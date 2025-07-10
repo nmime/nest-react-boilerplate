@@ -4585,6 +4585,10 @@
           "displayName": {
             "type": "string"
           },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
+          },
           "locale": {
             "type": "string",
             "enum": ["en", "ru"]
@@ -4635,6 +4639,10 @@
           },
           "displayName": {
             "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri"
           },
           "locale": {
             "type": "string",
@@ -4693,14 +4701,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "role",
-          "label",
-          "description",
-          "isSystem",
-          "permissions"
-        ]
+        "required": ["id", "role", "label", "description", "isSystem", "permissions"]
       },
       "AdminRbacPermissionDto": {
         "type": "object",
@@ -4788,14 +4789,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "role",
-          "label",
-          "description",
-          "isSystem",
-          "permissions"
-        ]
+        "required": ["id", "role", "label", "description", "isSystem", "permissions"]
       },
       "CreateAdminRoleDto": {
         "type": "object",
@@ -4917,6 +4911,15 @@
           "theme": {
             "type": "string",
             "enum": ["system", "light", "dark"]
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "avatarStatus": {
+            "type": "string",
+            "enum": ["none", "provider", "manual", "deleted"]
           },
           "lastLoginAt": {
             "type": "string",

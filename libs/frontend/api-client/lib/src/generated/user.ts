@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-  "/health": {
+  '/health': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getHealth"];
+    get: operations['BaseHealthController_getHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -20,14 +20,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/health/private": {
+  '/health/private': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getPrivateHealth"];
+    get: operations['BaseHealthController_getPrivateHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -36,14 +36,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/live": {
+  '/live': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getLiveness"];
+    get: operations['BaseHealthController_getLiveness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -52,14 +52,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/ready": {
+  '/ready': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getReadiness"];
+    get: operations['BaseHealthController_getReadiness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -68,14 +68,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/profile/me": {
+  '/profile/me': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["ProfileController_me"];
+    get: operations['ProfileController_me'];
     put?: never;
     post?: never;
     delete?: never;
@@ -94,7 +94,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       issuer?: string;
       audience?: string | string[];
       roles: string[];
@@ -107,13 +107,13 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       roles: string[];
       permissions: string[];
     };
     ProfilePayloadDto: {
-      principal: components["schemas"]["AuthenticatedPrincipalDto"];
-      profile: components["schemas"]["UserProfileViewDto"];
+      principal: components['schemas']['AuthenticatedPrincipalDto'];
+      profile: components['schemas']['UserProfileViewDto'];
     };
   };
   responses: never;
@@ -122,10 +122,9 @@ export interface components {
   headers: never;
   pathItems: never;
 }
-export type AuthenticatedPrincipalDto =
-  components["schemas"]["AuthenticatedPrincipalDto"];
-export type UserProfileViewDto = components["schemas"]["UserProfileViewDto"];
-export type ProfilePayloadDto = components["schemas"]["ProfilePayloadDto"];
+export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
+export type UserProfileViewDto = components['schemas']['UserProfileViewDto'];
+export type ProfilePayloadDto = components['schemas']['ProfilePayloadDto'];
 export type $defs = Record<string, never>;
 export interface operations {
   BaseHealthController_getHealth: {
@@ -211,8 +210,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["ProfilePayloadDto"];
+          'application/json': {
+            data: components['schemas']['ProfilePayloadDto'];
           };
         };
       };
@@ -222,7 +221,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -276,7 +275,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -312,7 +311,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -348,7 +347,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -384,7 +383,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error

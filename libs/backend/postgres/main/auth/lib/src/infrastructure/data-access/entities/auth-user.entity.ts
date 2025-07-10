@@ -6,6 +6,15 @@ export type AuthUserThemePreference = "system" | "light" | "dark";
 
 export type AuthUserStatus = "active" | "disabled" | "invited";
 
+/**
+ * Canonical avatar status on the auth user profile.
+ * - "none": no avatar set
+ * - "provider": avatar was set from a provider (Telegram/Discord) sync
+ * - "manual": user set a custom avatar (via upload or admin)
+ * - "deleted": user explicitly removed their avatar
+ */
+export type AuthUserAvatarStatus = "none" | "provider" | "manual" | "deleted";
+
 export const DefaultAuthTenantId = "00000000-0000-0000-0000-000000000000";
 
 export interface AuthUserAccessPolicyInput {
@@ -22,6 +31,9 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   locale?: Locale | null;
   theme?: AuthUserThemePreference | null;
   lastLoginAt?: Date | null;
+  avatarUrl?: string | null;
+  avatarHash?: string | null;
+  avatarStatus?: AuthUserAvatarStatus | null;
 }
 
 export class AuthUserEntity {
@@ -36,6 +48,9 @@ export class AuthUserEntity {
   locale: Locale = "en";
   theme: AuthUserThemePreference = "system";
   lastLoginAt: Date = new Date(0);
+  avatarUrl: string | null = null;
+  avatarHash: string | null = null;
+  avatarStatus: AuthUserAvatarStatus = "none";
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -51,6 +66,9 @@ export class AuthUserEntity {
       this.locale = input.locale ?? "en";
       this.theme = input.theme ?? "system";
       this.lastLoginAt = input.lastLoginAt ?? new Date(0);
+      this.avatarUrl = input.avatarUrl ?? null;
+      this.avatarHash = input.avatarHash ?? null;
+      this.avatarStatus = input.avatarStatus ?? "none";
     }
   }
 }
@@ -88,6 +106,24 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       fieldName: "last_login_at",
       defaultRaw: "'epoch'::timestamptz",
     },
+    avatarUrl: {
+      type: "varchar",
+      fieldName: "avatar_url",
+      length: 2048,
+      nullable: true,
+    },
+    avatarHash: {
+      type: "varchar",
+      fieldName: "avatar_hash",
+      length: 64,
+      nullable: true,
+    },
+    avatarStatus: {
+      type: "varchar",
+      fieldName: "avatar_status",
+      length: 16,
+      default: "none",
+    },
     createdAt: {
       type: "timestamptz",
       fieldName: "created_at",
@@ -112,6 +148,10 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     {
       name: "ck__auth_users__locale",
       expression: `"locale" in ('en', 'ru')`,
+    },
+    {
+      name: "ck__auth_users__avatar_status",
+      expression: `"avatar_status" in ('none', 'provider', 'manual', 'deleted')`,
     },
   ],
 });

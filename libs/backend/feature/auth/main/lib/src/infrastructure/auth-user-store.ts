@@ -1,17 +1,14 @@
-import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
-import { ResultAsync, okAsync } from "neverthrow";
-import type { Locale } from "@app/common-i18n";
+import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
+import { ResultAsync, okAsync } from 'neverthrow';
+import type { Locale } from '@app/common-i18n';
 import {
   AuthenticatedTheme,
   DefaultAuthTenantId,
   normalizeUserThemePreference,
   type UserThemePreference,
-} from "@app/backend-feature-auth-shared";
-import {
-  AuthUserRepository,
-  type AuthUserEntity,
-} from "@app/backend-postgres-main-auth";
+} from '@app/backend-feature-auth-shared';
+import { AuthUserRepository, type AuthUserEntity } from '@app/backend-postgres-main-auth';
 
 export interface AuthUserRecord {
   id: string;
@@ -23,12 +20,15 @@ export interface AuthUserRecord {
   permissions: string[];
   locale: Locale | null;
   theme: UserThemePreference;
-  status: "active" | "disabled" | "invited";
+  status: 'active' | 'disabled' | 'invited';
   lastLoginAt: Date | null;
+  avatarUrl: string | null;
+  avatarHash: string | null;
+  avatarStatus: 'none' | 'provider' | 'manual' | 'deleted';
 }
 
 export interface AuthUserStoreError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 
@@ -46,13 +46,11 @@ export interface CreateAuthUserInput {
 export interface AuthUserAccessPolicyUpdate {
   roles?: string[];
   permissions?: string[];
-  status?: AuthUserRecord["status"];
+  status?: AuthUserRecord['status'];
 }
 
 export interface AuthUserStore {
-  create(
-    input: CreateAuthUserInput,
-  ): ResultAsync<AuthUserRecord, AuthUserStoreError>;
+  create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError>;
   setAccessPolicy(
     id: string,
     policy: AuthUserAccessPolicyUpdate,
@@ -62,28 +60,22 @@ export interface AuthUserStore {
     email: string | null | undefined,
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
-  findById(
-    id: string,
-    tenantId?: string,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
-  setLocale(
-    id: string,
-    locale: Locale,
-    tenantId?: string,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  findById(id: string, tenantId?: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  setLocale(id: string, locale: Locale, tenantId?: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
-  recordLogin(
+  recordLogin(id: string, loggedInAt?: Date, tenantId?: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  syncProviderAvatar(
     id: string,
-    loggedInAt?: Date,
+    input: { url: string | null; hash: string | null },
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
 }
 
-export const AuthUserStoreInjectToken = Symbol("AuthUserStoreInjectToken");
+export const AuthUserStoreInjectToken = Symbol('AuthUserStoreInjectToken');
 
 export function toAuthUserRecord(entity: {
   id: string;
@@ -95,8 +87,11 @@ export function toAuthUserRecord(entity: {
   permissions: string[];
   locale: Locale | null;
   theme: string | null;
-  status: "active" | "disabled" | "invited";
+  status: 'active' | 'disabled' | 'invited';
   lastLoginAt: Date | null;
+  avatarUrl?: string | null;
+  avatarHash?: string | null;
+  avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }): AuthUserRecord {
   return {
     id: entity.id,
@@ -107,10 +102,12 @@ export function toAuthUserRecord(entity: {
     roles: entity.roles,
     permissions: entity.permissions,
     locale: entity.locale,
-    theme:
-      normalizeUserThemePreference(entity.theme) ?? AuthenticatedTheme.System,
+    theme: normalizeUserThemePreference(entity.theme) ?? AuthenticatedTheme.System,
     status: entity.status,
     lastLoginAt: entity.lastLoginAt,
+    avatarUrl: entity.avatarUrl ?? null,
+    avatarHash: entity.avatarHash ?? null,
+    avatarStatus: entity.avatarStatus ?? 'none',
   };
 }
 
@@ -120,9 +117,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   constructor(private readonly repository: AuthUserRepository) {}
   /* v8 ignore stop */
 
-  create(
-    input: CreateAuthUserInput,
-  ): ResultAsync<AuthUserRecord, AuthUserStoreError> {
+  create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError> {
     return this.repository.createUser(input).map(toAuthUserRecord);
   }
 
@@ -133,9 +128,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setAccessPolicy(id, policy, tenantId)
-      .map((entity: AuthUserEntity | null) =>
-        entity ? toAuthUserRecord(entity) : null,
-      );
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   findByEmail(
@@ -144,20 +137,13 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findByEmail(email, tenantId)
-      .map((entity: AuthUserEntity | null) =>
-        entity ? toAuthUserRecord(entity) : null,
-      );
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
-  findById(
-    id: string,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+  findById(id: string, tenantId: string = DefaultAuthTenantId): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findById(id, tenantId)
-      .map((entity: AuthUserEntity | null) =>
-        entity ? toAuthUserRecord(entity) : null,
-      );
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   setLocale(
@@ -175,9 +161,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setPreferences(id, preferences, tenantId)
-      .map((entity: AuthUserEntity | null) =>
-        entity ? toAuthUserRecord(entity) : null,
-      );
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   recordLogin(
@@ -187,9 +171,17 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .recordLogin(id, loggedInAt, tenantId)
-      .map((entity: AuthUserEntity | null) =>
-        entity ? toAuthUserRecord(entity) : null,
-      );
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
+
+  syncProviderAvatar(
+    id: string,
+    input: { url: string | null; hash: string | null },
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .syncProviderAvatar(id, input, tenantId)
+      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 }
 
@@ -198,20 +190,15 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   private readonly usersById = new Map<string, AuthUserRecord>();
   private readonly idsByTenantEmail = new Map<string, string>();
 
-  create(
-    input: CreateAuthUserInput,
-  ): ResultAsync<AuthUserRecord, AuthUserStoreError> {
+  create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError> {
     const tenantId = input.tenantId ?? DefaultAuthTenantId;
     const email = input.email?.trim().toLowerCase() || null;
     const key = email ? tenantEmailKey(tenantId, email) : null;
     if (key && this.idsByTenantEmail.has(key)) {
-      return ResultAsync.fromPromise(
-        Promise.reject(new Error("Email already exists for tenant.")),
-        () => ({
-          code: "repository_error" as const,
-          message: "Email already exists for tenant.",
-        }),
-      );
+      return ResultAsync.fromPromise(Promise.reject(new Error('Email already exists for tenant.')), () => ({
+        code: 'repository_error' as const,
+        message: 'Email already exists for tenant.',
+      }));
     }
 
     const record: AuthUserRecord = {
@@ -224,8 +211,11 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       permissions: input.permissions,
       locale: input.locale ?? null,
       theme: input.theme ?? AuthenticatedTheme.System,
-      status: "active",
+      status: 'active',
       lastLoginAt: null,
+      avatarUrl: null,
+      avatarHash: null,
+      avatarStatus: 'none',
     };
     this.usersById.set(record.id, record);
     if (key) {
@@ -261,16 +251,11 @@ export class InMemoryAuthUserStore implements AuthUserStore {
     if (!normalizedEmail) {
       return okAsync(null);
     }
-    const id = this.idsByTenantEmail.get(
-      tenantEmailKey(tenantId, normalizedEmail),
-    );
+    const id = this.idsByTenantEmail.get(tenantEmailKey(tenantId, normalizedEmail));
     return okAsync(id ? (this.usersById.get(id) ?? null) : null);
   }
 
-  findById(
-    id: string,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+  findById(id: string, tenantId: string = DefaultAuthTenantId): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id) ?? null;
     return okAsync(record?.tenantId === tenantId ? record : null);
   }
@@ -311,6 +296,36 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       return okAsync(null);
     }
     const updated = { ...record, lastLoginAt: loggedInAt };
+    this.usersById.set(id, updated);
+    return okAsync(updated);
+  }
+
+  syncProviderAvatar(
+    id: string,
+    input: { url: string | null; hash: string | null },
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id);
+    if (!record || record.tenantId !== tenantId) {
+      return okAsync(null);
+    }
+
+    // Respect user intent: do not override manual or deleted avatars
+    if (record.avatarStatus === 'manual' || record.avatarStatus === 'deleted') {
+      return okAsync(record);
+    }
+
+    // Skip if hash is unchanged
+    if (record.avatarHash === input.hash) {
+      return okAsync(record);
+    }
+
+    const updated: AuthUserRecord = {
+      ...record,
+      avatarUrl: input.url,
+      avatarHash: input.hash,
+      avatarStatus: input.url ? 'provider' : 'none',
+    };
     this.usersById.set(id, updated);
     return okAsync(updated);
   }

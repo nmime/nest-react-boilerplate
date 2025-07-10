@@ -444,6 +444,11 @@ export class ExternalAuthService {
         identity.value.id,
         input.discordTokens,
       );
+      await this.syncAvatarToUser(
+        user.id,
+        input.tenantId,
+        input.profile.avatarUrl,
+      );
       return {
         status: "authenticated",
         session: this.createExternalSession(
@@ -510,6 +515,11 @@ export class ExternalAuthService {
       input.tenantId,
       identity.value.id,
       input.discordTokens,
+    );
+    await this.syncAvatarToUser(
+      bootstrapUser.id,
+      input.tenantId,
+      input.profile.avatarUrl,
     );
     return {
       status: "authenticated",
@@ -675,6 +685,35 @@ export class ExternalAuthService {
         scopes,
         expiresAt: null,
       });
+    }
+  }
+
+  /**
+   * Sync provider avatar to the canonical user profile.
+   * Respects xrocket rules: never overrides manual or deleted status.
+   */
+  private async syncAvatarToUser(
+    userId: string,
+    tenantId: string,
+    providerAvatarUrl: string | null | undefined,
+  ): Promise<void> {
+    if (!providerAvatarUrl) {
+      // No provider avatar — do not clear existing (user may have manual)
+      return;
+    }
+    try {
+      // Use a simple content-addressable hash for change detection.
+      const { createHash } = await import("node:crypto");
+      const hash = createHash("sha256")
+        .update(providerAvatarUrl)
+        .digest("hex");
+      await this.users.syncProviderAvatar(
+        userId,
+        { url: providerAvatarUrl, hash },
+        tenantId,
+      );
+    } catch {
+      // Non-fatal: avatar sync failure should not block auth flow.
     }
   }
 }

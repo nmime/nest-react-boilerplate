@@ -1,13 +1,13 @@
-import { Language } from "./language.enum";
-import type { AuthProvider, AuthProviderChannel } from "./social-auth.types";
-import { createIsEnum } from "../util";
+import { Language } from './language.enum';
+import type { AuthProvider, AuthProviderChannel } from './social-auth.types';
+import { createIsEnum } from '../util';
 
 export type AuthenticatedLocale = Language;
 
 export enum AuthenticatedTheme {
-  System = "system",
-  Light = "light",
-  Dark = "dark",
+  System = 'system',
+  Light = 'light',
+  Dark = 'dark',
 }
 
 export const userThemePreferences = Object.values(AuthenticatedTheme);
@@ -19,6 +19,7 @@ export interface AuthenticatedPrincipal {
   tenantId: string;
   email?: string;
   displayName?: string;
+  avatarUrl?: string;
   locale?: AuthenticatedLocale;
   theme?: AuthenticatedTheme;
   issuer?: string;
@@ -34,8 +35,7 @@ export interface AuthenticatedPrincipal {
 }
 
 type SessionCallback = (error?: unknown) => void;
-type SessionLifecycleMethod = ((callback: SessionCallback) => void) &
-  (() => Promise<void>);
+type SessionLifecycleMethod = ((callback: SessionCallback) => void) & (() => Promise<void>);
 
 export interface AuthenticatedSession {
   user?: AuthenticatedPrincipal;

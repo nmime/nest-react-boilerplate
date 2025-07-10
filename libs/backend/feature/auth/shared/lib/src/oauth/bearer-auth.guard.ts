@@ -1,27 +1,12 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { PublicAuthMetadataKey } from "./access-control.decorators";
-import type {
-  AuthenticatedPrincipal,
-  AuthenticatedRequest,
-  JwtValidationEnvironment,
-} from "./access-control.types";
-import {
-  AuthenticatedTheme,
-  isAuthenticatedTheme,
-} from "./access-control.types";
-import { Language, isLanguage } from "./language.enum";
-import { isAuthProvider, isAuthProviderChannel } from "./social-auth.types";
-import {
-  assertRequestTenantMatchesPrincipal,
-  resolveTenantId,
-} from "./tenant-context";
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { PublicAuthMetadataKey } from './access-control.decorators';
+import type { AuthenticatedPrincipal, AuthenticatedRequest, JwtValidationEnvironment } from './access-control.types';
+import { AuthenticatedTheme, isAuthenticatedTheme } from './access-control.types';
+import { Language, isLanguage } from './language.enum';
+import { isAuthProvider, isAuthProviderChannel } from './social-auth.types';
+import { assertRequestTenantMatchesPrincipal, resolveTenantId } from './tenant-context';
 
 type JwtHeader = {
   alg?: string;
@@ -41,6 +26,7 @@ type JwtPayload = Record<string, unknown> & {
   auth_channel?: unknown;
   auth_time?: unknown;
   external_identity_id?: unknown;
+  avatar_url?: unknown;
   tenantId?: unknown;
   theme?: unknown;
   tid?: unknown;
@@ -53,9 +39,9 @@ type JwtPayload = Record<string, unknown> & {
 };
 
 const hmacAlgorithms: Record<string, string> = {
-  HS256: "sha256",
-  HS384: "sha384",
-  HS512: "sha512",
+  HS256: 'sha256',
+  HS384: 'sha384',
+  HS512: 'sha512',
 };
 const MinimumProductionJwtSecretLength = 32;
 
@@ -71,10 +57,7 @@ export class BearerAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const principal = validateBearerAuthorization(
-      readAuthorizationHeader(request),
-      process.env,
-    );
+    const principal = validateBearerAuthorization(readAuthorizationHeader(request), process.env);
     assertRequestTenantMatchesPrincipal(request, principal);
     request.user = principal;
     request.auth = principal;
@@ -84,10 +67,10 @@ export class BearerAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean | undefined>(
-        PublicAuthMetadataKey,
-        [context.getHandler(), context.getClass()],
-      ) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(PublicAuthMetadataKey, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false
     );
   }
 }
@@ -99,14 +82,11 @@ export function validateBearerAuthorization(
 ): AuthenticatedPrincipal {
   const secret = env.AUTH_JWT_SECRET?.trim();
   if (!secret) {
-    throw new UnauthorizedException("AUTH_JWT_SECRET is not configured.");
+    throw new UnauthorizedException('AUTH_JWT_SECRET is not configured.');
   }
-  if (
-    env.NODE_ENV === "production" &&
-    secret.length < MinimumProductionJwtSecretLength
-  ) {
+  if (env.NODE_ENV === 'production' && secret.length < MinimumProductionJwtSecretLength) {
     throw new UnauthorizedException(
-      "AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.",
+      'AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.',
     );
   }
 
@@ -121,36 +101,33 @@ export function validateBearerAuthorization(
   return principalFromPayload(payload);
 }
 
-function readAuthorizationHeader(
-  request: AuthenticatedRequest,
-): string | undefined {
-  const directHeader =
-    request.headers?.authorization ?? request.headers?.Authorization;
+function readAuthorizationHeader(request: AuthenticatedRequest): string | undefined {
+  const directHeader = request.headers?.authorization ?? request.headers?.Authorization;
   if (Array.isArray(directHeader)) {
     return directHeader[0];
   }
-  if (typeof directHeader === "string") {
+  if (typeof directHeader === 'string') {
     return directHeader;
   }
 
-  return request.get?.("authorization") ?? request.get?.("Authorization");
+  return request.get?.('authorization') ?? request.get?.('Authorization');
 }
 
 function extractBearerToken(authorizationHeader: string | undefined): string {
   if (!authorizationHeader) {
-    throw new UnauthorizedException("Missing bearer token.");
+    throw new UnauthorizedException('Missing bearer token.');
   }
 
   const trimmed = authorizationHeader.trim();
-  const separatorIndex = trimmed.indexOf(" ");
+  const separatorIndex = trimmed.indexOf(' ');
   if (separatorIndex < 0) {
-    throw new UnauthorizedException("Missing bearer token.");
+    throw new UnauthorizedException('Missing bearer token.');
   }
 
   const scheme = trimmed.slice(0, separatorIndex);
   const token = trimmed.slice(separatorIndex + 1).trim();
-  if (scheme.toLowerCase() !== "bearer" || token.length === 0) {
-    throw new UnauthorizedException("Missing bearer token.");
+  if (scheme.toLowerCase() !== 'bearer' || token.length === 0) {
+    throw new UnauthorizedException('Missing bearer token.');
   }
 
   return token;
@@ -162,9 +139,9 @@ function parseJwt(token: string): {
   signingInput: string;
   signature: string;
 } {
-  const parts = token.split(".");
+  const parts = token.split('.');
   if (parts.length !== 3 || parts.some((part) => part.length === 0)) {
-    throw new UnauthorizedException("Malformed JWT.");
+    throw new UnauthorizedException('Malformed JWT.');
   }
 
   const encodedHeader = parts[0] as string;
@@ -172,8 +149,8 @@ function parseJwt(token: string): {
   const signature = parts[2] as string;
 
   return {
-    header: decodeJson<JwtHeader>(encodedHeader, "JWT header"),
-    payload: decodeJson<JwtPayload>(encodedPayload, "JWT payload"),
+    header: decodeJson<JwtHeader>(encodedHeader, 'JWT header'),
+    payload: decodeJson<JwtPayload>(encodedPayload, 'JWT payload'),
     signingInput: `${encodedHeader}.${encodedPayload}`,
     signature,
   };
@@ -181,93 +158,75 @@ function parseJwt(token: string): {
 
 function decodeJson<T>(encoded: string, label: string): T {
   try {
-    return JSON.parse(base64UrlDecode(encoded).toString("utf8")) as T;
+    return JSON.parse(base64UrlDecode(encoded).toString('utf8')) as T;
   } catch {
     throw new UnauthorizedException(`Malformed ${label}.`);
   }
 }
 
 function verifyHeader(header: JwtHeader): string {
-  if (header.alg === "none") {
-    throw new UnauthorizedException("JWT alg none is not allowed.");
+  if (header.alg === 'none') {
+    throw new UnauthorizedException('JWT alg none is not allowed.');
   }
   const hmacAlgorithm = header.alg ? hmacAlgorithms[header.alg] : undefined;
   if (!hmacAlgorithm) {
-    throw new UnauthorizedException("Unsupported JWT algorithm.");
+    throw new UnauthorizedException('Unsupported JWT algorithm.');
   }
   return hmacAlgorithm;
 }
 
-function verifySignature(
-  hmacAlgorithm: string,
-  signingInput: string,
-  signature: string,
-  secret: string,
-): void {
-  const digest = createHmac(hmacAlgorithm, secret)
-    .update(signingInput)
-    .digest();
+function verifySignature(hmacAlgorithm: string, signingInput: string, signature: string, secret: string): void {
+  const digest = createHmac(hmacAlgorithm, secret).update(signingInput).digest();
   const provided = base64UrlDecode(signature);
 
   if (provided.length !== digest.length || !timingSafeEqual(provided, digest)) {
-    throw new UnauthorizedException("Invalid JWT signature.");
+    throw new UnauthorizedException('Invalid JWT signature.');
   }
 }
 
 function verifyTimeClaims(payload: JwtPayload, nowInSeconds: number): void {
-  if (typeof payload.exp !== "number" || !Number.isFinite(payload.exp)) {
-    throw new UnauthorizedException("JWT expiration is required.");
+  if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+    throw new UnauthorizedException('JWT expiration is required.');
   }
   if (payload.exp <= nowInSeconds) {
-    throw new UnauthorizedException("JWT is expired.");
+    throw new UnauthorizedException('JWT is expired.');
   }
-  if (typeof payload.nbf === "number" && payload.nbf > nowInSeconds) {
-    throw new UnauthorizedException("JWT is not active yet.");
+  if (typeof payload.nbf === 'number' && payload.nbf > nowInSeconds) {
+    throw new UnauthorizedException('JWT is not active yet.');
   }
 }
 
-function verifyIssuer(
-  payload: JwtPayload,
-  expectedIssuer: string | undefined,
-): void {
+function verifyIssuer(payload: JwtPayload, expectedIssuer: string | undefined): void {
   if (expectedIssuer && payload.iss !== expectedIssuer) {
-    throw new UnauthorizedException("JWT issuer mismatch.");
+    throw new UnauthorizedException('JWT issuer mismatch.');
   }
 }
 
-function verifyAudience(
-  payload: JwtPayload,
-  expectedAudience: string | undefined,
-): void {
+function verifyAudience(payload: JwtPayload, expectedAudience: string | undefined): void {
   if (!expectedAudience) {
     return;
   }
 
   const audience = payload.aud;
-  const matches = Array.isArray(audience)
-    ? audience.includes(expectedAudience)
-    : audience === expectedAudience;
+  const matches = Array.isArray(audience) ? audience.includes(expectedAudience) : audience === expectedAudience;
 
   if (!matches) {
-    throw new UnauthorizedException("JWT audience mismatch.");
+    throw new UnauthorizedException('JWT audience mismatch.');
   }
 }
 
 function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
   if (!payload.sub) {
-    throw new UnauthorizedException("JWT subject is required.");
+    throw new UnauthorizedException('JWT subject is required.');
   }
 
-  const permissions = uniqueStrings([
-    ...claimToStrings(payload.permissions),
-    ...claimToStrings(payload.scope),
-  ]);
+  const permissions = uniqueStrings([...claimToStrings(payload.permissions), ...claimToStrings(payload.scope)]);
 
   const principal: AuthenticatedPrincipal = {
     subject: payload.sub,
     tenantId: resolveTenantId(readTenantClaim(payload)),
     email: payload.email,
-    displayName: typeof payload.name === "string" ? payload.name : undefined,
+    displayName: typeof payload.name === 'string' ? payload.name : undefined,
     locale: normalizePrincipalLocale(payload.locale),
     theme: normalizePrincipalTheme(payload.theme),
     issuer: payload.iss,
@@ -286,38 +245,39 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
   if (isAuthProviderChannel(payload.auth_channel)) {
     principal.authChannel = payload.auth_channel;
   }
-  if (typeof payload.auth_time === "number") {
+  if (typeof payload.auth_time === 'number') {
     principal.authTime = payload.auth_time;
   }
-  if (typeof payload.external_identity_id === "string") {
+  if (typeof payload.external_identity_id === 'string') {
     principal.externalIdentityId = payload.external_identity_id;
+  }
+  if (typeof payload.avatar_url === 'string') {
+    principal.avatarUrl = payload.avatar_url;
   }
   return principal;
 }
 
 function readTenantClaim(payload: JwtPayload): string | undefined {
-  if (typeof payload.tid === "string") {
+  if (typeof payload.tid === 'string') {
     return payload.tid;
   }
-  if (typeof payload.tenantId === "string") {
+  if (typeof payload.tenantId === 'string') {
     return payload.tenantId;
   }
   return undefined;
 }
 
 function normalizePrincipalLocale(value: unknown): Language | undefined {
-  if (typeof value !== "string") {
+  if (typeof value !== 'string') {
     return undefined;
   }
 
-  const normalized = value.trim().toLowerCase().split("-")[0];
+  const normalized = value.trim().toLowerCase().split('-')[0];
   return isLanguage(normalized) ? normalized : undefined;
 }
 
-function normalizePrincipalTheme(
-  value: unknown,
-): AuthenticatedTheme | undefined {
-  if (typeof value !== "string") {
+function normalizePrincipalTheme(value: unknown): AuthenticatedTheme | undefined {
+  if (typeof value !== 'string') {
     return undefined;
   }
 
@@ -327,13 +287,11 @@ function normalizePrincipalTheme(
 
 function claimToStrings(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.filter(
-      (item): item is string => typeof item === "string" && item.length > 0,
-    );
+    return value.filter((item): item is string => typeof item === 'string' && item.length > 0);
   }
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return value
-      .split(" ")
+      .split(' ')
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
   }
@@ -345,7 +303,7 @@ function uniqueStrings(values: string[]): string[] {
 }
 
 function base64UrlDecode(value: string): Buffer {
-  const normalized = value.replace(/-/gu, "+").replace(/_/gu, "/");
-  const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
-  return Buffer.from(`${normalized}${padding}`, "base64");
+  const normalized = value.replace(/-/gu, '+').replace(/_/gu, '/');
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+  return Buffer.from(`${normalized}${padding}`, 'base64');
 }

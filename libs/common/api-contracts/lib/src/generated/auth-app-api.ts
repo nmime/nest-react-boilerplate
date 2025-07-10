@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-  "/health": {
+  '/health': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getHealth"];
+    get: operations['BaseHealthController_getHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -20,14 +20,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/health/private": {
+  '/health/private': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getPrivateHealth"];
+    get: operations['BaseHealthController_getPrivateHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -36,14 +36,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/live": {
+  '/live': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getLiveness"];
+    get: operations['BaseHealthController_getLiveness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -52,14 +52,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/ready": {
+  '/ready': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getReadiness"];
+    get: operations['BaseHealthController_getReadiness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -68,7 +68,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/auth/register": {
+  '/auth/register': {
     parameters: {
       query?: never;
       header?: never;
@@ -77,14 +77,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_register"];
+    post: operations['AuthController_register'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/login": {
+  '/auth/login': {
     parameters: {
       query?: never;
       header?: never;
@@ -93,14 +93,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_login"];
+    post: operations['AuthController_login'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/refresh": {
+  '/auth/refresh': {
     parameters: {
       query?: never;
       header?: never;
@@ -109,14 +109,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_refresh"];
+    post: operations['AuthController_refresh'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/telegram/web-login": {
+  '/auth/telegram/web-login': {
     parameters: {
       query?: never;
       header?: never;
@@ -125,14 +125,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_telegramWebLogin"];
+    post: operations['AuthController_telegramWebLogin'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/telegram/tma": {
+  '/auth/telegram/tma': {
     parameters: {
       query?: never;
       header?: never;
@@ -141,14 +141,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_telegramTma"];
+    post: operations['AuthController_telegramTma'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/telegram/bot-link": {
+  '/auth/telegram/bot-link': {
     parameters: {
       query?: never;
       header?: never;
@@ -157,14 +157,14 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_telegramBotLink"];
+    post: operations['AuthController_telegramBotLink'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/discord/authorization-request": {
+  '/auth/discord/authorization-request': {
     parameters: {
       query?: never;
       header?: never;
@@ -173,21 +173,21 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_discordAuthorizationRequest"];
+    post: operations['AuthController_discordAuthorizationRequest'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/auth/discord/callback": {
+  '/auth/discord/callback': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AuthController_discordCallback"];
+    get: operations['AuthController_discordCallback'];
     put?: never;
     post?: never;
     delete?: never;
@@ -196,14 +196,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/auth/provider-identities": {
+  '/auth/provider-identities': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AuthController_providerIdentities"];
+    get: operations['AuthController_providerIdentities'];
     put?: never;
     post?: never;
     delete?: never;
@@ -212,87 +212,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/auth/provider-identities/{identityId}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete: operations["AuthController_unlinkProviderIdentity"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/link-tokens": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations["AuthController_createLinkToken"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/email-verification-token": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations["AuthController_requestEmailVerification"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/password-reset-token": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations["AuthController_requestPasswordReset"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/me": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["AuthController_me"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/me/locale": {
+  '/auth/provider-identities/{identityId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -302,13 +222,77 @@ export interface paths {
     get?: never;
     put?: never;
     post?: never;
+    delete: operations['AuthController_unlinkProviderIdentity'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/link-tokens': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AuthController_createLinkToken'];
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations["AuthController_updateLocale"];
+    patch?: never;
     trace?: never;
   };
-  "/auth/me/preferences": {
+  '/auth/email-verification-token': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AuthController_requestEmailVerification'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/password-reset-token': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AuthController_requestPasswordReset'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AuthController_me'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/me/locale': {
     parameters: {
       query?: never;
       header?: never;
@@ -321,26 +305,10 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations["AuthController_updatePreferences"];
+    patch: operations['AuthController_updateLocale'];
     trace?: never;
   };
-  "/auth/locales": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["AuthController_locales"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/auth/logout": {
+  '/auth/me/preferences': {
     parameters: {
       query?: never;
       header?: never;
@@ -349,11 +317,59 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations["AuthController_logout"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['AuthController_updatePreferences'];
+    trace?: never;
+  };
+  '/auth/locales': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AuthController_locales'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AuthController_logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/auth/{path}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['BetterAuthApiController_handle_get'];
+    put: operations['BetterAuthApiController_handle_put'];
+    post: operations['BetterAuthApiController_handle_post'];
+    delete: operations['BetterAuthApiController_handle_delete'];
+    options: operations['BetterAuthApiController_handle_options'];
+    head: operations['BetterAuthApiController_handle_head'];
+    patch: operations['BetterAuthApiController_handle_patch'];
     trace?: never;
   };
 }
@@ -368,30 +384,34 @@ export interface components {
       email: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       /** @enum {string} */
-      theme: "system" | "light" | "dark";
+      theme: 'system' | 'light' | 'dark';
       roles: string[];
       permissions: string[];
+      /** Format: uri */
+      avatarUrl?: string;
+      /** @enum {string} */
+      avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
     };
     AuthSessionViewDto: {
       accessToken: string;
       /** @enum {string} */
-      tokenType: "Bearer";
+      tokenType: 'Bearer';
       expiresIn: number;
       refreshToken?: string;
-      user: components["schemas"]["AuthenticatedUserViewDto"];
+      user: components['schemas']['AuthenticatedUserViewDto'];
       amr?: string[];
       /** @enum {string} */
-      authProvider?: "password" | "telegram" | "discord";
+      authProvider?: 'password' | 'telegram' | 'discord';
       /** @enum {string} */
       authChannel?:
-        | "password"
-        | "telegram_web_login"
-        | "telegram_tma"
-        | "telegram_bot"
-        | "discord_oauth"
-        | "discord_bot";
+        | 'password'
+        | 'telegram_web_login'
+        | 'telegram_tma'
+        | 'telegram_bot'
+        | 'discord_oauth'
+        | 'discord_bot';
       authTime?: number;
       /** Format: uuid */
       externalIdentityId?: string;
@@ -408,7 +428,7 @@ export interface components {
       /** @example Ada Lovelace */
       displayName?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
     };
     LoginDto: {
       /** Format: uuid */
@@ -427,10 +447,10 @@ export interface components {
     };
     ExternalAuthResultDto: {
       /** @enum {string} */
-      status: "authenticated" | "linked" | "needs_link" | "conflict";
+      status: 'authenticated' | 'linked' | 'needs_link' | 'conflict';
       code?: string;
       message?: string;
-      session?: components["schemas"]["AuthSessionViewDto"];
+      session?: components['schemas']['AuthSessionViewDto'];
       identity?: {
         [key: string]: unknown;
       };
@@ -440,7 +460,7 @@ export interface components {
       /** Format: uuid */
       tenantId?: string;
       /** @enum {string} */
-      intent?: "login" | "link";
+      intent?: 'login' | 'link';
       linkToken?: string;
       returnUrl?: string;
       payload: {
@@ -451,7 +471,7 @@ export interface components {
       /** Format: uuid */
       tenantId?: string;
       /** @enum {string} */
-      intent?: "login" | "link";
+      intent?: 'login' | 'link';
       linkToken?: string;
       returnUrl?: string;
       initData: string;
@@ -471,7 +491,7 @@ export interface components {
       /** Format: uuid */
       tenantId?: string;
       /** @enum {string} */
-      intent?: "login" | "link";
+      intent?: 'login' | 'link';
       linkToken?: string;
       returnUrl?: string;
     };
@@ -479,17 +499,17 @@ export interface components {
       token: string;
       expiresAt: string;
       /** @enum {string} */
-      provider: "telegram" | "discord";
+      provider: 'telegram' | 'discord';
       /** @enum {string} */
-      intent: "login" | "link";
+      intent: 'login' | 'link';
     };
     LinkTokenDto: {
       /** Format: uuid */
       tenantId?: string;
       /** @enum {string} */
-      provider: "telegram" | "discord";
+      provider: 'telegram' | 'discord';
       /** @enum {string} */
-      intent?: "login" | "link";
+      intent?: 'login' | 'link';
       returnUrl?: string;
     };
     UserActionTokenPayloadDto: {
@@ -512,9 +532,9 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       /** @enum {string} */
-      theme?: "system" | "light" | "dark";
+      theme?: 'system' | 'light' | 'dark';
       issuer?: string;
       audience?: string | string[];
       roles: string[];
@@ -522,21 +542,21 @@ export interface components {
       tokenId?: string;
     };
     MePayloadDto: {
-      principal: components["schemas"]["AuthenticatedPrincipalDto"];
-      user: components["schemas"]["AuthenticatedUserViewDto"] | null;
+      principal: components['schemas']['AuthenticatedPrincipalDto'];
+      user: components['schemas']['AuthenticatedUserViewDto'] | null;
     };
     UpdateLocaleDto: {
       /** @enum {string} */
-      locale: "en" | "ru";
+      locale: 'en' | 'ru';
     };
     UpdatePreferencesDto: {
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       /** @enum {string} */
-      theme?: "system" | "light" | "dark";
+      theme?: 'system' | 'light' | 'dark';
     };
     SupportedLocalesPayloadDto: {
-      supportedLocales: ("en" | "ru")[];
+      supportedLocales: ('en' | 'ru')[];
     };
     LogoutPayloadDto: {
       /** @enum {boolean} */
@@ -628,7 +648,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["RegisterDto"];
+        'application/json': components['schemas']['RegisterDto'];
       };
     };
     responses: {
@@ -638,8 +658,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AuthSessionViewDto"];
+          'application/json': {
+            data: components['schemas']['AuthSessionViewDto'];
           };
         };
       };
@@ -649,7 +669,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -703,7 +723,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -739,7 +759,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -775,7 +795,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -811,7 +831,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -847,7 +867,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -888,7 +908,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["LoginDto"];
+        'application/json': components['schemas']['LoginDto'];
       };
     };
     responses: {
@@ -898,8 +918,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AuthSessionViewDto"];
+          'application/json': {
+            data: components['schemas']['AuthSessionViewDto'];
           };
         };
       };
@@ -909,7 +929,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -963,7 +983,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -999,7 +1019,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1035,7 +1055,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1071,7 +1091,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1107,7 +1127,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1148,7 +1168,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["RefreshTokenDto"];
+        'application/json': components['schemas']['RefreshTokenDto'];
       };
     };
     responses: {
@@ -1158,8 +1178,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AuthSessionViewDto"];
+          'application/json': {
+            data: components['schemas']['AuthSessionViewDto'];
           };
         };
       };
@@ -1169,7 +1189,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1223,7 +1243,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1259,7 +1279,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1295,7 +1315,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1331,7 +1351,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1367,7 +1387,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1408,7 +1428,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TelegramWebLoginDto"];
+        'application/json': components['schemas']['TelegramWebLoginDto'];
       };
     };
     responses: {
@@ -1418,8 +1438,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["ExternalAuthResultDto"];
+          'application/json': {
+            data: components['schemas']['ExternalAuthResultDto'];
           };
         };
       };
@@ -1429,7 +1449,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1483,7 +1503,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1519,7 +1539,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1555,7 +1575,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1591,7 +1611,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1627,7 +1647,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1668,7 +1688,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TelegramTmaDto"];
+        'application/json': components['schemas']['TelegramTmaDto'];
       };
     };
     responses: {
@@ -1678,8 +1698,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["ExternalAuthResultDto"];
+          'application/json': {
+            data: components['schemas']['ExternalAuthResultDto'];
           };
         };
       };
@@ -1689,7 +1709,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1743,7 +1763,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1779,7 +1799,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1815,7 +1835,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1851,7 +1871,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1887,7 +1907,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1928,7 +1948,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TelegramBotLinkDto"];
+        'application/json': components['schemas']['TelegramBotLinkDto'];
       };
     };
     responses: {
@@ -1938,8 +1958,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["ExternalAuthResultDto"];
+          'application/json': {
+            data: components['schemas']['ExternalAuthResultDto'];
           };
         };
       };
@@ -1949,7 +1969,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2003,7 +2023,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2039,7 +2059,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2075,7 +2095,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -2111,7 +2131,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2147,7 +2167,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2188,7 +2208,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["DiscordAuthorizationRequestDto"];
+        'application/json': components['schemas']['DiscordAuthorizationRequestDto'];
       };
     };
     responses: {
@@ -2198,8 +2218,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["Object"];
+          'application/json': {
+            data: components['schemas']['Object'];
           };
         };
       };
@@ -2209,7 +2229,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2263,7 +2283,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2299,7 +2319,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2335,7 +2355,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -2371,7 +2391,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2407,7 +2427,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2458,8 +2478,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["ExternalAuthResultDto"];
+          'application/json': {
+            data: components['schemas']['ExternalAuthResultDto'];
           };
         };
       };
@@ -2469,7 +2489,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2523,7 +2543,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2559,7 +2579,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2595,7 +2615,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -2631,7 +2651,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2667,7 +2687,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2714,8 +2734,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["Object"];
+          'application/json': {
+            data: components['schemas']['Object'];
           };
         };
       };
@@ -2725,7 +2745,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2779,7 +2799,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2815,7 +2835,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2851,7 +2871,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -2887,7 +2907,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2923,7 +2943,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2972,8 +2992,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["Object"];
+          'application/json': {
+            data: components['schemas']['Object'];
           };
         };
       };
@@ -2983,7 +3003,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3037,7 +3057,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3073,7 +3093,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3109,7 +3129,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -3145,7 +3165,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3181,7 +3201,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3222,7 +3242,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["LinkTokenDto"];
+        'application/json': components['schemas']['LinkTokenDto'];
       };
     };
     responses: {
@@ -3232,8 +3252,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["LinkTokenResultDto"];
+          'application/json': {
+            data: components['schemas']['LinkTokenResultDto'];
           };
         };
       };
@@ -3243,7 +3263,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3297,7 +3317,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3333,7 +3353,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3369,7 +3389,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -3405,7 +3425,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3441,7 +3461,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3482,7 +3502,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UserActionTokenRequestDto"];
+        'application/json': components['schemas']['UserActionTokenRequestDto'];
       };
     };
     responses: {
@@ -3492,8 +3512,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["UserActionTokenPayloadDto"];
+          'application/json': {
+            data: components['schemas']['UserActionTokenPayloadDto'];
           };
         };
       };
@@ -3503,7 +3523,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3557,7 +3577,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3593,7 +3613,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3629,7 +3649,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -3665,7 +3685,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3701,7 +3721,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3742,7 +3762,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UserActionTokenRequestDto"];
+        'application/json': components['schemas']['UserActionTokenRequestDto'];
       };
     };
     responses: {
@@ -3752,8 +3772,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["UserActionTokenPayloadDto"];
+          'application/json': {
+            data: components['schemas']['UserActionTokenPayloadDto'];
           };
         };
       };
@@ -3763,7 +3783,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3817,7 +3837,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3853,7 +3873,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3889,7 +3909,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -3925,7 +3945,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3961,7 +3981,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -4008,8 +4028,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["MePayloadDto"];
+          'application/json': {
+            data: components['schemas']['MePayloadDto'];
           };
         };
       };
@@ -4019,7 +4039,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -4073,7 +4093,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -4109,7 +4129,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -4145,7 +4165,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -4181,7 +4201,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -4217,7 +4237,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -4258,7 +4278,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateLocaleDto"];
+        'application/json': components['schemas']['UpdateLocaleDto'];
       };
     };
     responses: {
@@ -4268,8 +4288,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AuthenticatedUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AuthenticatedUserViewDto'];
           };
         };
       };
@@ -4279,7 +4299,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -4333,7 +4353,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -4369,7 +4389,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -4405,7 +4425,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -4441,7 +4461,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -4477,7 +4497,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -4518,7 +4538,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdatePreferencesDto"];
+        'application/json': components['schemas']['UpdatePreferencesDto'];
       };
     };
     responses: {
@@ -4528,8 +4548,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AuthenticatedUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AuthenticatedUserViewDto'];
           };
         };
       };
@@ -4539,7 +4559,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -4593,7 +4613,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -4629,7 +4649,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -4665,7 +4685,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -4701,7 +4721,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -4737,7 +4757,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -4784,8 +4804,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["SupportedLocalesPayloadDto"];
+          'application/json': {
+            data: components['schemas']['SupportedLocalesPayloadDto'];
           };
         };
       };
@@ -4795,7 +4815,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -4849,7 +4869,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -4885,7 +4905,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -4921,7 +4941,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -4957,7 +4977,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -4993,7 +5013,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -5040,8 +5060,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["LogoutPayloadDto"];
+          'application/json': {
+            data: components['schemas']['LogoutPayloadDto'];
           };
         };
       };
@@ -5051,7 +5071,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -5105,7 +5125,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -5141,7 +5161,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -5177,7 +5197,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -5213,7 +5233,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -5249,7 +5269,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -5278,6 +5298,125 @@ export interface operations {
             code: string;
           };
         };
+      };
+    };
+  };
+  BetterAuthApiController_handle_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_options: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_head: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  BetterAuthApiController_handle_patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

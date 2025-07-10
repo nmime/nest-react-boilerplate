@@ -3,11 +3,11 @@ import {
   type AuthenticatedPrincipal,
   type AuthSessionView,
   type Language,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 export function principalFromUserView(
   principal: AuthenticatedPrincipal,
-  user: AuthSessionView["user"],
+  user: AuthSessionView['user'],
 ): AuthenticatedPrincipal {
   return {
     ...principal,
@@ -15,6 +15,7 @@ export function principalFromUserView(
     tenantId: user.tenantId,
     email: user.email ?? undefined,
     displayName: user.displayName,
+    avatarUrl: user.avatarUrl ?? undefined,
     locale: normalizePrincipalLocale(user.locale),
     theme: user.theme,
     roles: user.roles,
@@ -22,8 +23,6 @@ export function principalFromUserView(
   };
 }
 
-function normalizePrincipalLocale(
-  locale: AuthSessionView["user"]["locale"],
-): Language | undefined {
+function normalizePrincipalLocale(locale: AuthSessionView['user']['locale']): Language | undefined {
   return locale && isLanguage(locale) ? locale : undefined;
 }

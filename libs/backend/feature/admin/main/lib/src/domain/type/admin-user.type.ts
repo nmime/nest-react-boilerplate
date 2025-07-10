@@ -21,6 +21,8 @@ export interface AdminUserView {
   readonly permissions: string[];
   readonly locale?: string;
   readonly theme?: string;
+  readonly avatarUrl?: string;
+  readonly avatarStatus?: "none" | "provider" | "manual" | "deleted";
   readonly lastLoginAt?: string;
   readonly createdAt: string;
   readonly updatedAt: string;

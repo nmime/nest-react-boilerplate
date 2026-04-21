@@ -7,32 +7,15 @@ const sharedConfig = {
 }
 
 const sharedTestConfig = {
-  globals: true,
-  setupFiles: ['./__tests__/setup.ts'],
+  globals: false,
+  setupFiles: ['./src/testing/setup.ts'],
   environment: 'jsdom' as const,
 }
 
 export default defineConfig({
   ...sharedConfig,
   test: {
-    projects: [
-      {
-        ...sharedConfig,
-        test: {
-          ...sharedTestConfig,
-          name: 'unit',
-          include: ['src/**/*.test.{ts,tsx}'],
-        },
-      },
-      {
-        ...sharedConfig,
-        test: {
-          ...sharedTestConfig,
-          name: 'e2e',
-          include: ['__tests__/e2e/**/*.test.{ts,tsx}'],
-          testTimeout: 15_000,
-        },
-      },
-    ],
+    ...sharedTestConfig,
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })

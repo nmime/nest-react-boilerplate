@@ -12,7 +12,7 @@ Project-wide principles and hard rules. All package-level rules (`api.md`, `admi
 
 ## Hard Rules
 
-- **Colocated tests**: test files sit next to source (`foo.ts` + `foo.spec.ts`)
+- **Colocated tests**: unit and integration test files sit next to source (`foo.ts` + `foo.test.ts`); E2E tests that require a running server live under `e2e/` at the app root
 - **Env-driven config**: all configuration flows through environment variables; no hard-coded values
 
 ## Quality Gates
@@ -22,3 +22,4 @@ All changes must pass before merge:
 - `turbo typecheck` — zero TypeScript errors
 - `turbo lint` — zero lint warnings
 - `turbo test` — all unit tests passing
+

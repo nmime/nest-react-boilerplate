@@ -16,7 +16,7 @@ Architectural rules for the Next.js admin panel: feature organization, UI librar
 - **Forms**: React Hook Form · Zod · @hookform/resolvers
 - **Tables**: @tanstack/react-table
 - **Animation**: Motion
-- **Testing**: Vitest · @testing-library/react · MSW v2
+- **Testing**: Vitest · @testing-library/react · MSW v2 · Playwright — see `admin-shadcn-test.md` for full testing rules
 - **Env**: @t3-oss/env-nextjs
 - **Toolchain**: pnpm · ESLint · Turbopack
 
@@ -36,7 +36,7 @@ src/
 ├── config/
 │   ├── env.ts        # Env variables (via @t3-oss/env-nextjs)
 │   └── app-paths.ts  # Centralized route paths
-└── testing/          # Test utilities (renderWithProviders, fixtures)
+└── testing/          # Test infrastructure: setup, renderWithProviders, fixtures, MSW handlers
 ```
 
 ## Feature Boundaries

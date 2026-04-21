@@ -2,7 +2,7 @@ import * as schema from '@workspace/database'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 
-import type { DrizzleModuleOptions } from './db.port'
+import type { DrizzleModuleOptions } from './db.port.js'
 
 /**
  * Creates a Drizzle database instance.

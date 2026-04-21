@@ -3,9 +3,9 @@ import { Global, Module } from '@nestjs/common'
 import { CacheModule } from '@/modules/cache/cache.module'
 import { CACHE_PORT } from '@/shared-kernel/application/ports/cache.port'
 
-import { createTestApp } from './helpers/create-app'
-import { registerAndLogin } from './helpers/create-authenticated-request'
-import { createRequest } from './helpers/create-request'
+import { createTestApp } from './helpers/create-app.js'
+import { registerAndLogin } from './helpers/create-authenticated-request.js'
+import { createRequest } from './helpers/create-request.js'
 
 import type { CachePort } from '@/shared-kernel/application/ports/cache.port'
 import type { INestApplication } from '@nestjs/common'
@@ -13,6 +13,7 @@ import type { INestApplication } from '@nestjs/common'
 /**
  * In-memory cache implementation for E2E tests (replaces Redis)
  */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 class InMemoryCacheService implements CachePort {
   private readonly store = new Map<string, { value: unknown; expiresAt?: number }>()
 
@@ -114,7 +115,7 @@ async function createTestOrder(
       userId,
       items: [{ productId: 'prod-001', quantity: 2, unitPrice: '99.99' }],
     })
-    .expect((r) => {
+    .expect((r: import('supertest').Response) => {
       if (r.status !== 201 && r.status !== 200) {
         throw new Error(`createTestOrder failed: ${r.status} ${JSON.stringify(r.body)}`)
       }

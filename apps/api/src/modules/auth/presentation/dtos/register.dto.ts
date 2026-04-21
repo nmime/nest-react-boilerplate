@@ -44,4 +44,4 @@ export class RegisterDto {
   password: string
 }
 
-export { LoginResponseDto as RegisterResponseDto, UserInfo } from './login.dto'
+export { LoginResponseDto as RegisterResponseDto, UserInfo } from './login.dto.js'

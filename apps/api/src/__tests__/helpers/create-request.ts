@@ -1,9 +1,8 @@
 import request from 'supertest'
 
 import type { INestApplication } from '@nestjs/common'
-import type { Test as SuperTestType } from 'supertest'
-import type TestAgent from 'supertest/lib/agent'
+import type { Agent } from 'supertest'
 
-export function createRequest(app: INestApplication): TestAgent<SuperTestType> {
+export function createRequest(app: INestApplication): Agent {
   return request(app.getHttpServer() as never)
 }

@@ -4,11 +4,10 @@
  * Uses the real login flow to obtain access tokens,
  * ensuring end-to-end authenticity.
  */
-import { createRequest } from './create-request'
+import { createRequest } from './create-request.js'
 
 import type { INestApplication } from '@nestjs/common'
-import type { Test as SuperTestType } from 'supertest'
-import type TestAgent from 'supertest/lib/agent'
+import type { Agent } from 'supertest'
 
 /**
  * Register and login a test user, returning the access token.
@@ -34,6 +33,6 @@ export async function registerAndLogin(
 /**
  * Attach the Bearer token to a SuperTest agent chain.
  */
-export function withToken(req: TestAgent<SuperTestType>, token: string): TestAgent<SuperTestType> {
-  return req.set('Authorization', `Bearer ${token}`) as unknown as TestAgent<SuperTestType>
+export function withToken(req: Agent, token: string): Agent {
+  return req.set('Authorization', `Bearer ${token}`) as unknown as Agent
 }

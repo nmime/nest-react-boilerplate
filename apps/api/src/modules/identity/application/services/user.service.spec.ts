@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-vitest'
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common'
-import { vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { UserFixtures } from '@/__tests__/unit/factories/domain-fixtures'
 import { UserService } from '@/modules/identity/application/services/user.service'

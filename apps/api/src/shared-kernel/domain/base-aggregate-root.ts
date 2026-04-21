@@ -1,4 +1,4 @@
-import type { DomainEvent } from './events/domain-event.base'
+import type { DomainEvent } from './events/domain-event.base.js'
 
 export abstract class BaseAggregateRoot {
   #domainEvents: DomainEvent[] = []

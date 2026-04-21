@@ -3,6 +3,7 @@
  */
 import { OrderItem } from '@/modules/order/domain/value-objects/order-item.vo'
 
+import { describe, expect, it } from 'vitest'
 describe('orderItem value object', () => {
   it('throws Error for empty productId', () => {
     expect(() => OrderItem.create('', 1, '10.00')).toThrow('productId must not be empty')

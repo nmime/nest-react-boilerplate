@@ -1,6 +1,6 @@
 import { RequestMethod } from '@nestjs/common'
 
-import { redactCensor, redactPaths } from './redaction.config'
+import { redactCensor, redactPaths } from './redaction.config.js'
 
 import type { Env } from '@/app/config/env.schema'
 import type { ConfigService } from '@nestjs/config'

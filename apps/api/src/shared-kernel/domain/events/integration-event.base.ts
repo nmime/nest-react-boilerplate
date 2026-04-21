@@ -1,4 +1,4 @@
-import { DomainEvent } from './domain-event.base'
+import { DomainEvent } from './domain-event.base.js'
 
 /**
  * Integration event base class

@@ -6,12 +6,15 @@ import { diskStorage } from 'multer'
 
 import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, UPLOAD_DIR } from '@/modules/upload/upload.constants'
 
-import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface'
-
-export const multerConfig: MulterOptions = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const multerConfig: Record<string, any> = {
   storage: diskStorage({
     destination: UPLOAD_DIR,
-    filename: (_req, file, cb) => {
+    filename: (
+      _req: unknown,
+      file: Express.Multer.File,
+      cb: (error: Error | null, filename: string) => void,
+    ) => {
       const ext = path.extname(file.originalname)
       cb(null, `${randomUUID()}${ext}`)
     },
@@ -19,7 +22,11 @@ export const multerConfig: MulterOptions = {
   limits: {
     fileSize: MAX_FILE_SIZE,
   },
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (
+    _req: unknown,
+    file: Express.Multer.File,
+    cb: (error: Error | null, acceptFile: boolean) => void,
+  ) => {
     if (ALLOWED_MIME_TYPES.test(file.mimetype)) {
       cb(null, true)
     } else {

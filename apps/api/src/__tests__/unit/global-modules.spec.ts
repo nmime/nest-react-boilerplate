@@ -12,6 +12,7 @@ import path from 'node:path'
  *   3. Update ARCHITECTURE.md @Global() table
  */
 
+import { beforeAll, describe, expect, it } from 'vitest'
 const APPROVED_GLOBAL_MODULES = new Set([
   'src/app/database/db.module.ts',
   'src/app/events/domain-events.module.ts',

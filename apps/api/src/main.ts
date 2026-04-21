@@ -17,7 +17,7 @@ import { TimeoutInterceptor } from '@/app/interceptors/timeout.interceptor'
 import { TraceContextInterceptor } from '@/app/interceptors/trace-context.interceptor'
 import { TransformInterceptor } from '@/app/interceptors/transform.interceptor'
 
-import { AppModule } from './app.module'
+import { AppModule } from './app.module.js'
 
 import type { Env } from '@/app/config/env.schema'
 import type { NestExpressApplication } from '@nestjs/platform-express'

@@ -1,2 +1,2 @@
-export * from './domain-event.base'
-export * from './integration-event.base'
+export * from './domain-event.base.js'
+export * from './integration-event.base.js'

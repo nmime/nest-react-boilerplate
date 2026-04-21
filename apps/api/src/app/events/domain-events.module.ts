@@ -1,6 +1,6 @@
 import { Module, Global } from '@nestjs/common'
 
-import { DomainEventPublisher } from './domain-event-publisher'
+import { DomainEventPublisher } from './domain-event-publisher.js'
 
 /**
  * Domain events module

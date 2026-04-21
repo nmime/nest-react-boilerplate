@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsString } from 'class-validator'
 
-import { UserInfo } from './login.dto'
+import { UserInfo } from './login.dto.js'
 
 export class RefreshTokenDto {
   @ApiProperty({
@@ -24,4 +24,4 @@ export class RefreshTokenResponseDto {
   user: UserInfo
 }
 
-export { UserInfo } from './login.dto'
+export { UserInfo } from './login.dto.js'

@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
-import { DB_TOKEN } from './db.port'
-import { createDrizzleInstance } from './db.provider'
+import { DB_TOKEN } from './db.port.js'
+import { createDrizzleInstance } from './db.provider.js'
 
-import type { DrizzleAsyncOptions } from './db.port'
+import type { DrizzleAsyncOptions } from './db.port.js'
 import type { Env } from '@/app/config/env.schema'
 import type { DynamicModule } from '@nestjs/common'
 

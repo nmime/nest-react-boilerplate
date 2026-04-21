@@ -3,6 +3,7 @@
  */
 import { Money } from '@/modules/order/domain/value-objects/money.vo'
 
+import { describe, expect, it } from 'vitest'
 describe('money value object', () => {
   it('throws Error for negative amount', () => {
     expect(() => Money.create('-1.00')).toThrow('Invalid amount')

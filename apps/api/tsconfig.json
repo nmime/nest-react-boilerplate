@@ -39,9 +39,7 @@
     "strictPropertyInitialization": false
   },
   "include": [
-    "src/**/*",
-    "*.ts",
-    "*.mts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

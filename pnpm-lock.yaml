@@ -90,9 +90,6 @@ importers:
       '@infra-x/code-quality':
         specifier: 0.4.0
         version: 0.4.0(@typescript-eslint/parser@8.57.1(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3))(class-validator@0.14.2)(eslint@10.2.0(jiti@2.6.1))(oxfmt@0.44.0)(oxlint@1.59.0(oxlint-tsgolint@0.20.0))(storybook@10.2.13(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(tailwindcss@4.2.2)(typescript@5.9.3)
-      '@infra-x/typescript-config':
-        specifier: ^0.1.6
-        version: 0.1.6
       '@tailwindcss/postcss':
         specifier: ^4.2.2
         version: 4.2.2
@@ -256,9 +253,6 @@ importers:
       '@infra-x/code-quality':
         specifier: 0.4.0
         version: 0.4.0(@typescript-eslint/parser@8.57.1(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3))(class-validator@0.14.2)(eslint@10.2.0(jiti@2.6.1))(oxfmt@0.44.0)(oxlint@1.59.0(oxlint-tsgolint@0.20.0))(storybook@10.2.13(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(tailwindcss@4.2.2)(typescript@5.9.3)
-      '@infra-x/typescript-config':
-        specifier: latest
-        version: 0.1.6
       '@nestjs/cli':
         specifier: ^11.0.16
         version: 11.0.16(@swc/cli@0.8.0(@swc/core@1.15.18)(chokidar@4.0.3))(@swc/core@1.15.18)(@types/node@25.5.0)(esbuild@0.27.7)
@@ -346,9 +340,6 @@ importers:
       '@infra-x/code-quality':
         specifier: 0.4.0
         version: 0.4.0(@typescript-eslint/parser@8.57.1(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3))(class-validator@0.14.2)(eslint@10.2.0(jiti@2.6.1))(oxfmt@0.44.0)(oxlint@1.59.0(oxlint-tsgolint@0.20.0))(storybook@10.2.13(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(tailwindcss@4.2.2)(typescript@5.9.3)
-      '@infra-x/typescript-config':
-        specifier: latest
-        version: 0.1.6
       '@types/bcrypt':
         specifier: ^6.0.0
         version: 6.0.0
@@ -462,9 +453,6 @@ importers:
       '@infra-x/code-quality':
         specifier: 0.4.0
         version: 0.4.0(@typescript-eslint/parser@8.57.1(eslint@10.2.0(jiti@2.6.1))(typescript@5.9.3))(class-validator@0.14.2)(eslint@10.2.0(jiti@2.6.1))(oxfmt@0.44.0)(oxlint@1.59.0(oxlint-tsgolint@0.20.0))(storybook@10.2.13(@testing-library/dom@10.4.1)(prettier@3.8.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(tailwindcss@4.2.2)(typescript@5.9.3)
-      '@infra-x/typescript-config':
-        specifier: ^0.1.6
-        version: 0.1.6
       '@tailwindcss/postcss':
         specifier: ^4.2.2
         version: 4.2.2
@@ -1665,9 +1653,6 @@ packages:
 
   '@infra-x/fwrap@0.1.1':
     resolution: {integrity: sha512-uqisYtZT6bqkrI+FL1Z0bClbpEKgO9j9LZQZNggcaUmAC/bbqJUi/NTfWXvnJLOj/HMK+MW+WiofZq/YODSfkQ==}
-
-  '@infra-x/typescript-config@0.1.6':
-    resolution: {integrity: sha512-YJiGiiQIOr9ZpECE7ICIp3b9Y2ov7VWy0fHOwqK6Y+YMSDQIdLKTUvmpz7/6YiBsWeUAi5FJ5sJv601BULShwQ==}
 
   '@inquirer/ansi@1.0.2':
     resolution: {integrity: sha512-S8qNSZiYzFd0wAcyG5AXCvUHC5Sr7xpZ9wZ2py9XR88jUz8wooStVx5M6dRzczbBWjic9NP7+rY0Xi7qqK/aMQ==}
@@ -8621,8 +8606,6 @@ snapshots:
       - typescript
 
   '@infra-x/fwrap@0.1.1': {}
-
-  '@infra-x/typescript-config@0.1.6': {}
 
   '@inquirer/ansi@1.0.2': {}
 

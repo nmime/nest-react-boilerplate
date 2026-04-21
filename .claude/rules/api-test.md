@@ -23,6 +23,8 @@ Testing rules for `apps/api`: which layer gets which test type, where tests live
 
 - Unit tests colocated with source: `foo.ts` + `foo.spec.ts` in the same directory
 - E2E tests under `src/__tests__/`
+- `src/__tests__/unit/` — cross-cutting test infrastructure: mock factories, domain fixtures, architecture guards
+- `src/__tests__/setup.ts` — E2E global setup (env validation, `globalThis.e2ePrefix`)
 
 ## TDD
 
@@ -39,6 +41,11 @@ Testing rules for `apps/api`: which layer gets which test type, where tests live
 
 - Domain object fixtures live in `src/__tests__/unit/factories/domain-fixtures.ts`
 - Constructed via aggregate factory methods or `reconstitute`; never via DTOs or the database
+
+## Conventions
+
+- File suffix: `.spec.ts` for unit tests, `.e2e-spec.ts` for E2E tests
+- Always import `describe`, `it`, `expect`, `vi` etc. explicitly from `'vitest'` — globals are disabled
 
 ## E2E Isolation
 

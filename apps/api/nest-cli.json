@@ -3,7 +3,7 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "tsConfigPath": "tsconfig.app.json",
+    "tsConfigPath": "tsconfig.json",
     "deleteOutDir": true,
     "builder": {
       "type": "swc",

@@ -2,12 +2,11 @@
 // Run `tsconfig` to regenerate.
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*.js",
-        "src/*/index.js",
-        "src/*"
+        "./src/*.js",
+        "./src/*/index.js",
+        "./src/*"
       ]
     },
     "types": ["vitest/globals", "node"],

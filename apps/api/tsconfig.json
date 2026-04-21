@@ -9,7 +9,7 @@
         "./src/*"
       ]
     },
-    "types": ["vitest/globals", "node"],
+    "types": ["node"],
     "target": "esnext",
     "esModuleInterop": true,
     "skipLibCheck": true,

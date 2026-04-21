@@ -3,6 +3,8 @@
  * Executed before all tests run
  */
 
+import { beforeAll } from 'vitest'
+
 declare global {
   var e2ePrefix: string
 }

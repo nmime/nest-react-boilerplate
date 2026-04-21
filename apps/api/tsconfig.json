@@ -32,6 +32,7 @@
     ],
     "module": "nodenext",
     "moduleResolution": "nodenext",
+    "rootDir": "src",
     "noEmit": false,
     "outDir": "dist",
     "experimentalDecorators": true,

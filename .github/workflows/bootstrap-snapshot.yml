@@ -1,0 +1,40 @@
+name: Bootstrap snapshot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-snapshot:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace repository contents with sandbox snapshot
+        env:
+          SNAPSHOT_URL: https://splox.s3.amazonaws.com/99bc4db9-0f4f-424b-8ba1-d43168a0171a_nest-react-boilerplate-snapshot.tar.gz
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          curl -fsSL "$SNAPSHOT_URL" -o "$tmpdir/snapshot.tar.gz"
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          tar -xzf "$tmpdir/snapshot.tar.gz" -C .
+          rm -f .github/workflows/bootstrap-snapshot.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Snapshot already applied"
+            exit 0
+          fi
+          git commit -m "Initial polished Nest React boilerplate"
+          git push origin HEAD:main

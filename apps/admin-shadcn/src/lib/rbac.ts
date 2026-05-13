@@ -25,10 +25,7 @@ const ROLE_HIERARCHY: RoleType[] = ['USER', 'ADMIN']
  * Returns true when `actor` meets or exceeds the `required` role.
  * Returns false when `actor` is null/undefined.
  */
-export function hasRequiredRole(
-  actor: RoleType | null | undefined,
-  required: RoleType,
-): boolean {
+export function hasRequiredRole(actor: RoleType | null | undefined, required: RoleType): boolean {
   if (!actor) return false
   return ROLE_HIERARCHY.indexOf(actor) >= ROLE_HIERARCHY.indexOf(required)
 }

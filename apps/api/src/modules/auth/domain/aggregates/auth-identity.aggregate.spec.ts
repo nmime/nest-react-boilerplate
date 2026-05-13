@@ -1,9 +1,9 @@
+import { describe, expect, it } from 'vitest'
+
 /**
  * AuthIdentity aggregate root pure domain tests — no NestJS Testing Module
  */
 import { AuthIdentity } from '@/modules/auth/domain/aggregates/auth-identity.aggregate'
-
-import { describe, expect, it } from 'vitest'
 describe('authIdentity aggregate', () => {
   describe('createEmailIdentity', () => {
     it('provider=email, password is not null', () => {

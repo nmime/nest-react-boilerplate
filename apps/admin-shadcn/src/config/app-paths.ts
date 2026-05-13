@@ -10,8 +10,8 @@ import {
   SettingsIcon,
 } from 'lucide-react'
 
-import type { LucideIcon } from 'lucide-react'
 import type { RoleType } from '@/lib/rbac'
+import type { LucideIcon } from 'lucide-react'
 
 export const appPaths = {
   home: {
@@ -125,7 +125,7 @@ export const settingsNavItems: NavItem[] = [
 ]
 
 function kebabToCamel(str: string): string {
-  return str.replaceAll(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+  return str.replaceAll(/-([a-z])/gu, (_, c: string) => c.toUpperCase())
 }
 
 // Walk the appPaths tree by href segments to resolve a label (used for breadcrumbs)

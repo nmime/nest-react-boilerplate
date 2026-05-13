@@ -185,12 +185,7 @@ export class UserService implements IdentityPort {
     }
 
     await this.eventPublisher.publish(
-      new UserRoleAssignedEvent(
-        targetUserId,
-        actorId,
-        { role: existing.role },
-        { role: newRole },
-      ),
+      new UserRoleAssignedEvent(targetUserId, actorId, { role: existing.role }, { role: newRole }),
     )
 
     return updated

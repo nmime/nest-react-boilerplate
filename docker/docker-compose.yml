@@ -8,7 +8,7 @@ services:
     environment:
       - POSTGRESQL_USERNAME=postgres
       - POSTGRESQL_PASSWORD=postgres
-      - POSTGRESQL_DATABASE=postgres
+      - POSTGRESQL_DATABASE=nestjs-boilerplate
     ports:
       - "5432:5432"
     volumes:

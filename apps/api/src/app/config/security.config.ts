@@ -2,7 +2,13 @@
  * Minimal CorsOptions type (mirrors @nestjs/common CorsOptions without deep-path import)
  */
 interface CorsOptions {
-  origin?: boolean | string | RegExp | string[] | RegExp[] | ((origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void)
+  origin?:
+    | boolean
+    | string
+    | RegExp
+    | string[]
+    | RegExp[]
+    | ((origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void)
   methods?: string | string[]
   allowedHeaders?: string | string[]
   exposedHeaders?: string | string[]

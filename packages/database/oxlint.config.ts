@@ -1,19 +1,10 @@
-import { base, depend, drizzle, node, unicorn } from '@infra-x/code-quality/lint'
+import { base, node, unicorn } from '@infra-x/code-quality/lint'
 import { defineConfig } from 'oxlint'
 
 export default defineConfig({
-  extends: [
-    base(),
-    unicorn(),
-    depend(),
-    node(),
-    drizzle({
-      rules: {
-        'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: 'db' }],
-        'drizzle/enforce-update-with-where': ['error', { drizzleObjectName: 'db' }],
-      },
-    }),
-  ],
+  // depend() and drizzle() are temporarily disabled: their JS plugins can crash
+  // oxlint with `oxc_allocator fixed_size` in this workspace.
+  extends: [base(), unicorn(), node()],
   overrides: [
     {
       files: ['scripts/**/*.ts'],

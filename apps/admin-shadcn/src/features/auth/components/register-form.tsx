@@ -27,11 +27,11 @@ const registerSchema = z.object({
     .string()
     .min(3, 'Name must be at least 3 characters.')
     .max(30, 'Name must be at most 30 characters.')
-    .regex(/^[\w-]+$/, 'Only letters, digits, underscores, and hyphens allowed.'),
+    .regex(/^[\w-]+$/u, 'Only letters, digits, underscores, and hyphens allowed.'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters.')
-    .regex(/(?=.*[a-zA-Z])(?=.*\d)/, 'Must contain both letters and digits.'),
+    .regex(/(?=.*[a-zA-Z])(?=.*\d)/u, 'Must contain both letters and digits.'),
 })
 
 type RegisterFormValues = z.infer<typeof registerSchema>

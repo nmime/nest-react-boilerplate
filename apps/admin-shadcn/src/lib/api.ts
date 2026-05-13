@@ -21,9 +21,9 @@
 
 import createQueryClient from 'openapi-react-query'
 
-import type { components } from '@workspace/api-types'
-
 import { apiClient } from './api-client'
+
+import type { components } from '@workspace/api-types'
 
 export const $api = createQueryClient(apiClient)
 

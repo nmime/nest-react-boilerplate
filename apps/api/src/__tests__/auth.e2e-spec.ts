@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
 import { IDENTITY_REPOSITORY } from '@/modules/identity/application/ports/user.repository.port'
 
 import { createTestApp } from './helpers/create-app.js'
@@ -5,13 +7,10 @@ import { registerAndLogin } from './helpers/create-authenticated-request.js'
 import { createRequest } from './helpers/create-request.js'
 
 import type { IdentityRepository } from '@/modules/identity/application/ports/user.repository.port'
-import type { INestApplication } from '@nestjs/common'
-
 // ============================================================
 // Type definitions
 // ============================================================
-
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import type { INestApplication } from '@nestjs/common'
 interface AuthResponse {
   accessToken: string
   refreshToken: string

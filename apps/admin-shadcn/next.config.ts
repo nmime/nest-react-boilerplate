@@ -3,14 +3,13 @@ import path from 'node:path'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
   transpilePackages: ['@workspace/ui'],
   images: {
     remotePatterns: [{ hostname: 'images.shadcnspace.com' }],
   },
   turbopack: {
-    root: path.resolve(__dirname, '../..'),
+    root: path.resolve(import.meta.dirname, '../..'),
   },
   headers() {
     return [

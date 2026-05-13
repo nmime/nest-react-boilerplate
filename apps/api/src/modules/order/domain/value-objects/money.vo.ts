@@ -14,11 +14,11 @@ export class Money {
   }
 
   static create(amount: string, currency = 'CNY'): Money {
-    const parsed = Number.parseFloat(amount)
+    const parsed = Number(amount)
     if (Number.isNaN(parsed) || parsed < 0) {
       throw new Error(`Invalid amount: ${amount}`)
     }
-    if (!/^[A-Z]{3}$/.test(currency)) {
+    if (!/^[A-Z]{3}$/u.test(currency)) {
       throw new Error(`Invalid currency code: ${currency}`)
     }
     return new Money(parsed.toFixed(2), currency)

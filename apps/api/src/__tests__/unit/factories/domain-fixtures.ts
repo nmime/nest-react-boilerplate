@@ -193,9 +193,7 @@ export const ArticleFixtures = {
 // ============================================================
 
 export const UserFixtures = {
-  user(
-    overrides?: Partial<{ id: string; name: string; email: string; role: 'ADMIN' | 'USER' }>,
-  ) {
+  user(overrides?: Partial<{ id: string; name: string; email: string; role: 'ADMIN' | 'USER' }>) {
     return {
       id: overrides?.id ?? 'user-id-1',
       name: overrides?.name ?? 'Test User',

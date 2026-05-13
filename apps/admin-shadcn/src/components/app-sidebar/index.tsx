@@ -41,9 +41,7 @@ const teams = [
 ]
 
 function visibleItems(items: NavItem[], userRole: RoleType | null): NavItem[] {
-  return items.filter(
-    (item) => !item.requiredRole || hasRequiredRole(userRole, item.requiredRole),
-  )
+  return items.filter((item) => !item.requiredRole || hasRequiredRole(userRole, item.requiredRole))
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -81,7 +79,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {visibleItems(managementNavItems, userRole).length > 0 && (
-          <NavMain label="Management" items={withActive(visibleItems(managementNavItems, userRole))} />
+          <NavMain
+            label="Management"
+            items={withActive(visibleItems(managementNavItems, userRole))}
+          />
         )}
         {visibleItems(settingsNavItems, userRole).length > 0 && (
           <NavMain label="Settings" items={withActive(visibleItems(settingsNavItems, userRole))} />

@@ -5,6 +5,8 @@ export default defineConfig({
   format: ['esm'],
   platform: 'node',
   dts: true,
-  tsconfig: './tsconfig.schemas.json',
-  external: ['drizzle-orm', 'drizzle-orm/pg-core', 'pg', 'postgres'],
+  tsconfig: './tsconfig.json',
+  deps: {
+    neverBundle: ['drizzle-orm', 'drizzle-orm/pg-core', 'pg', 'postgres'],
+  },
 })

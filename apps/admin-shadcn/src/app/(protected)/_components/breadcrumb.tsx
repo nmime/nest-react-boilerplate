@@ -20,7 +20,7 @@ function getLabel(href: string): string {
       .split('/')
       .pop()!
       .replaceAll('-', ' ')
-      .replaceAll(/\b\w/g, (c) => c.toUpperCase())
+      .replaceAll(/\b\w/gu, (c) => c.toUpperCase())
   )
 }
 

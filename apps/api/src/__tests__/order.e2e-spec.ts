@@ -1,4 +1,8 @@
 import { Global, Module } from '@nestjs/common'
+/**
+ * In-memory cache implementation for E2E tests (replaces Redis)
+ */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { CacheModule } from '@/modules/cache/cache.module'
 import { CACHE_PORT } from '@/shared-kernel/application/ports/cache.port'
@@ -9,11 +13,6 @@ import { createRequest } from './helpers/create-request.js'
 
 import type { CachePort } from '@/shared-kernel/application/ports/cache.port'
 import type { INestApplication } from '@nestjs/common'
-
-/**
- * In-memory cache implementation for E2E tests (replaces Redis)
- */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 class InMemoryCacheService implements CachePort {
   private readonly store = new Map<string, { value: unknown; expiresAt?: number }>()
 

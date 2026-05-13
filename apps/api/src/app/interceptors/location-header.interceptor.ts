@@ -70,7 +70,7 @@ export class LocationHeaderInterceptor implements NestInterceptor {
    */
   private buildResourcePath(requestPath: string, resourceId: string): string {
     // Remove trailing slash
-    const cleanPath = requestPath.replace(/\/$/, '')
+    const cleanPath = requestPath.replace(/\/$/u, '')
 
     return `${cleanPath}/${resourceId}`
   }

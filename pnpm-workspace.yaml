@@ -2,7 +2,26 @@ packages:
   - packages/*
   - apps/*
 
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@scarf/scarf'
+  - '@swc/core'
+  - bcrypt
+  - better-sqlite3
+  - esbuild
+  - msw
 
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  bcrypt: true
+  better-sqlite3: true
+  esbuild: true
+  msw: true
+  sharp: false
+  unrs-resolver: false

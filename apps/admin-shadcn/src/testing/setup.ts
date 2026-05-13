@@ -16,7 +16,11 @@ afterEach(() => {
 })
 afterAll(() => server.close())
 
-const mockRouter = { push: vi.fn<() => void>(), replace: vi.fn<() => void>(), back: vi.fn<() => void>() }
+const mockRouter = {
+  push: vi.fn<() => void>(),
+  replace: vi.fn<() => void>(),
+  back: vi.fn<() => void>(),
+}
 
 vi.mock('next/navigation', () => ({
   useRouter: () => mockRouter,

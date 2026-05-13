@@ -64,10 +64,7 @@ const TopProjectsTable = () => {
             <TableBody className="dark:divide-darkborder divide-y divide-border">
               {articles.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="p-6 text-center text-sm text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="p-6 text-center text-sm text-muted-foreground">
                     No articles yet.
                   </TableCell>
                 </TableRow>

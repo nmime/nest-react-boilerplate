@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import { glob } from 'node:fs/promises'
 import path from 'node:path'
-
 /**
  * Architecture guard: @Global() usage
  *

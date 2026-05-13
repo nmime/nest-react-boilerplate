@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     default: env.NEXT_PUBLIC_APP_NAME,
     template: `%s | ${env.NEXT_PUBLIC_APP_NAME}`,
   },
-  description: 'A minimal foundation.',
+  description: 'Production-ready NestJS API and Next.js admin dashboard boilerplate.',
   openGraph: {
     type: 'website',
     siteName: env.NEXT_PUBLIC_APP_NAME,

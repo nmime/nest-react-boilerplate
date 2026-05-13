@@ -1,13 +1,13 @@
+/**
+ * Article response type definition
+ */
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
 import { createTestApp } from './helpers/create-app.js'
 import { registerAndLogin } from './helpers/create-authenticated-request.js'
 import { createRequest } from './helpers/create-request.js'
 
 import type { INestApplication } from '@nestjs/common'
-
-/**
- * Article response type definition
- */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 interface ArticleResponse {
   id: string
   title: string

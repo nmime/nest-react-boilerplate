@@ -1,3 +1,5 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+
 import { USER_ROLE_REPOSITORY } from '@/modules/auth/application/ports/user-role.repository.port'
 import { IDENTITY_REPOSITORY } from '@/modules/identity/application/ports/user.repository.port'
 
@@ -7,8 +9,6 @@ import { createRequest } from './helpers/create-request.js'
 import type { UserRoleRepository } from '@/modules/auth/application/ports/user-role.repository.port'
 import type { IdentityRepository } from '@/modules/identity/application/ports/user.repository.port'
 import type { INestApplication } from '@nestjs/common'
-
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 interface UserResponse {
   id: string
   name: string

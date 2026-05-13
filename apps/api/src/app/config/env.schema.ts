@@ -13,7 +13,7 @@ export const envSchema = z.object({
   PORT: z
     .string()
     .default('3000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0 && value < 65_536, {
       message: 'PORT must be between 1 and 65535',
     }),
@@ -25,7 +25,7 @@ export const envSchema = z.object({
   DB_POOL_MAX: z
     .string()
     .default('20')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0 && value <= 100, {
       message: 'DB_POOL_MAX must be between 1 and 100',
     }),
@@ -33,7 +33,7 @@ export const envSchema = z.object({
   DB_POOL_MIN: z
     .string()
     .default('5')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value >= 0 && value <= 50, {
       message: 'DB_POOL_MIN must be between 0 and 50',
     }),
@@ -41,7 +41,7 @@ export const envSchema = z.object({
   DB_POOL_IDLE_TIMEOUT: z
     .string()
     .default('30000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value >= 1000, {
       message: 'DB_POOL_IDLE_TIMEOUT must be at least 1000ms',
     }),
@@ -49,7 +49,7 @@ export const envSchema = z.object({
   DB_POOL_CONNECTION_TIMEOUT: z
     .string()
     .default('10000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value >= 1000, {
       message: 'DB_POOL_CONNECTION_TIMEOUT must be at least 1000ms',
     }),
@@ -65,14 +65,14 @@ export const envSchema = z.object({
   JWT_EXPIRES_IN: z
     .string()
     .default('15m')
-    .refine((value) => /^\d+[smhd]$/.test(value), {
+    .refine((value) => /^\d+[smhd]$/u.test(value), {
       message: 'JWT_EXPIRES_IN format is invalid (e.g. 60s, 15m, 2h, 7d)',
     }),
 
   JWT_REFRESH_EXPIRES_IN: z
     .string()
     .default('7d')
-    .refine((value) => /^\d+[smhd]$/.test(value), {
+    .refine((value) => /^\d+[smhd]$/u.test(value), {
       message: 'JWT_REFRESH_EXPIRES_IN format is invalid (e.g. 60s, 15m, 2h, 7d)',
     }),
 
@@ -90,7 +90,7 @@ export const envSchema = z.object({
   // Redis configuration (supports redis:// and rediss:// for TLS encrypted connections)
   REDIS_URL: z
     .string()
-    .refine((value) => /^rediss?:\/\/.+/.test(value), {
+    .refine((value) => /^rediss?:\/\/.+/u.test(value), {
       message: 'REDIS_URL must start with redis:// or rediss://',
     })
     .default('redis://localhost:6379'),
@@ -98,7 +98,7 @@ export const envSchema = z.object({
   REDIS_TTL: z
     .string()
     .default('3600')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0, {
       message: 'REDIS_TTL must be greater than 0',
     }),
@@ -118,13 +118,13 @@ export const envSchema = z.object({
   THROTTLE_TTL: z
     .string()
     .default('60000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0, { message: 'THROTTLE_TTL must be greater than 0' }),
 
   THROTTLE_LIMIT: z
     .string()
     .default('100000')
-    .transform((value) => Number.parseInt(value, 10))
+    .transform(Number)
     .refine((value) => value > 0, { message: 'THROTTLE_LIMIT must be greater than 0' }),
 })
 

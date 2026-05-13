@@ -6,7 +6,7 @@
 export class Slug {
   readonly #value: string
 
-  private static readonly SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+  private static readonly SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
 
   private constructor(value: string) {
     this.#value = value

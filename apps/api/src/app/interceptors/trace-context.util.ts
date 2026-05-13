@@ -57,7 +57,7 @@ export function parseTraceparent(traceparent: string): TraceContext | null {
   }
 
   // Validate that all parts are valid hexadecimal
-  const hexRegex = /^[0-9a-f]+$/i
+  const hexRegex = /^[0-9a-f]+$/iu
   if (
     !hexRegex.test(version) ||
     !hexRegex.test(traceId) ||

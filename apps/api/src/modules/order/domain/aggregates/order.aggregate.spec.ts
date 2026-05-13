@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest'
+
 /**
  * Order aggregate root pure domain tests — no NestJS Testing Module
  */
@@ -8,8 +10,6 @@ import { OrderCreatedEvent } from '@/modules/order/domain/events/order-created.e
 import { OrderPaidEvent } from '@/modules/order/domain/events/order-paid.event'
 import { Money } from '@/modules/order/domain/value-objects/money.vo'
 import { OrderItem } from '@/modules/order/domain/value-objects/order-item.vo'
-
-import { describe, expect, it } from 'vitest'
 function buildItems(): OrderItem[] {
   return [OrderItem.create('prod-001', 1, '99.99')]
 }
@@ -45,7 +45,9 @@ describe('order aggregate', () => {
       order.pay()
 
       // Already PAID — cannot pay again
-      expect(() => order.pay()).toThrow()
+      expect(() => order.pay()).toThrow(
+        'Payment is not allowed in the current status paid; the order must be in pending_payment status',
+      )
     })
 
     it('success: status→PAID, version incremented, emits OrderPaidEvent', () => {
@@ -68,7 +70,7 @@ describe('order aggregate', () => {
       const order = Order.create('id-1', 'user-1', buildItems(), buildMoney())
       order.pay()
 
-      expect(() => order.cancel()).toThrow()
+      expect(() => order.cancel()).toThrow('Cancellation is not allowed in the current status paid')
     })
 
     it('throws Error when status is SHIPPING', () => {
@@ -76,10 +78,12 @@ describe('order aggregate', () => {
       order.pay()
       order.markShipping()
 
-      expect(() => order.cancel()).toThrow()
+      expect(() => order.cancel()).toThrow(
+        'Cancellation is not allowed in the current status shipping',
+      )
     })
 
-    it('pENDING_PAYMENT → cancel succeeds, emits OrderCancelledEvent', () => {
+    it('pending payment → cancel succeeds, emits OrderCancelledEvent', () => {
       const order = Order.create('id-1', 'user-1', buildItems(), buildMoney())
       order.clearDomainEvents()
 

@@ -2,8 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { IsOptional } from 'class-validator'
 
 import { ROLES } from '@/shared-kernel/domain/value-objects/role.vo'
-
-import type { RoleType } from '@/shared-kernel/domain/value-objects/role.vo'
 import {
   IsEmailField,
   IsInField,
@@ -11,6 +9,8 @@ import {
   MaxLengthField,
   MinLengthField,
 } from '@/shared-kernel/infrastructure/decorators/validators'
+
+import type { RoleType } from '@/shared-kernel/domain/value-objects/role.vo'
 
 /**
  * Adapted to better-auth schema: single-role system, banned boolean replaces status (defaults to false on creation)

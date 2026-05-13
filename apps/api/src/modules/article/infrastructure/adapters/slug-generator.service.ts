@@ -25,13 +25,13 @@ export class SlugGeneratorService implements SlugGenerator {
       .toLowerCase()
       .trim()
       // Keep only letters, digits, spaces, and hyphens
-      .replaceAll(/[^\da-z\s-]/g, '')
+      .replaceAll(/[^\da-z\s-]/gu, '')
       // Replace spaces with hyphens
-      .replaceAll(/\s+/g, '-')
+      .replaceAll(/\s+/gu, '-')
       // Collapse multiple hyphens into one
-      .replaceAll(/-+/g, '-')
+      .replaceAll(/-+/gu, '-')
       // Strip leading and trailing hyphens
-      .replaceAll(/^-+|-+$/g, '')
+      .replaceAll(/^-+|-+$/gu, '')
 
     // Fall back to a timestamp-based slug if the result is empty or too short
     if (slug.length < 3) {

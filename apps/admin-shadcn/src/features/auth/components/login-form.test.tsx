@@ -13,11 +13,11 @@ describe('loginForm', () => {
     const user = userEvent.setup()
     renderWithProviders(<LoginForm />)
 
-    await user.clear(screen.getByLabelText(/email/i))
-    await user.type(screen.getByLabelText(/email/i), mockCredentials.valid.email)
-    await user.clear(screen.getByLabelText(/password/i))
-    await user.type(screen.getByLabelText(/password/i), mockCredentials.valid.password)
-    await user.click(screen.getByRole('button', { name: /^login$/i }))
+    await user.clear(screen.getByLabelText(/email/iu))
+    await user.type(screen.getByLabelText(/email/iu), mockCredentials.valid.email)
+    await user.clear(screen.getByLabelText(/password/iu))
+    await user.type(screen.getByLabelText(/password/iu), mockCredentials.valid.password)
+    await user.click(screen.getByRole('button', { name: /^login$/iu }))
 
     await waitFor(
       () => {
@@ -31,7 +31,7 @@ describe('loginForm', () => {
 
   it('login button is present and enabled initially', () => {
     renderWithProviders(<LoginForm />)
-    const button = screen.getByRole('button', { name: /^login$/i })
+    const button = screen.getByRole('button', { name: /^login$/iu })
     expect(button).toBeInTheDocument()
     expect(button).not.toBeDisabled()
   })

@@ -3,11 +3,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": [
-        "./src/*.js",
-        "./src/*/index.js",
-        "./src/*"
-      ]
+      "@/*": ["./src/*.js", "./src/*/index.js", "./src/*"]
     },
     "types": ["node"],
     "target": "esnext",
@@ -27,9 +23,7 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/.cache/tsconfig.tsbuildinfo",
-    "lib": [
-      "esnext"
-    ],
+    "lib": ["esnext"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "rootDir": "src",
@@ -39,11 +33,6 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

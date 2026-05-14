@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Optional } from "@nestjs/common";
 import { ResultAsync, errAsync, okAsync } from "neverthrow";
 import { randomState } from "openid-client";
 import type {
@@ -8,9 +8,15 @@ import type {
   AuthOAuthError,
 } from "./auth-oauth.types";
 
+export const AUTH_OAUTH_CONFIG = Symbol("AUTH_OAUTH_CONFIG");
+
 @Injectable()
 export class AuthOAuthService {
-  constructor(private readonly config: AuthOAuthConfig = {}) {}
+  constructor(
+    @Optional()
+    @Inject(AUTH_OAUTH_CONFIG)
+    private readonly config: AuthOAuthConfig = {},
+  ) {}
 
   buildAuthorizationRequest(): ResultAsync<
     AuthOAuthAuthorizationRequest,

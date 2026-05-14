@@ -21,6 +21,21 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/frontend/landing"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node tools/frontend-static-smoke.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"A product front door for the xRocket ecosystem.\""
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": []
+        }
+      ],
+      "outputs": []
     }
   }
 }

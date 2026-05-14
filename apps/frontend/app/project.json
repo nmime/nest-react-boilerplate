@@ -21,6 +21,21 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/frontend/app"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node tools/frontend-static-smoke.mjs --dist dist/apps/frontend/app --app-name user-app --contains \"Personal crypto operations in one reliable workspace.\""
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": []
+        }
+      ],
+      "outputs": []
     }
   }
 }

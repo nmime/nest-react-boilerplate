@@ -1,4 +1,4 @@
-const baseConfig = require("../../../../eslint.config.js");
+const baseConfig = require("../../../eslint.config.js");
 
 module.exports = [
   {
@@ -16,12 +16,6 @@ module.exports = [
       parserOptions: {
         project: "tsconfig.*?.json",
       },
-    },
-  },
-  {
-    files: ["**/*.component-spec.ts"],
-    rules: {
-      "@nx/enforce-module-boundaries": "off",
     },
   },
 ];

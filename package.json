@@ -14,7 +14,8 @@
     "format": "prettier --write . --ignore-unknown",
     "format:check": "prettier --check . --ignore-unknown",
     "test:coverage": "pnpm exec nx run-many -t test --all -- --coverage",
-    "audit": "pnpm audit --audit-level=moderate"
+    "audit": "pnpm audit --audit-level=moderate",
+    "test:component": "nx run-many -t component-test --all"
   },
   "dependencies": {
     "@nestjs/common": "11.1.21",
@@ -94,7 +95,9 @@
     "vite": "8.0.13",
     "vitest": "4.1.6",
     "webpack-cli": "7.0.2",
-    "@types/pg": "8.20.0"
+    "@types/pg": "8.20.0",
+    "testcontainers": "11.14.0",
+    "@testcontainers/postgresql": "11.14.0"
   },
   "pnpm": {
     "overrides": {

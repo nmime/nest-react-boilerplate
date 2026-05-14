@@ -21,7 +21,9 @@
       "@app/common/shared": ["libs/common/shared/src/index.ts"],
       "@app/common/validation": ["libs/common/validation/src/index.ts"],
       "@app/features-auth-oauth": ["libs/features/auth/oauth/src/index.ts"],
-      "@app/frontend-ui": ["libs/frontend/ui/src/index.ts"]
+      "@app/frontend-ui": ["libs/frontend/ui/src/index.ts"],
+      "@app/postgres-main": ["libs/postgres/main/shared/src/index.ts"],
+      "@app/postgres-main-auth": ["libs/postgres/main/auth/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

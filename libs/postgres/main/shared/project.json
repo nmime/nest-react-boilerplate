@@ -1,0 +1,33 @@
+{
+  "name": "@app/postgres-main",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/postgres/main/shared/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:data-access", "scope:postgres"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/postgres/main/shared",
+        "main": "libs/postgres/main/shared/src/index.ts",
+        "tsConfig": "libs/postgres/main/shared/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/postgres/main/shared",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        { "externalDependencies": ["vitest"] }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/postgres/main/shared"]
+    }
+  }
+}

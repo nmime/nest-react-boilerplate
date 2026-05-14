@@ -4,6 +4,7 @@ packages:
   - "libs/frontend/*"
   - "libs/common/*"
   - "libs/features/*/*"
+  - "libs/postgres/*/*"
   - "libs/backend"
 
 onlyBuiltDependencies:

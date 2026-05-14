@@ -1,15 +1,12 @@
 <!--
-Thanks for contributing! Fill out every section below.
-Empty or placeholder PRs will be asked to update before review.
+Thanks for contributing! Fill out every relevant section before requesting review.
 -->
 
 ## Summary
 
-<!-- One or two sentences: what changes and why. -->
+<!-- What changed and why? -->
 
-## Type of Change
-
-<!-- Check the one that best describes this PR. -->
+## Type of change
 
 - [ ] `feat` — new feature
 - [ ] `fix` — bug fix
@@ -18,51 +15,50 @@ Empty or placeholder PRs will be asked to update before review.
 - [ ] `docs` — documentation only
 - [ ] `test` — test-only change
 - [ ] `chore` — build, tooling, dependencies
-- [ ] `style` — formatting, no code change
+- [ ] `style` — formatting only
 
 ## Scope
 
-<!-- Which packages does this touch? Check all that apply. -->
-
-- [ ] `apps/api`
-- [ ] `apps/admin-shadcn`
-- [ ] `packages/database`
-- [ ] `packages/api-types`
-- [ ] `packages/ui`
-- [ ] `packages/icons`
+- [ ] `apps/frontend/admin`
+- [ ] `apps/frontend/app`
+- [ ] `apps/frontend/landing`
+- [ ] `apps/backend/admin-app-api`
+- [ ] `apps/backend/user-app-api`
+- [ ] `apps/backend/auth-app-api`
+- [ ] `libs/frontend/ui`
+- [ ] `libs/common/bootstrap`
+- [ ] `libs/common/validation`
+- [ ] `libs/common/response`
+- [ ] `libs/features/auth/oauth`
 - [ ] Tooling / CI / docs
 
 ## Changes
-
-<!-- Bulleted list of the notable changes. Reviewer reads this first. -->
 
 -
 -
 
 ## Verification
 
-<!-- How did you verify this works? Commands run, manual checks, screenshots for UI. -->
+<!-- Paste commands run and summarize results. -->
 
 -
 
-## Pre-merge checklist
+## Nx quality gates
 
-- [ ] `turbo lint` passes
-- [ ] `turbo typecheck` passes
-- [ ] `turbo test` passes (unit + E2E where relevant)
-- [ ] Database schema changed → `@workspace/database` rebuilt and migration committed
-- [ ] Backend API changed → `@workspace/api-types` regenerated
-- [ ] New UI components added via `shadcn` CLI, not hand-written
+- [ ] `pnpm install --frozen-lockfile` passes
+- [ ] `pnpm exec nx run-many -t lint --all` passes
+- [ ] `pnpm exec nx run-many -t typecheck --all` passes
+- [ ] `pnpm exec nx run-many -t test --all` passes
+- [ ] `pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app` passes when frontend app behavior changed
+- [ ] `pnpm exec nx run-many -t build --all` passes
+- [ ] Documentation updated when architecture, commands, or public behavior changed
 - [ ] Commit messages follow Conventional Commits (`type(scope): subject`)
-- [ ] Documentation updated (`README.md`, `CONTRIBUTING.md`, or `docs/`) if user-facing behavior changed
 
-## Breaking Changes
-
-<!-- Does this break any public API, DB schema, or env var contract? Describe migration path. -->
+## Breaking changes
 
 - [ ] This PR contains no breaking changes
-- [ ] This PR contains breaking changes (describe below)
+- [ ] This PR contains breaking changes described below
 
-## Related Issues
+## Related issues
 
-<!-- "Closes #123", "Relates to #456" — link any relevant issues or prior PRs. -->
+<!-- Example: Closes #123 -->

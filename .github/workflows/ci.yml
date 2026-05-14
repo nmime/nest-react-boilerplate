@@ -7,7 +7,7 @@ on:
 
 jobs:
   ci:
-    name: Lint / Typecheck / Build / Test
+    name: Nx quality gates
     runs-on: ubuntu-latest
 
     steps:
@@ -15,107 +15,29 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
+      - uses: pnpm/action-setup@v4
         with:
-          version: 11.1.1
+          version: 10.32.1
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Peer dependency check
-        run: pnpm peers check
-
-      - name: Format check
-        run: pnpm turbo format:check
 
       - name: Lint
-        run: pnpm turbo lint
+        run: pnpm exec nx run-many -t lint --all
 
       - name: Typecheck
-        run: pnpm turbo typecheck
+        run: pnpm exec nx run-many -t typecheck --all
 
-      - name: Dependency rules
-        run: pnpm turbo deps
+      - name: Test
+        run: pnpm exec nx run-many -t test --all
+
+      - name: Frontend static e2e
+        run: pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
 
       - name: Build
-        run: pnpm turbo build
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3000
-          NEXT_PUBLIC_APP_URL: http://localhost:8080
-          NEXT_PUBLIC_APP_NAME: Nest React Boilerplate
-          VITE_API_URL: http://localhost:3000
-
-      - name: API unit tests
-        run: pnpm --filter api test
-
-      - name: Admin Vitest
-        run: pnpm --filter admin-shadcn exec vitest run
-        env:
-          NEXT_PUBLIC_API_URL: http://localhost:3000
-
-  e2e:
-    name: API E2E Tests
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: bitnami/postgresql:latest
-        env:
-          POSTGRESQL_USERNAME: postgres
-          POSTGRESQL_PASSWORD: postgres
-          POSTGRESQL_DATABASE: nestjs-boilerplate
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-
-      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093
-        with:
-          version: 11.1.1
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build database package
-        run: pnpm --filter @workspace/database build
-
-      - name: Push database schema
-        run: pnpm --filter @workspace/database db:push
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/nestjs-boilerplate
-
-      - name: Run E2E tests
-        working-directory: apps/api
-        run: pnpm test:e2e
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/nestjs-boilerplate
-          JWT_SECRET: test-secret-key-min-32-chars-for-ci
-          REDIS_URL: redis://localhost:6379
+        run: pnpm exec nx run-many -t build --all

@@ -92,3 +92,5 @@ storybook-static
 
 # AI working artifacts (plans, specs) — local only
 docs/superpowers/
+
+.nx/

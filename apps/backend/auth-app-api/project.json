@@ -47,6 +47,22 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/backend/auth-app-api"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/auth-app-api",
+        "command": "vitest run --config vitest.e2e.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "supertest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/backend/auth-app-api"]
     }
   }
 }

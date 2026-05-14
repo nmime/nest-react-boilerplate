@@ -29,18 +29,17 @@
     },
     "e2e": {
       "executor": "nx:run-commands",
-      "cache": true,
-      "dependsOn": ["build"],
+      "cache": false,
       "options": {
-        "command": "node tools/frontend-static-smoke.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"A product front door for the xRocket ecosystem.\""
+        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/landing/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"A product front door for the xRocket ecosystem.\" --coverage-dir coverage/e2e/apps/frontend/landing"
       },
       "inputs": [
         "production",
         {
-          "externalDependencies": []
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
         }
       ],
-      "outputs": []
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/landing"]
     }
   }
 }

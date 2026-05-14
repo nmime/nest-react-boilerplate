@@ -73,6 +73,14 @@ Repository wrappers return `neverthrow` `ResultAsync` values so feature code can
 - Backend e2e tests should exercise Nest apps through HTTP with `supertest`; DB-backed e2e/component tests should use Testcontainers and isolated fixtures.
 - Frontend e2e currently uses static build smoke tests. Browser-level e2e coverage requires an instrumented browser test setup and will be introduced separately rather than hidden behind the existing static smoke target.
 
+## E2E coverage
+
+Backend e2e tests run as explicit Nx `e2e` targets for each Nest API app. They use Nest testing modules plus `supertest` for real HTTP requests and write V8 coverage reports under `coverage/e2e/apps/backend/*`. Unit coverage gates remain separate and still enforce 100% on testable source.
+
+Frontend e2e tests run real Chromium smoke checks against an instrumented Vite production build for each React app. `VITE_E2E_COVERAGE=true` enables `vite-plugin-istanbul`; the browser exposes `window.__coverage__`, and `tools/frontend-browser-e2e-coverage.mjs` writes text, LCOV, and JSON reports under `coverage/e2e/apps/frontend/*`. Production builds are unaffected because instrumentation is opt-in by environment variable.
+
+Use `pnpm run test:e2e:coverage` to run all backend and frontend e2e coverage targets. Playwright Chromium must be installed first with `pnpm exec playwright install chromium` locally, or `pnpm exec playwright install --with-deps chromium` on GitHub Actions.
+
 ## Deployable outputs
 
 Nx builds backend apps into `dist/apps/backend/*` and frontend apps into `dist/apps/frontend/*`. The root Dockerfile can package any backend app as a Node runtime image or any frontend app as an nginx static image.

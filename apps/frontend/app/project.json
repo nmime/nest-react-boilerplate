@@ -24,18 +24,17 @@
     },
     "e2e": {
       "executor": "nx:run-commands",
-      "cache": true,
-      "dependsOn": ["build"],
+      "cache": false,
       "options": {
-        "command": "node tools/frontend-static-smoke.mjs --dist dist/apps/frontend/app --app-name user-app --contains \"Personal crypto operations in one reliable workspace.\""
+        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/app/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/app --app-name user-app --contains \"Personal crypto operations in one reliable workspace.\" --coverage-dir coverage/e2e/apps/frontend/app"
       },
       "inputs": [
         "production",
         {
-          "externalDependencies": []
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
         }
       ],
-      "outputs": []
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/app"]
     }
   }
 }

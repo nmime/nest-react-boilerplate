@@ -30,18 +30,17 @@
     },
     "e2e": {
       "executor": "nx:run-commands",
-      "cache": true,
-      "dependsOn": ["build"],
+      "cache": false,
       "options": {
-        "command": "node tools/frontend-static-smoke.mjs --dist dist/apps/frontend/admin --app-name admin-app --contains \"Operate the xRocket platform with a unified admin experience.\""
+        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/admin/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/admin --app-name admin-app --contains \"Operate the xRocket platform with a unified admin experience.\" --coverage-dir coverage/e2e/apps/frontend/admin"
       },
       "inputs": [
         "production",
         {
-          "externalDependencies": []
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
         }
       ],
-      "outputs": []
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/admin"]
     }
   }
 }

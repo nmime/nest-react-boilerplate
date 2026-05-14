@@ -15,7 +15,9 @@
     "format:check": "prettier --check . --ignore-unknown",
     "test:coverage": "pnpm exec nx run-many -t test --all -- --coverage",
     "audit": "pnpm audit --audit-level=moderate",
-    "test:component": "nx run-many -t component-test --all"
+    "test:component": "nx run-many -t component-test --all",
+    "test:e2e": "nx run-many -t e2e --all",
+    "test:e2e:coverage": "nx run-many -t e2e --all -- --coverage"
   },
   "dependencies": {
     "@nestjs/common": "11.1.21",
@@ -97,7 +99,12 @@
     "webpack-cli": "7.0.2",
     "@types/pg": "8.20.0",
     "testcontainers": "11.14.0",
-    "@testcontainers/postgresql": "11.14.0"
+    "@testcontainers/postgresql": "11.14.0",
+    "@playwright/test": "1.60.0",
+    "vite-plugin-istanbul": "8.0.0",
+    "istanbul-lib-coverage": "3.2.2",
+    "istanbul-lib-report": "3.0.1",
+    "istanbul-reports": "3.2.0"
   },
   "pnpm": {
     "overrides": {

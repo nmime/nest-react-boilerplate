@@ -42,8 +42,11 @@ jobs:
       - name: Component tests with Testcontainers
         run: pnpm run test:component -- --coverage
 
-      - name: Frontend static e2e
-        run: pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E coverage
+        run: pnpm run test:e2e:coverage
 
       - name: Build
         run: pnpm exec nx run-many -t build --all

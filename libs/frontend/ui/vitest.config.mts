@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
+import { fullCoverage } from "../../../tools/vitest-coverage.mts";
 import react from "@vitejs/plugin-react";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
@@ -11,5 +12,10 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
     passWithNoTests: false,
+    coverage: fullCoverage(
+      "../../../coverage/libs/frontend/ui",
+      ["src/lib/**/*.{ts,tsx}"],
+      [],
+    ),
   },
 });

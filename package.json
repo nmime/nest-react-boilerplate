@@ -31,11 +31,12 @@
     "react-dom": "19.2.6",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "uuid": "14.0.0",
-    "tslib": "2.8.1"
+    "tslib": "2.8.1",
+    "uuid": "14.0.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
+    "@nestjs/testing": "11.1.20",
     "@nx/devkit": "22.7.1",
     "@nx/eslint": "22.7.1",
     "@nx/eslint-plugin": "22.7.1",
@@ -57,9 +58,11 @@
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@types/supertest": "7.2.0",
     "@typescript-eslint/eslint-plugin": "8.59.3",
     "@typescript-eslint/parser": "8.59.3",
     "@vitejs/plugin-react": "6.0.1",
+    "@vitest/coverage-v8": "4.1.6",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
@@ -72,8 +75,10 @@
     "jsdom": "29.1.1",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "22.7.1",
+    "postcss": "8.5.14",
     "prettier": "3.8.3",
     "source-map-support": "0.5.21",
+    "supertest": "7.2.2",
     "ts-jest": "29.4.9",
     "ts-loader": "9.5.7",
     "ts-node": "10.9.2",
@@ -83,11 +88,7 @@
     "typescript-transform-paths": "3.5.6",
     "vite": "8.0.12",
     "vitest": "4.1.6",
-    "webpack-cli": "7.0.2",
-    "@nestjs/testing": "11.1.20",
-    "supertest": "7.2.2",
-    "@types/supertest": "7.2.0",
-    "postcss": "8.5.14"
+    "webpack-cli": "7.0.2"
   },
   "pnpm": {
     "overrides": {

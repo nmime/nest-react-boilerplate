@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
+import { fullCoverage } from "../../../tools/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/user-app-api",
@@ -27,5 +28,10 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.spec.ts", "src/**/*.e2e-spec.ts"],
     globals: false,
+    coverage: fullCoverage(
+      "../../../coverage/apps/backend/user-app-api",
+      ["src/**/*.ts"],
+      [],
+    ),
   },
 });

@@ -41,15 +41,12 @@ export class AuthOAuthService {
     try {
       const state = randomState();
       const scopes = this.config.scopes ?? ["openid", "profile", "email"];
-      const authorizationUrl = new URL("authorize", this.config.issuerUrl);
-      authorizationUrl.searchParams.set(
-        "client_id",
-        this.config.clientId ?? "",
-      );
-      authorizationUrl.searchParams.set(
-        "redirect_uri",
-        this.config.redirectUri ?? "",
-      );
+      const issuerUrl = this.config.issuerUrl;
+      const clientId = this.config.clientId;
+      const redirectUri = this.config.redirectUri;
+      const authorizationUrl = new URL("authorize", issuerUrl);
+      authorizationUrl.searchParams.set("client_id", clientId);
+      authorizationUrl.searchParams.set("redirect_uri", redirectUri);
       authorizationUrl.searchParams.set("response_type", "code");
       authorizationUrl.searchParams.set("scope", scopes.join(" "));
       authorizationUrl.searchParams.set("state", state);
@@ -58,8 +55,7 @@ export class AuthOAuthService {
     } catch (error) {
       return errAsync({
         code: "provider_error",
-        message:
-          error instanceof Error ? error.message : "OAuth provider error.",
+        message: (error as Error).message,
       });
     }
   }

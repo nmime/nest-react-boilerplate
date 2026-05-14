@@ -1,4 +1,9 @@
-import { ValidationPipe } from "@nestjs/common";
+import {
+  ArgumentMetadata,
+  BadRequestException,
+  ValidationPipe,
+} from "@nestjs/common";
+import { IsString } from "class-validator";
 import { describe, expect, it } from "vitest";
 import {
   createProblemValidationBody,
@@ -30,5 +35,50 @@ describe("createProblemValidationPipe", () => {
         },
       ],
     });
+  });
+
+  it("uses empty constraints when class-validator provides none", () => {
+    expect(
+      createProblemValidationBody([
+        {
+          property: "nested",
+        },
+      ]),
+    ).toMatchObject({
+      errors: [{ property: "nested", constraints: {} }],
+    });
+  });
+
+  it("throws problem details from the pipe exception factory", async () => {
+    class CreateUserDto {
+      @IsString()
+      name!: string;
+    }
+
+    const pipe = createProblemValidationPipe();
+    const metadata: ArgumentMetadata = {
+      data: undefined,
+      metatype: CreateUserDto,
+      type: "body",
+    };
+
+    await expect(
+      pipe.transform({ name: 123 }, metadata),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    try {
+      await pipe.transform({ name: 123 }, metadata);
+    } catch (error) {
+      expect((error as BadRequestException).getResponse()).toMatchObject({
+        errors: [
+          {
+            constraints: { isString: "name must be a string" },
+            property: "name",
+          },
+        ],
+        status: 400,
+        title: "Validation failed",
+      });
+    }
   });
 });

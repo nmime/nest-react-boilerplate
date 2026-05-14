@@ -1,0 +1,25 @@
+{
+  "name": "@app/frontend-ui",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/ui/src",
+  "projectType": "library",
+  "tags": ["platform:frontend", "type:ui"],
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/ui",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/libs/frontend/ui-test"]
+    }
+  }
+}

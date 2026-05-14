@@ -1,0 +1,246 @@
+:root {
+  --xr-color-background: #08111f;
+  --xr-color-surface: rgba(15, 27, 46, 0.82);
+  --xr-color-surface-strong: #12213a;
+  --xr-color-border: rgba(132, 174, 255, 0.2);
+  --xr-color-text: #eef5ff;
+  --xr-color-muted: #9fb0ca;
+  --xr-color-primary: #58d5ff;
+  --xr-color-primary-strong: #35a7ff;
+  --xr-color-success: #51e6a6;
+  --xr-color-warning: #ffd166;
+  --xr-radius-md: 14px;
+  --xr-radius-lg: 24px;
+  --xr-shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --xr-font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--xr-color-text);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(53, 167, 255, 0.22),
+      transparent 34rem
+    ),
+    linear-gradient(135deg, #08111f 0%, #0d1729 48%, #111d31 100%);
+  font-family: var(--xr-font-family);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.xr-shell {
+  width: min(1120px, calc(100% - 32px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 28px 0 56px;
+}
+
+.xr-header,
+.xr-actions,
+.xr-card-grid,
+.xr-stat-grid {
+  display: flex;
+  gap: 16px;
+}
+
+.xr-header {
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 72px;
+}
+
+.xr-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.xr-brand__mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--xr-color-border);
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    var(--xr-color-primary),
+    var(--xr-color-primary-strong)
+  );
+  color: #06101f;
+}
+
+.xr-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--xr-color-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--xr-color-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.875rem;
+}
+
+.xr-status--success {
+  color: var(--xr-color-success);
+}
+
+.xr-status--warning {
+  color: var(--xr-color-warning);
+}
+
+.xr-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 760px);
+  margin-bottom: 40px;
+}
+
+.xr-eyebrow {
+  margin: 0 0 14px;
+  color: var(--xr-color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.xr-hero h1,
+.xr-section h2 {
+  margin: 0;
+  letter-spacing: -0.05em;
+}
+
+.xr-hero h1 {
+  max-width: 760px;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  line-height: 0.92;
+}
+
+.xr-hero__description {
+  max-width: 680px;
+  margin: 24px 0 0;
+  color: var(--xr-color-muted);
+  font-size: 1.18rem;
+  line-height: 1.8;
+}
+
+.xr-actions {
+  flex-wrap: wrap;
+  margin-top: 32px;
+}
+
+.xr-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 18px;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.xr-button--primary {
+  background: linear-gradient(
+    135deg,
+    var(--xr-color-primary),
+    var(--xr-color-primary-strong)
+  );
+  color: #06101f;
+}
+
+.xr-button--secondary {
+  border-color: var(--xr-color-border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--xr-color-text);
+}
+
+.xr-content,
+.xr-section__content {
+  display: grid;
+  gap: 24px;
+}
+
+.xr-section {
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-lg);
+  padding: 24px;
+  background: var(--xr-color-surface);
+  box-shadow: var(--xr-shadow-lg);
+}
+
+.xr-section h2 {
+  font-size: clamp(1.75rem, 4vw, 2.6rem);
+}
+
+.xr-section__content {
+  margin-top: 24px;
+}
+
+.xr-card-grid,
+.xr-stat-grid {
+  flex-wrap: wrap;
+}
+
+.xr-card,
+.xr-stat-card {
+  flex: 1 1 240px;
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-md);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.xr-card__title,
+.xr-stat-card strong {
+  margin: 0;
+  color: var(--xr-color-text);
+}
+
+.xr-card__body,
+.xr-stat-card p,
+.xr-stat-card span {
+  color: var(--xr-color-muted);
+  line-height: 1.7;
+}
+
+.xr-stat-card {
+  display: grid;
+  gap: 8px;
+}
+
+.xr-stat-card strong {
+  font-size: 2rem;
+}
+
+@media (max-width: 720px) {
+  .xr-header {
+    align-items: flex-start;
+    flex-direction: column;
+    margin-bottom: 48px;
+  }
+
+  .xr-section {
+    padding: 18px;
+  }
+}

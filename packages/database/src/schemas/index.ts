@@ -1,6 +1,0 @@
-export * from './todos.schema'
-export * from './articles.schema'
-export * from './orders.schema'
-export * from './jobs.schema'
-export * from './identity/index'
-export * from './audit/index'

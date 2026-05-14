@@ -1,21 +1,21 @@
 packages:
-  - 'apps/frontend/*'
-  - 'apps/backend/*'
-  - 'libs/frontend/*'
-  - 'libs/common/*'
-  - 'libs/features/*/*'
-  - 'libs/backend'
+  - "apps/frontend/*"
+  - "apps/backend/*"
+  - "libs/frontend/*"
+  - "libs/common/*"
+  - "libs/features/*/*"
+  - "libs/backend"
 
 onlyBuiltDependencies:
-  - '@nestjs/core'
-  - '@parcel/watcher'
-  - '@swc/core'
+  - "@nestjs/core"
+  - "@parcel/watcher"
+  - "@swc/core"
   - esbuild
   - nx
 
 allowBuilds:
-  '@nestjs/core': true
-  '@parcel/watcher': true
-  '@swc/core': true
+  "@nestjs/core": true
+  "@parcel/watcher": true
+  "@swc/core": true
   esbuild: true
   nx: true

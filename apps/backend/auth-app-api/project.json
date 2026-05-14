@@ -1,0 +1,46 @@
+{
+  "name": "auth-app-api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/auth-app-api/src",
+  "projectType": "application",
+  "tags": ["platform:backend", "type:backend-app", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend/auth-app-api",
+        "main": "apps/backend/auth-app-api/src/main.ts",
+        "tsConfig": "apps/backend/auth-app-api/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "auth-app-api:build",
+        "runBuildTargetDependencies": true
+      },
+      "configurations": {
+        "development": { "buildTarget": "auth-app-api:build:development" },
+        "production": { "buildTarget": "auth-app-api:build:production" }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/auth-app-api",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        { "externalDependencies": ["vitest"] }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/backend/auth-app-api"]
+    }
+  }
+}

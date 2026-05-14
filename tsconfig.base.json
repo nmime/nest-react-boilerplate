@@ -1,0 +1,28 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@app/common/bootstrap": ["libs/common/bootstrap/src/index.ts"],
+      "@app/common/exception": ["libs/common/exception/src/index.ts"],
+      "@app/common/response": ["libs/common/response/src/index.ts"],
+      "@app/common/shared": ["libs/common/shared/src/index.ts"],
+      "@app/common/validation": ["libs/common/validation/src/index.ts"],
+      "@app/features-auth-oauth": ["libs/features/auth/oauth/src/index.ts"],
+      "@app/frontend-ui": ["libs/frontend/ui/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp", "dist"]
+}

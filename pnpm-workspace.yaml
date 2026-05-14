@@ -1,27 +1,21 @@
 packages:
-  - packages/*
-  - apps/*
+  - 'apps/frontend/*'
+  - 'apps/backend/*'
+  - 'libs/frontend/*'
+  - 'libs/common/*'
+  - 'libs/features/*/*'
+  - 'libs/backend'
 
 onlyBuiltDependencies:
   - '@nestjs/core'
-  - '@scarf/scarf'
+  - '@parcel/watcher'
   - '@swc/core'
-  - bcrypt
-  - better-sqlite3
   - esbuild
-  - msw
-
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+  - nx
 
 allowBuilds:
   '@nestjs/core': true
-  '@scarf/scarf': true
+  '@parcel/watcher': true
   '@swc/core': true
-  bcrypt: true
-  better-sqlite3: true
   esbuild: true
-  msw: true
-  sharp: false
-  unrs-resolver: false
+  nx: true

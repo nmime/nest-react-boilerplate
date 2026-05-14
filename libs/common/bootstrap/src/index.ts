@@ -10,6 +10,26 @@ export interface BootstrapNestApiOptions {
   corsOrigins?: string[];
 }
 
+function parseCorsOrigins(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+}
+
+function resolveConfiguredCorsOrigins(
+  options: BootstrapNestApiOptions,
+): string[] {
+  if (options.corsOrigins?.length) {
+    return options.corsOrigins;
+  }
+
+  return [
+    ...parseCorsOrigins(process.env.CORS_ORIGINS),
+    ...parseCorsOrigins(process.env.CORS_ORIGIN),
+  ];
+}
+
 export async function bootstrapNestApi(
   module: Type<unknown>,
   options: BootstrapNestApiOptions,
@@ -20,10 +40,19 @@ export async function bootstrapNestApi(
   app.useGlobalPipes(createProblemValidationPipe());
 
   if (options.enableCors ?? true) {
-    app.enableCors({
-      origin: options.corsOrigins?.length ? options.corsOrigins : true,
-      credentials: true,
-    });
+    const configuredOrigins = resolveConfiguredCorsOrigins(options);
+
+    if (configuredOrigins.length > 0) {
+      app.enableCors({
+        origin: configuredOrigins,
+        credentials: true,
+      });
+    } else if (process.env.NODE_ENV !== "production") {
+      app.enableCors({
+        origin: true,
+        credentials: true,
+      });
+    }
   }
 
   const port = Number.parseInt(

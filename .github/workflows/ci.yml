@@ -27,17 +27,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Format check
+        run: pnpm run format:check
+
       - name: Lint
         run: pnpm exec nx run-many -t lint --all
 
       - name: Typecheck
         run: pnpm exec nx run-many -t typecheck --all
 
-      - name: Test
-        run: pnpm exec nx run-many -t test --all
+      - name: Test with 100 percent coverage gates
+        run: pnpm run test:coverage
 
       - name: Frontend static e2e
         run: pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
 
       - name: Build
         run: pnpm exec nx run-many -t build --all
+
+      - name: Dependency audit
+        run: pnpm run audit

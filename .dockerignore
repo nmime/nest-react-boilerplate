@@ -1,6 +1,5 @@
 node_modules
 **/node_modules
-**/.turbo
 **/dist
 **/.env
 **/.env.*
@@ -9,6 +8,5 @@ node_modules
 **/*.tsbuildinfo
 .git
 .gitignore
-.claude
 .serena
 .agents

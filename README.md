@@ -1,112 +1,105 @@
 # Nest React Boilerplate
 
-[![CI](https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml)
 [![Node.js](https://img.shields.io/badge/node-22-brightgreen)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
-A production-ready Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, bootstrap, validation, response/result boundaries, and OAuth/OIDC readiness.
+Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, bootstrap, validation, response/result boundaries, and OAuth/OIDC readiness.
 
 ## Workspace layout
 
-### Frontend apps
-
-- `apps/frontend/admin` — `admin-app`, the internal admin surface.
-- `apps/frontend/app` — `user-app`, the user-facing application surface.
-- `apps/frontend/landing` — `landing-app`, the public product landing surface.
-- `libs/frontend/ui` — `@app/frontend-ui`, shared React layout and UI primitives used by all frontend apps.
-
-### Backend apps
-
-- `apps/backend/admin-app-api` — `backend-admin-app-api`, admin API shell.
-- `apps/backend/user-app-api` — `user-app-api`, user API shell.
-- `apps/backend/auth-app-api` — `auth-app-api`, auth API shell with OAuth module wiring.
-
-### Backend libraries
-
-- `libs/common/bootstrap` — Nest app bootstrap helper with Helmet, CORS support, and strict validation defaults.
-- `libs/common/validation` — `createProblemValidationPipe()` with `transform`, `whitelist`, and `forbidNonWhitelisted` enabled.
-- `libs/common/response` — response helpers and `neverthrow` `Result` to API response mapping.
-- `libs/features/auth/oauth` — disabled-by-default OAuth/OIDC shell using `openid-client` and `neverthrow` `ResultAsync`; it requires no secrets until explicitly configured.
-
-## Architecture rules
-
-Projects are tagged for Nx module-boundary enforcement:
-
-- `platform:frontend` or `platform:backend`
-- `type:frontend-app`, `type:backend-app`, `type:ui`, `type:common`, or `type:feature-shared`
-- `scope:admin`, `scope:user`, `scope:landing`, or `scope:auth` for app surfaces
-
-Frontend apps depend only on the shared UI library. Backend apps depend on backend common and feature-shared libraries. Backend shared libraries stay database- and service-agnostic so the boilerplate remains easy to extend.
+- `apps/frontend/admin` — `admin-app`, internal operations shell.
+- `apps/frontend/app` — `user-app`, user workspace shell.
+- `apps/frontend/landing` — `landing-app`, public landing shell.
+- `apps/backend/admin-app-api` — `backend-admin-app-api`, admin API shell on port 3001 locally.
+- `apps/backend/user-app-api` — `user-app-api`, user API shell on port 3002 locally.
+- `apps/backend/auth-app-api` — `auth-app-api`, auth API shell on port 3003 locally.
+- `libs/frontend/ui` — shared React UI primitives.
+- `libs/common/bootstrap` — Nest bootstrap with Helmet, strict validation, and secure CORS defaults.
+- `libs/common/validation` — validation problem details helpers.
+- `libs/common/response` — API response/result helpers.
+- `libs/features/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
 
 ## Requirements
 
 - Node.js 22.x
 - pnpm 10.32.1
 
-## Install
-
 ```bash
+corepack enable
 pnpm install --frozen-lockfile
 ```
 
-## Common Nx commands
+## Quality gates
 
 ```bash
-pnpm exec nx show projects
+pnpm run format:check
 pnpm exec nx run-many -t lint --all
 pnpm exec nx run-many -t typecheck --all
-pnpm exec nx run-many -t test --all
-pnpm exec nx run-many -t build --all
-```
-
-Frontend static e2e smoke checks build each frontend app and verify generated artifacts:
-
-```bash
+pnpm run test:coverage
 pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
+pnpm exec nx run-many -t build --all
+pnpm run audit
 ```
 
-Backend API smoke coverage is included in each backend app test target:
-
-```bash
-pnpm exec nx test backend-admin-app-api
-pnpm exec nx test user-app-api
-pnpm exec nx test auth-app-api
-```
+Vitest coverage is configured with 100% line, branch, function, and statement thresholds for the boilerplate's own testable source. Framework entrypoints and config files are excluded from coverage gates.
 
 ## Local development
-
-Run an individual frontend app:
 
 ```bash
 pnpm exec nx serve admin-app
 pnpm exec nx serve user-app
 pnpm exec nx serve landing-app
-```
 
-Run an individual backend API:
-
-```bash
 pnpm exec nx serve backend-admin-app-api
 pnpm exec nx serve user-app-api
 pnpm exec nx serve auth-app-api
 ```
 
-Each backend API exposes `GET /health` and uses the shared validation/security bootstrap baseline.
+Each backend API exposes `GET /health`.
 
-## Verification before a PR
+## Runtime environment
+
+Common backend variables:
+
+- `NODE_ENV` — set to `production` for deployed services.
+- `PORT` — listen port inside the process/container.
+- `CORS_ORIGINS` or `CORS_ORIGIN` — comma-separated allowed origins. In production, no wildcard/reflected CORS is enabled unless an origin is provided.
+
+OAuth placeholders are represented by the `AuthOAuthConfig` type (`issuerUrl`, `clientId`, `clientSecret`, `redirectUri`, `scopes`). OAuth is disabled by default until explicit configuration is wired by an application.
+
+## Build and deployment
+
+Build all deployable outputs:
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm exec nx run-many -t lint --all
-pnpm exec nx run-many -t typecheck --all
-pnpm exec nx run-many -t test --all
-pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
 pnpm exec nx run-many -t build --all
 ```
 
-## Documentation
+Backend outputs are emitted under `dist/apps/backend/*`. Frontend static outputs are emitted under `dist/apps/frontend/*`.
 
-- [Architecture](./docs/architecture.md)
-- [API conventions](./docs/api-conventions.md)
-- [Technology choices](./docs/technology-choices.md)
+The root `Dockerfile` supports backend and frontend targets:
+
+```bash
+# Backend API example
+docker build \
+  --target backend \
+  --build-arg NX_PROJECT=backend-admin-app-api \
+  --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api \
+  -t nest-react/backend-admin-app-api .
+
+# Frontend static example
+docker build \
+  --target frontend \
+  --build-arg NX_PROJECT=admin-app \
+  --build-arg FRONTEND_OUTPUT=dist/apps/frontend/admin \
+  -t nest-react/admin-app .
+```
+
+Optional local container smoke stack:
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+Frontend services are exposed on ports 8081-8083 and backend APIs on ports 3001-3003.

@@ -34,23 +34,29 @@ import { bootstrapNestApi } from "./index";
 class TestModule {}
 
 describe("bootstrapNestApi", () => {
-  const originalPort = process.env.PORT;
+  const originalEnvironment = {
+    corsOrigin: process.env.CORS_ORIGIN,
+    corsOrigins: process.env.CORS_ORIGINS,
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+  };
 
   beforeEach(() => {
+    delete process.env.CORS_ORIGIN;
+    delete process.env.CORS_ORIGINS;
+    delete process.env.NODE_ENV;
     delete process.env.PORT;
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    if (originalPort === undefined) {
-      delete process.env.PORT;
-      return;
-    }
-
-    process.env.PORT = originalPort;
+    restoreEnv("CORS_ORIGIN", originalEnvironment.corsOrigin);
+    restoreEnv("CORS_ORIGINS", originalEnvironment.corsOrigins);
+    restoreEnv("NODE_ENV", originalEnvironment.nodeEnv);
+    restoreEnv("PORT", originalEnvironment.port);
   });
 
-  it("creates an app with security middleware, validation, CORS, and the default port", async () => {
+  it("creates an app with security middleware, validation, development CORS, and the default port", async () => {
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
       defaultPort: 3010,
@@ -70,7 +76,8 @@ describe("bootstrapNestApi", () => {
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
   });
 
-  it("uses explicit CORS origins and a PORT override", async () => {
+  it("uses explicit CORS origins before environment origins and honors a PORT override", async () => {
+    process.env.CORS_ORIGINS = "https://ignored.example";
     process.env.PORT = "4111";
 
     await bootstrapNestApi(TestModule, {
@@ -86,6 +93,38 @@ describe("bootstrapNestApi", () => {
     expect(mocks.app.listen).toHaveBeenCalledWith(4111);
   });
 
+  it("uses comma-separated CORS_ORIGINS and CORS_ORIGIN values", async () => {
+    process.env.CORS_ORIGINS =
+      " , https://admin.example, https://app.example, ";
+    process.env.CORS_ORIGIN = "https://landing.example";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+
+    expect(mocks.app.enableCors).toHaveBeenCalledWith({
+      credentials: true,
+      origin: [
+        "https://admin.example",
+        "https://app.example",
+        "https://landing.example",
+      ],
+    });
+  });
+
+  it("does not reflect arbitrary origins in production without explicit origins", async () => {
+    process.env.NODE_ENV = "production";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+
+    expect(mocks.app.enableCors).not.toHaveBeenCalled();
+    expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+  });
+
   it("can skip CORS setup", async () => {
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
@@ -97,3 +136,12 @@ describe("bootstrapNestApi", () => {
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
   });
 });
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+}

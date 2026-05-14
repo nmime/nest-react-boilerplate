@@ -47,8 +47,6 @@ logs
 *.log
 
 # OS generated files
-.DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
@@ -69,10 +67,7 @@ Thumbs.db
 !.vscode/extensions.json
 
 # Temporary files
-*.tmp
-*.temp
 
-.turbo
 
 
 # test
@@ -86,7 +81,6 @@ playwright/.cache/
 storybook-static
 
 # Track project-level Claude Code instructions (override global ~/.gitignore)
-!.claude/
 !CLAUDE.md
 !**/CLAUDE.md
 

@@ -26,5 +26,5 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
-  "exclude": ["node_modules", "tmp", "dist"]
+  "exclude": ["node_modules", "dist"]
 }

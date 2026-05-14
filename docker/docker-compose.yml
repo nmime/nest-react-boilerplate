@@ -1,28 +1,78 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: bitnami/postgresql:latest
-    container_name: postgres
-    restart: unless-stopped
+  backend-admin-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: backend-admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin-app-api
     environment:
-      - POSTGRESQL_USERNAME=postgres
-      - POSTGRESQL_PASSWORD=postgres
-      - POSTGRESQL_DATABASE=nestjs-boilerplate
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/bitnami/postgresql
+      - "3001:3000"
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    restart: unless-stopped
+  user-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user-app-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
     ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+      - "3002:3000"
 
-volumes:
-  postgres_data:
-  redis_data:
+  auth-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth-app-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
+    ports:
+      - "3003:3000"
+
+  admin-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: admin-app
+        FRONTEND_OUTPUT: dist/apps/frontend/admin
+    ports:
+      - "8081:80"
+
+  user-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: user-app
+        FRONTEND_OUTPUT: dist/apps/frontend/app
+    ports:
+      - "8082:80"
+
+  landing-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: landing-app
+        FRONTEND_OUTPUT: dist/apps/frontend/landing
+    ports:
+      - "8083:80"

@@ -1,52 +1,40 @@
 # syntax=docker/dockerfile:1
 
-# ────────────────────────────────────────────
-# Stage 1: Install dependencies + build
-# ────────────────────────────────────────────
-FROM node:22-alpine AS builder
+ARG NODE_VERSION=22-alpine
+ARG PNPM_VERSION=10.32.1
 
-RUN apk add --no-cache python3 make g++ && \
-    corepack enable && corepack prepare pnpm@11.1.1 --activate
+FROM node:${NODE_VERSION} AS workspace
+ARG PNPM_VERSION
+WORKDIR /workspace
+RUN apk add --no-cache libc6-compat python3 make g++ \
+  && corepack enable \
+  && corepack prepare pnpm@${PNPM_VERSION} --activate
 
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json tsconfig.base.json eslint.config.js jest.preset.js .npmrc ./
+COPY apps ./apps
+COPY libs ./libs
+COPY tools ./tools
+RUN pnpm install --frozen-lockfile
+
+FROM workspace AS builder
+ARG NX_PROJECT
+RUN test -n "${NX_PROJECT}" \
+  && pnpm exec nx build "${NX_PROJECT}"
+
+FROM node:${NODE_VERSION} AS backend
+ENV NODE_ENV=production \
+  PORT=3000
 WORKDIR /app
-
-# Copy workspace config
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-
-# Copy each package's package.json (leverage Docker layer cache)
-COPY packages/database/package.json ./packages/database/
-COPY apps/api/package.json ./apps/api/
-
-# Install all dependencies. Build scripts are approved explicitly by the workspace.
-RUN pnpm install --frozen-lockfile --ignore-scripts
-
-# Copy source code
-COPY packages/database ./packages/database
-COPY apps/api ./apps/api
-
-# Build database package (api depends on its dist/)
-RUN pnpm --filter @workspace/database build
-
-# Build api
-RUN pnpm --filter api build
-
-# pnpm deploy outputs a flat structure with complete workspace dependencies.
-RUN pnpm --filter api deploy --prod --legacy /app/deploy
-
-# pnpm deploy only copies node_modules, not build artifacts — copy manually.
-RUN cp -r /app/apps/api/dist /app/deploy/dist
-
-# ────────────────────────────────────────────
-# Stage 2: Production image
-# ────────────────────────────────────────────
-FROM node:22-alpine AS runner
-
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-COPY --from=builder /app/deploy ./
-
+ARG BUILD_OUTPUT=dist/apps/backend/admin-app-api
+COPY --from=builder /workspace/package.json ./package.json
+COPY --from=builder /workspace/node_modules ./node_modules
+COPY --from=builder /workspace/${BUILD_OUTPUT} ./dist
+USER node
 EXPOSE 3000
-
 CMD ["node", "dist/main.js"]
+
+FROM nginx:1.27-alpine AS frontend
+ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
+COPY docker/nginx-spa.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
+EXPOSE 80

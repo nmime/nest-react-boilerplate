@@ -4,7 +4,7 @@ Use this guide with the root `README.md` and the documents in `docs/`.
 
 ## Prerequisites
 
-- Node.js 22.x
+- Node.js 26.x
 - pnpm 10.32.1
 - Docker, only when testing container images
 

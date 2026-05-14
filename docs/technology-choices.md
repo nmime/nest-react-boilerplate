@@ -2,7 +2,7 @@
 
 ## Nx and pnpm
 
-Nx provides project graph awareness, cached targets, module-boundary enforcement, and consistent commands across apps and libraries. pnpm 10.32.1 is pinned for deterministic workspace installs on Node.js 22.
+Nx provides project graph awareness, cached targets, module-boundary enforcement, and consistent commands across apps and libraries. pnpm 10.32.1 is pinned for deterministic workspace installs on Node.js 26.
 
 ## React, Vite, and Vitest
 
@@ -18,4 +18,4 @@ Backend startup applies Helmet, a strict validation pipe, and CORS behavior that
 
 ## Dependency compatibility
 
-Patch updates within the current Nest major are preferred. TypeScript 6, ESLint 10, and Node type definitions for Node 25 are deferred until the Nx and Node 22 toolchain officially supports them in this workspace.
+Patch updates within the current Nest major are preferred. TypeScript 6, ESLint 10, and The workspace now targets the latest Node 26 runtime while using the newest published Node type definitions available in the registry.

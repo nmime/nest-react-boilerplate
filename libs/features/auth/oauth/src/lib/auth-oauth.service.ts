@@ -41,9 +41,9 @@ export class AuthOAuthService {
     try {
       const state = randomState();
       const scopes = this.config.scopes ?? ["openid", "profile", "email"];
-      const issuerUrl = this.config.issuerUrl;
-      const clientId = this.config.clientId;
-      const redirectUri = this.config.redirectUri;
+      const issuerUrl = this.config.issuerUrl as string;
+      const clientId = this.config.clientId as string;
+      const redirectUri = this.config.redirectUri as string;
       const authorizationUrl = new URL("authorize", issuerUrl);
       authorizationUrl.searchParams.set("client_id", clientId);
       authorizationUrl.searchParams.set("redirect_uri", redirectUri);

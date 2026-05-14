@@ -24,7 +24,8 @@
       "@app/frontend-ui": ["libs/frontend/ui/src/index.ts"]
     },
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "6.0"
   },
   "exclude": ["node_modules", "dist"]
 }

@@ -1,6 +1,6 @@
 # Nest React Boilerplate
 
-[![Node.js](https://img.shields.io/badge/node-22-brightgreen)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-26-brightgreen)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
@@ -22,7 +22,7 @@ Production-oriented Nx workspace for React frontends and NestJS backend APIs. Th
 
 ## Requirements
 
-- Node.js 22.x
+- Node.js 26.x
 - pnpm 10.32.1
 
 ```bash

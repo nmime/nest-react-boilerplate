@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/backend/auth-app-api/src",
   "projectType": "application",
-  "tags": ["platform:backend", "type:backend-app", "scope:auth"],
+  "tags": ["platform:backend", "type:backend-app", "scope:auth", "type:app"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -24,8 +24,12 @@
         "runBuildTargetDependencies": true
       },
       "configurations": {
-        "development": { "buildTarget": "auth-app-api:build:development" },
-        "production": { "buildTarget": "auth-app-api:build:production" }
+        "development": {
+          "buildTarget": "auth-app-api:build:development"
+        },
+        "production": {
+          "buildTarget": "auth-app-api:build:production"
+        }
       }
     },
     "test": {
@@ -38,7 +42,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/backend/auth-app-api"]
     }

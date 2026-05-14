@@ -7,7 +7,8 @@
     "platform:frontend",
     "type:admin-app",
     "type:frontend-app",
-    "scope:admin"
+    "scope:admin",
+    "type:app"
   ],
   "// targets": "to see all targets run: nx show project admin-app --web",
   "targets": {

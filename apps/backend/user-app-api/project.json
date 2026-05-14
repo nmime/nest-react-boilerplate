@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/backend/user-app-api/src",
   "projectType": "application",
-  "tags": ["platform:backend", "type:backend-app", "scope:user"],
+  "tags": ["platform:backend", "type:backend-app", "scope:user", "type:app"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -24,8 +24,12 @@
         "runBuildTargetDependencies": true
       },
       "configurations": {
-        "development": { "buildTarget": "user-app-api:build:development" },
-        "production": { "buildTarget": "user-app-api:build:production" }
+        "development": {
+          "buildTarget": "user-app-api:build:development"
+        },
+        "production": {
+          "buildTarget": "user-app-api:build:production"
+        }
       }
     },
     "test": {
@@ -38,7 +42,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/backend/user-app-api"]
     }

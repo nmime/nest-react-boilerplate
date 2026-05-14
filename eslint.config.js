@@ -38,32 +38,74 @@ module.exports = [
           depConstraints: [
             {
               sourceTag: "platform:backend",
-              onlyDependOnLibsWithTags: ["platform:backend"],
+              onlyDependOnLibsWithTags: ["platform:backend", "platform:shared"],
             },
             {
               sourceTag: "platform:frontend",
-              onlyDependOnLibsWithTags: ["platform:frontend"],
+              onlyDependOnLibsWithTags: [
+                "platform:frontend",
+                "platform:shared",
+              ],
+            },
+            {
+              sourceTag: "platform:shared",
+              onlyDependOnLibsWithTags: ["platform:shared"],
+            },
+            {
+              sourceTag: "type:app",
+              onlyDependOnLibsWithTags: [
+                "type:feature-main",
+                "type:feature-shared",
+                "type:common",
+                "type:data-access",
+                "type:test-util",
+                "type:ui",
+                "type:util",
+                "type:sdk",
+              ],
             },
             {
               sourceTag: "type:backend-app",
               onlyDependOnLibsWithTags: [
+                "type:feature-main",
                 "type:feature-shared",
                 "type:common",
+                "type:data-access",
+                "type:test-util",
                 "type:util",
                 "type:sdk",
               ],
             },
             {
               sourceTag: "type:frontend-app",
-              onlyDependOnLibsWithTags: ["type:ui"],
+              onlyDependOnLibsWithTags: ["type:ui", "type:common", "type:util"],
+            },
+            {
+              sourceTag: "type:feature-main",
+              onlyDependOnLibsWithTags: [
+                "type:feature-shared",
+                "type:common",
+                "type:data-access",
+                "type:util",
+                "type:sdk",
+              ],
             },
             {
               sourceTag: "type:feature-shared",
               onlyDependOnLibsWithTags: [
                 "type:feature-shared",
                 "type:common",
+                "type:data-access",
                 "type:util",
                 "type:sdk",
+              ],
+            },
+            {
+              sourceTag: "type:data-access",
+              onlyDependOnLibsWithTags: [
+                "type:data-access",
+                "type:common",
+                "type:util",
               ],
             },
             {
@@ -72,7 +114,20 @@ module.exports = [
             },
             {
               sourceTag: "type:ui",
-              onlyDependOnLibsWithTags: ["type:ui"],
+              onlyDependOnLibsWithTags: ["type:ui", "type:common", "type:util"],
+            },
+            {
+              sourceTag: "type:test-util",
+              onlyDependOnLibsWithTags: [
+                "type:feature-main",
+                "type:feature-shared",
+                "type:common",
+                "type:data-access",
+                "type:test-util",
+                "type:ui",
+                "type:util",
+                "type:sdk",
+              ],
             },
             {
               sourceTag: "type:util",

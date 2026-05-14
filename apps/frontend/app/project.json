@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/frontend/app/src",
   "projectType": "application",
-  "tags": ["platform:frontend", "type:frontend-app", "scope:user"],
+  "tags": ["platform:frontend", "type:frontend-app", "scope:user", "type:app"],
   "// targets": "to see all targets run: nx show project user-app --web",
   "targets": {
     "test": {

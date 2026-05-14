@@ -1,11 +1,11 @@
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { AuthUserEntity } from "./entity";
+import { AuthUserEntitySchema } from "./entity";
 import { AuthUserRepository } from "./repository";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AuthUserEntity])],
+  imports: [MikroOrmModule.forFeature([AuthUserEntitySchema])],
   providers: [AuthUserRepository],
-  exports: [TypeOrmModule, AuthUserRepository],
+  exports: [MikroOrmModule, AuthUserRepository],
 })
 export class AuthPostgresModule {}

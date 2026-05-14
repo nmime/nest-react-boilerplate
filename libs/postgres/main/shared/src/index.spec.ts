@@ -4,7 +4,7 @@ import * as postgresMain from "./index";
 describe("postgres main exports", () => {
   it("exports public helpers", () => {
     expect(postgresMain.PostgresMainModule).toBeDefined();
-    expect(postgresMain.createPostgresDataSourceOptions).toBeDefined();
+    expect(postgresMain.createPostgresMikroOrmOptions).toBeDefined();
     expect(postgresMain.runInPostgresTransaction).toBeDefined();
   });
 });

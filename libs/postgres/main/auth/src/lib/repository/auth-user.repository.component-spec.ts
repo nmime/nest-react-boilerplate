@@ -1,23 +1,23 @@
+import { MikroORM } from "@mikro-orm/core";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { TypeOrmModule } from "@nestjs/typeorm";
 import {
-  createPostgresContainerTypeOrmOptions,
+  createPostgresContainerMikroOrmOptions,
   startPostgresContainer,
   stopPostgresContainer,
 } from "@app/common-component-test";
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { DataSource } from "typeorm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthPostgresModule } from "../auth-postgres.module";
-import { AuthUserEntity } from "../entity";
+import { AuthUserEntity, AuthUserEntitySchema } from "../entity";
 import { AuthUserRepository } from "./auth-user.repository";
 
 describe("AuthUserRepository component", () => {
   let container: StartedPostgreSqlContainer | undefined;
   let moduleRef: TestingModule | undefined;
   let app: INestApplication | undefined;
-  let dataSource: DataSource;
+  let orm: MikroORM;
   let authUsers: AuthUserRepository;
 
   beforeAll(async () => {
@@ -25,8 +25,10 @@ describe("AuthUserRepository component", () => {
 
     moduleRef = await Test.createTestingModule({
       imports: [
-        TypeOrmModule.forRoot(
-          createPostgresContainerTypeOrmOptions(container, [AuthUserEntity]),
+        MikroOrmModule.forRoot(
+          createPostgresContainerMikroOrmOptions(container, [
+            AuthUserEntitySchema,
+          ]),
         ),
         AuthPostgresModule,
       ],
@@ -35,12 +37,14 @@ describe("AuthUserRepository component", () => {
     app = moduleRef.createNestApplication();
     await app.init();
 
-    dataSource = moduleRef.get(DataSource);
+    orm = moduleRef.get(MikroORM);
+    await orm.schema.refresh();
     authUsers = moduleRef.get(AuthUserRepository);
   });
 
   afterEach(async () => {
-    await dataSource.getRepository(AuthUserEntity).clear();
+    await orm.em.nativeDelete(AuthUserEntity, {});
+    orm.em.clear();
   });
 
   afterAll(async () => {

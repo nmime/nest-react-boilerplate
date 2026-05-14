@@ -1,8 +1,9 @@
+import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import type { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
 export const DefaultPostgresTestImage = "postgres:17-alpine";
 export const DefaultPostgresTestDatabase = "app_component_test";
@@ -21,8 +22,10 @@ export interface PostgresContainerOptions {
 }
 
 export type PostgresEntityList = NonNullable<
-  PostgresConnectionOptions["entities"]
+  MikroOrmModuleSyncOptions["entities"]
 >;
+
+export type PostgresMikroOrmTestOptions = MikroOrmModuleSyncOptions;
 
 export function createPostgresContainer(
   options: PostgresContainerOptions = {},
@@ -51,24 +54,23 @@ export async function stopPostgresContainer(
   }
 }
 
-export function createPostgresContainerTypeOrmOptions(
+export function createPostgresContainerMikroOrmOptions(
   container: StartedPostgreSqlContainer,
   entities: PostgresEntityList = [],
-  overrides: Partial<PostgresConnectionOptions> = {},
-): PostgresConnectionOptions {
+  overrides: Partial<PostgresMikroOrmTestOptions> = {},
+): PostgresMikroOrmTestOptions {
   return {
-    type: "postgres",
+    driver: PostgreSqlDriver as unknown as MikroOrmModuleSyncOptions["driver"],
     host: container.getHost(),
     port: container.getPort(),
-    username: container.getUsername(),
+    user: container.getUsername(),
     password: container.getPassword(),
-    database: container.getDatabase(),
+    dbName: container.getDatabase(),
     entities,
-    migrations: [],
-    synchronize: true,
-    dropSchema: true,
-    logging: false,
-    ssl: false,
+    autoLoadEntities: true,
+    allowGlobalContext: true,
+    debug: false,
+    driverOptions: {},
     ...overrides,
   };
 }

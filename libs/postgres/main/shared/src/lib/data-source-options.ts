@@ -1,4 +1,6 @@
-import type { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
+import { Migrator } from "@mikro-orm/migrations";
+import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import {
   DefaultPostgresDatabase,
   DefaultPostgresHost,
@@ -9,36 +11,39 @@ import {
   readSslRejectUnauthorized,
 } from "./database.config";
 
-export type PostgresDataSourceOverrides = Partial<PostgresConnectionOptions>;
+export type PostgresMikroOrmOptions = MikroOrmModuleSyncOptions;
+export type PostgresMikroOrmOverrides = Partial<PostgresMikroOrmOptions>;
 
-export function createPostgresDataSourceOptions(
-  overrides: PostgresDataSourceOverrides = {},
+export function createPostgresMikroOrmOptions(
+  overrides: PostgresMikroOrmOverrides = {},
   env: PostgresEnvironment = process.env,
-): PostgresConnectionOptions {
-  const connection: PostgresConnectionOptions = env.DATABASE_URL
+): PostgresMikroOrmOptions {
+  const connection: PostgresMikroOrmOptions = env.DATABASE_URL
     ? {
-        type: "postgres",
-        url: env.DATABASE_URL,
+        clientUrl: env.DATABASE_URL,
       }
     : {
-        type: "postgres",
         host: env.POSTGRES_HOST ?? DefaultPostgresHost,
         port: readPort(env.POSTGRES_PORT),
-        username: env.POSTGRES_USER ?? DefaultPostgresUser,
+        user: env.POSTGRES_USER ?? DefaultPostgresUser,
         password: env.POSTGRES_PASSWORD,
-        database: env.POSTGRES_DB ?? DefaultPostgresDatabase,
+        dbName: env.POSTGRES_DB ?? DefaultPostgresDatabase,
       };
 
   return {
     ...connection,
+    driver: PostgreSqlDriver as unknown as MikroOrmModuleSyncOptions["driver"],
     entities: [],
-    migrations: [],
-    logging: readBoolean(env.POSTGRES_LOGGING) ?? false,
-    ssl: readBoolean(env.POSTGRES_SSL)
-      ? { rejectUnauthorized: readSslRejectUnauthorized(env) }
-      : false,
-    synchronize: readBoolean(env.POSTGRES_SYNCHRONIZE) ?? false,
+    extensions: [Migrator],
+    autoLoadEntities: true,
+    debug: readBoolean(env.POSTGRES_LOGGING) ?? false,
+    driverOptions: readBoolean(env.POSTGRES_SSL)
+      ? {
+          connection: {
+            ssl: { rejectUnauthorized: readSslRejectUnauthorized(env) },
+          },
+        }
+      : {},
     ...overrides,
-    type: "postgres",
   };
 }

@@ -1,8 +1,10 @@
+import type { EntityManager } from "@mikro-orm/postgresql";
 import { ResultAsync } from "neverthrow";
-import type { EntityManager } from "typeorm";
 
 export interface TransactionCapable {
-  transaction<T>(handler: (manager: EntityManager) => Promise<T>): Promise<T>;
+  transactional<T>(
+    handler: (manager: EntityManager) => Promise<T> | T,
+  ): Promise<T>;
 }
 
 export interface PostgresTransactionError {
@@ -11,10 +13,10 @@ export interface PostgresTransactionError {
 }
 
 export function runInPostgresTransaction<T>(
-  dataSource: TransactionCapable,
-  handler: (manager: EntityManager) => Promise<T>,
+  manager: TransactionCapable,
+  handler: (manager: EntityManager) => Promise<T> | T,
 ): ResultAsync<T, PostgresTransactionError> {
-  return ResultAsync.fromPromise(dataSource.transaction(handler), (cause) => ({
+  return ResultAsync.fromPromise(manager.transactional(handler), (cause) => ({
     code: "transaction_failed",
     message:
       cause instanceof Error ? cause.message : "Postgres transaction failed.",

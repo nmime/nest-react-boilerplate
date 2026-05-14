@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import { describe, expect, it } from "vitest";
-import { DataSource } from "typeorm";
-import { AuthUserEntity } from "./auth-user.entity";
+import { AuthUserEntity, AuthUserEntitySchema } from "./auth-user.entity";
 
 describe("AuthUserEntity", () => {
   it("constructs from explicit input", () => {
@@ -16,24 +15,36 @@ describe("AuthUserEntity", () => {
     ).toBeNull();
   });
 
-  it("can be constructed empty for TypeORM hydration", () => {
+  it("can be constructed empty for MikroORM hydration", () => {
     expect(new AuthUserEntity()).toBeInstanceOf(AuthUserEntity);
   });
 
-  it("registers table and unique email metadata", async () => {
-    const dataSource = new DataSource({
-      type: "postgres",
-      entities: [AuthUserEntity],
-    });
-
-    await dataSource.buildMetadatas();
-
-    const metadata = dataSource.getMetadata(AuthUserEntity);
+  it("registers table, primary key, and unique email metadata", () => {
+    AuthUserEntitySchema.init();
+    const metadata = AuthUserEntitySchema.meta;
 
     expect(metadata.tableName).toBe("auth_users");
-    expect(metadata.indices.some((index) => index.isUnique)).toBe(true);
+    expect(metadata.properties.id.primary).toBe(true);
+    expect(metadata.properties.id.type).toBe("uuid");
+    expect(metadata.properties.email.name).toBe("email");
+    expect(metadata.uniques).toContainEqual(
+      expect.objectContaining({
+        name: "auth_users_email_key",
+        properties: ["email"],
+      }),
+    );
+  });
+  it("defines timestamp lifecycle hooks", () => {
+    AuthUserEntitySchema.init();
+
     expect(
-      metadata.columns.some((column) => column.propertyName === "email"),
-    ).toBe(true);
+      AuthUserEntitySchema.meta.properties.createdAt.onCreate?.(),
+    ).toBeInstanceOf(Date);
+    expect(
+      AuthUserEntitySchema.meta.properties.updatedAt.onCreate?.(),
+    ).toBeInstanceOf(Date);
+    expect(
+      AuthUserEntitySchema.meta.properties.updatedAt.onUpdate?.(),
+    ).toBeInstanceOf(Date);
   });
 });

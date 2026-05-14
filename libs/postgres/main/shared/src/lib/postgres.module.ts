@@ -1,17 +1,17 @@
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { DynamicModule, Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import type { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
-import { createPostgresDataSourceOptions } from "./data-source-options";
+import {
+  createPostgresMikroOrmOptions,
+  type PostgresMikroOrmOverrides,
+} from "./data-source-options";
 
 @Module({})
 export class PostgresMainModule {
-  static forRoot(
-    overrides: Partial<PostgresConnectionOptions> = {},
-  ): DynamicModule {
+  static forRoot(overrides: PostgresMikroOrmOverrides = {}): DynamicModule {
     return {
       module: PostgresMainModule,
       imports: [
-        TypeOrmModule.forRoot(createPostgresDataSourceOptions(overrides)),
+        MikroOrmModule.forRoot(createPostgresMikroOrmOptions(overrides)),
       ],
     };
   }

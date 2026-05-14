@@ -1,7 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { EntityManager } from "@mikro-orm/core";
+import { Inject, Injectable } from "@nestjs/common";
 import { ResultAsync } from "neverthrow";
-import type { Repository } from "typeorm";
 import { AuthUserEntity, type AuthUserEntityInput } from "../entity";
 
 export interface AuthUserRepositoryError {
@@ -12,26 +11,33 @@ export interface AuthUserRepositoryError {
 @Injectable()
 export class AuthUserRepository {
   constructor(
-    @InjectRepository(AuthUserEntity)
-    private readonly repository: Repository<AuthUserEntity>,
+    @Inject(EntityManager)
+    private readonly entityManager: EntityManager,
   ) {}
 
   createUser(
     input: AuthUserEntityInput,
   ): ResultAsync<AuthUserEntity, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.repository.save(this.repository.create(input)),
-      mapRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.persistUser(input), mapRepositoryError);
   }
 
   findByEmail(
     email: string,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.repository.findOne({ where: { email } }),
+      this.entityManager.findOne(AuthUserEntity, { email }),
       mapRepositoryError,
     );
+  }
+
+  private async persistUser(
+    input: AuthUserEntityInput,
+  ): Promise<AuthUserEntity> {
+    const entity = new AuthUserEntity(input);
+    this.entityManager.persist(entity);
+    await this.entityManager.flush();
+
+    return entity;
   }
 }
 

@@ -1,5 +1,5 @@
+import type { EntityManager } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "vitest";
-import type { EntityManager } from "typeorm";
 import {
   runInPostgresTransaction,
   type TransactionCapable,
@@ -7,26 +7,28 @@ import {
 
 describe("runInPostgresTransaction", () => {
   it("returns the handler value when the transaction commits", async () => {
-    const manager = {} as EntityManager;
-    const dataSource: TransactionCapable = {
-      transaction: (handler) => handler(manager),
+    const entityManager = {} as EntityManager;
+    const transactionalManager: TransactionCapable = {
+      transactional: (handler) => Promise.resolve(handler(entityManager)),
     };
 
-    const result = await runInPostgresTransaction(dataSource, (current) =>
-      Promise.resolve({
-        sameManager: current === manager,
-      }),
+    const result = await runInPostgresTransaction(
+      transactionalManager,
+      (current) =>
+        Promise.resolve({
+          sameManager: current === entityManager,
+        }),
     );
 
     expect(result._unsafeUnwrap()).toEqual({ sameManager: true });
   });
 
   it("maps thrown errors to explicit transaction errors", async () => {
-    const dataSource: TransactionCapable = {
-      transaction: () => Promise.reject(new Error("rollback")),
+    const transactionalManager: TransactionCapable = {
+      transactional: () => Promise.reject(new Error("rollback")),
     };
 
-    const result = await runInPostgresTransaction(dataSource, () =>
+    const result = await runInPostgresTransaction(transactionalManager, () =>
       Promise.resolve("unused"),
     );
 
@@ -37,8 +39,8 @@ describe("runInPostgresTransaction", () => {
   });
 
   it("maps non-error failures to a stable message", async () => {
-    const dataSource: TransactionCapable = {
-      transaction: () =>
+    const transactionalManager: TransactionCapable = {
+      transactional: () =>
         // eslint-disable-next-line sonarjs/prefer-promise-shorthand
         new Promise((_resolve, reject) => {
           // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
@@ -46,7 +48,7 @@ describe("runInPostgresTransaction", () => {
         }),
     };
 
-    const result = await runInPostgresTransaction(dataSource, () =>
+    const result = await runInPostgresTransaction(transactionalManager, () =>
       Promise.resolve("unused"),
     );
 

@@ -1,39 +1,17 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { randomUUID } from "node:crypto";
+import { EntitySchema } from "@mikro-orm/core";
 
 export interface AuthUserEntityInput {
   email: string;
   displayName?: string | null;
 }
 
-@Entity({ name: "auth_users" })
-@Index("auth_users_email_key", ["email"], { unique: true })
 export class AuthUserEntity {
-  @PrimaryGeneratedColumn("uuid")
-  id!: string;
-
-  @Column({ type: "varchar", length: 320 })
+  id: string = randomUUID();
   email!: string;
-
-  @Column({
-    name: "display_name",
-    type: "varchar",
-    length: 160,
-    nullable: true,
-  })
-  displayName!: string | null;
-
-  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
-  updatedAt!: Date;
+  displayName: string | null = null;
+  createdAt: Date = new Date();
+  updatedAt: Date = new Date();
 
   constructor(input?: AuthUserEntityInput) {
     if (input) {
@@ -42,3 +20,30 @@ export class AuthUserEntity {
     }
   }
 }
+
+export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
+  class: AuthUserEntity,
+  tableName: "auth_users",
+  properties: {
+    id: { type: "uuid", primary: true },
+    email: { type: "varchar", length: 320 },
+    displayName: {
+      type: "varchar",
+      fieldName: "display_name",
+      length: 160,
+      nullable: true,
+    },
+    createdAt: {
+      type: "timestamptz",
+      fieldName: "created_at",
+      onCreate: () => new Date(),
+    },
+    updatedAt: {
+      type: "timestamptz",
+      fieldName: "updated_at",
+      onCreate: () => new Date(),
+      onUpdate: () => new Date(),
+    },
+  },
+  uniques: [{ name: "auth_users_email_key", properties: ["email"] }],
+});

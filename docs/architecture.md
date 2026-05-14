@@ -58,10 +58,10 @@ For the next DB stage, data-access libs should contain `entity/`, `repository/`,
 
 The first xRocket-inspired data-access libraries live under `libs/postgres/main/*`:
 
-- `@app/postgres-main` (`libs/postgres/main/shared`) owns shared Postgres/TypeORM configuration, the root module helper, and transaction helpers.
+- `@app/postgres-main` (`libs/postgres/main/shared`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
 - `@app/postgres-main-auth` (`libs/postgres/main/auth`) owns auth persistence objects such as `entity/` and `repository/` exports.
 
-Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. `synchronize` is `false` by default and must stay disabled for production; schema changes should be handled by migrations in a later stage.
+Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. MikroORM does not auto-sync schemas in this boilerplate; production schema changes should be handled by migrations in a later stage.
 
 Repository wrappers return `neverthrow` `ResultAsync` values so feature code can handle persistence failures explicitly. New data-access libraries should follow the same shape: `entity/`, `repository/`, a Nest module, and a public `index.ts` barrel. Testcontainers-backed component tests live beside repository code as `*.component-spec.ts` and run only through the `component-test` target.
 

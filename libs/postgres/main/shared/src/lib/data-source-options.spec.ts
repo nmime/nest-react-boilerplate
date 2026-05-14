@@ -1,5 +1,7 @@
+import { Migrator } from "@mikro-orm/migrations";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "vitest";
-import { createPostgresDataSourceOptions } from "./data-source-options";
+import { createPostgresMikroOrmOptions } from "./data-source-options";
 import {
   DefaultPostgresDatabase,
   DefaultPostgresHost,
@@ -10,38 +12,38 @@ import {
   readSslRejectUnauthorized,
 } from "./database.config";
 
-describe("Postgres data source options", () => {
-  it("uses secure local defaults without synchronize", () => {
-    expect(createPostgresDataSourceOptions({}, {})).toMatchObject({
-      type: "postgres",
+describe("Postgres MikroORM options", () => {
+  it("uses secure local defaults without automatic schema sync", () => {
+    expect(createPostgresMikroOrmOptions({}, {})).toMatchObject({
+      driver: PostgreSqlDriver,
       host: DefaultPostgresHost,
       port: DefaultPostgresPort,
-      username: DefaultPostgresUser,
-      database: DefaultPostgresDatabase,
-      synchronize: false,
-      logging: false,
-      ssl: false,
+      user: DefaultPostgresUser,
+      dbName: DefaultPostgresDatabase,
+      debug: false,
+      driverOptions: {},
       entities: [],
-      migrations: [],
+      extensions: [Migrator],
+      autoLoadEntities: true,
     });
   });
 
   it("prefers DATABASE_URL when provided", () => {
     expect(
-      createPostgresDataSourceOptions(
+      createPostgresMikroOrmOptions(
         {},
         { DATABASE_URL: "postgres://user:pass@db.example:5432/app" },
       ),
     ).toMatchObject({
-      type: "postgres",
-      url: "postgres://user:pass@db.example:5432/app",
-      synchronize: false,
+      driver: PostgreSqlDriver,
+      clientUrl: "postgres://user:pass@db.example:5432/app",
+      debug: false,
     });
   });
 
   it("reads POSTGRES_* values and SSL options", () => {
     expect(
-      createPostgresDataSourceOptions(
+      createPostgresMikroOrmOptions(
         {},
         {
           POSTGRES_HOST: "db",
@@ -51,32 +53,33 @@ describe("Postgres data source options", () => {
           POSTGRES_DB: "app_db",
           POSTGRES_SSL: "true",
           POSTGRES_SSL_REJECT_UNAUTHORIZED: "false",
-          POSTGRES_SYNCHRONIZE: "yes",
           POSTGRES_LOGGING: "on",
         },
       ),
     ).toMatchObject({
       host: "db",
       port: 15432,
-      username: "app",
+      user: "app",
       password: "secret",
-      database: "app_db",
-      ssl: { rejectUnauthorized: false },
-      synchronize: true,
-      logging: true,
+      dbName: "app_db",
+      driverOptions: {
+        connection: { ssl: { rejectUnauthorized: false } },
+      },
+      debug: true,
     });
   });
 
-  it("allows caller overrides while keeping postgres type", () => {
+  it("allows caller overrides while keeping the PostgreSQL driver", () => {
     expect(
-      createPostgresDataSourceOptions(
-        { database: "override", synchronize: true, type: "postgres" },
+      createPostgresMikroOrmOptions(
+        { dbName: "override", debug: true, entities: ["./dist/entities"] },
         { POSTGRES_DB: "env_db" },
       ),
     ).toMatchObject({
-      database: "override",
-      synchronize: true,
-      type: "postgres",
+      dbName: "override",
+      debug: true,
+      entities: ["./dist/entities"],
+      driver: PostgreSqlDriver,
     });
   });
 

@@ -63,7 +63,7 @@ describe("AuthUserRepository component", () => {
 
     const user = created._unsafeUnwrap();
     expect(user.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
     );
     expect(user.email).toBe("user@example.com");
     expect(user.roles).toEqual(["user"]);

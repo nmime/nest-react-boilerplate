@@ -30,15 +30,20 @@ describe("AuthUserRepository", () => {
     const result = await authUsers.createUser({
       email: "user@example.com",
       displayName: "User",
+      permissions: ["profile:read"],
+      roles: ["user"],
     });
 
     const entity = result._unsafeUnwrap();
     expect(entity.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
     );
     expect(entity).toMatchObject({
       email: "user@example.com",
       displayName: "User",
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "active",
     });
     expect(persist).toHaveBeenCalledWith(entity);
     expect(flush).toHaveBeenCalledTimes(1);
@@ -58,13 +63,118 @@ describe("AuthUserRepository", () => {
     });
   });
 
-  it("returns null when an email is unknown", async () => {
+  it("finds an auth user by id", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.findById("user-id");
+
+    expect(result._unsafeUnwrap()).toBe(entity);
+    expect(findOne).toHaveBeenCalledWith(AuthUserEntity, { id: "user-id" });
+  });
+
+  it("updates access policy fields", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setAccessPolicy("user-id", {
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps existing access policy fields when no policy fields are supplied", async () => {
+    const entity = new AuthUserEntity({
+      email: "user@example.com",
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "active",
+    });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setAccessPolicy("user-id", {});
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "active",
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps repository errors when updating access policy", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    flush.mockRejectedValue(new Error("policy update failed"));
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setAccessPolicy("user-id", {
+      roles: ["admin"],
+    });
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "policy update failed",
+    });
+  });
+
+  it("maps repository errors when recording login", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    flush.mockRejectedValue(new Error("login update failed"));
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.recordLogin("user-id");
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "login update failed",
+    });
+  });
+
+  it("records last login time", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.recordLogin("user-id", loggedInAt);
+
+    expect(result._unsafeUnwrap()?.lastLoginAt).toBe(loggedInAt);
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns null when an email or id is unknown", async () => {
     const { entityManager } = createEntityManagerMock();
     const authUsers = new AuthUserRepository(entityManager);
 
-    const result = await authUsers.findByEmail("missing@example.com");
-
-    expect(result._unsafeUnwrap()).toBeNull();
+    expect(
+      (await authUsers.findByEmail("missing@example.com"))._unsafeUnwrap(),
+    ).toBeNull();
+    expect((await authUsers.findById("missing-id"))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await authUsers.setAccessPolicy("missing-id", {}))._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (await authUsers.recordLogin("missing-id"))._unsafeUnwrap(),
+    ).toBeNull();
   });
 
   it("maps repository errors when creating users", async () => {

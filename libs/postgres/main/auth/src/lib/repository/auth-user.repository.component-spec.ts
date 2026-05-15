@@ -57,26 +57,62 @@ describe("AuthUserRepository component", () => {
     const created = await authUsers.createUser({
       email: "user@example.com",
       displayName: "Component User",
+      permissions: ["profile:read"],
+      roles: ["user"],
     });
 
     const user = created._unsafeUnwrap();
     expect(user.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
     );
     expect(user.email).toBe("user@example.com");
+    expect(user.roles).toEqual(["user"]);
+    expect(user.permissions).toEqual(["profile:read"]);
 
     const found = await authUsers.findByEmail("user@example.com");
     expect(found._unsafeUnwrap()).toMatchObject({
       id: user.id,
       email: "user@example.com",
       displayName: "Component User",
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "active",
     });
+  });
+
+  it("updates access policy and records logins", async () => {
+    const user = (
+      await authUsers.createUser({ email: "admin@example.com" })
+    )._unsafeUnwrap();
+    const policy = await authUsers.setAccessPolicy(user.id, {
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+    const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
+    const login = await authUsers.recordLogin(user.id, loggedInAt);
+
+    expect(policy._unsafeUnwrap()).toMatchObject({
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+    expect(login._unsafeUnwrap()?.lastLoginAt?.toISOString()).toBe(
+      loggedInAt.toISOString(),
+    );
   });
 
   it("returns null for missing users", async () => {
     const found = await authUsers.findByEmail("missing@example.com");
 
     expect(found._unsafeUnwrap()).toBeNull();
+    expect((await authUsers.findById("missing-id"))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await authUsers.setAccessPolicy("missing-id", {}))._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (await authUsers.recordLogin("missing-id"))._unsafeUnwrap(),
+    ).toBeNull();
   });
 
   it("maps real unique-constraint failures to repository errors", async () => {

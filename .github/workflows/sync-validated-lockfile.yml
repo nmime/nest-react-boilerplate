@@ -1,0 +1,43 @@
+name: Sync validated pnpm lockfile
+
+on:
+  push:
+    branches:
+      - feature/fullstack-deploy-test-readiness
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-validated-pnpm-lockfile
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: ${{ !contains(github.event.head_commit.message, 'test: sync validated pnpm lockfile') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/fullstack-deploy-test-readiness
+          token: ${{ github.token }}
+      - name: Apply validated lockfile artifact
+        env:
+          LOCK_URL: https://splox.s3.amazonaws.com/30c97bdb-9a3f-411b-af3a-1be6140a8f13_nest-react-boilerplate-pnpm-lock-e2d0f4a.yaml
+          LOCK_SHA256: 892820f2fb8d4004b030f7f57c28ced8d228a6ef7dd90849d545de9a1b824cfe
+        run: |
+          set -euo pipefail
+          curl -fsSL "$LOCK_URL" -o pnpm-lock.yaml
+          echo "$LOCK_SHA256  pnpm-lock.yaml" | sha256sum -c -
+          rm -f .github/workflows/sync-validated-lockfile.yml
+          git status --short
+          if git diff --quiet -- pnpm-lock.yaml .github/workflows/sync-validated-lockfile.yml; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git add -u .github/workflows/sync-validated-lockfile.yml || true
+          git commit -m "test: sync validated pnpm lockfile"
+          git push origin HEAD:feature/fullstack-deploy-test-readiness

@@ -9,12 +9,14 @@ describe("AuthUserEntity", () => {
         email: "user@example.com",
         displayName: "User",
         permissions: ["profile:read"],
+        passwordHash: "hashed",
         roles: ["user"],
         status: "invited",
       }),
     ).toMatchObject({
       email: "user@example.com",
       displayName: "User",
+      passwordHash: "hashed",
       permissions: ["profile:read"],
       roles: ["user"],
       status: "invited",
@@ -25,6 +27,7 @@ describe("AuthUserEntity", () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
 
     expect(entity.displayName).toBeNull();
+    expect(entity.passwordHash).toBe("");
     expect(entity.status).toBe("active");
     expect(entity.roles).toEqual([]);
     expect(entity.permissions).toEqual([]);
@@ -43,6 +46,9 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.id.primary).toBe(true);
     expect(metadata.properties.id.type).toBe("uuid");
     expect(metadata.properties.email.name).toBe("email");
+    expect(metadata.properties.passwordHash.fieldNames).toContain(
+      "password_hash",
+    );
     expect(metadata.properties.status.type).toBe("varchar");
     expect(metadata.properties.roles.type).toBe("json");
     expect(metadata.properties.permissions.type).toBe("json");

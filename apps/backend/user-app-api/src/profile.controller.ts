@@ -6,7 +6,7 @@ import {
   type AuthenticatedPrincipal,
   RbacGuard,
   RequirePermissions,
-} from "@app/features-auth-oauth";
+} from "@app/feature-auth-oauth";
 
 export interface ProfilePayload {
   principal: AuthenticatedPrincipal;

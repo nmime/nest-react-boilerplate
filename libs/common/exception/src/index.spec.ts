@@ -1,9 +1,13 @@
 import { BadRequestException, HttpException, HttpStatus } from "@nestjs/common";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ApiProblemExceptions,
+  BaseException,
+  Exception,
   ProblemHttpException,
   createProblemDetails,
   getProblemStatus,
+  mapHttpStatusToProblemTitle,
   toProblemDetails,
 } from "./index";
 
@@ -74,6 +78,158 @@ describe("@app/common/exception", () => {
       type: "about:blank",
       title: "Internal Server Error",
       status: 500,
+    });
+  });
+
+  it("maps status titles and exposes OpenAPI problem decorators", () => {
+    expect(mapHttpStatusToProblemTitle(HttpStatus.BAD_REQUEST)).toBe(
+      "Bad Request",
+    );
+    expect(mapHttpStatusToProblemTitle(599)).toBe("Unexpected Error");
+    expect(ApiProblemExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
+      expect.any(Function),
+    );
+  });
+
+  it("creates coded problem details and reusable base exceptions", () => {
+    const cause = new Error("root cause");
+    const exception = new BaseException({
+      cause,
+      code: "domain-conflict",
+      detail: "Already exists",
+      extensions: { resource: "user" },
+      instance: "/users/1",
+      status: HttpStatus.CONFLICT,
+      title: "Conflict",
+    });
+
+    expect(exception).toMatchObject({
+      cause,
+      code: "domain-conflict",
+      detail: "Already exists",
+      name: "BaseException",
+      status: HttpStatus.CONFLICT,
+      title: "Conflict",
+    });
+    expect(exception.toProblemDetails("/fallback")).toEqual({
+      type: "https://example.com/problems/domain-conflict",
+      title: "Conflict",
+      status: HttpStatus.CONFLICT,
+      detail: "Already exists",
+      instance: "/users/1",
+      code: "domain-conflict",
+      resource: "user",
+    });
+    expect(
+      new BaseException({
+        status: HttpStatus.BAD_REQUEST,
+        title: "Bad Request",
+      }).toProblemDetails("/fallback"),
+    ).toMatchObject({ instance: "/fallback", status: 400 });
+  });
+
+  it("creates standard domain exceptions", () => {
+    expect(Exception.badRequest("bad").toProblemDetails()).toMatchObject({
+      code: "bad-request",
+      detail: "bad",
+      status: HttpStatus.BAD_REQUEST,
+      title: "Bad Request",
+    });
+    expect(Exception.conflict().status).toBe(HttpStatus.CONFLICT);
+    expect(Exception.forbidden().status).toBe(HttpStatus.FORBIDDEN);
+    expect(Exception.notFound().status).toBe(HttpStatus.NOT_FOUND);
+    expect(Exception.unauthorized().status).toBe(HttpStatus.UNAUTHORIZED);
+  });
+
+  it("normalizes base, problem, and generic HTTP exceptions", () => {
+    const base = new BaseException({
+      code: "forbidden",
+      status: HttpStatus.FORBIDDEN,
+      title: "Forbidden",
+    });
+    const problem = new ProblemHttpException({
+      instance: "/existing",
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+      title: "Invalid",
+    });
+    const problemWithoutInstance = new ProblemHttpException({
+      status: HttpStatus.CONFLICT,
+      title: "Conflict",
+    });
+    const patchedProblem = new ProblemHttpException({
+      status: HttpStatus.BAD_REQUEST,
+      title: "Bad Request",
+    });
+    vi.spyOn(patchedProblem, "getResponse").mockReturnValue("bad request");
+    const genericProblem = new HttpException(
+      createProblemDetails({ status: 409, title: "Conflict" }),
+      409,
+    );
+    const genericProblemWithInstance = new HttpException(
+      createProblemDetails({
+        instance: "/existing-generic",
+        status: 409,
+        title: "Conflict",
+      }),
+      409,
+    );
+
+    expect(getProblemStatus(base)).toBe(HttpStatus.FORBIDDEN);
+    expect(getProblemStatus(new HttpException("Accepted", 202))).toBe(202);
+    expect(toProblemDetails(base, "/base")).toMatchObject({
+      code: "forbidden",
+      instance: "/base",
+      status: HttpStatus.FORBIDDEN,
+    });
+    expect(toProblemDetails(problem, "/fallback")).toMatchObject({
+      instance: "/existing",
+      status: HttpStatus.UNPROCESSABLE_ENTITY,
+    });
+    expect(toProblemDetails(problemWithoutInstance, "/problem")).toMatchObject({
+      instance: "/problem",
+      status: HttpStatus.CONFLICT,
+    });
+    expect(toProblemDetails(patchedProblem, "/patched")).toEqual({
+      type: "about:blank",
+      title: "Problem Http Exception",
+      status: HttpStatus.BAD_REQUEST,
+      instance: "/patched",
+    });
+    expect(toProblemDetails(genericProblem, "/generic")).toMatchObject({
+      instance: "/generic",
+      status: 409,
+      title: "Conflict",
+    });
+    expect(
+      toProblemDetails(genericProblemWithInstance, "/generic-fallback"),
+    ).toMatchObject({
+      instance: "/existing-generic",
+      status: 409,
+      title: "Conflict",
+    });
+  });
+
+  it("uses HTTP response messages and status fallbacks for titles", () => {
+    expect(
+      toProblemDetails(new BadRequestException(["name", "email"])),
+    ).toEqual({
+      type: "about:blank",
+      title: "name, email",
+      status: 400,
+    });
+    expect(
+      toProblemDetails(new HttpException({ message: "single message" }, 422)),
+    ).toEqual({
+      type: "about:blank",
+      title: "single message",
+      status: 422,
+    });
+    expect(
+      toProblemDetails(new HttpException("", HttpStatus.I_AM_A_TEAPOT)),
+    ).toEqual({
+      type: "about:blank",
+      title: "I Am A Teapot",
+      status: HttpStatus.I_AM_A_TEAPOT,
     });
   });
 });

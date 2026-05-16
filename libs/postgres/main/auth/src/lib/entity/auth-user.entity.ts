@@ -12,6 +12,7 @@ export interface AuthUserAccessPolicyInput {
 export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   email: string;
   displayName?: string | null;
+  passwordHash?: string;
   lastLoginAt?: Date | null;
 }
 
@@ -19,6 +20,7 @@ export class AuthUserEntity {
   id: string = randomUUID();
   email!: string;
   displayName: string | null = null;
+  passwordHash = "";
   status: AuthUserStatus = "active";
   roles: string[] = [];
   permissions: string[] = [];
@@ -30,6 +32,7 @@ export class AuthUserEntity {
     if (input) {
       this.email = input.email;
       this.displayName = input.displayName ?? null;
+      this.passwordHash = input.passwordHash ?? "";
       this.status = input.status ?? "active";
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
@@ -49,6 +52,11 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       fieldName: "display_name",
       length: 160,
       nullable: true,
+    },
+    passwordHash: {
+      type: "varchar",
+      fieldName: "password_hash",
+      length: 255,
     },
     status: { type: "varchar", length: 32 },
     roles: { type: "json" },

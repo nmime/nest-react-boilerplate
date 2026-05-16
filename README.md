@@ -4,7 +4,7 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
-Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, bootstrap, validation, response/result boundaries, and OAuth/OIDC readiness.
+Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, xRocket-style backend bootstrap, validation, response mapping, problem-details exceptions, Swagger/OpenAPI, Postgres persistence, and OAuth/OIDC readiness.
 
 ## Workspace layout
 
@@ -15,10 +15,16 @@ Production-oriented Nx workspace for React frontends and NestJS backend APIs. Th
 - `apps/backend/user-app-api` — `user-app-api`, user API shell on port 3002 locally.
 - `apps/backend/auth-app-api` — `auth-app-api`, auth API shell on port 3003 locally.
 - `libs/frontend/ui` — shared React UI primitives.
-- `libs/common/bootstrap` — Nest bootstrap with Helmet, strict validation, and secure CORS defaults.
-- `libs/common/validation` — validation problem details helpers.
-- `libs/common/response` — API response/result helpers.
-- `libs/features/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
+- `libs/common/bootstrap` — Nest bootstrap with raw body, cookies, Helmet, robots, query parsing, CORS, logging, validation, response mapping, exceptions, and Swagger wiring.
+- `libs/common/exception` — RFC 7807 problem-details exception model, factory, status mapper, and OpenAPI decorators.
+- `libs/common/response` — API response mapper, neverthrow result mapper, transformer, and exception filter.
+- `libs/common/swagger` — reusable Swagger/OpenAPI setup with bearer auth and problem response support.
+- `libs/common/validation` — `ProblemValidationPipe` and validation problem details helpers.
+- `libs/feature/auth/shared` and `libs/feature/auth/main` — register/login/JWT auth feature modules.
+- `libs/feature/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
+- `libs/feature/user/shared` and `libs/feature/user/main` — protected user profile feature modules.
+- `libs/feature/admin/shared` and `libs/feature/admin/main` — RBAC admin profile feature modules.
+- `libs/postgres/main/shared` and `libs/postgres/main/auth` — MikroORM/Postgres config and auth user persistence.
 
 ## Requirements
 
@@ -56,7 +62,35 @@ pnpm exec nx serve user-app-api
 pnpm exec nx serve auth-app-api
 ```
 
-Each backend API exposes `GET /health`.
+Each backend API exposes `GET /health`. `auth-app-api` also exposes `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, and `POST /auth/logout`; `user-app-api` exposes protected `GET /profile/me`; `backend-admin-app-api` exposes protected `GET /admin/profile/me`.
+
+## From-scratch Postgres run
+
+1. Copy env and start Postgres:
+
+```bash
+cp .env.example .env
+docker compose up -d postgres
+```
+
+2. Create the base auth schema (or translate the SQL into your migration flow):
+
+```bash
+psql "$DATABASE_URL" -f libs/postgres/main/auth/migrations/0001_create_auth_users.sql
+```
+
+3. Start APIs and apps in separate terminals:
+
+```bash
+pnpm exec nx serve auth-app-api        # http://localhost:3003
+pnpm exec nx serve user-app-api        # http://localhost:3002
+pnpm exec nx serve backend-admin-app-api # http://localhost:3001
+pnpm exec nx serve landing-app
+pnpm exec nx serve user-app
+pnpm exec nx serve admin-app
+```
+
+4. Register/login through `POST /auth/register` or the user app. Put an email in `ADMIN_BOOTSTRAP_EMAILS` before registering it to receive admin role/permissions for the admin app.
 
 ## Runtime environment
 

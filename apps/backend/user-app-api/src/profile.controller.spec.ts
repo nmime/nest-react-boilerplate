@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/features-auth-oauth";
+import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
 import { ProfileController } from "./profile.controller";
 
 describe("user-app-api ProfileController", () => {

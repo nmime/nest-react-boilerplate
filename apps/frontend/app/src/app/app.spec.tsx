@@ -1,16 +1,197 @@
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
+const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
+  ({ ok, status, json: () => Promise.resolve(body) }) as Response;
+
+const installStorage = () => {
+  const values = new Map<string, string>();
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: {
+      clear: () => values.clear(),
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    },
+  });
+};
+
+type FetchReply = Response | { rejectsWith: unknown };
+
+const setFetch = (...responses: FetchReply[]) => {
+  const fetchMock = vi.fn();
+  for (const response of responses) {
+    if ("rejectsWith" in response) {
+      fetchMock.mockRejectedValueOnce(response.rejectsWith);
+    } else {
+      fetchMock.mockResolvedValueOnce(response);
+    }
+  }
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+};
+
 describe("User app shell", () => {
-  it("renders the user product copy through the shared shell", () => {
+  beforeEach(() => {
+    installStorage();
+    window.localStorage.clear();
+    window.history.pushState({}, "", "/");
+    vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("renders auth and profile copy through the shared shell", () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("xRocket App");
+    expect(html).toContain("User App");
     expect(html).toContain(
-      "Personal crypto operations in one reliable workspace.",
+      "Sign in, register, and load your protected profile.",
     );
-    expect(html).toContain("Wallet overview");
-    expect(html).toContain("Explore workspace");
+    expect(html).toContain("Development login/register flow");
+    expect(html).toContain("Profile state");
+  });
+
+  it("renders static markup without browser globals or usable storage", () => {
+    vi.stubGlobal("window", undefined);
+    expect(renderToStaticMarkup(<App />)).toContain("User App");
+    vi.unstubAllGlobals();
+    installStorage();
+
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get: () => {
+        throw new Error("storage blocked");
+      },
+    });
+
+    expect(renderToStaticMarkup(<App />)).toContain(
+      "Provide a token or use login/register.",
+    );
+  });
+
+  it("loads a profile from a URL token", async () => {
+    window.history.pushState({}, "", "/?token=url-token");
+    vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
+    const fetchMock = setFetch(
+      jsonResponse({
+        data: {
+          principal: { subject: "subject-id", email: "ready@example.com" },
+        },
+      }),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByText("Ready: ready@example.com")).toBeTruthy();
+    expect(window.localStorage.getItem("boilerplate.user.bearerToken")).toBe(
+      "url-token",
+    );
+    expect(fetchMock).toHaveBeenCalledWith("https://user-api/profile/me", {
+      headers: { Authorization: "Bearer url-token" },
+    });
+  });
+
+  it("shows forbidden states for profile response and thrown failures", async () => {
+    window.history.pushState({}, "", "/?token=bad-token");
+    setFetch(jsonResponse({}, false, 403));
+    const { unmount } = render(<App />);
+    expect(
+      await screen.findByText("Forbidden: Profile request failed with 403."),
+    ).toBeTruthy();
+    unmount();
+
+    window.history.pushState({}, "", "/?token=throw-token");
+    setFetch({ rejectsWith: "network failed" });
+    render(<App />);
+    expect(
+      await screen.findByText("Forbidden: Profile request failed."),
+    ).toBeTruthy();
+  });
+
+  it("handles incomplete profile payloads and non-error auth rejections", async () => {
+    window.history.pushState({}, "", "/?token=no-profile-token");
+    setFetch(jsonResponse({ data: {} }));
+    const { unmount } = render(<App />);
+    expect(await screen.findByText("Ready: unknown")).toBeTruthy();
+    unmount();
+    cleanup();
+    window.localStorage.clear();
+    window.history.pushState({}, "", "/");
+
+    const rejectAuthJson = vi
+      .fn<() => Promise<unknown>>()
+      .mockRejectedValue("auth offline");
+    setFetch({
+      ok: true,
+      status: 200,
+      json: rejectAuthJson,
+    } as Response);
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+
+    expect(
+      await screen.findByText("Forbidden: Authentication failed."),
+    ).toBeTruthy();
+  });
+
+  it("logs in then loads the protected profile", async () => {
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth-api/");
+    setFetch(
+      jsonResponse({ data: { accessToken: "login-token" } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+    );
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Login email"), {
+      target: { value: "user@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Login password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+
+    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+  });
+
+  it("handles register failures and empty success tokens", async () => {
+    setFetch(jsonResponse({}, false, 409));
+    const { unmount } = render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Register display name"), {
+      target: { value: "Registered User" },
+    });
+    fireEvent.change(screen.getByLabelText("Register email"), {
+      target: { value: "new@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Register password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    expect(
+      await screen.findByText("Forbidden: register failed with 409."),
+    ).toBeTruthy();
+    unmount();
+
+    setFetch(jsonResponse({ data: {} }));
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+    await waitFor(() =>
+      expect(
+        screen.getByText("Provide a token or use login/register."),
+      ).toBeTruthy(),
+    );
   });
 });

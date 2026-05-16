@@ -38,3 +38,5 @@ export function createProblemValidationPipe(): ValidationPipe {
       new BadRequestException(createProblemValidationBody(errors)),
   });
 }
+
+export const ProblemValidationPipe = createProblemValidationPipe;

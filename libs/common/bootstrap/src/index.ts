@@ -1,8 +1,13 @@
 import { randomUUID } from "node:crypto";
-import type { Type } from "@nestjs/common";
+import type { INestApplication, Type } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import {
+  ProblemExceptionFilter,
+  ProblemResponseTransformer,
+} from "@app/common/response";
+import { setupSwagger } from "@app/common/swagger";
 import { createProblemValidationPipe } from "@app/common/validation";
 
 export interface BootstrapNestApiOptions {
@@ -12,6 +17,8 @@ export interface BootstrapNestApiOptions {
   corsOrigins?: string[];
   openApi?: BootstrapOpenApiOptions;
   rateLimit?: BootstrapRateLimitOptions;
+  cookieSecret?: string;
+  trustProxy?: boolean | number | string;
 }
 
 export interface BootstrapOpenApiOptions {
@@ -19,6 +26,7 @@ export interface BootstrapOpenApiOptions {
   path?: string;
   title?: string;
   version?: string;
+  description?: string;
 }
 
 export interface BootstrapRateLimitOptions {
@@ -49,6 +57,10 @@ type NextFunctionLike = () => void;
 interface RateLimitBucket {
   count: number;
   resetAt: number;
+}
+
+interface ExpressLikeApplication extends INestApplication {
+  set?: (name: string, value: unknown) => void;
 }
 
 const DefaultRateLimitWindowMs = 60_000;
@@ -149,6 +161,23 @@ function createRequestLoggingMiddleware(appName: string) {
   };
 }
 
+function createRobotsMiddleware() {
+  return (
+    request: RequestLike,
+    response: ResponseLike,
+    next: NextFunctionLike,
+  ) => {
+    const path = request.path ?? request.url ?? request.originalUrl;
+    if (path === "/robots.txt") {
+      response.setHeader("content-type", "text/plain; charset=utf-8");
+      response.end?.("User-agent: *\nDisallow: /\n");
+      return;
+    }
+
+    next();
+  };
+}
+
 function resolveRateLimitOptions(
   options: BootstrapNestApiOptions,
 ): Required<BootstrapRateLimitOptions> {
@@ -198,14 +227,21 @@ function createRateLimitMiddleware(
 
     if (current.count > rateLimit.max) {
       response.statusCode = 429;
-      response.setHeader("content-type", "application/json; charset=utf-8");
+      response.setHeader(
+        "content-type",
+        "application/problem+json; charset=utf-8",
+      );
       response.setHeader(
         "retry-after",
         String(Math.ceil((current.resetAt - now) / 1000)),
       );
       response.end?.(
         JSON.stringify({
-          error: { code: "rate_limited", message: "Too many requests." },
+          type: "https://example.com/problems/rate-limited",
+          title: "Too Many Requests",
+          status: 429,
+          detail: "Too many requests.",
+          code: "rate-limited",
         }),
       );
       return;
@@ -215,39 +251,36 @@ function createRateLimitMiddleware(
   };
 }
 
-function setupOpenApi(app: unknown, options: BootstrapNestApiOptions): void {
-  const enabled =
-    options.openApi?.enabled ??
-    readBoolean(process.env.OPENAPI_ENABLED) ??
-    false;
-  if (!enabled) {
-    return;
-  }
-
-  const title =
-    options.openApi?.title ?? process.env.OPENAPI_TITLE ?? options.appName;
-  const version =
-    options.openApi?.version ?? process.env.OPENAPI_VERSION ?? "1.0.0";
-  const path = options.openApi?.path ?? process.env.OPENAPI_PATH ?? "docs";
-  const config = new DocumentBuilder()
-    .setTitle(title)
-    .setVersion(version)
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app as never, config);
-  SwaggerModule.setup(path, app as never, document);
+function configureExpressPlatform(
+  app: INestApplication,
+  options: BootstrapNestApiOptions,
+): void {
+  const expressApp = app as ExpressLikeApplication;
+  expressApp.set?.("query parser", "extended");
+  expressApp.set?.(
+    "trust proxy",
+    options.trustProxy ?? readBoolean(process.env.TRUST_PROXY) ?? false,
+  );
 }
 
 export async function bootstrapNestApi(
   module: Type<unknown>,
   options: BootstrapNestApiOptions,
 ): Promise<void> {
-  const app = await NestFactory.create(module, { bufferLogs: true });
+  const app = await NestFactory.create(module, {
+    bufferLogs: true,
+    rawBody: true,
+  });
 
+  configureExpressPlatform(app, options);
   app.enableShutdownHooks();
   app.use(createRequestLoggingMiddleware(options.appName));
+  app.use(createRobotsMiddleware());
+  app.use(cookieParser(options.cookieSecret ?? process.env.COOKIE_SECRET));
   app.use(helmet());
   app.useGlobalPipes(createProblemValidationPipe());
+  app.useGlobalInterceptors(new ProblemResponseTransformer());
+  app.useGlobalFilters(new ProblemExceptionFilter());
 
   const rateLimit = resolveRateLimitOptions(options);
   if (rateLimit.enabled) {
@@ -270,7 +303,13 @@ export async function bootstrapNestApi(
     }
   }
 
-  setupOpenApi(app, options);
+  setupSwagger(app, {
+    description: options.openApi?.description,
+    enabled: options.openApi?.enabled,
+    path: options.openApi?.path,
+    title: options.openApi?.title ?? options.appName,
+    version: options.openApi?.version,
+  });
 
   await app.listen(resolvePort(options.defaultPort));
 }

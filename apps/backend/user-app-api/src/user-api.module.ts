@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
+import { UserMainModule } from "@app/feature-user-main";
 import { HealthController } from "./health.controller";
-import { ProfileController } from "./profile.controller";
 
 @Module({
-  controllers: [HealthController, ProfileController],
+  imports: [UserMainModule],
+  controllers: [HealthController],
 })
 export class UserApiModule {}

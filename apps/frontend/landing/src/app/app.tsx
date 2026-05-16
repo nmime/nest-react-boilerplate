@@ -3,44 +3,39 @@ import { ProductShell, UiCard, UiSection, UiStatCard } from "@app/frontend-ui";
 const App = () => (
   <ProductShell
     actions={[
-      { href: "#workspace", label: "Explore workspace" },
-      { href: "/", label: "System status", variant: "secondary" },
+      { href: "/app", label: "Open user app" },
+      { href: "/admin", label: "Open admin", variant: "secondary" },
+      {
+        href: "http://localhost:3003/docs",
+        label: "API docs",
+        variant: "secondary",
+      },
     ]}
-    appName="xRocket Landing"
-    description="A public-facing landing experience that shares the same tokens, layout rhythm, and component language as the app and admin surfaces."
-    eyebrow="Landing"
-    status="Public surface"
+    appName="Nest React Boilerplate"
+    description="A generic Postgres-ready starter with landing, user, admin, auth API, user API, and admin API surfaces."
+    eyebrow="Ready from scratch"
+    status="Postgres base"
     statusTone="success"
-    title="A product front door for the xRocket ecosystem."
+    title="Launch a full-stack Nest and React product foundation."
   >
     <UiSection
-      eyebrow="Unified experience"
-      title="Built on the shared xRocket UI foundation"
+      eyebrow="Workspace"
+      title="Three frontends and three APIs are wired together"
     >
-      <div className="xr-card-grid">
-        <UiCard title="Product narrative">
-          Introduce the platform with concise value props and clear calls to
-          action.
+      <div className="xr-card-grid" id="workspace">
+        <UiCard title="Landing app">
+          Public product messaging, app links, and documentation entry points.
         </UiCard>
-        <UiCard title="Trust signals">
-          Reserve space for security, networks, liquidity, and operational
-          reliability.
+        <UiCard title="User app">
+          Login, register, bearer-token storage, and protected profile loading.
         </UiCard>
-        <UiCard title="Conversion path">
-          Guide users toward app access, support, and account activation.
+        <UiCard title="Admin app">
+          Fail-closed RBAC flow using admin roles and permissions.
         </UiCard>
       </div>
-      <div className="xr-stat-grid" id="workspace">
-        <UiStatCard
-          detail="Designed for always-on operations"
-          label="Availability"
-          value="24/7"
-        />
-        <UiStatCard
-          detail="Shared with app and admin"
-          label="Design system"
-          value="1"
-        />
+      <div className="xr-stat-grid">
+        <UiStatCard detail="auth, user, admin" label="APIs" value="3" />
+        <UiStatCard detail="landing, user, admin" label="Frontends" value="3" />
       </div>
     </UiSection>
   </ProductShell>

@@ -20,10 +20,16 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 
 ## Shared libraries
 
-- `libs/common/bootstrap` creates Nest apps with Helmet, strict validation, and secure CORS defaults.
-- `libs/common/validation` creates validation problem details.
-- `libs/common/response` standardizes success and problem responses.
-- `libs/features/auth/oauth` contains a disabled-by-default OAuth/OIDC foundation.
+- `libs/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/common/exception` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiProblemExceptions`.
+- `libs/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ProblemResponseTransformer`/`ProblemExceptionFilter`.
+- `libs/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
+- `libs/common/validation` creates `ProblemValidationPipe` validation problem details.
+- `libs/feature/auth/shared` contains auth roles, permissions, user/session contracts, and default access-policy helpers.
+- `libs/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
+- `libs/feature/auth/oauth` contains reusable bearer guard/RBAC decorators plus a disabled-by-default OAuth/OIDC foundation.
+- `libs/feature/user/shared` and `libs/feature/user/main` contain the protected user profile feature.
+- `libs/feature/admin/shared` and `libs/feature/admin/main` contain the protected admin RBAC/profile feature.
 - `libs/frontend/ui` contains shared React components and layout.
 
 ## Nx architecture tags
@@ -40,14 +46,14 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks.
 - `scope:<domain>` identifies ownership such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, or `scope:shared`.
 
-The current repository keeps existing project names and imports stable. New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
+New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
 
 ## Library naming conventions
 
-Existing names remain valid for compatibility. New backend libraries should prefer explicit names that encode platform/domain/layer:
+Backend feature libraries use singular `libs/feature/...` paths and singular `@app/feature-*` aliases:
 
-- Feature main: `@app/backend-auth-main` or existing-compatible `@app/features-auth-main`.
-- Feature shared: `@app/backend-auth-shared` or existing-compatible `@app/features-auth-shared`.
+- Feature main: `@app/feature-auth-main`, `@app/feature-user-main`, `@app/feature-admin-main`.
+- Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/feature-admin-shared`.
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`, `@app/postgres-main-user`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
 - Frontend UI: `@app/frontend-ui`.
@@ -61,7 +67,7 @@ The first xRocket-inspired data-access libraries live under `libs/postgres/main/
 - `@app/postgres-main` (`libs/postgres/main/shared`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
 - `@app/postgres-main-auth` (`libs/postgres/main/auth`) owns auth persistence objects such as `entity/` and `repository/` exports.
 
-Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. MikroORM does not auto-sync schemas in this boilerplate; production schema changes should be handled by migrations in a later stage.
+Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. MikroORM does not auto-sync schemas in this boilerplate; the starter auth schema is documented in `libs/postgres/main/auth/migrations/0001_create_auth_users.sql` and production schema changes should run through a controlled migration step.
 
 Repository wrappers return `neverthrow` `ResultAsync` values so feature code can handle persistence failures explicitly. New data-access libraries should follow the same shape: `entity/`, `repository/`, a Nest module, and a public `index.ts` barrel. Testcontainers-backed component tests live beside repository code as `*.component-spec.ts` and run only through the `component-test` target.
 

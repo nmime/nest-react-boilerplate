@@ -45,3 +45,18 @@ The response shape is:
 ## OAuth foundation
 
 `libs/features/auth/oauth` is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
+
+## Auth endpoints
+
+`auth-app-api` exposes:
+
+```http
+POST /auth/register
+POST /auth/login
+GET /auth/me
+POST /auth/logout
+```
+
+Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`. Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `backend-admin-app-api`.
+
+Admin access is fail-closed. A registered email listed in `ADMIN_BOOTSTRAP_EMAILS` receives `admin` role plus `admin:read`, `admin:profile:read`, and `admin:dashboard:read` permissions.

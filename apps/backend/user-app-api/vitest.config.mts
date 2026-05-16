@@ -6,6 +6,10 @@ export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/user-app-api",
   resolve: {
     alias: {
+      "@app/common/shared": new URL(
+        "../../../libs/common/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/bootstrap": new URL(
         "../../../libs/common/bootstrap/src/index.ts",
         import.meta.url,
@@ -20,6 +24,14 @@ export default defineConfig({
       ).pathname,
       "@app/features-auth-oauth": new URL(
         "../../../libs/features/auth/oauth/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-user-main": new URL(
+        "../../../libs/features/user/main/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-user-shared": new URL(
+        "../../../libs/features/user/shared/src/index.ts",
         import.meta.url,
       ).pathname,
     },

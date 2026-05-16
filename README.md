@@ -18,7 +18,11 @@ Production-oriented Nx workspace for React frontends and NestJS backend APIs. Th
 - `libs/common/bootstrap` — Nest bootstrap with Helmet, strict validation, and secure CORS defaults.
 - `libs/common/validation` — validation problem details helpers.
 - `libs/common/response` — API response/result helpers.
+- `libs/features/auth/shared` and `libs/features/auth/main` — register/login/JWT auth feature modules.
 - `libs/features/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
+- `libs/features/user/shared` and `libs/features/user/main` — protected user profile feature modules.
+- `libs/features/admin/shared` and `libs/features/admin/main` — RBAC admin profile feature modules.
+- `libs/postgres/main/shared` and `libs/postgres/main/auth` — MikroORM/Postgres config and auth user persistence.
 
 ## Requirements
 
@@ -56,7 +60,35 @@ pnpm exec nx serve user-app-api
 pnpm exec nx serve auth-app-api
 ```
 
-Each backend API exposes `GET /health`.
+Each backend API exposes `GET /health`. `auth-app-api` also exposes `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, and `POST /auth/logout`; `user-app-api` exposes protected `GET /profile/me`; `backend-admin-app-api` exposes protected `GET /admin/profile/me`.
+
+## From-scratch Postgres run
+
+1. Copy env and start Postgres:
+
+```bash
+cp .env.example .env
+docker compose up -d postgres
+```
+
+2. Create the base auth schema (or translate the SQL into your migration flow):
+
+```bash
+psql "$DATABASE_URL" -f libs/postgres/main/auth/migrations/0001_create_auth_users.sql
+```
+
+3. Start APIs and apps in separate terminals:
+
+```bash
+pnpm exec nx serve auth-app-api        # http://localhost:3003
+pnpm exec nx serve user-app-api        # http://localhost:3002
+pnpm exec nx serve backend-admin-app-api # http://localhost:3001
+pnpm exec nx serve landing-app
+pnpm exec nx serve user-app
+pnpm exec nx serve admin-app
+```
+
+4. Register/login through `POST /auth/register` or the user app. Put an email in `ADMIN_BOOTSTRAP_EMAILS` before registering it to receive admin role/permissions for the admin app.
 
 ## Runtime environment
 

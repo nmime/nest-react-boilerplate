@@ -1,0 +1,35 @@
+{
+  "name": "@app/features-auth-shared",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/auth/shared/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/auth/shared",
+        "main": "libs/features/auth/shared/src/index.ts",
+        "tsConfig": "libs/features/auth/shared/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/features/auth/shared",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/dist/libs/features/auth/shared"]
+    }
+  }
+}

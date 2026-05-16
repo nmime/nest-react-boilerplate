@@ -1,0 +1,35 @@
+{
+  "name": "@app/features-auth-main",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/auth/main/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-main", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/auth/main",
+        "main": "libs/features/auth/main/src/index.ts",
+        "tsConfig": "libs/features/auth/main/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/features/auth/main",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/dist/libs/features/auth/main"]
+    }
+  }
+}

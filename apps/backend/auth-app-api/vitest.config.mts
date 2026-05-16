@@ -6,6 +6,10 @@ export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/auth-app-api",
   resolve: {
     alias: {
+      "@app/common/shared": new URL(
+        "../../../libs/common/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/bootstrap": new URL(
         "../../../libs/common/bootstrap/src/index.ts",
         import.meta.url,
@@ -20,6 +24,26 @@ export default defineConfig({
       ).pathname,
       "@app/features-auth-oauth": new URL(
         "../../../libs/features/auth/oauth/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-auth-main": new URL(
+        "../../../libs/features/auth/main/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-auth-shared": new URL(
+        "../../../libs/features/auth/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-admin-shared": new URL(
+        "../../../libs/features/admin/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/postgres-main": new URL(
+        "../../../libs/postgres/main/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/postgres-main-auth": new URL(
+        "../../../libs/postgres/main/auth/src/index.ts",
         import.meta.url,
       ).pathname,
     },

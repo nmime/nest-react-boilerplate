@@ -26,7 +26,7 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/app/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/app --app-name user-app --contains \"Personal crypto operations in one reliable workspace.\" --coverage-dir coverage/e2e/apps/frontend/app"
+        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/app/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/app --app-name user-app --contains \"Sign in, register, and load your protected profile.\" --coverage-dir coverage/e2e/apps/frontend/app"
       },
       "inputs": [
         "production",

@@ -15,12 +15,12 @@ export const AdminLayout = ({
       { href: "/", label: "Dashboard" },
       { href: "/profile", label: "Profile", variant: "secondary" },
     ]}
-    appName="xRocket Admin"
+    appName="Admin App"
     description="A guarded operational command surface for support, risk, and platform administration workflows."
     eyebrow="Admin console"
     status="RBAC protected"
     statusTone="warning"
-    title="Operate the xRocket platform with a unified admin experience."
+    title="Operate the product platform with a fail-closed admin experience."
   >
     {children}
   </ProductShell>

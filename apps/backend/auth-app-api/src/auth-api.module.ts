@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { AuthMainModule } from "@app/features-auth-main";
+import { AuthMainModule } from "@app/feature-auth-main";
 import { HealthController } from "./health.controller";
 
 @Module({

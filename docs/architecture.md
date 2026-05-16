@@ -20,14 +20,16 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 
 ## Shared libraries
 
-- `libs/common/bootstrap` creates Nest apps with Helmet, strict validation, and secure CORS defaults.
-- `libs/common/validation` creates validation problem details.
-- `libs/common/response` standardizes success and problem responses.
-- `libs/features/auth/shared` contains auth roles, permissions, user/session contracts, and default access-policy helpers.
-- `libs/features/auth/main` contains register/login/me/logout controllers and JWT/password application services.
-- `libs/features/auth/oauth` contains reusable bearer guard/RBAC decorators plus a disabled-by-default OAuth/OIDC foundation.
-- `libs/features/user/shared` and `libs/features/user/main` contain the protected user profile feature.
-- `libs/features/admin/shared` and `libs/features/admin/main` contain the protected admin RBAC/profile feature.
+- `libs/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/common/exception` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiProblemExceptions`.
+- `libs/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ProblemResponseTransformer`/`ProblemExceptionFilter`.
+- `libs/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
+- `libs/common/validation` creates `ProblemValidationPipe` validation problem details.
+- `libs/feature/auth/shared` contains auth roles, permissions, user/session contracts, and default access-policy helpers.
+- `libs/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
+- `libs/feature/auth/oauth` contains reusable bearer guard/RBAC decorators plus a disabled-by-default OAuth/OIDC foundation.
+- `libs/feature/user/shared` and `libs/feature/user/main` contain the protected user profile feature.
+- `libs/feature/admin/shared` and `libs/feature/admin/main` contain the protected admin RBAC/profile feature.
 - `libs/frontend/ui` contains shared React components and layout.
 
 ## Nx architecture tags
@@ -44,14 +46,14 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks.
 - `scope:<domain>` identifies ownership such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, or `scope:shared`.
 
-The current repository keeps existing project names and imports stable. New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
+New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
 
 ## Library naming conventions
 
-Existing names remain valid for compatibility. New backend libraries should prefer explicit names that encode platform/domain/layer:
+Backend feature libraries use singular `libs/feature/...` paths and singular `@app/feature-*` aliases:
 
-- Feature main: `@app/backend-auth-main` or existing-compatible `@app/features-auth-main`.
-- Feature shared: `@app/backend-auth-shared` or existing-compatible `@app/features-auth-shared`.
+- Feature main: `@app/feature-auth-main`, `@app/feature-user-main`, `@app/feature-admin-main`.
+- Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/feature-admin-shared`.
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`, `@app/postgres-main-user`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
 - Frontend UI: `@app/frontend-ui`.

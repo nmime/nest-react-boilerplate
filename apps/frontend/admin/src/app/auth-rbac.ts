@@ -45,11 +45,9 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
   const roles = normalizeClaimList(principal?.roles);
   const permissions = normalizeClaimList(principal?.permissions);
   const isAdmin = roles.includes("admin");
-  const hasLegacyRead = permissions.includes("admin:read");
   const canReadDashboard =
-    isAdmin && (hasLegacyRead || permissions.includes("admin:dashboard:read"));
-  const canReadProfile =
-    isAdmin && (hasLegacyRead || permissions.includes("admin:profile:read"));
+    isAdmin && permissions.includes("admin:dashboard:read");
+  const canReadProfile = isAdmin && permissions.includes("admin:profile:read");
 
   return {
     isAuthenticated: Boolean(principal?.subject),
@@ -62,11 +60,7 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
 
 export const getBearerTokenFromUrl = (href: string): string => {
   const url = new URL(href, "http://localhost/");
-  return (
-    url.searchParams.get("admin_token") ??
-    url.searchParams.get("token") ??
-    ""
-  ).trim();
+  return (url.searchParams.get("admin_token") ?? "").trim();
 };
 
 export const readStoredBearerToken = (storage?: Storage): string =>

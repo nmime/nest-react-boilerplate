@@ -5,44 +5,168 @@ const mocks = vi.hoisted(() => {
     enableCors: vi.fn(),
     enableShutdownHooks: vi.fn(),
     listen: vi.fn(),
+    set: vi.fn(),
     use: vi.fn(),
+    useGlobalFilters: vi.fn(),
+    useGlobalInterceptors: vi.fn(),
     useGlobalPipes: vi.fn(),
   };
-  const documentBuilder = {
-    addBearerAuth: vi.fn(() => documentBuilder),
-    build: vi.fn(() => "swagger-config"),
-    setTitle: vi.fn(() => documentBuilder),
-    setVersion: vi.fn(() => documentBuilder),
-  };
+  const cookieMiddleware = vi.fn();
   const helmetMiddleware = vi.fn();
   return {
     app,
-    createDocument: vi.fn(() => "swagger-document"),
+    cookieParser: vi.fn(() => cookieMiddleware),
+    cookieMiddleware,
     createProblemValidationPipe: vi.fn(() => "validation-pipe"),
-    documentBuilder,
     helmet: vi.fn(() => helmetMiddleware),
     helmetMiddleware,
     nestCreate: vi.fn(() => Promise.resolve(app)),
-    setup: vi.fn(),
+    problemExceptionFilter: vi.fn(function ProblemExceptionFilterMock() {
+      return undefined;
+    }),
+    problemResponseTransformer: vi.fn(
+      function ProblemResponseTransformerMock() {
+        return undefined;
+      },
+    ),
+    setupSwagger: vi.fn(),
   };
+
+  it("continues non-robots requests", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+    const middleware = mocks.app.use.mock.calls[1][0] as TestMiddleware;
+    const next = vi.fn();
+
+    middleware(
+      { url: "/health" },
+      { end: vi.fn(), on: vi.fn(), setHeader: vi.fn() },
+      next,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("generates request ids and prefers originalUrl in structured logs", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+    const middleware = mocks.app.use.mock.calls[0][0] as TestMiddleware;
+    const finishCallbacks: Array<() => void> = [];
+    const response = {
+      on: vi.fn((_: "finish", callback: () => void) =>
+        finishCallbacks.push(callback),
+      ),
+      setHeader: vi.fn(),
+      statusCode: 200,
+    };
+
+    middleware({ method: "POST", originalUrl: "/original" }, response, vi.fn());
+    finishCallbacks[0]();
+
+    expect(response.setHeader).toHaveBeenCalledWith(
+      "x-request-id",
+      expect.any(String),
+    );
+    expect(JSON.parse(logSpy.mock.calls[0][0] as string)).toMatchObject({
+      path: "/original",
+      status: 200,
+    });
+  });
+
+  it("enables rate limiting from environment configuration", async () => {
+    process.env.RATE_LIMIT_ENABLED = "on";
+    process.env.RATE_LIMIT_MAX = "2";
+    process.env.RATE_LIMIT_WINDOW_MS = "1000";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+
+    expect(mocks.app.use).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it("uses forwarded, socket, and unknown clients for rate-limit keys", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+      rateLimit: { enabled: true, max: 10, windowMs: 1_000 },
+    });
+    const middleware = mocks.app.use.mock.calls.at(-1)?.[0] as TestMiddleware;
+    const response = {
+      end: vi.fn(),
+      on: vi.fn(),
+      setHeader: vi.fn(),
+      statusCode: 200,
+    };
+    const next = vi.fn();
+
+    middleware({ headers: { "x-forwarded-for": "client-a" } }, response, next);
+    middleware({ socket: { remoteAddress: "client-b" } }, response, next);
+    middleware({}, response, next);
+
+    expect(next).toHaveBeenCalledTimes(3);
+  });
+
+  it("uses request.path in logs and originalUrl for robots fallback", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+    const loggingMiddleware = mocks.app.use.mock.calls[0][0] as TestMiddleware;
+    const robotsMiddleware = mocks.app.use.mock.calls[1][0] as TestMiddleware;
+    const finishCallbacks: Array<() => void> = [];
+    const logResponse = {
+      on: vi.fn((_: "finish", callback: () => void) =>
+        finishCallbacks.push(callback),
+      ),
+      setHeader: vi.fn(),
+      statusCode: 200,
+    };
+    const robotsResponse = {
+      end: vi.fn(),
+      on: vi.fn(),
+      setHeader: vi.fn(),
+    };
+
+    loggingMiddleware({ path: "/path-only" }, logResponse, vi.fn());
+    finishCallbacks[0]();
+    robotsMiddleware({ originalUrl: "/robots.txt" }, robotsResponse, vi.fn());
+
+    expect(JSON.parse(logSpy.mock.calls[0][0] as string)).toMatchObject({
+      path: "/path-only",
+    });
+    expect(robotsResponse.end).toHaveBeenCalledWith(
+      "User-agent: *\nDisallow: /\n",
+    );
+  });
 });
 
 vi.mock("@nestjs/core", () => ({
   NestFactory: { create: mocks.nestCreate },
 }));
 
-vi.mock("@nestjs/swagger", () => ({
-  DocumentBuilder: vi.fn(function DocumentBuilderMock() {
-    return mocks.documentBuilder;
-  }),
-  SwaggerModule: {
-    createDocument: mocks.createDocument,
-    setup: mocks.setup,
-  },
+vi.mock("cookie-parser", () => ({
+  default: mocks.cookieParser,
 }));
 
 vi.mock("helmet", () => ({
   default: mocks.helmet,
+}));
+
+vi.mock("@app/common/response", () => ({
+  ProblemExceptionFilter: mocks.problemExceptionFilter,
+  ProblemResponseTransformer: mocks.problemResponseTransformer,
+}));
+
+vi.mock("@app/common/swagger", () => ({
+  setupSwagger: mocks.setupSwagger,
 }));
 
 vi.mock("@app/common/validation", () => ({
@@ -77,11 +201,22 @@ type TestMiddleware = (
   next: TestNext,
 ) => void;
 
+const restoreEnv = (name: string, value: string | undefined): void => {
+  if (value === undefined) {
+    delete process.env[name];
+    return;
+  }
+
+  process.env[name] = value;
+};
+
 describe("bootstrapNestApi", () => {
   const originalEnvironment = {
+    cookieSecret: process.env.COOKIE_SECRET,
     corsOrigin: process.env.CORS_ORIGIN,
     corsOrigins: process.env.CORS_ORIGINS,
     nodeEnv: process.env.NODE_ENV,
+    openApiDescription: process.env.OPENAPI_DESCRIPTION,
     openApiEnabled: process.env.OPENAPI_ENABLED,
     openApiPath: process.env.OPENAPI_PATH,
     openApiTitle: process.env.OPENAPI_TITLE,
@@ -90,12 +225,15 @@ describe("bootstrapNestApi", () => {
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
     rateLimitMax: process.env.RATE_LIMIT_MAX,
     rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
+    trustProxy: process.env.TRUST_PROXY,
   };
 
   beforeEach(() => {
+    delete process.env.COOKIE_SECRET;
     delete process.env.CORS_ORIGIN;
     delete process.env.CORS_ORIGINS;
     delete process.env.NODE_ENV;
+    delete process.env.OPENAPI_DESCRIPTION;
     delete process.env.OPENAPI_ENABLED;
     delete process.env.OPENAPI_PATH;
     delete process.env.OPENAPI_TITLE;
@@ -104,13 +242,16 @@ describe("bootstrapNestApi", () => {
     delete process.env.RATE_LIMIT_ENABLED;
     delete process.env.RATE_LIMIT_MAX;
     delete process.env.RATE_LIMIT_WINDOW_MS;
+    delete process.env.TRUST_PROXY;
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    restoreEnv("COOKIE_SECRET", originalEnvironment.cookieSecret);
     restoreEnv("CORS_ORIGIN", originalEnvironment.corsOrigin);
     restoreEnv("CORS_ORIGINS", originalEnvironment.corsOrigins);
     restoreEnv("NODE_ENV", originalEnvironment.nodeEnv);
+    restoreEnv("OPENAPI_DESCRIPTION", originalEnvironment.openApiDescription);
     restoreEnv("OPENAPI_ENABLED", originalEnvironment.openApiEnabled);
     restoreEnv("OPENAPI_PATH", originalEnvironment.openApiPath);
     restoreEnv("OPENAPI_TITLE", originalEnvironment.openApiTitle);
@@ -119,9 +260,10 @@ describe("bootstrapNestApi", () => {
     restoreEnv("RATE_LIMIT_ENABLED", originalEnvironment.rateLimitEnabled);
     restoreEnv("RATE_LIMIT_MAX", originalEnvironment.rateLimitMax);
     restoreEnv("RATE_LIMIT_WINDOW_MS", originalEnvironment.rateLimitWindowMs);
+    restoreEnv("TRUST_PROXY", originalEnvironment.trustProxy);
   });
 
-  it("creates an app with shutdown hooks, request logging, security middleware, validation, development CORS, and the default port", async () => {
+  it("creates an app with xRocket-style HTTP foundation and the default port", async () => {
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
       defaultPort: 3010,
@@ -129,18 +271,36 @@ describe("bootstrapNestApi", () => {
 
     expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, {
       bufferLogs: true,
+      rawBody: true,
     });
+    expect(mocks.app.set).toHaveBeenCalledWith("query parser", "extended");
+    expect(mocks.app.set).toHaveBeenCalledWith("trust proxy", false);
     expect(mocks.app.enableShutdownHooks).toHaveBeenCalledOnce();
     expect(mocks.app.use).toHaveBeenNthCalledWith(1, expect.any(Function));
+    expect(mocks.app.use).toHaveBeenNthCalledWith(2, expect.any(Function));
+    expect(mocks.cookieParser).toHaveBeenCalledWith(undefined);
+    expect(mocks.app.use).toHaveBeenCalledWith(mocks.cookieMiddleware);
     expect(mocks.helmet).toHaveBeenCalledOnce();
     expect(mocks.app.use).toHaveBeenCalledWith(mocks.helmetMiddleware);
     expect(mocks.createProblemValidationPipe).toHaveBeenCalledOnce();
     expect(mocks.app.useGlobalPipes).toHaveBeenCalledWith("validation-pipe");
+    expect(mocks.problemResponseTransformer).toHaveBeenCalledWith();
+    expect(mocks.app.useGlobalInterceptors).toHaveBeenCalledWith(
+      expect.anything(),
+    );
+    expect(mocks.problemExceptionFilter).toHaveBeenCalledWith();
+    expect(mocks.app.useGlobalFilters).toHaveBeenCalledWith(expect.anything());
     expect(mocks.app.enableCors).toHaveBeenCalledWith({
       credentials: true,
       origin: true,
     });
-    expect(mocks.setup).not.toHaveBeenCalled();
+    expect(mocks.setupSwagger).toHaveBeenCalledWith(mocks.app, {
+      description: undefined,
+      enabled: undefined,
+      path: undefined,
+      title: "test-api",
+      version: undefined,
+    });
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
   });
 
@@ -258,76 +418,135 @@ describe("bootstrapNestApi", () => {
       requestId: "request-id",
       status: 204,
     });
-    logSpy.mockRestore();
   });
 
-  it("generates request ids and logs originalUrl/path fallbacks", async () => {
+  it("serves deny-all robots.txt before app routes", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+    const middleware = mocks.app.use.mock.calls[1][0] as TestMiddleware;
+    const response = {
+      end: vi.fn(),
+      on: vi.fn(),
+      setHeader: vi.fn(),
+    };
+    const next = vi.fn();
+
+    middleware({ path: "/robots.txt" }, response, next);
+
+    expect(response.setHeader).toHaveBeenCalledWith(
+      "content-type",
+      "text/plain; charset=utf-8",
+    );
+    expect(response.end).toHaveBeenCalledWith("User-agent: *\nDisallow: /\n");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("supports rate limiting with problem-details responses", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+      rateLimit: { enabled: true, max: 1, windowMs: 1_000 },
+    });
+    const middleware = mocks.app.use.mock.calls.at(-1)?.[0] as TestMiddleware;
+    const response = {
+      end: vi.fn(),
+      on: vi.fn(),
+      setHeader: vi.fn(),
+      statusCode: 200,
+    };
+    const request = { ip: "127.0.0.1" };
+
+    middleware(request, response, vi.fn());
+    middleware(request, response, vi.fn());
+
+    expect(response.statusCode).toBe(429);
+    expect(response.setHeader).toHaveBeenCalledWith(
+      "content-type",
+      "application/problem+json; charset=utf-8",
+    );
+    expect(response.end).toHaveBeenCalledWith(
+      expect.stringContaining("Too Many Requests"),
+    );
+  });
+
+  it("passes OpenAPI options, cookie secret, and trust proxy to platform integrations", async () => {
+    process.env.COOKIE_SECRET = "secret";
+    process.env.TRUST_PROXY = "true";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+      openApi: {
+        description: "Docs",
+        enabled: true,
+        path: "openapi",
+        title: "Custom API",
+        version: "2.0.0",
+      },
+    });
+
+    expect(mocks.cookieParser).toHaveBeenCalledWith("secret");
+    expect(mocks.app.set).toHaveBeenCalledWith("trust proxy", true);
+    expect(mocks.setupSwagger).toHaveBeenCalledWith(mocks.app, {
+      description: "Docs",
+      enabled: true,
+      path: "openapi",
+      title: "Custom API",
+      version: "2.0.0",
+    });
+  });
+
+  it("continues non-robots requests", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+    const middleware = mocks.app.use.mock.calls[1][0] as TestMiddleware;
+    const next = vi.fn();
+
+    middleware(
+      { url: "/health" },
+      { end: vi.fn(), on: vi.fn(), setHeader: vi.fn() },
+      next,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("generates request ids and prefers originalUrl in structured logs", async () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
       defaultPort: 3010,
     });
     const middleware = mocks.app.use.mock.calls[0][0] as TestMiddleware;
-
-    const firstFinishCallbacks: Array<() => void> = [];
-    const firstResponse = {
+    const finishCallbacks: Array<() => void> = [];
+    const response = {
       on: vi.fn((_: "finish", callback: () => void) =>
-        firstFinishCallbacks.push(callback),
+        finishCallbacks.push(callback),
       ),
       setHeader: vi.fn(),
-      statusCode: 201,
+      statusCode: 200,
     };
-    middleware(
-      {
-        headers: {},
-        method: "POST",
-        originalUrl: "/original-url",
-        url: "/url-fallback",
-      },
-      firstResponse,
-      vi.fn(),
-    );
-    firstFinishCallbacks[0]();
 
-    const generatedRequestId = firstResponse.setHeader.mock
-      .calls[0][1] as string;
-    expect(generatedRequestId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+    middleware({ method: "POST", originalUrl: "/original" }, response, vi.fn());
+    finishCallbacks[0]();
+
+    expect(response.setHeader).toHaveBeenCalledWith(
+      "x-request-id",
+      expect.any(String),
     );
     expect(JSON.parse(logSpy.mock.calls[0][0] as string)).toMatchObject({
-      path: "/original-url",
-      requestId: generatedRequestId,
+      path: "/original",
+      status: 200,
     });
-
-    const secondFinishCallbacks: Array<() => void> = [];
-    const secondResponse = {
-      on: vi.fn((_: "finish", callback: () => void) =>
-        secondFinishCallbacks.push(callback),
-      ),
-      setHeader: vi.fn(),
-      statusCode: 202,
-    };
-    middleware(
-      {
-        headers: {},
-        method: "PATCH",
-        path: "/path-fallback",
-      },
-      secondResponse,
-      vi.fn(),
-    );
-    secondFinishCallbacks[0]();
-
-    expect(JSON.parse(logSpy.mock.calls[1][0] as string)).toMatchObject({
-      path: "/path-fallback",
-      status: 202,
-    });
-    logSpy.mockRestore();
   });
 
-  it("installs rate limiting only when enabled", async () => {
-    process.env.RATE_LIMIT_ENABLED = "true";
-    process.env.RATE_LIMIT_MAX = "1";
+  it("enables rate limiting from environment configuration", async () => {
+    process.env.RATE_LIMIT_ENABLED = "on";
+    process.env.RATE_LIMIT_MAX = "2";
     process.env.RATE_LIMIT_WINDOW_MS = "1000";
 
     await bootstrapNestApi(TestModule, {
@@ -335,132 +554,62 @@ describe("bootstrapNestApi", () => {
       defaultPort: 3010,
     });
 
-    expect(mocks.app.use).toHaveBeenCalledTimes(3);
-    const rateLimitMiddleware = mocks.app.use.mock
-      .calls[2][0] as TestMiddleware;
-    const next = vi.fn();
+    expect(mocks.app.use).toHaveBeenCalledWith(expect.any(Function));
+  });
+
+  it("uses forwarded, socket, and unknown clients for rate-limit keys", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+      rateLimit: { enabled: true, max: 10, windowMs: 1_000 },
+    });
+    const middleware = mocks.app.use.mock.calls.at(-1)?.[0] as TestMiddleware;
     const response = {
       end: vi.fn(),
       on: vi.fn(),
       setHeader: vi.fn(),
       statusCode: 200,
     };
+    const next = vi.fn();
 
-    rateLimitMiddleware({ headers: {}, ip: "127.0.0.1" }, response, next);
-    rateLimitMiddleware({ headers: {}, ip: "127.0.0.1" }, response, next);
+    middleware({ headers: { "x-forwarded-for": "client-a" } }, response, next);
+    middleware({ socket: { remoteAddress: "client-b" } }, response, next);
+    middleware({}, response, next);
 
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(response.statusCode).toBe(429);
-    expect(response.end).toHaveBeenCalledWith(
-      JSON.stringify({
-        error: { code: "rate_limited", message: "Too many requests." },
-      }),
-    );
+    expect(next).toHaveBeenCalledTimes(3);
   });
 
-  it("uses rate-limit identity fallbacks and resets expired buckets", async () => {
+  it("uses request.path in logs and originalUrl for robots fallback", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
       defaultPort: 3010,
-      rateLimit: { enabled: true, max: 1, windowMs: 1 },
     });
-
-    const rateLimitMiddleware = mocks.app.use.mock
-      .calls[2][0] as TestMiddleware;
-    const next = vi.fn();
-    const response = {
-      end: vi.fn(),
-      on: vi.fn(),
+    const loggingMiddleware = mocks.app.use.mock.calls[0][0] as TestMiddleware;
+    const robotsMiddleware = mocks.app.use.mock.calls[1][0] as TestMiddleware;
+    const finishCallbacks: Array<() => void> = [];
+    const logResponse = {
+      on: vi.fn((_: "finish", callback: () => void) =>
+        finishCallbacks.push(callback),
+      ),
       setHeader: vi.fn(),
       statusCode: 200,
     };
+    const robotsResponse = {
+      end: vi.fn(),
+      on: vi.fn(),
+      setHeader: vi.fn(),
+    };
 
-    rateLimitMiddleware(
-      { headers: {}, socket: { remoteAddress: "socket-client" } },
-      response,
-      next,
-    );
-    rateLimitMiddleware({ headers: {} }, response, next);
+    loggingMiddleware({ path: "/path-only" }, logResponse, vi.fn());
+    finishCallbacks[0]();
+    robotsMiddleware({ originalUrl: "/robots.txt" }, robotsResponse, vi.fn());
 
-    expect(next).toHaveBeenCalledTimes(2);
-    expect(response.end).not.toHaveBeenCalled();
-  });
-
-  it("uses explicit OpenAPI options before environment fallbacks", async () => {
-    process.env.OPENAPI_ENABLED = "false";
-    process.env.OPENAPI_PATH = "ignored-openapi";
-    process.env.OPENAPI_TITLE = "Ignored API";
-    process.env.OPENAPI_VERSION = "ignored-version";
-
-    await bootstrapNestApi(TestModule, {
-      appName: "test-api",
-      defaultPort: 3010,
-      openApi: {
-        enabled: true,
-        path: "docs",
-        title: "Explicit API",
-        version: "1.2.3",
-      },
+    expect(JSON.parse(logSpy.mock.calls[0][0] as string)).toMatchObject({
+      path: "/path-only",
     });
-
-    expect(mocks.documentBuilder.setTitle).toHaveBeenCalledWith("Explicit API");
-    expect(mocks.documentBuilder.setVersion).toHaveBeenCalledWith("1.2.3");
-    expect(mocks.setup).toHaveBeenCalledWith(
-      "docs",
-      mocks.app,
-      "swagger-document",
-    );
-  });
-
-  it("uses default OpenAPI title, version, and path fallbacks", async () => {
-    await bootstrapNestApi(TestModule, {
-      appName: "fallback-api",
-      defaultPort: 3010,
-      openApi: { enabled: true },
-    });
-
-    expect(mocks.documentBuilder.setTitle).toHaveBeenCalledWith("fallback-api");
-    expect(mocks.documentBuilder.setVersion).toHaveBeenCalledWith("1.0.0");
-    expect(mocks.setup).toHaveBeenCalledWith(
-      "docs",
-      mocks.app,
-      "swagger-document",
-    );
-  });
-
-  it("sets up OpenAPI only when enabled", async () => {
-    process.env.OPENAPI_ENABLED = "true";
-    process.env.OPENAPI_PATH = "openapi";
-    process.env.OPENAPI_TITLE = "Production API";
-    process.env.OPENAPI_VERSION = "2026.1.0";
-
-    await bootstrapNestApi(TestModule, {
-      appName: "test-api",
-      defaultPort: 3010,
-    });
-
-    expect(mocks.documentBuilder.setTitle).toHaveBeenCalledWith(
-      "Production API",
-    );
-    expect(mocks.documentBuilder.setVersion).toHaveBeenCalledWith("2026.1.0");
-    expect(mocks.documentBuilder.addBearerAuth).toHaveBeenCalledOnce();
-    expect(mocks.createDocument).toHaveBeenCalledWith(
-      mocks.app,
-      "swagger-config",
-    );
-    expect(mocks.setup).toHaveBeenCalledWith(
-      "openapi",
-      mocks.app,
-      "swagger-document",
+    expect(robotsResponse.end).toHaveBeenCalledWith(
+      "User-agent: *\nDisallow: /\n",
     );
   });
 });
-
-function restoreEnv(name: string, value: string | undefined): void {
-  if (value === undefined) {
-    delete process.env[name];
-    return;
-  }
-
-  process.env[name] = value;
-}

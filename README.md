@@ -4,7 +4,7 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
-Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, bootstrap, validation, response/result boundaries, and OAuth/OIDC readiness.
+Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, xRocket-style backend bootstrap, validation, response mapping, problem-details exceptions, Swagger/OpenAPI, Postgres persistence, and OAuth/OIDC readiness.
 
 ## Workspace layout
 
@@ -15,13 +15,15 @@ Production-oriented Nx workspace for React frontends and NestJS backend APIs. Th
 - `apps/backend/user-app-api` — `user-app-api`, user API shell on port 3002 locally.
 - `apps/backend/auth-app-api` — `auth-app-api`, auth API shell on port 3003 locally.
 - `libs/frontend/ui` — shared React UI primitives.
-- `libs/common/bootstrap` — Nest bootstrap with Helmet, strict validation, and secure CORS defaults.
-- `libs/common/validation` — validation problem details helpers.
-- `libs/common/response` — API response/result helpers.
-- `libs/features/auth/shared` and `libs/features/auth/main` — register/login/JWT auth feature modules.
-- `libs/features/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
-- `libs/features/user/shared` and `libs/features/user/main` — protected user profile feature modules.
-- `libs/features/admin/shared` and `libs/features/admin/main` — RBAC admin profile feature modules.
+- `libs/common/bootstrap` — Nest bootstrap with raw body, cookies, Helmet, robots, query parsing, CORS, logging, validation, response mapping, exceptions, and Swagger wiring.
+- `libs/common/exception` — RFC 7807 problem-details exception model, factory, status mapper, and OpenAPI decorators.
+- `libs/common/response` — API response mapper, neverthrow result mapper, transformer, and exception filter.
+- `libs/common/swagger` — reusable Swagger/OpenAPI setup with bearer auth and problem response support.
+- `libs/common/validation` — `ProblemValidationPipe` and validation problem details helpers.
+- `libs/feature/auth/shared` and `libs/feature/auth/main` — register/login/JWT auth feature modules.
+- `libs/feature/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
+- `libs/feature/user/shared` and `libs/feature/user/main` — protected user profile feature modules.
+- `libs/feature/admin/shared` and `libs/feature/admin/main` — RBAC admin profile feature modules.
 - `libs/postgres/main/shared` and `libs/postgres/main/auth` — MikroORM/Postgres config and auth user persistence.
 
 ## Requirements

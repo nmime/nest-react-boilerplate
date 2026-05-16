@@ -3,6 +3,14 @@ import { defineConfig } from "vitest/config";
 import { fullCoverage } from "../../../tools/vitest-coverage.mts";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@app/common/exception": new URL(
+        "../../../libs/common/exception/src/index.ts",
+        import.meta.url,
+      ).pathname,
+    },
+  },
   cacheDir: "../../../dist/out-tsc/libs/common/response",
   test: {
     environment: "node",

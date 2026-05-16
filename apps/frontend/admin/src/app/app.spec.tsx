@@ -71,9 +71,6 @@ describe("admin auth and RBAC helpers", () => {
     expect(getBearerTokenFromUrl("/dashboard?admin_token=from-url")).toBe(
       "from-url",
     );
-    expect(getBearerTokenFromUrl("/dashboard?token=legacy-url")).toBe(
-      "legacy-url",
-    );
     expect(readStoredBearerToken(window.localStorage)).toBe("stored");
     expect(resolveInitialBearerToken("/dashboard", window.localStorage)).toBe(
       "stored",
@@ -107,14 +104,14 @@ describe("admin auth and RBAC helpers", () => {
       createAdminAccess({
         subject: "admin-id",
         roles: ["admin", "admin"],
-        permissions: ["admin:read"],
+        permissions: ["admin:profile:read", "admin:dashboard:read"],
       }),
     ).toEqual({
       isAuthenticated: true,
       canReadDashboard: true,
       canReadProfile: true,
       roles: ["admin"],
-      permissions: ["admin:read"],
+      permissions: ["admin:profile:read", "admin:dashboard:read"],
     });
     expect(
       createAdminAccess({
@@ -163,7 +160,7 @@ describe("admin pages", () => {
   const access = createAdminAccess({
     subject: "admin-id",
     roles: ["admin"],
-    permissions: ["admin:read"],
+    permissions: ["admin:profile:read", "admin:dashboard:read"],
   });
   const payload = {
     principal: { subject: "admin-id" },
@@ -172,7 +169,7 @@ describe("admin pages", () => {
       email: "admin@example.com",
       displayName: "Ada Admin",
       roles: ["admin"],
-      permissions: ["admin:read"],
+      permissions: ["admin:profile:read", "admin:dashboard:read"],
     },
   };
 
@@ -282,12 +279,12 @@ describe("Admin app shell", () => {
         principal: {
           subject: "admin-id",
           roles: ["admin"],
-          permissions: ["admin:read"],
+          permissions: ["admin:profile:read", "admin:dashboard:read"],
         },
         profile: {
           id: "admin-id",
           roles: ["admin"],
-          permissions: ["admin:read"],
+          permissions: ["admin:profile:read", "admin:dashboard:read"],
         },
       },
     });
@@ -318,13 +315,13 @@ describe("Admin app shell", () => {
           principal: {
             subject: "admin-id",
             roles: ["admin"],
-            permissions: ["admin:read"],
+            permissions: ["admin:profile:read", "admin:dashboard:read"],
           },
           profile: {
             id: "admin-id",
             email: "admin@example.com",
             roles: ["admin"],
-            permissions: ["admin:read"],
+            permissions: ["admin:profile:read", "admin:dashboard:read"],
           },
         },
       }),

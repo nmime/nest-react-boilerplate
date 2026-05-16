@@ -16,8 +16,16 @@
     "test:coverage": "pnpm exec nx run-many -t test --all -- --coverage",
     "audit": "pnpm audit --audit-level=moderate",
     "test:component": "nx run-many -t component-test --all",
-    "test:e2e": "nx run-many -t e2e --all",
-    "test:e2e:coverage": "nx run-many -t e2e --all -- --coverage"
+    "test:e2e": "nx run-many -t e2e --projects=admin-app,user-app,landing-app,backend-admin-app-api,user-app-api,auth-app-api",
+    "test:e2e:coverage": "nx run-many -t e2e --projects=admin-app,user-app,landing-app,backend-admin-app-api,user-app-api,auth-app-api -- --coverage",
+    "dev:db": "docker compose up -d postgres",
+    "db:migrate": "node tools/db-migrate.mjs",
+    "db:reset": "node tools/db-reset.mjs",
+    "dev:fullstack": "node tools/dev-fullstack.mjs",
+    "docker:fullstack": "docker compose -f docker/docker-compose.yml up --build",
+    "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
+    "test:docker-smoke": "node tools/docker-smoke.mjs",
+    "test:fullstack": "node tools/fullstack-e2e.mjs"
   },
   "dependencies": {
     "@mikro-orm/core": "7.0.16",

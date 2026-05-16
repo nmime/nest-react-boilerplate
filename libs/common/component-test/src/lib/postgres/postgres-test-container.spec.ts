@@ -1,11 +1,17 @@
+import { spawnSync } from "node:child_process";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DefaultPostgresStartupTimeoutMs,
   createPostgresContainer,
   createPostgresContainerMikroOrmOptions,
+  hasDockerRuntime,
   stopPostgresContainer,
 } from "./postgres-test-container";
+
+vi.mock("node:child_process", () => ({
+  spawnSync: vi.fn(),
+}));
 
 interface FakeStartedPostgresContainer {
   getHost(): string;
@@ -15,7 +21,14 @@ interface FakeStartedPostgresContainer {
   getDatabase(): string;
 }
 
+const mockedSpawnSync = vi.mocked(spawnSync);
+
 describe("postgres test container helpers", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    mockedSpawnSync.mockReset();
+  });
+
   it("creates a default PostgreSQL container without starting it", () => {
     expect(createPostgresContainer()).toBeDefined();
   });
@@ -58,6 +71,35 @@ describe("postgres test container helpers", () => {
       debug: true,
       driverOptions: {},
     });
+  });
+
+  it("detects Docker availability from explicit skip, CI, and local runtime checks", () => {
+    vi.stubEnv("SKIP_TESTCONTAINERS", "true");
+    expect(hasDockerRuntime()).toBe(false);
+    expect(mockedSpawnSync).not.toHaveBeenCalled();
+
+    vi.stubEnv("SKIP_TESTCONTAINERS", "false");
+    vi.stubEnv("CI", "true");
+    expect(hasDockerRuntime()).toBe(true);
+    expect(mockedSpawnSync).not.toHaveBeenCalled();
+
+    vi.stubEnv("CI", "false");
+    mockedSpawnSync.mockReturnValueOnce({ status: 0 } as never);
+    expect(hasDockerRuntime()).toBe(true);
+    expect(mockedSpawnSync).toHaveBeenCalledWith(
+      "/usr/bin/docker",
+      ["version"],
+      { stdio: "ignore", timeout: 5_000 },
+    );
+
+    mockedSpawnSync.mockReset();
+    mockedSpawnSync
+      .mockImplementationOnce(() => {
+        throw new Error("missing docker");
+      })
+      .mockReturnValueOnce({ status: 1 } as never);
+
+    expect(hasDockerRuntime()).toBe(false);
   });
 
   it("stops containers when provided and ignores undefined", async () => {

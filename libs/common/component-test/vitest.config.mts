@@ -12,7 +12,7 @@ export default defineConfig({
     coverage: fullCoverage(
       "../../../coverage/libs/common/component-test",
       ["src/**/*.ts"],
-      [],
+      ["src/index.ts", "src/**/index.ts"],
     ),
   },
 });

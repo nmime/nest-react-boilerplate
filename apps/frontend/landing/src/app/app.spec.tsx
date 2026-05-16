@@ -11,5 +11,6 @@ describe("Landing app shell", () => {
       "Launch a full-stack Nest and React product foundation.",
     );
     expect(html).toContain("Three frontends and three APIs");
+    expect(html).toContain('href="/docs"');
   });
 });

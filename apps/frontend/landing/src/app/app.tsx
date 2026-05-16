@@ -6,7 +6,7 @@ const App = () => (
       { href: "/app", label: "Open user app" },
       { href: "/admin", label: "Open admin", variant: "secondary" },
       {
-        href: "http://localhost:3003/docs",
+        href: "/docs",
         label: "API docs",
         variant: "secondary",
       },

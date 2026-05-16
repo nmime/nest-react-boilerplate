@@ -92,6 +92,28 @@ pnpm exec nx serve admin-app
 
 4. Register/login through `POST /auth/register` or the user app. Put an email in `ADMIN_BOOTSTRAP_EMAILS` before registering it to receive admin role/permissions for the admin app.
 
+## One-command local development
+
+```bash
+cp .env.example .env
+pnpm run dev:db
+pnpm run db:migrate
+pnpm run dev:fullstack
+```
+
+Use `pnpm run db:reset` only for local/dev databases; it drops the auth schema and reapplies SQL migrations. See `docs/deployment.md` for Docker deployment/smoke details.
+
+## Fullstack and Docker testing
+
+```bash
+pnpm run test:component
+pnpm run test:e2e
+pnpm run test:docker-smoke
+pnpm run test:fullstack
+```
+
+`test:fullstack` runs the `apps/e2e/fullstack` Playwright project against Docker Compose with real Postgres, API health, auth/user/admin HTTP flows, and frontend route checks. See `docs/testing.md` for the full matrix.
+
 ## Runtime environment
 
 Common backend variables:

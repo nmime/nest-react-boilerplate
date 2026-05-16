@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/no-hardcoded-passwords -- component tests use disposable local credentials only. */
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import { MikroORM } from "@mikro-orm/core";
+import { MikroORM, type IMigrator } from "@mikro-orm/core";
+import { Migrator } from "@mikro-orm/migrations";
 import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import supertest from "supertest";
@@ -12,7 +11,10 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from "@app/common-component-test";
-import { AuthUserEntitySchema } from "@app/postgres-main-auth";
+import {
+  AuthUserEntitySchema,
+  authMigrationOptions,
+} from "@app/postgres-main-auth";
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthMainModule } from "./auth-main.module";
@@ -49,9 +51,14 @@ describeIfDocker("AuthMainModule postgres component", () => {
       imports: [
         AuthMainModule.forRoot({
           mode: "postgres",
-          postgres: createPostgresContainerMikroOrmOptions(container, [
-            AuthUserEntitySchema,
-          ]),
+          postgres: createPostgresContainerMikroOrmOptions(
+            container,
+            [AuthUserEntitySchema],
+            {
+              extensions: [Migrator],
+              migrations: authMigrationOptions,
+            },
+          ),
         }),
       ],
     }).compile();
@@ -77,7 +84,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
     delete process.env.AUTH_PERSISTENCE;
   });
 
-  it("applies SQL migrations against a clean Testcontainers database", async () => {
+  it("applies MikroORM migrations against a clean Testcontainers database", async () => {
     const result = (await orm.em
       .getConnection()
       .execute(
@@ -172,14 +179,10 @@ describeIfDocker("AuthMainModule postgres component", () => {
 });
 
 async function runAuthMigrations(orm: MikroORM): Promise<void> {
-  const migrationSql = await readFile(
-    resolve(
-      process.cwd(),
-      "../../../../libs/postgres/main/auth/migrations/0001_create_auth_users.sql",
-    ),
-    "utf8",
-  );
-  await orm.em.getConnection().execute(migrationSql);
+  const migrator = (
+    orm as MikroORM & { getMigrator(): IMigrator }
+  ).getMigrator();
+  await migrator.up();
 }
 
 function getHttpServer(

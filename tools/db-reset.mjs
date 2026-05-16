@@ -1,38 +1,46 @@
 #!/usr/bin/env node
-import pg from "pg";
 import {
   assertLocalDevelopmentDatabase,
   loadDotEnv,
   postgresConnectionString,
   redactedConnectionString,
 } from "./env-loader.mjs";
+import {
+  authMigrationTableName,
+  initAuthMigrationOrm,
+  migrationNames,
+} from "./orm-migration-config.mjs";
 
 loadDotEnv();
 const connectionString = postgresConnectionString();
 
 async function main() {
   assertLocalDevelopmentDatabase(connectionString);
-  const client = new pg.Client({ connectionString });
-  await client.connect();
-  try {
-    await client.query("begin");
-    await client.query("drop table if exists auth_users cascade");
-    await client.query("commit");
-  } catch (error) {
-    await client.query("rollback").catch(() => undefined);
-    throw error;
-  } finally {
-    await client.end();
-  }
 
-  console.log(
-    JSON.stringify({
-      status: "reset",
-      database: redactedConnectionString(connectionString),
-      droppedTables: ["auth_users"],
-    }),
-  );
-  await import("./db-migrate.mjs");
+  const orm = await initAuthMigrationOrm();
+  try {
+    await orm.schema.drop({
+      dropForeignKeys: true,
+      dropMigrationsTable: true,
+      wrap: true,
+    });
+
+    const migrator = orm.getMigrator();
+    const applied = await migrator.up();
+
+    console.log(
+      JSON.stringify({
+        status: "reset",
+        database: redactedConnectionString(connectionString),
+        droppedSchema: true,
+        migrationsTable: authMigrationTableName,
+        executed: migrationNames(applied),
+        executedCount: applied.length,
+      }),
+    );
+  } finally {
+    await orm.close(true);
+  }
 }
 
 main().catch((error) => {

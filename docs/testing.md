@@ -12,3 +12,5 @@ The fullstack suite runs deterministic API-backed auth/user/admin flows plus
 frontend route assertions. UI-only registration/login remains intentionally light
 to avoid brittle form coupling; core auth persistence and same-origin proxy paths
 are exercised through HTTP and browser assertions.
+
+Database-backed component, Docker smoke, and fullstack tests use the same MikroORM migrator path as local development. Successful runs should leave `mikro_orm_migrations` tracking applied migrations; rerunning `pnpm run db:migrate` should report zero newly executed migrations.

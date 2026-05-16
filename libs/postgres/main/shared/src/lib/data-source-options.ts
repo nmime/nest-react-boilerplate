@@ -1,3 +1,4 @@
+import type { MigrationsOptions } from "@mikro-orm/core";
 import { Migrator } from "@mikro-orm/migrations";
 import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
@@ -10,6 +11,14 @@ import {
   readPort,
   readSslRejectUnauthorized,
 } from "./database.config";
+
+export const PostgresMigrationsTableName = "mikro_orm_migrations";
+
+export const defaultPostgresMigrationOptions: MigrationsOptions = {
+  tableName: PostgresMigrationsTableName,
+  transactional: true,
+  allOrNothing: true,
+};
 
 export type PostgresMikroOrmOptions = MikroOrmModuleSyncOptions;
 export type PostgresMikroOrmOverrides = Partial<PostgresMikroOrmOptions>;
@@ -26,7 +35,7 @@ export function createPostgresMikroOrmOptions(
         host: env.POSTGRES_HOST ?? DefaultPostgresHost,
         port: readPort(env.POSTGRES_PORT),
         user: env.POSTGRES_USER ?? DefaultPostgresUser,
-        password: env.POSTGRES_PASSWORD,
+        password: env.POSTGRES_PASSWORD ?? "postgres",
         dbName: env.POSTGRES_DB ?? DefaultPostgresDatabase,
       };
 
@@ -45,5 +54,9 @@ export function createPostgresMikroOrmOptions(
         }
       : {},
     ...overrides,
+    migrations: {
+      ...defaultPostgresMigrationOptions,
+      ...overrides.migrations,
+    },
   };
 }

@@ -73,10 +73,10 @@ cp .env.example .env
 docker compose up -d postgres
 ```
 
-2. Create the base auth schema (or translate the SQL into your migration flow):
+2. Apply the MikroORM migrations. They are tracked in the `mikro_orm_migrations` table and are safe to rerun:
 
 ```bash
-psql "$DATABASE_URL" -f libs/postgres/main/auth/migrations/0001_create_auth_users.sql
+pnpm run db:migrate
 ```
 
 3. Start APIs and apps in separate terminals:
@@ -101,7 +101,7 @@ pnpm run db:migrate
 pnpm run dev:fullstack
 ```
 
-Use `pnpm run db:reset` only for local/dev databases; it drops the auth schema and reapplies SQL migrations. See `docs/deployment.md` for Docker deployment/smoke details.
+Use `pnpm run db:reset` only for local/dev databases; it drops the app schema plus `mikro_orm_migrations` with MikroORM schema tooling, then reapplies MikroORM migrations. See `docs/deployment.md` for Docker deployment/smoke details.
 
 ## Fullstack and Docker testing
 

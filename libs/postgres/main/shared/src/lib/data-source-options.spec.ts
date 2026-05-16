@@ -1,7 +1,10 @@
 import { Migrator } from "@mikro-orm/migrations";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { describe, expect, it } from "vitest";
-import { createPostgresMikroOrmOptions } from "./data-source-options";
+import {
+  PostgresMigrationsTableName,
+  createPostgresMikroOrmOptions,
+} from "./data-source-options";
 import {
   DefaultPostgresDatabase,
   DefaultPostgresHost,
@@ -24,6 +27,11 @@ describe("Postgres MikroORM options", () => {
       driverOptions: {},
       entities: [],
       extensions: [Migrator],
+      migrations: {
+        tableName: PostgresMigrationsTableName,
+        transactional: true,
+        allOrNothing: true,
+      },
       autoLoadEntities: true,
     });
   });
@@ -37,6 +45,7 @@ describe("Postgres MikroORM options", () => {
     ).toMatchObject({
       driver: PostgreSqlDriver,
       clientUrl: "postgres://user:pass@db.example:5432/app",
+      migrations: { tableName: PostgresMigrationsTableName },
       debug: false,
     });
   });

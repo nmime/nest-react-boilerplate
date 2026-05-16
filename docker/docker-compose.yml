@@ -53,21 +53,16 @@ services:
       retries: 20
 
   migrate:
-    image: postgres:17-alpine
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: migrator
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
-    volumes:
-      - ../libs/postgres/main/auth/migrations:/migrations:ro
-    command:
-      [
-        "sh",
-        "-ec",
-        "for file in /migrations/*.sql; do echo applying $$(basename $$file); psql -v ON_ERROR_STOP=1 -h postgres -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate} -f $$file; done",
-      ]
+    environment: *backend-env
+    command: ["pnpm", "db:migrate"]
 
   backend-admin-app-api:
     build:

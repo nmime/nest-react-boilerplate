@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/component-test/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:test-util", "scope:shared"],
+  "tags": ["platform:backend", "type:test-util", "type:common", "scope:shared"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

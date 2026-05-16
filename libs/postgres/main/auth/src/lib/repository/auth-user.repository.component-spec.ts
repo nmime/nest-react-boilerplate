@@ -4,6 +4,7 @@ import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import {
   createPostgresContainerMikroOrmOptions,
+  hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
 } from "@app/common-component-test";
@@ -13,7 +14,15 @@ import { AuthPostgresModule } from "../auth-postgres.module";
 import { AuthUserEntity, AuthUserEntitySchema } from "../entity";
 import { AuthUserRepository } from "./auth-user.repository";
 
-describe("AuthUserRepository component", () => {
+const dockerAvailable = hasDockerRuntime();
+if (!dockerAvailable) {
+  process.stderr.write(
+    "AuthUserRepository component tests: skipped because Docker is not available on this host.\n",
+  );
+}
+const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+describeIfDocker("AuthUserRepository component", () => {
   let container: StartedPostgreSqlContainer | undefined;
   let moduleRef: TestingModule | undefined;
   let app: INestApplication | undefined;

@@ -1,4 +1,74 @@
+x-backend-env: &backend-env
+  NODE_ENV: production
+  PORT: 3000
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081,http://localhost:8082,http://localhost:8083}
+  DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
+  AUTH_PERSISTENCE: postgres
+  AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-replace-with-a-local-dev-secret}
+  AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-nest-react-boilerplate}
+  AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
+  AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-admin@example.com}
+  OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
+  OPENAPI_PATH: ${OPENAPI_PATH:-docs}
+
+x-backend-healthcheck: &backend-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      'node -e "fetch(''http://127.0.0.1:3000/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+    ]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 20s
+
+x-frontend-healthcheck: &frontend-healthcheck
+  test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health | grep -q ok"]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 10s
+
 services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: postgres:17-alpine
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ../libs/postgres/main/auth/migrations:/migrations:ro
+    command:
+      [
+        "sh",
+        "-ec",
+        "for file in /migrations/*.sql; do echo applying $$(basename $$file); psql -v ON_ERROR_STOP=1 -h postgres -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate} -f $$file; done",
+      ]
+
   backend-admin-app-api:
     build:
       context: ..
@@ -7,14 +77,16 @@ services:
       args:
         NX_PROJECT: backend-admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin-app-api
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
-      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "3001:3000"
+    healthcheck: *backend-healthcheck
 
   user-app-api:
     build:
@@ -24,14 +96,16 @@ services:
       args:
         NX_PROJECT: user-app-api
         BUILD_OUTPUT: dist/apps/backend/user-app-api
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
-      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "3002:3000"
+    healthcheck: *backend-healthcheck
 
   auth-app-api:
     build:
@@ -41,14 +115,16 @@ services:
       args:
         NX_PROJECT: auth-app-api
         BUILD_OUTPUT: dist/apps/backend/auth-app-api
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
-      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "3003:3000"
+    healthcheck: *backend-healthcheck
 
   admin-app:
     build:
@@ -58,8 +134,13 @@ services:
       args:
         NX_PROJECT: admin-app
         FRONTEND_OUTPUT: dist/apps/frontend/admin
+    restart: unless-stopped
+    depends_on:
+      backend-admin-app-api:
+        condition: service_healthy
     ports:
       - "8081:80"
+    healthcheck: *frontend-healthcheck
 
   user-app:
     build:
@@ -69,8 +150,15 @@ services:
       args:
         NX_PROJECT: user-app
         FRONTEND_OUTPUT: dist/apps/frontend/app
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
     ports:
       - "8082:80"
+    healthcheck: *frontend-healthcheck
 
   landing-app:
     build:
@@ -80,19 +168,17 @@ services:
       args:
         NX_PROJECT: landing-app
         FRONTEND_OUTPUT: dist/apps/frontend/landing
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+      backend-admin-app-api:
+        condition: service_healthy
     ports:
       - "8083:80"
-
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: nest_react_boilerplate
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    healthcheck: *frontend-healthcheck
 
 volumes:
   postgres-data:

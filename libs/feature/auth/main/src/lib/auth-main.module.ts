@@ -1,5 +1,8 @@
 import { DynamicModule, Module } from "@nestjs/common";
-import { PostgresMainModule } from "@app/postgres-main";
+import {
+  PostgresMainModule,
+  type PostgresMikroOrmOverrides,
+} from "@app/postgres-main";
 import { AuthPostgresModule } from "@app/postgres-main-auth";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
@@ -10,6 +13,11 @@ import {
 } from "./auth-user-store";
 
 export type AuthPersistenceMode = "postgres" | "memory";
+
+export interface AuthMainModuleOptions {
+  mode?: AuthPersistenceMode;
+  postgres?: PostgresMikroOrmOverrides;
+}
 
 function resolvePersistenceMode(): AuthPersistenceMode {
   if (
@@ -22,17 +30,31 @@ function resolvePersistenceMode(): AuthPersistenceMode {
   return "postgres";
 }
 
+function normalizeOptions(
+  optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
+): Required<AuthMainModuleOptions> {
+  if (typeof optionsOrMode === "string") {
+    return { mode: optionsOrMode, postgres: {} };
+  }
+
+  return {
+    mode: optionsOrMode.mode ?? resolvePersistenceMode(),
+    postgres: optionsOrMode.postgres ?? {},
+  };
+}
+
 @Module({})
 export class AuthMainModule {
   static forRoot(
-    mode: AuthPersistenceMode = resolvePersistenceMode(),
+    optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
   ): DynamicModule {
-    const useMemory = mode === "memory";
+    const options = normalizeOptions(optionsOrMode);
+    const useMemory = options.mode === "memory";
     return {
       module: AuthMainModule,
       imports: useMemory
         ? []
-        : [PostgresMainModule.forRoot(), AuthPostgresModule],
+        : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule],
       controllers: [AuthController],
       providers: [
         AuthService,

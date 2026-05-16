@@ -30,6 +30,27 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/dist/libs/feature/auth/main"]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/feature/auth/main",
+        "command": "vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": [
+            "vitest",
+            "supertest",
+            "testcontainers",
+            "@testcontainers/postgresql"
+          ]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/feature/auth/main-component"]
     }
   }
 }

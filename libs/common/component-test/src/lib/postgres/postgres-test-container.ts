@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import {
@@ -12,6 +13,33 @@ export const DefaultPostgresTestUsername = "component_test";
 // eslint-disable-next-line sonarjs/no-hardcoded-passwords
 export const DefaultPostgresTestPassword = "component_test_password";
 export const DefaultPostgresStartupTimeoutMs = 120_000;
+
+export function hasDockerRuntime(): boolean {
+  if (process.env.SKIP_TESTCONTAINERS === "true") {
+    return false;
+  }
+
+  if (process.env.CI === "true") {
+    return true;
+  }
+
+  const dockerBinaryPaths = [
+    "/usr/bin/docker",
+    "/usr/local/bin/docker",
+  ] as const;
+
+  return dockerBinaryPaths.some((dockerBinaryPath) => {
+    try {
+      const result = spawnSync(dockerBinaryPath, ["version"], {
+        stdio: "ignore",
+        timeout: 5_000,
+      });
+      return result.status === 0;
+    } catch {
+      return false;
+    }
+  });
+}
 
 export interface PostgresContainerOptions {
   image?: string;

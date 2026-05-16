@@ -1,3 +1,4 @@
+# Retry trigger for validated lockfile sync
 name: Sync validated pnpm lockfile
 
 on:

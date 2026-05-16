@@ -7,8 +7,7 @@ FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
 WORKDIR /workspace
 RUN apk add --no-cache libc6-compat python3 make g++ \
-  && corepack enable \
-  && corepack prepare pnpm@${PNPM_VERSION} --activate
+  && npm install -g pnpm@${PNPM_VERSION}
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json tsconfig.base.json eslint.config.js jest.preset.js .npmrc ./
 COPY apps ./apps
@@ -29,12 +28,13 @@ ENV NODE_ENV=production \
   PORT=3000
 WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin-app-api
+ENV APP_MAIN=${BUILD_OUTPUT}/src/main.js
 COPY --from=builder /workspace/package.json ./package.json
 COPY --from=builder /workspace/node_modules ./node_modules
-COPY --from=builder /workspace/${BUILD_OUTPUT} ./dist
+COPY --from=builder /workspace/dist ./dist
 USER node
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "node \"$APP_MAIN\""]
 
 FROM nginx:1.27-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

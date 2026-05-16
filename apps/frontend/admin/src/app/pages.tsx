@@ -63,7 +63,8 @@ export const ProfilePage = ({
   return (
     <UiSection eyebrow="Profile" title="Signed-in administrator">
       <UiCard title={profile?.displayName ?? profile?.email ?? "Administrator"}>
-        Subject: {payload.principal?.subject ?? profile?.id ?? "unknown"}
+        <p>Email: {profile?.email ?? payload.principal?.email ?? "unknown"}</p>
+        <p>Subject: {payload.principal?.subject ?? profile?.id ?? "unknown"}</p>
       </UiCard>
     </UiSection>
   );

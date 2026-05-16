@@ -18,11 +18,13 @@ pnpm run db:migrate
 pnpm run db:reset
 ```
 
-`db:migrate` reads `DATABASE_URL` or constructs a local URL from `POSTGRES_*` defaults, initializes MikroORM with the auth entity plus migration class list, and runs `orm.getMigrator().up()`. Applied migrations are tracked in `mikro_orm_migrations`; the command is idempotent and no runtime path uses raw SQL files or a `psql` loop.
+`db:migrate` reads `DATABASE_URL` or constructs a local URL from `POSTGRES_*` defaults, initializes MikroORM with the auth entity plus migration class list, and runs `orm.migrator.up()`. Applied migrations are tracked in `mikro_orm_migrations`; the command is idempotent and no runtime path uses raw SQL files or a `psql` loop.
 
 `db:reset` refuses non-local or non-dev-looking database names, then uses MikroORM schema tooling to drop app tables and `mikro_orm_migrations` before rerunning the same MikroORM migrator.
 
 ## Docker fullstack
+
+Docker validation scripts build Compose services serially and default `COMPOSE_PARALLEL_LIMIT=1`, `COMPOSE_BAKE=false`, `NX_DAEMON=false`, and `NX_PARALLEL=1` so image builds stay reliable on modest-memory CI and VPS hosts. Override these only on larger builders.
 
 ```bash
 pnpm run docker:fullstack

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-hardcoded-passwords -- component tests use disposable local credentials only. */
-import { MikroORM, type IMigrator } from "@mikro-orm/core";
+import { MikroORM } from "@mikro-orm/core";
 import { Migrator } from "@mikro-orm/migrations";
 import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
@@ -179,10 +179,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
 });
 
 async function runAuthMigrations(orm: MikroORM): Promise<void> {
-  const migrator = (
-    orm as MikroORM & { getMigrator(): IMigrator }
-  ).getMigrator();
-  await migrator.up();
+  await orm.migrator.up();
 }
 
 function getHttpServer(

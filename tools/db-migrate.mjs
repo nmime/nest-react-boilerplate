@@ -16,7 +16,7 @@ const connectionString = postgresConnectionString();
 async function main() {
   const orm = await initAuthMigrationOrm();
   try {
-    const migrator = orm.getMigrator();
+    const migrator = orm.migrator;
     const pending = await migrator.getPending();
     const applied = await migrator.up();
     const executed = await migrator.getExecuted();

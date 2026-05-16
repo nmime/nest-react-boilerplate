@@ -2,8 +2,22 @@
 import { run, skipWhenDockerUnavailable } from "./docker-runtime.mjs";
 
 const compose = ["compose", "-f", "docker/docker-compose.yml"];
+const stackServices = [
+  "migrate",
+  "backend-admin-app-api",
+  "user-app-api",
+  "auth-app-api",
+  "admin-app",
+  "user-app",
+  "landing-app",
+];
 const env = {
   ...process.env,
+  COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
+  COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
+  DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
+  NX_DAEMON: "false",
+  NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
   AUTH_JWT_SECRET:
     process.env.AUTH_JWT_SECRET ?? "docker-smoke-jwt-secret-change-me",
   AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? "nest-react-boilerplate",
@@ -51,7 +65,13 @@ try {
   if (await skipWhenDockerUnavailable("docker smoke")) {
     process.exit(0);
   }
-  await run("docker", [...compose, "up", "--build", "-d"], {
+  for (const service of stackServices) {
+    await run("docker", [...compose, "build", service], {
+      stdio: "inherit",
+      env,
+    });
+  }
+  await run("docker", [...compose, "up", "--no-build", "-d"], {
     stdio: "inherit",
     env,
   });

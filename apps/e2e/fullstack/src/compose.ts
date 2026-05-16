@@ -1,9 +1,23 @@
 import { spawn } from "node:child_process";
 
 export const composeArgs = ["compose", "-f", "docker/docker-compose.yml"];
+export const stackServices = [
+  "migrate",
+  "backend-admin-app-api",
+  "user-app-api",
+  "auth-app-api",
+  "admin-app",
+  "user-app",
+  "landing-app",
+];
 
 export const composeEnv = {
   ...process.env,
+  COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
+  COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
+  DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
+  NX_DAEMON: "false",
+  NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
   AUTH_JWT_SECRET:
     process.env.AUTH_JWT_SECRET ?? "fullstack-e2e-jwt-secret-change-me",
   AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? "nest-react-boilerplate",
@@ -33,6 +47,12 @@ export function run(command: string, args: string[]): Promise<void> {
       }
     });
   });
+}
+
+export async function buildStackImages(): Promise<void> {
+  for (const service of stackServices) {
+    await run("docker", [...composeArgs, "build", service]);
+  }
 }
 
 export async function waitForText(

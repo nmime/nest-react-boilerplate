@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { urls } from "./compose";
 
 interface HealthResponse {
@@ -10,6 +10,23 @@ interface SessionResponse {
     accessToken: string;
     user: { email: string; roles: string[]; permissions: string[] };
   };
+}
+
+async function gotoWithRetry(page: Page, url: string): Promise<void> {
+  const started = Date.now();
+  let lastError: unknown;
+
+  while (Date.now() - started < 30_000) {
+    try {
+      await page.goto(url);
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 async function register(
@@ -45,15 +62,15 @@ test("health endpoints and frontends are reachable through the Docker stack", as
   ]);
   expect(health.map((body) => body.data.status)).toEqual(["ok", "ok", "ok"]);
 
-  await page.goto(urls.landingApp);
+  await gotoWithRetry(page, urls.landingApp);
   await expect(
     page.getByText("Launch a full-stack Nest and React product foundation."),
   ).toBeVisible();
-  await page.goto(urls.userApp);
+  await gotoWithRetry(page, urls.userApp);
   await expect(
     page.getByText("Sign in, register, and load your protected profile."),
   ).toBeVisible();
-  await page.goto(urls.adminApp);
+  await gotoWithRetry(page, urls.adminApp);
   await expect(
     page.getByText(
       "Operate the product platform with a fail-closed admin experience.",
@@ -73,7 +90,10 @@ test("auth registration token works through user frontend same-origin proxies", 
   expect(profile.status).toBe(200);
   expect(await profile.text()).toContain(email);
 
-  await page.goto(`${urls.userApp}/?token=${session.data.accessToken}`);
+  await gotoWithRetry(
+    page,
+    `${urls.userApp}/?token=${session.data.accessToken}`,
+  );
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
 });
 
@@ -90,7 +110,8 @@ test("admin bootstrap token is accepted by admin API and admin frontend", async 
   expect(adminProfile.status).toBe(200);
   expect(await adminProfile.text()).toContain("admin@example.com");
 
-  await page.goto(
+  await gotoWithRetry(
+    page,
     `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`,
   );
   await expect(page.getByText("admin@example.com")).toBeVisible();

@@ -10,6 +10,7 @@ export const authMigrationOptions: MigrationsOptions = {
   transactional: true,
   allOrNothing: true,
   silent: true,
+  snapshot: false,
   migrationsList: [...authMigrations],
 };
 

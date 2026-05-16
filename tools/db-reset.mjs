@@ -25,7 +25,7 @@ async function main() {
       wrap: true,
     });
 
-    const migrator = orm.getMigrator();
+    const migrator = orm.migrator;
     const applied = await migrator.up();
 
     console.log(

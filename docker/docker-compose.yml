@@ -11,6 +11,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
     ports:
       - "3001:3000"
 
@@ -26,6 +28,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
     ports:
       - "3002:3000"
 
@@ -41,6 +45,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       CORS_ORIGINS: http://localhost:8081,http://localhost:8082,http://localhost:8083
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+      AUTH_JWT_SECRET: replace-with-a-local-dev-secret
     ports:
       - "3003:3000"
 
@@ -76,3 +82,17 @@ services:
         FRONTEND_OUTPUT: dist/apps/frontend/landing
     ports:
       - "8083:80"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nest_react_boilerplate
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

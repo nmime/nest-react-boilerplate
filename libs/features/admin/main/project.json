@@ -1,0 +1,35 @@
+{
+  "name": "@app/features-admin-main",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/admin/main/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-main", "scope:admin"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/admin/main",
+        "main": "libs/features/admin/main/src/index.ts",
+        "tsConfig": "libs/features/admin/main/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/features/admin/main",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/admin/main"]
+    }
+  }
+}

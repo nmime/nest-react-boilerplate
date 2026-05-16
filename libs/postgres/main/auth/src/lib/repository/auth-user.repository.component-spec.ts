@@ -106,12 +106,23 @@ describe("AuthUserRepository component", () => {
     const found = await authUsers.findByEmail("missing@example.com");
 
     expect(found._unsafeUnwrap()).toBeNull();
-    expect((await authUsers.findById("missing-id"))._unsafeUnwrap()).toBeNull();
     expect(
-      (await authUsers.setAccessPolicy("missing-id", {}))._unsafeUnwrap(),
+      (
+        await authUsers.findById("00000000-0000-4000-8000-000000000000")
+      )._unsafeUnwrap(),
     ).toBeNull();
     expect(
-      (await authUsers.recordLogin("missing-id"))._unsafeUnwrap(),
+      (
+        await authUsers.setAccessPolicy(
+          "00000000-0000-4000-8000-000000000000",
+          {},
+        )
+      )._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (
+        await authUsers.recordLogin("00000000-0000-4000-8000-000000000000")
+      )._unsafeUnwrap(),
     ).toBeNull();
   });
 

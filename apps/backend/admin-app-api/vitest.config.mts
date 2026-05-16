@@ -18,6 +18,18 @@ export default defineConfig({
         "../../../libs/common/validation/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/shared": new URL(
+        "../../../libs/common/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-admin-main": new URL(
+        "../../../libs/features/admin/main/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/features-admin-shared": new URL(
+        "../../../libs/features/admin/shared/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/features-auth-oauth": new URL(
         "../../../libs/features/auth/oauth/src/index.ts",
         import.meta.url,

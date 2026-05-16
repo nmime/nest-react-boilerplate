@@ -1,8 +1,9 @@
 import { Module } from "@nestjs/common";
-import { AdminProfileController } from "./admin-profile.controller";
+import { AdminMainModule } from "@app/features-admin-main";
 import { HealthController } from "./health.controller";
 
 @Module({
-  controllers: [HealthController, AdminProfileController],
+  imports: [AdminMainModule],
+  controllers: [HealthController],
 })
 export class AdminAppApiModule {}

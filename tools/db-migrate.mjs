@@ -1,48 +1,39 @@
 #!/usr/bin/env node
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import pg from "pg";
 import {
   loadDotEnv,
   postgresConnectionString,
   redactedConnectionString,
 } from "./env-loader.mjs";
+import {
+  authMigrationTableName,
+  initAuthMigrationOrm,
+  migrationNames,
+} from "./orm-migration-config.mjs";
 
 loadDotEnv();
-const migrationsDir =
-  process.env.AUTH_MIGRATIONS_DIR ?? "libs/postgres/main/auth/migrations";
 const connectionString = postgresConnectionString();
 
 async function main() {
-  const files = (await readdir(migrationsDir))
-    .filter((file) => file.endsWith(".sql"))
-    .sort();
-  if (files.length === 0) {
-    throw new Error(`No SQL migrations found in ${migrationsDir}`);
-  }
-
-  const client = new pg.Client({ connectionString });
-  await client.connect();
+  const orm = await initAuthMigrationOrm();
   try {
-    await client.query("begin");
-    for (const file of files) {
-      const sql = await readFile(join(migrationsDir, file), "utf8");
-      await client.query(sql);
-      console.log(`applied ${file}`);
-    }
-    await client.query("commit");
+    const migrator = orm.getMigrator();
+    const pending = await migrator.getPending();
+    const applied = await migrator.up();
+    const executed = await migrator.getExecuted();
+
     console.log(
       JSON.stringify({
         status: "ok",
-        migrations: files.length,
         database: redactedConnectionString(connectionString),
+        migrationsTable: authMigrationTableName,
+        pendingBefore: migrationNames(pending),
+        executed: migrationNames(applied),
+        executedCount: applied.length,
+        trackedMigrations: executed.map((migration) => migration.name),
       }),
     );
-  } catch (error) {
-    await client.query("rollback").catch(() => undefined);
-    throw error;
   } finally {
-    await client.end();
+    await orm.close(true);
   }
 }
 

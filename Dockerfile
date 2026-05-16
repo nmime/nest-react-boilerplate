@@ -16,6 +16,9 @@ COPY libs ./libs
 COPY tools ./tools
 RUN pnpm install --frozen-lockfile
 
+FROM workspace AS migrator
+CMD ["pnpm", "db:migrate"]
+
 FROM workspace AS builder
 ARG NX_PROJECT
 RUN test -n "${NX_PROJECT}" \

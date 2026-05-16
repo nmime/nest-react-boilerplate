@@ -24,7 +24,9 @@
       "@app/frontend-ui": ["libs/frontend/ui/src/index.ts"],
       "@app/postgres-main": ["libs/postgres/main/shared/src/index.ts"],
       "@app/postgres-main-auth": ["libs/postgres/main/auth/src/index.ts"],
-      "@app/common-component-test": ["libs/common/component-test/src/index.ts"]
+      "@app/common-component-test": ["libs/common/component-test/src/index.ts"],
+      "@app/features-admin-shared": ["libs/features/admin/shared/src/index.ts"],
+      "@app/features-admin-main": ["libs/features/admin/main/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

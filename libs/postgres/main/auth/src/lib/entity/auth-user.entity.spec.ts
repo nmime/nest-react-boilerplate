@@ -5,21 +5,37 @@ import { AuthUserEntity, AuthUserEntitySchema } from "./auth-user.entity";
 describe("AuthUserEntity", () => {
   it("constructs from explicit input", () => {
     expect(
-      new AuthUserEntity({ email: "user@example.com", displayName: "User" }),
-    ).toMatchObject({ email: "user@example.com", displayName: "User" });
+      new AuthUserEntity({
+        email: "user@example.com",
+        displayName: "User",
+        permissions: ["profile:read"],
+        roles: ["user"],
+        status: "invited",
+      }),
+    ).toMatchObject({
+      email: "user@example.com",
+      displayName: "User",
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "invited",
+    });
   });
 
-  it("defaults optional displayName to null", () => {
-    expect(
-      new AuthUserEntity({ email: "user@example.com" }).displayName,
-    ).toBeNull();
+  it("defaults optional enterprise access fields", () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+
+    expect(entity.displayName).toBeNull();
+    expect(entity.status).toBe("active");
+    expect(entity.roles).toEqual([]);
+    expect(entity.permissions).toEqual([]);
+    expect(entity.lastLoginAt).toBeNull();
   });
 
   it("can be constructed empty for MikroORM hydration", () => {
     expect(new AuthUserEntity()).toBeInstanceOf(AuthUserEntity);
   });
 
-  it("registers table, primary key, and unique email metadata", () => {
+  it("registers table, primary key, unique email, and access metadata", () => {
     AuthUserEntitySchema.init();
     const metadata = AuthUserEntitySchema.meta;
 
@@ -27,6 +43,10 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.id.primary).toBe(true);
     expect(metadata.properties.id.type).toBe("uuid");
     expect(metadata.properties.email.name).toBe("email");
+    expect(metadata.properties.status.type).toBe("varchar");
+    expect(metadata.properties.roles.type).toBe("json");
+    expect(metadata.properties.permissions.type).toBe("json");
+    expect(metadata.properties.lastLoginAt.nullable).toBe(true);
     expect(metadata.uniques).toContainEqual(
       expect.objectContaining({
         name: "auth_users_email_key",
@@ -34,6 +54,7 @@ describe("AuthUserEntity", () => {
       }),
     );
   });
+
   it("defines timestamp lifecycle hooks", () => {
     AuthUserEntitySchema.init();
 

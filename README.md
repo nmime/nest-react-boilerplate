@@ -114,6 +114,19 @@ Unit and coverage checks use Vitest. Component tests cover database-backed Nest 
 
 See [Testing matrix](docs/testing.md) for when to run each layer.
 
+## Rocket-launch a new project
+
+Use [`docs/new-project.md`](docs/new-project.md) and `pnpm init:project` to rename the boilerplate, replace safe placeholders, configure split environments, and run launch checks without rewriting Git history.
+
+Additional launch docs:
+
+- [Operations runbook](docs/operations.md)
+- [Production Kubernetes/Ansible deployment](docs/production-deploy.md)
+- [OpenAPI and typed client scaffold](docs/api-client.md)
+- [Frontend UX primitives](docs/frontend-ux.md)
+- [Auth production roadmap](docs/auth-production-roadmap.md)
+- [Branch protection recommendation](docs/branch-protection.md)
+
 ## Deployment and operations
 
 Start from `.env.example`, replace placeholder values with secrets from your environment or secret manager, and keep production OpenAPI/CORS/auth settings explicit. The repository includes deployment guidance for Docker runtime validation, database migrations, health checks, and production hardening:

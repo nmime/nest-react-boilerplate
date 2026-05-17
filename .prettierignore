@@ -4,3 +4,5 @@ coverage
 .nx
 pnpm-lock.yaml
 *.tsbuildinfo
+.helm/templates/
+deploy/argocd/application.yaml

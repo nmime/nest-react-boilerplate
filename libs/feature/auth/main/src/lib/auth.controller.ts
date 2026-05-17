@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
+import { supportedLocales } from "@app/common/i18n";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
   BearerAuthGuard,
@@ -20,6 +21,10 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   displayName?: string;
+
+  @IsOptional()
+  @IsString()
+  locale?: string;
 }
 
 export class LoginDto {
@@ -33,6 +38,16 @@ export class LoginDto {
 
 export interface MePayload {
   principal: AuthenticatedPrincipal;
+  user: AuthSessionView["user"] | null;
+}
+
+export class UpdateLocaleDto {
+  @IsString()
+  locale!: string;
+}
+
+export interface SupportedLocalesPayload {
+  supportedLocales: typeof supportedLocales;
 }
 
 export interface LogoutPayload {
@@ -57,8 +72,29 @@ export class AuthController {
 
   @Get("me")
   @UseGuards(new BearerAuthGuard())
-  me(@CurrentUser() principal: AuthenticatedPrincipal): OkResponse<MePayload> {
-    return createOkResponse({ principal });
+  async me(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<OkResponse<MePayload>> {
+    return createOkResponse({
+      principal,
+      user: await this.auth.getUserById(principal.subject),
+    });
+  }
+
+  @Patch("me/locale")
+  @UseGuards(new BearerAuthGuard())
+  async updateLocale(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: UpdateLocaleDto,
+  ): Promise<OkResponse<AuthSessionView["user"]>> {
+    return createOkResponse(
+      await this.auth.updateUserLocale(principal.subject, input.locale),
+    );
+  }
+
+  @Get("locales")
+  locales(): OkResponse<SupportedLocalesPayload> {
+    return createOkResponse({ supportedLocales });
   }
 
   @Post("logout")

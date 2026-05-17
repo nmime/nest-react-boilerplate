@@ -43,6 +43,8 @@ describe("User app shell", () => {
   beforeEach(() => {
     installStorage();
     window.localStorage.clear();
+    document.cookie = "locale=; path=/; max-age=0";
+    document.cookie = "lang=; path=/; max-age=0";
     window.history.pushState({}, "", "/");
     vi.unstubAllEnvs();
   });
@@ -86,6 +88,7 @@ describe("User app shell", () => {
     window.history.pushState({}, "", "/?token=url-token");
     vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
     const fetchMock = setFetch(
+      jsonResponse({ data: { user: { locale: "en" } } }),
       jsonResponse({
         data: {
           principal: { subject: "subject-id", email: "ready@example.com" },
@@ -99,14 +102,21 @@ describe("User app shell", () => {
     expect(window.localStorage.getItem("boilerplate.user.bearerToken")).toBe(
       "url-token",
     );
-    expect(fetchMock).toHaveBeenCalledWith("https://user-api/profile/me", {
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
       headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
     });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://user-api/profile/me",
+      {
+        headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
+      },
+    );
   });
 
   it("shows forbidden states for profile response and thrown failures", async () => {
     window.history.pushState({}, "", "/?token=bad-token");
-    setFetch(jsonResponse({}, false, 403));
+    setFetch(jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
     expect(
       await screen.findByText("Forbidden: Profile request failed with 403."),
@@ -114,7 +124,7 @@ describe("User app shell", () => {
     unmount();
 
     window.history.pushState({}, "", "/?token=throw-token");
-    setFetch({ rejectsWith: "network failed" });
+    setFetch(jsonResponse({ data: {} }), { rejectsWith: "network failed" });
     render(<App />);
     expect(
       await screen.findByText("Forbidden: Profile request failed."),
@@ -123,12 +133,14 @@ describe("User app shell", () => {
 
   it("handles incomplete profile payloads and non-error auth rejections", async () => {
     window.history.pushState({}, "", "/?token=no-profile-token");
-    setFetch(jsonResponse({ data: {} }));
+    setFetch(jsonResponse({ data: {} }), jsonResponse({ data: {} }));
     const { unmount } = render(<App />);
     expect(await screen.findByText("Ready: unknown")).toBeTruthy();
     unmount();
     cleanup();
     window.localStorage.clear();
+    document.cookie = "locale=; path=/; max-age=0";
+    document.cookie = "lang=; path=/; max-age=0";
     window.history.pushState({}, "", "/");
 
     const rejectAuthJson = vi
@@ -147,10 +159,83 @@ describe("User app shell", () => {
     ).toBeTruthy();
   });
 
+  it("uses saved user locale before profile calls and ignores stale local storage", async () => {
+    window.localStorage.setItem("boilerplate.locale", "en");
+    window.history.pushState({}, "", "/?token=saved-locale-token");
+    vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
+    const fetchMock = setFetch(
+      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByText("Listo: profile-subject")).toBeTruthy();
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
+      headers: {
+        "Accept-Language": "en",
+        Authorization: "Bearer saved-locale-token",
+      },
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/auth/me", {
+      headers: {
+        "Accept-Language": "es",
+        Authorization: "Bearer saved-locale-token",
+      },
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "https://user-api/profile/me",
+      {
+        headers: {
+          "Accept-Language": "es",
+          Authorization: "Bearer saved-locale-token",
+        },
+      },
+    );
+  });
+
+  it("persists language switches for authenticated users and subsequent calls", async () => {
+    window.history.pushState({}, "", "/?token=switch-token");
+    const fetchMock = setFetch(
+      jsonResponse({ data: { user: { locale: "en" } } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+    );
+
+    render(<App />);
+    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Language"), {
+      target: { value: "es" },
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+    expect(fetchMock).toHaveBeenNthCalledWith(3, "/auth/me/locale", {
+      method: "PATCH",
+      headers: {
+        "Accept-Language": "es",
+        Authorization: "Bearer switch-token",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ locale: "es" }),
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(5, "/profile/me", {
+      headers: {
+        "Accept-Language": "es",
+        Authorization: "Bearer switch-token",
+      },
+    });
+  });
+
   it("logs in then loads the protected profile", async () => {
     vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth-api/");
     setFetch(
       jsonResponse({ data: { accessToken: "login-token" } }),
+      jsonResponse({ data: { user: { locale: "en" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
     );
     render(<App />);

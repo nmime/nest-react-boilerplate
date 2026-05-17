@@ -1,7 +1,10 @@
+export type AuthenticatedLocale = "en" | "es";
+
 export interface AuthenticatedPrincipal {
   subject: string;
   email?: string;
   displayName?: string;
+  locale?: AuthenticatedLocale;
   issuer?: string;
   audience?: string | string[];
   roles: string[];

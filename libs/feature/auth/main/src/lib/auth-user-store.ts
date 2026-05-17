@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { ResultAsync, okAsync } from "neverthrow";
+import type { Locale } from "@app/common/i18n";
 import { AuthUserRepository } from "@app/postgres-main-auth";
 
 export interface AuthUserRecord {
@@ -10,6 +11,7 @@ export interface AuthUserRecord {
   passwordHash: string;
   roles: string[];
   permissions: string[];
+  locale: Locale | null;
   status: "active" | "disabled" | "invited";
   lastLoginAt: Date | null;
 }
@@ -25,6 +27,7 @@ export interface CreateAuthUserInput {
   passwordHash: string;
   roles: string[];
   permissions: string[];
+  locale?: Locale | null;
 }
 
 export interface AuthUserStore {
@@ -35,6 +38,10 @@ export interface AuthUserStore {
     email: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  setLocale(
+    id: string,
+    locale: Locale,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   recordLogin(
     id: string,
     loggedInAt?: Date,
@@ -50,6 +57,7 @@ export function toAuthUserRecord(entity: {
   passwordHash: string;
   roles: string[];
   permissions: string[];
+  locale: Locale | null;
   status: "active" | "disabled" | "invited";
   lastLoginAt: Date | null;
 }): AuthUserRecord {
@@ -60,6 +68,7 @@ export function toAuthUserRecord(entity: {
     passwordHash: entity.passwordHash,
     roles: entity.roles,
     permissions: entity.permissions,
+    locale: entity.locale,
     status: entity.status,
     lastLoginAt: entity.lastLoginAt,
   };
@@ -86,6 +95,15 @@ export class PostgresAuthUserStore implements AuthUserStore {
   findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findById(id)
+      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+  }
+
+  setLocale(
+    id: string,
+    locale: Locale,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .setLocale(id, locale)
       .map((entity) => (entity ? toAuthUserRecord(entity) : null));
   }
 
@@ -125,6 +143,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       passwordHash: input.passwordHash,
       roles: input.roles,
       permissions: input.permissions,
+      locale: input.locale ?? null,
       status: "active",
       lastLoginAt: null,
     };
@@ -142,6 +161,19 @@ export class InMemoryAuthUserStore implements AuthUserStore {
 
   findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return okAsync(this.usersById.get(id) ?? null);
+  }
+
+  setLocale(
+    id: string,
+    locale: Locale,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id);
+    if (!record) {
+      return okAsync(null);
+    }
+    const updated = { ...record, locale };
+    this.usersById.set(id, updated);
+    return okAsync(updated);
   }
 
   recordLogin(

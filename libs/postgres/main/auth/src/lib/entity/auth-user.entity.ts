@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { EntitySchema } from "@mikro-orm/core";
+import type { Locale } from "@app/common/i18n";
 
 export type AuthUserStatus = "active" | "disabled" | "invited";
 
@@ -13,6 +14,7 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   email: string;
   displayName?: string | null;
   passwordHash?: string;
+  locale?: Locale | null;
   lastLoginAt?: Date | null;
 }
 
@@ -24,6 +26,7 @@ export class AuthUserEntity {
   status: AuthUserStatus = "active";
   roles: string[] = [];
   permissions: string[] = [];
+  locale: Locale | null = null;
   lastLoginAt: Date | null = null;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
@@ -36,6 +39,7 @@ export class AuthUserEntity {
       this.status = input.status ?? "active";
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
+      this.locale = input.locale ?? null;
       this.lastLoginAt = input.lastLoginAt ?? null;
     }
   }
@@ -61,6 +65,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     status: { type: "varchar", length: 32 },
     roles: { type: "json" },
     permissions: { type: "json" },
+    locale: { type: "varchar", length: 16, nullable: true },
     lastLoginAt: {
       type: "timestamptz",
       fieldName: "last_login_at",

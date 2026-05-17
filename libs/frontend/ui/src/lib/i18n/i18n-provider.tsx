@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -94,20 +95,35 @@ const FrontendI18nContext =
 export interface FrontendI18nProviderProps {
   children: ReactNode;
   initialLocale?: Locale;
+  userLocale?: Locale | null;
+  onLocaleChange?: (locale: Locale) => Promise<void> | void;
 }
 
 export function FrontendI18nProvider({
   children,
   initialLocale,
+  onLocaleChange,
+  userLocale,
 }: Readonly<FrontendI18nProviderProps>) {
   const [locale, setLocaleState] = useState<Locale>(
-    () => initialLocale ?? detectBrowserLocale(),
+    () => userLocale ?? initialLocale ?? detectBrowserLocale(),
   );
 
-  const setLocale = useCallback((nextLocale: Locale) => {
-    setLocaleState(nextLocale);
-    persistLocale(nextLocale);
-  }, []);
+  useEffect(() => {
+    if (userLocale) {
+      setLocaleState(userLocale);
+      persistLocale(userLocale);
+    }
+  }, [userLocale]);
+
+  const setLocale = useCallback(
+    (nextLocale: Locale) => {
+      setLocaleState(nextLocale);
+      persistLocale(nextLocale);
+      void onLocaleChange?.(nextLocale);
+    },
+    [onLocaleChange],
+  );
 
   const value = useMemo<FrontendI18nContextValue>(
     () => ({

@@ -4,6 +4,7 @@ export interface AdminPrincipal {
   subject?: string;
   email?: string;
   displayName?: string;
+  locale?: string | null;
   roles?: string[];
   permissions?: string[];
 }
@@ -14,6 +15,7 @@ export interface AdminProfilePayload {
     id: string;
     email?: string;
     displayName?: string;
+    locale?: string | null;
     roles: string[];
     permissions: string[];
   };

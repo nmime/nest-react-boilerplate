@@ -1,6 +1,7 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Inject, Injectable } from "@nestjs/common";
 import { ResultAsync } from "neverthrow";
+import type { Locale } from "@app/common/i18n";
 import {
   AuthUserEntity,
   type AuthUserAccessPolicyInput,
@@ -53,6 +54,16 @@ export class AuthUserRepository {
     );
   }
 
+  setLocale(
+    id: string,
+    locale: Locale,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.updateLocale(id, locale),
+      mapRepositoryError,
+    );
+  }
+
   recordLogin(
     id: string,
     loggedInAt: Date = new Date(),
@@ -92,6 +103,20 @@ export class AuthUserRepository {
       entity.permissions = policy.permissions;
     }
 
+    await this.entityManager.flush();
+    return entity;
+  }
+
+  private async updateLocale(
+    id: string,
+    locale: Locale,
+  ): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, { id });
+    if (!entity) {
+      return null;
+    }
+
+    entity.locale = locale;
     await this.entityManager.flush();
     return entity;
   }

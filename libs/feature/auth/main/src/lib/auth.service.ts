@@ -5,9 +5,11 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import {
@@ -16,6 +18,7 @@ import {
   type AuthSessionView,
   type AuthenticatedUserView,
 } from "@app/feature-auth-shared";
+import { normalizeLocale } from "@app/common/i18n";
 import {
   AUTH_USER_STORE,
   type AuthUserRecord,
@@ -26,6 +29,7 @@ export interface RegisterUserInput {
   email: string;
   password: string;
   displayName?: string;
+  locale?: string | null;
 }
 
 export interface LoginInput {
@@ -67,6 +71,7 @@ export class AuthService {
       email,
       displayName: input.displayName?.trim() || null,
       passwordHash: hashPassword(input.password),
+      locale: normalizeLocale(input.locale),
       roles: policy.roles,
       permissions: policy.permissions,
     });
@@ -106,6 +111,26 @@ export class AuthService {
     return toAuthenticatedUserView(user.value);
   }
 
+  async updateUserLocale(
+    id: string,
+    inputLocale: string | null | undefined,
+  ): Promise<AuthenticatedUserView> {
+    const locale = normalizeLocale(inputLocale);
+    if (!locale) {
+      throw new BadRequestException("Unsupported locale.");
+    }
+
+    const updated = await this.users.setLocale(id, locale);
+    if (updated.isErr()) {
+      throw new ConflictException(updated.error.message);
+    }
+    if (!updated.value) {
+      throw new NotFoundException("User was not found.");
+    }
+
+    return toAuthenticatedUserView(updated.value);
+  }
+
   createSession(
     user: AuthUserRecord,
     env: JwtSigningEnvironment = process.env,
@@ -119,6 +144,7 @@ export class AuthService {
           sub: view.id,
           email: view.email,
           name: view.displayName,
+          locale: view.locale,
           roles: view.roles,
           permissions: view.permissions,
         },

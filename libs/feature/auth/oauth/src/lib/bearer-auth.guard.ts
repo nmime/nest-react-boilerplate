@@ -25,6 +25,7 @@ type JwtPayload = Record<string, unknown> & {
   iat?: number;
   iss?: string;
   jti?: string;
+  locale?: unknown;
   name?: string;
   nbf?: number;
   permissions?: unknown;
@@ -233,12 +234,22 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
     subject: payload.sub,
     email: payload.email,
     displayName: typeof payload.name === "string" ? payload.name : undefined,
+    locale: normalizePrincipalLocale(payload.locale),
     issuer: payload.iss,
     audience: payload.aud,
     roles: uniqueStrings(claimToStrings(payload.roles)),
     permissions,
     tokenId: payload.jti,
   };
+}
+
+function normalizePrincipalLocale(value: unknown): "en" | "es" | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase().split("-")[0];
+  return normalized === "en" || normalized === "es" ? normalized : undefined;
 }
 
 function claimToStrings(value: unknown): string[] {

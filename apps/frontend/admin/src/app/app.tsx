@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { normalizeLocale } from "@app/common/i18n";
 import { FrontendI18nProvider, useI18n } from "@app/frontend-ui";
 import {
   createAdminAccess,
@@ -26,12 +27,30 @@ const getConfiguredAdminApiBaseUrl = (): string => {
   return getAdminApiBaseUrl(env["VITE_ADMIN_API_BASE_URL"]);
 };
 
-const AdminApp = () => {
+const getConfiguredAuthApiBaseUrl = (): string => {
+  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
+
+  return getAdminApiBaseUrl(env["VITE_AUTH_API_BASE_URL"]);
+};
+
+const bearerHeaders = (token: string, locale: string) => ({
+  "Accept-Language": locale,
+  Authorization: `Bearer ${token}`,
+});
+
+interface AdminAppProps {
+  token: string;
+  setToken: (token: string) => void;
+  applyUserLocale: (locale: "en" | "es") => void;
+}
+
+const AdminApp = ({
+  applyUserLocale,
+  setToken,
+  token,
+}: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
-  const [token, setToken] = useState(() =>
-    resolveInitialBearerToken(getBrowserHref(), getBrowserStorage()),
-  );
   const [state, setState] = useState<AdminProfileState>(
     token ? { status: "loading" } : { status: "missing-token" },
   );
@@ -49,6 +68,15 @@ const AdminApp = () => {
         /* v8 ignore next 3 -- defensive cleanup path for unmounted components */
         if (!active) {
           return;
+        }
+        const nextLocale = normalizeLocale(
+          payload.profile?.locale ?? payload.principal?.locale,
+        );
+        if (nextLocale) {
+          applyUserLocale(nextLocale);
+          if (nextLocale !== locale) {
+            return;
+          }
         }
         const access = createAdminAccess(payload.principal);
         setState(
@@ -77,7 +105,7 @@ const AdminApp = () => {
       /* v8 ignore next -- cleanup assignment has no user-visible branch */
       active = false;
     };
-  }, [locale, t, token]);
+  }, [applyUserLocale, locale, t, token]);
 
   return (
     <AdminLayout>
@@ -92,10 +120,65 @@ const AdminApp = () => {
   );
 };
 
-const App = () => (
-  <FrontendI18nProvider>
-    <AdminApp />
-  </FrontendI18nProvider>
-);
+const App = () => {
+  const [token, setToken] = useState(() =>
+    resolveInitialBearerToken(getBrowserHref(), getBrowserStorage()),
+  );
+  const [userLocale, setUserLocale] = useState<"en" | "es" | null>(null);
+
+  const applyUserLocale = useCallback((nextLocale: "en" | "es") => {
+    setUserLocale(nextLocale);
+  }, []);
+
+  const persistUserLocale = useCallback(
+    async (nextLocale: "en" | "es") => {
+      if (!token) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${getConfiguredAuthApiBaseUrl()}/auth/me/locale`,
+          {
+            method: "PATCH",
+            headers: {
+              ...bearerHeaders(token, nextLocale),
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ locale: nextLocale }),
+          },
+        );
+        if (response.ok) {
+          const body = (await response.json()) as {
+            data?: {
+              locale?: string | null;
+              user?: { locale?: string | null };
+            };
+          };
+          const persistedLocale = normalizeLocale(
+            body.data?.locale ?? body.data?.user?.locale,
+          );
+          setUserLocale(persistedLocale ?? nextLocale);
+        }
+      } catch {
+        // Locale remains persisted locally and can be retried on the next switch.
+      }
+    },
+    [token],
+  );
+
+  return (
+    <FrontendI18nProvider
+      onLocaleChange={persistUserLocale}
+      userLocale={userLocale}
+    >
+      <AdminApp
+        applyUserLocale={applyUserLocale}
+        setToken={setToken}
+        token={token}
+      />
+    </FrontendI18nProvider>
+  );
+};
 
 export default App;

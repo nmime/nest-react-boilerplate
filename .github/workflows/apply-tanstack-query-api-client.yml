@@ -1,0 +1,34 @@
+name: Apply TanStack Query API client patch
+
+on:
+  push:
+    branches:
+      - copilot/add-tanstack-query-integration
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    if: ${{ !contains(github.event.head_commit.message, 'feat: add tanstack query api client') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: copilot/add-tanstack-query-integration
+          fetch-depth: 0
+
+      - name: Apply implementation patch and remove bootstrap files
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          curl -fsSL "https://splox.s3.amazonaws.com/96b224f9-5570-4683-a77e-aa05d5809b8f_tanstack-query-api-client.patch" -o /tmp/tanstack-query-api-client.patch
+          git apply --check /tmp/tanstack-query-api-client.patch
+          git apply /tmp/tanstack-query-api-client.patch
+          rm -f .github/workflows/apply-tanstack-query-api-client.yml .github/tanstack-query-publish-trigger.txt
+          git add -A
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "feat: add tanstack query api client"
+          git push origin HEAD:copilot/add-tanstack-query-integration

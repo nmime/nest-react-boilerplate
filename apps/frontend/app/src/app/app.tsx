@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
+  apiFetch,
   FrontendI18nProvider,
+  FrontendQueryProvider,
   ProductShell,
   UiCard,
   UiSection,
@@ -36,6 +39,8 @@ type LocalePayload =
   | AuthSessionPayload
   | ProfilePayload
   | { locale?: string | null };
+
+type ApiEnvelope<T> = { data?: T };
 
 const TOKEN_KEY = "boilerplate.user.bearerToken";
 const getEnvValue = (key: string): string => {
@@ -92,25 +97,25 @@ const getPayloadLocale = (payload?: LocalePayload): Locale | undefined => {
   );
 };
 
-const bearerHeaders = (token: string, locale: Locale) => ({
-  "Accept-Language": locale,
-  Authorization: `Bearer ${token}`,
-});
-
 async function fetchAuthMe(
   token: string,
-  locale: Locale,
-): Promise<ProfilePayload | undefined> {
-  const response = await fetch(`${authBaseUrl()}/auth/me`, {
-    headers: bearerHeaders(token, locale),
-  });
-
-  if (!response.ok) {
+): Promise<ProfilePayload | AuthSessionPayload | undefined> {
+  try {
+    const body = await apiFetch<
+      ApiEnvelope<ProfilePayload | AuthSessionPayload>
+    >("/auth/me", { authToken: token, baseUrl: authBaseUrl() });
+    return body.data;
+  } catch {
     return undefined;
   }
+}
 
-  const body = (await response.json()) as { data?: ProfilePayload };
-  return body.data;
+async function fetchUserProfile(token: string): Promise<ProfilePayload> {
+  const body = await apiFetch<ApiEnvelope<ProfilePayload>>("/profile/me", {
+    authToken: token,
+    baseUrl: userBaseUrl(),
+  });
+  return body.data ?? {};
 }
 
 export interface UserAppProps {
@@ -119,119 +124,165 @@ export interface UserAppProps {
   applyUserLocale: (locale: Locale) => void;
 }
 
+const getErrorReason = (error: unknown, fallback: string): string =>
+  error instanceof Error ? error.message : fallback;
+
+const getProfileState = (
+  token: string,
+  loading: boolean,
+  profile?: ProfilePayload,
+  error?: unknown,
+): ProfileState => {
+  if (!token) {
+    return { status: "missing-token" };
+  }
+  if (loading) {
+    return { status: "loading" };
+  }
+  if (error) {
+    return {
+      status: "forbidden",
+      reason: getErrorReason(error, "Profile request failed."),
+    };
+  }
+
+  return {
+    status: "ready",
+    subject:
+      profile?.profile?.email ??
+      profile?.principal?.email ??
+      profile?.profile?.id ??
+      profile?.principal?.subject ??
+      "unknown",
+    email: profile?.profile?.email ?? profile?.principal?.email,
+  };
+};
+
 const UserApp = ({
   applyUserLocale,
   setToken,
   token,
 }: Readonly<UserAppProps>) => {
   const { locale, t } = useI18n();
-  const [state, setState] = useState<ProfileState>(
-    token ? { status: "loading" } : { status: "missing-token" },
-  );
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!token) {
-      setState({ status: "missing-token" });
-      return undefined;
+    if (token) {
+      persistToken(token);
     }
+  }, [token]);
 
-    let active = true;
-    persistToken(token);
-    setState({ status: "loading" });
+  const authMeQuery = useQuery({
+    enabled: Boolean(token),
+    queryFn: () => fetchAuthMe(token),
+    queryKey: ["auth", "me", token, locale],
+    retry: false,
+    staleTime: 15_000,
+  });
+  const authLocale = getPayloadLocale(authMeQuery.data);
 
-    void (async () => {
-      try {
-        const authPayload = await fetchAuthMe(token, locale).catch(
-          () => undefined,
-        );
-        const authLocale = getPayloadLocale(authPayload);
-        if (active && authLocale) {
-          applyUserLocale(authLocale);
-          if (authLocale !== locale) {
-            return;
-          }
-        }
+  useEffect(() => {
+    if (authLocale) {
+      applyUserLocale(authLocale);
+    }
+  }, [applyUserLocale, authLocale]);
 
-        const response = await fetch(`${userBaseUrl()}/profile/me`, {
-          headers: bearerHeaders(token, locale),
-        });
-        if (!response.ok) {
-          throw new Error(`Profile request failed with ${response.status}.`);
-        }
-        const body = (await response.json()) as { data?: ProfilePayload };
-        if (!active) {
-          return;
-        }
-        const nextLocale = getPayloadLocale(body.data);
-        if (nextLocale) {
-          applyUserLocale(nextLocale);
-        }
-        setState({
-          status: "ready",
-          subject:
-            body.data?.profile?.email ??
-            body.data?.principal?.email ??
-            body.data?.profile?.id ??
-            body.data?.principal?.subject ??
-            "unknown",
-          email: body.data?.profile?.email ?? body.data?.principal?.email,
-        });
-      } catch (error) {
-        if (active) {
-          setState({
-            status: "forbidden",
-            reason:
-              error instanceof Error
-                ? error.message
-                : "Profile request failed.",
-          });
-        }
+  const profileQuery = useQuery({
+    enabled:
+      Boolean(token) &&
+      !authMeQuery.isLoading &&
+      (!authLocale || authLocale === locale),
+    queryFn: () => fetchUserProfile(token),
+    queryKey: ["user", "profile", "me", token, locale],
+    retry: false,
+    staleTime: 15_000,
+  });
+  const profileLocale = getPayloadLocale(profileQuery.data);
+
+  useEffect(() => {
+    if (profileLocale) {
+      applyUserLocale(profileLocale);
+    }
+  }, [applyUserLocale, profileLocale]);
+
+  const authMutation = useMutation({
+    mutationFn: async ({
+      displayName,
+      email,
+      mode,
+      password,
+    }: {
+      displayName?: FormDataEntryValue | null;
+      email: FormDataEntryValue | null;
+      mode: "login" | "register";
+      password: FormDataEntryValue | null;
+    }) =>
+      apiFetch<ApiEnvelope<AuthSessionPayload>>(`/auth/${mode}`, {
+        baseUrl: authBaseUrl(),
+        json: {
+          displayName: displayName || undefined,
+          email,
+          locale,
+          password,
+        },
+        method: "POST",
+      }),
+    onSuccess: (body) => {
+      const nextLocale = getPayloadLocale(body?.data);
+      if (nextLocale) {
+        applyUserLocale(nextLocale);
       }
-    })();
+      const nextToken = body?.data?.accessToken ?? "";
+      setToken(nextToken);
+      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      void queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+    retry: false,
+  });
 
-    return () => {
-      active = false;
-    };
-  }, [applyUserLocale, locale, token]);
+  const state = useMemo(
+    () =>
+      authMutation.isError
+        ? {
+            status: "forbidden" as const,
+            reason: getErrorReason(
+              authMutation.error,
+              "Authentication failed.",
+            ),
+          }
+        : getProfileState(
+            token,
+            Boolean(token) &&
+              (authMeQuery.isLoading ||
+                profileQuery.isLoading ||
+                Boolean(authLocale && authLocale !== locale)),
+            profileQuery.data,
+            profileQuery.error,
+          ),
+    [
+      authLocale,
+      authMeQuery.isLoading,
+      authMutation.error,
+      authMutation.isError,
+      locale,
+      profileQuery.data,
+      profileQuery.error,
+      profileQuery.isLoading,
+      token,
+    ],
+  );
 
   const submitAuth =
     (mode: "login" | "register") =>
     (event: { preventDefault: () => void; currentTarget: HTMLFormElement }) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
-      void fetch(`${authBaseUrl()}/auth/${mode}`, {
-        method: "POST",
-        headers: {
-          "Accept-Language": locale,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          email: form.get("email"),
-          password: form.get("password"),
-          displayName: form.get("displayName") || undefined,
-          locale,
-        }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            throw new Error(`${mode} failed with ${response.status}.`);
-          }
-          return (await response.json()) as { data?: AuthSessionPayload };
-        })
-        .then((body) => {
-          const nextLocale = getPayloadLocale(body.data);
-          if (nextLocale) {
-            applyUserLocale(nextLocale);
-          }
-          setToken(body.data?.accessToken ?? "");
-        })
-        .catch((error: unknown) =>
-          setState({
-            status: "forbidden",
-            reason:
-              error instanceof Error ? error.message : "Authentication failed.",
-          }),
-        );
+      authMutation.mutate({
+        displayName: form.get("displayName"),
+        email: form.get("email"),
+        mode,
+        password: form.get("password"),
+      });
     };
 
   return (
@@ -311,9 +362,29 @@ const UserApp = ({
   );
 };
 
-const App = () => {
+const AppContent = () => {
   const [token, setToken] = useState(readInitialToken);
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
+  const queryClient = useQueryClient();
+
+  const localeMutation = useMutation({
+    mutationFn: (nextLocale: Locale) =>
+      apiFetch<ApiEnvelope<AuthSessionPayload | { locale?: string | null }>>(
+        "/auth/me/locale",
+        {
+          authToken: token,
+          baseUrl: authBaseUrl(),
+          json: { locale: nextLocale },
+          method: "PATCH",
+        },
+      ),
+    onSuccess: (body, nextLocale) => {
+      setUserLocale(getPayloadLocale(body?.data) ?? nextLocale);
+      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      void queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+    retry: false,
+  });
 
   const applyUserLocale = useCallback((nextLocale: Locale) => {
     setUserLocale(nextLocale);
@@ -326,25 +397,12 @@ const App = () => {
       }
 
       try {
-        const response = await fetch(`${authBaseUrl()}/auth/me/locale`, {
-          method: "PATCH",
-          headers: {
-            ...bearerHeaders(token, nextLocale),
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ locale: nextLocale }),
-        });
-        if (response.ok) {
-          const body = (await response.json()) as {
-            data?: AuthSessionPayload | { locale?: string | null };
-          };
-          setUserLocale(getPayloadLocale(body.data) ?? nextLocale);
-        }
+        await localeMutation.mutateAsync(nextLocale);
       } catch {
         // Locale is still persisted locally; retry on the next explicit change.
       }
     },
-    [token],
+    [localeMutation, token],
   );
 
   return (
@@ -360,5 +418,11 @@ const App = () => {
     </FrontendI18nProvider>
   );
 };
+
+const App = () => (
+  <FrontendQueryProvider>
+    <AppContent />
+  </FrontendQueryProvider>
+);
 
 export default App;

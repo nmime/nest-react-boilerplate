@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { configureApiLocale, setApiLocale } from "../api/api-client";
 import {
   fallbackLocale,
   resolveLocale,
@@ -105,12 +106,19 @@ export function FrontendI18nProvider({
   onLocaleChange,
   userLocale,
 }: Readonly<FrontendI18nProviderProps>) {
-  const [locale, setLocaleState] = useState<Locale>(
-    () => userLocale ?? initialLocale ?? detectBrowserLocale(),
-  );
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    const resolvedLocale = userLocale ?? initialLocale ?? detectBrowserLocale();
+    configureApiLocale({ locale: resolvedLocale });
+    return resolvedLocale;
+  });
+
+  useEffect(() => {
+    configureApiLocale({ getLocale: () => locale });
+  }, [locale]);
 
   useEffect(() => {
     if (userLocale) {
+      configureApiLocale({ locale: userLocale });
       setLocaleState(userLocale);
       persistLocale(userLocale);
     }
@@ -118,6 +126,7 @@ export function FrontendI18nProvider({
 
   const setLocale = useCallback(
     (nextLocale: Locale) => {
+      setApiLocale(nextLocale);
       setLocaleState(nextLocale);
       persistLocale(nextLocale);
       void onLocaleChange?.(nextLocale);

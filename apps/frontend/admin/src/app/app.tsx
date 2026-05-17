@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
-import { normalizeLocale } from "@app/common/i18n";
-import { FrontendI18nProvider, useI18n } from "@app/frontend-ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { normalizeLocale, type Locale } from "@app/common/i18n";
+import {
+  apiFetch,
+  FrontendI18nProvider,
+  FrontendQueryProvider,
+  useI18n,
+} from "@app/frontend-ui";
 import {
   createAdminAccess,
   fetchAdminProfile,
@@ -33,16 +39,48 @@ const getConfiguredAuthApiBaseUrl = (): string => {
   return getAdminApiBaseUrl(env["VITE_AUTH_API_BASE_URL"]);
 };
 
-const bearerHeaders = (token: string, locale: string) => ({
-  "Accept-Language": locale,
-  Authorization: `Bearer ${token}`,
-});
+type AuthLocalePayload = {
+  locale?: string | null;
+  user?: { locale?: string | null };
+};
+
+type ApiEnvelope<T> = { data?: T };
 
 interface AdminAppProps {
   token: string;
   setToken: (token: string) => void;
-  applyUserLocale: (locale: "en" | "es") => void;
+  applyUserLocale: (locale: Locale) => void;
 }
+
+const getProfileState = (
+  token: string,
+  loading: boolean,
+  payload: Awaited<ReturnType<typeof fetchAdminProfile>> | undefined,
+  error: unknown,
+  principalMissingMessage: string,
+): AdminProfileState => {
+  if (!token) {
+    return { status: "missing-token" };
+  }
+  if (loading) {
+    return { status: "loading" };
+  }
+  if (error) {
+    return {
+      status: "forbidden",
+      reason:
+        error instanceof Error ? error.message : "Profile request failed.",
+    };
+  }
+
+  const access = createAdminAccess(payload?.principal);
+  return access.isAuthenticated
+    ? { status: "ready", payload: payload ?? {}, access }
+    : {
+        status: "forbidden",
+        reason: principalMissingMessage,
+      };
+};
 
 const AdminApp = ({
   applyUserLocale,
@@ -51,61 +89,35 @@ const AdminApp = ({
 }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
-  const [state, setState] = useState<AdminProfileState>(
-    token ? { status: "loading" } : { status: "missing-token" },
+
+  const profileQuery = useQuery({
+    enabled: Boolean(token),
+    queryFn: () => fetchAdminProfile(token, getConfiguredAdminApiBaseUrl()),
+    queryKey: ["admin", "profile", "me", token, locale],
+    retry: false,
+    staleTime: 15_000,
+  });
+  const payloadLocale = normalizeLocale(
+    profileQuery.data?.profile?.locale ?? profileQuery.data?.principal?.locale,
   );
 
   useEffect(() => {
-    if (!token) {
-      setState({ status: "missing-token" });
-      return undefined;
+    if (payloadLocale) {
+      applyUserLocale(payloadLocale);
     }
+  }, [applyUserLocale, payloadLocale]);
 
-    let active = true;
-    setState({ status: "loading" });
-    void fetchAdminProfile(fetch, token, getConfiguredAdminApiBaseUrl(), locale)
-      .then((payload) => {
-        /* v8 ignore next 3 -- defensive cleanup path for unmounted components */
-        if (!active) {
-          return;
-        }
-        const nextLocale = normalizeLocale(
-          payload.profile?.locale ?? payload.principal?.locale,
-        );
-        if (nextLocale) {
-          applyUserLocale(nextLocale);
-          if (nextLocale !== locale) {
-            return;
-          }
-        }
-        const access = createAdminAccess(payload.principal);
-        setState(
-          access.isAuthenticated
-            ? { status: "ready", payload, access }
-            : {
-                status: "forbidden",
-                reason: t("errors.auth.principalMissing"),
-              },
-        );
-      })
-      .catch((error: unknown) => {
-        /* v8 ignore next 1 -- rejected after unmount is a defensive no-op */
-        if (active) {
-          setState({
-            status: "forbidden",
-            reason:
-              error instanceof Error
-                ? error.message
-                : "Profile request failed.",
-          });
-        }
-      });
-
-    return () => {
-      /* v8 ignore next -- cleanup assignment has no user-visible branch */
-      active = false;
-    };
-  }, [applyUserLocale, locale, t, token]);
+  const state = useMemo(
+    () =>
+      getProfileState(
+        token,
+        profileQuery.isLoading,
+        profileQuery.data,
+        profileQuery.error,
+        t("errors.auth.principalMissing"),
+      ),
+    [profileQuery.data, profileQuery.error, profileQuery.isLoading, t, token],
+  );
 
   return (
     <AdminLayout>
@@ -120,51 +132,48 @@ const AdminApp = ({
   );
 };
 
-const App = () => {
+const AppContent = () => {
   const [token, setToken] = useState(() =>
     resolveInitialBearerToken(getBrowserHref(), getBrowserStorage()),
   );
-  const [userLocale, setUserLocale] = useState<"en" | "es" | null>(null);
+  const [userLocale, setUserLocale] = useState<Locale | null>(null);
+  const queryClient = useQueryClient();
 
-  const applyUserLocale = useCallback((nextLocale: "en" | "es") => {
+  const localeMutation = useMutation({
+    mutationFn: (nextLocale: Locale) =>
+      apiFetch<ApiEnvelope<AuthLocalePayload>>("/auth/me/locale", {
+        authToken: token,
+        baseUrl: getConfiguredAuthApiBaseUrl(),
+        json: { locale: nextLocale },
+        method: "PATCH",
+      }),
+    onSuccess: (body, nextLocale) => {
+      const persistedLocale = normalizeLocale(
+        body?.data?.locale ?? body?.data?.user?.locale,
+      );
+      setUserLocale(persistedLocale ?? nextLocale);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "profile"] });
+    },
+    retry: false,
+  });
+
+  const applyUserLocale = useCallback((nextLocale: Locale) => {
     setUserLocale(nextLocale);
   }, []);
 
   const persistUserLocale = useCallback(
-    async (nextLocale: "en" | "es") => {
+    async (nextLocale: Locale) => {
       if (!token) {
         return;
       }
 
       try {
-        const response = await fetch(
-          `${getConfiguredAuthApiBaseUrl()}/auth/me/locale`,
-          {
-            method: "PATCH",
-            headers: {
-              ...bearerHeaders(token, nextLocale),
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ locale: nextLocale }),
-          },
-        );
-        if (response.ok) {
-          const body = (await response.json()) as {
-            data?: {
-              locale?: string | null;
-              user?: { locale?: string | null };
-            };
-          };
-          const persistedLocale = normalizeLocale(
-            body.data?.locale ?? body.data?.user?.locale,
-          );
-          setUserLocale(persistedLocale ?? nextLocale);
-        }
+        await localeMutation.mutateAsync(nextLocale);
       } catch {
         // Locale remains persisted locally and can be retried on the next switch.
       }
     },
-    [token],
+    [localeMutation, token],
   );
 
   return (
@@ -180,5 +189,11 @@ const App = () => {
     </FrontendI18nProvider>
   );
 };
+
+const App = () => (
+  <FrontendQueryProvider>
+    <AppContent />
+  </FrontendQueryProvider>
+);
 
 export default App;

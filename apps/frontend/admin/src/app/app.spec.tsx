@@ -133,19 +133,24 @@ describe("admin auth and RBAC helpers", () => {
     const fetchImpl = mockFetch(true, {
       data: { principal: { subject: "1" } },
     });
-    await expect(fetchAdminProfile(fetchImpl, "abc", "/api")).resolves.toEqual({
+    vi.stubGlobal("fetch", fetchImpl);
+    await expect(fetchAdminProfile("abc", "/api")).resolves.toEqual({
       principal: { subject: "1" },
     });
     expect(fetchImpl).toHaveBeenCalledWith("/api/admin/profile/me", {
-      headers: { "Accept-Language": "en", Authorization: "Bearer abc" },
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en",
+        Authorization: "Bearer abc",
+      },
     });
 
-    await expect(
-      fetchAdminProfile(mockFetch(false, {}, 403), "abc", ""),
-    ).rejects.toThrow("Profile request failed with 403.");
-    await expect(
-      fetchAdminProfile(mockFetch(true, {}), "abc", ""),
-    ).resolves.toEqual({});
+    vi.stubGlobal("fetch", mockFetch(false, {}, 403));
+    await expect(fetchAdminProfile("abc", "")).rejects.toThrow(
+      "Request failed with 403.",
+    );
+    vi.stubGlobal("fetch", mockFetch(true, {}));
+    await expect(fetchAdminProfile("abc", "")).resolves.toEqual({});
   });
 
   it("normalizes admin API base URLs", () => {
@@ -336,7 +341,7 @@ describe("Admin app shell", () => {
     vi.stubGlobal("fetch", mockFetch(false, {}, 401));
     render(<App />);
     await waitFor(() =>
-      expect(screen.getByText("Profile request failed with 401.")).toBeTruthy(),
+      expect(screen.getByText("Request failed with 401.")).toBeTruthy(),
     );
   });
 

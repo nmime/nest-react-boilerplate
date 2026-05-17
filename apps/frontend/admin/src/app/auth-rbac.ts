@@ -1,3 +1,5 @@
+import { apiFetch } from "@app/frontend-ui";
+
 export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin.bearerToken";
 
 export interface AdminPrincipal {
@@ -28,6 +30,8 @@ export interface AdminAccess {
   roles: string[];
   permissions: string[];
 }
+
+type ApiEnvelope<T> = { data?: T };
 
 export const normalizeClaimList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -89,19 +93,16 @@ export const getAdminApiBaseUrl = (envValue?: string): string =>
   (envValue?.trim() || "/").replace(/\/$/u, "");
 
 export const fetchAdminProfile = async (
-  fetchImpl: typeof fetch,
   token: string,
   apiBaseUrl = "",
-  locale = "en",
 ): Promise<AdminProfilePayload> => {
-  const response = await fetchImpl(`${apiBaseUrl}/admin/profile/me`, {
-    headers: { "Accept-Language": locale, Authorization: `Bearer ${token}` },
-  });
+  const body = await apiFetch<ApiEnvelope<AdminProfilePayload>>(
+    "/admin/profile/me",
+    {
+      authToken: token,
+      baseUrl: apiBaseUrl,
+    },
+  );
 
-  if (!response.ok) {
-    throw new Error(`Profile request failed with ${response.status}.`);
-  }
-
-  const body = (await response.json()) as { data?: AdminProfilePayload };
-  return body.data ?? {};
+  return body?.data ?? {};
 };

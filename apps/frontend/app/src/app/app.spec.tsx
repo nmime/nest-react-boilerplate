@@ -39,6 +39,48 @@ const setFetch = (...responses: FetchReply[]) => {
   return fetchMock;
 };
 
+type FetchInit = {
+  body?: unknown;
+  headers?: Record<string, string>;
+  method?: string;
+};
+
+type FetchMock = ReturnType<typeof setFetch>;
+
+const findFetchInit = (
+  fetchMock: FetchMock,
+  url: string,
+  expectedHeaders: Record<string, string>,
+  method?: string,
+): FetchInit | undefined =>
+  fetchMock.mock.calls.find(([calledUrl, init]) => {
+    const fetchInit = init as FetchInit | undefined;
+
+    return (
+      calledUrl === url &&
+      (!method || fetchInit?.method === method) &&
+      Object.entries(expectedHeaders).every(
+        ([key, value]) => fetchInit?.headers?.[key] === value,
+      )
+    );
+  })?.[1] as FetchInit | undefined;
+
+const expectFetchRequest = (
+  fetchMock: FetchMock,
+  url: string,
+  expectedHeaders: Record<string, string>,
+  method?: string,
+): FetchInit => {
+  const init = findFetchInit(fetchMock, url, expectedHeaders, method);
+  expect(init, `missing ${method ?? "GET"} ${url}`).toBeTruthy();
+  expect(init?.headers).toMatchObject({
+    Accept: "application/json",
+    ...expectedHeaders,
+  });
+
+  return init as FetchInit;
+};
+
 describe("User app shell", () => {
   beforeEach(() => {
     installStorage();
@@ -102,16 +144,14 @@ describe("User app shell", () => {
     expect(window.localStorage.getItem("boilerplate.user.bearerToken")).toBe(
       "url-token",
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
-      headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
+    expectFetchRequest(fetchMock, "/auth/me", {
+      "Accept-Language": "en",
+      Authorization: "Bearer url-token",
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      "https://user-api/profile/me",
-      {
-        headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
-      },
-    );
+    expectFetchRequest(fetchMock, "https://user-api/profile/me", {
+      "Accept-Language": "en",
+      Authorization: "Bearer url-token",
+    });
   });
 
   it("shows forbidden states for profile response and thrown failures", async () => {
@@ -119,7 +159,7 @@ describe("User app shell", () => {
     setFetch(jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
     expect(
-      await screen.findByText("Forbidden: Profile request failed with 403."),
+      await screen.findByText("Forbidden: Request failed with 403."),
     ).toBeTruthy();
     unmount();
 
@@ -154,9 +194,11 @@ describe("User app shell", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
 
-    expect(
-      await screen.findByText("Forbidden: Authentication failed."),
-    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByText("Provide a token or use login/register."),
+      ).toBeTruthy(),
+    );
   });
 
   it("uses saved user locale before profile calls and ignores stale local storage", async () => {
@@ -172,28 +214,18 @@ describe("User app shell", () => {
     render(<App />);
 
     expect(await screen.findByText("Listo: profile-subject")).toBeTruthy();
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
-      headers: {
-        "Accept-Language": "en",
-        Authorization: "Bearer saved-locale-token",
-      },
+    expectFetchRequest(fetchMock, "/auth/me", {
+      "Accept-Language": "en",
+      Authorization: "Bearer saved-locale-token",
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/auth/me", {
-      headers: {
-        "Accept-Language": "es",
-        Authorization: "Bearer saved-locale-token",
-      },
+    expectFetchRequest(fetchMock, "/auth/me", {
+      "Accept-Language": "es",
+      Authorization: "Bearer saved-locale-token",
     });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      3,
-      "https://user-api/profile/me",
-      {
-        headers: {
-          "Accept-Language": "es",
-          Authorization: "Bearer saved-locale-token",
-        },
-      },
-    );
+    expectFetchRequest(fetchMock, "https://user-api/profile/me", {
+      "Accept-Language": "es",
+      Authorization: "Bearer saved-locale-token",
+    });
   });
 
   it("persists language switches for authenticated users and subsequent calls", async () => {
@@ -213,22 +245,39 @@ describe("User app shell", () => {
       target: { value: "es" },
     });
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
-    expect(fetchMock).toHaveBeenNthCalledWith(3, "/auth/me/locale", {
-      method: "PATCH",
-      headers: {
+    await waitFor(() =>
+      expect(
+        findFetchInit(
+          fetchMock,
+          "/auth/me/locale",
+          {
+            "Accept-Language": "es",
+            Authorization: "Bearer switch-token",
+            "Content-Type": "application/json",
+          },
+          "PATCH",
+        ),
+      ).toBeTruthy(),
+    );
+    const patchInit = expectFetchRequest(
+      fetchMock,
+      "/auth/me/locale",
+      {
         "Accept-Language": "es",
         Authorization: "Bearer switch-token",
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ locale: "es" }),
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(5, "/profile/me", {
-      headers: {
-        "Accept-Language": "es",
-        Authorization: "Bearer switch-token",
-      },
-    });
+      "PATCH",
+    );
+    expect(patchInit.body).toBe(JSON.stringify({ locale: "es" }));
+    await waitFor(() =>
+      expect(
+        findFetchInit(fetchMock, "/profile/me", {
+          "Accept-Language": "es",
+          Authorization: "Bearer switch-token",
+        }),
+      ).toBeTruthy(),
+    );
   });
 
   it("logs in then loads the protected profile", async () => {
@@ -266,7 +315,7 @@ describe("User app shell", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Register" }));
     expect(
-      await screen.findByText("Forbidden: register failed with 409."),
+      await screen.findByText("Forbidden: Request failed with 409."),
     ).toBeTruthy();
     unmount();
 

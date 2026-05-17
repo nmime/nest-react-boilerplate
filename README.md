@@ -16,6 +16,7 @@ The workspace is organized around deployable applications and small shared libra
 - NestJS APIs for auth, user-facing API traffic, and admin API traffic.
 - Shared backend libraries for bootstrap concerns, validation, RFC 7807 problem responses, Swagger/OpenAPI setup, auth/user/admin feature modules, and PostgreSQL data access.
 - Shared frontend UI primitives used by the React applications.
+- TanStack Query as the frontend request/server-state manager for user/admin APIs, through a shared `apiFetch` client that injects the active locale. MobX is intentionally not included because the boilerplate currently needs server-state caching and invalidation, not a separate observable client-state layer.
 - Docker and test tooling that exercise the same build, migration, and runtime paths used in local development.
 
 See [Architecture](docs/architecture.md) and [Technology choices](docs/technology-choices.md) for the detailed project model and dependency rationale.

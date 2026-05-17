@@ -32,6 +32,7 @@ describe("AuthUserRepository", () => {
       displayName: "User",
       permissions: ["profile:read"],
       roles: ["user"],
+      locale: "es",
     });
 
     const entity = result._unsafeUnwrap();
@@ -43,6 +44,7 @@ describe("AuthUserRepository", () => {
       displayName: "User",
       permissions: ["profile:read"],
       roles: ["user"],
+      locale: "es",
       status: "active",
     });
     expect(persist).toHaveBeenCalledWith(entity);
@@ -133,6 +135,33 @@ describe("AuthUserRepository", () => {
     });
   });
 
+  it("updates a persisted auth user locale", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setLocale("user-id", "es");
+
+    expect(result._unsafeUnwrap()).toMatchObject({ locale: "es" });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("maps repository errors when updating locale", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    flush.mockRejectedValue(new Error("locale update failed"));
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setLocale("user-id", "es");
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "locale update failed",
+    });
+  });
+
   it("maps repository errors when recording login", async () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
     const { findOne, flush, entityManager } = createEntityManagerMock();
@@ -179,6 +208,11 @@ describe("AuthUserRepository", () => {
           "00000000-0000-4000-8000-000000000000",
           {},
         )
+      )._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (
+        await authUsers.setLocale("00000000-0000-4000-8000-000000000000", "es")
       )._unsafeUnwrap(),
     ).toBeNull();
     expect(

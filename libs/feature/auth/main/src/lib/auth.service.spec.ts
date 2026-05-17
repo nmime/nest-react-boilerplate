@@ -1,4 +1,8 @@
-import { ConflictException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { errAsync, okAsync } from "neverthrow";
 import { validateBearerAuthorization } from "@app/feature-auth-oauth";
@@ -50,6 +54,36 @@ describe("AuthService", () => {
     await expect(service.getUserById("missing")).resolves.toBeNull();
   });
 
+  it("persists normalized locale in sessions, JWT principals, and updates", async () => {
+    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
+    const service = new AuthService(new InMemoryAuthUserStore());
+
+    const registered = await service.register({
+      email: "locale@example.com",
+      password: "password123",
+      locale: "es-MX",
+    });
+
+    expect(registered.user.locale).toBe("es");
+    expect(
+      validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
+        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+      }).locale,
+    ).toBe("es");
+
+    await expect(
+      service.updateUserLocale(registered.user.id, "en-US"),
+    ).resolves.toMatchObject({ locale: "en" });
+    await expect(
+      service.getUserById(registered.user.id),
+    ).resolves.toMatchObject({
+      locale: "en",
+    });
+    await expect(
+      service.updateUserLocale(registered.user.id, "fr-FR"),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it("rejects duplicate registrations and invalid credentials", async () => {
     process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
     const service = new AuthService(new InMemoryAuthUserStore());
@@ -75,6 +109,7 @@ describe("AuthService", () => {
         }),
       findById: () =>
         errAsync({ code: "repository_error" as const, message: "id failed" }),
+      setLocale: () => okAsync(null),
       recordLogin: () => okAsync(null),
     };
     const serviceWithFindFailure = new AuthService(failingStore);
@@ -113,6 +148,7 @@ describe("AuthService", () => {
           passwordHash: inactiveHash,
           roles: ["user"],
           permissions: ["profile:read"],
+          locale: null,
           status: "disabled" as const,
           lastLoginAt: null,
         }),
@@ -135,6 +171,7 @@ describe("AuthService", () => {
       passwordHash: activeHash,
       roles: ["user"],
       permissions: ["profile:read"],
+      locale: null,
       status: "active" as const,
       lastLoginAt: null,
     };
@@ -142,6 +179,7 @@ describe("AuthService", () => {
       findByEmail: () => okAsync(activeRecord),
       create: () => okAsync(activeRecord),
       findById: () => okAsync(activeRecord),
+      setLocale: () => okAsync(null),
       recordLogin: () => okAsync(null),
     }).login({ email: "active@example.com", password: "password123" });
     expect(fallbackLogin.user.id).toBe("active-id");
@@ -167,6 +205,7 @@ describe("AuthService", () => {
       passwordHash: "hash",
       roles: [],
       permissions: [],
+      locale: null,
       status: "active" as const,
       lastLoginAt: null,
     };
@@ -185,6 +224,7 @@ describe("AuthService", () => {
         passwordHash: "hash",
         roles: [],
         permissions: [],
+        locale: null,
         status: "active",
         lastLoginAt: null,
       },
@@ -203,6 +243,7 @@ describe("AuthService", () => {
           passwordHash: "hash",
           roles: [],
           permissions: [],
+          locale: null,
           status: "active",
           lastLoginAt: null,
         },

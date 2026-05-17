@@ -244,3 +244,32 @@ a {
     padding: 18px;
   }
 }
+.xr-feedback,
+.xr-toast {
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-md);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--xr-color-text);
+}
+
+.xr-feedback--loading {
+  color: var(--xr-color-muted);
+}
+
+.xr-feedback--empty h2,
+.xr-feedback--empty p {
+  margin: 0 0 10px;
+}
+
+.xr-feedback__action {
+  margin-top: 14px;
+}
+
+.xr-toast--success {
+  border-color: rgba(81, 230, 166, 0.55);
+}
+
+.xr-toast--warning {
+  border-color: rgba(255, 209, 102, 0.55);
+}

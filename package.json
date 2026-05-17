@@ -25,7 +25,14 @@
     "docker:fullstack": "docker compose -f docker/docker-compose.yml up --build",
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "test:docker-smoke": "node tools/docker-smoke.mjs",
-    "test:fullstack": "node tools/fullstack-e2e.mjs"
+    "test:fullstack": "node tools/fullstack-e2e.mjs",
+    "check": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "init:project": "node tools/init-project.mjs",
+    "db:seed": "node tools/db-seed.mjs",
+    "db:backup": "node tools/db-backup.mjs",
+    "db:restore": "node tools/db-restore.mjs",
+    "api:openapi": "node tools/export-openapi.mjs",
+    "api:client": "node tools/generate-api-client.mjs"
   },
   "dependencies": {
     "@mikro-orm/core": "7.0.16",

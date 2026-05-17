@@ -88,4 +88,19 @@ describe("auth-app-api e2e", () => {
       .expect(201)
       .expect({ data: { loggedOut: true } });
   });
+
+  it("GET /live and /ready return ok", async () => {
+    const httpServer = app.getHttpServer() as unknown as Parameters<
+      typeof supertest
+    >[0];
+
+    await supertest(httpServer)
+      .get("/live")
+      .expect(200)
+      .expect({ data: { app: "auth-app-api", status: "ok" } });
+    await supertest(httpServer)
+      .get("/ready")
+      .expect(200)
+      .expect({ data: { app: "auth-app-api", status: "ok" } });
+  });
 });

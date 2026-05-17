@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import {
+  loadDotEnv,
+  postgresConnectionString,
+  redactedConnectionString,
+} from "./env-loader.mjs";
+
+function parseArgs(argv) {
+  const args = { dryRun: false, output: "" };
+  for (let i = 0; i < argv.length; i += 1) {
+    const item = argv[i];
+    if (item === "--") continue;
+    const val = () => {
+      const next = argv[++i];
+      if (!next) throw new Error(`${item} requires a value.`);
+      return next;
+    };
+    if (item === "--dry-run") args.dryRun = true;
+    else if (item === "--output") args.output = val();
+    else if (item === "--help" || item === "-h") args.help = true;
+    else throw new Error(`Unknown option: ${item}`);
+  }
+  return args;
+}
+const defaultOutput = () =>
+  join(
+    "backups",
+    `postgres-${new Date().toISOString().replace(/[:.]/gu, "-")}.dump`,
+  );
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  if (args.help) {
+    console.log(
+      "Usage: pnpm db:backup -- [--dry-run] [--output backups/app.dump]",
+    );
+    return;
+  }
+  loadDotEnv();
+  const connectionString = postgresConnectionString();
+  const output = args.output || defaultOutput();
+  const command = [
+    "pg_dump",
+    "--format=custom",
+    "--no-owner",
+    "--no-acl",
+    "--file",
+    output,
+    connectionString,
+  ];
+  if (args.dryRun) {
+    console.log(
+      JSON.stringify(
+        {
+          status: "dry-run",
+          database: redactedConnectionString(connectionString),
+          output,
+          command: [
+            ...command.slice(0, -1),
+            redactedConnectionString(connectionString),
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+  mkdirSync(
+    output.includes("/") ? output.slice(0, output.lastIndexOf("/")) : ".",
+    {
+      recursive: true,
+    },
+  );
+  const result = spawnSync(command[0], command.slice(1), { stdio: "inherit" });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+  console.log(
+    JSON.stringify({
+      status: "backed-up",
+      database: redactedConnectionString(connectionString),
+      output,
+    }),
+  );
+}
+
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

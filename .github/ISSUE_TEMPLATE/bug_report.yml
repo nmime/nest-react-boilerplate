@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible defect
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: pnpm command, route, request, or UI flow
+    validations:
+      required: true
+  - type: input
+    id: sha
+    attributes:
+      label: Commit SHA / version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Redact tokens, cookies, passwords, and private data.

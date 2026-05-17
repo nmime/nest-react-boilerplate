@@ -1,0 +1,129 @@
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+secrets:
+  # Production should create this Secret outside the chart, for example through
+  # External Secrets Operator or the ansible-k8s-full-setup platform secret flow.
+  existingSecret: ""
+
+config:
+  nodeEnv: production
+  corsOrigins: https://admin.example.com,https://app.example.com
+  authJwtIssuer: https://auth.example.com
+  authJwtAudience: nest-react-boilerplate-api
+  authJwtExpiresInSeconds: "3600"
+  openApiEnabled: "false"
+  logLevel: info
+
+postgresql:
+  host: postgresql
+  port: "5432"
+  database: nest_react_boilerplate
+  user: postgres
+  ssl: "true"
+  sslRejectUnauthorized: "true"
+
+migrations:
+  enabled: true
+  image:
+    repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
+    tag: latest
+  command: ["pnpm", "db:migrate"]
+
+apps:
+  authApi:
+    enabled: true
+    replicas: 2
+    port: 3003
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
+      tag: latest
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  userApi:
+    enabled: true
+    replicas: 2
+    port: 3002
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
+      tag: latest
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  adminApi:
+    enabled: true
+    replicas: 2
+    port: 3001
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
+      tag: latest
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  landing:
+    enabled: true
+    replicas: 2
+    port: 80
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
+      tag: latest
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+  userFrontend:
+    enabled: true
+    replicas: 2
+    port: 80
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
+      tag: latest
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+  adminFrontend:
+    enabled: true
+    replicas: 2
+    port: 80
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
+      tag: latest
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: example.com
+      service: landing
+      paths: ["/"]
+    - host: app.example.com
+      service: user-frontend
+      paths: ["/"]
+    - host: admin.example.com
+      service: admin-frontend
+      paths: ["/"]
+    - host: auth.example.com
+      service: auth-api
+      paths: ["/"]
+  tls:
+    - secretName: nest-react-boilerplate-tls
+      hosts: [example.com, app.example.com, admin.example.com, auth.example.com]
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilization: 70
+
+monitoring:
+  enabled: false
+
+networkPolicy:
+  enabled: false

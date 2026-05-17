@@ -96,6 +96,10 @@ pnpm run docker:down
 
 Docker validation scripts intentionally default to conservative build parallelism for reliability on CI and small VPS hosts. See [Deployment and local stack readiness](docs/deployment.md) for the compose topology and runtime notes.
 
+## Frontend API state
+
+The admin and user React apps use a shared frontend API client with TanStack Query for request orchestration, bearer-authenticated profile loading, locale-aware mutations, and centralized JSON fetch handling. See [OpenAPI and typed client scaffold](docs/api-client.md#frontend-api-client-and-tanstack-query) for the fetch/query conventions used by the frontend apps.
+
 ## Testing and validation
 
 Common local checks:
@@ -125,6 +129,7 @@ Additional launch docs:
 - [One-server Docker Compose production deployment](docs/docker-compose-production.md)
 - [Production readiness checklist](docs/production-readiness.md)
 - [OpenAPI and typed client scaffold](docs/api-client.md)
+- [Frontend API client and TanStack Query](docs/api-client.md#frontend-api-client-and-tanstack-query)
 - [Frontend UX primitives](docs/frontend-ux.md)
 - [Internationalization](docs/i18n.md)
 - [Auth production roadmap](docs/auth-production-roadmap.md)

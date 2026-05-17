@@ -9,18 +9,6 @@ export interface AdminPrincipal {
   permissions?: string[];
 }
 
-export interface AdminProfilePayload {
-  principal?: AdminPrincipal;
-  profile?: {
-    id: string;
-    email?: string;
-    displayName?: string;
-    locale?: string | null;
-    roles: string[];
-    permissions: string[];
-  };
-}
-
 export interface AdminAccess {
   isAuthenticated: boolean;
   canReadDashboard: boolean;
@@ -84,24 +72,3 @@ export const resolveInitialBearerToken = (
   href: string,
   storage?: Storage,
 ): string => getBearerTokenFromUrl(href) || readStoredBearerToken(storage);
-
-export const getAdminApiBaseUrl = (envValue?: string): string =>
-  (envValue?.trim() || "/").replace(/\/$/u, "");
-
-export const fetchAdminProfile = async (
-  fetchImpl: typeof fetch,
-  token: string,
-  apiBaseUrl = "",
-  locale = "en",
-): Promise<AdminProfilePayload> => {
-  const response = await fetchImpl(`${apiBaseUrl}/admin/profile/me`, {
-    headers: { "Accept-Language": locale, Authorization: `Bearer ${token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Profile request failed with ${response.status}.`);
-  }
-
-  const body = (await response.json()) as { data?: AdminProfilePayload };
-  return body.data ?? {};
-};

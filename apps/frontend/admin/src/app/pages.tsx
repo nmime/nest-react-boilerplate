@@ -6,7 +6,8 @@ import {
   useI18n,
 } from "@app/frontend-ui";
 import { translate, type TranslationKey } from "@app/common/i18n";
-import type { AdminAccess, AdminProfilePayload } from "./auth-rbac";
+import type { AdminProfilePayload } from "@app/frontend-api-client";
+import type { AdminAccess } from "./auth-rbac";
 
 export type AdminProfileState =
   | { status: "missing-token" }

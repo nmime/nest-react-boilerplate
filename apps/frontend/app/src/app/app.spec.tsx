@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
-  ({ ok, status, json: () => Promise.resolve(body) }) as Response;
+  new Response(JSON.stringify(body), {
+    headers: { "content-type": "application/json" },
+    status: ok ? status : status || 500,
+  });
 
 const installStorage = () => {
   const values = new Map<string, string>();
@@ -26,8 +29,11 @@ const installStorage = () => {
 
 type FetchReply = Response | { rejectsWith: unknown };
 
+const createFetchMock = () =>
+  vi.fn<(input: string, init?: RequestInit) => Promise<Response>>();
+
 const setFetch = (...responses: FetchReply[]) => {
-  const fetchMock = vi.fn();
+  const fetchMock = createFetchMock();
   for (const response of responses) {
     if ("rejectsWith" in response) {
       fetchMock.mockRejectedValueOnce(response.rejectsWith);
@@ -37,6 +43,19 @@ const setFetch = (...responses: FetchReply[]) => {
   }
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+};
+
+const getRequestAt = (
+  fetchImpl: ReturnType<typeof createFetchMock>,
+  index: number,
+): { headers: Headers; init: RequestInit; input: string } => {
+  const [input, init] = fetchImpl.mock.calls[index] ?? [];
+
+  if (!(init?.headers instanceof Headers)) {
+    throw new Error("Missing Headers instance in fetch call.");
+  }
+
+  return { headers: init.headers, init, input };
 };
 
 describe("User app shell", () => {
@@ -102,15 +121,15 @@ describe("User app shell", () => {
     expect(window.localStorage.getItem("boilerplate.user.bearerToken")).toBe(
       "url-token",
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
-      headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      "https://user-api/profile/me",
-      {
-        headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
-      },
+    const authRequest = getRequestAt(fetchMock, 0);
+    const profileRequest = getRequestAt(fetchMock, 1);
+    expect(authRequest.input).toBe("/auth/me");
+    expect(authRequest.init.body).toBeUndefined();
+    expect(profileRequest.input).toBe("https://user-api/profile/me");
+    expect(profileRequest.init.body).toBeUndefined();
+    expect(profileRequest.headers.get("Accept-Language")).toBe("en");
+    expect(profileRequest.headers.get("Authorization")).toBe(
+      "Bearer url-token",
     );
   });
 
@@ -143,20 +162,16 @@ describe("User app shell", () => {
     document.cookie = "lang=; path=/; max-age=0";
     window.history.pushState({}, "", "/");
 
-    const rejectAuthJson = vi
-      .fn<() => Promise<unknown>>()
-      .mockRejectedValue("auth offline");
-    setFetch({
-      ok: true,
-      status: 200,
-      json: rejectAuthJson,
-    } as Response);
+    const fetchMock = setFetch({
+      rejectsWith: "auth offline",
+    });
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
 
     expect(
       await screen.findByText("Forbidden: Authentication failed."),
     ).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("uses saved user locale before profile calls and ignores stale local storage", async () => {
@@ -172,28 +187,13 @@ describe("User app shell", () => {
     render(<App />);
 
     expect(await screen.findByText("Listo: profile-subject")).toBeTruthy();
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/auth/me", {
-      headers: {
-        "Accept-Language": "en",
-        Authorization: "Bearer saved-locale-token",
-      },
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/auth/me", {
-      headers: {
-        "Accept-Language": "es",
-        Authorization: "Bearer saved-locale-token",
-      },
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      3,
-      "https://user-api/profile/me",
-      {
-        headers: {
-          "Accept-Language": "es",
-          Authorization: "Bearer saved-locale-token",
-        },
-      },
-    );
+    const firstRequest = getRequestAt(fetchMock, 0);
+    const secondRequest = getRequestAt(fetchMock, 1);
+    const thirdRequest = getRequestAt(fetchMock, 2);
+    expect(firstRequest.headers.get("Accept-Language")).toBe("en");
+    expect(secondRequest.headers.get("Accept-Language")).toBe("es");
+    expect(thirdRequest.headers.get("Accept-Language")).toBe("es");
+    expect(thirdRequest.input).toBe("https://user-api/profile/me");
   });
 
   it("persists language switches for authenticated users and subsequent calls", async () => {
@@ -214,21 +214,28 @@ describe("User app shell", () => {
     });
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
-    expect(fetchMock).toHaveBeenNthCalledWith(3, "/auth/me/locale", {
-      method: "PATCH",
-      headers: {
-        "Accept-Language": "es",
-        Authorization: "Bearer switch-token",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ locale: "es" }),
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(5, "/profile/me", {
-      headers: {
-        "Accept-Language": "es",
-        Authorization: "Bearer switch-token",
-      },
-    });
+    const patchIndex = fetchMock.mock.calls.findIndex(
+      ([url, init]) => url === "/auth/me/locale" && init?.method === "PATCH",
+    );
+    expect(patchIndex).toBeGreaterThanOrEqual(0);
+    const patchRequest = getRequestAt(fetchMock, patchIndex);
+    expect(patchRequest.headers.get("Accept-Language")).toBe("es");
+    expect(patchRequest.headers.get("Authorization")).toBe(
+      "Bearer switch-token",
+    );
+    expect(patchRequest.headers.get("content-type")).toBe("application/json");
+    const profileCalls = fetchMock.mock.calls.filter(
+      ([url]) => url === "/profile/me",
+    );
+    expect(profileCalls.length).toBeGreaterThanOrEqual(2);
+    let latestProfileIndex = -1;
+    for (const [index, [url]] of fetchMock.mock.calls.entries()) {
+      if (url === "/profile/me") {
+        latestProfileIndex = index;
+      }
+    }
+    const latestProfileRequest = getRequestAt(fetchMock, latestProfileIndex);
+    expect(latestProfileRequest.headers.get("Accept-Language")).toBe("es");
   });
 
   it("logs in then loads the protected profile", async () => {

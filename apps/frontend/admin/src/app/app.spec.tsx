@@ -7,12 +7,14 @@ import {
 } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  fetchAdminProfile,
+  getAdminApiBaseUrl,
+} from "@app/frontend-api-client";
 import App from "./app";
 import {
   ADMIN_TOKEN_STORAGE_KEY,
   createAdminAccess,
-  fetchAdminProfile,
-  getAdminApiBaseUrl,
   getBearerTokenFromUrl,
   readStoredBearerToken,
   resolveInitialBearerToken,
@@ -29,8 +31,13 @@ import {
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
   vi
-    .fn()
-    .mockResolvedValue({ ok, status, json: vi.fn().mockResolvedValue(body) });
+    .fn<(input: string, init?: RequestInit) => Promise<Response>>()
+    .mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        headers: { "content-type": "application/json" },
+        status: ok ? status : status || 500,
+      }),
+    );
 
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>();
@@ -49,6 +56,19 @@ const createMemoryStorage = (): Storage => {
       store.set(key, value);
     },
   };
+};
+
+const getRequestHeaders = (
+  fetchImpl: ReturnType<typeof mockFetch>,
+  index: number,
+): Headers => {
+  const init = fetchImpl.mock.calls[index]?.[1];
+
+  if (!(init?.headers instanceof Headers)) {
+    throw new Error("Missing Headers instance in fetch call.");
+  }
+
+  return init.headers;
 };
 
 beforeEach(() => {
@@ -133,18 +153,22 @@ describe("admin auth and RBAC helpers", () => {
     const fetchImpl = mockFetch(true, {
       data: { principal: { subject: "1" } },
     });
-    await expect(fetchAdminProfile(fetchImpl, "abc", "/api")).resolves.toEqual({
+    await expect(
+      fetchAdminProfile("abc", "en", "/api", fetchImpl),
+    ).resolves.toEqual({
       principal: { subject: "1" },
     });
-    expect(fetchImpl).toHaveBeenCalledWith("/api/admin/profile/me", {
-      headers: { "Accept-Language": "en", Authorization: "Bearer abc" },
-    });
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe("/api/admin/profile/me");
+    expect(fetchImpl.mock.calls[0]?.[1]?.body).toBeUndefined();
+    const headers = getRequestHeaders(fetchImpl, 0);
+    expect(headers.get("Accept-Language")).toBe("en");
+    expect(headers.get("Authorization")).toBe("Bearer abc");
 
     await expect(
-      fetchAdminProfile(mockFetch(false, {}, 403), "abc", ""),
+      fetchAdminProfile("abc", "en", "", mockFetch(false, {}, 403)),
     ).rejects.toThrow("Profile request failed with 403.");
     await expect(
-      fetchAdminProfile(mockFetch(true, {}), "abc", ""),
+      fetchAdminProfile("abc", "en", "", mockFetch(true, {})),
     ).resolves.toEqual({});
   });
 
@@ -340,9 +364,40 @@ describe("Admin app shell", () => {
     );
   });
 
-  it("fails closed for missing principals and non-Error profile failures", async () => {
+  it("fails closed for missing principals and persists locale updates", async () => {
     window.history.replaceState(null, "", "/?admin_token=missing-principal");
-    vi.stubGlobal("fetch", mockFetch(true, { data: {} }));
+    const fetchImpl = vi
+      .fn<(input: string, init?: RequestInit) => Promise<Response>>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: {} }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { user: { locale: "es" } } }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              principal: {
+                subject: "admin-id",
+                roles: ["admin"],
+                permissions: ["admin:profile:read", "admin:dashboard:read"],
+              },
+            },
+          }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          },
+        ),
+      );
+    vi.stubGlobal("fetch", fetchImpl);
 
     render(<App />);
     await waitFor(() =>
@@ -351,12 +406,17 @@ describe("Admin app shell", () => {
       ).toBeTruthy(),
     );
 
-    window.history.replaceState(null, "", "/?admin_token=string-failure");
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue("offline"));
-    render(<App />);
+    fireEvent.change(screen.getByLabelText("Language"), {
+      target: { value: "es" },
+    });
 
-    await waitFor(() =>
-      expect(screen.getByText("Profile request failed.")).toBeTruthy(),
-    );
+    await waitFor(() => {
+      const patchCall = fetchImpl.mock.calls.find(
+        ([url, init]) => url === "/auth/me/locale" && init?.method === "PATCH",
+      );
+
+      expect(patchCall).toBeTruthy();
+      expect(screen.getByText("Falta el principal autenticado.")).toBeTruthy();
+    });
   });
 });

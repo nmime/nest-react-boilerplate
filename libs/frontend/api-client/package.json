@@ -1,0 +1,13 @@
+{
+  "name": "@app/frontend-api-client",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@tanstack/react-query": "5.100.10"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  }
+}

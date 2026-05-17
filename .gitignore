@@ -88,3 +88,6 @@ storybook-static
 docs/superpowers/
 
 .nx/
+
+# Local database backups
+backups/

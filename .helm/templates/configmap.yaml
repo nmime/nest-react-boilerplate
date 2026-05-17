@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-config
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
+  AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
+  AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
+  OPENAPI_ENABLED: {{ .Values.config.openApiEnabled | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  POSTGRES_HOST: {{ .Values.postgresql.host | quote }}
+  POSTGRES_PORT: {{ .Values.postgresql.port | quote }}
+  POSTGRES_DB: {{ .Values.postgresql.database | quote }}
+  POSTGRES_USER: {{ .Values.postgresql.user | quote }}
+  POSTGRES_SSL: {{ .Values.postgresql.ssl | quote }}
+  POSTGRES_SSL_REJECT_UNAUTHORIZED: {{ .Values.postgresql.sslRejectUnauthorized | quote }}
+  POSTGRES_SYNCHRONIZE: 'false'

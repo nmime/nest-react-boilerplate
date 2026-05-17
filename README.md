@@ -4,95 +4,53 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
-Production-oriented Nx workspace for React frontends and NestJS backend APIs. The repository is organized around deployable app surfaces plus shared libraries for UI, xRocket-style backend bootstrap, validation, response mapping, problem-details exceptions, Swagger/OpenAPI, Postgres persistence, and OAuth/OIDC readiness.
+A production-oriented Nx monorepo starter for teams building React frontends and NestJS APIs on PostgreSQL.
 
-## Workspace layout
+This repository is intended to be a clean application foundation rather than a demo catalog. It provides the workspace structure, shared backend/frontend building blocks, database migration path, Docker packaging, and validation scripts needed to start a full-stack product without copying infrastructure from scratch.
 
-- `apps/frontend/admin` — `admin-app`, internal operations shell.
-- `apps/frontend/app` — `user-app`, user workspace shell.
-- `apps/frontend/landing` — `landing-app`, public landing shell.
-- `apps/backend/admin-app-api` — `backend-admin-app-api`, admin API shell on port 3001 locally.
-- `apps/backend/user-app-api` — `user-app-api`, user API shell on port 3002 locally.
-- `apps/backend/auth-app-api` — `auth-app-api`, auth API shell on port 3003 locally.
-- `libs/frontend/ui` — shared React UI primitives.
-- `libs/common/bootstrap` — Nest bootstrap with raw body, cookies, Helmet, robots, query parsing, CORS, logging, validation, response mapping, exceptions, and Swagger wiring.
-- `libs/common/exception` — RFC 7807 problem-details exception model, factory, status mapper, and OpenAPI decorators.
-- `libs/common/response` — API response mapper, neverthrow result mapper, transformer, and exception filter.
-- `libs/common/swagger` — reusable Swagger/OpenAPI setup with bearer auth and problem response support.
-- `libs/common/validation` — `ProblemValidationPipe` and validation problem details helpers.
-- `libs/feature/auth/shared` and `libs/feature/auth/main` — register/login/JWT auth feature modules.
-- `libs/feature/auth/oauth` — disabled-by-default OAuth/OIDC foundation.
-- `libs/feature/user/shared` and `libs/feature/user/main` — protected user profile feature modules.
-- `libs/feature/admin/shared` and `libs/feature/admin/main` — RBAC admin profile feature modules.
-- `libs/postgres/main/shared` and `libs/postgres/main/auth` — MikroORM/Postgres config and auth user persistence.
+## Architecture at a glance
 
-## Requirements
+The workspace is organized around deployable applications and small shared libraries:
+
+- React/Vite frontends for the public landing surface, user workspace, and admin workspace.
+- NestJS APIs for auth, user-facing API traffic, and admin API traffic.
+- Shared backend libraries for bootstrap concerns, validation, RFC 7807 problem responses, Swagger/OpenAPI setup, auth/user/admin feature modules, and PostgreSQL data access.
+- Shared frontend UI primitives used by the React applications.
+- Docker and test tooling that exercise the same build, migration, and runtime paths used in local development.
+
+See [Architecture](docs/architecture.md) and [Technology choices](docs/technology-choices.md) for the detailed project model and dependency rationale.
+
+## Repository layout
+
+```text
+apps/
+  backend/      NestJS API applications
+  frontend/     React/Vite applications
+  e2e/          full-stack Playwright suites
+libs/
+  common/       reusable backend foundation libraries
+  feature/      domain feature modules and contracts
+  frontend/     shared React UI library
+  postgres/     MikroORM/PostgreSQL data-access libraries
+docs/           architecture, testing, deployment, and operations notes
+docker/         compose/nginx files for the containerized stack
+tools/          local development, migration, Docker, and validation scripts
+```
+
+## Prerequisites
 
 - Node.js 26.x
-- pnpm 10.32.1
+- pnpm 10.32.1 via Corepack
+- Docker, when running PostgreSQL, component tests, Docker smoke tests, or the full-stack stack
 
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
 ```
 
-## Quality gates
+## Getting started
 
-```bash
-pnpm run format:check
-pnpm exec nx run-many -t lint --all
-pnpm exec nx run-many -t typecheck --all
-pnpm run test:coverage
-pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
-pnpm exec nx run-many -t build --all
-pnpm run audit
-```
-
-Vitest coverage is configured with 100% line, branch, function, and statement thresholds for the boilerplate's own testable source. Framework entrypoints and config files are excluded from coverage gates.
-
-## Local development
-
-```bash
-pnpm exec nx serve admin-app
-pnpm exec nx serve user-app
-pnpm exec nx serve landing-app
-
-pnpm exec nx serve backend-admin-app-api
-pnpm exec nx serve user-app-api
-pnpm exec nx serve auth-app-api
-```
-
-Each backend API exposes `GET /health`. `auth-app-api` also exposes `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, and `POST /auth/logout`; `user-app-api` exposes protected `GET /profile/me`; `backend-admin-app-api` exposes protected `GET /admin/profile/me`.
-
-## From-scratch Postgres run
-
-1. Copy env and start Postgres:
-
-```bash
-cp .env.example .env
-docker compose up -d postgres
-```
-
-2. Apply the MikroORM migrations. They are tracked in the `mikro_orm_migrations` table and are safe to rerun:
-
-```bash
-pnpm run db:migrate
-```
-
-3. Start APIs and apps in separate terminals:
-
-```bash
-pnpm exec nx serve auth-app-api        # http://localhost:3003
-pnpm exec nx serve user-app-api        # http://localhost:3002
-pnpm exec nx serve backend-admin-app-api # http://localhost:3001
-pnpm exec nx serve landing-app
-pnpm exec nx serve user-app
-pnpm exec nx serve admin-app
-```
-
-4. Register/login through `POST /auth/register` or the user app. Put an email in `ADMIN_BOOTSTRAP_EMAILS` before registering it to receive admin role/permissions for the admin app.
-
-## One-command local development
+Create a local environment file, start PostgreSQL, apply migrations, then run the full stack:
 
 ```bash
 cp .env.example .env
@@ -101,61 +59,73 @@ pnpm run db:migrate
 pnpm run dev:fullstack
 ```
 
-Use `pnpm run db:reset` only for local/dev databases; it drops the app schema plus `mikro_orm_migrations` with MikroORM schema tooling, then reapplies MikroORM migrations. See `docs/deployment.md` for Docker deployment/smoke details.
-
-## Fullstack and Docker testing
+`dev:fullstack` starts the three backend APIs and three Vite frontends with local API base URL defaults. You can also run individual projects with Nx, for example:
 
 ```bash
+pnpm exec nx serve auth-app-api
+pnpm exec nx serve user-app
+```
+
+The backend APIs expose `GET /health`. Auth, user profile, and admin profile flows are wired through the shared auth and PostgreSQL layers so a new developer can validate the stack without adding application code first.
+
+## Database migrations
+
+PostgreSQL persistence is managed through MikroORM. Migration classes are registered through the workspace migration tooling and applied with:
+
+```bash
+pnpm run db:migrate
+```
+
+Applied migrations are tracked by MikroORM in the `mikro_orm_migrations` table, making the command safe to rerun. The reset helper is limited to local/dev-looking databases and drops the app schema plus migration tracking before reapplying migrations:
+
+```bash
+pnpm run db:reset
+```
+
+For operational details, see [Deployment and local stack readiness](docs/deployment.md).
+
+## Docker workflow
+
+The root `Dockerfile` packages backend applications as Node runtime images and frontend applications as nginx static images. The Docker Compose stack includes PostgreSQL, a migration service, backend health checks, frontend nginx health checks, and same-origin proxying from the frontends to the APIs.
+
+```bash
+pnpm run docker:fullstack
+pnpm run test:docker-smoke
+pnpm run docker:down
+```
+
+Docker validation scripts intentionally default to conservative build parallelism for reliability on CI and small VPS hosts. See [Deployment and local stack readiness](docs/deployment.md) for the compose topology and runtime notes.
+
+## Testing and validation
+
+Common local checks:
+
+```bash
+pnpm run format:check
+pnpm run lint
+pnpm run typecheck
+pnpm run test:coverage
 pnpm run test:component
 pnpm run test:e2e
-pnpm run test:docker-smoke
 pnpm run test:fullstack
 ```
 
-`test:fullstack` runs the `apps/e2e/fullstack` Playwright project against Docker Compose with real Postgres, API health, auth/user/admin HTTP flows, and frontend route checks. See `docs/testing.md` for the full matrix.
+Unit and coverage checks use Vitest. Component tests cover database-backed Nest modules with Testcontainers. E2E and full-stack checks use Playwright, Docker Compose, real PostgreSQL migrations, API health probes, auth/user/admin HTTP flows, and frontend route assertions.
 
-## Runtime environment
+See [Testing matrix](docs/testing.md) for when to run each layer.
 
-Common backend variables:
+## Deployment and operations
 
-- `NODE_ENV` — set to `production` for deployed services.
-- `PORT` — listen port inside the process/container.
-- `CORS_ORIGINS` or `CORS_ORIGIN` — comma-separated allowed origins. In production, no wildcard/reflected CORS is enabled unless an origin is provided.
+Start from `.env.example`, replace placeholder values with secrets from your environment or secret manager, and keep production OpenAPI/CORS/auth settings explicit. The repository includes deployment guidance for Docker runtime validation, database migrations, health checks, and production hardening:
 
-OAuth placeholders are represented by the `AuthOAuthConfig` type (`issuerUrl`, `clientId`, `clientSecret`, `redirectUri`, `scopes`). OAuth is disabled by default until explicit configuration is wired by an application.
+- [Deployment and local stack readiness](docs/deployment.md)
+- [Production hardening](docs/production-hardening.md)
+- [API conventions](docs/api-conventions.md)
 
-## Build and deployment
+## Development conventions
 
-Build all deployable outputs:
-
-```bash
-pnpm exec nx run-many -t build --all
-```
-
-Backend outputs are emitted under `dist/apps/backend/*`. Frontend static outputs are emitted under `dist/apps/frontend/*`.
-
-The root `Dockerfile` supports backend and frontend targets:
-
-```bash
-# Backend API example
-docker build \
-  --target backend \
-  --build-arg NX_PROJECT=backend-admin-app-api \
-  --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api \
-  -t nest-react/backend-admin-app-api .
-
-# Frontend static example
-docker build \
-  --target frontend \
-  --build-arg NX_PROJECT=admin-app \
-  --build-arg FRONTEND_OUTPUT=dist/apps/frontend/admin \
-  -t nest-react/admin-app .
-```
-
-Optional local container smoke stack:
-
-```bash
-docker compose -f docker/docker-compose.yml up --build
-```
-
-Frontend services are exposed on ports 8081-8083 and backend APIs on ports 3001-3003.
+- Keep deployable code in `apps/`; put reusable backend, frontend, data-access, and feature code in `libs/`.
+- Prefer explicit MikroORM migrations over runtime schema synchronization.
+- Keep Docker, local development, and CI validation paths aligned so smoke tests reflect production packaging.
+- Add focused tests at the lowest useful layer, then use Docker/full-stack checks for integration confidence.
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md) and existing Nx project tags when adding projects or libraries.

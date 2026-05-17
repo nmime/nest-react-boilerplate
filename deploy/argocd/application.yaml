@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: nest-react-boilerplate-production
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
@@ -12,6 +14,7 @@ spec:
     helm:
       valueFiles:
         - values.yaml
+        - values-production.yaml
       parameters:
         - name: secrets.existingSecret
           value: nest-react-boilerplate-production-secrets
@@ -20,7 +23,8 @@ spec:
     namespace: nest-react-boilerplate
   syncPolicy:
     automated:
-      prune: false
+      prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - PruneLast=true

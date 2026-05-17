@@ -12,5 +12,10 @@
     "@nx/vite": "22.7.1",
     "@vitejs/plugin-react": "6.0.1",
     "vite": "8.0.13"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
   }
 }

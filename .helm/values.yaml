@@ -4,8 +4,9 @@ fullnameOverride: ""
 imagePullSecrets: []
 
 secrets:
-  # Production should create this Secret outside the chart, for example through
-  # External Secrets Operator or the ansible-k8s-full-setup platform secret flow.
+  # Production should create this Secret outside the chart, for example with
+  # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
+  # secret flow. When set, the chart does not render the fallback Secret.
   existingSecret: ""
 
 config:
@@ -30,69 +31,119 @@ migrations:
   image:
     repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
     tag: latest
+    pullPolicy: IfNotPresent
   command: ["pnpm", "db:migrate"]
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podSecurityContext: {}
+  securityContext: {}
 
+# The same chart deploys three Nest API services and three nginx frontend
+# services. API probes should keep /live and /ready; nginx probes use /.
 apps:
   authApi:
     enabled: true
     replicas: 2
     port: 3003
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
   userApi:
     enabled: true
     replicas: 2
     port: 3002
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
   adminApi:
     enabled: true
     replicas: 2
     port: 3001
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
   landing:
     enabled: true
     replicas: 2
     port: 80
+    servicePort: 80
+    livenessPath: /
+    readinessPath: /
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
   userFrontend:
     enabled: true
     replicas: 2
     port: 80
+    servicePort: 80
+    livenessPath: /
+    readinessPath: /
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
   adminFrontend:
     enabled: true
     replicas: 2
     port: 80
+    servicePort: 80
+    livenessPath: /
+    readinessPath: /
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
       tag: latest
+      pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
 
 ingress:
   enabled: false
@@ -114,13 +165,21 @@ ingress:
       paths: ["/"]
   tls:
     - secretName: nest-react-boilerplate-tls
-      hosts: [example.com, app.example.com, admin.example.com, auth.example.com]
+      hosts:
+        - example.com
+        - app.example.com
+        - admin.example.com
+        - auth.example.com
 
 autoscaling:
   enabled: false
   minReplicas: 2
   maxReplicas: 6
   targetCPUUtilization: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
 
 monitoring:
   enabled: false

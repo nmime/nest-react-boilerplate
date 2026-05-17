@@ -91,3 +91,6 @@ docs/superpowers/
 
 # Local database backups
 backups/
+
+.env.production
+docker/secrets/

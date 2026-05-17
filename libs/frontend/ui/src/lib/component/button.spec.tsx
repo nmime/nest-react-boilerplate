@@ -5,6 +5,7 @@ import { UiCard } from "./card";
 import { UiSection } from "./section";
 import { UiStatCard } from "./stat-card";
 import { UiStatusPill } from "./status-pill";
+import { UiEmptyState, UiLoading, UiToast } from "./feedback";
 
 describe("shared UI components", () => {
   it("renders links with href and variant class", () => {
@@ -80,5 +81,23 @@ describe("shared UI components", () => {
     expect(stat).toContain("Always available");
     expect(defaultStatus).toContain("xr-status--info");
     expect(warningStatus).toContain("xr-status--warning");
+  });
+  it("renders feedback primitives", () => {
+    const loading = renderToStaticMarkup(<UiLoading label="Loading profile" />);
+    const empty = renderToStaticMarkup(
+      <UiEmptyState
+        description="Create the first item."
+        title="Nothing here yet"
+      />,
+    );
+    const toast = renderToStaticMarkup(
+      <UiToast message="Saved" tone="success" />,
+    );
+
+    expect(loading).toContain('role="status"');
+    expect(loading).toContain("Loading profile");
+    expect(empty).toContain("Nothing here yet");
+    expect(empty).toContain("Create the first item.");
+    expect(toast).toContain("xr-toast--success");
   });
 });

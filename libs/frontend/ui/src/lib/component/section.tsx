@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export interface UiSectionProps {
   eyebrow?: string;
   title: string;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 export const UiSection = ({

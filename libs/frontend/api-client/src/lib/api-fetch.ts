@@ -88,9 +88,9 @@ export async function apiFetch<TResponse, TBody = unknown>(
   if (
     body !== undefined &&
     !isBodyInit(body) &&
-    !requestHeaders.has("content-type")
+    !requestHeaders.has("Content-Type")
   ) {
-    requestHeaders.set("content-type", "application/json");
+    requestHeaders.set("Content-Type", "application/json");
   }
 
   const response = await rawFetch(`${normalizeApiBaseUrl(baseUrl)}${path}`, {

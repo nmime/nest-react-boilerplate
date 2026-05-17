@@ -137,7 +137,7 @@ describe("admin auth and RBAC helpers", () => {
       principal: { subject: "1" },
     });
     expect(fetchImpl).toHaveBeenCalledWith("/api/admin/profile/me", {
-      headers: { Authorization: "Bearer abc" },
+      headers: { "Accept-Language": "en", Authorization: "Bearer abc" },
     });
 
     await expect(
@@ -175,7 +175,7 @@ describe("admin pages", () => {
 
   it("renders dashboard, profile, forbidden, and not-found pages", () => {
     expect(renderToStaticMarkup(<DashboardPage access={access} />)).toContain(
-      "Admin operations",
+      "Admin dashboard",
     );
     expect(
       renderToStaticMarkup(
@@ -230,7 +230,7 @@ describe("admin pages", () => {
     ).toContain("Provide a bearer token");
     expect(
       renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
-    ).toContain("Loading administrator profile");
+    ).toContain("Loading admin profile...");
     expect(
       renderToStaticMarkup(
         renderAdminRoute("/", { status: "forbidden", reason: "Nope" }),
@@ -240,7 +240,7 @@ describe("admin pages", () => {
       renderToStaticMarkup(
         renderAdminRoute("/dashboard", { status: "ready", payload, access }),
       ),
-    ).toContain("Admin operations");
+    ).toContain("Admin dashboard");
     expect(
       renderToStaticMarkup(
         renderAdminRoute("/profile", { status: "ready", payload, access }),
@@ -299,7 +299,7 @@ describe("Admin app shell", () => {
     fireEvent.submit(screen.getByLabelText("Development bearer token"));
 
     await waitFor(() =>
-      expect(screen.getByText("Admin operations")).toBeTruthy(),
+      expect(screen.getByText("Admin dashboard")).toBeTruthy(),
     );
     expect(window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)).toBe(
       "dev-token",

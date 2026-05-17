@@ -60,22 +60,30 @@ describe("@app/common/exception", () => {
     expect(getProblemStatus(problem)).toBe(409);
     expect(getProblemStatus(new Error("boom"))).toBe(500);
     expect(toProblemDetails(problem)).toEqual({
-      type: "about:blank",
+      code: "conflict",
+      detail: "The request conflicts with current state.",
+      type: "https://example.com/problems/conflict",
       title: "Conflict",
       status: 409,
     });
     expect(toProblemDetails(badRequest)).toEqual({
-      type: "about:blank",
-      title: "Invalid input",
+      code: "bad-request",
+      detail: "The request could not be processed.",
+      type: "https://example.com/problems/bad-request",
+      title: "Bad Request",
       status: 400,
     });
     expect(toProblemDetails(rawHttp)).toEqual({
-      type: "about:blank",
-      title: "Nope",
+      code: "i-am-a-teapot",
+      detail: "Nope",
+      type: "https://example.com/problems/i-am-a-teapot",
+      title: "I Am A Teapot",
       status: 418,
     });
     expect(toProblemDetails("boom")).toEqual({
-      type: "about:blank",
+      code: "internal-server-error",
+      detail: "An unexpected error occurred.",
+      type: "https://example.com/problems/internal-server-error",
       title: "Internal Server Error",
       status: 500,
     });
@@ -190,8 +198,10 @@ describe("@app/common/exception", () => {
       status: HttpStatus.CONFLICT,
     });
     expect(toProblemDetails(patchedProblem, "/patched")).toEqual({
-      type: "about:blank",
-      title: "Problem Http Exception",
+      code: "bad-request",
+      detail: "The request could not be processed.",
+      type: "https://example.com/problems/bad-request",
+      title: "Bad Request",
       status: HttpStatus.BAD_REQUEST,
       instance: "/patched",
     });
@@ -213,23 +223,41 @@ describe("@app/common/exception", () => {
     expect(
       toProblemDetails(new BadRequestException(["name", "email"])),
     ).toEqual({
-      type: "about:blank",
-      title: "name, email",
+      code: "bad-request",
+      detail: "The request could not be processed.",
+      type: "https://example.com/problems/bad-request",
+      title: "Bad Request",
       status: 400,
     });
     expect(
       toProblemDetails(new HttpException({ message: "single message" }, 422)),
     ).toEqual({
-      type: "about:blank",
-      title: "single message",
+      code: "unprocessable-entity",
+      detail: "single message",
+      type: "https://example.com/problems/unprocessable-entity",
+      title: "Unprocessable Entity",
       status: 422,
     });
     expect(
       toProblemDetails(new HttpException("", HttpStatus.I_AM_A_TEAPOT)),
     ).toEqual({
-      type: "about:blank",
+      code: "i-am-a-teapot",
+      type: "https://example.com/problems/i-am-a-teapot",
       title: "I Am A Teapot",
       status: HttpStatus.I_AM_A_TEAPOT,
+    });
+    expect(
+      toProblemDetails(
+        Exception.forbidden("Required role is missing."),
+        undefined,
+        "es",
+      ),
+    ).toMatchObject({
+      code: "forbidden",
+      detail: "Falta el rol requerido.",
+      status: HttpStatus.FORBIDDEN,
+      title: "Prohibido",
+      type: "https://example.com/problems/forbidden",
     });
   });
 });

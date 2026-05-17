@@ -90,9 +90,10 @@ export const fetchAdminProfile = async (
   fetchImpl: typeof fetch,
   token: string,
   apiBaseUrl = "",
+  locale = "en",
 ): Promise<AdminProfilePayload> => {
   const response = await fetchImpl(`${apiBaseUrl}/admin/profile/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { "Accept-Language": locale, Authorization: `Bearer ${token}` },
   });
 
   if (!response.ok) {

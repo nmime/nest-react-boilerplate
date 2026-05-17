@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { UiButton } from "../component/button";
 import { UiStatusPill } from "../component/status-pill";
+import { LanguageSwitcher } from "../i18n/i18n-provider";
 
 export interface ProductShellAction {
   label: string;
@@ -35,7 +36,10 @@ export const ProductShell = ({
         <span className="xr-brand__mark">xR</span>
         <span>{appName}</span>
       </a>
-      <UiStatusPill label={status} tone={statusTone} />
+      <div className="xr-header__controls">
+        <LanguageSwitcher />
+        <UiStatusPill label={status} tone={statusTone} />
+      </div>
     </header>
 
     <section className="xr-hero">

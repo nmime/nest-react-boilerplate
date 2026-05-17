@@ -18,9 +18,11 @@ import type { Observable } from "rxjs";
 import {
   BaseException,
   createProblemDetails,
+  localizeProblemDetails,
   toProblemDetails,
   type ProblemDetails,
 } from "@app/common/exception";
+import { resolveLocaleFromRequest } from "@app/common/i18n";
 
 export interface OkResponse<T> {
   data: T;
@@ -71,25 +73,32 @@ export function mapResultToResponse<
     | HttpException
     | Error
     | { code: string; message: string },
->(result: Result<T, E>): ApiResponse<T> {
+>(result: Result<T, E>, locale?: string): ApiResponse<T> {
   if (result.isOk()) {
     return createOkResponse(result.value);
   }
 
   const error = result.error;
   if (error instanceof BaseException || error instanceof HttpException) {
-    return toProblemDetails(error);
+    return toProblemDetails(error, undefined, locale);
   }
 
   if (error instanceof Error) {
-    return createProblemDetails({
-      detail: error.message,
-      status: HttpStatus.BAD_REQUEST,
-      title: error.message,
-    });
+    return localizeProblemDetails(
+      createProblemDetails({
+        code: "bad-request",
+        detail: error.message,
+        status: HttpStatus.BAD_REQUEST,
+        title: "Bad Request",
+      }),
+      locale,
+    );
   }
 
-  return createProblemResponse(error.code, error.message);
+  return localizeProblemDetails(
+    createProblemResponse(error.code, error.message),
+    locale,
+  );
 }
 
 export const mapValueToApiResponse = <T>(
@@ -123,14 +132,17 @@ export class ProblemExceptionFilter implements ExceptionFilter {
     const http = host.switchToHttp();
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
+    const locale = resolveLocaleFromRequest(request);
     const problem = toProblemDetails(
       exception,
       request.originalUrl ?? request.url,
+      locale,
     );
 
-    response
+    const problemResponse = response
       .status(problem.status)
-      .type("application/problem+json")
-      .json(problem);
+      .type("application/problem+json");
+    problemResponse.header?.("content-language", locale);
+    problemResponse.json(problem);
   }
 }

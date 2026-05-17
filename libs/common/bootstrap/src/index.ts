@@ -7,6 +7,11 @@ import {
   ProblemExceptionFilter,
   ProblemResponseTransformer,
 } from "@app/common/response";
+import {
+  createRequestLocaleMiddleware,
+  resolveLocaleFromRequest,
+  translate,
+} from "@app/common/i18n";
 import { setupSwagger } from "@app/common/swagger";
 import { createProblemValidationPipe } from "@app/common/validation";
 
@@ -235,12 +240,14 @@ function createRateLimitMiddleware(
         "retry-after",
         String(Math.ceil((current.resetAt - now) / 1000)),
       );
+      const locale = resolveLocaleFromRequest(request);
+      response.setHeader("content-language", locale);
       response.end?.(
         JSON.stringify({
           type: "https://example.com/problems/rate-limited",
-          title: "Too Many Requests",
+          title: translate("errors.too-many-requests.title", { locale }),
           status: 429,
-          detail: "Too many requests.",
+          detail: translate("errors.rate-limited.detail", { locale }),
           code: "rate-limited",
         }),
       );
@@ -277,6 +284,7 @@ export async function bootstrapNestApi(
   app.use(createRequestLoggingMiddleware(options.appName));
   app.use(createRobotsMiddleware());
   app.use(cookieParser(options.cookieSecret ?? process.env.COOKIE_SECRET));
+  app.use(createRequestLocaleMiddleware());
   app.use(helmet());
   app.useGlobalPipes(createProblemValidationPipe());
   app.useGlobalInterceptors(new ProblemResponseTransformer());

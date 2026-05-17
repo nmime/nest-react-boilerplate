@@ -11,6 +11,7 @@ export interface ProblemValidationErrorBody {
   title: "Validation failed";
   status: 400;
   detail: string;
+  code: "validation-error";
   errors: ProblemValidationIssue[];
 }
 
@@ -22,6 +23,7 @@ export function createProblemValidationBody(
     title: "Validation failed",
     status: 400,
     detail: "Request validation failed.",
+    code: "validation-error",
     errors: errors.map((error) => ({
       property: error.property,
       constraints: error.constraints ?? {},

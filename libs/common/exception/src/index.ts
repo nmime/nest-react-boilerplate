@@ -1,5 +1,10 @@
 import { applyDecorators, HttpException, HttpStatus } from "@nestjs/common";
 import { ApiResponse } from "@nestjs/swagger";
+import {
+  hasTranslationKey,
+  translate,
+  type TranslationKey,
+} from "@app/common/i18n";
 
 export interface ProblemDetails {
   type: string;
@@ -24,7 +29,44 @@ export interface BaseExceptionInput extends ProblemDetailsInput {
   cause?: unknown;
 }
 
+interface HttpExceptionResponseBody {
+  error?: string;
+  message?: string | string[];
+  statusCode?: number;
+}
+
 export const ProblemTypeBaseUrl = "https://example.com/problems";
+
+const statusCodeMap: Record<number, string> = {
+  [HttpStatus.BAD_REQUEST]: "bad-request",
+  [HttpStatus.UNAUTHORIZED]: "unauthorized",
+  [HttpStatus.FORBIDDEN]: "forbidden",
+  [HttpStatus.NOT_FOUND]: "not-found",
+  [HttpStatus.CONFLICT]: "conflict",
+  [HttpStatus.TOO_MANY_REQUESTS]: "rate-limited",
+  [HttpStatus.INTERNAL_SERVER_ERROR]: "internal-server-error",
+};
+
+const messageKeyMap: Record<string, TranslationKey> = {
+  "AUTH_JWT_SECRET is not configured.": "errors.auth.jwtSecretMissing",
+  "Authenticated principal is missing.": "errors.auth.principalMissing",
+  "Email is already registered.": "errors.auth.emailRegistered",
+  "Invalid JWT signature.": "errors.auth.invalidSignature",
+  // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- User-facing auth error, not a credential.
+  "Invalid email or password.": "errors.auth.invalidCredentials",
+  "JWT alg none is not allowed.": "errors.auth.algNone",
+  "JWT audience mismatch.": "errors.auth.audienceMismatch",
+  "JWT is expired.": "errors.auth.expired",
+  "JWT is not active yet.": "errors.auth.notActive",
+  "JWT issuer mismatch.": "errors.auth.issuerMismatch",
+  "JWT subject is required.": "errors.auth.subjectRequired",
+  "Malformed JWT.": "errors.auth.malformedJwt",
+  "Missing bearer token.": "errors.auth.missingBearer",
+  "Required permission is missing.": "errors.rbac.permissionMissing",
+  "Required role is missing.": "errors.rbac.roleMissing",
+  "Unsupported JWT algorithm.": "errors.auth.unsupportedAlgorithm",
+  "User is not active.": "errors.auth.userInactive",
+};
 
 export const mapHttpStatusToProblemTitle = (status: number): string => {
   const title = (HttpStatus as unknown as Record<number, string>)[status];
@@ -36,6 +78,12 @@ export const mapHttpStatusToProblemTitle = (status: number): string => {
         .join(" ")
     : "Unexpected Error";
 };
+
+export const problemCodeForStatus = (status: number): string =>
+  statusCodeMap[status] ??
+  mapHttpStatusToProblemTitle(status)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-");
 
 export const createProblemDetails = ({
   title,
@@ -133,23 +181,112 @@ export const Exception = {
     }),
 };
 
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
 const isProblemDetails = (value: unknown): value is ProblemDetails =>
-  typeof value === "object" &&
-  value !== null &&
+  isObjectRecord(value) &&
   "type" in value &&
   "title" in value &&
   "status" in value;
 
-const getHttpExceptionTitle = (error: HttpException): string => {
-  const response = error.getResponse();
-
-  if (typeof response === "object" && "message" in response) {
-    const message = (response as { message?: string | string[] }).message;
-    return Array.isArray(message) ? message.join(", ") : String(message);
+const getResponseMessage = (response: unknown): string | undefined => {
+  if (!isObjectRecord(response) || !("message" in response)) {
+    return undefined;
   }
 
-  return error.message || mapHttpStatusToProblemTitle(error.getStatus());
+  const message = (response as HttpExceptionResponseBody).message;
+  return Array.isArray(message) ? message.join(", ") : message;
 };
+
+const getHttpExceptionTitle = (error: HttpException): string =>
+  mapHttpStatusToProblemTitle(error.getStatus()) || error.message;
+
+const getHttpExceptionDetail = (error: HttpException): string | undefined =>
+  getResponseMessage(error.getResponse()) || error.message || undefined;
+
+const titleKeyForProblem = (
+  problem: ProblemDetails,
+): TranslationKey | undefined => {
+  const code =
+    typeof problem.code === "string"
+      ? problem.code
+      : problemCodeForStatus(problem.status);
+  const key = `errors.${code}.title`;
+  return hasTranslationKey(key) ? key : undefined;
+};
+
+const detailKeyForProblem = (
+  problem: ProblemDetails,
+): TranslationKey | undefined => {
+  if (typeof problem.detail === "string" && messageKeyMap[problem.detail]) {
+    return messageKeyMap[problem.detail];
+  }
+
+  const code =
+    typeof problem.code === "string"
+      ? problem.code
+      : problemCodeForStatus(problem.status);
+  const key = `errors.${code}.detail`;
+  return hasTranslationKey(key) ? key : undefined;
+};
+
+function localizeValidationIssues(
+  value: unknown,
+  locale: string | undefined,
+): unknown {
+  if (!Array.isArray(value)) {
+    return value;
+  }
+
+  return (value as unknown[]).map((issue): unknown => {
+    if (!isObjectRecord(issue) || !isObjectRecord(issue.constraints)) {
+      return issue;
+    }
+
+    const property =
+      typeof issue.property === "string" ? issue.property : "value";
+    const constraints = Object.fromEntries(
+      Object.entries(issue.constraints).map(([name, message]) => {
+        const key = `validation.constraints.${name}`;
+        return [
+          name,
+          hasTranslationKey(key)
+            ? translate(key, { locale, params: { property } })
+            : message,
+        ];
+      }),
+    );
+
+    return { ...issue, constraints };
+  });
+}
+
+export function localizeProblemDetails(
+  problem: ProblemDetails,
+  locale?: string,
+): ProblemDetails {
+  const code =
+    typeof problem.code === "string"
+      ? problem.code
+      : problemCodeForStatus(problem.status);
+  const titleKey = titleKeyForProblem({ ...problem, code });
+  const detailKey = detailKeyForProblem({ ...problem, code });
+
+  return {
+    ...problem,
+    code,
+    type:
+      problem.type === "about:blank"
+        ? `${ProblemTypeBaseUrl}/${code}`
+        : problem.type,
+    ...(titleKey ? { title: translate(titleKey, { locale }) } : {}),
+    ...(detailKey ? { detail: translate(detailKey, { locale }) } : {}),
+    ...("errors" in problem
+      ? { errors: localizeValidationIssues(problem.errors, locale) }
+      : {}),
+  };
+}
 
 export const getProblemStatus = (error: unknown): number => {
   if (error instanceof BaseException) {
@@ -166,43 +303,64 @@ export const getProblemStatus = (error: unknown): number => {
 export const toProblemDetails = (
   error: unknown,
   instance?: string,
+  locale?: string,
 ): ProblemDetails => {
   if (error instanceof BaseException) {
-    return error.toProblemDetails(instance);
+    return localizeProblemDetails(error.toProblemDetails(instance), locale);
   }
 
   if (error instanceof ProblemHttpException) {
     const response = error.getResponse();
-    return isProblemDetails(response)
-      ? { ...response, ...(instance && !response.instance ? { instance } : {}) }
-      : createProblemDetails({
-          instance,
-          status: error.getStatus(),
-          title: getHttpExceptionTitle(error),
-        });
+    return localizeProblemDetails(
+      isProblemDetails(response)
+        ? {
+            ...response,
+            ...(instance && !response.instance ? { instance } : {}),
+          }
+        : createProblemDetails({
+            code: problemCodeForStatus(error.getStatus()),
+            detail: getHttpExceptionDetail(error),
+            instance,
+            status: error.getStatus(),
+            title: getHttpExceptionTitle(error),
+          }),
+      locale,
+    );
   }
 
   if (error instanceof HttpException) {
     const response = error.getResponse();
     if (isProblemDetails(response)) {
-      return {
-        ...response,
-        ...(instance && !response.instance ? { instance } : {}),
-      };
+      return localizeProblemDetails(
+        {
+          ...response,
+          ...(instance && !response.instance ? { instance } : {}),
+        },
+        locale,
+      );
     }
 
-    return createProblemDetails({
-      instance,
-      status: error.getStatus(),
-      title: getHttpExceptionTitle(error),
-    });
+    return localizeProblemDetails(
+      createProblemDetails({
+        code: problemCodeForStatus(error.getStatus()),
+        detail: getHttpExceptionDetail(error),
+        instance,
+        status: error.getStatus(),
+        title: getHttpExceptionTitle(error),
+      }),
+      locale,
+    );
   }
 
-  return createProblemDetails({
-    instance,
-    status: HttpStatus.INTERNAL_SERVER_ERROR,
-    title: "Internal Server Error",
-  });
+  return localizeProblemDetails(
+    createProblemDetails({
+      code: "internal-server-error",
+      instance,
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      title: "Internal Server Error",
+    }),
+    locale,
+  );
 };
 
 export const problemDetailsOpenApiSchema = {

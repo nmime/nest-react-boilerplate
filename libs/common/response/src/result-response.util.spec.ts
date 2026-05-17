@@ -55,9 +55,17 @@ describe("problem response mapper", () => {
       ),
     ).toMatchObject({ code: "conflict", status: 409, title: "Conflict" });
     expect(mapResultToResponse(err(new Error("Boom")))).toMatchObject({
-      detail: "Boom",
+      code: "bad-request",
+      detail: "The request could not be processed.",
       status: 400,
-      title: "Boom",
+      title: "Bad Request",
+      type: "https://example.com/problems/bad-request",
+    });
+    expect(mapResultToResponse(err(new Error("Boom")), "es")).toMatchObject({
+      code: "bad-request",
+      detail: "La solicitud no pudo procesarse.",
+      status: 400,
+      title: "Solicitud incorrecta",
     });
   });
 

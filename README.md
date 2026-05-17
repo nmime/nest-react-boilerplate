@@ -126,6 +126,7 @@ Additional launch docs:
 - [Production readiness checklist](docs/production-readiness.md)
 - [OpenAPI and typed client scaffold](docs/api-client.md)
 - [Frontend UX primitives](docs/frontend-ux.md)
+- [Internationalization](docs/i18n.md)
 - [Auth production roadmap](docs/auth-production-roadmap.md)
 - [Branch protection recommendation](docs/branch-protection.md)
 

@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ProductShell, UiCard, UiSection, UiStatCard } from "@app/frontend-ui";
+import {
+  FrontendI18nProvider,
+  ProductShell,
+  UiCard,
+  UiSection,
+  UiStatCard,
+  useI18n,
+} from "@app/frontend-ui";
 
 type ProfileState =
   | { status: "missing-token" }
@@ -47,7 +54,8 @@ const persistToken = (token: string): void => {
   getBrowserStorage()?.setItem(TOKEN_KEY, token);
 };
 
-const App = () => {
+const UserApp = () => {
+  const { locale, t } = useI18n();
   const [token, setToken] = useState(readInitialToken);
   const [state, setState] = useState<ProfileState>(
     token ? { status: "loading" } : { status: "missing-token" },
@@ -61,7 +69,7 @@ const App = () => {
     persistToken(token);
     setState({ status: "loading" });
     void fetch(`${userBaseUrl()}/profile/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { "Accept-Language": locale, Authorization: `Bearer ${token}` },
     })
       .then(async (response) => {
         if (!response.ok) {
@@ -85,7 +93,7 @@ const App = () => {
             error instanceof Error ? error.message : "Profile request failed.",
         }),
       );
-  }, [token]);
+  }, [locale, token]);
 
   const submitAuth =
     (mode: "login" | "register") =>
@@ -94,7 +102,10 @@ const App = () => {
       const form = new FormData(event.currentTarget);
       void fetch(`${authBaseUrl()}/auth/${mode}`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "Accept-Language": locale,
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
           email: form.get("email"),
           password: form.get("password"),
@@ -120,22 +131,26 @@ const App = () => {
   return (
     <ProductShell
       actions={[
-        { href: "#auth", label: "Login or register" },
-        { href: "#profile", label: "Profile", variant: "secondary" },
+        { href: "#auth", label: t("user.form.login") },
+        {
+          href: "#profile",
+          label: t("user.action.profile"),
+          variant: "secondary",
+        },
       ]}
-      appName="User App"
-      description="A ready-from-scratch user workspace backed by auth-app-api, user-app-api, and PostgreSQL JWT auth."
-      eyebrow="User workspace"
-      status="Auth enabled"
+      appName={t("user.appName")}
+      description={t("user.description")}
+      eyebrow={t("user.eyebrow")}
+      status={t("user.status")}
       statusTone="success"
-      title="Sign in, register, and load your protected profile."
+      title={t("user.title")}
     >
       <UiSection
         eyebrow="Authentication"
         title="Development login/register flow"
       >
         <div className="xr-card-grid" id="auth">
-          <UiCard title="Login">
+          <UiCard title={t("user.login.title")}>
             <form onSubmit={submitAuth("login")}>
               <input
                 aria-label="Login email"
@@ -148,15 +163,15 @@ const App = () => {
                 placeholder="password"
                 type="password"
               />
-              <button type="submit">Login</button>
+              <button type="submit">{t("user.form.login")}</button>
             </form>
           </UiCard>
-          <UiCard title="Register">
+          <UiCard title={t("user.register.title")}>
             <form onSubmit={submitAuth("register")}>
               <input
                 aria-label="Register display name"
                 name="displayName"
-                placeholder="Display name"
+                placeholder={t("user.form.displayName")}
               />
               <input
                 aria-label="Register email"
@@ -169,16 +184,16 @@ const App = () => {
                 placeholder="minimum 8 characters"
                 type="password"
               />
-              <button type="submit">Register</button>
+              <button type="submit">{t("user.form.register")}</button>
             </form>
           </UiCard>
-          <UiCard title="Profile state" id="profile">
-            {state.status === "missing-token" &&
-              "Provide a token or use login/register."}
-            {state.status === "loading" && "Loading protected profile..."}
+          <UiCard title={t("user.profile.title")} id="profile">
+            {state.status === "missing-token" && t("user.state.missingToken")}
+            {state.status === "loading" && t("user.loadingProfile")}
             {state.status === "ready" &&
-              `Ready: ${state.email ?? state.subject}`}
-            {state.status === "forbidden" && `Forbidden: ${state.reason}`}
+              t("user.state.ready", { subject: state.email ?? state.subject })}
+            {state.status === "forbidden" &&
+              t("user.state.forbidden", { reason: state.reason })}
           </UiCard>
         </div>
         <div className="xr-stat-grid">
@@ -189,5 +204,11 @@ const App = () => {
     </ProductShell>
   );
 };
+
+const App = () => (
+  <FrontendI18nProvider>
+    <UserApp />
+  </FrontendI18nProvider>
+);
 
 export default App;

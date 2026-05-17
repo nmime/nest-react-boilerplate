@@ -27,6 +27,7 @@ describe("createProblemValidationPipe", () => {
       type: "https://example.com/problems/validation-error",
       title: "Validation failed",
       status: 400,
+      code: "validation-error",
       detail: "Request validation failed.",
       errors: [
         {

@@ -7,3 +7,5 @@ export * from "./lib/component/status-pill";
 export * from "./lib/component/stat-card";
 export * from "./lib/component/feedback";
 export * from "./lib/layout/product-shell";
+
+export * from "./lib/i18n/i18n-provider";

@@ -1,44 +1,66 @@
-import { ProductShell, UiCard, UiSection, UiStatCard } from "@app/frontend-ui";
+import {
+  FrontendI18nProvider,
+  ProductShell,
+  UiCard,
+  UiSection,
+  UiStatCard,
+  useI18n,
+} from "@app/frontend-ui";
+
+const LandingApp = () => {
+  const { t } = useI18n();
+
+  return (
+    <ProductShell
+      actions={[
+        { href: "/app", label: t("landing.action.user") },
+        {
+          href: "/admin",
+          label: t("landing.action.admin"),
+          variant: "secondary",
+        },
+        {
+          href: "/docs",
+          label: "API docs",
+          variant: "secondary",
+        },
+      ]}
+      appName="Nest React Boilerplate"
+      description={t("landing.description")}
+      eyebrow={t("landing.eyebrow")}
+      status={t("common.status.ready")}
+      statusTone="success"
+      title={t("landing.title")}
+    >
+      <UiSection eyebrow="Workspace" title={t("landing.section.title")}>
+        <div className="xr-card-grid" id="workspace">
+          <UiCard title={t("landing.card.api")}>
+            auth-app-api, user-app-api, and admin-app-api.
+          </UiCard>
+          <UiCard title={t("landing.card.frontend")}>
+            landing, user, and admin React surfaces share one i18n provider.
+          </UiCard>
+          <UiCard title={t("landing.card.ops")}>
+            Docker, health checks, OpenAPI, and deployment defaults stay wired.
+          </UiCard>
+        </div>
+        <div className="xr-stat-grid">
+          <UiStatCard detail="auth, user, admin" label="APIs" value="3" />
+          <UiStatCard
+            detail="landing, user, admin"
+            label={t("landing.stat.apps")}
+            value="3"
+          />
+        </div>
+      </UiSection>
+    </ProductShell>
+  );
+};
 
 const App = () => (
-  <ProductShell
-    actions={[
-      { href: "/app", label: "Open user app" },
-      { href: "/admin", label: "Open admin", variant: "secondary" },
-      {
-        href: "/docs",
-        label: "API docs",
-        variant: "secondary",
-      },
-    ]}
-    appName="Nest React Boilerplate"
-    description="A generic Postgres-ready starter with landing, user, admin, auth API, user API, and admin API surfaces."
-    eyebrow="Ready from scratch"
-    status="Postgres base"
-    statusTone="success"
-    title="Launch a full-stack Nest and React product foundation."
-  >
-    <UiSection
-      eyebrow="Workspace"
-      title="Three frontends and three APIs are wired together"
-    >
-      <div className="xr-card-grid" id="workspace">
-        <UiCard title="Landing app">
-          Public product messaging, app links, and documentation entry points.
-        </UiCard>
-        <UiCard title="User app">
-          Login, register, bearer-token storage, and protected profile loading.
-        </UiCard>
-        <UiCard title="Admin app">
-          Fail-closed RBAC flow using admin roles and permissions.
-        </UiCard>
-      </div>
-      <div className="xr-stat-grid">
-        <UiStatCard detail="auth, user, admin" label="APIs" value="3" />
-        <UiStatCard detail="landing, user, admin" label="Frontends" value="3" />
-      </div>
-    </UiSection>
-  </ProductShell>
+  <FrontendI18nProvider>
+    <LandingApp />
+  </FrontendI18nProvider>
 );
 
 export default App;

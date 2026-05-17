@@ -100,7 +100,7 @@ describe("User app shell", () => {
       "url-token",
     );
     expect(fetchMock).toHaveBeenCalledWith("https://user-api/profile/me", {
-      headers: { Authorization: "Bearer url-token" },
+      headers: { "Accept-Language": "en", Authorization: "Bearer url-token" },
     });
   });
 

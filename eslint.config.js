@@ -14,6 +14,7 @@ module.exports = [
   {
     files: ["**/*.json"],
     rules: {
+      "sonarjs/no-empty-test-file": "off",
       "@nx/dependency-checks": [
         "error",
         {
@@ -164,6 +165,13 @@ module.exports = [
     files: ["**/*.js", "**/*.jsx"],
     rules: {
       ...typescriptEslintPlugin.configs.recommended.rules,
+    },
+  },
+
+  {
+    files: ["**/*.json"],
+    rules: {
+      "sonarjs/no-empty-test-file": "off",
     },
   },
   {

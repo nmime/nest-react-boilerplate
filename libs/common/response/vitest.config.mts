@@ -5,6 +5,10 @@ import { fullCoverage } from "../../../tools/vitest-coverage.mts";
 export default defineConfig({
   resolve: {
     alias: {
+      "@app/common/i18n": new URL(
+        "../../../libs/common/i18n/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/exception": new URL(
         "../../../libs/common/exception/src/index.ts",
         import.meta.url,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FrontendI18nProvider, useI18n } from "@app/frontend-ui";
 import {
   createAdminAccess,
   fetchAdminProfile,
@@ -25,7 +26,8 @@ const getConfiguredAdminApiBaseUrl = (): string => {
   return getAdminApiBaseUrl(env["VITE_ADMIN_API_BASE_URL"]);
 };
 
-const App = () => {
+const AdminApp = () => {
+  const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
   const [token, setToken] = useState(() =>
     resolveInitialBearerToken(getBrowserHref(), getBrowserStorage()),
@@ -42,7 +44,7 @@ const App = () => {
 
     let active = true;
     setState({ status: "loading" });
-    void fetchAdminProfile(fetch, token, getConfiguredAdminApiBaseUrl())
+    void fetchAdminProfile(fetch, token, getConfiguredAdminApiBaseUrl(), locale)
       .then((payload) => {
         /* v8 ignore next 3 -- defensive cleanup path for unmounted components */
         if (!active) {
@@ -54,7 +56,7 @@ const App = () => {
             ? { status: "ready", payload, access }
             : {
                 status: "forbidden",
-                reason: "Authenticated principal is missing.",
+                reason: t("errors.auth.principalMissing"),
               },
         );
       })
@@ -75,7 +77,7 @@ const App = () => {
       /* v8 ignore next -- cleanup assignment has no user-visible branch */
       active = false;
     };
-  }, [token]);
+  }, [locale, t, token]);
 
   return (
     <AdminLayout>
@@ -85,9 +87,15 @@ const App = () => {
           setToken(nextToken.trim());
         }}
       />
-      {renderAdminRoute(path, state)}
+      {renderAdminRoute(path, state, t)}
     </AdminLayout>
   );
 };
+
+const App = () => (
+  <FrontendI18nProvider>
+    <AdminApp />
+  </FrontendI18nProvider>
+);
 
 export default App;

@@ -1,23 +1,16 @@
-/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
+import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { fullCoverage } from "../../../tools/vitest-coverage.mts";
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@app/common/i18n": new URL(
-        "../../../libs/common/i18n/src/index.ts",
-        import.meta.url,
-      ).pathname,
-    },
-  },
-  cacheDir: "../../../dist/out-tsc/libs/common/exception",
+  cacheDir: "../../../dist/out-tsc/libs/common/i18n",
+  plugins: [nxViteTsPaths()],
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../coverage/libs/common/exception",
+      "../../../coverage/libs/common/i18n",
       ["src/**/*.ts"],
       [],
     ),

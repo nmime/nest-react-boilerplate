@@ -1,0 +1,120 @@
+secrets:
+  existingSecret: nest-react-boilerplate-production-secrets
+
+config:
+  nodeEnv: production
+  corsOrigins: https://admin.example.com,https://app.example.com
+  authJwtIssuer: https://auth.example.com
+  authJwtAudience: nest-react-boilerplate-api
+  authJwtExpiresInSeconds: "3600"
+  openApiEnabled: "false"
+  logLevel: info
+
+postgresql:
+  host: postgresql-rw.databases.svc.cluster.local
+  port: "5432"
+  database: nest_react_boilerplate
+  user: nest_react_boilerplate
+  ssl: "true"
+  sslRejectUnauthorized: "true"
+
+migrations:
+  image:
+    repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
+    tag: production
+    pullPolicy: IfNotPresent
+
+apps:
+  authApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
+      tag: production
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  userApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
+      tag: production
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  adminApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
+      tag: production
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  landing:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
+      tag: production
+      pullPolicy: IfNotPresent
+  userFrontend:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
+      tag: production
+      pullPolicy: IfNotPresent
+  adminFrontend:
+    replicas: 3
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
+      tag: production
+      pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  tls:
+    - secretName: nest-react-boilerplate-tls
+      hosts:
+        - example.com
+        - app.example.com
+        - admin.example.com
+        - auth.example.com
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilization: 65
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+monitoring:
+  enabled: true
+
+networkPolicy:
+  enabled: true

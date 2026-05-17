@@ -161,5 +161,17 @@
   },
   "engines": {
     "node": ">=26 <27"
-  }
+  },
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmime/nest-react-boilerplate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nmime/nest-react-boilerplate/issues"
+  },
+  "homepage": "https://github.com/nmime/nest-react-boilerplate#readme"
 }

@@ -5,26 +5,43 @@ metadata:
   name: {{ include "boilerplate.fullname" . }}-migrate
   labels:
     {{- include "boilerplate.labels" . | nindent 4 }}
-    app.kubernetes.io/component: migration
+    app.kubernetes.io/component: migrate
   annotations:
     helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
-  backoffLimit: 1
+  backoffLimit: {{ default 2 .Values.migrations.backoffLimit }}
+  activeDeadlineSeconds: {{ default 600 .Values.migrations.activeDeadlineSeconds }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/component: migration
+        {{- include "boilerplate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
     spec:
       restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.migrations.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: migrate
           image: {{ printf "%s:%s" .Values.migrations.image.repository .Values.migrations.image.tag | quote }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.migrations.image.pullPolicy }}
+          {{- with .Values.migrations.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: {{ toJson .Values.migrations.command }}
           envFrom:
             - configMapRef:
                 name: {{ include "boilerplate.fullname" . }}-config
             - secretRef:
                 name: {{ include "boilerplate.secretName" . }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
 {{- end }}

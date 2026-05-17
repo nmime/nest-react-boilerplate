@@ -7,6 +7,9 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "boilerplate.fullname" $root }}-{{ kebabcase $name }}
+  labels:
+    {{- include "boilerplate.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
 spec:
   minReplicas: {{ $root.Values.autoscaling.minReplicas }}
   maxReplicas: {{ $root.Values.autoscaling.maxReplicas }}

@@ -122,6 +122,8 @@ Additional launch docs:
 
 - [Operations runbook](docs/operations.md)
 - [Production Kubernetes/Ansible deployment](docs/production-deploy.md)
+- [One-server Docker Compose production deployment](docs/docker-compose-production.md)
+- [Production readiness checklist](docs/production-readiness.md)
 - [OpenAPI and typed client scaffold](docs/api-client.md)
 - [Frontend UX primitives](docs/frontend-ux.md)
 - [Auth production roadmap](docs/auth-production-roadmap.md)
@@ -133,6 +135,8 @@ Start from `.env.example`, replace placeholder values with secrets from your env
 
 - [Deployment and local stack readiness](docs/deployment.md)
 - [Production hardening](docs/production-hardening.md)
+- [One-server Docker Compose production deployment](docs/docker-compose-production.md)
+- [Production readiness checklist](docs/production-readiness.md)
 - [API conventions](docs/api-conventions.md)
 
 ## Development conventions
@@ -142,3 +146,10 @@ Start from `.env.example`, replace placeholder values with secrets from your env
 - Keep Docker, local development, and CI validation paths aligned so smoke tests reflect production packaging.
 - Add focused tests at the lowest useful layer, then use Docker/full-stack checks for integration confidence.
 - Follow [CONTRIBUTING.md](CONTRIBUTING.md) and existing Nx project tags when adding projects or libraries.
+
+## License and attribution
+
+This project is open source under the [MIT License](LICENSE). Attribution and
+mention of the original author (`nmime`, https://github.com/nmime) are
+appreciated and recommended when you reuse or publish derivatives, but they are
+not required beyond the MIT license terms.

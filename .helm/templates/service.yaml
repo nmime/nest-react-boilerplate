@@ -12,11 +12,12 @@ metadata:
 spec:
   type: ClusterIP
   selector:
+    app.kubernetes.io/name: {{ include "boilerplate.name" $root }}
     app.kubernetes.io/instance: {{ $root.Release.Name }}
     app.kubernetes.io/component: {{ kebabcase $name }}
   ports:
     - name: http
-      port: {{ $app.port }}
+      port: {{ default $app.port $app.servicePort }}
       targetPort: http
 {{- end }}
 {{- end }}

@@ -31,3 +31,9 @@ pnpm db:restore -- --input backups/pre-release.dump --yes
 ```
 
 `db:reset`, `db:seed`, and `db:restore` refuse non-local/dev-looking databases unless `--force` is supplied. Backup and restore commands redact connection strings in logs.
+
+## Deployment runbooks
+
+- Single-server Docker Compose: [docker-compose-production.md](docker-compose-production.md)
+- Kubernetes/Helm/ArgoCD: [production-deploy.md](production-deploy.md)
+- Preflight checklist: [production-readiness.md](production-readiness.md)

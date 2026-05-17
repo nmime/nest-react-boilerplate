@@ -53,13 +53,15 @@ The commands match the current multi-target Dockerfile (`backend`, `frontend`, `
 
 ```bash
 kubectl create namespace nest-react-boilerplate
+export AUTH_JWT_SECRET_FILE=/secure/path/auth-jwt-secret.txt
+export DATABASE_URL_FILE=/secure/path/database-url.txt
 kubectl create secret generic nest-react-boilerplate-production-secrets \
   -n nest-react-boilerplate \
-  --from-literal=AUTH_JWT_SECRET='replace-from-secret-manager' \
-  --from-literal=DATABASE_URL='postgres://user:password@postgresql:5432/nest_react_boilerplate'
+  --from-file=AUTH_JWT_SECRET="$AUTH_JWT_SECRET_FILE" \
+  --from-file=DATABASE_URL="$DATABASE_URL_FILE"
 ```
 
-Prefer External Secrets Operator/Vault in production. The inline command above is only a shape example.
+Prefer External Secrets Operator/Vault in production. The command above is only a shape example and reads values from local secret files rather than shell history.
 
 ## 4. Deploy with Helm
 
@@ -77,7 +79,7 @@ helm upgrade --install nest-react-boilerplate .helm \
   --wait --timeout 10m
 ```
 
-The chart runs the migration job as a Helm pre-install/pre-upgrade hook when `migrations.enabled=true`.
+The chart runs the migration job as a Helm pre-install/pre-upgrade hook when `migrations.enabled=true`. See `.helm/README.md` for the chart contract, render checks, and GitOps notes.
 
 ## 5. Ingress, TLS, and probes
 

@@ -32,4 +32,19 @@ describe("backend-admin-app-api health e2e", () => {
       .expect(200)
       .expect({ data: { app: "backend-admin-app-api", status: "ok" } });
   });
+
+  it("GET /live and /ready return ok", async () => {
+    const httpServer = app.getHttpServer() as unknown as Parameters<
+      typeof supertest
+    >[0];
+
+    await supertest(httpServer)
+      .get("/live")
+      .expect(200)
+      .expect({ data: { app: "backend-admin-app-api", status: "ok" } });
+    await supertest(httpServer)
+      .get("/ready")
+      .expect(200)
+      .expect({ data: { app: "backend-admin-app-api", status: "ok" } });
+  });
 });

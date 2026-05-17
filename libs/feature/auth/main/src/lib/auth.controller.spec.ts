@@ -4,7 +4,7 @@ import { AuthController } from "./auth.controller";
 describe("AuthController", () => {
   it("wraps auth service calls in ok responses", async () => {
     const session = {
-      user: { id: "id", email: "e", roles: [], permissions: [] },
+      user: { id: "id", email: "e", roles: [], permissions: [], locale: "es" },
       accessToken: "t",
       tokenType: "Bearer" as const,
       expiresIn: 1,
@@ -12,6 +12,8 @@ describe("AuthController", () => {
     const service = {
       register: () => Promise.resolve(session),
       login: () => Promise.resolve(session),
+      getUserById: () => Promise.resolve(session.user),
+      updateUserLocale: () => Promise.resolve(session.user),
     };
     const controller = new AuthController(service as never);
 
@@ -21,11 +23,20 @@ describe("AuthController", () => {
     await expect(
       controller.login({ email: "e", password: "password123" }),
     ).resolves.toEqual({ data: session });
-    expect(
+    await expect(
       controller.me({ subject: "id", roles: [], permissions: [] }),
-    ).toEqual({
-      data: { principal: { subject: "id", roles: [], permissions: [] } },
+    ).resolves.toEqual({
+      data: {
+        principal: { subject: "id", roles: [], permissions: [] },
+        user: session.user,
+      },
     });
+    await expect(
+      controller.updateLocale(
+        { subject: "id", roles: [], permissions: [] },
+        { locale: "es" },
+      ),
+    ).resolves.toEqual({ data: session.user });
     expect(controller.logout()).toEqual({ data: { loggedOut: true } });
   });
 });

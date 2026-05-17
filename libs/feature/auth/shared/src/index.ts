@@ -1,3 +1,4 @@
+import type { Locale } from "@app/common/i18n";
 import { normalizeStringList } from "@app/common/shared";
 
 export const USER_ROLE = "user";
@@ -15,6 +16,7 @@ export interface AuthenticatedUserView {
   id: string;
   email: string;
   displayName?: string;
+  locale?: Locale;
   roles: string[];
   permissions: string[];
 }
@@ -55,6 +57,7 @@ export function toAuthenticatedUserView(input: {
   id: string;
   email: string;
   displayName?: string | null;
+  locale?: Locale | null;
   roles?: string[];
   permissions?: string[];
 }): AuthenticatedUserView {
@@ -62,6 +65,7 @@ export function toAuthenticatedUserView(input: {
     id: input.id,
     email: input.email,
     ...(input.displayName ? { displayName: input.displayName } : {}),
+    ...(input.locale ? { locale: input.locale } : {}),
     roles: normalizeStringList(input.roles),
     permissions: normalizeStringList(input.permissions),
   };

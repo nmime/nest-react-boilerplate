@@ -1,3 +1,4 @@
+import type { Locale } from "@app/common/i18n";
 import { normalizeStringList } from "@app/common/shared";
 import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
 
@@ -22,6 +23,7 @@ export interface AdminProfileView {
   id: string;
   email?: string;
   displayName?: string;
+  locale?: Locale;
   roles: string[];
   permissions: string[];
 }
@@ -68,6 +70,7 @@ export const toAdminProfileView = (
     id: principal.subject,
     email: principal.email,
     displayName: principal.displayName,
+    locale: principal.locale,
     roles: policy.roles,
     permissions: policy.permissions,
   };

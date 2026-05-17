@@ -73,7 +73,7 @@ export const getUserApiBaseUrl = (value?: string): string =>
   normalizeApiBaseUrl(value);
 
 export const getAdminApiBaseUrl = (value?: string): string =>
-  normalizeApiBaseUrl(value?.trim() || "/");
+  normalizeApiBaseUrl(value);
 
 export const createFrontendQueryClient = (): QueryClient =>
   new QueryClient({

@@ -14,6 +14,7 @@ const record: AuthUserRecord = {
   passwordHash: "hash",
   roles: ["user"],
   permissions: ["profile:read"],
+  locale: null,
   status: "active",
   lastLoginAt: null,
 };
@@ -27,6 +28,9 @@ describe("auth user stores", () => {
       ),
       findById: vi.fn((id: string) =>
         okAsync(id === record.id ? record : null),
+      ),
+      setLocale: vi.fn((id: string, locale: "en" | "es") =>
+        okAsync(id === record.id ? { ...record, locale } : null),
       ),
       recordLogin: vi.fn((id: string, loggedInAt?: Date) =>
         okAsync(
@@ -49,6 +53,10 @@ describe("auth user stores", () => {
     expect((await store.findById(record.id))._unsafeUnwrap()).toEqual(record);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
     expect(
+      (await store.setLocale(record.id, "es"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "es" });
+    expect((await store.setLocale("missing", "es"))._unsafeUnwrap()).toBeNull();
+    expect(
       (await store.recordLogin(record.id, loggedInAt))._unsafeUnwrap(),
     ).toMatchObject({ lastLoginAt: loggedInAt });
     expect((await store.recordLogin("missing"))._unsafeUnwrap()).toBeNull();
@@ -60,6 +68,7 @@ describe("auth user stores", () => {
       createUser: vi.fn(() => errAsync(error)),
       findByEmail: vi.fn(() => errAsync(error)),
       findById: vi.fn(() => errAsync(error)),
+      setLocale: vi.fn(() => errAsync(error)),
       recordLogin: vi.fn(() => errAsync(error)),
     };
     const store = new PostgresAuthUserStore(repository as never);
@@ -69,6 +78,9 @@ describe("auth user stores", () => {
       error,
     );
     expect((await store.findById(record.id))._unsafeUnwrapErr()).toEqual(error);
+    expect((await store.setLocale(record.id, "es"))._unsafeUnwrapErr()).toEqual(
+      error,
+    );
     expect((await store.recordLogin(record.id))._unsafeUnwrapErr()).toEqual(
       error,
     );
@@ -84,6 +96,7 @@ describe("auth user stores", () => {
       displayName: null,
       roles: ["user"],
       status: "active",
+      locale: null,
       lastLoginAt: null,
     });
     expect((await store.create(record))._unsafeUnwrapErr()).toEqual({
@@ -105,6 +118,10 @@ describe("auth user stores", () => {
     ).toBeNull();
     expect((await store.findById(created.id))._unsafeUnwrap()).toEqual(created);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await store.setLocale(created.id, "es"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "es" });
+    expect((await store.setLocale("missing", "es"))._unsafeUnwrap()).toBeNull();
     expect(
       (await store.recordLogin(created.id, loggedInAt))._unsafeUnwrap(),
     ).toMatchObject({ lastLoginAt: loggedInAt });

@@ -5,6 +5,7 @@ import {
   apiFetch,
   FrontendI18nProvider,
   FrontendQueryProvider,
+  FrontendStateProvider,
   useI18n,
 } from "@app/frontend-ui";
 import {
@@ -191,9 +192,11 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <FrontendQueryProvider>
-    <AppContent />
-  </FrontendQueryProvider>
+  <FrontendStateProvider>
+    <FrontendQueryProvider>
+      <AppContent />
+    </FrontendQueryProvider>
+  </FrontendStateProvider>
 );
 
 export default App;

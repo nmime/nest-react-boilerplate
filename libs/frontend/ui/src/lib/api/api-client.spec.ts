@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ApiError,
   apiFetch,
+  apiRequest,
   buildApiHeaders,
   configureApiLocale,
   resolveApiUrl,
@@ -90,6 +91,15 @@ describe("frontend API client", () => {
       message: "La solicitud falló con 500.",
       status: 500,
     } satisfies Partial<ApiError>);
+  });
+
+  it("apiRequest returns non-OK responses without throwing", async () => {
+    configureApiLocale({ locale: "en" });
+    const response = jsonResponse({ detail: "Nope" }, false, 403);
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(response);
+
+    await expect(apiRequest("/profile", { fetchImpl })).resolves.toBe(response);
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe("/profile");
   });
 
   it("parses problem responses into ApiError", async () => {

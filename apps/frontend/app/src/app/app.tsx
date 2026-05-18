@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
-import { authApi, userApi } from "@app/api-client";
+import { authApi, throwOnOpenApiErrorData, userApi } from "@app/api-client";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
@@ -21,10 +21,10 @@ type ProfileState =
   | { status: "ready"; email?: string; subject: string }
   | { status: "forbidden"; reason: string };
 
-type AuthMePayload = authApi.AuthControllerMe200["data"];
-type AuthSessionPayload = authApi.AuthControllerLogin200["data"];
-type AuthLocalePayload = authApi.AuthControllerUpdateLocale200["data"];
-type UserProfilePayload = userApi.ProfileControllerMe200["data"];
+type AuthMePayload = authApi.AuthControllerMeData;
+type AuthSessionPayload = authApi.AuthControllerLoginData;
+type AuthLocalePayload = authApi.AuthControllerUpdateLocaleData;
+type UserProfilePayload = userApi.ProfileControllerMeData;
 type LocalePayload =
   | AuthLocalePayload
   | AuthMePayload
@@ -72,7 +72,9 @@ const persistToken = (token: string): void => {
   getBrowserStorage()?.setItem(TOKEN_KEY, token);
 };
 
-const getPayloadLocale = (payload?: LocalePayload): Locale | undefined => {
+const getPayloadLocale = (
+  payload?: LocalePayload | null,
+): Locale | undefined => {
   const directLocale =
     payload && "locale" in payload ? payload.locale : undefined;
   const userLocale =
@@ -87,24 +89,25 @@ const getPayloadLocale = (payload?: LocalePayload): Locale | undefined => {
   );
 };
 
-async function fetchAuthMe(token: string): Promise<AuthMePayload | undefined> {
+async function fetchAuthMe(token: string): Promise<AuthMePayload | null> {
   try {
-    const body = await authApi.authControllerMe({
+    const result = await authApi.authControllerMe({
       authToken: token,
       baseUrl: authBaseUrl(),
     });
-    return body.data;
+    return result.data?.data ?? null;
   } catch {
-    return undefined;
+    return null;
   }
 }
 
 async function fetchUserProfile(token: string): Promise<UserProfilePayload> {
-  const body = await userApi.profileControllerMe({
-    authToken: token,
-    baseUrl: userBaseUrl(),
-  });
-  return body.data;
+  return throwOnOpenApiErrorData(
+    userApi.profileControllerMe({
+      authToken: token,
+      baseUrl: userBaseUrl(),
+    }),
+  );
 }
 
 export interface UserAppProps {
@@ -113,8 +116,20 @@ export interface UserAppProps {
   applyUserLocale: (locale: Locale) => void;
 }
 
-const getErrorReason = (error: unknown, fallback: string): string =>
-  error instanceof Error ? error.message : fallback;
+const getErrorReason = (error: unknown, fallback: string): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const message = record["detail"] ?? record["message"] ?? record["title"];
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
 
 const formValueToString = (
   value: FormDataEntryValue | null | undefined,
@@ -213,28 +228,32 @@ const UserApp = ({
       password: FormDataEntryValue | null;
     }) =>
       mode === "login"
-        ? authApi.authControllerLogin(
-            {
-              email: formValueToString(email),
-              password: formValueToString(password),
-            },
-            { baseUrl: authBaseUrl() },
+        ? throwOnOpenApiErrorData(
+            authApi.authControllerLogin(
+              {
+                email: formValueToString(email),
+                password: formValueToString(password),
+              },
+              { baseUrl: authBaseUrl() },
+            ),
           )
-        : authApi.authControllerRegister(
-            {
-              displayName: formValueToString(displayName) || undefined,
-              email: formValueToString(email),
-              locale,
-              password: formValueToString(password),
-            },
-            { baseUrl: authBaseUrl() },
+        : throwOnOpenApiErrorData(
+            authApi.authControllerRegister(
+              {
+                displayName: formValueToString(displayName) || undefined,
+                email: formValueToString(email),
+                locale,
+                password: formValueToString(password),
+              },
+              { baseUrl: authBaseUrl() },
+            ),
           ),
     onSuccess: (body) => {
-      const nextLocale = getPayloadLocale(body?.data);
+      const nextLocale = getPayloadLocale(body);
       if (nextLocale) {
         applyUserLocale(nextLocale);
       }
-      const nextToken = body?.data?.accessToken ?? "";
+      const nextToken = body?.accessToken ?? "";
       setToken(nextToken);
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),
@@ -388,12 +407,14 @@ const AppContent = observer(function AppContent() {
 
   const localeMutation = useMutation({
     mutationFn: (nextLocale: Locale) =>
-      authApi.authControllerUpdateLocale(
-        { locale: nextLocale },
-        { authToken: token, baseUrl: authBaseUrl() },
+      throwOnOpenApiErrorData(
+        authApi.authControllerUpdateLocale(
+          { locale: nextLocale },
+          { authToken: token, baseUrl: authBaseUrl() },
+        ),
       ),
     onSuccess: (body, nextLocale) => {
-      setUserLocale(getPayloadLocale(body?.data) ?? nextLocale);
+      setUserLocale(getPayloadLocale(body) ?? nextLocale);
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),
       });

@@ -1,4 +1,4 @@
-import { adminApi } from "@app/api-client";
+import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
 
 export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin.bearerToken";
 
@@ -82,10 +82,10 @@ export const fetchAdminProfile = async (
   token: string,
   apiBaseUrl = "",
 ): Promise<AdminProfilePayload> => {
-  const body = await adminApi.adminProfileControllerMe({
-    authToken: token,
-    baseUrl: apiBaseUrl,
-  });
-
-  return body.data ?? {};
+  return throwOnOpenApiErrorData(
+    adminApi.adminProfileControllerMe({
+      authToken: token,
+      baseUrl: apiBaseUrl,
+    }),
+  );
 };

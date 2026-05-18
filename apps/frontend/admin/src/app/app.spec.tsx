@@ -28,9 +28,16 @@ import {
 } from "./pages";
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
-  vi
-    .fn()
-    .mockResolvedValue({ ok, status, json: vi.fn().mockResolvedValue(body) });
+  vi.fn().mockResolvedValue(
+    new Response(JSON.stringify(body), {
+      headers: { "Content-Type": "application/json" },
+      status,
+      statusText: ok ? "OK" : "Error",
+    }),
+  );
+
+const getRequest = (fetchImpl: ReturnType<typeof mockFetch>): Request =>
+  fetchImpl.mock.calls[0]?.[0] as Request;
 
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>();
@@ -137,14 +144,13 @@ describe("admin auth and RBAC helpers", () => {
     await expect(fetchAdminProfile("abc", "/api")).resolves.toEqual({
       principal: { subject: "1" },
     });
-    expect(fetchImpl).toHaveBeenCalledWith("/api/admin/profile/me", {
-      headers: {
-        Accept: "application/json",
-        "Accept-Language": "en",
-        Authorization: "Bearer abc",
-      },
-      method: "GET",
-      signal: undefined,
+    const request = getRequest(fetchImpl);
+    expect(request.url).toBe(`${window.location.origin}/api/admin/profile/me`);
+    expect(request.method).toBe("GET");
+    expect(Object.fromEntries(request.headers.entries())).toMatchObject({
+      accept: "application/json",
+      "accept-language": "en",
+      authorization: "Bearer abc",
     });
 
     vi.stubGlobal("fetch", mockFetch(false, {}, 403));

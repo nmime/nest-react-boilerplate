@@ -10,7 +10,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
-  ({ ok, status, json: () => Promise.resolve(body) }) as Response;
+  new Response(JSON.stringify(body), {
+    headers: { "Content-Type": "application/json" },
+    status,
+    statusText: ok ? "OK" : "Error",
+  });
 
 const installStorage = () => {
   const values = new Map<string, string>();
@@ -40,30 +44,92 @@ const setFetch = (...responses: FetchReply[]) => {
 };
 
 type FetchInit = {
-  body?: unknown;
+  body?: BodyInit | null;
   headers?: Record<string, string>;
   method?: string;
 };
 
 type FetchMock = ReturnType<typeof setFetch>;
+type FetchCall = [unknown, unknown?];
+
+const getCalledUrl = (calledInput: unknown): string =>
+  calledInput instanceof Request ? calledInput.url : String(calledInput);
+
+const getCalledInit = (calledInput: unknown, init: unknown): FetchInit => {
+  if (calledInput instanceof Request) {
+    return {
+      body: calledInput.body,
+      headers: Object.fromEntries(calledInput.headers.entries()),
+      method: calledInput.method,
+    };
+  }
+
+  return init ?? {};
+};
+
+const matchesUrl = (actualUrl: string, expectedUrl: string): boolean => {
+  if (actualUrl === expectedUrl) {
+    return true;
+  }
+
+  if (expectedUrl.startsWith("/")) {
+    try {
+      return new URL(actualUrl).pathname === expectedUrl;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+};
+
+const findFetchCall = (
+  fetchMock: FetchMock,
+  url: string,
+  expectedHeaders: Record<string, string>,
+  method?: string,
+): FetchCall | undefined =>
+  fetchMock.mock.calls.find(([calledInput, init]) => {
+    const fetchInit = getCalledInit(calledInput, init);
+
+    return (
+      matchesUrl(getCalledUrl(calledInput), url) &&
+      (!method || fetchInit.method === method) &&
+      Object.entries(expectedHeaders).every(
+        ([key, value]) => fetchInit.headers?.[key.toLowerCase()] === value,
+      )
+    );
+  }) as FetchCall | undefined;
 
 const findFetchInit = (
   fetchMock: FetchMock,
   url: string,
   expectedHeaders: Record<string, string>,
   method?: string,
-): FetchInit | undefined =>
-  fetchMock.mock.calls.find(([calledUrl, init]) => {
-    const fetchInit = init as FetchInit | undefined;
+): FetchInit | undefined => {
+  const call = findFetchCall(fetchMock, url, expectedHeaders, method);
 
-    return (
-      calledUrl === url &&
-      (!method || fetchInit?.method === method) &&
-      Object.entries(expectedHeaders).every(
-        ([key, value]) => fetchInit?.headers?.[key] === value,
-      )
-    );
-  })?.[1] as FetchInit | undefined;
+  return call ? getCalledInit(call[0], call[1]) : undefined;
+};
+
+const readFetchBody = async (
+  fetchMock: FetchMock,
+  url: string,
+  expectedHeaders: Record<string, string>,
+  method?: string,
+): Promise<string | undefined> => {
+  const call = findFetchCall(fetchMock, url, expectedHeaders, method);
+  if (!call) {
+    return undefined;
+  }
+
+  if (call[0] instanceof Request) {
+    return call[0].clone().text();
+  }
+
+  const body = getCalledInit(call[0], call[1]).body;
+  return typeof body === "string" ? body : undefined;
+};
 
 const expectFetchRequest = (
   fetchMock: FetchMock,
@@ -73,10 +139,14 @@ const expectFetchRequest = (
 ): FetchInit => {
   const init = findFetchInit(fetchMock, url, expectedHeaders, method);
   expect(init, `missing ${method ?? "GET"} ${url}`).toBeTruthy();
-  expect(init?.headers).toMatchObject({
-    Accept: "application/json",
-    ...expectedHeaders,
-  });
+  expect(init?.headers).toMatchObject(
+    Object.fromEntries(
+      Object.entries({
+        Accept: "application/json",
+        ...expectedHeaders,
+      }).map(([key, value]) => [key.toLowerCase(), value]),
+    ),
+  );
 
   return init as FetchInit;
 };
@@ -189,6 +259,7 @@ describe("User app shell", () => {
     setFetch({
       ok: true,
       status: 200,
+      headers: new Headers({ "Content-Type": "application/json" }),
       json: rejectAuthJson,
     } as Response);
     render(<App />);
@@ -259,7 +330,7 @@ describe("User app shell", () => {
         ),
       ).toBeTruthy(),
     );
-    const patchInit = expectFetchRequest(
+    expectFetchRequest(
       fetchMock,
       "/auth/me/locale",
       {
@@ -269,7 +340,18 @@ describe("User app shell", () => {
       },
       "PATCH",
     );
-    expect(patchInit.body).toBe(JSON.stringify({ locale: "es" }));
+    await expect(
+      readFetchBody(
+        fetchMock,
+        "/auth/me/locale",
+        {
+          "Accept-Language": "es",
+          Authorization: "Bearer switch-token",
+          "Content-Type": "application/json",
+        },
+        "PATCH",
+      ),
+    ).resolves.toBe(JSON.stringify({ locale: "es" }));
     await waitFor(() =>
       expect(
         findFetchInit(fetchMock, "/profile/me", {

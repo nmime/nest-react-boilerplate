@@ -13,6 +13,7 @@ const sourceRoots = [
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
   "libs/frontend/ui/src",
+  "libs/frontend/api-client/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [".spec.ts", ".spec.tsx"];

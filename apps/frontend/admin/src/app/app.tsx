@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
-import { authApi, adminApi } from "@app/api-client";
+import { adminApi, authApi, throwOnOpenApiErrorData } from "@app/api-client";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
@@ -146,12 +146,14 @@ const AppContent = observer(function AppContent() {
 
   const localeMutation = useMutation({
     mutationFn: (nextLocale: Locale) =>
-      authApi.authControllerUpdateLocale(
-        { locale: nextLocale },
-        { authToken: token, baseUrl: getConfiguredAuthApiBaseUrl() },
+      throwOnOpenApiErrorData(
+        authApi.authControllerUpdateLocale(
+          { locale: nextLocale },
+          { authToken: token, baseUrl: getConfiguredAuthApiBaseUrl() },
+        ),
       ),
     onSuccess: (body, nextLocale) => {
-      const persistedLocale = normalizeLocale(body?.data?.locale);
+      const persistedLocale = normalizeLocale(body?.locale);
       setUserLocale(persistedLocale ?? nextLocale);
       void queryClient.invalidateQueries({
         queryKey: adminApi.getAdminProfileControllerMeQueryKey(),

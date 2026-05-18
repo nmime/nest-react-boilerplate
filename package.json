@@ -58,7 +58,7 @@
     "mobx-react-lite": "^4.1.1",
     "nestjs-i18n": "10.8.4",
     "neverthrow": "8.2.0",
-    "openapi-fetch": "^0.14.1",
+    "openapi-fetch": "^0.17.0",
     "openapi-react-query": "^0.5.4",
     "openid-client": "6.8.4",
     "pg": "8.20.0",

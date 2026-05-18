@@ -1,44 +1,81 @@
 #!/usr/bin/env node
-import { rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
+import { dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 
+const generatedRoot = "libs/frontend/api-client/src/generated";
+const services = [
+  {
+    name: "auth",
+    input: "docs/openapi/auth-app-api.json",
+    output: `${generatedRoot}/auth.ts`,
+  },
+  {
+    name: "user",
+    input: "docs/openapi/user-app-api.json",
+    output: `${generatedRoot}/user.ts`,
+  },
+  {
+    name: "admin",
+    input: "docs/openapi/admin-app-api.json",
+    output: `${generatedRoot}/admin.ts`,
+  },
+];
+
 function parseArgs(argv) {
-  const args = { config: "orval.config.mjs", dryRun: false };
+  const args = { dryRun: false };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;
-    const val = () => {
-      const next = argv[++i];
-      if (!next) throw new Error(`${item} requires a value.`);
-      return next;
-    };
-    if (item === "--config") args.config = val();
-    else if (item === "--dry-run") args.dryRun = true;
+    if (item === "--dry-run") args.dryRun = true;
     else if (item === "--help" || item === "-h") args.help = true;
     else throw new Error(`Unknown option: ${item}`);
   }
   return args;
 }
 
+function run(command, args) {
+  const result = spawnSync(command, args, { stdio: "inherit" });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
+    console.log("Usage: pnpm api:clients -- [--dry-run]");
+    return;
+  }
+
+  if (args.dryRun) {
     console.log(
-      "Usage: pnpm api:clients -- [--config orval.config.mjs] [--dry-run]",
+      JSON.stringify({ status: "dry-run", generatedRoot, services }, null, 2),
     );
     return;
   }
-  const command = ["pnpm", "exec", "orval", "--config", args.config];
-  if (args.dryRun) {
-    console.log(JSON.stringify({ status: "dry-run", command }, null, 2));
-    return;
+
+  rmSync(generatedRoot, { recursive: true, force: true });
+  mkdirSync(generatedRoot, { recursive: true });
+
+  for (const service of services) {
+    mkdirSync(dirname(service.output), { recursive: true });
+    run("pnpm", [
+      "exec",
+      "openapi-typescript",
+      service.input,
+      "-o",
+      service.output,
+      "--root-types=true",
+      "--root-types-no-schema-prefix=true",
+    ]);
   }
-  rmSync("libs/frontend/api-client/src/generated", {
-    recursive: true,
-    force: true,
-  });
-  const result = spawnSync(command[0], command.slice(1), { stdio: "inherit" });
-  if (result.status !== 0) process.exit(result.status ?? 1);
+
+  run("pnpm", [
+    "exec",
+    "prettier",
+    "--write",
+    ...services.map((service) => service.output),
+  ]);
+  console.log(JSON.stringify({ status: "generated", generatedRoot, services }));
 }
 
 main().catch((error) => {

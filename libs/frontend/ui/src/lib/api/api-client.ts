@@ -136,7 +136,7 @@ const parseBody = async (response: Response): Promise<unknown> => {
   }
 };
 
-const getErrorMessage = (status: number, body: unknown): string => {
+export const getApiErrorMessage = (status: number, body: unknown): string => {
   if (body && typeof body === "object") {
     const record = body as Record<string, unknown>;
     const message =
@@ -155,10 +155,10 @@ const getErrorMessage = (status: number, body: unknown): string => {
   });
 };
 
-export async function apiFetch<T = unknown>(
+export async function apiRequest(
   input: string | URL,
   options: ApiFetchOptions = {},
-): Promise<T> {
+): Promise<Response> {
   const {
     authToken,
     baseUrl,
@@ -166,7 +166,6 @@ export async function apiFetch<T = unknown>(
     fetchImpl = fetch,
     headers: inputHeaders,
     json,
-    parseAs = "json",
     ...requestInit
   } = options;
   const hasJsonBody = json !== undefined;
@@ -181,12 +180,20 @@ export async function apiFetch<T = unknown>(
     request.body = body;
   }
 
-  const response = await fetchImpl(resolveApiUrl(input, baseUrl), request);
+  return fetchImpl(resolveApiUrl(input, baseUrl), request);
+}
+
+export async function apiFetch<T = unknown>(
+  input: string | URL,
+  options: ApiFetchOptions = {},
+): Promise<T> {
+  const { parseAs = "json" } = options;
+  const response = await apiRequest(input, options);
 
   if (!response.ok) {
     const errorBody = await parseBody(response);
     throw new ApiError(
-      getErrorMessage(response.status, errorBody),
+      getApiErrorMessage(response.status, errorBody),
       response.status,
       errorBody,
     );

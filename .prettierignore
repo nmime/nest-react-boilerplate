@@ -6,3 +6,5 @@ pnpm-lock.yaml
 *.tsbuildinfo
 .helm/templates/
 deploy/argocd/application.yaml
+
+libs/frontend/api-client/src/generated

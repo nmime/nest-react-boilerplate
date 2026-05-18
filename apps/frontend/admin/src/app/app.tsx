@@ -2,12 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
-import type {
-  ApiEnvelope,
-  AuthenticatedUserContract,
-} from "@app/api-contracts";
+import { authApi, adminApi } from "@app/api-client";
 import {
-  apiFetch,
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
@@ -45,8 +41,6 @@ const getConfiguredAuthApiBaseUrl = (): string => {
 
   return getAdminApiBaseUrl(env["VITE_AUTH_API_BASE_URL"]);
 };
-
-type AuthLocalePayload = Partial<AuthenticatedUserContract>;
 
 interface AdminAppProps {
   token: string;
@@ -96,7 +90,11 @@ const AdminApp = ({
   const profileQuery = useQuery({
     enabled: Boolean(token),
     queryFn: () => fetchAdminProfile(token, getConfiguredAdminApiBaseUrl()),
-    queryKey: ["admin", "profile", "me", token, locale],
+    queryKey: [
+      ...adminApi.getAdminProfileControllerMeQueryKey(),
+      token,
+      locale,
+    ],
     retry: false,
     staleTime: 15_000,
   });
@@ -148,16 +146,16 @@ const AppContent = observer(function AppContent() {
 
   const localeMutation = useMutation({
     mutationFn: (nextLocale: Locale) =>
-      apiFetch<ApiEnvelope<AuthLocalePayload>>("/auth/me/locale", {
-        authToken: token,
-        baseUrl: getConfiguredAuthApiBaseUrl(),
-        json: { locale: nextLocale },
-        method: "PATCH",
-      }),
+      authApi.authControllerUpdateLocale(
+        { locale: nextLocale },
+        { authToken: token, baseUrl: getConfiguredAuthApiBaseUrl() },
+      ),
     onSuccess: (body, nextLocale) => {
       const persistedLocale = normalizeLocale(body?.data?.locale);
       setUserLocale(persistedLocale ?? nextLocale);
-      void queryClient.invalidateQueries({ queryKey: ["admin", "profile"] });
+      void queryClient.invalidateQueries({
+        queryKey: adminApi.getAdminProfileControllerMeQueryKey(),
+      });
     },
     retry: false,
   });

@@ -1,19 +1,14 @@
-import type {
-  AdminPrincipalContract,
-  AdminProfileContract,
-  ApiEnvelope,
-} from "@app/api-contracts";
-import { apiFetch } from "@app/frontend-ui";
+import { adminApi } from "@app/api-client";
 
 export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin.bearerToken";
 
-export type AdminPrincipal = Partial<AdminPrincipalContract>;
+export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 
 export type AdminProfilePayload = Partial<
-  Omit<AdminProfileContract, "principal" | "profile">
+  Omit<adminApi.AdminProfilePayloadDto, "principal" | "profile">
 > & {
   principal?: AdminPrincipal;
-  profile?: Partial<AdminProfileContract["profile"]>;
+  profile?: Partial<adminApi.AdminProfilePayloadDto["profile"]>;
 };
 
 export interface AdminAccess {
@@ -87,13 +82,10 @@ export const fetchAdminProfile = async (
   token: string,
   apiBaseUrl = "",
 ): Promise<AdminProfilePayload> => {
-  const body = await apiFetch<ApiEnvelope<AdminProfilePayload>>(
-    "/admin/profile/me",
-    {
-      authToken: token,
-      baseUrl: apiBaseUrl,
-    },
-  );
+  const body = await adminApi.adminProfileControllerMe({
+    authToken: token,
+    baseUrl: apiBaseUrl,
+  });
 
-  return body?.data ?? {};
+  return body.data ?? {};
 };

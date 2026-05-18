@@ -31,6 +31,7 @@ describe("AuthService", () => {
     expect(registered.user).toMatchObject({
       email: "user@example.com",
       displayName: "User",
+      theme: "system",
       roles: ["user"],
       permissions: ["profile:read"],
     });
@@ -54,7 +55,7 @@ describe("AuthService", () => {
     await expect(service.getUserById("missing")).resolves.toBeNull();
   });
 
-  it("persists normalized locale in sessions, JWT principals, and updates", async () => {
+  it("persists normalized locale/theme in sessions, JWT principals, and updates", async () => {
     process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
     const service = new AuthService(new InMemoryAuthUserStore());
 
@@ -62,25 +63,42 @@ describe("AuthService", () => {
       email: "locale@example.com",
       password: "password123",
       locale: "es-MX",
+      theme: "Dark",
     });
 
     expect(registered.user.locale).toBe("es");
+    expect(registered.user.theme).toBe("dark");
     expect(
       validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
       }).locale,
     ).toBe("es");
+    expect(
+      validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
+        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+      }).theme,
+    ).toBe("dark");
 
     await expect(
       service.updateUserLocale(registered.user.id, "en-US"),
     ).resolves.toMatchObject({ locale: "en" });
     await expect(
+      service.updateUserPreferences(registered.user.id, {
+        locale: "es",
+        theme: "light",
+      }),
+    ).resolves.toMatchObject({ locale: "es", theme: "light" });
+    await expect(
       service.getUserById(registered.user.id),
     ).resolves.toMatchObject({
-      locale: "en",
+      locale: "es",
+      theme: "light",
     });
     await expect(
       service.updateUserLocale(registered.user.id, "fr-FR"),
+    ).rejects.toThrow(BadRequestException);
+    await expect(
+      service.updateUserPreferences(registered.user.id, { theme: "sepia" }),
     ).rejects.toThrow(BadRequestException);
   });
 
@@ -110,6 +128,7 @@ describe("AuthService", () => {
       findById: () =>
         errAsync({ code: "repository_error" as const, message: "id failed" }),
       setLocale: () => okAsync(null),
+      setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
     };
     const serviceWithFindFailure = new AuthService(failingStore);
@@ -149,6 +168,7 @@ describe("AuthService", () => {
           roles: ["user"],
           permissions: ["profile:read"],
           locale: null,
+          theme: "system" as const,
           status: "disabled" as const,
           lastLoginAt: null,
         }),
@@ -172,6 +192,7 @@ describe("AuthService", () => {
       roles: ["user"],
       permissions: ["profile:read"],
       locale: null,
+      theme: "system" as const,
       status: "active" as const,
       lastLoginAt: null,
     };
@@ -180,6 +201,7 @@ describe("AuthService", () => {
       create: () => okAsync(activeRecord),
       findById: () => okAsync(activeRecord),
       setLocale: () => okAsync(null),
+      setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
     }).login({ email: "active@example.com", password: "password123" });
     expect(fallbackLogin.user.id).toBe("active-id");
@@ -206,6 +228,7 @@ describe("AuthService", () => {
       roles: [],
       permissions: [],
       locale: null,
+      theme: "system",
       status: "active" as const,
       lastLoginAt: null,
     };
@@ -225,6 +248,7 @@ describe("AuthService", () => {
         roles: [],
         permissions: [],
         locale: null,
+        theme: "system",
         status: "active",
         lastLoginAt: null,
       },
@@ -244,6 +268,7 @@ describe("AuthService", () => {
           roles: [],
           permissions: [],
           locale: null,
+          theme: "system",
           status: "active",
           lastLoginAt: null,
         },

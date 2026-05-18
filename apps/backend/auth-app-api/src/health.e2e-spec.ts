@@ -5,10 +5,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createProblemValidationPipe } from "@app/common/validation";
 import { AuthApiModule } from "./auth-api.module";
 
+type UserThemePreference = "system" | "light" | "dark";
+
 interface AuthSessionResponse {
   data: {
     accessToken: string;
-    user: { email: string };
+    user: {
+      email: string;
+      locale?: string;
+      theme: UserThemePreference;
+    };
   };
 }
 
@@ -60,6 +66,7 @@ describe("auth-app-api e2e", () => {
       .expect(201);
     const registerBody = register.body as AuthSessionResponse;
     expect(registerBody.data.user.email).toBe("e2e@example.com");
+    expect(registerBody.data.user.theme).toBe("system");
 
     await supertest(httpServer)
       .get("/auth/me")
@@ -67,12 +74,52 @@ describe("auth-app-api e2e", () => {
       .expect(200)
       .expect((response) => {
         const body = response.body as {
-          data?: { principal?: { email?: string } };
+          data?: {
+            principal?: { email?: string; theme?: UserThemePreference };
+            user?: { theme?: UserThemePreference };
+          };
         };
         if (body.data?.principal?.email !== "e2e@example.com") {
           throw new Error("registered token principal email mismatch");
         }
+        if (body.data?.user?.theme !== "system") {
+          throw new Error("registered user theme mismatch");
+        }
       });
+
+    await supertest(httpServer)
+      .patch("/auth/me/preferences")
+      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .send({ locale: "es", theme: "dark" })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as {
+          data?: { locale?: string; theme?: UserThemePreference };
+        };
+        if (body.data?.locale !== "es" || body.data.theme !== "dark") {
+          throw new Error("preferences endpoint did not persist locale/theme");
+        }
+      });
+
+    await supertest(httpServer)
+      .patch("/auth/me/locale")
+      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .send({ locale: "en" })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as {
+          data?: { locale?: string; theme?: UserThemePreference };
+        };
+        if (body.data?.locale !== "en" || body.data.theme !== "dark") {
+          throw new Error("locale compatibility endpoint changed theme");
+        }
+      });
+
+    await supertest(httpServer)
+      .patch("/auth/me/preferences")
+      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .send({ theme: "sepia" })
+      .expect(400);
 
     const login = await supertest(httpServer)
       .post("/auth/login")

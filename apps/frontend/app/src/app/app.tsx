@@ -13,6 +13,7 @@ import {
   UiStatCard,
   useAuthShellStore,
   useI18n,
+  type UiTheme,
 } from "@app/frontend-ui";
 
 type ProfileState =
@@ -23,10 +24,10 @@ type ProfileState =
 
 type AuthMePayload = authApi.AuthControllerMeData;
 type AuthSessionPayload = authApi.AuthControllerLoginData;
-type AuthLocalePayload = authApi.AuthControllerUpdateLocaleData;
+type AuthPreferencesPayload = authApi.AuthControllerUpdatePreferencesData;
 type UserProfilePayload = userApi.ProfileControllerMeData;
 type LocalePayload =
-  | AuthLocalePayload
+  | AuthPreferencesPayload
   | AuthMePayload
   | AuthSessionPayload
   | UserProfilePayload
@@ -72,6 +73,26 @@ const persistToken = (token: string): void => {
   getBrowserStorage()?.setItem(TOKEN_KEY, token);
 };
 
+const normalizeTheme = (value: unknown): UiTheme | undefined => {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "system" ||
+    normalized === "light" ||
+    normalized === "dark"
+    ? normalized
+    : undefined;
+};
+
+const readTheme = (value: unknown): UiTheme | undefined =>
+  normalizeTheme(
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)["theme"]
+      : undefined,
+  );
+
 const getPayloadLocale = (
   payload?: LocalePayload | null,
 ): Locale | undefined => {
@@ -86,6 +107,21 @@ const getPayloadLocale = (
 
   return normalizeLocale(
     directLocale ?? userLocale ?? profileLocale ?? principalLocale ?? undefined,
+  );
+};
+
+const getPayloadTheme = (
+  payload?: LocalePayload | null,
+): UiTheme | undefined => {
+  return (
+    readTheme(payload) ??
+    (payload && "user" in payload ? readTheme(payload.user) : undefined) ??
+    (payload && "profile" in payload
+      ? readTheme(payload.profile)
+      : undefined) ??
+    (payload && "principal" in payload
+      ? readTheme(payload.principal)
+      : undefined)
   );
 };
 
@@ -114,6 +150,7 @@ export interface UserAppProps {
   token: string;
   setToken: (token: string) => void;
   applyUserLocale: (locale: Locale) => void;
+  applyUserTheme: (theme: UiTheme) => void;
 }
 
 const getErrorReason = (error: unknown, fallback: string): string => {
@@ -170,6 +207,7 @@ const getProfileState = (
 
 const UserApp = ({
   applyUserLocale,
+  applyUserTheme,
   setToken,
   token,
 }: Readonly<UserAppProps>) => {
@@ -190,12 +228,18 @@ const UserApp = ({
     staleTime: 15_000,
   });
   const authLocale = getPayloadLocale(authMeQuery.data);
+  const authTheme = getPayloadTheme(authMeQuery.data);
 
   useEffect(() => {
     if (authLocale) {
       applyUserLocale(authLocale);
     }
   }, [applyUserLocale, authLocale]);
+  useEffect(() => {
+    if (authTheme) {
+      applyUserTheme(authTheme);
+    }
+  }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
     enabled:
@@ -250,8 +294,12 @@ const UserApp = ({
           ),
     onSuccess: (body) => {
       const nextLocale = getPayloadLocale(body);
+      const nextTheme = getPayloadTheme(body);
       if (nextLocale) {
         applyUserLocale(nextLocale);
+      }
+      if (nextTheme) {
+        applyUserTheme(nextTheme);
       }
       const nextToken = body?.accessToken ?? "";
       setToken(nextToken);
@@ -288,6 +336,7 @@ const UserApp = ({
           ),
     [
       authLocale,
+      authTheme,
       authMeQuery.isLoading,
       authMutation.error,
       authMutation.isError,
@@ -296,6 +345,7 @@ const UserApp = ({
       profileQuery.data,
       profileQuery.error,
       profileQuery.isLoading,
+      applyUserTheme,
       token,
     ],
   );
@@ -403,18 +453,24 @@ const AppContent = observer(function AppContent() {
     [authShell],
   );
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
+  const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
 
-  const localeMutation = useMutation({
-    mutationFn: (nextLocale: Locale) =>
+  const preferencesMutation = useMutation({
+    mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
-        authApi.authControllerUpdateLocale(
-          { locale: nextLocale },
-          { authToken: token, baseUrl: authBaseUrl() },
-        ),
+        authApi.authControllerUpdatePreferences(nextPreferences, {
+          authToken: token,
+          baseUrl: authBaseUrl(),
+        }),
       ),
-    onSuccess: (body, nextLocale) => {
-      setUserLocale(getPayloadLocale(body) ?? nextLocale);
+    onSuccess: (body, nextPreferences) => {
+      setUserLocale(
+        getPayloadLocale(body) ?? nextPreferences.locale ?? userLocale ?? null,
+      );
+      setUserTheme(
+        getPayloadTheme(body) ?? nextPreferences.theme ?? userTheme ?? null,
+      );
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),
       });
@@ -428,6 +484,9 @@ const AppContent = observer(function AppContent() {
   const applyUserLocale = useCallback((nextLocale: Locale) => {
     setUserLocale(nextLocale);
   }, []);
+  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
+    setUserTheme(nextTheme);
+  }, []);
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
@@ -436,21 +495,38 @@ const AppContent = observer(function AppContent() {
       }
 
       try {
-        await localeMutation.mutateAsync(nextLocale);
+        await preferencesMutation.mutateAsync({ locale: nextLocale });
       } catch {
         // Locale is still persisted locally; retry on the next explicit change.
       }
     },
-    [localeMutation, token],
+    [preferencesMutation, token],
+  );
+  const persistUserTheme = useCallback(
+    async (nextTheme: UiTheme) => {
+      if (!token) {
+        return;
+      }
+
+      try {
+        await preferencesMutation.mutateAsync({ theme: nextTheme });
+      } catch {
+        // Theme is still persisted locally; retry on the next explicit change.
+      }
+    },
+    [preferencesMutation, token],
   );
 
   return (
     <FrontendI18nProvider
       onLocaleChange={persistUserLocale}
+      onThemeChange={persistUserTheme}
       userLocale={userLocale}
+      userTheme={userTheme}
     >
       <UserApp
         applyUserLocale={applyUserLocale}
+        applyUserTheme={applyUserTheme}
         setToken={setToken}
         token={token}
       />

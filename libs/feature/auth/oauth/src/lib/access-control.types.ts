@@ -1,10 +1,12 @@
 export type AuthenticatedLocale = "en" | "es";
+export type AuthenticatedTheme = "system" | "light" | "dark";
 
 export interface AuthenticatedPrincipal {
   subject: string;
   email?: string;
   displayName?: string;
   locale?: AuthenticatedLocale;
+  theme?: AuthenticatedTheme;
   issuer?: string;
   audience?: string | string[];
   roles: string[];

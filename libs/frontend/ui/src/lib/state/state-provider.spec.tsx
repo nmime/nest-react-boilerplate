@@ -59,6 +59,7 @@ describe("frontend MobX state foundation", () => {
     });
 
     expect(screen.getByText("es")).toBeTruthy();
+    expect(document.documentElement.lang).toBe("es");
     await apiFetch("/localized", { fetchImpl });
 
     expect(fetchImpl.mock.calls[0]?.[1]?.headers).toMatchObject({
@@ -67,7 +68,7 @@ describe("frontend MobX state foundation", () => {
   });
 
   it("keeps client-only shell state in MobX without server cache data", () => {
-    const store = createRootStore();
+    const store = createRootStore({ initialTheme: "dark" });
     store.authShell.setBearerToken(" shell-token ");
     store.ui.openModal("profile-menu");
     store.ui.toggleSidebar();
@@ -76,5 +77,6 @@ describe("frontend MobX state foundation", () => {
     expect(store.authShell.bearerToken).toBe("shell-token");
     expect(store.ui.activeModal).toBe("profile-menu");
     expect(store.ui.sidebarOpen).toBe(false);
+    expect(store.ui.theme).toBe("dark");
   });
 });

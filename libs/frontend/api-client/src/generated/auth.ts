@@ -116,6 +116,22 @@ export interface paths {
         patch: operations["AuthController_updateLocale"];
         trace?: never;
     };
+    "/auth/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AuthController_updatePreferences"];
+        trace?: never;
+    };
     "/auth/locales": {
         parameters: {
             query?: never;
@@ -159,6 +175,8 @@ export interface components {
             displayName?: string;
             /** @enum {string} */
             locale?: "en" | "es";
+            /** @enum {string} */
+            theme: "system" | "light" | "dark";
             roles: string[];
             permissions: string[];
         };
@@ -196,6 +214,8 @@ export interface components {
             displayName?: string;
             /** @enum {string} */
             locale?: "en" | "es";
+            /** @enum {string} */
+            theme?: "system" | "light" | "dark";
             issuer?: string;
             audience?: string | string[];
             roles: string[];
@@ -209,6 +229,12 @@ export interface components {
         UpdateLocaleDto: {
             /** @enum {string} */
             locale: "en" | "es";
+        };
+        UpdatePreferencesDto: {
+            /** @enum {string} */
+            locale?: "en" | "es";
+            /** @enum {string} */
+            theme?: "system" | "light" | "dark";
         };
         SupportedLocalesPayloadDto: {
             supportedLocales: ("en" | "es")[];
@@ -231,6 +257,7 @@ export type LoginDto = components['schemas']['LoginDto'];
 export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
 export type MePayloadDto = components['schemas']['MePayloadDto'];
 export type UpdateLocaleDto = components['schemas']['UpdateLocaleDto'];
+export type UpdatePreferencesDto = components['schemas']['UpdatePreferencesDto'];
 export type SupportedLocalesPayloadDto = components['schemas']['SupportedLocalesPayloadDto'];
 export type LogoutPayloadDto = components['schemas']['LogoutPayloadDto'];
 export type $defs = Record<string, never>;
@@ -709,6 +736,145 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateLocaleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AuthenticatedUserViewDto"];
+                    };
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example about:blank */
+                        type: string;
+                        /** @example Bad Request */
+                        title: string;
+                        /** @example 400 */
+                        status: number;
+                        detail?: string;
+                        instance?: string;
+                        code?: string;
+                    };
+                };
+            };
+        };
+    };
+    AuthController_updatePreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreferencesDto"];
             };
         };
         responses: {

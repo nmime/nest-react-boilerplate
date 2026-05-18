@@ -320,7 +320,7 @@ describe("User app shell", () => {
       expect(
         findFetchInit(
           fetchMock,
-          "/auth/me/locale",
+          "/auth/me/preferences",
           {
             "Accept-Language": "es",
             Authorization: "Bearer switch-token",
@@ -332,7 +332,7 @@ describe("User app shell", () => {
     );
     expectFetchRequest(
       fetchMock,
-      "/auth/me/locale",
+      "/auth/me/preferences",
       {
         "Accept-Language": "es",
         Authorization: "Bearer switch-token",
@@ -343,7 +343,7 @@ describe("User app shell", () => {
     await expect(
       readFetchBody(
         fetchMock,
-        "/auth/me/locale",
+        "/auth/me/preferences",
         {
           "Accept-Language": "es",
           Authorization: "Bearer switch-token",
@@ -360,6 +360,51 @@ describe("User app shell", () => {
         }),
       ).toBeTruthy(),
     );
+  });
+
+  it("persists theme switches for authenticated users", async () => {
+    window.history.pushState({}, "", "/?token=theme-token");
+    const fetchMock = setFetch(
+      jsonResponse({ data: { user: { locale: "en", theme: "system" } } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { user: { locale: "en", theme: "dark" } } }),
+      jsonResponse({ data: { user: { locale: "en", theme: "dark" } } }),
+      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+    );
+
+    render(<App />);
+    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Theme"), {
+      target: { value: "dark" },
+    });
+
+    await waitFor(() =>
+      expect(
+        findFetchInit(
+          fetchMock,
+          "/auth/me/preferences",
+          {
+            "Accept-Language": "en",
+            Authorization: "Bearer theme-token",
+            "Content-Type": "application/json",
+          },
+          "PATCH",
+        ),
+      ).toBeTruthy(),
+    );
+    await expect(
+      readFetchBody(
+        fetchMock,
+        "/auth/me/preferences",
+        {
+          "Accept-Language": "en",
+          Authorization: "Bearer theme-token",
+          "Content-Type": "application/json",
+        },
+        "PATCH",
+      ),
+    ).resolves.toBe(JSON.stringify({ theme: "dark" }));
   });
 
   it("logs in then loads the protected profile", async () => {

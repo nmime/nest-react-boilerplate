@@ -28,16 +28,31 @@ import {
 } from "./pages";
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
-  vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), {
-      headers: { "Content-Type": "application/json" },
-      status,
-      statusText: ok ? "OK" : "Error",
-    }),
+  vi.fn().mockImplementation(() =>
+    Promise.resolve(
+      new Response(JSON.stringify(body), {
+        headers: { "Content-Type": "application/json" },
+        status,
+        statusText: ok ? "OK" : "Error",
+      }),
+    ),
   );
 
 const getRequest = (fetchImpl: ReturnType<typeof mockFetch>): Request =>
   fetchImpl.mock.calls[0]?.[0] as Request;
+
+const getRequestsByPath = (
+  fetchImpl: ReturnType<typeof vi.fn>,
+  path: string,
+  method?: string,
+): Request[] =>
+  fetchImpl.mock.calls
+    .map((call) => call[0] as Request)
+    .filter(
+      (request) =>
+        new URL(request.url).pathname === path &&
+        (!method || request.method === method),
+    );
 
 const createMemoryStorage = (): Storage => {
   const store = new Map<string, string>();
@@ -371,5 +386,77 @@ describe("Admin app shell", () => {
     await waitFor(() =>
       expect(screen.getByText("Profile request failed.")).toBeTruthy(),
     );
+  });
+
+  it("sends authenticated language and theme preference updates through /auth/me/preferences", async () => {
+    window.history.replaceState(null, "", "/?admin_token=prefs-token");
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              principal: {
+                subject: "admin-id",
+                roles: ["admin"],
+                permissions: ["admin:profile:read", "admin:dashboard:read"],
+              },
+              user: { locale: "en", theme: "system" },
+            },
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              principal: {
+                subject: "admin-id",
+                roles: ["admin"],
+                permissions: ["admin:profile:read", "admin:dashboard:read"],
+              },
+              profile: {
+                id: "admin-id",
+                email: "admin@example.com",
+                roles: ["admin"],
+                permissions: ["admin:profile:read", "admin:dashboard:read"],
+              },
+            },
+          }),
+        ),
+      )
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: { locale: "es", theme: "dark" } })),
+      );
+    vi.stubGlobal("fetch", fetchImpl);
+
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("admin@example.com")).toBeTruthy(),
+    );
+
+    fireEvent.change(screen.getByLabelText("Language"), {
+      target: { value: "es" },
+    });
+    fireEvent.change(screen.getByLabelText("Theme"), {
+      target: { value: "dark" },
+    });
+
+    await waitFor(() =>
+      expect(
+        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH").length,
+      ).toBeGreaterThanOrEqual(2),
+    );
+    const preferenceRequests = getRequestsByPath(
+      fetchImpl,
+      "/auth/me/preferences",
+      "PATCH",
+    );
+    await expect(preferenceRequests[0]?.clone().json()).resolves.toEqual({
+      locale: "es",
+    });
+    await expect(preferenceRequests[1]?.clone().json()).resolves.toEqual({
+      theme: "dark",
+    });
   });
 });

@@ -45,6 +45,7 @@ describe("AuthUserRepository", () => {
       permissions: ["profile:read"],
       roles: ["user"],
       locale: "es",
+      theme: "system",
       status: "active",
     });
     expect(persist).toHaveBeenCalledWith(entity);
@@ -147,6 +148,18 @@ describe("AuthUserRepository", () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
+  it("updates a persisted auth user theme", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setPreferences("user-id", { theme: "dark" });
+
+    expect(result._unsafeUnwrap()).toMatchObject({ theme: "dark" });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
   it("maps repository errors when updating locale", async () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
     const { findOne, flush, entityManager } = createEntityManagerMock();
@@ -159,6 +172,23 @@ describe("AuthUserRepository", () => {
     expect(result._unsafeUnwrapErr()).toEqual({
       code: "repository_error",
       message: "locale update failed",
+    });
+  });
+
+  it("maps repository errors when updating preferences", async () => {
+    const entity = new AuthUserEntity({ email: "user@example.com" });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    flush.mockRejectedValue(new Error("preferences update failed"));
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setPreferences("user-id", {
+      theme: "light",
+    });
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "preferences update failed",
     });
   });
 

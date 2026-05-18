@@ -13,6 +13,7 @@ import {
 describe("@app/common/i18n", () => {
   it("translates keys with interpolation and fallback", () => {
     expect(translate("common.language", { locale: "es" })).toBe("Idioma");
+    expect(translate("common.theme.dark", { locale: "en" })).toBe("Dark");
     expect(
       translate("user.state.ready", {
         locale: "en",

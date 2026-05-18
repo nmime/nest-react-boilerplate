@@ -2,7 +2,11 @@ import type { ReactNode } from "react";
 import { observer } from "mobx-react-lite";
 import { UiButton } from "../component/button";
 import { UiStatusPill } from "../component/status-pill";
-import { LanguageSwitcher, useI18n } from "../i18n/i18n-provider";
+import {
+  LanguageSwitcher,
+  ThemeSwitcher,
+  useI18n,
+} from "../i18n/i18n-provider";
 import { useOptionalRootStore } from "../state";
 
 export interface ProductShellAction {
@@ -52,6 +56,7 @@ export const ProductShell = observer(function ProductShell({
         </a>
         <div className="xr-header__controls">
           <LanguageSwitcher />
+          <ThemeSwitcher />
           <UiStatusPill label={status} tone={statusTone} />
         </div>
       </header>

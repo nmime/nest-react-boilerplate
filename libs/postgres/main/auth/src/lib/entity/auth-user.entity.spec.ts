@@ -11,6 +11,7 @@ describe("AuthUserEntity", () => {
         permissions: ["profile:read"],
         passwordHash: "hashed",
         locale: "es",
+        theme: "dark",
         roles: ["user"],
         status: "invited",
       }),
@@ -21,6 +22,7 @@ describe("AuthUserEntity", () => {
       permissions: ["profile:read"],
       roles: ["user"],
       locale: "es",
+      theme: "dark",
       status: "invited",
     });
   });
@@ -34,6 +36,7 @@ describe("AuthUserEntity", () => {
     expect(entity.roles).toEqual([]);
     expect(entity.permissions).toEqual([]);
     expect(entity.locale).toBeNull();
+    expect(entity.theme).toBe("system");
     expect(entity.lastLoginAt).toBeNull();
   });
 
@@ -57,6 +60,8 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.permissions.type).toBe("json");
     expect(metadata.properties.locale.length).toBe(16);
     expect(metadata.properties.locale.nullable).toBe(true);
+    expect(metadata.properties.theme.length).toBe(16);
+    expect(metadata.properties.theme.default).toBe("system");
     expect(metadata.properties.lastLoginAt.nullable).toBe(true);
     expect(metadata.uniques).toContainEqual(
       expect.objectContaining({

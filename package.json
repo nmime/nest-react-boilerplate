@@ -26,15 +26,17 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "test:docker-smoke": "node tools/docker-smoke.mjs",
     "test:fullstack": "node tools/fullstack-e2e.mjs",
-    "check": "pnpm run format:check && pnpm run api:contracts:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run format:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run lint && pnpm run typecheck && pnpm run test",
     "init:project": "node tools/init-project.mjs",
     "db:seed": "node tools/db-seed.mjs",
     "db:backup": "node tools/db-backup.mjs",
     "db:restore": "node tools/db-restore.mjs",
     "api:openapi": "node tools/export-openapi.mjs",
-    "api:client": "node tools/generate-api-client.mjs",
+    "api:client": "node tools/generate-api-clients.mjs",
     "api:contracts": "node tools/generate-api-contracts.mjs",
-    "api:contracts:check": "node tools/check-api-contracts.mjs"
+    "api:contracts:check": "node tools/check-api-contracts.mjs",
+    "api:clients": "node tools/generate-api-clients.mjs",
+    "api:clients:check": "node tools/check-api-clients.mjs"
   },
   "dependencies": {
     "@mikro-orm/core": "7.0.16",
@@ -113,6 +115,7 @@
     "jsonc-eslint-parser": "3.1.0",
     "nx": "22.7.1",
     "openapi-typescript": "^7.13.0",
+    "orval": "^8.10.0",
     "postcss": "8.5.14",
     "prettier": "3.8.3",
     "source-map-support": "0.5.21",

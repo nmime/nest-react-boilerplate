@@ -2,15 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
-import type {
-  ApiEnvelope,
-  AuthenticatedUserContract,
-  AuthMeContract,
-  AuthSessionContract,
-  UserProfileContract,
-} from "@app/api-contracts";
+import { authApi, userApi } from "@app/api-client";
 import {
-  apiFetch,
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
@@ -28,15 +21,16 @@ type ProfileState =
   | { status: "ready"; email?: string; subject: string }
   | { status: "forbidden"; reason: string };
 
-type ProfilePayload = Partial<UserProfileContract>;
-type AuthSessionPayload = Partial<AuthSessionContract> &
-  Partial<AuthMeContract>;
-type AuthLocalePayload = Partial<AuthenticatedUserContract>;
+type AuthMePayload = authApi.AuthControllerMe200["data"];
+type AuthSessionPayload = authApi.AuthControllerLogin200["data"];
+type AuthLocalePayload = authApi.AuthControllerUpdateLocale200["data"];
+type UserProfilePayload = userApi.ProfileControllerMe200["data"];
 type LocalePayload =
-  | AuthSessionPayload
-  | ProfilePayload
   | AuthLocalePayload
-  | { locale?: string | null };
+  | AuthMePayload
+  | AuthSessionPayload
+  | UserProfilePayload
+  | undefined;
 
 const TOKEN_KEY = "boilerplate.user.bearerToken";
 const getEnvValue = (key: string): string => {
@@ -93,25 +87,24 @@ const getPayloadLocale = (payload?: LocalePayload): Locale | undefined => {
   );
 };
 
-async function fetchAuthMe(
-  token: string,
-): Promise<ProfilePayload | AuthSessionPayload | undefined> {
+async function fetchAuthMe(token: string): Promise<AuthMePayload | undefined> {
   try {
-    const body = await apiFetch<
-      ApiEnvelope<ProfilePayload | AuthSessionPayload>
-    >("/auth/me", { authToken: token, baseUrl: authBaseUrl() });
+    const body = await authApi.authControllerMe({
+      authToken: token,
+      baseUrl: authBaseUrl(),
+    });
     return body.data;
   } catch {
     return undefined;
   }
 }
 
-async function fetchUserProfile(token: string): Promise<ProfilePayload> {
-  const body = await apiFetch<ApiEnvelope<ProfilePayload>>("/profile/me", {
+async function fetchUserProfile(token: string): Promise<UserProfilePayload> {
+  const body = await userApi.profileControllerMe({
     authToken: token,
     baseUrl: userBaseUrl(),
   });
-  return body.data ?? {};
+  return body.data;
 }
 
 export interface UserAppProps {
@@ -123,10 +116,14 @@ export interface UserAppProps {
 const getErrorReason = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
 
+const formValueToString = (
+  value: FormDataEntryValue | null | undefined,
+): string => (typeof value === "string" ? value : "");
+
 const getProfileState = (
   token: string,
   loading: boolean,
-  profile: ProfilePayload | undefined,
+  profile: UserProfilePayload | undefined,
   profileRequestFailedMessage: string,
   profileUnknownMessage: string,
   error?: unknown,
@@ -173,7 +170,7 @@ const UserApp = ({
   const authMeQuery = useQuery({
     enabled: Boolean(token),
     queryFn: () => fetchAuthMe(token),
-    queryKey: ["auth", "me", token, locale],
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), token, locale],
     retry: false,
     staleTime: 15_000,
   });
@@ -191,7 +188,7 @@ const UserApp = ({
       !authMeQuery.isLoading &&
       (!authLocale || authLocale === locale),
     queryFn: () => fetchUserProfile(token),
-    queryKey: ["user", "profile", "me", token, locale],
+    queryKey: [...userApi.getProfileControllerMeQueryKey(), token, locale],
     retry: false,
     staleTime: 15_000,
   });
@@ -215,16 +212,23 @@ const UserApp = ({
       mode: "login" | "register";
       password: FormDataEntryValue | null;
     }) =>
-      apiFetch<ApiEnvelope<AuthSessionPayload>>(`/auth/${mode}`, {
-        baseUrl: authBaseUrl(),
-        json: {
-          displayName: displayName || undefined,
-          email,
-          locale,
-          password,
-        },
-        method: "POST",
-      }),
+      mode === "login"
+        ? authApi.authControllerLogin(
+            {
+              email: formValueToString(email),
+              password: formValueToString(password),
+            },
+            { baseUrl: authBaseUrl() },
+          )
+        : authApi.authControllerRegister(
+            {
+              displayName: formValueToString(displayName) || undefined,
+              email: formValueToString(email),
+              locale,
+              password: formValueToString(password),
+            },
+            { baseUrl: authBaseUrl() },
+          ),
     onSuccess: (body) => {
       const nextLocale = getPayloadLocale(body?.data);
       if (nextLocale) {
@@ -232,8 +236,12 @@ const UserApp = ({
       }
       const nextToken = body?.data?.accessToken ?? "";
       setToken(nextToken);
-      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
-      void queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      void queryClient.invalidateQueries({
+        queryKey: authApi.getAuthControllerMeQueryKey(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: userApi.getProfileControllerMeQueryKey(),
+      });
     },
     retry: false,
   });
@@ -380,16 +388,18 @@ const AppContent = observer(function AppContent() {
 
   const localeMutation = useMutation({
     mutationFn: (nextLocale: Locale) =>
-      apiFetch<ApiEnvelope<AuthLocalePayload>>("/auth/me/locale", {
-        authToken: token,
-        baseUrl: authBaseUrl(),
-        json: { locale: nextLocale },
-        method: "PATCH",
-      }),
+      authApi.authControllerUpdateLocale(
+        { locale: nextLocale },
+        { authToken: token, baseUrl: authBaseUrl() },
+      ),
     onSuccess: (body, nextLocale) => {
       setUserLocale(getPayloadLocale(body?.data) ?? nextLocale);
-      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
-      void queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+      void queryClient.invalidateQueries({
+        queryKey: authApi.getAuthControllerMeQueryKey(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: userApi.getProfileControllerMeQueryKey(),
+      });
     },
     retry: false,
   });

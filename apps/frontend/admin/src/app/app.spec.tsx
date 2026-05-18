@@ -143,6 +143,8 @@ describe("admin auth and RBAC helpers", () => {
         "Accept-Language": "en",
         Authorization: "Bearer abc",
       },
+      method: "GET",
+      signal: undefined,
     });
 
     vi.stubGlobal("fetch", mockFetch(false, {}, 403));

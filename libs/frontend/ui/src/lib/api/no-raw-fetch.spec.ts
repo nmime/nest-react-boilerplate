@@ -8,9 +8,15 @@ const workspaceRoot = join(
   "../../../../../..",
 );
 
-const sourceRoots = ["apps/frontend/app/src", "apps/frontend/admin/src"];
+const sourceRoots = [
+  "apps/frontend/app/src",
+  "apps/frontend/admin/src",
+  "apps/frontend/landing/src",
+  "libs/frontend/ui/src",
+];
 const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [".spec.ts", ".spec.tsx"];
+const ignoredFiles = new Set(["libs/frontend/ui/src/lib/api/api-client.ts"]);
 
 const walk = (directory: string): string[] =>
   readdirSync(directory).flatMap((entry) => {
@@ -22,7 +28,8 @@ const walk = (directory: string): string[] =>
 
 const isCheckedSourceFile = (path: string): boolean =>
   allowedExtensions.has(path.slice(path.lastIndexOf("."))) &&
-  !ignoredSuffixes.some((suffix) => path.endsWith(suffix));
+  !ignoredSuffixes.some((suffix) => path.endsWith(suffix)) &&
+  !ignoredFiles.has(relative(workspaceRoot, path));
 
 describe("frontend request manager guard", () => {
   it("keeps app/admin source on the shared API client instead of raw fetch", () => {

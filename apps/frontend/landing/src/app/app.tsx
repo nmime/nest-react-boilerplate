@@ -22,33 +22,40 @@ const LandingApp = () => {
         },
         {
           href: "/docs",
-          label: "API docs",
+          label: t("landing.action.docs"),
           variant: "secondary",
         },
       ]}
-      appName="Nest React Boilerplate"
+      appName={t("landing.productName")}
       description={t("landing.description")}
       eyebrow={t("landing.eyebrow")}
       status={t("common.status.ready")}
       statusTone="success"
       title={t("landing.title")}
     >
-      <UiSection eyebrow="Workspace" title={t("landing.section.title")}>
+      <UiSection
+        eyebrow={t("landing.section.eyebrow")}
+        title={t("landing.section.title")}
+      >
         <div className="xr-card-grid" id="workspace">
           <UiCard title={t("landing.card.api")}>
-            auth-app-api, user-app-api, and admin-app-api.
+            {t("landing.card.api.description")}
           </UiCard>
           <UiCard title={t("landing.card.frontend")}>
-            landing, user, and admin React surfaces share one i18n provider.
+            {t("landing.card.frontend.description")}
           </UiCard>
           <UiCard title={t("landing.card.ops")}>
-            Docker, health checks, OpenAPI, and deployment defaults stay wired.
+            {t("landing.card.ops.description")}
           </UiCard>
         </div>
         <div className="xr-stat-grid">
-          <UiStatCard detail="auth, user, admin" label="APIs" value="3" />
           <UiStatCard
-            detail="landing, user, admin"
+            detail={t("landing.stat.apis.detail")}
+            label={t("landing.stat.apis")}
+            value="3"
+          />
+          <UiStatCard
+            detail={t("landing.stat.apps.detail")}
             label={t("landing.stat.apps")}
             value="3"
           />

@@ -5,7 +5,11 @@ import {
   UiStatCard,
   useI18n,
 } from "@app/frontend-ui";
-import { translate, type TranslationKey } from "@app/common/i18n";
+import {
+  translate,
+  type TranslationKey,
+  type TranslationParams,
+} from "@app/common/i18n";
 import type { AdminAccess, AdminProfilePayload } from "./auth-rbac";
 
 export type AdminProfileState =
@@ -14,8 +18,9 @@ export type AdminProfileState =
   | { status: "forbidden"; reason: string }
   | { status: "ready"; payload: AdminProfilePayload; access: AdminAccess };
 
-type Translate = (key: TranslationKey) => string;
-const fallbackTranslate: Translate = (key) => translate(key);
+type Translate = (key: TranslationKey, params?: TranslationParams) => string;
+const fallbackTranslate: Translate = (key, params) =>
+  translate(key, { params });
 
 export const AdminLayout = ({
   children,
@@ -48,30 +53,38 @@ export const DashboardPage = ({
   access,
 }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
+  const none = t("admin.dashboard.access.none");
 
   return (
-    <UiSection eyebrow="Dashboard" title={t("admin.dashboard.title")}>
+    <UiSection
+      eyebrow={t("admin.dashboard.eyebrow")}
+      title={t("admin.dashboard.title")}
+    >
       <div className="xr-card-grid">
-        <UiCard title="Operational visibility">
-          Monitor users, payments, and platform workflows from a consistent
-          admin shell.
+        <UiCard title={t("admin.dashboard.card.visibility.title")}>
+          {t("admin.dashboard.card.visibility.description")}
         </UiCard>
-        <UiCard title="Fail-closed RBAC">
-          Dashboard access is granted only when the bearer token carries the
-          admin role and dashboard permission.
+        <UiCard title={t("admin.dashboard.card.rbac.title")}>
+          {t("admin.dashboard.card.rbac.description")}
         </UiCard>
-        <UiCard title="Current access">
-          Roles: {access.roles.join(", ") || "none"}. Permissions:{" "}
-          {access.permissions.join(", ") || "none"}.
+        <UiCard title={t("admin.dashboard.card.access.title")}>
+          {t("admin.dashboard.accessSummary", {
+            permissions: access.permissions.join(", ") || none,
+            roles: access.roles.join(", ") || none,
+          })}
         </UiCard>
       </div>
-      <div className="xr-stat-grid" id="operations">
+      <div className="xr-stat-grid">
         <UiStatCard
-          detail="Fetched from /admin/profile/me"
-          label="Profile"
-          value="1"
+          detail={t("admin.dashboard.stat.profile.detail")}
+          label={t("admin.dashboard.stat.profile.label")}
+          value={access.canReadProfile ? "1" : "0"}
         />
-        <UiStatCard detail="Admin shell routes" label="Pages" value="4" />
+        <UiStatCard
+          detail={t("admin.dashboard.stat.pages.detail")}
+          label={t("admin.dashboard.stat.pages.label")}
+          value={access.canReadDashboard ? "2" : "0"}
+        />
       </div>
     </UiSection>
   );
@@ -82,12 +95,30 @@ export const ProfilePage = ({
 }: Readonly<{ payload: AdminProfilePayload }>) => {
   const { t } = useI18n();
   const profile = payload.profile;
+  const unknown = t("admin.profile.unknown");
 
   return (
-    <UiSection eyebrow="Profile" title={t("admin.profile.title")}>
-      <UiCard title={profile?.displayName ?? profile?.email ?? "Administrator"}>
-        <p>Email: {profile?.email ?? payload.principal?.email ?? "unknown"}</p>
-        <p>Subject: {payload.principal?.subject ?? profile?.id ?? "unknown"}</p>
+    <UiSection
+      eyebrow={t("admin.profile.eyebrow")}
+      title={t("admin.profile.title")}
+    >
+      <UiCard
+        title={
+          profile?.displayName ??
+          profile?.email ??
+          t("admin.profile.fallbackDisplayName")
+        }
+      >
+        <p>
+          {t("admin.profile.emailLine", {
+            value: profile?.email ?? payload.principal?.email ?? unknown,
+          })}
+        </p>
+        <p>
+          {t("admin.profile.subjectLine", {
+            value: payload.principal?.subject ?? profile?.id ?? unknown,
+          })}
+        </p>
       </UiCard>
     </UiSection>
   );
@@ -97,7 +128,10 @@ export const ForbiddenPage = ({ reason }: Readonly<{ reason: string }>) => {
   const { t } = useI18n();
 
   return (
-    <UiSection eyebrow="Forbidden" title="Access denied">
+    <UiSection
+      eyebrow={t("admin.forbidden.eyebrow")}
+      title={t("admin.forbidden.accessDeniedTitle")}
+    >
       <UiCard title={t("admin.forbidden.title")}>{reason}</UiCard>
     </UiSection>
   );
@@ -107,7 +141,10 @@ export const NotFoundPage = () => {
   const { t } = useI18n();
 
   return (
-    <UiSection eyebrow="Not found" title="Admin page not found">
+    <UiSection
+      eyebrow={t("admin.notFound.eyebrow")}
+      title={t("admin.notFound.sectionTitle")}
+    >
       <UiCard title={t("admin.notFound.title")}>
         {t("admin.notFound.description")}
       </UiCard>
@@ -122,7 +159,7 @@ export const DevTokenForm = ({
 
   return (
     <form
-      aria-label="Development bearer token"
+      aria-label={t("admin.form.devTokenAriaLabel")}
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -132,7 +169,7 @@ export const DevTokenForm = ({
     >
       <label>
         {t("admin.form.bearerToken")}
-        <input name="token" placeholder="Paste development token" />
+        <input name="token" placeholder={t("admin.form.tokenPlaceholder")} />
       </label>
       <button type="submit">{t("admin.form.saveToken")}</button>
     </form>
@@ -149,7 +186,12 @@ export const renderAdminRoute = (
   }
 
   if (state.status === "loading") {
-    return <UiSection eyebrow="Loading" title={t("admin.loadingProfile")} />;
+    return (
+      <UiSection
+        eyebrow={t("admin.loadingEyebrow")}
+        title={t("admin.loadingProfile")}
+      />
+    );
   }
 
   if (state.status === "forbidden") {

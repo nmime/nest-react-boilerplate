@@ -1,11 +1,12 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { translate } from "@app/common/i18n";
 
 export interface UiLoadingProps {
   label?: string;
 }
 
 export const UiLoading = ({
-  label = "Loading...",
+  label = translate("common.loading"),
 }: Readonly<UiLoadingProps>) => (
   <div
     aria-live="polite"
@@ -75,8 +76,8 @@ export class UiErrorBoundary extends Component<
         <>
           {this.props.fallback ?? (
             <UiEmptyState
-              description="Try refreshing the page. If the issue continues, contact support with the request id from the API response."
-              title="Something went wrong"
+              description={translate("ui.errorBoundary.description")}
+              title={translate("ui.errorBoundary.title")}
             />
           )}
         </>

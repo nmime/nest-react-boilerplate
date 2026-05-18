@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   apiFetch,
@@ -10,6 +11,7 @@ import {
   UiCard,
   UiSection,
   UiStatCard,
+  useAuthShellStore,
   useI18n,
 } from "@app/frontend-ui";
 
@@ -131,7 +133,9 @@ const getErrorReason = (error: unknown, fallback: string): string =>
 const getProfileState = (
   token: string,
   loading: boolean,
-  profile?: ProfilePayload,
+  profile: ProfilePayload | undefined,
+  profileRequestFailedMessage: string,
+  profileUnknownMessage: string,
   error?: unknown,
 ): ProfileState => {
   if (!token) {
@@ -143,7 +147,7 @@ const getProfileState = (
   if (error) {
     return {
       status: "forbidden",
-      reason: getErrorReason(error, "Profile request failed."),
+      reason: getErrorReason(error, profileRequestFailedMessage),
     };
   }
 
@@ -154,7 +158,7 @@ const getProfileState = (
       profile?.principal?.email ??
       profile?.profile?.id ??
       profile?.principal?.subject ??
-      "unknown",
+      profileUnknownMessage,
     email: profile?.profile?.email ?? profile?.principal?.email,
   };
 };
@@ -248,7 +252,7 @@ const UserApp = ({
             status: "forbidden" as const,
             reason: getErrorReason(
               authMutation.error,
-              "Authentication failed.",
+              t("user.error.authenticationFailed"),
             ),
           }
         : getProfileState(
@@ -258,6 +262,8 @@ const UserApp = ({
                 profileQuery.isLoading ||
                 Boolean(authLocale && authLocale !== locale)),
             profileQuery.data,
+            t("user.error.profileRequestFailed"),
+            t("user.profile.unknown"),
             profileQuery.error,
           ),
     [
@@ -266,6 +272,7 @@ const UserApp = ({
       authMutation.error,
       authMutation.isError,
       locale,
+      t,
       profileQuery.data,
       profileQuery.error,
       profileQuery.isLoading,
@@ -303,22 +310,19 @@ const UserApp = ({
       statusTone="success"
       title={t("user.title")}
     >
-      <UiSection
-        eyebrow="Authentication"
-        title="Development login/register flow"
-      >
+      <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
         <div className="xr-card-grid" id="auth">
           <UiCard title={t("user.login.title")}>
             <form onSubmit={submitAuth("login")}>
               <input
-                aria-label="Login email"
+                aria-label={t("user.form.loginEmailLabel")}
                 name="email"
-                placeholder="user@example.com"
+                placeholder={t("user.form.emailPlaceholder")}
               />
               <input
-                aria-label="Login password"
+                aria-label={t("user.form.loginPasswordLabel")}
                 name="password"
-                placeholder="password"
+                placeholder={t("user.form.loginPasswordPlaceholder")}
                 type="password"
               />
               <button type="submit">{t("user.form.login")}</button>
@@ -327,19 +331,19 @@ const UserApp = ({
           <UiCard title={t("user.register.title")}>
             <form onSubmit={submitAuth("register")}>
               <input
-                aria-label="Register display name"
+                aria-label={t("user.form.registerDisplayNameLabel")}
                 name="displayName"
                 placeholder={t("user.form.displayName")}
               />
               <input
-                aria-label="Register email"
+                aria-label={t("user.form.registerEmailLabel")}
                 name="email"
-                placeholder="new@example.com"
+                placeholder={t("user.form.registerEmailPlaceholder")}
               />
               <input
-                aria-label="Register password"
+                aria-label={t("user.form.registerPasswordLabel")}
                 name="password"
-                placeholder="minimum 8 characters"
+                placeholder={t("user.form.registerPasswordPlaceholder")}
                 type="password"
               />
               <button type="submit">{t("user.form.register")}</button>
@@ -355,16 +359,29 @@ const UserApp = ({
           </UiCard>
         </div>
         <div className="xr-stat-grid">
-          <UiStatCard detail="auth-app-api" label="Auth API" value="3003" />
-          <UiStatCard detail="user-app-api" label="User API" value="3002" />
+          <UiStatCard
+            detail={t("user.stat.authApi.detail")}
+            label={t("user.stat.authApi.label")}
+            value="3003"
+          />
+          <UiStatCard
+            detail={t("user.stat.userApi.detail")}
+            label={t("user.stat.userApi.label")}
+            value="3002"
+          />
         </div>
       </UiSection>
     </ProductShell>
   );
 };
 
-const AppContent = () => {
-  const [token, setToken] = useState(readInitialToken);
+const AppContent = observer(function AppContent() {
+  const authShell = useAuthShellStore();
+  const token = authShell.bearerToken ?? "";
+  const setToken = useCallback(
+    (nextToken: string) => authShell.setBearerToken(nextToken),
+    [authShell],
+  );
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const queryClient = useQueryClient();
 
@@ -418,10 +435,10 @@ const AppContent = () => {
       />
     </FrontendI18nProvider>
   );
-};
+});
 
 const App = () => (
-  <FrontendStateProvider>
+  <FrontendStateProvider initialBearerToken={readInitialToken()}>
     <FrontendQueryProvider>
       <AppContent />
     </FrontendQueryProvider>

@@ -1,4 +1,4 @@
-import { fallbackLocale, type Locale } from "@app/common/i18n";
+import { fallbackLocale, translate, type Locale } from "@app/common/i18n";
 
 let currentApiLocale: Locale = fallbackLocale;
 let apiLocaleGetter: () => Locale = () => currentApiLocale;
@@ -149,7 +149,10 @@ const getErrorMessage = (status: number, body: unknown): string => {
     }
   }
 
-  return `Request failed with ${status}.`;
+  return translate("errors.api.requestFailed", {
+    locale: getApiLocale(),
+    params: { status },
+  });
 };
 
 export async function apiFetch<T = unknown>(

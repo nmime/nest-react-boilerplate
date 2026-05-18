@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   apiFetch,
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
+  useAuthShellStore,
   useI18n,
 } from "@app/frontend-ui";
 import {
@@ -59,6 +61,7 @@ const getProfileState = (
   payload: Awaited<ReturnType<typeof fetchAdminProfile>> | undefined,
   error: unknown,
   principalMissingMessage: string,
+  profileRequestFailedMessage: string,
 ): AdminProfileState => {
   if (!token) {
     return { status: "missing-token" };
@@ -70,7 +73,7 @@ const getProfileState = (
     return {
       status: "forbidden",
       reason:
-        error instanceof Error ? error.message : "Profile request failed.",
+        error instanceof Error ? error.message : profileRequestFailedMessage,
     };
   }
 
@@ -116,6 +119,7 @@ const AdminApp = ({
         profileQuery.data,
         profileQuery.error,
         t("errors.auth.principalMissing"),
+        t("admin.error.profileRequestFailed"),
       ),
     [profileQuery.data, profileQuery.error, profileQuery.isLoading, t, token],
   );
@@ -133,9 +137,12 @@ const AdminApp = ({
   );
 };
 
-const AppContent = () => {
-  const [token, setToken] = useState(() =>
-    resolveInitialBearerToken(getBrowserHref(), getBrowserStorage()),
+const AppContent = observer(function AppContent() {
+  const authShell = useAuthShellStore();
+  const token = authShell.bearerToken ?? "";
+  const setToken = useCallback(
+    (nextToken: string) => authShell.setBearerToken(nextToken),
+    [authShell],
   );
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const queryClient = useQueryClient();
@@ -189,10 +196,15 @@ const AppContent = () => {
       />
     </FrontendI18nProvider>
   );
-};
+});
 
 const App = () => (
-  <FrontendStateProvider>
+  <FrontendStateProvider
+    initialBearerToken={resolveInitialBearerToken(
+      getBrowserHref(),
+      getBrowserStorage(),
+    )}
+  >
     <FrontendQueryProvider>
       <AppContent />
     </FrontendQueryProvider>

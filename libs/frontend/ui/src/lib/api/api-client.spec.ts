@@ -79,6 +79,19 @@ describe("frontend API client", () => {
     });
   });
 
+  it("uses localized fallback copy when a problem response has no message", async () => {
+    configureApiLocale({ locale: "es" });
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({}, false, 500));
+
+    await expect(apiFetch("/profile", { fetchImpl })).rejects.toMatchObject({
+      body: {},
+      message: "La solicitud falló con 500.",
+      status: 500,
+    } satisfies Partial<ApiError>);
+  });
+
   it("parses problem responses into ApiError", async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()

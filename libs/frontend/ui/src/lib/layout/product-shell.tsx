@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { observer } from "mobx-react-lite";
 import { UiButton } from "../component/button";
 import { UiStatusPill } from "../component/status-pill";
-import { LanguageSwitcher } from "../i18n/i18n-provider";
+import { LanguageSwitcher, useI18n } from "../i18n/i18n-provider";
+import { useOptionalRootStore } from "../state";
 
 export interface ProductShellAction {
   label: string;
@@ -20,7 +22,7 @@ export interface ProductShellProps {
   children: ReactNode;
 }
 
-export const ProductShell = ({
+export const ProductShell = observer(function ProductShell({
   appName,
   eyebrow,
   title,
@@ -29,38 +31,51 @@ export const ProductShell = ({
   statusTone = "info",
   actions,
   children,
-}: Readonly<ProductShellProps>) => (
-  <main className="xr-shell">
-    <header className="xr-header">
-      <a className="xr-brand" href="/" aria-label={`${appName} home`}>
-        <span className="xr-brand__mark">xR</span>
-        <span>{appName}</span>
-      </a>
-      <div className="xr-header__controls">
-        <LanguageSwitcher />
-        <UiStatusPill label={status} tone={statusTone} />
-      </div>
-    </header>
+}: Readonly<ProductShellProps>) {
+  const { t } = useI18n();
+  const uiStore = useOptionalRootStore()?.ui;
 
-    <section className="xr-hero">
-      <div className="xr-hero__copy">
-        <p className="xr-eyebrow">{eyebrow}</p>
-        <h1>{title}</h1>
-        <p className="xr-hero__description">{description}</p>
-        <div className="xr-actions">
-          {actions.map((action) => (
-            <UiButton
-              href={action.href}
-              key={action.label}
-              variant={action.variant}
-            >
-              {action.label}
-            </UiButton>
-          ))}
+  return (
+    <main
+      className="xr-shell"
+      data-sidebar-open={uiStore?.sidebarOpen ?? false}
+      data-theme={uiStore?.theme ?? "system"}
+    >
+      <header className="xr-header">
+        <a
+          aria-label={t("common.homeLink", { appName })}
+          className="xr-brand"
+          href="/"
+        >
+          <span className="xr-brand__mark">xR</span>
+          <span>{appName}</span>
+        </a>
+        <div className="xr-header__controls">
+          <LanguageSwitcher />
+          <UiStatusPill label={status} tone={statusTone} />
         </div>
-      </div>
-    </section>
+      </header>
 
-    <div className="xr-content">{children}</div>
-  </main>
-);
+      <section className="xr-hero">
+        <div className="xr-hero__copy">
+          <p className="xr-eyebrow">{eyebrow}</p>
+          <h1>{title}</h1>
+          <p className="xr-hero__description">{description}</p>
+          <div className="xr-actions">
+            {actions.map((action) => (
+              <UiButton
+                href={action.href}
+                key={action.label}
+                variant={action.variant}
+              >
+                {action.label}
+              </UiButton>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="xr-content">{children}</div>
+    </main>
+  );
+});

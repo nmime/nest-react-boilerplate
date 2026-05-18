@@ -35,7 +35,7 @@ async function main() {
   }
   const command = [
     "pnpm",
-    "dlx",
+    "exec",
     "openapi-typescript",
     args.input,
     "-o",

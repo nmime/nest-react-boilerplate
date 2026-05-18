@@ -22,6 +22,10 @@ export default defineConfig({
         "../../../libs/common/response/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/swagger": new URL(
+        "../../../libs/common/swagger/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/validation": new URL(
         "../../../libs/common/validation/src/index.ts",
         import.meta.url,

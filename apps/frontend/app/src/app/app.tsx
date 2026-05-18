@@ -2,6 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
+import type {
+  ApiEnvelope,
+  AuthenticatedUserContract,
+  AuthMeContract,
+  AuthSessionContract,
+  UserProfileContract,
+} from "@app/api-contracts";
 import {
   apiFetch,
   FrontendI18nProvider,
@@ -21,29 +28,15 @@ type ProfileState =
   | { status: "ready"; email?: string; subject: string }
   | { status: "forbidden"; reason: string };
 
-type PrincipalPayload = {
-  subject?: string;
-  email?: string;
-  locale?: string | null;
-};
-
-type ProfilePayload = {
-  principal?: PrincipalPayload;
-  profile?: { email?: string; id?: string; locale?: string | null };
-};
-
-type AuthSessionPayload = {
-  accessToken?: string;
-  principal?: PrincipalPayload;
-  user?: { locale?: string | null };
-};
-
+type ProfilePayload = Partial<UserProfileContract>;
+type AuthSessionPayload = Partial<AuthSessionContract> &
+  Partial<AuthMeContract>;
+type AuthLocalePayload = Partial<AuthenticatedUserContract>;
 type LocalePayload =
   | AuthSessionPayload
   | ProfilePayload
+  | AuthLocalePayload
   | { locale?: string | null };
-
-type ApiEnvelope<T> = { data?: T };
 
 const TOKEN_KEY = "boilerplate.user.bearerToken";
 const getEnvValue = (key: string): string => {
@@ -387,15 +380,12 @@ const AppContent = observer(function AppContent() {
 
   const localeMutation = useMutation({
     mutationFn: (nextLocale: Locale) =>
-      apiFetch<ApiEnvelope<AuthSessionPayload | { locale?: string | null }>>(
-        "/auth/me/locale",
-        {
-          authToken: token,
-          baseUrl: authBaseUrl(),
-          json: { locale: nextLocale },
-          method: "PATCH",
-        },
-      ),
+      apiFetch<ApiEnvelope<AuthLocalePayload>>("/auth/me/locale", {
+        authToken: token,
+        baseUrl: authBaseUrl(),
+        json: { locale: nextLocale },
+        method: "PATCH",
+      }),
     onSuccess: (body, nextLocale) => {
       setUserLocale(getPayloadLocale(body?.data) ?? nextLocale);
       void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });

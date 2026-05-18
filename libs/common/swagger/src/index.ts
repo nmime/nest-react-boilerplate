@@ -1,6 +1,13 @@
 import { applyDecorators, HttpStatus } from "@nestjs/common";
-import type { INestApplication } from "@nestjs/common";
-import { ApiResponse, DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import type { INestApplication, Type } from "@nestjs/common";
+import {
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiResponse,
+  DocumentBuilder,
+  getSchemaPath,
+  SwaggerModule,
+} from "@nestjs/swagger";
 
 export const problemDetailsOpenApiSchema = {
   type: "object",
@@ -14,6 +21,23 @@ export const problemDetailsOpenApiSchema = {
     code: { type: "string" },
   },
 };
+
+export const okResponseOpenApiSchema = (model: Type<unknown>) => ({
+  type: "object",
+  required: ["data"],
+  properties: {
+    data: { $ref: getSchemaPath(model) },
+  },
+});
+
+export function ApiOkDataResponse(
+  model: Type<unknown>,
+): MethodDecorator & ClassDecorator {
+  return applyDecorators(
+    ApiExtraModels(model),
+    ApiOkResponse({ schema: okResponseOpenApiSchema(model) }),
+  );
+}
 
 const mapHttpStatusToProblemTitle = (status: number): string => {
   const title = (HttpStatus as unknown as Record<number, string>)[status];

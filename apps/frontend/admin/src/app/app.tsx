@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
+import type {
+  ApiEnvelope,
+  AuthenticatedUserContract,
+} from "@app/api-contracts";
 import {
   apiFetch,
   FrontendI18nProvider,
@@ -42,12 +46,7 @@ const getConfiguredAuthApiBaseUrl = (): string => {
   return getAdminApiBaseUrl(env["VITE_AUTH_API_BASE_URL"]);
 };
 
-type AuthLocalePayload = {
-  locale?: string | null;
-  user?: { locale?: string | null };
-};
-
-type ApiEnvelope<T> = { data?: T };
+type AuthLocalePayload = Partial<AuthenticatedUserContract>;
 
 interface AdminAppProps {
   token: string;
@@ -156,9 +155,7 @@ const AppContent = observer(function AppContent() {
         method: "PATCH",
       }),
     onSuccess: (body, nextLocale) => {
-      const persistedLocale = normalizeLocale(
-        body?.data?.locale ?? body?.data?.user?.locale,
-      );
+      const persistedLocale = normalizeLocale(body?.data?.locale);
       setUserLocale(persistedLocale ?? nextLocale);
       void queryClient.invalidateQueries({ queryKey: ["admin", "profile"] });
     },

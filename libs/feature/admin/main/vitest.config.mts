@@ -18,6 +18,10 @@ export default defineConfig({
         "../../../../libs/common/response/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/swagger": new URL(
+        "../../../../libs/common/swagger/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/shared": new URL(
         "../../../../libs/common/shared/src/index.ts",
         import.meta.url,

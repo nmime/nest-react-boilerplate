@@ -1,27 +1,20 @@
+import type {
+  AdminPrincipalContract,
+  AdminProfileContract,
+  ApiEnvelope,
+} from "@app/api-contracts";
 import { apiFetch } from "@app/frontend-ui";
 
 export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin.bearerToken";
 
-export interface AdminPrincipal {
-  subject?: string;
-  email?: string;
-  displayName?: string;
-  locale?: string | null;
-  roles?: string[];
-  permissions?: string[];
-}
+export type AdminPrincipal = Partial<AdminPrincipalContract>;
 
-export interface AdminProfilePayload {
+export type AdminProfilePayload = Partial<
+  Omit<AdminProfileContract, "principal" | "profile">
+> & {
   principal?: AdminPrincipal;
-  profile?: {
-    id: string;
-    email?: string;
-    displayName?: string;
-    locale?: string | null;
-    roles: string[];
-    permissions: string[];
-  };
-}
+  profile?: Partial<AdminProfileContract["profile"]>;
+};
 
 export interface AdminAccess {
   isAuthenticated: boolean;
@@ -30,8 +23,6 @@ export interface AdminAccess {
   roles: string[];
   permissions: string[];
 }
-
-type ApiEnvelope<T> = { data?: T };
 
 export const normalizeClaimList = (value: unknown): string[] => {
   if (Array.isArray(value)) {

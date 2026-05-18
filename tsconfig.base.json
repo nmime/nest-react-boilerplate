@@ -32,7 +32,8 @@
       "@app/feature-user-shared": ["libs/feature/user/shared/src/index.ts"],
       "@app/feature-user-main": ["libs/feature/user/main/src/index.ts"],
       "@app/common/swagger": ["libs/common/swagger/src/index.ts"],
-      "@app/common/i18n": ["libs/common/i18n/src/index.ts"]
+      "@app/common/i18n": ["libs/common/i18n/src/index.ts"],
+      "@app/api-contracts": ["libs/common/api-contracts/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

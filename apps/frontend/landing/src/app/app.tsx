@@ -1,5 +1,6 @@
 import {
   FrontendI18nProvider,
+  FrontendStateProvider,
   ProductShell,
   UiCard,
   UiSection,
@@ -58,9 +59,11 @@ const LandingApp = () => {
 };
 
 const App = () => (
-  <FrontendI18nProvider>
-    <LandingApp />
-  </FrontendI18nProvider>
+  <FrontendStateProvider>
+    <FrontendI18nProvider>
+      <LandingApp />
+    </FrontendI18nProvider>
+  </FrontendStateProvider>
 );
 
 export default App;

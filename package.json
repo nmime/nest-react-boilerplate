@@ -50,6 +50,8 @@
     "cookie-parser": "1.4.7",
     "dataloader": "2.2.3",
     "helmet": "8.1.0",
+    "mobx": "^6.15.3",
+    "mobx-react-lite": "^4.1.1",
     "nestjs-i18n": "10.8.4",
     "neverthrow": "8.2.0",
     "openid-client": "6.8.4",

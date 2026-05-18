@@ -5,6 +5,7 @@ import {
   apiFetch,
   FrontendI18nProvider,
   FrontendQueryProvider,
+  FrontendStateProvider,
   ProductShell,
   UiCard,
   UiSection,
@@ -420,9 +421,11 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <FrontendQueryProvider>
-    <AppContent />
-  </FrontendQueryProvider>
+  <FrontendStateProvider>
+    <FrontendQueryProvider>
+      <AppContent />
+    </FrontendQueryProvider>
+  </FrontendStateProvider>
 );
 
 export default App;

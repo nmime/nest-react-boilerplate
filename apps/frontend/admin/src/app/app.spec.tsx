@@ -389,7 +389,7 @@ describe("Admin app shell", () => {
   });
 
   it("sends authenticated language and theme preference updates through /auth/me/preferences", async () => {
-    window.history.replaceState(null, "", "/?admin_token=prefs-token");
+    window.history.replaceState(null, "", "/profile?admin_token=prefs-token");
     const fetchImpl = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
@@ -438,7 +438,7 @@ describe("Admin app shell", () => {
     fireEvent.change(screen.getByLabelText("Language"), {
       target: { value: "es" },
     });
-    fireEvent.change(screen.getByLabelText("Theme"), {
+    fireEvent.change(screen.getByLabelText(/^(Theme|Tema)$/u), {
       target: { value: "dark" },
     });
 

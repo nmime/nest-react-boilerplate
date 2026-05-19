@@ -57,10 +57,9 @@ type FetchMock = typeof fetch & {
 };
 
 const mockFetch = (body: unknown, status = 200): FetchMock =>
-  vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-    const request = new Request(input, init);
-    return Promise.resolve(jsonResponse(request.method ? body : body, status));
-  }) as unknown as FetchMock;
+  vi.fn(() =>
+    Promise.resolve(jsonResponse(body, status)),
+  ) as unknown as FetchMock;
 
 const firstRequest = (fetchImpl: FetchMock): Request => {
   expect(fetchImpl).toHaveBeenCalledTimes(1);

@@ -62,6 +62,7 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.locale.nullable).toBe(true);
     expect(metadata.properties.theme.length).toBe(16);
     expect(metadata.properties.theme.default).toBe("system");
+    expect(metadata.properties.theme.nullable).not.toBe(true);
     expect(metadata.properties.lastLoginAt.nullable).toBe(true);
     expect(metadata.uniques).toContainEqual(
       expect.objectContaining({

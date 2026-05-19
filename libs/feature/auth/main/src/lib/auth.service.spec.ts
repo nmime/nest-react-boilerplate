@@ -89,10 +89,19 @@ describe("AuthService", () => {
       }),
     ).resolves.toMatchObject({ locale: "es", theme: "light" });
     await expect(
+      service.updateUserPreferences(registered.user.id, { locale: "en-US" }),
+    ).resolves.toMatchObject({ locale: "en", theme: "light" });
+    await expect(
+      service.updateUserPreferences(registered.user.id, { theme: "dark" }),
+    ).resolves.toMatchObject({ locale: "en", theme: "dark" });
+    await expect(
+      service.updateUserPreferences(registered.user.id, {}),
+    ).resolves.toMatchObject({ locale: "en", theme: "dark" });
+    await expect(
       service.getUserById(registered.user.id),
     ).resolves.toMatchObject({
-      locale: "es",
-      theme: "light",
+      locale: "en",
+      theme: "dark",
     });
     await expect(
       service.updateUserLocale(registered.user.id, "fr-FR"),
@@ -100,6 +109,20 @@ describe("AuthService", () => {
     await expect(
       service.updateUserPreferences(registered.user.id, { theme: "sepia" }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it("rejects malformed preference payloads before validation", async () => {
+    const service = new AuthService(new InMemoryAuthUserStore());
+    const registered = await service.register({
+      email: "bad-payload@example.com",
+      password: "password123",
+    });
+
+    for (const input of [null, undefined, "en", 1, true, ["en"]]) {
+      await expect(
+        service.updateUserPreferences(registered.user.id, input as never),
+      ).rejects.toThrow(BadRequestException);
+    }
   });
 
   it("rejects duplicate registrations and invalid credentials", async () => {

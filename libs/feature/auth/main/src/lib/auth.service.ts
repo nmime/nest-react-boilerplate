@@ -124,11 +124,18 @@ export class AuthService {
 
   async updateUserPreferences(
     id: string,
-    input: {
-      locale?: string | null;
-      theme?: string | null;
-    },
+    input:
+      | {
+          locale?: string | null;
+          theme?: string | null;
+        }
+      | null
+      | undefined,
   ): Promise<AuthenticatedUserView> {
+    if (input === null || typeof input !== "object" || Array.isArray(input)) {
+      throw new BadRequestException("Preferences payload must be an object.");
+    }
+
     const preferences: { locale?: ReturnType<typeof normalizeLocale> } & {
       theme?: UserThemePreference;
     } = {};

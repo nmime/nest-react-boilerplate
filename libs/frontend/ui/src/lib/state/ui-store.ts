@@ -68,12 +68,41 @@ function applyThemeToDocument(theme: UiTheme): void {
   root.dataset["theme"] = resolveTheme(theme);
 }
 
+function addMediaQueryChangeListener(
+  mediaQueryList: MediaQueryList,
+  listener: (event: MediaQueryListEvent) => void,
+): void {
+  if (typeof mediaQueryList.addEventListener === "function") {
+    mediaQueryList.addEventListener("change", listener);
+    return;
+  }
+
+  if (typeof mediaQueryList.addListener === "function") {
+    mediaQueryList.addListener(listener);
+  }
+}
+
+function removeMediaQueryChangeListener(
+  mediaQueryList: MediaQueryList,
+  listener: (event: MediaQueryListEvent) => void,
+): void {
+  if (typeof mediaQueryList.removeEventListener === "function") {
+    mediaQueryList.removeEventListener("change", listener);
+    return;
+  }
+
+  if (typeof mediaQueryList.removeListener === "function") {
+    mediaQueryList.removeListener(listener);
+  }
+}
+
 export class UiStore {
   activeModal: string | null = null;
   sidebarOpen = true;
   theme: UiTheme;
   resolvedTheme: ResolvedUiTheme;
   private mediaQueryListener?: (event: MediaQueryListEvent) => void;
+  private mediaQueryList?: MediaQueryList;
 
   constructor(initialTheme?: UiTheme | null) {
     this.theme = initialTheme ?? readStoredTheme() ?? "system";
@@ -104,18 +133,18 @@ export class UiStore {
   }
 
   private syncSystemThemeSubscription(): void {
+    this.removeSystemThemeSubscription();
+
     if (
       typeof window === "undefined" ||
-      typeof window.matchMedia !== "function"
+      typeof window.matchMedia !== "function" ||
+      this.theme !== "system"
     ) {
       return;
     }
 
     const mediaQueryList = window.matchMedia(SystemThemeMediaQuery);
-    if (this.mediaQueryListener) {
-      mediaQueryList.removeEventListener("change", this.mediaQueryListener);
-    }
-
+    this.mediaQueryList = mediaQueryList;
     this.mediaQueryListener = (event: MediaQueryListEvent) => {
       if (this.theme !== "system") {
         return;
@@ -123,11 +152,18 @@ export class UiStore {
       this.resolvedTheme = event.matches ? "dark" : "light";
       applyThemeToDocument(this.theme);
     };
+    addMediaQueryChangeListener(mediaQueryList, this.mediaQueryListener);
+  }
 
-    if (this.theme !== "system") {
-      return;
+  private removeSystemThemeSubscription(): void {
+    if (this.mediaQueryList && this.mediaQueryListener) {
+      removeMediaQueryChangeListener(
+        this.mediaQueryList,
+        this.mediaQueryListener,
+      );
     }
-    mediaQueryList.addEventListener("change", this.mediaQueryListener);
+    this.mediaQueryList = undefined;
+    this.mediaQueryListener = undefined;
   }
 
   setSidebarOpen(open: boolean): void {

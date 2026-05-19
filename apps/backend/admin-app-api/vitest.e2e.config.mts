@@ -5,8 +5,16 @@ export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/admin-app-api-e2e",
   resolve: {
     alias: {
+      "@app/common/i18n": new URL(
+        "../../../libs/common/i18n/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/exception": new URL(
         "../../../libs/common/exception/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/common/shared": new URL(
+        "../../../libs/common/shared/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/bootstrap": new URL(
@@ -23,6 +31,14 @@ export default defineConfig({
       ).pathname,
       "@app/common/validation": new URL(
         "../../../libs/common/validation/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/feature-admin-main": new URL(
+        "../../../libs/feature/admin/main/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/feature-admin-shared": new URL(
+        "../../../libs/feature/admin/shared/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-oauth": new URL(

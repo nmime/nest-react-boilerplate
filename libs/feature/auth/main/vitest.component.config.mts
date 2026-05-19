@@ -4,6 +4,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
+      "@app/common/i18n": new URL(
+        "../../../../libs/common/i18n/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/exception": new URL(
         "../../../../libs/common/exception/src/index.ts",
         import.meta.url,
@@ -18,6 +22,10 @@ export default defineConfig({
       ).pathname,
       "@app/common/validation": new URL(
         "../../../../libs/common/validation/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/common/swagger": new URL(
+        "../../../../libs/common/swagger/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-oauth": new URL(

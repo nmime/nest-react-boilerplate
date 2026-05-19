@@ -4,7 +4,7 @@
 | --------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Formatting                        | `pnpm run format:check`                            | Prettier check for source, generated artifacts, docs, and config files.                                        |
 | API contract freshness            | `pnpm api:contracts:check`                         | Regenerates OpenAPI/contract output in a temp area and compares it with committed files.                       |
-| Frontend client freshness         | `pnpm api:clients:check`                           | Regenerates `@app/api-client` generated files from committed OpenAPI specs and checks for drift.              |
+| Frontend client freshness         | `pnpm api:clients:check`                           | Regenerates `@app/api-client` generated files from committed OpenAPI specs and checks for drift.               |
 | Unit/component UI/API             | `pnpm run test` or `pnpm run test:coverage`        | Vitest with 100% gates for testable source.                                                                    |
 | Backend Testcontainers components | `pnpm run test:component`                          | Postgres Testcontainers coverage for repository and auth module/controller/service wiring.                     |
 | Static/browser frontend e2e       | `pnpm run test:e2e` / `pnpm run test:e2e:coverage` | Builds frontend apps and runs Playwright smoke/coverage checks.                                                |

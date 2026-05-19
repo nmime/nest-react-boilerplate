@@ -179,7 +179,8 @@ describe("UiStore", () => {
     const activeSubscriptions = matchMediaMock.instances.filter(
       (instance) => instance.listeners.length === 1,
     );
-    const nextSubscription = activeSubscriptions[activeSubscriptions.length - 1];
+    const nextSubscription =
+      activeSubscriptions[activeSubscriptions.length - 1];
     expect(nextSubscription).toBeDefined();
     expect(nextSubscription).not.toBe(firstSubscription);
 

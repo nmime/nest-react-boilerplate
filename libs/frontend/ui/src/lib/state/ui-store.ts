@@ -5,6 +5,17 @@ export type ResolvedUiTheme = "light" | "dark";
 export const ThemeStorageKey = "boilerplate.theme";
 
 const SystemThemeMediaQuery = "(prefers-color-scheme: dark)";
+const LegacyAddListener = "addListener";
+const LegacyRemoveListener = "removeListener";
+
+type LegacyMediaQueryList = MediaQueryList & {
+  [LegacyAddListener]?: (
+    listener: (event: MediaQueryListEvent) => void,
+  ) => void;
+  [LegacyRemoveListener]?: (
+    listener: (event: MediaQueryListEvent) => void,
+  ) => void;
+};
 
 function normalizeTheme(value: string | null | undefined): UiTheme | undefined {
   if (!value) {
@@ -77,8 +88,10 @@ function addMediaQueryChangeListener(
     return;
   }
 
-  if (typeof mediaQueryList.addListener === "function") {
-    mediaQueryList.addListener(listener);
+  const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
+  const addListener = legacyMediaQueryList[LegacyAddListener];
+  if (typeof addListener === "function") {
+    addListener.call(mediaQueryList, listener);
   }
 }
 
@@ -91,8 +104,10 @@ function removeMediaQueryChangeListener(
     return;
   }
 
-  if (typeof mediaQueryList.removeListener === "function") {
-    mediaQueryList.removeListener(listener);
+  const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
+  const removeListener = legacyMediaQueryList[LegacyRemoveListener];
+  if (typeof removeListener === "function") {
+    removeListener.call(mediaQueryList, listener);
   }
 }
 

@@ -15,9 +15,9 @@ The workspace is organized around deployable applications and small shared libra
 - React/Vite frontends for the public landing surface, user workspace, and admin workspace.
 - NestJS APIs for auth, user-facing API traffic, and admin API traffic.
 - Shared backend libraries for bootstrap concerns, validation, RFC 7807 problem responses, Swagger/OpenAPI setup, auth/user/admin feature modules, and PostgreSQL data access.
-- Shared frontend UI primitives used by the React applications.
-- TanStack Query as the frontend request/server-state manager for user/admin APIs, through a shared `apiFetch` client that injects the active locale.
-- MobX as the client/UI shell state foundation for observable locale, auth shell, and layout state; server-fetched user/profile/list data stays in TanStack Query caches.
+- Shared frontend UI primitives used by the React applications, including localized product shell controls for language and theme preferences.
+- TanStack Query as the frontend request/server-state manager for user/admin APIs, through generated API-client wrappers that inject bearer and locale headers from the shared frontend state layer.
+- MobX as the client/UI shell state foundation for observable locale, theme, auth shell, and layout state; server-fetched user/profile/list data stays in TanStack Query caches.
 - Docker and test tooling that exercise the same build, migration, and runtime paths used in local development.
 
 See [Architecture](docs/architecture.md), [Frontend state](docs/frontend-state.md), and [Technology choices](docs/technology-choices.md) for the detailed project model and dependency rationale.
@@ -70,6 +70,14 @@ pnpm exec nx serve user-app
 
 The backend APIs expose `GET /health`. Auth, user profile, and admin profile flows are wired through the shared auth and PostgreSQL layers so a new developer can validate the stack without adding application code first.
 
+## User locale and theme preferences
+
+Authenticated users have first-class locale and theme preferences. The auth API stores `locale` and `theme` on the auth user record, includes both values in `GET /auth/me` responses, and exposes `PATCH /auth/me/preferences` for partial updates. `theme` accepts `system`, `light`, or `dark` and defaults to `system`; locale remains limited to the supported locale set. The older `PATCH /auth/me/locale` route remains as a compatibility wrapper.
+
+The frontend apps load saved preferences for authenticated sessions, apply them to the shared `LocaleStore`/`UiStore`, and persist guest choices locally. Locale changes persist through `boilerplate.locale` and the `locale` cookie, update `document.documentElement.lang`, and keep API requests aligned by sending the current `Accept-Language` header at call time. Theme changes persist in `boilerplate.theme`, set `data-theme-preference` to `system`, `light`, or `dark`, resolve `data-theme` to `light` or `dark`, and follow `prefers-color-scheme` while the preference is `system`. `ThemeSwitcher` and `LanguageSwitcher` are rendered through the shared product shell, so landing, user, and admin surfaces share the same guest and authenticated behavior.
+
+Generated OpenAPI contracts and `@app/api-client` wrappers are the source for frontend auth preference calls; app code should not embed raw auth preference endpoint strings. Use `authApi.authControllerUpdatePreferences`, its generated mutation key/hook helpers, and the configured auth API options so bearer auth, base URL, request envelopes, and locale headers stay centralized. See [Internationalization](docs/i18n.md), [Frontend state](docs/frontend-state.md), and [OpenAPI and typed client scaffold](docs/api-client.md) for the full flow.
+
 ## Database migrations
 
 PostgreSQL persistence is managed through MikroORM. Migration classes are registered through the workspace migration tooling and applied with:
@@ -104,6 +112,8 @@ Common local checks:
 
 ```bash
 pnpm run format:check
+pnpm run api:contracts:check
+pnpm run api:clients:check
 pnpm run lint
 pnpm run typecheck
 pnpm run test:coverage
@@ -114,7 +124,7 @@ pnpm run test:fullstack
 
 Unit and coverage checks use Vitest. Component tests cover database-backed Nest modules with Testcontainers. E2E and full-stack checks use Playwright, Docker Compose, real PostgreSQL migrations, API health probes, auth/user/admin HTTP flows, and frontend route assertions.
 
-See [Testing matrix](docs/testing.md) for when to run each layer.
+When auth DTOs, controllers, generated clients, preference stores, or product shell controls change, run the OpenAPI freshness checks plus affected backend/frontend tests before relying on broader `pnpm run check`. See [Testing matrix](docs/testing.md) for when to run each layer.
 
 ## Rocket-launch a new project
 

@@ -26,6 +26,7 @@ type JwtPayload = Record<string, unknown> & {
   iss?: string;
   jti?: string;
   locale?: unknown;
+  theme?: unknown;
   name?: string;
   nbf?: number;
   permissions?: unknown;
@@ -235,6 +236,7 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
     email: payload.email,
     displayName: typeof payload.name === "string" ? payload.name : undefined,
     locale: normalizePrincipalLocale(payload.locale),
+    theme: normalizePrincipalTheme(payload.theme),
     issuer: payload.iss,
     audience: payload.aud,
     roles: uniqueStrings(claimToStrings(payload.roles)),
@@ -250,6 +252,21 @@ function normalizePrincipalLocale(value: unknown): "en" | "es" | undefined {
 
   const normalized = value.trim().toLowerCase().split("-")[0];
   return normalized === "en" || normalized === "es" ? normalized : undefined;
+}
+
+function normalizePrincipalTheme(
+  value: unknown,
+): "system" | "light" | "dark" | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "system" ||
+    normalized === "light" ||
+    normalized === "dark"
+    ? normalized
+    : undefined;
 }
 
 function claimToStrings(value: unknown): string[] {

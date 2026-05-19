@@ -9,6 +9,7 @@ import {
   FrontendStateProvider,
   useAuthShellStore,
   useI18n,
+  type UiTheme,
 } from "@app/frontend-ui";
 import {
   createAdminAccess,
@@ -46,6 +47,63 @@ interface AdminAppProps {
   token: string;
   setToken: (token: string) => void;
   applyUserLocale: (locale: Locale) => void;
+  applyUserTheme: (theme: UiTheme) => void;
+}
+
+type AuthMePayload = authApi.AuthControllerMeData;
+
+const normalizeTheme = (value: unknown): UiTheme | undefined => {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return normalized === "system" ||
+    normalized === "light" ||
+    normalized === "dark"
+    ? normalized
+    : undefined;
+};
+
+const readTheme = (value: unknown): UiTheme | undefined =>
+  normalizeTheme(
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>)["theme"]
+      : undefined,
+  );
+
+const getPayloadTheme = (
+  payload:
+    | AuthMePayload
+    | Awaited<ReturnType<typeof fetchAdminProfile>>
+    | null
+    | undefined,
+): UiTheme | undefined => {
+  return (
+    readTheme(payload) ??
+    (payload && "user" in payload ? readTheme(payload.user) : undefined) ??
+    (payload && "profile" in payload
+      ? readTheme(payload.profile)
+      : undefined) ??
+    (payload && "principal" in payload
+      ? readTheme(payload.principal)
+      : undefined)
+  );
+};
+
+async function fetchAuthMe(
+  token: string,
+  baseUrl: string,
+): Promise<AuthMePayload | null> {
+  try {
+    const result = await authApi.authControllerMe({
+      authToken: token,
+      baseUrl,
+    });
+    return result.data?.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 const getProfileState = (
@@ -81,14 +139,42 @@ const getProfileState = (
 
 const AdminApp = ({
   applyUserLocale,
+  applyUserTheme,
   setToken,
   token,
 }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
+  const authBaseUrl = getConfiguredAuthApiBaseUrl();
+
+  const authMeQuery = useQuery({
+    enabled: Boolean(token),
+    queryFn: () => fetchAuthMe(token, authBaseUrl),
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), token, locale],
+    retry: false,
+    staleTime: 15_000,
+  });
+  const authLocale = normalizeLocale(
+    authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal?.locale,
+  );
+  const authTheme = getPayloadTheme(authMeQuery.data);
+
+  useEffect(() => {
+    if (authLocale) {
+      applyUserLocale(authLocale);
+    }
+  }, [applyUserLocale, authLocale]);
+  useEffect(() => {
+    if (authTheme) {
+      applyUserTheme(authTheme);
+    }
+  }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
-    enabled: Boolean(token),
+    enabled:
+      Boolean(token) &&
+      !authMeQuery.isLoading &&
+      (!authLocale || authLocale === locale),
     queryFn: () => fetchAdminProfile(token, getConfiguredAdminApiBaseUrl()),
     queryKey: [
       ...adminApi.getAdminProfileControllerMeQueryKey(),
@@ -99,7 +185,9 @@ const AdminApp = ({
     staleTime: 15_000,
   });
   const payloadLocale = normalizeLocale(
-    profileQuery.data?.profile?.locale ?? profileQuery.data?.principal?.locale,
+    profileQuery.data?.profile?.locale ??
+      profileQuery.data?.principal?.locale ??
+      authLocale,
   );
 
   useEffect(() => {
@@ -112,13 +200,20 @@ const AdminApp = ({
     () =>
       getProfileState(
         token,
-        profileQuery.isLoading,
+        authMeQuery.isLoading || profileQuery.isLoading,
         profileQuery.data,
         profileQuery.error,
         t("errors.auth.principalMissing"),
         t("admin.error.profileRequestFailed"),
       ),
-    [profileQuery.data, profileQuery.error, profileQuery.isLoading, t, token],
+    [
+      authMeQuery.isLoading,
+      profileQuery.data,
+      profileQuery.error,
+      profileQuery.isLoading,
+      t,
+      token,
+    ],
   );
 
   return (
@@ -142,19 +237,30 @@ const AppContent = observer(function AppContent() {
     [authShell],
   );
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
+  const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
+  const authBaseUrl = getConfiguredAuthApiBaseUrl();
 
-  const localeMutation = useMutation({
-    mutationFn: (nextLocale: Locale) =>
+  const preferencesMutation = useMutation({
+    mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
-        authApi.authControllerUpdateLocale(
-          { locale: nextLocale },
-          { authToken: token, baseUrl: getConfiguredAuthApiBaseUrl() },
-        ),
+        authApi.authControllerUpdatePreferences(nextPreferences, {
+          authToken: token,
+          baseUrl: authBaseUrl,
+        }),
       ),
-    onSuccess: (body, nextLocale) => {
+    onSuccess: (body, nextPreferences) => {
       const persistedLocale = normalizeLocale(body?.locale);
-      setUserLocale(persistedLocale ?? nextLocale);
+      const persistedTheme = getPayloadTheme(body);
+      setUserLocale(
+        persistedLocale ?? nextPreferences.locale ?? userLocale ?? null,
+      );
+      setUserTheme(
+        persistedTheme ?? nextPreferences.theme ?? userTheme ?? null,
+      );
+      void queryClient.invalidateQueries({
+        queryKey: authApi.getAuthControllerMeQueryKey(),
+      });
       void queryClient.invalidateQueries({
         queryKey: adminApi.getAdminProfileControllerMeQueryKey(),
       });
@@ -165,6 +271,9 @@ const AppContent = observer(function AppContent() {
   const applyUserLocale = useCallback((nextLocale: Locale) => {
     setUserLocale(nextLocale);
   }, []);
+  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
+    setUserTheme(nextTheme);
+  }, []);
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
@@ -173,21 +282,38 @@ const AppContent = observer(function AppContent() {
       }
 
       try {
-        await localeMutation.mutateAsync(nextLocale);
+        await preferencesMutation.mutateAsync({ locale: nextLocale });
       } catch {
         // Locale remains persisted locally and can be retried on the next switch.
       }
     },
-    [localeMutation, token],
+    [preferencesMutation, token],
+  );
+  const persistUserTheme = useCallback(
+    async (nextTheme: UiTheme) => {
+      if (!token) {
+        return;
+      }
+
+      try {
+        await preferencesMutation.mutateAsync({ theme: nextTheme });
+      } catch {
+        // Theme remains persisted locally and can be retried on the next switch.
+      }
+    },
+    [preferencesMutation, token],
   );
 
   return (
     <FrontendI18nProvider
       onLocaleChange={persistUserLocale}
+      onThemeChange={persistUserTheme}
       userLocale={userLocale}
+      userTheme={userTheme}
     >
       <AdminApp
         applyUserLocale={applyUserLocale}
+        applyUserTheme={applyUserTheme}
         setToken={setToken}
         token={token}
       />

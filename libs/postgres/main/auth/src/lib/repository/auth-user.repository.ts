@@ -4,6 +4,7 @@ import { ResultAsync } from "neverthrow";
 import type { Locale } from "@app/common/i18n";
 import {
   AuthUserEntity,
+  type AuthUserThemePreference,
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
 } from "../entity";
@@ -58,8 +59,15 @@ export class AuthUserRepository {
     id: string,
     locale: Locale,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return this.setPreferences(id, { locale });
+  }
+
+  setPreferences(
+    id: string,
+    preferences: { locale?: Locale; theme?: AuthUserThemePreference },
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.updateLocale(id, locale),
+      this.updatePreferences(id, preferences),
       mapRepositoryError,
     );
   }
@@ -107,16 +115,21 @@ export class AuthUserRepository {
     return entity;
   }
 
-  private async updateLocale(
+  private async updatePreferences(
     id: string,
-    locale: Locale,
+    preferences: { locale?: Locale; theme?: AuthUserThemePreference },
   ): Promise<AuthUserEntity | null> {
     const entity = await this.entityManager.findOne(AuthUserEntity, { id });
     if (!entity) {
       return null;
     }
 
-    entity.locale = locale;
+    if (preferences.locale) {
+      entity.locale = preferences.locale;
+    }
+    if (preferences.theme) {
+      entity.theme = preferences.theme;
+    }
     await this.entityManager.flush();
     return entity;
   }

@@ -21,6 +21,7 @@ const AUTH_REGISTER_PATH = "/auth/register";
 const AUTH_LOGIN_PATH = "/auth/login";
 const AUTH_ME_PATH = "/auth/me";
 const AUTH_UPDATE_LOCALE_PATH = "/auth/me/locale";
+const AUTH_UPDATE_PREFERENCES_PATH = "/auth/me/preferences";
 const AUTH_LOCALES_PATH = "/auth/locales";
 const AUTH_LOGOUT_PATH = "/auth/logout";
 
@@ -36,6 +37,8 @@ export type AuthenticatedPrincipalDto =
   components["schemas"]["AuthenticatedPrincipalDto"];
 export type MePayloadDto = components["schemas"]["MePayloadDto"];
 export type UpdateLocaleDto = components["schemas"]["UpdateLocaleDto"];
+export type UpdatePreferencesDto =
+  components["schemas"]["UpdatePreferencesDto"];
 export type SupportedLocalesPayloadDto =
   components["schemas"]["SupportedLocalesPayloadDto"];
 export type LogoutPayloadDto = components["schemas"]["LogoutPayloadDto"];
@@ -85,6 +88,23 @@ export type AuthControllerUpdateLocaleData =
   EnvelopeData<AuthControllerUpdateLocaleResponse>;
 export type AuthControllerUpdateLocaleError = OpenApiError<
   typeof authControllerUpdateLocale
+>;
+
+export const authControllerUpdatePreferences = (
+  body: UpdatePreferencesDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(AUTH_UPDATE_PREFERENCES_PATH, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AuthControllerUpdatePreferencesResponse = OpenApiData<
+  typeof authControllerUpdatePreferences
+>;
+export type AuthControllerUpdatePreferencesData =
+  EnvelopeData<AuthControllerUpdatePreferencesResponse>;
+export type AuthControllerUpdatePreferencesError = OpenApiError<
+  typeof authControllerUpdatePreferences
 >;
 
 export const authControllerLocales = (options?: ApiClientRequestOptions) =>
@@ -138,6 +158,8 @@ export const getAuthControllerLocalesQueryOptions = (
     AuthControllerLocalesResponse,
     AuthControllerLocalesError
   >;
+export const getAuthControllerUpdatePreferencesMutationKey = () =>
+  ["patch", AUTH_UPDATE_PREFERENCES_PATH] as const;
 
 type OpenApiQueryOptions<TData, TError> = Omit<
   UseQueryOptions<TData, TError, TData, readonly unknown[]>,
@@ -227,6 +249,22 @@ export const useAuthControllerUpdateLocaleMutation = <TContext = unknown>({
     mutationKey: ["patch", AUTH_UPDATE_LOCALE_PATH] as const,
     mutationFn: (body) =>
       throwOnOpenApiErrorData(authControllerUpdateLocale(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerUpdatePreferencesMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerUpdatePreferencesData,
+  AuthControllerUpdatePreferencesError,
+  UpdatePreferencesDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerUpdatePreferencesMutationKey(),
+    mutationFn: (body) =>
+      throwOnOpenApiErrorData(authControllerUpdatePreferences(body, request)),
     ...options,
   });
 

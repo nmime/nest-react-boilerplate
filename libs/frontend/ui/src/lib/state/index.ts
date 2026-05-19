@@ -19,4 +19,10 @@ export {
   useUiStore,
   type FrontendStateProviderProps,
 } from "./state-provider";
-export { UiStore, type UiTheme } from "./ui-store";
+export {
+  ThemeStorageKey,
+  UiStore,
+  resolveTheme,
+  type ResolvedUiTheme,
+  type UiTheme,
+} from "./ui-store";

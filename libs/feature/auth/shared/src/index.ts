@@ -6,6 +6,8 @@ export const ADMIN_ROLE = "admin";
 export const PROFILE_READ_PERMISSION = "profile:read";
 export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
 export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
+export const userThemePreferences = ["system", "light", "dark"] as const;
+export type UserThemePreference = (typeof userThemePreferences)[number];
 
 export interface AuthAccessPolicy {
   roles: string[];
@@ -17,6 +19,7 @@ export interface AuthenticatedUserView {
   email: string;
   displayName?: string;
   locale?: Locale;
+  theme: UserThemePreference;
   roles: string[];
   permissions: string[];
 }
@@ -58,6 +61,7 @@ export function toAuthenticatedUserView(input: {
   email: string;
   displayName?: string | null;
   locale?: Locale | null;
+  theme?: UserThemePreference | null;
   roles?: string[];
   permissions?: string[];
 }): AuthenticatedUserView {
@@ -66,7 +70,19 @@ export function toAuthenticatedUserView(input: {
     email: input.email,
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.locale ? { locale: input.locale } : {}),
+    theme: normalizeUserThemePreference(input.theme) ?? "system",
     roles: normalizeStringList(input.roles),
     permissions: normalizeStringList(input.permissions),
   };
+}
+
+export function normalizeUserThemePreference(
+  value: string | null | undefined,
+): UserThemePreference | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return userThemePreferences.find((theme) => theme === normalized);
 }

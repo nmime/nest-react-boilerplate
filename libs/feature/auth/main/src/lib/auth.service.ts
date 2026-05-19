@@ -14,9 +14,11 @@ import {
 } from "@nestjs/common";
 import {
   createDefaultAccessPolicy,
+  normalizeUserThemePreference,
   toAuthenticatedUserView,
   type AuthSessionView,
   type AuthenticatedUserView,
+  type UserThemePreference,
 } from "@app/feature-auth-shared";
 import { normalizeLocale } from "@app/common/i18n";
 import {
@@ -30,6 +32,7 @@ export interface RegisterUserInput {
   password: string;
   displayName?: string;
   locale?: string | null;
+  theme?: string | null;
 }
 
 export interface LoginInput {
@@ -72,6 +75,7 @@ export class AuthService {
       displayName: input.displayName?.trim() || null,
       passwordHash: hashPassword(input.password),
       locale: normalizeLocale(input.locale),
+      theme: normalizeUserThemePreference(input.theme),
       roles: policy.roles,
       permissions: policy.permissions,
     });
@@ -115,12 +119,44 @@ export class AuthService {
     id: string,
     inputLocale: string | null | undefined,
   ): Promise<AuthenticatedUserView> {
-    const locale = normalizeLocale(inputLocale);
-    if (!locale) {
-      throw new BadRequestException("Unsupported locale.");
+    return this.updateUserPreferences(id, { locale: inputLocale });
+  }
+
+  async updateUserPreferences(
+    id: string,
+    input:
+      | {
+          locale?: string | null;
+          theme?: string | null;
+        }
+      | null
+      | undefined,
+  ): Promise<AuthenticatedUserView> {
+    if (input === null || typeof input !== "object" || Array.isArray(input)) {
+      throw new BadRequestException("Preferences payload must be an object.");
     }
 
-    const updated = await this.users.setLocale(id, locale);
+    const preferences: { locale?: ReturnType<typeof normalizeLocale> } & {
+      theme?: UserThemePreference;
+    } = {};
+
+    if (Object.hasOwn(input, "locale")) {
+      const locale = normalizeLocale(input.locale);
+      if (!locale) {
+        throw new BadRequestException("Unsupported locale.");
+      }
+      preferences.locale = locale;
+    }
+
+    if (Object.hasOwn(input, "theme")) {
+      const theme = normalizeUserThemePreference(input.theme);
+      if (!theme) {
+        throw new BadRequestException("Unsupported theme.");
+      }
+      preferences.theme = theme;
+    }
+
+    const updated = await this.users.setPreferences(id, preferences);
     if (updated.isErr()) {
       throw new ConflictException(updated.error.message);
     }
@@ -145,6 +181,7 @@ export class AuthService {
           email: view.email,
           name: view.displayName,
           locale: view.locale,
+          theme: view.theme,
           roles: view.roles,
           permissions: view.permissions,
         },

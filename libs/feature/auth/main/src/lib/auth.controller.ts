@@ -13,7 +13,10 @@ import {
   CurrentUser,
   type AuthenticatedPrincipal,
 } from "@app/feature-auth-oauth";
-import type { AuthSessionView } from "@app/feature-auth-shared";
+import {
+  type AuthSessionView,
+  userThemePreferences,
+} from "@app/feature-auth-shared";
 import { AuthService } from "./auth.service";
 
 export class RegisterDto {
@@ -59,6 +62,18 @@ export class UpdateLocaleDto {
   locale!: string;
 }
 
+export class UpdatePreferencesDto {
+  @ApiPropertyOptional({ enum: supportedLocales })
+  @IsOptional()
+  @IsString()
+  locale?: string;
+
+  @ApiPropertyOptional({ enum: userThemePreferences })
+  @IsOptional()
+  @IsString()
+  theme?: string;
+}
+
 export interface SupportedLocalesPayload {
   supportedLocales: typeof supportedLocales;
 }
@@ -79,6 +94,9 @@ class AuthenticatedPrincipalDto {
 
   @ApiPropertyOptional({ enum: supportedLocales })
   locale?: string;
+
+  @ApiPropertyOptional({ enum: userThemePreferences })
+  theme?: string;
 
   @ApiPropertyOptional()
   issuer?: string;
@@ -110,6 +128,9 @@ class AuthenticatedUserViewDto {
 
   @ApiPropertyOptional({ enum: supportedLocales })
   locale?: string;
+
+  @ApiProperty({ enum: userThemePreferences })
+  theme!: string;
 
   @ApiProperty({ items: { type: "string" }, type: "array" })
   roles!: string[];
@@ -191,7 +212,22 @@ export class AuthController {
     @Body() input: UpdateLocaleDto,
   ): Promise<OkResponse<AuthSessionView["user"]>> {
     return createOkResponse(
-      await this.auth.updateUserLocale(principal.subject, input.locale),
+      await this.auth.updateUserPreferences(principal.subject, {
+        locale: input.locale,
+      }),
+    );
+  }
+
+  @Patch("me/preferences")
+  @ApiBearerAuth()
+  @ApiOkDataResponse(AuthenticatedUserViewDto)
+  @UseGuards(new BearerAuthGuard())
+  async updatePreferences(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: UpdatePreferencesDto,
+  ): Promise<OkResponse<AuthSessionView["user"]>> {
+    return createOkResponse(
+      await this.auth.updateUserPreferences(principal.subject, input),
     );
   }
 

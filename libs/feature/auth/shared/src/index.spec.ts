@@ -3,6 +3,7 @@ import {
   ADMIN_DASHBOARD_READ_PERMISSION,
   ADMIN_PROFILE_READ_PERMISSION,
   createDefaultAccessPolicy,
+  normalizeUserThemePreference,
   PROFILE_READ_PERMISSION,
   toAuthenticatedUserView,
   USER_ROLE,
@@ -35,6 +36,7 @@ describe("auth shared", () => {
         id: "id",
         email: "user@example.com",
         displayName: "User",
+        theme: "dark",
         roles: ["user", "user"],
         permissions: ["profile:read", ""],
       }),
@@ -42,14 +44,22 @@ describe("auth shared", () => {
       id: "id",
       email: "user@example.com",
       displayName: "User",
+      theme: "dark",
       roles: ["user"],
       permissions: ["profile:read"],
     });
     expect(toAuthenticatedUserView({ id: "id", email: "e" })).toEqual({
       id: "id",
       email: "e",
+      theme: "system",
       roles: [],
       permissions: [],
     });
+  });
+
+  it("normalizes supported theme preferences", () => {
+    expect(normalizeUserThemePreference("Dark")).toBe("dark");
+    expect(normalizeUserThemePreference("system")).toBe("system");
+    expect(normalizeUserThemePreference("sepia")).toBeUndefined();
   });
 });

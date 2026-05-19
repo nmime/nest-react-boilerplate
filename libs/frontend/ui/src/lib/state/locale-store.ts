@@ -9,6 +9,12 @@ import { configureApiLocale, setApiLocale } from "../api/api-client";
 
 export const LocaleStorageKey = "boilerplate.locale";
 
+function applyLocaleToDocument(locale: Locale): void {
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = locale;
+  }
+}
+
 function readCookie(name: string): string | undefined {
   if (typeof document === "undefined") {
     return undefined;
@@ -73,12 +79,14 @@ export class LocaleStore {
   constructor(initialLocale?: Locale | null) {
     this.locale = initialLocale ?? detectBrowserLocale();
     configureApiLocale({ getLocale: () => this.locale, locale: this.locale });
+    applyLocaleToDocument(this.locale);
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
   setLocale(nextLocale: Locale): void {
     this.locale = nextLocale;
     setApiLocale(nextLocale);
+    applyLocaleToDocument(nextLocale);
     persistLocale(nextLocale);
   }
 

@@ -5,10 +5,13 @@ import {
   authControllerMe,
   authControllerRegister,
   authControllerUpdateLocale,
+  authControllerUpdatePreferences,
   getAuthControllerLocalesQueryKey,
   getAuthControllerMeQueryKey,
+  getAuthControllerUpdatePreferencesMutationKey,
   type AuthControllerLoginData,
   type AuthControllerLoginError,
+  type AuthControllerUpdatePreferencesData,
   type AuthControllerRegisterData,
   type AuthControllerRegisterError,
   type AuthControllerUpdateLocaleData,
@@ -16,8 +19,10 @@ import {
   type LoginDto,
   type RegisterDto,
   type UpdateLocaleDto,
+  type UpdatePreferencesDto,
   useAuthControllerLoginMutation,
   useAuthControllerRegisterMutation,
+  useAuthControllerUpdatePreferencesMutation,
   useAuthControllerUpdateLocaleMutation,
 } from "./auth";
 import { adminProfileControllerMe } from "./admin";
@@ -52,8 +57,8 @@ type FetchMock = typeof fetch & {
 };
 
 const mockFetch = (body: unknown, status = 200): FetchMock =>
-  vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
-    jsonResponse(body, status),
+  vi.fn(() =>
+    Promise.resolve(jsonResponse(body, status)),
   ) as unknown as FetchMock;
 
 const firstRequest = (fetchImpl: FetchMock): Request => {
@@ -189,7 +194,7 @@ describe("generated api clients", () => {
     expect(isApiClientError(new Error("plain"))).toBe(false);
   });
 
-  it("serializes mutation bodies for login, register, and locale updates", async () => {
+  it("serializes mutation bodies for login, register, locale, and preferences updates", async () => {
     const loginBody: LoginDto = {
       email: "ada@example.com",
       password: "password123",
@@ -225,6 +230,20 @@ describe("generated api clients", () => {
     await expect(updateRequest.clone().json()).resolves.toEqual(
       updateLocaleBody,
     );
+
+    const updatePreferencesBody: UpdatePreferencesDto = {
+      locale: "en",
+      theme: "dark",
+    };
+    const updatePreferencesFetch = mockFetch({ data: session.user });
+    await authControllerUpdatePreferences(updatePreferencesBody, {
+      fetchImpl: updatePreferencesFetch,
+    });
+    const updatePreferencesRequest = firstRequest(updatePreferencesFetch);
+    expect(updatePreferencesRequest.method).toBe("PATCH");
+    await expect(updatePreferencesRequest.clone().json()).resolves.toEqual(
+      updatePreferencesBody,
+    );
   });
 
   it("exposes stable GET query keys", () => {
@@ -232,6 +251,10 @@ describe("generated api clients", () => {
     expect(getAuthControllerLocalesQueryKey()).toEqual([
       "get",
       "/auth/locales",
+    ]);
+    expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual([
+      "patch",
+      "/auth/me/preferences",
     ]);
   });
 
@@ -250,10 +273,19 @@ describe("generated api clients", () => {
     type UpdateLocaleOnError = NonNullable<
       UpdateLocaleMutationOptions["onError"]
     >;
+    type UpdatePreferencesMutationOptions = NonNullable<
+      Parameters<typeof useAuthControllerUpdatePreferencesMutation>[0]
+    >;
+    type UpdatePreferencesOnError = NonNullable<
+      UpdatePreferencesMutationOptions["onError"]
+    >;
 
     expectTypeOf<AuthControllerLoginData>().toEqualTypeOf<AuthSessionViewDto>();
     expectTypeOf<AuthControllerRegisterData>().toEqualTypeOf<AuthSessionViewDto>();
     expectTypeOf<AuthControllerUpdateLocaleData>().toEqualTypeOf<
+      AuthSessionViewDto["user"]
+    >();
+    expectTypeOf<AuthControllerUpdatePreferencesData>().toEqualTypeOf<
       AuthSessionViewDto["user"]
     >();
     expectTypeOf<Parameters<LoginOnError>[0]>().toEqualTypeOf<
@@ -264,5 +296,8 @@ describe("generated api clients", () => {
     expectTypeOf<
       Parameters<UpdateLocaleOnError>[1]
     >().toEqualTypeOf<UpdateLocaleDto>();
+    expectTypeOf<
+      Parameters<UpdatePreferencesOnError>[1]
+    >().toEqualTypeOf<UpdatePreferencesDto>();
   });
 });

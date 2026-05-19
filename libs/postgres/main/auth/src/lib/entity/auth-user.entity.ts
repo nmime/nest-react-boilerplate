@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { EntitySchema } from "@mikro-orm/core";
 import type { Locale } from "@app/common/i18n";
 
+export type AuthUserThemePreference = "system" | "light" | "dark";
+
 export type AuthUserStatus = "active" | "disabled" | "invited";
 
 export interface AuthUserAccessPolicyInput {
@@ -15,6 +17,7 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   displayName?: string | null;
   passwordHash?: string;
   locale?: Locale | null;
+  theme?: AuthUserThemePreference | null;
   lastLoginAt?: Date | null;
 }
 
@@ -27,6 +30,7 @@ export class AuthUserEntity {
   roles: string[] = [];
   permissions: string[] = [];
   locale: Locale | null = null;
+  theme: AuthUserThemePreference = "system";
   lastLoginAt: Date | null = null;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
@@ -40,6 +44,7 @@ export class AuthUserEntity {
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
       this.locale = input.locale ?? null;
+      this.theme = input.theme ?? "system";
       this.lastLoginAt = input.lastLoginAt ?? null;
     }
   }
@@ -66,6 +71,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     roles: { type: "json" },
     permissions: { type: "json" },
     locale: { type: "varchar", length: 16, nullable: true },
+    theme: { type: "varchar", length: 16, default: "system" },
     lastLoginAt: {
       type: "timestamptz",
       fieldName: "last_login_at",

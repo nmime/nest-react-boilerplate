@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   FrontendI18nProvider,
   LanguageSwitcher,
+  ThemeSwitcher,
   detectBrowserLocale,
   useI18n,
 } from "./i18n-provider";
@@ -34,11 +35,13 @@ describe("FrontendI18nProvider", () => {
     const html = renderToStaticMarkup(
       <FrontendI18nProvider initialLocale="es">
         <LanguageSwitcher />
+        <ThemeSwitcher />
         <Example />
       </FrontendI18nProvider>,
     );
 
     expect(html).toContain("Idioma");
+    expect(html).toContain("Tema");
     expect(html).toContain("Lanza una base");
     expect(html).toContain("Español");
   });
@@ -86,7 +89,35 @@ describe("FrontendI18nProvider", () => {
 
     expect(onLocaleChange).toHaveBeenCalledWith("es");
     expect(setItem).toHaveBeenCalledWith("boilerplate.locale", "es");
+    expect(document.documentElement.lang).toBe("es");
     expect(screen.getByText("Idioma")).toBeTruthy();
+  });
+
+  it("persists explicit theme switches through callback and local storage", () => {
+    const setItem = vi.fn();
+    const onThemeChange = vi.fn();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: vi.fn(() => null),
+        setItem,
+      },
+    });
+
+    render(
+      <FrontendI18nProvider initialTheme="system" onThemeChange={onThemeChange}>
+        <ThemeSwitcher />
+      </FrontendI18nProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Theme"), {
+      target: { value: "dark" },
+    });
+
+    expect(onThemeChange).toHaveBeenCalledWith("dark");
+    expect(setItem).toHaveBeenCalledWith("boilerplate.theme", "dark");
+    expect(document.documentElement.dataset["themePreference"]).toBe("dark");
+    expect(document.documentElement.dataset["theme"]).toBe("dark");
   });
 
   it("detects query locale before browser fallback", () => {

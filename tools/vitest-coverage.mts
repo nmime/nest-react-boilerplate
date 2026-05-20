@@ -18,6 +18,8 @@ export const fullCoverage = (
     "**/vitest.config.*",
     "**/main.ts",
     "**/main.tsx",
+    "**/generated/**",
+    "**/migrations/**",
     "**/node_modules/**",
     ...exclude,
   ],

@@ -14,9 +14,22 @@ export interface AuthenticatedPrincipal {
   tokenId?: string;
 }
 
+export interface AuthenticatedSession {
+  user?: AuthenticatedPrincipal;
+  destroy?: (callback: (error?: Error) => void) => void;
+  regenerate?: (callback: (error?: Error) => void) => void;
+  save?: (callback: (error?: Error) => void) => void;
+}
+
+export interface AuthenticatedResponse {
+  clearCookie?: (name: string, options?: { path?: string }) => void;
+}
+
 export interface AuthenticatedRequest {
   headers?: Record<string, string | string[] | undefined>;
   get?: (name: string) => string | undefined;
+  session?: AuthenticatedSession & Record<string, unknown>;
+  res?: AuthenticatedResponse;
   user?: AuthenticatedPrincipal;
   auth?: AuthenticatedPrincipal;
 }

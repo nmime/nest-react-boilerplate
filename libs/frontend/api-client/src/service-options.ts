@@ -45,6 +45,7 @@ export const toOpenApiFetchOptions = (
   return {
     ...requestOptions,
     baseUrl: normalizeOpenApiBaseUrl(baseUrl),
+    credentials: requestOptions.credentials ?? "include",
     fetch: fetchImpl ?? globalThis.fetch,
     headers: buildApiHeaders({ authToken, headers, hasJsonBody: false }),
   };

@@ -1,17 +1,13 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import {
-  ApiBearerAuth,
-  ApiProperty,
-  ApiPropertyOptional,
-} from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
-  BearerAuthGuard,
   CurrentUser,
   type AuthenticatedPrincipal,
   RbacGuard,
+  SessionAuthGuard,
   RequirePermissions,
 } from "@app/feature-auth-oauth";
 
@@ -55,10 +51,9 @@ class ProfilePayloadDto {
   principal!: AuthenticatedPrincipalDto;
 }
 
-@ApiBearerAuth()
 @ApiProblemExceptions(400, 401, 403, 429, 500)
 @Controller("profile")
-@UseGuards(new BearerAuthGuard(), new RbacGuard())
+@UseGuards(new SessionAuthGuard(), new RbacGuard())
 export class ProfileController {
   @Get("me")
   @ApiOkDataResponse(ProfilePayloadDto)

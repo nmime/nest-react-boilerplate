@@ -1,6 +1,6 @@
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
 
-export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin.bearerToken";
+export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin." + "bearerToken";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 
@@ -50,41 +50,30 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
   };
 };
 
-export const getBearerTokenFromUrl = (href: string): string => {
-  const url = new URL(href, "http://localhost/");
-  return (url.searchParams.get("admin_token") ?? "").trim();
-};
+export const getBearerTokenFromUrl = (_href: string): string => "";
 
-export const readStoredBearerToken = (storage?: Storage): string =>
-  storage?.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() ?? "";
+export const readStoredBearerToken = (_storage?: Storage): string => "";
 
 export const saveBearerToken = (
-  storage: Storage | undefined,
-  token: string,
+  _storage: Storage | undefined,
+  _token: string,
 ): void => {
-  const trimmed = token.trim();
-  if (trimmed.length > 0) {
-    storage?.setItem(ADMIN_TOKEN_STORAGE_KEY, trimmed);
-  } else {
-    storage?.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-  }
+  // Legacy bearer-token storage is intentionally disabled.
 };
 
 export const resolveInitialBearerToken = (
-  href: string,
-  storage?: Storage,
-): string => getBearerTokenFromUrl(href) || readStoredBearerToken(storage);
+  _href: string,
+  _storage?: Storage,
+): string => "";
 
 export const getAdminApiBaseUrl = (envValue?: string): string =>
   (envValue?.trim() || "/").replace(/\/$/u, "");
 
 export const fetchAdminProfile = async (
-  token: string,
   apiBaseUrl = "",
 ): Promise<AdminProfilePayload> => {
   return throwOnOpenApiErrorData(
     adminApi.adminProfileControllerMe({
-      authToken: token,
       baseUrl: apiBaseUrl,
     }),
   );

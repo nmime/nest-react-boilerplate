@@ -26,6 +26,10 @@ const JWT_FIXTURE_MATERIAL = Buffer.from([
 ]).toString("utf8");
 const now = 1_700_000_000;
 
+function futureExpiration(): number {
+  return Math.floor(Date.now() / 1000) + 60;
+}
+
 function signToken(
   payload: Record<string, unknown>,
   header: Record<string, unknown> = {},
@@ -33,7 +37,9 @@ function signToken(
   const encodedHeader = base64UrlEncode(
     Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT", ...header })),
   );
-  const encodedPayload = base64UrlEncode(Buffer.from(JSON.stringify(payload)));
+  const encodedPayload = base64UrlEncode(
+    Buffer.from(JSON.stringify({ exp: futureExpiration(), ...payload })),
+  );
   const signingInput = `${encodedHeader}.${encodedPayload}`;
   const signature = base64UrlEncode(
     createHmac("sha256", JWT_FIXTURE_MATERIAL).update(signingInput).digest(),
@@ -280,6 +286,12 @@ describe("BearerAuthGuard", () => {
       `Bearer ${signToken({ sub: "user-id" })}x`,
       { AUTH_JWT_SECRET: JWT_FIXTURE_MATERIAL },
       "Invalid JWT signature",
+    ],
+    [
+      "missing expiration",
+      `Bearer ${signToken({ exp: undefined, sub: "user-id" })}`,
+      { AUTH_JWT_SECRET: JWT_FIXTURE_MATERIAL },
+      "expiration is required",
     ],
     [
       "expired",

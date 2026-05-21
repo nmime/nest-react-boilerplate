@@ -1,23 +1,30 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from "@nestjs/common";
 import {
-  ApiBearerAuth,
-  ApiProperty,
-  ApiPropertyOptional,
-} from "@nestjs/swagger";
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
-  BearerAuthGuard,
+  clearSessionPrincipal,
   CurrentUser,
+  SessionAuthGuard,
+  setSessionPrincipal,
   type AuthenticatedPrincipal,
+  type AuthenticatedRequest,
 } from "@app/feature-auth-oauth";
 import {
   type AuthSessionView,
   userThemePreferences,
 } from "@app/feature-auth-shared";
-import { AuthService } from "./auth.service";
+import { AuthService, toSessionPrincipal } from "./auth.service";
 
 export class RegisterDto {
   @ApiProperty({ example: "user@example.com", format: "email" })
@@ -171,6 +178,71 @@ class LogoutPayloadDto {
   loggedOut!: true;
 }
 
+
+type SessionMethod = "destroy" | "regenerate" | "save";
+
+function getSessionCookieName(): string {
+  const configured = process.env.SESSION_COOKIE_NAME?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  return process.env.NODE_ENV === "production" ? "__Host-nrb.sid" : "nrb.sid";
+}
+
+function callSessionMethod(
+  request: AuthenticatedRequest,
+  method: SessionMethod,
+): Promise<void> {
+  const handler = request.session?.[method];
+  if (typeof handler !== "function") {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    handler.call(request.session, (error?: Error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+async function establishRequestSession(
+  request: AuthenticatedRequest,
+  session: AuthSessionView,
+): Promise<void> {
+  await callSessionMethod(request, "regenerate");
+  setSessionPrincipal(request, toSessionPrincipal(session));
+  await callSessionMethod(request, "save");
+}
+
+async function clearRequestSession(
+  request: AuthenticatedRequest,
+): Promise<void> {
+  clearSessionPrincipal(request);
+  await callSessionMethod(request, "destroy");
+  request.res?.clearCookie?.(getSessionCookieName(), { path: "/" });
+}
+
+function principalFromUserView(
+  principal: AuthenticatedPrincipal,
+  user: AuthSessionView["user"],
+): AuthenticatedPrincipal {
+  return {
+    ...principal,
+    subject: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    locale: user.locale,
+    theme: user.theme,
+    roles: user.roles,
+    permissions: user.permissions,
+  };
+}
+
 @ApiProblemExceptions(400, 401, 403, 409, 429, 500)
 @Controller("auth")
 export class AuthController {
@@ -180,20 +252,27 @@ export class AuthController {
   @ApiOkDataResponse(AuthSessionViewDto)
   async register(
     @Body() input: RegisterDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView>> {
-    return createOkResponse(await this.auth.register(input));
+    const session = await this.auth.register(input);
+    await establishRequestSession(request, session);
+    return createOkResponse(session);
   }
 
   @Post("login")
   @ApiOkDataResponse(AuthSessionViewDto)
-  async login(@Body() input: LoginDto): Promise<OkResponse<AuthSessionView>> {
-    return createOkResponse(await this.auth.login(input));
+  async login(
+    @Body() input: LoginDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView>> {
+    const session = await this.auth.login(input);
+    await establishRequestSession(request, session);
+    return createOkResponse(session);
   }
 
   @Get("me")
-  @ApiBearerAuth()
   @ApiOkDataResponse(MePayloadDto)
-  @UseGuards(new BearerAuthGuard())
+  @UseGuards(new SessionAuthGuard())
   async me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): Promise<OkResponse<MePayload>> {
@@ -204,31 +283,33 @@ export class AuthController {
   }
 
   @Patch("me/locale")
-  @ApiBearerAuth()
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @UseGuards(new BearerAuthGuard())
+  @UseGuards(new SessionAuthGuard())
   async updateLocale(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdateLocaleDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView["user"]>> {
-    return createOkResponse(
-      await this.auth.updateUserPreferences(principal.subject, {
-        locale: input.locale,
-      }),
-    );
+    const user = await this.auth.updateUserPreferences(principal.subject, {
+      locale: input.locale,
+    });
+    setSessionPrincipal(request, principalFromUserView(principal, user));
+    await callSessionMethod(request, "save");
+    return createOkResponse(user);
   }
 
   @Patch("me/preferences")
-  @ApiBearerAuth()
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @UseGuards(new BearerAuthGuard())
+  @UseGuards(new SessionAuthGuard())
   async updatePreferences(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdatePreferencesDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView["user"]>> {
-    return createOkResponse(
-      await this.auth.updateUserPreferences(principal.subject, input),
-    );
+    const user = await this.auth.updateUserPreferences(principal.subject, input);
+    setSessionPrincipal(request, principalFromUserView(principal, user));
+    await callSessionMethod(request, "save");
+    return createOkResponse(user);
   }
 
   @Get("locales")
@@ -238,10 +319,12 @@ export class AuthController {
   }
 
   @Post("logout")
-  @ApiBearerAuth()
   @ApiOkDataResponse(LogoutPayloadDto)
-  @UseGuards(new BearerAuthGuard())
-  logout(): OkResponse<LogoutPayload> {
+  @UseGuards(new SessionAuthGuard())
+  async logout(
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<LogoutPayload>> {
+    await clearRequestSession(request);
     return createOkResponse({ loggedOut: true });
   }
 }

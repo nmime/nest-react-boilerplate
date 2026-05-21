@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { INestApplication, Type } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
+import connectPgSimple from "connect-pg-simple";
+import session, { type SessionOptions } from "express-session";
 import helmet from "helmet";
 import {
   ProblemExceptionFilter,
@@ -70,7 +72,11 @@ interface ExpressLikeApplication extends INestApplication {
 
 const DefaultRateLimitWindowMs = 60_000;
 const DefaultRateLimitMax = 100;
+const DefaultSessionCookieMaxAgeSeconds = 604_800;
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
+
+type SessionSameSite = NonNullable<SessionOptions["cookie"]>["sameSite"];
+type SessionStore = SessionOptions["store"];
 
 function parseCorsOrigins(value: string | undefined): string[] {
   return (value ?? "")
@@ -120,6 +126,95 @@ function readPositiveInteger(
 
   return parsed;
 }
+
+function readOptionalSecret(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+}
+
+function resolveSessionSecret(isProduction: boolean): string {
+  const secret =
+    readOptionalSecret(process.env.SESSION_SECRET) ??
+    readOptionalSecret(process.env.AUTH_JWT_SECRET);
+  if (secret) {
+    return secret;
+  }
+  if (isProduction) {
+    throw new Error(
+      "SESSION_SECRET or AUTH_JWT_SECRET must be configured in production.",
+    );
+  }
+
+  return "nrb-development-session-secret";
+}
+
+function resolveSessionCookieName(isProduction: boolean): string {
+  return (
+    readOptionalSecret(process.env.SESSION_COOKIE_NAME) ??
+    (isProduction ? "__Host-nrb.sid" : "nrb.sid")
+  );
+}
+
+function resolveSessionCookieSameSite(): SessionSameSite {
+  const value = (process.env.SESSION_COOKIE_SAME_SITE ?? "lax")
+    .trim()
+    .toLowerCase();
+  if (value === "lax" || value === "strict" || value === "none") {
+    return value;
+  }
+
+  throw new Error(
+    'SESSION_COOKIE_SAME_SITE must be one of "lax", "strict", or "none".',
+  );
+}
+
+function resolveSessionCookieSecure(isProduction: boolean): boolean {
+  if (isProduction) {
+    return true;
+  }
+
+  return readBoolean(process.env.SESSION_COOKIE_SECURE) ?? false;
+}
+
+function createSessionStore(): SessionStore | undefined {
+  const databaseUrl = readOptionalSecret(process.env.DATABASE_URL);
+  if (!databaseUrl) {
+    return undefined;
+  }
+
+  const PgSessionStore = connectPgSimple(session);
+  return new PgSessionStore({
+    conString: databaseUrl,
+    createTableIfMissing: true,
+  }) as SessionStore;
+}
+
+function createSessionMiddleware() {
+  const isProduction = process.env.NODE_ENV === "production";
+  const maxAgeSeconds = readPositiveInteger(
+    "SESSION_COOKIE_MAX_AGE_SECONDS",
+    process.env.SESSION_COOKIE_MAX_AGE_SECONDS,
+    DefaultSessionCookieMaxAgeSeconds,
+  );
+  const store = createSessionStore();
+  const options: SessionOptions = {
+    cookie: {
+      httpOnly: true,
+      maxAge: maxAgeSeconds * 1000,
+      path: "/",
+      sameSite: resolveSessionCookieSameSite(),
+      secure: resolveSessionCookieSecure(isProduction),
+    },
+    name: resolveSessionCookieName(isProduction),
+    resave: false,
+    saveUninitialized: false,
+    secret: resolveSessionSecret(isProduction),
+    ...(store ? { store } : {}),
+  };
+
+  return session(options);
+}
+
 
 function resolvePort(defaultPort: number): number {
   const port = readPositiveInteger("PORT", process.env.PORT, defaultPort);
@@ -284,6 +379,7 @@ export async function bootstrapNestApi(
   app.use(createRequestLoggingMiddleware(options.appName));
   app.use(createRobotsMiddleware());
   app.use(cookieParser(options.cookieSecret ?? process.env.COOKIE_SECRET));
+  app.use(createSessionMiddleware());
   app.use(createRequestLocaleMiddleware());
   app.use(helmet());
   app.useGlobalPipes(createProblemValidationPipe());

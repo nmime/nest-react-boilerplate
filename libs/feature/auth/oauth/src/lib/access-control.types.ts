@@ -14,20 +14,30 @@ export interface AuthenticatedPrincipal {
   tokenId?: string;
 }
 
+type SessionCallback = (error?: unknown) => void;
+type SessionLifecycleMethod = ((callback: SessionCallback) => void) &
+  (() => Promise<void>);
+
 export interface AuthenticatedSession {
   user?: AuthenticatedPrincipal;
-  destroy?: (callback: (error?: Error) => void) => void;
-  regenerate?: (callback: (error?: Error) => void) => void;
-  save?: (callback: (error?: Error) => void) => void;
+  destroy?: SessionLifecycleMethod;
+  regenerate?: SessionLifecycleMethod;
+  save?: SessionLifecycleMethod;
 }
 
 export interface AuthenticatedResponse {
   clearCookie?: (name: string, options?: { path?: string }) => void;
 }
 
+export interface AuthenticatedRawRequest {
+  res?: AuthenticatedResponse;
+}
+
 export interface AuthenticatedRequest {
   headers?: Record<string, string | string[] | undefined>;
   get?: (name: string) => string | undefined;
+  raw?: AuthenticatedRawRequest;
+  reply?: AuthenticatedResponse;
   session?: AuthenticatedSession & Record<string, unknown>;
   res?: AuthenticatedResponse;
   user?: AuthenticatedPrincipal;

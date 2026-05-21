@@ -5,6 +5,7 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UseGuards,
 } from "@nestjs/common";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
@@ -19,6 +20,7 @@ import {
   setSessionPrincipal,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
+  type AuthenticatedResponse,
 } from "@app/feature-auth-oauth";
 import {
   type AuthSessionView,
@@ -190,24 +192,35 @@ function getSessionCookieName(): string {
   return process.env.NODE_ENV === "production" ? "__Host-nrb.sid" : "nrb.sid";
 }
 
-function callSessionMethod(
+async function callSessionMethod(
   request: AuthenticatedRequest,
   method: SessionMethod,
 ): Promise<void> {
   const handler = request.session?.[method];
   if (typeof handler !== "function") {
-    return Promise.resolve();
+    return;
   }
 
-  return new Promise((resolve, reject) => {
-    handler.call(request.session, (error?: Error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
+  if (handler.length > 0) {
+    await new Promise<void>((resolve, reject) => {
+      (handler as (callback: (error?: unknown) => void) => void).call(
+        request.session,
+        (error?: unknown) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        },
+      );
     });
-  });
+    return;
+  }
+
+  const result = (handler as () => Promise<void> | void).call(request.session);
+  if (result) {
+    await result;
+  }
 }
 
 async function establishRequestSession(
@@ -219,12 +232,25 @@ async function establishRequestSession(
   await callSessionMethod(request, "save");
 }
 
+function clearSessionCookie(
+  request: AuthenticatedRequest,
+  response?: AuthenticatedResponse,
+): void {
+  const cookieName = getSessionCookieName();
+  const options = { path: "/" };
+  request.res?.clearCookie?.(cookieName, options);
+  request.reply?.clearCookie?.(cookieName, options);
+  request.raw?.res?.clearCookie?.(cookieName, options);
+  response?.clearCookie?.(cookieName, options);
+}
+
 async function clearRequestSession(
   request: AuthenticatedRequest,
+  response?: AuthenticatedResponse,
 ): Promise<void> {
   clearSessionPrincipal(request);
   await callSessionMethod(request, "destroy");
-  request.res?.clearCookie?.(getSessionCookieName(), { path: "/" });
+  clearSessionCookie(request, response);
 }
 
 function principalFromUserView(
@@ -323,8 +349,9 @@ export class AuthController {
   @UseGuards(new SessionAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: AuthenticatedResponse,
   ): Promise<OkResponse<LogoutPayload>> {
-    await clearRequestSession(request);
+    await clearRequestSession(request, response);
     return createOkResponse({ loggedOut: true });
   }
 }

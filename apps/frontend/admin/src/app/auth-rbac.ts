@@ -1,7 +1,5 @@
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
 
-export const ADMIN_TOKEN_STORAGE_KEY = "xrocket.admin." + "bearerToken";
-
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 
 export type AdminProfilePayload = Partial<
@@ -49,22 +47,6 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
     permissions,
   };
 };
-
-export const getBearerTokenFromUrl = (_href: string): string => "";
-
-export const readStoredBearerToken = (_storage?: Storage): string => "";
-
-export const saveBearerToken = (
-  _storage: Storage | undefined,
-  _token: string,
-): void => {
-  // Legacy bearer-token storage is intentionally disabled.
-};
-
-export const resolveInitialBearerToken = (
-  _href: string,
-  _storage?: Storage,
-): string => "";
 
 export const getAdminApiBaseUrl = (envValue?: string): string =>
   (envValue?.trim() || "/").replace(/\/$/u, "");

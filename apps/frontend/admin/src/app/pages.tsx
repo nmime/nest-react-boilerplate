@@ -13,7 +13,6 @@ import {
 import type { AdminAccess, AdminProfilePayload } from "./auth-rbac";
 
 export type AdminProfileState =
-  | { status: "missing-token" }
   | { status: "loading" }
   | { status: "forbidden"; reason: string }
   | { status: "ready"; payload: AdminProfilePayload; access: AdminAccess };
@@ -152,44 +151,11 @@ export const NotFoundPage = () => {
   );
 };
 
-export const DevTokenForm = ({
-  onSubmit,
-}: Readonly<{ onSubmit: (token: string) => void }>) => {
-  const { t } = useI18n();
-
-  return (
-    <form
-      aria-label={t("admin.form.devTokenAriaLabel")}
-      onSubmit={(event) => {
-        event.preventDefault();
-        const form = new FormData(event.currentTarget);
-        const token = form.get("token");
-        onSubmit(typeof token === "string" ? token : "");
-      }}
-    >
-      <label>
-        {t("admin.form.bearerToken")}
-        <input
-          autoComplete="one-time-code"
-          name="token"
-          placeholder={t("admin.form.tokenPlaceholder")}
-          required
-        />
-      </label>
-      <button type="submit">{t("admin.form.saveToken")}</button>
-    </form>
-  );
-};
-
 export const renderAdminRoute = (
   path: string,
   state: AdminProfileState,
   t: Translate = fallbackTranslate,
 ): React.ReactNode => {
-  if (state.status === "missing-token") {
-    return <ForbiddenPage reason={t("admin.state.missingToken")} />;
-  }
-
   if (state.status === "loading") {
     return (
       <UiSection

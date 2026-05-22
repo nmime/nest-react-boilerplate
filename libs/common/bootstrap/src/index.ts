@@ -468,11 +468,13 @@ function createRobotsMiddleware() {
 function resolveRateLimitOptions(
   options: BootstrapNestApiOptions,
 ): Required<BootstrapRateLimitOptions> {
+  const enabled =
+    options.rateLimit?.enabled ??
+    readBoolean(process.env.RATE_LIMIT_ENABLED) ??
+    (process.env.NODE_ENV === "production");
+
   return {
-    enabled:
-      options.rateLimit?.enabled ??
-      readBoolean(process.env.RATE_LIMIT_ENABLED) ??
-      false,
+    enabled,
     max:
       options.rateLimit?.max ??
       readPositiveInteger(
@@ -499,11 +501,7 @@ function createRateLimitMiddleware(
     next: NextFunctionLike,
   ) => {
     const now = Date.now();
-    const key =
-      getHeader(request, "x-forwarded-for") ??
-      request.ip ??
-      request.socket?.remoteAddress ??
-      "unknown";
+    const key = request.ip ?? request.socket?.remoteAddress ?? "unknown";
     const bucket = rateLimitBuckets.get(key);
     const current =
       bucket && bucket.resetAt > now

@@ -24,7 +24,7 @@ describe("createProblemValidationPipe", () => {
         },
       ]),
     ).toEqual({
-      type: "https://example.com/problems/validation-error",
+      type: "urn:problem:nest-react-boilerplate:validation-error",
       title: "Validation failed",
       status: 400,
       code: "validation-error",

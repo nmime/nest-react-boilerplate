@@ -526,7 +526,7 @@ function createRateLimitMiddleware(
       response.setHeader("content-language", locale);
       response.end?.(
         JSON.stringify({
-          type: "https://example.com/problems/rate-limited",
+          type: "urn:problem:nest-react-boilerplate:rate-limited",
           title: translate("errors.too-many-requests.title", { locale }),
           status: 429,
           detail: translate("errors.rate-limited.detail", { locale }),

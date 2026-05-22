@@ -28,7 +28,7 @@ describe("problem response mapper", () => {
         detail: "Invalid input",
         status: 400,
         title: "Invalid input",
-        type: "https://example.com/problems/bad-request",
+        type: "urn:problem:nest-react-boilerplate:bad-request",
       },
     );
   });
@@ -59,7 +59,7 @@ describe("problem response mapper", () => {
       detail: "The request could not be processed.",
       status: 400,
       title: "Bad Request",
-      type: "https://example.com/problems/bad-request",
+      type: "urn:problem:nest-react-boilerplate:bad-request",
     });
     expect(mapResultToResponse(err(new Error("Boom")), "es")).toMatchObject({
       code: "bad-request",

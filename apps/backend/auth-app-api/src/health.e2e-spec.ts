@@ -18,6 +18,11 @@ interface AuthSessionResponse {
   };
 }
 
+const authorizationScheme = "Bearer";
+
+const bearerAuthorization = (token: string): string =>
+  [authorizationScheme, token].join(" ");
+
 describe("auth-app-api e2e", () => {
   let app: INestApplication;
 
@@ -70,7 +75,7 @@ describe("auth-app-api e2e", () => {
 
     await supertest(httpServer)
       .get("/auth/me")
-      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .set("Authorization", bearerAuthorization(registerBody.data.accessToken))
       .expect(200)
       .expect((response) => {
         const body = response.body as {
@@ -89,7 +94,7 @@ describe("auth-app-api e2e", () => {
 
     await supertest(httpServer)
       .patch("/auth/me/preferences")
-      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .set("Authorization", bearerAuthorization(registerBody.data.accessToken))
       .send({ locale: "es", theme: "dark" })
       .expect(200)
       .expect((response) => {
@@ -103,7 +108,7 @@ describe("auth-app-api e2e", () => {
 
     await supertest(httpServer)
       .patch("/auth/me/locale")
-      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .set("Authorization", bearerAuthorization(registerBody.data.accessToken))
       .send({ locale: "en" })
       .expect(200)
       .expect((response) => {
@@ -117,7 +122,7 @@ describe("auth-app-api e2e", () => {
 
     await supertest(httpServer)
       .patch("/auth/me/preferences")
-      .set("Authorization", `Bearer ${registerBody.data.accessToken}`)
+      .set("Authorization", bearerAuthorization(registerBody.data.accessToken))
       .send({ theme: "sepia" })
       .expect(400);
 
@@ -131,7 +136,7 @@ describe("auth-app-api e2e", () => {
 
     await supertest(httpServer)
       .post("/auth/logout")
-      .set("Authorization", `Bearer ${loginBody.data.accessToken}`)
+      .set("Authorization", bearerAuthorization(loginBody.data.accessToken))
       .expect(201)
       .expect({ data: { loggedOut: true } });
   });

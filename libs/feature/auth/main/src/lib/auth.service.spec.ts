@@ -16,6 +16,10 @@ import {
 } from "./auth.service";
 
 const TEST_JWT_SECRET_VALUE = "TEST_JWT_SECRET_VALUE";
+const authorizationScheme = "Bearer";
+
+const bearerAuthorization = (token: string): string =>
+  [authorizationScheme, token].join(" ");
 
 describe("AuthService", () => {
   it("registers, logs in, records sessions, and signs verifiable JWTs", async () => {
@@ -37,7 +41,7 @@ describe("AuthService", () => {
     });
     expect(registered.tokenType).toBe("Bearer");
     expect(
-      validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
+      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
       }).subject,
     ).toBe(registered.user.id);
@@ -69,12 +73,12 @@ describe("AuthService", () => {
     expect(registered.user.locale).toBe("es");
     expect(registered.user.theme).toBe("dark");
     expect(
-      validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
+      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
       }).locale,
     ).toBe("es");
     expect(
-      validateBearerAuthorization(`Bearer ${registered.accessToken}`, {
+      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
       }).theme,
     ).toBe("dark");

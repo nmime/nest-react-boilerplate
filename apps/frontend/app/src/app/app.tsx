@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { observer } from "mobx-react-lite";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import { authApi, throwOnOpenApiErrorData, userApi } from "@app/api-client";
 import {
@@ -11,13 +10,11 @@ import {
   UiCard,
   UiSection,
   UiStatCard,
-  useAuthShellStore,
   useI18n,
   type UiTheme,
 } from "@app/frontend-ui";
 
 type ProfileState =
-  | { status: "missing-token" }
   | { status: "loading" }
   | { status: "ready"; email?: string; subject: string }
   | { status: "forbidden"; reason: string };
@@ -33,7 +30,6 @@ type LocalePayload =
   | UserProfilePayload
   | undefined;
 
-const TOKEN_KEY = "boilerplate.user.bearerToken";
 const getEnvValue = (key: string): string => {
   const env = import.meta.env as Readonly<Record<string, string | undefined>>;
   return env[key]?.trim() ?? "";
@@ -44,33 +40,27 @@ const authBaseUrl = () =>
 const userBaseUrl = () =>
   getEnvValue("VITE_USER_API_BASE_URL").replace(/\/$/u, "");
 
-type BrowserStorage = Pick<Storage, "getItem" | "setItem">;
-
-const getBrowserStorage = (): BrowserStorage | null => {
+const scrubLegacyAuthTokenParams = (): void => {
   if (typeof window === "undefined") {
-    return null;
+    return;
   }
 
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-};
-
-const readTokenFromUrl = (): string => {
-  if (typeof window === "undefined") {
-    return "";
+  const url = new URL(window.location.href);
+  let changed = false;
+  for (const key of ["token", "admin" + "_token"]) {
+    if (url.searchParams.has(key)) {
+      url.searchParams.delete(key);
+      changed = true;
+    }
   }
 
-  return new URL(window.location.href).searchParams.get("token") ?? "";
-};
-
-const readInitialToken = () =>
-  (readTokenFromUrl() || getBrowserStorage()?.getItem(TOKEN_KEY) || "").trim();
-
-const persistToken = (token: string): void => {
-  getBrowserStorage()?.setItem(TOKEN_KEY, token);
+  if (changed) {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }
 };
 
 const normalizeTheme = (value: unknown): UiTheme | undefined => {
@@ -125,10 +115,9 @@ const getPayloadTheme = (
   );
 };
 
-async function fetchAuthMe(token: string): Promise<AuthMePayload | null> {
+async function fetchAuthMe(): Promise<AuthMePayload | null> {
   try {
     const result = await authApi.authControllerMe({
-      authToken: token,
       baseUrl: authBaseUrl(),
     });
     return result.data?.data ?? null;
@@ -137,18 +126,15 @@ async function fetchAuthMe(token: string): Promise<AuthMePayload | null> {
   }
 }
 
-async function fetchUserProfile(token: string): Promise<UserProfilePayload> {
+async function fetchUserProfile(): Promise<UserProfilePayload> {
   return throwOnOpenApiErrorData(
     userApi.profileControllerMe({
-      authToken: token,
       baseUrl: userBaseUrl(),
     }),
   );
 }
 
 export interface UserAppProps {
-  token: string;
-  setToken: (token: string) => void;
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
 }
@@ -173,16 +159,12 @@ const formValueToString = (
 ): string => (typeof value === "string" ? value : "");
 
 const getProfileState = (
-  token: string,
   loading: boolean,
   profile: UserProfilePayload | undefined,
   profileRequestFailedMessage: string,
   profileUnknownMessage: string,
   error?: unknown,
 ): ProfileState => {
-  if (!token) {
-    return { status: "missing-token" };
-  }
   if (loading) {
     return { status: "loading" };
   }
@@ -208,22 +190,13 @@ const getProfileState = (
 const UserApp = ({
   applyUserLocale,
   applyUserTheme,
-  setToken,
-  token,
 }: Readonly<UserAppProps>) => {
   const { locale, t } = useI18n();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (token) {
-      persistToken(token);
-    }
-  }, [token]);
-
   const authMeQuery = useQuery({
-    enabled: Boolean(token),
-    queryFn: () => fetchAuthMe(token),
-    queryKey: [...authApi.getAuthControllerMeQueryKey(), token, locale],
+    queryFn: fetchAuthMe,
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
@@ -242,12 +215,9 @@ const UserApp = ({
   }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
-    enabled:
-      Boolean(token) &&
-      !authMeQuery.isLoading &&
-      (!authLocale || authLocale === locale),
-    queryFn: () => fetchUserProfile(token),
-    queryKey: [...userApi.getProfileControllerMeQueryKey(), token, locale],
+    enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
+    queryFn: fetchUserProfile,
+    queryKey: [...userApi.getProfileControllerMeQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
@@ -301,8 +271,6 @@ const UserApp = ({
       if (nextTheme) {
         applyUserTheme(nextTheme);
       }
-      const nextToken = body?.accessToken ?? "";
-      setToken(nextToken);
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),
       });
@@ -324,11 +292,9 @@ const UserApp = ({
             ),
           }
         : getProfileState(
-            token,
-            Boolean(token) &&
-              (authMeQuery.isLoading ||
-                profileQuery.isLoading ||
-                Boolean(authLocale && authLocale !== locale)),
+            authMeQuery.isLoading ||
+              profileQuery.isLoading ||
+              Boolean(authLocale && authLocale !== locale),
             profileQuery.data,
             t("user.error.profileRequestFailed"),
             t("user.profile.unknown"),
@@ -336,7 +302,6 @@ const UserApp = ({
           ),
     [
       authLocale,
-      authTheme,
       authMeQuery.isLoading,
       authMutation.error,
       authMutation.isError,
@@ -345,8 +310,6 @@ const UserApp = ({
       profileQuery.data,
       profileQuery.error,
       profileQuery.isLoading,
-      applyUserTheme,
-      token,
     ],
   );
 
@@ -386,13 +349,19 @@ const UserApp = ({
             <form onSubmit={submitAuth("login")}>
               <input
                 aria-label={t("user.form.loginEmailLabel")}
+                autoComplete="email"
                 name="email"
                 placeholder={t("user.form.emailPlaceholder")}
+                required
+                type="email"
               />
               <input
                 aria-label={t("user.form.loginPasswordLabel")}
+                autoComplete="current-password"
+                minLength={8}
                 name="password"
                 placeholder={t("user.form.loginPasswordPlaceholder")}
+                required
                 type="password"
               />
               <button type="submit">{t("user.form.login")}</button>
@@ -407,20 +376,25 @@ const UserApp = ({
               />
               <input
                 aria-label={t("user.form.registerEmailLabel")}
+                autoComplete="email"
                 name="email"
                 placeholder={t("user.form.registerEmailPlaceholder")}
+                required
+                type="email"
               />
               <input
                 aria-label={t("user.form.registerPasswordLabel")}
+                autoComplete="new-password"
+                minLength={8}
                 name="password"
                 placeholder={t("user.form.registerPasswordPlaceholder")}
+                required
                 type="password"
               />
               <button type="submit">{t("user.form.register")}</button>
             </form>
           </UiCard>
           <UiCard title={t("user.profile.title")} id="profile">
-            {state.status === "missing-token" && t("user.state.missingToken")}
             {state.status === "loading" && t("user.loadingProfile")}
             {state.status === "ready" &&
               t("user.state.ready", { subject: state.email ?? state.subject })}
@@ -445,13 +419,7 @@ const UserApp = ({
   );
 };
 
-const AppContent = observer(function AppContent() {
-  const authShell = useAuthShellStore();
-  const token = authShell.bearerToken ?? "";
-  const setToken = useCallback(
-    (nextToken: string) => authShell.setBearerToken(nextToken),
-    [authShell],
-  );
+const AppContent = () => {
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
@@ -460,7 +428,6 @@ const AppContent = observer(function AppContent() {
     mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
         authApi.authControllerUpdatePreferences(nextPreferences, {
-          authToken: token,
           baseUrl: authBaseUrl(),
         }),
       ),
@@ -490,31 +457,23 @@ const AppContent = observer(function AppContent() {
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
-      if (!token) {
-        return;
-      }
-
       try {
         await preferencesMutation.mutateAsync({ locale: nextLocale });
       } catch {
         // Locale is still persisted locally; retry on the next explicit change.
       }
     },
-    [preferencesMutation, token],
+    [preferencesMutation],
   );
   const persistUserTheme = useCallback(
     async (nextTheme: UiTheme) => {
-      if (!token) {
-        return;
-      }
-
       try {
         await preferencesMutation.mutateAsync({ theme: nextTheme });
       } catch {
         // Theme is still persisted locally; retry on the next explicit change.
       }
     },
-    [preferencesMutation, token],
+    [preferencesMutation],
   );
 
   return (
@@ -527,19 +486,23 @@ const AppContent = observer(function AppContent() {
       <UserApp
         applyUserLocale={applyUserLocale}
         applyUserTheme={applyUserTheme}
-        setToken={setToken}
-        token={token}
       />
     </FrontendI18nProvider>
   );
-});
+};
 
-const App = () => (
-  <FrontendStateProvider initialBearerToken={readInitialToken()}>
-    <FrontendQueryProvider>
-      <AppContent />
-    </FrontendQueryProvider>
-  </FrontendStateProvider>
-);
+const App = () => {
+  useEffect(() => {
+    scrubLegacyAuthTokenParams();
+  }, []);
+
+  return (
+    <FrontendStateProvider initialBearerToken="">
+      <FrontendQueryProvider>
+        <AppContent />
+      </FrontendQueryProvider>
+    </FrontendStateProvider>
+  );
+};
 
 export default App;

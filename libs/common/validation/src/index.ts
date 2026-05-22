@@ -7,7 +7,7 @@ export interface ProblemValidationIssue {
 }
 
 export interface ProblemValidationErrorBody {
-  type: "https://example.com/problems/validation-error";
+  type: "urn:problem:nest-react-boilerplate:validation-error";
   title: "Validation failed";
   status: 400;
   detail: string;
@@ -19,7 +19,7 @@ export function createProblemValidationBody(
   errors: ValidationError[],
 ): ProblemValidationErrorBody {
   return {
-    type: "https://example.com/problems/validation-error",
+    type: "urn:problem:nest-react-boilerplate:validation-error",
     title: "Validation failed",
     status: 400,
     detail: "Request validation failed.",

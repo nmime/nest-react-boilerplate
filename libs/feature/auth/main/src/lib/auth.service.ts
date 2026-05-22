@@ -21,6 +21,7 @@ import {
   type UserThemePreference,
 } from "@app/feature-auth-shared";
 import { normalizeLocale } from "@app/common/i18n";
+import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
 import {
   AUTH_USER_STORE,
   type AuthUserRecord,
@@ -192,6 +193,27 @@ export class AuthService {
       expiresIn,
     };
   }
+
+  createUserSession(
+    user: AuthUserRecord,
+    env: JwtSigningEnvironment = process.env,
+  ): AuthSessionView {
+    return this.createSession(user, env);
+  }
+}
+
+export function toSessionPrincipal(
+  session: AuthSessionView,
+): AuthenticatedPrincipal {
+  return {
+    subject: session.user.id,
+    email: session.user.email,
+    displayName: session.user.displayName,
+    locale: session.user.locale,
+    theme: session.user.theme,
+    roles: session.user.roles,
+    permissions: session.user.permissions,
+  };
 }
 
 export function normalizeEmail(email: string): string {

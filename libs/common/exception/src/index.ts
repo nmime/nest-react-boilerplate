@@ -35,7 +35,7 @@ interface HttpExceptionResponseBody {
   statusCode?: number;
 }
 
-export const ProblemTypeBaseUrl = "https://example.com/problems";
+export const ProblemTypeBaseUrl = "urn:problem:nest-react-boilerplate";
 
 const statusCodeMap: Record<number, string> = {
   [HttpStatus.BAD_REQUEST]: "bad-request",
@@ -90,7 +90,7 @@ export const createProblemDetails = ({
   status,
   code,
   detail,
-  type = code ? `${ProblemTypeBaseUrl}/${code}` : "about:blank",
+  type = code ? `${ProblemTypeBaseUrl}:${code}` : "about:blank",
   instance,
   extensions = {},
 }: ProblemDetailsInput): ProblemDetails => ({
@@ -278,7 +278,7 @@ export function localizeProblemDetails(
     code,
     type:
       problem.type === "about:blank"
-        ? `${ProblemTypeBaseUrl}/${code}`
+        ? `${ProblemTypeBaseUrl}:${code}`
         : problem.type,
     ...(titleKey ? { title: translate(titleKey, { locale }) } : {}),
     ...(detailKey ? { detail: translate(detailKey, { locale }) } : {}),

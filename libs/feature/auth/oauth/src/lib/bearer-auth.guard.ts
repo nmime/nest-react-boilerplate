@@ -186,7 +186,10 @@ function verifySignature(
 }
 
 function verifyTimeClaims(payload: JwtPayload, nowInSeconds: number): void {
-  if (typeof payload.exp === "number" && payload.exp <= nowInSeconds) {
+  if (typeof payload.exp !== "number" || !Number.isFinite(payload.exp)) {
+    throw new UnauthorizedException("JWT expiration is required.");
+  }
+  if (payload.exp <= nowInSeconds) {
     throw new UnauthorizedException("JWT is expired.");
   }
   if (typeof payload.nbf === "number" && payload.nbf > nowInSeconds) {

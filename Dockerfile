@@ -18,6 +18,9 @@ RUN pnpm install --frozen-lockfile
 FROM workspace AS migrator
 CMD ["pnpm", "db:migrate"]
 
+FROM workspace AS prod-deps
+RUN pnpm prune --prod
+
 FROM workspace AS builder
 ARG NX_PROJECT
 RUN test -n "${NX_PROJECT}" \
@@ -30,7 +33,7 @@ WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin-app-api
 ENV APP_MAIN=${BUILD_OUTPUT}/src/main.js
 COPY --from=builder /workspace/package.json ./package.json
-COPY --from=builder /workspace/node_modules ./node_modules
+COPY --from=prod-deps /workspace/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
 USER node
 EXPOSE 3000

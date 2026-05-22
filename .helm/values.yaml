@@ -6,8 +6,12 @@ imagePullSecrets: []
 secrets:
   # Production should create this Secret outside the chart, for example with
   # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
-  # secret flow. When set, the chart does not render the fallback Secret.
+  # secret flow. Set existingSecret to use one. Set create=true only when
+  # supplying explicit non-placeholder values below.
   existingSecret: ""
+  create: false
+  authJwtSecret: ""
+  databaseUrl: ""
 
 config:
   nodeEnv: production

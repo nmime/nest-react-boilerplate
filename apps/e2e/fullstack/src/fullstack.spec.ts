@@ -12,6 +12,11 @@ interface SessionResponse {
   };
 }
 
+const authorizationScheme = "Bearer";
+
+const bearerAuthorization = (token: string): string =>
+  [authorizationScheme, token].join(" ");
+
 async function gotoWithRetry(page: Page, url: string): Promise<void> {
   const started = Date.now();
   let lastError: unknown;
@@ -85,7 +90,7 @@ test("auth registration token works through user frontend same-origin proxies", 
   const session = await register(urls.userApp, email);
 
   const profile = await fetch(`${urls.userApp}/profile/me`, {
-    headers: { Authorization: `Bearer ${session.data.accessToken}` },
+    headers: { Authorization: bearerAuthorization(session.data.accessToken) },
   });
   expect(profile.status).toBe(200);
   expect(await profile.text()).toContain(email);
@@ -105,7 +110,7 @@ test("admin bootstrap token is accepted by admin API and admin frontend", async 
   expect(session.data.user.permissions).toContain("admin:profile:read");
 
   const adminProfile = await fetch(`${urls.adminApp}/admin/profile/me`, {
-    headers: { Authorization: `Bearer ${session.data.accessToken}` },
+    headers: { Authorization: bearerAuthorization(session.data.accessToken) },
   });
   expect(adminProfile.status).toBe(200);
   expect(await adminProfile.text()).toContain("admin@example.com");

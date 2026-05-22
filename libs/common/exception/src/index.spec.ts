@@ -19,10 +19,10 @@ describe("@app/common/exception", () => {
         status: 403,
         detail: "Missing role",
         instance: "/admin/profile/me",
-        type: "https://example.test/problems/forbidden",
+        type: "urn:problem:test:forbidden",
       }),
     ).toEqual({
-      type: "https://example.test/problems/forbidden",
+      type: "urn:problem:test:forbidden",
       title: "Forbidden",
       status: 403,
       detail: "Missing role",
@@ -62,28 +62,28 @@ describe("@app/common/exception", () => {
     expect(toProblemDetails(problem)).toEqual({
       code: "conflict",
       detail: "The request conflicts with current state.",
-      type: "https://example.com/problems/conflict",
+      type: "urn:problem:nest-react-boilerplate:conflict",
       title: "Conflict",
       status: 409,
     });
     expect(toProblemDetails(badRequest)).toEqual({
       code: "bad-request",
       detail: "The request could not be processed.",
-      type: "https://example.com/problems/bad-request",
+      type: "urn:problem:nest-react-boilerplate:bad-request",
       title: "Bad Request",
       status: 400,
     });
     expect(toProblemDetails(rawHttp)).toEqual({
       code: "i-am-a-teapot",
       detail: "Nope",
-      type: "https://example.com/problems/i-am-a-teapot",
+      type: "urn:problem:nest-react-boilerplate:i-am-a-teapot",
       title: "I Am A Teapot",
       status: 418,
     });
     expect(toProblemDetails("boom")).toEqual({
       code: "internal-server-error",
       detail: "An unexpected error occurred.",
-      type: "https://example.com/problems/internal-server-error",
+      type: "urn:problem:nest-react-boilerplate:internal-server-error",
       title: "Internal Server Error",
       status: 500,
     });
@@ -120,7 +120,7 @@ describe("@app/common/exception", () => {
       title: "Conflict",
     });
     expect(exception.toProblemDetails("/fallback")).toEqual({
-      type: "https://example.com/problems/domain-conflict",
+      type: "urn:problem:nest-react-boilerplate:domain-conflict",
       title: "Conflict",
       status: HttpStatus.CONFLICT,
       detail: "Already exists",
@@ -200,7 +200,7 @@ describe("@app/common/exception", () => {
     expect(toProblemDetails(patchedProblem, "/patched")).toEqual({
       code: "bad-request",
       detail: "The request could not be processed.",
-      type: "https://example.com/problems/bad-request",
+      type: "urn:problem:nest-react-boilerplate:bad-request",
       title: "Bad Request",
       status: HttpStatus.BAD_REQUEST,
       instance: "/patched",
@@ -225,7 +225,7 @@ describe("@app/common/exception", () => {
     ).toEqual({
       code: "bad-request",
       detail: "The request could not be processed.",
-      type: "https://example.com/problems/bad-request",
+      type: "urn:problem:nest-react-boilerplate:bad-request",
       title: "Bad Request",
       status: 400,
     });
@@ -234,7 +234,7 @@ describe("@app/common/exception", () => {
     ).toEqual({
       code: "unprocessable-entity",
       detail: "single message",
-      type: "https://example.com/problems/unprocessable-entity",
+      type: "urn:problem:nest-react-boilerplate:unprocessable-entity",
       title: "Unprocessable Entity",
       status: 422,
     });
@@ -242,7 +242,7 @@ describe("@app/common/exception", () => {
       toProblemDetails(new HttpException("", HttpStatus.I_AM_A_TEAPOT)),
     ).toEqual({
       code: "i-am-a-teapot",
-      type: "https://example.com/problems/i-am-a-teapot",
+      type: "urn:problem:nest-react-boilerplate:i-am-a-teapot",
       title: "I Am A Teapot",
       status: HttpStatus.I_AM_A_TEAPOT,
     });
@@ -257,7 +257,7 @@ describe("@app/common/exception", () => {
       detail: "Falta el rol requerido.",
       status: HttpStatus.FORBIDDEN,
       title: "Prohibido",
-      type: "https://example.com/problems/forbidden",
+      type: "urn:problem:nest-react-boilerplate:forbidden",
     });
   });
 });

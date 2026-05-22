@@ -120,20 +120,27 @@ const parseBody = async (response: Response): Promise<unknown> => {
     return undefined;
   }
 
+  let text = "";
+  try {
+    text = await response.text();
+  } catch {
+    return undefined;
+  }
+
+  if (text.length === 0) {
+    return undefined;
+  }
+
   const contentType = response.headers?.get?.("content-type") ?? "";
-  if (contentType.includes("application/json") || response.json) {
+  if (contentType.toLowerCase().includes("json")) {
     try {
-      return await response.json();
+      return JSON.parse(text);
     } catch {
       return undefined;
     }
   }
 
-  try {
-    return await response.text();
-  } catch {
-    return undefined;
-  }
+  return text;
 };
 
 export const getApiErrorMessage = (status: number, body: unknown): string => {
@@ -171,6 +178,7 @@ export async function apiRequest(
   const hasJsonBody = json !== undefined;
   const request: RequestInit = {
     ...requestInit,
+    credentials: requestInit.credentials ?? "include",
     headers: buildApiHeaders({ authToken, headers: inputHeaders, hasJsonBody }),
   };
 

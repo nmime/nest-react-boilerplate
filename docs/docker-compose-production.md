@@ -77,10 +77,15 @@ Terminate TLS at the host reverse proxy and proxy to loopback ports:
 - `https://example.com` -> `127.0.0.1:${LANDING_APP_PORT:-8080}`
 - `https://admin.example.com` -> `127.0.0.1:${ADMIN_APP_PORT:-8081}`
 - `https://app.example.com` -> `127.0.0.1:${USER_APP_PORT:-8082}`
-- API hostnames, if exposed directly, -> their matching loopback API ports
+- `https://auth.example.com` -> `127.0.0.1:${AUTH_APP_API_PORT:-3003}`
+- `https://api.example.com` -> `127.0.0.1:${USER_APP_API_PORT:-3002}`
+- `https://admin-api.example.com` -> `127.0.0.1:${ADMIN_APP_API_PORT:-3001}`
 
-Keep `CORS_ORIGINS` aligned with the public browser origins. Keep OpenAPI off or
-protect it behind SSO/VPN/edge auth.
+Keep `CORS_ORIGINS` aligned with the public browser origins. Keep the standalone
+SPA CSP connection allow-list aligned with the explicit API origins above when
+building with absolute `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, or
+`VITE_ADMIN_API_BASE_URL`. Keep OpenAPI off or protect it behind SSO/VPN/edge
+auth.
 
 ## 6. Backup and restore
 

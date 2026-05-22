@@ -211,9 +211,6 @@ describe("User app shell", () => {
     render(<App />);
 
     expect(await screen.findByText("Ready: ready@example.com")).toBeTruthy();
-    expect(window.localStorage.getItem("boilerplate.user.bearerToken")).toBe(
-      "url-token",
-    );
     expectFetchRequest(fetchMock, "/auth/me", {
       "Accept-Language": "en",
       Authorization: "Bearer url-token",

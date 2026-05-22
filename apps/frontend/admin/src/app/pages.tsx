@@ -169,7 +169,12 @@ export const DevTokenForm = ({
     >
       <label>
         {t("admin.form.bearerToken")}
-        <input name="token" placeholder={t("admin.form.tokenPlaceholder")} />
+        <input
+          autoComplete="one-time-code"
+          name="token"
+          placeholder={t("admin.form.tokenPlaceholder")}
+          required
+        />
       </label>
       <button type="submit">{t("admin.form.saveToken")}</button>
     </form>

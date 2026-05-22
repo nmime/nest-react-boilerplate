@@ -349,13 +349,19 @@ const UserApp = ({
             <form onSubmit={submitAuth("login")}>
               <input
                 aria-label={t("user.form.loginEmailLabel")}
+                autoComplete="email"
                 name="email"
                 placeholder={t("user.form.emailPlaceholder")}
+                required
+                type="email"
               />
               <input
                 aria-label={t("user.form.loginPasswordLabel")}
+                autoComplete="current-password"
+                minLength={8}
                 name="password"
                 placeholder={t("user.form.loginPasswordPlaceholder")}
+                required
                 type="password"
               />
               <button type="submit">{t("user.form.login")}</button>
@@ -370,13 +376,19 @@ const UserApp = ({
               />
               <input
                 aria-label={t("user.form.registerEmailLabel")}
+                autoComplete="email"
                 name="email"
                 placeholder={t("user.form.registerEmailPlaceholder")}
+                required
+                type="email"
               />
               <input
                 aria-label={t("user.form.registerPasswordLabel")}
+                autoComplete="new-password"
+                minLength={8}
                 name="password"
                 placeholder={t("user.form.registerPasswordPlaceholder")}
+                required
                 type="password"
               />
               <button type="submit">{t("user.form.register")}</button>

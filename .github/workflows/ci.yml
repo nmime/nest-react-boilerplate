@@ -1,28 +1,25 @@
 name: CI
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
-      - test/ui-hardening-r60
+      - main
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bootstrap-pnpm-lock:
-    name: Regenerate pnpm lockfile
-    if: github.ref == 'refs/heads/test/ui-hardening-r60'
+  quality:
+    name: Nx quality gates
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - uses: pnpm/action-setup@v6
         with:
@@ -33,80 +30,144 @@ jobs:
           node-version: 26
           cache: pnpm
 
-      - name: Regenerate pnpm-lock.yaml
-        run: pnpm --config.engine-strict=false install --lockfile-only --frozen-lockfile=false
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Verify Storybook lockfile entries
-        run: |
-          grep -Fq "'@storybook/react-vite':" pnpm-lock.yaml
-          grep -Fq "'@storybook/test-runner':" pnpm-lock.yaml
-          grep -Fq "storybook:" pnpm-lock.yaml
+      - name: Format check
+        run: pnpm run format:check
 
-      - name: Commit pnpm-lock.yaml through GitHub REST Contents API
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFile } from 'node:fs/promises';
+      - name: Lint
+        run: pnpm exec nx run-many -t lint --all
 
-          const token = process.env.GITHUB_TOKEN;
-          const repo = process.env.GITHUB_REPOSITORY;
-          const branch = process.env.GITHUB_REF_NAME;
-          const filePath = 'pnpm-lock.yaml';
+      - name: Typecheck
+        run: pnpm exec nx run-many -t typecheck --all
 
-          if (!token || !repo || !branch) {
-            throw new Error('Missing GitHub Actions repository context');
-          }
+      - name: Test with 100 percent coverage gates
+        run: pnpm run test:coverage
 
-          const content = await readFile(filePath, 'utf8');
-          for (const required of ["'@storybook/react-vite':", "'@storybook/test-runner':", 'storybook:']) {
-            if (!content.includes(required)) {
-              throw new Error(`Regenerated lockfile is missing ${required}`);
-            }
-          }
+      - name: Component tests with Testcontainers
+        run: pnpm run test:component -- --coverage
 
-          const apiUrl = `https://api.github.com/repos/${repo}/contents/${filePath}`;
-          const headers = {
-            accept: 'application/vnd.github+json',
-            authorization: `Bearer ${token}`,
-            'user-agent': 'ui-hardening-lockfile-bootstrap',
-            'x-github-api-version': '2022-11-28',
-          };
+      - name: Build
+        run: pnpm exec nx run-many -t build --all
 
-          const getResponse = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
-            headers,
-          });
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
 
-          if (!getResponse.ok) {
-            throw new Error(`Failed to read existing ${filePath}: ${getResponse.status} ${await getResponse.text()}`);
-          }
+      - name: Build Storybook
+        run: pnpm run storybook:build
 
-          const current = await getResponse.json();
-          const remoteContent = Buffer.from(String(current.content ?? '').replaceAll('\n', ''), 'base64').toString('utf8');
+      - name: Storybook interaction tests
+        run: pnpm run test:storybook
 
-          if (remoteContent === content) {
-            console.log(`${filePath} already up to date`);
-            process.exit(0);
-          }
+      - name: Storybook visual regression
+        run: pnpm run test:visual
 
-          const putResponse = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-              ...headers,
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({
-              branch,
-              content: Buffer.from(content, 'utf8').toString('base64'),
-              message: 'chore: regenerate UI hardening lockfile',
-              sha: current.sha,
-            }),
-          });
+      - name: Dependency audit
+        run: pnpm run audit
 
-          if (!putResponse.ok) {
-            throw new Error(`Failed to update ${filePath}: ${putResponse.status} ${await putResponse.text()}`);
-          }
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-quality
+          path: |
+            coverage/**
+          if-no-files-found: ignore
 
-          const result = await putResponse.json();
-          console.log(JSON.stringify({ commit: result.commit?.sha, blob: result.content?.sha }, null, 2));
-          NODE
+  e2e:
+    name: Static/browser e2e coverage
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E coverage
+        run: pnpm run test:e2e:coverage
+
+      - name: Upload e2e artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: |
+            coverage/e2e/**
+            playwright-report/**
+            test-results/**
+          if-no-files-found: ignore
+
+  docker-smoke:
+    name: Docker smoke stack
+    runs-on: ubuntu-latest
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Docker smoke
+        run: pnpm run test:docker-smoke
+
+  fullstack-e2e:
+    name: Fullstack Playwright e2e
+    runs-on: ubuntu-latest
+    needs: docker-smoke
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Fullstack e2e
+        run: pnpm run test:fullstack
+
+      - name: Upload fullstack artifacts
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: fullstack-e2e-artifacts
+          path: |
+            coverage/e2e/fullstack/**
+            playwright-report/fullstack/**
+            test-results/fullstack/**
+          if-no-files-found: ignore

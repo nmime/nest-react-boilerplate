@@ -24,14 +24,14 @@ jobs:
           token: ${{ github.token }}
           fetch-depth: 0
 
-      - name: Normalize accidental lib/lib/src references
+      - name: Normalize accidental doubled library source globs
         run: |
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
           repo = Path.cwd()
           suffixes = {'.ts','.tsx','.mts','.cts','.js','.jsx','.mjs','.cjs','.json','.jsonc','.md','.yml','.yaml','.css','.scss','.html','.txt'}
-          skip = {'.git','node_modules','dist','coverage','.nx'}
+          skip = {'.git','node_modules','dist','coverage','.nx','.github'}
           changed=[]
           for path in sorted(repo.rglob('*')):
               if not path.is_file() or any(part in skip for part in path.parts):
@@ -53,13 +53,19 @@ jobs:
       - name: Validate library layout
         run: |
           set -euo pipefail
-          if grep -R --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=coverage --exclude-dir=.nx -n 'lib/lib/src' .; then
-            exit 1
-          fi
           python3 <<'PY'
           from pathlib import Path
           import json
           bad=[]
+          for path in sorted(Path('.').rglob('*')):
+              if not path.is_file() or any(part in {'.git','node_modules','dist','coverage','.nx','.github'} for part in path.parts):
+                  continue
+              try:
+                  text = path.read_text()
+              except UnicodeDecodeError:
+                  continue
+              if 'lib/lib/src' in text:
+                  bad.append(f'doubled source glob in {path}')
           for project_file in sorted(Path('libs').glob('**/project.json')):
               data=json.loads(project_file.read_text())
               source_root=data.get('sourceRoot')

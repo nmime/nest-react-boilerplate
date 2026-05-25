@@ -24,28 +24,28 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
 export class AuthUserEntity {
   id: string = randomUUID();
   email!: string;
-  displayName: string | null = null;
+  displayName = "";
   passwordHash = "";
   status: AuthUserStatus = "active";
   roles: string[] = [];
   permissions: string[] = [];
-  locale: Locale | null = null;
+  locale: Locale = "en";
   theme: AuthUserThemePreference = "system";
-  lastLoginAt: Date | null = null;
+  lastLoginAt: Date = new Date(0);
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
   constructor(input?: AuthUserEntityInput) {
     if (input) {
       this.email = input.email;
-      this.displayName = input.displayName ?? null;
+      this.displayName = input.displayName ?? "";
       this.passwordHash = input.passwordHash ?? "";
       this.status = input.status ?? "active";
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
-      this.locale = input.locale ?? null;
+      this.locale = input.locale ?? "en";
       this.theme = input.theme ?? "system";
-      this.lastLoginAt = input.lastLoginAt ?? null;
+      this.lastLoginAt = input.lastLoginAt ?? new Date(0);
     }
   }
 }
@@ -60,7 +60,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       type: "varchar",
       fieldName: "display_name",
       length: 160,
-      nullable: true,
+      default: "",
     },
     passwordHash: {
       type: "varchar",
@@ -70,12 +70,12 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     status: { type: "varchar", length: 32 },
     roles: { type: "json" },
     permissions: { type: "json" },
-    locale: { type: "varchar", length: 16, nullable: true },
+    locale: { type: "varchar", length: 16, default: "en" },
     theme: { type: "varchar", length: 16, default: "system" },
     lastLoginAt: {
       type: "timestamptz",
       fieldName: "last_login_at",
-      nullable: true,
+      defaultRaw: "'epoch'::timestamptz",
     },
     createdAt: {
       type: "timestamptz",
@@ -89,5 +89,5 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       onUpdate: () => new Date(),
     },
   },
-  uniques: [{ name: "auth_users_email_key", properties: ["email"] }],
+  uniques: [{ name: "uq__auth_users__email", properties: ["email"] }],
 });

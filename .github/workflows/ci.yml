@@ -51,6 +51,18 @@ jobs:
       - name: Build
         run: pnpm exec nx run-many -t build --all
 
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: pnpm run storybook:build
+
+      - name: Storybook interaction tests
+        run: pnpm run test:storybook
+
+      - name: Storybook visual regression
+        run: pnpm run test:visual
+
       - name: Dependency audit
         run: pnpm run audit
 

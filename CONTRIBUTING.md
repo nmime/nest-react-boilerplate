@@ -25,6 +25,7 @@ pnpm install --frozen-lockfile
 
 ```bash
 pnpm run format:check
+pnpm run db:migrations:check
 pnpm exec nx run-many -t lint --all
 pnpm exec nx run-many -t typecheck --all
 pnpm run test:coverage
@@ -42,6 +43,7 @@ Coverage gates require 100% branches, functions, lines, and statements for testa
 - Keep `GET /health` available for deploy health checks.
 - Never log secrets or full environment objects.
 - OAuth remains disabled until an app explicitly supplies configuration.
+- Follow [database migration standards](docs/database-migrations.md): explicit `NOT NULL`, `VARCHAR` plus checks instead of enums, and deterministic constraint/index names.
 
 ## Frontend changes
 

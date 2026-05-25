@@ -9,18 +9,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 import {
-  ADMIN_TOKEN_STORAGE_KEY,
   createAdminAccess,
   fetchAdminProfile,
   getAdminApiBaseUrl,
-  getBearerTokenFromUrl,
-  readStoredBearerToken,
-  resolveInitialBearerToken,
-  saveBearerToken,
 } from "./auth-rbac";
 import {
   DashboardPage,
-  DevTokenForm,
   ForbiddenPage,
   NotFoundPage,
   ProfilePage,
@@ -88,32 +82,6 @@ afterEach(() => {
 });
 
 describe("admin auth and RBAC helpers", () => {
-  it("resolves bearer tokens from URL first and localStorage second", () => {
-    window.localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, " stored ");
-    expect(getBearerTokenFromUrl("/dashboard?admin_token=from-url")).toBe(
-      "from-url",
-    );
-    expect(readStoredBearerToken(window.localStorage)).toBe("stored");
-    expect(resolveInitialBearerToken("/dashboard", window.localStorage)).toBe(
-      "stored",
-    );
-    expect(
-      resolveInitialBearerToken(
-        "/dashboard?admin_token=from-url",
-        window.localStorage,
-      ),
-    ).toBe("from-url");
-  });
-
-  it("stores and clears bearer tokens for the dev form", () => {
-    saveBearerToken(window.localStorage, " token ");
-    expect(window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)).toBe("token");
-    saveBearerToken(window.localStorage, " ");
-    expect(window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)).toBeNull();
-    saveBearerToken(undefined, "ignored");
-    expect(readStoredBearerToken()).toBe("");
-  });
-
   it("builds fail-closed admin access policies", () => {
     expect(createAdminAccess()).toEqual({
       isAuthenticated: false,
@@ -151,29 +119,30 @@ describe("admin auth and RBAC helpers", () => {
     ).toMatchObject({ canReadDashboard: false, canReadProfile: false });
   });
 
-  it("fetches profile with bearer headers and rejects failed responses", async () => {
+  it("fetches profile with session credentials and rejects failed responses", async () => {
     const fetchImpl = mockFetch(true, {
       data: { principal: { subject: "1" } },
     });
     vi.stubGlobal("fetch", fetchImpl);
-    await expect(fetchAdminProfile("abc", "/api")).resolves.toEqual({
+    await expect(fetchAdminProfile("/api")).resolves.toEqual({
       principal: { subject: "1" },
     });
     const request = getRequest(fetchImpl);
     expect(request.url).toBe(`${window.location.origin}/api/admin/profile/me`);
     expect(request.method).toBe("GET");
+    expect(request.credentials).toBe("include");
     expect(Object.fromEntries(request.headers.entries())).toMatchObject({
       accept: "application/json",
       "accept-language": "en",
-      authorization: "Bearer abc",
     });
+    expect(request.headers.has("authorization")).toBe(false);
 
     vi.stubGlobal("fetch", mockFetch(false, {}, 403));
-    await expect(fetchAdminProfile("abc", "")).rejects.toThrow(
+    await expect(fetchAdminProfile("")).rejects.toThrow(
       "Request failed with 403.",
     );
     vi.stubGlobal("fetch", mockFetch(true, {}));
-    await expect(fetchAdminProfile("abc", "")).resolves.toEqual({});
+    await expect(fetchAdminProfile("")).resolves.toEqual({});
   });
 
   it("normalizes admin API base URLs", () => {
@@ -238,24 +207,7 @@ describe("admin pages", () => {
     );
   });
 
-  it("submits token values from the development form", () => {
-    const onSubmit = vi.fn();
-
-    render(<DevTokenForm onSubmit={onSubmit} />);
-    const form = screen.getByLabelText("Development bearer token");
-
-    fireEvent.submit(form);
-    expect(onSubmit).toHaveBeenLastCalledWith("");
-
-    screen.getByPlaceholderText("Paste development token").remove();
-    fireEvent.submit(form);
-    expect(onSubmit).toHaveBeenLastCalledWith("");
-  });
-
   it("routes fail closed for every state", () => {
-    expect(
-      renderToStaticMarkup(renderAdminRoute("/", { status: "missing-token" })),
-    ).toContain("Provide a bearer token");
     expect(
       renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
     ).toContain("Loading admin profile...");
@@ -301,7 +253,7 @@ describe("admin pages", () => {
 });
 
 describe("Admin app shell", () => {
-  it("renders missing token state and submits development token", async () => {
+  it("renders authenticated dashboard without browser token storage", async () => {
     const fetchImpl = mockFetch(true, {
       data: {
         principal: {
@@ -319,23 +271,29 @@ describe("Admin app shell", () => {
     vi.stubGlobal("fetch", fetchImpl);
 
     render(<App />);
-    expect(screen.getByText("Access denied")).toBeTruthy();
-
-    fireEvent.change(screen.getByPlaceholderText("Paste development token"), {
-      target: { value: "dev-token" },
-    });
-    fireEvent.submit(screen.getByLabelText("Development bearer token"));
 
     await waitFor(() =>
       expect(screen.getByText("Admin dashboard")).toBeTruthy(),
     );
-    expect(window.localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)).toBe(
-      "dev-token",
+    expect(window.localStorage.length).toBe(0);
+    expect(getRequestsByPath(fetchImpl, "/auth/me", "GET").length).toBe(1);
+    const profileRequests = getRequestsByPath(
+      fetchImpl,
+      "/admin/profile/me",
+      "GET",
     );
+    expect(profileRequests.length).toBe(1);
+    expect(profileRequests[0]?.credentials).toBe("include");
+    expect(profileRequests[0]?.headers.has("authorization")).toBe(false);
   });
 
-  it("loads a URL token, shows profile route, and reports failed fetches", async () => {
-    window.history.replaceState(null, "", "/profile?admin_token=url-token");
+  it("scrubs legacy URL token params, shows profile route, and reports failed fetches", async () => {
+    const legacyAdminTokenParam = "admin" + "_token";
+    window.history.replaceState(
+      null,
+      "",
+      `/profile?token=legacy&${legacyAdminTokenParam}=url-token`,
+    );
     vi.stubGlobal(
       "fetch",
       mockFetch(true, {
@@ -359,8 +317,11 @@ describe("Admin app shell", () => {
     await waitFor(() =>
       expect(screen.getByText("admin@example.com")).toBeTruthy(),
     );
+    expect(window.location.pathname).toBe("/profile");
+    expect(window.location.search).toBe("");
 
-    window.history.replaceState(null, "", "/?admin_token=bad-token");
+    cleanup();
+    window.history.replaceState(null, "", "/");
     vi.stubGlobal("fetch", mockFetch(false, {}, 401));
     render(<App />);
     await waitFor(() =>
@@ -369,7 +330,7 @@ describe("Admin app shell", () => {
   });
 
   it("fails closed for missing principals and non-Error profile failures", async () => {
-    window.history.replaceState(null, "", "/?admin_token=missing-principal");
+    window.history.replaceState(null, "", "/");
     vi.stubGlobal("fetch", mockFetch(true, { data: {} }));
 
     render(<App />);
@@ -379,7 +340,8 @@ describe("Admin app shell", () => {
       ).toBeTruthy(),
     );
 
-    window.history.replaceState(null, "", "/?admin_token=string-failure");
+    cleanup();
+    window.history.replaceState(null, "", "/");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue("offline"));
     render(<App />);
 
@@ -389,7 +351,7 @@ describe("Admin app shell", () => {
   });
 
   it("sends authenticated language and theme preference updates through /auth/me/preferences", async () => {
-    window.history.replaceState(null, "", "/profile?admin_token=prefs-token");
+    window.history.replaceState(null, "", "/profile");
     const fetchImpl = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(

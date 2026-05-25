@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - .github/workflows/fix-lib-lib-src-main.yml
   workflow_dispatch:
 
 permissions:
@@ -13,6 +11,7 @@ permissions:
 
 env:
   WORKFLOW_FILE: .github/workflows/fix-lib-lib-src-main.yml
+  TRIGGER_FILE: .github/r106-lib-src-cleanup.trigger
 
 jobs:
   fix:
@@ -42,7 +41,9 @@ jobs:
                   text = path.read_text()
               except UnicodeDecodeError:
                   continue
-              updated = text.replace('lib/lib/src', 'lib/src')
+              updated = text
+              while 'lib/lib/src' in updated or 'lib/lib/lib/src' in updated:
+                  updated = updated.replace('lib/lib/lib/src', 'lib/src').replace('lib/lib/src', 'lib/src')
               if updated != text:
                   path.write_text(updated)
                   changed.append(path.as_posix())
@@ -64,7 +65,7 @@ jobs:
                   text = path.read_text()
               except UnicodeDecodeError:
                   continue
-              if 'lib/lib/src' in text:
+              if 'lib/lib/src' in text or 'lib/lib/lib/src' in text:
                   bad.append(f'doubled source glob in {path}')
           for project_file in sorted(Path('libs').glob('**/project.json')):
               data=json.loads(project_file.read_text())
@@ -82,10 +83,10 @@ jobs:
               raise SystemExit(1)
           PY
 
-      - name: Remove one-time workflow
+      - name: Remove one-time workflow and trigger
         run: |
           set -euo pipefail
-          git rm "$WORKFLOW_FILE"
+          git rm -f "$WORKFLOW_FILE" "$TRIGGER_FILE"
 
       - name: Commit cleanup
         run: |

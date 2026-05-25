@@ -6,14 +6,14 @@ require("@swc-node/register");
 const { MikroORM } = require("@mikro-orm/core");
 const {
   AuthUserEntitySchema,
-} = require("../libs/postgres/main/auth/src/lib/entity/auth-user.entity.ts");
+} = require("../libs/postgres/main/auth/lib/src/lib/entity/auth-user.entity.ts");
 const {
   authMigrationOptions,
   AuthMigrationsTableName,
-} = require("../libs/postgres/main/auth/src/lib/migrations/index.ts");
+} = require("../libs/postgres/main/auth/lib/src/lib/migrations/index.ts");
 const {
   createPostgresMikroOrmOptions,
-} = require("../libs/postgres/main/shared/src/lib/data-source-options.ts");
+} = require("../libs/postgres/main/shared/lib/src/lib/data-source-options.ts");
 
 export const authMigrationTableName = AuthMigrationsTableName;
 

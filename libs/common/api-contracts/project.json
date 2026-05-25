@@ -1,7 +1,7 @@
 {
   "name": "@app/api-contracts",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/api-contracts/src",
+  "sourceRoot": "libs/common/api-contracts/lib/src",
   "projectType": "library",
   "tags": ["platform:shared", "type:common", "scope:api-contracts"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/api-contracts",
-        "main": "libs/common/api-contracts/src/index.ts",
+        "main": "libs/common/api-contracts/lib/src/index.ts",
         "tsConfig": "libs/common/api-contracts/tsconfig.lib.json",
         "assets": []
       }

@@ -1,7 +1,7 @@
 {
   "name": "@app/feature-auth-main",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature/auth/main/src",
+  "sourceRoot": "libs/feature/auth/main/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:feature-main", "scope:auth"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/feature/auth/main",
-        "main": "libs/feature/auth/main/src/index.ts",
+        "main": "libs/feature/auth/main/lib/src/index.ts",
         "tsConfig": "libs/feature/auth/main/tsconfig.lib.json",
         "assets": []
       }

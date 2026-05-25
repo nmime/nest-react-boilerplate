@@ -1,7 +1,7 @@
 {
   "name": "@app/common/i18n",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/i18n/src",
+  "sourceRoot": "libs/common/i18n/lib/src",
   "projectType": "library",
   "tags": ["platform:shared", "type:common", "scope:shared"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/i18n",
-        "main": "libs/common/i18n/src/index.ts",
+        "main": "libs/common/i18n/lib/src/index.ts",
         "tsConfig": "libs/common/i18n/tsconfig.lib.json",
         "assets": []
       }

@@ -1,7 +1,7 @@
 {
   "name": "@app/common-component-test",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/component-test/src",
+  "sourceRoot": "libs/common/component-test/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:test-util", "type:common", "scope:shared"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/component-test",
-        "main": "libs/common/component-test/src/index.ts",
+        "main": "libs/common/component-test/lib/src/index.ts",
         "tsConfig": "libs/common/component-test/tsconfig.lib.json",
         "assets": []
       }

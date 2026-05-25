@@ -1,7 +1,7 @@
 {
   "name": "@app/postgres-main-auth",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/postgres/main/auth/src",
+  "sourceRoot": "libs/postgres/main/auth/lib/src",
   "projectType": "library",
   "tags": [
     "platform:backend",
@@ -15,7 +15,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/postgres/main/auth",
-        "main": "libs/postgres/main/auth/src/index.ts",
+        "main": "libs/postgres/main/auth/lib/src/index.ts",
         "tsConfig": "libs/postgres/main/auth/tsconfig.lib.json",
         "assets": []
       }

@@ -10,6 +10,6 @@
     ],
     "declaration": true
   },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "exclude": ["lib/lib/src/**/*.spec.ts", "lib/src/**/*.test.ts"],
+  "include": ["lib/lib/src/**/*.ts", "lib/lib/lib/src/**/*.tsx"]
 }

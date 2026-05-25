@@ -10,11 +10,11 @@
       "vite/client"
     ]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["lib/lib/src/**/*.ts", "lib/lib/lib/src/**/*.tsx"],
   "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.tsx"
+    "lib/lib/src/**/*.spec.ts",
+    "lib/src/**/*.test.ts",
+    "lib/lib/src/**/*.spec.tsx",
+    "lib/src/**/*.test.tsx"
   ]
 }

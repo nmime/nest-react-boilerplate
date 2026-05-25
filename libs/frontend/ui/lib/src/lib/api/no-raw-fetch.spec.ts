@@ -12,12 +12,12 @@ const sourceRoots = [
   "apps/frontend/app/src",
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
-  "libs/frontend/ui/src",
-  "libs/frontend/api-client/src",
+  "libs/frontend/ui/lib/src",
+  "libs/frontend/api-client/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [".spec.ts", ".spec.tsx"];
-const ignoredFiles = new Set(["libs/frontend/ui/src/lib/api/api-client.ts"]);
+const ignoredFiles = new Set(["libs/frontend/ui/lib/src/lib/api/api-client.ts"]);
 
 const walk = (directory: string): string[] =>
   readdirSync(directory).flatMap((entry) => {

@@ -2,7 +2,7 @@
 
 ## Decision
 
-REST contracts are standardized on the NestJS Swagger/OpenAPI documents produced by the backend apps. `openapi-typescript` generates shared contract review types in `libs/common/api-contracts` and frontend per-service client types in `libs/frontend/api-client/src/generated`. Frontend runtime clients are built with `openapi-fetch` and `openapi-react-query`; Orval is not used.
+REST contracts are standardized on the NestJS Swagger/OpenAPI documents produced by the backend apps. `openapi-typescript` generates shared contract review types in `libs/common/api-contracts` and frontend per-service client types in `libs/frontend/api-client/lib/src/generated`. Frontend runtime clients are built with `openapi-fetch` and `openapi-react-query`; Orval is not used.
 
 ## Rationale
 

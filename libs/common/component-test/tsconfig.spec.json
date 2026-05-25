@@ -4,5 +4,5 @@
     "outDir": "../../../dist/out-tsc/libs/common/component-test-spec",
     "types": ["node", "vitest"]
   },
-  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]
+  "include": ["lib/lib/src/**/*.spec.ts", "lib/src/**/*.test.ts", "lib/lib/src/**/*.ts"]
 }

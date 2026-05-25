@@ -6,11 +6,11 @@ export default defineConfig({
   cacheDir: "../../../dist/out-tsc/libs/common/api-contracts",
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../coverage/libs/common/api-contracts",
-      ["src/**/*.ts"],
+      ["lib/lib/src/**/*.ts"],
       [],
     ),
   },

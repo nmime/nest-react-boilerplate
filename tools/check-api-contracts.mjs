@@ -11,7 +11,7 @@ import { join, relative } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const docsRoot = "docs/openapi";
-const typesRoot = "libs/common/api-contracts/src/generated";
+const typesRoot = "libs/common/api-contracts/lib/src/generated";
 
 function listFiles(root) {
   const files = [];

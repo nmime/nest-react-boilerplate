@@ -1,7 +1,7 @@
 {
   "name": "@app/common/shared",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/shared/src",
+  "sourceRoot": "libs/common/shared/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:common", "scope:shared"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/shared",
-        "main": "libs/common/shared/src/index.ts",
+        "main": "libs/common/shared/lib/src/index.ts",
         "tsConfig": "libs/common/shared/tsconfig.lib.json",
         "assets": []
       }

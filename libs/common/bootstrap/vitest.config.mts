@@ -6,7 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common/i18n": new URL(
-        "../../../libs/common/i18n/src/index.ts",
+        "../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
@@ -14,11 +14,11 @@ export default defineConfig({
   cacheDir: "../../../dist/out-tsc/libs/common/bootstrap",
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../coverage/libs/common/bootstrap",
-      ["src/**/*.ts"],
+      ["lib/lib/src/**/*.ts"],
       [],
     ),
   },

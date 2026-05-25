@@ -8,7 +8,7 @@ module.exports = [
       "package.json",
       "tsconfig*.json",
       "vitest.config.mts",
-      "src/generated/**/*.ts",
+      "lib/src/generated/**/*.ts",
     ],
   },
   ...baseConfig,

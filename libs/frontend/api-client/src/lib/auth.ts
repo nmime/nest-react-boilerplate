@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import createClient from "openapi-fetch";
 import createQueryClient from "openapi-react-query";
-import type { components, paths } from "./generated/auth";
+import type { components, paths } from "../generated/auth";
 import {
   type ApiClientRequestOptions,
   type ApiClientError,

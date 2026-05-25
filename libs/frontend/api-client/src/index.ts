@@ -1,6 +1,6 @@
-export * as adminApi from "./admin";
-export * as authApi from "./auth";
-export * as userApi from "./user";
+export * as adminApi from "./lib/admin";
+export * as authApi from "./lib/auth";
+export * as userApi from "./lib/user";
 export {
   ApiClientError,
   isApiClientError,
@@ -11,4 +11,4 @@ export {
   type EnvelopeData,
   type OpenApiData,
   type OpenApiError,
-} from "./service-options";
+} from "./lib/service-options";

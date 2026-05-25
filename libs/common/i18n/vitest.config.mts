@@ -7,11 +7,11 @@ export default defineConfig({
   plugins: [nxViteTsPaths()],
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../coverage/libs/common/i18n",
-      ["src/**/*.ts"],
+      ["lib/lib/src/**/*.ts"],
       [],
     ),
   },

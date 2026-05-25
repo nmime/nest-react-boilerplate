@@ -1,7 +1,7 @@
 {
   "name": "@app/feature-user-shared",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature/user/shared/src",
+  "sourceRoot": "libs/feature/user/shared/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:feature-shared", "scope:user"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/feature/user/shared",
-        "main": "libs/feature/user/shared/src/index.ts",
+        "main": "libs/feature/user/shared/lib/src/index.ts",
         "tsConfig": "libs/feature/user/shared/tsconfig.lib.json",
         "assets": []
       }

@@ -12,7 +12,7 @@ const sourceRoots = [
   "apps/frontend/app/src",
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
-  "libs/frontend/ui/src",
+  "libs/frontend/ui/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [".spec.ts", ".spec.tsx", ".test.ts", ".test.tsx"];
@@ -24,7 +24,7 @@ const ignoredDirectories = new Set([
   "node_modules",
 ]);
 const ignoredFiles = new Set([
-  "libs/frontend/ui/src/lib/i18n/no-hardcoded-copy.spec.ts",
+  "libs/frontend/ui/lib/src/lib/i18n/no-hardcoded-copy.spec.ts",
 ]);
 const userFacingNames = [
   "aria-label",

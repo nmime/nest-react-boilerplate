@@ -1,7 +1,7 @@
 {
   "name": "@app/common/swagger",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/swagger/src",
+  "sourceRoot": "libs/common/swagger/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:common", "scope:shared"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/swagger",
-        "main": "libs/common/swagger/src/index.ts",
+        "main": "libs/common/swagger/lib/src/index.ts",
         "tsConfig": "libs/common/swagger/tsconfig.lib.json",
         "assets": []
       }

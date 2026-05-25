@@ -5,7 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common-component-test": new URL(
-        "../../../../libs/common/component-test/src/index.ts",
+        "../../../../libs/common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
@@ -13,7 +13,7 @@ export default defineConfig({
   cacheDir: "../../../../dist/out-tsc/libs/postgres/main/auth-component",
   test: {
     environment: "node",
-    include: ["src/**/*.component-spec.ts"],
+    include: ["lib/src/**/*.component-spec.ts"],
     globals: false,
     hookTimeout: 180_000,
     testTimeout: 180_000,
@@ -24,10 +24,10 @@ export default defineConfig({
         "../../../../coverage/libs/postgres/main/auth-component",
       reporter: ["text", "lcov"],
       include: [
-        "src/lib/entity/auth-user.entity.ts",
-        "src/lib/repository/auth-user.repository.ts",
+        "lib/src/lib/entity/auth-user.entity.ts",
+        "lib/src/lib/repository/auth-user.repository.ts",
       ],
-      exclude: ["src/**/*.component-spec.ts"],
+      exclude: ["lib/src/**/*.component-spec.ts"],
     },
   },
 });

@@ -1,7 +1,7 @@
 {
   "name": "@app/feature-admin-main",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/feature/admin/main/src",
+  "sourceRoot": "libs/feature/admin/main/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:feature-main", "scope:admin"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/feature/admin/main",
-        "main": "libs/feature/admin/main/src/index.ts",
+        "main": "libs/feature/admin/main/lib/src/index.ts",
         "tsConfig": "libs/feature/admin/main/tsconfig.lib.json",
         "assets": []
       }

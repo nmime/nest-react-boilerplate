@@ -12,7 +12,7 @@ const contracts = [
 function parseArgs(argv) {
   const args = {
     docsRoot: "docs/openapi",
-    typesRoot: "libs/common/api-contracts/src/generated",
+    typesRoot: "libs/common/api-contracts/lib/src/generated",
     dryRun: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -105,7 +105,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(
-      "Usage: pnpm api:contracts -- [--docs-root docs/openapi] [--types-root libs/common/api-contracts/src/generated] [--dry-run]",
+      "Usage: pnpm api:contracts -- [--docs-root docs/openapi] [--types-root libs/common/api-contracts/lib/src/generated] [--dry-run]",
     );
     return;
   }

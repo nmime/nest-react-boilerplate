@@ -7,22 +7,22 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common/shared": new URL(
-        "../../../../libs/common/shared/src/index.ts",
+        "../../../../libs/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-oauth": new URL(
-        "../../../../libs/feature/auth/oauth/src/index.ts",
+        "../../../../libs/feature/auth/oauth/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
   },
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/feature/user/shared",
-      ["src/**/*.ts"],
+      ["lib/lib/src/**/*.ts"],
       [],
     ),
   },

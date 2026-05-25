@@ -3,7 +3,7 @@ import { mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 
-const generatedRoot = "libs/frontend/api-client/src/generated";
+const generatedRoot = "libs/frontend/api-client/lib/src/generated";
 const services = [
   {
     name: "auth",

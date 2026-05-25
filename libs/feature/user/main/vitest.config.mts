@@ -7,43 +7,43 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common/i18n": new URL(
-        "../../../../libs/common/i18n/src/index.ts",
+        "../../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/exception": new URL(
-        "../../../../libs/common/exception/src/index.ts",
+        "../../../../libs/common/exception/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/shared": new URL(
-        "../../../../libs/common/shared/src/index.ts",
+        "../../../../libs/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/response": new URL(
-        "../../../../libs/common/response/src/index.ts",
+        "../../../../libs/common/response/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/swagger": new URL(
-        "../../../../libs/common/swagger/src/index.ts",
+        "../../../../libs/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-oauth": new URL(
-        "../../../../libs/feature/auth/oauth/src/index.ts",
+        "../../../../libs/feature/auth/oauth/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-user-shared": new URL(
-        "../../../../libs/feature/user/shared/src/index.ts",
+        "../../../../libs/feature/user/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
   },
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/feature/user/main",
-      ["src/**/*.ts"],
-      ["src/index.ts", "src/lib/user-main.module.ts"],
+      ["lib/lib/src/**/*.ts"],
+      ["lib/src/index.ts", "lib/src/lib/user-main.module.ts"],
     ),
   },
 });

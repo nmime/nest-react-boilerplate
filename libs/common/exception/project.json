@@ -1,7 +1,7 @@
 {
   "name": "@app/common/exception",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/common/exception/src",
+  "sourceRoot": "libs/common/exception/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:common", "scope:shared"],
   "targets": {
@@ -10,7 +10,7 @@
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/common/exception",
-        "main": "libs/common/exception/src/index.ts",
+        "main": "libs/common/exception/lib/src/index.ts",
         "tsConfig": "libs/common/exception/tsconfig.lib.json",
         "assets": []
       }

@@ -13,9 +13,9 @@ pnpm api:clients:check
 
 Checked-in generated artifacts live at:
 
-- `libs/frontend/api-client/src/generated/auth.ts`
-- `libs/frontend/api-client/src/generated/user.ts`
-- `libs/frontend/api-client/src/generated/admin.ts`
+- `libs/frontend/api-client/lib/src/generated/auth.ts`
+- `libs/frontend/api-client/lib/src/generated/user.ts`
+- `libs/frontend/api-client/lib/src/generated/admin.ts`
 
 `@app/api-client` wraps those generated `paths/components/operations` types in service modules exported as `authApi`, `userApi`, and `adminApi`. Apps import DTOs, success payload aliases, typed error aliases, query keys/options, and mutation/query helpers from those namespaces instead of importing contracts directly or embedding endpoint path strings.
 
@@ -36,7 +36,7 @@ When backend routes, DTOs, response wrappers, auth metadata, or error decorators
 1. Regenerate OpenAPI/contracts with `pnpm api:contracts` if the backend spec changed.
 2. Regenerate frontend client types with `pnpm api:clients`.
 3. Commit both OpenAPI/contract output and frontend generated artifacts.
-4. Update wrapper aliases/hooks in `libs/frontend/api-client/src/auth.ts` when a route becomes app-facing.
+4. Update wrapper aliases/hooks in `libs/frontend/api-client/lib/src/auth.ts` when a route becomes app-facing.
 5. Run `pnpm api:contracts:check`, `pnpm api:clients:check`, and affected app/client tests or `pnpm run check` before opening a PR.
 
 Treat generated files as read-only; fix controllers, Swagger metadata, or the generator script and regenerate. Orval config/mutators are no longer part of the client architecture.

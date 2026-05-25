@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 function parseArgs(argv) {
   const args = {
     input: "docs/openapi/auth-app-api.json",
-    output: "libs/frontend/api-client/src/generated.ts",
+    output: "libs/frontend/api-client/lib/src/generated.ts",
     dryRun: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -29,7 +29,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(
-      "Usage: pnpm api:client -- [--input docs/openapi/auth-app-api.json] [--output libs/frontend/api-client/src/generated.ts]",
+      "Usage: pnpm api:client -- [--input docs/openapi/auth-app-api.json] [--output libs/frontend/api-client/lib/src/generated.ts]",
     );
     return;
   }

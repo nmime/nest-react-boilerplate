@@ -10,11 +10,11 @@ export default defineConfig({
   plugins: [react(), nxViteTsPaths()],
   test: {
     environment: "jsdom",
-    include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
+    include: ["lib/lib/src/**/*.spec.ts", "lib/lib/src/**/*.spec.tsx"],
     passWithNoTests: false,
     coverage: fullCoverage(
       "../../../coverage/libs/frontend/ui",
-      ["src/lib/**/*.{ts,tsx}"],
+      ["lib/src/lib/**/*.{ts,tsx}"],
       [],
     ),
   },

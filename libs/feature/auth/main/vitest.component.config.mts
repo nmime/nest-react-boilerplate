@@ -5,51 +5,51 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common/i18n": new URL(
-        "../../../../libs/common/i18n/src/index.ts",
+        "../../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/exception": new URL(
-        "../../../../libs/common/exception/src/index.ts",
+        "../../../../libs/common/exception/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/shared": new URL(
-        "../../../../libs/common/shared/src/index.ts",
+        "../../../../libs/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/response": new URL(
-        "../../../../libs/common/response/src/index.ts",
+        "../../../../libs/common/response/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/validation": new URL(
-        "../../../../libs/common/validation/src/index.ts",
+        "../../../../libs/common/validation/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/swagger": new URL(
-        "../../../../libs/common/swagger/src/index.ts",
+        "../../../../libs/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-oauth": new URL(
-        "../../../../libs/feature/auth/oauth/src/index.ts",
+        "../../../../libs/feature/auth/oauth/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-shared": new URL(
-        "../../../../libs/feature/auth/shared/src/index.ts",
+        "../../../../libs/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-admin-shared": new URL(
-        "../../../../libs/feature/admin/shared/src/index.ts",
+        "../../../../libs/feature/admin/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/postgres-main": new URL(
-        "../../../../libs/postgres/main/shared/src/index.ts",
+        "../../../../libs/postgres/main/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/postgres-main-auth": new URL(
-        "../../../../libs/postgres/main/auth/src/index.ts",
+        "../../../../libs/postgres/main/auth/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common-component-test": new URL(
-        "../../../../libs/common/component-test/src/index.ts",
+        "../../../../libs/common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
@@ -57,7 +57,7 @@ export default defineConfig({
   cacheDir: "../../../../dist/out-tsc/libs/feature/auth/main-component",
   test: {
     environment: "node",
-    include: ["src/**/*.postgres.component-spec.ts"],
+    include: ["lib/src/**/*.postgres.component-spec.ts"],
     globals: false,
     hookTimeout: 180_000,
     testTimeout: 180_000,
@@ -66,8 +66,8 @@ export default defineConfig({
       provider: "v8",
       reportsDirectory: "../../../../coverage/libs/feature/auth/main-component",
       reporter: ["text", "lcov"],
-      include: ["src/lib/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.spec.ts", "src/**/*.component-spec.ts"],
+      include: ["lib/src/lib/**/*.{ts,tsx}"],
+      exclude: ["lib/lib/src/**/*.spec.ts", "lib/src/**/*.component-spec.ts"],
     },
   },
 });

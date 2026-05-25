@@ -6,11 +6,11 @@ export default defineConfig({
   cacheDir: "../../../../dist/out-tsc/libs/postgres/main/shared",
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["lib/lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/postgres/main/shared",
-      ["src/**/*.ts"],
+      ["lib/lib/src/**/*.ts"],
       [],
     ),
   },

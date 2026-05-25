@@ -12,8 +12,8 @@
   },
   "include": [
     "vitest.config.mts",
-    "lib/lib/src/**/*.spec.ts",
-    "lib/lib/src/**/*.spec.tsx",
+    "lib/src/**/*.spec.ts",
+    "lib/src/**/*.spec.tsx",
     "lib/src/**/*.d.ts"
   ]
 }

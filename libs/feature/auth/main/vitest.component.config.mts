@@ -67,7 +67,7 @@ export default defineConfig({
       reportsDirectory: "../../../../coverage/libs/feature/auth/main-component",
       reporter: ["text", "lcov"],
       include: ["lib/src/lib/**/*.{ts,tsx}"],
-      exclude: ["lib/lib/src/**/*.spec.ts", "lib/src/**/*.component-spec.ts"],
+      exclude: ["lib/src/**/*.spec.ts", "lib/src/**/*.component-spec.ts"],
     },
   },
 });

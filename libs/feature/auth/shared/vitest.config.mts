@@ -14,11 +14,11 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["lib/lib/src/**/*.spec.ts"],
+    include: ["lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/feature/auth/shared",
-      ["lib/lib/src/**/*.ts"],
+      ["lib/src/**/*.ts"],
       [],
     ),
   },

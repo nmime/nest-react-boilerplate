@@ -6,9 +6,9 @@
     "declaration": true
   },
   "exclude": [
-    "lib/lib/src/**/*.spec.ts",
+    "lib/src/**/*.spec.ts",
     "lib/src/**/*.test.ts",
     "lib/src/**/*.component-spec.ts"
   ],
-  "include": ["lib/lib/src/**/*.ts"]
+  "include": ["lib/src/**/*.ts"]
 }

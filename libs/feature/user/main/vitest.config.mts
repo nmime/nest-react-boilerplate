@@ -38,11 +38,11 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["lib/lib/src/**/*.spec.ts"],
+    include: ["lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/feature/user/main",
-      ["lib/lib/src/**/*.ts"],
+      ["lib/src/**/*.ts"],
       ["lib/src/index.ts", "lib/src/lib/user-main.module.ts"],
     ),
   },

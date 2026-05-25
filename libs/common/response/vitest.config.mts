@@ -18,11 +18,11 @@ export default defineConfig({
   cacheDir: "../../../dist/out-tsc/libs/common/response",
   test: {
     environment: "node",
-    include: ["lib/lib/src/**/*.spec.ts"],
+    include: ["lib/src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../coverage/libs/common/response",
-      ["lib/lib/src/**/*.ts"],
+      ["lib/src/**/*.ts"],
       [],
     ),
   },

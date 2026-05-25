@@ -6,12 +6,12 @@ export default defineConfig({
   cacheDir: "../../../dist/out-tsc/libs/common/component-test",
   test: {
     environment: "node",
-    include: ["lib/lib/src/**/*.spec.ts"],
+    include: ["lib/src/**/*.spec.ts"],
     exclude: ["lib/src/**/*.component-spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "../../../coverage/libs/common/component-test",
-      ["lib/lib/src/**/*.ts"],
+      ["lib/src/**/*.ts"],
       ["lib/src/index.ts", "lib/src/**/index.ts"],
     ),
   },

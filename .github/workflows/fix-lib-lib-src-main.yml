@@ -1,0 +1,95 @@
+name: Fix lib/src glob cleanup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/fix-lib-lib-src-main.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  WORKFLOW_FILE: .github/workflows/fix-lib-lib-src-main.yml
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+          fetch-depth: 0
+
+      - name: Normalize accidental lib/lib/src references
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          repo = Path.cwd()
+          suffixes = {'.ts','.tsx','.mts','.cts','.js','.jsx','.mjs','.cjs','.json','.jsonc','.md','.yml','.yaml','.css','.scss','.html','.txt'}
+          skip = {'.git','node_modules','dist','coverage','.nx'}
+          changed=[]
+          for path in sorted(repo.rglob('*')):
+              if not path.is_file() or any(part in skip for part in path.parts):
+                  continue
+              if path.suffix not in suffixes:
+                  continue
+              try:
+                  text = path.read_text()
+              except UnicodeDecodeError:
+                  continue
+              updated = text.replace('lib/lib/src', 'lib/src')
+              if updated != text:
+                  path.write_text(updated)
+                  changed.append(path.as_posix())
+          print('changed_files=')
+          print('\n'.join(changed))
+          PY
+
+      - name: Validate library layout
+        run: |
+          set -euo pipefail
+          if grep -R --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=coverage --exclude-dir=.nx -n 'lib/lib/src' .; then
+            exit 1
+          fi
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+          bad=[]
+          for project_file in sorted(Path('libs').glob('**/project.json')):
+              data=json.loads(project_file.read_text())
+              source_root=data.get('sourceRoot')
+              if isinstance(source_root,str) and source_root.startswith('libs/'):
+                  if not source_root.endswith('/lib/src'):
+                      bad.append(f'{project_file}: sourceRoot={source_root}')
+                  if not Path(source_root).is_dir():
+                      bad.append(f'{project_file}: missing {source_root}')
+          for root_src in sorted(Path('libs').glob('**/src')):
+              if '/lib/src' not in root_src.as_posix():
+                  bad.append(f'unmigrated root src dir: {root_src.as_posix()}')
+          if bad:
+              print('\n'.join(bad))
+              raise SystemExit(1)
+          PY
+
+      - name: Remove one-time workflow
+        run: |
+          set -euo pipefail
+          git rm "$WORKFLOW_FILE"
+
+      - name: Commit cleanup
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "fix: normalize lib src config globs"
+          git push origin HEAD:main

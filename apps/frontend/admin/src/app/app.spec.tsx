@@ -32,8 +32,18 @@ const mockFetch = (ok: boolean, body: unknown, status = 200) =>
     ),
   );
 
+const createRequestFromFetchCall = (
+  call: Parameters<typeof fetch>,
+): Request => {
+  const [input, init] = call;
+
+  return input instanceof Request ? input : new Request(input, init);
+};
+
 const getRequest = (fetchImpl: ReturnType<typeof mockFetch>): Request =>
-  fetchImpl.mock.calls[0]?.[0] as Request;
+  createRequestFromFetchCall(
+    fetchImpl.mock.calls[0] as Parameters<typeof fetch>,
+  );
 
 const getRequestsByPath = (
   fetchImpl: ReturnType<typeof vi.fn>,
@@ -41,7 +51,7 @@ const getRequestsByPath = (
   method?: string,
 ): Request[] =>
   fetchImpl.mock.calls
-    .map((call) => call[0] as Request)
+    .map((call) => createRequestFromFetchCall(call as Parameters<typeof fetch>))
     .filter(
       (request) =>
         new URL(request.url).pathname === path &&
@@ -119,7 +129,7 @@ describe("admin auth and RBAC helpers", () => {
     ).toMatchObject({ canReadDashboard: false, canReadProfile: false });
   });
 
-  it("fetches profile with session credentials and rejects failed responses", async () => {
+  it("fetches the credentialed profile endpoint and rejects failed responses", async () => {
     const fetchImpl = mockFetch(true, {
       data: { principal: { subject: "1" } },
     });
@@ -138,11 +148,11 @@ describe("admin auth and RBAC helpers", () => {
     expect(request.headers.has("authorization")).toBe(false);
 
     vi.stubGlobal("fetch", mockFetch(false, {}, 403));
-    await expect(fetchAdminProfile("")).rejects.toThrow(
+    await expect(fetchAdminProfile()).rejects.toThrow(
       "Request failed with 403.",
     );
     vi.stubGlobal("fetch", mockFetch(true, {}));
-    await expect(fetchAdminProfile("")).resolves.toEqual({});
+    await expect(fetchAdminProfile()).resolves.toEqual({});
   });
 
   it("normalizes admin API base URLs", () => {
@@ -253,7 +263,12 @@ describe("admin pages", () => {
 });
 
 describe("Admin app shell", () => {
-  it("renders authenticated dashboard without browser token storage", async () => {
+  it("loads the credentialed session profile without browser token persistence", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      `/profile?${"admin" + "_token"}=legacy&token=legacy&keep=1`,
+    );
     const fetchImpl = mockFetch(true, {
       data: {
         principal: {
@@ -263,6 +278,7 @@ describe("Admin app shell", () => {
         },
         profile: {
           id: "admin-id",
+          email: "admin@example.com",
           roles: ["admin"],
           permissions: ["admin:profile:read", "admin:dashboard:read"],
         },
@@ -271,58 +287,25 @@ describe("Admin app shell", () => {
     vi.stubGlobal("fetch", fetchImpl);
 
     render(<App />);
-
-    await waitFor(() =>
-      expect(screen.getByText("Admin dashboard")).toBeTruthy(),
-    );
-    expect(window.localStorage.length).toBe(0);
-    expect(getRequestsByPath(fetchImpl, "/auth/me", "GET").length).toBe(1);
-    const profileRequests = getRequestsByPath(
-      fetchImpl,
-      "/admin/profile/me",
-      "GET",
-    );
-    expect(profileRequests.length).toBe(1);
-    expect(profileRequests[0]?.credentials).toBe("include");
-    expect(profileRequests[0]?.headers.has("authorization")).toBe(false);
-  });
-
-  it("scrubs legacy URL token params, shows profile route, and reports failed fetches", async () => {
-    const legacyAdminTokenParam = "admin" + "_token";
-    window.history.replaceState(
-      null,
-      "",
-      `/profile?token=legacy&${legacyAdminTokenParam}=url-token`,
-    );
-    vi.stubGlobal(
-      "fetch",
-      mockFetch(true, {
-        data: {
-          principal: {
-            subject: "admin-id",
-            roles: ["admin"],
-            permissions: ["admin:profile:read", "admin:dashboard:read"],
-          },
-          profile: {
-            id: "admin-id",
-            email: "admin@example.com",
-            roles: ["admin"],
-            permissions: ["admin:profile:read", "admin:dashboard:read"],
-          },
-        },
-      }),
-    );
-
-    render(<App />);
     await waitFor(() =>
       expect(screen.getByText("admin@example.com")).toBeTruthy(),
     );
-    expect(window.location.pathname).toBe("/profile");
-    expect(window.location.search).toBe("");
 
-    cleanup();
-    window.history.replaceState(null, "", "/");
+    expect(window.location.pathname).toBe("/profile");
+    expect(window.location.search).toBe("?keep=1");
+    expect(window.localStorage.length).toBe(0);
+    const profileRequest = getRequestsByPath(
+      fetchImpl,
+      "/admin/profile/me",
+      "GET",
+    )[0];
+    expect(profileRequest?.credentials).toBe("include");
+    expect(profileRequest?.headers.has("authorization")).toBe(false);
+  });
+
+  it("reports failed credentialed profile fetches", async () => {
     vi.stubGlobal("fetch", mockFetch(false, {}, 401));
+
     render(<App />);
     await waitFor(() =>
       expect(screen.getByText("Request failed with 401.")).toBeTruthy(),
@@ -330,7 +313,6 @@ describe("Admin app shell", () => {
   });
 
   it("fails closed for missing principals and non-Error profile failures", async () => {
-    window.history.replaceState(null, "", "/");
     vi.stubGlobal("fetch", mockFetch(true, { data: {} }));
 
     render(<App />);
@@ -340,8 +322,6 @@ describe("Admin app shell", () => {
       ).toBeTruthy(),
     );
 
-    cleanup();
-    window.history.replaceState(null, "", "/");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue("offline"));
     render(<App />);
 

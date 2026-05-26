@@ -20,7 +20,6 @@
       "@app/common/response": ["libs/common/response/lib/src/index.ts"],
       "@app/common/shared": ["libs/common/shared/lib/src/index.ts"],
       "@app/common/validation": ["libs/common/validation/lib/src/index.ts"],
-      "@app/feature-auth-oauth": ["libs/feature/auth/oauth/lib/src/index.ts"],
       "@app/frontend-ui": ["libs/frontend/ui/lib/src/index.ts"],
       "@app/postgres-main": ["libs/postgres/main/shared/lib/src/index.ts"],
       "@app/postgres-main-auth": ["libs/postgres/main/auth/lib/src/index.ts"],

@@ -8,7 +8,11 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiProperty,
+  ApiPropertyOptional,
+} from "@nestjs/swagger";
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
@@ -179,9 +183,10 @@ class LogoutPayloadDto {
 }
 
 type SessionMethod = "destroy" | "regenerate" | "save";
+export const SESSION_COOKIE_NAME = "SESSION_COOKIE_NAME";
 
 function getSessionCookieName(): string {
-  const configured = process.env.SESSION_COOKIE_NAME?.trim();
+  const configured = process.env[SESSION_COOKIE_NAME]?.trim();
   if (configured) {
     return configured;
   }
@@ -299,6 +304,7 @@ export class AuthController {
 
   @Get("me")
   @ApiOkDataResponse(MePayloadDto)
+  @ApiBearerAuth()
   @UseGuards(new BearerAuthGuard())
   async me(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -311,6 +317,7 @@ export class AuthController {
 
   @Patch("me/locale")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
+  @ApiBearerAuth()
   @UseGuards(new BearerAuthGuard())
   async updateLocale(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -327,6 +334,7 @@ export class AuthController {
 
   @Patch("me/preferences")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
+  @ApiBearerAuth()
   @UseGuards(new BearerAuthGuard())
   async updatePreferences(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -350,6 +358,7 @@ export class AuthController {
 
   @Post("logout")
   @ApiOkDataResponse(LogoutPayloadDto)
+  @ApiBearerAuth()
   @UseGuards(new BearerAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,

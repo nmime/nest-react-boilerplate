@@ -1,5 +1,9 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiProperty,
+  ApiPropertyOptional,
+} from "@nestjs/swagger";
 import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
@@ -86,6 +90,7 @@ class ProfilePayloadDto {
 export class ProfileController {
   @Get("me")
   @ApiOkDataResponse(ProfilePayloadDto)
+  @ApiBearerAuth()
   @RequirePermissions(USER_PROFILE_READ_PERMISSION)
   me(
     @CurrentUser() principal: AuthenticatedPrincipal,

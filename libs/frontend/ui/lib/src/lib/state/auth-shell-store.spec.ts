@@ -53,8 +53,8 @@ describe("frontend auth and locale state", () => {
     document.cookie = "locale=; path=/; max-age=0";
     document.cookie = "lang=; path=/; max-age=0";
     document.documentElement.lang = "";
-    document.documentElement.dataset["theme"] = "";
-    document.documentElement.dataset["themePreference"] = "";
+    delete document.documentElement.dataset["theme"];
+    delete document.documentElement.dataset["themePreference"];
     window.history.replaceState({}, "", "/");
     vi.restoreAllMocks();
   });

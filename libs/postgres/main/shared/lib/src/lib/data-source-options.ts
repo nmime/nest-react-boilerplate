@@ -41,7 +41,7 @@ export function createPostgresMikroOrmOptions(
 
   return {
     ...connection,
-    driver: PostgreSqlDriver as unknown as MikroOrmModuleSyncOptions["driver"],
+    driver: PostgreSqlDriver,
     entities: [],
     extensions: [Migrator],
     autoLoadEntities: true,

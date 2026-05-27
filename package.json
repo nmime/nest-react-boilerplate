@@ -184,11 +184,7 @@
       "esbuild",
       "nx"
     ],
-    "ignoredBuiltDependencies": [
-      "@scarf/scarf",
-      "less",
-      "unrs-resolver"
-    ]
+    "ignoredBuiltDependencies": ["@scarf/scarf", "less", "unrs-resolver"]
   },
   "engines": {
     "node": ">=26 <27"

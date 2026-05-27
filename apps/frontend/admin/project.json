@@ -37,10 +37,7 @@
       "inputs": [
         "production",
         {
-          "externalDependencies": [
-            "@playwright/test",
-            "vite-plugin-istanbul"
-          ]
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/admin"]

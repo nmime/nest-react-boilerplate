@@ -155,13 +155,54 @@
     "webpack-cli": "7.0.2"
   },
   "pnpm": {
-    "overrides": {"typescript":"6.0.3","rxjs":"7.8.2","tslib":"2.8.1","lodash":"4.18.1","brace-expansion@<2.0.0":"1.1.14","brace-expansion@>=2.0.0 <3.0.0":"2.1.0","picomatch@<3.0.0":"2.3.2","picomatch@>=4.0.0 <5.0.0":"4.0.4","path-to-regexp@>=8.0.0 <9.0.0":"8.4.2","serialize-javascript":"7.0.5","postcss":"8.5.15","follow-redirects":"1.16.0","axios":"1.16.1","fast-uri":"3.1.2","svgo@>=3.0.0 <4.0.0":"3.3.3","js-yaml":"4.1.1","brace-expansion@>=4.0.0 <6.0.0":"5.0.6","yaml":"2.9.0","ajv@>=7.0.0 <9.0.0":"8.20.0","ws":"8.21.0"},
-    "onlyBuiltDependencies": ["@nestjs/core", "@parcel/watcher", "@swc/core", "esbuild", "nx"],
-    "ignoredBuiltDependencies": ["@scarf/scarf", "less", "unrs-resolver"]
+    "overrides": {
+      "typescript": "6.0.3",
+      "rxjs": "7.8.2",
+      "tslib": "2.8.1",
+      "lodash": "4.18.1",
+      "brace-expansion@<2.0.0": "1.1.14",
+      "brace-expansion@>=2.0.0 <3.0.0": "2.1.0",
+      "picomatch@<3.0.0": "2.3.2",
+      "picomatch@>=4.0.0 <5.0.0": "4.0.4",
+      "path-to-regexp@>=8.0.0 <9.0.0": "8.4.2",
+      "serialize-javascript": "7.0.5",
+      "postcss": "8.5.15",
+      "follow-redirects": "1.16.0",
+      "axios": "1.16.1",
+      "fast-uri": "3.1.2",
+      "svgo@>=3.0.0 <4.0.0": "3.3.3",
+      "js-yaml": "4.1.1",
+      "brace-expansion@>=4.0.0 <6.0.0": "5.0.6",
+      "yaml": "2.9.0",
+      "ajv@>=7.0.0 <9.0.0": "8.20.0",
+      "ws": "8.21.0"
+    },
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@parcel/watcher",
+      "@swc/core",
+      "esbuild",
+      "nx"
+    ],
+    "ignoredBuiltDependencies": [
+      "@scarf/scarf",
+      "less",
+      "unrs-resolver"
+    ]
   },
-  "engines": { "node": ">=26 <27" },
-  "author": { "name": "nmime", "url": "https://github.com/nmime" },
-  "repository": { "type": "git", "url": "git+https://github.com/nmime/nest-react-boilerplate.git" },
-  "bugs": { "url": "https://github.com/nmime/nest-react-boilerplate/issues" },
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmime/nest-react-boilerplate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nmime/nest-react-boilerplate/issues"
+  },
   "homepage": "https://github.com/nmime/nest-react-boilerplate#readme"
 }

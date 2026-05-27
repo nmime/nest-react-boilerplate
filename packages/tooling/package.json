@@ -4,5 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Workspace-local project tooling scripts for API contracts, database operations, Docker, testing, and QA presets.",
-  "files": ["scripts", "baselines", "README.md"]
+  "files": [
+    "scripts",
+    "baselines",
+    "README.md"
+  ]
 }

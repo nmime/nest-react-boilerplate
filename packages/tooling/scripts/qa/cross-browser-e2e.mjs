@@ -1,3 +1,31 @@
 #!/usr/bin/env node
-import { spawnSync } from "node:child_process";
-const all = ["chromium", "firefox", "webkit", "mobile-chrome", "mobile-safari"]; const dryRun = process.argv.includes("--dry-run"); const selected = process.argv.filter((x) => x.startsWith("--project=")).map((x) => x.slice("--project=".length)); const projects = selected.length ? selected : all; const command = ["pnpm", "exec", "playwright", "test", "-c", "playwright.extended.config.ts", ...projects.flatMap((p) => ["--project", p])]; if (dryRun) { console.log(JSON.stringify({ status: "dry-run", command, projects }, null, 2)); process.exit(0); } const result = spawnSync(command[0], command.slice(1), { stdio: "inherit" }); process.exit(result.status ?? 1);
+import { existsSync } from "node:fs";
+import { commandExists, parseArgs, run } from "./runtime-utils.mjs";
+
+const args = parseArgs();
+const all = ["chromium", "firefox", "webkit", "mobile-chrome", "mobile-safari"];
+const dryRun = args.flags.has("dry-run");
+const config = args.options.get("config") ?? process.env.PLAYWRIGHT_EXTENDED_CONFIG ?? "playwright.extended.config.ts";
+const selected = args.options.get("project") ? [args.options.get("project")] : process.argv.filter((value) => value.startsWith("--project=")).map((value) => value.slice("--project=".length));
+const projects = selected.length ? selected : (process.env.PLAYWRIGHT_MATRIX_PROJECTS?.split(",").map((value) => value.trim()).filter(Boolean) ?? all);
+const passthrough = args.positional;
+const command = ["exec", "playwright", "test", "-c", config, ...projects.flatMap((project) => ["--project", project]), ...passthrough];
+
+if (!existsSync(config)) {
+  console.error(`Playwright matrix config not found: ${config}`);
+  process.exit(1);
+}
+if (dryRun) {
+  console.log(JSON.stringify({ status: "dry-run", command: ["pnpm", ...command], projects, config }, null, 2));
+  process.exit(0);
+}
+if (!commandExists("pnpm")) {
+  console.error("pnpm is required to run the Playwright matrix.");
+  process.exit(1);
+}
+if (process.env.PLAYWRIGHT_AUTO_INSTALL === "1") {
+  const browserNames = [...new Set(projects.map((project) => project === "mobile-chrome" ? "chromium" : project === "mobile-safari" ? "webkit" : project).filter((project) => ["chromium", "firefox", "webkit"].includes(project)))];
+  run("pnpm", ["exec", "playwright", "install", "--with-deps", ...browserNames], { stdio: "inherit" });
+}
+const result = run("pnpm", command, { stdio: "inherit" });
+process.exit(result.status);

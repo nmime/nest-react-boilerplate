@@ -13,6 +13,7 @@
     "test": "nx run-many -t test",
     "test:storybook": "node packages/tooling/scripts/testing/storybook-test.mjs",
     "test:visual": "node packages/tooling/scripts/testing/storybook-visual-regression.mjs",
+    "test:visual:update": "node packages/tooling/scripts/testing/storybook-visual-regression.mjs --update-snapshots",
     "lint": "nx run-many -t lint",
     "typecheck": "nx run-many -t typecheck",
     "format": "prettier --write . --ignore-unknown",
@@ -31,7 +32,7 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "test:docker-smoke": "node packages/tooling/scripts/docker/smoke.mjs",
     "test:fullstack": "node packages/tooling/scripts/docker/fullstack-e2e.mjs",
-    "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run test:property && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run lint && pnpm run typecheck && pnpm run test",
     "lib:configs:check": "node packages/tooling/scripts/project/check-library-configs.mjs",
     "init:project": "node packages/tooling/scripts/project/init-project.mjs",
     "db:seed": "node packages/tooling/scripts/db/seed.mjs",
@@ -41,6 +42,7 @@
     "api:client": "node packages/tooling/scripts/api/generate-client.mjs",
     "api:contracts": "node packages/tooling/scripts/api/generate-contracts.mjs",
     "api:contracts:check": "node packages/tooling/scripts/api/check-contracts.mjs",
+    "api:contracts:consumer": "node packages/tooling/scripts/qa/consumer-contracts.mjs",
     "api:clients": "node packages/tooling/scripts/api/generate-clients.mjs",
     "api:clients:check": "node packages/tooling/scripts/api/check-clients.mjs",
     "api:openapi:lint": "node packages/tooling/scripts/qa/openapi-lint.mjs",
@@ -48,10 +50,13 @@
     "test:a11y": "node packages/tooling/scripts/qa/accessibility.mjs",
     "test:e2e:matrix": "node packages/tooling/scripts/qa/cross-browser-e2e.mjs",
     "test:perf": "node packages/tooling/scripts/qa/performance.mjs",
+    "test:security:sast": "node packages/tooling/scripts/qa/security-sast.mjs",
+    "test:security:secrets": "node packages/tooling/scripts/qa/secret-scan.mjs",
     "test:security:dast": "node packages/tooling/scripts/qa/security-dast.mjs",
+    "test:security": "node packages/tooling/scripts/qa/security-suite.mjs",
     "test:mutation": "node packages/tooling/scripts/qa/mutation.mjs",
     "test:property": "node packages/tooling/scripts/qa/property.mjs",
-    "quality:presets": "pnpm run api:openapi:lint && pnpm run test:property && pnpm run test:a11y -- --dry-run && pnpm run test:e2e:matrix -- --dry-run && pnpm run test:perf -- --dry-run && pnpm run test:security:dast -- --dry-run && pnpm run test:mutation -- --dry-run"
+    "quality:presets": "pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run test:a11y -- --dry-run && pnpm run test:e2e:matrix -- --dry-run && pnpm run test:perf -- --dry-run && pnpm run test:security -- --dry-run && pnpm run test:mutation -- --dry-run"
   },
   "dependencies": {
     "@fastify/cookie": "11.0.2",
@@ -177,18 +182,8 @@
       "ajv@>=7.0.0 <9.0.0": "8.20.0",
       "ws": "8.21.0"
     },
-    "onlyBuiltDependencies": [
-      "@nestjs/core",
-      "@parcel/watcher",
-      "@swc/core",
-      "esbuild",
-      "nx"
-    ],
-    "ignoredBuiltDependencies": [
-      "@scarf/scarf",
-      "less",
-      "unrs-resolver"
-    ]
+    "onlyBuiltDependencies": ["@nestjs/core", "@parcel/watcher", "@swc/core", "esbuild", "nx"],
+    "ignoredBuiltDependencies": ["@scarf/scarf", "less", "unrs-resolver"]
   },
   "engines": {
     "node": ">=26 <27"

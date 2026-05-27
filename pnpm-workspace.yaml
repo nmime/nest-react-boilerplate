@@ -6,6 +6,7 @@ packages:
   - "libs/feature/*/*/lib"
   - "libs/postgres/*/*/lib"
   - "libs/backend/lib"
+  - "packages/tooling"
 
 onlyBuiltDependencies:
   - "@nestjs/core"

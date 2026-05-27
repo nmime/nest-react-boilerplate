@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+const all = ["chromium", "firefox", "webkit", "mobile-chrome", "mobile-safari"]; const dryRun = process.argv.includes("--dry-run"); const selected = process.argv.filter((x) => x.startsWith("--project=")).map((x) => x.slice("--project=".length)); const projects = selected.length ? selected : all; const command = ["pnpm", "exec", "playwright", "test", "-c", "playwright.extended.config.ts", ...projects.flatMap((p) => ["--project", p])]; if (dryRun) { console.log(JSON.stringify({ status: "dry-run", command, projects }, null, 2)); process.exit(0); } const result = spawnSync(command[0], command.slice(1), { stdio: "inherit" }); process.exit(result.status ?? 1);

@@ -1,0 +1,74 @@
+{
+  "consumer": {
+    "name": "frontend-auth-client"
+  },
+  "provider": {
+    "name": "auth-app-api"
+  },
+  "interactions": [
+    {
+      "description": "login returns an authenticated session envelope",
+      "request": {
+        "method": "POST",
+        "path": "/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "contract@example.com",
+          "password": "correct-horse-battery-staple"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "accessToken": "jwt-token-for-contract-tests",
+            "tokenType": "Bearer",
+            "expiresIn": 3600,
+            "user": {
+              "id": "user-1",
+              "email": "contract@example.com",
+              "theme": "system",
+              "roles": ["user"],
+              "permissions": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "current user endpoint returns the authenticated user envelope",
+      "request": {
+        "method": "GET",
+        "path": "/auth/me",
+        "headers": {
+          "Authorization": "Bearer jwt-token-for-contract-tests"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "id": "user-1",
+            "email": "contract@example.com",
+            "theme": "system",
+            "roles": ["user"],
+            "permissions": []
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

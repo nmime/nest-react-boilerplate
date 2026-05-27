@@ -33,8 +33,12 @@ export default defineConfig({
         "../../../libs/common/validation/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-auth-oauth": new URL(
-        "../../../libs/feature/auth/oauth/lib/src/index.ts",
+      "@app/feature-auth-main": new URL(
+        "../../../libs/feature/auth/main/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/feature-auth-shared": new URL(
+        "../../../libs/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-user-main": new URL(

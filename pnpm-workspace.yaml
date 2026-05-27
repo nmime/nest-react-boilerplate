@@ -1,11 +1,11 @@
 packages:
   - "apps/frontend/*"
   - "apps/backend/*"
-  - "libs/frontend/*"
-  - "libs/common/*"
-  - "libs/feature/*/*"
-  - "libs/postgres/*/*"
-  - "libs/backend"
+  - "libs/frontend/*/lib"
+  - "libs/common/*/lib"
+  - "libs/feature/*/*/lib"
+  - "libs/postgres/*/*/lib"
+  - "libs/backend/lib"
 
 onlyBuiltDependencies:
   - "@nestjs/core"

@@ -1,5 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { AuthController } from "./auth.controller";
+
+function createRequest() {
+  return {
+    session: {
+      regenerate: vi.fn((callback: (error?: unknown) => void) => callback()),
+      save: vi.fn((callback: (error?: unknown) => void) => callback()),
+      destroy: vi.fn((callback: (error?: unknown) => void) => callback()),
+    },
+    res: { clearCookie: vi.fn() },
+  };
+}
 
 describe("AuthController", () => {
   it("wraps auth service calls in ok responses", async () => {
@@ -25,10 +36,16 @@ describe("AuthController", () => {
     const controller = new AuthController(service as never);
 
     await expect(
-      controller.register({ email: "e", password: "password123" }),
+      controller.register(
+        { email: "e", password: "password123" },
+        createRequest() as never,
+      ),
     ).resolves.toEqual({ data: session });
     await expect(
-      controller.login({ email: "e", password: "password123" }),
+      controller.login(
+        { email: "e", password: "password123" },
+        createRequest() as never,
+      ),
     ).resolves.toEqual({ data: session });
     await expect(
       controller.me({ subject: "id", roles: [], permissions: [] }),
@@ -42,14 +59,18 @@ describe("AuthController", () => {
       controller.updateLocale(
         { subject: "id", roles: [], permissions: [] },
         { locale: "es" },
+        createRequest() as never,
       ),
     ).resolves.toEqual({ data: session.user });
     await expect(
       controller.updatePreferences(
         { subject: "id", roles: [], permissions: [] },
         { locale: "en", theme: "light" },
+        createRequest() as never,
       ),
     ).resolves.toEqual({ data: session.user });
-    expect(controller.logout()).toEqual({ data: { loggedOut: true } });
+    await expect(
+      controller.logout(createRequest() as never, undefined as never),
+    ).resolves.toEqual({ data: { loggedOut: true } });
   });
 });

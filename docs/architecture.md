@@ -25,9 +25,8 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 - `libs/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ProblemResponseTransformer`/`ProblemExceptionFilter`.
 - `libs/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
 - `libs/common/validation` creates `ProblemValidationPipe` validation problem details.
-- `libs/feature/auth/shared` contains auth roles, permissions, user/session contracts, and default access-policy helpers.
+- `libs/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
-- `libs/feature/auth/oauth` contains reusable bearer guard/RBAC decorators plus a disabled-by-default OAuth/OIDC foundation.
 - `libs/feature/user/shared` and `libs/feature/user/main` contain the protected user profile feature.
 - `libs/feature/admin/shared` and `libs/feature/admin/main` contain the protected admin RBAC/profile feature.
 - `libs/frontend/ui` contains shared React components and layout.

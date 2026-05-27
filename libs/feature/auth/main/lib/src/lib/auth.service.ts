@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 import {
   createDefaultAccessPolicy,
+  type AuthenticatedPrincipal,
   normalizeUserThemePreference,
   toAuthenticatedUserView,
   type AuthSessionView,
@@ -21,7 +22,6 @@ import {
   type UserThemePreference,
 } from "@app/feature-auth-shared";
 import { normalizeLocale } from "@app/common/i18n";
-import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
 import {
   AUTH_USER_STORE,
   type AuthUserRecord,

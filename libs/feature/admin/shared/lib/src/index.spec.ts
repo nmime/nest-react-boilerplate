@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
+import type { AuthenticatedPrincipal } from "@app/feature-auth-shared";
 import {
   ADMIN_DASHBOARD_READ_PERMISSION,
   ADMIN_PROFILE_READ_PERMISSION,

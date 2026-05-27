@@ -15,6 +15,7 @@ const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
     json: vi.fn().mockResolvedValue(body),
     ok,
     status,
+    text: vi.fn().mockResolvedValue(JSON.stringify(body)),
   }) as unknown as Response;
 
 type CapturedRequestInit = RequestInit & {

@@ -86,3 +86,11 @@ export function normalizeUserThemePreference(
   const normalized = value.trim().toLowerCase();
   return userThemePreferences.find((theme) => theme === normalized);
 }
+export * from "./lib/oauth/access-control.decorators";
+export * from "./lib/oauth/access-control.types";
+export * from "./lib/oauth/auth-oauth.module";
+export * from "./lib/oauth/auth-oauth.service";
+export * from "./lib/oauth/auth-oauth.types";
+export * from "./lib/oauth/bearer-auth.guard";
+export * from "./lib/oauth/rbac.guard";
+export * from "./lib/oauth/session-auth.guard";

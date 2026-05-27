@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../../..",
+  "../../../../../../..",
 );
 
 const sourceRoots = [
@@ -16,8 +16,15 @@ const sourceRoots = [
   "libs/frontend/api-client/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
-const ignoredSuffixes = [".spec.ts", ".spec.tsx"];
-const ignoredFiles = new Set(["libs/frontend/ui/lib/src/lib/api/api-client.ts"]);
+const ignoredSuffixes = [
+  ".spec.ts",
+  ".spec.tsx",
+  ".stories.ts",
+  ".stories.tsx",
+];
+const ignoredFiles = new Set([
+  "libs/frontend/ui/lib/src/lib/api/api-client.ts",
+]);
 
 const walk = (directory: string): string[] =>
   readdirSync(directory).flatMap((entry) => {

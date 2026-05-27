@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { errAsync, okAsync } from "neverthrow";
-import { validateBearerAuthorization } from "@app/feature-auth-oauth";
+import { validateBearerAuthorization } from "@app/feature-auth-shared";
 import { InMemoryAuthUserStore } from "./auth-user-store";
 import {
   AuthService,

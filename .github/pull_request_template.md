@@ -29,7 +29,7 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `libs/common/bootstrap`
 - [ ] `libs/common/validation`
 - [ ] `libs/common/response`
-- [ ] `libs/feature/auth/oauth`
+- [ ] `libs/feature/auth/shared`
 - [ ] Tooling / CI / docs
 
 ## Changes

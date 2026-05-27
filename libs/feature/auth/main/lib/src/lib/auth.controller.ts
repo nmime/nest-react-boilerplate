@@ -14,15 +14,13 @@ import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
+  BearerAuthGuard,
   clearSessionPrincipal,
   CurrentUser,
-  SessionAuthGuard,
   setSessionPrincipal,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
-} from "@app/feature-auth-oauth";
-import {
   type AuthSessionView,
   userThemePreferences,
 } from "@app/feature-auth-shared";
@@ -180,7 +178,6 @@ class LogoutPayloadDto {
   loggedOut!: true;
 }
 
-
 type SessionMethod = "destroy" | "regenerate" | "save";
 
 function getSessionCookieName(): string {
@@ -207,7 +204,11 @@ async function callSessionMethod(
         request.session,
         (error?: unknown) => {
           if (error) {
-            reject(error);
+            reject(
+              error instanceof Error
+                ? error
+                : new Error("Session lifecycle method failed."),
+            );
             return;
           }
           resolve();
@@ -298,7 +299,7 @@ export class AuthController {
 
   @Get("me")
   @ApiOkDataResponse(MePayloadDto)
-  @UseGuards(new SessionAuthGuard())
+  @UseGuards(new BearerAuthGuard())
   async me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): Promise<OkResponse<MePayload>> {
@@ -310,7 +311,7 @@ export class AuthController {
 
   @Patch("me/locale")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @UseGuards(new SessionAuthGuard())
+  @UseGuards(new BearerAuthGuard())
   async updateLocale(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdateLocaleDto,
@@ -326,13 +327,16 @@ export class AuthController {
 
   @Patch("me/preferences")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @UseGuards(new SessionAuthGuard())
+  @UseGuards(new BearerAuthGuard())
   async updatePreferences(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdatePreferencesDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView["user"]>> {
-    const user = await this.auth.updateUserPreferences(principal.subject, input);
+    const user = await this.auth.updateUserPreferences(
+      principal.subject,
+      input,
+    );
     setSessionPrincipal(request, principalFromUserView(principal, user));
     await callSessionMethod(request, "save");
     return createOkResponse(user);
@@ -346,7 +350,7 @@ export class AuthController {
 
   @Post("logout")
   @ApiOkDataResponse(LogoutPayloadDto)
-  @UseGuards(new SessionAuthGuard())
+  @UseGuards(new BearerAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: AuthenticatedResponse,

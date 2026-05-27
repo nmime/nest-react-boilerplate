@@ -92,7 +92,7 @@ try {
       "--url",
       url,
       "--config-dir",
-      "libs/frontend/ui/.storybook",
+      "libs/frontend/ui/lib/.storybook",
     ],
     { stdio: "inherit" },
   );

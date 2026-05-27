@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../../dist/out-tsc/libs/common/exception-spec",
-    "types": ["node", "vitest"]
-  },
-  "include": ["lib/src/**/*.spec.ts", "lib/src/**/*.test.ts", "lib/src/**/*.ts"]
-}

@@ -4,278 +4,280 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_health"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/health": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/live": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_live"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations["HealthController_health"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/live": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/ready": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["HealthController_ready"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations["HealthController_live"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/ready": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/admin/profile/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["AdminProfileController_me"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get: operations["HealthController_ready"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/admin/profile/me": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    get: operations["AdminProfileController_me"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        AuthenticatedPrincipalDto: {
-            subject: string;
-            /** Format: email */
-            email?: string;
-            displayName?: string;
-            /** @enum {string} */
-            locale?: "en" | "es";
-            issuer?: string;
-            audience?: string | string[];
-            roles: string[];
-            permissions: string[];
-            tokenId?: string;
-        };
-        AdminProfileViewDto: {
-            id: string;
-            /** Format: email */
-            email?: string;
-            displayName?: string;
-            /** @enum {string} */
-            locale?: "en" | "es";
-            roles: string[];
-            permissions: string[];
-        };
-        AdminProfilePayloadDto: {
-            principal: components["schemas"]["AuthenticatedPrincipalDto"];
-            profile: components["schemas"]["AdminProfileViewDto"];
-        };
+  schemas: {
+    AuthenticatedPrincipalDto: {
+      subject: string;
+      /** Format: email */
+      email?: string;
+      displayName?: string;
+      /** @enum {string} */
+      locale?: "en" | "es";
+      issuer?: string;
+      audience?: string | string[];
+      roles: string[];
+      permissions: string[];
+      tokenId?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    AdminProfileViewDto: {
+      id: string;
+      /** Format: email */
+      email?: string;
+      displayName?: string;
+      /** @enum {string} */
+      locale?: "en" | "es";
+      roles: string[];
+      permissions: string[];
+    };
+    AdminProfilePayloadDto: {
+      principal: components["schemas"]["AuthenticatedPrincipalDto"];
+      profile: components["schemas"]["AdminProfileViewDto"];
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
-export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
-export type AdminProfileViewDto = components['schemas']['AdminProfileViewDto'];
-export type AdminProfilePayloadDto = components['schemas']['AdminProfilePayloadDto'];
+export type AuthenticatedPrincipalDto =
+  components["schemas"]["AuthenticatedPrincipalDto"];
+export type AdminProfileViewDto = components["schemas"]["AdminProfileViewDto"];
+export type AdminProfilePayloadDto =
+  components["schemas"]["AdminProfilePayloadDto"];
 export type $defs = Record<string, never>;
 export interface operations {
-    HealthController_health: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  HealthController_health: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    HealthController_live: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+        content?: never;
+      };
     };
-    HealthController_ready: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  HealthController_live: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    AdminProfileController_me: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: components["schemas"]["AdminProfilePayloadDto"];
-                    };
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example about:blank */
-                        type: string;
-                        /** @example Bad Request */
-                        title: string;
-                        /** @example 400 */
-                        status: number;
-                        detail?: string;
-                        instance?: string;
-                        code?: string;
-                    };
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example about:blank */
-                        type: string;
-                        /** @example Bad Request */
-                        title: string;
-                        /** @example 400 */
-                        status: number;
-                        detail?: string;
-                        instance?: string;
-                        code?: string;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example about:blank */
-                        type: string;
-                        /** @example Bad Request */
-                        title: string;
-                        /** @example 400 */
-                        status: number;
-                        detail?: string;
-                        instance?: string;
-                        code?: string;
-                    };
-                };
-            };
-            /** @description Too Many Requests */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example about:blank */
-                        type: string;
-                        /** @example Bad Request */
-                        title: string;
-                        /** @example 400 */
-                        status: number;
-                        detail?: string;
-                        instance?: string;
-                        code?: string;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @example about:blank */
-                        type: string;
-                        /** @example Bad Request */
-                        title: string;
-                        /** @example 400 */
-                        status: number;
-                        detail?: string;
-                        instance?: string;
-                        code?: string;
-                    };
-                };
-            };
-        };
+        content?: never;
+      };
     };
+  };
+  HealthController_ready: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AdminProfileController_me: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminProfilePayloadDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @example about:blank */
+            type: string;
+            /** @example Bad Request */
+            title: string;
+            /** @example 400 */
+            status: number;
+            detail?: string;
+            instance?: string;
+            code?: string;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @example about:blank */
+            type: string;
+            /** @example Bad Request */
+            title: string;
+            /** @example 400 */
+            status: number;
+            detail?: string;
+            instance?: string;
+            code?: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @example about:blank */
+            type: string;
+            /** @example Bad Request */
+            title: string;
+            /** @example 400 */
+            status: number;
+            detail?: string;
+            instance?: string;
+            code?: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @example about:blank */
+            type: string;
+            /** @example Bad Request */
+            title: string;
+            /** @example 400 */
+            status: number;
+            detail?: string;
+            instance?: string;
+            code?: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @example about:blank */
+            type: string;
+            /** @example Bad Request */
+            title: string;
+            /** @example 400 */
+            status: number;
+            detail?: string;
+            instance?: string;
+            code?: string;
+          };
+        };
+      };
+    };
+  };
 }

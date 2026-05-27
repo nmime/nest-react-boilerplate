@@ -95,6 +95,7 @@ class FastifyPostgresSessionStore {
     private readonly defaultMaxAgeSeconds: number,
   ) {
     this.pool = new Pool({ connectionString: databaseUrl });
+    // eslint-disable-next-line sonarjs/no-async-constructor
     this.initialized = this.createTable(this.pool);
   }
 
@@ -216,7 +217,10 @@ class FastifyPostgresSessionStore {
     }
 
     let maxAge = this.defaultMaxAgeSeconds * 1000;
-    if (typeof cookie?.originalMaxAge === "number" && cookie.originalMaxAge > 0) {
+    if (
+      typeof cookie?.originalMaxAge === "number" &&
+      cookie.originalMaxAge > 0
+    ) {
       maxAge = cookie.originalMaxAge;
     } else if (typeof cookie?.maxAge === "number" && cookie.maxAge > 0) {
       maxAge = cookie.maxAge;
@@ -471,7 +475,7 @@ function resolveRateLimitOptions(
   const enabled =
     options.rateLimit?.enabled ??
     readBoolean(process.env.RATE_LIMIT_ENABLED) ??
-    (process.env.NODE_ENV === "production");
+    process.env.NODE_ENV === "production";
 
   return {
     enabled,

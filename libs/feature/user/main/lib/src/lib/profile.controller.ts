@@ -9,7 +9,7 @@ import {
   RbacGuard,
   SessionAuthGuard,
   RequirePermissions,
-} from "@app/feature-auth-oauth";
+} from "@app/feature-auth-shared";
 import {
   toUserProfileView,
   USER_PROFILE_READ_PERMISSION,

@@ -23,8 +23,12 @@
       "@app/frontend-ui": ["libs/frontend/ui/lib/src/index.ts"],
       "@app/postgres-main": ["libs/postgres/main/shared/lib/src/index.ts"],
       "@app/postgres-main-auth": ["libs/postgres/main/auth/lib/src/index.ts"],
-      "@app/common-component-test": ["libs/common/component-test/lib/src/index.ts"],
-      "@app/feature-admin-shared": ["libs/feature/admin/shared/lib/src/index.ts"],
+      "@app/common-component-test": [
+        "libs/common/component-test/lib/src/index.ts"
+      ],
+      "@app/feature-admin-shared": [
+        "libs/feature/admin/shared/lib/src/index.ts"
+      ],
       "@app/feature-admin-main": ["libs/feature/admin/main/lib/src/index.ts"],
       "@app/feature-auth-shared": ["libs/feature/auth/shared/lib/src/index.ts"],
       "@app/feature-auth-main": ["libs/feature/auth/main/lib/src/index.ts"],

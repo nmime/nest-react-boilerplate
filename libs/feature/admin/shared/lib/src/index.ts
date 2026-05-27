@@ -1,6 +1,6 @@
 import type { Locale } from "@app/common/i18n";
 import { normalizeStringList } from "@app/common/shared";
-import type { AuthenticatedPrincipal } from "@app/feature-auth-oauth";
+import type { AuthenticatedPrincipal } from "@app/feature-auth-shared";
 
 export const ADMIN_ROLE = "admin";
 export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";

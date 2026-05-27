@@ -30,14 +30,14 @@ describe("AuthUserEntity", () => {
   it("defaults optional enterprise access fields", () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
 
-    expect(entity.displayName).toBeNull();
+    expect(entity.displayName).toBe("");
     expect(entity.passwordHash).toBe("");
     expect(entity.status).toBe("active");
     expect(entity.roles).toEqual([]);
     expect(entity.permissions).toEqual([]);
-    expect(entity.locale).toBeNull();
+    expect(entity.locale).toBe("en");
     expect(entity.theme).toBe("system");
-    expect(entity.lastLoginAt).toBeNull();
+    expect(entity.lastLoginAt).toEqual(new Date(0));
   });
 
   it("can be constructed empty for MikroORM hydration", () => {
@@ -59,14 +59,14 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.roles.type).toBe("json");
     expect(metadata.properties.permissions.type).toBe("json");
     expect(metadata.properties.locale.length).toBe(16);
-    expect(metadata.properties.locale.nullable).toBe(true);
+    expect(metadata.properties.locale.nullable).not.toBe(true);
     expect(metadata.properties.theme.length).toBe(16);
     expect(metadata.properties.theme.default).toBe("system");
     expect(metadata.properties.theme.nullable).not.toBe(true);
-    expect(metadata.properties.lastLoginAt.nullable).toBe(true);
+    expect(metadata.properties.lastLoginAt.nullable).not.toBe(true);
     expect(metadata.uniques).toContainEqual(
       expect.objectContaining({
-        name: "auth_users_email_key",
+        name: "uq__auth_users__email",
         properties: ["email"],
       }),
     );

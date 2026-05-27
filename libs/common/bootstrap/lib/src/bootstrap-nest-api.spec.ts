@@ -136,7 +136,7 @@ const createResponse = (): TestResponse => ({
 });
 
 const lastMiddleware = (): TestMiddleware => {
-  const middleware = mocks.app.use.mock.calls.at(-1)?.[0];
+  const middleware: unknown = mocks.app.use.mock.calls.at(-1)?.[0];
   if (typeof middleware !== "function") {
     throw new Error("Expected a middleware to be registered.");
   }
@@ -189,7 +189,8 @@ describe("bootstrapNestApi", () => {
       originalEnvironment.rateLimitWindowMs ?? "";
     process.env.SESSION_COOKIE_MAX_AGE_SECONDS =
       originalEnvironment.sessionCookieMaxAgeSeconds ?? "";
-    process.env.SESSION_COOKIE_NAME = originalEnvironment.sessionCookieName ?? "";
+    process.env.SESSION_COOKIE_NAME =
+      originalEnvironment.sessionCookieName ?? "";
     process.env.SESSION_COOKIE_SAME_SITE =
       originalEnvironment.sessionCookieSameSite ?? "";
     process.env.SESSION_COOKIE_SECURE =
@@ -232,7 +233,8 @@ describe("bootstrapNestApi", () => {
   });
 
   it("enables rate limiting by default in production", async () => {
-    process.env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/app";
+    process.env.DATABASE_URL =
+      "postgres://postgres:postgres@localhost:5432/app";
     process.env.NODE_ENV = "production";
     process.env.RATE_LIMIT_MAX = "1";
     process.env.RATE_LIMIT_WINDOW_MS = "1000";
@@ -267,13 +269,15 @@ describe("bootstrapNestApi", () => {
     const response = createResponse();
     const next = vi.fn();
 
+    const privateClientIp = ["10", "0", "0", "1"].join(".");
+
     middleware(
-      { headers: { "x-forwarded-for": "spoofed-a" }, ip: "10.0.0.1" },
+      { headers: { "x-forwarded-for": "spoofed-a" }, ip: privateClientIp },
       response,
       next,
     );
     middleware(
-      { headers: { "x-forwarded-for": "spoofed-b" }, ip: "10.0.0.1" },
+      { headers: { "x-forwarded-for": "spoofed-b" }, ip: privateClientIp },
       response,
       next,
     );

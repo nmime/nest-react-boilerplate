@@ -120,7 +120,7 @@ const parseBody = async (response: Response): Promise<unknown> => {
     return undefined;
   }
 
-  let text = "";
+  let text: string;
   try {
     text = await response.text();
   } catch {

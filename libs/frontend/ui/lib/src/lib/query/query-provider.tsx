@@ -3,7 +3,7 @@ import {
   QueryClientProvider,
   type QueryClientConfig,
 } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export const createFrontendQueryClient = (
   config?: QueryClientConfig,
@@ -28,7 +28,11 @@ export const frontendQueryClient = createFrontendQueryClient();
 
 export function FrontendQueryProvider({
   children,
-  client = frontendQueryClient,
+  client,
 }: Readonly<{ children: ReactNode; client?: QueryClient }>) {
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  const [ownedClient] = useState(() => client ?? createFrontendQueryClient());
+
+  return (
+    <QueryClientProvider client={ownedClient}>{children}</QueryClientProvider>
+  );
 }

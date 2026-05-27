@@ -14,7 +14,8 @@ export default defineConfig({
     coverage: {
       enabled: false,
       provider: "v8",
-      reportsDirectory: "../../../../../coverage/libs/feature/auth/main-component",
+      reportsDirectory:
+        "../../../../../coverage/libs/feature/auth/main-component",
       reporter: ["text", "lcov"],
       include: ["src/lib/**/*.{ts,tsx}"],
       exclude: ["src/**/*.spec.ts", "src/**/*.component-spec.ts"],

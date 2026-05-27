@@ -4,7 +4,8 @@ import { defineConfig } from "vitest/config";
 import { fullCoverage } from "../../../../../tools/vitest-coverage.mts";
 
 export default defineConfig({
-  cacheDir: "../../../../../node_modules/.vitest/out-tsc/libs/feature/user/main",
+  cacheDir:
+    "../../../../../node_modules/.vitest/out-tsc/libs/feature/user/main",
   plugins: [nxViteTsPaths()],
   test: {
     environment: "node",

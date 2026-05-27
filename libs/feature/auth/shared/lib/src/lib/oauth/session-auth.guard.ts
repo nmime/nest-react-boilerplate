@@ -45,11 +45,10 @@ export function setSessionPrincipal(
   request: AuthenticatedRequest,
   principal: AuthenticatedPrincipal,
 ): void {
-  if (!request.session) {
-    throw new UnauthorizedException("Session is not available.");
+  if (request.session) {
+    request.session.user = principal;
   }
 
-  request.session.user = principal;
   request.user = principal;
   request.auth = principal;
 }

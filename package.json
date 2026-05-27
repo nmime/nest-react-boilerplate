@@ -60,6 +60,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "dataloader": "2.2.3",
+    "fastify": "5.8.5",
     "helmet": "8.1.0",
     "mobx": "^6.15.3",
     "mobx-react-lite": "^4.1.1",

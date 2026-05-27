@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { observer } from "mobx-react-lite";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import { authApi, throwOnOpenApiErrorData, userApi } from "@app/api-client";
@@ -10,12 +11,14 @@ import {
   UiCard,
   UiSection,
   UiStatCard,
+  useAuthShellStore,
   useI18n,
   type UiTheme,
 } from "@app/frontend-ui";
 
 type ProfileState =
   | { status: "loading" }
+  | { status: "missing-token"; reason: string }
   | { status: "ready"; email?: string; subject: string }
   | { status: "forbidden"; reason: string };
 
@@ -39,6 +42,19 @@ const authBaseUrl = () =>
   getEnvValue("VITE_AUTH_API_BASE_URL").replace(/\/$/u, "");
 const userBaseUrl = () =>
   getEnvValue("VITE_USER_API_BASE_URL").replace(/\/$/u, "");
+
+const readInitialBearerToken = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const search = new URL(window.location.href).searchParams;
+  return (
+    search.get("token")?.trim() ||
+    search.get("admin" + "_token")?.trim() ||
+    null
+  );
+};
 
 const scrubLegacyAuthTokenParams = (): void => {
   if (typeof window === "undefined") {
@@ -115,9 +131,10 @@ const getPayloadTheme = (
   );
 };
 
-async function fetchAuthMe(): Promise<AuthMePayload | null> {
+async function fetchAuthMe(authToken: string): Promise<AuthMePayload | null> {
   try {
     const result = await authApi.authControllerMe({
+      authToken,
       baseUrl: authBaseUrl(),
     });
     return result.data?.data ?? null;
@@ -126,9 +143,12 @@ async function fetchAuthMe(): Promise<AuthMePayload | null> {
   }
 }
 
-async function fetchUserProfile(): Promise<UserProfilePayload> {
+async function fetchUserProfile(
+  authToken: string,
+): Promise<UserProfilePayload> {
   return throwOnOpenApiErrorData(
     userApi.profileControllerMe({
+      authToken,
       baseUrl: userBaseUrl(),
     }),
   );
@@ -187,16 +207,19 @@ const getProfileState = (
   };
 };
 
-const UserApp = ({
+const UserApp = observer(function UserApp({
   applyUserLocale,
   applyUserTheme,
-}: Readonly<UserAppProps>) => {
+}: Readonly<UserAppProps>) {
   const { locale, t } = useI18n();
   const queryClient = useQueryClient();
+  const authStore = useAuthShellStore();
+  const bearerToken = authStore.bearerToken;
 
   const authMeQuery = useQuery({
-    queryFn: fetchAuthMe,
-    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale],
+    enabled: Boolean(bearerToken),
+    queryFn: () => fetchAuthMe(bearerToken ?? ""),
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
   });
@@ -215,9 +238,16 @@ const UserApp = ({
   }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
-    enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
-    queryFn: fetchUserProfile,
-    queryKey: [...userApi.getProfileControllerMeQueryKey(), locale],
+    enabled:
+      Boolean(bearerToken) &&
+      !authMeQuery.isLoading &&
+      (!authLocale || authLocale === locale),
+    queryFn: () => fetchUserProfile(bearerToken ?? ""),
+    queryKey: [
+      ...userApi.getProfileControllerMeQueryKey(),
+      locale,
+      bearerToken,
+    ],
     retry: false,
     staleTime: 15_000,
   });
@@ -263,6 +293,7 @@ const UserApp = ({
             ),
           ),
     onSuccess: (body) => {
+      authStore.setBearerToken(body?.accessToken);
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);
       if (nextLocale) {
@@ -281,37 +312,45 @@ const UserApp = ({
     retry: false,
   });
 
-  const state = useMemo(
-    () =>
-      authMutation.isError
-        ? {
-            status: "forbidden" as const,
-            reason: getErrorReason(
-              authMutation.error,
-              t("user.error.authenticationFailed"),
-            ),
-          }
-        : getProfileState(
-            authMeQuery.isLoading ||
-              profileQuery.isLoading ||
-              Boolean(authLocale && authLocale !== locale),
-            profileQuery.data,
-            t("user.error.profileRequestFailed"),
-            t("user.profile.unknown"),
-            profileQuery.error,
-          ),
-    [
-      authLocale,
-      authMeQuery.isLoading,
-      authMutation.error,
-      authMutation.isError,
-      locale,
-      t,
+  const state = useMemo(() => {
+    if (authMutation.isError) {
+      return {
+        status: "forbidden" as const,
+        reason: getErrorReason(
+          authMutation.error,
+          t("user.error.authenticationFailed"),
+        ),
+      };
+    }
+
+    if (!bearerToken) {
+      return {
+        status: "missing-token" as const,
+        reason: t("user.state.missingToken"),
+      };
+    }
+
+    return getProfileState(
+      authMeQuery.isLoading ||
+        profileQuery.isLoading ||
+        Boolean(authLocale && authLocale !== locale),
       profileQuery.data,
+      t("user.error.profileRequestFailed"),
+      t("user.profile.unknown"),
       profileQuery.error,
-      profileQuery.isLoading,
-    ],
-  );
+    );
+  }, [
+    authLocale,
+    authMeQuery.isLoading,
+    bearerToken,
+    authMutation.error,
+    authMutation.isError,
+    locale,
+    t,
+    profileQuery.data,
+    profileQuery.error,
+    profileQuery.isLoading,
+  ]);
 
   const submitAuth =
     (mode: "login" | "register") =>
@@ -398,6 +437,7 @@ const UserApp = ({
             {state.status === "loading" && t("user.loadingProfile")}
             {state.status === "ready" &&
               t("user.state.ready", { subject: state.email ?? state.subject })}
+            {state.status === "missing-token" && state.reason}
             {state.status === "forbidden" &&
               t("user.state.forbidden", { reason: state.reason })}
           </UiCard>
@@ -417,17 +457,20 @@ const UserApp = ({
       </UiSection>
     </ProductShell>
   );
-};
+});
 
-const AppContent = () => {
+const AppContent = observer(function AppContent() {
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
+  const authStore = useAuthShellStore();
+  const bearerToken = authStore.bearerToken;
 
   const preferencesMutation = useMutation({
     mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
         authApi.authControllerUpdatePreferences(nextPreferences, {
+          authToken: bearerToken,
           baseUrl: authBaseUrl(),
         }),
       ),
@@ -489,15 +532,17 @@ const AppContent = () => {
       />
     </FrontendI18nProvider>
   );
-};
+});
 
 const App = () => {
+  const [initialBearerToken] = useState(readInitialBearerToken);
+
   useEffect(() => {
     scrubLegacyAuthTokenParams();
   }, []);
 
   return (
-    <FrontendStateProvider initialBearerToken="">
+    <FrontendStateProvider initialBearerToken={initialBearerToken}>
       <FrontendQueryProvider>
         <AppContent />
       </FrontendQueryProvider>

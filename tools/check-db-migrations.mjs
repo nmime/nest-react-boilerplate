@@ -123,9 +123,7 @@ function validateAlterTableAddColumns(file, sql) {
 
 function validateOnlineDdlHints(file, sql) {
   const normalized = normalizeSql(sql).toLowerCase();
-  const looksMysql = /\b(engine|charset|collate)\s*=|`[^`]+`/.test(
-    normalized,
-  );
+  const looksMysql = /\b(engine|charset|collate)\s*=|`[^`]+`/.test(normalized);
 
   if (!looksMysql) {
     return;
@@ -166,7 +164,10 @@ function validateUniqueNames(file, sql) {
       const expected = `uq__${table}__${cols}`;
 
       if (actual !== expected) {
-        fail(file, `unique constraint must be named ${expected}, got ${actual}`);
+        fail(
+          file,
+          `unique constraint must be named ${expected}, got ${actual}`,
+        );
       }
     } else if (!/^uq__[a-zA-Z0-9_]+__[a-zA-Z0-9_]+$/.test(actual)) {
       fail(
@@ -208,7 +209,10 @@ function validateForeignKeyNames(file, sql) {
 
     if (!table) {
       if (!/^fk__[a-zA-Z0-9_]+__[a-zA-Z0-9_]+$/.test(actual)) {
-        fail(file, `foreign key name must match fk__{table}__{column}: ${actual}`);
+        fail(
+          file,
+          `foreign key name must match fk__{table}__{column}: ${actual}`,
+        );
       }
 
       continue;
@@ -229,7 +233,10 @@ function validateCheckConstraintNames(file, sql) {
     const actual = match[1];
 
     if (!/^ck__[a-zA-Z0-9_]+__[a-zA-Z0-9_]+$/.test(actual)) {
-      fail(file, `check constraint name must match ck__{table}__{rule}: ${actual}`);
+      fail(
+        file,
+        `check constraint name must match ck__{table}__{rule}: ${actual}`,
+      );
     }
   }
 }

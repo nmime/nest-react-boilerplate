@@ -10,7 +10,7 @@ import {
   SessionAuthGuard,
   RequirePermissions,
   RequireRoles,
-} from "@app/feature-auth-oauth";
+} from "@app/feature-auth-shared";
 import {
   ADMIN_PROFILE_READ_PERMISSION,
   ADMIN_ROLE,

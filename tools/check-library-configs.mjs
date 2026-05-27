@@ -8,6 +8,7 @@ const libsRoot = join(root, "libs");
 const rootConfigFileNames = new Set([
   "eslint.config.cjs",
   "project.json",
+  "package.json",
   "tsconfig.json",
   "tsconfig.lib.json",
   "tsconfig.spec.json",
@@ -40,12 +41,16 @@ function checkFile(absolutePath) {
   }
 
   if (rootConfigFileNames.has(fileName) && segments.at(-2) !== "lib") {
-    errors.push(`${path}: library config file must be inside the library lib/ folder`);
+    errors.push(
+      `${path}: library config file must be inside the library lib/ folder`,
+    );
   }
 
   const storybookIndex = segments.indexOf(".storybook");
   if (storybookIndex >= 0 && segments.at(storybookIndex - 1) !== "lib") {
-    errors.push(`${path}: library Storybook config must be inside the library lib/ folder`);
+    errors.push(
+      `${path}: library Storybook config must be inside the library lib/ folder`,
+    );
   }
 }
 

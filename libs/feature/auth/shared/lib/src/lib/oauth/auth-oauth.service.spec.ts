@@ -208,9 +208,9 @@ describe("AuthOAuthService", () => {
 
     expect(authorization.isOk()).toBe(true);
     const request = authorization._unsafeUnwrap();
-    expect(new URL(request.authorizationUrl).searchParams.has("returnUrl")).toBe(
-      false,
-    );
+    expect(
+      new URL(request.authorizationUrl).searchParams.has("returnUrl"),
+    ).toBe(false);
     const consumed = await service.consumeAuthorizationState({
       sessionId: SessionId,
       state: request.state,

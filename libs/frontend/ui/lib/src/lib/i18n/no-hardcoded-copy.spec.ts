@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const workspaceRoot = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../../..",
+  "../../../../../../..",
 );
 
 const sourceRoots = [
@@ -15,7 +15,14 @@ const sourceRoots = [
   "libs/frontend/ui/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
-const ignoredSuffixes = [".spec.ts", ".spec.tsx", ".test.ts", ".test.tsx"];
+const ignoredSuffixes = [
+  ".spec.ts",
+  ".spec.tsx",
+  ".test.ts",
+  ".test.tsx",
+  ".stories.ts",
+  ".stories.tsx",
+];
 const ignoredDirectories = new Set([
   ".git",
   ".nx",

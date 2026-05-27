@@ -14,11 +14,7 @@ import {
   fetchAdminProfile,
   getAdminApiBaseUrl,
 } from "./auth-rbac";
-import {
-  AdminLayout,
-  type AdminProfileState,
-  renderAdminRoute,
-} from "./pages";
+import { AdminLayout, type AdminProfileState, renderAdminRoute } from "./pages";
 
 const getBrowserPath = (): string => window.location.pathname;
 
@@ -208,11 +204,7 @@ const AdminApp = ({
     ],
   );
 
-  return (
-    <AdminLayout>
-      {renderAdminRoute(path, state, t)}
-    </AdminLayout>
-  );
+  return <AdminLayout>{renderAdminRoute(path, state, t)}</AdminLayout>;
 };
 
 const AppContent = () => {

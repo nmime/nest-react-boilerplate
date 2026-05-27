@@ -3,43 +3,10 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/frontend/landing/src",
   "projectType": "application",
-  "tags": [
-    "platform:frontend",
-    "type:frontend-app",
-    "scope:landing",
-    "type:app"
-  ],
+  "tags": ["platform:frontend", "type:frontend-app", "scope:landing", "type:app"],
   "// targets": "to see all targets run: nx show project landing-app --web",
   "targets": {
-    "test": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "options": {
-        "cwd": "apps/frontend/landing",
-        "command": "vitest run --config vitest.config.mts"
-      },
-      "inputs": [
-        "default",
-        "^production",
-        {
-          "externalDependencies": ["vitest"]
-        }
-      ],
-      "outputs": ["{workspaceRoot}/coverage/apps/frontend/landing"]
-    },
-    "e2e": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/landing/vite.config.mts && node tools/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"Launch a full-stack Nest and React product foundation.\" --coverage-dir coverage/e2e/apps/frontend/landing"
-      },
-      "inputs": [
-        "production",
-        {
-          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
-        }
-      ],
-      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/landing"]
-    }
+    "test": { "executor": "nx:run-commands", "cache": true, "options": { "cwd": "apps/frontend/landing", "command": "vitest run --config vitest.config.mts" }, "inputs": ["default", "^production", { "externalDependencies": ["vitest"] }], "outputs": ["{workspaceRoot}/coverage/apps/frontend/landing"] },
+    "e2e": { "executor": "nx:run-commands", "cache": false, "options": { "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/landing/vite.config.mts && node packages/tooling/scripts/testing/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"Launch a full-stack Nest and React product foundation.\" --coverage-dir coverage/e2e/apps/frontend/landing" }, "inputs": ["production", { "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"] }], "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/landing"] }
   }
 }

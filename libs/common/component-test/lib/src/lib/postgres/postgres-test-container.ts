@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import type { AnyEntity, EntityClass, EntitySchema } from "@mikro-orm/core";
 import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import {
@@ -49,9 +50,11 @@ export interface PostgresContainerOptions {
   startupTimeoutMs?: number;
 }
 
-export type PostgresEntityList = NonNullable<
-  MikroOrmModuleSyncOptions["entities"]
->;
+export type PostgresEntityList = (
+  | string
+  | EntityClass<AnyEntity>
+  | EntitySchema
+)[];
 
 export type PostgresMikroOrmTestOptions = MikroOrmModuleSyncOptions;
 
@@ -88,7 +91,7 @@ export function createPostgresContainerMikroOrmOptions(
   overrides: Partial<PostgresMikroOrmTestOptions> = {},
 ): PostgresMikroOrmTestOptions {
   return {
-    driver: PostgreSqlDriver as unknown as MikroOrmModuleSyncOptions["driver"],
+    driver: PostgreSqlDriver,
     host: container.getHost(),
     port: container.getPort(),
     user: container.getUsername(),

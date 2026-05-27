@@ -9,6 +9,7 @@ describe("AdminProfileController", () => {
       subject: "admin-id",
       email: "admin@example.com",
       displayName: "Ada Admin",
+      locale: "es",
       roles: ["admin", "admin"],
       permissions: [ADMIN_PROFILE_READ_PERMISSION, "profile:read"],
     };
@@ -20,6 +21,7 @@ describe("AdminProfileController", () => {
           id: "admin-id",
           email: "admin@example.com",
           displayName: "Ada Admin",
+          locale: "es",
           roles: ["admin"],
           permissions: [ADMIN_PROFILE_READ_PERMISSION, "profile:read"],
         },

@@ -7,6 +7,8 @@ describe("User ProfileController", () => {
     const principal: AuthenticatedPrincipal = {
       subject: "user-id",
       email: "user@example.com",
+      displayName: "User Name",
+      locale: "es",
       roles: ["user"],
       permissions: ["profile:read"],
     };
@@ -17,6 +19,8 @@ describe("User ProfileController", () => {
         profile: {
           id: "user-id",
           email: "user@example.com",
+          displayName: "User Name",
+          locale: "es",
           roles: ["user"],
           permissions: ["profile:read"],
         },

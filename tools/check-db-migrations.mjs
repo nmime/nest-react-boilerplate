@@ -123,7 +123,9 @@ function validateAlterTableAddColumns(file, sql) {
 
 function validateOnlineDdlHints(file, sql) {
   const normalized = normalizeSql(sql).toLowerCase();
-  const looksMysql = /\b(engine|charset|collate)\s*=|`[^`]+`/.test(normalized);
+  const looksMysql =
+    /\b(engine|charset|collate)\s*=/.test(normalized) ||
+    /`[a-z_][a-z0-9_$]*`/i.test(sql);
 
   if (!looksMysql) {
     return;

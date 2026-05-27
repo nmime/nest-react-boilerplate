@@ -1,0 +1,25 @@
+export default {
+  packageManager: "pnpm",
+  testRunner: "command",
+  commandRunner: {
+    command: "pnpm exec vitest run --runInBand --passWithNoTests",
+  },
+  mutate: [
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "libs/**/*.ts",
+    "libs/**/*.tsx",
+    "!**/*.spec.ts",
+    "!**/*.spec.tsx",
+    "!**/*.e2e-spec.ts",
+    "!**/*.component-spec.ts",
+    "!**/generated/**",
+    "!**/migrations/**",
+  ],
+  thresholds: { high: 80, low: 60, break: 50 },
+  timeoutMS: 60000,
+  concurrency: 2,
+  reporters: ["progress", "clear-text", "html"],
+  htmlReporter: { fileName: "test-results/mutation/index.html" },
+  coverageAnalysis: "off",
+};

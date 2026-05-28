@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vitest/config";
-import { fullCoverage } from "../../../../../tools/vitest-coverage.mts";
+import { fullCoverage } from "../../../../../packages/tooling/scripts/src/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir:

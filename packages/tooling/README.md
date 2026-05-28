@@ -11,6 +11,6 @@ Workspace-local tooling package for repository scripts. Implementations live und
 - `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
 - `src/` shared TypeScript helper exports.
 
-Root `tools/*` files are compatibility shims only; update implementations here.
+Do not add root-level `tools/` wrappers. New local commands should call `packages/tooling/scripts/...` directly from `package.json` or from the owning workspace package.
 
 All QA presets are designed to be useful locally without depending on GitHub Actions. Expensive presets support `--dry-run` and environment variables documented in `docs/testing/modern-qa.md` so CI can choose a different cadence later.

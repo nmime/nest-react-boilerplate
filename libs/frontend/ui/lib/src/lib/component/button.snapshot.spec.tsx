@@ -33,4 +33,52 @@ describe("UiButton snapshots", () => {
       </a>
     `);
   });
+
+  it("renders a busy button", () => {
+    const { container } = render(
+      <UiButton isLoading loadingLabel="Saving">
+        Save changes
+      </UiButton>,
+    );
+
+    expect(container.firstChild).toMatchInlineSnapshot(`
+      <button
+        aria-busy="true"
+        class="xr-button xr-button--primary xr-button--loading"
+        disabled=""
+        type="button"
+      >
+        <span
+          aria-hidden="true"
+          class="xr-button__content"
+        >
+          Save changes
+        </span>
+        <span
+          class="xr-button__loading-label"
+        >
+          Saving
+        </span>
+      </button>
+    `);
+  });
+
+  it("renders a disabled secondary anchor", () => {
+    const { container } = render(
+      <UiButton disabled href="/billing" variant="secondary">
+        Billing settings
+      </UiButton>,
+    );
+
+    expect(container.firstChild).toMatchInlineSnapshot(`
+      <a
+        aria-disabled="true"
+        class="xr-button xr-button--secondary"
+        href="/billing"
+        tabindex="-1"
+      >
+        Billing settings
+      </a>
+    `);
+  });
 });

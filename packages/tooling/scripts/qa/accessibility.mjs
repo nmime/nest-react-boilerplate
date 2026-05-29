@@ -18,6 +18,18 @@ if (dryRun) {
   process.exit(0);
 }
 
+function contentType(file) {
+  if (file.endsWith(".html")) return "text/html; charset=utf-8";
+  if (file.endsWith(".js") || file.endsWith(".mjs")) {
+    return "text/javascript; charset=utf-8";
+  }
+  if (file.endsWith(".css")) return "text/css; charset=utf-8";
+  if (file.endsWith(".json")) return "application/json; charset=utf-8";
+  if (file.endsWith(".svg")) return "image/svg+xml";
+  if (file.endsWith(".ico")) return "image/x-icon";
+  return "application/octet-stream";
+}
+
 async function serveDir(dir) {
   const root = resolve(dir);
   const server = createServer((req, res) => {
@@ -28,6 +40,7 @@ async function serveDir(dir) {
       res.end("not found");
       return;
     }
+    res.setHeader("content-type", contentType(file));
     createReadStream(file).pipe(res);
   });
   await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
@@ -50,8 +63,17 @@ async function loadAxeSource() {
   }
 }
 
+const defaultTargetDirs = [
+  "dist/apps/frontend/admin",
+  "dist/apps/frontend/app",
+  "dist/apps/frontend/landing",
+];
+if (process.env.A11Y_INCLUDE_STORYBOOK === "1") {
+  defaultTargetDirs.push("dist/storybook/frontend-ui");
+}
+
 const servers = [];
-for (const dir of ["dist/apps/frontend/admin", "dist/apps/frontend/app", "dist/apps/frontend/landing", "dist/storybook/frontend-ui"]) if (existsSync(join(dir, "index.html"))) {
+for (const dir of defaultTargetDirs) if (existsSync(join(dir, "index.html"))) {
   const server = await serveDir(dir);
   servers.push(server);
   urls.push(server.url);

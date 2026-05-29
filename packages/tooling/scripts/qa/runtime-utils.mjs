@@ -62,7 +62,17 @@ export function run(command, args = [], options = {}) {
 }
 
 export function defaultIgnore(rel) {
-  return [".git", "node_modules", "dist", "coverage", "test-results", "playwright-report", ".nx", ".cache"].some((item) => rel === item || rel.startsWith(`${item}/`));
+  const ignoredSegments = new Set([
+    ".git",
+    "node_modules",
+    "dist",
+    "coverage",
+    "test-results",
+    "playwright-report",
+    ".nx",
+    ".cache",
+  ]);
+  return rel.split("/").some((segment) => ignoredSegments.has(segment));
 }
 
 export function collectFiles(root, options = {}) {

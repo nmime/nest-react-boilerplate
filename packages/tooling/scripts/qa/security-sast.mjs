@@ -27,7 +27,15 @@ if (engine === "semgrep" && !dryRun) {
   } else findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
 }
 
-for (const file of collectFiles(workspaceRoot, { include: (path, rel) => [".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts"].includes(extname(path).toLowerCase()) && !rel.endsWith(".d.ts") })) {
+function isProductionSource(path, rel) {
+  if (![".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts"].includes(extname(path).toLowerCase())) {
+    return false;
+  }
+  if (rel.endsWith(".d.ts")) return false;
+  return !/(^|[./-])(spec|test|e2e-spec|component-spec)\.[cm]?[jt]sx?$/u.test(rel);
+}
+
+for (const file of collectFiles(workspaceRoot, { include: isProductionSource })) {
   const rel = relative(workspaceRoot, file).replaceAll("\\", "/");
   const text = readFileSync(file, "utf8");
   for (const rule of rules) for (const match of text.matchAll(rule.regex)) {

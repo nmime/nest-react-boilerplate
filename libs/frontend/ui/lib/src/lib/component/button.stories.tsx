@@ -3,13 +3,12 @@ import { expect, userEvent, within } from "storybook/test";
 
 import { UiButton } from "./button";
 
-const storyTitle = ["Components", "UiButton"].join("/");
 const primaryLabel = ["Create", "workspace"].join(" ");
 const secondaryLabel = ["Read", "docs"].join(" ");
 const loadingLabel = ["Saving"].join("");
 
 const meta = {
-  title: storyTitle,
+  title: "Components/UiButton",
   component: UiButton,
   parameters: {
     layout: "centered",

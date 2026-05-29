@@ -16,7 +16,7 @@ concurrency:
 jobs:
   quality:
     name: Nx quality gates
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
 
   e2e:
     name: Static/browser e2e coverage
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: quality
 
     steps:
@@ -114,7 +114,7 @@ jobs:
 
   docker-smoke:
     name: Docker smoke stack
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: quality
 
     steps:
@@ -137,7 +137,7 @@ jobs:
 
   fullstack-e2e:
     name: Fullstack Playwright e2e
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: docker-smoke
 
     steps:

@@ -21,6 +21,28 @@ describe("shared UI components", () => {
     expect(html).toContain("Open dashboard");
   });
 
+  it("hardens links that open in a new tab", () => {
+    const html = renderToStaticMarkup(
+      <UiButton href="https://example.com/docs" rel="nofollow" target="_blank">
+        External docs
+      </UiButton>,
+    );
+
+    expect(html).toContain('rel="noopener noreferrer nofollow"');
+    expect(html).toContain('target="_blank"');
+  });
+
+  it("renders disabled links outside the tab order", () => {
+    const html = renderToStaticMarkup(
+      <UiButton disabled href="/danger" variant="secondary">
+        Dangerous action
+      </UiButton>,
+    );
+
+    expect(html).toContain('aria-disabled="true"');
+    expect(html).toContain('tabindex="-1"');
+  });
+
   it("renders safe button controls by default", () => {
     const html = renderToStaticMarkup(<UiButton>Confirm</UiButton>);
 
@@ -29,13 +51,29 @@ describe("shared UI components", () => {
     expect(html).toContain("xr-button--primary");
   });
 
-  it("renders card title and body content", () => {
+  it("marks loading buttons as busy and disabled", () => {
     const html = renderToStaticMarkup(
-      <UiCard title="Security">Strict validation enabled</UiCard>,
+      <UiButton isLoading loadingLabel="Saving">
+        Save changes
+      </UiButton>,
+    );
+
+    expect(html).toContain('aria-busy="true"');
+    expect(html).toContain("disabled");
+    expect(html).toContain("xr-button--loading");
+    expect(html).toContain("Saving");
+  });
+
+  it("renders card title and body content with a stable label", () => {
+    const html = renderToStaticMarkup(
+      <UiCard title="Security" titleId="security-card-title">
+        Strict validation enabled
+      </UiCard>,
     );
 
     expect(html).toContain("<article");
-    expect(html).toContain("<h3");
+    expect(html).toContain('aria-labelledby="security-card-title"');
+    expect(html).toContain('id="security-card-title"');
     expect(html).toContain("Security");
     expect(html).toContain("Strict validation enabled");
   });
@@ -45,11 +83,12 @@ describe("shared UI components", () => {
 
     expect(html).toContain("Body only");
     expect(html).not.toContain("xr-card__title");
+    expect(html).not.toContain("aria-labelledby");
   });
 
   it("renders sections with and without optional eyebrow copy", () => {
     const withEyebrow = renderToStaticMarkup(
-      <UiSection eyebrow="Overview" title="Workspace">
+      <UiSection eyebrow="Overview" title="Workspace" titleId="workspace-title">
         Section content
       </UiSection>,
     );
@@ -59,6 +98,7 @@ describe("shared UI components", () => {
 
     expect(withEyebrow).toContain("Overview");
     expect(withEyebrow).toContain("xr-eyebrow");
+    expect(withEyebrow).toContain('aria-labelledby="workspace-title"');
     expect(withoutEyebrow).toContain("Workspace");
     expect(withoutEyebrow).not.toContain("xr-eyebrow");
   });
@@ -69,35 +109,50 @@ describe("shared UI components", () => {
         detail="Always available"
         label="Availability"
         value="24/7"
+        valueLabel="twenty four seven"
       />,
     );
     const defaultStatus = renderToStaticMarkup(<UiStatusPill label="Ready" />);
-    const warningStatus = renderToStaticMarkup(
-      <UiStatusPill label="Internal" tone="warning" />,
+    const liveStatus = renderToStaticMarkup(
+      <UiStatusPill label="Internal" live="polite" tone="warning" />,
     );
 
-    expect(stat).toContain("Availability");
-    expect(stat).toContain("24/7");
-    expect(stat).toContain("Always available");
+    expect(stat).toContain('role="group"');
+    expect(stat).toContain(
+      'aria-label="Availability: twenty four seven. Always available"',
+    );
     expect(defaultStatus).toContain("xr-status--info");
-    expect(warningStatus).toContain("xr-status--warning");
+    expect(defaultStatus).toContain('data-tone="info"');
+    expect(liveStatus).toContain("xr-status--warning");
+    expect(liveStatus).toContain('aria-live="polite"');
+    expect(liveStatus).toContain('role="status"');
   });
+
   it("renders feedback primitives", () => {
     const loading = renderToStaticMarkup(<UiLoading label="Loading profile" />);
     const empty = renderToStaticMarkup(
       <UiEmptyState
         description="Create the first item."
+        descriptionId="empty-description"
         title="Nothing here yet"
+        titleId="empty-title"
       />,
     );
     const toast = renderToStaticMarkup(
       <UiToast message="Saved" tone="success" />,
     );
+    const warningToast = renderToStaticMarkup(
+      <UiToast message="Sync delayed" tone="warning" />,
+    );
 
     expect(loading).toContain('role="status"');
+    expect(loading).toContain('aria-live="polite"');
     expect(loading).toContain("Loading profile");
-    expect(empty).toContain("Nothing here yet");
-    expect(empty).toContain("Create the first item.");
+    expect(empty).toContain('aria-labelledby="empty-title"');
+    expect(empty).toContain('aria-describedby="empty-description"');
     expect(toast).toContain("xr-toast--success");
+    expect(toast).toContain('aria-live="polite"');
+    expect(warningToast).toContain('role="alert"');
+    expect(warningToast).toContain('aria-live="assertive"');
   });
 });

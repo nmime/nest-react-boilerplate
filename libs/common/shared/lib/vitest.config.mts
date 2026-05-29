@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { fullCoverage } from "../../../../packages/tooling/scripts/src/vitest-coverage.mts";
+import { fullCoverage } from "../../../../config/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir: "../../../../dist/out-tsc/libs/common/shared",

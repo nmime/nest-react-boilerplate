@@ -1,11 +1,7 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PUBLIC_AUTH_METADATA_KEY } from "./access-control.decorators";
+import { validateBearerAuthorization } from "./bearer-auth.guard";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedRequest,
@@ -21,14 +17,16 @@ export class SessionAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const principal = getSessionPrincipal(request);
-    if (!principal) {
-      throw new UnauthorizedException("Authenticated session is required.");
-    }
+    const principal =
+      getSessionPrincipal(request) ??
+      validateBearerAuthorization(
+        readAuthorizationHeader(request),
+        process.env,
+      );
 
     request.user = principal;
     request.auth = principal;
-    return true;
+    return request.user === principal && request.auth === principal;
   }
 
   private isPublicRoute(context: ExecutionContext): boolean {
@@ -59,6 +57,21 @@ export function clearSessionPrincipal(request: AuthenticatedRequest): void {
   }
   delete request.user;
   delete request.auth;
+}
+
+function readAuthorizationHeader(
+  request: AuthenticatedRequest,
+): string | undefined {
+  const directHeader =
+    request.headers?.authorization ?? request.headers?.Authorization;
+  if (Array.isArray(directHeader)) {
+    return directHeader[0];
+  }
+  if (typeof directHeader === "string") {
+    return directHeader;
+  }
+
+  return request.get?.("authorization") ?? request.get?.("Authorization");
 }
 
 function getSessionPrincipal(

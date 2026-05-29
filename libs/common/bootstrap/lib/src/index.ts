@@ -407,6 +407,11 @@ async function registerFastifySession(
   );
 }
 
+function resolveHost(): string | undefined {
+  const host = process.env.HOST?.trim();
+  return host && host.length > 0 ? host : undefined;
+}
+
 function resolvePort(defaultPort: number): number {
   const port = readPositiveInteger("PORT", process.env.PORT, defaultPort);
   if (port > 65_535) {
@@ -598,5 +603,11 @@ export async function bootstrapNestApi(
     version: options.openApi?.version,
   });
 
-  await app.listen(resolvePort(options.defaultPort));
+  const port = resolvePort(options.defaultPort);
+  const host = resolveHost();
+  if (host) {
+    await app.listen(port, host);
+  } else {
+    await app.listen(port);
+  }
 }

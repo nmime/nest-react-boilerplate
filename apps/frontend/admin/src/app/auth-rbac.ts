@@ -53,9 +53,11 @@ export const getAdminApiBaseUrl = (envValue?: string): string =>
 
 export const fetchAdminProfile = async (
   apiBaseUrl = "",
+  authToken?: string | null,
 ): Promise<AdminProfilePayload> => {
   return throwOnOpenApiErrorData(
     adminApi.adminProfileControllerMe({
+      authToken: authToken?.trim() || undefined,
       baseUrl: apiBaseUrl,
     }),
   );

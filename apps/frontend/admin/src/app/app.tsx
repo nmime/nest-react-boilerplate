@@ -18,6 +18,19 @@ import { AdminLayout, type AdminProfileState, renderAdminRoute } from "./pages";
 
 const getBrowserPath = (): string => window.location.pathname;
 
+const getInitialBearerToken = (): string | null => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const search = new URL(window.location.href).searchParams;
+  return (
+    search.get("token")?.trim() ||
+    search.get("admin" + "_token")?.trim() ||
+    null
+  );
+};
+
 const scrubLegacyAuthTokenParams = (): void => {
   if (typeof window === "undefined") {
     return;
@@ -99,9 +112,13 @@ const getPayloadTheme = (
   );
 };
 
-async function fetchAuthMe(baseUrl: string): Promise<AuthMePayload | null> {
+async function fetchAuthMe(
+  baseUrl: string,
+  authToken?: string | null,
+): Promise<AuthMePayload | null> {
   try {
     const result = await authApi.authControllerMe({
+      authToken: authToken?.trim() || undefined,
       baseUrl,
     });
     return result.data?.data ?? null;
@@ -143,11 +160,12 @@ const AdminApp = ({
 }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
+  const [bearerToken] = useState(getInitialBearerToken);
   const authBaseUrl = getConfiguredAuthApiBaseUrl();
 
   const authMeQuery = useQuery({
-    queryFn: () => fetchAuthMe(authBaseUrl),
-    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale],
+    queryFn: () => fetchAuthMe(authBaseUrl, bearerToken),
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
   });
@@ -169,8 +187,13 @@ const AdminApp = ({
 
   const profileQuery = useQuery({
     enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
-    queryFn: () => fetchAdminProfile(getConfiguredAdminApiBaseUrl()),
-    queryKey: [...adminApi.getAdminProfileControllerMeQueryKey(), locale],
+    queryFn: () =>
+      fetchAdminProfile(getConfiguredAdminApiBaseUrl(), bearerToken),
+    queryKey: [
+      ...adminApi.getAdminProfileControllerMeQueryKey(),
+      locale,
+      bearerToken,
+    ],
     retry: false,
     staleTime: 15_000,
   });

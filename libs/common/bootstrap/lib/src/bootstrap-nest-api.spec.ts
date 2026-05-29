@@ -218,6 +218,17 @@ describe("bootstrapNestApi", () => {
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
   });
 
+  it("honors HOST when binding the API listener", async () => {
+    process.env.HOST = "0.0.0.0";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+
+    expect(mocks.app.listen).toHaveBeenCalledWith(3010, "0.0.0.0");
+  });
+
   it("passes explicit TRUST_PROXY configuration to Fastify", async () => {
     process.env.TRUST_PROXY = "true";
 

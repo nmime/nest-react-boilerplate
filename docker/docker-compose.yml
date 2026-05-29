@@ -1,7 +1,8 @@
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 3000
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8081,http://localhost:8082,http://localhost:8083}
+  HOST: ${HOST:-0.0.0.0}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${ADMIN_APP_PORT:-8081},http://localhost:${USER_APP_PORT:-8082},http://localhost:${LANDING_APP_PORT:-8083}}
   DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
   AUTH_PERSISTENCE: postgres
   AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-replace-with-a-local-dev-secret}
@@ -55,6 +56,7 @@ services:
   migrate:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: migrator
     restart: "no"
@@ -67,6 +69,7 @@ services:
   backend-admin-app-api:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: backend
       args:
@@ -80,12 +83,13 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "3001:3000"
+      - "${BACKEND_ADMIN_APP_API_PORT:-3001}:3000"
     healthcheck: *backend-healthcheck
 
   user-app-api:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: backend
       args:
@@ -99,12 +103,13 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "3002:3000"
+      - "${USER_APP_API_PORT:-3002}:3000"
     healthcheck: *backend-healthcheck
 
   auth-app-api:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: backend
       args:
@@ -118,12 +123,13 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "3003:3000"
+      - "${AUTH_APP_API_PORT:-3003}:3000"
     healthcheck: *backend-healthcheck
 
   admin-app:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: frontend
       args:
@@ -134,12 +140,13 @@ services:
       backend-admin-app-api:
         condition: service_healthy
     ports:
-      - "8081:80"
+      - "${ADMIN_APP_PORT:-8081}:80"
     healthcheck: *frontend-healthcheck
 
   user-app:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: frontend
       args:
@@ -152,12 +159,13 @@ services:
       user-app-api:
         condition: service_healthy
     ports:
-      - "8082:80"
+      - "${USER_APP_PORT:-8082}:80"
     healthcheck: *frontend-healthcheck
 
   landing-app:
     build:
       context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: frontend
       args:
@@ -172,7 +180,7 @@ services:
       backend-admin-app-api:
         condition: service_healthy
     ports:
-      - "8083:80"
+      - "${LANDING_APP_PORT:-8083}:80"
     healthcheck: *frontend-healthcheck
 
 volumes:

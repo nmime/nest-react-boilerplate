@@ -2,6 +2,7 @@ import {
   buildStackImages,
   composeArgs,
   run,
+  upStack,
   urls,
   waitForText,
 } from "./compose";
@@ -14,7 +15,7 @@ export default async function globalSetup(): Promise<void> {
     "--remove-orphans",
   ]);
   await buildStackImages();
-  await run("docker", [...composeArgs, "up", "--no-build", "-d"]);
+  await upStack();
   await waitForText("auth api", `${urls.authApi}/health`, "auth-app-api");
   await waitForText("user api", `${urls.userApi}/health`, "user-app-api");
   await waitForText(

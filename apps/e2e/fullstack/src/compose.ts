@@ -11,6 +11,20 @@ export const stackServices = [
   "landing-app",
 ];
 
+const host = process.env.FULLSTACK_HOST ?? "127.0.0.1";
+const ports = {
+  adminApi: process.env.BACKEND_ADMIN_APP_API_PORT ?? "3001",
+  userApi: process.env.USER_APP_API_PORT ?? "3002",
+  authApi: process.env.AUTH_APP_API_PORT ?? "3003",
+  adminApp: process.env.ADMIN_APP_PORT ?? "8081",
+  userApp: process.env.USER_APP_PORT ?? "8082",
+  landingApp: process.env.LANDING_APP_PORT ?? "8083",
+};
+const url = (port: string, path = "") => `http://${host}:${port}${path}`;
+const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
+  .map((port) => url(port))
+  .join(",");
+
 export const composeEnv = {
   ...process.env,
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
@@ -18,6 +32,9 @@ export const composeEnv = {
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
   NX_DAEMON: "false",
   NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
+  CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
+  USER_APP_URL: process.env.USER_APP_URL ?? url(ports.userApp),
+  FULLSTACK_BASE_URL: process.env.FULLSTACK_BASE_URL ?? url(ports.userApp),
   AUTH_JWT_SECRET:
     process.env.AUTH_JWT_SECRET ?? "fullstack-e2e-jwt-secret-change-me",
   AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? "nest-react-boilerplate",
@@ -28,12 +45,12 @@ export const composeEnv = {
 };
 
 export const urls = {
-  adminApi: "http://127.0.0.1:3001",
-  userApi: "http://127.0.0.1:3002",
-  authApi: "http://127.0.0.1:3003",
-  adminApp: "http://127.0.0.1:8081",
-  userApp: "http://127.0.0.1:8082",
-  landingApp: "http://127.0.0.1:8083",
+  adminApi: url(ports.adminApi),
+  userApi: url(ports.userApi),
+  authApi: url(ports.authApi),
+  adminApp: url(ports.adminApp),
+  userApp: url(ports.userApp),
+  landingApp: url(ports.landingApp),
 };
 
 export function run(command: string, args: string[]): Promise<void> {
@@ -47,6 +64,20 @@ export function run(command: string, args: string[]): Promise<void> {
       }
     });
   });
+}
+
+export async function upStack(): Promise<void> {
+  try {
+    await run("docker", [...composeArgs, "up", "--no-build", "-d"]);
+  } catch (error) {
+    console.warn(
+      `docker compose up reported a transient startup failure; retrying once: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await run("docker", [...composeArgs, "up", "--no-build", "-d"]);
+  }
 }
 
 export async function buildStackImages(): Promise<void> {

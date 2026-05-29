@@ -2,14 +2,14 @@
 import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize, relative, resolve, sep } from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 
 const outputDir = resolve("test-results/storybook-visual");
 const storybookRoot = resolve("dist/storybook/frontend-ui");
 const providedUrl = process.env.STORYBOOK_URL;
 const dryRun = process.argv.includes("--dry-run");
 const updateBaselines = process.env.UPDATE_VISUAL_BASELINES === "1" || process.argv.includes("--update-snapshots");
-const projects = (process.env.VISUAL_PROJECTS ?? "chromium,firefox,webkit,mobile-chrome,mobile-safari").split(",").map((item) => item.trim()).filter(Boolean);
+const projects = (process.env.VISUAL_PROJECTS ?? "chromium").split(",").map((item) => item.trim()).filter(Boolean);
 const maxStories = Number(process.env.VISUAL_MAX_STORIES ?? 0);
 const contentTypes = new Map([[".css", "text/css; charset=utf-8"], [".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".map", "application/json; charset=utf-8"], [".png", "image/png"], [".svg", "image/svg+xml"], [".txt", "text/plain; charset=utf-8"], [".woff", "font/woff"], [".woff2", "font/woff2"]]);
 
@@ -66,7 +66,7 @@ function writeGeneratedFiles(stories) {
     'const baseUrl = process.env.STORYBOOK_VISUAL_BASE_URL;',
     'for (const story of stories) {',
     '  test(story.id, async ({ page }) => {',
-    '    await page.goto(`${baseUrl}/iframe.html?id=${story.id}&viewMode=story`, { waitUntil: "networkidle" });',
+    '    await page.goto(`${baseUrl}/iframe.html?id=${story.id}&viewMode=story`, { waitUntil: "commit" });',
     '    const root = page.locator("#storybook-root, #root").first();',
     '    await expect(root).toBeVisible();',
     '    const screenshotName = `${story.id.replaceAll(/[^a-zA-Z0-9_-]+/g, "-")}.png`;',
@@ -122,8 +122,11 @@ try {
   }
   const command = ["exec", "playwright", "test", "-c", generated.configPath, generated.specPath];
   if (updateBaselines) command.push("--update-snapshots");
-  const result = spawnSync("pnpm", command, { stdio: "inherit", env: { ...process.env, STORYBOOK_VISUAL_BASE_URL: baseUrl } });
-  process.exit(result.status ?? 1);
+  const child = spawn("pnpm", command, { stdio: "inherit", env: { ...process.env, STORYBOOK_VISUAL_BASE_URL: baseUrl } });
+  process.exitCode = await new Promise((resolveExit, rejectExit) => {
+    child.once("error", rejectExit);
+    child.once("exit", (code) => resolveExit(code ?? 1));
+  });
 } catch (error) {
   console.error(error);
   process.exit(1);

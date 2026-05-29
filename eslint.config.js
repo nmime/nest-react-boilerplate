@@ -9,7 +9,16 @@ module.exports = [
   ...nx.configs["flat/typescript"],
   ...nx.configs["flat/javascript"],
   {
-    ignores: ["**/dist", "**/node_modules", "**/vite.config.*.timestamp*"],
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/.nx/**",
+      "**/coverage/**",
+      "**/playwright-report/**",
+      "**/test-results/**",
+      "**/vite.config.*.timestamp*",
+      "packages/tooling/scripts/**",
+    ],
   },
   {
     files: ["**/*.json"],

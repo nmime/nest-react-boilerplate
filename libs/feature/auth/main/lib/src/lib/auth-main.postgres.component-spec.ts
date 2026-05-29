@@ -99,9 +99,11 @@ describeIfDocker("AuthMainModule postgres component", () => {
       "status",
       "roles",
       "permissions",
+      "locale",
       "last_login_at",
       "created_at",
       "updated_at",
+      "theme",
     ]);
   });
 

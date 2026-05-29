@@ -6,20 +6,23 @@ ARG PNPM_VERSION=10.32.1
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
 WORKDIR /workspace
+ENV CI=true NX_DAEMON=false
 RUN apk add --no-cache libc6-compat python3 make g++ \
   && npm install -g pnpm@${PNPM_VERSION}
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json tsconfig.base.json eslint.config.js jest.preset.js .npmrc ./
 COPY apps ./apps
 COPY libs ./libs
-COPY tools ./tools
+COPY packages ./packages
+COPY config ./config
+COPY contracts ./contracts
 RUN pnpm install --frozen-lockfile
 
 FROM workspace AS migrator
 CMD ["pnpm", "db:migrate"]
 
 FROM workspace AS prod-deps
-RUN pnpm prune --prod
+RUN pnpm prune --prod --config.confirmModulesPurge=false
 
 FROM workspace AS builder
 ARG NX_PROJECT

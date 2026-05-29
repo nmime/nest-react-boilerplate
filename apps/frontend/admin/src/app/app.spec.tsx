@@ -137,6 +137,15 @@ describe("admin auth and RBAC helpers", () => {
     });
     expect(request.headers.has("authorization")).toBe(false);
 
+    const tokenFetch = mockFetch(true, {
+      data: { principal: { subject: "2" } },
+    });
+    vi.stubGlobal("fetch", tokenFetch);
+    await fetchAdminProfile("/api", "direct-token");
+    expect(getRequest(tokenFetch).headers.get("authorization")).toBe(
+      "Bearer direct-token",
+    );
+
     vi.stubGlobal("fetch", mockFetch(false, {}, 403));
     await expect(fetchAdminProfile("")).rejects.toThrow(
       "Request failed with 403.",
@@ -294,24 +303,22 @@ describe("Admin app shell", () => {
       "",
       `/profile?token=legacy&${legacyAdminTokenParam}=url-token`,
     );
-    vi.stubGlobal(
-      "fetch",
-      mockFetch(true, {
-        data: {
-          principal: {
-            subject: "admin-id",
-            roles: ["admin"],
-            permissions: ["admin:profile:read", "admin:dashboard:read"],
-          },
-          profile: {
-            id: "admin-id",
-            email: "admin@example.com",
-            roles: ["admin"],
-            permissions: ["admin:profile:read", "admin:dashboard:read"],
-          },
+    const fetchImpl = mockFetch(true, {
+      data: {
+        principal: {
+          subject: "admin-id",
+          roles: ["admin"],
+          permissions: ["admin:profile:read", "admin:dashboard:read"],
         },
-      }),
-    );
+        profile: {
+          id: "admin-id",
+          email: "admin@example.com",
+          roles: ["admin"],
+          permissions: ["admin:profile:read", "admin:dashboard:read"],
+        },
+      },
+    });
+    vi.stubGlobal("fetch", fetchImpl);
 
     render(<App />);
     await waitFor(() =>
@@ -319,6 +326,12 @@ describe("Admin app shell", () => {
     );
     expect(window.location.pathname).toBe("/profile");
     expect(window.location.search).toBe("");
+    const profileRequest = getRequestsByPath(
+      fetchImpl,
+      "/admin/profile/me",
+      "GET",
+    )[0];
+    expect(profileRequest?.headers.get("authorization")).toBe("Bearer legacy");
 
     cleanup();
     window.history.replaceState(null, "", "/");

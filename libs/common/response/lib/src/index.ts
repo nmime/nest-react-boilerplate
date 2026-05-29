@@ -49,6 +49,14 @@ export function createProblemResponse(
   });
 }
 
+interface ProblemHttpResponse {
+  status: (code: number) => ProblemHttpResponse;
+  type: (contentType: string) => ProblemHttpResponse;
+  header?: (name: string, value: string) => ProblemHttpResponse;
+  json?: (body: ProblemDetails) => unknown;
+  send?: (body: ProblemDetails) => unknown;
+}
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
@@ -141,8 +149,12 @@ export class ProblemExceptionFilter implements ExceptionFilter {
 
     const problemResponse = response
       .status(problem.status)
-      .type("application/problem+json");
+      .type("application/problem+json") as ProblemHttpResponse;
     problemResponse.header?.("content-language", locale);
-    problemResponse.json(problem);
+    if (typeof problemResponse.json === "function") {
+      problemResponse.json(problem);
+    } else {
+      problemResponse.send?.(problem);
+    }
   }
 }

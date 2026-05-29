@@ -118,6 +118,28 @@ describe("problem response mapper", () => {
     );
   });
 
+  it("supports Fastify replies that send instead of json", () => {
+    const send = vi.fn();
+    const header = vi.fn(() => ({ send }));
+    const type = vi.fn(() => ({ header, send }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ url: "/fastify" }),
+        getResponse: () => ({ status }),
+      }),
+    };
+
+    new ProblemExceptionFilter().catch(new Error("boom"), host as never);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(type).toHaveBeenCalledWith("application/problem+json");
+    expect(header).toHaveBeenCalledWith("content-language", "en");
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ instance: "/fastify", status: 500 }),
+    );
+  });
+
   it("uses request.url when originalUrl is unavailable", () => {
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));

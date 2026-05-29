@@ -14,7 +14,10 @@ export default defineConfig({
   ],
   outputDir: "test-results/fullstack",
   use: {
-    baseURL: "http://127.0.0.1:8082",
+    baseURL:
+      process.env.FULLSTACK_BASE_URL ??
+      process.env.USER_APP_URL ??
+      "http://127.0.0.1:8082",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

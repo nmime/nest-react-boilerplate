@@ -4,7 +4,7 @@ import {
   ADMIN_PROFILE_READ_PERMISSION,
   createDefaultAccessPolicy,
   normalizeUserThemePreference,
-  PROFILE_READ_PERMISSION,
+  USER_PROFILE_READ_PERMISSION,
   toAuthenticatedUserView,
   USER_ROLE,
   ADMIN_ROLE,
@@ -14,7 +14,7 @@ describe("auth shared", () => {
   it("creates default user and bootstrap admin access policies", () => {
     expect(createDefaultAccessPolicy("user@example.com", {})).toEqual({
       roles: [USER_ROLE],
-      permissions: [PROFILE_READ_PERMISSION],
+      permissions: [USER_PROFILE_READ_PERMISSION],
     });
     expect(
       createDefaultAccessPolicy("Admin@Example.com", {
@@ -23,7 +23,7 @@ describe("auth shared", () => {
     ).toEqual({
       roles: [USER_ROLE, ADMIN_ROLE],
       permissions: [
-        PROFILE_READ_PERMISSION,
+        USER_PROFILE_READ_PERMISSION,
         ADMIN_PROFILE_READ_PERMISSION,
         ADMIN_DASHBOARD_READ_PERMISSION,
       ],

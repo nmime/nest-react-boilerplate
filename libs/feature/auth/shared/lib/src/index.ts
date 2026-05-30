@@ -4,7 +4,7 @@ import { normalizeStringList } from "@app/common/shared";
 
 export const USER_ROLE = "user";
 export const ADMIN_ROLE = "admin";
-export const PROFILE_READ_PERMISSION = "profile:read";
+export const USER_PROFILE_READ_PERMISSION = "profile:read";
 export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
 export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
 export const userThemePreferences = ["system", "light", "dark"] as const;
@@ -49,11 +49,11 @@ export function createDefaultAccessPolicy(
     roles: isAdmin ? [USER_ROLE, ADMIN_ROLE] : [USER_ROLE],
     permissions: isAdmin
       ? [
-          PROFILE_READ_PERMISSION,
+          USER_PROFILE_READ_PERMISSION,
           ADMIN_PROFILE_READ_PERMISSION,
           ADMIN_DASHBOARD_READ_PERMISSION,
         ]
-      : [PROFILE_READ_PERMISSION],
+      : [USER_PROFILE_READ_PERMISSION],
   };
 }
 

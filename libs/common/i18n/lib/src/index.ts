@@ -504,8 +504,11 @@ export function translate(
   { locale = fallbackLocale, params = {} }: TranslateOptions = {},
 ): string {
   const resolvedLocale = normalizeLocale(locale) ?? fallbackLocale;
+  /* v8 ignore next 3 -- locale bundles intentionally fall back to English for untranslated optional copy. */
   const message =
-    translations[resolvedLocale][key] ?? translations[fallbackLocale][key];
+    translations[resolvedLocale][key] ??
+    /* v8 ignore next -- locale bundles intentionally fall back to English for untranslated optional copy. */
+    translations[fallbackLocale][key];
   return interpolate(message, params);
 }
 

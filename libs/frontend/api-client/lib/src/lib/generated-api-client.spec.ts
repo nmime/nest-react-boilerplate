@@ -31,6 +31,8 @@ import {
   isApiClientError,
   throwOnOpenApiError,
   throwOnOpenApiErrorData,
+  toOpenApiFetchOptions,
+  unwrapEnvelopeData,
 } from "./service-options";
 import { profileControllerMe } from "./user";
 
@@ -117,6 +119,16 @@ describe("generated api clients", () => {
       "Bearer admin-token",
     );
     expect(adminRequest.headers.get("accept-language")).toBe("es");
+  });
+
+  it("normalizes OpenAPI options and unwraps non-envelope data", () => {
+    const currentLocation = globalThis.location;
+    vi.stubGlobal("location", undefined);
+
+    expect(toOpenApiFetchOptions().baseUrl).toBe("http://localhost");
+    expect(unwrapEnvelopeData({ value: "raw" })).toEqual({ value: "raw" });
+
+    vi.stubGlobal("location", currentLocation);
   });
 
   it("unwraps success envelopes through the data helper", async () => {

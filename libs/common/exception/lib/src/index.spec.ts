@@ -7,6 +7,7 @@ import {
   ProblemHttpException,
   createProblemDetails,
   getProblemStatus,
+  localizeProblemDetails,
   mapHttpStatusToProblemTitle,
   toProblemDetails,
 } from "./index";
@@ -216,6 +217,58 @@ describe("@app/common/exception", () => {
       instance: "/existing-generic",
       status: 409,
       title: "Conflict",
+    });
+  });
+
+  it("localizes validation issues and preserves unmapped problem fields", () => {
+    expect(
+      localizeProblemDetails(
+        {
+          type: "about:blank",
+          title: "Bad Request",
+          status: HttpStatus.BAD_REQUEST,
+          errors: [
+            {
+              property: "email",
+              constraints: { isEmail: "bad", custom: "custom" },
+            },
+            { constraints: { minLength: "short" } },
+            "plain",
+          ],
+        },
+        "es",
+      ),
+    ).toMatchObject({
+      code: "bad-request",
+      errors: [
+        {
+          property: "email",
+          constraints: {
+            isEmail: "email debe ser un email válido",
+            custom: "custom",
+          },
+        },
+        { constraints: { minLength: "value es demasiado corto" } },
+        "plain",
+      ],
+      type: "urn:problem:nest-react-boilerplate:bad-request",
+    });
+    expect(
+      localizeProblemDetails({
+        type: "urn:custom",
+        title: "Custom",
+        status: 499,
+        code: "unmapped",
+        detail: "No translation",
+        errors: "raw",
+      }),
+    ).toEqual({
+      type: "urn:custom",
+      title: "Custom",
+      status: 499,
+      code: "unmapped",
+      detail: "No translation",
+      errors: "raw",
     });
   });
 

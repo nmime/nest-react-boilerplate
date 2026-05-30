@@ -1,5 +1,6 @@
+import { fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { UiButton } from "./button";
 import { UiCard } from "./card";
 import { UiSection } from "./section";
@@ -64,6 +65,46 @@ describe("shared UI components", () => {
     expect(html).toContain("Saving");
   });
 
+  it("prevents unavailable link actions while forwarding available clicks", () => {
+    const unavailableClick = vi.fn();
+    const availableClick = vi.fn();
+
+    const { rerender } = render(
+      <UiButton disabled href="/reports" onClick={unavailableClick}>
+        Reports
+      </UiButton>,
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "Reports" }));
+    expect(unavailableClick).not.toHaveBeenCalled();
+
+    rerender(
+      <UiButton href="/reports" onClick={availableClick}>
+        Reports
+      </UiButton>,
+    );
+
+    fireEvent.click(screen.getByRole("link", { name: "Reports" }));
+    expect(availableClick).toHaveBeenCalledOnce();
+  });
+
+  it("honors explicit stat-card accessibility props", () => {
+    const html = renderToStaticMarkup(
+      <UiStatCard
+        aria-label="Custom stat label"
+        className="custom-stat"
+        detail="Updated every minute"
+        label="Latency"
+        role="figure"
+        value="12ms"
+      />,
+    );
+
+    expect(html).toContain('aria-label="Custom stat label"');
+    expect(html).toContain('class="xr-stat-card custom-stat"');
+    expect(html).toContain('role="figure"');
+  });
+
   it("renders card title and body content with a stable label", () => {
     const html = renderToStaticMarkup(
       <UiCard title="Security" titleId="security-card-title">
@@ -126,6 +167,12 @@ describe("shared UI components", () => {
     expect(liveStatus).toContain("xr-status--warning");
     expect(liveStatus).toContain('aria-live="polite"');
     expect(liveStatus).toContain('role="status"');
+
+    const valueLabelFallback = renderToStaticMarkup(
+      <UiStatCard detail="Median" label="Latency" value="12ms" />,
+    );
+
+    expect(valueLabelFallback).toContain('aria-label="Latency: 12ms. Median"');
   });
 
   it("renders feedback primitives", () => {

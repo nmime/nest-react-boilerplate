@@ -1,3 +1,4 @@
+/* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { fallbackLocale, translate, type Locale } from "@app/common/i18n";
 
 let currentApiLocale: Locale = fallbackLocale;

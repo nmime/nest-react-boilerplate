@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { AuthenticatedPrincipal } from "@app/feature-auth-shared";
 import { ADMIN_PROFILE_READ_PERMISSION } from "@app/feature-admin-shared";
-import { AdminProfileController } from "./admin-profile.controller";
+import {
+  AdminProfileController,
+  AdminProfilePayloadDto,
+  AdminProfileViewDto,
+  getAdminProfileViewDtoType,
+  getAuthenticatedPrincipalDtoType,
+} from "./admin-profile.controller";
 
 describe("AdminProfileController", () => {
   it("returns principal and normalized admin profile", () => {
@@ -27,5 +33,13 @@ describe("AdminProfileController", () => {
         },
       },
     });
+  });
+
+  it("exposes DTO type thunks used by Swagger metadata", () => {
+    expect(getAuthenticatedPrincipalDtoType().name).toBe(
+      "AuthenticatedPrincipalDto",
+    );
+    expect(getAdminProfileViewDtoType()).toBe(AdminProfileViewDto);
+    expect(new AdminProfilePayloadDto()).toBeInstanceOf(AdminProfilePayloadDto);
   });
 });

@@ -49,4 +49,35 @@ describe("backend-admin-app-api HealthController", () => {
       ServiceUnavailableException,
     );
   });
+
+  it("uses a safe readiness detail for non-Error database failures", async () => {
+    const nonErrorDatabaseFailure = { message: "offline" } as Error;
+    const controller = new HealthController({
+      em: {
+        getConnection: () => ({
+          execute: () => Promise.reject(nonErrorDatabaseFailure),
+        }),
+      },
+    } as never);
+
+    try {
+      await controller.ready();
+      throw new Error("Expected readiness to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ServiceUnavailableException);
+      expect(
+        (error as ServiceUnavailableException).getResponse(),
+      ).toMatchObject({
+        app: "backend-admin-app-api",
+        status: "degraded",
+        dependencies: [
+          {
+            name: "postgres",
+            status: "unavailable",
+            detail: "PostgreSQL readiness check failed.",
+          },
+        ],
+      });
+    }
+  });
 });

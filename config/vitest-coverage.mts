@@ -29,5 +29,5 @@ export const fullCoverage = (
   provider: "v8",
   reportsDirectory,
   reporter: ["text", "lcov"],
-  thresholds: { branches: 50, functions: 30, lines: 50, statements: 50 },
+  thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
 });

@@ -77,9 +77,12 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
-  window.localStorage.clear();
-  window.history.replaceState(null, "", "/");
+  if (typeof window !== "undefined") {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/");
+  }
 });
 
 describe("admin auth and RBAC helpers", () => {
@@ -243,6 +246,24 @@ describe("admin pages", () => {
     );
   });
 
+  it("renders empty dashboard access fallbacks", () => {
+    const html = renderToStaticMarkup(
+      <DashboardPage
+        access={{
+          isAuthenticated: true,
+          canReadDashboard: false,
+          canReadProfile: false,
+          roles: [],
+          permissions: [],
+        }}
+      />,
+    );
+
+    expect(html).toContain("Roles: none");
+    expect(html).toContain("Permissions: none");
+    expect(html).toContain("0");
+  });
+
   it("routes fail closed for every state", () => {
     expect(
       renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
@@ -289,6 +310,15 @@ describe("admin pages", () => {
 });
 
 describe("Admin app shell", () => {
+  it("renders static markup without browser globals", () => {
+    vi.stubGlobal("window", undefined);
+    try {
+      expect(renderToStaticMarkup(<App />)).toContain("Admin console");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("renders authenticated dashboard without browser token storage", async () => {
     const fetchImpl = mockFetch(true, {
       data: {
@@ -427,8 +457,12 @@ describe("Admin app shell", () => {
           }),
         ),
       )
-      .mockResolvedValue(
-        new Response(JSON.stringify({ data: { locale: "es", theme: "dark" } })),
+      .mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ data: { locale: "es", theme: "dark" } }),
+          ),
+        ),
       );
     vi.stubGlobal("fetch", fetchImpl);
 
@@ -448,6 +482,9 @@ describe("Admin app shell", () => {
       expect(
         getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH").length,
       ).toBeGreaterThanOrEqual(2),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText(/^(Idioma|Language)$/u)).toBeTruthy(),
     );
     const preferenceRequests = getRequestsByPath(
       fetchImpl,

@@ -201,33 +201,24 @@ const getResponseMessage = (response: unknown): string | undefined => {
 };
 
 const getHttpExceptionTitle = (error: HttpException): string =>
-  mapHttpStatusToProblemTitle(error.getStatus()) || error.message;
+  mapHttpStatusToProblemTitle(error.getStatus());
 
 const getHttpExceptionDetail = (error: HttpException): string | undefined =>
   getResponseMessage(error.getResponse()) || error.message || undefined;
 
-const titleKeyForProblem = (
-  problem: ProblemDetails,
-): TranslationKey | undefined => {
-  const code =
-    typeof problem.code === "string"
-      ? problem.code
-      : problemCodeForStatus(problem.status);
+const titleKeyForProblem = (code: string): TranslationKey | undefined => {
   const key = `errors.${code}.title`;
   return hasTranslationKey(key) ? key : undefined;
 };
 
 const detailKeyForProblem = (
   problem: ProblemDetails,
+  code: string,
 ): TranslationKey | undefined => {
   if (typeof problem.detail === "string" && messageKeyMap[problem.detail]) {
     return messageKeyMap[problem.detail];
   }
 
-  const code =
-    typeof problem.code === "string"
-      ? problem.code
-      : problemCodeForStatus(problem.status);
   const key = `errors.${code}.detail`;
   return hasTranslationKey(key) ? key : undefined;
 };
@@ -271,8 +262,8 @@ export function localizeProblemDetails(
     typeof problem.code === "string"
       ? problem.code
       : problemCodeForStatus(problem.status);
-  const titleKey = titleKeyForProblem({ ...problem, code });
-  const detailKey = detailKeyForProblem({ ...problem, code });
+  const titleKey = titleKeyForProblem(code);
+  const detailKey = detailKeyForProblem(problem, code);
 
   return {
     ...problem,

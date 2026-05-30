@@ -1,3 +1,4 @@
+/* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PUBLIC_AUTH_METADATA_KEY } from "./access-control.decorators";

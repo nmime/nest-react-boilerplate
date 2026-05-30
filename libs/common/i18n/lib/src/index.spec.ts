@@ -3,6 +3,9 @@ import {
   I18nService,
   createRequestLocaleMiddleware,
   fallbackLocale,
+  hasTranslationKey,
+  interpolate,
+  normalizeLocale,
   parseAcceptLanguage,
   resolveLocale,
   resolveLocaleFromRequest,
@@ -43,6 +46,30 @@ describe("@app/common/i18n", () => {
     ).toBe("es");
     expect(resolveLocaleFromRequest({ cookies: { locale: "es" } })).toBe("es");
     expect(resolveLocaleFromRequest({ url: "/health?locale=es" })).toBe("es");
+  });
+
+  it("handles defensive locale parsing and lookup branches", () => {
+    expect(normalizeLocale("   ")).toBeUndefined();
+    expect(parseAcceptLanguage("fr;q=oops, es;q=0, en;q=0.4")).toBe("en");
+    expect(resolveLocaleFromRequest({ query: { locale: ["es"] } })).toBe("es");
+    expect(resolveLocaleFromRequest({ headers: { "x-locale": ["es"] } })).toBe(
+      "es",
+    );
+    expect(resolveLocaleFromRequest({ cookies: { lang: "es" } })).toBe("es");
+    expect(
+      resolveLocaleFromRequest({ originalUrl: ["ht", "tp://["].join("") }),
+    ).toBe("en");
+    expect(resolveLocaleFromRequest({ url: "/health" })).toBe("en");
+    expect(hasTranslationKey("common.ready")).toBe(true);
+    expect(hasTranslationKey("missing.translation.key")).toBe(false);
+    expect(interpolate("Hello {{ name }} {{missing}}", { name: "Ada" })).toBe(
+      "Hello Ada {{missing}}",
+    );
+
+    const service = new I18nService();
+    expect(service.translate("common.ready", { locale: "es" })).toBe("Listo");
+    expect(service.resolveLocale("es-MX")).toBe("es");
+    expect(service.resolveLocaleFromRequest({ language: "es" })).toBe("es");
   });
 
   it("stores resolved locale on requests through middleware", () => {

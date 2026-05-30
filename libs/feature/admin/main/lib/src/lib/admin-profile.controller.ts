@@ -27,7 +27,7 @@ export interface AdminProfilePayload {
   profile: AdminProfileView;
 }
 
-class AuthenticatedPrincipalDto {
+export class AuthenticatedPrincipalDto {
   @ApiProperty()
   subject!: string;
 
@@ -58,7 +58,7 @@ class AuthenticatedPrincipalDto {
   tokenId?: string;
 }
 
-class AdminProfileViewDto {
+export class AdminProfileViewDto {
   @ApiProperty()
   id!: string;
 
@@ -78,11 +78,14 @@ class AdminProfileViewDto {
   permissions!: string[];
 }
 
-class AdminProfilePayloadDto {
-  @ApiProperty({ type: () => AuthenticatedPrincipalDto })
+export const getAuthenticatedPrincipalDtoType = () => AuthenticatedPrincipalDto;
+export const getAdminProfileViewDtoType = () => AdminProfileViewDto;
+
+export class AdminProfilePayloadDto {
+  @ApiProperty({ type: getAuthenticatedPrincipalDtoType })
   principal!: AuthenticatedPrincipalDto;
 
-  @ApiProperty({ type: () => AdminProfileViewDto })
+  @ApiProperty({ type: getAdminProfileViewDtoType })
   profile!: AdminProfileViewDto;
 }
 

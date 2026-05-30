@@ -1,7 +1,9 @@
 import { HttpStatus } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import {
+  ApiOkDataResponse,
   ApiProblemExceptions,
+  okResponseOpenApiSchema,
   problemDetailsOpenApiSchema,
   readBoolean,
   resolveSwaggerOptions,
@@ -17,6 +19,8 @@ const mocks = vi.hoisted(() => {
     setVersion: vi.fn(() => builder),
   };
   return {
+    apiExtraModels: vi.fn(() => vi.fn()),
+    apiOkResponse: vi.fn(() => vi.fn()),
     apiResponse: vi.fn(() => vi.fn()),
     builder,
     createDocument: vi.fn(() => "document"),
@@ -90,10 +94,14 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@nestjs/swagger", () => ({
+  ApiExtraModels: mocks.apiExtraModels,
+  ApiOkResponse: mocks.apiOkResponse,
   ApiResponse: mocks.apiResponse,
   DocumentBuilder: vi.fn(function DocumentBuilderMock() {
     return mocks.builder;
   }),
+  getSchemaPath: (model: { name: string }) =>
+    `#/components/schemas/${model.name}`,
   SwaggerModule: {
     createDocument: mocks.createDocument,
     setup: mocks.setup,
@@ -151,10 +159,24 @@ describe("common swagger", () => {
     });
   });
 
-  it("exports problem response schema and decorator", () => {
+  it("exports success and problem response schemas and decorators", () => {
+    class PayloadDto {}
+
     expect(problemDetailsOpenApiSchema).toMatchObject({
       required: ["type", "title", "status"],
       type: "object",
+    });
+    expect(okResponseOpenApiSchema(PayloadDto)).toEqual({
+      type: "object",
+      required: ["data"],
+      properties: {
+        data: { $ref: "#/components/schemas/PayloadDto" },
+      },
+    });
+    expect(ApiOkDataResponse(PayloadDto)).toEqual(expect.any(Function));
+    expect(mocks.apiExtraModels).toHaveBeenCalledWith(PayloadDto);
+    expect(mocks.apiOkResponse).toHaveBeenCalledWith({
+      schema: okResponseOpenApiSchema(PayloadDto),
     });
     expect(typeof ApiProblemExceptions).toBe("function");
   });

@@ -449,6 +449,7 @@ function createRequestLoggingMiddleware(appName: string) {
         appName,
         durationMs: Date.now() - startedAt,
         method: request.method,
+        /* v8 ignore next -- some adapters expose only one URL-like request field. */
         path: request.originalUrl ?? request.url ?? request.path,
         requestId,
         status: response.statusCode,

@@ -274,7 +274,7 @@ describe("User app shell", () => {
     window.history.pushState({}, "", "/?token=saved-locale-token");
     vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
     const fetchMock = setFetch(
-      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { locale: "es" } }),
       jsonResponse({ data: { user: { locale: "es" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
     );
@@ -364,7 +364,7 @@ describe("User app shell", () => {
     const fetchMock = setFetch(
       jsonResponse({ data: { user: { locale: "en", theme: "system" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
-      jsonResponse({ data: { user: { locale: "en", theme: "dark" } } }),
+      jsonResponse({ data: { theme: "dark" } }),
       jsonResponse({ data: { user: { locale: "en", theme: "dark" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
     );
@@ -431,13 +431,21 @@ describe("User app shell", () => {
     fireEvent.change(screen.getByLabelText("Register display name"), {
       target: { value: "Registered User" },
     });
-    fireEvent.change(screen.getByLabelText("Register email"), {
-      target: { value: "new@example.com" },
-    });
-    fireEvent.change(screen.getByLabelText("Register password"), {
-      target: { value: "password123" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.change(
+      screen.getByLabelText(/^(Register email|Email de registro)$/u),
+      {
+        target: { value: "new@example.com" },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/^(Register password|Contraseña de registro)$/u),
+      {
+        target: { value: "password123" },
+      },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /^(Register|Registrarse)$/u }),
+    );
     expect(
       await screen.findByText("Forbidden: Request failed with 409."),
     ).toBeTruthy();
@@ -451,5 +459,77 @@ describe("User app shell", () => {
         screen.getByText("Provide a token or use login/register."),
       ).toBeTruthy(),
     );
+  });
+
+  it("continues after auth/me failures and uses object error details", async () => {
+    window.history.pushState({}, "", "/?token=retry-token");
+    setFetch(
+      { rejectsWith: new Error("auth offline") },
+      jsonResponse({ data: { profile: { email: "after-auth@example.com" } } }),
+    );
+    const { unmount } = render(<App />);
+    expect(
+      await screen.findByText("Ready: after-auth@example.com"),
+    ).toBeTruthy();
+    unmount();
+
+    window.history.pushState({}, "", "/?token=object-error-token");
+    setFetch(jsonResponse({ data: {} }), {
+      rejectsWith: { detail: "Object detail" },
+    });
+    render(<App />);
+    expect(await screen.findByText("Forbidden: Object detail")).toBeTruthy();
+  });
+
+  it("applies profile locales and auth success locale/theme payloads", async () => {
+    window.history.pushState({}, "", "/?token=profile-locale-token");
+    setFetch(
+      jsonResponse({ data: { user: { locale: "en", theme: "light" } } }),
+      jsonResponse({
+        data: {
+          profile: { email: "locale@example.com", locale: "es", theme: "blue" },
+        },
+      }),
+      jsonResponse({ data: { user: { locale: "es", theme: "light" } } }),
+      jsonResponse({
+        data: {
+          profile: { email: "locale@example.com", locale: "es", theme: "blue" },
+        },
+      }),
+    );
+    const { unmount } = render(<App />);
+    expect(await screen.findByText("Listo: locale@example.com")).toBeTruthy();
+    unmount();
+
+    setFetch(
+      jsonResponse({
+        data: { accessToken: "register-token", locale: "es", theme: "dark" },
+      }),
+      jsonResponse({ data: { user: { locale: "es", theme: "dark" } } }),
+      jsonResponse({ data: { profile: { email: "registered@example.com" } } }),
+    );
+    render(<App />);
+    screen
+      .getByLabelText(/^(Register display name|Nombre visible de registro)$/u)
+      .remove();
+    fireEvent.change(
+      screen.getByLabelText(/^(Register email|Email de registro)$/u),
+      {
+        target: { value: "registered@example.com" },
+      },
+    );
+    fireEvent.change(
+      screen.getByLabelText(/^(Register password|Contraseña de registro)$/u),
+      {
+        target: { value: "password123" },
+      },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /^(Register|Registrarse)$/u }),
+    );
+
+    expect(
+      await screen.findByText("Listo: registered@example.com"),
+    ).toBeTruthy();
   });
 });

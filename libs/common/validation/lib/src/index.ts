@@ -4,6 +4,7 @@ import type { ValidationError } from "class-validator";
 export interface ProblemValidationIssue {
   property: string;
   constraints: Record<string, string>;
+  message?: string;
 }
 
 export interface ProblemValidationErrorBody {

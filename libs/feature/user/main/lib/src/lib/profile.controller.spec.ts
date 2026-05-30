@@ -8,7 +8,7 @@ describe("User ProfileController", () => {
       subject: "user-id",
       email: "user@example.com",
       displayName: "User Name",
-      locale: "es",
+      locale: "ru",
       roles: ["user"],
       permissions: ["profile:read"],
     };
@@ -20,7 +20,7 @@ describe("User ProfileController", () => {
           id: "user-id",
           email: "user@example.com",
           displayName: "User Name",
-          locale: "es",
+          locale: "ru",
           roles: ["user"],
           permissions: ["profile:read"],
         },

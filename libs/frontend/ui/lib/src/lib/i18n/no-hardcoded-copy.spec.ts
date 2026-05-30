@@ -85,7 +85,7 @@ const allowedLiteralValues = new Set([
   "Promise",
   "xR",
   "en",
-  "es",
+  "ru",
   "GET",
   "POST",
   "PATCH",

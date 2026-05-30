@@ -31,14 +31,14 @@ const getCapturedRequest = (
 
 describe("frontend API client", () => {
   it("injects Accept-Language into every request and updates with the locale getter", async () => {
-    let locale: "en" | "es" = "en";
+    let locale: "en" | "ru" = "en";
     configureApiLocale({ getLocale: () => locale });
     const fetchImpl = vi
       .fn<typeof fetch>()
       .mockResolvedValue(jsonResponse({ data: { ok: true } }));
 
     await apiFetch("/first", { fetchImpl });
-    locale = "es";
+    locale = "ru";
     await apiFetch("/second", { fetchImpl });
 
     expect(fetchImpl.mock.calls[0]?.[0]).toBe("/first");
@@ -48,13 +48,13 @@ describe("frontend API client", () => {
     });
     expect(fetchImpl.mock.calls[1]?.[0]).toBe("/second");
     expect(getCapturedRequest(fetchImpl, 1).headers).toMatchObject({
-      "Accept-Language": "es",
+      "Accept-Language": "ru",
     });
   });
 
   it("sets JSON and authorization headers consistently", async () => {
-    setApiLocale("es");
-    configureApiLocale({ locale: "es" });
+    setApiLocale("ru");
+    configureApiLocale({ locale: "ru" });
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
 
     await apiFetch("profile/me", {
@@ -75,21 +75,21 @@ describe("frontend API client", () => {
     });
     expect(request.headers).toMatchObject({
       Accept: "application/json",
-      "Accept-Language": "es",
+      "Accept-Language": "ru",
       Authorization: "Bearer token",
       "Content-Type": "application/json",
     });
   });
 
   it("uses localized fallback copy when a problem response has no message", async () => {
-    configureApiLocale({ locale: "es" });
+    configureApiLocale({ locale: "ru" });
     const fetchImpl = vi
       .fn<typeof fetch>()
       .mockResolvedValue(jsonResponse({}, false, 500));
 
     await expect(apiFetch("/profile", { fetchImpl })).rejects.toMatchObject({
       body: {},
-      message: "La solicitud falló con 500.",
+      message: "Запрос не удался со статусом 500.",
       status: 500,
     } satisfies Partial<ApiError>);
   });
@@ -126,7 +126,7 @@ describe("frontend API client", () => {
       buildApiHeaders({
         authToken: null,
         hasJsonBody: false,
-        headers: { "Accept-Language": "es", "x-request-id": "1" },
+        headers: { "Accept-Language": "ru", "x-request-id": "1" },
       }),
     ).toEqual({
       Accept: "application/json",

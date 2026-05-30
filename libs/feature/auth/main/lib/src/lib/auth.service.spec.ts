@@ -66,17 +66,17 @@ describe("AuthService", () => {
     const registered = await service.register({
       email: "locale@example.com",
       password: "password123",
-      locale: "es-MX",
+      locale: "ru-RU",
       theme: "Dark",
     });
 
-    expect(registered.user.locale).toBe("es");
+    expect(registered.user.locale).toBe("ru");
     expect(registered.user.theme).toBe("dark");
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
       }).locale,
-    ).toBe("es");
+    ).toBe("ru");
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
@@ -88,10 +88,10 @@ describe("AuthService", () => {
     ).resolves.toMatchObject({ locale: "en" });
     await expect(
       service.updateUserPreferences(registered.user.id, {
-        locale: "es",
+        locale: "ru",
         theme: "light",
       }),
-    ).resolves.toMatchObject({ locale: "es", theme: "light" });
+    ).resolves.toMatchObject({ locale: "ru", theme: "light" });
     await expect(
       service.updateUserPreferences(registered.user.id, { locale: "en-US" }),
     ).resolves.toMatchObject({ locale: "en", theme: "light" });

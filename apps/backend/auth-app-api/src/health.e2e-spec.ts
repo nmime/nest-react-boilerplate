@@ -95,13 +95,13 @@ describe("auth-app-api e2e", () => {
     await supertest(httpServer)
       .patch("/auth/me/preferences")
       .set("Authorization", bearerAuthorization(registerBody.data.accessToken))
-      .send({ locale: "es", theme: "dark" })
+      .send({ locale: "ru", theme: "dark" })
       .expect(200)
       .expect((response) => {
         const body = response.body as {
           data?: { locale?: string; theme?: UserThemePreference };
         };
-        if (body.data?.locale !== "es" || body.data.theme !== "dark") {
+        if (body.data?.locale !== "ru" || body.data.theme !== "dark") {
           throw new Error("preferences endpoint did not persist locale/theme");
         }
       });

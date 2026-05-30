@@ -1,4 +1,6 @@
-export type AuthenticatedLocale = "en" | "es";
+import { Language } from "./language.enum";
+
+export type AuthenticatedLocale = Language;
 export type AuthenticatedTheme = "system" | "light" | "dark";
 
 export interface AuthenticatedPrincipal {

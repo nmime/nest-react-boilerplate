@@ -13,6 +13,7 @@ import type {
   AuthenticatedRequest,
   JwtValidationEnvironment,
 } from "./access-control.types";
+import { Language, isLanguage } from "./language.enum";
 
 type JwtHeader = {
   alg?: string;
@@ -249,13 +250,13 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
   };
 }
 
-function normalizePrincipalLocale(value: unknown): "en" | "es" | undefined {
+function normalizePrincipalLocale(value: unknown): Language | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
   const normalized = value.trim().toLowerCase().split("-")[0];
-  return normalized === "en" || normalized === "es" ? normalized : undefined;
+  return isLanguage(normalized) ? normalized : undefined;
 }
 
 function normalizePrincipalTheme(

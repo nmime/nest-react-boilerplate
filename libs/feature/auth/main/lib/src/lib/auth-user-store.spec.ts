@@ -30,14 +30,14 @@ describe("auth user stores", () => {
       findById: vi.fn((id: string) =>
         okAsync(id === record.id ? record : null),
       ),
-      setLocale: vi.fn((id: string, locale: "en" | "es") =>
+      setLocale: vi.fn((id: string, locale: "en" | "ru") =>
         okAsync(id === record.id ? { ...record, locale } : null),
       ),
       setPreferences: vi.fn(
         (
           id: string,
           preferences: {
-            locale?: "en" | "es";
+            locale?: "en" | "ru";
             theme?: "system" | "light" | "dark";
           },
         ) => okAsync(id === record.id ? { ...record, ...preferences } : null),
@@ -63,9 +63,9 @@ describe("auth user stores", () => {
     expect((await store.findById(record.id))._unsafeUnwrap()).toEqual(record);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
     expect(
-      (await store.setLocale(record.id, "es"))._unsafeUnwrap(),
-    ).toMatchObject({ locale: "es" });
-    expect((await store.setLocale("missing", "es"))._unsafeUnwrap()).toBeNull();
+      (await store.setLocale(record.id, "ru"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "ru" });
+    expect((await store.setLocale("missing", "ru"))._unsafeUnwrap()).toBeNull();
     expect(
       (
         await store.setPreferences(record.id, { locale: "en", theme: "dark" })
@@ -94,7 +94,7 @@ describe("auth user stores", () => {
       error,
     );
     expect((await store.findById(record.id))._unsafeUnwrapErr()).toEqual(error);
-    expect((await store.setLocale(record.id, "es"))._unsafeUnwrapErr()).toEqual(
+    expect((await store.setLocale(record.id, "ru"))._unsafeUnwrapErr()).toEqual(
       error,
     );
     expect(
@@ -112,6 +112,7 @@ describe("auth user stores", () => {
     const created = (await store.create(record))._unsafeUnwrap();
     const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
 
+    uiTheme: record.theme;
     expect(created).toMatchObject({
       email: record.email,
       displayName: null,
@@ -140,9 +141,9 @@ describe("auth user stores", () => {
     expect((await store.findById(created.id))._unsafeUnwrap()).toEqual(created);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
     expect(
-      (await store.setLocale(created.id, "es"))._unsafeUnwrap(),
-    ).toMatchObject({ locale: "es" });
-    expect((await store.setLocale("missing", "es"))._unsafeUnwrap()).toBeNull();
+      (await store.setLocale(created.id, "ru"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "ru" });
+    expect((await store.setLocale("missing", "ru"))._unsafeUnwrap()).toBeNull();
     expect(
       (
         await store.setPreferences(created.id, { theme: "dark" })

@@ -70,7 +70,7 @@ export const toAdminProfileView = (
     id: principal.subject,
     email: principal.email,
     displayName: principal.displayName,
-    locale: principal.locale,
+    locale: principal.locale as Locale,
     roles: policy.roles,
     permissions: policy.permissions,
   };

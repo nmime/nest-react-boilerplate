@@ -95,3 +95,4 @@ export * from "./lib/oauth/auth-oauth.types";
 export * from "./lib/oauth/bearer-auth.guard";
 export * from "./lib/oauth/rbac.guard";
 export * from "./lib/oauth/session-auth.guard";
+export * from "./lib/oauth/language.enum";

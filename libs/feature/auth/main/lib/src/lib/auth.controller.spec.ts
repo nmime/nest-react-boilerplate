@@ -30,7 +30,7 @@ const sessionView: AuthSessionView = {
     id: "user-id",
     email: "user@example.com",
     displayName: "Ada Lovelace",
-    locale: "es",
+    locale: "ru",
     theme: "dark",
     roles: ["user", "admin"],
     permissions: ["profile:read", "admin:profile:read"],
@@ -126,7 +126,7 @@ describe("AuthController", () => {
       },
     });
     expect(controller.locales()).toEqual({
-      data: { supportedLocales: ["en", "es"] },
+      data: { supportedLocales: ["en", "ru"] },
     });
 
     expect(service.register).toHaveBeenCalledWith({
@@ -187,7 +187,7 @@ describe("AuthController", () => {
       subject: "user-id",
       email: "user@example.com",
       displayName: "Ada Lovelace",
-      locale: "es",
+      locale: "ru",
       theme: "dark",
       issuer: "issuer",
       audience: ["web", "mobile"],
@@ -229,7 +229,7 @@ describe("AuthController", () => {
   it("updates locale and persists the refreshed principal", async () => {
     const updatedUser = {
       ...sessionView.user,
-      locale: "es" as const,
+      locale: "ru" as const,
     };
     const service = createService({
       updateUserPreferences: vi.fn(() => Promise.resolve(updatedUser)),
@@ -243,15 +243,15 @@ describe("AuthController", () => {
     const { request, session } = createRequest(principal);
 
     await expect(
-      controller.updateLocale(principal, { locale: "es" }, request),
+      controller.updateLocale(principal, { locale: "ru" }, request),
     ).resolves.toEqual({ data: updatedUser });
 
     expect(service.updateUserPreferences).toHaveBeenCalledWith("user-id", {
-      locale: "es",
+      locale: "ru",
     });
     expect(session.user).toMatchObject({
       subject: "user-id",
-      locale: "es",
+      locale: "ru",
       theme: "dark",
     });
     expect(session.save).toHaveBeenCalledOnce();
@@ -263,7 +263,7 @@ describe("AuthController", () => {
       subject: "user-id",
       email: "user@example.com",
       displayName: "Ada Lovelace",
-      locale: "es",
+      locale: "ru",
       theme: "dark",
       roles: ["user"],
       permissions: ["profile:read"],

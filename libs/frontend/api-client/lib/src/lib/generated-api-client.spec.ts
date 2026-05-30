@@ -70,7 +70,7 @@ const firstRequest = (fetchImpl: FetchMock): Request => {
 
 describe("generated api clients", () => {
   it("sends centralized headers and normalized baseUrl for auth, user, and admin clients", async () => {
-    configureApiLocale({ locale: "es" });
+    configureApiLocale({ locale: "ru" });
     const abortController = new AbortController();
     const { signal } = abortController;
     const authFetch = mockFetch({ data: { principal: null, user: null } });
@@ -87,7 +87,7 @@ describe("generated api clients", () => {
     expect(authRequest.url).toBe(`${globalThis.location.origin}/api/auth/me`);
     expect(authRequest.method).toBe("GET");
     expect(authRequest.headers.get("accept")).toBe("application/json");
-    expect(authRequest.headers.get("accept-language")).toBe("es");
+    expect(authRequest.headers.get("accept-language")).toBe("ru");
     expect(authRequest.headers.get("authorization")).toBe("Bearer token-123");
     expect(authRequest.headers.get("x-request-id")).toBe("req-1");
     expect(authRequest.signal.aborted).toBe(false);
@@ -103,7 +103,7 @@ describe("generated api clients", () => {
     const userRequest = firstRequest(userFetch);
     expect(userRequest.url).toBe("https://api.example.test/root/profile/me");
     expect(userRequest.headers.get("authorization")).toBe("Bearer user-token");
-    expect(userRequest.headers.get("accept-language")).toBe("es");
+    expect(userRequest.headers.get("accept-language")).toBe("ru");
 
     const adminFetch = mockFetch({ data: { principal: null, profile: null } });
     await adminProfileControllerMe({
@@ -118,7 +118,7 @@ describe("generated api clients", () => {
     expect(adminRequest.headers.get("authorization")).toBe(
       "Bearer admin-token",
     );
-    expect(adminRequest.headers.get("accept-language")).toBe("es");
+    expect(adminRequest.headers.get("accept-language")).toBe("ru");
   });
 
   it("normalizes OpenAPI options and unwraps non-envelope data", () => {
@@ -232,7 +232,7 @@ describe("generated api clients", () => {
     );
     await expect(registerRequest.clone().json()).resolves.toEqual(registerBody);
 
-    const updateLocaleBody: UpdateLocaleDto = { locale: "es" };
+    const updateLocaleBody: UpdateLocaleDto = { locale: "ru" };
     const updateFetch = mockFetch({ data: session.user });
     await authControllerUpdateLocale(updateLocaleBody, {
       fetchImpl: updateFetch,

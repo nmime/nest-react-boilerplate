@@ -80,33 +80,33 @@ describe("frontend auth and locale state", () => {
     installStorage();
     const store = new LocaleStore("en");
 
-    store.setLocale("es");
+    store.setLocale("ru");
 
-    expect(window.localStorage.getItem(LocaleStorageKey)).toBe("es");
-    expect(document.cookie).toContain("locale=es");
-    expect(document.documentElement.lang).toBe("es");
-    expect(getApiLocale()).toBe("es");
+    expect(window.localStorage.getItem(LocaleStorageKey)).toBe("ru");
+    expect(document.cookie).toContain("locale=ru");
+    expect(document.documentElement.lang).toBe("ru");
+    expect(getApiLocale()).toBe("ru");
   });
 
   it("prioritizes query, storage, cookie, then navigator locale detection", () => {
     installStorage();
-    setNavigatorLocale(["es-MX", "en-US"]);
+    setNavigatorLocale(["ru-RU", "en-US"]);
     window.localStorage.setItem(LocaleStorageKey, "en");
-    document.cookie = "locale=es; path=/";
-    document.cookie = "lang=es; path=/";
+    document.cookie = "locale=ru; path=/";
+    document.cookie = "lang=ru; path=/";
 
-    window.history.replaceState({}, "", "/?locale=es");
-    expect(detectBrowserLocale()).toBe("es");
+    window.history.replaceState({}, "", "/?locale=ru");
+    expect(detectBrowserLocale()).toBe("ru");
 
     window.history.replaceState({}, "", "/");
     expect(detectBrowserLocale()).toBe("en");
 
     window.localStorage.removeItem(LocaleStorageKey);
-    expect(detectBrowserLocale()).toBe("es");
+    expect(detectBrowserLocale()).toBe("ru");
 
     document.cookie = "locale=; path=/; max-age=0";
     document.cookie = "lang=; path=/; max-age=0";
-    expect(detectBrowserLocale()).toBe("es");
+    expect(detectBrowserLocale()).toBe("ru");
   });
 
   it("coordinates root store bearer token, locale, and theme state", () => {
@@ -115,16 +115,16 @@ describe("frontend auth and locale state", () => {
 
     const store = createRootStore({
       initialBearerToken: "  root-token  ",
-      initialLocale: "es",
+      initialLocale: "ru",
       initialTheme: "dark",
     });
 
     expect(store.authShell.bearerToken).toBe("root-token");
     expect(store.authShell.isAuthenticated).toBe(true);
-    expect(store.locale.locale).toBe("es");
+    expect(store.locale.locale).toBe("ru");
     expect(store.ui.theme).toBe("dark");
-    expect(getApiLocale()).toBe("es");
-    expect(document.documentElement.lang).toBe("es");
+    expect(getApiLocale()).toBe("ru");
+    expect(document.documentElement.lang).toBe("ru");
     expect(document.documentElement.dataset["themePreference"]).toBe("dark");
     expect(document.documentElement.dataset["theme"]).toBe("dark");
 

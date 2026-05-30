@@ -55,15 +55,15 @@ describe("frontend MobX state foundation", () => {
     expect(screen.getByText("en")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "es" },
+      target: { value: "ru" },
     });
 
-    expect(screen.getByText("es")).toBeTruthy();
-    expect(document.documentElement.lang).toBe("es");
+    expect(screen.getByText("ru")).toBeTruthy();
+    expect(document.documentElement.lang).toBe("ru");
     await apiFetch("/localized", { fetchImpl });
 
     expect(fetchImpl.mock.calls[0]?.[1]?.headers).toMatchObject({
-      "Accept-Language": "es",
+      "Accept-Language": "ru",
     });
   });
 

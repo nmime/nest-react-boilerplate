@@ -33,17 +33,17 @@ describe("FrontendI18nProvider", () => {
 
   it("renders translated content from provider locale", () => {
     const html = renderToStaticMarkup(
-      <FrontendI18nProvider initialLocale="es">
+      <FrontendI18nProvider initialLocale="ru">
         <LanguageSwitcher />
         <ThemeSwitcher />
         <Example />
       </FrontendI18nProvider>,
     );
 
-    expect(html).toContain("Idioma");
-    expect(html).toContain("Tema");
-    expect(html).toContain("Lanza una base");
-    expect(html).toContain("Español");
+    expect(html).toContain("Язык");
+    expect(html).toContain("Тема");
+    expect(html).toContain("Запустите готовую full-stack основу");
+    expect(html).toContain("Русский");
   });
 
   it("prefers an authenticated user locale over stored fallback values", () => {
@@ -56,14 +56,14 @@ describe("FrontendI18nProvider", () => {
     });
 
     render(
-      <FrontendI18nProvider userLocale="es">
+      <FrontendI18nProvider userLocale="ru">
         <LanguageSwitcher />
         <Example />
       </FrontendI18nProvider>,
     );
 
-    expect(screen.getByText("Idioma")).toBeTruthy();
-    expect(screen.getByText(/Lanza una base/u)).toBeTruthy();
+    expect(screen.getByText("Язык")).toBeTruthy();
+    expect(screen.getByText(/Запустите готовую full-stack основу/u)).toBeTruthy();
   });
 
   it("persists explicit language switches through the callback and local storage", () => {
@@ -84,13 +84,13 @@ describe("FrontendI18nProvider", () => {
     );
 
     fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "es" },
+      target: { value: "ru" },
     });
 
-    expect(onLocaleChange).toHaveBeenCalledWith("es");
-    expect(setItem).toHaveBeenCalledWith("boilerplate.locale", "es");
-    expect(document.documentElement.lang).toBe("es");
-    expect(screen.getByText("Idioma")).toBeTruthy();
+    expect(onLocaleChange).toHaveBeenCalledWith("ru");
+    expect(setItem).toHaveBeenCalledWith("boilerplate.locale", "ru");
+    expect(document.documentElement.lang).toBe("ru");
+    expect(screen.getByText("Язык")).toBeTruthy();
   });
 
   it("persists explicit theme switches through callback and local storage", () => {
@@ -122,7 +122,7 @@ describe("FrontendI18nProvider", () => {
 
   it("detects query locale before browser fallback", () => {
     installStorage();
-    window.history.replaceState(null, "", "/?lang=es");
-    expect(detectBrowserLocale()).toBe("es");
+    window.history.replaceState(null, "", "/?lang=ru");
+    expect(detectBrowserLocale()).toBe("ru");
   });
 });

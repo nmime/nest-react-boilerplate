@@ -21,6 +21,7 @@ import {
   type AuthSessionView,
   type AuthenticatedUserView,
   type UserThemePreference,
+  Language,
 } from "@app/feature-auth-shared";
 import { normalizeLocale } from "@app/common/i18n";
 import {
@@ -210,7 +211,7 @@ export function toSessionPrincipal(
     subject: session.user.id,
     email: session.user.email,
     displayName: session.user.displayName,
-    locale: session.user.locale,
+    locale: session.user.locale as Language,
     theme: session.user.theme,
     roles: session.user.roles,
     permissions: session.user.permissions,

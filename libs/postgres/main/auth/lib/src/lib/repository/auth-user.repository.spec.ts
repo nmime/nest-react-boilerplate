@@ -32,7 +32,7 @@ describe("AuthUserRepository", () => {
       displayName: "User",
       permissions: ["profile:read"],
       roles: ["user"],
-      locale: "es",
+      locale: "ru",
     });
 
     const entity = result._unsafeUnwrap();
@@ -44,7 +44,7 @@ describe("AuthUserRepository", () => {
       displayName: "User",
       permissions: ["profile:read"],
       roles: ["user"],
-      locale: "es",
+      locale: "ru",
       theme: "system",
       status: "active",
     });
@@ -142,9 +142,9 @@ describe("AuthUserRepository", () => {
     findOne.mockResolvedValue(entity);
     const authUsers = new AuthUserRepository(entityManager);
 
-    const result = await authUsers.setLocale("user-id", "es");
+    const result = await authUsers.setLocale("user-id", "ru");
 
-    expect(result._unsafeUnwrap()).toMatchObject({ locale: "es" });
+    expect(result._unsafeUnwrap()).toMatchObject({ locale: "ru" });
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
@@ -167,7 +167,7 @@ describe("AuthUserRepository", () => {
     flush.mockRejectedValue(new Error("locale update failed"));
     const authUsers = new AuthUserRepository(entityManager);
 
-    const result = await authUsers.setLocale("user-id", "es");
+    const result = await authUsers.setLocale("user-id", "ru");
 
     expect(result._unsafeUnwrapErr()).toEqual({
       code: "repository_error",
@@ -242,7 +242,7 @@ describe("AuthUserRepository", () => {
     ).toBeNull();
     expect(
       (
-        await authUsers.setLocale("00000000-0000-4000-8000-000000000000", "es")
+        await authUsers.setLocale("00000000-0000-4000-8000-000000000000", "ru")
       )._unsafeUnwrap(),
     ).toBeNull();
     expect(

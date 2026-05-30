@@ -10,7 +10,7 @@ describe("AuthUserEntity", () => {
         displayName: "User",
         permissions: ["profile:read"],
         passwordHash: "hashed",
-        locale: "es",
+        locale: "ru",
         theme: "dark",
         roles: ["user"],
         status: "invited",
@@ -21,7 +21,7 @@ describe("AuthUserEntity", () => {
       passwordHash: "hashed",
       permissions: ["profile:read"],
       roles: ["user"],
-      locale: "es",
+      locale: "ru",
       theme: "dark",
       status: "invited",
     });

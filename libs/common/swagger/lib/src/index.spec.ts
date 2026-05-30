@@ -8,6 +8,7 @@ import {
   readBoolean,
   resolveSwaggerOptions,
   setupSwagger,
+  getProblemDetailsSchema,
 } from "./index";
 
 const mocks = vi.hoisted(() => {
@@ -26,71 +27,6 @@ const mocks = vi.hoisted(() => {
     createDocument: vi.fn(() => "document"),
     setup: vi.fn(),
   };
-
-  it("resolves explicit defaults and option descriptions", () => {
-    expect(resolveSwaggerOptions({ title: "api" }, {})).toEqual({
-      enabled: false,
-      path: "docs",
-      title: "api",
-      version: "1.0.0",
-    });
-    expect(
-      resolveSwaggerOptions(
-        {
-          description: "option docs",
-          enabled: true,
-          path: "custom-docs",
-          title: "option api",
-          version: "3.0.0",
-        },
-        {
-          OPENAPI_DESCRIPTION: "env docs",
-          OPENAPI_TITLE: "env api",
-        },
-      ),
-    ).toEqual({
-      description: "option docs",
-      enabled: true,
-      path: "custom-docs",
-      title: "env api",
-      version: "3.0.0",
-    });
-  });
-
-  it("creates problem response decorators for known and custom statuses", () => {
-    expect(ApiProblemExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
-      expect.any(Function),
-    );
-    expect(mocks.apiResponse).toHaveBeenCalledWith({
-      description: "Bad Request",
-      schema: problemDetailsOpenApiSchema,
-      status: HttpStatus.BAD_REQUEST,
-    });
-    expect(mocks.apiResponse).toHaveBeenCalledWith({
-      description: "Unexpected Error",
-      schema: problemDetailsOpenApiSchema,
-      status: 599,
-    });
-  });
-
-  it("creates swagger docs without an optional description", () => {
-    const app = {} as never;
-
-    setupSwagger(app, {
-      enabled: true,
-      path: "docs-no-description",
-      title: "api",
-      version: "1.2.3",
-    });
-
-    expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
-    expect(mocks.setup).toHaveBeenCalledWith(
-      "docs-no-description",
-      app,
-      "document",
-      { jsonDocumentUrl: "docs-no-description/openapi.json" },
-    );
-  });
 });
 
 vi.mock("@nestjs/swagger", () => ({
@@ -216,14 +152,22 @@ describe("common swagger", () => {
       expect.any(Function),
     );
     expect(mocks.apiResponse).toHaveBeenCalledWith({
-      description: "Bad Request",
-      schema: problemDetailsOpenApiSchema,
       status: HttpStatus.BAD_REQUEST,
+      description: "Bad Request",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.BAD_REQUEST),
+        },
+      },
     });
     expect(mocks.apiResponse).toHaveBeenCalledWith({
-      description: "Unexpected Error",
-      schema: problemDetailsOpenApiSchema,
       status: 599,
+      description: "Unexpected Error",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(599),
+        },
+      },
     });
   });
 

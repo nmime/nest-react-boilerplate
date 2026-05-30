@@ -274,24 +274,24 @@ describe("User app shell", () => {
     window.history.pushState({}, "", "/?token=saved-locale-token");
     vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
     const fetchMock = setFetch(
-      jsonResponse({ data: { locale: "es" } }),
-      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { locale: "ru" } }),
+      jsonResponse({ data: { user: { locale: "ru" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
     );
 
     render(<App />);
 
-    expect(await screen.findByText("Listo: profile-subject")).toBeTruthy();
+    expect(await screen.findByText("Готово: profile-subject")).toBeTruthy();
     expectFetchRequest(fetchMock, "/auth/me", {
       "Accept-Language": "en",
       Authorization: "Bearer saved-locale-token",
     });
     expectFetchRequest(fetchMock, "/auth/me", {
-      "Accept-Language": "es",
+      "Accept-Language": "ru",
       Authorization: "Bearer saved-locale-token",
     });
     expectFetchRequest(fetchMock, "https://user-api/profile/me", {
-      "Accept-Language": "es",
+      "Accept-Language": "ru",
       Authorization: "Bearer saved-locale-token",
     });
   });
@@ -301,8 +301,8 @@ describe("User app shell", () => {
     const fetchMock = setFetch(
       jsonResponse({ data: { user: { locale: "en" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
-      jsonResponse({ data: { user: { locale: "es" } } }),
-      jsonResponse({ data: { user: { locale: "es" } } }),
+      jsonResponse({ data: { user: { locale: "ru" } } }),
+      jsonResponse({ data: { user: { locale: "ru" } } }),
       jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
     );
 
@@ -310,7 +310,7 @@ describe("User app shell", () => {
     expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "es" },
+      target: { value: "ru" },
     });
 
     await waitFor(() =>
@@ -319,7 +319,7 @@ describe("User app shell", () => {
           fetchMock,
           "/auth/me/preferences",
           {
-            "Accept-Language": "es",
+            "Accept-Language": "ru",
             Authorization: "Bearer switch-token",
             "Content-Type": "application/json",
           },
@@ -331,7 +331,7 @@ describe("User app shell", () => {
       fetchMock,
       "/auth/me/preferences",
       {
-        "Accept-Language": "es",
+        "Accept-Language": "ru",
         Authorization: "Bearer switch-token",
         "Content-Type": "application/json",
       },
@@ -342,17 +342,17 @@ describe("User app shell", () => {
         fetchMock,
         "/auth/me/preferences",
         {
-          "Accept-Language": "es",
+          "Accept-Language": "ru",
           Authorization: "Bearer switch-token",
           "Content-Type": "application/json",
         },
         "PATCH",
       ),
-    ).resolves.toBe(JSON.stringify({ locale: "es" }));
+    ).resolves.toBe(JSON.stringify({ locale: "ru" }));
     await waitFor(() =>
       expect(
         findFetchInit(fetchMock, "/profile/me", {
-          "Accept-Language": "es",
+          "Accept-Language": "ru",
           Authorization: "Bearer switch-token",
         }),
       ).toBeTruthy(),
@@ -487,49 +487,49 @@ describe("User app shell", () => {
       jsonResponse({ data: { user: { locale: "en", theme: "light" } } }),
       jsonResponse({
         data: {
-          profile: { email: "locale@example.com", locale: "es", theme: "blue" },
+          profile: { email: "locale@example.com", locale: "ru", theme: "blue" },
         },
       }),
-      jsonResponse({ data: { user: { locale: "es", theme: "light" } } }),
+      jsonResponse({ data: { user: { locale: "ru", theme: "light" } } }),
       jsonResponse({
         data: {
-          profile: { email: "locale@example.com", locale: "es", theme: "blue" },
+          profile: { email: "locale@example.com", locale: "ru", theme: "blue" },
         },
       }),
     );
     const { unmount } = render(<App />);
-    expect(await screen.findByText("Listo: locale@example.com")).toBeTruthy();
+    expect(await screen.findByText("Готово: locale@example.com")).toBeTruthy();
     unmount();
 
     setFetch(
       jsonResponse({
-        data: { accessToken: "register-token", locale: "es", theme: "dark" },
+        data: { accessToken: "register-token", locale: "ru", theme: "dark" },
       }),
-      jsonResponse({ data: { user: { locale: "es", theme: "dark" } } }),
+      jsonResponse({ data: { user: { locale: "ru", theme: "dark" } } }),
       jsonResponse({ data: { profile: { email: "registered@example.com" } } }),
     );
     render(<App />);
     screen
-      .getByLabelText(/^(Register display name|Nombre visible de registro)$/u)
+      .getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u)
       .remove();
     fireEvent.change(
-      screen.getByLabelText(/^(Register email|Email de registro)$/u),
+      screen.getByLabelText(/^(Register email|Email для регистрации)$/u),
       {
         target: { value: "registered@example.com" },
       },
     );
     fireEvent.change(
-      screen.getByLabelText(/^(Register password|Contraseña de registro)$/u),
+      screen.getByLabelText(/^(Register password|Пароль для регистрации)$/u),
       {
         target: { value: "password123" },
       },
     );
     fireEvent.click(
-      screen.getByRole("button", { name: /^(Register|Registrarse)$/u }),
+      screen.getByRole("button", { name: /^(Register|Зарегистрироваться)$/u }),
     );
 
     expect(
-      await screen.findByText("Listo: registered@example.com"),
+      await screen.findByText("Готово: registered@example.com"),
     ).toBeTruthy();
   });
 });

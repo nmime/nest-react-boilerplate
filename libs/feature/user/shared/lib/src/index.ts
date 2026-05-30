@@ -20,7 +20,7 @@ export function toUserProfileView(
     id: principal.subject,
     email: principal.email,
     displayName: principal.displayName,
-    locale: principal.locale,
+    locale: principal.locale as Locale,
     roles: normalizeStringList(principal.roles),
     permissions: normalizeStringList(principal.permissions),
   };

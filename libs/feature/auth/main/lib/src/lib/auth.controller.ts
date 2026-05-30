@@ -28,6 +28,7 @@ import {
   type AuthenticatedResponse,
   type AuthSessionView,
   userThemePreferences,
+  Language,
 } from "@app/feature-auth-shared";
 import { AuthService, toSessionPrincipal } from "./auth.service";
 
@@ -269,7 +270,7 @@ function principalFromUserView(
     subject: user.id,
     email: user.email,
     displayName: user.displayName,
-    locale: user.locale,
+    locale: user.locale as Language,
     theme: user.theme,
     roles: user.roles,
     permissions: user.permissions,

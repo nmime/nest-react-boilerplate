@@ -10,6 +10,7 @@ import {
   localizeProblemDetails,
   mapHttpStatusToProblemTitle,
   toProblemDetails,
+  getProblemDetailsSchema,
 } from "./index";
 
 describe("@app/common/exception", () => {
@@ -98,6 +99,18 @@ describe("@app/common/exception", () => {
     expect(ApiProblemExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
       expect.any(Function),
     );
+
+    // Test getProblemDetailsSchema for 400 Bad Request
+    const schema400 = getProblemDetailsSchema(HttpStatus.BAD_REQUEST);
+    expect(schema400.properties.status.example).toBe(400);
+    expect(schema400.properties.title.example).toBe("Bad Request");
+    expect(schema400.properties.errors).toBeDefined();
+
+    // Test getProblemDetailsSchema for 401 Unauthorized
+    const schema401 = getProblemDetailsSchema(HttpStatus.UNAUTHORIZED);
+    expect(schema401.properties.status.example).toBe(401);
+    expect(schema401.properties.title.example).toBe("Unauthorized");
+    expect(schema401.properties.errors).toBeUndefined();
   });
 
   it("creates coded problem details and reusable base exceptions", () => {
@@ -236,7 +249,7 @@ describe("@app/common/exception", () => {
             "plain",
           ],
         },
-        "es",
+        "ru",
       ),
     ).toMatchObject({
       code: "bad-request",
@@ -244,11 +257,11 @@ describe("@app/common/exception", () => {
         {
           property: "email",
           constraints: {
-            isEmail: "email debe ser un email válido",
+            isEmail: "Поле email должно быть действительным email-адресом",
             custom: "custom",
           },
         },
-        { constraints: { minLength: "value es demasiado corto" } },
+        { constraints: { minLength: "Поле value слишком короткое" } },
         "plain",
       ],
       type: "urn:problem:nest-react-boilerplate:bad-request",
@@ -303,13 +316,13 @@ describe("@app/common/exception", () => {
       toProblemDetails(
         Exception.forbidden("Required role is missing."),
         undefined,
-        "es",
+        "ru",
       ),
     ).toMatchObject({
       code: "forbidden",
-      detail: "Falta el rol requerido.",
+      detail: "Отсутствует необходимая роль.",
       status: HttpStatus.FORBIDDEN,
-      title: "Prohibido",
+      title: "Доступ ограничен",
       type: "urn:problem:nest-react-boilerplate:forbidden",
     });
   });

@@ -61,11 +61,11 @@ describe("problem response mapper", () => {
       title: "Bad Request",
       type: "urn:problem:nest-react-boilerplate:bad-request",
     });
-    expect(mapResultToResponse(err(new Error("Boom")), "es")).toMatchObject({
+    expect(mapResultToResponse(err(new Error("Boom")), "ru")).toMatchObject({
       code: "bad-request",
-      detail: "La solicitud no pudo procesarse.",
+      detail: "Запрос не может быть обработан.",
       status: 400,
-      title: "Solicitud incorrecta",
+      title: "Некорректный запрос",
     });
   });
 

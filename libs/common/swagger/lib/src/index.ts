@@ -9,18 +9,11 @@ import {
   SwaggerModule,
 } from "@nestjs/swagger";
 
-export const problemDetailsOpenApiSchema = {
-  type: "object",
-  required: ["type", "title", "status"],
-  properties: {
-    type: { type: "string", example: "about:blank" },
-    title: { type: "string", example: "Bad Request" },
-    status: { type: "integer", example: 400 },
-    detail: { type: "string" },
-    instance: { type: "string" },
-    code: { type: "string" },
-  },
-};
+export {
+  ApiProblemExceptions,
+  problemDetailsOpenApiSchema,
+  getProblemDetailsSchema,
+} from "@app/common/exception";
 
 export const okResponseOpenApiSchema = (model: Type<unknown>) => ({
   type: "object",
@@ -36,31 +29,6 @@ export function ApiOkDataResponse(
   return applyDecorators(
     ApiExtraModels(model),
     ApiOkResponse({ schema: okResponseOpenApiSchema(model) }),
-  );
-}
-
-const mapHttpStatusToProblemTitle = (status: number): string => {
-  const title = (HttpStatus as unknown as Record<number, string>)[status];
-  return typeof title === "string"
-    ? title
-        .toLowerCase()
-        .split("_")
-        .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ")
-    : "Unexpected Error";
-};
-
-export function ApiProblemExceptions(
-  ...statuses: number[]
-): MethodDecorator & ClassDecorator {
-  return applyDecorators(
-    ...statuses.map((status) =>
-      ApiResponse({
-        description: mapHttpStatusToProblemTitle(status),
-        schema: problemDetailsOpenApiSchema,
-        status,
-      }),
-    ),
   );
 }
 

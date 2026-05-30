@@ -460,7 +460,7 @@ describe("Admin app shell", () => {
       .mockImplementation(() =>
         Promise.resolve(
           new Response(
-            JSON.stringify({ data: { locale: "es", theme: "dark" } }),
+            JSON.stringify({ data: { locale: "ru", theme: "dark" } }),
           ),
         ),
       );
@@ -472,9 +472,9 @@ describe("Admin app shell", () => {
     );
 
     fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "es" },
+      target: { value: "ru" },
     });
-    fireEvent.change(screen.getByLabelText(/^(Theme|Tema)$/u), {
+    fireEvent.change(screen.getByLabelText(/^(Theme|Тема)$/u), {
       target: { value: "dark" },
     });
 
@@ -484,7 +484,7 @@ describe("Admin app shell", () => {
       ).toBeGreaterThanOrEqual(2),
     );
     await waitFor(() =>
-      expect(screen.getByLabelText(/^(Idioma|Language)$/u)).toBeTruthy(),
+      expect(screen.getByLabelText(/^(Язык|Language)$/u)).toBeTruthy(),
     );
     const preferenceRequests = getRequestsByPath(
       fetchImpl,
@@ -492,7 +492,7 @@ describe("Admin app shell", () => {
       "PATCH",
     );
     await expect(preferenceRequests[0]?.clone().json()).resolves.toEqual({
-      locale: "es",
+      locale: "ru",
     });
     await expect(preferenceRequests[1]?.clone().json()).resolves.toEqual({
       theme: "dark",

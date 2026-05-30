@@ -8,7 +8,7 @@ describe("user shared", () => {
         subject: "user-id",
         email: "user@example.com",
         displayName: "User",
-        locale: "es",
+        locale: "ru",
         roles: ["user", "user"],
         permissions: [USER_PROFILE_READ_PERMISSION],
       }),
@@ -16,7 +16,7 @@ describe("user shared", () => {
       id: "user-id",
       email: "user@example.com",
       displayName: "User",
-      locale: "es",
+      locale: "ru",
       roles: ["user"],
       permissions: [USER_PROFILE_READ_PERMISSION],
     });

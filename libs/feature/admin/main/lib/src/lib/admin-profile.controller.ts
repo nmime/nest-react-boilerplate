@@ -82,10 +82,10 @@ export const getAuthenticatedPrincipalDtoType = () => AuthenticatedPrincipalDto;
 export const getAdminProfileViewDtoType = () => AdminProfileViewDto;
 
 export class AdminProfilePayloadDto {
-  @ApiProperty({ type: getAuthenticatedPrincipalDtoType })
+  @ApiProperty({ type: () => AuthenticatedPrincipalDto })
   principal!: AuthenticatedPrincipalDto;
 
-  @ApiProperty({ type: getAdminProfileViewDtoType })
+  @ApiProperty({ type: () => AdminProfileViewDto })
   profile!: AdminProfileViewDto;
 }
 

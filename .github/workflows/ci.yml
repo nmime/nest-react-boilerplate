@@ -66,6 +66,9 @@ jobs:
       - name: Dependency audit
         run: pnpm run audit
 
+      - name: Backup/restore verification and world-class gates
+        run: pnpm run test:backup-restore && pnpm run test:world-class
+
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         if: always()

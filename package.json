@@ -32,7 +32,7 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "test:docker-smoke": "node packages/tooling/scripts/docker/smoke.mjs",
     "test:fullstack": "node packages/tooling/scripts/docker/fullstack-e2e.mjs",
-    "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run test:world-class && pnpm run lint && pnpm run typecheck && pnpm run test",
     "lib:configs:check": "node packages/tooling/scripts/project/check-library-configs.mjs",
     "init:project": "node packages/tooling/scripts/project/init-project.mjs",
     "db:seed": "node packages/tooling/scripts/db/seed.mjs",
@@ -56,7 +56,17 @@
     "test:security": "node packages/tooling/scripts/qa/security-suite.mjs",
     "test:mutation": "node packages/tooling/scripts/qa/mutation.mjs",
     "test:property": "node packages/tooling/scripts/qa/property.mjs",
-    "quality:presets": "pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run test:a11y -- --dry-run && pnpm run test:e2e:matrix -- --dry-run && pnpm run test:perf -- --dry-run && pnpm run test:security -- --dry-run && pnpm run test:mutation -- --dry-run"
+    "test:world-class": "node packages/tooling/scripts/qa/world-class-gates.mjs",
+    "test:load": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate load-stress-soak",
+    "test:chaos": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate chaos-resilience",
+    "test:disaster-recovery": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate disaster-recovery",
+    "test:backup-restore": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate disaster-recovery,backup-restore-ci",
+    "test:observability": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate observability",
+    "test:migrations:rollback": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate migration-rollback",
+    "test:concurrency": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate concurrency-race",
+    "test:reliability:smoke": "node packages/tooling/scripts/qa/world-class-gates.mjs --gate reliability-smoke",
+    "quality:world-class": "pnpm run test:world-class",
+    "quality:presets": "pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz -- --dry-run && pnpm run test:property && pnpm run test:a11y -- --dry-run && pnpm run test:e2e:matrix -- --dry-run && pnpm run test:perf -- --dry-run && pnpm run test:security -- --dry-run && pnpm run test:mutation -- --dry-run && pnpm run test:world-class"
   },
   "dependencies": {
     "@fastify/cookie": "11.0.2",
@@ -121,8 +131,6 @@
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
     "@types/supertest": "7.2.0",
-    "@typescript-eslint/eslint-plugin": "8.60.0",
-    "@typescript-eslint/parser": "8.60.0",
     "@vitejs/plugin-react": "6.0.2",
     "@vitest/coverage-v8": "4.1.7",
     "eslint": "10.4.0",
@@ -156,7 +164,6 @@
     "typescript-transform-paths": "4.0.0",
     "vite": "8.0.14",
     "vite-plugin-istanbul": "9.0.0",
-    "vitest": "4.1.7",
     "webpack-cli": "7.0.2"
   },
   "pnpm": {

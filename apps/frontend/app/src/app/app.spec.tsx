@@ -510,7 +510,9 @@ describe("User app shell", () => {
     );
     render(<App />);
     screen
-      .getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u)
+      .getByLabelText(
+        /^(Register display name|Отображаемое имя для регистрации)$/u,
+      )
       .remove();
     fireEvent.change(
       screen.getByLabelText(/^(Register email|Email для регистрации)$/u),

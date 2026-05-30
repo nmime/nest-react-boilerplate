@@ -195,5 +195,5 @@ function getHttpServer(
     throw new Error("Nest application was not initialized.");
   }
 
-  return app.getHttpServer() as Parameters<typeof supertest>[0];
+  return app.getHttpAdapter().getInstance() as Parameters<typeof supertest>[0];
 }

@@ -85,7 +85,7 @@ describe("access-control decorators", () => {
   });
 
   it("injects the current principal and applies metadata decorators", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 

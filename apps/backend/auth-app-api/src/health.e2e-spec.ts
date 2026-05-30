@@ -43,7 +43,7 @@ describe("auth-app-api e2e", () => {
   });
 
   it("GET /health returns ok", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 
@@ -56,7 +56,7 @@ describe("auth-app-api e2e", () => {
   });
 
   it("registers, logs in, returns me, and logs out with a bearer token", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 
@@ -142,7 +142,7 @@ describe("auth-app-api e2e", () => {
   });
 
   it("GET /live and /ready return ok", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 

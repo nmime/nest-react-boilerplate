@@ -7,4 +7,10 @@ describe("common component-test exports", () => {
     expect(componentTest.createPostgresContainerMikroOrmOptions).toBeDefined();
     expect(componentTest.stopPostgresContainer).toBeDefined();
   });
+
+  it("exports generic service containers", () => {
+    expect(componentTest.createRedisContainer).toBeDefined();
+    expect(componentTest.createRabbitMqContainer).toBeDefined();
+    expect(componentTest.createMinioContainer).toBeDefined();
+  });
 });

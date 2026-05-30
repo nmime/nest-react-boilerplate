@@ -23,7 +23,7 @@ describe("user-app-api health e2e", () => {
   });
 
   it("GET /health returns ok", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 
@@ -34,7 +34,7 @@ describe("user-app-api health e2e", () => {
   });
 
   it("GET /live and /ready return ok", async () => {
-    const httpServer = app.getHttpServer() as unknown as Parameters<
+    const httpServer = app.getHttpAdapter().getInstance() as Parameters<
       typeof supertest
     >[0];
 

@@ -63,7 +63,9 @@ describe("FrontendI18nProvider", () => {
     );
 
     expect(screen.getByText("Язык")).toBeTruthy();
-    expect(screen.getByText(/Запустите готовую full-stack основу/u)).toBeTruthy();
+    expect(
+      screen.getByText(/Запустите готовую full-stack основу/u),
+    ).toBeTruthy();
   });
 
   it("persists explicit language switches through the callback and local storage", () => {

@@ -4,9 +4,22 @@
   "private": true,
   "type": "module",
   "description": "Workspace-local project tooling scripts for API contracts, database operations, Docker, testing, and QA presets.",
+  "bin": {
+    "repo-tooling": "./bin/repo-tooling.mjs"
+  },
+  "scripts": {
+    "tooling": "node ./bin/repo-tooling.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
   "files": [
+    "bin",
+    "src",
     "scripts",
     "baselines",
-    "README.md"
-  ]
+    "README.md",
+    "tsconfig.json"
+  ],
+  "dependencies": {
+    "jiti": "2.7.0"
+  }
 }

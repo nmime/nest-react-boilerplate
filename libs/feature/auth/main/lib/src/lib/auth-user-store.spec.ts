@@ -112,13 +112,13 @@ describe("auth user stores", () => {
     const created = (await store.create(record))._unsafeUnwrap();
     const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
 
-    uiTheme: record.theme;
     expect(created).toMatchObject({
       email: record.email,
       displayName: null,
       roles: ["user"],
       status: "active",
       locale: null,
+      theme: record.theme,
       lastLoginAt: null,
     });
     expect((await store.create(record))._unsafeUnwrapErr()).toEqual({

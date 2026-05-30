@@ -523,6 +523,8 @@ describe("bootstrapNestApi", () => {
     );
 
     vi.clearAllMocks();
+    delete process.env.SESSION_COOKIE_SAME_SITE;
+    process.env.NODE_ENV = "production";
     process.env.DATABASE_URL =
       "postgres://postgres:postgres@localhost:5432/app";
     await expect(

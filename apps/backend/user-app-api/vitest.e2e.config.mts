@@ -9,6 +9,10 @@ export default defineConfig({
         "../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/network": new URL(
+        "../../../libs/common/network/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/exception": new URL(
         "../../../libs/common/exception/lib/src/index.ts",
         import.meta.url,

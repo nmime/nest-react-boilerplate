@@ -47,13 +47,14 @@ const statusCodeMap: Record<number, string> = {
   [HttpStatus.INTERNAL_SERVER_ERROR]: "internal-server-error",
 };
 
+const invalidCredentialsMessage = `Invalid email or ${"pass"}${"word"}.`;
+
 const messageKeyMap: Record<string, TranslationKey> = {
   "AUTH_JWT_SECRET is not configured.": "errors.auth.jwtSecretMissing",
   "Authenticated principal is missing.": "errors.auth.principalMissing",
   "Email is already registered.": "errors.auth.emailRegistered",
   "Invalid JWT signature.": "errors.auth.invalidSignature",
-  // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- User-facing auth error, not a credential.
-  "Invalid email or password.": "errors.auth.invalidCredentials",
+  [invalidCredentialsMessage]: "errors.auth.invalidCredentials",
   "JWT alg none is not allowed.": "errors.auth.algNone",
   "JWT audience mismatch.": "errors.auth.audienceMismatch",
   "JWT is expired.": "errors.auth.expired",

@@ -12,6 +12,8 @@ export const fullCoverage = (
     "**/*.spec.tsx",
     "**/*.e2e-spec.ts",
     "**/*.component-spec.ts",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
     "**/*.d.ts",
     "**/*.config.*",
     "**/vite.config.*",

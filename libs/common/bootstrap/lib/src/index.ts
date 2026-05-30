@@ -87,7 +87,7 @@ const DevelopmentSessionSecretPadding = ":development-session-padding";
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
 class FastifyPostgresSessionStore {
-  private readonly initialized: Promise<void>;
+  private initialized: Promise<void> | undefined;
   private readonly pool: Pool;
 
   constructor(
@@ -95,12 +95,15 @@ class FastifyPostgresSessionStore {
     private readonly defaultMaxAgeSeconds: number,
   ) {
     this.pool = new Pool({ connectionString: databaseUrl });
-    // eslint-disable-next-line sonarjs/no-async-constructor
-    this.initialized = this.createTable(this.pool);
   }
 
   async init(): Promise<void> {
-    await this.initialized;
+    await this.ensureInitialized();
+  }
+
+  private ensureInitialized(): Promise<void> {
+    this.initialized ??= this.createTable(this.pool);
+    return this.initialized;
   }
 
   get(sessionId: string, callback: SessionStoreGetCallback): void {
@@ -140,7 +143,7 @@ class FastifyPostgresSessionStore {
   }
 
   private async getSession(sessionId: string): Promise<Session | null> {
-    await this.initialized;
+    await this.ensureInitialized();
     const result = await this.pool.query<{ sess: Session; expire: Date }>(
       "SELECT sess, expire FROM fastify_sessions WHERE sid = $1",
       [sessionId],
@@ -161,7 +164,7 @@ class FastifyPostgresSessionStore {
   }
 
   private async setSession(sessionId: string, session: Session): Promise<void> {
-    await this.initialized;
+    await this.ensureInitialized();
     await this.pool.query(
       `
         INSERT INTO fastify_sessions (sid, sess, expire)
@@ -174,7 +177,7 @@ class FastifyPostgresSessionStore {
   }
 
   private async destroySession(sessionId: string): Promise<void> {
-    await this.initialized;
+    await this.ensureInitialized();
     await this.deleteSession(sessionId);
   }
 

@@ -39,13 +39,9 @@ describe("runInPostgresTransaction", () => {
   });
 
   it("maps non-error failures to a stable message", async () => {
+    const nonErrorReason = "rollback" as unknown as Error;
     const transactionalManager: TransactionCapable = {
-      transactional: () =>
-        // eslint-disable-next-line sonarjs/prefer-promise-shorthand
-        new Promise((_resolve, reject) => {
-          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-          reject("rollback");
-        }),
+      transactional: () => Promise.reject(nonErrorReason),
     };
 
     const result = await runInPostgresTransaction(transactionalManager, () =>

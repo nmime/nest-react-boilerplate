@@ -18,6 +18,10 @@ export const AUTH_OAUTH_CONFIG = Symbol("AUTH_OAUTH_CONFIG");
 const DefaultStateTtlMs = 10 * 60 * 1000;
 const PlaceholderOrigin = "https://return.invalid";
 
+type ReturnUrlValidation =
+  | { ok: true; returnUrl?: string }
+  | { ok: false; error: AuthOAuthError };
+
 export class InMemoryAuthOAuthStateStore implements AuthOAuthStateStore {
   private readonly statesBySession = new Map<string, AuthOAuthStoredState[]>();
 
@@ -112,8 +116,8 @@ export class AuthOAuthService {
     }
 
     const returnUrl = this.validateReturnUrl(input.returnUrl);
-    if (isAuthOAuthError(returnUrl)) {
-      return errAsync(returnUrl);
+    if (!returnUrl.ok) {
+      return errAsync(returnUrl.error);
     }
 
     try {
@@ -136,14 +140,14 @@ export class AuthOAuthService {
         stateHash: hashOAuthValue(state),
         createdAt: now,
         expiresAt: stateExpiresAt,
-        ...(returnUrl ? { returnUrl } : {}),
+        ...(returnUrl.returnUrl ? { returnUrl: returnUrl.returnUrl } : {}),
       });
 
       return okAsync({
         authorizationUrl: authorizationUrl.toString(),
         state,
         stateExpiresAt,
-        ...(returnUrl ? { returnUrl } : {}),
+        ...(returnUrl.returnUrl ? { returnUrl: returnUrl.returnUrl } : {}),
       });
     } catch (error) {
       return errAsync({
@@ -239,12 +243,11 @@ export class AuthOAuthService {
     return this.config.clock?.() ?? Date.now();
   }
 
-  // eslint-disable-next-line sonarjs/function-return-type
   private validateReturnUrl(
     value: string | null | undefined,
-  ): string | undefined | AuthOAuthError {
+  ): ReturnUrlValidation {
     if (value === null || value === undefined || value.trim() === "") {
-      return undefined;
+      return { ok: true };
     }
 
     const normalized = normalizeReturnUrl(value);
@@ -254,12 +257,15 @@ export class AuthOAuthService {
 
     if (!normalized || !allowed.includes(normalized)) {
       return {
-        code: "invalid_request",
-        message: "OAuth return URL is not allowlisted.",
+        ok: false,
+        error: {
+          code: "invalid_request",
+          message: "OAuth return URL is not allowlisted.",
+        },
       };
     }
 
-    return normalized;
+    return { ok: true, returnUrl: normalized };
   }
 }
 

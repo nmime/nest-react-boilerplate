@@ -42,7 +42,7 @@ jobs:
       - name: Typecheck
         run: pnpm exec nx run-many -t typecheck --all
 
-      - name: Test with 100 percent coverage gates
+      - name: Test with configured coverage gates
         run: pnpm run test:coverage
 
       - name: Component tests with Testcontainers

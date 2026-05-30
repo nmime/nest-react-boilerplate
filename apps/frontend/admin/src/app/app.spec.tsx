@@ -11,6 +11,7 @@ import App from "./app";
 import {
   createAdminAccess,
   fetchAdminProfile,
+  normalizeClaimList,
   getAdminApiBaseUrl,
 } from "./auth-rbac";
 import {
@@ -82,6 +83,15 @@ afterEach(() => {
 });
 
 describe("admin auth and RBAC helpers", () => {
+  it("normalizes claim arrays defensively", () => {
+    expect(normalizeClaimList(["admin", "", "admin", 42, "support"])).toEqual([
+      "admin",
+      "support",
+    ]);
+    expect(normalizeClaimList("admin")).toEqual([]);
+    expect(normalizeClaimList(undefined)).toEqual([]);
+  });
+
   it("builds fail-closed admin access policies", () => {
     expect(createAdminAccess()).toEqual({
       isAuthenticated: false,
@@ -194,6 +204,23 @@ describe("admin pages", () => {
     expect(renderToStaticMarkup(<ProfilePage payload={{}} />)).toContain(
       "Administrator",
     );
+    expect(
+      renderToStaticMarkup(
+        <ProfilePage
+          payload={{
+            principal: {
+              email: "principal@example.com",
+              subject: "subject-id",
+            },
+          }}
+        />,
+      ),
+    ).toContain("principal@example.com");
+    expect(
+      renderToStaticMarkup(
+        <ProfilePage payload={{ profile: { id: "p-1" } }} />,
+      ),
+    ).toContain("p-1");
     expect(
       renderToStaticMarkup(
         <ProfilePage

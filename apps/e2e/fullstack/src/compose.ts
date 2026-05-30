@@ -12,13 +12,25 @@ export const stackServices = [
 ];
 
 const host = process.env.FULLSTACK_HOST ?? "127.0.0.1";
+const stableHash = (value: string): number =>
+  [...value].reduce(
+    (hash, char) => (hash * 33 + char.charCodeAt(0)) >>> 0,
+    5381,
+  );
+const fallbackRunId = stableHash(process.cwd()).toString(36);
+const generatedPortBase =
+  Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? "", 10) ||
+  32_000 + (stableHash(process.cwd()) % 8_000);
+const pickPort = (envName: string, offset: number): string =>
+  process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
-  adminApi: process.env.BACKEND_ADMIN_APP_API_PORT ?? "3001",
-  userApi: process.env.USER_APP_API_PORT ?? "3002",
-  authApi: process.env.AUTH_APP_API_PORT ?? "3003",
-  adminApp: process.env.ADMIN_APP_PORT ?? "8081",
-  userApp: process.env.USER_APP_PORT ?? "8082",
-  landingApp: process.env.LANDING_APP_PORT ?? "8083",
+  postgres: pickPort("POSTGRES_PORT", 0),
+  adminApi: pickPort("BACKEND_ADMIN_APP_API_PORT", 1),
+  userApi: pickPort("USER_APP_API_PORT", 2),
+  authApi: pickPort("AUTH_APP_API_PORT", 3),
+  adminApp: pickPort("ADMIN_APP_PORT", 81),
+  userApp: pickPort("USER_APP_PORT", 82),
+  landingApp: pickPort("LANDING_APP_PORT", 83),
 };
 const url = (port: string, path = "") => `http://${host}:${port}${path}`;
 const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
@@ -27,6 +39,15 @@ const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
 
 export const composeEnv = {
   ...process.env,
+  COMPOSE_PROJECT_NAME:
+    process.env.COMPOSE_PROJECT_NAME ?? `nrbfullstack${fallbackRunId}`,
+  POSTGRES_PORT: ports.postgres,
+  BACKEND_ADMIN_APP_API_PORT: ports.adminApi,
+  USER_APP_API_PORT: ports.userApi,
+  AUTH_APP_API_PORT: ports.authApi,
+  ADMIN_APP_PORT: ports.adminApp,
+  USER_APP_PORT: ports.userApp,
+  LANDING_APP_PORT: ports.landingApp,
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
@@ -81,6 +102,9 @@ export async function upStack(): Promise<void> {
 }
 
 export async function buildStackImages(): Promise<void> {
+  console.log(
+    `fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
+  );
   for (const service of stackServices) {
     await run("docker", [...composeArgs, "build", service]);
   }

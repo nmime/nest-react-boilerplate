@@ -2,11 +2,15 @@ import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { ResultAsync, okAsync } from "neverthrow";
 import type { Locale } from "@app/common/i18n";
-import type { UserThemePreference } from "@app/feature-auth-shared";
+import {
+  DEFAULT_AUTH_TENANT_ID,
+  type UserThemePreference,
+} from "@app/feature-auth-shared";
 import { AuthUserRepository } from "@app/postgres-main-auth";
 
 export interface AuthUserRecord {
   id: string;
+  tenantId: string;
   email: string;
   displayName: string | null;
   passwordHash: string;
@@ -24,6 +28,7 @@ export interface AuthUserStoreError {
 }
 
 export interface CreateAuthUserInput {
+  tenantId?: string;
   email: string;
   displayName?: string | null;
   passwordHash: string;
@@ -39,19 +44,26 @@ export interface AuthUserStore {
   ): ResultAsync<AuthUserRecord, AuthUserStoreError>;
   findByEmail(
     email: string,
+    tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
-  findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  findById(
+    id: string,
+    tenantId?: string,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   setLocale(
     id: string,
     locale: Locale,
+    tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
+    tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   recordLogin(
     id: string,
     loggedInAt?: Date,
+    tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
 }
 
@@ -59,6 +71,7 @@ export const AUTH_USER_STORE = Symbol("AUTH_USER_STORE");
 
 export function toAuthUserRecord(entity: {
   id: string;
+  tenantId?: string | null;
   email: string;
   displayName: string | null;
   passwordHash: string;
@@ -71,6 +84,7 @@ export function toAuthUserRecord(entity: {
 }): AuthUserRecord {
   return {
     id: entity.id,
+    tenantId: entity.tenantId ?? DEFAULT_AUTH_TENANT_ID,
     email: entity.email,
     displayName: entity.displayName,
     passwordHash: entity.passwordHash,
@@ -95,40 +109,47 @@ export class PostgresAuthUserStore implements AuthUserStore {
 
   findByEmail(
     email: string,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
-      .findByEmail(email)
+      .findByEmail(email, tenantId)
       .map((entity) => (entity ? toAuthUserRecord(entity) : null));
   }
 
-  findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+  findById(
+    id: string,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
-      .findById(id)
+      .findById(id, tenantId)
       .map((entity) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   setLocale(
     id: string,
     locale: Locale,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    return this.setPreferences(id, { locale });
+    return this.setPreferences(id, { locale }, tenantId);
   }
 
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
-      .setPreferences(id, preferences)
+      .setPreferences(id, preferences, tenantId)
       .map((entity) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   recordLogin(
     id: string,
     loggedInAt?: Date,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
-      .recordLogin(id, loggedInAt)
+      .recordLogin(id, loggedInAt, tenantId)
       .map((entity) => (entity ? toAuthUserRecord(entity) : null));
   }
 }
@@ -136,24 +157,27 @@ export class PostgresAuthUserStore implements AuthUserStore {
 @Injectable()
 export class InMemoryAuthUserStore implements AuthUserStore {
   private readonly usersById = new Map<string, AuthUserRecord>();
-  private readonly idsByEmail = new Map<string, string>();
+  private readonly idsByTenantEmail = new Map<string, string>();
 
   create(
     input: CreateAuthUserInput,
   ): ResultAsync<AuthUserRecord, AuthUserStoreError> {
+    const tenantId = input.tenantId ?? DEFAULT_AUTH_TENANT_ID;
     const email = input.email.toLowerCase();
-    if (this.idsByEmail.has(email)) {
+    const key = tenantEmailKey(tenantId, email);
+    if (this.idsByTenantEmail.has(key)) {
       return ResultAsync.fromPromise(
-        Promise.reject(new Error("Email already exists.")),
+        Promise.reject(new Error("Email already exists for tenant.")),
         () => ({
           code: "repository_error" as const,
-          message: "Email already exists.",
+          message: "Email already exists for tenant.",
         }),
       );
     }
 
     const record: AuthUserRecord = {
       id: randomUUID(),
+      tenantId,
       email,
       displayName: input.displayName ?? null,
       passwordHash: input.passwordHash,
@@ -165,34 +189,43 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       lastLoginAt: null,
     };
     this.usersById.set(record.id, record);
-    this.idsByEmail.set(email, record.id);
+    this.idsByTenantEmail.set(key, record.id);
     return okAsync(record);
   }
 
   findByEmail(
     email: string,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    const id = this.idsByEmail.get(email.toLowerCase());
+    const id = this.idsByTenantEmail.get(
+      tenantEmailKey(tenantId, email.toLowerCase()),
+    );
     return okAsync(id ? (this.usersById.get(id) ?? null) : null);
   }
 
-  findById(id: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    return okAsync(this.usersById.get(id) ?? null);
+  findById(
+    id: string,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id) ?? null;
+    return okAsync(record?.tenantId === tenantId ? record : null);
   }
 
   setLocale(
     id: string,
     locale: Locale,
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    return this.setPreferences(id, { locale });
+    return this.setPreferences(id, { locale }, tenantId);
   }
 
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id);
-    if (!record) {
+    if (!record || record.tenantId !== tenantId) {
       return okAsync(null);
     }
     const updated = {
@@ -207,13 +240,18 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   recordLogin(
     id: string,
     loggedInAt: Date = new Date(),
+    tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id);
-    if (!record) {
+    if (!record || record.tenantId !== tenantId) {
       return okAsync(null);
     }
     const updated = { ...record, lastLoginAt: loggedInAt };
     this.usersById.set(id, updated);
     return okAsync(updated);
   }
+}
+
+function tenantEmailKey(tenantId: string, email: string): string {
+  return `${tenantId}:${email}`;
 }

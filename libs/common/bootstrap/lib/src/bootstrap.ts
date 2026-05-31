@@ -11,7 +11,11 @@ import { robotsMiddleware } from "./util/robots.util";
 export async function bootstrap(
   params: BootstrapParams,
 ): Promise<INestApplication> {
-  initOpenTelemetry({ serviceName: params.name });
+  initOpenTelemetry({
+    serviceName: params.name,
+    serviceVersion: process.env.OTEL_SERVICE_VERSION ?? process.env.npm_package_version,
+    environment: process.env.NODE_ENV,
+  });
   const { logger, middlewares } = createLogger({ name: params.name });
   const module = await params.module;
   const app = await NestFactory.create(module, { logger, rawBody: true });

@@ -53,6 +53,11 @@ registerLegacy(
   "Check database migration naming and drift.",
   "scripts/db/migrations-check.mjs",
 );
+registerLegacy(
+  "db:migrations:rollback-check",
+  "Run auth migrations up/down/up against disposable PostgreSQL.",
+  "scripts/db/migrations-rollback-check.mjs",
+);
 registerLegacy("db:reset", "Reset the local database.", "scripts/db/reset.mjs");
 registerLegacy("db:seed", "Seed the local database.", "scripts/db/seed.mjs");
 registerLegacy(

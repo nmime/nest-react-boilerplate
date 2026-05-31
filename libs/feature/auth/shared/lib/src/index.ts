@@ -1,6 +1,7 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import type { Locale } from "@app/common/i18n";
 import { normalizeStringList } from "@app/common/shared";
+import { resolveTenantId } from "./lib/oauth/tenant-context";
 
 export const USER_ROLE = "user";
 export const ADMIN_ROLE = "admin";
@@ -17,6 +18,7 @@ export interface AuthAccessPolicy {
 
 export interface AuthenticatedUserView {
   id: string;
+  tenantId: string;
   email: string;
   displayName?: string;
   locale?: Locale;
@@ -59,6 +61,7 @@ export function createDefaultAccessPolicy(
 
 export function toAuthenticatedUserView(input: {
   id: string;
+  tenantId?: string | null;
   email: string;
   displayName?: string | null;
   locale?: Locale | null;
@@ -68,6 +71,7 @@ export function toAuthenticatedUserView(input: {
 }): AuthenticatedUserView {
   return {
     id: input.id,
+    tenantId: resolveTenantId(input.tenantId),
     email: input.email,
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.locale ? { locale: input.locale } : {}),
@@ -95,4 +99,5 @@ export * from "./lib/oauth/auth-oauth.types";
 export * from "./lib/oauth/bearer-auth.guard";
 export * from "./lib/oauth/rbac.guard";
 export * from "./lib/oauth/session-auth.guard";
+export * from "./lib/oauth/tenant-context";
 export * from "./lib/oauth/language.enum";

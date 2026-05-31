@@ -6,6 +6,8 @@ export type AuthUserThemePreference = "system" | "light" | "dark";
 
 export type AuthUserStatus = "active" | "disabled" | "invited";
 
+export const DefaultAuthTenantId = "00000000-0000-0000-0000-000000000000";
+
 export interface AuthUserAccessPolicyInput {
   permissions?: string[];
   roles?: string[];
@@ -13,6 +15,7 @@ export interface AuthUserAccessPolicyInput {
 }
 
 export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
+  tenantId?: string;
   email: string;
   displayName?: string | null;
   passwordHash?: string;
@@ -23,6 +26,7 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
 
 export class AuthUserEntity {
   id: string = randomUUID();
+  tenantId: string = DefaultAuthTenantId;
   email!: string;
   displayName = "";
   passwordHash = "";
@@ -37,6 +41,7 @@ export class AuthUserEntity {
 
   constructor(input?: AuthUserEntityInput) {
     if (input) {
+      this.tenantId = input.tenantId ?? DefaultAuthTenantId;
       this.email = input.email;
       this.displayName = input.displayName ?? "";
       this.passwordHash = input.passwordHash ?? "";
@@ -55,6 +60,11 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
   tableName: "auth_users",
   properties: {
     id: { type: "uuid", primary: true },
+    tenantId: {
+      type: "uuid",
+      fieldName: "tenant_id",
+      default: DefaultAuthTenantId,
+    },
     email: { type: "varchar", length: 320 },
     displayName: {
       type: "varchar",
@@ -90,5 +100,11 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       onUpdate: () => new Date(),
     },
   },
-  uniques: [{ name: "uq__auth_users__email", properties: ["email"] }],
+  indexes: [{ name: "ix__auth_users__tenant_id", properties: ["tenantId"] }],
+  uniques: [
+    {
+      name: "uq__auth_users__tenant_id_email",
+      properties: ["tenantId", "email"],
+    },
+  ],
 });

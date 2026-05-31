@@ -4,6 +4,7 @@ import { ResultAsync } from "neverthrow";
 import type { Locale } from "@app/common/i18n";
 import {
   AuthUserEntity,
+  DefaultAuthTenantId,
   type AuthUserThemePreference,
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
@@ -29,18 +30,20 @@ export class AuthUserRepository {
 
   findByEmail(
     email: string,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.entityManager.findOne(AuthUserEntity, { email }),
+      this.entityManager.findOne(AuthUserEntity, { email, tenantId }),
       mapRepositoryError,
     );
   }
 
   findById(
     id: string,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.entityManager.findOne(AuthUserEntity, { id }),
+      this.entityManager.findOne(AuthUserEntity, { id, tenantId }),
       mapRepositoryError,
     );
   }
@@ -48,9 +51,10 @@ export class AuthUserRepository {
   setAccessPolicy(
     id: string,
     policy: AuthUserAccessPolicyInput,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.updateAccessPolicy(id, policy),
+      this.updateAccessPolicy(id, policy, tenantId),
       mapRepositoryError,
     );
   }
@@ -58,16 +62,18 @@ export class AuthUserRepository {
   setLocale(
     id: string,
     locale: Locale,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return this.setPreferences(id, { locale });
+    return this.setPreferences(id, { locale }, tenantId);
   }
 
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: AuthUserThemePreference },
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.updatePreferences(id, preferences),
+      this.updatePreferences(id, preferences, tenantId),
       mapRepositoryError,
     );
   }
@@ -75,9 +81,10 @@ export class AuthUserRepository {
   recordLogin(
     id: string,
     loggedInAt: Date = new Date(),
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
-      this.updateLastLoginAt(id, loggedInAt),
+      this.updateLastLoginAt(id, loggedInAt, tenantId),
       mapRepositoryError,
     );
   }
@@ -85,7 +92,10 @@ export class AuthUserRepository {
   private async persistUser(
     input: AuthUserEntityInput,
   ): Promise<AuthUserEntity> {
-    const entity = new AuthUserEntity(input);
+    const entity = new AuthUserEntity({
+      ...input,
+      tenantId: input.tenantId ?? DefaultAuthTenantId,
+    });
     this.entityManager.persist(entity);
     await this.entityManager.flush();
 
@@ -95,8 +105,12 @@ export class AuthUserRepository {
   private async updateAccessPolicy(
     id: string,
     policy: AuthUserAccessPolicyInput,
+    tenantId: string,
   ): Promise<AuthUserEntity | null> {
-    const entity = await this.entityManager.findOne(AuthUserEntity, { id });
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
     if (!entity) {
       return null;
     }
@@ -118,8 +132,12 @@ export class AuthUserRepository {
   private async updatePreferences(
     id: string,
     preferences: { locale?: Locale; theme?: AuthUserThemePreference },
+    tenantId: string,
   ): Promise<AuthUserEntity | null> {
-    const entity = await this.entityManager.findOne(AuthUserEntity, { id });
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
     if (!entity) {
       return null;
     }
@@ -137,8 +155,12 @@ export class AuthUserRepository {
   private async updateLastLoginAt(
     id: string,
     loggedInAt: Date,
+    tenantId: string,
   ): Promise<AuthUserEntity | null> {
-    const entity = await this.entityManager.findOne(AuthUserEntity, { id });
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
     if (!entity) {
       return null;
     }

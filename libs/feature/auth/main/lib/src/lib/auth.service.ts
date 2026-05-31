@@ -17,6 +17,8 @@ import {
   createDefaultAccessPolicy,
   type AuthenticatedPrincipal,
   normalizeUserThemePreference,
+  resolveTenantId,
+  normalizeTenantId,
   toAuthenticatedUserView,
   type AuthSessionView,
   type AuthenticatedUserView,
@@ -31,6 +33,7 @@ import {
 } from "./auth-user-store";
 
 export interface RegisterUserInput {
+  tenantId?: string | null;
   email: string;
   password: string;
   displayName?: string;
@@ -39,6 +42,7 @@ export interface RegisterUserInput {
 }
 
 export interface LoginInput {
+  tenantId?: string | null;
   email: string;
   password: string;
 }
@@ -63,17 +67,19 @@ export class AuthService {
   ) {}
 
   async register(input: RegisterUserInput): Promise<AuthSessionView> {
+    const tenantId = parseTenantId(input.tenantId);
     const email = normalizeEmail(input.email);
-    const existing = await this.users.findByEmail(email);
+    const existing = await this.users.findByEmail(email, tenantId);
     if (existing.isErr()) {
       throw new ConflictException(existing.error.message);
     }
     if (existing.value) {
-      throw new ConflictException("Email is already registered.");
+      throw new ConflictException("Email is already registered for tenant.");
     }
 
     const policy = createDefaultAccessPolicy(email);
     const created = await this.users.create({
+      tenantId,
       email,
       displayName: input.displayName?.trim() || null,
       passwordHash: hashPassword(input.password),
@@ -90,8 +96,9 @@ export class AuthService {
   }
 
   async login(input: LoginInput): Promise<AuthSessionView> {
+    const tenantId = parseTenantId(input.tenantId);
     const email = normalizeEmail(input.email);
-    const user = await this.users.findByEmail(email);
+    const user = await this.users.findByEmail(email, tenantId);
     if (
       user.isErr() ||
       !user.value ||
@@ -103,14 +110,22 @@ export class AuthService {
       throw new UnauthorizedException("User is not active.");
     }
 
-    const loggedIn = await this.users.recordLogin(user.value.id);
+    const loggedIn = await this.users.recordLogin(
+      user.value.id,
+      new Date(),
+      tenantId,
+    );
     const sessionUser =
       loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
     return this.createSession(sessionUser);
   }
 
-  async getUserById(id: string): Promise<AuthenticatedUserView | null> {
-    const user = await this.users.findById(id);
+  async getUserById(
+    id: string,
+    tenantId?: string | null,
+  ): Promise<AuthenticatedUserView | null> {
+    const resolvedTenantId = parseTenantId(tenantId);
+    const user = await this.users.findById(id, resolvedTenantId);
     if (user.isErr() || !user.value) {
       return null;
     }
@@ -120,21 +135,45 @@ export class AuthService {
 
   async updateUserLocale(
     id: string,
-    inputLocale: string | null | undefined,
+    tenantIdOrLocale: string | null | undefined,
+    maybeInputLocale?: string | null,
   ): Promise<AuthenticatedUserView> {
-    return this.updateUserPreferences(id, { locale: inputLocale });
+    const hasExplicitTenant = arguments.length >= 3;
+    const tenantId = hasExplicitTenant ? tenantIdOrLocale : undefined;
+    const inputLocale = hasExplicitTenant ? maybeInputLocale : tenantIdOrLocale;
+    return this.updateUserPreferences(id, tenantId, { locale: inputLocale });
   }
 
   async updateUserPreferences(
     id: string,
-    input:
+    tenantIdOrInput:
+      | string
       | {
           locale?: string | null;
           theme?: string | null;
         }
       | null
       | undefined,
+    maybeInput?:
+      | {
+          locale?: string | null;
+          theme?: string | null;
+        }
+      | null,
   ): Promise<AuthenticatedUserView> {
+    const hasExplicitTenant =
+      typeof tenantIdOrInput === "string" || arguments.length >= 3;
+    const resolvedTenantId = parseTenantId(
+      hasExplicitTenant
+        ? (tenantIdOrInput as string | null | undefined)
+        : undefined,
+    );
+    const input = hasExplicitTenant
+      ? maybeInput
+      : (tenantIdOrInput as
+          | { locale?: string | null; theme?: string | null }
+          | null
+          | undefined);
     if (input === null || typeof input !== "object" || Array.isArray(input)) {
       throw new BadRequestException("Preferences payload must be an object.");
     }
@@ -159,12 +198,16 @@ export class AuthService {
       preferences.theme = theme;
     }
 
-    const updated = await this.users.setPreferences(id, preferences);
+    const updated = await this.users.setPreferences(
+      id,
+      preferences,
+      resolvedTenantId,
+    );
     if (updated.isErr()) {
       throw new ConflictException(updated.error.message);
     }
     if (!updated.value) {
-      throw new NotFoundException("User was not found.");
+      throw new NotFoundException("User was not found in tenant.");
     }
 
     return toAuthenticatedUserView(updated.value);
@@ -181,6 +224,8 @@ export class AuthService {
       accessToken: signJwt(
         {
           sub: view.id,
+          tid: view.tenantId,
+          tenantId: view.tenantId,
           email: view.email,
           name: view.displayName,
           locale: view.locale,
@@ -209,6 +254,7 @@ export function toSessionPrincipal(
 ): AuthenticatedPrincipal {
   return {
     subject: session.user.id,
+    tenantId: session.user.tenantId,
     email: session.user.email,
     displayName: session.user.displayName,
     locale: session.user.locale as Language,
@@ -216,6 +262,13 @@ export function toSessionPrincipal(
     roles: session.user.roles,
     permissions: session.user.permissions,
   };
+}
+
+export function parseTenantId(value: string | null | undefined): string {
+  if (value && !normalizeTenantId(value)) {
+    throw new BadRequestException("Invalid tenant id.");
+  }
+  return resolveTenantId(value);
 }
 
 export function normalizeEmail(email: string): string {

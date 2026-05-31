@@ -14,6 +14,10 @@ import type {
   JwtValidationEnvironment,
 } from "./access-control.types";
 import { Language, isLanguage } from "./language.enum";
+import {
+  assertRequestTenantMatchesPrincipal,
+  resolveTenantId,
+} from "./tenant-context";
 
 type JwtHeader = {
   alg?: string;
@@ -28,7 +32,9 @@ type JwtPayload = Record<string, unknown> & {
   iss?: string;
   jti?: string;
   locale?: unknown;
+  tenantId?: unknown;
   theme?: unknown;
+  tid?: unknown;
   name?: string;
   nbf?: number;
   permissions?: unknown;
@@ -57,6 +63,7 @@ export class BearerAuthGuard implements CanActivate {
       readAuthorizationHeader(request),
       process.env,
     );
+    assertRequestTenantMatchesPrincipal(request, principal);
     request.user = principal;
     request.auth = principal;
 
@@ -238,6 +245,7 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
 
   return {
     subject: payload.sub,
+    tenantId: resolveTenantId(readTenantClaim(payload)),
     email: payload.email,
     displayName: typeof payload.name === "string" ? payload.name : undefined,
     locale: normalizePrincipalLocale(payload.locale),
@@ -248,6 +256,16 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
     permissions,
     tokenId: payload.jti,
   };
+}
+
+function readTenantClaim(payload: JwtPayload): string | undefined {
+  if (typeof payload.tid === "string") {
+    return payload.tid;
+  }
+  if (typeof payload.tenantId === "string") {
+    return payload.tenantId;
+  }
+  return undefined;
 }
 
 function normalizePrincipalLocale(value: unknown): Language | undefined {

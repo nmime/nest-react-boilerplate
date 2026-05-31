@@ -67,7 +67,7 @@ jobs:
         run: pnpm run audit
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-quality
@@ -102,7 +102,7 @@ jobs:
         run: pnpm run test:e2e:coverage
 
       - name: Upload e2e artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-artifacts
@@ -180,7 +180,7 @@ jobs:
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
 
       - name: Upload ops gate artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ops-gate-artifacts
@@ -216,7 +216,7 @@ jobs:
         run: pnpm run test:fullstack
 
       - name: Upload fullstack artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: fullstack-e2e-artifacts

@@ -1,0 +1,7 @@
+Nest React Boilerplate installed.
+
+Check rollout:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+If ingress is disabled, port-forward a service:
+  kubectl port-forward svc/{{ include "boilerplate.fullname" . }}-auth-api 3003:3003 -n {{ .Release.Namespace }}

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nest-react-boilerplate-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-github-org/nest-react-boilerplate.git
+    targetRevision: main
+    path: .helm
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-production.yaml
+      parameters:
+        - name: secrets.existingSecret
+          value: nest-react-boilerplate-production-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nest-react-boilerplate
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true

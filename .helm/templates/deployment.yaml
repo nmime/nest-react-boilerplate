@@ -1,0 +1,71 @@
+{{- $root := . -}}
+{{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "boilerplate.fullname" $root }}-{{ kebabcase $name }}
+  labels:
+    {{- include "boilerplate.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
+spec:
+  {{- if not $root.Values.autoscaling.enabled }}
+  replicas: {{ $app.replicas }}
+  {{- end }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "boilerplate.name" $root }}
+      app.kubernetes.io/instance: {{ $root.Release.Name }}
+      app.kubernetes.io/component: {{ kebabcase $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "boilerplate.labels" $root | nindent 8 }}
+        app.kubernetes.io/component: {{ kebabcase $name }}
+    spec:
+      {{- with $root.Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $app.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ kebabcase $name }}
+          image: {{ printf "%s:%s" $app.image.repository $app.image.tag | quote }}
+          imagePullPolicy: {{ default "IfNotPresent" $app.image.pullPolicy }}
+          {{- with $app.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ $app.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "boilerplate.fullname" $root }}-config
+            - secretRef:
+                name: {{ include "boilerplate.secretName" $root }}
+          readinessProbe:
+            httpGet:
+              path: {{ default (ternary "/ready" "/" (contains "Api" $name)) $app.readinessPath | quote }}
+              port: http
+            initialDelaySeconds: {{ default 10 $app.readinessInitialDelaySeconds }}
+            periodSeconds: {{ default 10 $app.readinessPeriodSeconds }}
+            timeoutSeconds: {{ default 3 $app.readinessTimeoutSeconds }}
+            failureThreshold: {{ default 6 $app.readinessFailureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: {{ default (ternary "/live" "/" (contains "Api" $name)) $app.livenessPath | quote }}
+              port: http
+            initialDelaySeconds: {{ default 20 $app.livenessInitialDelaySeconds }}
+            periodSeconds: {{ default 20 $app.livenessPeriodSeconds }}
+            timeoutSeconds: {{ default 3 $app.livenessTimeoutSeconds }}
+            failureThreshold: {{ default 3 $app.livenessFailureThreshold }}
+          resources:
+            {{- toYaml $app.resources | nindent 12 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,18 @@
+{
+  "name": "@app/frontend-ui",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  }
+}

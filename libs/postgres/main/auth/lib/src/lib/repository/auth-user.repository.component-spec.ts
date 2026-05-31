@@ -1,0 +1,151 @@
+import { MikroORM } from "@mikro-orm/core";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
+import { type INestApplication } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import {
+  createPostgresContainerMikroOrmOptions,
+  hasDockerRuntime,
+  startPostgresContainer,
+  stopPostgresContainer,
+} from "@app/common-component-test";
+import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { AuthPostgresModule } from "../auth-postgres.module";
+import { AuthUserEntity, AuthUserEntitySchema } from "../entity";
+import { AuthUserRepository } from "./auth-user.repository";
+
+const dockerAvailable = hasDockerRuntime();
+if (!dockerAvailable) {
+  process.stderr.write(
+    "AuthUserRepository component tests: skipped because Docker is not available on this host.\n",
+  );
+}
+const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+describeIfDocker("AuthUserRepository component", () => {
+  let container: StartedPostgreSqlContainer | undefined;
+  let moduleRef: TestingModule | undefined;
+  let app: INestApplication | undefined;
+  let orm: MikroORM;
+  let authUsers: AuthUserRepository;
+
+  beforeAll(async () => {
+    container = await startPostgresContainer();
+
+    moduleRef = await Test.createTestingModule({
+      imports: [
+        MikroOrmModule.forRoot(
+          createPostgresContainerMikroOrmOptions(container, [
+            AuthUserEntitySchema,
+          ]),
+        ),
+        AuthPostgresModule,
+      ],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
+
+    orm = moduleRef.get(MikroORM);
+    await orm.schema.refresh();
+    authUsers = moduleRef.get(AuthUserRepository);
+  });
+
+  afterEach(async () => {
+    await orm.em.nativeDelete(AuthUserEntity, {});
+    orm.em.clear();
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    await moduleRef?.close();
+    await stopPostgresContainer(container);
+  });
+
+  it("creates and finds users through a real Postgres repository", async () => {
+    const created = await authUsers.createUser({
+      email: "user@example.com",
+      displayName: "Component User",
+      permissions: ["profile:read"],
+      roles: ["user"],
+    });
+
+    const user = created._unsafeUnwrap();
+    expect(user.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+    );
+    expect(user.email).toBe("user@example.com");
+    expect(user.roles).toEqual(["user"]);
+    expect(user.permissions).toEqual(["profile:read"]);
+
+    const found = await authUsers.findByEmail("user@example.com");
+    expect(found._unsafeUnwrap()).toMatchObject({
+      id: user.id,
+      email: "user@example.com",
+      displayName: "Component User",
+      permissions: ["profile:read"],
+      roles: ["user"],
+      status: "active",
+    });
+  });
+
+  it("updates access policy and records logins", async () => {
+    const user = (
+      await authUsers.createUser({ email: "admin@example.com" })
+    )._unsafeUnwrap();
+    const policy = await authUsers.setAccessPolicy(user.id, {
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+    const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
+    const login = await authUsers.recordLogin(user.id, loggedInAt);
+
+    expect(policy._unsafeUnwrap()).toMatchObject({
+      permissions: ["admin:read"],
+      roles: ["admin"],
+      status: "disabled",
+    });
+    expect(login._unsafeUnwrap()?.lastLoginAt?.toISOString()).toBe(
+      loggedInAt.toISOString(),
+    );
+  });
+
+  it("returns null for missing users", async () => {
+    const found = await authUsers.findByEmail("missing@example.com");
+
+    expect(found._unsafeUnwrap()).toBeNull();
+    expect(
+      (
+        await authUsers.findById("00000000-0000-4000-8000-000000000000")
+      )._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (
+        await authUsers.setAccessPolicy(
+          "00000000-0000-4000-8000-000000000000",
+          {},
+        )
+      )._unsafeUnwrap(),
+    ).toBeNull();
+    expect(
+      (
+        await authUsers.recordLogin("00000000-0000-4000-8000-000000000000")
+      )._unsafeUnwrap(),
+    ).toBeNull();
+  });
+
+  it("maps real unique-constraint failures to repository errors", async () => {
+    await authUsers
+      .createUser({ email: "duplicate@example.com" })
+      .mapErr((error) => {
+        throw new Error(error.message);
+      });
+
+    const duplicate = await authUsers.createUser({
+      email: "duplicate@example.com",
+    });
+
+    expect(duplicate._unsafeUnwrapErr().code).toBe("repository_error");
+  });
+});

@@ -1,0 +1,227 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Nx quality gates
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm exec nx run-many -t lint --all
+
+      - name: Typecheck
+        run: pnpm exec nx run-many -t typecheck --all
+
+      - name: Test with configured coverage gates
+        run: pnpm run test:coverage
+
+      - name: Component tests with Testcontainers
+        run: pnpm run test:component -- --coverage
+
+      - name: Build
+        run: pnpm exec nx run-many -t build --all
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build Storybook
+        run: pnpm run storybook:build
+
+      - name: Storybook interaction tests
+        run: pnpm run test:storybook
+
+      - name: Storybook visual regression
+        run: pnpm run test:visual
+
+      - name: Dependency audit
+        run: pnpm run audit
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-quality
+          path: |
+            coverage/**
+          if-no-files-found: ignore
+
+  e2e:
+    name: Static/browser e2e coverage
+    runs-on: ubuntu-24.04
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: E2E coverage
+        run: pnpm run test:e2e:coverage
+
+      - name: Upload e2e artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-artifacts
+          path: |
+            coverage/e2e/**
+            playwright-report/**
+            test-results/**
+          if-no-files-found: ignore
+
+  docker-smoke:
+    name: Docker smoke stack
+    runs-on: ubuntu-24.04
+    needs: quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Docker smoke
+        run: pnpm run test:docker-smoke
+
+  ops-gates:
+    name: Runtime QA/ops gates
+    runs-on: ubuntu-24.04
+    needs: docker-smoke
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
+      PLAYWRIGHT_AUTO_INSTALL: "1"
+      A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CHAOS_URLS: http://127.0.0.1:3002/health
+      QA_CHAOS_SERVICE: user-app-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser matrix
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Start local runtime stack
+        run: docker compose -f docker/docker-compose.yml up -d --build
+
+      - name: Run runtime-backed QA/ops gates
+        run: pnpm run test:world-class
+
+      - name: Stop local runtime stack
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+
+      - name: Upload ops gate artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ops-gate-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: ignore
+
+  fullstack-e2e:
+    name: Fullstack Playwright e2e
+    runs-on: ubuntu-24.04
+    needs: docker-smoke
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Fullstack e2e
+        run: pnpm run test:fullstack
+
+      - name: Upload fullstack artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fullstack-e2e-artifacts
+          path: |
+            coverage/e2e/fullstack/**
+            playwright-report/fullstack/**
+            test-results/fullstack/**
+          if-no-files-found: ignore

@@ -1,0 +1,52 @@
+# Local verification, artifacts, and fallback CI policy
+
+GitHub-hosted Actions may be unavailable for this repository/account. When that happens, Hetzner/local verification is the source of truth.
+
+## Canonical local gate
+
+Run the full gate from a clean `main` checkout with Node 26 and pnpm 10:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm exec playwright install --with-deps chromium
+pnpm run format:check
+pnpm run check
+pnpm exec nx run-many -t lint --all
+pnpm exec nx run-many -t typecheck --all
+pnpm exec nx run-many -t build --all
+pnpm run test:coverage
+pnpm run test:e2e:coverage
+pnpm run storybook:build
+pnpm run test:storybook
+pnpm run test:visual
+pnpm run test:a11y
+pnpm run test:security:sast
+pnpm run test:security:secrets
+pnpm run audit
+pnpm run quality:presets
+pnpm run test:docker-smoke
+pnpm run test:fullstack
+```
+
+Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
+
+## Coverage gates
+
+The Vitest coverage gate is configured in `config/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.
+
+## Tracked generated and binary artifacts
+
+Generated OpenAPI clients under `generated/` and visual baseline PNGs under `packages/tooling/baselines/visual/` are intentionally tracked so consumers and visual regression tests are reproducible without extra generation steps. Treat changes to these files as generated artifacts:
+
+- regenerate API clients with `pnpm run api:clients:generate`; verify with `pnpm run api:clients:check`;
+- update visual baselines only with `pnpm run test:visual:update`, then verify with `pnpm run test:visual`;
+- review generated/binary diffs together with the source API/schema/story change that caused them.
+
+## Script map
+
+- `pnpm run check`: fast aggregate for formatting, migrations, contracts, lint, typecheck, and unit tests.
+- `pnpm run test:coverage`: unit/component coverage gate.
+- `pnpm run test:e2e:coverage`: browser/API e2e coverage.
+- `pnpm run quality:presets`: dry-run modern QA presets.
+- `pnpm run test:docker-smoke`: Docker stack smoke probes.
+- `pnpm run test:fullstack`: fullstack Playwright e2e against Docker Compose.

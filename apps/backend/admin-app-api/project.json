@@ -1,0 +1,68 @@
+{
+  "name": "backend-admin-app-api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/admin-app-api/src",
+  "projectType": "application",
+  "tags": ["platform:backend", "type:backend-app", "scope:admin", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend/admin-app-api",
+        "main": "apps/backend/admin-app-api/src/main.ts",
+        "tsConfig": "apps/backend/admin-app-api/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "backend-admin-app-api:build",
+        "runBuildTargetDependencies": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "backend-admin-app-api:build:development"
+        },
+        "production": {
+          "buildTarget": "backend-admin-app-api:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/admin-app-api",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/backend/admin-app-api"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/admin-app-api",
+        "command": "vitest run --config vitest.e2e.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "supertest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/backend/admin-app-api"]
+    }
+  }
+}

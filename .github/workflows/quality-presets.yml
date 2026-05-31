@@ -1,0 +1,56 @@
+name: Quality presets
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  presets:
+    name: Modern QA presets
+    runs-on: ubuntu-24.04
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
+      PLAYWRIGHT_AUTO_INSTALL: "1"
+      A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CHAOS_URLS: http://127.0.0.1:3002/health
+      QA_CHAOS_SERVICE: user-app-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser matrix
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Start local runtime stack
+        run: docker compose -f docker/docker-compose.yml up -d --build
+      - name: Run quality presets
+        run: pnpm run quality:presets
+      - name: Stop local runtime stack
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+      - name: Upload test result artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-preset-results
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: ignore

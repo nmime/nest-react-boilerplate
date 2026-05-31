@@ -123,7 +123,113 @@ export class Migration20260525184500NormalizeAuthUserDatabaseStandards extends M
   }
 
   override down(): void {
-    // This migration normalizes production-safe constraints and column nullability.
-    // Reverting to historical nullable columns or generated constraint names is intentionally unsupported.
+    this.addSql(`
+      do $$
+      begin
+        alter table "auth_users" drop constraint if exists "uq__auth_users__email";
+        if not exists (
+          select 1 from pg_constraint where conname = 'auth_users_email_key'
+        ) then
+          alter table "auth_users"
+            add constraint "auth_users_email_key" unique ("email");
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'email'
+        ) then
+          alter table "auth_users" alter column "email" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'display_name'
+        ) then
+          alter table "auth_users" alter column "display_name" drop default;
+          alter table "auth_users" alter column "display_name" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'password_hash'
+        ) then
+          alter table "auth_users" alter column "password_hash" drop default;
+          alter table "auth_users" alter column "password_hash" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'status'
+        ) then
+          alter table "auth_users" alter column "status" drop default;
+          alter table "auth_users" alter column "status" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'roles'
+        ) then
+          alter table "auth_users" alter column "roles" drop default;
+          alter table "auth_users" alter column "roles" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'permissions'
+        ) then
+          alter table "auth_users" alter column "permissions" drop default;
+          alter table "auth_users" alter column "permissions" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'locale'
+        ) then
+          alter table "auth_users" drop constraint if exists "ck__auth_users__locale";
+          if not exists (
+            select 1 from pg_constraint where conname = 'auth_users_locale_check'
+          ) then
+            alter table "auth_users"
+              add constraint "auth_users_locale_check"
+              check ("locale" in ('en', 'es'));
+          end if;
+          alter table "auth_users" alter column "locale" drop default;
+          alter table "auth_users" alter column "locale" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'theme'
+        ) then
+          alter table "auth_users" drop constraint if exists "ck__auth_users__theme";
+          if not exists (
+            select 1 from pg_constraint where conname = 'auth_users_theme_check'
+          ) then
+            alter table "auth_users"
+              add constraint "auth_users_theme_check"
+              check ("theme" in ('system', 'light', 'dark'));
+          end if;
+          alter table "auth_users" alter column "theme" drop default;
+          alter table "auth_users" alter column "theme" drop not null;
+        end if;
+
+        if exists (
+          select 1
+          from information_schema.columns
+          where table_name = 'auth_users' and column_name = 'last_login_at'
+        ) then
+          alter table "auth_users" alter column "last_login_at" drop default;
+          alter table "auth_users" alter column "last_login_at" drop not null;
+        end if;
+      end $$;
+    `);
   }
 }

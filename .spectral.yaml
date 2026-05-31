@@ -1,0 +1,27 @@
+extends: []
+
+rules:
+  operation-operationId:
+    description: Operations must expose stable operationId values for generated clients.
+    message: Operation is missing operationId.
+    severity: error
+    given: $.paths[*][*]
+    then:
+      field: operationId
+      function: truthy
+  operation-tags:
+    description: Operations must be grouped with tags.
+    message: Operation is missing tags.
+    severity: error
+    given: $.paths[*][*]
+    then:
+      field: tags
+      function: truthy
+  operation-responses:
+    description: Operations must declare responses.
+    message: Operation is missing responses.
+    severity: error
+    given: $.paths[*][*]
+    then:
+      field: responses
+      function: truthy

@@ -1,0 +1,106 @@
+{{- $otelEnabled := and .Values.monitoring.enabled .Values.monitoring.otel.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-config
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
+  AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
+  AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
+  OPENAPI_ENABLED: {{ .Values.config.openApiEnabled | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  POSTGRES_HOST: {{ .Values.postgresql.host | quote }}
+  POSTGRES_PORT: {{ .Values.postgresql.port | quote }}
+  POSTGRES_DB: {{ .Values.postgresql.database | quote }}
+  POSTGRES_USER: {{ .Values.postgresql.user | quote }}
+  POSTGRES_SSL: {{ .Values.postgresql.ssl | quote }}
+  POSTGRES_SSL_REJECT_UNAUTHORIZED: {{ .Values.postgresql.sslRejectUnauthorized | quote }}
+  POSTGRES_SYNCHRONIZE: 'false'
+  OTEL_ENABLED: {{ ternary "true" "false" $otelEnabled | quote }}
+  OTEL_SERVICE_NAME: {{ include "boilerplate.fullname" . | quote }}
+  {{ if .Values.monitoring.otel.serviceVersion }}
+  OTEL_SERVICE_VERSION: {{ .Values.monitoring.otel.serviceVersion | quote }}
+  {{ end }}
+  {{ if $otelEnabled }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ default (printf "http://%s-otel-collector:4318" (include "boilerplate.fullname" .)) .Values.monitoring.otel.endpoint | quote }}
+  OTEL_EXPORTER_OTLP_HEADERS: {{ default "" .Values.monitoring.otel.headers | quote }}
+  OTEL_METRIC_EXPORT_INTERVAL: {{ default "60000" .Values.monitoring.otel.metricExportInterval | quote }}
+  {{ end }}
+{{- if .Values.frontendNginx.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-frontend-nginx
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend-nginx
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name _;
+
+      root /usr/share/nginx/html;
+      index index.html;
+
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src {{ .Values.frontendNginx.cspConnectSrc }}; frame-ancestors 'self'; base-uri 'self'; form-action 'self'" always;
+
+      location = {{ .Values.frontendNginx.healthPath }} {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+      }
+
+      location = /index.html {
+        add_header Cache-Control "private, no-cache, no-store, must-revalidate" always;
+        add_header Expires "Sat, 01 Jan 2000 00:00:00 GMT" always;
+        add_header Pragma "no-cache" always;
+        try_files $uri =404;
+      }
+
+      location = /profile {
+        try_files /index.html =404;
+      }
+
+      location /auth/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-api:{{ default .Values.apps.authApi.port .Values.apps.authApi.servicePort }};
+      }
+
+      location /profile/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-user-api:{{ default .Values.apps.userApi.port .Values.apps.userApi.servicePort }};
+      }
+
+      location /admin/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-api:{{ default .Values.apps.adminApi.port .Values.apps.adminApi.servicePort }};
+      }
+
+      location / {
+        try_files $uri $uri/ /index.html;
+      }
+
+      location ~* \.(css|js|jpg|jpeg|gif|png|svg|ico|ttf|woff|woff2|eot)$ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+      }
+    }
+{{- end }}

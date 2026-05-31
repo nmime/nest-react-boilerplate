@@ -1,0 +1,164 @@
+secrets:
+  existingSecret: nest-react-boilerplate-production-secrets
+
+config:
+  nodeEnv: production
+  corsOrigins: https://admin.example.com,https://app.example.com
+  authJwtIssuer: https://auth.example.com
+  authJwtAudience: nest-react-boilerplate-api
+  authJwtExpiresInSeconds: "3600"
+  openApiEnabled: "false"
+  logLevel: info
+
+postgresql:
+  host: postgresql-rw.databases.svc.cluster.local
+  port: "5432"
+  database: nest_react_boilerplate
+  user: nest_react_boilerplate
+  ssl: "true"
+  sslRejectUnauthorized: "true"
+
+frontendNginx:
+  cspConnectSrc: "'self'"
+
+migrations:
+  image:
+    repository: ghcr.io/nmime/nest-react-boilerplate/migrator
+    tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+    digest: ""
+    pullPolicy: IfNotPresent
+
+apps:
+  authApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/auth-app-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  userApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/user-app-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  adminApi:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/admin-app-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: 1000m, memory: 1Gi }
+  landing:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/landing-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+  userFrontend:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/user-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+  adminFrontend:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/admin-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  tls:
+    - secretName: nest-react-boilerplate-tls
+      hosts:
+        - example.com
+        - app.example.com
+        - admin.example.com
+        - auth.example.com
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilization: 65
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+monitoring:
+  enabled: true
+  otel:
+    enabled: true
+    endpoint: ""
+    metricExportInterval: "30000"
+  otelCollector:
+    enabled: true
+    replicas: 2
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+  prometheusRule:
+    enabled: true
+  grafanaDashboard:
+    enabled: true
+
+# Enable after provisioning durable storage/object-store credentials. See
+# docs/operations/observability-dr.md for the encryption/upload hook contract.
+backups:
+  enabled: false
+  schedule: "17 * * * *"
+  destination:
+    objectStore:
+      enabled: true
+      existingSecret: nest-react-boilerplate-backup-object-store
+      bucket: example-prod-backups
+      prefix: nest-react-boilerplate/postgres
+  encryption:
+    enabled: true
+    existingSecret: nest-react-boilerplate-backup-encryption
+    command: 'age -r "$AGE_RECIPIENT" -o "$BACKUP_FILE.age" "$BACKUP_FILE" && rm -f "$BACKUP_FILE" && BACKUP_FILE="$BACKUP_FILE.age"'
+  hooks:
+    upload: 'aws s3 cp "$BACKUP_FILE" "s3://$BACKUP_BUCKET/$BACKUP_PREFIX/$(basename "$BACKUP_FILE")" --only-show-errors'
+  retention:
+    keepLast: 336
+
+networkPolicy:
+  enabled: true

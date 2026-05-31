@@ -1,0 +1,41 @@
+# Command matrix
+
+Use this matrix as the supported DX contract for local development and CI. Prefer these package scripts over direct `nx` or ad-hoc `node packages/tooling/scripts/*` calls so command names stay stable while implementations move.
+
+| Goal                      | Command                                     | When to run                               | Notes                                                                                                       |
+| ------------------------- | ------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Start all serve targets   | `pnpm dev`                                  | Daily development                         | Uses Nx `run-many -t serve`.                                                                                |
+| Start Docker fullstack    | `pnpm dev:fullstack`                        | Product walkthroughs and cross-app checks | Routes through `repo-tooling dev fullstack`.                                                                |
+| Start local Postgres      | `pnpm dev:db`                               | Before API/database work                  | Uses the root Docker Compose file.                                                                          |
+| Build everything          | `pnpm build`                                | Before release or image builds            | Runs all Nx build targets.                                                                                  |
+| Unit/component tests      | `pnpm test`                                 | Before every PR                           | Runs all Nx test targets.                                                                                   |
+| Frontend component tests  | `pnpm test:component`                       | UI library or page changes                | Runs component-test targets.                                                                                |
+| E2E smoke                 | `pnpm test:e2e`                             | Cross-app behavior changes                | Covers `admin-app`, `user-app`, `landing-app`, `backend-admin-app-api`, `user-app-api`, and `auth-app-api`. |
+| Lint                      | `pnpm lint`                                 | Before PR                                 | Enforces workspace import and code rules.                                                                   |
+| Typecheck                 | `pnpm typecheck`                            | Before PR                                 | Runs all Nx typecheck targets.                                                                              |
+| Format                    | `pnpm format` / `pnpm format:check`         | Before PR / CI                            | Prettier with unknown file support.                                                                         |
+| Database migrate          | `pnpm db:migrate`                           | After changing migrations                 | Uses tooling env loader.                                                                                    |
+| Migration drift check     | `pnpm db:migrations:check`                  | Before PR with DB changes                 | Validates naming and drift.                                                                                 |
+| API OpenAPI export        | `pnpm api:openapi`                          | API shape changes                         | Produces OpenAPI contracts.                                                                                 |
+| API client generation     | `pnpm api:clients`                          | After OpenAPI changes                     | Updates generated clients.                                                                                  |
+| API contract check        | `pnpm api:contracts:check`                  | CI and API PRs                            | Fails on stale contracts.                                                                                   |
+| Generate a vertical slice | `pnpm generate:feature <name> -- --dry-run` | Before starting a product feature         | Scaffolds DTO/controller/service/entity/migration/client/UI/checklist. Remove `--dry-run` to write files.   |
+| Full quality gate         | `pnpm check`                                | Before merging release-risk work          | Runs formatting, API, QA, lint, typecheck, and tests.                                                       |
+
+## Project names and paths
+
+| Project                 | Path                         | Purpose                                         |
+| ----------------------- | ---------------------------- | ----------------------------------------------- |
+| `landing-app`           | `apps/frontend/landing`      | Marketing/landing React app.                    |
+| `user-app`              | `apps/frontend/app`          | Authenticated user React app.                   |
+| `admin-app`             | `apps/frontend/admin`        | Admin React app.                                |
+| `auth-app-api`          | `apps/backend/auth-app-api`  | Auth/session API.                               |
+| `user-app-api`          | `apps/backend/user-app-api`  | User-facing API.                                |
+| `backend-admin-app-api` | `apps/backend/admin-app-api` | Admin-facing API.                               |
+| `@app/frontend-ui`      | `libs/frontend/ui/lib`       | Shared UI, state, i18n, query, and API helpers. |
+
+## Tooling policy
+
+- Add new local automation under `packages/tooling/src` and expose it through `packages/tooling/bin/repo-tooling.mjs` plus a root package script when it is part of the public DX.
+- Do not add root-level `tools/` or `scripts/` compatibility wrappers; they were removed in favor of the workspace tooling package.
+- If a command appears in docs, it must appear here or in `packages/tooling/README.md`.

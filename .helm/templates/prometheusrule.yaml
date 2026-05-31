@@ -1,0 +1,62 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.prometheusRule.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-slo-alerts
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.prometheusRule.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ include "boilerplate.fullname" . }}.availability
+      rules:
+        - alert: NestReactBoilerplateNoReadyReplicas
+          expr: kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}",deployment=~"{{ include "boilerplate.fullname" . }}-(auth-api|user-api|admin-api|landing|user-frontend|admin-frontend)"} == 0
+          for: 10m
+          labels:
+            severity: page
+            service: {{ include "boilerplate.fullname" . | quote }}
+          annotations:
+            summary: "{{ include "boilerplate.fullname" . }} deployment has no ready replicas"
+            description: "Deployment {{`{{ $labels.deployment }}`}} in namespace {{`{{ $labels.namespace }}`}} has had zero available replicas for 10 minutes. Follow docs/operations/observability-dr.md."
+        - alert: NestReactBoilerplateHighRestartRate
+          expr: increase(kube_pod_container_status_restarts_total{namespace="{{ .Release.Namespace }}",pod=~"{{ include "boilerplate.fullname" . }}-.*"}[15m]) > 3
+          for: 15m
+          labels:
+            severity: warn
+            service: {{ include "boilerplate.fullname" . | quote }}
+          annotations:
+            summary: "{{ include "boilerplate.fullname" . }} pods are restarting"
+            description: "Pod {{`{{ $labels.pod }}`}} restarted repeatedly in the last 15 minutes."
+        - alert: NestReactBoilerplateOtelCollectorDown
+          expr: up{namespace="{{ .Release.Namespace }}",service="{{ include "boilerplate.fullname" . }}-otel-collector"} == 0
+          for: 5m
+          labels:
+            severity: warn
+            service: {{ include "boilerplate.fullname" . | quote }}
+          annotations:
+            summary: "OTLP collector scrape target is down"
+            description: "Prometheus cannot scrape the OpenTelemetry Collector metrics endpoint."
+    - name: {{ include "boilerplate.fullname" . }}.dr
+      rules:
+        - alert: NestReactBoilerplateBackupCronJobMissed
+          expr: time() - kube_cronjob_status_last_schedule_time{namespace="{{ .Release.Namespace }}",cronjob="{{ include "boilerplate.fullname" . }}-postgres-backup"} > 7200
+          for: 15m
+          labels:
+            severity: page
+            service: {{ include "boilerplate.fullname" . | quote }}
+          annotations:
+            summary: "PostgreSQL backup schedule is stale"
+            description: "No successful backup schedule has been observed within the last 2 hours; RPO may be violated."
+        - alert: NestReactBoilerplateBackupJobFailed
+          expr: kube_job_failed{namespace="{{ .Release.Namespace }}",job_name=~"{{ include "boilerplate.fullname" . }}-postgres-backup.*"} > 0
+          for: 5m
+          labels:
+            severity: page
+            service: {{ include "boilerplate.fullname" . | quote }}
+          annotations:
+            summary: "PostgreSQL backup job failed"
+            description: "A backup job failed. Check job logs, object-store credentials, and encryption hooks."
+{{- end }}

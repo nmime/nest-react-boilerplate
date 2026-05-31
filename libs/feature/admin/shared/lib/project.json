@@ -1,0 +1,35 @@
+{
+  "name": "@app/feature-admin-shared",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/feature/admin/shared/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:admin"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/feature/admin/shared",
+        "main": "libs/feature/admin/shared/lib/src/index.ts",
+        "tsConfig": "libs/feature/admin/shared/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/feature/admin/shared/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/feature/admin/shared"]
+    }
+  }
+}

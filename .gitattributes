@@ -1,0 +1,5 @@
+# Generated API clients are checked in for reproducible consumers.
+libs/**/generated/** linguist-generated=true
+
+# Visual regression baselines are intentional binary fixtures.
+packages/tooling/baselines/visual/**/*.png binary

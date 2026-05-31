@@ -1,0 +1,332 @@
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+secrets:
+  # Production should create this Secret outside the chart, for example with
+  # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
+  # secret flow. Set existingSecret to use one. Set create=true only when
+  # supplying explicit non-placeholder values below.
+  existingSecret: ""
+  create: false
+  authJwtSecret: ""
+  databaseUrl: ""
+
+config:
+  nodeEnv: production
+  corsOrigins: https://admin.example.com,https://app.example.com
+  authJwtIssuer: https://auth.example.com
+  authJwtAudience: nest-react-boilerplate-api
+  authJwtExpiresInSeconds: "3600"
+  openApiEnabled: "false"
+  logLevel: info
+
+postgresql:
+  host: postgresql
+  port: "5432"
+  database: nest_react_boilerplate
+  user: postgres
+  ssl: "true"
+  sslRejectUnauthorized: "true"
+
+migrations:
+  enabled: true
+  image:
+    repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
+    # Prefer immutable tags (sha-<git-sha>) or digest (sha256:...) for releases.
+    tag: latest
+    digest: ""
+    pullPolicy: IfNotPresent
+  command: ["pnpm", "db:migrate"]
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podSecurityContext: {}
+  securityContext: {}
+
+# Frontend Pods use a chart-rendered nginx config so in-cluster upstreams point
+# at Helm Service DNS names instead of docker-compose service names baked into
+# the image.
+frontendNginx:
+  enabled: true
+  healthPath: /nginx-health
+  cspConnectSrc: "'self'"
+
+# The same chart deploys three Nest API services and three nginx frontend
+# services. API probes should keep /live and /ready; nginx probes use
+# frontendNginx.healthPath when nginxConfig=true.
+apps:
+  authApi:
+    enabled: true
+    replicas: 2
+    port: 3003
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  userApi:
+    enabled: true
+    replicas: 2
+    port: 3002
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  adminApi:
+    enabled: true
+    replicas: 2
+    port: 3001
+    servicePort: 3000
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  landing:
+    enabled: true
+    replicas: 2
+    port: 80
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  userFrontend:
+    enabled: true
+    replicas: 2
+    port: 80
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  adminFrontend:
+    enabled: true
+    replicas: 2
+    port: 80
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
+      tag: latest
+      digest: ""
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: example.com
+      service: landing
+      paths: ["/"]
+    - host: app.example.com
+      service: user-frontend
+      paths: ["/"]
+    - host: admin.example.com
+      service: admin-frontend
+      paths: ["/"]
+    - host: auth.example.com
+      service: auth-api
+      paths: ["/"]
+  tls:
+    - secretName: nest-react-boilerplate-tls
+      hosts:
+        - example.com
+        - app.example.com
+        - admin.example.com
+        - auth.example.com
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilization: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+monitoring:
+  enabled: false
+  otel:
+    # Enables the app's OpenTelemetry SDK. If endpoint is empty and the in-cluster
+    # collector is enabled, pods export to that collector over OTLP/HTTP.
+    enabled: false
+    endpoint: ""
+    headers: ""
+    metricExportInterval: "60000"
+    serviceVersion: ""
+  otelCollector:
+    enabled: false
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: 0.113.0
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    config: |
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      processors:
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 384
+        batch: {}
+      exporters:
+        prometheus:
+          endpoint: 0.0.0.0:9464
+          resource_to_telemetry_conversion:
+            enabled: true
+        debug:
+          verbosity: basic
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+      service:
+        extensions: [health_check]
+        pipelines:
+          metrics:
+            receivers: [otlp]
+            processors: [memory_limiter, batch]
+            exporters: [prometheus]
+          traces:
+            receivers: [otlp]
+            processors: [memory_limiter, batch]
+            exporters: [debug]
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+  prometheusRule:
+    enabled: false
+    labels: {}
+    # SLOs used by the default alert rules. Tune per environment.
+    availabilityTarget: "99.9"
+    p95LatencySeconds: 1
+    errorRateRatio: 0.05
+  grafanaDashboard:
+    enabled: false
+    labels:
+      grafana_dashboard: "1"
+
+backups:
+  enabled: false
+  schedule: "17 * * * *"
+  timeZone: "Etc/UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 900
+  activeDeadlineSeconds: 1800
+  ttlSecondsAfterFinished: 86400
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  destination:
+    path: /backups
+    pvc:
+      enabled: false
+      claimName: ""
+    objectStore:
+      enabled: false
+      existingSecret: ""
+      bucket: ""
+      prefix: nest-react-boilerplate/postgres
+  encryption:
+    enabled: false
+    # Provide a command such as: age -r "$AGE_RECIPIENT" -o "$BACKUP_FILE.age" "$BACKUP_FILE" && shred -u "$BACKUP_FILE" && BACKUP_FILE="$BACKUP_FILE.age"
+    command: ""
+    existingSecret: ""
+  retention:
+    keepLast: 168
+    command: ""
+  hooks:
+    preBackup: ""
+    upload: ""
+    postBackup: ""
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 1000m, memory: 1Gi }
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ["ALL"] }
+
+networkPolicy:
+  enabled: false

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nest-react-boilerplate
+version: 0.1.0
+appVersion: "0.1.0"
+description: Generic Helm chart for the Nest React boilerplate applications.
+type: application

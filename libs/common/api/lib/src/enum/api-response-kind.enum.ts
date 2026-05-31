@@ -1,0 +1,15 @@
+export enum ApiResponseKind {
+  Ok = "ok",
+  BadRequest = "bad-request",
+  Unauthorized = "unauthorized",
+  Forbidden = "forbidden",
+  NotFound = "not-found",
+  Conflict = "conflict",
+  TooManyRequests = "too-many-requests",
+  ServerError = "server-error",
+  RequestValidation = "request-validation",
+  ResponseValidation = "response-validation",
+  Timeout = "timeout",
+  NetworkError = "network-error",
+  Unknown = "unknown",
+}

@@ -1,0 +1,67 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@app/common/bootstrap": ["libs/common/bootstrap/lib/src/index.ts"],
+      "@app/common/exception": ["libs/common/exception/lib/src/index.ts"],
+      "@app/common/response": ["libs/common/response/lib/src/index.ts"],
+      "@app/common/shared": ["libs/common/shared/lib/src/index.ts"],
+      "@app/common/validation": ["libs/common/validation/lib/src/index.ts"],
+      "@app/common/api": ["libs/common/api/lib/src/index.ts"],
+      "@app/common/analytics": ["libs/common/analytics/lib/src/index.ts"],
+      "@app/common/format": ["libs/common/format/lib/src/index.ts"],
+      "@app/common/health": ["libs/common/health/lib/src/index.ts"],
+      "@app/common/intl": ["libs/common/intl/lib/src/index.ts"],
+      "@app/common/logger": ["libs/common/logger/lib/src/index.ts"],
+      "@app/common/network": ["libs/common/network/lib/src/index.ts"],
+      "@app/common/otel": ["libs/common/otel/lib/src/index.ts"],
+      "@app/common/rabbit": ["libs/common/rabbit/lib/src/index.ts"],
+      "@app/common/redis": ["libs/common/redis/lib/src/index.ts"],
+      "@app/common/s3": ["libs/common/s3/lib/src/index.ts"],
+      "@app/common/static": ["libs/common/static/lib/src/index.ts"],
+      "@app/common/test": ["libs/common/test/lib/src/index.ts"],
+      "@app/common/websocket": ["libs/common/websocket/lib/src/index.ts"],
+      "@app/frontend-ui": ["libs/frontend/ui/lib/src/index.ts"],
+      "@app/postgres-main": ["libs/postgres/main/shared/lib/src/index.ts"],
+      "@app/postgres-main-auth": ["libs/postgres/main/auth/lib/src/index.ts"],
+      "@app/common-component-test": [
+        "libs/common/component-test/lib/src/index.ts"
+      ],
+      "@app/feature-admin-shared": [
+        "libs/feature/admin/shared/lib/src/index.ts"
+      ],
+      "@app/feature-admin-main": ["libs/feature/admin/main/lib/src/index.ts"],
+      "@app/feature-auth-shared": ["libs/feature/auth/shared/lib/src/index.ts"],
+      "@app/feature-auth-main": ["libs/feature/auth/main/lib/src/index.ts"],
+      "@app/feature-user-shared": ["libs/feature/user/shared/lib/src/index.ts"],
+      "@app/feature-user-main": ["libs/feature/user/main/lib/src/index.ts"],
+      "@app/common/swagger": ["libs/common/swagger/lib/src/index.ts"],
+      "@app/common/i18n": ["libs/common/i18n/lib/src/index.ts"],
+      "@app/api-contracts": ["libs/common/api-contracts/lib/src/index.ts"],
+      "@app/api-client": ["libs/frontend/api-client/lib/src/index.ts"],
+      "@app/common/feature-flags": [
+        "libs/common/feature-flags/lib/src/index.ts"
+      ],
+      "@app/common/notifications": [
+        "libs/common/notifications/lib/src/index.ts"
+      ]
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "exclude": ["node_modules", "dist"]
+}

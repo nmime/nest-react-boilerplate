@@ -14,7 +14,13 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from "@nestjs/swagger";
-import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from "class-validator";
 import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
@@ -33,6 +39,11 @@ import {
 import { AuthService, toSessionPrincipal } from "./auth.service";
 
 export class RegisterDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
   @ApiProperty({ example: "user@example.com", format: "email" })
   @IsEmail()
   email!: string;
@@ -54,6 +65,11 @@ export class RegisterDto {
 }
 
 export class LoginDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
   @ApiProperty({ example: "user@example.com", format: "email" })
   @IsEmail()
   email!: string;
@@ -99,6 +115,9 @@ class AuthenticatedPrincipalDto {
   @ApiProperty()
   subject!: string;
 
+  @ApiProperty({ format: "uuid" })
+  tenantId!: string;
+
   @ApiPropertyOptional({ format: "email" })
   email?: string;
 
@@ -132,6 +151,9 @@ class AuthenticatedPrincipalDto {
 class AuthenticatedUserViewDto {
   @ApiProperty()
   id!: string;
+
+  @ApiProperty({ format: "uuid" })
+  tenantId!: string;
 
   @ApiProperty({ format: "email" })
   email!: string;
@@ -268,6 +290,7 @@ function principalFromUserView(
   return {
     ...principal,
     subject: user.id,
+    tenantId: user.tenantId,
     email: user.email,
     displayName: user.displayName,
     locale: user.locale as Language,
@@ -313,7 +336,7 @@ export class AuthController {
   ): Promise<OkResponse<MePayload>> {
     return createOkResponse({
       principal,
-      user: await this.auth.getUserById(principal.subject),
+      user: await this.auth.getUserById(principal.subject, principal.tenantId),
     });
   }
 
@@ -326,9 +349,11 @@ export class AuthController {
     @Body() input: UpdateLocaleDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView["user"]>> {
-    const user = await this.auth.updateUserPreferences(principal.subject, {
-      locale: input.locale,
-    });
+    const user = await this.auth.updateUserPreferences(
+      principal.subject,
+      principal.tenantId,
+      { locale: input.locale },
+    );
     setSessionPrincipal(request, principalFromUserView(principal, user));
     await callSessionMethod(request, "save");
     return createOkResponse(user);
@@ -345,6 +370,7 @@ export class AuthController {
   ): Promise<OkResponse<AuthSessionView["user"]>> {
     const user = await this.auth.updateUserPreferences(
       principal.subject,
+      principal.tenantId,
       input,
     );
     setSessionPrincipal(request, principalFromUserView(principal, user));

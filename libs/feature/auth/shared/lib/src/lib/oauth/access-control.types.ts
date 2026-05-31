@@ -5,6 +5,7 @@ export type AuthenticatedTheme = "system" | "light" | "dark";
 
 export interface AuthenticatedPrincipal {
   subject: string;
+  tenantId: string;
   email?: string;
   displayName?: string;
   locale?: AuthenticatedLocale;
@@ -42,6 +43,7 @@ export interface AuthenticatedRequest {
   reply?: AuthenticatedResponse;
   session?: AuthenticatedSession & Record<string, unknown>;
   res?: AuthenticatedResponse;
+  tenantId?: string;
   user?: AuthenticatedPrincipal;
   auth?: AuthenticatedPrincipal;
 }

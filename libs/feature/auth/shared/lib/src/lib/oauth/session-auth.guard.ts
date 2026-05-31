@@ -6,6 +6,10 @@ import type {
   AuthenticatedPrincipal,
   AuthenticatedRequest,
 } from "./access-control.types";
+import {
+  assertRequestTenantMatchesPrincipal,
+  normalizeTenantId,
+} from "./tenant-context";
 
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
@@ -24,6 +28,7 @@ export class SessionAuthGuard implements CanActivate {
         process.env,
       );
 
+    assertRequestTenantMatchesPrincipal(request, principal);
     request.user = principal;
     request.auth = principal;
     return request.user === principal && request.auth === principal;
@@ -47,6 +52,7 @@ export function setSessionPrincipal(
     request.session.user = principal;
   }
 
+  request.tenantId = principal.tenantId;
   request.user = principal;
   request.auth = principal;
 }
@@ -55,6 +61,7 @@ export function clearSessionPrincipal(request: AuthenticatedRequest): void {
   if (request.session) {
     delete request.session.user;
   }
+  delete request.tenantId;
   delete request.user;
   delete request.auth;
 }
@@ -92,6 +99,8 @@ function isAuthenticatedPrincipal(
   return (
     typeof principal.subject === "string" &&
     principal.subject.length > 0 &&
+    typeof principal.tenantId === "string" &&
+    normalizeTenantId(principal.tenantId) === principal.tenantId &&
     Array.isArray(principal.roles) &&
     principal.roles.every((role) => typeof role === "string") &&
     Array.isArray(principal.permissions) &&

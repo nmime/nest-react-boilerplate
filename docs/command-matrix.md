@@ -14,6 +14,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Lint                      | `pnpm lint`                                 | Before PR                                 | Enforces workspace import and code rules.                                                                   |
 | Typecheck                 | `pnpm typecheck`                            | Before PR                                 | Runs all Nx typecheck targets.                                                                              |
 | Format                    | `pnpm format` / `pnpm format:check`         | Before PR / CI                            | Prettier with unknown file support.                                                                         |
+| Dependency audit          | `pnpm audit`                                | Before dependency PRs and CI              | Fails on moderate-or-higher known vulnerabilities.                                                          |
 | Database migrate          | `pnpm db:migrate`                           | After changing migrations                 | Uses tooling env loader.                                                                                    |
 | Migration drift check     | `pnpm db:migrations:check`                  | Before PR with DB changes                 | Validates naming and drift.                                                                                 |
 | API OpenAPI export        | `pnpm api:openapi`                          | API shape changes                         | Produces OpenAPI contracts.                                                                                 |
@@ -21,6 +22,20 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | API contract check        | `pnpm api:contracts:check`                  | CI and API PRs                            | Fails on stale contracts.                                                                                   |
 | Generate a vertical slice | `pnpm generate:feature <name> -- --dry-run` | Before starting a product feature         | Scaffolds DTO/controller/service/entity/migration/client/UI/checklist. Remove `--dry-run` to write files.   |
 | Full quality gate         | `pnpm check`                                | Before merging release-risk work          | Runs formatting, API, QA, lint, typecheck, and tests.                                                       |
+
+## Recommended PR preflight
+
+For most changes, run this shorter sequence locally before opening a PR:
+
+```bash
+pnpm run format:check
+pnpm run lint
+pnpm run typecheck
+pnpm run test:coverage
+pnpm run audit
+```
+
+Run `pnpm run check` and runtime-backed QA presets for release-risk changes, security-sensitive changes, cross-app behavior, migrations, and Docker/deployment updates.
 
 ## Project names and paths
 

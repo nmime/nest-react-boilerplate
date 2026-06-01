@@ -22,16 +22,19 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
+  PNPM_VERSION: 10.32.1
+  HELM_VERSION: v3.15.4
 
 jobs:
   helm-render:
     name: Helm render gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
         with:
-          version: v3.15.4
+          version: ${{ env.HELM_VERSION }}
       - name: Validate Helm chart
         run: bash scripts/validate-helm.sh
 
@@ -39,6 +42,7 @@ jobs:
     name: Build, scan, and sign ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: helm-render
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:

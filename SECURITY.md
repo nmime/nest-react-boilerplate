@@ -20,3 +20,4 @@ Include:
 - Rotate any value that was committed, logged, or pasted into a ticket.
 - Keep `OPENAPI_ENABLED=false` on public production APIs unless protected upstream.
 - Use explicit CORS origins, strong JWT/cookie secrets, TLS, migrations, backups, and `/ready` probes.
+- Follow the [dependency and supply-chain policy](docs/dependency-management.md) for Dependabot, Dependency Review, audit, CodeQL, SBOM, image scan, and signing expectations.

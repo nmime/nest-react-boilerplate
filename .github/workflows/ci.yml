@@ -9,14 +9,24 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  CI: "true"
+  NX_DAEMON: "false"
+  NODE_VERSION_FILE: .nvmrc
+  PNPM_VERSION: 10.32.1
 
 jobs:
   helm-validation:
     name: Helm render validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
@@ -28,17 +38,18 @@ jobs:
   quality:
     name: Nx quality gates
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
 
       - name: Install dependencies
@@ -90,17 +101,18 @@ jobs:
     name: Static/browser e2e coverage
     runs-on: ubuntu-24.04
     needs: quality
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
 
       - name: Install dependencies
@@ -127,17 +139,18 @@ jobs:
     name: Docker smoke stack
     runs-on: ubuntu-24.04
     needs: quality
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
 
       - name: Install dependencies
@@ -150,6 +163,7 @@ jobs:
     name: Runtime QA/ops gates
     runs-on: ubuntu-24.04
     needs: docker-smoke
+    timeout-minutes: 90
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
@@ -167,11 +181,11 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
 
       - name: Install dependencies
@@ -204,17 +218,18 @@ jobs:
     name: Fullstack Playwright e2e
     runs-on: ubuntu-24.04
     needs: docker-smoke
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.32.1
+          version: ${{ env.PNPM_VERSION }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
 
       - name: Install dependencies

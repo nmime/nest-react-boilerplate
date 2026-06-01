@@ -42,7 +42,7 @@ metadata:
 data:
   default.conf: |
     server {
-      listen 80;
+      listen {{ default 8080 .Values.frontendNginx.listenPort }};
       server_name _;
 
       root /usr/share/nginx/html;

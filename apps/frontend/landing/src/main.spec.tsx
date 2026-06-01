@@ -39,10 +39,8 @@ describe("landing app root", () => {
     vi.resetModules();
   });
 
-  it("wraps the root render in the shared error boundary fallback", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  it("wraps the root render in the shared assertive error boundary fallback", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     document.body.innerHTML = '<div id="root"></div>';
 
     await import("./main");
@@ -54,10 +52,12 @@ describe("landing app root", () => {
 
     render(<>{domMocks.getRenderedTree() as ReactNode}</>);
 
+    const fallback = screen.getByRole("alert");
+
+    expect(fallback.getAttribute("aria-live")).toBe("assertive");
     expect(
       screen.getByRole("heading", { name: "Something went wrong" }),
     ).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
-    consoleError.mockRestore();
   });
 });

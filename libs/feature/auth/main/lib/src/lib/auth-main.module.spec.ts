@@ -3,6 +3,11 @@ import { AuthMainModule } from "./auth-main.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import {
+  AUTH_TOKEN_STORE,
+  InMemoryAuthTokenStore,
+  PostgresAuthTokenStore,
+} from "./auth-token-store";
+import {
   AUTH_USER_STORE,
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
@@ -19,10 +24,18 @@ describe("AuthMainModule", () => {
       provide: AUTH_USER_STORE,
       useClass: InMemoryAuthUserStore,
     });
+    expect(memoryModule.providers).toContainEqual({
+      provide: AUTH_TOKEN_STORE,
+      useClass: InMemoryAuthTokenStore,
+    });
     expect(memoryModule.imports).toEqual([]);
     expect(postgresModule.providers).toContainEqual({
       provide: AUTH_USER_STORE,
       useClass: PostgresAuthUserStore,
+    });
+    expect(postgresModule.providers).toContainEqual({
+      provide: AUTH_TOKEN_STORE,
+      useClass: PostgresAuthTokenStore,
     });
     expect(postgresModule.imports).toHaveLength(2);
   });

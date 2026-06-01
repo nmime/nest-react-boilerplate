@@ -19,6 +19,7 @@ COPY contracts ./contracts
 RUN pnpm install --frozen-lockfile
 
 FROM workspace AS migrator
+USER node
 CMD ["pnpm", "db:migrate"]
 
 FROM workspace AS prod-deps

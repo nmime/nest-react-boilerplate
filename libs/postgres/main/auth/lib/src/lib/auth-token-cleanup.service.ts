@@ -62,9 +62,7 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await this.repository.cleanupExpiredTokens(now);
       if (result.isErr()) {
-        this.logger.warn(
-          `Auth token cleanup failed: ${result.error.message}`,
-        );
+        this.logger.warn(`Auth token cleanup failed: ${result.error.message}`);
         return false;
       }
 

@@ -4,6 +4,9 @@ node_modules
 **/.env
 **/.env.*
 **/coverage
+**/.nx
+**/playwright-report
+**/test-results
 **/*.log
 **/*.tsbuildinfo
 .git

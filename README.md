@@ -30,6 +30,8 @@ pnpm run db:migrate
 pnpm run dev:fullstack
 ```
 
+Local overrides can be copied from `.env.local.example`; test-only defaults live in `.env.test.example`; production placeholders live in `.env.production.example`. Never commit real `.env*` files or Docker secret files.
+
 ## API contracts and clients
 
 Generated OpenAPI contracts are committed under `contracts/openapi` and regenerated with:
@@ -43,7 +45,17 @@ See [OpenAPI and typed client scaffold](docs/api-client.md) and the [API lifecyc
 
 ## Testing and QA
 
-Fast checks:
+Fast PR checks:
+
+```bash
+pnpm run format:check
+pnpm run lint
+pnpm run typecheck
+pnpm run test:coverage
+pnpm run audit
+```
+
+Full release-risk checks:
 
 ```bash
 pnpm run check
@@ -51,6 +63,10 @@ pnpm run quality:presets
 ```
 
 Additional runnable presets include OpenAPI fuzzing, accessibility, cross-browser/mobile Playwright, performance, security DAST, mutation, and property checks. See [Modern QA and testing matrix](docs/testing/modern-qa.md).
+
+## Dependency and supply-chain hygiene
+
+Dependabot, Dependency Review, CodeQL, `pnpm audit`, Trivy image scanning, SBOM generation, and keyless image signing are configured in GitHub Actions. See [Dependency and supply-chain management](docs/dependency-management.md) for the update and review policy.
 
 ## Deployment and operations
 

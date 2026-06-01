@@ -11,6 +11,6 @@ describe("Landing app shell", () => {
       "Launch a full-stack Nest and React product foundation.",
     );
     expect(html).toContain("What is included");
-    expect(html).toContain('href="/docs"');
+    expect(html).toContain('href="/auth/docs"');
   });
 });

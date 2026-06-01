@@ -67,6 +67,18 @@ assert.ok(
   envExampleJwtSecret.trim().length < 32,
   '.env.example AUTH_JWT_SECRET placeholder must fail the production minimum length.',
 );
+const productionEnvExample = read('.env.production.example');
+has(
+  productionEnvExample,
+  'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
+  'production env example reads JWT secret from a Docker secret file',
+);
+assert.ok(
+  !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
+  'Production env example must not provide an inline JWT secret placeholder.',
+);
+has(productionEnvExample, 'RATE_LIMIT_STORE=redis', 'production env example forces shared Redis rate limiting');
+has(productionEnvExample, 'REDIS_URL=redis://redis:6379/0', 'production env example points at Compose Redis');
 for (const [service, variable] of [
   ['admin-app', 'ADMIN_APP_PORT:-8081'],
   ['user-app', 'USER_APP_PORT:-8082'],
@@ -77,6 +89,19 @@ for (const [service, variable] of [
 
 const prodCompose = read('docker/docker-compose.prod.yml');
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
+const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
+has(prodBackendEnv, 'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}', 'production Compose defaults to Redis rate limiting');
+has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'production Compose points APIs at Redis');
+has(prodBackendEnv, 'REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}', 'production Compose sets Redis key prefix');
+const prodBackendService = section(prodCompose, 'x-backend-service:', '\nx-frontend-service:');
+has(prodBackendService, 'redis:', 'production backend services depend on Redis');
+has(prodBackendService, 'condition: service_healthy', 'production backend services wait for healthy dependencies');
+const prodRedisService = section(prodCompose, '  redis:', '\n\n  migrate:');
+has(prodRedisService, 'image: redis:7-alpine', 'production Compose Redis image');
+has(prodRedisService, 'redis-server', 'production Compose starts Redis server explicitly');
+has(prodRedisService, 'redis-cli', 'production Compose Redis healthcheck command');
+has(prodRedisService, 'ping', 'production Compose Redis ping healthcheck');
+has(prodCompose, 'redis-data:', 'production Compose persists Redis data volume');
 for (const [service, variable] of [
   ['admin-app', 'ADMIN_APP_PORT:-8081'],
   ['user-app', 'USER_APP_PORT:-8082'],
@@ -86,6 +111,14 @@ for (const [service, variable] of [
   has(serviceBlock, `127.0.0.1:${'${'}${variable}}:8080`, `${service} production host mapping targets container port 8080`);
   assert.ok(!serviceBlock.includes(`127.0.0.1:${'${'}${variable}}:80"`), `${service} must not target privileged container port 80`);
 }
+
+const dockerSmoke = read('packages/tooling/scripts/docker/smoke.mjs');
+const smokeJwtSecretDefault = dockerSmoke.match(/AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
+assert.ok(smokeJwtSecretDefault, 'Docker smoke script must set an AUTH_JWT_SECRET default');
+assert.ok(
+  smokeJwtSecretDefault.length >= 32,
+  'Docker smoke AUTH_JWT_SECRET default must satisfy the production minimum length.',
+);
 
 const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, helm ? 'listen {{ default 8080 .Values.frontendNginx.listenPort }};' : 'listen 8080;', 'frontend nginx listen port');

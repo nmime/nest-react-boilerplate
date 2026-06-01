@@ -15,6 +15,9 @@ routes.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
 - APIs probe `/live` and `/ready`; nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap.
+- Keep persisted auth token cleanup explicit in `config.authTokenCleanup*` values.
+  The service defaults to enabled hourly cleanup on startup and clamps intervals
+  below 60000ms to avoid tight cleanup loops.
 - Enable ingress/TLS only after DNS and cert-manager/ingress are ready.
 - Tune resources, HPA, PDBs, imagePullSecrets, and optional pod/container
   security contexts per environment.

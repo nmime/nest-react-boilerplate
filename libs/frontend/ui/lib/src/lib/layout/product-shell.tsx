@@ -43,11 +43,20 @@ export const ProductShell = observer(function ProductShell({
   actions,
   children,
 }: Readonly<ProductShellProps>) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
-  const resolvedActionsLabel =
-    actionsLabel ?? t("common.navigationLabel", { appName });
-  const resolvedSkipLinkLabel = skipLinkLabel ?? t("common.skipToContent");
+  const defaultLabels =
+    locale === "ru"
+      ? {
+          actionsLabel: `Навигация ${appName}`,
+          skipLinkLabel: "Перейти к содержимому",
+        }
+      : {
+          actionsLabel: `${appName} navigation`,
+          skipLinkLabel: "Skip to content",
+        };
+  const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
+  const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
 
   return (
     <>

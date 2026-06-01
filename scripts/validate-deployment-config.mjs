@@ -90,7 +90,15 @@ for (const app of ['landing', 'userFrontend', 'adminFrontend']) {
   has(appBlock, 'port: 8080', `${app} container port`);
   has(appBlock, 'servicePort: 80', `${app} service port`);
 }
-has(read('.helm/templates/deployment.yaml'), 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
+const deploymentTemplate = read('.helm/templates/deployment.yaml');
+has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
+const apiEnvFromBlock = section(
+  deploymentTemplate,
+  '{{- if contains "Api" $name }}',
+  '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
+);
+has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
+has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on API apps');
 has(read('.helm/templates/service.yaml'), 'targetPort: http', 'Helm service targets named container port');
 
 const productionValues = read('.helm/values-production.yaml');

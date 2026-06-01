@@ -29,7 +29,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+      - name: Validate deployment config
+        run: node scripts/validate-deployment-config.mjs
+      - name: Validate Helm rate-limit config
+        run: node scripts/validate-helm-rate-limit-config.mjs
+      - uses: azure/setup-helm@bf6a7d304bc2fdb57e0331155b7ebf2c504acf0a # v4
         with:
           version: v3.15.4
       - name: Validate Helm chart

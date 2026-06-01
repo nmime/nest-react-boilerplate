@@ -68,6 +68,7 @@ Coverage gates require 100% branches, functions, lines, and statements for testa
 ## Frontend changes
 
 - Reuse `@app/frontend-ui` primitives for shared layout and components.
+- Follow [frontend state architecture](docs/frontend-state.md) for TanStack Query, MobX shell state, theme/i18n ownership, raw-fetch limits, and copy rules.
 - Keep static smoke checks, Storybook stories, and user-visible copy assertions in sync when frontend shells change.
 - Keep browser-facing API base URLs documented with the matching `VITE_*` variable.
 

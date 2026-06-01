@@ -45,12 +45,15 @@ See [OpenAPI and typed client scaffold](docs/api-client.md) and the [API lifecyc
 
 ## Testing and QA
 
-Fast PR checks:
+Fast PR preflight:
 
 ```bash
-pnpm run format:check
-pnpm run lint
-pnpm run typecheck
+pnpm run check:fast
+```
+
+`check:fast` runs the Prettier check plus Nx lint, typecheck, and unit test targets. Add coverage and dependency review checks when a PR changes runtime code or dependencies:
+
+```bash
 pnpm run test:coverage
 pnpm run audit
 ```

@@ -23,16 +23,23 @@ pnpm install --frozen-lockfile
 
 ## Required checks before a PR
 
+Run the fast local preflight before every PR:
+
 ```bash
-pnpm run format:check
-pnpm run db:migrations:check
-pnpm exec nx run-many -t lint --all
-pnpm exec nx run-many -t typecheck --all
-pnpm run test:coverage
-pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app
-pnpm exec nx run-many -t build --all
-pnpm run audit
+pnpm run check:fast
 ```
+
+Add the targeted checks that match the changed surface area:
+
+```bash
+pnpm run db:migrations:check      # database migrations
+pnpm run test:coverage            # runtime TypeScript changes
+pnpm run test:e2e                 # cross-app behavior changes
+pnpm run build                    # build, package, or Docker changes
+pnpm run audit                    # dependency changes
+```
+
+Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cutting changes before requesting merge.
 
 Coverage gates require 100% branches, functions, lines, and statements for testable app and library source.
 

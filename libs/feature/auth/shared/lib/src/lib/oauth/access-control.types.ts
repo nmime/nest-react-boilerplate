@@ -52,4 +52,5 @@ export interface JwtValidationEnvironment {
   AUTH_JWT_SECRET?: string;
   AUTH_JWT_ISSUER?: string;
   AUTH_JWT_AUDIENCE?: string;
+  NODE_ENV?: string;
 }

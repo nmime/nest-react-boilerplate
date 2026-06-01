@@ -25,7 +25,7 @@ x-backend-healthcheck: &backend-healthcheck
   start_period: 20s
 
 x-frontend-healthcheck: &frontend-healthcheck
-  test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/nginx-health | grep -q ok"]
+  test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok"]
   interval: 10s
   timeout: 5s
   retries: 12
@@ -83,7 +83,7 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "${BACKEND_ADMIN_APP_API_PORT:-3001}:3000"
+      - "${ADMIN_APP_API_PORT:-3001}:3000"
     healthcheck: *backend-healthcheck
 
   user-app-api:
@@ -140,7 +140,7 @@ services:
       backend-admin-app-api:
         condition: service_healthy
     ports:
-      - "${ADMIN_APP_PORT:-8081}:80"
+      - "${ADMIN_APP_PORT:-8081}:8080"
     healthcheck: *frontend-healthcheck
 
   user-app:
@@ -159,7 +159,7 @@ services:
       user-app-api:
         condition: service_healthy
     ports:
-      - "${USER_APP_PORT:-8082}:80"
+      - "${USER_APP_PORT:-8082}:8080"
     healthcheck: *frontend-healthcheck
 
   landing-app:
@@ -180,7 +180,7 @@ services:
       backend-admin-app-api:
         condition: service_healthy
     ports:
-      - "${LANDING_APP_PORT:-8083}:80"
+      - "${LANDING_APP_PORT:-8083}:8080"
     healthcheck: *frontend-healthcheck
 
 volumes:

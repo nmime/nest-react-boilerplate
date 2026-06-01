@@ -6,6 +6,7 @@ import {
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
+  UiErrorBoundary,
   useI18n,
   type UiTheme,
 } from "@app/frontend-ui";
@@ -71,6 +72,7 @@ const getConfiguredAuthApiBaseUrl = (): string => {
 interface AdminAppProps {
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
+  bearerToken: string | null;
 }
 
 type AuthMePayload = authApi.AuthControllerMeData;
@@ -161,10 +163,10 @@ const getProfileState = (
 const AdminApp = ({
   applyUserLocale,
   applyUserTheme,
+  bearerToken,
 }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const [path] = useState(getBrowserPath);
-  const [bearerToken] = useState(getInitialBearerToken);
   const authBaseUrl = getConfiguredAuthApiBaseUrl();
 
   const authMeQuery = useQuery({
@@ -234,7 +236,12 @@ const AdminApp = ({
   return <AdminLayout>{renderAdminRoute(path, state, t)}</AdminLayout>;
 };
 
-const AppContent = () => {
+interface AppContentProps {
+  initialBearerToken: string | null;
+}
+
+const AppContent = ({ initialBearerToken }: Readonly<AppContentProps>) => {
+  const bearerToken = initialBearerToken;
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
@@ -244,6 +251,7 @@ const AppContent = () => {
     mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
         authApi.authControllerUpdatePreferences(nextPreferences, {
+          authToken: bearerToken?.trim() || undefined,
           baseUrl: authBaseUrl,
         }),
       ),
@@ -306,20 +314,25 @@ const AppContent = () => {
       <AdminApp
         applyUserLocale={applyUserLocale}
         applyUserTheme={applyUserTheme}
+        bearerToken={bearerToken}
       />
     </FrontendI18nProvider>
   );
 };
 
 const App = () => {
+  const [initialBearerToken] = useState(getInitialBearerToken);
+
   useEffect(() => {
     scrubLegacyAuthTokenParams();
   }, []);
 
   return (
-    <FrontendStateProvider initialBearerToken="">
+    <FrontendStateProvider initialBearerToken={initialBearerToken ?? ""}>
       <FrontendQueryProvider>
-        <AppContent />
+        <UiErrorBoundary>
+          <AppContent initialBearerToken={initialBearerToken} />
+        </UiErrorBoundary>
       </FrontendQueryProvider>
     </FrontendStateProvider>
   );

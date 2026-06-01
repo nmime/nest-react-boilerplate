@@ -18,15 +18,15 @@ The CI workflow has a final `CI status summary` job with `if: always()`. It writ
 
 CodeQL and Dependency Review also write step summaries and upload small Markdown artifacts. Use these summaries when the Checks tab, check-run API, or local personal access token permissions do not expose detailed check results.
 
-## Badges
+## Workflow status pages
 
-The README links directly to the current status pages for:
+Use the GitHub Actions workflow pages for current run history and badges when repository readers have authenticated access:
 
-- CI
-- CodeQL
-- Dependency review
+- CI: `.github/workflows/ci.yml`
+- CodeQL: `.github/workflows/codeql.yml`
+- Dependency review: `.github/workflows/dependency-review.yml`
 
-Badges are intentionally workflow-level links so private-repository readers can click through to the authenticated run history.
+Workflow-level links are preferred so private-repository readers can click through to the authenticated run history.
 
 ## Dependabot labels
 

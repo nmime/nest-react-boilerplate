@@ -77,6 +77,7 @@ describe("ProductShell", () => {
     );
 
     expect(html).toContain("Перейти к содержимому");
+    expect(html).toContain('aria-label="Домой в xRocket Test"');
     expect(html).toContain('aria-label="Навигация xRocket Test"');
   });
 });

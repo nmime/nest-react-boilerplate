@@ -43,20 +43,23 @@ export const ProductShell = observer(function ProductShell({
   actions,
   children,
 }: Readonly<ProductShellProps>) {
-  const { locale, t } = useI18n();
+  const { locale } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
   const defaultLabels =
     locale === "ru"
       ? {
           actionsLabel: `Навигация ${appName}`,
+          homeLinkLabel: `Домой в ${appName}`,
           skipLinkLabel: "Перейти к содержимому",
         }
       : {
           actionsLabel: `${appName} navigation`,
+          homeLinkLabel: `${appName} home`,
           skipLinkLabel: "Skip to content",
         };
   const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
   const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
+  const resolvedHomeLinkLabel = defaultLabels.homeLinkLabel;
 
   return (
     <>
@@ -70,7 +73,7 @@ export const ProductShell = observer(function ProductShell({
       >
         <header className="xr-header">
           <a
-            aria-label={t("common.homeLink", { appName })}
+            aria-label={resolvedHomeLinkLabel}
             className="xr-brand"
             href={homeHref}
           >

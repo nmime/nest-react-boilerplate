@@ -74,6 +74,7 @@ jobs:
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -82,10 +83,10 @@ jobs:
         run: pnpm run format:check
 
       - name: Lint
-        run: pnpm exec nx run-many -t lint --all
+        run: pnpm run lint
 
       - name: Typecheck
-        run: pnpm exec nx run-many -t typecheck --all
+        run: pnpm run typecheck
 
       - name: Test with configured coverage gates
         run: pnpm run test:coverage
@@ -94,7 +95,7 @@ jobs:
         run: pnpm run test:component -- --coverage
 
       - name: Build
-        run: pnpm exec nx run-many -t build --all
+        run: pnpm run build
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -137,6 +138,7 @@ jobs:
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -175,6 +177,7 @@ jobs:
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -210,6 +213,7 @@ jobs:
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -254,6 +258,7 @@ jobs:
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

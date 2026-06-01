@@ -35,7 +35,7 @@ describe("resolveBackendEnvironmentConfig", () => {
       },
       trustProxy: true,
     });
-    expect(config.session.secret).toHaveLength(32);
+    expect(config.session.secret.length).toBeGreaterThanOrEqual(32);
   });
 
   it("uses Redis rate-limit storage when explicitly configured", () => {

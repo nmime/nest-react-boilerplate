@@ -30,6 +30,22 @@ pnpm run test:fullstack
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
+## Pass 3 targeted validation
+
+When validating auth/session and preference-token fix-forward work, use the same Node and pnpm versions as CI, install from the lockfile, then run the fast aggregate plus the focused projects/specs that cover the risky paths:
+
+```bash
+nvm use 26.1.0
+pnpm --version # 10.32.1
+pnpm install --frozen-lockfile
+pnpm run check:fast
+pnpm exec nx run @app/common/bootstrap:test
+pnpm exec vitest run apps/frontend/admin/src/app/preference-token.spec.tsx
+pnpm exec vitest run libs/feature/auth/main/lib/src/lib/auth-token-store.spec.ts libs/postgres/main/auth/lib/src/lib/repository/auth-token.repository.spec.ts
+```
+
+For private-repository sandbox validation, prefer an authenticated full checkout or archive download before attempting file-by-file reconstruction. If credentials are not available inside the sandbox and nested source/archive retrieval is blocked, use GitHub Actions or a trusted local checkout for these commands rather than validating against a partial tree.
+
 ## Coverage gates
 
 The Vitest coverage gate is configured in `config/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.

@@ -35,15 +35,22 @@ export const normalizeAdminPath = (path: string): string => {
 
 export const AdminLayout = ({
   children,
-}: Readonly<{ children: React.ReactNode }>) => {
+  currentPath = "/",
+}: Readonly<{ children: React.ReactNode; currentPath?: string }>) => {
   const { t } = useI18n();
+  const routePath = normalizeAdminPath(currentPath);
 
   return (
     <ProductShell
       actions={[
-        { href: "/admin", label: t("admin.action.dashboard") },
+        {
+          href: "/admin",
+          isCurrent: routePath === "/" || routePath === "/dashboard",
+          label: t("admin.action.dashboard"),
+        },
         {
           href: "/admin/profile",
+          isCurrent: routePath === "/profile",
           label: t("admin.action.profile"),
           variant: "secondary",
         },

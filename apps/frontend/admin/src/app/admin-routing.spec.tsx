@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { createAdminAccess } from "./auth-rbac";
-import { normalizeAdminPath, renderAdminRoute } from "./pages";
+import { AdminLayout, normalizeAdminPath, renderAdminRoute } from "./pages";
 
 describe("admin route base handling", () => {
   const access = createAdminAccess({
@@ -43,5 +43,18 @@ describe("admin route base handling", () => {
         }),
       ),
     ).toContain("Ada Admin");
+  });
+
+  it("keeps admin shell navigation scoped and exposes the current page", () => {
+    const html = renderToStaticMarkup(
+      <AdminLayout currentPath="/admin/profile">
+        <span>Profile content</span>
+      </AdminLayout>,
+    );
+
+    expect(html).toContain('href="/admin"');
+    expect(html).toContain('href="/admin/profile"');
+    expect(html).toContain('aria-current="page"');
+    expect(html).toContain('href="#xr-content"');
   });
 });

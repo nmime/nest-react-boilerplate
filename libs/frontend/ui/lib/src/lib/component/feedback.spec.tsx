@@ -1,31 +1,79 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { UiErrorBoundary } from "./feedback";
 
 const ThrowingChild = () => {
-  throw new Error("boom");
+  throw new Error("Child render failed");
+};
+
+const MaybeThrowingChild = ({
+  shouldThrow,
+}: Readonly<{ shouldThrow: boolean }>) => {
+  if (shouldThrow) {
+    throw new Error("Resettable child failed");
+  }
+
+  return <p>Recovered child</p>;
 };
 
 describe("UiErrorBoundary", () => {
-  it("announces the default crash fallback as an assertive alert", () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
-    try {
-      render(
-        <UiErrorBoundary>
-          <ThrowingChild />
-        </UiErrorBoundary>,
-      );
-    } finally {
-      consoleError.mockRestore();
-    }
+  it("announces the default crash fallback as an assertive alert and reports render errors", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onError = vi.fn();
+
+    render(
+      <UiErrorBoundary onError={onError}>
+        <ThrowingChild />
+      </UiErrorBoundary>,
+    );
 
     const fallback = screen.getByRole("alert");
 
     expect(fallback.getAttribute("aria-live")).toBe("assertive");
-    expect(fallback.textContent).toContain("Something went wrong");
-    expect(fallback.textContent).toContain("Try refreshing the page.");
+    expect(
+      screen.getByRole("heading", { name: "Something went wrong" }),
+    ).toBeTruthy();
+    expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Child render failed" }),
+      expect.objectContaining({ componentStack: expect.any(String) }),
+    );
+  });
+
+  it("supports custom fallbacks and reset-key recovery", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onReset = vi.fn();
+
+    const { rerender } = render(
+      <UiErrorBoundary
+        fallback={<div role="alert">Custom fallback</div>}
+        onReset={onReset}
+        resetKey="failed"
+      >
+        <MaybeThrowingChild shouldThrow />
+      </UiErrorBoundary>,
+    );
+
+    expect(screen.getByRole("alert").textContent).toContain("Custom fallback");
+
+    rerender(
+      <UiErrorBoundary
+        fallback={<div role="alert">Custom fallback</div>}
+        onReset={onReset}
+        resetKey="recovered"
+      >
+        <MaybeThrowingChild shouldThrow={false} />
+      </UiErrorBoundary>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Recovered child")).toBeTruthy(),
+    );
+    expect(onReset).toHaveBeenCalledTimes(1);
   });
 });

@@ -13,6 +13,23 @@ data:
   AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
   OPENAPI_ENABLED: {{ .Values.config.openApiEnabled | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  RATE_LIMIT_ENABLED: {{ .Values.config.rateLimitEnabled | quote }}
+  RATE_LIMIT_STORE: {{ .Values.config.rateLimitStore | quote }}
+  RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
+  RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
+  REDIS_KEY_PREFIX: {{ .Values.config.redisKeyPrefix | quote }}
+  {{ if .Values.config.redisUrl }}
+  REDIS_URL: {{ .Values.config.redisUrl | quote }}
+  {{ end }}
+  {{ if .Values.config.redisHosts }}
+  REDIS_HOSTS: {{ .Values.config.redisHosts | quote }}
+  {{ end }}
+  {{ if .Values.config.redisMode }}
+  REDIS_MODE: {{ .Values.config.redisMode | quote }}
+  {{ end }}
+  {{ if .Values.config.redisDb }}
+  REDIS_DB: {{ .Values.config.redisDb | quote }}
+  {{ end }}
   POSTGRES_HOST: {{ .Values.postgresql.host | quote }}
   POSTGRES_PORT: {{ .Values.postgresql.port | quote }}
   POSTGRES_DB: {{ .Values.postgresql.database | quote }}
@@ -82,7 +99,7 @@ data:
         try_files /index.html =404;
       }
 
-      location /auth/ {
+      location ^~ /auth/ {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -90,7 +107,7 @@ data:
         proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-api:{{ default .Values.apps.authApi.port .Values.apps.authApi.servicePort }};
       }
 
-      location /profile/ {
+      location ^~ /profile/ {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -98,7 +115,7 @@ data:
         proxy_pass http://{{ include "boilerplate.fullname" . }}-user-api:{{ default .Values.apps.userApi.port .Values.apps.userApi.servicePort }};
       }
 
-      location /admin/ {
+      location ^~ /admin/ {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

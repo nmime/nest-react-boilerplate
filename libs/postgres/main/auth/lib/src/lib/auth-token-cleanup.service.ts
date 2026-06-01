@@ -13,12 +13,13 @@ export interface AuthTokenCleanupConfig {
 }
 
 const DefaultCleanupIntervalMs = 60 * 60 * 1000;
+type CleanupInterval = ReturnType<typeof setInterval>;
 
 @Injectable()
 export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(AuthTokenCleanupService.name);
   private readonly config = resolveAuthTokenCleanupConfig();
-  private interval: NodeJS.Timeout | undefined;
+  private interval: CleanupInterval | undefined;
   private cleanupInProgress = false;
 
   constructor(private readonly repository: AuthTokenRepository) {}

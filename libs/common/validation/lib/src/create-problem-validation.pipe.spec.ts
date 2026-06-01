@@ -50,6 +50,47 @@ describe("createProblemValidationPipe", () => {
     });
   });
 
+  it("flattens nested validation errors", () => {
+    expect(
+      createProblemValidationBody([
+        {
+          property: "profile",
+          children: [
+            {
+              property: "displayName",
+              constraints: { isString: "displayName must be a string" },
+            },
+            {
+              property: "addresses",
+              children: [
+                {
+                  property: "0",
+                  children: [
+                    {
+                      property: "city",
+                      constraints: { isString: "city must be a string" },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+    ).toMatchObject({
+      errors: [
+        {
+          property: "profile.displayName",
+          constraints: { isString: "displayName must be a string" },
+        },
+        {
+          property: "profile.addresses.0.city",
+          constraints: { isString: "city must be a string" },
+        },
+      ],
+    });
+  });
+
   it("throws problem details from the pipe exception factory", async () => {
     class CreateUserDto {
       @IsString()

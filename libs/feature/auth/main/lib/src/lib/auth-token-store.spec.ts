@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { InMemoryAuthTokenStore } from "./auth-token-store";
+import { describe, expect, it, vi } from "vitest";
+import { okAsync } from "neverthrow";
+import {
+  hashOpaqueToken,
+  InMemoryAuthTokenStore,
+  PostgresAuthTokenStore,
+} from "./auth-token-store";
 
 const TENANT_A = "11111111-1111-4111-8111-111111111111";
 const TENANT_B = "22222222-2222-4222-8222-222222222222";
@@ -85,5 +90,53 @@ describe("InMemoryAuthTokenStore", () => {
         TENANT_A,
       ),
     ).resolves.toMatchObject({ value: null });
+  });
+});
+
+describe("PostgresAuthTokenStore", () => {
+  it("persists only token hashes for refresh and user action tokens", async () => {
+    const repository = {
+      createRefreshToken: vi.fn(() => okAsync({})),
+      createUserToken: vi.fn(() => okAsync({})),
+    };
+    const store = new PostgresAuthTokenStore(repository as never);
+
+    const refresh = await store.issueRefreshToken({
+      tenantId: TENANT_A,
+      userId: "user-1",
+    });
+    const action = await store.issueUserActionToken({
+      tenantId: TENANT_A,
+      userId: "user-1",
+      purpose: "password_reset",
+    });
+
+    expect(refresh.isOk()).toBe(true);
+    expect(action.isOk()).toBe(true);
+    if (refresh.isErr() || action.isErr()) {
+      throw new Error("expected issued postgres tokens");
+    }
+
+    expect(repository.createRefreshToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: TENANT_A,
+        userId: "user-1",
+        tokenHash: hashOpaqueToken(refresh.value.token),
+      }),
+    );
+    expect(repository.createUserToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: TENANT_A,
+        userId: "user-1",
+        purpose: "password_reset",
+        tokenHash: hashOpaqueToken(action.value.token),
+      }),
+    );
+    expect(
+      JSON.stringify(repository.createRefreshToken.mock.calls),
+    ).not.toContain(refresh.value.token);
+    expect(JSON.stringify(repository.createUserToken.mock.calls)).not.toContain(
+      action.value.token,
+    );
   });
 });

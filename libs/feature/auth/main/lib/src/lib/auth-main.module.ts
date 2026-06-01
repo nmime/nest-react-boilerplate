@@ -11,7 +11,11 @@ import {
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
 } from "./auth-user-store";
-import { AUTH_TOKEN_STORE, InMemoryAuthTokenStore } from "./auth-token-store";
+import {
+  AUTH_TOKEN_STORE,
+  InMemoryAuthTokenStore,
+  PostgresAuthTokenStore,
+} from "./auth-token-store";
 
 export type AuthPersistenceMode = "postgres" | "memory";
 
@@ -62,7 +66,9 @@ export class AuthMainModule {
         useMemory
           ? { provide: AUTH_USER_STORE, useClass: InMemoryAuthUserStore }
           : { provide: AUTH_USER_STORE, useClass: PostgresAuthUserStore },
-        { provide: AUTH_TOKEN_STORE, useClass: InMemoryAuthTokenStore },
+        useMemory
+          ? { provide: AUTH_TOKEN_STORE, useClass: InMemoryAuthTokenStore }
+          : { provide: AUTH_TOKEN_STORE, useClass: PostgresAuthTokenStore },
       ],
       exports: [AuthService],
     };

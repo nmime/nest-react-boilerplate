@@ -125,8 +125,18 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, helm ? '.Values.frontendNginx.healthPath' : '/nginx-health', 'nginx health route');
   before(text, 'location = /admin {', 'location ^~ /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
   before(text, 'location = /admin/ {', 'location ^~ /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
-  before(text, 'location ~ ^/admin/(dashboard|profile)/?$', 'location ^~ /admin/ {', 'admin dashboard/profile SPA regex precedes /admin API prefix');
-  before(text, 'location = /profile {', 'location ^~ /profile/ {', 'exact /profile SPA route precedes profile API prefix');
+  for (const adminSpaRoute of ['dashboard', 'dashboard/', 'profile', 'profile/']) {
+    before(
+      text,
+      `location = /admin/${adminSpaRoute} {`,
+      'location ^~ /admin/ {',
+      `exact /admin/${adminSpaRoute} SPA route wins over admin API prefix`,
+    );
+  }
+  assert.ok(
+    !text.includes('location ~ ^/admin/(dashboard|profile)/?$'),
+    'Admin SPA deep links must use exact locations because the ^~ admin API prefix skips regex locations.',
+  );
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');

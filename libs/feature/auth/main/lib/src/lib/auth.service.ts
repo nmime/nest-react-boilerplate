@@ -74,6 +74,8 @@ export interface JwtSigningEnvironment {
 const DefaultExpiresInSeconds = 3600;
 const PasswordIterations = 120_000;
 const PasswordKeyLength = 32;
+const MaximumPasswordHashIterations = 1_000_000;
+const MaximumPasswordDigestLength = 128;
 
 @Injectable()
 export class AuthService {
@@ -398,22 +400,36 @@ export function hashPassword(
 
 export function verifyPassword(password: string, encodedHash: string): boolean {
   const [algorithm, iterations, salt, expectedDigest] = encodedHash.split("$");
+  if (algorithm !== "pbkdf2_sha256" || !salt || !expectedDigest) {
+    return false;
+  }
+
+  const parsedIterations = parsePasswordHashIterations(iterations);
+  if (!parsedIterations) {
+    return false;
+  }
+
+  let expected: Buffer;
+  try {
+    expected = Buffer.from(expectedDigest, "base64url");
+  } catch {
+    return false;
+  }
+
   if (
-    algorithm !== "pbkdf2_sha256" ||
-    !iterations ||
-    !salt ||
-    !expectedDigest
+    expected.length === 0 ||
+    expected.length > MaximumPasswordDigestLength
   ) {
     return false;
   }
+
   const digest = pbkdf2Sync(
     password,
     salt,
-    Number(iterations),
-    Buffer.from(expectedDigest, "base64url").length,
+    parsedIterations,
+    expected.length,
     "sha256",
   );
-  const expected = Buffer.from(expectedDigest, "base64url");
   return digest.length === expected.length && timingSafeEqual(digest, expected);
 }
 
@@ -442,6 +458,24 @@ export function signJwt(
 
 function base64UrlJson(value: unknown): string {
   return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+}
+
+function parsePasswordHashIterations(value: string | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (
+    !Number.isInteger(parsed) ||
+    String(parsed) !== value ||
+    parsed < 1 ||
+    parsed > MaximumPasswordHashIterations
+  ) {
+    return null;
+  }
+
+  return parsed;
 }
 
 function readExpiresInSeconds(value: string | undefined): number {

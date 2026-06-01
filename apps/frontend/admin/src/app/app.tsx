@@ -233,7 +233,11 @@ const AdminApp = ({
     ],
   );
 
-  return <AdminLayout>{renderAdminRoute(path, state, t)}</AdminLayout>;
+  return (
+    <AdminLayout currentPath={path}>
+      {renderAdminRoute(path, state, t)}
+    </AdminLayout>
+  );
 };
 
 interface AppContentProps {

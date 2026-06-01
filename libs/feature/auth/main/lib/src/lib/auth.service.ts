@@ -69,6 +69,7 @@ export interface JwtSigningEnvironment {
   AUTH_JWT_AUDIENCE?: string;
   AUTH_JWT_EXPIRES_IN_SECONDS?: string;
   ADMIN_BOOTSTRAP_EMAILS?: string;
+  NODE_ENV?: string;
 }
 
 const DefaultExpiresInSeconds = 3600;
@@ -438,8 +439,14 @@ export function signJwt(
   env: JwtSigningEnvironment,
   expiresIn = DefaultExpiresInSeconds,
 ): string {
-  if (!env.AUTH_JWT_SECRET) {
+  const secret = env.AUTH_JWT_SECRET?.trim();
+  if (!secret) {
     throw new UnauthorizedException("AUTH_JWT_SECRET is not configured.");
+  }
+  if (env.NODE_ENV === "production" && secret.length < 32) {
+    throw new UnauthorizedException(
+      "AUTH_JWT_SECRET must be at least 32 characters in production.",
+    );
   }
   const now = Math.floor(Date.now() / 1000);
   const fullPayload = {
@@ -450,7 +457,7 @@ export function signJwt(
     exp: now + expiresIn,
   };
   const signingInput = `${base64UrlJson({ alg: "HS256", typ: "JWT" })}.${base64UrlJson(fullPayload)}`;
-  const signature = createHmac("sha256", env.AUTH_JWT_SECRET)
+  const signature = createHmac("sha256", secret)
     .update(signingInput)
     .digest("base64url");
   return `${signingInput}.${signature}`;

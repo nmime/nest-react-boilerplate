@@ -77,6 +77,7 @@ const PasswordIterations = 120_000;
 const PasswordKeyLength = 32;
 const MaximumPasswordHashIterations = 1_000_000;
 const MaximumPasswordDigestLength = 128;
+const MinimumProductionJwtSecretLength = 32;
 
 @Injectable()
 export class AuthService {
@@ -443,9 +444,12 @@ export function signJwt(
   if (!secret) {
     throw new UnauthorizedException("AUTH_JWT_SECRET is not configured.");
   }
-  if (env.NODE_ENV === "production" && secret.length < 32) {
+  if (
+    env.NODE_ENV === "production" &&
+    secret.length < MinimumProductionJwtSecretLength
+  ) {
     throw new UnauthorizedException(
-      "AUTH_JWT_SECRET must be at least 32 characters in production.",
+      "AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.",
     );
   }
   const now = Math.floor(Date.now() / 1000);

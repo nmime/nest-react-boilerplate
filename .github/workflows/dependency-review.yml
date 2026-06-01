@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Dependency review
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v4
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
@@ -31,8 +31,8 @@ jobs:
           {
             echo "## Dependency review summary"
             echo
-            echo "Workflow: ${{ github.workflow }}"
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Workflow: $${{ github.workflow }}"
+            echo "Run: $${{ github.server_url }}/$${{ github.repository }}/actions/runs/$${{ github.run_id }}"
             echo
             echo "The dependency-review action is configured with \`comment-summary-in-pr: always\` and \`fail-on-severity: moderate\`."
           } | tee dependency-review-summary.md >> "$GITHUB_STEP_SUMMARY"

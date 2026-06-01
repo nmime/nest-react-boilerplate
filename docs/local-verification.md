@@ -11,6 +11,8 @@ pnpm install --frozen-lockfile
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
 pnpm run check
+node scripts/validate-deployment-config.mjs
+node scripts/validate-helm-rate-limit-config.mjs
 pnpm exec nx run-many -t lint --all
 pnpm exec nx run-many -t typecheck --all
 pnpm exec nx run-many -t build --all
@@ -72,6 +74,8 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 ## Script map
 
 - `pnpm run check`: fast aggregate for formatting, migrations, contracts, lint, typecheck, and unit tests.
+- `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
+- `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.
 - `pnpm run test:coverage`: unit/component coverage gate.
 - `pnpm run test:e2e:coverage`: browser/API e2e coverage.
 - `pnpm run quality:presets`: dry-run modern QA presets.

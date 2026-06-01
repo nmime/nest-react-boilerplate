@@ -38,18 +38,30 @@ export const ProductShell = observer(function ProductShell({
   status,
   statusTone = "info",
   homeHref = "/",
-  actionsLabel = `${appName} navigation`,
-  skipLinkLabel = "Skip to content",
+  actionsLabel,
+  skipLinkLabel,
   actions,
   children,
 }: Readonly<ProductShellProps>) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
+  const defaultLabels =
+    locale === "ru"
+      ? {
+          actionsLabel: `Навигация ${appName}`,
+          skipLinkLabel: "Перейти к содержимому",
+        }
+      : {
+          actionsLabel: `${appName} navigation`,
+          skipLinkLabel: "Skip to content",
+        };
+  const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
+  const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
 
   return (
     <>
       <a className="xr-skip-link" href="#xr-content">
-        {skipLinkLabel}
+        {resolvedSkipLinkLabel}
       </a>
       <main
         className="xr-shell"
@@ -77,7 +89,7 @@ export const ProductShell = observer(function ProductShell({
             <p className="xr-eyebrow">{eyebrow}</p>
             <h1>{title}</h1>
             <p className="xr-hero__description">{description}</p>
-            <nav aria-label={actionsLabel} className="xr-actions">
+            <nav aria-label={resolvedActionsLabel} className="xr-actions">
               {actions.map((action) => (
                 <UiButton
                   aria-current={action.isCurrent ? "page" : undefined}

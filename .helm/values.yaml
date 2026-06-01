@@ -19,6 +19,11 @@ config:
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: "3600"
+  # Expired persisted refresh/action token cleanup. Intervals below 60000ms are
+  # clamped by the service to avoid tight cleanup loops from configuration typos.
+  authTokenCleanupEnabled: "true"
+  authTokenCleanupIntervalMs: "3600000"
+  authTokenCleanupRunOnStart: "true"
   openApiEnabled: "false"
   logLevel: info
   rateLimitEnabled: "true"

@@ -1,17 +1,28 @@
 # Contributing
 
-Use this guide with the root `README.md` and the documents in `docs/`.
+Use this guide with the root `README.md`, [Command matrix](docs/command-matrix.md), and the documents in `docs/`.
 
 ## Prerequisites
 
-- Node.js 26.x
-- pnpm 10.32.1
-- Docker, only when testing container images
+- Node.js `26.1.0` from `.nvmrc`.
+- pnpm `10.32.1` through Corepack.
+- Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
 
 ```bash
+nvm use
 corepack enable
+corepack prepare pnpm@10.32.1 --activate
 pnpm install --frozen-lockfile
+cp .env.example .env
 ```
+
+## Branch and PR workflow
+
+1. Branch from `main` with a focused name, for example `feature/billing-settings` or `fix/auth-cookie-flags`.
+2. Keep commits scoped and explain user-visible behavior in the commit message or PR body.
+3. Document any new runtime variable in `.env.example`, relevant environment examples, and `README.md`.
+4. Update generated contracts/clients when API shape changes.
+5. Do not commit secrets, `.env*` files with real values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
 
 ## Workspace rules
 
@@ -19,7 +30,8 @@ pnpm install --frozen-lockfile
 - Put shared libraries under `libs/**`.
 - Use Nx project names in commands.
 - Keep cross-project imports on the configured `@app/*` path aliases.
-- Do not commit generated output from `dist/`, `coverage/`, or `.nx/`.
+- Add public developer commands to `package.json` and [Command matrix](docs/command-matrix.md).
+- Add local automation under `packages/tooling/src` and expose supported commands through `packages/tooling/bin/repo-tooling.mjs`.
 
 ## Required checks before a PR
 
@@ -35,6 +47,7 @@ Add the targeted checks that match the changed surface area:
 pnpm run db:migrations:check      # database migrations
 pnpm run test:coverage            # runtime TypeScript changes
 pnpm run test:e2e                 # cross-app behavior changes
+pnpm run test:fullstack           # Docker-backed full-stack behavior
 pnpm run build                    # build, package, or Docker changes
 pnpm run audit                    # dependency changes
 ```
@@ -49,16 +62,18 @@ Coverage gates require 100% branches, functions, lines, and statements for testa
 - Preserve Helmet, strict validation, and secure production CORS behavior.
 - Keep `GET /health` available for deploy health checks.
 - Never log secrets or full environment objects.
-- OAuth remains disabled until an app explicitly supplies configuration.
+- Keep OAuth disabled unless an app explicitly supplies provider configuration and product-specific callback handling.
 - Follow [database migration standards](docs/database-migrations.md): explicit `NOT NULL`, `VARCHAR` plus checks instead of enums, and deterministic constraint/index names.
 
 ## Frontend changes
 
 - Reuse `@app/frontend-ui` primitives for shared layout and components.
-- Keep static smoke checks in sync with user-visible copy when frontend shells change.
+- Keep static smoke checks, Storybook stories, and user-visible copy assertions in sync when frontend shells change.
+- Keep browser-facing API base URLs documented with the matching `VITE_*` variable.
 
-## Deployment changes
+## Deployment and documentation changes
 
 - Keep the root `Dockerfile` aligned with current Nx project names and output paths.
-- Keep `docker/docker-compose.yml` optional and limited to services used by current code.
-- Document any new runtime variables in `README.md`.
+- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack.
+- Update Docker, CI, runbook, or troubleshooting docs whenever operational behavior changes.
+- Document only behavior that is verified in source or by running the relevant command.

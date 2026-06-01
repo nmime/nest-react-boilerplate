@@ -52,12 +52,20 @@ const devCompose = read('docker/docker-compose.yml');
 has(devCompose, 'http://127.0.0.1:8080/nginx-health', 'dev frontend healthcheck targets container port 8080');
 has(devCompose, `${'${'}ADMIN_APP_API_PORT:-3001}:3000`, 'admin API port variable');
 const devBackendEnv = section(devCompose, 'x-backend-env:', '\nx-backend-healthcheck:');
-has(devBackendEnv, 'NODE_ENV: production', 'dev Compose backend runs with production NODE_ENV');
+has(devBackendEnv, 'NODE_ENV: ${NODE_ENV:-development}', 'dev Compose backend defaults to development NODE_ENV');
+has(devBackendEnv, 'AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}', 'dev Compose uses an intentionally short dev JWT default');
 const jwtSecretDefault = devBackendEnv.match(/AUTH_JWT_SECRET:\s*\$\{AUTH_JWT_SECRET:-([^}]+)\}/)?.[1];
 assert.ok(jwtSecretDefault, 'Missing local Docker AUTH_JWT_SECRET default');
 assert.ok(
-  jwtSecretDefault.trim().length >= 32,
-  'Local Docker AUTH_JWT_SECRET default must satisfy the production minimum length.',
+  jwtSecretDefault.trim().length < 32,
+  'Local Docker AUTH_JWT_SECRET default must fail the production minimum length.',
+);
+const envExample = read('.env.example');
+const envExampleJwtSecret = envExample.match(/^AUTH_JWT_SECRET=(.+)$/m)?.[1];
+assert.ok(envExampleJwtSecret, 'Missing .env.example AUTH_JWT_SECRET placeholder');
+assert.ok(
+  envExampleJwtSecret.trim().length < 32,
+  '.env.example AUTH_JWT_SECRET placeholder must fail the production minimum length.',
 );
 for (const [service, variable] of [
   ['admin-app', 'ADMIN_APP_PORT:-8081'],

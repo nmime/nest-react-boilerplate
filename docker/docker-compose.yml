@@ -1,11 +1,11 @@
 x-backend-env: &backend-env
-  NODE_ENV: production
+  NODE_ENV: ${NODE_ENV:-development}
   PORT: 3000
   HOST: ${HOST:-0.0.0.0}
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${ADMIN_APP_PORT:-8081},http://localhost:${USER_APP_PORT:-8082},http://localhost:${LANDING_APP_PORT:-8083}}
   DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
   AUTH_PERSISTENCE: postgres
-  AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-replace-with-a-local-dev-secret-32chars}
+  AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-nest-react-boilerplate}
   AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
   AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}

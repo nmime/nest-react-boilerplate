@@ -21,6 +21,18 @@ type Translate = (key: TranslationKey, params?: TranslationParams) => string;
 const fallbackTranslate: Translate = (key, params) =>
   translate(key, { params });
 
+export const normalizeAdminPath = (path: string): string => {
+  const normalizedPath = path.split("?")[0]?.replace(/\/$/u, "") || "/";
+
+  if (normalizedPath === "/admin") {
+    return "/";
+  }
+
+  return normalizedPath.startsWith("/admin/")
+    ? normalizedPath.slice("/admin".length) || "/"
+    : normalizedPath;
+};
+
 export const AdminLayout = ({
   children,
 }: Readonly<{ children: React.ReactNode }>) => {
@@ -29,15 +41,16 @@ export const AdminLayout = ({
   return (
     <ProductShell
       actions={[
-        { href: "/", label: t("admin.action.dashboard") },
+        { href: "/admin", label: t("admin.action.dashboard") },
         {
-          href: "/profile",
+          href: "/admin/profile",
           label: t("admin.action.profile"),
           variant: "secondary",
         },
       ]}
       appName={t("admin.appName")}
       description={t("admin.description")}
+      homeHref="/admin"
       eyebrow={t("admin.eyebrow")}
       status={t("admin.status")}
       statusTone="warning"
@@ -169,7 +182,9 @@ export const renderAdminRoute = (
     return <ForbiddenPage reason={state.reason} />;
   }
 
-  if (path === "/" || path === "/dashboard") {
+  const routePath = normalizeAdminPath(path);
+
+  if (routePath === "/" || routePath === "/dashboard") {
     return state.access.canReadDashboard ? (
       <DashboardPage access={state.access} />
     ) : (
@@ -177,7 +192,7 @@ export const renderAdminRoute = (
     );
   }
 
-  if (path === "/profile") {
+  if (routePath === "/profile") {
     return state.access.canReadProfile ? (
       <ProfilePage payload={state.payload} />
     ) : (

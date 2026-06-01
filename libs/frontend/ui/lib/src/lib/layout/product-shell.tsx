@@ -22,6 +22,7 @@ export interface ProductShellProps {
   description: string;
   status: string;
   statusTone?: "success" | "info" | "warning";
+  homeHref?: string;
   actions: ProductShellAction[];
   children: ReactNode;
 }
@@ -33,6 +34,7 @@ export const ProductShell = observer(function ProductShell({
   description,
   status,
   statusTone = "info",
+  homeHref = "/",
   actions,
   children,
 }: Readonly<ProductShellProps>) {
@@ -49,7 +51,7 @@ export const ProductShell = observer(function ProductShell({
         <a
           aria-label={t("common.homeLink", { appName })}
           className="xr-brand"
-          href="/"
+          href={homeHref}
         >
           <span className="xr-brand__mark">xR</span>
           <span>{appName}</span>

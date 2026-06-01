@@ -12,6 +12,14 @@ pnpm run check:fast
 
 That command covers Prettier, Nx lint, Nx typecheck, and unit tests. Longer quality, browser, Docker smoke, runtime QA, and fullstack e2e jobs wait behind that fast gate so common failures surface early.
 
+The `Nx quality gates` job also runs the deployment configuration static assertions before the heavier quality/build steps:
+
+```bash
+node scripts/validate-deployment-config.mjs
+```
+
+Those assertions keep Docker Compose, Helm, production secret handling, and Redis rate-limit defaults observable in CI after targeted deployment-config changes.
+
 ## Status summaries
 
 The CI workflow has a final `CI status summary` job with `if: always()`. It writes a Markdown table of every CI job result to the GitHub step summary and uploads the same table as the `ci-status-summary` artifact.

@@ -29,3 +29,21 @@ jobs:
         uses: github/codeql-action/autobuild@fee9466b8957867761f2d78f922ab084e3e2dd17 # v3
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@fee9466b8957867761f2d78f922ab084e3e2dd17 # v3
+      - name: Write CodeQL summary
+        if: always()
+        run: |
+          {
+            echo "## CodeQL summary"
+            echo
+            echo "Workflow: ${{ github.workflow }}"
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "See the Security tab and this workflow run for analysis details."
+          } | tee codeql-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload CodeQL summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: codeql-summary
+          path: codeql-summary.md
+          if-no-files-found: ignore

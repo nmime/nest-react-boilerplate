@@ -57,6 +57,7 @@ migrations:
 frontendNginx:
   enabled: true
   healthPath: /nginx-health
+  listenPort: 8080
   cspConnectSrc: "'self'"
 
 # The same chart deploys three Nest API services and three nginx frontend
@@ -117,7 +118,7 @@ apps:
   landing:
     enabled: true
     replicas: 2
-    port: 80
+    port: 8080
     servicePort: 80
     nginxConfig: true
     livenessPath: /nginx-health
@@ -135,7 +136,7 @@ apps:
   userFrontend:
     enabled: true
     replicas: 2
-    port: 80
+    port: 8080
     servicePort: 80
     nginxConfig: true
     livenessPath: /nginx-health
@@ -153,7 +154,7 @@ apps:
   adminFrontend:
     enabled: true
     replicas: 2
-    port: 80
+    port: 8080
     servicePort: 80
     nginxConfig: true
     livenessPath: /nginx-health

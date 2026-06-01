@@ -7,6 +7,9 @@ config:
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: "3600"
+  authTokenCleanupEnabled: "true"
+  authTokenCleanupIntervalMs: "3600000"
+  authTokenCleanupRunOnStart: "true"
   openApiEnabled: "false"
   logLevel: info
   rateLimitEnabled: "true"

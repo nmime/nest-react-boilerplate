@@ -40,4 +40,22 @@ describe("ProductShell", () => {
     expect(html).toContain('id="xr-content"');
     expect(html).toContain("Reusable content");
   });
+
+  it("localizes default skip link and navigation labels", () => {
+    const html = renderToStaticMarkup(
+      <ProductShell
+        actions={[{ href: "#primary", label: "Primary action" }]}
+        appName="xRocket Test"
+        description="Shared shell description"
+        eyebrow="Shared shell"
+        status="Ready"
+        title="Unified product surface"
+      >
+        <UiCard title="Child card">Reusable content</UiCard>
+      </ProductShell>,
+    );
+
+    expect(html).toContain("Skip to content");
+    expect(html).toContain('aria-label="xRocket Test navigation"');
+  });
 });

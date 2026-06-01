@@ -42,8 +42,10 @@ USER node
 EXPOSE 3000
 CMD ["sh", "-c", "node \"$APP_MAIN\""]
 
-FROM nginx:1.31.1-alpine AS frontend
+FROM nginxinc/nginx-unprivileged:1.31.1-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
+USER root
 COPY docker/nginx-fullstack.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
-EXPOSE 80
+USER 101
+EXPOSE 8080

@@ -8,6 +8,15 @@ import {
   useI18n,
 } from "@app/frontend-ui";
 
+const getAuthApiDocsHref = (): string => {
+  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
+  const authApiBaseUrl = env["VITE_AUTH_API_BASE_URL"]
+    ?.trim()
+    .replace(/\/$/u, "");
+
+  return authApiBaseUrl ? `${authApiBaseUrl}/docs` : "/auth/docs";
+};
+
 const LandingApp = () => {
   const { t } = useI18n();
 
@@ -21,7 +30,7 @@ const LandingApp = () => {
           variant: "secondary",
         },
         {
-          href: "/docs",
+          href: getAuthApiDocsHref(),
           label: t("landing.action.docs"),
           variant: "secondary",
         },

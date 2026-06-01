@@ -35,11 +35,13 @@ x-backend-env: &backend-env
 x-backend-command: &backend-command >-
   sh -ec 'export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)";
   export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)";
+  export DATABASE_URL="$${DATABASE_URL:-postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@postgres:5432/$${POSTGRES_DB}}";
   exec node "$$APP_MAIN"'
 
 x-migrate-command: &migrate-command >-
   sh -ec 'export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)";
   export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)";
+  export DATABASE_URL="$${DATABASE_URL:-postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@postgres:5432/$${POSTGRES_DB}}";
   exec pnpm db:migrate'
 
 x-backend-healthcheck: &backend-healthcheck

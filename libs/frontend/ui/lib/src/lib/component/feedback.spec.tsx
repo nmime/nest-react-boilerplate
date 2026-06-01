@@ -22,10 +22,8 @@ describe("UiErrorBoundary", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders the translated accessible fallback and reports render errors", () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  it("announces the default crash fallback as an assertive alert and reports render errors", () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const onError = vi.fn();
 
     render(
@@ -34,21 +32,21 @@ describe("UiErrorBoundary", () => {
       </UiErrorBoundary>,
     );
 
+    const fallback = screen.getByRole("alert");
+
+    expect(fallback.getAttribute("aria-live")).toBe("assertive");
     expect(
       screen.getByRole("heading", { name: "Something went wrong" }),
     ).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
     expect(onError).toHaveBeenCalledWith(
-      expect.any(Error),
+      expect.objectContaining({ message: "Child render failed" }),
       expect.objectContaining({ componentStack: expect.any(String) }),
     );
-    consoleError.mockRestore();
   });
 
-  it("supports custom fallbacks and reset keys", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  it("supports custom fallbacks and reset-key recovery", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
     const onReset = vi.fn();
 
     const { rerender } = render(
@@ -61,7 +59,7 @@ describe("UiErrorBoundary", () => {
       </UiErrorBoundary>,
     );
 
-    expect(screen.getByRole("alert")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toContain("Custom fallback");
 
     rerender(
       <UiErrorBoundary
@@ -77,6 +75,5 @@ describe("UiErrorBoundary", () => {
       expect(screen.getByText("Recovered child")).toBeTruthy(),
     );
     expect(onReset).toHaveBeenCalledTimes(1);
-    consoleError.mockRestore();
   });
 });

@@ -19,9 +19,29 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Dependency review
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
+      - name: Write dependency review summary
+        if: always()
+        run: |
+          mkdir -p ci-summaries
+          {
+            echo "# Dependency review summary"
+            echo ""
+            echo "Result: ${{ job.status }}"
+            echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "The Dependency Review action is also configured to comment a summary on pull requests."
+          } | tee ci-summaries/dependency-review-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload dependency review summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-review-summary
+          path: ci-summaries/dependency-review-summary.md
+          if-no-files-found: error

@@ -1,5 +1,8 @@
 # Nest React Boilerplate
 
+[![CI](https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/nmime/nest-react-boilerplate/actions/workflows/codeql.yml/badge.svg)](https://github.com/nmime/nest-react-boilerplate/actions/workflows/codeql.yml)
+[![Dependency review](https://github.com/nmime/nest-react-boilerplate/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/nmime/nest-react-boilerplate/actions/workflows/dependency-review.yml)
 [![Node.js](https://img.shields.io/badge/node-26-brightgreen)](https://nodejs.org)
 [![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
@@ -57,6 +60,8 @@ pnpm run check:fast
 pnpm run test:coverage
 pnpm run audit
 ```
+
+The CI workflow runs `check:fast` as the first PR gate before the longer quality and runtime-backed gates. Workflow run summaries and a `ci-status-summary` artifact provide a compact status table when check-run API details are unavailable. See [CI observability](docs/ci-observability.md).
 
 Full release-risk checks:
 

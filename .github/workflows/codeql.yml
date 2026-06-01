@@ -20,12 +20,32 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
+      - name: Write CodeQL summary
+        if: always()
+        run: |
+          mkdir -p ci-summaries
+          {
+            echo "# CodeQL summary"
+            echo ""
+            echo "Result: ${{ job.status }}"
+            echo "Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "Code scanning results are uploaded to GitHub Advanced Security when the analysis step succeeds."
+          } | tee ci-summaries/codeql-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload CodeQL summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: codeql-summary
+          path: ci-summaries/codeql-summary.md
+          if-no-files-found: error

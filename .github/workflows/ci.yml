@@ -28,26 +28,49 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v4
+      - uses: actions/checkout@v6
+      - uses: azure/setup-helm@v5
         with:
           version: v3.15.4
       - name: Validate Helm chart
         run: bash scripts/validate-helm.sh
 
-  quality:
-    name: Nx quality gates
+  fast-check:
+    name: Fast PR gate (check:fast)
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
-
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run fast PR gate
+        run: pnpm run check:fast
+
+  quality:
+    name: Nx quality gates
+    runs-on: ubuntu-24.04
+    needs: fast-check
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
@@ -89,7 +112,7 @@ jobs:
         run: pnpm run audit
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage-quality
@@ -104,13 +127,13 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
@@ -125,7 +148,7 @@ jobs:
         run: pnpm run test:e2e:coverage
 
       - name: Upload e2e artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: e2e-artifacts
@@ -142,13 +165,13 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
@@ -177,13 +200,13 @@ jobs:
       QA_CHAOS_URLS: http://127.0.0.1:3002/health
       QA_CHAOS_SERVICE: user-app-api
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
@@ -205,7 +228,7 @@ jobs:
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
 
       - name: Upload ops gate artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ops-gate-artifacts
@@ -221,13 +244,13 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version-file: ${{ env.NODE_VERSION_FILE }}
           cache: pnpm
@@ -242,7 +265,7 @@ jobs:
         run: pnpm run test:fullstack
 
       - name: Upload fullstack artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: fullstack-e2e-artifacts
@@ -251,3 +274,47 @@ jobs:
             playwright-report/fullstack/**
             test-results/fullstack/**
           if-no-files-found: ignore
+
+  ci-summary:
+    name: CI status summary
+    runs-on: ubuntu-24.04
+    if: always()
+    needs:
+      - helm-validation
+      - fast-check
+      - quality
+      - e2e
+      - docker-smoke
+      - ops-gates
+      - fullstack-e2e
+    steps:
+      - name: Write CI status summary
+        run: |
+          mkdir -p ci-summaries
+          {
+            echo "# CI status summary"
+            echo ""
+            echo "Workflow: ${{ github.workflow }}"
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Ref: ${{ github.ref }}"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
+            echo "| Fast PR gate (check:fast) | ${{ needs.fast-check.result }} |"
+            echo "| Nx quality gates | ${{ needs.quality.result }} |"
+            echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
+            echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"
+            echo "| Runtime QA/ops gates | ${{ needs.ops-gates.result }} |"
+            echo "| Fullstack Playwright e2e | ${{ needs.fullstack-e2e.result }} |"
+            echo ""
+            echo "The uploaded ci-status-summary artifact mirrors this table for users who cannot read check-run details through the GitHub API."
+          } | tee ci-summaries/ci-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload CI status summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-status-summary
+          path: ci-summaries/ci-summary.md
+          if-no-files-found: error

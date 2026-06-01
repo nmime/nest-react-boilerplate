@@ -4,14 +4,59 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "04:00"
+    open-pull-requests-limit: 10
+    labels: [dependencies, security]
+    commit-message:
+      prefix: deps
+      include: scope
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
+      nx:
+        patterns:
+          - "@nx/*"
+          - nx
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      opentelemetry:
+        patterns:
+          - "@opentelemetry/*"
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "04:15"
+    open-pull-requests-limit: 5
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+      day: monday
+      time: "04:30"
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: docker
+      include: scope
+  - package-ecosystem: docker
+    directory: /docker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:45"
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: docker
+      include: scope

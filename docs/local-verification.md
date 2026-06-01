@@ -30,6 +30,17 @@ pnpm run test:fullstack
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
+## Private repository sandbox fallback
+
+Disposable sandboxes do not automatically inherit repository credentials. If the repository is private and a full checkout is unavailable, avoid retrying unauthenticated `git clone`, codeload, or archive downloads; those endpoints are expected to fail or return incomplete evidence without a repo-scoped credential.
+
+Use the connected GitHub API/MCP for targeted evidence instead:
+
+- Read PR metadata, diffs, changed files, and combined commit status through authenticated GitHub tooling.
+- Read repository files through `get_file_contents`. When a sandbox needs a copy of a file, use the `download_url` returned for that exact file/ref. Treat those URLs as scoped, short-lived credentials; do not paste them into logs and do not reuse a root-file token for nested paths.
+- Reconstruct only the files needed for static checks or focused script validation. Do not treat file-by-file reconstruction as a substitute for the canonical full gate.
+- If combined status is `pending` with `total_count: 0`, or check-run/workflow/log/artifact APIs are inaccessible to the token, record that as an access limitation and use GitHub Actions with sufficient permissions, an authenticated checkout, or a trusted local/CI runner for definitive results.
+
 ## Coverage gates
 
 The Vitest coverage gate is configured in `config/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.

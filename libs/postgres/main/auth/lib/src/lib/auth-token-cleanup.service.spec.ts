@@ -45,18 +45,18 @@ describe("AuthTokenCleanupService", () => {
     const previousInterval = process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS;
     const previousRunOnStart = process.env.AUTH_TOKEN_CLEANUP_RUN_ON_START;
     process.env.AUTH_TOKEN_CLEANUP_ENABLED = "true";
-    process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS = "250";
+    process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS = "60000";
     process.env.AUTH_TOKEN_CLEANUP_RUN_ON_START = "false";
     const repository = createRepositoryMock();
     const cleanup = new AuthTokenCleanupService(repository);
 
     cleanup.onModuleInit();
-    vi.advanceTimersByTime(249);
+    vi.advanceTimersByTime(59_999);
     expect(repository.cleanupExpiredTokens).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(repository.cleanupExpiredTokens).toHaveBeenCalledTimes(1);
     cleanup.onModuleDestroy();
-    vi.advanceTimersByTime(250);
+    vi.advanceTimersByTime(60_000);
     expect(repository.cleanupExpiredTokens).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
@@ -83,6 +83,20 @@ describe("resolveAuthTokenCleanupConfig", () => {
         AUTH_TOKEN_CLEANUP_RUN_ON_START: "no",
       }),
     ).toEqual({ enabled: false, intervalMs: 60_000, runOnStart: false });
+  });
+
+  it("clamps unsafe intervals and ignores invalid interval values", () => {
+    expect(
+      resolveAuthTokenCleanupConfig({
+        AUTH_TOKEN_CLEANUP_INTERVAL_MS: "1",
+      }).intervalMs,
+    ).toBe(60_000);
+
+    expect(
+      resolveAuthTokenCleanupConfig({
+        AUTH_TOKEN_CLEANUP_INTERVAL_MS: "60000ms",
+      }).intervalMs,
+    ).toBe(3_600_000);
   });
 });
 

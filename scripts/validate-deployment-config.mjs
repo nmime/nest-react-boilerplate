@@ -44,6 +44,9 @@ has(dockerfile, 'FROM nginxinc/nginx-unprivileged:1.31.1-alpine AS frontend', 'u
 has(dockerfile, 'COPY docker/nginx-fullstack.conf /etc/nginx/conf.d/default.conf', 'frontend nginx config copy');
 has(dockerfile, 'USER 101', 'frontend runtime user 101');
 has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
+const migratorStage = section(dockerfile, 'FROM workspace AS migrator', 'FROM workspace AS prod-deps');
+has(migratorStage, 'USER node', 'migrator runs as the non-root node user');
+before(migratorStage, 'USER node', 'CMD ["pnpm", "db:migrate"]', 'migrator USER node before db:migrate command');
 
 const devCompose = read('docker/docker-compose.yml');
 has(devCompose, 'http://127.0.0.1:8080/nginx-health', 'dev frontend healthcheck targets container port 8080');
@@ -73,7 +76,7 @@ for (const [service, variable] of [
 ]) {
   const serviceBlock = section(prodCompose, `  ${service}:`, '\n\n  ');
   has(serviceBlock, `127.0.0.1:${'${'}${variable}}:8080`, `${service} production host mapping targets container port 8080`);
-  assert.ok(!serviceBlock.includes(`127.0.0.1:${'${'}${variable}}:80\"`), `${service} must not target privileged container port 80`);
+  assert.ok(!serviceBlock.includes(`127.0.0.1:${'${'}${variable}}:80"`), `${service} must not target privileged container port 80`);
 }
 
 const assertNginxRoutes = (text, { helm = false } = {}) => {
@@ -108,6 +111,9 @@ const apiEnvFromBlock = section(
 has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
 has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on API apps');
 has(read('.helm/templates/service.yaml'), 'targetPort: http', 'Helm service targets named container port');
+const migrationJobTemplate = read('.helm/templates/migration-job.yaml');
+has(migrationJobTemplate, '.Values.migrations.podSecurityContext', 'Helm migration job renders pod security context');
+has(migrationJobTemplate, '.Values.migrations.securityContext', 'Helm migration job renders container security context');
 
 const productionValues = read('.helm/values-production.yaml');
 for (const app of ['authApi', 'userApi', 'adminApi', 'landing', 'userFrontend', 'adminFrontend']) {
@@ -116,5 +122,12 @@ for (const app of ['authApi', 'userApi', 'adminApi', 'landing', 'userFrontend', 
   has(appBlock, 'allowPrivilegeEscalation: false', `${app} disables privilege escalation`);
   has(appBlock, 'capabilities: { drop: ["ALL"] }', `${app} drops Linux capabilities`);
 }
+const migrationValuesBlock = section(productionValues, 'migrations:', '\n\napps:');
+has(migrationValuesBlock, 'runAsNonRoot: true', 'migration job runs as non-root in production values');
+has(migrationValuesBlock, 'runAsUser: 1000', 'migration job uses node user UID in production values');
+has(migrationValuesBlock, 'runAsGroup: 1000', 'migration job uses node group GID in production values');
+has(migrationValuesBlock, 'seccompProfile: { type: RuntimeDefault }', 'migration job uses RuntimeDefault seccomp');
+has(migrationValuesBlock, 'allowPrivilegeEscalation: false', 'migration job disables privilege escalation');
+has(migrationValuesBlock, 'capabilities: { drop: ["ALL"] }', 'migration job drops Linux capabilities');
 
 console.log('deployment config static assertions passed');

@@ -14,6 +14,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Lint                      | `pnpm lint`                                 | Before PR                                 | Enforces workspace import and code rules.                                                                   |
 | Typecheck                 | `pnpm typecheck`                            | Before PR                                 | Runs all Nx typecheck targets.                                                                              |
 | Format                    | `pnpm format` / `pnpm format:check`         | Before PR / CI                            | Prettier with unknown file support.                                                                         |
+| Fast PR preflight         | `pnpm run check:fast`                       | Before every PR                           | Runs format check plus Nx lint, typecheck, and tests without release-risk gates.                            |
 | Dependency audit          | `pnpm audit`                                | Before dependency PRs and CI              | Fails on moderate-or-higher known vulnerabilities.                                                          |
 | Database migrate          | `pnpm db:migrate`                           | After changing migrations                 | Uses tooling env loader.                                                                                    |
 | Migration drift check     | `pnpm db:migrations:check`                  | Before PR with DB changes                 | Validates naming and drift.                                                                                 |
@@ -25,17 +26,13 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 
 ## Recommended PR preflight
 
-For most changes, run this shorter sequence locally before opening a PR:
+For most changes, run the fast local preflight before opening a PR:
 
 ```bash
-pnpm run format:check
-pnpm run lint
-pnpm run typecheck
-pnpm run test:coverage
-pnpm run audit
+pnpm run check:fast
 ```
 
-Run `pnpm run check` and runtime-backed QA presets for release-risk changes, security-sensitive changes, cross-app behavior, migrations, and Docker/deployment updates.
+Add targeted checks from the table above for migrations, dependency changes, cross-app behavior, Docker/deployment work, or release-risk changes.
 
 ## Project names and paths
 

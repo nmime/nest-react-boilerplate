@@ -83,7 +83,7 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "${BACKEND_ADMIN_APP_API_PORT:-3001}:3000"
+      - "${ADMIN_APP_API_PORT:-3001}:3000"
     healthcheck: *backend-healthcheck
 
   user-app-api:

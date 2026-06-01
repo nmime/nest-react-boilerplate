@@ -9,6 +9,7 @@ This boilerplate ships with conservative production defaults for the Nest APIs a
 - Production CORS does **not** reflect arbitrary origins. Set `CORS_ORIGINS` to a comma-separated allow-list.
 - Frontend nginx CSP permits API connections only to same-origin proxy routes or to the documented split-origin API hosts: `https://auth.example.com`, `https://api.example.com`, and `https://admin-api.example.com`.
 - Production rate limiting is enabled by default unless `RATE_LIMIT_ENABLED=false` or an explicit `rateLimit.enabled: false` option disables it.
+- Backend env used by bootstrap is parsed through a centralized fail-fast schema before the app listens.
 - `TRUST_PROXY` defaults to `false`; only set it to a known proxy configuration for trusted load balancers or ingress tiers.
 - Shutdown hooks are enabled for graceful termination.
 - Every request receives or preserves an `x-request-id` header.
@@ -27,21 +28,41 @@ The auth feature exports reusable access-control primitives:
 
 JWTs must not use `alg:none`. Unsupported algorithms, bad signatures, expired tokens, future `nbf` tokens, and issuer/audience mismatches are rejected.
 
+## Backend environment validation
+
+`bootstrapNestApi()` calls `resolveBackendEnvironmentConfig()` before binding a listener. Invalid booleans, ports, session cookie settings, rate-limit windows, Redis settings, and production-only requirements throw immediately so broken deployments do not start partially configured.
+
+Production startup requires:
+
+- `DATABASE_URL` for durable server-side sessions.
+- `SESSION_SECRET` or `AUTH_JWT_SECRET` with at least 32 characters.
+- Valid positive integer `PORT`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, and `SESSION_COOKIE_MAX_AGE_SECONDS` values when set.
+- Valid `RATE_LIMIT_STORE` (`auto`, `memory`, or `redis`) and Redis connection settings when `RATE_LIMIT_STORE=redis`.
+
 ## Rate limiting and proxy trust
 
-The bootstrap layer includes a simple in-memory limiter for small deployments and tests. It defaults to **on in production** and **off outside production** unless `RATE_LIMIT_ENABLED` or `options.rateLimit.enabled` is explicitly set:
+The bootstrap layer includes a rate limiter that defaults to **on in production** and **off outside production** unless `RATE_LIMIT_ENABLED` or `options.rateLimit.enabled` is explicitly set:
 
 ```env
 RATE_LIMIT_ENABLED=true
+RATE_LIMIT_STORE=auto
 RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX=100
 ```
 
+`RATE_LIMIT_STORE=auto` uses Redis when `REDIS_URL` or `REDIS_HOSTS` is configured. `RATE_LIMIT_STORE=redis` fails startup if Redis config is missing and pings Redis before the API begins listening. If production falls back to in-memory storage, startup logs a warning because limits are per process and not shared across replicas.
+
+```env
+RATE_LIMIT_STORE=redis
+REDIS_URL=redis://redis:6379/0
+REDIS_KEY_PREFIX=nrb:
+```
+
+The production Docker Compose stack includes a Redis service and defaults APIs to `RATE_LIMIT_STORE=redis`. For Kubernetes or managed deployments, provide `REDIS_URL` or `REDIS_HOSTS` through your Secret/ConfigMap layer, or enforce equivalent shared limits at the ingress/API gateway before setting `RATE_LIMIT_STORE=memory`.
+
 The limiter key is derived from Fastify's resolved `request.ip`, then `request.socket.remoteAddress`, and finally `"unknown"`. It does **not** trust raw `X-Forwarded-For` headers, so spoofed client-supplied XFF values do not create separate limiter buckets.
 
 Leave `TRUST_PROXY=false` unless the app is behind a known, trusted proxy chain. If proxy trust is required, configure Fastify's `TRUST_PROXY` value for that exact ingress topology so `request.ip` is resolved by the framework rather than by raw headers.
-
-For multi-instance production, prefer an edge/API-gateway or Redis-backed limiter so counts are shared across replicas.
 
 ## OpenAPI
 
@@ -61,6 +82,7 @@ Before deploying, provide values for:
 - `NODE_ENV=production`
 - API `PORT` or per-process port mapping
 - `CORS_ORIGINS`
+- `RATE_LIMIT_STORE=redis` with `REDIS_URL`/`REDIS_HOSTS`, or documented ingress/API-gateway limits if using `memory`
 - `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX` if the production defaults need tuning
 - `TRUST_PROXY=false` unless explicitly set for a known proxy configuration
 - `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`

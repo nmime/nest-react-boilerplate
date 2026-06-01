@@ -92,7 +92,7 @@ helm upgrade --install nest-react-boilerplate .helm \
   --set-string ingress.tls[0].secretName=nest-react-boilerplate-tls
 ```
 
-Backend probes use `/live` and `/ready`; frontend probes use `/`. `auth-app-api` readiness checks PostgreSQL because MikroORM is registered there.
+Backend probes use `/live` and `/ready`; frontend probes use `/nginx-health` from the unprivileged nginx containers. `auth-app-api` readiness checks PostgreSQL because MikroORM is registered there.
 
 ## 6. Verification
 

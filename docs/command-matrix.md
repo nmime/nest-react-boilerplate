@@ -9,8 +9,13 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Start local Postgres      | `pnpm dev:db`                               | Before API/database work                  | Uses the root Docker Compose file.                                                                          |
 | Build everything          | `pnpm build`                                | Before release or image builds            | Runs all Nx build targets.                                                                                  |
 | Unit/component tests      | `pnpm test`                                 | Before every PR                           | Runs all Nx test targets.                                                                                   |
+| Coverage gate             | `pnpm run test:coverage`                    | Runtime TypeScript changes                | Runs configured coverage gates for testable app and library source.                                         |
 | Frontend component tests  | `pnpm test:component`                       | UI library or page changes                | Runs component-test targets.                                                                                |
 | E2E smoke                 | `pnpm test:e2e`                             | Cross-app behavior changes                | Covers `admin-app`, `user-app`, `landing-app`, `backend-admin-app-api`, `user-app-api`, and `auth-app-api`. |
+| Docker fullstack          | `pnpm run docker:fullstack`                 | Docker/local stack validation             | Builds and starts the full-stack `docker/docker-compose.yml` stack through repository tooling.              |
+| Docker smoke              | `pnpm run test:docker-smoke`                | Docker image or Compose changes           | Runs the Docker smoke stack validation used by CI.                                                          |
+| Docker teardown           | `pnpm run docker:down`                      | After Docker validation                   | Stops the full-stack Compose services and removes orphans.                                                  |
+| Fullstack Playwright      | `pnpm run test:fullstack`                   | Docker-backed full-stack behavior         | Runs full-stack Playwright checks against the Docker Compose stack.                                         |
 | Lint                      | `pnpm lint`                                 | Before PR                                 | Enforces workspace import and code rules.                                                                   |
 | Typecheck                 | `pnpm typecheck`                            | Before PR                                 | Runs all Nx typecheck targets.                                                                              |
 | Format                    | `pnpm format` / `pnpm format:check`         | Before PR / CI                            | Prettier with unknown file support.                                                                         |
@@ -23,6 +28,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | API contract check        | `pnpm api:contracts:check`                  | CI and API PRs                            | Fails on stale contracts.                                                                                   |
 | Generate a vertical slice | `pnpm generate:feature <name> -- --dry-run` | Before starting a product feature         | Scaffolds DTO/controller/service/entity/migration/client/UI/checklist. Remove `--dry-run` to write files.   |
 | Full quality gate         | `pnpm check`                                | Before merging release-risk work          | Runs formatting, API, QA, lint, typecheck, and tests.                                                       |
+| Quality preset sweep      | `pnpm run quality:presets`                  | Release-risk or scheduled QA sweeps       | Runs the modern QA preset bundle documented in `docs/testing/modern-qa.md`.                                 |
 
 ## Recommended PR preflight
 

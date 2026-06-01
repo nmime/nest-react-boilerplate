@@ -31,7 +31,7 @@ updates:
       day: monday
       time: "04:15"
     open-pull-requests-limit: 5
-    labels: [dependencies, ci]
+    labels: [dependencies]
     commit-message:
       prefix: ci
       include: scope

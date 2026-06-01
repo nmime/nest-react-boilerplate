@@ -25,3 +25,21 @@ jobs:
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
+      - name: Write dependency review summary
+        if: always()
+        run: |
+          {
+            echo "## Dependency review summary"
+            echo
+            echo "Workflow: ${{ github.workflow }}"
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "The dependency-review action is configured with \`comment-summary-in-pr: always\` and \`fail-on-severity: moderate\`."
+          } | tee dependency-review-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload dependency review summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: dependency-review-summary
+          path: dependency-review-summary.md
+          if-no-files-found: ignore

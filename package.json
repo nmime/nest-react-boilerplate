@@ -33,6 +33,7 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "test:docker-smoke": "node packages/tooling/bin/repo-tooling.mjs docker smoke",
     "test:fullstack": "node packages/tooling/bin/repo-tooling.mjs docker fullstack-e2e",
+    "check:fast": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
     "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz && pnpm run test:property && pnpm run test:world-class && pnpm run lint && pnpm run typecheck && pnpm run test",
     "lib:configs:check": "node packages/tooling/bin/repo-tooling.mjs project check-library-configs",
     "init:project": "node packages/tooling/bin/repo-tooling.mjs project init",
@@ -179,7 +180,6 @@
     "typescript-transform-paths": "4.0.0",
     "vite": "8.0.14",
     "vite-plugin-istanbul": "9.0.0",
-    "vitest": "4.1.7",
     "webpack-cli": "7.0.2"
   },
   "pnpm": {

@@ -8,7 +8,7 @@ import {
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
 } from "./entity";
-import { AuthUserRepository } from "./repository";
+import { AuthTokenRepository, AuthUserRepository } from "./repository";
 
 @Module({
   imports: [
@@ -21,7 +21,7 @@ import { AuthUserRepository } from "./repository";
       AuthUserTokenEntitySchema,
     ]),
   ],
-  providers: [AuthUserRepository],
-  exports: [MikroOrmModule, AuthUserRepository],
+  providers: [AuthUserRepository, AuthTokenRepository],
+  exports: [MikroOrmModule, AuthUserRepository, AuthTokenRepository],
 })
 export class AuthPostgresModule {}

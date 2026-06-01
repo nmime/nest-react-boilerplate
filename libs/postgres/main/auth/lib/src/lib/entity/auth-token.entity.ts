@@ -74,10 +74,14 @@ export const AuthRefreshTokenEntitySchema =
     },
     indexes: [
       {
-        name: "ix__auth_refresh_tokens__tenant_user",
+        name: "ix__auth_refresh_tokens__tenant_id_user_id",
         properties: ["tenantId", "userId"],
       },
       { name: "ix__auth_refresh_tokens__family_id", properties: ["familyId"] },
+      {
+        name: "ix__auth_refresh_tokens__expires_at",
+        properties: ["expiresAt"],
+      },
     ],
     uniques: [
       {
@@ -120,10 +124,11 @@ export const AuthUserTokenEntitySchema = new EntitySchema<AuthUserTokenEntity>({
   },
   indexes: [
     {
-      name: "ix__auth_user_tokens__tenant_user",
+      name: "ix__auth_user_tokens__tenant_id_user_id",
       properties: ["tenantId", "userId"],
     },
     { name: "ix__auth_user_tokens__purpose", properties: ["purpose"] },
+    { name: "ix__auth_user_tokens__expires_at", properties: ["expiresAt"] },
   ],
   uniques: [
     { name: "uq__auth_user_tokens__token_hash", properties: ["tokenHash"] },

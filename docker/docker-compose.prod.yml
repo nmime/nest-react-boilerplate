@@ -15,8 +15,11 @@ x-backend-env: &backend-env
   AUTH_OAUTH_CLIENT_SECRET: ${AUTH_OAUTH_CLIENT_SECRET:-}
   AUTH_OAUTH_REDIRECT_URI: ${AUTH_OAUTH_REDIRECT_URI:-}
   RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+  RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}
   RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
   RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-false}
   OPENAPI_PATH: ${OPENAPI_PATH:-docs}
   LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -66,6 +69,8 @@ x-backend-service: &backend-service
   depends_on:
     postgres:
       condition: service_healthy
+    redis:
+      condition: service_healthy
     migrate:
       condition: service_completed_successfully
   healthcheck: *backend-healthcheck
@@ -97,6 +102,20 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks: [database]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:-latest}
@@ -213,6 +232,7 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:
 
 secrets:
   auth_jwt_secret:

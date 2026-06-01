@@ -16,6 +16,44 @@ export interface ProblemValidationErrorBody {
   errors: ProblemValidationIssue[];
 }
 
+function getValidationPropertyPath(
+  error: ValidationError,
+  parentPath?: string,
+): string {
+  return parentPath ? `${parentPath}.${error.property}` : error.property;
+}
+
+function flattenValidationIssues(
+  errors: ValidationError[],
+  parentPath?: string,
+): ProblemValidationIssue[] {
+  return errors.flatMap((error) => {
+    const property = getValidationPropertyPath(error, parentPath);
+    const issues: ProblemValidationIssue[] = [];
+
+    if (error.constraints && Object.keys(error.constraints).length > 0) {
+      issues.push({
+        property,
+        constraints: error.constraints,
+      });
+    }
+
+    const childIssues = flattenValidationIssues(error.children ?? [], property);
+    if (childIssues.length > 0) {
+      return [...issues, ...childIssues];
+    }
+
+    if (issues.length === 0) {
+      issues.push({
+        property,
+        constraints: {},
+      });
+    }
+
+    return issues;
+  });
+}
+
 export function createProblemValidationBody(
   errors: ValidationError[],
 ): ProblemValidationErrorBody {
@@ -25,10 +63,7 @@ export function createProblemValidationBody(
     status: 400,
     detail: "Request validation failed.",
     code: "validation-error",
-    errors: errors.map((error) => ({
-      property: error.property,
-      constraints: error.constraints ?? {},
-    })),
+    errors: flattenValidationIssues(errors),
   };
 }
 

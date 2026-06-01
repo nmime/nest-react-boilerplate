@@ -13,6 +13,7 @@ export interface ProductShellAction {
   label: string;
   href: string;
   variant?: "primary" | "secondary";
+  isCurrent?: boolean;
 }
 
 export interface ProductShellProps {
@@ -22,6 +23,9 @@ export interface ProductShellProps {
   description: string;
   status: string;
   statusTone?: "success" | "info" | "warning";
+  homeHref?: string;
+  actionsLabel?: string;
+  skipLinkLabel?: string;
   actions: ProductShellAction[];
   children: ReactNode;
 }
@@ -33,54 +37,77 @@ export const ProductShell = observer(function ProductShell({
   description,
   status,
   statusTone = "info",
+  homeHref = "/",
+  actionsLabel,
+  skipLinkLabel,
   actions,
   children,
 }: Readonly<ProductShellProps>) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
+  const defaultLabels =
+    locale === "ru"
+      ? {
+          actionsLabel: `Навигация ${appName}`,
+          skipLinkLabel: "Перейти к содержимому",
+        }
+      : {
+          actionsLabel: `${appName} navigation`,
+          skipLinkLabel: "Skip to content",
+        };
+  const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
+  const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
 
   return (
-    <main
-      className="xr-shell"
-      data-sidebar-open={uiStore?.sidebarOpen ?? false}
-      data-theme={uiStore?.theme ?? "system"}
-    >
-      <header className="xr-header">
-        <a
-          aria-label={t("common.homeLink", { appName })}
-          className="xr-brand"
-          href="/"
-        >
-          <span className="xr-brand__mark">xR</span>
-          <span>{appName}</span>
-        </a>
-        <div className="xr-header__controls">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
-          <UiStatusPill label={status} tone={statusTone} />
-        </div>
-      </header>
-
-      <section className="xr-hero">
-        <div className="xr-hero__copy">
-          <p className="xr-eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-          <p className="xr-hero__description">{description}</p>
-          <div className="xr-actions">
-            {actions.map((action) => (
-              <UiButton
-                href={action.href}
-                key={action.label}
-                variant={action.variant}
-              >
-                {action.label}
-              </UiButton>
-            ))}
+    <>
+      <a className="xr-skip-link" href="#xr-content">
+        {resolvedSkipLinkLabel}
+      </a>
+      <main
+        className="xr-shell"
+        data-sidebar-open={uiStore?.sidebarOpen ?? false}
+        data-theme={uiStore?.theme ?? "system"}
+      >
+        <header className="xr-header">
+          <a
+            aria-label={t("common.homeLink", { appName })}
+            className="xr-brand"
+            href={homeHref}
+          >
+            <span className="xr-brand__mark">xR</span>
+            <span>{appName}</span>
+          </a>
+          <div className="xr-header__controls">
+            <LanguageSwitcher />
+            <ThemeSwitcher />
+            <UiStatusPill label={status} tone={statusTone} />
           </div>
-        </div>
-      </section>
+        </header>
 
-      <div className="xr-content">{children}</div>
-    </main>
+        <section className="xr-hero">
+          <div className="xr-hero__copy">
+            <p className="xr-eyebrow">{eyebrow}</p>
+            <h1>{title}</h1>
+            <p className="xr-hero__description">{description}</p>
+            <nav aria-label={resolvedActionsLabel} className="xr-actions">
+              {actions.map((action) => (
+                <UiButton
+                  aria-current={action.isCurrent ? "page" : undefined}
+                  href={action.href}
+                  key={action.label}
+                  variant={action.variant}
+                >
+                  {action.label}
+                </UiButton>
+              ))}
+            </nav>
+          </div>
+        </section>
+
+        <div className="xr-content" id="xr-content" tabIndex={-1}>
+          {children}
+        </div>
+      </main>
+    </>
   );
 });

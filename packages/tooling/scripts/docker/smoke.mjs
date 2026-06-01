@@ -19,7 +19,7 @@ const pickPort = (envName, offset) =>
   process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
   postgres: pickPort("POSTGRES_PORT", 0),
-  adminApi: pickPort("BACKEND_ADMIN_APP_API_PORT", 1),
+  adminApi: pickPort("ADMIN_APP_API_PORT", 1),
   userApi: pickPort("USER_APP_API_PORT", 2),
   authApi: pickPort("AUTH_APP_API_PORT", 3),
   adminApp: pickPort("ADMIN_APP_PORT", 81),
@@ -35,7 +35,7 @@ const env = {
   COMPOSE_PROJECT_NAME:
     process.env.COMPOSE_PROJECT_NAME ?? `nrbsmoke${process.pid}`,
   POSTGRES_PORT: ports.postgres,
-  BACKEND_ADMIN_APP_API_PORT: ports.adminApi,
+  ADMIN_APP_API_PORT: ports.adminApi,
   USER_APP_API_PORT: ports.userApi,
   AUTH_APP_API_PORT: ports.authApi,
   ADMIN_APP_PORT: ports.adminApp,

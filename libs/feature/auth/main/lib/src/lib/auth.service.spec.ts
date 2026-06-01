@@ -15,7 +15,7 @@ import {
   verifyPassword,
 } from "./auth.service";
 
-const TEST_JWT_SECRET_VALUE = "TEST_JWT_SECRET_VALUE";
+const TEST_JWT_SECRET_VALUE = "TEST_JWT_SECRET_VALUE_at_least_32_chars";
 const authorizationScheme = "Bearer";
 
 const bearerAuthorization = (token: string): string =>
@@ -316,5 +316,12 @@ describe("AuthService", () => {
     expect(() => signJwt({ sub: "user" }, {}, 60)).toThrow(
       UnauthorizedException,
     );
+    expect(() =>
+      signJwt(
+        { sub: "user" },
+        { AUTH_JWT_SECRET: "short", NODE_ENV: "production" },
+        60,
+      ),
+    ).toThrow(UnauthorizedException);
   });
 });

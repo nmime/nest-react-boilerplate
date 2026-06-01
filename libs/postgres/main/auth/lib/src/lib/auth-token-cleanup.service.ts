@@ -13,6 +13,7 @@ export interface AuthTokenCleanupConfig {
 }
 
 const DefaultCleanupIntervalMs = 60 * 60 * 1000;
+const MinimumCleanupIntervalMs = 60 * 1000;
 type CleanupInterval = ReturnType<typeof setInterval>;
 
 @Injectable()
@@ -89,6 +90,7 @@ export function resolveAuthTokenCleanupConfig(
     intervalMs: parsePositiveInteger(
       env.AUTH_TOKEN_CLEANUP_INTERVAL_MS,
       DefaultCleanupIntervalMs,
+      MinimumCleanupIntervalMs,
     ),
     runOnStart: parseBoolean(env.AUTH_TOKEN_CLEANUP_RUN_ON_START, true),
   };
@@ -110,11 +112,17 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   return fallback;
 }
 
-function parsePositiveInteger(value: string | undefined, fallback: number): number {
+function parsePositiveInteger(
+  value: string | undefined,
+  fallback: number,
+  minimum: number,
+): number {
   if (value === undefined || value.trim() === "") {
     return fallback;
   }
 
-  const parsed = Number.parseInt(value, 10);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+  const parsed = Number(value.trim());
+  return Number.isSafeInteger(parsed) && parsed > 0
+    ? Math.max(parsed, minimum)
+    : fallback;
 }

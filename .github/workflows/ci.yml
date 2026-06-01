@@ -35,9 +35,53 @@ jobs:
       - name: Validate Helm chart
         run: bash scripts/validate-helm.sh
 
+  fast-check:
+    name: Fast PR gate (check:fast)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run fast aggregate
+        run: pnpm run check:fast
+
+      - name: Write fast gate summary
+        if: always()
+        run: |
+          {
+            echo "## Fast PR gate"
+            echo
+            echo "Command: \`pnpm run check:fast\`"
+            echo
+            echo "Workflow: ${{ github.workflow }}"
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } | tee fast-check-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload fast gate summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: fast-check-summary
+          path: fast-check-summary.md
+          if-no-files-found: ignore
+
   quality:
     name: Nx quality gates
     runs-on: ubuntu-24.04
+    needs: fast-check
     timeout-minutes: 60
 
     steps:
@@ -256,3 +300,44 @@ jobs:
             playwright-report/fullstack/**
             test-results/fullstack/**
           if-no-files-found: ignore
+
+  ci-status-summary:
+    name: CI status summary
+    runs-on: ubuntu-24.04
+    needs:
+      - helm-validation
+      - fast-check
+      - quality
+      - e2e
+      - docker-smoke
+      - ops-gates
+      - fullstack-e2e
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Write CI status summary
+        run: |
+          {
+            echo "## CI status summary"
+            echo
+            echo "Workflow: ${{ github.workflow }}"
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "| Job | Result |"
+            echo "| --- | --- |"
+            echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
+            echo "| Fast PR gate (check:fast) | ${{ needs.fast-check.result }} |"
+            echo "| Nx quality gates | ${{ needs.quality.result }} |"
+            echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
+            echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"
+            echo "| Runtime QA/ops gates | ${{ needs.ops-gates.result }} |"
+            echo "| Fullstack Playwright e2e | ${{ needs.fullstack-e2e.result }} |"
+          } | tee ci-status-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload CI status summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: ci-status-summary
+          path: ci-status-summary.md
+          if-no-files-found: error

@@ -31,7 +31,7 @@ Postgres tables are migrated for durable storage (`auth_refresh_tokens`, `auth_u
 `AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to remove expired refresh and user-action tokens. It runs hourly and once on startup by default. Runtime overrides:
 
 - `AUTH_TOKEN_CLEANUP_ENABLED=false` disables the cleanup loop.
-- `AUTH_TOKEN_CLEANUP_INTERVAL_MS=60000` changes the interval.
+- `AUTH_TOKEN_CLEANUP_INTERVAL_MS=60000` changes the interval; lower values are clamped to one minute.
 - `AUTH_TOKEN_CLEANUP_RUN_ON_START=false` skips the startup cleanup run.
 
 ## Safer admin bootstrap

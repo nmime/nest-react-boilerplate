@@ -48,6 +48,14 @@ has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
 const devCompose = read('docker/docker-compose.yml');
 has(devCompose, 'http://127.0.0.1:8080/nginx-health', 'dev frontend healthcheck targets container port 8080');
 has(devCompose, `${'${'}ADMIN_APP_API_PORT:-3001}:3000`, 'admin API port variable');
+const devBackendEnv = section(devCompose, 'x-backend-env:', '\nx-backend-healthcheck:');
+has(devBackendEnv, 'NODE_ENV: production', 'dev Compose backend runs with production NODE_ENV');
+const jwtSecretDefault = devBackendEnv.match(/AUTH_JWT_SECRET:\s*\$\{AUTH_JWT_SECRET:-([^}]+)\}/)?.[1];
+assert.ok(jwtSecretDefault, 'Missing local Docker AUTH_JWT_SECRET default');
+assert.ok(
+  jwtSecretDefault.trim().length >= 32,
+  'Local Docker AUTH_JWT_SECRET default must satisfy the production minimum length.',
+);
 for (const [service, variable] of [
   ['admin-app', 'ADMIN_APP_PORT:-8081'],
   ['user-app', 'USER_APP_PORT:-8082'],
@@ -90,7 +98,15 @@ for (const app of ['landing', 'userFrontend', 'adminFrontend']) {
   has(appBlock, 'port: 8080', `${app} container port`);
   has(appBlock, 'servicePort: 80', `${app} service port`);
 }
-has(read('.helm/templates/deployment.yaml'), 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
+const deploymentTemplate = read('.helm/templates/deployment.yaml');
+has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
+const apiEnvFromBlock = section(
+  deploymentTemplate,
+  '{{- if contains "Api" $name }}',
+  '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
+);
+has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
+has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on API apps');
 has(read('.helm/templates/service.yaml'), 'targetPort: http', 'Helm service targets named container port');
 
 const productionValues = read('.helm/values-production.yaml');

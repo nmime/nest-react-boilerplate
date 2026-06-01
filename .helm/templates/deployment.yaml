@@ -50,11 +50,13 @@ spec:
             # frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
+          {{- if contains "Api" $name }}
           envFrom:
             - configMapRef:
                 name: {{ include "boilerplate.fullname" $root }}-config
             - secretRef:
                 name: {{ include "boilerplate.secretName" $root }}
+          {{- end }}
           {{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}
           volumeMounts:
             - name: frontend-nginx-config

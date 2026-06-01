@@ -13,6 +13,23 @@ data:
   AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
   OPENAPI_ENABLED: {{ .Values.config.openApiEnabled | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  RATE_LIMIT_ENABLED: {{ .Values.config.rateLimitEnabled | quote }}
+  RATE_LIMIT_STORE: {{ .Values.config.rateLimitStore | quote }}
+  RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
+  RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
+  REDIS_KEY_PREFIX: {{ .Values.config.redisKeyPrefix | quote }}
+  {{ if .Values.config.redisUrl }}
+  REDIS_URL: {{ .Values.config.redisUrl | quote }}
+  {{ end }}
+  {{ if .Values.config.redisHosts }}
+  REDIS_HOSTS: {{ .Values.config.redisHosts | quote }}
+  {{ end }}
+  {{ if .Values.config.redisMode }}
+  REDIS_MODE: {{ .Values.config.redisMode | quote }}
+  {{ end }}
+  {{ if .Values.config.redisDb }}
+  REDIS_DB: {{ .Values.config.redisDb | quote }}
+  {{ end }}
   POSTGRES_HOST: {{ .Values.postgresql.host | quote }}
   POSTGRES_PORT: {{ .Values.postgresql.port | quote }}
   POSTGRES_DB: {{ .Values.postgresql.database | quote }}

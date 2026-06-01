@@ -9,6 +9,12 @@ config:
   authJwtExpiresInSeconds: "3600"
   openApiEnabled: "false"
   logLevel: info
+  rateLimitEnabled: "true"
+  rateLimitStore: redis
+  rateLimitWindowMs: "60000"
+  rateLimitMax: "100"
+  redisUrl: redis://redis-master.databases.svc.cluster.local:6379/0
+  redisKeyPrefix: "nrb:"
 
 postgresql:
   host: postgresql-rw.databases.svc.cluster.local

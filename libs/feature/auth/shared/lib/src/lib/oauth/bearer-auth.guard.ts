@@ -47,6 +47,7 @@ const HMAC_ALGORITHMS: Record<string, string> = {
   HS384: "sha384",
   HS512: "sha512",
 };
+const MinimumProductionJwtSecretLength = 32;
 
 @Injectable()
 export class BearerAuthGuard implements CanActivate {
@@ -84,9 +85,17 @@ export function validateBearerAuthorization(
   env: JwtValidationEnvironment = process.env,
   nowInSeconds: number = Math.floor(Date.now() / 1000),
 ): AuthenticatedPrincipal {
-  const secret = env.AUTH_JWT_SECRET;
+  const secret = env.AUTH_JWT_SECRET?.trim();
   if (!secret) {
     throw new UnauthorizedException("AUTH_JWT_SECRET is not configured.");
+  }
+  if (
+    env.NODE_ENV === "production" &&
+    secret.length < MinimumProductionJwtSecretLength
+  ) {
+    throw new UnauthorizedException(
+      "AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.",
+    );
   }
 
   const token = extractBearerToken(authorizationHeader);

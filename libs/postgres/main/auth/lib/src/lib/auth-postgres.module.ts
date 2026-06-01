@@ -1,5 +1,6 @@
 import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
+import { AuthTokenCleanupService } from "./auth-token-cleanup.service";
 import {
   AuthRefreshTokenEntitySchema,
   AuthTenantEntitySchema,
@@ -21,7 +22,12 @@ import { AuthTokenRepository, AuthUserRepository } from "./repository";
       AuthUserTokenEntitySchema,
     ]),
   ],
-  providers: [AuthUserRepository, AuthTokenRepository],
-  exports: [MikroOrmModule, AuthUserRepository, AuthTokenRepository],
+  providers: [AuthUserRepository, AuthTokenRepository, AuthTokenCleanupService],
+  exports: [
+    MikroOrmModule,
+    AuthUserRepository,
+    AuthTokenRepository,
+    AuthTokenCleanupService,
+  ],
 })
 export class AuthPostgresModule {}

@@ -21,6 +21,16 @@ config:
   authJwtExpiresInSeconds: "3600"
   openApiEnabled: "false"
   logLevel: info
+  rateLimitEnabled: "true"
+  rateLimitStore: auto
+  rateLimitWindowMs: "60000"
+  rateLimitMax: "100"
+  # Set redisUrl or redisHosts when using RATE_LIMIT_STORE=redis.
+  redisUrl: ""
+  redisHosts: ""
+  redisMode: single
+  redisKeyPrefix: "nrb:"
+  redisDb: ""
 
 postgresql:
   host: postgresql

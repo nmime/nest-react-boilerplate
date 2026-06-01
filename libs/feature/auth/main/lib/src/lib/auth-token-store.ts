@@ -218,20 +218,17 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     input: RefreshTokenIssueInput,
   ): ResultAsync<IssuedRefreshToken, AuthTokenStoreError> {
     const issued = createIssuedRefreshToken(input);
-    this.refreshTokensByHash.set(
-      tokenRecordKey(issued.tenantId, issued.tokenHash),
-      {
-        id: issued.id,
-        tenantId: issued.tenantId,
-        userId: issued.userId,
-        tokenHash: issued.tokenHash,
-        familyId: issued.familyId,
-        parentTokenId: input.parentTokenId ?? null,
-        expiresAt: issued.expiresAt,
-        revokedAt: null,
-        replacedByTokenId: null,
-      },
-    );
+    this.refreshTokensByHash.set(issued.tokenHash, {
+      id: issued.id,
+      tenantId: issued.tenantId,
+      userId: issued.userId,
+      tokenHash: issued.tokenHash,
+      familyId: issued.familyId,
+      parentTokenId: input.parentTokenId ?? null,
+      expiresAt: issued.expiresAt,
+      revokedAt: null,
+      replacedByTokenId: null,
+    });
     return okAsync(issued);
   }
 
@@ -279,18 +276,15 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     input: UserActionTokenIssueInput,
   ): ResultAsync<IssuedUserActionToken, AuthTokenStoreError> {
     const issued = createIssuedUserActionToken(input);
-    this.userTokensByHash.set(
-      tokenRecordKey(issued.tenantId, issued.tokenHash),
-      {
-        id: issued.id,
-        tenantId: issued.tenantId,
-        userId: issued.userId,
-        purpose: issued.purpose,
-        tokenHash: issued.tokenHash,
-        expiresAt: issued.expiresAt,
-        consumedAt: null,
-      },
-    );
+    this.userTokensByHash.set(issued.tokenHash, {
+      id: issued.id,
+      tenantId: issued.tenantId,
+      userId: issued.userId,
+      purpose: issued.purpose,
+      tokenHash: issued.tokenHash,
+      expiresAt: issued.expiresAt,
+      consumedAt: null,
+    });
     return okAsync(issued);
   }
 
@@ -300,15 +294,13 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     tenantId?: string,
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     const tokenHash = hashOpaqueToken(token);
-    const resolvedTenantId = tenantId ?? DEFAULT_AUTH_TENANT_ID;
-    const record =
-      this.userTokensByHash.get(tokenRecordKey(resolvedTenantId, tokenHash)) ??
-      null;
+    const record = this.userTokensByHash.get(tokenHash) ?? null;
     if (
       !record ||
       record.purpose !== purpose ||
       record.consumedAt ||
-      record.expiresAt <= new Date()
+      record.expiresAt <= new Date() ||
+      (tenantId && record.tenantId !== tenantId)
     ) {
       return okAsync(null);
     }
@@ -321,20 +313,17 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     input: RefreshTokenIssueInput,
   ): IssuedRefreshToken {
     const issued = createIssuedRefreshToken(input);
-    this.refreshTokensByHash.set(
-      tokenRecordKey(issued.tenantId, issued.tokenHash),
-      {
-        id: issued.id,
-        tenantId: issued.tenantId,
-        userId: issued.userId,
-        tokenHash: issued.tokenHash,
-        familyId: issued.familyId,
-        parentTokenId: input.parentTokenId ?? null,
-        expiresAt: issued.expiresAt,
-        revokedAt: null,
-        replacedByTokenId: null,
-      },
-    );
+    this.refreshTokensByHash.set(issued.tokenHash, {
+      id: issued.id,
+      tenantId: issued.tenantId,
+      userId: issued.userId,
+      tokenHash: issued.tokenHash,
+      familyId: issued.familyId,
+      parentTokenId: input.parentTokenId ?? null,
+      expiresAt: issued.expiresAt,
+      revokedAt: null,
+      replacedByTokenId: null,
+    });
     return issued;
   }
 
@@ -343,12 +332,13 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     tenantId?: string,
   ): RefreshTokenRecord | null {
     const tokenHash = hashOpaqueToken(token);
-    const resolvedTenantId = tenantId ?? DEFAULT_AUTH_TENANT_ID;
-    const record =
-      this.refreshTokensByHash.get(
-        tokenRecordKey(resolvedTenantId, tokenHash),
-      ) ?? null;
-    if (!record || record.revokedAt || record.expiresAt <= new Date()) {
+    const record = this.refreshTokensByHash.get(tokenHash) ?? null;
+    if (
+      !record ||
+      record.revokedAt ||
+      record.expiresAt <= new Date() ||
+      (tenantId && record.tenantId !== tenantId)
+    ) {
       return null;
     }
 
@@ -435,10 +425,6 @@ function mapTokenStoreError(cause: { message?: string }): AuthTokenStoreError {
     code: "token_store_error",
     message: cause.message ?? "Auth token store failed.",
   };
-}
-
-function tokenRecordKey(tenantId: string, tokenHash: string): string {
-  return `${tenantId}:${tokenHash}`;
 }
 
 function secondsFromNow(seconds: number): Date {

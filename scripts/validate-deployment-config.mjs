@@ -123,13 +123,13 @@ assert.ok(
 const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, helm ? 'listen {{ default 8080 .Values.frontendNginx.listenPort }};' : 'listen 8080;', 'frontend nginx listen port');
   has(text, helm ? '.Values.frontendNginx.healthPath' : '/nginx-health', 'nginx health route');
-  before(text, 'location = /admin {', 'location /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
-  before(text, 'location = /admin/ {', 'location /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
-  before(text, 'location ~ ^/admin/(dashboard|profile)/?$', 'location /admin/ {', 'admin dashboard/profile SPA regex precedes /admin API prefix');
-  before(text, 'location = /profile {', 'location /profile/ {', 'exact /profile SPA route precedes profile API prefix');
-  has(text, 'location /auth/', 'auth API prefix route');
-  has(text, 'location /profile/', 'profile/user API prefix route');
-  has(text, 'location /admin/', 'admin API prefix route');
+  before(text, 'location = /admin {', 'location ^~ /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
+  before(text, 'location = /admin/ {', 'location ^~ /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
+  before(text, 'location ~ ^/admin/(dashboard|profile)/?$', 'location ^~ /admin/ {', 'admin dashboard/profile SPA regex precedes /admin API prefix');
+  before(text, 'location = /profile {', 'location ^~ /profile/ {', 'exact /profile SPA route precedes profile API prefix');
+  has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
+  has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
+  has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
   has(text, helm ? '-admin-api:' : 'backend-admin-app-api:3000', 'admin API upstream');
 };
 assertNginxRoutes(read('docker/nginx-fullstack.conf'));

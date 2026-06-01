@@ -42,7 +42,7 @@ metadata:
 data:
   default.conf: |
     server {
-      listen 80;
+      listen {{ default 8080 .Values.frontendNginx.listenPort }};
       server_name _;
 
       root /usr/share/nginx/html;
@@ -67,6 +67,18 @@ data:
       }
 
       location = /profile {
+        try_files /index.html =404;
+      }
+
+      location = /admin {
+        try_files /index.html =404;
+      }
+
+      location = /admin/ {
+        try_files /index.html =404;
+      }
+
+      location ~ ^/admin/(dashboard|profile)/?$ {
         try_files /index.html =404;
       }
 

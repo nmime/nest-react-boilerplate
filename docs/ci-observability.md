@@ -12,6 +12,14 @@ pnpm run check:fast
 
 That command covers Prettier, Nx lint, Nx typecheck, and unit tests. Longer quality, browser, Docker smoke, runtime QA, and fullstack e2e jobs wait behind that fast gate so common failures surface early.
 
+The `Helm render validation` job also runs the deployment configuration static assertions before Helm rendering:
+
+```bash
+node scripts/validate-deployment-config.mjs
+```
+
+This keeps Docker Compose, Helm, environment-example, nginx, and runtime-hardening drift visible in the same early CI surface as the Helm render gate.
+
 ## Status summaries
 
 The CI workflow has a final `CI status summary` job with `if: always()`. It writes a Markdown table of every CI job result to the GitHub step summary and uploads the same table as the `ci-status-summary` artifact.

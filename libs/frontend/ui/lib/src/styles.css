@@ -235,6 +235,11 @@ select {
   color: var(--xr-color-text);
 }
 
+.xr-button[aria-current="page"] {
+  border-color: rgba(88, 213, 255, 0.72);
+  box-shadow: 0 0 0 1px rgba(88, 213, 255, 0.22);
+}
+
 .xr-brand:focus-visible,
 .xr-button:focus-visible,
 .xr-language-switcher select:focus-visible,

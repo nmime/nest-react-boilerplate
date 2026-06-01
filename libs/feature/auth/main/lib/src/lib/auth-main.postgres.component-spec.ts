@@ -11,7 +11,12 @@ import {
   stopPostgresContainer,
 } from "@app/common-component-test";
 import {
+  AuthRefreshTokenEntitySchema,
+  AuthTenantEntitySchema,
+  AuthTenantInvitationEntitySchema,
+  AuthTenantMembershipEntitySchema,
   AuthUserEntitySchema,
+  AuthUserTokenEntitySchema,
   authMigrationOptions,
 } from "@app/postgres-main-auth";
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
@@ -21,6 +26,7 @@ import { AuthMainModule } from "./auth-main.module";
 interface AuthSessionResponse {
   data: {
     accessToken: string;
+    refreshToken?: string;
     user: { email: string; displayName?: string | null };
   };
 }
@@ -54,7 +60,14 @@ describeIfDocker("AuthMainModule postgres component", () => {
           mode: "postgres",
           postgres: createPostgresContainerMikroOrmOptions(
             container,
-            [AuthUserEntitySchema],
+            [
+              AuthUserEntitySchema,
+              AuthTenantEntitySchema,
+              AuthTenantMembershipEntitySchema,
+              AuthTenantInvitationEntitySchema,
+              AuthRefreshTokenEntitySchema,
+              AuthUserTokenEntitySchema,
+            ],
             {
               extensions: [Migrator],
               migrations: authMigrationOptions,
@@ -73,6 +86,8 @@ describeIfDocker("AuthMainModule postgres component", () => {
   });
 
   afterEach(async () => {
+    await orm.em.getConnection().execute("delete from auth_user_tokens");
+    await orm.em.getConnection().execute("delete from auth_refresh_tokens");
     await orm.em.getConnection().execute("delete from auth_users");
     orm.em.clear();
   });
@@ -86,13 +101,13 @@ describeIfDocker("AuthMainModule postgres component", () => {
   });
 
   it("applies MikroORM migrations against a clean Testcontainers database", async () => {
-    const result = (await orm.em
+    const userColumns = (await orm.em
       .getConnection()
       .execute(
         "select column_name from information_schema.columns where table_name = 'auth_users' order by ordinal_position",
       )) as Array<{ column_name: string }>;
 
-    expect(result.map((row) => row.column_name)).toEqual([
+    expect(userColumns.map((row) => row.column_name)).toEqual([
       "id",
       "email",
       "display_name",
@@ -106,6 +121,18 @@ describeIfDocker("AuthMainModule postgres component", () => {
       "updated_at",
       "theme",
       "tenant_id",
+    ]);
+
+    const tokenTables = (await orm.em.getConnection().execute(`
+      select table_name
+      from information_schema.tables
+      where table_schema = 'public'
+        and table_name in ('auth_refresh_tokens', 'auth_user_tokens')
+      order by table_name
+    `)) as Array<{ table_name: string }>;
+    expect(tokenTables.map((row) => row.table_name)).toEqual([
+      "auth_refresh_tokens",
+      "auth_user_tokens",
     ]);
   });
 
@@ -127,6 +154,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
       displayName: "Component User",
     });
     expect(body.data.accessToken.split(".")).toHaveLength(3);
+    expect(body.data.refreshToken).toEqual(expect.any(String));
 
     const persisted = (await orm.em
       .getConnection()
@@ -136,6 +164,58 @@ describeIfDocker("AuthMainModule postgres component", () => {
     expect(persisted).toEqual([
       { email: "component@example.com", display_name: "Component User" },
     ]);
+  });
+
+  it("persists and rotates refresh tokens through Postgres", async () => {
+    const httpServer = getHttpServer(app);
+    const email = "refresh-component@example.com";
+    const register = await supertest(httpServer)
+      .post("/auth/register")
+      .send({ email, [passwordField]: componentCredential })
+      .expect(201);
+    const originalRefreshToken = (register.body as AuthSessionResponse).data
+      .refreshToken;
+    expect(originalRefreshToken).toEqual(expect.any(String));
+
+    const issuedRows = (await orm.em.getConnection().execute(`
+      select token_hash, revoked_at, replaced_by_token_id
+      from auth_refresh_tokens
+    `)) as Array<{
+      token_hash: string;
+      revoked_at: Date | null;
+      replaced_by_token_id: string | null;
+    }>;
+    expect(issuedRows).toHaveLength(1);
+    expect(issuedRows[0]?.token_hash).not.toBe(originalRefreshToken);
+    expect(issuedRows[0]?.revoked_at).toBeNull();
+
+    const refresh = await supertest(httpServer)
+      .post("/auth/refresh")
+      .send({ refreshToken: originalRefreshToken })
+      .expect(201);
+    const rotatedRefreshToken = (refresh.body as AuthSessionResponse).data
+      .refreshToken;
+    expect(rotatedRefreshToken).toEqual(expect.any(String));
+    expect(rotatedRefreshToken).not.toBe(originalRefreshToken);
+
+    await supertest(httpServer)
+      .post("/auth/refresh")
+      .send({ refreshToken: originalRefreshToken })
+      .expect(401);
+
+    const rows = (await orm.em.getConnection().execute(`
+      select parent_token_id, revoked_at, replaced_by_token_id
+      from auth_refresh_tokens
+      order by (parent_token_id is not null) asc, created_at asc
+    `)) as Array<{
+      parent_token_id: string | null;
+      revoked_at: Date | null;
+      replaced_by_token_id: string | null;
+    }>;
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.revoked_at).not.toBeNull();
+    expect(rows[0]?.replaced_by_token_id).not.toBeNull();
+    expect(rows[1]?.parent_token_id).not.toBeNull();
   });
 
   it("rejects duplicate registration and logs in persisted users", async () => {

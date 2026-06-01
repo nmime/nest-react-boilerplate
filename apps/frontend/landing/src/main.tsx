@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import * as ReactDOM from "react-dom/client";
+import { UiErrorBoundary } from "@app/frontend-ui";
 import App from "./app/app";
 
 const container = document.getElementById("root");
@@ -12,6 +13,8 @@ const root = ReactDOM.createRoot(container);
 
 root.render(
   <StrictMode>
-    <App />
+    <UiErrorBoundary>
+      <App />
+    </UiErrorBoundary>
   </StrictMode>,
 );

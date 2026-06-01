@@ -51,6 +51,27 @@ select {
   font: inherit;
 }
 
+.xr-skip-link {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: var(--xr-color-surface-strong);
+  box-shadow: var(--xr-shadow-lg);
+  color: var(--xr-color-text);
+  text-decoration: none;
+  transform: translateY(calc(-100% - 24px));
+  transition: transform 160ms ease;
+}
+
+.xr-skip-link:focus-visible {
+  outline: none;
+  box-shadow: var(--xr-focus-ring), var(--xr-shadow-lg);
+  transform: translateY(0);
+}
+
 .xr-shell {
   width: min(1120px, calc(100% - 32px));
   min-height: 100vh;
@@ -212,6 +233,11 @@ select {
   border-color: var(--xr-color-border);
   background: rgba(255, 255, 255, 0.06);
   color: var(--xr-color-text);
+}
+
+.xr-button[aria-current="page"] {
+  border-color: rgba(88, 213, 255, 0.72);
+  box-shadow: 0 0 0 1px rgba(88, 213, 255, 0.22);
 }
 
 .xr-brand:focus-visible,

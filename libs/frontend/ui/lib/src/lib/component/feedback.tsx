@@ -144,7 +144,9 @@ export class UiErrorBoundary extends Component<
         <>
           {this.props.fallback ?? (
             <UiEmptyState
+              aria-live="assertive"
               description={translate("ui.errorBoundary.description")}
+              role="alert"
               title={translate("ui.errorBoundary.title")}
             />
           )}

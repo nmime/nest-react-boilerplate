@@ -4,6 +4,7 @@ import {
   getClientIp,
   isIpInAllowList,
   isPrivateNetworkIp,
+  isRequestFromPrivateNetwork,
 } from "./index";
 
 /* eslint-disable sonarjs/no-hardcoded-ip -- These addresses are deterministic fixtures for CIDR behavior. */
@@ -21,6 +22,15 @@ describe("network helpers", () => {
     ).toBe(true);
     expect(
       isIpInAllowList("203.0.114.10", buildIpAllowList(["203.0.113.0/24"])),
+    ).toBe(false);
+  });
+
+  it("uses adapter-resolved request IP for private-network request checks", () => {
+    expect(
+      isRequestFromPrivateNetwork({
+        headers: { "x-forwarded-for": "127.0.0.1, 10.0.0.1" },
+        ip: "203.0.113.9",
+      }),
     ).toBe(false);
   });
 

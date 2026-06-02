@@ -43,6 +43,20 @@ describe("createUmamiAnalyticsPlugin", () => {
     });
   });
 
+  it("uses an explicit endpoint without appending /api/send", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createUmamiAnalyticsPlugin({
+      websiteId: "website-id",
+      endpoint: "https://analytics.example.com/custom",
+      host: "https://umami.example.com",
+      fetch: fetcher,
+    });
+
+    await plugin.page?.({ name: "Home", path: "/" });
+
+    expect(fetcher.mock.calls[0]?.[0]).toBe("https://analytics.example.com/custom");
+  });
+
   it("builds /api/send endpoint from host", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
     const plugin = createUmamiAnalyticsPlugin({
@@ -54,5 +68,11 @@ describe("createUmamiAnalyticsPlugin", () => {
     await plugin.page?.({ name: "Home", path: "/" });
 
     expect(fetcher.mock.calls[0]?.[0]).toBe("https://umami.example.com/api/send");
+  });
+
+  it("rejects missing endpoint and host instead of constructing a relative URL", () => {
+    expect(() =>
+      createUmamiAnalyticsPlugin({ websiteId: "website-id" }),
+    ).toThrow("Umami analytics requires either endpoint or host");
   });
 });

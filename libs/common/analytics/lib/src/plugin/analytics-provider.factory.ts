@@ -56,7 +56,7 @@ export function createAnalyticsProviderPlugins(
   }
 
   if (shouldCreateProvider("umami", requestedProviders, autoDetectProviders)) {
-    if (config.umami?.enabled !== false && config.umami?.websiteId) {
+    if (isUmamiConfigured(config.umami)) {
       plugins.push(
         createUmamiAnalyticsPlugin({
           websiteId: config.umami.websiteId,
@@ -90,4 +90,14 @@ function shouldCreateProvider(
   autoDetectProviders: boolean,
 ): boolean {
   return autoDetectProviders || requestedProviders.includes(provider);
+}
+
+function isUmamiConfigured(
+  config?: AnalyticsUmamiConfig,
+): config is AnalyticsUmamiConfig & { websiteId: string } {
+  return Boolean(
+    config?.enabled !== false &&
+      config?.websiteId &&
+      (config.endpoint?.trim() || config.host?.trim()),
+  );
 }

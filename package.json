@@ -97,6 +97,7 @@
     "@opentelemetry/sdk-node": "0.218.0",
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@tanstack/react-query": "^5.100.14",
+    "cacheable": "2.3.5",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",
     "dataloader": "2.2.3",

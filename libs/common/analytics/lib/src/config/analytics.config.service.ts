@@ -1,6 +1,13 @@
 import { Injectable } from "@nestjs/common";
-import { createGa4MeasurementProtocolPlugin } from "../plugin";
-import type { AnalyticsConfig, AnalyticsPlugin } from "../type";
+import {
+  createAnalyticsProviderPlugins,
+  createNoopAnalyticsPlugin,
+} from "../plugin";
+import type {
+  AnalyticsConfig,
+  AnalyticsPlugin,
+  AnalyticsProviderName,
+} from "../type";
 
 @Injectable()
 export class AnalyticsConfigService {
@@ -30,6 +37,21 @@ export class AnalyticsConfigService {
     return this.config.enabled ?? readBooleanConfig("ANALYTICS_ENABLED", true);
   }
 
+  get provider(): AnalyticsProviderName | "auto" | undefined {
+    return (
+      this.config.provider ??
+      readProviderConfig(process.env.ANALYTICS_PROVIDER)
+    );
+  }
+
+  get providers(): Array<AnalyticsProviderName | "auto"> | undefined {
+    if (this.config.providers?.length) {
+      return this.config.providers;
+    }
+
+    return readProviderListConfig(process.env.ANALYTICS_PROVIDERS);
+  }
+
   get ga4MeasurementId(): string {
     return (
       this.config.ga4?.measurementId ??
@@ -52,6 +74,51 @@ export class AnalyticsConfigService {
     );
   }
 
+  get postHogApiKey(): string {
+    return (
+      this.config.posthog?.apiKey ??
+      process.env.ANALYTICS_POSTHOG_API_KEY ??
+      ""
+    );
+  }
+
+  get postHogHost(): string {
+    return (
+      this.config.posthog?.host ??
+      process.env.ANALYTICS_POSTHOG_HOST ??
+      "https://app.posthog.com"
+    );
+  }
+
+  get umamiWebsiteId(): string {
+    return (
+      this.config.umami?.websiteId ??
+      process.env.ANALYTICS_UMAMI_WEBSITE_ID ??
+      ""
+    );
+  }
+
+  get umamiEndpoint(): string {
+    const configuredEndpoint =
+      this.config.umami?.endpoint ?? process.env.ANALYTICS_UMAMI_ENDPOINT;
+
+    if (configuredEndpoint) {
+      return configuredEndpoint;
+    }
+
+    const host = this.config.umami?.host ?? process.env.ANALYTICS_UMAMI_HOST;
+
+    return host ? `${host.replace(/\/+$/, "")}/api/send` : "";
+  }
+
+  get umamiHostname(): string {
+    return (
+      this.config.umami?.hostname ??
+      process.env.ANALYTICS_UMAMI_HOSTNAME ??
+      this.appName
+    );
+  }
+
   get isProduction(): boolean {
     return this.environment === "production";
   }
@@ -64,26 +131,35 @@ export class AnalyticsConfigService {
 
   private createPlugins(): AnalyticsPlugin[] {
     const plugins = [...(this.config.plugins ?? [])];
+    const providerPlugins = createAnalyticsProviderPlugins({
+      provider: this.provider,
+      providers: this.providers,
+      ga4: {
+        ...this.config.ga4,
+        measurementId: this.ga4MeasurementId,
+        apiSecret: this.ga4ApiSecret,
+        collectUrl: this.ga4CollectUrl,
+      },
+      posthog: {
+        ...this.config.posthog,
+        apiKey: this.postHogApiKey,
+        host: this.postHogHost,
+      },
+      umami: {
+        ...this.config.umami,
+        websiteId: this.umamiWebsiteId,
+        endpoint: this.umamiEndpoint || undefined,
+        hostname: this.umamiHostname,
+      },
+    });
 
-    if (this.ga4Enabled) {
-      plugins.push(
-        createGa4MeasurementProtocolPlugin({
-          measurementId: this.ga4MeasurementId,
-          apiSecret: this.ga4ApiSecret,
-          endpoint: this.ga4CollectUrl,
-          fetch: this.config.ga4?.fetch,
-        }),
-      );
+    plugins.push(...providerPlugins);
+
+    if (plugins.length === 0) {
+      plugins.push(createNoopAnalyticsPlugin());
     }
 
     return plugins;
-  }
-
-  private get ga4Enabled(): boolean {
-    return (
-      this.config.ga4?.enabled ??
-      Boolean(this.ga4MeasurementId && this.ga4ApiSecret)
-    );
   }
 }
 
@@ -108,4 +184,39 @@ function readBooleanConfig(name: string, fallback: boolean): boolean {
     default:
       throw new Error(`Invalid boolean config ${name}: ${value}`);
   }
+}
+
+function readProviderConfig(
+  value?: string,
+): AnalyticsProviderName | "auto" | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (isProviderName(normalized) || normalized === "auto") {
+    return normalized;
+  }
+
+  throw new Error(`Invalid analytics provider: ${value}`);
+}
+
+function readProviderListConfig(
+  value?: string,
+): Array<AnalyticsProviderName | "auto"> | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return value
+    .split(",")
+    .map((provider) => provider.trim())
+    .filter(Boolean)
+    .map(readProviderConfig)
+    .filter((provider): provider is AnalyticsProviderName | "auto" => Boolean(provider));
+}
+
+function isProviderName(value: string): value is AnalyticsProviderName {
+  return ["noop", "ga4", "posthog", "umami"].includes(value);
 }

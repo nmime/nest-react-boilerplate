@@ -12,8 +12,7 @@ export function createUmamiAnalyticsPlugin(
   options: UmamiAnalyticsPluginOptions,
 ): AnalyticsPlugin {
   const fetcher = options.fetch ?? fetch;
-  const endpoint =
-    options.endpoint ?? `${stripTrailingSlash(options.host ?? "")}/api/send`;
+  const endpoint = resolveUmamiEndpoint(options);
   const hostname = options.hostname ?? "server";
 
   return {
@@ -61,6 +60,22 @@ export function createUmamiAnalyticsPlugin(
       });
     },
   };
+}
+
+function resolveUmamiEndpoint(options: UmamiAnalyticsPluginOptions): string {
+  const endpoint = options.endpoint?.trim();
+  if (endpoint) {
+    return endpoint;
+  }
+
+  const host = options.host?.trim();
+  if (host) {
+    return `${stripTrailingSlash(host)}/api/send`;
+  }
+
+  throw new Error(
+    "Umami analytics requires either endpoint or host when websiteId is configured.",
+  );
 }
 
 async function sendUmamiEvent(

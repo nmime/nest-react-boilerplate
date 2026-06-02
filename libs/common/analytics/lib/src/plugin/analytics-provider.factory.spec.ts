@@ -20,6 +20,23 @@ describe("createAnalyticsProviderPlugins", () => {
     ).toEqual(["noop"]);
   });
 
+  it("falls back to no-op when explicit Umami is missing an endpoint and host", () => {
+    expect(
+      createAnalyticsProviderPlugins({
+        provider: "umami",
+        umami: { websiteId: "website-id" },
+      }).map((plugin) => plugin.name),
+    ).toEqual(["noop"]);
+  });
+
+  it("does not auto-detect Umami from websiteId alone", () => {
+    expect(
+      createAnalyticsProviderPlugins({
+        umami: { websiteId: "website-id" },
+      }),
+    ).toEqual([]);
+  });
+
   it("creates requested provider plugins with valid credentials", () => {
     expect(
       createAnalyticsProviderPlugins({

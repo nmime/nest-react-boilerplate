@@ -54,7 +54,7 @@ pnpm run audit                    # dependency changes
 
 Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cutting changes before requesting merge.
 
-Coverage gates require 100% branches, functions, lines, and statements for testable app and library source.
+Coverage thresholds are defined in `config/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
 
 ## Backend changes
 

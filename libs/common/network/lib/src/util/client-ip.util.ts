@@ -9,13 +9,10 @@ export interface RequestWithClientAddress {
 export function getClientIp(
   request: RequestWithClientAddress,
 ): string | undefined {
-  const forwardedFor = request.headers?.["x-forwarded-for"];
-  const forwardedValue = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : forwardedFor;
-  const forwardedIp = forwardedValue?.split(",")[0]?.trim();
+  const requestIp = request.ip?.trim();
+  if (requestIp) {
+    return requestIp;
+  }
 
-  return (
-    forwardedIp || request.ip || request.socket?.remoteAddress || undefined
-  );
+  return request.socket?.remoteAddress?.trim() || undefined;
 }

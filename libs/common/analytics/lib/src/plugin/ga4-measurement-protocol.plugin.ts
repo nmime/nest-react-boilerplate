@@ -21,18 +21,21 @@ export function createGa4MeasurementProtocolPlugin(
       const url = new URL(endpoint);
       url.searchParams.set("measurement_id", options.measurementId);
       url.searchParams.set("api_secret", options.apiSecret);
+
       await fetcher(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           client_id: clientId,
           user_id: payload.userId,
+          timestamp_micros: toMicros(payload.timestamp),
           events: [
             {
               name: payload.event,
               params: {
                 ...payload.properties,
                 source: payload.source,
+                context: payload.context,
               },
             },
           ],
@@ -40,4 +43,8 @@ export function createGa4MeasurementProtocolPlugin(
       });
     },
   };
+}
+
+function toMicros(timestamp?: Date): number | undefined {
+  return timestamp ? timestamp.getTime() * 1000 : undefined;
 }

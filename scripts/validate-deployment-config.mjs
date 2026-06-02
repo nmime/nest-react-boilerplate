@@ -88,6 +88,11 @@ for (const [service, variable] of [
 }
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+has(prodCompose, 'http://127.0.0.1:3000/health', 'prod backend healthcheck targets implemented /health endpoint');
+assert.ok(
+  !prodCompose.includes('http://127.0.0.1:3000/ready'),
+  'Production Compose backend healthcheck must not target missing /ready endpoint.',
+);
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}', 'production Compose defaults to Redis rate limiting');

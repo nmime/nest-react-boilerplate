@@ -12,6 +12,18 @@ Use this checklist before either deployment mode.
       final `.env.production`.
 - [ ] `helm lint .helm` and `helm template .helm -f .helm/values-production.yaml`
       succeed for the target image tags.
+- [ ] Release-image Helm render gates run the same deployment and Helm
+      rate-limit validators as CI before images are built, scanned, and signed.
+
+## Supply-chain gates
+
+- [ ] GitHub Actions remain pinned to full commit SHAs with an adjacent version
+      comment for reviewability.
+- [ ] Routine GitHub Actions minor/patch updates may be grouped by Dependabot;
+      major action updates are reviewed separately for Node runtime, hosted
+      runner, and input/behavior changes.
+- [ ] CodeQL, dependency review, SBOM generation, Trivy scanning, and cosign
+      signing gates remain enabled for release workflows.
 
 ## Configuration and secrets
 

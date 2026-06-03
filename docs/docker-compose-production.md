@@ -67,6 +67,11 @@ curl -fsS http://127.0.0.1:${ADMIN_APP_API_PORT:-3001}/ready
 docker compose --env-file .env.production -f docker/docker-compose.prod.yml logs -f --tail=100
 ```
 
+The backend Compose healthcheck and the manual API probes above intentionally
+use `/ready`, which is implemented by each API and performs a PostgreSQL
+readiness check when MikroORM is registered. `/health` and `/live` remain
+liveness-only checks and should not replace production dependency readiness.
+
 Frontends are bound to loopback (`127.0.0.1`) by default. Put Caddy, nginx,
 Traefik, or your cloud load balancer in front for public TLS and routing.
 

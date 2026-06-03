@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AuthPostgresModule } from "./auth-postgres.module";
+import { AuthTokenCleanupService } from "./auth-token-cleanup.service";
 import {
   AuthRefreshTokenEntity,
   AuthUserEntity,
@@ -15,5 +16,6 @@ describe("AuthPostgresModule", () => {
     expect(AuthUserTokenEntity).toBeDefined();
     expect(AuthUserRepository).toBeDefined();
     expect(AuthTokenRepository).toBeDefined();
+    expect(AuthTokenCleanupService).toBeDefined();
   });
 });

@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import type { ErrorInfo } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { UiErrorBoundary } from "./feedback";
 
@@ -24,7 +25,7 @@ describe("UiErrorBoundary", () => {
 
   it("announces the default crash fallback as an assertive alert and reports render errors", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const onError = vi.fn();
+    const onError = vi.fn<(error: Error, errorInfo: ErrorInfo) => void>();
 
     render(
       <UiErrorBoundary onError={onError}>
@@ -39,10 +40,12 @@ describe("UiErrorBoundary", () => {
       screen.getByRole("heading", { name: "Something went wrong" }),
     ).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
-    expect(onError).toHaveBeenCalledWith(
+    expect(onError).toHaveBeenCalledOnce();
+    const [error, errorInfo] = onError.mock.calls[0] ?? [];
+    expect(error).toEqual(
       expect.objectContaining({ message: "Child render failed" }),
-      expect.objectContaining({ componentStack: expect.any(String) }),
     );
+    expect(errorInfo?.componentStack).toEqual(expect.any(String));
   });
 
   it("supports custom fallbacks and reset-key recovery", async () => {

@@ -418,10 +418,7 @@ export function verifyPassword(password: string, encodedHash: string): boolean {
     return false;
   }
 
-  if (
-    expected.length === 0 ||
-    expected.length > MaximumPasswordDigestLength
-  ) {
+  if (expected.length === 0 || expected.length > MaximumPasswordDigestLength) {
     return false;
   }
 

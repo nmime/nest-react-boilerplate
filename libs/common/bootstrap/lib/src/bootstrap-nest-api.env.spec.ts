@@ -15,7 +15,7 @@ describe("resolveBackendEnvironmentConfig", () => {
         RATE_LIMIT_WINDOW_MS: "5000",
         SESSION_COOKIE_SECURE: "false",
         TRUST_PROXY: "true",
-      } as NodeJS.ProcessEnv,
+      },
     );
 
     expect(config).toMatchObject({
@@ -48,7 +48,7 @@ describe("resolveBackendEnvironmentConfig", () => {
         RATE_LIMIT_STORE: "redis",
         REDIS_KEY_PREFIX: "nrb:",
         REDIS_URL: "redis://localhost:6379/0",
-      } as NodeJS.ProcessEnv,
+      },
     );
 
     expect(config.rateLimit.store).toBe("redis");
@@ -69,7 +69,7 @@ describe("resolveBackendEnvironmentConfig", () => {
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
           NODE_ENV: "production",
           RATE_LIMIT_ENABLED: "maybe",
-        } as NodeJS.ProcessEnv,
+        },
       ),
     ).toThrow("RATE_LIMIT_ENABLED must be a boolean value.");
 
@@ -81,7 +81,7 @@ describe("resolveBackendEnvironmentConfig", () => {
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
           NODE_ENV: "production",
           RATE_LIMIT_STORE: "redis",
-        } as NodeJS.ProcessEnv,
+        },
       ),
     ).toThrow(
       "RATE_LIMIT_STORE=redis requires REDIS_URL or REDIS_HOSTS to be configured.",
@@ -97,7 +97,7 @@ describe("resolveBackendEnvironmentConfig", () => {
           RATE_LIMIT_STORE: "redis",
           REDIS_HOSTS: "redis.example.com:6379",
           REDIS_MODE: "sentinel",
-        } as NodeJS.ProcessEnv,
+        },
       ),
     ).toThrow(
       "REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.",

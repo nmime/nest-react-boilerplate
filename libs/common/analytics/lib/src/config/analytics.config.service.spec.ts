@@ -24,7 +24,10 @@ describe("AnalyticsConfigService", () => {
     expect(service.appName).toBe("configured-app");
     expect(service.environment).toBe("test");
     expect(service.enabled).toBe(false);
-    expect(service.plugins.map((item) => item.name)).toEqual(["custom", "noop"]);
+    expect(service.plugins.map((item) => item.name)).toEqual([
+      "custom",
+      "noop",
+    ]);
   });
 
   it("reads defaults from analytics environment variables", () => {
@@ -47,7 +50,10 @@ describe("AnalyticsConfigService", () => {
     vi.stubEnv("ANALYTICS_POSTHOG_API_KEY", "ph-key");
     vi.stubEnv("ANALYTICS_POSTHOG_HOST", "https://posthog.example.com");
     vi.stubEnv("ANALYTICS_UMAMI_WEBSITE_ID", "website-id");
-    vi.stubEnv("ANALYTICS_UMAMI_ENDPOINT", "https://umami.example.com/api/send");
+    vi.stubEnv(
+      "ANALYTICS_UMAMI_ENDPOINT",
+      "https://umami.example.com/api/send",
+    );
 
     const service = new AnalyticsConfigService();
 

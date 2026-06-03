@@ -31,7 +31,11 @@ export function createAnalyticsProviderPlugins(
   }
 
   if (shouldCreateProvider("ga4", requestedProviders, autoDetectProviders)) {
-    if (config.ga4?.enabled !== false && config.ga4?.measurementId && config.ga4.apiSecret) {
+    if (
+      config.ga4?.enabled !== false &&
+      config.ga4?.measurementId &&
+      config.ga4.apiSecret
+    ) {
       plugins.push(
         createGa4MeasurementProtocolPlugin({
           measurementId: config.ga4.measurementId,
@@ -43,7 +47,9 @@ export function createAnalyticsProviderPlugins(
     }
   }
 
-  if (shouldCreateProvider("posthog", requestedProviders, autoDetectProviders)) {
+  if (
+    shouldCreateProvider("posthog", requestedProviders, autoDetectProviders)
+  ) {
     if (config.posthog?.enabled !== false && config.posthog?.apiKey) {
       plugins.push(
         createPostHogAnalyticsPlugin({
@@ -97,7 +103,7 @@ function isUmamiConfigured(
 ): config is AnalyticsUmamiConfig & { websiteId: string } {
   return Boolean(
     config?.enabled !== false &&
-      config?.websiteId &&
-      (config.endpoint?.trim() || config.host?.trim()),
+    config?.websiteId &&
+    (config.endpoint?.trim() || config.host?.trim()),
   );
 }

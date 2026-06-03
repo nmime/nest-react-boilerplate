@@ -43,7 +43,9 @@ export function createGa4MeasurementProtocolPlugin(
   };
 }
 
-function buildGa4EventParams(payload: AnalyticsPayload): Record<string, Ga4ParamValue> {
+function buildGa4EventParams(
+  payload: AnalyticsPayload,
+): Record<string, Ga4ParamValue> {
   return compactObject({
     ...normalizeParamRecord(payload.properties),
     source: normalizeGa4ParamValue(payload.source),
@@ -75,6 +77,8 @@ function normalizeParamRecord(
   );
 }
 
+// GA4 Measurement Protocol accepts finite numeric params alongside strings.
+// eslint-disable-next-line sonarjs/function-return-type
 function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -101,13 +105,15 @@ function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
   }
 
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? undefined;
   } catch {
-    return String(value);
+    return Object.prototype.toString.call(value);
   }
 }
 
-function compactObject<T extends Record<string, unknown>>(value: T): Record<string, Ga4ParamValue> {
+function compactObject<T extends Record<string, unknown>>(
+  value: T,
+): Record<string, Ga4ParamValue> {
   return Object.fromEntries(
     Object.entries(value).filter(([, entry]) => entry !== undefined),
   ) as Record<string, Ga4ParamValue>;

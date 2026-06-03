@@ -13,18 +13,18 @@ describe("auth password hash verification", () => {
     const oversizedDigest = Buffer.alloc(129).toString("base64url");
 
     expect(verifyPassword("password123", "bad-format")).toBe(false);
-    expect(
-      verifyPassword("password123", "pbkdf2_sha256$NaN$salt$digest"),
-    ).toBe(false);
-    expect(
-      verifyPassword("password123", "pbkdf2_sha256$0$salt$digest"),
-    ).toBe(false);
+    expect(verifyPassword("password123", "pbkdf2_sha256$NaN$salt$digest")).toBe(
+      false,
+    );
+    expect(verifyPassword("password123", "pbkdf2_sha256$0$salt$digest")).toBe(
+      false,
+    );
     expect(
       verifyPassword("password123", "pbkdf2_sha256$1000001$salt$digest"),
     ).toBe(false);
-    expect(
-      verifyPassword("password123", "pbkdf2_sha256$120000$salt$"),
-    ).toBe(false);
+    expect(verifyPassword("password123", "pbkdf2_sha256$120000$salt$")).toBe(
+      false,
+    );
     expect(
       verifyPassword(
         "password123",

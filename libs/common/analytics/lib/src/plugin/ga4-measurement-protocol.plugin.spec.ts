@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { createGa4MeasurementProtocolPlugin } from "./ga4-measurement-protocol.plugin";
 
+interface Ga4RequestBody {
+  client_id: string;
+  user_id?: string;
+  timestamp_micros?: number;
+  events: Array<{ name: string; params: Record<string, unknown> }>;
+}
+
 describe("createGa4MeasurementProtocolPlugin", () => {
   it("maps timestamps and context to GA4 Measurement Protocol params", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
@@ -33,12 +40,17 @@ describe("createGa4MeasurementProtocolPlugin", () => {
       timestamp,
     });
 
-    const requestUrl = fetcher.mock.calls[0]?.[0] as URL;
-    const requestInit = fetcher.mock.calls[0]?.[1];
-    const body = JSON.parse(String(requestInit?.body));
+    const [requestUrl, requestInit] = fetcher.mock.calls[0] ?? [];
+    const body = readJsonBody<Ga4RequestBody>(requestInit);
 
-    expect(requestUrl.searchParams.get("measurement_id")).toBe("G-TEST");
-    expect(requestUrl.searchParams.get("api_secret")).toBe("test-secret");
+    expect(requestUrl).toBeInstanceOf(URL);
+
+    expect((requestUrl as URL).searchParams.get("measurement_id")).toBe(
+      "G-TEST",
+    );
+    expect((requestUrl as URL).searchParams.get("api_secret")).toBe(
+      "test-secret",
+    );
     expect(body).toMatchObject({
       client_id: "anon-1",
       user_id: "user-1",
@@ -64,3 +76,11 @@ describe("createGa4MeasurementProtocolPlugin", () => {
     expect(body.events[0].params).not.toHaveProperty("omitted");
   });
 });
+
+function readJsonBody<T>(requestInit: RequestInit | undefined): T {
+  if (typeof requestInit?.body !== "string") {
+    throw new TypeError("Expected fetch body to be a JSON string.");
+  }
+
+  return JSON.parse(requestInit.body) as T;
+}

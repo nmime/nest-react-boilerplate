@@ -25,7 +25,8 @@ describe("createPostHogAnalyticsPlugin", () => {
       "https://posthog.example.com/capture/",
       expect.objectContaining({ method: "POST" }),
     );
-    const body = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
+    const [, requestInit] = fetcher.mock.calls[0] ?? [];
+    const body = readJsonBody<Record<string, unknown>>(requestInit);
     expect(body).toMatchObject({
       api_key: "ph-key",
       event: "order_created",
@@ -45,10 +46,21 @@ describe("createPostHogAnalyticsPlugin", () => {
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(null, { status: 500 }));
-    const plugin = createPostHogAnalyticsPlugin({ apiKey: "ph-key", fetch: fetcher });
+    const plugin = createPostHogAnalyticsPlugin({
+      apiKey: "ph-key",
+      fetch: fetcher,
+    });
 
     await expect(plugin.track?.({ event: "failed" })).rejects.toThrow(
       "PostHog analytics request failed: 500",
     );
   });
 });
+
+function readJsonBody<T>(requestInit: RequestInit | undefined): T {
+  if (typeof requestInit?.body !== "string") {
+    throw new TypeError("Expected fetch body to be a JSON string.");
+  }
+
+  return JSON.parse(requestInit.body) as T;
+}

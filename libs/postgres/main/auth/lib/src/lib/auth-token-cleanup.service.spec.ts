@@ -6,37 +6,42 @@ import {
 } from "./auth-token-cleanup.service";
 import type { AuthTokenRepository } from "./repository";
 
-function createRepositoryMock(): AuthTokenRepository {
+function createRepositoryMock(): {
+  cleanupExpiredTokens: ReturnType<typeof vi.fn>;
+  repository: AuthTokenRepository;
+} {
+  const cleanupExpiredTokens = vi.fn(() =>
+    okAsync({ refreshTokensDeleted: 0, userTokensDeleted: 0 }),
+  );
+
   return {
-    cleanupExpiredTokens: vi.fn(() =>
-      okAsync({ refreshTokensDeleted: 0, userTokensDeleted: 0 }),
-    ),
-  } as unknown as AuthTokenRepository;
+    cleanupExpiredTokens,
+    repository: { cleanupExpiredTokens } as unknown as AuthTokenRepository,
+  };
 }
 
 describe("AuthTokenCleanupService", () => {
   it("cleans up expired tokens through the repository", async () => {
-    const repository = createRepositoryMock();
+    const { cleanupExpiredTokens, repository } = createRepositoryMock();
     const cleanup = new AuthTokenCleanupService(repository);
     const now = new Date("2026-06-01T00:00:00.000Z");
 
     await expect(cleanup.runCleanup(now)).resolves.toBe(true);
 
-    expect(repository.cleanupExpiredTokens).toHaveBeenCalledWith(now);
+    expect(cleanupExpiredTokens).toHaveBeenCalledWith(now);
   });
 
   it("does not overlap cleanup runs", async () => {
+    const cleanupExpiredTokens = vi.fn(() => new Promise(() => undefined));
     const repository = {
-      cleanupExpiredTokens: vi.fn(
-        () => new Promise(() => undefined),
-      ),
+      cleanupExpiredTokens,
     } as unknown as AuthTokenRepository;
     const cleanup = new AuthTokenCleanupService(repository);
 
     void cleanup.runCleanup();
     await expect(cleanup.runCleanup()).resolves.toBe(false);
 
-    expect(repository.cleanupExpiredTokens).toHaveBeenCalledTimes(1);
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
   });
 
   it("schedules and clears interval based on environment config", () => {
@@ -47,17 +52,17 @@ describe("AuthTokenCleanupService", () => {
     process.env.AUTH_TOKEN_CLEANUP_ENABLED = "true";
     process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS = "60000";
     process.env.AUTH_TOKEN_CLEANUP_RUN_ON_START = "false";
-    const repository = createRepositoryMock();
+    const { cleanupExpiredTokens, repository } = createRepositoryMock();
     const cleanup = new AuthTokenCleanupService(repository);
 
     cleanup.onModuleInit();
     vi.advanceTimersByTime(59_999);
-    expect(repository.cleanupExpiredTokens).not.toHaveBeenCalled();
+    expect(cleanupExpiredTokens).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
-    expect(repository.cleanupExpiredTokens).toHaveBeenCalledTimes(1);
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
     cleanup.onModuleDestroy();
     vi.advanceTimersByTime(60_000);
-    expect(repository.cleanupExpiredTokens).toHaveBeenCalledTimes(1);
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
     restoreEnv("AUTH_TOKEN_CLEANUP_ENABLED", previousEnabled);

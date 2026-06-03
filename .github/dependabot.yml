@@ -36,8 +36,9 @@ updates:
       prefix: ci
       include: scope
     groups:
-      github-actions:
+      github-actions-minor-patch:
         patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
     schedule:

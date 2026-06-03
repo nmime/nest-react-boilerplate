@@ -4,10 +4,10 @@
 
 ```bash
 git checkout -b chore/initialize-project
+pnpm install --frozen-lockfile
 pnpm init:project -- --name "Acme App" --domain acme.example --owner your-github-org --dry-run
 pnpm init:project -- --name "Acme App" --domain acme.example --owner your-github-org
-pnpm install --frozen-lockfile
-pnpm check
+pnpm run check
 ```
 
 The initializer replaces known boilerplate tokens (`nest-react-boilerplate`, `Nest React Boilerplate`, database name, example domains, JWT audience, and owner placeholders). It refuses a dirty worktree unless `--force` is provided and does not rewrite Git history.

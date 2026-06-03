@@ -103,7 +103,7 @@ function configuredCommand(names, fallback) {
 
 function runShell(label, command, extraEnv = {}) {
   assertNonDryRunCommand(command, label);
-  const result = run("sh", ["-lc", command], { env: extraEnv });
+  const result = run("sh", ["-c", command], { env: extraEnv });
   assertGate(result.status === 0, `${label} command failed`, {
     command: redact(command),
     status: result.status,

@@ -4,6 +4,7 @@ import {
   getClientIp,
   isIpInAllowList,
   isPrivateNetworkIp,
+  isRequestFromPrivateNetwork,
 } from "./index";
 
 /* eslint-disable sonarjs/no-hardcoded-ip -- These addresses are deterministic fixtures for CIDR behavior. */
@@ -24,12 +25,28 @@ describe("network helpers", () => {
     ).toBe(false);
   });
 
-  it("resolves forwarded client IPs", () => {
+  it("uses adapter-resolved request IP for private-network request checks", () => {
+    expect(
+      isRequestFromPrivateNetwork({
+        headers: { "x-forwarded-for": "127.0.0.1, 10.0.0.1" },
+        ip: "203.0.113.9",
+      }),
+    ).toBe(false);
+  });
+
+  it("uses adapter-resolved or socket addresses instead of spoofable forwarding headers", () => {
     expect(
       getClientIp({
-        headers: { "x-forwarded-for": "203.0.113.9, 10.0.0.1" },
-        socket: { remoteAddress: "127.0.0.1" },
+        headers: { "x-forwarded-for": "127.0.0.1, 10.0.0.1" },
+        ip: "203.0.113.9",
+        socket: { remoteAddress: "198.51.100.10" },
       }),
     ).toBe("203.0.113.9");
+    expect(
+      getClientIp({
+        headers: { "x-forwarded-for": "127.0.0.1, 10.0.0.1" },
+        socket: { remoteAddress: "127.0.0.1" },
+      }),
+    ).toBe("127.0.0.1");
   });
 });

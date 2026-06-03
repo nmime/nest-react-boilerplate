@@ -88,6 +88,11 @@ for (const [service, variable] of [
 }
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+has(prodCompose, 'http://127.0.0.1:3000/ready', 'prod backend healthcheck targets readiness-aware /ready endpoint');
+assert.ok(
+  !prodCompose.includes('http://127.0.0.1:3000/health'),
+  'Production Compose backend healthcheck must use readiness-aware /ready rather than liveness-only /health.',
+);
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}', 'production Compose defaults to Redis rate limiting');
@@ -102,6 +107,21 @@ has(prodRedisService, 'redis-server', 'production Compose starts Redis server ex
 has(prodRedisService, 'redis-cli', 'production Compose Redis healthcheck command');
 has(prodRedisService, 'ping', 'production Compose Redis ping healthcheck');
 has(prodCompose, 'redis-data:', 'production Compose persists Redis data volume');
+
+for (const [app, controllerPath] of [
+  ['auth-app-api', 'apps/backend/auth-app-api/src/health.controller.ts'],
+  ['user-app-api', 'apps/backend/user-app-api/src/health.controller.ts'],
+  ['backend-admin-app-api', 'apps/backend/admin-app-api/src/health.controller.ts'],
+]) {
+  const controller = read(controllerPath);
+  has(controller, '@Get("health")', `${app} exposes /health for liveness`);
+  has(controller, 'return this.live();', `${app} /health remains liveness-only`);
+  has(controller, '@Get("ready")', `${app} exposes /ready for readiness`);
+  has(controller, 'await this.checkPostgres();', `${app} /ready evaluates PostgreSQL readiness`);
+  has(controller, 'ServiceUnavailableException', `${app} /ready fails closed when dependencies are unavailable`);
+  has(controller, 'select 1', `${app} /ready performs a PostgreSQL probe`);
+}
+
 for (const [service, variable] of [
   ['admin-app', 'ADMIN_APP_PORT:-8081'],
   ['user-app', 'USER_APP_PORT:-8082'],
@@ -125,7 +145,18 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, helm ? '.Values.frontendNginx.healthPath' : '/nginx-health', 'nginx health route');
   before(text, 'location = /admin {', 'location ^~ /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
   before(text, 'location = /admin/ {', 'location ^~ /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
-  before(text, 'location ~ ^/admin/(dashboard|profile)/?$', 'location ^~ /admin/ {', 'admin dashboard/profile SPA regex precedes /admin API prefix');
+  for (const adminSpaRoute of ['dashboard', 'dashboard/', 'profile', 'profile/']) {
+    before(
+      text,
+      `location = /admin/${adminSpaRoute} {`,
+      'location ^~ /admin/ {',
+      `exact /admin/${adminSpaRoute} SPA route wins over admin API prefix`,
+    );
+  }
+  assert.ok(
+    !text.includes('location ~ ^/admin/(dashboard|profile)/?$'),
+    'Admin SPA deep links must use exact locations because the ^~ admin API prefix skips regex locations.',
+  );
   before(text, 'location = /profile {', 'location ^~ /profile/ {', 'exact /profile SPA route precedes profile API prefix');
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');

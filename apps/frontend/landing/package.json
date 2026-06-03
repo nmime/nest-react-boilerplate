@@ -4,14 +4,14 @@
   "private": true,
   "dependencies": {
     "@app/frontend-ui": "workspace:*",
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "@nx/react": "22.7.4",
-    "@nx/vite": "22.7.4",
+    "@nx/react": "22.7.5",
+    "@nx/vite": "22.7.5",
     "@vitejs/plugin-react": "6.0.2",
-    "vite": "8.0.14"
+    "vite": "8.0.16"
   },
   "license": "MIT",
   "author": {

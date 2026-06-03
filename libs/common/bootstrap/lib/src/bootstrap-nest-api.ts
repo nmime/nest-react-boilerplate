@@ -506,7 +506,9 @@ function resolveSessionCookieSecure(
     return true;
   }
 
-  return readBoolean("SESSION_COOKIE_SECURE", env.SESSION_COOKIE_SECURE) ?? false;
+  return (
+    readBoolean("SESSION_COOKIE_SECURE", env.SESSION_COOKIE_SECURE) ?? false
+  );
 }
 
 function createSessionStore(
@@ -579,7 +581,9 @@ function parseRateLimitStorePreference(
     return normalized;
   }
 
-  throw new Error('RATE_LIMIT_STORE must be one of "auto", "memory", or "redis".');
+  throw new Error(
+    'RATE_LIMIT_STORE must be one of "auto", "memory", or "redis".',
+  );
 }
 
 function parseRedisMode(value: string | undefined): RedisMode {
@@ -594,7 +598,9 @@ function parseRedisMode(value: string | undefined): RedisMode {
     case RedisMode.Cluster:
       return RedisMode.Cluster;
     default:
-      throw new Error('REDIS_MODE must be one of "single", "sentinel", or "cluster".');
+      throw new Error(
+        'REDIS_MODE must be one of "single", "sentinel", or "cluster".',
+      );
   }
 }
 
@@ -633,8 +639,13 @@ function resolveRedisConnectionConfig(
   }
 
   const mode = parseRedisMode(env.REDIS_MODE);
-  if ((mode === RedisMode.Cluster || mode === RedisMode.Sentinel) && hosts.length === 0) {
-    throw new Error("REDIS_HOSTS is required for cluster or sentinel Redis mode.");
+  if (
+    (mode === RedisMode.Cluster || mode === RedisMode.Sentinel) &&
+    hosts.length === 0
+  ) {
+    throw new Error(
+      "REDIS_HOSTS is required for cluster or sentinel Redis mode.",
+    );
   }
 
   const sentinelGroupIdentifier = readOptionalString(
@@ -738,7 +749,9 @@ export function resolveBackendEnvironmentConfig(
       secret: resolveSessionSecret(isProduction, env),
     },
     trustProxy:
-      options.trustProxy ?? readBoolean("TRUST_PROXY", env.TRUST_PROXY) ?? false,
+      options.trustProxy ??
+      readBoolean("TRUST_PROXY", env.TRUST_PROXY) ??
+      false,
   };
 }
 
@@ -883,16 +896,16 @@ function handleRateLimitHit(
   next: NextFunctionLike,
 ): void {
   const now = Date.now();
-  const retryAfterSeconds = Math.max(
-    Math.ceil((hit.resetAt - now) / 1000),
-    1,
-  );
+  const retryAfterSeconds = Math.max(Math.ceil((hit.resetAt - now) / 1000), 1);
   response.setHeader("x-ratelimit-limit", String(rateLimit.max));
   response.setHeader(
     "x-ratelimit-remaining",
     String(Math.max(rateLimit.max - hit.count, 0)),
   );
-  response.setHeader("x-ratelimit-reset", String(Math.ceil(hit.resetAt / 1000)));
+  response.setHeader(
+    "x-ratelimit-reset",
+    String(Math.ceil(hit.resetAt / 1000)),
+  );
 
   if (hit.count > rateLimit.max) {
     response.setHeader("retry-after", String(retryAfterSeconds));
@@ -992,7 +1005,13 @@ export async function bootstrapNestApi(
     await rateLimitStore.init?.();
     registerRateLimitStoreShutdown(app, rateLimitStore);
     warnAboutRateLimitStore(config);
-    app.use(createRateLimitMiddleware(options.appName, config.rateLimit, rateLimitStore));
+    app.use(
+      createRateLimitMiddleware(
+        options.appName,
+        config.rateLimit,
+        rateLimitStore,
+      ),
+    );
   }
 
   if (options.enableCors ?? true) {

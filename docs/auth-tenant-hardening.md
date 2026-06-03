@@ -28,6 +28,12 @@ The auth feature includes an injectable token store interface plus an in-memory 
 
 Postgres tables are migrated for durable storage (`auth_refresh_tokens`, `auth_user_tokens`) so projects can add a repository-backed token store without changing API/service call sites.
 
+`AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to remove expired refresh and user-action tokens. It runs hourly and once on startup by default. Runtime overrides:
+
+- `AUTH_TOKEN_CLEANUP_ENABLED=false` disables the cleanup loop.
+- `AUTH_TOKEN_CLEANUP_INTERVAL_MS=60000` changes the interval; lower values are clamped to one minute.
+- `AUTH_TOKEN_CLEANUP_RUN_ON_START=false` skips the startup cleanup run.
+
 ## Safer admin bootstrap
 
 `ADMIN_BOOTSTRAP_EMAILS` no longer grants admin by itself. Set `ADMIN_BOOTSTRAP_ENABLED=true` to opt in, and use `ADMIN_BOOTSTRAP_TENANT_IDS` when bootstrapping non-default tenants.
@@ -43,6 +49,7 @@ Relevant tests:
 ```bash
 pnpm nx test @app/feature-auth-shared --skip-nx-cache
 pnpm nx test @app/feature-auth-main --skip-nx-cache
+pnpm nx test @app/postgres-main-auth --skip-nx-cache
 pnpm nx test @app/common/redis --skip-nx-cache
 pnpm nx test auth-app-api --skip-nx-cache
 ```

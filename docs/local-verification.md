@@ -1,10 +1,10 @@
 # Local verification, artifacts, and fallback CI policy
 
-GitHub-hosted Actions may be unavailable for this repository/account. When that happens, Hetzner/local verification is the source of truth.
+GitHub-hosted Actions may be unavailable for this repository/account. When that happens, a trusted local or CI runner with repository access is the source of truth.
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node 26 and pnpm 10:
+Run the full gate from a clean `main` checkout with Node 26.1.0 and pnpm 10.32.1:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -67,13 +67,13 @@ The Vitest coverage gate is configured in `config/vitest-coverage.mts`. Workflow
 
 Generated OpenAPI clients under `generated/` and visual baseline PNGs under `packages/tooling/baselines/visual/` are intentionally tracked so consumers and visual regression tests are reproducible without extra generation steps. Treat changes to these files as generated artifacts:
 
-- regenerate API clients with `pnpm run api:clients:generate`; verify with `pnpm run api:clients:check`;
+- regenerate API clients with `pnpm run api:clients`; verify with `pnpm run api:clients:check`;
 - update visual baselines only with `pnpm run test:visual:update`, then verify with `pnpm run test:visual`;
 - review generated/binary diffs together with the source API/schema/story change that caused them.
 
 ## Script map
 
-- `pnpm run check`: fast aggregate for formatting, migrations, contracts, lint, typecheck, and unit tests.
+- `pnpm run check`: full aggregate for formatting, migrations, contracts, QA presets, lint, typecheck, and unit tests.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.
 - `pnpm run test:coverage`: unit/component coverage gate.

@@ -27,12 +27,12 @@ Dockerfile        multi-stage backend/frontend/migrator image build
 
 ## Prerequisites
 
-| Tool | Version / note |
-| ---- | -------------- |
-| Node.js | `26.1.0` from `.nvmrc` |
-| pnpm | `10.32.1` from `packageManager`; use Corepack |
+| Tool           | Version / note                                                               |
+| -------------- | ---------------------------------------------------------------------------- |
+| Node.js        | `26.1.0` from `.nvmrc`                                                       |
+| pnpm           | `10.32.1` from `packageManager`; use Corepack                                |
 | Docker Compose | Required for local PostgreSQL, Docker smoke tests, and full-stack containers |
-| Git | Required for normal contribution flow |
+| Git            | Required for normal contribution flow                                        |
 
 Recommended setup:
 
@@ -82,25 +82,27 @@ Default local API ports are configured through environment variables: admin API 
 
 Start from the examples and keep real values out of git:
 
-| File | Purpose |
-| ---- | ------- |
-| `.env.example` | Complete local/reference key list with safe placeholders. |
-| `.env.local.example` | Developer defaults for local apps and local PostgreSQL. |
-| `.env.test.example` | Test defaults, including in-memory auth persistence. |
+| File                      | Purpose                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| `.env.example`            | Complete local/reference key list with safe placeholders. |
+| `.env.local.example`      | Developer defaults for local apps and local PostgreSQL.   |
+| `.env.test.example`       | Test defaults, including in-memory auth persistence.      |
 | `.env.production.example` | Production/Compose placeholders and secret-file examples. |
 
 Important variable groups:
 
-| Group | Keys |
-| ----- | ---- |
-| Runtime mode and ports | `NODE_ENV`, `PORT`, `ADMIN_APP_API_PORT`, `USER_APP_API_PORT`, `AUTH_APP_API_PORT`, `ADMIN_APP_PORT`, `USER_APP_PORT`, `LANDING_APP_PORT` |
-| Database | `DATABASE_URL` or `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_SSL`, `POSTGRES_SSL_REJECT_UNAUTHORIZED`, `POSTGRES_SYNCHRONIZE`, `POSTGRES_LOGGING` |
-| Browser/CORS | `CORS_ORIGINS`, `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, `VITE_ADMIN_API_BASE_URL` |
-| Auth/RBAC | `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`, `AUTH_JWT_EXPIRES_IN_SECONDS`, `ADMIN_BOOTSTRAP_ENABLED`, `ADMIN_BOOTSTRAP_EMAILS`, `ADMIN_BOOTSTRAP_TENANT_IDS` |
-| OAuth/OIDC | `AUTH_OAUTH_ENABLED`, `AUTH_OAUTH_ISSUER_URL`, `AUTH_OAUTH_CLIENT_ID`, `AUTH_OAUTH_CLIENT_SECRET`, `AUTH_OAUTH_REDIRECT_URI`, `AUTH_OAUTH_SCOPES` |
-| Rate limiting / Redis | `RATE_LIMIT_ENABLED`, `RATE_LIMIT_STORE`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_URL`, `REDIS_HOSTS`, `REDIS_MODE`, `REDIS_KEY_PREFIX`, `REDIS_DB` |
-| OpenAPI / telemetry / proxy | `OPENAPI_ENABLED`, `OPENAPI_PATH`, `OPENAPI_TITLE`, `OPENAPI_VERSION`, `OTEL_*`, `TRUST_PROXY`, `LOG_LEVEL` |
-| Production images/secrets | `IMAGE_REGISTRY`, `IMAGE_TAG`, `AUTH_JWT_SECRET_FILE`, `POSTGRES_PASSWORD_FILE` |
+| Group                       | Keys                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime mode and ports      | `NODE_ENV`, `PORT`, `ADMIN_APP_API_PORT`, `USER_APP_API_PORT`, `AUTH_APP_API_PORT`, `ADMIN_APP_PORT`, `USER_APP_PORT`, `LANDING_APP_PORT`                                                               |
+| Database                    | `DATABASE_URL` or `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_SSL`, `POSTGRES_SSL_REJECT_UNAUTHORIZED`, `POSTGRES_SYNCHRONIZE`, `POSTGRES_LOGGING` |
+| Browser/CORS                | `CORS_ORIGINS`, `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, `VITE_ADMIN_API_BASE_URL`                                                                                                           |
+| Auth/RBAC                   | `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`, `AUTH_JWT_EXPIRES_IN_SECONDS`, `ADMIN_BOOTSTRAP_ENABLED`, `ADMIN_BOOTSTRAP_EMAILS`, `ADMIN_BOOTSTRAP_TENANT_IDS`                             |
+| Auth token cleanup          | `AUTH_TOKEN_CLEANUP_ENABLED`, `AUTH_TOKEN_CLEANUP_INTERVAL_MS`, `AUTH_TOKEN_CLEANUP_RUN_ON_START`                                                                                                       |
+| OAuth/OIDC                  | `AUTH_OAUTH_ENABLED`, `AUTH_OAUTH_ISSUER_URL`, `AUTH_OAUTH_CLIENT_ID`, `AUTH_OAUTH_CLIENT_SECRET`, `AUTH_OAUTH_REDIRECT_URI`, `AUTH_OAUTH_SCOPES`                                                       |
+| Analytics                   | `ANALYTICS_ENABLED`, `ANALYTICS_PROVIDER`, `ANALYTICS_PROVIDERS`, `ANALYTICS_APP_NAME`, `ANALYTICS_ENVIRONMENT`, `ANALYTICS_GA4_*`, `ANALYTICS_POSTHOG_*`, `ANALYTICS_UMAMI_*`                          |
+| Rate limiting / Redis       | `RATE_LIMIT_ENABLED`, `RATE_LIMIT_STORE`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `REDIS_URL`, `REDIS_HOSTS`, `REDIS_MODE`, `REDIS_KEY_PREFIX`, `REDIS_DB`                                            |
+| OpenAPI / telemetry / proxy | `OPENAPI_ENABLED`, `OPENAPI_PATH`, `OPENAPI_TITLE`, `OPENAPI_VERSION`, `OTEL_*`, `TRUST_PROXY`, `LOG_LEVEL`                                                                                             |
+| Production images/secrets   | `IMAGE_REGISTRY`, `IMAGE_TAG`, `AUTH_JWT_SECRET_FILE`, `POSTGRES_PASSWORD_FILE`                                                                                                                         |
 
 Security defaults are intentionally conservative: production CORS has no wildcard, admin bootstrap is disabled unless explicitly enabled, OpenAPI is disabled in production examples, and OAuth is disabled until provider-specific product code is configured.
 
@@ -190,16 +192,16 @@ Run `pnpm run check:fast` before opening a PR and add the targeted commands abov
 
 ## Troubleshooting
 
-| Symptom | Checks / fix |
-| ------- | ------------ |
-| `pnpm install --frozen-lockfile` fails because pnpm is wrong | Run `corepack enable && corepack prepare pnpm@10.32.1 --activate`, then retry. |
-| PostgreSQL port is already in use | Set `POSTGRES_PORT` in `.env` or stop the conflicting local service, then rerun `pnpm run dev:db`. |
-| Migrations cannot connect | Confirm `docker compose ps postgres`, verify `DATABASE_URL` or `POSTGRES_*`, then run `pnpm run db:migrate` again. |
-| Browser calls are blocked by CORS | Add the exact frontend origin to `CORS_ORIGINS`; do not use wildcards for production. |
-| OpenAPI docs return 404 | Set `OPENAPI_ENABLED=true` and confirm `OPENAPI_PATH` for the API you are serving. |
-| Docker builds are slow or memory-constrained | Keep the documented defaults (`COMPOSE_PARALLEL_LIMIT=1`, `COMPOSE_BAKE=false`, `NX_DAEMON=false`, `NX_PARALLEL=1`) unless the builder has enough memory. |
-| Playwright tests fail before opening a browser | Install browsers with `pnpm exec playwright install --with-deps chromium` or the browser matrix needed by the command. |
-| Contracts or generated clients are stale | Run `pnpm api:contracts` and `pnpm api:clients`, then commit the generated changes. |
+| Symptom                                                      | Checks / fix                                                                                                                                              |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile` fails because pnpm is wrong | Run `corepack enable && corepack prepare pnpm@10.32.1 --activate`, then retry.                                                                            |
+| PostgreSQL port is already in use                            | Set `POSTGRES_PORT` in `.env` or stop the conflicting local service, then rerun `pnpm run dev:db`.                                                        |
+| Migrations cannot connect                                    | Confirm `docker compose ps postgres`, verify `DATABASE_URL` or `POSTGRES_*`, then run `pnpm run db:migrate` again.                                        |
+| Browser calls are blocked by CORS                            | Add the exact frontend origin to `CORS_ORIGINS`; do not use wildcards for production.                                                                     |
+| OpenAPI docs return 404                                      | Set `OPENAPI_ENABLED=true` and confirm `OPENAPI_PATH` for the API you are serving.                                                                        |
+| Docker builds are slow or memory-constrained                 | Keep the documented defaults (`COMPOSE_PARALLEL_LIMIT=1`, `COMPOSE_BAKE=false`, `NX_DAEMON=false`, `NX_PARALLEL=1`) unless the builder has enough memory. |
+| Playwright tests fail before opening a browser               | Install browsers with `pnpm exec playwright install --with-deps chromium` or the browser matrix needed by the command.                                    |
+| Contracts or generated clients are stale                     | Run `pnpm api:contracts` and `pnpm api:clients`, then commit the generated changes.                                                                       |
 
 ## Contributing
 

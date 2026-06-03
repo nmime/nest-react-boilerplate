@@ -46,7 +46,7 @@ export function writeJson(path, value) {
 }
 
 export function commandExists(command) {
-  const result = process.platform === "win32" ? spawnSync("where", [command], { stdio: "ignore" }) : spawnSync("sh", ["-lc", `command -v ${JSON.stringify(command)} >/dev/null 2>&1`], { stdio: "ignore" });
+  const result = process.platform === "win32" ? spawnSync("where", [command], { stdio: "ignore" }) : spawnSync("sh", ["-c", `command -v ${JSON.stringify(command)} >/dev/null 2>&1`], { stdio: "ignore" });
   return result.status === 0;
 }
 

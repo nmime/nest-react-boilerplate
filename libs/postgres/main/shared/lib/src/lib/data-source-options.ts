@@ -45,8 +45,8 @@ export function createPostgresMikroOrmOptions(
     entities: [],
     extensions: [Migrator],
     autoLoadEntities: true,
-    debug: readBoolean(env.POSTGRES_LOGGING) ?? false,
-    driverOptions: readBoolean(env.POSTGRES_SSL)
+    debug: readBoolean(env.POSTGRES_LOGGING, "POSTGRES_LOGGING") ?? false,
+    driverOptions: readBoolean(env.POSTGRES_SSL, "POSTGRES_SSL")
       ? {
           connection: {
             ssl: { rejectUnauthorized: readSslRejectUnauthorized(env) },

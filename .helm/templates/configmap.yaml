@@ -95,7 +95,19 @@ data:
         try_files /index.html =404;
       }
 
-      location ~ ^/admin/(dashboard|profile)/?$ {
+      location = /admin/dashboard {
+        try_files /index.html =404;
+      }
+
+      location = /admin/dashboard/ {
+        try_files /index.html =404;
+      }
+
+      location = /admin/profile {
+        try_files /index.html =404;
+      }
+
+      location = /admin/profile/ {
         try_files /index.html =404;
       }
 

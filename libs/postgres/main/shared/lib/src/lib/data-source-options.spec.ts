@@ -95,12 +95,35 @@ describe("Postgres MikroORM options", () => {
   it("parses booleans and ports defensively", () => {
     expect(readBoolean(undefined)).toBeUndefined();
     expect(readBoolean("1")).toBe(true);
+    expect(readBoolean(" yes ")).toBe(true);
     expect(readBoolean("FALSE")).toBe(false);
+    expect(readBoolean("off")).toBe(false);
+    expect(() => readBoolean("maybe", "TEST_FLAG")).toThrow(
+      "TEST_FLAG must be a boolean value.",
+    );
     expect(readPort(undefined)).toBe(DefaultPostgresPort);
+    expect(readPort(" 15432 ")).toBe(15432);
     expect(() => readPort("70000")).toThrow("Invalid POSTGRES_PORT: 70000");
+    expect(() => readPort("5432abc")).toThrow(
+      "Invalid POSTGRES_PORT: 5432abc",
+    );
     expect(() => readPort("not-a-number")).toThrow(
       "Invalid POSTGRES_PORT: not-a-number",
     );
     expect(readSslRejectUnauthorized({ POSTGRES_SSL: "true" })).toBe(true);
+    expect(() =>
+      readSslRejectUnauthorized({
+        POSTGRES_SSL_REJECT_UNAUTHORIZED: "definitely",
+      }),
+    ).toThrow("POSTGRES_SSL_REJECT_UNAUTHORIZED must be a boolean value.");
+  });
+
+  it("rejects invalid SSL and logging booleans instead of silently disabling them", () => {
+    expect(() =>
+      createPostgresMikroOrmOptions({}, { POSTGRES_SSL: "treu" }),
+    ).toThrow("POSTGRES_SSL must be a boolean value.");
+    expect(() =>
+      createPostgresMikroOrmOptions({}, { POSTGRES_LOGGING: "enabled" }),
+    ).toThrow("POSTGRES_LOGGING must be a boolean value.");
   });
 });

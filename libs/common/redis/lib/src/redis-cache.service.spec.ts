@@ -5,7 +5,7 @@ import { RedisCacheService } from "./redis-cache.service";
 describe("RedisCacheService", () => {
   it("returns cached values without rerunning the action", async () => {
     const cache = new RedisCacheService(new InMemoryRedisClient());
-    const action = vi.fn(async () => ({ ok: true }));
+    const action = vi.fn(() => Promise.resolve({ ok: true }));
 
     await expect(
       cache.withCache({ key: "cache:hit", ttl: 60, action }),
@@ -65,8 +65,8 @@ describe("RedisCacheService", () => {
 
   it("does not cache null, undefined, or skipped values", async () => {
     const cache = new RedisCacheService(new InMemoryRedisClient());
-    const nullAction = vi.fn(async () => null as string | null);
-    const skippedAction = vi.fn(async () => "skip-me");
+    const nullAction = vi.fn(() => Promise.resolve(null as string | null));
+    const skippedAction = vi.fn(() => Promise.resolve("skip-me"));
 
     await cache.withCache({ key: "cache:null", ttl: 60, action: nullAction });
     await cache.withCache({ key: "cache:null", ttl: 60, action: nullAction });
@@ -117,9 +117,9 @@ describe("RedisCacheService", () => {
 
   it("fetches and stores only missing batch values", async () => {
     const cache = new RedisCacheService(new InMemoryRedisClient());
-    const fetchMissing = vi.fn(async (keys: string[]) => {
-      return new Map(keys.map((key) => [key, key.toUpperCase()]));
-    });
+    const fetchMissing = vi.fn((keys: string[]) =>
+      Promise.resolve(new Map(keys.map((key) => [key, key.toUpperCase()]))),
+    );
 
     await expect(
       cache.withCacheBatch({
@@ -163,7 +163,7 @@ describe("RedisCacheService", () => {
       new RedisCacheService(readFailingRedis).withCache({
         key: "cache:error:read",
         ttl: 60,
-        action: async () => "value",
+        action: () => Promise.resolve("value"),
       }),
     ).rejects.toThrow(readError);
 
@@ -171,7 +171,7 @@ describe("RedisCacheService", () => {
       new RedisCacheService(writeFailingRedis).withCache({
         key: "cache:error:write",
         ttl: 60,
-        action: async () => "value",
+        action: () => Promise.resolve("value"),
       }),
     ).rejects.toThrow(writeError);
   });

@@ -104,9 +104,7 @@ describe("Postgres MikroORM options", () => {
     expect(readPort(undefined)).toBe(DefaultPostgresPort);
     expect(readPort(" 15432 ")).toBe(15432);
     expect(() => readPort("70000")).toThrow("Invalid POSTGRES_PORT: 70000");
-    expect(() => readPort("5432abc")).toThrow(
-      "Invalid POSTGRES_PORT: 5432abc",
-    );
+    expect(() => readPort("5432abc")).toThrow("Invalid POSTGRES_PORT: 5432abc");
     expect(() => readPort("not-a-number")).toThrow(
       "Invalid POSTGRES_PORT: not-a-number",
     );

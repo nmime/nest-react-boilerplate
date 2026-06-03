@@ -13,11 +13,10 @@ function createEntityManagerMock() {
   const flush = vi.fn(() => Promise.resolve());
   const findOne = vi.fn(() => Promise.resolve(null));
   const nativeDelete = vi.fn(() => Promise.resolve(0));
-  let entityManager: EntityManager;
-  const transactional = vi.fn(
-    async (callback: (em: EntityManager) => unknown) => callback(entityManager),
+  const transactional = vi.fn((callback: (em: EntityManager) => unknown) =>
+    Promise.resolve(callback(entityManager)),
   );
-  entityManager = {
+  const entityManager = {
     persist,
     flush,
     findOne,

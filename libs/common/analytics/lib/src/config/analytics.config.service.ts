@@ -39,8 +39,7 @@ export class AnalyticsConfigService {
 
   get provider(): AnalyticsProviderName | "auto" | undefined {
     return (
-      this.config.provider ??
-      readProviderConfig(process.env.ANALYTICS_PROVIDER)
+      this.config.provider ?? readProviderConfig(process.env.ANALYTICS_PROVIDER)
     );
   }
 
@@ -76,9 +75,7 @@ export class AnalyticsConfigService {
 
   get postHogApiKey(): string {
     return (
-      this.config.posthog?.apiKey ??
-      process.env.ANALYTICS_POSTHOG_API_KEY ??
-      ""
+      this.config.posthog?.apiKey ?? process.env.ANALYTICS_POSTHOG_API_KEY ?? ""
     );
   }
 
@@ -108,7 +105,7 @@ export class AnalyticsConfigService {
 
     const host = this.config.umami?.host ?? process.env.ANALYTICS_UMAMI_HOST;
 
-    return host ? `${host.replace(/\/+$/, "")}/api/send` : "";
+    return host ? `${stripTrailingSlash(host)}/api/send` : "";
   }
 
   get umamiHostname(): string {
@@ -214,9 +211,20 @@ function readProviderListConfig(
     .map((provider) => provider.trim())
     .filter(Boolean)
     .map(readProviderConfig)
-    .filter((provider): provider is AnalyticsProviderName | "auto" => Boolean(provider));
+    .filter((provider): provider is AnalyticsProviderName | "auto" =>
+      Boolean(provider),
+    );
 }
 
 function isProviderName(value: string): value is AnalyticsProviderName {
   return ["noop", "ga4", "posthog", "umami"].includes(value);
+}
+
+function stripTrailingSlash(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+
+  return value.slice(0, end);
 }

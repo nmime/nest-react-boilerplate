@@ -25,7 +25,8 @@ describe("createUmamiAnalyticsPlugin", () => {
       "https://umami.example.com/api/send",
       expect.objectContaining({ method: "POST" }),
     );
-    const body = JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body));
+    const [, requestInit] = fetcher.mock.calls[0] ?? [];
+    const body = readJsonBody<Record<string, unknown>>(requestInit);
     expect(body).toMatchObject({
       type: "event",
       payload: {
@@ -54,7 +55,9 @@ describe("createUmamiAnalyticsPlugin", () => {
 
     await plugin.page?.({ name: "Home", path: "/" });
 
-    expect(fetcher.mock.calls[0]?.[0]).toBe("https://analytics.example.com/custom");
+    expect(fetcher.mock.calls[0]?.[0]).toBe(
+      "https://analytics.example.com/custom",
+    );
   });
 
   it("builds /api/send endpoint from host", async () => {
@@ -67,7 +70,9 @@ describe("createUmamiAnalyticsPlugin", () => {
 
     await plugin.page?.({ name: "Home", path: "/" });
 
-    expect(fetcher.mock.calls[0]?.[0]).toBe("https://umami.example.com/api/send");
+    expect(fetcher.mock.calls[0]?.[0]).toBe(
+      "https://umami.example.com/api/send",
+    );
   });
 
   it("rejects missing endpoint and host instead of constructing a relative URL", () => {
@@ -76,3 +81,11 @@ describe("createUmamiAnalyticsPlugin", () => {
     ).toThrow("Umami analytics requires either endpoint or host");
   });
 });
+
+function readJsonBody<T>(requestInit: RequestInit | undefined): T {
+  if (typeof requestInit?.body !== "string") {
+    throw new TypeError("Expected fetch body to be a JSON string.");
+  }
+
+  return JSON.parse(requestInit.body) as T;
+}

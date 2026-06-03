@@ -176,7 +176,7 @@ export class RedisCacheService {
 
 class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
   readonly opts = {};
-  namespace?: string | undefined;
+  namespace?: string;
 
   constructor(private readonly redis: RedisClientLike) {}
 
@@ -198,17 +198,16 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
 
   async set(key: string, value: unknown, ttl?: number): Promise<boolean> {
     if (ttl !== undefined && ttl <= 0) {
-      await this.redis.del(key);
-      return true;
+      const deleted = await this.redis.del(key);
+      return Number(deleted) > 0;
     }
 
-    if (ttl === undefined) {
-      await this.redis.set(key, String(value));
-    } else {
-      await this.redis.set(key, String(value), "PX", Math.ceil(ttl));
-    }
+    const result =
+      ttl === undefined
+        ? await this.redis.set(key, String(value))
+        : await this.redis.set(key, String(value), "PX", Math.ceil(ttl));
 
-    return true;
+    return result !== null;
   }
 
   async setMany(
@@ -229,12 +228,14 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
       return true;
     }
 
-    await this.redis.del(...keys);
-    return true;
+    const deleted = await this.redis.del(...keys);
+    return Number(deleted) > 0;
   }
 
-  async clear(): Promise<void> {
-    throw new Error("RedisCacheService does not support clearing Redis.");
+  clear(): Promise<void> {
+    return Promise.reject(
+      new Error("RedisCacheService does not support clearing Redis."),
+    );
   }
 }
 

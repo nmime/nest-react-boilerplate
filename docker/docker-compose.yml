@@ -25,7 +25,8 @@ x-backend-healthcheck: &backend-healthcheck
   start_period: 20s
 
 x-frontend-healthcheck: &frontend-healthcheck
-  test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok"]
+  test:
+    ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok"]
   interval: 10s
   timeout: 5s
   retries: 12

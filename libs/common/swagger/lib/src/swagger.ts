@@ -1,4 +1,4 @@
-import { applyDecorators } from "@nestjs/common";
+import { HttpStatus, applyDecorators } from "@nestjs/common";
 import type { INestApplication, Type } from "@nestjs/common";
 import {
   ApiExtraModels,
@@ -7,6 +7,7 @@ import {
   getSchemaPath,
   SwaggerModule,
 } from "@nestjs/swagger";
+import { ApiProblemExceptions } from "@app/common/exception";
 
 export * from "@app/common/exception";
 
@@ -27,6 +28,15 @@ export function ApiOkDataResponse(
       description: "OK",
       schema: okResponseOpenApiSchema(model),
     }),
+  );
+}
+
+export function ApiReadinessResponses(
+  description: string,
+): MethodDecorator & ClassDecorator {
+  return applyDecorators(
+    ApiOkResponse({ description }),
+    ApiProblemExceptions(HttpStatus.SERVICE_UNAVAILABLE),
   );
 }
 

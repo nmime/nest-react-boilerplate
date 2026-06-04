@@ -137,7 +137,7 @@ services:
       start_period: 5s
 
   migrate:
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -153,7 +153,7 @@ services:
 
   backend-admin-app-api:
     <<: *backend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -166,7 +166,7 @@ services:
 
   user-app-api:
     <<: *backend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -179,7 +179,7 @@ services:
 
   auth-app-api:
     <<: *backend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -192,7 +192,7 @@ services:
 
   admin-app:
     <<: *frontend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -208,7 +208,7 @@ services:
 
   user-app:
     <<: *frontend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile
@@ -226,7 +226,7 @@ services:
 
   landing-app:
     <<: *frontend-service
-    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
       dockerfile: Dockerfile

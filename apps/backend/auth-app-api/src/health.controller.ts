@@ -5,7 +5,10 @@ import {
   Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { ApiOkResponse } from "@nestjs/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
+
+const postgresReadinessFailureDetail = "PostgreSQL readiness check failed.";
 
 export interface HealthDependency {
   name: "postgres";
@@ -24,16 +27,19 @@ export class HealthController {
   constructor(@Optional() private readonly orm?: MikroORM) {}
 
   @Get("health")
+  @ApiOkResponse({ description: "Auth API health check succeeded." })
   health(): OkResponse<HealthPayload> {
     return this.live();
   }
 
   @Get("live")
+  @ApiOkResponse({ description: "Auth API liveness check succeeded." })
   live(): OkResponse<HealthPayload> {
     return createOkResponse({ app: "auth-app-api", status: "ok" });
   }
 
   @Get("ready")
+  @ApiOkResponse({ description: "Auth API readiness check succeeded." })
   async ready(): Promise<OkResponse<HealthPayload>> {
     const postgres = await this.checkPostgres();
     const dependencies = postgres ? [postgres] : undefined;
@@ -61,14 +67,11 @@ export class HealthController {
     try {
       await this.orm.em.getConnection().execute("select 1");
       return { name: "postgres", status: "ok" };
-    } catch (error: unknown) {
+    } catch {
       return {
         name: "postgres",
         status: "unavailable",
-        detail:
-          error instanceof Error
-            ? error.message
-            : "PostgreSQL readiness check failed.",
+        detail: postgresReadinessFailureDetail,
       };
     }
   }

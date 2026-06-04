@@ -21,6 +21,7 @@ Clone the repository, then create local config and secret files:
 git clone https://github.com/nmime/nest-react-boilerplate.git
 cd nest-react-boilerplate
 cp .env.production.example .env.production
+sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=sha-$(git rev-parse --short=12 HEAD)/" .env.production
 mkdir -p docker/secrets
 openssl rand -base64 48 > docker/secrets/auth_jwt_secret.txt
 openssl rand -base64 32 > docker/secrets/postgres_password.txt
@@ -29,15 +30,23 @@ chmod 600 .env.production docker/secrets/*.txt
 
 Edit `.env.production` for real domains, CORS origins, image registry/tag, OAuth
 settings, and host ports. Do not commit `.env.production` or `docker/secrets/`.
+The example `IMAGE_TAG=sha-000000000000` is deliberately non-production; replace
+it with the exact `sha-<git-sha>` tag you built, or pin images by digest in a
+release-specific compose override. Never deploy `latest`, `main`, `dev`, or
+other mutable tags.
 
 ## 2. Validate the compose file
 
 ```bash
 docker compose --env-file .env.production -f docker/docker-compose.prod.yml config
+node scripts/validate-docker-compose-prod.mjs
 ```
 
 This verifies interpolation, required values, networks, volumes, health checks,
-and secret file paths without starting containers.
+and secret file paths without starting containers. Compose fails fast when
+`IMAGE_TAG` is unset, and the Node validation checks `.env.production` when that
+file exists so `IMAGE_TAG` fails if it is unset, mutable, or still the
+placeholder value.
 
 ## 3. Start or update with one command
 
@@ -120,7 +129,7 @@ cat backups/postgres.dump | docker compose --env-file .env.production -f docker/
 
 ## 7. Rollback
 
-1. Record the current Git SHA and `IMAGE_TAG` before every update.
+1. Record the current Git SHA, immutable `IMAGE_TAG`, or pinned digest before every update.
 2. Take a database backup before migrations.
 3. Change `IMAGE_TAG` in `.env.production` back to the previous immutable tag.
 4. Run `docker compose --env-file .env.production -f docker/docker-compose.prod.yml up -d`.

@@ -1,4 +1,5 @@
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
+import { getRequiredApiBaseUrl, type FrontendEnv } from "@app/frontend-ui";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 
@@ -48,8 +49,11 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
   };
 };
 
-export const getAdminApiBaseUrl = (envValue?: string): string =>
-  (envValue?.trim() || "/").replace(/\/$/u, "");
+export const getAdminApiBaseUrl = (env: FrontendEnv): string =>
+  getRequiredApiBaseUrl(env, "VITE_ADMIN_API_BASE_URL");
+
+export const getAuthApiBaseUrl = (env: FrontendEnv): string =>
+  getRequiredApiBaseUrl(env, "VITE_AUTH_API_BASE_URL");
 
 export const fetchAdminProfile = async (
   apiBaseUrl = "",

@@ -692,6 +692,22 @@ function resolveRateLimitOptions(
 
   const store: BackendRateLimitStore =
     enabled && storePreference !== "memory" && redis ? "redis" : "memory";
+  const allowProductionMemoryStore =
+    readBoolean(
+      "RATE_LIMIT_IN_MEMORY_ALLOWED",
+      env.RATE_LIMIT_IN_MEMORY_ALLOWED,
+    ) ?? false;
+
+  if (
+    enabled &&
+    isProduction &&
+    store === "memory" &&
+    !allowProductionMemoryStore
+  ) {
+    throw new Error(
+      "Production rate limiting requires RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS, or RATE_LIMIT_IN_MEMORY_ALLOWED=true after configuring equivalent ingress/API-gateway limits.",
+    );
+  }
 
   return {
     enabled,
@@ -844,7 +860,7 @@ function warnAboutRateLimitStore(config: BackendEnvironmentConfig): void {
     console.warn(
       "Production rate limiting is using in-memory per-process storage. " +
         "Set RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS for shared multi-instance enforcement, " +
-        "or enforce equivalent limits at the ingress/API gateway.",
+        "or enforce equivalent limits at the ingress/API gateway before setting RATE_LIMIT_IN_MEMORY_ALLOWED=true.",
     );
   }
 }

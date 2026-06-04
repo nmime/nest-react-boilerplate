@@ -7,7 +7,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auth API health check succeeded."
           }
         },
         "tags": ["Health"]
@@ -19,7 +19,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auth API liveness check succeeded."
           }
         },
         "tags": ["Health"]
@@ -31,7 +31,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Auth API readiness check succeeded."
           }
         },
         "tags": ["Health"]
@@ -53,7 +53,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -359,7 +359,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -665,7 +665,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -971,7 +971,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -1277,7 +1277,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -1573,7 +1573,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -1884,7 +1884,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -2195,7 +2195,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -2496,7 +2496,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -2792,7 +2792,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {

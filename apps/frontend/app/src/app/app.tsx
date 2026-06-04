@@ -11,8 +11,11 @@ import {
   UiCard,
   UiSection,
   UiStatCard,
+  getRequiredApiBaseUrl,
+  readLegacyUrlBearerToken,
   useAuthShellStore,
   useI18n,
+  type FrontendEnv,
   type UiTheme,
 } from "@app/frontend-ui";
 
@@ -33,27 +36,20 @@ type LocalePayload =
   | UserProfilePayload
   | undefined;
 
-const getEnvValue = (key: string): string => {
-  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
-  return env[key]?.trim() ?? "";
-};
+const getFrontendEnv = (): FrontendEnv =>
+  import.meta.env as Readonly<Record<string, boolean | string | undefined>>;
 
 const authBaseUrl = () =>
-  getEnvValue("VITE_AUTH_API_BASE_URL").replace(/\/$/u, "");
+  getRequiredApiBaseUrl(getFrontendEnv(), "VITE_AUTH_API_BASE_URL");
 const userBaseUrl = () =>
-  getEnvValue("VITE_USER_API_BASE_URL").replace(/\/$/u, "");
+  getRequiredApiBaseUrl(getFrontendEnv(), "VITE_USER_API_BASE_URL");
 
 const readInitialBearerToken = (): string | null => {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const search = new URL(window.location.href).searchParams;
-  return (
-    search.get("token")?.trim() ||
-    search.get("admin" + "_token")?.trim() ||
-    null
-  );
+  return readLegacyUrlBearerToken(getFrontendEnv(), window.location.href);
 };
 
 const scrubLegacyAuthTokenParams = (): void => {

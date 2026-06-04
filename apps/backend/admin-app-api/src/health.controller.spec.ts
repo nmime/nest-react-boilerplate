@@ -50,12 +50,14 @@ describe("backend-admin-app-api HealthController", () => {
     );
   });
 
-  it("uses a safe readiness detail for non-Error database failures", async () => {
-    const nonErrorDatabaseFailure = { message: "offline" } as Error;
+  it("uses a safe readiness detail for raw database errors", async () => {
+    const rawDatabaseFailure = new Error(
+      "password authentication failed for user postgres at 10.0.0.12:5432",
+    );
     const controller = new HealthController({
       em: {
         getConnection: () => ({
-          execute: () => Promise.reject(nonErrorDatabaseFailure),
+          execute: () => Promise.reject(rawDatabaseFailure),
         }),
       },
     } as never);

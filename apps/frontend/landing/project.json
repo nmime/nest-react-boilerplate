@@ -31,7 +31,7 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "VITE_E2E_COVERAGE=true pnpm exec vite build --config apps/frontend/landing/vite.config.mts && node packages/tooling/scripts/testing/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"Launch a full-stack Nest and React product foundation.\" --coverage-dir coverage/e2e/apps/frontend/landing"
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin pnpm exec vite build --config apps/frontend/landing/vite.config.mts && node packages/tooling/scripts/testing/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/landing --app-name landing-app --contains \"Launch a full-stack Nest and React product foundation.\" --coverage-dir coverage/e2e/apps/frontend/landing"
       },
       "inputs": [
         "production",

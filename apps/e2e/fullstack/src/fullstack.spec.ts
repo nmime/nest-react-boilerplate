@@ -83,7 +83,7 @@ test("health endpoints and frontends are reachable through the Docker stack", as
   ).toBeVisible();
 });
 
-test("auth registration token works through user frontend same-origin proxies", async ({
+test("registered users can log in through the user frontend same-origin proxies", async ({
   page,
 }) => {
   const email = `fullstack-${Date.now()}@example.com`;
@@ -95,14 +95,15 @@ test("auth registration token works through user frontend same-origin proxies", 
   expect(profile.status).toBe(200);
   expect(await profile.text()).toContain(email);
 
-  await gotoWithRetry(
-    page,
-    `${urls.userApp}/?token=${session.data.accessToken}`,
-  );
+  await gotoWithRetry(page, urls.userApp);
+  await page.getByLabel("Login email").fill(email);
+  await page.getByLabel("Login password").fill("fullstack-secret");
+  await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
+  await expect(page).not.toHaveURL(/token=/u);
 });
 
-test("admin bootstrap token is accepted by admin API and admin frontend", async ({
+test("admin API accepts bearer tokens while production admin frontend ignores URL tokens", async ({
   page,
 }) => {
   const session = await register(urls.userApp, "admin@example.com");
@@ -119,5 +120,10 @@ test("admin bootstrap token is accepted by admin API and admin frontend", async 
     page,
     `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`,
   );
-  await expect(page.getByText("admin@example.com")).toBeVisible();
+  await expect(page).not.toHaveURL(/admin_token=|token=/u);
+  await expect(
+    page.getByText(
+      /Authenticated principal is missing\.|Request failed with 401\.|Unauthorized/u,
+    ),
+  ).toBeVisible();
 });

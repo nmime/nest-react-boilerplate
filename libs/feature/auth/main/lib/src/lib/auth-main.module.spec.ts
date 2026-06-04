@@ -61,4 +61,29 @@ describe("AuthMainModule", () => {
       process.env.AUTH_PERSISTENCE = previousPersistence;
     }
   });
+
+  it("rejects memory auth persistence in production", () => {
+    const previousNodeEnvironment = process.env.NODE_ENV;
+    const previousPersistence = process.env.AUTH_PERSISTENCE;
+    process.env.NODE_ENV = "production";
+    process.env.AUTH_PERSISTENCE = "memory";
+
+    expect(() => AuthMainModule.forRoot()).toThrow(
+      "AUTH_PERSISTENCE=memory is not allowed in production.",
+    );
+    expect(() => AuthMainModule.forRoot("memory")).toThrow(
+      "AUTH_PERSISTENCE=memory is not allowed in production.",
+    );
+
+    if (previousNodeEnvironment === undefined) {
+      delete process.env.NODE_ENV;
+    } else {
+      process.env.NODE_ENV = previousNodeEnvironment;
+    }
+    if (previousPersistence === undefined) {
+      delete process.env.AUTH_PERSISTENCE;
+    } else {
+      process.env.AUTH_PERSISTENCE = previousPersistence;
+    }
+  });
 });

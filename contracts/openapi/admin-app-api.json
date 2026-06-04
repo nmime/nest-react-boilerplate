@@ -7,7 +7,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Admin API health check succeeded."
           }
         },
         "tags": ["Health"]
@@ -19,7 +19,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Admin API liveness check succeeded."
           }
         },
         "tags": ["Health"]
@@ -31,7 +31,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Admin API readiness check succeeded."
           }
         },
         "tags": ["Health"]
@@ -43,7 +43,7 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {

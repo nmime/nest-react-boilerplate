@@ -121,6 +121,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description User API health check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -138,6 +139,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description User API liveness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -155,6 +157,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description User API readiness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -172,6 +175,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;

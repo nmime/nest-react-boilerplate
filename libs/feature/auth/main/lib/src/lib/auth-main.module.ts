@@ -24,6 +24,14 @@ export interface AuthMainModuleOptions {
   postgres?: PostgresMikroOrmOverrides;
 }
 
+function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
+  if (process.env.NODE_ENV === "production" && mode === "memory") {
+    throw new Error(
+      "AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres with DATABASE_URL-backed storage.",
+    );
+  }
+}
+
 function resolvePersistenceMode(): AuthPersistenceMode {
   if (
     process.env.AUTH_PERSISTENCE === "memory" ||
@@ -54,6 +62,7 @@ export class AuthMainModule {
     optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
   ): DynamicModule {
     const options = normalizeOptions(optionsOrMode);
+    assertSafePersistenceMode(options.mode);
     const useMemory = options.mode === "memory";
     return {
       module: AuthMainModule,

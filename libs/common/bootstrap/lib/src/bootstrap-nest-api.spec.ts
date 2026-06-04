@@ -200,6 +200,7 @@ describe("bootstrapNestApi", () => {
     nodeEnv: process.env.NODE_ENV,
     port: process.env.PORT,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
+    rateLimitInMemoryAllowed: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED,
     rateLimitMax: process.env.RATE_LIMIT_MAX,
     rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
     sessionCookieMaxAgeSeconds: process.env.SESSION_COOKIE_MAX_AGE_SECONDS,
@@ -217,6 +218,7 @@ describe("bootstrapNestApi", () => {
     delete process.env.NODE_ENV;
     delete process.env.PORT;
     delete process.env.RATE_LIMIT_ENABLED;
+    delete process.env.RATE_LIMIT_IN_MEMORY_ALLOWED;
     delete process.env.RATE_LIMIT_MAX;
     delete process.env.RATE_LIMIT_WINDOW_MS;
     delete process.env.SESSION_COOKIE_MAX_AGE_SECONDS;
@@ -235,6 +237,8 @@ describe("bootstrapNestApi", () => {
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? "";
     process.env.PORT = originalEnvironment.port ?? "";
     process.env.RATE_LIMIT_ENABLED = originalEnvironment.rateLimitEnabled ?? "";
+    process.env.RATE_LIMIT_IN_MEMORY_ALLOWED =
+      originalEnvironment.rateLimitInMemoryAllowed ?? "";
     process.env.RATE_LIMIT_MAX = originalEnvironment.rateLimitMax ?? "";
     process.env.RATE_LIMIT_WINDOW_MS =
       originalEnvironment.rateLimitWindowMs ?? "";
@@ -298,6 +302,7 @@ describe("bootstrapNestApi", () => {
     process.env.DATABASE_URL =
       "postgres://postgres:postgres@localhost:5432/app";
     process.env.NODE_ENV = "production";
+    process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = "true";
     process.env.RATE_LIMIT_MAX = "1";
     process.env.RATE_LIMIT_WINDOW_MS = "1000";
     process.env.SESSION_SECRET = "x".repeat(32);
@@ -527,6 +532,7 @@ describe("bootstrapNestApi", () => {
     process.env.NODE_ENV = "production";
     process.env.DATABASE_URL =
       "postgres://postgres:postgres@localhost:5432/app";
+    process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = "true";
     await expect(
       bootstrapNestApi(TestModule, { appName: "test-api", defaultPort: 3010 }),
     ).rejects.toThrow(
@@ -535,6 +541,7 @@ describe("bootstrapNestApi", () => {
 
     vi.clearAllMocks();
     process.env.SESSION_SECRET = "short";
+    process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = "true";
     await expect(
       bootstrapNestApi(TestModule, { appName: "test-api", defaultPort: 3010 }),
     ).rejects.toThrow(

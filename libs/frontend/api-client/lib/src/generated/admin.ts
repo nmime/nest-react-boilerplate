@@ -122,6 +122,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Admin API health check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -139,6 +140,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Admin API liveness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -156,6 +158,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Admin API readiness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -173,6 +176,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;

@@ -21,7 +21,7 @@ env:
 jobs:
   presets:
     name: Modern QA presets
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 120
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate

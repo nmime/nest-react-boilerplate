@@ -80,4 +80,22 @@ describe("ProductShell", () => {
     expect(html).toContain('aria-label="Домой в xRocket Test"');
     expect(html).toContain('aria-label="Навигация xRocket Test"');
   });
+
+  it("omits empty action navigation", () => {
+    const html = renderToStaticMarkup(
+      <ProductShell
+        actions={[]}
+        appName="xRocket Test"
+        description="Shared shell description"
+        eyebrow="Shared shell"
+        status="Ready"
+        title="Unified product surface"
+      >
+        <UiCard title="Child card">Reusable content</UiCard>
+      </ProductShell>,
+    );
+
+    expect(html).not.toContain('class="xr-actions"');
+    expect(html).toContain("Reusable content");
+  });
 });

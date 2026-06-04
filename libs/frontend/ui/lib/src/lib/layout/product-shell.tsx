@@ -69,7 +69,8 @@ export const ProductShell = observer(function ProductShell({
       <main
         className="xr-shell"
         data-sidebar-open={uiStore?.sidebarOpen ?? false}
-        data-theme={uiStore?.theme ?? "system"}
+        data-theme={uiStore?.resolvedTheme ?? "light"}
+        data-theme-preference={uiStore?.theme ?? "system"}
       >
         <header className="xr-header">
           <a
@@ -92,18 +93,20 @@ export const ProductShell = observer(function ProductShell({
             <p className="xr-eyebrow">{eyebrow}</p>
             <h1>{title}</h1>
             <p className="xr-hero__description">{description}</p>
-            <nav aria-label={resolvedActionsLabel} className="xr-actions">
-              {actions.map((action) => (
-                <UiButton
-                  aria-current={action.isCurrent ? "page" : undefined}
-                  href={action.href}
-                  key={action.label}
-                  variant={action.variant}
-                >
-                  {action.label}
-                </UiButton>
-              ))}
-            </nav>
+            {actions.length > 0 ? (
+              <nav aria-label={resolvedActionsLabel} className="xr-actions">
+                {actions.map((action) => (
+                  <UiButton
+                    aria-current={action.isCurrent ? "page" : undefined}
+                    href={action.href}
+                    key={action.label}
+                    variant={action.variant}
+                  >
+                    {action.label}
+                  </UiButton>
+                ))}
+              </nav>
+            ) : null}
           </div>
         </section>
 

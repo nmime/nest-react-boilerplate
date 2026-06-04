@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { UiButton } from "./button";
 import { UiCard } from "./card";
+import { UiTextField } from "./form-field";
 import { UiSection } from "./section";
 import { UiStatCard } from "./stat-card";
 import { UiStatusPill } from "./status-pill";
@@ -185,6 +186,14 @@ describe("shared UI components", () => {
         titleId="empty-title"
       />,
     );
+    const staticEmpty = renderToStaticMarkup(
+      <UiEmptyState
+        aria-live="off"
+        description="Static onboarding copy."
+        role="region"
+        title="Welcome"
+      />,
+    );
     const toast = renderToStaticMarkup(
       <UiToast message="Saved" tone="success" />,
     );
@@ -197,9 +206,36 @@ describe("shared UI components", () => {
     expect(loading).toContain("Loading profile");
     expect(empty).toContain('aria-labelledby="empty-title"');
     expect(empty).toContain('aria-describedby="empty-description"');
+    expect(empty).toContain('role="status"');
+    expect(empty).toContain('aria-live="polite"');
+    expect(staticEmpty).toContain('role="region"');
+    expect(staticEmpty).toContain('aria-live="off"');
     expect(toast).toContain("xr-toast--success");
     expect(toast).toContain('aria-live="polite"');
     expect(warningToast).toContain('role="alert"');
     expect(warningToast).toContain('aria-live="assertive"');
+  });
+
+  it("renders accessible text fields with labels and descriptions", () => {
+    const html = renderToStaticMarkup(
+      <UiTextField
+        error="Use a work email"
+        hint="We never share this address."
+        label="Email address"
+        name="email"
+        placeholder="name@example.com"
+        required
+        type="email"
+      />,
+    );
+
+    expect(html).toContain('<label class="xr-field__label"');
+    expect(html).toContain('class="xr-input"');
+    expect(html).toContain("aria-describedby=");
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('role="alert"');
+    expect(html).toContain("Email address");
+    expect(html).toContain("We never share this address.");
+    expect(html).toContain("Use a work email");
   });
 });

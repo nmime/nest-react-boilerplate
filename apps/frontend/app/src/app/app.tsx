@@ -8,9 +8,15 @@ import {
   FrontendQueryProvider,
   FrontendStateProvider,
   ProductShell,
+  UiButton,
   UiCard,
+  UiEmptyState,
+  UiErrorBoundary,
+  UiLoading,
   UiSection,
   UiStatCard,
+  UiTextField,
+  UiToast,
   getRequiredApiBaseUrl,
   readLegacyUrlBearerToken,
   useAuthShellStore,
@@ -367,6 +373,11 @@ const UserApp = observer(function UserApp({
       });
     };
 
+  const loginPending =
+    authMutation.isPending && authMutation.variables?.mode === "login";
+  const registerPending =
+    authMutation.isPending && authMutation.variables?.mode === "register";
+
   return (
     <ProductShell
       actions={[
@@ -387,61 +398,95 @@ const UserApp = observer(function UserApp({
       <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
         <div className="xr-card-grid" id="auth">
           <UiCard title={t("user.login.title")}>
-            <form onSubmit={submitAuth("login")}>
-              <input
+            <form className="xr-form" onSubmit={submitAuth("login")}>
+              <UiTextField
                 aria-label={t("user.form.loginEmailLabel")}
                 autoComplete="email"
+                label={t("user.form.email")}
                 name="email"
                 placeholder={t("user.form.emailPlaceholder")}
                 required
                 type="email"
               />
-              <input
+              <UiTextField
                 aria-label={t("user.form.loginPasswordLabel")}
                 autoComplete="current-password"
+                label={t("user.form.password")}
                 minLength={8}
                 name="password"
                 placeholder={t("user.form.loginPasswordPlaceholder")}
                 required
                 type="password"
               />
-              <button type="submit">{t("user.form.login")}</button>
+              <UiButton
+                isLoading={loginPending}
+                loadingLabel={t("user.loadingProfile")}
+                type="submit"
+              >
+                {t("user.form.login")}
+              </UiButton>
             </form>
           </UiCard>
           <UiCard title={t("user.register.title")}>
-            <form onSubmit={submitAuth("register")}>
-              <input
+            <form className="xr-form" onSubmit={submitAuth("register")}>
+              <UiTextField
                 aria-label={t("user.form.registerDisplayNameLabel")}
+                label={t("user.form.displayName")}
                 name="displayName"
                 placeholder={t("user.form.displayName")}
               />
-              <input
+              <UiTextField
                 aria-label={t("user.form.registerEmailLabel")}
                 autoComplete="email"
+                label={t("user.form.email")}
                 name="email"
                 placeholder={t("user.form.registerEmailPlaceholder")}
                 required
                 type="email"
               />
-              <input
+              <UiTextField
                 aria-label={t("user.form.registerPasswordLabel")}
                 autoComplete="new-password"
+                label={t("user.form.password")}
                 minLength={8}
                 name="password"
                 placeholder={t("user.form.registerPasswordPlaceholder")}
                 required
                 type="password"
               />
-              <button type="submit">{t("user.form.register")}</button>
+              <UiButton
+                isLoading={registerPending}
+                loadingLabel={t("user.loadingProfile")}
+                type="submit"
+              >
+                {t("user.form.register")}
+              </UiButton>
             </form>
           </UiCard>
           <UiCard title={t("user.profile.title")} id="profile">
-            {state.status === "loading" && t("user.loadingProfile")}
-            {state.status === "ready" &&
-              t("user.state.ready", { subject: state.email ?? state.subject })}
-            {state.status === "missing-token" && state.reason}
-            {state.status === "forbidden" &&
-              t("user.state.forbidden", { reason: state.reason })}
+            {state.status === "loading" ? (
+              <UiLoading label={t("user.loadingProfile")} />
+            ) : null}
+            {state.status === "ready" ? (
+              <UiToast
+                message={t("user.state.ready", {
+                  subject: state.email ?? state.subject,
+                })}
+                tone="success"
+              />
+            ) : null}
+            {state.status === "missing-token" ? (
+              <UiEmptyState
+                description={state.reason}
+                title={t("user.profile.title")}
+              />
+            ) : null}
+            {state.status === "forbidden" ? (
+              <UiToast
+                message={t("user.state.forbidden", { reason: state.reason })}
+                tone="warning"
+              />
+            ) : null}
           </UiCard>
         </div>
         <div className="xr-stat-grid">
@@ -547,7 +592,9 @@ const App = () => {
   return (
     <FrontendStateProvider initialBearerToken={initialBearerToken}>
       <FrontendQueryProvider>
-        <AppContent />
+        <UiErrorBoundary>
+          <AppContent />
+        </UiErrorBoundary>
       </FrontendQueryProvider>
     </FrontendStateProvider>
   );

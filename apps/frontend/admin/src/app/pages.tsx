@@ -1,6 +1,8 @@
 import {
   ProductShell,
   UiCard,
+  UiEmptyState,
+  UiLoading,
   UiSection,
   UiStatCard,
   useI18n,
@@ -128,16 +130,24 @@ export const ProfilePage = ({
           t("admin.profile.fallbackDisplayName")
         }
       >
-        <p>
-          {t("admin.profile.emailLine", {
-            value: profile?.email ?? payload.principal?.email ?? unknown,
-          })}
-        </p>
-        <p>
-          {t("admin.profile.subjectLine", {
-            value: payload.principal?.subject ?? profile?.id ?? unknown,
-          })}
-        </p>
+        <dl className="xr-profile-list">
+          <div>
+            <dt>{t("user.form.email")}</dt>
+            <dd>
+              {t("admin.profile.emailLine", {
+                value: profile?.email ?? payload.principal?.email ?? unknown,
+              })}
+            </dd>
+          </div>
+          <div>
+            <dt>{t("admin.dashboard.card.access.title")}</dt>
+            <dd>
+              {t("admin.profile.subjectLine", {
+                value: payload.principal?.subject ?? profile?.id ?? unknown,
+              })}
+            </dd>
+          </div>
+        </dl>
       </UiCard>
     </UiSection>
   );
@@ -151,7 +161,7 @@ export const ForbiddenPage = ({ reason }: Readonly<{ reason: string }>) => {
       eyebrow={t("admin.forbidden.eyebrow")}
       title={t("admin.forbidden.accessDeniedTitle")}
     >
-      <UiCard title={t("admin.forbidden.title")}>{reason}</UiCard>
+      <UiEmptyState description={reason} title={t("admin.forbidden.title")} />
     </UiSection>
   );
 };
@@ -164,9 +174,10 @@ export const NotFoundPage = () => {
       eyebrow={t("admin.notFound.eyebrow")}
       title={t("admin.notFound.sectionTitle")}
     >
-      <UiCard title={t("admin.notFound.title")}>
-        {t("admin.notFound.description")}
-      </UiCard>
+      <UiEmptyState
+        description={t("admin.notFound.description")}
+        title={t("admin.notFound.title")}
+      />
     </UiSection>
   );
 };
@@ -181,7 +192,9 @@ export const renderAdminRoute = (
       <UiSection
         eyebrow={t("admin.loadingEyebrow")}
         title={t("admin.loadingProfile")}
-      />
+      >
+        <UiLoading label={t("admin.loadingProfile")} />
+      </UiSection>
     );
   }
 

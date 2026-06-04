@@ -48,34 +48,22 @@ export const UiSelect = ({
       >
         {label}
       </UiLabel>
-      <select
-        aria-label={ariaLabel ?? label}
-        className="xr-select-native absolute right-0 top-0 z-10 h-10 min-w-[8.5rem] cursor-pointer rounded-full opacity-0"
-        disabled={disabled}
-        onChange={(event) => onValueChange(event.currentTarget.value)}
-        value={value}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
       <SelectPrimitive.Root
         disabled={disabled}
         onValueChange={onValueChange}
         value={value}
       >
         <SelectPrimitive.Trigger
-          aria-hidden="true"
-          tabIndex={-1}
+          aria-label={ariaLabel ?? label}
           className={cn(
             "xr-select-trigger inline-flex h-10 min-w-[8.5rem] max-w-full items-center justify-between gap-2 rounded-full border border-[var(--xr-color-border)] bg-[var(--xr-color-surface-strong)] px-3 text-sm font-semibold text-[var(--xr-color-text)] shadow-sm outline-none transition-[background-color,border-color,box-shadow] hover:border-[color-mix(in_srgb,var(--xr-color-primary)_58%,transparent)] focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--xr-color-primary)_28%,transparent)] disabled:cursor-not-allowed disabled:opacity-60",
             triggerClassName,
           )}
         >
           <span className="xr-select-value truncate">
-            {selectedOption?.label ?? placeholder}
+            <SelectPrimitive.Value placeholder={placeholder}>
+              {selectedOption?.label}
+            </SelectPrimitive.Value>
           </span>
           <SelectPrimitive.Icon
             aria-hidden="true"
@@ -94,6 +82,7 @@ export const UiSelect = ({
               {options.map((option) => (
                 <SelectPrimitive.Item
                   className="xr-select-item relative flex cursor-default select-none items-center rounded-xl px-3 py-2 text-sm outline-none data-[highlighted]:bg-[var(--xr-control-background)] data-[state=checked]:text-[var(--xr-color-primary)]"
+                  data-value={option.value}
                   key={option.value}
                   value={option.value}
                 >

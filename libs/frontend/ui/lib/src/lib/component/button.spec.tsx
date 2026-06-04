@@ -245,7 +245,8 @@ describe("shared UI components", () => {
     const onValueChange = vi.fn();
 
     render(
-      <UiForm aria-label="Preferences">
+      <>
+        <UiForm aria-label="Preferences" />
         <UiSelect
           aria-label="Language"
           label="Language"
@@ -256,14 +257,22 @@ describe("shared UI components", () => {
           ]}
           value="en"
         />
-      </UiForm>,
+      </>,
     );
 
     expect(screen.getByRole("form", { name: "Preferences" })).toBeDefined();
-    const nativeSelect = screen.getByRole("combobox", { name: "Language" });
-    expect(nativeSelect).toHaveProperty("value", "en");
-    const trigger = document.querySelector(".xr-select-trigger");
-    expect(trigger?.className).toContain("xr-select-trigger");
-    expect(trigger?.className).toContain("rounded-full");
+    expect(document.querySelectorAll("select")).toHaveLength(0);
+    expect(document.querySelector(".xr-select-native")).toBeNull();
+
+    const trigger = screen.getByRole("combobox", { name: "Language" });
+    expect(trigger.tagName.toLowerCase()).toBe("button");
+    expect(trigger.getAttribute("aria-hidden")).toBeNull();
+    expect(trigger.getAttribute("tabindex")).not.toBe("-1");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.className).toContain("xr-select-trigger");
+    expect(trigger.className).toContain("rounded-full");
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.textContent).toContain("English");
   });
 });

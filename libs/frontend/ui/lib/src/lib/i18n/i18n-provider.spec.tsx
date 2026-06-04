@@ -24,10 +24,37 @@ function installStorage() {
   });
 }
 
-function chooseSelectOption(label: string, option: string) {
-  fireEvent.change(screen.getByLabelText(label), {
-    target: { value: option },
+function installRadixPointerMocks() {
+  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+    configurable: true,
+    value: vi.fn(() => false),
   });
+  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
+function chooseSelectOption(label: string, option: string) {
+  const trigger = screen.getByRole("combobox", { name: label });
+
+  installRadixPointerMocks();
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: "mouse",
+  });
+
+  const optionElement = document.querySelector<HTMLElement>(
+    `[role="option"][data-value="${option}"]`,
+  );
+
+  expect(optionElement).toBeTruthy();
+  fireEvent.click(optionElement as HTMLElement);
 }
 
 describe("FrontendI18nProvider", () => {
@@ -91,6 +118,10 @@ describe("FrontendI18nProvider", () => {
       </FrontendI18nProvider>,
     );
 
+    expect(
+      document.querySelectorAll(".xr-language-switcher select"),
+    ).toHaveLength(0);
+
     chooseSelectOption("Language", "ru");
 
     expect(onLocaleChange).toHaveBeenCalledWith("ru");
@@ -114,6 +145,10 @@ describe("FrontendI18nProvider", () => {
       <FrontendI18nProvider initialTheme="system" onThemeChange={onThemeChange}>
         <ThemeSwitcher />
       </FrontendI18nProvider>,
+    );
+
+    expect(document.querySelectorAll(".xr-theme-switcher select")).toHaveLength(
+      0,
     );
 
     chooseSelectOption("Theme", "dark");

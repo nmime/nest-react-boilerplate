@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
@@ -25,6 +25,36 @@ const createMemoryStorage = (): Storage => {
     },
   };
 };
+
+function installRadixPointerMocks() {
+  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+    configurable: true,
+    value: vi.fn(() => false),
+  });
+  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
+function openSelect(label: string) {
+  const trigger = screen.getByRole("combobox", { name: label });
+
+  installRadixPointerMocks();
+  trigger.focus();
+  expect(document.activeElement).toBe(trigger);
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: "mouse",
+  });
+
+  return trigger;
+}
 
 beforeEach(() => {
   Object.defineProperty(window, "localStorage", {
@@ -75,9 +105,20 @@ describe("admin preference controls accessibility", () => {
 
     expect(languageSelect).toBe(screen.getByLabelText("Language"));
     expect(themeSelect).toBe(screen.getByLabelText("Theme"));
-    expect(languageSelect).toHaveProperty("value", "en");
-    expect(themeSelect).toHaveProperty("value", "system");
-    expect(screen.getByRole("option", { name: "English" })).toBeTruthy();
+    expect(document.querySelectorAll("header select")).toHaveLength(0);
+    expect(document.querySelector("header .xr-select-native")).toBeNull();
+    expect(languageSelect.tagName.toLowerCase()).toBe("button");
+    expect(themeSelect.tagName.toLowerCase()).toBe("button");
+    expect(languageSelect.getAttribute("aria-hidden")).toBeNull();
+    expect(themeSelect.getAttribute("aria-hidden")).toBeNull();
+    expect(languageSelect.getAttribute("tabindex")).not.toBe("-1");
+    expect(themeSelect.getAttribute("tabindex")).not.toBe("-1");
+    expect(languageSelect.textContent).toContain("English");
+    expect(themeSelect.textContent).toContain("System");
+
+    openSelect("Language");
+    fireEvent.click(screen.getByRole("option", { name: "English" }));
+    openSelect("Theme");
     expect(screen.getByRole("option", { name: "Dark" })).toBeTruthy();
   });
 });

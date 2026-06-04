@@ -45,9 +45,11 @@ export interface UiEmptyStateProps extends HTMLAttributes<HTMLElement> {
 
 export const UiEmptyState = ({
   action,
+  "aria-live": ariaLive,
   className,
   description,
   descriptionId,
+  role,
   title,
   titleId,
   ...props
@@ -67,7 +69,9 @@ export const UiEmptyState = ({
       {...sectionProps}
       aria-describedby={ariaDescribedBy ?? copyId}
       aria-labelledby={ariaLabelledBy ?? headingId}
+      aria-live={ariaLive ?? "polite"}
       className={classNames("xr-feedback", "xr-feedback--empty", className)}
+      role={role ?? "status"}
     >
       <h2 id={headingId}>{title}</h2>
       <p id={copyId}>{description}</p>

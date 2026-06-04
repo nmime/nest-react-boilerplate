@@ -3,18 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import { UiButton } from "./button";
 
-describe("UiButton snapshots", () => {
-  it("renders a primary button", () => {
+describe("UiButton shadcn-style rendering", () => {
+  it("renders a primary button with the legacy hook and Tailwind tokens", () => {
     const { container } = render(<UiButton>Launch app</UiButton>);
+    const element = container.firstElementChild;
 
-    expect(container.firstChild).toMatchInlineSnapshot(`
-      <button
-        class="xr-button xr-button--primary"
-        type="button"
-      >
-        Launch app
-      </button>
-    `);
+    expect(element?.tagName).toBe("BUTTON");
+    expect(element?.getAttribute("type")).toBe("button");
+    expect(element?.className).toContain("xr-button--primary");
+    expect(element?.className).toContain("bg-[linear-gradient");
   });
 
   it("renders a secondary anchor", () => {
@@ -23,15 +20,12 @@ describe("UiButton snapshots", () => {
         Read docs
       </UiButton>,
     );
+    const element = container.firstElementChild;
 
-    expect(container.firstChild).toMatchInlineSnapshot(`
-      <a
-        class="xr-button xr-button--secondary"
-        href="/docs"
-      >
-        Read docs
-      </a>
-    `);
+    expect(element?.tagName).toBe("A");
+    expect(element?.getAttribute("href")).toBe("/docs");
+    expect(element?.className).toContain("xr-button--secondary");
+    expect(element?.className).toContain("border-[var(--xr-color-border)]");
   });
 
   it("renders a busy button", () => {
@@ -40,27 +34,12 @@ describe("UiButton snapshots", () => {
         Save changes
       </UiButton>,
     );
+    const element = container.firstElementChild;
 
-    expect(container.firstChild).toMatchInlineSnapshot(`
-      <button
-        aria-busy="true"
-        class="xr-button xr-button--primary xr-button--loading"
-        disabled=""
-        type="button"
-      >
-        <span
-          aria-hidden="true"
-          class="xr-button__content"
-        >
-          Save changes
-        </span>
-        <span
-          class="xr-button__loading-label"
-        >
-          Saving
-        </span>
-      </button>
-    `);
+    expect(element?.getAttribute("aria-busy")).toBe("true");
+    expect(element?.getAttribute("disabled")).toBe("");
+    expect(element?.className).toContain("xr-button--loading");
+    expect(element?.textContent).toContain("Saving");
   });
 
   it("renders a disabled secondary anchor", () => {
@@ -69,16 +48,10 @@ describe("UiButton snapshots", () => {
         Billing settings
       </UiButton>,
     );
+    const element = container.firstElementChild;
 
-    expect(container.firstChild).toMatchInlineSnapshot(`
-      <a
-        aria-disabled="true"
-        class="xr-button xr-button--secondary"
-        href="/billing"
-        tabindex="-1"
-      >
-        Billing settings
-      </a>
-    `);
+    expect(element?.getAttribute("aria-disabled")).toBe("true");
+    expect(element?.getAttribute("tabindex")).toBe("-1");
+    expect(element?.className).toContain("xr-button--secondary");
   });
 });

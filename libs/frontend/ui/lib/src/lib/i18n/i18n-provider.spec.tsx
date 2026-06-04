@@ -24,6 +24,39 @@ function installStorage() {
   });
 }
 
+function installRadixPointerMocks() {
+  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+    configurable: true,
+    value: vi.fn(() => false),
+  });
+  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
+function chooseSelectOption(label: string, option: string) {
+  const trigger = screen.getByRole("combobox", { name: label });
+
+  installRadixPointerMocks();
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: "mouse",
+  });
+
+  const optionElement = document.querySelector<HTMLElement>(
+    `[role="option"][data-value="${option}"]`,
+  );
+
+  expect(optionElement).toBeTruthy();
+  fireEvent.click(optionElement as HTMLElement);
+}
+
 describe("FrontendI18nProvider", () => {
   afterEach(() => {
     cleanup();
@@ -85,9 +118,11 @@ describe("FrontendI18nProvider", () => {
       </FrontendI18nProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "ru" },
-    });
+    expect(
+      document.querySelectorAll(".xr-language-switcher select"),
+    ).toHaveLength(0);
+
+    chooseSelectOption("Language", "ru");
 
     expect(onLocaleChange).toHaveBeenCalledWith("ru");
     expect(setItem).toHaveBeenCalledWith("boilerplate.locale", "ru");
@@ -112,9 +147,11 @@ describe("FrontendI18nProvider", () => {
       </FrontendI18nProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText("Theme"), {
-      target: { value: "dark" },
-    });
+    expect(document.querySelectorAll(".xr-theme-switcher select")).toHaveLength(
+      0,
+    );
+
+    chooseSelectOption("Theme", "dark");
 
     expect(onThemeChange).toHaveBeenCalledWith("dark");
     expect(setItem).toHaveBeenCalledWith("boilerplate.theme", "dark");

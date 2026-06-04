@@ -3,7 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { UiButton } from "./button";
 import { UiCard } from "./card";
+import { UiForm } from "./form";
 import { UiTextField } from "./form-field";
+import { UiSelect } from "./select";
 import { UiSection } from "./section";
 import { UiStatCard } from "./stat-card";
 import { UiStatusPill } from "./status-pill";
@@ -229,13 +231,48 @@ describe("shared UI components", () => {
       />,
     );
 
-    expect(html).toContain('<label class="xr-field__label"');
-    expect(html).toContain('class="xr-input"');
+    expect(html).toContain('class="xr-field__label');
+    expect(html).toContain('class="xr-input');
     expect(html).toContain("aria-describedby=");
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain('role="alert"');
     expect(html).toContain("Email address");
     expect(html).toContain("We never share this address.");
     expect(html).toContain("Use a work email");
+  });
+
+  it("renders shadcn-style form and Radix select primitives", () => {
+    const onValueChange = vi.fn();
+
+    render(
+      <>
+        <UiForm aria-label="Preferences" />
+        <UiSelect
+          aria-label="Language"
+          label="Language"
+          onValueChange={onValueChange}
+          options={[
+            { label: "English", value: "en" },
+            { label: "Русский", value: "ru" },
+          ]}
+          value="en"
+        />
+      </>,
+    );
+
+    expect(screen.getByRole("form", { name: "Preferences" })).toBeDefined();
+    expect(document.querySelectorAll("select")).toHaveLength(0);
+    expect(document.querySelector(".xr-select-native")).toBeNull();
+
+    const trigger = screen.getByRole("combobox", { name: "Language" });
+    expect(trigger.tagName.toLowerCase()).toBe("button");
+    expect(trigger.getAttribute("aria-hidden")).toBeNull();
+    expect(trigger.getAttribute("tabindex")).not.toBe("-1");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    expect(trigger.className).toContain("xr-select-trigger");
+    expect(trigger.className).toContain("rounded-full");
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    expect(trigger.textContent).toContain("English");
   });
 });

@@ -69,7 +69,8 @@ export const ProductShell = observer(function ProductShell({
       <main
         className="xr-shell"
         data-sidebar-open={uiStore?.sidebarOpen ?? false}
-        data-theme={uiStore?.theme ?? "system"}
+        data-theme={uiStore?.resolvedTheme ?? "light"}
+        data-theme-preference={uiStore?.theme ?? "system"}
       >
         <header className="xr-header">
           <a

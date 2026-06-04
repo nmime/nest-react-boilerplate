@@ -186,6 +186,14 @@ describe("shared UI components", () => {
         titleId="empty-title"
       />,
     );
+    const staticEmpty = renderToStaticMarkup(
+      <UiEmptyState
+        aria-live="off"
+        description="Static onboarding copy."
+        role="region"
+        title="Welcome"
+      />,
+    );
     const toast = renderToStaticMarkup(
       <UiToast message="Saved" tone="success" />,
     );
@@ -198,6 +206,10 @@ describe("shared UI components", () => {
     expect(loading).toContain("Loading profile");
     expect(empty).toContain('aria-labelledby="empty-title"');
     expect(empty).toContain('aria-describedby="empty-description"');
+    expect(empty).toContain('role="status"');
+    expect(empty).toContain('aria-live="polite"');
+    expect(staticEmpty).toContain('role="region"');
+    expect(staticEmpty).toContain('aria-live="off"');
     expect(toast).toContain("xr-toast--success");
     expect(toast).toContain('aria-live="polite"');
     expect(warningToast).toContain('role="alert"');

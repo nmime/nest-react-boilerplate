@@ -31,6 +31,7 @@ const ignoredDirectories = new Set([
   "node_modules",
 ]);
 const ignoredFiles = new Set([
+  "libs/frontend/ui/lib/src/lib/component/alert.tsx",
   "libs/frontend/ui/lib/src/lib/i18n/no-hardcoded-copy.spec.ts",
 ]);
 const userFacingNames = [

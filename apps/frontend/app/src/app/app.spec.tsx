@@ -28,6 +28,39 @@ const installStorage = () => {
   });
 };
 
+function installRadixPointerMocks() {
+  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+    configurable: true,
+    value: vi.fn(() => false),
+  });
+  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
+function chooseSelectOption(label: string | RegExp, option: string) {
+  const trigger = screen.getByRole("combobox", { name: label });
+
+  installRadixPointerMocks();
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: "mouse",
+  });
+
+  const optionElement = document.querySelector<HTMLElement>(
+    `[role="option"][data-value="${option}"]`,
+  );
+
+  expect(optionElement).toBeTruthy();
+  fireEvent.click(optionElement as HTMLElement);
+}
+
 type FetchReply = Response | { rejectsWith: unknown };
 
 const setFetch = (...responses: FetchReply[]) => {
@@ -309,9 +342,7 @@ describe("User app shell", () => {
     render(<App />);
     expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "ru" },
-    });
+    chooseSelectOption("Language", "ru");
 
     await waitFor(() =>
       expect(
@@ -372,9 +403,7 @@ describe("User app shell", () => {
     render(<App />);
     expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
 
-    fireEvent.change(screen.getByLabelText("Theme"), {
-      target: { value: "dark" },
-    });
+    chooseSelectOption("Theme", "dark");
 
     await waitFor(() =>
       expect(

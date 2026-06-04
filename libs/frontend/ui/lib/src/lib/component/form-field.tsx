@@ -1,5 +1,8 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { UiInput } from "./input";
+import { UiLabel } from "./label";
+import { cn } from "../utils/cn";
 
 export interface UiTextFieldProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -10,9 +13,6 @@ export interface UiTextFieldProps extends Omit<
   inputClassName?: string;
   label: string;
 }
-
-const classNames = (...values: Array<string | undefined | false>): string =>
-  values.filter(Boolean).join(" ");
 
 export const UiTextField = ({
   className,
@@ -34,24 +34,29 @@ export const UiTextField = ({
     .join(" ");
 
   return (
-    <div className={classNames("xr-field", className)}>
-      <label className="xr-field__label" htmlFor={inputId}>
-        {label}
-      </label>
-      <input
+    <div className={cn("xr-field grid min-w-0 gap-2", className)}>
+      <UiLabel htmlFor={inputId}>{label}</UiLabel>
+      <UiInput
         {...inputProps}
         aria-describedby={describedBy || undefined}
         aria-invalid={error ? true : inputProps["aria-invalid"]}
-        className={classNames("xr-input", inputClassName)}
+        className={inputClassName}
         id={inputId}
       />
       {hint ? (
-        <p className="xr-field__hint" id={hintId}>
+        <p
+          className="xr-field__hint m-0 text-sm text-[var(--xr-color-muted)]"
+          id={hintId}
+        >
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="xr-field__error" id={errorId} role="alert">
+        <p
+          className="xr-field__error m-0 text-sm text-[var(--xr-color-warning)]"
+          id={errorId}
+          role="alert"
+        >
           {error}
         </p>
       ) : null}

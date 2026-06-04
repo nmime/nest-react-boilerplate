@@ -4,9 +4,16 @@ import react from "@vitejs/plugin-react";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
+import { assertRequiredFrontendApiBaseUrls } from "../../../libs/frontend/ui/lib/src/lib/config/frontend-env";
 
-export default defineConfig(() => {
+export default defineConfig(({ command, mode }) => {
   const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";
+  assertRequiredFrontendApiBaseUrls({
+    ...process.env,
+    DEV: command !== "build" || mode !== "production",
+    MODE: mode,
+    PROD: command === "build" && mode === "production",
+  });
 
   return {
     root: import.meta.dirname,

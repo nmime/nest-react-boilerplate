@@ -5,14 +5,14 @@ import {
   UiCard,
   UiSection,
   UiStatCard,
+  getRequiredApiBaseUrl,
   useI18n,
+  type FrontendEnv,
 } from "@app/frontend-ui";
 
 const getAuthApiDocsHref = (): string => {
-  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
-  const authApiBaseUrl = env["VITE_AUTH_API_BASE_URL"]
-    ?.trim()
-    .replace(/\/$/u, "");
+  const env = import.meta.env as FrontendEnv;
+  const authApiBaseUrl = getRequiredApiBaseUrl(env, "VITE_AUTH_API_BASE_URL");
 
   return authApiBaseUrl ? `${authApiBaseUrl}/docs` : "/auth/docs";
 };

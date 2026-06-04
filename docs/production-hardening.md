@@ -87,7 +87,7 @@ Before deploying, provide values for:
 - `TRUST_PROXY=false` unless explicitly set for a known proxy configuration
 - `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`
 - OAuth issuer/client values if OAuth is enabled
-- Explicit `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` origins if the frontend does not use same-origin proxying
+- Explicit `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` origins, or `VITE_API_BASE_URL_MODE=same-origin` when a production reverse proxy intentionally serves API routes from the same origin. Production frontend builds/runtime fail fast without one of these explicit configurations.
 - `DATABASE_URL` or `POSTGRES_*`
 - `POSTGRES_SSL=true` for managed databases where required
 - `POSTGRES_SYNCHRONIZE=false`
@@ -102,3 +102,7 @@ Before deploying, provide values for:
 6. Keep OpenAPI disabled publicly unless protected by SSO/VPN/edge auth.
 7. Treat raw `X-Forwarded-For` as untrusted input; let the framework resolve `request.ip` only after `TRUST_PROXY` is explicitly configured.
 8. Run CI gates: format, lint, typecheck, unit/component/e2e tests, coverage, and dependency audit.
+
+## Frontend auth bootstrap migration
+
+Legacy `?token=` / `?admin_token=` bearer-token URL bootstrap is accepted only in development/test modes and the parameters are scrubbed from browser history. Production builds ignore URL bearer tokens to avoid leaking credentials through logs, referrers, browser history, and copied links. Migrate production entry points to a server-side session, OAuth/OIDC authorization-code flow, or a one-time code exchange endpoint that sets an HTTP-only session cookie before redirecting back to the frontend.

@@ -95,7 +95,7 @@ Important variable groups:
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Runtime mode and ports      | `NODE_ENV`, `PORT`, `ADMIN_APP_API_PORT`, `USER_APP_API_PORT`, `AUTH_APP_API_PORT`, `ADMIN_APP_PORT`, `USER_APP_PORT`, `LANDING_APP_PORT`                                                               |
 | Database                    | `DATABASE_URL` or `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_SSL`, `POSTGRES_SSL_REJECT_UNAUTHORIZED`, `POSTGRES_SYNCHRONIZE`, `POSTGRES_LOGGING` |
-| Browser/CORS                | `CORS_ORIGINS`, `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, `VITE_ADMIN_API_BASE_URL`                                                                                                           |
+| Browser/CORS                | `CORS_ORIGINS`, `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, `VITE_ADMIN_API_BASE_URL`, `VITE_API_BASE_URL_MODE`                                                                                 |
 | Auth/RBAC                   | `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`, `AUTH_JWT_EXPIRES_IN_SECONDS`, `ADMIN_BOOTSTRAP_ENABLED`, `ADMIN_BOOTSTRAP_EMAILS`, `ADMIN_BOOTSTRAP_TENANT_IDS`                             |
 | Auth token cleanup          | `AUTH_TOKEN_CLEANUP_ENABLED`, `AUTH_TOKEN_CLEANUP_INTERVAL_MS`, `AUTH_TOKEN_CLEANUP_RUN_ON_START`                                                                                                       |
 | OAuth/OIDC                  | `AUTH_OAUTH_ENABLED`, `AUTH_OAUTH_ISSUER_URL`, `AUTH_OAUTH_CLIENT_ID`, `AUTH_OAUTH_CLIENT_SECRET`, `AUTH_OAUTH_REDIRECT_URI`, `AUTH_OAUTH_SCOPES`                                                       |
@@ -104,7 +104,7 @@ Important variable groups:
 | OpenAPI / telemetry / proxy | `OPENAPI_ENABLED`, `OPENAPI_PATH`, `OPENAPI_TITLE`, `OPENAPI_VERSION`, `OTEL_*`, `TRUST_PROXY`, `LOG_LEVEL`                                                                                             |
 | Production images/secrets   | `IMAGE_REGISTRY`, `IMAGE_TAG`, `AUTH_JWT_SECRET_FILE`, `POSTGRES_PASSWORD_FILE`                                                                                                                         |
 
-Security defaults are intentionally conservative: production CORS has no wildcard, admin bootstrap is disabled unless explicitly enabled, OpenAPI is disabled in production examples, and OAuth is disabled until provider-specific product code is configured.
+Security defaults are intentionally conservative: production CORS has no wildcard, admin bootstrap is disabled unless explicitly enabled, OpenAPI is disabled in production examples, production frontend builds require explicit API origins or `VITE_API_BASE_URL_MODE=same-origin`, URL bearer-token bootstrap is ignored outside development/test modes, and OAuth is disabled until provider-specific product code is configured.
 
 ## Architecture overview
 
@@ -175,7 +175,7 @@ pnpm run test:docker-smoke
 pnpm run docker:down
 ```
 
-The Docker full stack publishes the frontends on `ADMIN_APP_PORT`/`USER_APP_PORT`/`LANDING_APP_PORT` defaults `8081`/`8082`/`8083` and the APIs on `3001`/`3002`/`3003` defaults. Frontend containers use nginx same-origin proxying for API routes, so the Vite API base URL values can stay empty in containerized same-origin deployments.
+The Docker full stack publishes the frontends on `ADMIN_APP_PORT`/`USER_APP_PORT`/`LANDING_APP_PORT` defaults `8081`/`8082`/`8083` and the APIs on `3001`/`3002`/`3003` defaults. Frontend containers can use nginx same-origin proxying for API routes; when you intentionally rely on that pattern, set `VITE_API_BASE_URL_MODE=same-origin` so production builds do not silently fall back to same-origin by accident.
 
 For production-oriented Compose guidance, secret files, Redis rate limiting, and image tags, see [Docker Compose production guide](docs/docker-compose-production.md) and [Deployment and local stack readiness](docs/deployment.md).
 

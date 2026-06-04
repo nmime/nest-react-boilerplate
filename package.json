@@ -31,6 +31,7 @@
     "dev:fullstack": "node packages/tooling/bin/repo-tooling.mjs dev fullstack",
     "docker:fullstack": "docker compose -f docker/docker-compose.yml up --build",
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
+    "docker:prod:config:check": "node scripts/validate-docker-compose-prod.mjs",
     "test:docker-smoke": "node packages/tooling/bin/repo-tooling.mjs docker smoke",
     "test:fullstack": "node packages/tooling/bin/repo-tooling.mjs docker fullstack-e2e",
     "check:fast": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",

@@ -24,6 +24,7 @@ import {
   type UiTheme,
   type RootStore,
 } from "../state";
+import { UiSelect } from "../component/select";
 
 export { detectBrowserLocale } from "../state";
 
@@ -155,23 +156,21 @@ export function useI18n(): FrontendI18nContextValue {
 }
 
 export const LanguageSwitcher = observer(function LanguageSwitcher() {
-  const { locale, setLocale, supportedLocales: locales, t } = useI18n();
+  const { locale, setLocale, t } = useI18n();
+  const locales = supportedLocales;
 
   return (
-    <label className="xr-language-switcher">
-      {t("common.language")}
-      <select
-        aria-label={t("common.language")}
-        onChange={(event) => setLocale(event.currentTarget.value as Locale)}
-        value={locale}
-      >
-        {locales.map((nextLocale) => (
-          <option key={nextLocale} value={nextLocale}>
-            {t(`common.language.${nextLocale}`)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <UiSelect
+      aria-label={t("common.language")}
+      className="xr-language-switcher"
+      label={t("common.language")}
+      onValueChange={(value) => setLocale(value as Locale)}
+      options={locales.map((nextLocale) => ({
+        label: t(`common.language.${nextLocale}`),
+        value: nextLocale,
+      }))}
+      value={locale}
+    />
   );
 });
 
@@ -181,19 +180,16 @@ export const ThemeSwitcher = observer(function ThemeSwitcher() {
   const { setTheme, t, theme } = useI18n();
 
   return (
-    <label className="xr-theme-switcher">
-      {t("common.theme")}
-      <select
-        aria-label={t("common.theme")}
-        onChange={(event) => setTheme(event.currentTarget.value as UiTheme)}
-        value={theme}
-      >
-        {supportedThemes.map((nextTheme) => (
-          <option key={nextTheme} value={nextTheme}>
-            {t(`common.theme.${nextTheme}`)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <UiSelect
+      aria-label={t("common.theme")}
+      className="xr-theme-switcher"
+      label={t("common.theme")}
+      onValueChange={(value) => setTheme(value as UiTheme)}
+      options={supportedThemes.map((nextTheme) => ({
+        label: t(`common.theme.${nextTheme}`),
+        value: nextTheme,
+      }))}
+      value={theme}
+    />
   );
 });

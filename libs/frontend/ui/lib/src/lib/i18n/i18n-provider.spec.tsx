@@ -24,6 +24,12 @@ function installStorage() {
   });
 }
 
+function chooseSelectOption(label: string, option: string) {
+  fireEvent.change(screen.getByLabelText(label), {
+    target: { value: option },
+  });
+}
+
 describe("FrontendI18nProvider", () => {
   afterEach(() => {
     cleanup();
@@ -85,9 +91,7 @@ describe("FrontendI18nProvider", () => {
       </FrontendI18nProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText("Language"), {
-      target: { value: "ru" },
-    });
+    chooseSelectOption("Language", "ru");
 
     expect(onLocaleChange).toHaveBeenCalledWith("ru");
     expect(setItem).toHaveBeenCalledWith("boilerplate.locale", "ru");
@@ -112,9 +116,7 @@ describe("FrontendI18nProvider", () => {
       </FrontendI18nProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText("Theme"), {
-      target: { value: "dark" },
-    });
+    chooseSelectOption("Theme", "dark");
 
     expect(onThemeChange).toHaveBeenCalledWith("dark");
     expect(setItem).toHaveBeenCalledWith("boilerplate.theme", "dark");

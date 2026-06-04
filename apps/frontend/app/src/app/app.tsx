@@ -12,6 +12,7 @@ import {
   UiCard,
   UiEmptyState,
   UiErrorBoundary,
+  UiForm,
   UiLoading,
   UiSection,
   UiStatCard,
@@ -398,7 +399,7 @@ const UserApp = observer(function UserApp({
       <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
         <div className="xr-card-grid" id="auth">
           <UiCard title={t("user.login.title")}>
-            <form className="xr-form" onSubmit={submitAuth("login")}>
+            <UiForm onSubmit={submitAuth("login")}>
               <UiTextField
                 aria-label={t("user.form.loginEmailLabel")}
                 autoComplete="email"
@@ -425,10 +426,10 @@ const UserApp = observer(function UserApp({
               >
                 {t("user.form.login")}
               </UiButton>
-            </form>
+            </UiForm>
           </UiCard>
           <UiCard title={t("user.register.title")}>
-            <form className="xr-form" onSubmit={submitAuth("register")}>
+            <UiForm onSubmit={submitAuth("register")}>
               <UiTextField
                 aria-label={t("user.form.registerDisplayNameLabel")}
                 label={t("user.form.displayName")}
@@ -461,7 +462,7 @@ const UserApp = observer(function UserApp({
               >
                 {t("user.form.register")}
               </UiButton>
-            </form>
+            </UiForm>
           </UiCard>
           <UiCard title={t("user.profile.title")} id="profile">
             {state.status === "loading" ? (

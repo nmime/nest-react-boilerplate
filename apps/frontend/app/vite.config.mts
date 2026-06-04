@@ -1,6 +1,7 @@
 /// <reference types='vitest' />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
@@ -27,6 +28,7 @@ export default defineConfig(({ command, mode }) => {
       host: "localhost",
     },
     plugins: [
+      tailwindcss(),
       react(),
       nxViteTsPaths(),
       nxCopyAssetsPlugin(["*.md"]),

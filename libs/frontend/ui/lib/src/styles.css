@@ -1,3 +1,18 @@
+@import "tailwindcss";
+
+@source "./lib/**/*.{ts,tsx}";
+@source "../../../../../apps/frontend/**/*.{ts,tsx}";
+
+@theme {
+  --font-sans: var(--xr-font-family);
+  --color-background: var(--xr-color-background);
+  --color-foreground: var(--xr-color-text);
+  --color-primary: var(--xr-color-primary);
+  --color-muted: var(--xr-color-muted);
+  --radius-lg: var(--xr-radius-lg);
+  --radius-md: var(--xr-radius-md);
+}
+
 :root {
   --xr-color-background: #08111f;
   --xr-color-background-accent: rgba(53, 167, 255, 0.22);
@@ -303,8 +318,7 @@ input {
 
 .xr-brand:focus-visible,
 .xr-button:focus-visible,
-.xr-language-switcher select:focus-visible,
-.xr-theme-switcher select:focus-visible {
+.xr-select-trigger:focus-visible {
   outline: none;
   box-shadow: var(--xr-focus-ring);
 }
@@ -580,8 +594,7 @@ input {
   gap: 0.5rem;
 }
 
-.xr-language-switcher select,
-.xr-theme-switcher select {
+.xr-select-trigger {
   background: var(--xr-color-surface-strong);
   border: 1px solid var(--xr-color-border);
   border-radius: 999px;
@@ -589,6 +602,18 @@ input {
   max-width: 100%;
   min-width: 0;
   padding: 0.35rem 0.65rem;
+}
+
+.xr-select-content {
+  color-scheme: inherit;
+}
+
+.xr-select-item[data-highlighted] {
+  background: var(--xr-control-background);
+}
+
+.xr-select-item[data-state="checked"] {
+  color: var(--xr-color-primary);
 }
 
 .xr-theme-switcher {

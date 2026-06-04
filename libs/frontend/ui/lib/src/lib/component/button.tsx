@@ -6,20 +6,46 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../utils/cn";
 
-type ButtonVariant = "primary" | "secondary";
+type ButtonVariant = NonNullable<
+  VariantProps<typeof buttonVariants>["variant"]
+>;
 
-interface BaseUiButtonProps {
+const buttonVariants = cva(
+  [
+    "xr-button inline-flex min-h-11 max-w-full min-w-0 items-center justify-center gap-2 rounded-full border px-5 text-center text-sm font-bold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--xr-color-primary)_34%,transparent)]",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
+  ],
+  {
+    variants: {
+      variant: {
+        primary:
+          "xr-button--primary border-transparent bg-[linear-gradient(135deg,var(--xr-color-primary),var(--xr-color-primary-strong))] text-[var(--xr-color-primary-contrast)] hover:-translate-y-0.5 hover:shadow-lg",
+        secondary:
+          "xr-button--secondary border-[var(--xr-color-border)] bg-[var(--xr-control-background)] text-[var(--xr-color-text)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--xr-color-primary)_58%,transparent)]",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+    },
+  },
+);
+
+interface BaseUiButtonProps extends VariantProps<typeof buttonVariants> {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
   isLoading?: boolean;
   loadingLabel?: string;
-  variant?: ButtonVariant;
 }
 
 type NativeButtonProps = BaseUiButtonProps &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof BaseUiButtonProps> & {
+    asChild?: boolean;
     href?: never;
   };
 
@@ -28,22 +54,19 @@ type AnchorButtonProps = BaseUiButtonProps &
     AnchorHTMLAttributes<HTMLAnchorElement>,
     keyof BaseUiButtonProps | "href" | "type"
   > & {
+    asChild?: never;
     href: string;
   };
 
 export type UiButtonProps = NativeButtonProps | AnchorButtonProps;
 
-const classNames = (...values: Array<string | undefined | false>): string =>
-  values.filter(Boolean).join(" ");
-
 const buildClassName = ({
   className,
   isLoading,
-  variant = "primary",
+  variant,
 }: Pick<BaseUiButtonProps, "className" | "isLoading" | "variant">) =>
-  classNames(
-    "xr-button",
-    `xr-button--${variant}`,
+  cn(
+    buttonVariants({ variant: variant as ButtonVariant }),
     isLoading && "xr-button--loading",
     className,
   );
@@ -78,7 +101,7 @@ const renderButtonContent = (
 
   return (
     <>
-      <span aria-hidden="true" className="xr-button__content">
+      <span aria-hidden="true" className="xr-button__content opacity-65">
         {children}
       </span>
       <span className="xr-button__loading-label">{loadingLabel}</span>
@@ -130,21 +153,23 @@ export const UiButton = ({
   }
 
   const {
+    asChild = false,
     onClick,
     type = "button",
     ...buttonProps
   } = interactiveProps as NativeButtonProps;
+  const Comp = asChild ? Slot : "button";
 
   return (
-    <button
+    <Comp
       {...buttonProps}
       aria-busy={isLoading || undefined}
       className={buttonClassName}
-      disabled={isUnavailable}
+      disabled={asChild ? undefined : isUnavailable}
       onClick={onClick}
-      type={type}
+      type={asChild ? undefined : type}
     >
       {content}
-    </button>
+    </Comp>
   );
 };

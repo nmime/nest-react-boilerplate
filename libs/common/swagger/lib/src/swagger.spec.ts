@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ApiOkDataResponse,
   ApiProblemExceptions,
+  ApiReadinessResponses,
   okResponseOpenApiSchema,
   problemDetailsOpenApiSchema,
   readBoolean,
@@ -141,6 +142,24 @@ describe("common swagger", () => {
       schema: okResponseOpenApiSchema(PayloadDto),
     });
     expect(typeof ApiProblemExceptions).toBe("function");
+  });
+
+  it("couples readiness success docs with explicit 503 problem details", () => {
+    expect(ApiReadinessResponses("API readiness check succeeded.")).toEqual(
+      expect.any(Function),
+    );
+    expect(mocks.apiOkResponse).toHaveBeenCalledWith({
+      description: "API readiness check succeeded.",
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      description: "Service Unavailable",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.SERVICE_UNAVAILABLE),
+        },
+      },
+    });
   });
 
   it("resolves explicit defaults and option descriptions", () => {

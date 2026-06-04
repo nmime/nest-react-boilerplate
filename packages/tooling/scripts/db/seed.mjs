@@ -2,14 +2,17 @@
 import { pbkdf2Sync, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import {
+  assertSeedSafety,
+  DEFAULT_ADMIN_EMAIL,
+  DEFAULT_ADMIN_PASSWORD,
+  resolvePassword,
+} from "./seed-safety.mjs";
+import {
   assertLocalDevelopmentDatabase,
   loadDotEnv,
   postgresConnectionString,
   redactedConnectionString,
 } from "./env-loader.mjs";
-
-const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-const DEFAULT_ADMIN_PASSWORD = "ChangeMe123!";
 
 function parseArgs(argv) {
   const args = {
@@ -48,59 +51,6 @@ function hashPassword(password) {
   return `pbkdf2_sha256$120000$${salt}$${digest}`;
 }
 
-function isTruthy(value) {
-  return ["1", "true", "yes", "on"].includes(
-    String(value ?? "").trim().toLowerCase(),
-  );
-}
-
-function isLocalDevelopmentDatabase(connectionString) {
-  const url = new URL(connectionString);
-  const host = url.hostname.toLowerCase();
-  const database = url.pathname.replace(/^\//u, "");
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1", "postgres"]);
-  const looksLikeDevDb = /(^|_)(dev|test|boilerplate)($|_)/u.test(database);
-  return localHosts.has(host) && looksLikeDevDb;
-}
-
-function resolvePassword(args) {
-  if (!args.passwordEnv) return args.password;
-  const password = process.env[args.passwordEnv];
-  if (!password) throw new Error(`${args.passwordEnv} must contain the seed password.`);
-  return password;
-}
-
-function assertSeedSafety(args, connectionString) {
-  const localDevelopmentDatabase = isLocalDevelopmentDatabase(connectionString);
-  const productionRuntime = process.env.NODE_ENV === "production";
-  const defaultSeedCredentials =
-    args.email.toLowerCase() === DEFAULT_ADMIN_EMAIL &&
-    args.password === DEFAULT_ADMIN_PASSWORD;
-
-  if (!args.force) {
-    assertLocalDevelopmentDatabase(connectionString);
-  }
-
-  if (args.force && !localDevelopmentDatabase) {
-    if (!isTruthy(process.env.DB_SEED_ALLOW_NON_LOCAL)) {
-      throw new Error(
-        "Refusing --force seed against a non-local/dev database. Set DB_SEED_ALLOW_NON_LOCAL=true only for an intentional, controlled seed operation.",
-      );
-    }
-    if (productionRuntime && !isTruthy(process.env.DB_SEED_ALLOW_PRODUCTION)) {
-      throw new Error(
-        "Refusing --force seed in production. Set DB_SEED_ALLOW_PRODUCTION=true only for an intentional, controlled production seed operation.",
-      );
-    }
-  }
-
-  if ((productionRuntime || !localDevelopmentDatabase) && defaultSeedCredentials) {
-    throw new Error(
-      "Default seed admin credentials are not allowed for production or non-local databases. Pass --email and a strong --password or --password-env value.",
-    );
-  }
-}
-
 const args = parseArgs(process.argv.slice(2));
 if (args.help) {
   console.log(
@@ -112,7 +62,7 @@ if (args.help) {
 loadDotEnv();
 args.password = resolvePassword(args);
 const connectionString = postgresConnectionString();
-assertSeedSafety(args, connectionString);
+assertSeedSafety(args, connectionString, { assertLocalDevelopmentDatabase });
 
 const plan = {
   database: redactedConnectionString(connectionString),

@@ -2,10 +2,12 @@ import { MikroORM } from "@mikro-orm/core";
 import {
   Controller,
   Get,
+  HttpStatus,
   Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ApiOkResponse } from "@nestjs/swagger";
+import { ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 
 const postgresReadinessFailureDetail = "PostgreSQL readiness check failed.";
@@ -40,6 +42,7 @@ export class HealthController {
 
   @Get("ready")
   @ApiOkResponse({ description: "User API readiness check succeeded." })
+  @ApiProblemExceptions(HttpStatus.SERVICE_UNAVAILABLE)
   async ready(): Promise<OkResponse<HealthPayload>> {
     const postgres = await this.checkPostgres();
     const dependencies = postgres ? [postgres] : undefined;

@@ -60,6 +60,35 @@ describe("resolveBackendEnvironmentConfig", () => {
     });
   });
 
+  it("fails closed for production rate limiting without Redis or an explicit safe override", () => {
+    expect(() =>
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          AUTH_JWT_SECRET: "x".repeat(32),
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
+          NODE_ENV: "production",
+        },
+      ),
+    ).toThrow("Production rate limiting requires RATE_LIMIT_STORE=redis");
+
+    expect(
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          AUTH_JWT_SECRET: "x".repeat(32),
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
+          NODE_ENV: "production",
+          RATE_LIMIT_IN_MEMORY_ALLOWED: "true",
+        },
+      ).rateLimit,
+    ).toMatchObject({
+      enabled: true,
+      store: "memory",
+      storePreference: "auto",
+    });
+  });
+
   it("fails fast for invalid production and rate-limit environment", () => {
     expect(() =>
       resolveBackendEnvironmentConfig(

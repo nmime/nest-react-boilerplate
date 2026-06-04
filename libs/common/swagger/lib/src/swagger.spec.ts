@@ -74,6 +74,31 @@ describe("common swagger", () => {
     expect(mocks.createDocument).not.toHaveBeenCalled();
   });
 
+  it("keeps production swagger disabled unless explicitly allowed", () => {
+    expect(
+      resolveSwaggerOptions(
+        { title: "api" },
+        { NODE_ENV: "production", OPENAPI_ENABLED: "true" },
+      ),
+    ).toMatchObject({ enabled: false });
+    expect(
+      resolveSwaggerOptions(
+        { enabled: true, title: "api" },
+        { NODE_ENV: "production" },
+      ),
+    ).toMatchObject({ enabled: false });
+    expect(
+      resolveSwaggerOptions(
+        { title: "api" },
+        {
+          NODE_ENV: "production",
+          OPENAPI_ALLOW_PRODUCTION: "true",
+          OPENAPI_ENABLED: "true",
+        },
+      ),
+    ).toMatchObject({ enabled: true });
+  });
+
   it("creates bearer-auth swagger docs with problem response support", () => {
     const app = {} as never;
 
@@ -112,6 +137,7 @@ describe("common swagger", () => {
     expect(ApiOkDataResponse(PayloadDto)).toEqual(expect.any(Function));
     expect(mocks.apiExtraModels).toHaveBeenCalledWith(PayloadDto);
     expect(mocks.apiOkResponse).toHaveBeenCalledWith({
+      description: "OK",
       schema: okResponseOpenApiSchema(PayloadDto),
     });
     expect(typeof ApiProblemExceptions).toBe("function");

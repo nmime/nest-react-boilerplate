@@ -41,3 +41,22 @@ pnpm run docker:down
 This lets Docker browser calls use empty Vite API base URLs without localhost
 hacks. Production secrets should be supplied from a secret manager; repository
 values are placeholders only.
+
+## Docker Compose production readiness
+
+The single-server production stack is documented in
+[docker-compose-production.md](docker-compose-production.md). Before starting it,
+copy `.env.production.example`, replace `IMAGE_TAG=sha-000000000000` with the
+immutable `sha-<git-sha>` image tag you built, create the Docker secret files
+with `chmod 600`, and run:
+
+```bash
+docker compose --env-file .env.production -f docker/docker-compose.prod.yml config
+node scripts/validate-docker-compose-prod.mjs
+```
+
+Do not use `latest`, `main`, `dev`, or other mutable image tags for production
+Compose. If your release process pins by image digest instead, put those digest
+references in a release-specific compose override and record the digest with the
+source Git SHA. The repository examples intentionally contain placeholder
+domains, registry names, and non-production secrets only.

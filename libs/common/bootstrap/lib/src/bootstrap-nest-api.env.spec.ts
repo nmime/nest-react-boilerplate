@@ -68,6 +68,9 @@ describe("resolveBackendEnvironmentConfig", () => {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
           NODE_ENV: "production",
+          RATE_LIMIT_STORE: "auto",
+          REDIS_HOSTS: "",
+          REDIS_URL: "",
         },
       ),
     ).toThrow("Production rate limiting requires RATE_LIMIT_STORE=redis");

@@ -11,6 +11,7 @@ import App from "./app";
 import {
   createAdminAccess,
   fetchAdminProfile,
+  getAuthApiBaseUrl,
   normalizeClaimList,
   getAdminApiBaseUrl,
 } from "./auth-rbac";
@@ -168,10 +169,25 @@ describe("admin auth and RBAC helpers", () => {
   });
 
   it("normalizes admin API base URLs", () => {
-    expect(getAdminApiBaseUrl(" https://admin.example/api/ ")).toBe(
-      "https://admin.example/api",
-    );
-    expect(getAdminApiBaseUrl()).toBe("");
+    expect(
+      getAdminApiBaseUrl({
+        VITE_ADMIN_API_BASE_URL: " https://admin.example/api/ ",
+      }),
+    ).toBe("https://admin.example/api");
+    expect(
+      getAuthApiBaseUrl({ VITE_AUTH_API_BASE_URL: " https://auth.example/ " }),
+    ).toBe("https://auth.example");
+    expect(getAdminApiBaseUrl({ MODE: "test" })).toBe("");
+    expect(() =>
+      getAdminApiBaseUrl({ MODE: "production", PROD: true }),
+    ).toThrow(/VITE_ADMIN_API_BASE_URL/u);
+    expect(
+      getAdminApiBaseUrl({
+        MODE: "production",
+        PROD: true,
+        VITE_API_BASE_URL_MODE: "same-origin",
+      }),
+    ).toBe("");
   });
 });
 

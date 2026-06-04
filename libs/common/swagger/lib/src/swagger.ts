@@ -23,7 +23,10 @@ export function ApiOkDataResponse(
 ): MethodDecorator & ClassDecorator {
   return applyDecorators(
     ApiExtraModels(model),
-    ApiOkResponse({ schema: okResponseOpenApiSchema(model) }),
+    ApiOkResponse({
+      description: "OK",
+      schema: okResponseOpenApiSchema(model),
+    }),
   );
 }
 
@@ -50,8 +53,15 @@ export function resolveSwaggerOptions(
   Pick<SetupSwaggerOptions, "enabled" | "path" | "title" | "version">
 > &
   Pick<SetupSwaggerOptions, "description"> {
+  const requestedEnabled =
+    options.enabled ?? readBoolean(env.OPENAPI_ENABLED) ?? false;
+  const enabled =
+    env.NODE_ENV === "production"
+      ? requestedEnabled && (readBoolean(env.OPENAPI_ALLOW_PRODUCTION) ?? false)
+      : requestedEnabled;
+
   return {
-    enabled: options.enabled ?? readBoolean(env.OPENAPI_ENABLED) ?? false,
+    enabled,
     path: options.path ?? env.OPENAPI_PATH ?? "docs",
     title: env.OPENAPI_TITLE ?? options.title,
     version: options.version ?? env.OPENAPI_VERSION ?? "1.0.0",

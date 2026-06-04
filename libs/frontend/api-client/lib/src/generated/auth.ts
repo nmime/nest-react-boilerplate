@@ -354,6 +354,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Auth API health check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -371,6 +372,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Auth API liveness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -388,6 +390,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description Auth API readiness check succeeded. */
       200: {
         headers: {
           [name: string]: unknown;
@@ -409,6 +412,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -649,6 +653,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -889,6 +894,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -1129,6 +1135,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -1369,6 +1376,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -1605,6 +1613,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -1845,6 +1854,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -2085,6 +2095,7 @@ export interface operations {
       };
     };
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -2321,6 +2332,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
@@ -2557,6 +2569,7 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;

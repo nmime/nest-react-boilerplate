@@ -7,30 +7,31 @@ import {
   FrontendQueryProvider,
   FrontendStateProvider,
   UiErrorBoundary,
+  readLegacyUrlBearerToken,
   useI18n,
+  type FrontendEnv,
   type UiTheme,
 } from "@app/frontend-ui";
 import {
   createAdminAccess,
   fetchAdminProfile,
   getAdminApiBaseUrl,
+  getAuthApiBaseUrl,
 } from "./auth-rbac";
 import { AdminLayout, type AdminProfileState, renderAdminRoute } from "./pages";
 
 const getBrowserPath = (): string =>
   typeof window === "undefined" ? "/" : window.location.pathname;
 
+const getFrontendEnv = (): FrontendEnv =>
+  import.meta.env as Readonly<Record<string, boolean | string | undefined>>;
+
 const getInitialBearerToken = (): string | null => {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const search = new URL(window.location.href).searchParams;
-  return (
-    search.get("token")?.trim() ||
-    search.get("admin" + "_token")?.trim() ||
-    null
-  );
+  return readLegacyUrlBearerToken(getFrontendEnv(), window.location.href);
 };
 
 const scrubLegacyAuthTokenParams = (): void => {
@@ -58,15 +59,11 @@ const scrubLegacyAuthTokenParams = (): void => {
 };
 
 const getConfiguredAdminApiBaseUrl = (): string => {
-  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
-
-  return getAdminApiBaseUrl(env["VITE_ADMIN_API_BASE_URL"]);
+  return getAdminApiBaseUrl(getFrontendEnv());
 };
 
 const getConfiguredAuthApiBaseUrl = (): string => {
-  const env = import.meta.env as Readonly<Record<string, string | undefined>>;
-
-  return getAdminApiBaseUrl(env["VITE_AUTH_API_BASE_URL"]);
+  return getAuthApiBaseUrl(getFrontendEnv());
 };
 
 interface AdminAppProps {

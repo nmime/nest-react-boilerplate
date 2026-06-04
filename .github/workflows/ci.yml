@@ -25,7 +25,7 @@ env:
 jobs:
   helm-validation:
     name: Helm render validation
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -41,7 +41,7 @@ jobs:
 
   fast-check:
     name: Fast PR gate (check:fast)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -84,7 +84,7 @@ jobs:
 
   quality:
     name: Nx quality gates
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: fast-check
     timeout-minutes: 60
 
@@ -148,7 +148,7 @@ jobs:
 
   e2e:
     name: Static/browser e2e coverage
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: quality
     timeout-minutes: 45
 
@@ -187,7 +187,7 @@ jobs:
 
   docker-smoke:
     name: Docker smoke stack
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: quality
     timeout-minutes: 45
 
@@ -212,7 +212,7 @@ jobs:
 
   ops-gates:
     name: Runtime QA/ops gates
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: docker-smoke
     timeout-minutes: 90
     env:
@@ -268,7 +268,7 @@ jobs:
 
   fullstack-e2e:
     name: Fullstack Playwright e2e
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs: docker-smoke
     timeout-minutes: 60
 
@@ -307,7 +307,7 @@ jobs:
 
   ci-status-summary:
     name: CI status summary
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     needs:
       - helm-validation
       - fast-check

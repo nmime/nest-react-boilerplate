@@ -10,6 +10,15 @@ export const ADMIN_ROLE = "admin";
 export const USER_PROFILE_READ_PERMISSION = "profile:read";
 export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
 export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
+export const ADMIN_USERS_READ_PERMISSION = "admin:users:read";
+export const ADMIN_USERS_WRITE_PERMISSION = "admin:users:write";
+export const ADMIN_USERS_STATUS_UPDATE_PERMISSION = "admin:users:status:update";
+export const ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION =
+  "admin:users:access-policy:update";
+export const ADMIN_ROLES_READ_PERMISSION = "admin:roles:read";
+export const ADMIN_AUDIT_READ_PERMISSION = "admin:audit:read";
+export const ADMIN_SETTINGS_READ_PERMISSION = "admin:settings:read";
+export const ADMIN_SETTINGS_UPDATE_PERMISSION = "admin:settings:update";
 export const userThemePreferences = ["system", "light", "dark"] as const;
 export type UserThemePreference = (typeof userThemePreferences)[number];
 
@@ -55,6 +64,14 @@ export function createDefaultAccessPolicy(
           USER_PROFILE_READ_PERMISSION,
           ADMIN_PROFILE_READ_PERMISSION,
           ADMIN_DASHBOARD_READ_PERMISSION,
+          ADMIN_USERS_READ_PERMISSION,
+          ADMIN_USERS_WRITE_PERMISSION,
+          ADMIN_USERS_STATUS_UPDATE_PERMISSION,
+          ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+          ADMIN_ROLES_READ_PERMISSION,
+          ADMIN_AUDIT_READ_PERMISSION,
+          ADMIN_SETTINGS_READ_PERMISSION,
+          ADMIN_SETTINGS_UPDATE_PERMISSION,
         ]
       : [USER_PROFILE_READ_PERMISSION],
   };

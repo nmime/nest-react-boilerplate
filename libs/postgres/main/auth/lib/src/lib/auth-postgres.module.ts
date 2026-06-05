@@ -2,6 +2,7 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
 import { Module } from "@nestjs/common";
 import { AuthTokenCleanupService } from "./auth-token-cleanup.service";
 import {
+  AdminAuditLogEntitySchema,
   AuthRefreshTokenEntitySchema,
   AuthTenantEntitySchema,
   AuthTenantInvitationEntitySchema,
@@ -9,7 +10,11 @@ import {
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
 } from "./entity";
-import { AuthTokenRepository, AuthUserRepository } from "./repository";
+import {
+  AdminAuditLogRepository,
+  AuthTokenRepository,
+  AuthUserRepository,
+} from "./repository";
 
 @Module({
   imports: [
@@ -20,14 +25,21 @@ import { AuthTokenRepository, AuthUserRepository } from "./repository";
       AuthTenantInvitationEntitySchema,
       AuthRefreshTokenEntitySchema,
       AuthUserTokenEntitySchema,
+      AdminAuditLogEntitySchema,
     ]),
   ],
-  providers: [AuthUserRepository, AuthTokenRepository, AuthTokenCleanupService],
+  providers: [
+    AuthUserRepository,
+    AuthTokenRepository,
+    AuthTokenCleanupService,
+    AdminAuditLogRepository,
+  ],
   exports: [
     MikroOrmModule,
     AuthUserRepository,
     AuthTokenRepository,
     AuthTokenCleanupService,
+    AdminAuditLogRepository,
   ],
 })
 export class AuthPostgresModule {}

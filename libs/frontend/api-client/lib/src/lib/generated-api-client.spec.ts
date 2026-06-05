@@ -25,7 +25,17 @@ import {
   useAuthControllerUpdatePreferencesMutation,
   useAuthControllerUpdateLocaleMutation,
 } from "./auth";
-import { adminProfileControllerMe } from "./admin";
+import {
+  adminProfileControllerMe,
+  adminUsersControllerListUsers,
+  adminUsersControllerUpdateUserAccessPolicy,
+  adminUsersControllerUpdateUserStatus,
+  getAdminUsersControllerListUsersQueryKey,
+  getAdminUsersControllerUpdateUserAccessPolicyMutationKey,
+  getAdminUsersControllerUpdateUserStatusMutationKey,
+  type UpdateAdminUserAccessPolicyDto,
+  type UpdateAdminUserStatusDto,
+} from "./admin";
 import {
   ApiClientError,
   isApiClientError,
@@ -258,6 +268,58 @@ describe("generated api clients", () => {
     );
   });
 
+  it("serializes admin user filters and protected mutation bodies", async () => {
+    const listFetch = mockFetch({
+      data: { items: [], limit: 25, offset: 5, total: 0 },
+    });
+    await adminUsersControllerListUsers(
+      {
+        limit: 25,
+        offset: 5,
+        permission: "admin:users:read",
+        role: "admin",
+        search: "ada",
+        status: "active",
+      },
+      { fetchImpl: listFetch },
+    );
+    const listUrl = new URL(firstRequest(listFetch).url);
+    expect(listUrl.pathname).toBe("/admin/users");
+    expect(listUrl.searchParams.get("limit")).toBe("25");
+    expect(listUrl.searchParams.get("offset")).toBe("5");
+    expect(listUrl.searchParams.get("permission")).toBe("admin:users:read");
+    expect(listUrl.searchParams.get("role")).toBe("admin");
+    expect(listUrl.searchParams.get("search")).toBe("ada");
+    expect(listUrl.searchParams.get("status")).toBe("active");
+
+    const statusBody: UpdateAdminUserStatusDto = { status: "disabled" };
+    const statusFetch = mockFetch({ data: { id: "user-id" } });
+    await adminUsersControllerUpdateUserStatus("user-id", statusBody, {
+      fetchImpl: statusFetch,
+    });
+    const statusRequest = firstRequest(statusFetch);
+    expect(statusRequest.method).toBe("PATCH");
+    expect(statusRequest.url).toBe(
+      `${globalThis.location.origin}/admin/users/user-id/status`,
+    );
+    await expect(statusRequest.clone().json()).resolves.toEqual(statusBody);
+
+    const policyBody: UpdateAdminUserAccessPolicyDto = {
+      permissions: ["profile:read", "admin:users:read"],
+      roles: ["user", "admin"],
+    };
+    const policyFetch = mockFetch({ data: { id: "user-id" } });
+    await adminUsersControllerUpdateUserAccessPolicy("user-id", policyBody, {
+      fetchImpl: policyFetch,
+    });
+    const policyRequest = firstRequest(policyFetch);
+    expect(policyRequest.method).toBe("PATCH");
+    expect(policyRequest.url).toBe(
+      `${globalThis.location.origin}/admin/users/user-id/access-policy`,
+    );
+    await expect(policyRequest.clone().json()).resolves.toEqual(policyBody);
+  });
+
   it("exposes stable GET query keys", () => {
     expect(getAuthControllerMeQueryKey()).toEqual(["get", "/auth/me"]);
     expect(getAuthControllerLocalesQueryKey()).toEqual([
@@ -267,6 +329,17 @@ describe("generated api clients", () => {
     expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual([
       "patch",
       "/auth/me/preferences",
+    ]);
+    expect(
+      getAdminUsersControllerListUsersQueryKey({ status: "active" }),
+    ).toEqual(["get", "/admin/users", { status: "active" }]);
+    expect(getAdminUsersControllerUpdateUserStatusMutationKey()).toEqual([
+      "patch",
+      "/admin/users/{id}/status",
+    ]);
+    expect(getAdminUsersControllerUpdateUserAccessPolicyMutationKey()).toEqual([
+      "patch",
+      "/admin/users/{id}/access-policy",
     ]);
   });
 

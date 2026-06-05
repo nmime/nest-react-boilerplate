@@ -39,11 +39,13 @@ export interface AuthenticatedRawRequest {
 export interface AuthenticatedRequest {
   headers?: Record<string, string | string[] | undefined>;
   get?: (name: string) => string | undefined;
+  path?: string;
   raw?: AuthenticatedRawRequest;
   reply?: AuthenticatedResponse;
   session?: AuthenticatedSession & Record<string, unknown>;
   res?: AuthenticatedResponse;
   tenantId?: string;
+  url?: string;
   user?: AuthenticatedPrincipal;
   auth?: AuthenticatedPrincipal;
 }

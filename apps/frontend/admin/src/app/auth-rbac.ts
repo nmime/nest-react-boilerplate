@@ -1,4 +1,9 @@
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
+import {
+  createAdminAccessPolicy,
+  type AdminAccessPolicy,
+  type AdminPrincipalClaims,
+} from "@app/feature-admin-shared";
 import { getRequiredApiBaseUrl, type FrontendEnv } from "@app/frontend-ui";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
@@ -10,13 +15,7 @@ export type AdminProfilePayload = Partial<
   profile?: Partial<adminApi.AdminProfilePayloadDto["profile"]>;
 };
 
-export interface AdminAccess {
-  isAuthenticated: boolean;
-  canReadDashboard: boolean;
-  canReadProfile: boolean;
-  roles: string[];
-  permissions: string[];
-}
+export type AdminAccess = AdminAccessPolicy;
 
 export const normalizeClaimList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -32,22 +31,12 @@ export const normalizeClaimList = (value: unknown): string[] => {
   return [];
 };
 
-export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess => {
-  const roles = normalizeClaimList(principal?.roles);
-  const permissions = normalizeClaimList(principal?.permissions);
-  const isAdmin = roles.includes("admin");
-  const canReadDashboard =
-    isAdmin && permissions.includes("admin:dashboard:read");
-  const canReadProfile = isAdmin && permissions.includes("admin:profile:read");
-
-  return {
-    isAuthenticated: Boolean(principal?.subject),
-    canReadDashboard,
-    canReadProfile,
-    roles,
-    permissions,
-  };
-};
+export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess =>
+  createAdminAccessPolicy({
+    permissions: normalizeClaimList(principal?.permissions),
+    roles: normalizeClaimList(principal?.roles),
+    subject: principal?.subject,
+  } satisfies AdminPrincipalClaims);
 
 export const getAdminApiBaseUrl = (env: FrontendEnv): string =>
   getRequiredApiBaseUrl(env, "VITE_ADMIN_API_BASE_URL");

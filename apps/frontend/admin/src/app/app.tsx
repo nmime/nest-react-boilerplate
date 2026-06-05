@@ -230,9 +230,22 @@ const AdminApp = ({
     ],
   );
 
+  const adminRequestOptions = useMemo(
+    () => ({
+      authToken: bearerToken?.trim() || undefined,
+      baseUrl: getConfiguredAdminApiBaseUrl(),
+    }),
+    [bearerToken],
+  );
+
   return (
-    <AdminLayout currentPath={path}>
-      {renderAdminRoute(path, state, t)}
+    <AdminLayout
+      access={state.status === "ready" ? state.access : undefined}
+      currentPath={path}
+    >
+      {renderAdminRoute(path, state, t, {
+        requestOptions: adminRequestOptions,
+      })}
     </AdminLayout>
   );
 };

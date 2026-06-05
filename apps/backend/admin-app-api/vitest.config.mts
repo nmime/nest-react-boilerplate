@@ -38,6 +38,14 @@ export default defineConfig({
         "../../../libs/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/postgres-main": new URL(
+        "../../../libs/postgres/main/shared/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/postgres-main-auth": new URL(
+        "../../../libs/postgres/main/auth/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/feature-admin-main": new URL(
         "../../../libs/feature/admin/main/lib/src/index.ts",
         import.meta.url,

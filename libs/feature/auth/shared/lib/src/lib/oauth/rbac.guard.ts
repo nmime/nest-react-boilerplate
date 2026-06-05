@@ -34,11 +34,8 @@ export class RbacGuard implements CanActivate {
       context,
     );
 
-    if (requiredRoles.length === 0 && requiredPermissions.length === 0) {
-      return true;
-    }
-
     const principal = this.getPrincipal(context);
+
     if (requiredRoles.length > 0 && !hasAnyRole(principal, requiredRoles)) {
       throw new ForbiddenException("Required role is missing.");
     }

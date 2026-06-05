@@ -16,19 +16,29 @@ export interface UiDropdownMenuItem {
 export interface UiDropdownMenuProps {
   align?: "start" | "center" | "end";
   className?: string;
+  defaultOpen?: boolean;
   items: readonly UiDropdownMenuItem[];
   label?: string;
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
   trigger: ReactNode;
 }
 
 export const UiDropdownMenu = ({
   align = "end",
   className,
+  defaultOpen,
   items,
   label = "Actions",
+  onOpenChange,
+  open,
   trigger,
 }: Readonly<UiDropdownMenuProps>) => (
-  <DropdownMenuPrimitive.Root>
+  <DropdownMenuPrimitive.Root
+    defaultOpen={defaultOpen}
+    onOpenChange={onOpenChange}
+    open={open}
+  >
     <DropdownMenuPrimitive.Trigger asChild>
       {trigger}
     </DropdownMenuPrimitive.Trigger>

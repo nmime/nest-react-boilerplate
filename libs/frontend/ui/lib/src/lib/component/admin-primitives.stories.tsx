@@ -50,8 +50,30 @@ const columns: UiDataTableColumn<AdminUserRow>[] = [
   },
 ];
 
+const storyFrameStyle = {
+  display: "grid",
+  gap: 18,
+  width: "min(1080px, 92vw)",
+} as const;
+
+const StoryFrame = ({
+  children,
+  title,
+}: Readonly<{ children: React.ReactNode; title: string }>) => {
+  const headingId = title.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-");
+
+  return (
+    <section aria-labelledby={headingId} style={storyFrameStyle}>
+      <h1 className="sr-only" id={headingId}>
+        {title}
+      </h1>
+      {children}
+    </section>
+  );
+};
+
 const AdminPrimitiveShowcase = () => (
-  <div style={{ display: "grid", gap: 18, width: "min(1080px, 92vw)" }}>
+  <StoryFrame title="Admin primitives kitchen sink">
     <UiSearchFilterToolbar
       actions={<UiButton>Create user</UiButton>}
       searchPlaceholder="Search users"
@@ -113,7 +135,7 @@ const AdminPrimitiveShowcase = () => (
         trigger={<UiButton variant="secondary">Confirm action</UiButton>}
       />
     </div>
-  </div>
+  </StoryFrame>
 );
 
 const meta = {
@@ -142,19 +164,151 @@ export const KitchenSink: Story = {
 
 export const EmptyTable: Story = {
   render: () => (
-    <UiDataTable
-      aria-label="Empty users"
-      columns={columns}
-      emptyDescription="Invite a user to get started."
-      emptyTitle="No users yet"
-      rowKey={(row) => row.id}
-      rows={[]}
-    />
+    <StoryFrame title="Empty admin table">
+      <UiDataTable
+        aria-label="Empty users"
+        columns={columns}
+        emptyDescription="Invite a user to get started."
+        emptyTitle="No users yet"
+        rowKey={(row) => row.id}
+        rows={[]}
+      />
+    </StoryFrame>
+  ),
+};
+
+export const TableLoading: Story = {
+  render: () => (
+    <StoryFrame title="Loading admin table">
+      <UiDataTable
+        aria-label="Loading users"
+        columns={columns}
+        isLoading
+        rowKey={(row) => row.id}
+        rows={[]}
+      />
+    </StoryFrame>
   ),
 };
 
 export const ResourceError: Story = {
   render: () => (
-    <UiResourceError action={<UiButton variant="secondary">Retry</UiButton>} />
+    <StoryFrame title="Resource error">
+      <UiResourceError
+        action={<UiButton variant="secondary">Retry</UiButton>}
+      />
+    </StoryFrame>
+  ),
+};
+
+export const DropdownOpened: Story = {
+  render: () => (
+    <StoryFrame title="Opened dropdown menu">
+      <UiDropdownMenu
+        defaultOpen
+        items={[
+          { label: "Archive" },
+          { disabled: true, label: "Suspend" },
+          { label: "Delete", tone: "warning" },
+        ]}
+        trigger={<UiButton variant="secondary">Actions</UiButton>}
+      />
+    </StoryFrame>
+  ),
+};
+
+export const DialogOpened: Story = {
+  render: () => (
+    <StoryFrame title="Opened dialog">
+      <UiDialog
+        description="Preview the shared admin dialog primitive."
+        open
+        title="Edit user"
+        trigger={<UiButton variant="secondary">Open dialog</UiButton>}
+      >
+        <p>Dialog content supports forms, alerts, and resource details.</p>
+      </UiDialog>
+    </StoryFrame>
+  ),
+};
+
+export const ConfirmDialogOpened: Story = {
+  render: () => (
+    <StoryFrame title="Opened confirm dialog">
+      <UiConfirmDialog
+        description="Confirm destructive or high-impact admin actions."
+        onConfirm={() => undefined}
+        open
+        title="Archive user"
+        trigger={<UiButton variant="secondary">Confirm action</UiButton>}
+      />
+    </StoryFrame>
+  ),
+};
+
+export const DisabledControls: Story = {
+  render: () => (
+    <StoryFrame title="Disabled controls">
+      <UiSearchFilterToolbar
+        actions={<UiButton disabled>Create user</UiButton>}
+        searchValue="Disabled query"
+      >
+        <UiDropdownMenu
+          items={[{ disabled: true, label: "Active" }]}
+          trigger={
+            <UiButton disabled variant="secondary">
+              Status
+            </UiButton>
+          }
+        />
+      </UiSearchFilterToolbar>
+      <UiCheckbox disabled label="Require approval" />
+      <UiSwitch disabled label="Enable notifications" />
+      <UiTextarea
+        aria-label="Disabled notes"
+        disabled
+        value="Read-only notes"
+      />
+      <UiPagination
+        currentPage={1}
+        onPageChange={() => undefined}
+        pageSize={10}
+        totalItems={10}
+        totalPages={1}
+      />
+    </StoryFrame>
+  ),
+};
+
+export const NotificationVariants: Story = {
+  render: () => (
+    <StoryFrame title="Notification variants">
+      <UiNotification message="Sync is healthy" title="Info" tone="info" />
+      <UiNotification message="Saved changes" title="Success" tone="success" />
+      <UiNotification
+        action={<UiButton variant="secondary">Review</UiButton>}
+        message="Billing usage is near the limit"
+        title="Warning"
+        tone="warning"
+      />
+    </StoryFrame>
+  ),
+};
+
+export const StatusAndResourceVariants: Story = {
+  render: () => (
+    <StoryFrame title="Status and resource variants">
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <UiStatusTag label="Neutral" tone="neutral" />
+        <UiStatusTag label="Info" tone="info" />
+        <UiStatusTag label="Success" tone="success" />
+        <UiStatusTag label="Warning" tone="warning" />
+      </div>
+      <UiResourceError
+        action={<UiButton variant="secondary">Reconnect</UiButton>}
+        description="The admin API returned a recoverable error."
+        title="Admin API unavailable"
+      />
+    </StoryFrame>
   ),
 };

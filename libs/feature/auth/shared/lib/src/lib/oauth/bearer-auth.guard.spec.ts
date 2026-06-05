@@ -5,6 +5,12 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import {
+  ADMIN_MANAGE_ALL_PERMISSION,
+  ADMIN_PROFILE_READ_PERMISSION,
+  ADMIN_ROLE,
+  ADMIN_USERS_READ_PERMISSION,
+} from "@app/feature-admin-shared";
 import { describe, expect, it } from "vitest";
 import {
   PUBLIC_AUTH_METADATA_KEY,
@@ -106,6 +112,7 @@ describe("BearerAuthGuard", () => {
       roles: ["admin"],
       subject: "user-id",
       tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DEFAULT_AUTH_TENANT_ID,
       tokenId: "token-id",
     });
   });
@@ -133,6 +140,7 @@ describe("BearerAuthGuard", () => {
     expect(request.user).toMatchObject({
       permissions: ["profile:read"],
       subject: "user-id",
+      tenantId: DEFAULT_AUTH_TENANT_ID,
     });
     expect(request.auth).toBe(request.user);
   });
@@ -354,17 +362,17 @@ describe("RbacGuard", () => {
     const handler = () => undefined;
     Reflect.defineMetadata(
       REQUIRED_ROLES_METADATA_KEY,
-      ["admin", "support"],
+      [ADMIN_ROLE, "support"],
       handler,
     );
     Reflect.defineMetadata(
       REQUIRED_PERMISSIONS_METADATA_KEY,
-      ["admin:read", "profile:read"],
+      [ADMIN_USERS_READ_PERMISSION, "profile:read"],
       handler,
     );
     const principal = createPrincipal({
-      permissions: ["admin:read", "profile:read"],
-      roles: ["support"],
+      permissions: [ADMIN_USERS_READ_PERMISSION, "profile:read"],
+      roles: [ADMIN_ROLE, "support"],
     });
 
     expect(
@@ -376,10 +384,10 @@ describe("RbacGuard", () => {
 
   it("rejects missing role, missing permission, and absent principals", () => {
     const handler = () => undefined;
-    Reflect.defineMetadata(REQUIRED_ROLES_METADATA_KEY, ["admin"], handler);
+    Reflect.defineMetadata(REQUIRED_ROLES_METADATA_KEY, [ADMIN_ROLE], handler);
     Reflect.defineMetadata(
       REQUIRED_PERMISSIONS_METADATA_KEY,
-      ["admin:read"],
+      [ADMIN_USERS_READ_PERMISSION],
       handler,
     );
     const guard = new RbacGuard(new Reflector());
@@ -390,7 +398,7 @@ describe("RbacGuard", () => {
           {
             user: createPrincipal({
               roles: ["user"],
-              permissions: ["admin:read"],
+              permissions: [ADMIN_USERS_READ_PERMISSION],
             }),
           },
           handler,
@@ -400,7 +408,7 @@ describe("RbacGuard", () => {
     expect(() =>
       guard.canActivate(
         createContext(
-          { user: createPrincipal({ roles: ["admin"], permissions: [] }) },
+          { user: createPrincipal({ roles: [ADMIN_ROLE], permissions: [] }) },
           handler,
         ),
       ),
@@ -408,6 +416,81 @@ describe("RbacGuard", () => {
     expect(() => guard.canActivate(createContext({}, handler))).toThrow(
       UnauthorizedException,
     );
+  });
+
+  it("denies protected admin routes without permission metadata", () => {
+    class AdminNoMetadataController {}
+    const guard = new RbacGuard(new Reflector());
+
+    expect(() =>
+      guard.canActivate(
+        createContext(
+          {
+            user: createPrincipal({ roles: [ADMIN_ROLE] }),
+            url: "/admin/nope",
+          },
+          () => undefined,
+          AdminNoMetadataController,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("denies admin role alone and admin permission without admin role", () => {
+    const handler = () => undefined;
+    Reflect.defineMetadata(REQUIRED_ROLES_METADATA_KEY, [ADMIN_ROLE], handler);
+    Reflect.defineMetadata(
+      REQUIRED_PERMISSIONS_METADATA_KEY,
+      [ADMIN_USERS_READ_PERMISSION],
+      handler,
+    );
+    const guard = new RbacGuard(new Reflector());
+
+    expect(() =>
+      guard.canActivate(
+        createContext(
+          { user: createPrincipal({ roles: [ADMIN_ROLE], permissions: [] }) },
+          handler,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+    expect(() =>
+      guard.canActivate(
+        createContext(
+          {
+            user: createPrincipal({
+              roles: ["support"],
+              permissions: [ADMIN_USERS_READ_PERMISSION],
+            }),
+          },
+          handler,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("allows explicit manage/all admin permission for admin route permissions", () => {
+    const handler = () => undefined;
+    Reflect.defineMetadata(REQUIRED_ROLES_METADATA_KEY, [ADMIN_ROLE], handler);
+    Reflect.defineMetadata(
+      REQUIRED_PERMISSIONS_METADATA_KEY,
+      [ADMIN_PROFILE_READ_PERMISSION],
+      handler,
+    );
+
+    expect(
+      new RbacGuard(new Reflector()).canActivate(
+        createContext(
+          {
+            user: createPrincipal({
+              roles: [ADMIN_ROLE],
+              permissions: [ADMIN_MANAGE_ALL_PERMISSION],
+            }),
+          },
+          handler,
+        ),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -418,6 +501,7 @@ function createPrincipal(
     permissions: [],
     roles: [],
     subject: "user-id",
+    tenantId: DEFAULT_AUTH_TENANT_ID,
     ...partial,
   };
 }

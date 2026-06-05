@@ -132,8 +132,16 @@ describe("admin auth and RBAC helpers", () => {
   it("builds fail-closed admin access policies", () => {
     expect(createAdminAccess()).toEqual({
       isAuthenticated: false,
+      canAccessAdmin: false,
+      canReadAudit: false,
       canReadDashboard: false,
       canReadProfile: false,
+      canReadRoles: false,
+      canReadSettings: false,
+      canReadUsers: false,
+      canUpdateSettings: false,
+      canUpdateUserAccessPolicy: false,
+      canUpdateUserStatus: false,
       roles: [],
       permissions: [],
     });
@@ -145,8 +153,16 @@ describe("admin auth and RBAC helpers", () => {
       }),
     ).toEqual({
       isAuthenticated: true,
+      canAccessAdmin: true,
+      canReadAudit: false,
       canReadDashboard: true,
       canReadProfile: true,
+      canReadRoles: false,
+      canReadSettings: false,
+      canReadUsers: false,
+      canUpdateSettings: false,
+      canUpdateUserAccessPolicy: false,
+      canUpdateUserStatus: false,
       roles: ["admin"],
       permissions: ["admin:profile:read", "admin:dashboard:read"],
     });

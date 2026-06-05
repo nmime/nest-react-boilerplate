@@ -17,6 +17,9 @@ import {
   toOpenApiFetchOptions,
 } from "./service-options";
 
+const ADMIN_HEALTH_PATH = "/health";
+const ADMIN_LIVE_PATH = "/live";
+const ADMIN_READY_PATH = "/ready";
 const ADMIN_PROFILE_ME_PATH = "/admin/profile/me";
 const ADMIN_USERS_PATH = "/admin/users";
 const ADMIN_USER_PATH = "/admin/users/{id}";
@@ -49,6 +52,14 @@ export type AdminAuditLogListPayloadDto =
   components["schemas"]["AdminAuditLogListPayloadDto"];
 export type AdminDashboardSummaryDto =
   components["schemas"]["AdminDashboardSummaryDto"];
+
+export const adminHealthControllerHealth = (
+  options?: ApiClientRequestOptions,
+) => client.GET(ADMIN_HEALTH_PATH, toOpenApiFetchOptions(options));
+export const adminHealthControllerLive = (options?: ApiClientRequestOptions) =>
+  client.GET(ADMIN_LIVE_PATH, toOpenApiFetchOptions(options));
+export const adminHealthControllerReady = (options?: ApiClientRequestOptions) =>
+  client.GET(ADMIN_READY_PATH, toOpenApiFetchOptions(options));
 export type AdminUsersListQuery = NonNullable<
   paths[typeof ADMIN_USERS_PATH]["get"]["parameters"]["query"]
 >;

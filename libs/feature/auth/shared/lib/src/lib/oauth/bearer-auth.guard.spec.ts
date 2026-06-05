@@ -331,13 +331,23 @@ describe("BearerAuthGuard", () => {
 });
 
 describe("RbacGuard", () => {
-  it("allows public routes and routes without access-control metadata", () => {
+  it("allows public routes", () => {
     const publicHandler = () => undefined;
     Reflect.defineMetadata(PUBLIC_AUTH_METADATA_KEY, true, publicHandler);
     const guard = new RbacGuard(new Reflector());
 
     expect(guard.canActivate(createContext({}, publicHandler))).toBe(true);
-    expect(guard.canActivate(createContext({}))).toBe(true);
+  });
+
+  it("requires an authenticated principal even when routes have no RBAC metadata", () => {
+    const guard = new RbacGuard(new Reflector());
+
+    expect(() => guard.canActivate(createContext({}))).toThrow(
+      UnauthorizedException,
+    );
+    expect(
+      guard.canActivate(createContext({ user: createPrincipal({}) })),
+    ).toBe(true);
   });
 
   it("allows any matching role and all required permissions", () => {

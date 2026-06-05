@@ -86,6 +86,53 @@ describe("AuthUserRepository", () => {
     });
   });
 
+  it("lists and counts users with tenant-scoped allowlisted filters", async () => {
+    const entity = new AuthUserEntity({ email: "admin@example.com" });
+    const { entityManager } = createEntityManagerMock();
+    const find = vi.fn(() => Promise.resolve([entity]));
+    const count = vi.fn(() => Promise.resolve(1));
+    Object.assign(entityManager, { find, count });
+    const authUsers = new AuthUserRepository(entityManager);
+
+    await expect(
+      authUsers
+        .listUsers({
+          limit: 10,
+          offset: 5,
+          permission: "admin:users:read",
+          role: "admin",
+          search: "Ada_%",
+          status: "active",
+          tenantId: "tenant-id",
+        })
+        .then((result) => result._unsafeUnwrap()),
+    ).resolves.toEqual([entity]);
+    await expect(
+      authUsers
+        .countUsers({ role: "admin", tenantId: "tenant-id" })
+        .then((result) => result._unsafeUnwrap()),
+    ).resolves.toBe(1);
+
+    expect(find).toHaveBeenCalledWith(
+      AuthUserEntity,
+      {
+        tenantId: "tenant-id",
+        $or: [
+          { email: { $ilike: "%Ada\\_\\%%" } },
+          { displayName: { $ilike: "%Ada\\_\\%%" } },
+        ],
+        status: "active",
+        roles: { $contains: ["admin"] },
+        permissions: { $contains: ["admin:users:read"] },
+      },
+      { limit: 10, offset: 5, orderBy: { createdAt: "DESC" } },
+    );
+    expect(count).toHaveBeenCalledWith(AuthUserEntity, {
+      tenantId: "tenant-id",
+      roles: { $contains: ["admin"] },
+    });
+  });
+
   it("updates access policy fields", async () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
     const { findOne, flush, entityManager } = createEntityManagerMock();

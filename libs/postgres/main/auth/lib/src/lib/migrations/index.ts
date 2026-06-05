@@ -6,6 +6,7 @@ import { Migration20260525184500NormalizeAuthUserDatabaseStandards } from "./Mig
 import { Migration20260531120000AddAuthUserTenantIsolation } from "./Migration20260531120000AddAuthUserTenantIsolation";
 import { Migration20260531123000AddAuthTenantLifecycle } from "./Migration20260531123000AddAuthTenantLifecycle";
 import { Migration20260601130000AddAuthTokenExpiryIndexes } from "./Migration20260601130000AddAuthTokenExpiryIndexes";
+import { Migration20260605143000CreateAdminAuditLogs } from "./Migration20260605143000CreateAdminAuditLogs";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";
 
@@ -17,6 +18,7 @@ export const authMigrations = [
   Migration20260531120000AddAuthUserTenantIsolation,
   Migration20260531123000AddAuthTenantLifecycle,
   Migration20260601130000AddAuthTokenExpiryIndexes,
+  Migration20260605143000CreateAdminAuditLogs,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -36,4 +38,5 @@ export {
   Migration20260531120000AddAuthUserTenantIsolation,
   Migration20260531123000AddAuthTenantLifecycle,
   Migration20260601130000AddAuthTokenExpiryIndexes,
+  Migration20260605143000CreateAdminAuditLogs,
 };

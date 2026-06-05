@@ -15,6 +15,16 @@ export interface AuthUserRepositoryError {
   message: string;
 }
 
+export interface AuthUserListInput {
+  tenantId?: string;
+  search?: string;
+  status?: AuthUserEntity["status"];
+  role?: string;
+  permission?: string;
+  limit?: number;
+  offset?: number;
+}
+
 @Injectable()
 export class AuthUserRepository {
   constructor(
@@ -44,6 +54,28 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.findOne(AuthUserEntity, { id, tenantId }),
+      mapRepositoryError,
+    );
+  }
+
+  listUsers(
+    input: AuthUserListInput = {},
+  ): ResultAsync<AuthUserEntity[], AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.entityManager.find(AuthUserEntity, this.toUserFilter(input), {
+        limit: input.limit ?? 50,
+        offset: input.offset ?? 0,
+        orderBy: { createdAt: "DESC" },
+      }),
+      mapRepositoryError,
+    );
+  }
+
+  countUsers(
+    input: AuthUserListInput = {},
+  ): ResultAsync<number, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.entityManager.count(AuthUserEntity, this.toUserFilter(input)),
       mapRepositoryError,
     );
   }
@@ -169,6 +201,32 @@ export class AuthUserRepository {
     await this.entityManager.flush();
     return entity;
   }
+
+  private toUserFilter(input: AuthUserListInput): object {
+    return {
+      tenantId: input.tenantId ?? DefaultAuthTenantId,
+      ...(input.search
+        ? {
+            $or: [
+              { email: { $ilike: `%${escapeLike(input.search)}%` } },
+              { displayName: { $ilike: `%${escapeLike(input.search)}%` } },
+            ],
+          }
+        : {}),
+      ...(input.status ? { status: input.status } : {}),
+      ...(input.role ? { roles: { $contains: [input.role] } } : {}),
+      ...(input.permission
+        ? { permissions: { $contains: [input.permission] } }
+        : {}),
+    };
+  }
+}
+
+function escapeLike(value: string): string {
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_");
 }
 
 function mapRepositoryError(cause: unknown): AuthUserRepositoryError {

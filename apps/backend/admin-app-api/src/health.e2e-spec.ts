@@ -1,19 +1,31 @@
+import { MikroORM } from "@mikro-orm/core";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createProblemValidationPipe } from "@app/common/validation";
 import { AdminAppApiModule } from "./admin-app-api.module";
 
 describe("backend-admin-app-api health e2e", () => {
   let app: NestFastifyApplication;
+  const ormMock = {
+    close: vi.fn(() => Promise.resolve()),
+    em: {
+      fork: vi.fn(() => ormMock.em),
+      getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
+      getRepository: () => ({}),
+    },
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AdminAppApiModule],
-    }).compile();
+    })
+      .overrideProvider(MikroORM)
+      .useValue(ormMock)
+      .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
@@ -23,7 +35,7 @@ describe("backend-admin-app-api health e2e", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
 
   it("GET /health returns ok", async () => {
@@ -45,7 +57,11 @@ describe("backend-admin-app-api health e2e", () => {
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
     expect(readyResponse.statusCode).toBe(200);
     expect(readyResponse.json()).toEqual({
-      data: { app: "backend-admin-app-api", status: "ok" },
+      data: {
+        app: "backend-admin-app-api",
+        dependencies: [{ name: "postgres", status: "ok" }],
+        status: "ok",
+      },
     });
   });
 });

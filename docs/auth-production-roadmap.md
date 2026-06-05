@@ -19,3 +19,18 @@ ID-token callback exchange, so no nonce is generated or validated beyond the
 enforced OAuth state check.
 
 Do not enable public password auth without the lifecycle above, production email delivery, rate limiting, monitoring, and tested recovery flows.
+
+## Admin CASL + RBAC authorization
+
+Admin authorization is RBAC-first and CASL-derived. Roles and permission strings remain the stored/source-of-truth access policy. The shared admin module maps only catalogued admin permissions to CASL actions/resources through `createAdminAbility`; `canAdmin`/`cannotAdmin` are thin helpers around that ability.
+
+Fail-closed rules:
+
+- Admin APIs still require the `admin` role where controller metadata declares it.
+- The `admin` role alone does not grant access; the principal must also carry explicit catalogued permissions allowed by the role-permission matrix.
+- Admin permission strings without the `admin` role are denied on admin routes.
+- Unknown `admin:*` permissions are ignored by the ability factory and rejected by admin access-policy mutation validation.
+- `manage/all` is available only through the explicit `admin:manage:all` permission.
+- Protected admin routes without permission metadata are denied by `RbacGuard`.
+
+Frontend admin routing uses the same shared CASL-derived access policy only for menu and route hints. Backend guards remain authoritative.

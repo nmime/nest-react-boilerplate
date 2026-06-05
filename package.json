@@ -76,6 +76,7 @@
     "generate:feature": "node packages/tooling/bin/repo-tooling.mjs project generate-vertical-slice"
   },
   "dependencies": {
+    "@casl/ability": "6.7.0",
     "@fastify/cookie": "11.0.2",
     "@fastify/session": "11.1.1",
     "@fastify/static": "9.1.3",

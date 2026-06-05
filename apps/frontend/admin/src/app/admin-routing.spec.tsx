@@ -58,3 +58,46 @@ describe("admin route base handling", () => {
     expect(html).toContain('href="#xr-content"');
   });
 });
+
+describe("admin frontend CASL RBAC gating", () => {
+  it("denies menu/action access for admin role without permissions", () => {
+    const access = createAdminAccess({
+      subject: "admin-id",
+      roles: ["admin"],
+      permissions: [],
+    });
+
+    expect(access.canAccessAdmin).toBe(false);
+    expect(access.canReadDashboard).toBe(false);
+    expect(access.canReadProfile).toBe(false);
+    expect(
+      renderToStaticMarkup(
+        renderAdminRoute("/admin", { status: "ready", payload: {}, access }),
+      ),
+    ).toContain("Missing admin dashboard permission");
+  });
+
+  it("denies permissions without admin role in client-side hints", () => {
+    const access = createAdminAccess({
+      subject: "support-id",
+      roles: ["support"],
+      permissions: ["admin:dashboard:read", "admin:profile:read"],
+    });
+
+    expect(access.canAccessAdmin).toBe(false);
+    expect(access.canReadDashboard).toBe(false);
+    expect(access.canReadProfile).toBe(false);
+  });
+
+  it("uses explicit manage/all for broad frontend admin access hints", () => {
+    const access = createAdminAccess({
+      subject: "admin-id",
+      roles: ["admin"],
+      permissions: ["admin:manage:all"],
+    });
+
+    expect(access.canAccessAdmin).toBe(true);
+    expect(access.canReadDashboard).toBe(true);
+    expect(access.canReadProfile).toBe(true);
+  });
+});

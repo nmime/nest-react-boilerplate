@@ -3,7 +3,7 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/feature/admin/shared/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:feature-shared", "scope:admin"],
+  "tags": ["platform:shared", "type:util", "scope:admin"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

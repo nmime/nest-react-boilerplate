@@ -7,6 +7,14 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import {
+  ADMIN_MANAGE_ACTION,
+  ADMIN_ALL_RESOURCE,
+  ADMIN_ROLE,
+  adminPermissionToAbility,
+  canAdmin,
+  createAdminAbility,
+} from "@app/feature-admin-shared";
+import {
   PUBLIC_AUTH_METADATA_KEY,
   REQUIRED_PERMISSIONS_METADATA_KEY,
   REQUIRED_ROLES_METADATA_KEY,
@@ -33,13 +41,19 @@ export class RbacGuard implements CanActivate {
       REQUIRED_PERMISSIONS_METADATA_KEY,
       context,
     );
-
     const principal = this.getPrincipal(context);
+
+    if (
+      this.isProtectedAdminRoute(context) &&
+      requiredPermissions.length === 0
+    ) {
+      throw new ForbiddenException("Admin access metadata is missing.");
+    }
 
     if (requiredRoles.length > 0 && !hasAnyRole(principal, requiredRoles)) {
       throw new ForbiddenException("Required role is missing.");
     }
-    if (!hasAllPermissions(principal, requiredPermissions)) {
+    if (!hasAllPermissions(principal, requiredPermissions, requiredRoles)) {
       throw new ForbiddenException("Required permission is missing.");
     }
 
@@ -52,6 +66,17 @@ export class RbacGuard implements CanActivate {
         context.getHandler(),
         context.getClass(),
       ]) ?? false
+    );
+  }
+
+  private isProtectedAdminRoute(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const requestPath = request.url ?? request.path ?? "";
+
+    return (
+      context.getClass().name.startsWith("Admin") ||
+      requestPath === "/admin" ||
+      requestPath.startsWith("/admin/")
     );
   }
 
@@ -85,8 +110,23 @@ function hasAnyRole(
 function hasAllPermissions(
   principal: AuthenticatedPrincipal,
   permissions: string[],
+  requiredRoles: string[],
 ): boolean {
-  return permissions.every((permission) =>
-    principal.permissions.includes(permission),
-  );
+  const adminAbility = createAdminAbility(principal);
+
+  return permissions.every((permission) => {
+    const adminRule = adminPermissionToAbility(permission);
+    if (adminRule) {
+      return (
+        requiredRoles.includes(ADMIN_ROLE) &&
+        (canAdmin(adminAbility, adminRule.action, adminRule.resource) ||
+          canAdmin(adminAbility, ADMIN_MANAGE_ACTION, ADMIN_ALL_RESOURCE))
+      );
+    }
+    if (permission.startsWith("admin:")) {
+      return false;
+    }
+
+    return principal.permissions.includes(permission);
+  });
 }

@@ -35,7 +35,6 @@ import {
   DEFAULT_AUTH_TENANT_ID,
   RequirePermissions,
   RequireRoles,
-  RbacGuard,
   SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
@@ -62,6 +61,7 @@ import {
   type AuthUserEntity,
   type AuthUserStatus,
 } from "@app/postgres-main-auth";
+import { AdminRbacGuard } from "./admin-rbac.guard";
 
 const userStatuses = ["active", "disabled", "invited"] as const;
 const adminAuditActions = [
@@ -419,7 +419,7 @@ const hasAdminUserWriteAccess = (entity: AuthUserEntity): boolean =>
 
 @ApiProblemExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
-@UseGuards(new SessionAuthGuard(), new RbacGuard())
+@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
 @Controller("admin")
 export class AdminUsersController {
   constructor(

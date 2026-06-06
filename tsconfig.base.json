@@ -35,6 +35,9 @@
       "@app/common/test": ["libs/common/test/lib/src/index.ts"],
       "@app/common/websocket": ["libs/common/websocket/lib/src/index.ts"],
       "@app/frontend-ui": ["libs/frontend/ui/lib/src/index.ts"],
+      "@app/frontend-api-support": [
+        "libs/frontend/api-support/lib/src/index.ts"
+      ],
       "@app/postgres-main": ["libs/postgres/main/shared/lib/src/index.ts"],
       "@app/postgres-main-auth": ["libs/postgres/main/auth/lib/src/index.ts"],
       "@app/common-component-test": [

@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { lstatSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 const rootConfigFileNames = new Set([
@@ -41,7 +41,11 @@ export function runCheckLibraryConfigs(
 function walk(directory: string, root: string, errors: string[]): void {
   for (const entry of readdirSync(directory)) {
     const absolutePath = join(directory, entry);
-    const stats = statSync(absolutePath);
+    const stats = lstatSync(absolutePath);
+
+    if (stats.isSymbolicLink()) {
+      continue;
+    }
 
     if (stats.isDirectory()) {
       if (entry === "node_modules" || entry === "dist") {

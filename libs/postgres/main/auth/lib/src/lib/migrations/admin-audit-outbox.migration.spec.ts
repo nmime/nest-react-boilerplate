@@ -34,7 +34,7 @@ describe("admin audit/outbox migrations", () => {
     );
     expect(sql).toContain("\"status\" varchar(32) not null default 'pending'");
     expect(sql).toContain('"payload" jsonb not null');
-    expect(sql).toContain('"ix__admin_audit_logs__tenant_created_at_id"');
+    expect(sql).toContain('"ix__admin_audit_logs__tenant_id_created_at_id"');
     expect(sql).toContain('"tenant_id", "created_at", "id"');
   });
 

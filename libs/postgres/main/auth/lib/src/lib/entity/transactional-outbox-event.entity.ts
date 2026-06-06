@@ -84,11 +84,11 @@ export const TransactionalOutboxEventEntitySchema =
     },
     indexes: [
       {
-        name: "ix__transactional_outbox_events__tenant_status_created_at",
+        name: "ix__transactional_outbox_events__tenant_id_status_created_at",
         properties: ["tenantId", "status", "createdAt"],
       },
       {
-        name: "ix__transactional_outbox_events__tenant_aggregate",
+        name: "ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id",
         properties: ["tenantId", "aggregateType", "aggregateId"],
       },
     ],

@@ -20,7 +20,7 @@ export function runMutation(options: MutationOptions = {}): number {
     args.options.get("report") ?? "test-results/mutation/command.json";
   const command = [
     "dlx",
-    "@stryker-mutator/core@latest",
+    "@stryker-mutator/core@9.6.1",
     "run",
     config,
     ...args.positional,

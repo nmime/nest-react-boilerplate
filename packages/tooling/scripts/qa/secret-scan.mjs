@@ -7,6 +7,7 @@ const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECRET_SCAN_ENGINE ?? "native";
 const reportPath = args.options.get("report") ?? "test-results/security-secrets/report.json";
+const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.0";
 const findings = [];
 const patterns = [
   { id: "private-key", severity: "critical", regex: /-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/g },
@@ -33,7 +34,7 @@ if (engine === "gitleaks" && !dryRun) {
     const result = run("gitleaks", ["detect", "--source", ".", "--redact", "--no-git", "--report-format", "json", "--report-path", reportPath]);
     if (result.status !== 0) findings.push({ rule: "gitleaks", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else if (commandExists("docker")) {
-    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/repo`, "zricethezav/gitleaks:latest", "detect", "--source", "/repo", "--redact", "--no-git"]);
+    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/repo`, gitleaksImage, "detect", "--source", "/repo", "--redact", "--no-git"]);
     if (result.status !== 0) findings.push({ rule: "gitleaks-docker", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else findings.push({ rule: "gitleaks", severity: "high", message: "SECRET_SCAN_ENGINE=gitleaks requested but gitleaks/Docker is unavailable" });
 }
@@ -57,7 +58,7 @@ if (engine !== "gitleaks" || findings.length === 0) {
   }
 }
 
-writeJson(reportPath, { status: findings.length ? "failed" : "ok", engine, dryRun, findings });
+writeJson(reportPath, { status: findings.length ? "failed" : "ok", engine, dryRun, gitleaksImage, findings });
 if (dryRun) {
   console.log(JSON.stringify({ status: "dry-run", engine, rules: patterns.map((pattern) => pattern.id), findings: findings.length, report: reportPath }));
   process.exit(0);

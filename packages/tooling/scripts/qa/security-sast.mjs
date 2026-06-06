@@ -7,6 +7,7 @@ const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECURITY_SAST_ENGINE ?? "native";
 const reportPath = args.options.get("report") ?? "test-results/security-sast/report.json";
+const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.145.0";
 const findings = [];
 const rules = [
   { id: "eval", severity: "high", regex: /\beval\s*\(/g, message: "Avoid eval; use explicit parsers or dispatch tables." },
@@ -22,7 +23,7 @@ if (engine === "semgrep" && !dryRun) {
     const result = run("semgrep", ["--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "."]);
     if (result.status !== 0) findings.push({ rule: "semgrep", severity: "high", message: "semgrep reported findings", stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-2000) });
   } else if (commandExists("docker")) {
-    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, "semgrep/semgrep", "semgrep", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "/src"]);
+    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, semgrepImage, "semgrep", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "/src"]);
     if (result.status !== 0) findings.push({ rule: "semgrep-docker", severity: "high", message: "semgrep reported findings", stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-2000) });
   } else findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
 }
@@ -47,7 +48,7 @@ for (const file of collectFiles(workspaceRoot, { include: isProductionSource }))
 
 const failSeverities = new Set((process.env.SECURITY_SAST_FAIL_SEVERITIES ?? "critical,high").split(",").map((item) => item.trim()).filter(Boolean));
 const failing = dryRun ? [] : findings.filter((finding) => failSeverities.has(finding.severity));
-writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, failSeverities: [...failSeverities], findings });
+writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, semgrepImage, failSeverities: [...failSeverities], findings });
 if (dryRun) {
   console.log(JSON.stringify({ status: "dry-run", engine, rules: rules.map((rule) => rule.id), report: reportPath }));
   process.exit(0);

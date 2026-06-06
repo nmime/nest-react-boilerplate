@@ -13,6 +13,7 @@ const sourceRoots = [
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
   "libs/frontend/ui/lib/src",
+  "libs/frontend/api-support/lib/src",
   "libs/frontend/api-client/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
@@ -23,7 +24,7 @@ const ignoredSuffixes = [
   ".stories.tsx",
 ];
 const ignoredFiles = new Set([
-  "libs/frontend/ui/lib/src/lib/api/api-client.ts",
+  "libs/frontend/api-support/lib/src/lib/api-client.ts",
 ]);
 
 const walk = (directory: string): string[] =>

@@ -2,7 +2,7 @@ import {
   buildApiHeaders,
   getApiErrorMessage,
   type ApiFetchOptions,
-} from "@app/frontend-ui";
+} from "@app/frontend-api-support";
 
 export type ApiClientRequestOptions = Omit<
   ApiFetchOptions,

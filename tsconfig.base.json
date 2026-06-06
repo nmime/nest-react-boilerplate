@@ -26,6 +26,7 @@
       "@app/common/health": ["libs/common/health/lib/src/index.ts"],
       "@app/common/intl": ["libs/common/intl/lib/src/index.ts"],
       "@app/common/logger": ["libs/common/logger/lib/src/index.ts"],
+      "@app/common/nats": ["libs/common/nats/lib/src/index.ts"],
       "@app/common/network": ["libs/common/network/lib/src/index.ts"],
       "@app/common/otel": ["libs/common/otel/lib/src/index.ts"],
       "@app/common/rabbit": ["libs/common/rabbit/lib/src/index.ts"],

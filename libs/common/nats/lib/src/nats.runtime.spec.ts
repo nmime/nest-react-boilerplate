@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Test, type TestingModule } from "@nestjs/testing";
 import type { NatsConnection, QueuedIterator } from "@nats-io/nats-core";
@@ -24,12 +25,20 @@ interface StartedNatsRuntimeContainer extends StartedServiceContainer {
 }
 
 const dockerAvailable = hasDockerRuntime();
-if (!dockerAvailable) {
+const actualDockerRuntimeAvailable = hasActualDockerRuntime();
+const runRuntimeSmoke = dockerAvailable && actualDockerRuntimeAvailable;
+if (!runRuntimeSmoke) {
   process.stderr.write(
-    "NATS runtime smoke tests: skipped because Docker is not available on this host.\n",
+    [
+      "NATS runtime smoke tests: skipped because an actual Docker runtime is not available on this host.",
+      `hasDockerRuntime=${dockerAvailable}`,
+      `actualDockerRuntimeAvailable=${actualDockerRuntimeAvailable}`,
+      "startNatsContainer will not be called.",
+      "\n",
+    ].join(" "),
   );
 }
-const describeIfDocker = dockerAvailable ? describe : describe.skip;
+const describeIfDocker = runRuntimeSmoke ? describe : describe.skip;
 
 describeIfDocker("NATS runtime smoke", () => {
   let container: StartedNatsRuntimeContainer | undefined;
@@ -236,4 +245,34 @@ async function managerDeleteStream(
   }
   const manager = await moduleRef.get(NatsJetStreamService).getManager();
   await manager.streams.delete(stream).catch(() => false);
+}
+
+/**
+ * Runtime smoke tests need a real Docker daemon, not only the shared CI
+ * convention used by hasDockerRuntime(). This spec-local guard prevents
+ * Testcontainers startup in CI sandboxes where Docker is intentionally absent.
+ */
+function hasActualDockerRuntime(): boolean {
+  if (process.env.SKIP_TESTCONTAINERS === "true") {
+    return false;
+  }
+
+  const dockerBinaryPaths = [
+    "docker",
+    "/usr/bin/docker",
+    "/usr/local/bin/docker",
+    "/opt/homebrew/bin/docker",
+  ] as const;
+
+  return dockerBinaryPaths.some((dockerBinaryPath) => {
+    try {
+      const result = spawnSync(dockerBinaryPath, ["info"], {
+        stdio: "ignore",
+        timeout: 5_000,
+      });
+      return result.status === 0;
+    } catch {
+      return false;
+    }
+  });
 }

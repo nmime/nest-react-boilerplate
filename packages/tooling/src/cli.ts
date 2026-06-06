@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
 import { runMutation } from "./commands/qa/mutation";
+import { runStaticCheck } from "./commands/tooling/static-check";
 import { run } from "./runtime/process";
 
 export interface CommandContext {
@@ -37,6 +38,11 @@ register(
   "qa:mutation",
   "Run Stryker mutation testing or write its dry-run report.",
   ({ argv, workspaceRoot }) => runMutation({ argv, workspaceRoot }),
+);
+register(
+  "tooling:static-check",
+  "Run node --check and safe import smoke checks for repo tooling scripts.",
+  ({ workspaceRoot }) => runStaticCheck({ workspaceRoot }),
 );
 
 registerLegacy(

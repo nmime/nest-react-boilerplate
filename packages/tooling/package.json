@@ -9,7 +9,8 @@
   },
   "scripts": {
     "tooling": "node ./bin/repo-tooling.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "static-check": "node ./bin/repo-tooling.mjs tooling static-check"
   },
   "files": [
     "bin",

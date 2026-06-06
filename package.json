@@ -34,8 +34,8 @@
     "docker:prod:config:check": "node scripts/validate-docker-compose-prod.mjs",
     "test:docker-smoke": "node packages/tooling/bin/repo-tooling.mjs docker smoke",
     "test:fullstack": "node packages/tooling/bin/repo-tooling.mjs docker fullstack-e2e",
-    "check:fast": "pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
-    "check": "pnpm run format:check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz && pnpm run test:property && pnpm run test:world-class && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check:fast": "pnpm run tooling:static-check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
+    "check": "pnpm run format:check && pnpm run tooling:static-check && pnpm run db:migrations:check && pnpm run lib:configs:check && pnpm run api:contracts:check && pnpm run api:clients:check && pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz && pnpm run test:property && pnpm run test:world-class && pnpm run lint && pnpm run typecheck && pnpm run test",
     "lib:configs:check": "node packages/tooling/bin/repo-tooling.mjs project check-library-configs",
     "init:project": "node packages/tooling/bin/repo-tooling.mjs project init",
     "db:seed": "node packages/tooling/bin/repo-tooling.mjs db seed",
@@ -65,7 +65,7 @@
     "test:disaster-recovery": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate disaster-recovery",
     "test:backup-restore": "pnpm run db:restore:drill -- --ci --dry-run",
     "test:observability": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate observability",
-    "test:migrations:rollback": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate migration-rollback",
+    "test:migrations:rollback": "pnpm run db:migrations:rollback-check",
     "test:concurrency": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate concurrency-race",
     "test:reliability:smoke": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate reliability-smoke",
     "quality:world-class": "pnpm run test:world-class",
@@ -73,7 +73,9 @@
     "db:restore:drill": "node packages/tooling/bin/repo-tooling.mjs db restore-drill",
     "test:restore-drill": "pnpm run db:restore:drill -- --ci --dry-run",
     "helm:validate": "bash scripts/validate-helm.sh",
-    "generate:feature": "node packages/tooling/bin/repo-tooling.mjs project generate-vertical-slice"
+    "generate:feature": "node packages/tooling/bin/repo-tooling.mjs project generate-vertical-slice",
+    "tooling:static-check": "node packages/tooling/bin/repo-tooling.mjs tooling static-check",
+    "db:migrations:rollback-check": "node packages/tooling/bin/repo-tooling.mjs db migrations rollback-check"
   },
   "dependencies": {
     "@casl/ability": "6.7.0",

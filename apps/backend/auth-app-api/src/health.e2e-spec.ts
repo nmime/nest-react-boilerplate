@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
@@ -5,6 +6,10 @@ import {
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createProblemValidationPipe } from "@app/common/validation";
+import type {
+  AuthenticatedPrincipal,
+  AuthenticatedSession,
+} from "@app/feature-auth-shared";
 import { AuthApiModule } from "./auth-api.module";
 
 type UserThemePreference = "system" | "light" | "dark";
@@ -26,6 +31,81 @@ const authorizationScheme = "Bearer";
 const bearerAuthorization = (token: string): string =>
   [authorizationScheme, token].join(" ");
 
+function readSessionId(
+  cookieHeader: string | string[] | undefined,
+): string | undefined {
+  const header = Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader;
+
+  return header
+    ?.split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith("nrb.sid="))
+    ?.slice("nrb.sid=".length);
+}
+
+function installInMemorySession(app: NestFastifyApplication): void {
+  const sessions = new Map<string, AuthenticatedPrincipal>();
+  const fastify = app.getHttpAdapter().getInstance() as {
+    addHook: (
+      hook: "preHandler",
+      handler: (
+        request: { headers: { cookie?: string | string[] } },
+        reply: { header: (name: string, value: string) => void },
+        done: () => void,
+      ) => void,
+    ) => void;
+  };
+
+  fastify.addHook("preHandler", (request, reply, done) => {
+    let sessionId = readSessionId(request.headers.cookie);
+    const session = {
+      ...(sessionId && sessions.has(sessionId)
+        ? { user: sessions.get(sessionId) }
+        : {}),
+      destroy: (callback?: (error?: unknown) => void) => {
+        if (sessionId) {
+          sessions.delete(sessionId);
+        }
+        delete session.user;
+        reply.header("set-cookie", "nrb.sid=; Path=/; Max-Age=0; HttpOnly");
+        callback?.();
+      },
+      regenerate: (callback?: (error?: unknown) => void) => {
+        sessionId = randomUUID();
+        callback?.();
+      },
+      save: (callback?: (error?: unknown) => void) => {
+        if (sessionId && session.user) {
+          sessions.set(sessionId, session.user);
+          reply.header("set-cookie", `nrb.sid=${sessionId}; Path=/; HttpOnly`);
+        }
+        callback?.();
+      },
+    } as AuthenticatedSession;
+
+    (request as { session?: AuthenticatedSession }).session = session;
+    done();
+  });
+}
+
+function sessionCookieHeader(response: {
+  headers: Record<string, string | string[] | undefined>;
+}): string {
+  const setCookie = response.headers["set-cookie"];
+  let cookies: string[] = [];
+
+  if (Array.isArray(setCookie)) {
+    cookies = setCookie;
+  } else if (setCookie) {
+    cookies = [setCookie];
+  }
+
+  return cookies
+    .map((cookie) => cookie.split(";")[0])
+    .filter((cookie) => cookie.length > 0)
+    .join("; ");
+}
+
 describe("auth-app-api e2e", () => {
   let app: NestFastifyApplication;
 
@@ -39,12 +119,15 @@ describe("auth-app-api e2e", () => {
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
     );
+    installInMemorySession(app);
     app.useGlobalPipes(createProblemValidationPipe());
     await app.init();
   });
 
   afterAll(async () => {
     await app.close();
+    delete process.env.AUTH_PERSISTENCE;
+    delete process.env.AUTH_JWT_SECRET;
   });
 
   it("GET /health returns ok", async () => {
@@ -56,7 +139,7 @@ describe("auth-app-api e2e", () => {
     });
   });
 
-  it("registers, logs in, returns me, and logs out with a bearer token", async () => {
+  it("supports session-only and bearer-only callers for auth self endpoints", async () => {
     const password = `e2e-${Date.now().toString(36)}-secret`;
     const register = await app.inject({
       method: "POST",
@@ -70,26 +153,39 @@ describe("auth-app-api e2e", () => {
     });
     expect(register.statusCode).toBe(201);
     const registerBody = register.json<AuthSessionResponse>();
+    let registerCookieHeader = sessionCookieHeader(register);
+    expect(registerCookieHeader).toContain("nrb.sid=");
     expect(registerBody.data.user.email).toBe("e2e@example.com");
     expect(registerBody.data.user.theme).toBe("system");
     expect(registerBody.data.refreshToken).toEqual(expect.any(String));
 
-    const me = await app.inject({
+    const sessionOnlyMe = await app.inject({
+      method: "GET",
+      url: "/auth/me",
+      headers: { cookie: registerCookieHeader },
+    });
+    expect(sessionOnlyMe.statusCode).toBe(200);
+    const sessionOnlyMeBody = sessionOnlyMe.json<{
+      data?: {
+        principal?: { email?: string; theme?: UserThemePreference };
+        user?: { theme?: UserThemePreference };
+      };
+    }>();
+    expect(sessionOnlyMeBody.data?.principal?.email).toBe("e2e@example.com");
+    expect(sessionOnlyMeBody.data?.user?.theme).toBe("system");
+
+    const bearerOnlyMe = await app.inject({
       method: "GET",
       url: "/auth/me",
       headers: {
         authorization: bearerAuthorization(registerBody.data.accessToken),
       },
     });
-    expect(me.statusCode).toBe(200);
-    const meBody = me.json<{
-      data?: {
-        principal?: { email?: string; theme?: UserThemePreference };
-        user?: { theme?: UserThemePreference };
-      };
+    expect(bearerOnlyMe.statusCode).toBe(200);
+    const bearerOnlyMeBody = bearerOnlyMe.json<{
+      data?: { principal?: { email?: string; theme?: UserThemePreference } };
     }>();
-    expect(meBody.data?.principal?.email).toBe("e2e@example.com");
-    expect(meBody.data?.user?.theme).toBe("system");
+    expect(bearerOnlyMeBody.data?.principal?.email).toBe("e2e@example.com");
 
     const crossTenant = await app.inject({
       method: "GET",
@@ -123,7 +219,7 @@ describe("auth-app-api e2e", () => {
     });
     expect(replayedRefresh.statusCode).toBe(401);
 
-    const preferences = await app.inject({
+    const bearerOnlyPreferences = await app.inject({
       method: "PATCH",
       url: "/auth/me/preferences",
       headers: {
@@ -132,34 +228,97 @@ describe("auth-app-api e2e", () => {
       },
       payload: JSON.stringify({ locale: "ru", theme: "dark" }),
     });
-    expect(preferences.statusCode).toBe(200);
-    const preferencesBody = preferences.json<{
+    expect(bearerOnlyPreferences.statusCode).toBe(200);
+    const bearerOnlyPreferencesBody = bearerOnlyPreferences.json<{
       data?: { locale?: string; theme?: UserThemePreference };
     }>();
-    expect(preferencesBody.data?.locale).toBe("ru");
-    expect(preferencesBody.data?.theme).toBe("dark");
+    expect(bearerOnlyPreferencesBody.data?.locale).toBe("ru");
+    expect(bearerOnlyPreferencesBody.data?.theme).toBe("dark");
 
-    const locale = await app.inject({
+    const sessionOnlyPreferences = await app.inject({
+      method: "PATCH",
+      url: "/auth/me/preferences",
+      headers: {
+        cookie: registerCookieHeader,
+        "content-type": "application/json",
+      },
+      payload: JSON.stringify({ locale: "en", theme: "light" }),
+    });
+    expect(sessionOnlyPreferences.statusCode).toBe(200);
+    const preferencesCookieHeader = sessionCookieHeader(sessionOnlyPreferences);
+    if (preferencesCookieHeader) {
+      registerCookieHeader = preferencesCookieHeader;
+    }
+    const sessionOnlyPreferencesBody = sessionOnlyPreferences.json<{
+      data?: { locale?: string; theme?: UserThemePreference };
+    }>();
+    expect(sessionOnlyPreferencesBody.data?.locale).toBe("en");
+    expect(sessionOnlyPreferencesBody.data?.theme).toBe("light");
+
+    const bearerOnlyLocale = await app.inject({
       method: "PATCH",
       url: "/auth/me/locale",
       headers: {
         authorization: bearerAuthorization(registerBody.data.accessToken),
         "content-type": "application/json",
       },
-      payload: JSON.stringify({ locale: "en" }),
+      payload: JSON.stringify({ locale: "ru" }),
     });
-    expect(locale.statusCode).toBe(200);
-    const localeBody = locale.json<{
+    expect(bearerOnlyLocale.statusCode).toBe(200);
+    const bearerOnlyLocaleBody = bearerOnlyLocale.json<{
       data?: { locale?: string; theme?: UserThemePreference };
     }>();
-    expect(localeBody.data?.locale).toBe("en");
-    expect(localeBody.data?.theme).toBe("dark");
+    expect(bearerOnlyLocaleBody.data?.locale).toBe("ru");
+    expect(bearerOnlyLocaleBody.data?.theme).toBe("light");
+
+    const sessionOnlyLocale = await app.inject({
+      method: "PATCH",
+      url: "/auth/me/locale",
+      headers: {
+        cookie: registerCookieHeader,
+        "content-type": "application/json",
+      },
+      payload: JSON.stringify({ locale: "en" }),
+    });
+    expect(sessionOnlyLocale.statusCode).toBe(200);
+    const localeCookieHeader = sessionCookieHeader(sessionOnlyLocale);
+    if (localeCookieHeader) {
+      registerCookieHeader = localeCookieHeader;
+    }
+    const sessionOnlyLocaleBody = sessionOnlyLocale.json<{
+      data?: { locale?: string; theme?: UserThemePreference };
+    }>();
+    expect(sessionOnlyLocaleBody.data?.locale).toBe("en");
+    expect(sessionOnlyLocaleBody.data?.theme).toBe("light");
+
+    const invalidRegisterLocale = await app.inject({
+      method: "POST",
+      url: "/auth/register",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({
+        email: "invalid-locale@example.com",
+        password,
+        locale: "fr",
+      }),
+    });
+    expect(invalidRegisterLocale.statusCode).toBe(400);
+
+    const invalidLocale = await app.inject({
+      method: "PATCH",
+      url: "/auth/me/locale",
+      headers: {
+        cookie: registerCookieHeader,
+        "content-type": "application/json",
+      },
+      payload: JSON.stringify({ locale: "fr" }),
+    });
+    expect(invalidLocale.statusCode).toBe(400);
 
     const invalidTheme = await app.inject({
       method: "PATCH",
       url: "/auth/me/preferences",
       headers: {
-        authorization: bearerAuthorization(registerBody.data.accessToken),
+        cookie: registerCookieHeader,
         "content-type": "application/json",
       },
       payload: JSON.stringify({ theme: "sepia" }),
@@ -176,7 +335,7 @@ describe("auth-app-api e2e", () => {
     const loginBody = login.json<AuthSessionResponse>();
     expect(loginBody.data.user.email).toBe("e2e@example.com");
 
-    const logout = await app.inject({
+    const bearerOnlyLogout = await app.inject({
       method: "POST",
       url: "/auth/logout",
       headers: {
@@ -185,8 +344,23 @@ describe("auth-app-api e2e", () => {
       },
       payload: JSON.stringify({ refreshToken: loginBody.data.refreshToken }),
     });
-    expect(logout.statusCode).toBe(201);
-    expect(logout.json()).toEqual({ data: { loggedOut: true } });
+    expect(bearerOnlyLogout.statusCode).toBe(201);
+    expect(bearerOnlyLogout.json()).toEqual({ data: { loggedOut: true } });
+
+    const sessionOnlyLogout = await app.inject({
+      method: "POST",
+      url: "/auth/logout",
+      headers: { cookie: registerCookieHeader },
+    });
+    expect(sessionOnlyLogout.statusCode).toBe(201);
+    expect(sessionOnlyLogout.json()).toEqual({ data: { loggedOut: true } });
+
+    const sessionAfterLogout = await app.inject({
+      method: "GET",
+      url: "/auth/me",
+      headers: { cookie: registerCookieHeader },
+    });
+    expect(sessionAfterLogout.statusCode).toBe(401);
   });
 
   it("GET /live and /ready return ok", async () => {

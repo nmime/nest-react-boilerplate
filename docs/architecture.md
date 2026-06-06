@@ -8,7 +8,7 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 - `user-app` in `apps/frontend/app`
 - `landing-app` in `apps/frontend/landing`
 
-All three apps are Vite React apps that share UI primitives from `libs/frontend/ui`.
+All three apps are Vite React apps. They share React UI primitives from `libs/frontend/ui`, call typed backend wrappers from `libs/frontend/api-client`, and rely on `libs/frontend/api-support` for browser-safe request primitives such as `apiFetch`, locale-aware API headers, and fallback API error copy.
 
 ## Backend apps
 
@@ -31,7 +31,9 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 - `libs/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/feature/user/shared` and `libs/feature/user/main` contain the protected user profile feature.
 - `libs/feature/admin/shared` and `libs/feature/admin/main` contain the protected admin RBAC/profile feature.
-- `libs/frontend/ui` contains shared React components and layout.
+- `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
+- `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
+- `libs/frontend/ui` contains shared React components, layout, providers, and a compatibility re-export for the existing API helper surface. New request implementation code belongs in API support, not UI.
 
 ## Nx architecture tags
 
@@ -44,7 +46,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:feature-shared` is for backend feature contracts/services shared by multiple apps or feature-main libs.
 - `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses.
-- `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks.
+- `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
 - `scope:<domain>` identifies ownership such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, or `scope:shared`.
 
 New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
@@ -57,6 +59,8 @@ Backend feature libraries use singular `libs/feature/...` paths and singular `@a
 - Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/feature-admin-shared`.
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
+- Frontend API support: `@app/frontend-api-support`.
+- Frontend API SDK: `@app/api-client`.
 - Frontend UI: `@app/frontend-ui`.
 
 For the next DB stage, data-access libs should contain `entity/`, `repository/`, and module/config exports. Feature libs should consume repositories through Nest providers instead of importing app code.

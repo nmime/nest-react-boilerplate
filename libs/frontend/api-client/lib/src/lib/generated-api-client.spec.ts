@@ -1,4 +1,4 @@
-import { configureApiLocale } from "@app/frontend-ui";
+import { configureApiLocale } from "@app/frontend-api-support";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   authControllerLogin,
@@ -132,13 +132,16 @@ describe("generated api clients", () => {
   });
 
   it("normalizes OpenAPI options and unwraps non-envelope data", () => {
-    const currentLocation = globalThis.location;
-    vi.stubGlobal("location", undefined);
-
-    expect(toOpenApiFetchOptions().baseUrl).toBe("http://localhost");
+    expect(toOpenApiFetchOptions({ baseUrl: "" }).baseUrl).toBe(
+      globalThis.location.origin,
+    );
+    expect(toOpenApiFetchOptions({ baseUrl: "/api/" }).baseUrl).toBe(
+      `${globalThis.location.origin}/api`,
+    );
+    expect(toOpenApiFetchOptions({ baseUrl: "http://api.test/" }).baseUrl).toBe(
+      "http://api.test",
+    );
     expect(unwrapEnvelopeData({ value: "raw" })).toEqual({ value: "raw" });
-
-    vi.stubGlobal("location", currentLocation);
   });
 
   it("unwraps success envelopes through the data helper", async () => {

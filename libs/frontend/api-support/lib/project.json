@@ -1,15 +1,15 @@
 {
-  "name": "@app/api-client",
+  "name": "@app/frontend-api-support",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/frontend/api-client/lib/src",
+  "sourceRoot": "libs/frontend/api-support/lib/src",
   "projectType": "library",
-  "tags": ["platform:frontend", "type:sdk", "scope:shared"],
+  "tags": ["platform:frontend", "type:util", "scope:shared"],
   "targets": {
     "test": {
       "executor": "nx:run-commands",
       "cache": true,
       "options": {
-        "cwd": "libs/frontend/api-client/lib",
+        "cwd": "libs/frontend/api-support/lib",
         "command": "vitest run --config vitest.config.mts"
       },
       "inputs": [
@@ -19,7 +19,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/frontend/api-client"]
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/api-support"]
     }
   }
 }

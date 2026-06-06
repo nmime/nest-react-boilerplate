@@ -88,7 +88,12 @@ module.exports = [
             },
             {
               sourceTag: "type:frontend-app",
-              onlyDependOnLibsWithTags: ["type:ui", "type:common", "type:util"],
+              onlyDependOnLibsWithTags: [
+                "type:ui",
+                "type:common",
+                "type:util",
+                "type:sdk",
+              ],
             },
             {
               sourceTag: "type:feature-main",
@@ -149,6 +154,45 @@ module.exports = [
                 "type:sdk",
                 "type:common",
                 "type:util",
+              ],
+            },
+
+            {
+              sourceTag: "scope:admin",
+              onlyDependOnLibsWithTags: [
+                "scope:admin",
+                "scope:auth",
+                "scope:postgres",
+                "scope:shared",
+              ],
+            },
+            {
+              sourceTag: "scope:auth",
+              onlyDependOnLibsWithTags: [
+                "scope:auth",
+                "scope:admin",
+                "scope:postgres",
+                "scope:shared",
+              ],
+            },
+            {
+              sourceTag: "scope:user",
+              onlyDependOnLibsWithTags: [
+                "scope:user",
+                "scope:auth",
+                "scope:shared",
+              ],
+            },
+            {
+              sourceTag: "scope:landing",
+              onlyDependOnLibsWithTags: ["scope:landing", "scope:shared"],
+            },
+            {
+              sourceTag: "scope:postgres",
+              onlyDependOnLibsWithTags: [
+                "scope:postgres",
+                "scope:auth",
+                "scope:shared",
               ],
             },
           ],

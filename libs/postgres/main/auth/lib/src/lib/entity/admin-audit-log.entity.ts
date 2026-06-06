@@ -78,15 +78,15 @@ export const AdminAuditLogEntitySchema = new EntitySchema<AdminAuditLogEntity>({
   },
   indexes: [
     {
-      name: "ix__admin_audit_logs__tenant_created_at",
+      name: "ix__admin_audit_logs__tenant_id_created_at",
       properties: ["tenantId", "createdAt"],
     },
     {
-      name: "ix__admin_audit_logs__tenant_action",
+      name: "ix__admin_audit_logs__tenant_id_action",
       properties: ["tenantId", "action"],
     },
     {
-      name: "ix__admin_audit_logs__tenant_target_user_id",
+      name: "ix__admin_audit_logs__tenant_id_target_user_id",
       properties: ["tenantId", "targetUserId"],
     },
   ],

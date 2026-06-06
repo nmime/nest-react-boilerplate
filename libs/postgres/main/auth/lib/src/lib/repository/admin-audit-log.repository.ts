@@ -6,6 +6,10 @@ import {
   DefaultAuthTenantId,
   type AdminAuditLogEntityInput,
 } from "../entity";
+import {
+  normalizePageLimit,
+  normalizePageOffset,
+} from "./admin-user-mutation.repository";
 import type { AuthUserRepositoryError } from "./auth-user.repository";
 
 export interface AdminAuditLogListInput {
@@ -35,9 +39,9 @@ export class AdminAuditLogRepository {
   ): ResultAsync<AdminAuditLogEntity[], AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.find(AdminAuditLogEntity, toAuditFilter(input), {
-        limit: input.limit ?? 50,
-        offset: input.offset ?? 0,
-        orderBy: { createdAt: "DESC" },
+        limit: normalizePageLimit(input.limit),
+        offset: normalizePageOffset(input.offset),
+        orderBy: { createdAt: "DESC", id: "DESC" },
       }),
       mapRepositoryError,
     );

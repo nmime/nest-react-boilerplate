@@ -9,9 +9,11 @@ export const DefaultNatsTestImage = "nats:2.10-alpine";
 export const DefaultNatsClientPort = 4222;
 export const DefaultNatsMonitoringPort = 8222;
 
-export type NatsContainerOptions = Partial<
+export interface NatsContainerOptions extends Partial<
   Pick<GenericServiceContainerOptions, "image" | "startupTimeoutMs">
->;
+> {
+  jetStream?: boolean;
+}
 
 export function createNatsContainer(options: NatsContainerOptions = {}) {
   return createGenericServiceContainer({
@@ -20,7 +22,11 @@ export function createNatsContainer(options: NatsContainerOptions = {}) {
     startupTimeoutMs: options.startupTimeoutMs,
   })
     .withExposedPorts(DefaultNatsClientPort, DefaultNatsMonitoringPort)
-    .withCommand(["-m", `${DefaultNatsMonitoringPort}`])
+    .withCommand(
+      options.jetStream
+        ? ["-js", "-m", `${DefaultNatsMonitoringPort}`]
+        : ["-m", `${DefaultNatsMonitoringPort}`],
+    )
     .withWaitStrategy(Wait.forLogMessage(/Server is ready/));
 }
 
@@ -50,4 +56,12 @@ export async function startNatsContainer(
     monitoringPort,
     monitoringUrl: `http://${host}:${monitoringPort}`,
   };
+}
+
+export async function stopNatsContainer(
+  container: StartedServiceContainer | undefined,
+): Promise<void> {
+  if (container) {
+    await container.container.stop();
+  }
 }

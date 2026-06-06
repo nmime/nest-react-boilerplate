@@ -34,28 +34,32 @@ export const UiSearchFilterToolbar = ({
   };
 
   return (
-    <form
-      aria-label={label}
+    <div
       className={cn("xr-toolbar", className)}
       data-admin-primitive="search-filter-toolbar"
-      onSubmit={handleSubmit}
-      role="search"
     >
-      <div className="xr-toolbar__search">
-        <UiLabel className="sr-only" htmlFor={searchId}>
-          {searchLabel}
-        </UiLabel>
-        <UiInput
-          id={searchId}
-          onChange={(event) => onSearchChange?.(event.currentTarget.value)}
-          placeholder={searchPlaceholder}
-          type="search"
-          value={searchValue}
-        />
-      </div>
+      <form
+        aria-label={label}
+        className="xr-toolbar__search-form"
+        onSubmit={handleSubmit}
+        role="search"
+      >
+        <div className="xr-toolbar__search">
+          <UiLabel className="sr-only" htmlFor={searchId}>
+            {searchLabel}
+          </UiLabel>
+          <UiInput
+            id={searchId}
+            onChange={(event) => onSearchChange?.(event.currentTarget.value)}
+            placeholder={searchPlaceholder}
+            type="search"
+            value={searchValue}
+          />
+        </div>
+      </form>
       {children ? <div className="xr-toolbar__filters">{children}</div> : null}
       {actions ? <div className="xr-toolbar__actions">{actions}</div> : null}
-    </form>
+    </div>
   );
 };
 

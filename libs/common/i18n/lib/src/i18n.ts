@@ -127,6 +127,8 @@ export const translations = {
     "admin.users.policyDialog.description":
       "Update roles and permissions for {{email}}. Backend remains authoritative.",
     "admin.users.reasonLabel": "Reason",
+    "admin.users.statusDialog.reasonLabel": "Status update audit reason",
+    "admin.users.policyDialog.reasonLabel": "Access policy audit reason",
     "admin.users.reasonPlaceholder": "Optional reason for audit trail",
     "admin.users.status.unchanged": "Status unchanged",
     "admin.roles.eyebrow": "RBAC catalog",
@@ -135,6 +137,7 @@ export const translations = {
     "admin.roles.emptyEyebrow": "No roles catalog entries",
     "admin.roles.emptyTitle":
       "No client-side fake data is shown; waiting for real /admin/roles data.",
+    "admin.roles.error.requestFailed": "Roles catalog request failed",
     "admin.roles.column.permission": "Permission",
     "admin.roles.column.resource": "Resource",
     "admin.roles.column.action": "Action",
@@ -145,6 +148,7 @@ export const translations = {
     "admin.audit.emptyEyebrow": "No audit events",
     "admin.audit.emptyTitle":
       "No client-side fake data is shown; this table only renders real /admin/audit results.",
+    "admin.audit.error.requestFailed": "Audit log request failed",
     "admin.audit.column.action": "Action",
     "admin.audit.column.resource": "Resource",
     "admin.audit.column.actor": "Actor",
@@ -405,6 +409,8 @@ export const translations = {
     "admin.users.policyDialog.description":
       "Обновить роли и разрешения для {{email}}. Бэкенд остается источником истины.",
     "admin.users.reasonLabel": "Причина",
+    "admin.users.statusDialog.reasonLabel": "Причина аудита изменения статуса",
+    "admin.users.policyDialog.reasonLabel": "Причина аудита политики доступа",
     "admin.users.reasonPlaceholder": "Необязательная причина для аудита",
     "admin.users.status.unchanged": "Статус без изменений",
     "admin.roles.eyebrow": "Каталог RBAC",
@@ -413,6 +419,7 @@ export const translations = {
     "admin.roles.emptyEyebrow": "Нет записей каталога ролей",
     "admin.roles.emptyTitle":
       "Клиентские фиктивные данные не показываются; ожидаются реальные данные /admin/roles.",
+    "admin.roles.error.requestFailed": "Не удалось запросить каталог ролей",
     "admin.roles.column.permission": "Разрешение",
     "admin.roles.column.resource": "Ресурс",
     "admin.roles.column.action": "Действие",
@@ -423,6 +430,7 @@ export const translations = {
     "admin.audit.emptyEyebrow": "Событий аудита нет",
     "admin.audit.emptyTitle":
       "Клиентские фиктивные данные не показываются; таблица отображает только реальные результаты /admin/audit.",
+    "admin.audit.error.requestFailed": "Не удалось запросить журнал аудита",
     "admin.audit.column.action": "Действие",
     "admin.audit.column.resource": "Ресурс",
     "admin.audit.column.actor": "Субъект",

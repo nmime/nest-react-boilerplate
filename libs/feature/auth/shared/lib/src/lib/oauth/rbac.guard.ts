@@ -90,17 +90,15 @@ export class RbacGuard implements CanActivate {
     return principal;
   }
 
-  protected requiresPermissionMetadata(context: ExecutionContext): boolean {
-    void context;
-
+  protected requiresPermissionMetadata(context: ExecutionContext): boolean;
+  protected requiresPermissionMetadata(): boolean {
     return false;
   }
 
   protected evaluateDomainPermission(
     context: PermissionEvaluationContext,
-  ): PermissionEvaluationResult {
-    void context;
-
+  ): PermissionEvaluationResult;
+  protected evaluateDomainPermission(): PermissionEvaluationResult {
     return undefined;
   }
 

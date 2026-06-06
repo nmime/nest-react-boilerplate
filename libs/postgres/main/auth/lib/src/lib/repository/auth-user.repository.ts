@@ -9,6 +9,10 @@ import {
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
 } from "../entity";
+import {
+  normalizePageLimit,
+  normalizePageOffset,
+} from "./admin-user-mutation.repository";
 
 export interface AuthUserRepositoryError {
   code: "repository_error";
@@ -63,8 +67,8 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity[], AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.find(AuthUserEntity, this.toUserFilter(input), {
-        limit: input.limit ?? 50,
-        offset: input.offset ?? 0,
+        limit: normalizePageLimit(input.limit),
+        offset: normalizePageOffset(input.offset),
         orderBy: { createdAt: "DESC" },
       }),
       mapRepositoryError,

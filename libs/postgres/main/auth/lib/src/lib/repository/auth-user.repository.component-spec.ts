@@ -11,8 +11,16 @@ import {
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthPostgresModule } from "../auth-postgres.module";
-import { AuthUserEntity, AuthUserEntitySchema } from "../entity";
+import {
+  AdminAuditLogEntity,
+  AdminAuditLogEntitySchema,
+  AuthUserEntity,
+  AuthUserEntitySchema,
+  TransactionalOutboxEventEntity,
+  TransactionalOutboxEventEntitySchema,
+} from "../entity";
 import { AuthUserRepository } from "./auth-user.repository";
+import { AdminUserMutationRepository } from "./admin-user-mutation.repository";
 
 const dockerAvailable = hasDockerRuntime();
 if (!dockerAvailable) {
@@ -28,6 +36,7 @@ describeIfDocker("AuthUserRepository component", () => {
   let app: INestApplication | undefined;
   let orm: MikroORM;
   let authUsers: AuthUserRepository;
+  let adminUserMutations: AdminUserMutationRepository;
 
   beforeAll(async () => {
     container = await startPostgresContainer();
@@ -36,7 +45,9 @@ describeIfDocker("AuthUserRepository component", () => {
       imports: [
         MikroOrmModule.forRoot(
           createPostgresContainerMikroOrmOptions(container, [
+            AdminAuditLogEntitySchema,
             AuthUserEntitySchema,
+            TransactionalOutboxEventEntitySchema,
           ]),
         ),
         AuthPostgresModule,
@@ -49,9 +60,12 @@ describeIfDocker("AuthUserRepository component", () => {
     orm = moduleRef.get(MikroORM);
     await orm.schema.refresh();
     authUsers = moduleRef.get(AuthUserRepository);
+    adminUserMutations = moduleRef.get(AdminUserMutationRepository);
   });
 
   afterEach(async () => {
+    await orm.em.nativeDelete(TransactionalOutboxEventEntity, {});
+    await orm.em.nativeDelete(AdminAuditLogEntity, {});
     await orm.em.nativeDelete(AuthUserEntity, {});
     orm.em.clear();
   });
@@ -147,5 +161,80 @@ describeIfDocker("AuthUserRepository component", () => {
     });
 
     expect(duplicate._unsafeUnwrapErr().code).toBe("repository_error");
+  });
+
+  it("atomically writes sensitive admin mutations with audit and outbox rows", async () => {
+    const user = (
+      await authUsers.createUser({
+        email: "powerful-admin@example.com",
+        roles: ["admin"],
+        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+      })
+    )._unsafeUnwrap();
+    const actor = (
+      await authUsers.createUser({
+        email: "second-powerful-admin@example.com",
+        roles: ["admin"],
+        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+      })
+    )._unsafeUnwrap();
+
+    const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
+      targetUserId: user.id,
+      actorUserId: actor.id,
+      action: "admin.user.status.update",
+      policy: { status: "disabled" },
+      audit: { metadata: { requestId: "req-component" } },
+    });
+
+    expect(mutation._unsafeUnwrap()).toMatchObject({
+      before: { status: "active" },
+      after: { status: "disabled" },
+      auditLog: {
+        action: "admin.user.status.update",
+        before: { status: "active" },
+        after: { status: "disabled" },
+      },
+      outboxEvent: {
+        aggregateType: "admin.user",
+        aggregateId: user.id,
+        eventType: "admin.user.status.update",
+        status: "pending",
+      },
+    });
+    expect(await orm.em.count(AdminAuditLogEntity, {})).toBe(1);
+    expect(await orm.em.count(TransactionalOutboxEventEntity, {})).toBe(1);
+  });
+
+  it("blocks last powerful admin changes when another active admin lacks required permissions", async () => {
+    const onlyPowerfulAdmin = (
+      await authUsers.createUser({
+        email: "only-powerful-admin@example.com",
+        roles: ["admin"],
+        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+      })
+    )._unsafeUnwrap();
+    await authUsers.createUser({
+      email: "role-only-admin@example.com",
+      roles: ["admin"],
+      permissions: ["admin:users:read"],
+    });
+
+    const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
+      targetUserId: onlyPowerfulAdmin.id,
+      actorUserId: "00000000-0000-4000-8000-000000000099",
+      action: "admin.user.access_policy.update",
+      policy: {
+        roles: ["admin"],
+        permissions: ["admin:users:write"],
+      },
+      audit: { metadata: { requestId: "req-component" } },
+    });
+
+    expect(mutation._unsafeUnwrapErr().message).toBe(
+      "At least one active administrator must retain admin write access.",
+    );
+    expect(await orm.em.count(AdminAuditLogEntity, {})).toBe(0);
+    expect(await orm.em.count(TransactionalOutboxEventEntity, {})).toBe(0);
   });
 });

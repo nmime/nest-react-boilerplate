@@ -57,7 +57,9 @@ import {
 } from "@app/feature-admin-shared";
 import {
   AdminAuditLogRepository,
+  AdminUserMutationRepository,
   AuthUserRepository,
+  type AdminUserMutationResult,
   type AdminAuditLogEntity,
   type AuthUserEntity,
   type AuthUserStatus,
@@ -358,6 +360,26 @@ const unwrapRepositoryResult = <T>(
   );
 };
 
+const unwrapSensitiveMutationResult = <T>(
+  result: Result<T, { message?: string }>,
+): T => {
+  if (result.isOk()) {
+    return result.value;
+  }
+
+  const message = result.error.message ?? "Admin repository operation failed.";
+  if (
+    message ===
+      "Administrators cannot remove their own active admin write access." ||
+    message ===
+      "At least one active administrator must retain admin write access."
+  ) {
+    throw new BadRequestException(message);
+  }
+
+  throw new InternalServerErrorException(message);
+};
+
 const toIso = (value: Date | undefined | null): string | undefined =>
   value && value.getTime() > 0 ? value.toISOString() : undefined;
 
@@ -393,29 +415,22 @@ const toAdminAuditLogView = (
   createdAt: entity.createdAt.toISOString(),
 });
 
-const accessPolicySnapshot = (
-  entity: AuthUserEntity,
-): Record<string, unknown> => ({
-  roles: entity.roles,
-  permissions: entity.permissions,
-  status: entity.status,
-});
-
 const metadataFromRequest = (
   request: AuthenticatedRequest,
 ): Record<string, unknown> => ({
-  ...(request.headers?.["x-request-id"]
-    ? { requestId: request.headers["x-request-id"] }
+  ...(normalizeHeaderScalar(request.headers?.["x-request-id"])
+    ? { requestId: normalizeHeaderScalar(request.headers?.["x-request-id"]) }
     : {}),
 });
 
-const isActiveAdmin = (entity: AuthUserEntity): boolean =>
-  entity.status === "active" && entity.roles.includes(ADMIN_ROLE);
+const normalizeHeaderScalar = (
+  value: string | string[] | undefined,
+): string | undefined => {
+  const scalar = Array.isArray(value) ? value[0] : value;
+  const trimmed = scalar?.trim();
 
-const hasAdminUserWriteAccess = (entity: AuthUserEntity): boolean =>
-  entity.roles.includes(ADMIN_ROLE) &&
-  entity.permissions.includes(ADMIN_USERS_WRITE_PERMISSION) &&
-  entity.permissions.includes(ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION);
+  return trimmed ? trimmed.slice(0, 256) : undefined;
+};
 
 @ApiProblemExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
@@ -425,52 +440,8 @@ export class AdminUsersController {
   constructor(
     private readonly users: AuthUserRepository,
     private readonly auditLogs: AdminAuditLogRepository,
+    private readonly adminUserMutations: AdminUserMutationRepository,
   ) {}
-
-  private async assertSafeSensitiveMutation(input: {
-    actor: AuthenticatedPrincipal;
-    before: AuthUserEntity;
-    tenantId: string;
-    nextStatus?: AuthUserStatus;
-    nextRoles?: string[];
-    nextPermissions?: string[];
-  }): Promise<void> {
-    const isSelf = input.actor.subject === input.before.id;
-    const wouldDisableActiveAdmin =
-      isActiveAdmin(input.before) &&
-      input.nextStatus !== undefined &&
-      input.nextStatus !== "active";
-    const wouldRemoveAdminWriteAccess =
-      isActiveAdmin(input.before) &&
-      input.nextRoles !== undefined &&
-      input.nextPermissions !== undefined &&
-      !hasAdminUserWriteAccess({
-        ...input.before,
-        roles: input.nextRoles,
-        permissions: input.nextPermissions,
-      });
-
-    if (isSelf && (wouldDisableActiveAdmin || wouldRemoveAdminWriteAccess)) {
-      throw new BadRequestException(
-        "Administrators cannot remove their own active admin write access.",
-      );
-    }
-
-    if (!wouldDisableActiveAdmin && !wouldRemoveAdminWriteAccess) {
-      return;
-    }
-
-    const activeAdmins = await this.users.countUsers({
-      tenantId: input.tenantId,
-      role: ADMIN_ROLE,
-      status: "active",
-    });
-    if (unwrapRepositoryResult(activeAdmins) <= 1) {
-      throw new BadRequestException(
-        "At least one active administrator must retain admin write access.",
-      );
-    }
-  }
 
   @Get("users")
   @ApiOkDataResponse(AdminUserListPayloadDto)
@@ -535,41 +506,24 @@ export class AdminUsersController {
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AdminUserViewDto>> {
     const tenantId = resolveTenantId(principal);
-    const before = await this.users.findById(id, tenantId);
-    const beforeEntity = unwrapRepositoryResult(before);
-    if (!beforeEntity) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    await this.assertSafeSensitiveMutation({
-      actor: principal,
-      before: beforeEntity,
+    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
       tenantId,
-      nextStatus: input.status,
-    });
-
-    const updated = await this.users.setAccessPolicy(
-      id,
-      { status: input.status },
-      tenantId,
-    );
-    const entity = unwrapRepositoryResult(updated);
-    if (!entity) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    await this.auditLogs.record({
-      tenantId,
+      targetUserId: id,
       actorUserId: principal.subject,
       action: "admin.user.status.update",
-      resource: "admin.users",
-      targetUserId: id,
-      before: { status: beforeEntity.status },
-      after: { status: entity.status },
-      metadata: metadataFromRequest(request),
+      policy: { status: input.status },
+      audit: {
+        actorUserId: principal.subject,
+        metadata: metadataFromRequest(request),
+      },
     });
+    const result =
+      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    if (!result) {
+      throw new NotFoundException("Admin user was not found.");
+    }
 
-    return createOkResponse(toAdminUserView(entity));
+    return createOkResponse(toAdminUserView(result.after));
   }
 
   @Patch("users/:id/access-policy")
@@ -587,45 +541,27 @@ export class AdminUsersController {
   ): Promise<OkResponse<AdminUserViewDto>> {
     requireAllowedPolicy(input);
     const tenantId = resolveTenantId(principal);
-    const before = await this.users.findById(id, tenantId);
-    const beforeEntity = unwrapRepositoryResult(before);
-    if (!beforeEntity) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    await this.assertSafeSensitiveMutation({
-      actor: principal,
-      before: beforeEntity,
+    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
       tenantId,
-      nextRoles: input.roles,
-      nextPermissions: input.permissions,
-    });
-
-    const updated = await this.users.setAccessPolicy(
-      id,
-      {
+      targetUserId: id,
+      actorUserId: principal.subject,
+      action: "admin.user.access_policy.update",
+      policy: {
         roles: input.roles,
         permissions: input.permissions,
       },
-      tenantId,
-    );
-    const entity = unwrapRepositoryResult(updated);
-    if (!entity) {
+      audit: {
+        actorUserId: principal.subject,
+        metadata: metadataFromRequest(request),
+      },
+    });
+    const result =
+      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    if (!result) {
       throw new NotFoundException("Admin user was not found.");
     }
 
-    await this.auditLogs.record({
-      tenantId,
-      actorUserId: principal.subject,
-      action: "admin.user.access_policy.update",
-      resource: "admin.users",
-      targetUserId: id,
-      before: accessPolicySnapshot(beforeEntity),
-      after: accessPolicySnapshot(entity),
-      metadata: metadataFromRequest(request),
-    });
-
-    return createOkResponse(toAdminUserView(entity));
+    return createOkResponse(toAdminUserView(result.after));
   }
 
   @Get("roles")

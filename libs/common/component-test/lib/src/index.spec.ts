@@ -6,6 +6,11 @@ describe("common component-test exports", () => {
     expect(componentTest.createPostgresContainer).toBeDefined();
     expect(componentTest.createPostgresContainerMikroOrmOptions).toBeDefined();
     expect(componentTest.stopPostgresContainer).toBeDefined();
+    expect(componentTest.hasDockerRuntime).toBeDefined();
+    expect(componentTest.shouldSkipDockerTest).toBeDefined();
+    expect(componentTest.DockerUnavailableGuardPattern).toBe(
+      "const dockerIt = it.skipIf(shouldSkipDockerTest());",
+    );
   });
 
   it("exports generic service containers", () => {

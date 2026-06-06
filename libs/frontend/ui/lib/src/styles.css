@@ -709,7 +709,8 @@ input {
 .xr-pagination__controls,
 .xr-toolbar,
 .xr-toolbar__filters,
-.xr-toolbar__actions {
+.xr-toolbar__actions,
+.xr-toolbar__search-form {
   align-items: center;
   flex-wrap: wrap;
 }
@@ -728,9 +729,14 @@ input {
   background: var(--xr-card-background);
 }
 
+.xr-toolbar__search-form,
 .xr-toolbar__search {
   flex: 1 1 260px;
   min-width: min(100%, 220px);
+}
+
+.xr-toolbar__search-form {
+  display: block;
 }
 
 .sr-only {

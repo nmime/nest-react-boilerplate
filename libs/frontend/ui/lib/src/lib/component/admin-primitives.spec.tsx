@@ -24,6 +24,7 @@ import {
 } from "./search-filter-toolbar";
 import { UiStatusTag } from "./status-tag";
 import { UiTabs } from "./tabs";
+import { UiSelect } from "./select";
 import { UiTextarea } from "./textarea";
 
 interface UserRow extends Record<string, unknown> {
@@ -237,6 +238,39 @@ describe("admin UI primitives", () => {
     expect(search.className).toContain("xr-input");
     fireEvent.change(search, { target: { value: "grace" } });
     expect(onSearchChange).toHaveBeenCalledWith("grace");
+  });
+
+  it("keeps toolbar filters outside the search form so Radix selects stay semantic-only", () => {
+    render(
+      <UiSearchFilterToolbar searchLabel="Search users">
+        <UiSelect
+          aria-label="Filter users by status"
+          label="Status"
+          onValueChange={vi.fn()}
+          options={[
+            { label: "All statuses", value: "all" },
+            { label: "Active", value: "active" },
+          ]}
+          value="all"
+        />
+      </UiSearchFilterToolbar>,
+    );
+
+    expect(
+      screen.getByRole("searchbox", { name: "Search users" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("combobox", { name: "Filter users by status" }),
+    ).toBeTruthy();
+    expect(document.querySelectorAll("select")).toHaveLength(0);
+    expect(
+      [...document.querySelectorAll("input,select,textarea")].filter(
+        (control) =>
+          !control.labels?.length &&
+          !control.getAttribute("aria-label") &&
+          !control.getAttribute("aria-labelledby"),
+      ),
+    ).toEqual([]);
   });
 
   it("supports AdminSearchFilterToolbar alias, submit, custom labels, and partial modes", () => {

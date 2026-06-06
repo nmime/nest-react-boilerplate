@@ -550,6 +550,7 @@ export const UsersPage = ({
         onSubmit={() => setPage(1)}
       >
         <UiSelect
+          aria-label="Filter users by status"
           label="Status"
           value={status}
           onValueChange={(v) => {
@@ -564,6 +565,7 @@ export const UsersPage = ({
           ]}
         />
         <UiSelect
+          aria-label="Filter users by role"
           label="Role"
           value={role}
           onValueChange={(v) => {
@@ -573,6 +575,7 @@ export const UsersPage = ({
           options={roleOptions}
         />
         <UiSelect
+          aria-label="Filter users by permission"
           label="Permission"
           value={permission}
           onValueChange={(v) => {
@@ -683,7 +686,7 @@ export const UsersPage = ({
         }}
       >
         <UiTextarea
-          aria-label="Reason"
+          aria-label="Status update audit reason"
           placeholder="Optional reason for audit trail"
           value={reason}
           onChange={(event) => setReason(event.currentTarget.value)}
@@ -731,6 +734,7 @@ export const UsersPage = ({
         }}
       >
         <UiSelect
+          aria-label="Access policy status"
           label="Status"
           value={policyStatus ?? policyTarget?.status ?? "none"}
           onValueChange={(value) => setPolicyStatus(value as UserStatus)}
@@ -786,7 +790,7 @@ export const UsersPage = ({
           )}
         </div>
         <UiTextarea
-          aria-label="Reason"
+          aria-label="Access policy audit reason"
           placeholder="Optional reason for audit trail"
           value={reason}
           onChange={(event) => setReason(event.currentTarget.value)}

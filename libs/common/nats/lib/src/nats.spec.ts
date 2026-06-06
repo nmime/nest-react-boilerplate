@@ -154,6 +154,24 @@ describe("NATS foundation", () => {
     expect(config.drainTimeoutMs).toBe(7500);
   });
 
+  it("rejects NATS integer environment values with trailing junk", () => {
+    process.env.NATS_SERVERS = "nats://nats:4222";
+    process.env.NATS_TIMEOUT_MS = "1500ms";
+
+    expect(() => new NatsConfigService().connectionConfig).toThrow(
+      "Invalid NATS integer value: 1500ms",
+    );
+  });
+
+  it("accepts explicit negative reconnect attempts without trailing junk", () => {
+    process.env.NATS_SERVERS = "nats://nats:4222";
+    process.env.NATS_MAX_RECONNECT_ATTEMPTS = "-1";
+
+    expect(new NatsConfigService().connectionConfig).toMatchObject({
+      maxReconnectAttempts: -1,
+    });
+  });
+
   it("rejects mutually exclusive NATS authentication settings", () => {
     const config = new NatsConfigService({
       servers: ["nats://nats:4222"],

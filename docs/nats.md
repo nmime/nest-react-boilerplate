@@ -77,7 +77,7 @@ NATS.js v3 removed the old codec helpers. Publish strings or bytes directly, use
 
 ```ts
 import { InjectNatsConnection } from "@app/common/nats";
-import type { NatsConnection } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 export class RawCoreExample {
   constructor(
@@ -101,7 +101,7 @@ import {
   createJetStreamManager,
   InjectNatsConnection,
 } from "@app/common/nats";
-import type { NatsConnection } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 export class JetStreamExample {
   constructor(
@@ -126,7 +126,7 @@ import {
   createKvm,
   InjectNatsConnection,
 } from "@app/common/nats";
-import type { NatsConnection } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 export class KvExample {
   constructor(
@@ -150,7 +150,7 @@ import {
   createObjm,
   InjectNatsConnection,
 } from "@app/common/nats";
-import type { NatsConnection } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 export class ObjectStoreExample {
   constructor(
@@ -172,7 +172,7 @@ The published services manager export is `Svcm` from `@nats-io/services`; `@app/
 
 ```ts
 import { createServices, InjectNatsConnection } from "@app/common/nats";
-import type { NatsConnection } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 export class ServicesExample {
   constructor(

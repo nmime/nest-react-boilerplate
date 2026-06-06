@@ -69,7 +69,20 @@ export const AuthTenantEntitySchema = new EntitySchema<AuthTenantEntity>({
       onUpdate: () => new Date(),
     },
   },
-  uniques: [{ name: "uq__auth_tenants__slug", properties: ["slug"] }],
+  uniques: [
+    { name: "uq__auth_tenants__slug", properties: ["slug"] },
+    {
+      name: "uq__auth_tenants__primary_domain",
+      properties: ["primaryDomain"],
+      where: "\"primary_domain\" <> ''",
+    },
+  ],
+  checks: [
+    {
+      name: "ck__auth_tenants__status",
+      expression: "\"status\" in ('active', 'suspended', 'deleted')",
+    },
+  ],
 });
 
 export const AuthTenantMembershipEntitySchema =
@@ -161,6 +174,13 @@ export const AuthTenantInvitationEntitySchema =
       {
         name: "uq__auth_tenant_invitations__token_hash",
         properties: ["tokenHash"],
+      },
+    ],
+    checks: [
+      {
+        name: "ck__auth_tenant_invitations__status",
+        expression:
+          "\"status\" in ('pending', 'accepted', 'revoked', 'expired')",
       },
     ],
   });

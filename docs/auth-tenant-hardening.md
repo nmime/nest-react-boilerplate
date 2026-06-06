@@ -10,6 +10,20 @@ Postgres migrations create:
 - `auth_tenant_memberships` for user membership and tenant roles.
 - `auth_tenant_invitations` with hashed invitation tokens and expiry.
 
+These tables are currently persistence scaffolding, not a complete tenant
+management workflow. The template's current runtime behavior uses tenant IDs on
+`auth_users`, auth principals, request guards, token stores, and rate-limit keys;
+it does not yet expose repository-backed tenant CRUD, membership management, or
+invitation acceptance flows. Add dedicated tenant repositories only when an
+application enables those workflows so the repository contract can match the
+real product flow instead of a generic SaaS assumption.
+
+Entity metadata intentionally mirrors the migration-owned tenant lifecycle
+constraints that are safe for schema consistency checks: tenant slug uniqueness,
+non-empty `primary_domain` uniqueness, tenant status values, membership
+tenant/user uniqueness, invitation token uniqueness, and invitation status
+values.
+
 Existing `auth_users` remain tenant-scoped by `tenant_id`; the default tenant id is `00000000-0000-0000-0000-000000000000` for single-tenant starter apps.
 
 HTTP tenant helpers live in `@app/feature-auth-shared`:
@@ -17,6 +31,19 @@ HTTP tenant helpers live in `@app/feature-auth-shared`:
 - `x-tenant-id` / `x-nrb-tenant-id` are authoritative when present.
 - `x-tenant-domain` / `x-nrb-tenant-domain` and `Host` are normalized as domain hints for future tenant lookup.
 - bearer/session guards reject a request when the requested tenant id does not match the authenticated principal.
+
+## Tenant FK policy
+
+Tenant membership rows use database FKs to tenants and users because membership
+records are operational joins and should be removed with either side. Tenant
+invitations use an FK to `auth_tenants`, but `invited_by_user_id` intentionally
+has no FK: invitations may be bootstrapped or imported with the default zero UUID
+sentinel, and invite history should survive inviter deletion. Application code
+that requires a live inviter should validate it before creating an invitation.
+
+`admin_audit_logs` likewise avoids FKs to tenants/users so immutable audit
+history can retain actor/resource identifiers after account or tenant deletion;
+audit mutation semantics are owned separately from tenant lifecycle scaffolding.
 
 ## Token foundations
 

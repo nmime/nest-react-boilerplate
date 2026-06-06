@@ -1,21 +1,21 @@
 # NATS foundation
 
-`@app/common/nats` provides a backend Nest foundation for the official NATS JavaScript v3 mono-repo without wiring any runtime application to require a broker by default.
+`@app/common/nats` provides a backend Nest foundation for NATS without wiring any runtime application to require a broker by default.
 
-The implementation follows [`nats-io/nats.js`](https://github.com/nats-io/nats.js/) v3 and uses the official npm modules:
+It uses the official NATS.js v3 mono-repo packages from [`nats-io/nats.js`](https://github.com/nats-io/nats.js/). The v3 client is split into runtime and feature packages instead of the legacy single `nats` package:
 
 - `@nats-io/transport-node` for the Node/Bun TCP transport and `connect()`.
-- `@nats-io/nats-core` for the transport-agnostic Core `NatsConnection`, publish, subscribe, request/reply, connection lifecycle, headers, and shared types.
-- `@nats-io/jetstream` for `jetstream(nc)` and `jetstreamManager(nc)`.
-- `@nats-io/kv` for `Kvm`, NATS KV stores, and KV codecs.
-- `@nats-io/obj` for `Objm` and NATS Object Store.
-- `@nats-io/services` for `Svcm` and NATS Services.
+- `@nats-io/nats-core` for core types such as `Msg`, `PublishOptions`, and `RequestOptions`.
+- `@nats-io/jetstream` for JetStream clients and managers.
+- `@nats-io/kv` for key-value buckets.
+- `@nats-io/obj` for Object Store.
+- `@nats-io/services` for NATS services.
 
-`@app/common/nats` uses the v3 mono-repo modules directly instead of the previous single-package client.
+`@nats-io/core` is not used because the published official core package is `@nats-io/nats-core`.
 
 ## Configuration
 
-The module is disabled when `NATS_SERVERS` is empty. Importing `NatsModule.forRoot()` will then provide a `null` core connection and `null` JetStream/KV/Object Store/Services managers, keep `NatsHealthIndicator` healthy with `{ enabled: false }`, and avoid outbound broker connections.
+The module is disabled when `NATS_SERVERS` is empty. Importing `NatsModule.forRoot()` will then provide a `null` connection, keep `NatsHealthIndicator` healthy with `{ enabled: false }`, and avoid outbound broker connections.
 
 Supported environment variables:
 
@@ -31,6 +31,8 @@ Supported environment variables:
 - `NATS_PING_INTERVAL_MS`: optional client ping interval in milliseconds.
 - `NATS_DRAIN_TIMEOUT_MS`: optional shutdown drain timeout; defaults to `5000`.
 
+These values are mapped to `NodeConnectionOptions` from `@nats-io/transport-node`.
+
 ## Nest module usage
 
 ```ts
@@ -43,31 +45,26 @@ import { NatsModule } from "@app/common/nats";
 export class MessagingModule {}
 ```
 
-Inject `NatsService` for typed Core JSON publish/request helpers, or inject the raw Core connection with `@InjectNatsConnection()` when a feature needs lower-level `@nats-io/nats-core` APIs. `NatsService` throws `NatsConnectionUnavailableError` if a feature tries to publish/request while NATS is disabled, closed, or draining.
+Inject `NatsService` for ready-to-use JSON/string Core helpers, or inject the raw connection with `@InjectNatsConnection()` when a feature needs lower-level NATS APIs. `NatsService` throws `NatsConnectionUnavailableError` if a feature tries to publish/request while NATS is disabled, closed, or draining.
 
 `NatsHealthIndicator.check()` uses `flush()` as a lightweight protocol roundtrip and does not publish fake business data. Shutdown uses `drain()` first, then falls back to `close()` if draining times out.
 
-## Core NATS examples
+## Core
 
 ```ts
-import {
-  InjectNatsConnection,
-  NatsService,
-  type NatsConnection,
-} from "@app/common/nats";
+import { Injectable } from "@nestjs/common";
+import { NatsService } from "@app/common/nats";
 
+@Injectable()
 export class UserEvents {
-  constructor(
-    private readonly nats: NatsService,
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(private readonly nats: NatsService) {}
 
-  publishUserCreated(userId: string): void {
+  userCreated(userId: string): void {
     this.nats.publishJson("events.user.created", { userId });
   }
 
-  async lookupUser(userId: string): Promise<{ name: string }> {
-    return await this.nats.requestJson<{ name: string }, { userId }>(
+  lookupUser(userId: string): Promise<{ ok: boolean }> {
+    return this.nats.requestJson(
       "rpc.user.lookup",
       { userId },
       { timeout: 500 },
@@ -76,113 +73,121 @@ export class UserEvents {
 }
 ```
 
-Codec helpers are exported for modules that need direct Core payload encoding:
+NATS.js v3 removed the old codec helpers. Publish strings or bytes directly, use `JSON.stringify(value)` for JSON payloads, and use `msg.string()` or `msg.json<T>()` on received messages.
 
 ```ts
-import { createNatsJsonCodec, createNatsStringCodec } from "@app/common/nats";
+import { InjectNatsConnection } from "@app/common/nats";
+import type { NatsConnection } from "@nats-io/transport-node";
 
-const jsonCodec = createNatsJsonCodec<{ userId: string }>();
-const stringCodec = createNatsStringCodec();
-```
-
-## JetStream
-
-`NatsModule` creates injectable JetStream providers when a connection is enabled. They are `null` when NATS is disabled.
-
-```ts
-import {
-  InjectNatsJetStream,
-  InjectNatsJetStreamManager,
-} from "@app/common/nats";
-import type { JetStreamClient, JetStreamManager } from "@nats-io/jetstream";
-
-export class Streams {
+export class RawCoreExample {
   constructor(
-    @InjectNatsJetStream() private readonly js: JetStreamClient | null,
-    @InjectNatsJetStreamManager()
-    private readonly jsm: JetStreamManager | null,
+    @InjectNatsConnection() private readonly nc: NatsConnection | null,
   ) {}
 
-  async ensureStream(): Promise<void> {
-    await this.jsm?.streams.add({ name: "EVENTS", subjects: ["events.>"] });
+  publish(): void {
+    if (!this.nc) return;
+    this.nc.publish("events.example", JSON.stringify({ ok: true }));
   }
 }
 ```
 
-Factory helpers are also exported:
+## JetStream
+
+Use the v3 module functions from `@nats-io/jetstream`; do not call removed connection methods.
 
 ```ts
 import {
-  createNatsJetStream,
-  createNatsJetStreamManager,
+  createJetStream,
+  createJetStreamManager,
+  InjectNatsConnection,
 } from "@app/common/nats";
+import type { NatsConnection } from "@nats-io/transport-node";
 
-const js = createNatsJetStream(nc);
-const jsm = await createNatsJetStreamManager(nc);
+export class JetStreamExample {
+  constructor(
+    @InjectNatsConnection() private readonly nc: NatsConnection | null,
+  ) {}
+
+  async streams(): Promise<void> {
+    if (!this.nc) return;
+    const js = createJetStream(this.nc);
+    const jsm = await createJetStreamManager(this.nc);
+    await jsm.streams.add({ name: "EVENTS", subjects: ["events.>"] });
+    await js.publish("events.created", JSON.stringify({ ok: true }));
+  }
+}
 ```
 
 ## KV
 
 ```ts
-import { InjectNatsKvManager, openNatsKeyValueStore } from "@app/common/nats";
-import type { Kvm } from "@nats-io/kv";
+import {
+  createJetStream,
+  createKvm,
+  InjectNatsConnection,
+} from "@app/common/nats";
+import type { NatsConnection } from "@nats-io/transport-node";
 
-export class SettingsStore {
-  constructor(@InjectNatsKvManager() private readonly kvm: Kvm | null) {}
+export class KvExample {
+  constructor(
+    @InjectNatsConnection() private readonly nc: NatsConnection | null,
+  ) {}
 
-  async getStore() {
-    if (!this.kvm) return null;
-    return await this.kvm.open("settings");
+  async openBucket(): Promise<void> {
+    if (!this.nc) return;
+    const kvm = createKvm(createJetStream(this.nc));
+    const bucket = await kvm.create("profiles");
+    await bucket.put("user-1", JSON.stringify({ name: "Ada" }));
   }
 }
-
-const kv = await openNatsKeyValueStore(nc, "settings");
 ```
-
-Use `createNatsKeyValueStore(nc, "settings", options)` when the bucket should be created or opened if it already exists.
 
 ## Object Store
 
 ```ts
 import {
-  InjectNatsObjectStoreManager,
-  createNatsObjectStore,
-  openNatsObjectStore,
+  createJetStream,
+  createObjm,
+  InjectNatsConnection,
 } from "@app/common/nats";
-import type { Objm } from "@nats-io/obj";
+import type { NatsConnection } from "@nats-io/transport-node";
 
-export class DocumentObjects {
+export class ObjectStoreExample {
   constructor(
-    @InjectNatsObjectStoreManager() private readonly objm: Objm | null,
+    @InjectNatsConnection() private readonly nc: NatsConnection | null,
   ) {}
 
-  async getStore() {
-    return await this.objm?.open("documents");
+  async openStore(): Promise<void> {
+    if (!this.nc) return;
+    const objm = createObjm(createJetStream(this.nc));
+    const store = await objm.create("files");
+    await store.put({ name: "readme.txt" }, "hello");
   }
 }
-
-const objectStore = await createNatsObjectStore(nc, "documents");
-const existingObjectStore = await openNatsObjectStore(nc, "documents", false);
 ```
 
 ## Services
 
+The published services manager export is `Svcm` from `@nats-io/services`; `@app/common/nats` exposes `createServices(nc)`.
+
 ```ts
-import { InjectNatsServiceManager, addNatsService } from "@app/common/nats";
-import type { Svcm } from "@nats-io/services";
+import { createServices, InjectNatsConnection } from "@app/common/nats";
+import type { NatsConnection } from "@nats-io/transport-node";
 
-export class MathServiceRegistration {
-  constructor(@InjectNatsServiceManager() private readonly svcm: Svcm | null) {}
+export class ServicesExample {
+  constructor(
+    @InjectNatsConnection() private readonly nc: NatsConnection | null,
+  ) {}
 
-  async register(): Promise<void> {
-    const service = await this.svcm?.add({ name: "math", version: "1.0.0" });
-    service?.addEndpoint("max", (error, message) => {
-      if (error || !message) return;
-      const numbers = message.json<number[]>();
-      message.respond(JSON.stringify(Math.max(...numbers)));
+  async start(): Promise<void> {
+    if (!this.nc) return;
+    const services = createServices(this.nc);
+    const service = await services.add({ name: "math", version: "1.0.0" });
+    service.addEndpoint("sum", (err, msg) => {
+      if (err) return;
+      const request = msg.json<{ a: number; b: number }>();
+      msg.respond(JSON.stringify({ result: request.a + request.b }));
     });
   }
 }
-
-const service = await addNatsService(nc, { name: "math", version: "1.0.0" });
 ```

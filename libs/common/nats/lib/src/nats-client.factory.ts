@@ -1,50 +1,16 @@
-import type {
-  Codec,
-  ConnectionOptions,
-  NatsConnection,
-} from "@nats-io/nats-core";
-import { connect } from "@nats-io/transport-node";
+import { connect, type NodeConnectionOptions } from "@nats-io/transport-node";
+import type { NatsConnection } from "@nats-io/nats-core";
 import type { NatsConnectionConfig } from "./type";
-
-export type { Codec, NatsConnection } from "@nats-io/nats-core";
-
-export function createNatsJsonCodec<T = unknown>(): Codec<T> {
-  const textEncoder = new TextEncoder();
-  const textDecoder = new TextDecoder();
-
-  return {
-    encode(value: T): Uint8Array {
-      return textEncoder.encode(JSON.stringify(value));
-    },
-    decode(bytes: Uint8Array): T {
-      return JSON.parse(textDecoder.decode(bytes)) as T;
-    },
-  };
-}
-
-export function createNatsStringCodec(): Codec<string> {
-  const textEncoder = new TextEncoder();
-  const textDecoder = new TextDecoder();
-
-  return {
-    encode(value: string): Uint8Array {
-      return textEncoder.encode(value);
-    },
-    decode(bytes: Uint8Array): string {
-      return textDecoder.decode(bytes);
-    },
-  };
-}
 
 export async function createNatsConnection(
   config: NatsConnectionConfig,
 ): Promise<NatsConnection> {
-  return await connect(toNatsConnectionOptions(config));
+  return (await connect(toNatsConnectionOptions(config))) as NatsConnection;
 }
 
 export function toNatsConnectionOptions(
   config: NatsConnectionConfig,
-): ConnectionOptions {
+): NodeConnectionOptions {
   return stripUndefined({
     servers: config.servers,
     name: config.name,

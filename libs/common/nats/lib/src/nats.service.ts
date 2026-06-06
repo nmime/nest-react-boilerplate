@@ -1,11 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import type {
-  NatsConnection,
-  PublishOptions,
-  RequestOptions,
-} from "@nats-io/nats-core";
+import type { Msg, PublishOptions, RequestOptions } from "@nats-io/nats-core";
+import type { NatsConnection } from "@nats-io/nats-core";
 import { InjectNatsConnection } from "./decorator";
-import { createNatsJsonCodec } from "./nats-client.factory";
 
 export class NatsConnectionUnavailableError extends Error {
   constructor(reason: string) {
@@ -16,8 +12,6 @@ export class NatsConnectionUnavailableError extends Error {
 
 @Injectable()
 export class NatsService {
-  private readonly jsonCodec = createNatsJsonCodec<unknown>();
-
   constructor(
     @InjectNatsConnection()
     private readonly connection: NatsConnection | null,
@@ -36,25 +30,47 @@ export class NatsService {
     payload: TPayload,
     options?: PublishOptions,
   ): void {
-    this.activeConnection().publish(
-      subject,
-      this.jsonCodec.encode(payload),
-      options,
-    );
+    this.publishString(subject, JSON.stringify(payload), options);
+  }
+
+  publishString(
+    subject: string,
+    payload: string,
+    options?: PublishOptions,
+  ): void {
+    this.activeConnection().publish(subject, payload, options);
   }
 
   async requestJson<TResponse, TPayload = unknown>(
     subject: string,
-    payload: TPayload,
+    payload?: TPayload,
     options?: RequestOptions,
   ): Promise<TResponse> {
-    const response = await this.activeConnection().request(
+    const response = await this.requestMessage(
       subject,
-      this.jsonCodec.encode(payload),
+      payload === undefined ? undefined : JSON.stringify(payload),
       options,
     );
 
-    return this.jsonCodec.decode(response.data) as TResponse;
+    return response.json<TResponse>();
+  }
+
+  async requestString(
+    subject: string,
+    payload?: string,
+    options?: RequestOptions,
+  ): Promise<string> {
+    const response = await this.requestMessage(subject, payload, options);
+
+    return response.string();
+  }
+
+  private async requestMessage(
+    subject: string,
+    payload?: string,
+    options?: RequestOptions,
+  ): Promise<Msg> {
+    return await this.activeConnection().request(subject, payload, options);
   }
 
   private activeConnection(): NatsConnection {

@@ -54,6 +54,7 @@ describe("admin route base handling", () => {
 
     expect(html).toContain('href="/admin"');
     expect(html).toContain('href="/admin/profile"');
+    expect(html).not.toContain('href="/admin/tenants"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="#xr-content"');
   });

@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import type { AnyEntity, EntityClass, EntitySchema } from "@mikro-orm/core";
 import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
@@ -6,6 +5,7 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
+import { hasDockerRuntime } from "./docker-runtime";
 
 export const DefaultPostgresTestImage = "postgres:17-alpine";
 export const DefaultPostgresTestDatabase = "app_component_test";
@@ -17,34 +17,7 @@ export const DefaultPostgresTestPassword = [
 ].join("_");
 export const DefaultPostgresStartupTimeoutMs = 120_000;
 
-export function hasDockerRuntime(): boolean {
-  if (process.env.SKIP_TESTCONTAINERS === "true") {
-    return false;
-  }
-
-  if (process.env.CI === "true") {
-    return true;
-  }
-
-  const dockerBinaryPaths = [
-    "docker",
-    "/usr/bin/docker",
-    "/usr/local/bin/docker",
-    "/opt/homebrew/bin/docker",
-  ] as const;
-
-  return dockerBinaryPaths.some((dockerBinaryPath) => {
-    try {
-      const result = spawnSync(dockerBinaryPath, ["version"], {
-        stdio: "ignore",
-        timeout: 5_000,
-      });
-      return result.status === 0;
-    } catch {
-      return false;
-    }
-  });
-}
+export { hasDockerRuntime };
 
 export interface PostgresContainerOptions {
   image?: string;

@@ -28,7 +28,6 @@ import type { TranslationKey, TranslationParams } from "@app/common/i18n";
 import type { UserRow, UserStatus } from "./types";
 import {
   errorText,
-  formatDate,
   join,
   pageSize,
   paramsFromPath,
@@ -100,6 +99,7 @@ export const UsersPage = ({
   currentPath: string;
   requestOptions?: ApiClientRequestOptions;
 }>) => {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const initial = paramsFromPath(currentPath);
   const [search, setSearch] = useState(initial.get("search") ?? "");
@@ -254,8 +254,7 @@ export const UsersPage = ({
     onSuccess: async () => {
       setNotice({
         tone: "success",
-        message:
-          "Access policy update requested and current entities will refetch.",
+        message: t("admin.users.notice.accessPolicyUpdateRequested"),
       });
       await refetchCurrent();
     },
@@ -504,8 +503,8 @@ export const UsersPage = ({
           options={[
             {
               label: policyTarget?.status
-                ? statusLabel[policyTarget.status]
-                : "Status unchanged",
+                ? t(statusLabelKey[policyTarget.status])
+                : t("admin.users.status.unchanged"),
               value: policyTarget?.status ?? "none",
             },
           ]}

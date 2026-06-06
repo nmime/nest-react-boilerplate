@@ -70,6 +70,7 @@ const DashboardDataPage = ({
   access: AdminAccess;
   requestOptions: ApiClientRequestOptions;
 }>) => {
+  const { t } = useI18n();
   const summary = useQuery({
     queryKey: [
       ...adminApi.getAdminUsersControllerDashboardSummaryQueryKey(),

@@ -1,6 +1,5 @@
-import { type ReactNode } from "react";
+import { type ReactElement } from "react";
 import { UiLoading, UiSection } from "@app/frontend-ui";
-import { AdminLayout } from "./admin-pages/admin-layout";
 import { AuditPage } from "./admin-pages/audit-page";
 import { DashboardPage } from "./admin-pages/dashboard-page";
 import { ProfilePage, TenantRoadmapPage } from "./admin-pages/profile-pages";
@@ -25,12 +24,12 @@ export { UsersPage } from "./admin-pages/users-page";
 export { normalizeAdminPath } from "./admin-pages/utils";
 
 /* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
-const renderReadyAdminRoute = (
+function renderReadyAdminRoute(
   path: string,
   state: Extract<AdminProfileState, { status: "ready" }>,
   t: Translate,
   runtime: AdminRouteRuntime,
-): ReactNode => {
+): ReactElement {
   const routePath = normalizeAdminPath(path);
   if (routePath === "/" || routePath === "/dashboard") {
     return state.access.canReadDashboard ? (
@@ -75,15 +74,15 @@ const renderReadyAdminRoute = (
     );
   }
   return routePath === "/tenants" ? <TenantRoadmapPage /> : <NotFoundPage />;
-};
+}
 /* eslint-enable sonarjs/cognitive-complexity */
 
-export const renderAdminRoute = (
+export function renderAdminRoute(
   path: string,
   state: AdminProfileState,
   t: Translate = fallbackTranslate,
   runtime: AdminRouteRuntime = {},
-): ReactNode => {
+): ReactElement {
   if (state.status === "loading") {
     return (
       <UiSection
@@ -99,4 +98,4 @@ export const renderAdminRoute = (
   }
   const rendered = renderReadyAdminRoute(path, state, t, runtime);
   return rendered;
-};
+}

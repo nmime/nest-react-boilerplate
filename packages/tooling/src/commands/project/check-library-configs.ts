@@ -1,4 +1,4 @@
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 const rootConfigFileNames = new Set([
@@ -72,6 +72,18 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   ) {
     errors.push(
       `${path}: library config file must be inside the library lib/ folder`,
+    );
+  }
+
+  if (
+    fileName !== undefined &&
+    fileName.startsWith("eslint.config.") &&
+    readFileSync(absolutePath, "utf8").match(
+      /["']@nx\/enforce-module-boundaries["']\s*:\s*(?:["']off["']|0|\[\s*(?:["']off["']|0))/u,
+    ) !== null
+  ) {
+    errors.push(
+      `${path}: do not disable @nx/enforce-module-boundaries in library ESLint config`,
     );
   }
 

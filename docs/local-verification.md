@@ -11,6 +11,14 @@ pnpm install --frozen-lockfile
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
 pnpm run check
+pnpm run db:migrations:check
+pnpm run lib:configs:check
+pnpm run api:contracts:check
+pnpm run api:clients:check
+pnpm run api:openapi:lint
+pnpm run api:contracts:consumer
+pnpm run api:openapi:fuzz
+pnpm run test:property
 node scripts/validate-deployment-config.mjs
 node scripts/validate-helm-rate-limit-config.mjs
 pnpm exec nx run-many -t lint --all
@@ -31,6 +39,8 @@ pnpm run test:fullstack
 ```
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
+
+The PR/push CI workflow also exposes these static commands as a focused `Non-runtime validation gates` job after dependency installation. It hard-gates generated OpenAPI contract and client freshness, migration and library configuration standards, OpenAPI lint, consumer contracts, bounded OpenAPI fuzz case generation, and property-based invariants without starting Docker, Helm runtime, or deployed services.
 
 ## Pass 3 targeted validation
 
@@ -74,6 +84,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 ## Script map
 
 - `pnpm run check`: full aggregate for formatting, migrations, contracts, QA presets, lint, typecheck, and unit tests.
+- CI `Non-runtime validation gates`: focused PR/push job that runs `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after Node/pnpm setup and lockfile installation.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.
 - `pnpm run test:coverage`: unit/component coverage gate.

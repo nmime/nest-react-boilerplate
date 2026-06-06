@@ -19,6 +19,8 @@ const selectedGates = new Set(
 );
 const scripts = readJson("package.json").scripts ?? {};
 const results = [];
+const ciMode = process.env.CI === "true";
+const allowCiSkips = process.env.WORLD_CLASS_ALLOW_CI_SKIPS === "1";
 let backupRestoreEvidence;
 
 const requiredGates = [
@@ -55,6 +57,14 @@ function requireScripts(names) {
   for (const name of names) {
     assertGate(Boolean(scripts[name]), `Missing package script: ${name}`);
   }
+}
+
+function missingRuntimeGate(reason, details = {}) {
+  return {
+    status: ciMode && !allowCiSkips ? "failed" : "skipped",
+    reason,
+    details: { ...details, ciMode, allowCiSkipsEnv: "WORLD_CLASS_ALLOW_CI_SKIPS=1" },
+  };
 }
 
 function skipGate(reason, details = {}) {
@@ -151,11 +161,13 @@ async function runGate(name, check) {
   const started = performance.now();
   try {
     const evidence = await check();
+    const status = evidence?.status === "failed" ? "failed" : evidence?.status === "skipped" ? "skipped" : "ok";
     results.push({
       name,
-      status: evidence?.status === "skipped" ? "skipped" : "ok",
+      status,
       durationMs: Math.round(performance.now() - started),
       evidence,
+      ...(status === "failed" ? { message: evidence?.reason ?? "World-class gate required in CI was not configured" } : {}),
     });
   } catch (error) {
     results.push({ name, status: "failed", durationMs: Math.round(performance.now() - started), message: error instanceof Error ? error.message : String(error), details: error?.details ?? {} });
@@ -178,7 +190,7 @@ async function loadStressSoak() {
 
   const urls = urlsFrom("QA_LOAD_URLS", "QA_LOAD_URL", "PERF_API_URLS", "PERF_URLS");
   if (!urls.length) {
-    return skipGate("Load/stress/soak gate skipped because no runtime target is configured.", {
+    return missingRuntimeGate("Load/stress/soak gate requires a runtime target in CI; set a command/URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
       env: ["QA_LOAD_COMMAND", "QA_LOAD_URLS", "QA_LOAD_URL", "PERF_API_URLS", "PERF_URLS"],
     });
   }
@@ -198,7 +210,7 @@ async function loadStressSoak() {
 async function chaosResilience() {
   const urls = urlsFrom("QA_CHAOS_URLS", "QA_CHAOS_URL", "QA_CANARY_URLS", "CANARY_URLS");
   if (!urls.length) {
-    return skipGate("Chaos gate skipped because no runtime target is configured.", {
+    return missingRuntimeGate("Chaos gate requires a runtime target in CI; set a command/URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
       env: ["QA_CHAOS_URLS", "QA_CHAOS_URL", "QA_CANARY_URLS", "CANARY_URLS"],
     });
   }
@@ -228,7 +240,7 @@ function runBackupRestore() {
   requireScripts(["db:backup", "db:restore"]);
   const missingTools = ["pg_dump", "pg_restore"].filter((tool) => !commandExists(tool));
   if (missingTools.length) {
-    backupRestoreEvidence = skipGate("Backup/restore runtime gate skipped because local PostgreSQL client tools are unavailable.", {
+    backupRestoreEvidence = missingRuntimeGate("Backup/restore runtime gate requires local PostgreSQL client tools or an explicit command in CI.", {
       missingTools,
       env: ["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"],
     });
@@ -277,7 +289,7 @@ function browserDeviceCloudMatrix() {
 async function canarySyntheticMonitoring() {
   const urls = urlsFrom("QA_CANARY_URLS", "CANARY_URLS", "SYNTHETIC_MONITOR_URLS");
   if (!urls.length) {
-    return skipGate("Canary/synthetic gate skipped because no runtime target is configured.", {
+    return missingRuntimeGate("Canary/synthetic gate requires runtime targets in CI; set URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
       env: ["QA_CANARY_URLS", "CANARY_URLS", "SYNTHETIC_MONITOR_URLS"],
     });
   }
@@ -360,7 +372,15 @@ const skipped = [
   ...requiredGates.filter((gate) => selectedGates.size && !selectedGates.has(gate)).map((name) => ({ name, reason: "not selected" })),
   ...results.filter((result) => result.status === "skipped").map((result) => ({ name: result.name, reason: result.evidence?.reason })),
 ];
-const report = { status: failed.length ? "failed" : "ok", dryRun: false, gates: results, skipped, generatedAt: new Date().toISOString() };
+const report = {
+  status: failed.length ? "failed" : skipped.length ? "partial" : "ok",
+  dryRun: false,
+  ciMode,
+  allowCiSkips,
+  gates: results,
+  skipped,
+  generatedAt: new Date().toISOString(),
+};
 ensureDir("test-results/world-class");
 writeJson(reportPath, report);
 
@@ -370,4 +390,7 @@ if (failed.length) {
   process.exit(1);
 }
 
-console.log(JSON.stringify({ status: "ok", gates: results.length, skipped: skipped.length, report: reportPath }));
+if (skipped.length) {
+  console.warn(`World-class QA gates completed with ${skipped.length} skipped gate(s); report status is partial.`);
+}
+console.log(JSON.stringify({ status: report.status, gates: results.length, skipped: skipped.length, report: reportPath }));

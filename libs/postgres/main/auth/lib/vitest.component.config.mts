@@ -25,7 +25,10 @@ export default defineConfig({
       reporter: ["text", "lcov"],
       include: [
         "src/lib/entity/auth-user.entity.ts",
+        "src/lib/entity/admin-audit-log.entity.ts",
+        "src/lib/entity/transactional-outbox-event.entity.ts",
         "src/lib/repository/auth-user.repository.ts",
+        "src/lib/repository/admin-user-mutation.repository.ts",
       ],
       exclude: ["src/**/*.component-spec.ts"],
     },

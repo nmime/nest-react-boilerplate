@@ -9,9 +9,11 @@ import {
   AuthTenantMembershipEntitySchema,
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
+  TransactionalOutboxEventEntitySchema,
 } from "./entity";
 import {
   AdminAuditLogRepository,
+  AdminUserMutationRepository,
   AuthTokenRepository,
   AuthUserRepository,
 } from "./repository";
@@ -26,6 +28,7 @@ import {
       AuthRefreshTokenEntitySchema,
       AuthUserTokenEntitySchema,
       AdminAuditLogEntitySchema,
+      TransactionalOutboxEventEntitySchema,
     ]),
   ],
   providers: [
@@ -33,6 +36,7 @@ import {
     AuthTokenRepository,
     AuthTokenCleanupService,
     AdminAuditLogRepository,
+    AdminUserMutationRepository,
   ],
   exports: [
     MikroOrmModule,
@@ -40,6 +44,7 @@ import {
     AuthTokenRepository,
     AuthTokenCleanupService,
     AdminAuditLogRepository,
+    AdminUserMutationRepository,
   ],
 })
 export class AuthPostgresModule {}

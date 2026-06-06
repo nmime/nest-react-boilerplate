@@ -15,7 +15,9 @@ import {
 } from "@app/feature-admin-shared";
 import type {
   AdminAuditLogEntity,
+  AdminUserMutationResult,
   AuthUserEntity,
+  TransactionalOutboxEventEntity,
 } from "@app/postgres-main-auth";
 import { AdminUsersController } from "./admin-users.controller";
 
@@ -68,6 +70,20 @@ type TestAdminAuditLog = Pick<
   | "createdAt"
 >;
 
+type TestOutboxEvent = Pick<
+  TransactionalOutboxEventEntity,
+  | "id"
+  | "tenantId"
+  | "aggregateType"
+  | "aggregateId"
+  | "eventType"
+  | "payload"
+  | "metadata"
+  | "status"
+  | "createdAt"
+  | "publishedAt"
+>;
+
 const createUser = (partial: Partial<TestAuthUser> = {}): TestAuthUser => ({
   id: "user-id",
   tenantId,
@@ -101,6 +117,46 @@ const createAuditLog = (
   ...partial,
 });
 
+const createOutboxEvent = (
+  partial: Partial<TestOutboxEvent> = {},
+): TestOutboxEvent => ({
+  id: "outbox-id",
+  tenantId,
+  aggregateType: "admin.user",
+  aggregateId: "user-id",
+  eventType: "admin.user.status.update",
+  payload: {},
+  metadata: {},
+  status: "pending",
+  createdAt: new Date("2026-01-03T00:00:00.000Z"),
+  publishedAt: null,
+  ...partial,
+});
+
+const createMutationResult = (
+  input: {
+    before?: Partial<TestAuthUser>;
+    after?: Partial<TestAuthUser>;
+    action?: "admin.user.status.update" | "admin.user.access_policy.update";
+  } = {},
+): AdminUserMutationResult => {
+  const before = createUser(input.before) as AuthUserEntity;
+  const after = createUser({
+    status: "disabled",
+    ...input.after,
+  }) as AuthUserEntity;
+  const auditLog = createAuditLog({
+    action: input.action ?? "admin.user.status.update",
+    before: { status: before.status },
+    after: { status: after.status },
+  }) as AdminAuditLogEntity;
+  const outboxEvent = createOutboxEvent({
+    eventType: input.action ?? "admin.user.status.update",
+  }) as TransactionalOutboxEventEntity;
+
+  return { before, after, auditLog, outboxEvent };
+};
+
 const createController = () => {
   const users = {
     listUsers: vi.fn(() => okAsync([createUser()])),
@@ -113,10 +169,18 @@ const createController = () => {
     list: vi.fn(() => okAsync([createAuditLog()])),
     count: vi.fn(() => okAsync(1)),
   };
+  const adminUserMutations = {
+    mutateAccessPolicyWithAudit: vi.fn(() => okAsync(createMutationResult())),
+  };
 
   return {
+    adminUserMutations,
     auditLogs,
-    controller: new AdminUsersController(users as never, auditLogs as never),
+    controller: new AdminUsersController(
+      users as never,
+      auditLogs as never,
+      adminUserMutations as never,
+    ),
     users,
   };
 };
@@ -168,7 +232,8 @@ describe("AdminUsersController", () => {
   });
 
   it("updates status and emits a redacted audit event", async () => {
-    const { auditLogs, controller, users } = createController();
+    const { adminUserMutations, auditLogs, controller, users } =
+      createController();
 
     await expect(
       controller.updateUserStatus(
@@ -178,33 +243,41 @@ describe("AdminUsersController", () => {
         { headers: { "x-request-id": "req-1" } },
       ),
     ).resolves.toMatchObject({ data: { status: "disabled" } });
-    expect(users.setAccessPolicy).toHaveBeenCalledWith(
-      "user-id",
-      { status: "disabled" },
-      tenantId,
+    expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledWith(
+      {
+        tenantId,
+        targetUserId: "user-id",
+        actorUserId: "actor-id",
+        action: "admin.user.status.update",
+        policy: { status: "disabled" },
+        audit: {
+          actorUserId: "actor-id",
+          metadata: { requestId: "req-1" },
+        },
+      },
     );
-    expect(auditLogs.record).toHaveBeenCalledWith({
-      tenantId,
-      actorUserId: "actor-id",
-      action: "admin.user.status.update",
-      resource: "admin.users",
-      targetUserId: "user-id",
-      before: { status: "active" },
-      after: { status: "disabled" },
-      metadata: { requestId: "req-1" },
-    });
+    expect(users.setAccessPolicy).not.toHaveBeenCalled();
+    expect(auditLogs.record).not.toHaveBeenCalled();
   });
 
   it("updates access policy, rejects unknown grants, and never includes secrets in audit snapshots", async () => {
-    const { auditLogs, controller, users } = createController();
-    users.setAccessPolicy.mockReturnValue(
+    const { adminUserMutations, auditLogs, controller, users } =
+      createController();
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
       okAsync(
-        createUser({
-          roles: ["user", ADMIN_ROLE],
-          permissions: [
-            USER_PROFILE_READ_PERMISSION,
-            ADMIN_USERS_READ_PERMISSION,
-          ],
+        createMutationResult({
+          action: "admin.user.access_policy.update",
+          before: {
+            roles: ["user"],
+            permissions: [USER_PROFILE_READ_PERMISSION],
+          },
+          after: {
+            roles: ["user", ADMIN_ROLE],
+            permissions: [
+              USER_PROFILE_READ_PERMISSION,
+              ADMIN_USERS_READ_PERMISSION,
+            ],
+          },
         }),
       ),
     );
@@ -223,27 +296,25 @@ describe("AdminUsersController", () => {
         { headers: {} },
       ),
     ).resolves.toMatchObject({ data: { roles: ["user", ADMIN_ROLE] } });
-    expect(auditLogs.record).toHaveBeenCalledWith(
+    expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "admin.user.access_policy.update",
-        before: {
-          roles: ["user"],
-          permissions: [USER_PROFILE_READ_PERMISSION],
-          status: "active",
-        },
-        after: {
+        policy: {
           roles: ["user", ADMIN_ROLE],
           permissions: [
             USER_PROFILE_READ_PERMISSION,
             ADMIN_USERS_READ_PERMISSION,
           ],
-          status: "active",
         },
       }),
     );
-    expect(JSON.stringify(auditLogs.record.mock.calls[0][0])).not.toContain(
-      "redacted-hash",
-    );
+    expect(
+      JSON.stringify(
+        adminUserMutations.mutateAccessPolicyWithAudit.mock.calls[0][0],
+      ),
+    ).not.toContain("redacted-hash");
+    expect(users.setAccessPolicy).not.toHaveBeenCalled();
+    expect(auditLogs.record).not.toHaveBeenCalled();
 
     await expect(
       controller.updateUserAccessPolicy(
@@ -256,17 +327,14 @@ describe("AdminUsersController", () => {
   });
 
   it("blocks self lockout and last-active-admin sensitive mutations", async () => {
-    const { controller, users } = createController();
-    const adminUser = createUser({
-      id: principal.subject,
-      roles: [ADMIN_ROLE],
-      permissions: [
-        USER_PROFILE_READ_PERMISSION,
-        ADMIN_USERS_WRITE_PERMISSION,
-        ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-      ],
-    });
-    users.findById.mockReturnValue(okAsync(adminUser));
+    const { adminUserMutations, controller, users } = createController();
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      errAsync({
+        code: "repository_error",
+        message:
+          "Administrators cannot remove their own active admin write access.",
+      }),
+    );
 
     await expect(
       controller.updateUserStatus(
@@ -277,10 +345,13 @@ describe("AdminUsersController", () => {
       ),
     ).rejects.toThrow("own active admin write access");
 
-    users.findById.mockReturnValue(
-      okAsync({ ...adminUser, id: "other-admin" }),
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      errAsync({
+        code: "repository_error",
+        message:
+          "At least one active administrator must retain admin write access.",
+      }),
     );
-    users.countUsers.mockReturnValue(okAsync(1));
     await expect(
       controller.updateUserStatus(
         principal,
@@ -290,7 +361,9 @@ describe("AdminUsersController", () => {
       ),
     ).rejects.toThrow("At least one active administrator");
 
-    users.countUsers.mockReturnValue(okAsync(2));
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      okAsync(createMutationResult()),
+    );
     await expect(
       controller.updateUserAccessPolicy(
         principal,
@@ -299,6 +372,9 @@ describe("AdminUsersController", () => {
         { headers: {} },
       ),
     ).resolves.toMatchObject({ data: { status: "disabled" } });
+    expect(users.countUsers).not.toHaveBeenCalledWith(
+      expect.objectContaining({ role: ADMIN_ROLE, status: "active" }),
+    );
   });
 
   it("returns roles catalog, audit log, dashboard metrics, and 404 for missing users", async () => {

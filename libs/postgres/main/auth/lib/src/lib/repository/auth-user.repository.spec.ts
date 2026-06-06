@@ -133,6 +133,21 @@ describe("AuthUserRepository", () => {
     });
   });
 
+  it("defensively caps and clamps pagination at repository level", async () => {
+    const { entityManager } = createEntityManagerMock();
+    const find = vi.fn(() => Promise.resolve([]));
+    Object.assign(entityManager, { find });
+    const authUsers = new AuthUserRepository(entityManager);
+
+    await authUsers.listUsers({ limit: 1_000, offset: -10 });
+
+    expect(find).toHaveBeenCalledWith(
+      AuthUserEntity,
+      { tenantId: DefaultAuthTenantId },
+      { limit: 100, offset: 0, orderBy: { createdAt: "DESC" } },
+    );
+  });
+
   it("updates access policy fields", async () => {
     const entity = new AuthUserEntity({ email: "user@example.com" });
     const { findOne, flush, entityManager } = createEntityManagerMock();

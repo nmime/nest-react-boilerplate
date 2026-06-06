@@ -1,6 +1,17 @@
 #!/usr/bin/env node
-import { PostgreSqlContainer } from "@testcontainers/postgresql";
-import { initAuthMigrationOrm } from "./orm-migration-config.mjs";
+
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log("Usage: repo-tooling db:migrations:rollback-check");
+  console.log("");
+  console.log("Starts disposable PostgreSQL through Testcontainers and runs auth migrations up/down/up.");
+  console.log("Requires a Docker/Testcontainers-capable environment.");
+  process.exit(0);
+}
+
+const [{ PostgreSqlContainer }, { initAuthMigrationOrm }] = await Promise.all([
+  import("@testcontainers/postgresql"),
+  import("./orm-migration-config.mjs"),
+]);
 
 const started = Date.now();
 let container;

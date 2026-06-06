@@ -303,15 +303,17 @@ function observability() {
 }
 
 function migrationRollback() {
-  requireScripts(["db:migrate"]);
-  const command = configuredCommand(["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"]);
-  if (command) return { mode: "command", source: command.source, ...runShell("migration rollback", command.command) };
-  const schema = { tables: new Set(), indexes: new Set() };
-  const migrations = [{ up: () => schema.tables.add("users"), down: () => schema.tables.delete("users") }, { up: () => schema.indexes.add("users_email_unique"), down: () => schema.indexes.delete("users_email_unique") }];
-  for (const migration of migrations) migration.up();
-  for (const migration of [...migrations].reverse()) migration.down();
-  assertGate(schema.tables.size === 0 && schema.indexes.size === 0, "Rollback did not restore initial schema");
-  return { migrations: migrations.length };
+  requireScripts(["db:migrations:rollback-check"]);
+  const defaultCommand = commandExists("docker") ? "pnpm run db:migrations:rollback-check" : undefined;
+  const command = configuredCommand(["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"], defaultCommand);
+  if (!command) {
+    return skipGate("Migration rollback gate skipped because Docker/Testcontainers is unavailable and no real rollback command is configured.", {
+      env: ["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"],
+      requiredScript: "db:migrations:rollback-check",
+    });
+  }
+
+  return { mode: "command", source: command.source, ...runShell("migration rollback", command.command) };
 }
 
 async function concurrencyRace() {

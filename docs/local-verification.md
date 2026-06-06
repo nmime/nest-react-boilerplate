@@ -10,6 +10,7 @@ Run the full gate from a clean `main` checkout with Node 26.1.0 and pnpm 10.32.1
 pnpm install --frozen-lockfile
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
+pnpm run tooling:static-check
 pnpm run check
 node scripts/validate-deployment-config.mjs
 node scripts/validate-helm-rate-limit-config.mjs
@@ -71,9 +72,17 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 - update visual baselines only with `pnpm run test:visual:update`, then verify with `pnpm run test:visual`;
 - review generated/binary diffs together with the source API/schema/story change that caused them.
 
+## Tooling and migration rollback checks
+
+`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/scripts/**/*.mjs`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. It does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
+
+`pnpm run db:migrations:rollback-check` (also exposed as `pnpm run test:migrations:rollback`) is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
+
 ## Script map
 
-- `pnpm run check`: full aggregate for formatting, migrations, contracts, QA presets, lint, typecheck, and unit tests.
+- `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
+- `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
+- `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation; also reachable through `pnpm run test:migrations:rollback`.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.
 - `pnpm run test:coverage`: unit/component coverage gate.

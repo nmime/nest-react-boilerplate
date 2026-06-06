@@ -116,7 +116,11 @@ describe("common swagger", () => {
     expect(mocks.builder.setVersion).toHaveBeenCalledWith("1.2.3");
     expect(mocks.builder.setDescription).toHaveBeenCalledWith("API docs");
     expect(mocks.builder.addBearerAuth).toHaveBeenCalledOnce();
-    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith("nrb.sid");
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
+      "nrb.sid",
+      undefined,
+      "nrb.sid",
+    );
     expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
     expect(mocks.setup).toHaveBeenCalledWith("docs", app, "document", {
       jsonDocumentUrl: "docs/openapi.json",

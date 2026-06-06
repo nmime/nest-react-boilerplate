@@ -94,7 +94,7 @@ export function setupSwagger(
     .setTitle(resolved.title)
     .setVersion(resolved.version)
     .addBearerAuth()
-    .addCookieAuth("nrb.sid");
+    .addCookieAuth("nrb.sid", undefined, "nrb.sid");
 
   if (resolved.description) {
     builder.setDescription(resolved.description);

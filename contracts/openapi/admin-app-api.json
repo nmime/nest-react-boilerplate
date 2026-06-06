@@ -2627,7 +2627,7 @@
         "bearerFormat": "JWT",
         "type": "http"
       },
-      "cookie": {
+      "nrb.sid": {
         "type": "apiKey",
         "in": "cookie",
         "name": "nrb.sid"

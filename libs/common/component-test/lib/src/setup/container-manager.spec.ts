@@ -6,9 +6,21 @@ describe("ContainerManager", () => {
     const manager = new ContainerManager();
     const stops: string[] = [];
 
-    manager.register({ stop: vi.fn(() => stops.push("first")) });
-    manager.register({ stop: vi.fn(() => stops.push("second")) });
-    manager.register({ stop: vi.fn(() => stops.push("third")) });
+    manager.register({
+      stop: vi.fn(() => {
+        stops.push("first");
+      }),
+    });
+    manager.register({
+      stop: vi.fn(() => {
+        stops.push("second");
+      }),
+    });
+    manager.register({
+      stop: vi.fn(() => {
+        stops.push("third");
+      }),
+    });
 
     await manager.stopAll();
 

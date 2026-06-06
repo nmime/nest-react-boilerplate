@@ -244,6 +244,8 @@ describe("admin current entities integration", () => {
     );
 
     expect(screen.queryByText("Users")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Access denied" })).toBeTruthy();
+    expect(screen.getByText("RBAC denied")).toBeTruthy();
     expect(screen.getByText("Missing admin users permission.")).toBeTruthy();
     cleanup();
     render(
@@ -271,7 +273,11 @@ describe("admin current entities integration", () => {
         payload,
       }),
     );
-    expect(screen.getByText("Admin page not found")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Admin page not found" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Unknown route")).toBeTruthy();
+    expect(screen.getByText("Choose dashboard or profile.")).toBeTruthy();
     cleanup();
     render(renderAdminRoute("/admin", { status: "loading" }));
     expect(screen.getAllByText("Loading admin profile...")).toHaveLength(2);

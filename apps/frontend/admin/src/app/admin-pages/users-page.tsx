@@ -448,7 +448,7 @@ export const UsersPage = ({
         }}
       >
         <UiTextarea
-          aria-label={t("admin.users.reasonLabel")}
+          aria-label={t("admin.users.statusDialog.reasonLabel")}
           placeholder={t("admin.users.reasonPlaceholder")}
           value={reason}
           onChange={(event) => setReason(event.currentTarget.value)}
@@ -552,7 +552,7 @@ export const UsersPage = ({
           )}
         </div>
         <UiTextarea
-          aria-label={t("admin.users.reasonLabel")}
+          aria-label={t("admin.users.policyDialog.reasonLabel")}
           placeholder={t("admin.users.reasonPlaceholder")}
           value={reason}
           onChange={(event) => setReason(event.currentTarget.value)}

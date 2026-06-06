@@ -1,14 +1,40 @@
-import {
-  connect,
-  JSONCodec,
-  StringCodec,
-  type ConnectionOptions,
-  type NatsConnection,
-} from "nats";
+import type {
+  Codec,
+  ConnectionOptions,
+  NatsConnection,
+} from "@nats-io/nats-core";
+import { connect } from "@nats-io/transport-node";
 import type { NatsConnectionConfig } from "./type";
 
-export const createNatsJsonCodec = JSONCodec;
-export const createNatsStringCodec = StringCodec;
+export type { Codec, NatsConnection } from "@nats-io/nats-core";
+
+export function createNatsJsonCodec<T = unknown>(): Codec<T> {
+  const textEncoder = new TextEncoder();
+  const textDecoder = new TextDecoder();
+
+  return {
+    encode(value: T): Uint8Array {
+      return textEncoder.encode(JSON.stringify(value));
+    },
+    decode(bytes: Uint8Array): T {
+      return JSON.parse(textDecoder.decode(bytes)) as T;
+    },
+  };
+}
+
+export function createNatsStringCodec(): Codec<string> {
+  const textEncoder = new TextEncoder();
+  const textDecoder = new TextDecoder();
+
+  return {
+    encode(value: string): Uint8Array {
+      return textEncoder.encode(value);
+    },
+    decode(bytes: Uint8Array): string {
+      return textDecoder.decode(bytes);
+    },
+  };
+}
 
 export async function createNatsConnection(
   config: NatsConnectionConfig,

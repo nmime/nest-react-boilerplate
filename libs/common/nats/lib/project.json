@@ -20,12 +20,14 @@
       "cache": true,
       "options": {
         "cwd": "libs/common/nats/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "vitest run --config vitest.config.mts --pool=threads --maxWorkers=1 --testTimeout=30000"
       },
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/common/nats"]
     }

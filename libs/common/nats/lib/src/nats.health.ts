@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { NatsConnection } from "nats";
+import type { NatsConnection } from "@nats-io/nats-core";
 import { InjectNatsConnection } from "./decorator";
 
 @Injectable()

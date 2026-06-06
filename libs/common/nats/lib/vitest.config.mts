@@ -10,6 +10,9 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
+    pool: "threads",
+    maxWorkers: 1,
+    testTimeout: 30_000,
     coverage: fullCoverage(
       "../../../../coverage/libs/common/nats",
       ["src/**/*.ts"],

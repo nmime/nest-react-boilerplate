@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import {
-  JSONCodec,
-  type NatsConnection,
-  type PublishOptions,
-  type RequestOptions,
-} from "nats";
+import type {
+  NatsConnection,
+  PublishOptions,
+  RequestOptions,
+} from "@nats-io/nats-core";
 import { InjectNatsConnection } from "./decorator";
+import { createNatsJsonCodec } from "./nats-client.factory";
 
 export class NatsConnectionUnavailableError extends Error {
   constructor(reason: string) {
@@ -16,7 +16,7 @@ export class NatsConnectionUnavailableError extends Error {
 
 @Injectable()
 export class NatsService {
-  private readonly jsonCodec = JSONCodec<unknown>();
+  private readonly jsonCodec = createNatsJsonCodec<unknown>();
 
   constructor(
     @InjectNatsConnection()

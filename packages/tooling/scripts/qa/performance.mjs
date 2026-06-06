@@ -7,13 +7,14 @@ const engine = args.options.get("engine") ?? process.env.PERF_ENGINE ?? "native"
 const urls = envList("PERF_URLS");
 const apiUrls = envList("PERF_API_URLS");
 const reportPath = args.options.get("report") ?? "test-results/performance/report.json";
+const lighthouseVersion = args.options.get("lighthouse-version") ?? process.env.LIGHTHOUSE_VERSION ?? "13.3.0";
 const budget = { ttfbMs: Number(process.env.PERF_TTFB_BUDGET_MS ?? 1500), htmlBytes: Number(process.env.PERF_HTML_BUDGET_BYTES ?? 500000), lighthousePerformance: Number(process.env.PERF_LIGHTHOUSE_PERFORMANCE_MIN ?? 0.7), apiP95Ms: Number(process.env.PERF_API_P95_BUDGET_MS ?? 750) };
 const results = [];
 const findings = [];
 ensureDir("test-results/performance");
 
 if (dryRun) {
-  writeJson(reportPath, { status: "dry-run", engine, urls, apiUrls, budget });
+  writeJson(reportPath, { status: "dry-run", engine, urls, apiUrls, budget, lighthouseVersion });
   console.log(JSON.stringify({ status: "dry-run", preset: "performance", engine, report: reportPath }));
   process.exit(0);
 }
@@ -25,6 +26,7 @@ if (!urls.length && !apiUrls.length) {
     urls,
     apiUrls,
     budget,
+    lighthouseVersion,
     reason: "No performance targets configured. Set PERF_URLS and/or PERF_API_URLS to real HTTP(S) targets to enforce budgets.",
   });
   console.log(JSON.stringify({
@@ -42,7 +44,7 @@ if ((engine === "lighthouse" || process.env.PERF_LIGHTHOUSE === "1") && urls.len
   else {
     for (const [index, url] of urls.entries()) {
       const outputPath = `test-results/performance/lighthouse-${index + 1}.json`;
-      const result = run("pnpm", ["dlx", "lighthouse@latest", url, "--quiet", "--chrome-flags=--headless --no-sandbox", "--output=json", `--output-path=${outputPath}`]);
+      const result = run("pnpm", ["dlx", `lighthouse@${lighthouseVersion}`, url, "--quiet", "--chrome-flags=--headless --no-sandbox", "--output=json", `--output-path=${outputPath}`]);
       results.push({ engine: "lighthouse", url, status: result.status, outputPath, ok: result.status === 0 });
       if (result.status !== 0) findings.push({ url, rule: "lighthouse", severity: "high", stderr: result.stderr.slice(-2000) });
     }
@@ -84,7 +86,7 @@ for (const url of apiUrls) {
   if (!ok) findings.push({ url, rule: "api-load-budget", severity: "high", p95, budget });
 }
 
-writeJson(reportPath, { status: findings.length ? "violations" : "ok", engine, budget, results, findings });
+writeJson(reportPath, { status: findings.length ? "violations" : "ok", engine, budget, lighthouseVersion, results, findings });
 if (findings.length) {
   console.error("Performance checks failed:");
   for (const finding of findings) console.error(`- ${finding.url ?? finding.rule}: ${finding.rule}`);

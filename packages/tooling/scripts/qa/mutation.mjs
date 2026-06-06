@@ -5,7 +5,7 @@ import { commandExists, parseArgs, run, writeJson } from "./runtime-utils.mjs";
 const args = parseArgs();
 const config = args.options.get("config") ?? process.env.STRYKER_CONFIG ?? "stryker.config.mjs";
 const reportPath = args.options.get("report") ?? "test-results/mutation/command.json";
-const command = ["dlx", "@stryker-mutator/core@latest", "run", config, ...args.positional];
+const command = ["dlx", "@stryker-mutator/core@9.6.1", "run", config, ...args.positional];
 if (!existsSync(config)) {
   console.error(`Stryker config not found: ${config}`);
   process.exit(1);

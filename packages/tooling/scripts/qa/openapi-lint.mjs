@@ -6,6 +6,7 @@ import { commandExists, httpMethods, loadOpenApiContracts, parseArgs, resolveJso
 const args = parseArgs();
 const engine = args.options.get("engine") ?? process.env.OPENAPI_LINT_ENGINE ?? "native";
 const reportPath = args.options.get("report") ?? "test-results/openapi-lint/report.json";
+const spectralVersion = args.options.get("spectral-version") ?? process.env.SPECTRAL_CLI_VERSION ?? "6.16.0";
 const errors = [];
 const warnings = [];
 const contracts = loadOpenApiContracts();
@@ -45,7 +46,7 @@ for (const contract of contracts) {
 
 let spectral = null;
 if (engine === "spectral" || args.flags.has("spectral")) {
-  const spectralArgs = ["dlx", "@stoplight/spectral-cli@latest", "lint", ...contracts.map((contract) => contract.path), "--format", "json"];
+  const spectralArgs = ["dlx", `@stoplight/spectral-cli@${spectralVersion}`, "lint", ...contracts.map((contract) => contract.path), "--format", "json"];
   if (existsSync(".spectral.yaml")) spectralArgs.push("--ruleset", ".spectral.yaml");
   if (!commandExists("pnpm")) errors.push("Spectral lint requested but pnpm is not available");
   else {
@@ -55,7 +56,7 @@ if (engine === "spectral" || args.flags.has("spectral")) {
   }
 }
 
-writeJson(reportPath, { status: errors.length ? "failed" : "ok", contracts: contracts.map((contract) => contract.file), errors, warnings, spectral });
+writeJson(reportPath, { status: errors.length ? "failed" : "ok", contracts: contracts.map((contract) => contract.file), errors, warnings, spectralVersion, spectral });
 if (warnings.length) for (const warning of warnings) console.warn(`warning: ${warning}`);
 if (errors.length) {
   console.error("OpenAPI lint failed:");

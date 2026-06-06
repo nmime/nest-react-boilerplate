@@ -2,6 +2,8 @@
 
 `@app/common/nats` provides a minimal backend Nest foundation for NATS without wiring any runtime application to require a broker by default.
 
+It uses the official `nats` npm client from [`nats-io/nats.js`](https://github.com/nats-io/nats.js).
+
 ## Configuration
 
 The module is disabled when `NATS_SERVERS` is empty. Importing `NatsModule.forRoot()` will then provide a `null` connection, keep `NatsHealthIndicator` healthy with `{ enabled: false }`, and avoid outbound broker connections.

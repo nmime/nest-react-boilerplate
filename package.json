@@ -107,6 +107,7 @@
     "helmet": "8.2.0",
     "mobx": "^6.15.4",
     "mobx-react-lite": "^4.1.1",
+    "nats": "2.29.3",
     "nestjs-i18n": "10.8.4",
     "neverthrow": "8.2.0",
     "openapi-fetch": "^0.17.0",

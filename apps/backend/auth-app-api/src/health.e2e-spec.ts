@@ -92,11 +92,13 @@ function sessionCookieHeader(response: {
   headers: Record<string, string | string[] | undefined>;
 }): string {
   const setCookie = response.headers["set-cookie"];
-  const cookies = Array.isArray(setCookie)
-    ? setCookie
-    : setCookie
-      ? [setCookie]
-      : [];
+  let cookies: string[] = [];
+
+  if (Array.isArray(setCookie)) {
+    cookies = setCookie;
+  } else if (setCookie) {
+    cookies = [setCookie];
+  }
 
   return cookies
     .map((cookie) => cookie.split(";")[0])

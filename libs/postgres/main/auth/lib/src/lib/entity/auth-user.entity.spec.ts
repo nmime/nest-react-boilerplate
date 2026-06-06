@@ -66,6 +66,12 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.permissions.type).toBe("json");
     expect(metadata.properties.locale.length).toBe(16);
     expect(metadata.properties.locale.nullable).not.toBe(true);
+    expect(metadata.checks).toContainEqual(
+      expect.objectContaining({
+        name: "ck__auth_users__locale",
+        expression: `"locale" in ('en', 'ru')`,
+      }),
+    );
     expect(metadata.properties.theme.length).toBe(16);
     expect(metadata.properties.theme.default).toBe("system");
     expect(metadata.properties.theme.nullable).not.toBe(true);

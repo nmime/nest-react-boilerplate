@@ -135,6 +135,32 @@ describeIfDocker("AuthUserRepository component", () => {
     ).toBeNull();
   });
 
+  it("persists supported locales and rejects unsupported locales", async () => {
+    const user = (
+      await authUsers.createUser({
+        email: "locale@example.com",
+        locale: "ru",
+      })
+    )._unsafeUnwrap();
+
+    expect(user.locale).toBe("ru");
+    expect(
+      (await authUsers.setLocale(user.id, "en"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "en" });
+    expect(
+      (await authUsers.setLocale(user.id, "ru"))._unsafeUnwrap(),
+    ).toMatchObject({ locale: "ru" });
+
+    const unsupportedLocale = "es" as unknown as Parameters<
+      AuthUserRepository["setLocale"]
+    >[1];
+    const unsupported = await authUsers.setLocale(user.id, unsupportedLocale);
+
+    expect(unsupported._unsafeUnwrapErr()).toMatchObject({
+      code: "repository_error",
+    });
+  });
+
   it("maps real unique-constraint failures to repository errors", async () => {
     await authUsers
       .createUser({ email: "duplicate@example.com" })

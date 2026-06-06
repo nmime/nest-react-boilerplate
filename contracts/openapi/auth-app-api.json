@@ -1903,6 +1903,9 @@
         },
         "security": [
           {
+            "nrb.sid": []
+          },
+          {
             "bearer": []
           }
         ],
@@ -2214,6 +2217,9 @@
         },
         "security": [
           {
+            "nrb.sid": []
+          },
+          {
             "bearer": []
           }
         ],
@@ -2524,6 +2530,9 @@
           }
         },
         "security": [
+          {
+            "nrb.sid": []
+          },
           {
             "bearer": []
           }
@@ -3122,6 +3131,9 @@
         },
         "security": [
           {
+            "nrb.sid": []
+          },
+          {
             "bearer": []
           }
         ],
@@ -3143,6 +3155,11 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "type": "http"
+      },
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "nrb.sid"
       }
     },
     "schemas": {

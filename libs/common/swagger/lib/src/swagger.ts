@@ -93,7 +93,8 @@ export function setupSwagger(
   const builder = new DocumentBuilder()
     .setTitle(resolved.title)
     .setVersion(resolved.version)
-    .addBearerAuth();
+    .addBearerAuth()
+    .addCookieAuth("nrb.sid");
 
   if (resolved.description) {
     builder.setDescription(resolved.description);

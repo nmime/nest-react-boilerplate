@@ -257,6 +257,7 @@ export interface components {
         | "admin:audit:read"
         | "admin:settings:read"
         | "admin:settings:update"
+        | "admin:manage:all"
       )[];
     };
     AdminRbacRoleDto: {
@@ -658,7 +659,8 @@ export interface operations {
           | "admin:roles:read"
           | "admin:audit:read"
           | "admin:settings:read"
-          | "admin:settings:update";
+          | "admin:settings:update"
+          | "admin:manage:all";
       };
       header?: never;
       path?: never;

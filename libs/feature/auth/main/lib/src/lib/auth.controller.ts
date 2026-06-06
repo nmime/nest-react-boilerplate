@@ -10,11 +10,13 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
+  ApiCookieAuth,
   ApiProperty,
   ApiPropertyOptional,
 } from "@nestjs/swagger";
 import {
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -24,10 +26,10 @@ import { supportedLocales } from "@app/common/i18n";
 import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
-  BearerAuthGuard,
   clearSessionPrincipal,
   CurrentUser,
   setSessionPrincipal,
+  SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
@@ -60,6 +62,7 @@ export class RegisterDto {
   @ApiPropertyOptional({ enum: supportedLocales })
   @IsOptional()
   @IsString()
+  @IsIn(supportedLocales)
   locale?: string;
 }
 
@@ -114,6 +117,7 @@ export interface MePayload {
 export class UpdateLocaleDto {
   @ApiProperty({ enum: supportedLocales })
   @IsString()
+  @IsIn(supportedLocales)
   locale!: string;
 }
 
@@ -121,11 +125,13 @@ export class UpdatePreferencesDto {
   @ApiPropertyOptional({ enum: supportedLocales })
   @IsOptional()
   @IsString()
+  @IsIn(supportedLocales)
   locale?: string;
 
   @ApiPropertyOptional({ enum: userThemePreferences })
   @IsOptional()
   @IsString()
+  @IsIn(userThemePreferences)
   theme?: string;
 }
 
@@ -393,7 +399,8 @@ export class AuthController {
   @Get("me")
   @ApiOkDataResponse(MePayloadDto)
   @ApiBearerAuth()
-  @UseGuards(new BearerAuthGuard())
+  @ApiCookieAuth("nrb.sid")
+  @UseGuards(new SessionAuthGuard())
   async me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): Promise<OkResponse<MePayload>> {
@@ -406,7 +413,8 @@ export class AuthController {
   @Patch("me/locale")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
   @ApiBearerAuth()
-  @UseGuards(new BearerAuthGuard())
+  @ApiCookieAuth("nrb.sid")
+  @UseGuards(new SessionAuthGuard())
   async updateLocale(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdateLocaleDto,
@@ -425,7 +433,8 @@ export class AuthController {
   @Patch("me/preferences")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
   @ApiBearerAuth()
-  @UseGuards(new BearerAuthGuard())
+  @ApiCookieAuth("nrb.sid")
+  @UseGuards(new SessionAuthGuard())
   async updatePreferences(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: UpdatePreferencesDto,
@@ -450,7 +459,8 @@ export class AuthController {
   @Post("logout")
   @ApiOkDataResponse(LogoutPayloadDto)
   @ApiBearerAuth()
-  @UseGuards(new BearerAuthGuard())
+  @ApiCookieAuth("nrb.sid")
+  @UseGuards(new SessionAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: AuthenticatedResponse,

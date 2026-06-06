@@ -15,6 +15,7 @@ import {
 const mocks = vi.hoisted(() => {
   const builder = {
     addBearerAuth: vi.fn(() => builder),
+    addCookieAuth: vi.fn(() => builder),
     build: vi.fn(() => "config"),
     setDescription: vi.fn(() => builder),
     setTitle: vi.fn(() => builder),
@@ -100,7 +101,7 @@ describe("common swagger", () => {
     ).toMatchObject({ enabled: true });
   });
 
-  it("creates bearer-auth swagger docs with problem response support", () => {
+  it("creates bearer and session-cookie auth swagger docs with problem response support", () => {
     const app = {} as never;
 
     setupSwagger(app, {
@@ -115,6 +116,7 @@ describe("common swagger", () => {
     expect(mocks.builder.setVersion).toHaveBeenCalledWith("1.2.3");
     expect(mocks.builder.setDescription).toHaveBeenCalledWith("API docs");
     expect(mocks.builder.addBearerAuth).toHaveBeenCalledOnce();
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith("nrb.sid");
     expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
     expect(mocks.setup).toHaveBeenCalledWith("docs", app, "document", {
       jsonDocumentUrl: "docs/openapi.json",

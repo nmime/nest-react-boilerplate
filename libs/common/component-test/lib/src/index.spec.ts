@@ -10,7 +10,23 @@ describe("common component-test exports", () => {
 
   it("exports generic service containers", () => {
     expect(componentTest.createRedisContainer).toBeDefined();
-    expect(componentTest.createRabbitMqContainer).toBeDefined();
+    expect(componentTest.createNatsContainer).toBeDefined();
     expect(componentTest.createMinioContainer).toBeDefined();
+  });
+
+  it("does not export removed queue container helpers", () => {
+    const removedCreateHelper = ["create", "Rabbit", "Mq", "Container"].join(
+      "",
+    );
+    const removedImageConstant = ["Default", "Rabbit", "Mq", "TestImage"].join(
+      "",
+    );
+
+    expect(
+      (componentTest as Record<string, unknown>)[removedCreateHelper],
+    ).toBeUndefined();
+    expect(
+      (componentTest as Record<string, unknown>)[removedImageConstant],
+    ).toBeUndefined();
   });
 });

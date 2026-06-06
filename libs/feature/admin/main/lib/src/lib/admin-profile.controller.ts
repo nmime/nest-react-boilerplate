@@ -10,7 +10,6 @@ import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
-  RbacGuard,
   SessionAuthGuard,
   RequirePermissions,
   RequireRoles,
@@ -21,6 +20,7 @@ import {
   type AdminProfileView,
   toAdminProfileView,
 } from "@app/feature-admin-shared";
+import { AdminRbacGuard } from "./admin-rbac.guard";
 
 export interface AdminProfilePayload {
   principal: AuthenticatedPrincipal;
@@ -91,7 +91,7 @@ export class AdminProfilePayloadDto {
 
 @ApiProblemExceptions(400, 401, 403, 429, 500)
 @Controller("admin/profile")
-@UseGuards(new SessionAuthGuard(), new RbacGuard())
+@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
 export class AdminProfileController {
   @Get("me")
   @ApiOkDataResponse(AdminProfilePayloadDto)

@@ -263,10 +263,20 @@ describe("admin UI primitives", () => {
       screen.getByRole("combobox", { name: "Filter users by status" }),
     ).toBeTruthy();
     expect(document.querySelectorAll("select")).toHaveLength(0);
+
+    const semanticControls = Array.from(
+      document.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >("input,select,textarea"),
+    );
+    const labelCountFor = (
+      control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
+    ): number => control.labels?.length ?? 0;
+
     expect(
-      [...document.querySelectorAll("input,select,textarea")].filter(
+      semanticControls.filter(
         (control) =>
-          !control.labels?.length &&
+          labelCountFor(control) === 0 &&
           !control.getAttribute("aria-label") &&
           !control.getAttribute("aria-labelledby"),
       ),

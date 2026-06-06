@@ -125,12 +125,11 @@ function parseOptionalInteger(value: string | undefined): number | undefined {
     return undefined;
   }
 
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed)) {
+  if (!/^-?\d+$/u.test(value)) {
     throw new Error(`Invalid NATS integer value: ${value}`);
   }
 
-  return parsed;
+  return Number.parseInt(value, 10);
 }
 
 function parseOptionalPositiveInteger(

@@ -40,7 +40,6 @@ export interface UserProfilePayload {
 }
 
 export type LocalePayload =
-  | AuthPreferencesPayload
   | AuthMePayload
   | AuthSessionPayload
   | UserProfilePayload

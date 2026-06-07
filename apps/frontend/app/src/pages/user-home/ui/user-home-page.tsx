@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { useEffect, useMemo } from "react";
 import { observer } from "mobx-react-lite";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -137,7 +137,7 @@ export const UserHomePage = observer(function UserHomePage({
     profileQuery.isLoading,
   ]);
 
-  const submitAuth = (mode: AuthMode, event: FormEvent<HTMLFormElement>) => {
+  const submitAuth = (mode: AuthMode, event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     authMutation.mutate({

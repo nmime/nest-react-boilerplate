@@ -85,6 +85,11 @@ type FetchInit = {
 type FetchMock = ReturnType<typeof setFetch>;
 type FetchCall = [unknown, unknown?];
 
+const normalizeHeaders = (
+  headers: HeadersInit | undefined,
+): Record<string, string> | undefined =>
+  headers ? Object.fromEntries(new Headers(headers).entries()) : undefined;
+
 const getCalledUrl = (calledInput: unknown): string =>
   calledInput instanceof Request ? calledInput.url : String(calledInput);
 
@@ -92,12 +97,18 @@ const getCalledInit = (calledInput: unknown, init: unknown): FetchInit => {
   if (calledInput instanceof Request) {
     return {
       body: calledInput.body,
-      headers: Object.fromEntries(calledInput.headers.entries()),
+      headers: normalizeHeaders(calledInput.headers),
       method: calledInput.method,
     };
   }
 
-  return init ?? {};
+  const requestInit = init as RequestInit | undefined;
+
+  return {
+    body: requestInit?.body,
+    headers: normalizeHeaders(requestInit?.headers),
+    method: requestInit?.method,
+  };
 };
 
 const matchesUrl = (actualUrl: string, expectedUrl: string): boolean => {

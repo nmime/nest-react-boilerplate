@@ -10,7 +10,9 @@
             "description": "User API health check succeeded."
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/live": {
@@ -22,7 +24,9 @@
             "description": "User API liveness check succeeded."
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/ready": {
@@ -39,7 +43,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -75,7 +83,9 @@
             }
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/profile/me": {
@@ -89,7 +99,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/ProfilePayloadDto"
@@ -105,7 +117,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -157,7 +173,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -171,7 +190,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -212,7 +235,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -253,7 +280,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -294,7 +325,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -341,7 +376,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Profile"]
+        "tags": [
+          "Profile"
+        ]
       }
     }
   },
@@ -362,15 +399,15 @@
       },
       "nrb.sid": {
         "type": "apiKey",
-        "description": "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
         "in": "cookie",
-        "name": "nrb.sid"
+        "name": "nrb.sid",
+        "description": "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name."
       },
       "__Host-nrb.sid": {
         "type": "apiKey",
-        "description": "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
         "in": "cookie",
-        "name": "__Host-nrb.sid"
+        "name": "__Host-nrb.sid",
+        "description": "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name."
       }
     },
     "schemas": {
@@ -389,7 +426,10 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           },
           "issuer": {
             "type": "string"
@@ -423,7 +463,11 @@
             "type": "string"
           }
         },
-        "required": ["subject", "roles", "permissions"]
+        "required": [
+          "subject",
+          "roles",
+          "permissions"
+        ]
       },
       "UserProfileViewDto": {
         "type": "object",
@@ -440,7 +484,10 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           },
           "roles": {
             "type": "array",
@@ -455,7 +502,11 @@
             }
           }
         },
-        "required": ["id", "roles", "permissions"]
+        "required": [
+          "id",
+          "roles",
+          "permissions"
+        ]
       },
       "ProfilePayloadDto": {
         "type": "object",
@@ -467,7 +518,10 @@
             "$ref": "#/components/schemas/UserProfileViewDto"
           }
         },
-        "required": ["principal", "profile"]
+        "required": [
+          "principal",
+          "profile"
+        ]
       }
     }
   }

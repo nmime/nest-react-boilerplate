@@ -10,7 +10,9 @@
             "description": "Auth API health check succeeded."
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/live": {
@@ -22,7 +24,9 @@
             "description": "Auth API liveness check succeeded."
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/ready": {
@@ -39,7 +43,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -75,7 +83,9 @@
             }
           }
         },
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/auth/register": {
@@ -99,7 +109,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionViewDto"
@@ -115,7 +127,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -167,7 +183,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -181,7 +200,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -222,7 +245,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -263,7 +290,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -304,7 +335,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -345,7 +380,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -381,7 +420,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/login": {
@@ -405,7 +446,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionViewDto"
@@ -421,7 +464,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -473,7 +520,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -487,7 +537,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -528,7 +582,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -569,7 +627,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -610,7 +672,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -651,7 +717,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -687,7 +757,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/refresh": {
@@ -711,7 +783,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionViewDto"
@@ -727,7 +801,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -779,7 +857,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -793,7 +874,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -834,7 +919,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -875,7 +964,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -916,7 +1009,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -957,7 +1054,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -993,7 +1094,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/email-verification-token": {
@@ -1017,7 +1120,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/UserActionTokenPayloadDto"
@@ -1033,7 +1138,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1085,7 +1194,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -1099,7 +1211,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1140,7 +1256,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1181,7 +1301,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1222,7 +1346,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1263,7 +1391,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1299,7 +1431,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/password-reset-token": {
@@ -1323,7 +1457,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/UserActionTokenPayloadDto"
@@ -1339,7 +1475,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1391,7 +1531,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -1405,7 +1548,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1446,7 +1593,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1487,7 +1638,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1528,7 +1683,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1569,7 +1728,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1605,7 +1768,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/me": {
@@ -1619,7 +1784,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/MePayloadDto"
@@ -1635,7 +1802,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1687,7 +1858,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -1701,7 +1875,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1742,7 +1920,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1783,7 +1965,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1824,7 +2010,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1865,7 +2055,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1912,7 +2106,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/me/locale": {
@@ -1936,7 +2132,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthenticatedUserViewDto"
@@ -1952,7 +2150,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2004,7 +2206,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -2018,7 +2223,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2059,7 +2268,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2100,7 +2313,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2141,7 +2358,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2182,7 +2403,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2229,7 +2454,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/me/preferences": {
@@ -2253,7 +2480,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AuthenticatedUserViewDto"
@@ -2269,7 +2498,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2321,7 +2554,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -2335,7 +2571,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2376,7 +2616,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2417,7 +2661,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2458,7 +2706,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2499,7 +2751,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2546,7 +2802,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/locales": {
@@ -2560,7 +2818,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/SupportedLocalesPayloadDto"
@@ -2576,7 +2836,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2628,7 +2892,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -2642,7 +2909,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2683,7 +2954,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2724,7 +2999,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2765,7 +3044,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2806,7 +3089,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2842,7 +3129,9 @@
             }
           }
         },
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/auth/logout": {
@@ -2856,7 +3145,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["data"],
+                  "required": [
+                    "data"
+                  ],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/LogoutPayloadDto"
@@ -2872,7 +3163,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2924,7 +3219,10 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": ["property", "constraints"]
+                        "required": [
+                          "property",
+                          "constraints"
+                        ]
                       }
                     }
                   }
@@ -2938,7 +3236,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2979,7 +3281,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -3020,7 +3326,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -3061,7 +3371,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -3102,7 +3416,11 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": [
+                    "type",
+                    "title",
+                    "status"
+                  ],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -3149,7 +3467,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     }
   },
@@ -3170,15 +3490,15 @@
       },
       "nrb.sid": {
         "type": "apiKey",
-        "description": "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
         "in": "cookie",
-        "name": "nrb.sid"
+        "name": "nrb.sid",
+        "description": "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name."
       },
       "__Host-nrb.sid": {
         "type": "apiKey",
-        "description": "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
         "in": "cookie",
-        "name": "__Host-nrb.sid"
+        "name": "__Host-nrb.sid",
+        "description": "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name."
       }
     },
     "schemas": {
@@ -3201,11 +3521,18 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           },
           "theme": {
             "type": "string",
-            "enum": ["system", "light", "dark"]
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
           },
           "roles": {
             "type": "array",
@@ -3220,7 +3547,14 @@
             }
           }
         },
-        "required": ["id", "tenantId", "email", "theme", "roles", "permissions"]
+        "required": [
+          "id",
+          "tenantId",
+          "email",
+          "theme",
+          "roles",
+          "permissions"
+        ]
       },
       "AuthSessionViewDto": {
         "type": "object",
@@ -3230,7 +3564,9 @@
           },
           "tokenType": {
             "type": "string",
-            "enum": ["Bearer"]
+            "enum": [
+              "Bearer"
+            ]
           },
           "expiresIn": {
             "type": "number"
@@ -3243,7 +3579,12 @@
             "$ref": "#/components/schemas/AuthenticatedUserViewDto"
           }
         },
-        "required": ["accessToken", "tokenType", "expiresIn", "user"]
+        "required": [
+          "accessToken",
+          "tokenType",
+          "expiresIn",
+          "user"
+        ]
       },
       "RegisterDto": {
         "type": "object",
@@ -3268,10 +3609,16 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -3291,7 +3638,10 @@
             "writeOnly": true
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "RefreshTokenDto": {
         "type": "object",
@@ -3305,7 +3655,9 @@
             "writeOnly": true
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "UserActionTokenPayloadDto": {
         "type": "object",
@@ -3314,7 +3666,9 @@
             "type": "boolean"
           }
         },
-        "required": ["issued"]
+        "required": [
+          "issued"
+        ]
       },
       "UserActionTokenRequestDto": {
         "type": "object",
@@ -3329,7 +3683,9 @@
             "format": "email"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "AuthenticatedPrincipalDto": {
         "type": "object",
@@ -3350,11 +3706,18 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           },
           "theme": {
             "type": "string",
-            "enum": ["system", "light", "dark"]
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
           },
           "issuer": {
             "type": "string"
@@ -3388,7 +3751,12 @@
             "type": "string"
           }
         },
-        "required": ["subject", "tenantId", "roles", "permissions"]
+        "required": [
+          "subject",
+          "tenantId",
+          "roles",
+          "permissions"
+        ]
       },
       "MePayloadDto": {
         "type": "object",
@@ -3406,28 +3774,43 @@
             ]
           }
         },
-        "required": ["principal", "user"]
+        "required": [
+          "principal",
+          "user"
+        ]
       },
       "UpdateLocaleDto": {
         "type": "object",
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           }
         },
-        "required": ["locale"]
+        "required": [
+          "locale"
+        ]
       },
       "UpdatePreferencesDto": {
         "type": "object",
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": [
+              "en",
+              "ru"
+            ]
           },
           "theme": {
             "type": "string",
-            "enum": ["system", "light", "dark"]
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ]
           }
         }
       },
@@ -3438,21 +3821,30 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["en", "ru"]
+              "enum": [
+                "en",
+                "ru"
+              ]
             }
           }
         },
-        "required": ["supportedLocales"]
+        "required": [
+          "supportedLocales"
+        ]
       },
       "LogoutPayloadDto": {
         "type": "object",
         "properties": {
           "loggedOut": {
             "type": "boolean",
-            "enum": [true]
+            "enum": [
+              true
+            ]
           }
         },
-        "required": ["loggedOut"]
+        "required": [
+          "loggedOut"
+        ]
       }
     }
   }

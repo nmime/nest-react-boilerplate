@@ -69,6 +69,8 @@ export function defaultIgnore(rel) {
     "coverage",
     "test-results",
     "playwright-report",
+    "validation-logs",
+    "tmp",
     ".nx",
     ".cache",
     ".stryker-tmp",

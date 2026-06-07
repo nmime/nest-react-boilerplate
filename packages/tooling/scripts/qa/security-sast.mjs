@@ -6,6 +6,7 @@ import { collectFiles, commandExists, parseArgs, run, workspaceRoot, writeJson }
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECURITY_SAST_ENGINE ?? "native";
+const failOnUnavailableExternal = (process.env.SECURITY_SAST_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-sast/report.json";
 const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.145.0";
 const findings = [];
@@ -16,6 +17,7 @@ const rules = [
   { id: "dangerous-inner-html", severity: "medium", regex: /dangerouslySetInnerHTML|\.innerHTML\s*=/g, message: "Review HTML injection for sanitization." },
   { id: "shell-exec", severity: "medium", regex: /\bexec\s*\(/g, message: "Prefer spawn/execFile with array arguments over shell exec." },
   { id: "weak-random", severity: "medium", regex: /Math\.random\s*\(/g, message: "Do not use Math.random for security-sensitive values." },
+  { id: "http-url", severity: "medium", regex: /["`]http:\/\/[^"`\s]+["`]/g, message: "Review plaintext HTTP URLs; production endpoints should use HTTPS." },
 ];
 
 if (engine === "semgrep" && !dryRun) {
@@ -25,7 +27,7 @@ if (engine === "semgrep" && !dryRun) {
   } else if (commandExists("docker")) {
     const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, semgrepImage, "semgrep", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "/src"]);
     if (result.status !== 0) findings.push({ rule: "semgrep-docker", severity: "high", message: "semgrep reported findings", stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-2000) });
-  } else findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
+  } else if (failOnUnavailableExternal) findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
 }
 
 function isProductionSource(path, rel) {
@@ -40,7 +42,7 @@ for (const file of collectFiles(workspaceRoot, { include: isProductionSource }))
   const rel = relative(workspaceRoot, file).replaceAll("\\", "/");
   const text = readFileSync(file, "utf8");
   for (const rule of rules) for (const match of text.matchAll(rule.regex)) {
-    if (rel.includes("security-sast.mjs")) continue;
+    if (rel.includes("security-sast.mjs") || rel.includes("security-dast.mjs")) continue;
     const line = text.slice(0, match.index).split("\n").length;
     findings.push({ file: rel, line, rule: rule.id, severity: rule.severity, message: rule.message });
   }
@@ -48,7 +50,7 @@ for (const file of collectFiles(workspaceRoot, { include: isProductionSource }))
 
 const failSeverities = new Set((process.env.SECURITY_SAST_FAIL_SEVERITIES ?? "critical,high").split(",").map((item) => item.trim()).filter(Boolean));
 const failing = dryRun ? [] : findings.filter((finding) => failSeverities.has(finding.severity));
-writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, semgrepImage, failSeverities: [...failSeverities], findings });
+writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, semgrepImage, failOnUnavailableExternal, failSeverities: [...failSeverities], findings });
 if (dryRun) {
   console.log(JSON.stringify({ status: "dry-run", engine, rules: rules.map((rule) => rule.id), report: reportPath }));
   process.exit(0);

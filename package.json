@@ -18,9 +18,12 @@
     "lint": "nx run-many -t lint",
     "typecheck": "nx run-many -t typecheck",
     "format": "prettier --write . --ignore-unknown",
-    "format:check": "prettier --check . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown --cache --cache-location .cache/prettier/check-cache",
+    "format:changed": "node packages/tooling/bin/repo-tooling.mjs tooling changed-format-check",
     "test:coverage": "pnpm exec nx run-many -t test --all -- --coverage",
     "audit": "pnpm audit --audit-level=moderate",
+    "audit:ci": "pnpm audit --audit-level=moderate --prod",
+    "audit:lockfile": "pnpm audit --audit-level=moderate --prod",
     "test:component": "nx run-many -t component-test --all",
     "test:e2e": "nx run-many -t e2e --projects=admin-app,user-app,landing-app,backend-admin-app-api,user-app-api,auth-app-api",
     "test:e2e:coverage": "nx run-many -t e2e --projects=admin-app,user-app,landing-app,backend-admin-app-api,user-app-api,auth-app-api -- --coverage",
@@ -32,6 +35,7 @@
     "docker:fullstack": "docker compose -f docker/docker-compose.yml up --build",
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "docker:prod:config:check": "node scripts/validate-docker-compose-prod.mjs",
+    "deploy:validate": "node scripts/validate-deployment-config.mjs && node scripts/validate-docker-compose-prod.mjs && node scripts/validate-helm-rate-limit-config.mjs && bash scripts/validate-helm.sh",
     "test:docker-smoke": "node packages/tooling/bin/repo-tooling.mjs docker smoke",
     "test:fullstack": "node packages/tooling/bin/repo-tooling.mjs docker fullstack-e2e",
     "check:fast": "pnpm run tooling:static-check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
@@ -57,6 +61,7 @@
     "test:security:secrets": "node packages/tooling/bin/repo-tooling.mjs qa secret-scan",
     "test:security:dast": "node packages/tooling/bin/repo-tooling.mjs qa security-dast",
     "test:security": "node packages/tooling/bin/repo-tooling.mjs qa security-suite",
+    "security:scan": "pnpm run test:security:secrets && pnpm run test:security:sast",
     "test:mutation": "node packages/tooling/bin/repo-tooling.mjs qa mutation",
     "test:property": "node packages/tooling/bin/repo-tooling.mjs qa property",
     "test:world-class": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates",
@@ -68,6 +73,7 @@
     "test:migrations:rollback": "pnpm run db:migrations:rollback-check",
     "test:concurrency": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate concurrency-race",
     "test:reliability:smoke": "node packages/tooling/bin/repo-tooling.mjs qa world-class-gates --gate reliability-smoke",
+    "ci:pr": "pnpm run tooling:static-check && pnpm run format:changed && pnpm run test:security:secrets && pnpm run test:security:sast && pnpm run audit:ci",
     "quality:world-class": "pnpm run test:world-class",
     "quality:presets": "pnpm run api:openapi:lint && pnpm run api:contracts:consumer && pnpm run api:openapi:fuzz && pnpm run test:property && pnpm run test:a11y && pnpm run test:e2e:matrix && pnpm run test:perf && pnpm run test:security && pnpm run test:mutation && pnpm run test:world-class",
     "db:restore:drill": "node packages/tooling/bin/repo-tooling.mjs db restore-drill",
@@ -75,6 +81,9 @@
     "helm:validate": "bash scripts/validate-helm.sh",
     "generate:feature": "node packages/tooling/bin/repo-tooling.mjs project generate-vertical-slice",
     "tooling:static-check": "node packages/tooling/bin/repo-tooling.mjs tooling static-check",
+    "ci:workflows:check": "node scripts/validate-github-workflows.mjs",
+    "branch:cleanup:check": "node packages/tooling/bin/repo-tooling.mjs git branch-cleanup --target HEAD",
+    "branch:cleanup": "node packages/tooling/bin/repo-tooling.mjs git branch-cleanup",
     "db:migrations:rollback-check": "node packages/tooling/bin/repo-tooling.mjs db migrations rollback-check"
   },
   "dependencies": {
@@ -236,7 +245,8 @@
     ]
   },
   "engines": {
-    "node": ">=26 <27"
+    "node": ">=26 <27",
+    "pnpm": "10.32.1"
   },
   "author": {
     "name": "nmime",

@@ -19,10 +19,4 @@ module.exports = [
       },
     },
   },
-  {
-    files: ["**/*.component-spec.ts"],
-    rules: {
-      "@nx/enforce-module-boundaries": "off",
-    },
-  },
 ];

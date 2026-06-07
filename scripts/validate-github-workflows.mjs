@@ -64,6 +64,22 @@ for (const required of ["pnpm run ci:pr", "pnpm run deploy:validate"]) {
   assert.ok(ci.includes(required), `ci.yml missing required gate: ${required}`);
 }
 for (const required of [
+  "non-runtime-validation",
+  "pnpm run db:migrations:check",
+  "pnpm run lib:configs:check",
+  "pnpm run api:contracts:check",
+  "pnpm run api:clients:check",
+  "pnpm run api:openapi:lint",
+  "pnpm run api:contracts:consumer",
+  "pnpm run api:openapi:fuzz",
+  "pnpm run test:property",
+]) {
+  assert.ok(
+    ci.includes(required),
+    `ci.yml missing non-runtime validation gate: ${required}`,
+  );
+}
+for (const required of [
   "pnpm run tooling:static-check",
   "pnpm run test:security:secrets",
   "pnpm run test:security:sast",

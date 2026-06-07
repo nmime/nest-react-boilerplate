@@ -12,7 +12,7 @@ import {
   NatsService,
   NatsServicesService,
   closeNatsConnection,
-} from "@app/common/nats";
+} from "./index";
 import {
   hasDockerRuntime,
   startNatsContainer,
@@ -94,7 +94,7 @@ describeIfDocker("NATS runtime smoke", () => {
           ],
         })
           .compile()
-          .then(async (shutdownModule) => ({ plainContainer, shutdownModule })),
+          .then((shutdownModule) => ({ plainContainer, shutdownModule })),
     );
 
     try {
@@ -142,9 +142,8 @@ describeIfDocker("NATS runtime smoke", () => {
 
     expect(manager).toBeDefined();
     expect(client).toBeDefined();
-    await expect(manager.getAccountInfo()).resolves.toMatchObject({
-      streams: expect.any(Number),
-    });
+    const accountInfo = await manager.getAccountInfo();
+    expect(typeof accountInfo.streams).toBe("number");
 
     const kvManager = moduleRef.get(NatsKvService).getManager();
     const bucketName = `runtime_kv_${Date.now()}`;

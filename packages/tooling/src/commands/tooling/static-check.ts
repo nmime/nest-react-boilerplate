@@ -36,22 +36,52 @@ const pnpmRunReference = /(?:^|&&|\|\||;|\s)pnpm\s+run\s+([@\w:.-]+)/g;
 export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
   const syntaxTargets = collectToolingModuleScripts(workspaceRoot);
-  const failures: CheckFailure[] = [];
+  const smokeCommands = getSmokeCommands();
+  const failures = [
+    ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
+    ...checkSmokeCommands(workspaceRoot, smokeCommands),
+    ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
+  ];
 
-  for (const script of syntaxTargets) {
+  if (failures.length > 0) {
+    reportFailures(failures);
+    return 1;
+  }
+
+  console.log(
+    JSON.stringify({
+      status: "ok",
+      checkedSyntax: syntaxTargets.length,
+      importSmoke: smokeCommands.length,
+      packageScriptReferences: countPackageScriptReferences(workspaceRoot),
+    }),
+  );
+
+  return 0;
+}
+
+function checkSyntaxTargets(
+  workspaceRoot: string,
+  syntaxTargets: string[],
+): CheckFailure[] {
+  return syntaxTargets.flatMap((script) => {
     const result = run(process.execPath, ["--check", script], {
       cwd: workspaceRoot,
     });
 
-    if (result.status !== 0) {
-      failures.push({
+    if (result.status === 0) return [];
+
+    return [
+      {
         ...result,
         file: relativeToWorkspace(workspaceRoot, script),
-      });
-    }
-  }
+      },
+    ];
+  });
+}
 
-  const smokeCommands = [
+function getSmokeCommands(): string[][] {
+  return [
     ["packages/tooling/bin/repo-tooling.mjs", "--help"],
     [
       "packages/tooling/bin/repo-tooling.mjs",
@@ -85,52 +115,39 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       "--help",
     ],
   ];
+}
 
-  for (const args of smokeCommands) {
+function checkSmokeCommands(
+  workspaceRoot: string,
+  smokeCommands: string[][],
+): CheckFailure[] {
+  return smokeCommands.flatMap((args) => {
     const result = run(process.execPath, args, { cwd: workspaceRoot });
+    return result.status === 0 ? [] : [result];
+  });
+}
 
-    if (result.status !== 0) {
-      failures.push(result);
-    }
+function toPackageScriptFailure(failure: ReferencedScript): CheckFailure {
+  return {
+    command: `package.json script reference ${failure.owner}#${failure.script}`,
+    file: failure.owner,
+    status: 1,
+    stdout: "",
+    stderr: `Missing referenced script path: ${failure.reference} -> ${failure.path}`,
+  };
+}
+
+function reportFailures(failures: CheckFailure[]): void {
+  console.error("Tooling static validation failed:");
+
+  for (const failure of failures) {
+    console.error(`- command: ${failure.command}`);
+    if (failure.file) console.error(`  file: ${failure.file}`);
+    console.error(`  exitCode: ${failure.status}`);
+    if (failure.stderr) console.error(`  stderr: ${tail(failure.stderr)}`);
+    if (failure.stdout) console.error(`  stdout: ${tail(failure.stdout)}`);
+    if (failure.error) console.error(`  error: ${failure.error}`);
   }
-
-  const referenceFailures = checkPackageScriptReferences(workspaceRoot);
-
-  for (const failure of referenceFailures) {
-    failures.push({
-      command: `package.json script reference ${failure.owner}#${failure.script}`,
-      file: failure.owner,
-      status: 1,
-      stdout: "",
-      stderr: `Missing referenced script path: ${failure.reference} -> ${failure.path}`,
-    });
-  }
-
-  if (failures.length > 0) {
-    console.error("Tooling static validation failed:");
-
-    for (const failure of failures) {
-      console.error(`- command: ${failure.command}`);
-      if (failure.file) console.error(`  file: ${failure.file}`);
-      console.error(`  exitCode: ${failure.status}`);
-      if (failure.stderr) console.error(`  stderr: ${tail(failure.stderr)}`);
-      if (failure.stdout) console.error(`  stdout: ${tail(failure.stdout)}`);
-      if (failure.error) console.error(`  error: ${failure.error}`);
-    }
-
-    return 1;
-  }
-
-  console.log(
-    JSON.stringify({
-      status: "ok",
-      checkedSyntax: syntaxTargets.length,
-      importSmoke: smokeCommands.length,
-      packageScriptReferences: countPackageScriptReferences(workspaceRoot),
-    }),
-  );
-
-  return 0;
 }
 
 export function runChangedFormatCheck(
@@ -197,7 +214,7 @@ function collectToolingModuleScripts(workspaceRoot: string): string[] {
     ...walk(resolve(workspaceRoot, "scripts")),
   ]
     .filter((path) => path.endsWith(".mjs"))
-    .sort();
+    .sort((left, right) => left.localeCompare(right));
 }
 
 function walk(root: string): string[] {
@@ -220,48 +237,70 @@ function walk(root: string): string[] {
 function checkPackageScriptReferences(
   workspaceRoot: string,
 ): ReferencedScript[] {
-  const packageJsonPaths = ["package.json", "packages/tooling/package.json"];
-  const missing: ReferencedScript[] = [];
-
-  for (const owner of packageJsonPaths) {
-    const packageJson = JSON.parse(
-      readFileSync(resolve(workspaceRoot, owner), "utf8"),
-    ) as { scripts?: Record<string, string> };
+  return ["package.json", "packages/tooling/package.json"].flatMap((owner) => {
+    const packageJson = readPackageJson(workspaceRoot, owner);
     const scripts = packageJson.scripts ?? {};
 
-    for (const [script, command] of Object.entries(scripts)) {
-      const references = [
-        ...extractPathReferences(command, nodeScriptReference),
-        ...extractPathReferences(command, shellScriptReference),
-      ];
+    return Object.entries(scripts).flatMap(([script, command]) => [
+      ...findMissingPathReferences(workspaceRoot, owner, script, command),
+      ...findMissingScriptReferences(owner, scripts, script, command),
+    ]);
+  });
+}
 
-      for (const reference of references) {
-        const path = normalizeReference(reference);
-        const absolutePath = resolve(workspaceRoot, owner, "..", path);
-        if (!statExists(absolutePath)) {
-          missing.push({
-            owner,
-            script,
-            reference,
-            path: relativeToWorkspace(workspaceRoot, absolutePath),
-          });
-        }
-      }
+function readPackageJson(
+  workspaceRoot: string,
+  owner: string,
+): { scripts?: Record<string, string> } {
+  return JSON.parse(readFileSync(resolve(workspaceRoot, owner), "utf8")) as {
+    scripts?: Record<string, string>;
+  };
+}
 
-      for (const referencedScript of extractScriptReferences(command)) {
-        if (!Object.hasOwn(scripts, referencedScript)) {
-          missing.push({
-            owner,
-            script,
-            reference: `pnpm run ${referencedScript}`,
-            path: `${owner}#scripts.${referencedScript}`,
-          });
-        }
-      }
-    }
-  }
+function findMissingPathReferences(
+  workspaceRoot: string,
+  owner: string,
+  script: string,
+  command: string,
+): ReferencedScript[] {
+  return [
+    ...extractPathReferences(command, nodeScriptReference),
+    ...extractPathReferences(command, shellScriptReference),
+  ].flatMap((reference) => {
+    const path = normalizeReference(reference);
+    const absolutePath = resolve(workspaceRoot, owner, "..", path);
 
-  return missing;
+    if (statExists(absolutePath)) return [];
+
+    return [
+      {
+        owner,
+        script,
+        reference,
+        path: relativeToWorkspace(workspaceRoot, absolutePath),
+      },
+    ];
+  });
+}
+
+function findMissingScriptReferences(
+  owner: string,
+  scripts: Record<string, string>,
+  script: string,
+  command: string,
+): ReferencedScript[] {
+  return extractScriptReferences(command).flatMap((referencedScript) => {
+    if (Object.hasOwn(scripts, referencedScript)) return [];
+
+    return [
+      {
+        owner,
+        script,
+        reference: `pnpm run ${referencedScript}`,
+        path: `${owner}#scripts.${referencedScript}`,
+      },
+    ];
+  });
 }
 
 function countPackageScriptReferences(workspaceRoot: string): number {
@@ -297,7 +336,7 @@ function extractScriptReferences(command: string): string[] {
 }
 
 function normalizeReference(reference: string): string {
-  return reference.replace(/^['\"]|['\"]$/g, "");
+  return reference.replace(/^['"]|['"]$/g, "");
 }
 
 function statExists(path: string): boolean {

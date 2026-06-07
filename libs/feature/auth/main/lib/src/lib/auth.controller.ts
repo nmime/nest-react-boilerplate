@@ -10,7 +10,6 @@ import {
 } from "@nestjs/common";
 import {
   ApiBearerAuth,
-  ApiCookieAuth,
   ApiProperty,
   ApiPropertyOptional,
 } from "@nestjs/swagger";
@@ -23,7 +22,11 @@ import {
   MinLength,
 } from "class-validator";
 import { supportedLocales } from "@app/common/i18n";
-import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
+import {
+  ApiOkDataResponse,
+  ApiProblemExceptions,
+  ApiSessionCookieAuth,
+} from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
   clearSessionPrincipal,
@@ -399,7 +402,7 @@ export class AuthController {
   @Get("me")
   @ApiOkDataResponse(MePayloadDto)
   @ApiBearerAuth()
-  @ApiCookieAuth("nrb.sid")
+  @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async me(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -413,7 +416,7 @@ export class AuthController {
   @Patch("me/locale")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
   @ApiBearerAuth()
-  @ApiCookieAuth("nrb.sid")
+  @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async updateLocale(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -433,7 +436,7 @@ export class AuthController {
   @Patch("me/preferences")
   @ApiOkDataResponse(AuthenticatedUserViewDto)
   @ApiBearerAuth()
-  @ApiCookieAuth("nrb.sid")
+  @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async updatePreferences(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -459,7 +462,7 @@ export class AuthController {
   @Post("logout")
   @ApiOkDataResponse(LogoutPayloadDto)
   @ApiBearerAuth()
-  @ApiCookieAuth("nrb.sid")
+  @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,

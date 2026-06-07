@@ -8,6 +8,7 @@ import { Migration20260531123000AddAuthTenantLifecycle } from "./Migration202605
 import { Migration20260601130000AddAuthTokenExpiryIndexes } from "./Migration20260601130000AddAuthTokenExpiryIndexes";
 import { Migration20260605143000CreateAdminAuditLogs } from "./Migration20260605143000CreateAdminAuditLogs";
 import { Migration20260606120000CreateTransactionalOutboxEvents } from "./Migration20260606120000CreateTransactionalOutboxEvents";
+import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";
 
@@ -21,6 +22,7 @@ export const authMigrations = [
   Migration20260601130000AddAuthTokenExpiryIndexes,
   Migration20260605143000CreateAdminAuditLogs,
   Migration20260606120000CreateTransactionalOutboxEvents,
+  Migration20260607080000AlignAuthUserLocaleConstraint,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -42,4 +44,5 @@ export {
   Migration20260601130000AddAuthTokenExpiryIndexes,
   Migration20260605143000CreateAdminAuditLogs,
   Migration20260606120000CreateTransactionalOutboxEvents,
+  Migration20260607080000AlignAuthUserLocaleConstraint,
 };

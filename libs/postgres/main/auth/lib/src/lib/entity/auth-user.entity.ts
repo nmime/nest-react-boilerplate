@@ -101,6 +101,12 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     },
   },
   indexes: [{ name: "ix__auth_users__tenant_id", properties: ["tenantId"] }],
+  checks: [
+    {
+      name: "ck__auth_users__locale",
+      expression: `"locale" in ('en', 'ru')`,
+    },
+  ],
   uniques: [
     {
       name: "uq__auth_users__tenant_id_email",

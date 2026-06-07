@@ -180,14 +180,16 @@ const collectOffenders = (): Offender[] =>
 
         checkMatch(userFacingAttributePattern, "user-facing attribute", 3);
         checkMatch(userFacingObjectPropertyPattern, "user-facing property", 3);
-        for (const value of getJsxTextValues(line)) {
-          if (!isLikelyNonCopyLiteral(value)) {
-            offenders.push({
-              file: relativePath,
-              line: index + 1,
-              source: "JSX text",
-              value,
-            });
+        if (extname(path) === ".tsx") {
+          for (const value of getJsxTextValues(line)) {
+            if (!isLikelyNonCopyLiteral(value)) {
+              offenders.push({
+                file: relativePath,
+                line: index + 1,
+                source: "JSX text",
+                value,
+              });
+            }
           }
         }
       });

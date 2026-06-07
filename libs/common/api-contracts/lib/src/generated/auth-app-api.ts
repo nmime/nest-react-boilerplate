@@ -324,6 +324,25 @@ export interface components {
   headers: never;
   pathItems: never;
 }
+export type AuthenticatedUserViewDto =
+  components["schemas"]["AuthenticatedUserViewDto"];
+export type AuthSessionViewDto = components["schemas"]["AuthSessionViewDto"];
+export type RegisterDto = components["schemas"]["RegisterDto"];
+export type LoginDto = components["schemas"]["LoginDto"];
+export type RefreshTokenDto = components["schemas"]["RefreshTokenDto"];
+export type UserActionTokenPayloadDto =
+  components["schemas"]["UserActionTokenPayloadDto"];
+export type UserActionTokenRequestDto =
+  components["schemas"]["UserActionTokenRequestDto"];
+export type AuthenticatedPrincipalDto =
+  components["schemas"]["AuthenticatedPrincipalDto"];
+export type MePayloadDto = components["schemas"]["MePayloadDto"];
+export type UpdateLocaleDto = components["schemas"]["UpdateLocaleDto"];
+export type UpdatePreferencesDto =
+  components["schemas"]["UpdatePreferencesDto"];
+export type SupportedLocalesPayloadDto =
+  components["schemas"]["SupportedLocalesPayloadDto"];
+export type LogoutPayloadDto = components["schemas"]["LogoutPayloadDto"];
 export type $defs = Record<string, never>;
 export interface operations {
   HealthController_health: {

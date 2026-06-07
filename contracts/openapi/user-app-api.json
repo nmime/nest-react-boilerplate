@@ -332,6 +332,12 @@
         },
         "security": [
           {
+            "nrb.sid": []
+          },
+          {
+            "__Host-nrb.sid": []
+          },
+          {
             "bearer": []
           }
         ],
@@ -356,8 +362,15 @@
       },
       "nrb.sid": {
         "type": "apiKey",
+        "description": "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
         "in": "cookie",
         "name": "nrb.sid"
+      },
+      "__Host-nrb.sid": {
+        "type": "apiKey",
+        "description": "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+        "in": "cookie",
+        "name": "__Host-nrb.sid"
       }
     },
     "schemas": {

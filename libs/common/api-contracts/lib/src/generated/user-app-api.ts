@@ -106,6 +106,10 @@ export interface components {
   headers: never;
   pathItems: never;
 }
+export type AuthenticatedPrincipalDto =
+  components["schemas"]["AuthenticatedPrincipalDto"];
+export type UserProfileViewDto = components["schemas"]["UserProfileViewDto"];
+export type ProfilePayloadDto = components["schemas"]["ProfilePayloadDto"];
 export type $defs = Record<string, never>;
 export interface operations {
   HealthController_health: {

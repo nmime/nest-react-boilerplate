@@ -83,6 +83,49 @@
           }
         }
       }
+    },
+    {
+      "description": "current user endpoint accepts the session cookie issued by login",
+      "request": {
+        "method": "GET",
+        "path": "/auth/me",
+        "headers": {
+          "Cookie": "nrb.sid=contract-session-id"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "principal": {
+              "subject": "user-1",
+              "email": "contract@example.com",
+              "displayName": "Contract User",
+              "locale": "en",
+              "theme": "system",
+              "issuer": "nest-react-boilerplate",
+              "audience": "nest-react-boilerplate-api",
+              "roles": ["user"],
+              "permissions": [],
+              "tokenId": "contract-token-id",
+              "tenantId": "00000000-0000-0000-0000-000000000000"
+            },
+            "user": {
+              "id": "user-1",
+              "email": "contract@example.com",
+              "displayName": "Contract User",
+              "locale": "en",
+              "theme": "system",
+              "roles": ["user"],
+              "permissions": [],
+              "tenantId": "00000000-0000-0000-0000-000000000000"
+            }
+          }
+        }
+      }
     }
   ],
   "metadata": {

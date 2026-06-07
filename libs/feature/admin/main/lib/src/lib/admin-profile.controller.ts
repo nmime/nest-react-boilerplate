@@ -5,7 +5,11 @@ import {
   ApiPropertyOptional,
 } from "@nestjs/swagger";
 import { supportedLocales } from "@app/common/i18n";
-import { ApiOkDataResponse, ApiProblemExceptions } from "@app/common/swagger";
+import {
+  ApiOkDataResponse,
+  ApiProblemExceptions,
+  ApiSessionCookieAuth,
+} from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
   CurrentUser,
@@ -96,6 +100,7 @@ export class AdminProfileController {
   @Get("me")
   @ApiOkDataResponse(AdminProfilePayloadDto)
   @ApiBearerAuth()
+  @ApiSessionCookieAuth()
   @RequireRoles(ADMIN_ROLE)
   @RequirePermissions(ADMIN_PROFILE_READ_PERMISSION)
   me(

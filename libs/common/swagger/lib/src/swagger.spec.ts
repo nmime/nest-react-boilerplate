@@ -4,6 +4,7 @@ import {
   ApiOkDataResponse,
   ApiProblemExceptions,
   ApiReadinessResponses,
+  ApiSessionCookieAuth,
   okResponseOpenApiSchema,
   problemDetailsOpenApiSchema,
   readBoolean,
@@ -32,6 +33,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@nestjs/swagger", () => ({
+  ApiCookieAuth: vi.fn(() => vi.fn()),
   ApiExtraModels: mocks.apiExtraModels,
   ApiOkResponse: mocks.apiOkResponse,
   ApiResponse: mocks.apiResponse,
@@ -102,6 +104,7 @@ describe("common swagger", () => {
   });
 
   it("creates bearer and session-cookie auth swagger docs with problem response support", () => {
+    mocks.builder.addCookieAuth.mockClear();
     const app = {} as never;
 
     setupSwagger(app, {
@@ -118,8 +121,21 @@ describe("common swagger", () => {
     expect(mocks.builder.addBearerAuth).toHaveBeenCalledOnce();
     expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
       "nrb.sid",
-      undefined,
+      {
+        description:
+          "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+        type: "apiKey",
+      },
       "nrb.sid",
+    );
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
+      "__Host-nrb.sid",
+      {
+        description:
+          "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+        type: "apiKey",
+      },
+      "__Host-nrb.sid",
     );
     expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
     expect(mocks.setup).toHaveBeenCalledWith("docs", app, "document", {
@@ -148,6 +164,7 @@ describe("common swagger", () => {
       schema: okResponseOpenApiSchema(PayloadDto),
     });
     expect(typeof ApiProblemExceptions).toBe("function");
+    expect(ApiSessionCookieAuth()).toEqual(expect.any(Function));
   });
 
   it("couples readiness success docs with explicit 503 problem details", () => {

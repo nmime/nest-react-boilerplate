@@ -323,6 +323,29 @@ export interface components {
   headers: never;
   pathItems: never;
 }
+export type AuthenticatedPrincipalDto =
+  components["schemas"]["AuthenticatedPrincipalDto"];
+export type AdminProfileViewDto = components["schemas"]["AdminProfileViewDto"];
+export type AdminProfilePayloadDto =
+  components["schemas"]["AdminProfilePayloadDto"];
+export type AdminUserViewDto = components["schemas"]["AdminUserViewDto"];
+export type AdminUserListPayloadDto =
+  components["schemas"]["AdminUserListPayloadDto"];
+export type UpdateAdminUserStatusDto =
+  components["schemas"]["UpdateAdminUserStatusDto"];
+export type UpdateAdminUserAccessPolicyDto =
+  components["schemas"]["UpdateAdminUserAccessPolicyDto"];
+export type AdminRbacRoleDto = components["schemas"]["AdminRbacRoleDto"];
+export type AdminRbacPermissionDto =
+  components["schemas"]["AdminRbacPermissionDto"];
+export type AdminRbacCatalogPayloadDto =
+  components["schemas"]["AdminRbacCatalogPayloadDto"];
+export type AdminAuditLogViewDto =
+  components["schemas"]["AdminAuditLogViewDto"];
+export type AdminAuditLogListPayloadDto =
+  components["schemas"]["AdminAuditLogListPayloadDto"];
+export type AdminDashboardSummaryDto =
+  components["schemas"]["AdminDashboardSummaryDto"];
 export type $defs = Record<string, never>;
 export interface operations {
   HealthController_health: {

@@ -140,19 +140,19 @@ const createMutationResult = (
     action?: "admin.user.status.update" | "admin.user.access_policy.update";
   } = {},
 ): AdminUserMutationResult => {
-  const before = createUser(input.before) as AuthUserEntity;
+  const before = createUser(input.before);
   const after = createUser({
     status: "disabled",
     ...input.after,
-  }) as AuthUserEntity;
+  });
   const auditLog = createAuditLog({
     action: input.action ?? "admin.user.status.update",
     before: { status: before.status },
     after: { status: after.status },
-  }) as AdminAuditLogEntity;
+  });
   const outboxEvent = createOutboxEvent({
     eventType: input.action ?? "admin.user.status.update",
-  }) as TransactionalOutboxEventEntity;
+  });
 
   return { before, after, auditLog, outboxEvent };
 };

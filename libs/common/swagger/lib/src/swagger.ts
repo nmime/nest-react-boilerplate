@@ -1,6 +1,7 @@
 import { HttpStatus, applyDecorators } from "@nestjs/common";
 import type { INestApplication, Type } from "@nestjs/common";
 import {
+  ApiCookieAuth,
   ApiExtraModels,
   ApiOkResponse,
   DocumentBuilder,
@@ -10,6 +11,28 @@ import {
 import { ApiProblemExceptions } from "@app/common/exception";
 
 export * from "@app/common/exception";
+
+export const sessionCookieSecuritySchemes = [
+  {
+    name: "nrb.sid",
+    description:
+      "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+  },
+  {
+    name: "__Host-nrb.sid",
+    description:
+      "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+  },
+] as const;
+
+export const sessionCookieSecuritySchemeNames =
+  sessionCookieSecuritySchemes.map(({ name }) => name);
+
+export function ApiSessionCookieAuth(): MethodDecorator & ClassDecorator {
+  return applyDecorators(
+    ...sessionCookieSecuritySchemes.map(({ name }) => ApiCookieAuth(name)),
+  );
+}
 
 export const okResponseOpenApiSchema = (model: Type<unknown>) => ({
   type: "object",
@@ -93,8 +116,11 @@ export function setupSwagger(
   const builder = new DocumentBuilder()
     .setTitle(resolved.title)
     .setVersion(resolved.version)
-    .addBearerAuth()
-    .addCookieAuth("nrb.sid", undefined, "nrb.sid");
+    .addBearerAuth();
+
+  for (const { description, name } of sessionCookieSecuritySchemes) {
+    builder.addCookieAuth(name, { description, type: "apiKey" }, name);
+  }
 
   if (resolved.description) {
     builder.setDescription(resolved.description);

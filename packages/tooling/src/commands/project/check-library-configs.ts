@@ -82,8 +82,8 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   if (
     fileName !== undefined &&
     fileName.startsWith("eslint.config.") &&
-    readFileSync(absolutePath, "utf8").match(
-      /["']@nx\/enforce-module-boundaries["']\s*:\s*(?:["']off["']|0|\[\s*(?:["']off["']|0))/u,
+    /["']@nx\/enforce-module-boundaries["']\s*:\s*(?:["']off["']|0|\[\s*(?:["']off["']|0))/u.exec(
+      readFileSync(absolutePath, "utf8"),
     ) !== null
   ) {
     errors.push(

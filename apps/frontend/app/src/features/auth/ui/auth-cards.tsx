@@ -1,5 +1,5 @@
 import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { UiButton, UiCard, UiForm, UiTextField } from "../../../shared/ui";
 import type { AuthMode } from "../model";
 
@@ -7,7 +7,7 @@ export interface AuthCardsProps {
   isLoginPending: boolean;
   isRegisterPending: boolean;
   loadingLabel: string;
-  onSubmit: (mode: AuthMode, event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (mode: AuthMode, event: SubmitEvent<HTMLFormElement>) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 

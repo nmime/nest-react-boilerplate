@@ -1,5 +1,5 @@
 import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import type { FormEvent, ReactNode } from "react";
+import type { SubmitEvent, ReactNode } from "react";
 import { AuthCards, type AuthMode } from "../../../features/auth";
 import { UiSection, UiStatCard } from "../../../shared/ui";
 
@@ -7,7 +7,7 @@ export interface AuthPanelProps {
   isLoginPending: boolean;
   isRegisterPending: boolean;
   loadingLabel: string;
-  onAuthSubmit: (mode: AuthMode, event: FormEvent<HTMLFormElement>) => void;
+  onAuthSubmit: (mode: AuthMode, event: SubmitEvent<HTMLFormElement>) => void;
   children: ReactNode;
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }

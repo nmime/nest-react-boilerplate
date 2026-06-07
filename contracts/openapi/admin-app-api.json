@@ -10,9 +10,7 @@
             "description": "Admin API health check succeeded."
           }
         },
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     },
     "/live": {
@@ -24,9 +22,7 @@
             "description": "Admin API liveness check succeeded."
           }
         },
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     },
     "/ready": {
@@ -43,11 +39,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -83,9 +75,7 @@
             }
           }
         },
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     },
     "/admin/profile/me": {
@@ -99,9 +89,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminProfilePayloadDto"
@@ -117,11 +105,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -173,10 +157,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -190,11 +171,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -235,11 +212,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -280,11 +253,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -325,11 +294,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -376,9 +341,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminProfile"
-        ]
+        "tags": ["AdminProfile"]
       }
     },
     "/admin/users": {
@@ -419,11 +382,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "active",
-                "disabled",
-                "invited"
-              ]
+              "enum": ["active", "disabled", "invited"]
             }
           },
           {
@@ -432,10 +391,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "user",
-                "admin"
-              ]
+              "enum": ["user", "admin"]
             }
           },
           {
@@ -468,9 +424,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminUserListPayloadDto"
@@ -486,11 +440,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -542,10 +492,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -559,11 +506,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -604,11 +547,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -649,11 +588,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -694,11 +629,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -739,11 +670,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -790,9 +717,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/users/{id}": {
@@ -815,9 +740,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminUserViewDto"
@@ -833,11 +756,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -889,10 +808,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -906,11 +822,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -951,11 +863,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -996,11 +904,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1041,11 +945,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1086,11 +986,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1137,9 +1033,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/users/{id}/status": {
@@ -1172,9 +1066,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminUserViewDto"
@@ -1190,11 +1082,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1246,10 +1134,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -1263,11 +1148,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1308,11 +1189,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1353,11 +1230,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1398,11 +1271,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1443,11 +1312,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1494,9 +1359,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/users/{id}/access-policy": {
@@ -1529,9 +1392,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminUserViewDto"
@@ -1547,11 +1408,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1603,10 +1460,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -1620,11 +1474,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1665,11 +1515,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1710,11 +1556,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1755,11 +1597,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1800,11 +1638,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1851,9 +1685,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/roles": {
@@ -1867,9 +1699,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminRbacCatalogPayloadDto"
@@ -1885,11 +1715,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -1941,10 +1767,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -1958,11 +1781,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2003,11 +1822,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2048,11 +1863,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2093,11 +1904,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2138,11 +1945,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2189,9 +1992,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/audit": {
@@ -2255,9 +2056,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminAuditLogListPayloadDto"
@@ -2273,11 +2072,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2329,10 +2124,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -2346,11 +2138,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2391,11 +2179,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2436,11 +2220,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2481,11 +2261,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2526,11 +2302,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2577,9 +2349,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     },
     "/admin/dashboard/summary": {
@@ -2593,9 +2363,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "data"
-                  ],
+                  "required": ["data"],
                   "properties": {
                     "data": {
                       "$ref": "#/components/schemas/AdminDashboardSummaryDto"
@@ -2611,11 +2379,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2667,10 +2431,7 @@
                             "description": "The validation constraints that failed."
                           }
                         },
-                        "required": [
-                          "property",
-                          "constraints"
-                        ]
+                        "required": ["property", "constraints"]
                       }
                     }
                   }
@@ -2684,11 +2445,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2729,11 +2486,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2774,11 +2527,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2819,11 +2568,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2864,11 +2609,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "type",
-                    "title",
-                    "status"
-                  ],
+                  "required": ["type", "title", "status"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -2915,9 +2656,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "AdminUsers"
-        ]
+        "tags": ["AdminUsers"]
       }
     }
   },
@@ -2965,10 +2704,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": [
-              "en",
-              "ru"
-            ]
+            "enum": ["en", "ru"]
           },
           "issuer": {
             "type": "string"
@@ -3002,11 +2738,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "subject",
-          "roles",
-          "permissions"
-        ]
+        "required": ["subject", "roles", "permissions"]
       },
       "AdminProfileViewDto": {
         "type": "object",
@@ -3023,10 +2755,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": [
-              "en",
-              "ru"
-            ]
+            "enum": ["en", "ru"]
           },
           "roles": {
             "type": "array",
@@ -3041,11 +2770,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "roles",
-          "permissions"
-        ]
+        "required": ["id", "roles", "permissions"]
       },
       "AdminProfilePayloadDto": {
         "type": "object",
@@ -3057,10 +2782,7 @@
             "$ref": "#/components/schemas/AdminProfileViewDto"
           }
         },
-        "required": [
-          "principal",
-          "profile"
-        ]
+        "required": ["principal", "profile"]
       },
       "AdminUserViewDto": {
         "type": "object",
@@ -3082,11 +2804,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "disabled",
-              "invited"
-            ]
+            "enum": ["active", "disabled", "invited"]
           },
           "roles": {
             "type": "array",
@@ -3105,11 +2823,7 @@
           },
           "theme": {
             "type": "string",
-            "enum": [
-              "system",
-              "light",
-              "dark"
-            ]
+            "enum": ["system", "light", "dark"]
           },
           "lastLoginAt": {
             "type": "string",
@@ -3154,28 +2868,17 @@
             "type": "number"
           }
         },
-        "required": [
-          "items",
-          "total",
-          "limit",
-          "offset"
-        ]
+        "required": ["items", "total", "limit", "offset"]
       },
       "UpdateAdminUserStatusDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "active",
-              "disabled",
-              "invited"
-            ]
+            "enum": ["active", "disabled", "invited"]
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "UpdateAdminUserAccessPolicyDto": {
         "type": "object",
@@ -3184,10 +2887,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "user",
-                "admin"
-              ]
+              "enum": ["user", "admin"]
             }
           },
           "permissions": {
@@ -3211,10 +2911,7 @@
             }
           }
         },
-        "required": [
-          "roles",
-          "permissions"
-        ]
+        "required": ["roles", "permissions"]
       },
       "AdminRbacRoleDto": {
         "type": "object",
@@ -3235,12 +2932,7 @@
             }
           }
         },
-        "required": [
-          "role",
-          "label",
-          "description",
-          "permissions"
-        ]
+        "required": ["role", "label", "description", "permissions"]
       },
       "AdminRbacPermissionDto": {
         "type": "object",
@@ -3258,12 +2950,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "permission",
-          "resource",
-          "action",
-          "description"
-        ]
+        "required": ["permission", "resource", "action", "description"]
       },
       "AdminRbacCatalogPayloadDto": {
         "type": "object",
@@ -3379,12 +3066,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "items",
-          "total",
-          "limit",
-          "offset"
-        ]
+        "required": ["items", "total", "limit", "offset"]
       },
       "AdminDashboardSummaryDto": {
         "type": "object",

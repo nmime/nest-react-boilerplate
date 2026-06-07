@@ -29,18 +29,32 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      - name: Validate deployment config
-        run: node scripts/validate-deployment-config.mjs
-      - name: Validate Helm rate-limit config
-        run: node scripts/validate-helm-rate-limit-config.mjs
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
       - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
         with:
           version: v3.15.4
-      - name: Validate Helm chart
-        run: bash scripts/validate-helm.sh
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate GitHub workflow hardening
+        run: node scripts/validate-github-workflows.mjs
+
+      - name: Validate deployment, Docker, and Helm config
+        run: pnpm run deploy:validate
 
   fast-check:
-    name: Fast PR gate (check:fast)
+    name: Fast PR gate (ci:pr)
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     steps:
@@ -60,7 +74,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run fast aggregate
-        run: pnpm run check:fast
+        run: pnpm run ci:pr
 
       - name: Write fast gate summary
         if: always()
@@ -68,7 +82,7 @@ jobs:
           {
             echo "## Fast PR gate"
             echo
-            echo "Command: \`pnpm run check:fast\`"
+            echo "Command: \`pnpm run ci:pr\`"
             echo
             echo "Workflow: ${{ github.workflow }}"
             echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -104,7 +118,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Format check
+      - name: Changed-file format check
+        run: pnpm run format:changed
+      - name: Full format check
         run: pnpm run format:check
 
       - name: Lint
@@ -135,7 +151,7 @@ jobs:
         run: pnpm run test:visual
 
       - name: Dependency audit
-        run: pnpm run audit
+        run: pnpm run audit:ci
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -371,7 +387,7 @@ jobs:
             echo "| Job | Result |"
             echo "| --- | --- |"
             echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
-            echo "| Fast PR gate (check:fast) | ${{ needs.fast-check.result }} |"
+            echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
             echo "| Nx quality gates | ${{ needs.quality.result }} |"
             echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
             echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"

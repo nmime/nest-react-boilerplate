@@ -6,13 +6,13 @@ import type {
 } from "../../../entities/profile";
 
 interface ApiEnvelope<TData> {
-  data?: TData;
+  data: TData;
 }
 
 const unwrapData = <TData>(payload: TData | ApiEnvelope<TData>): TData =>
   payload && typeof payload === "object" && "data" in payload
-    ? ((payload as ApiEnvelope<TData>).data as TData)
-    : (payload as TData);
+    ? payload.data
+    : payload;
 
 export async function updateUserPreferences(
   authToken: string | null | undefined,

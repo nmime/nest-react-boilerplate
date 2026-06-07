@@ -16,3 +16,17 @@ packages/tooling/baselines/**
 packages/tooling/scripts/**
 playwright.extended.config.ts
 stryker.config.mjs
+
+test-results
+
+playwright-report
+
+.cache
+
+tmp
+
+*.log
+
+docs/command-matrix.md
+
+docs/testing/modern-qa.md

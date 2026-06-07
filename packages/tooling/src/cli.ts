@@ -3,7 +3,11 @@ import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
 import { runMutation } from "./commands/qa/mutation";
-import { runStaticCheck } from "./commands/tooling/static-check";
+import { runBranchCleanup } from "./commands/git/branch-cleanup";
+import {
+  runChangedFormatCheck,
+  runStaticCheck,
+} from "./commands/tooling/static-check";
 import { run } from "./runtime/process";
 
 export interface CommandContext {
@@ -25,6 +29,12 @@ const workspaceRoot = resolve(packageRoot, "../..");
 const commands = new Map<string, CommandDefinition>();
 
 register(
+  "git:branch-cleanup",
+  "Safely preview or delete local/remote branches already merged into the target branch.",
+  runBranchCleanup,
+);
+
+register(
   "project:check-library-configs",
   "Validate Nx library config placement.",
   ({ workspaceRoot }) => runCheckLibraryConfigs({ workspaceRoot }),
@@ -43,6 +53,11 @@ register(
   "tooling:static-check",
   "Run node --check and safe import smoke checks for repo tooling scripts.",
   ({ workspaceRoot }) => runStaticCheck({ workspaceRoot }),
+);
+register(
+  "tooling:changed-format-check",
+  "Run Prettier only on changed files for PR memory-safe formatting validation.",
+  ({ argv, workspaceRoot }) => runChangedFormatCheck({ argv, workspaceRoot }),
 );
 
 registerLegacy(

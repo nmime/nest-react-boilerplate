@@ -1,8 +1,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
+import { extname } from "node:path";
 import { join, relative, resolve } from "node:path";
 import { run } from "../../runtime/process";
 
 export interface StaticCheckOptions {
+  workspaceRoot?: string;
+}
+
+export interface ChangedFormatCheckOptions {
+  argv?: string[];
   workspaceRoot?: string;
 }
 
@@ -22,7 +28,8 @@ interface ReferencedScript {
   path: string;
 }
 
-const nodeScriptReference = /(?:^|&&|\|\||;|\s)node\s+([^\s]+\.(?:cjs|js|mjs|mts|ts))/g;
+const nodeScriptReference =
+  /(?:^|&&|\|\||;|\s)node\s+([^\s]+\.(?:cjs|js|mjs|mts|ts))/g;
 const shellScriptReference = /(?:^|&&|\|\||;|\s)(?:bash|sh)\s+([^\s]+\.sh)/g;
 const pnpmRunReference = /(?:^|&&|\|\||;|\s)pnpm\s+run\s+([@\w:.-]+)/g;
 
@@ -37,15 +44,46 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     });
 
     if (result.status !== 0) {
-      failures.push({ ...result, file: relativeToWorkspace(workspaceRoot, script) });
+      failures.push({
+        ...result,
+        file: relativeToWorkspace(workspaceRoot, script),
+      });
     }
   }
 
   const smokeCommands = [
     ["packages/tooling/bin/repo-tooling.mjs", "--help"],
-    ["packages/tooling/bin/repo-tooling.mjs", "project", "check-library-configs", "--help"],
-    ["packages/tooling/bin/repo-tooling.mjs", "tooling", "static-check", "--help"],
-    ["packages/tooling/bin/repo-tooling.mjs", "db", "migrations", "rollback-check", "--help"],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "git",
+      "branch-cleanup",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "project",
+      "check-library-configs",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "tooling",
+      "static-check",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "tooling",
+      "changed-format-check",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "db",
+      "migrations",
+      "rollback-check",
+      "--help",
+    ],
   ];
 
   for (const args of smokeCommands) {
@@ -95,10 +133,68 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   return 0;
 }
 
+export function runChangedFormatCheck(
+  options: ChangedFormatCheckOptions = {},
+): number {
+  const workspaceRoot = options.workspaceRoot ?? process.cwd();
+  const parsed = parseArgs(options.argv ?? []);
+  const base =
+    parsed.options.get("base") ?? process.env.FORMAT_BASE_REF ?? "origin/main";
+  const head =
+    parsed.options.get("head") ?? process.env.FORMAT_HEAD_REF ?? "HEAD";
+  const mergeBaseResult = run("git", ["merge-base", base, head], {
+    cwd: workspaceRoot,
+  });
+
+  if (mergeBaseResult.status !== 0) {
+    console.error(`Unable to determine merge-base for ${base} and ${head}.`);
+    if (mergeBaseResult.stderr) console.error(tail(mergeBaseResult.stderr));
+    return mergeBaseResult.status;
+  }
+
+  const mergeBase = mergeBaseResult.stdout.trim();
+  const changedResult = run(
+    "git",
+    ["diff", "--name-only", "--diff-filter=ACMR", `${mergeBase}...${head}`],
+    { cwd: workspaceRoot },
+  );
+
+  if (changedResult.status !== 0) {
+    console.error("Unable to list changed files for formatting check.");
+    if (changedResult.stderr) console.error(tail(changedResult.stderr));
+    return changedResult.status;
+  }
+
+  const files = changedResult.stdout
+    .split("\n")
+    .map((file) => file.trim())
+    .filter(Boolean)
+    .filter(isPrettierCandidate);
+
+  if (files.length === 0) {
+    console.log(JSON.stringify({ status: "ok", checkedFiles: 0, base, head }));
+    return 0;
+  }
+
+  const result = run(
+    "pnpm",
+    ["exec", "prettier", "--check", "--ignore-unknown", ...files],
+    { cwd: workspaceRoot, stdio: "inherit" },
+  );
+
+  if (result.status !== 0) return result.status;
+
+  console.log(
+    JSON.stringify({ status: "ok", checkedFiles: files.length, base, head }),
+  );
+  return 0;
+}
+
 function collectToolingModuleScripts(workspaceRoot: string): string[] {
   return [
     ...walk(resolve(workspaceRoot, "packages/tooling/bin")),
     ...walk(resolve(workspaceRoot, "packages/tooling/scripts")),
+    ...walk(resolve(workspaceRoot, "scripts")),
   ]
     .filter((path) => path.endsWith(".mjs"))
     .sort();
@@ -121,7 +217,9 @@ function walk(root: string): string[] {
   return files;
 }
 
-function checkPackageScriptReferences(workspaceRoot: string): ReferencedScript[] {
+function checkPackageScriptReferences(
+  workspaceRoot: string,
+): ReferencedScript[] {
   const packageJsonPaths = ["package.json", "packages/tooling/package.json"];
   const missing: ReferencedScript[] = [];
 
@@ -212,6 +310,60 @@ function statExists(path: string): boolean {
 
 function relativeToWorkspace(workspaceRoot: string, path: string): string {
   return relative(workspaceRoot, path).replaceAll("\\", "/");
+}
+
+function isPrettierCandidate(file: string): boolean {
+  if (
+    /(^|\/)(node_modules|dist|coverage|test-results|playwright-report|\.nx|\.cache|tmp)(\/|$)/u.test(
+      file,
+    )
+  ) {
+    return false;
+  }
+  if (file === "pnpm-lock.yaml" || file.endsWith(".tsbuildinfo")) return false;
+  return new Set([
+    "",
+    ".cjs",
+    ".css",
+    ".html",
+    ".js",
+    ".json",
+    ".jsx",
+    ".md",
+    ".mjs",
+    ".mts",
+    ".scss",
+    ".ts",
+    ".tsx",
+    ".yaml",
+    ".yml",
+  ]).has(extname(file).toLowerCase());
+}
+
+function parseArgs(argv: string[]): {
+  flags: Set<string>;
+  options: Map<string, string>;
+} {
+  const flags = new Set<string>();
+  const options = new Map<string, string>();
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index] ?? "";
+    if (!value.startsWith("--")) continue;
+    const raw = value.slice(2);
+    const equals = raw.indexOf("=");
+    if (equals >= 0) {
+      options.set(raw.slice(0, equals), raw.slice(equals + 1));
+      continue;
+    }
+    const next = argv[index + 1];
+    if (next && !next.startsWith("--")) {
+      options.set(raw, next);
+      index += 1;
+    } else {
+      flags.add(raw);
+    }
+  }
+  return { flags, options };
 }
 
 function tail(value: string, max = 2000): string {

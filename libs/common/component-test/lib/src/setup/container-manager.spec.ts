@@ -46,9 +46,9 @@ describe("ContainerManager", () => {
       }),
     });
     const third = manager.register({
-      stop: vi.fn(async () => {
+      stop: vi.fn(() => {
         stops.push("third");
-        throw secondFailure;
+        return Promise.reject(secondFailure);
       }),
     });
 

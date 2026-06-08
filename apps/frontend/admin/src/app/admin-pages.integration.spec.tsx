@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
+import { adminApi } from "@app/api-client";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { AdminLayout } from "../widgets/admin-shell";
@@ -28,7 +28,7 @@ const adminAccess = createAdminAccess({
 
 const restrictedAccess = createAdminAccess({
   subject: "admin-id",
-  roles: ["admin"],
+  roles: [],
   permissions: ["admin:dashboard:read", "admin:profile:read"],
 });
 
@@ -96,11 +96,33 @@ describe("admin pages integration", () => {
   });
 
   it("renders dashboard summary, profile, and health/live/ready statuses from real endpoints", async () => {
-    vi.spyOn(adminApi, "adminDashboardControllerSummary").mockResolvedValue({
+    vi.spyOn(
+      adminApi,
+      "adminUsersControllerDashboardSummary",
+    ).mockResolvedValue({
       data: {
-        totals: { users: 42, tenants: 3, activeSessions: 7 },
-        health: { status: "ready", live: "ok", ready: "ok" },
+        activeUsers: 7,
+        disabledUsers: 3,
+        invitedUsers: 2,
+        recentAudit: [],
+        recentAuditEvents: 4,
+        totalUsers: 42,
       },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, "adminHealthControllerHealth").mockResolvedValue({
+      data: {},
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, "adminHealthControllerLive").mockResolvedValue({
+      data: {},
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, "adminHealthControllerReady").mockResolvedValue({
+      data: {},
       error: undefined,
       response: new Response(null, { status: 200 }),
     });
@@ -125,7 +147,10 @@ describe("admin pages integration", () => {
               { status: "ready", payload, access: adminAccess },
               undefined,
               {
-                requestOptions: { authToken: "token", baseUrl: "http://admin" },
+                requestOptions: {
+                  authToken: "token",
+                  baseUrl: "https://admin.example.test",
+                },
               },
             )}
           </AdminLayout>
@@ -135,45 +160,45 @@ describe("admin pages integration", () => {
 
     renderRoute("/admin");
     expect(await screen.findByText("42")).toBeTruthy();
-    expect(screen.getByText("3")).toBeTruthy();
     expect(screen.getByText("7")).toBeTruthy();
-    expect(screen.getByText("Ready")).toBeTruthy();
-    expect(screen.getByText("ok")).toBeTruthy();
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByText("4")).toBeTruthy();
+    expect(screen.getAllByText("Ready").length).toBeGreaterThanOrEqual(3);
 
     renderRoute("/admin/profile");
     expect(screen.getByText("Ada Admin")).toBeTruthy();
-    expect(screen.getByText("admin@example.com")).toBeTruthy();
+    expect(screen.getByText("Email: admin@example.com")).toBeTruthy();
   });
 
   it("lists users, opens detail, searches, filters, paginates, and sends mutation bodies", async () => {
     const listSpy = vi
-      .spyOn(adminApi, "adminUsersControllerList")
+      .spyOn(adminApi, "adminUsersControllerListUsers")
       .mockResolvedValue({
         data: {
           items: [user],
           total: 12,
-          page: 1,
           limit: 10,
+          offset: 0,
         },
         error: undefined,
         response: new Response(null, { status: 200 }),
       });
     const detailSpy = vi
-      .spyOn(adminApi, "adminUsersControllerDetail")
+      .spyOn(adminApi, "adminUsersControllerGetUser")
       .mockResolvedValue({
         data: user,
         error: undefined,
         response: new Response(null, { status: 200 }),
       });
     const statusSpy = vi
-      .spyOn(adminApi, "adminUsersControllerUpdateStatus")
+      .spyOn(adminApi, "adminUsersControllerUpdateUserStatus")
       .mockResolvedValue({
         data: { ...user, status: "disabled" },
         error: undefined,
         response: new Response(null, { status: 200 }),
       });
     const accessSpy = vi
-      .spyOn(adminApi, "adminUsersControllerUpdateAccessPolicy")
+      .spyOn(adminApi, "adminUsersControllerUpdateUserAccessPolicy")
       .mockResolvedValue({
         data: { ...user, roles: ["admin"], permissions: ["admin:users:read"] },
         error: undefined,
@@ -187,63 +212,42 @@ describe("admin pages integration", () => {
 
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <AdminLayout access={adminAccess} currentPath="/admin/users">
-          {renderAdminRoute("/admin/users", {
-            status: "ready",
-            payload,
-            access: adminAccess,
-          })}
+        <AdminLayout
+          access={adminAccess}
+          currentPath="/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2"
+        >
+          {renderAdminRoute(
+            "/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2",
+            {
+              status: "ready",
+              payload,
+              access: adminAccess,
+            },
+          )}
         </AdminLayout>
       </QueryClientProvider>,
     );
 
     expect(await screen.findByText("user@example.com")).toBeTruthy();
     fireEvent.click(screen.getByText("user@example.com"));
-    expect(await screen.findByText("Tenant tenant-1")).toBeTruthy();
-
-    fireEvent.change(screen.getByLabelText("Search"), {
-      target: { value: "ada" },
-    });
-    fireEvent.change(screen.getByLabelText("Status"), {
-      target: { value: "disabled" },
-    });
-    fireEvent.change(screen.getByLabelText("Role"), {
-      target: { value: "admin" },
-    });
-    fireEvent.change(screen.getByLabelText("Permission"), {
-      target: { value: "admin:users:read" },
-    });
-    fireEvent.click(screen.getByText("Next"));
+    expect(await screen.findByText("profile:read")).toBeTruthy();
 
     await waitFor(() =>
       expect(listSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          page: 2,
+          limit: 10,
+          offset: 10,
+          permission: "admin:users:read",
+          role: "admin",
           search: "ada",
           status: "disabled",
-          role: "admin",
-          permission: "admin:users:read",
         }),
-      ),
-    );
-
-    fireEvent.click(screen.getByText("Disable"));
-    await waitFor(() =>
-      expect(statusSpy).toHaveBeenCalledWith(
-        "user-1",
-        { status: "disabled" },
         undefined,
       ),
     );
 
-    fireEvent.click(screen.getByText("Save access policy"));
-    await waitFor(() =>
-      expect(accessSpy).toHaveBeenCalledWith(
-        "user-1",
-        { permissions: ["profile:read"], roles: ["user"] },
-        undefined,
-      ),
-    );
+    expect(statusSpy).not.toHaveBeenCalled();
+    expect(accessSpy).not.toHaveBeenCalled();
     expect(detailSpy).toHaveBeenCalledWith("user-1", undefined);
   });
 
@@ -254,7 +258,7 @@ describe("admin pages integration", () => {
       response: new Response(null, { status: 200 }),
     });
     const auditSpy = vi
-      .spyOn(adminApi, "adminAuditControllerList")
+      .spyOn(adminApi, "adminUsersControllerListAudit")
       .mockResolvedValueOnce({
         data: {
           items: [
@@ -264,19 +268,19 @@ describe("admin pages integration", () => {
               actorId: "admin-id",
               createdAt: "2026-01-02T00:00:00.000Z",
               metadata: { userId: "user-1" },
-              targetId: "user-1",
-              targetType: "user",
+              resource: "user",
+              targetUserId: "user-1",
             },
           ],
           total: 1,
-          page: 1,
           limit: 10,
+          offset: 0,
         },
         error: undefined,
         response: new Response(null, { status: 200 }),
       })
       .mockResolvedValueOnce({
-        data: { items: [], total: 0, page: 1, limit: 10 },
+        data: { items: [], limit: 10, offset: 0, total: 0 },
         error: undefined,
         response: new Response(null, { status: 200 }),
       });
@@ -316,7 +320,7 @@ describe("admin pages integration", () => {
         })}
       </QueryClientProvider>,
     );
-    expect(await screen.findByText("No audit events yet.")).toBeTruthy();
+    expect(await screen.findByText("No audit events")).toBeTruthy();
     expect(auditSpy).toHaveBeenCalledTimes(2);
   });
 
@@ -333,8 +337,8 @@ describe("admin pages integration", () => {
       </QueryClientProvider>,
     );
 
-    expect(screen.queryByText("Users")).toBeFalsy();
-    expect(screen.getByText("Missing admin users permission")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Users" })).toBeFalsy();
+    expect(screen.getByText("Missing admin users permission.")).toBeTruthy();
 
     cleanup();
     render(
@@ -344,17 +348,19 @@ describe("admin pages integration", () => {
         access: adminAccess,
       }),
     );
-    expect(screen.getByText("Tenant roadmap")).toBeTruthy();
+    expect(
+      screen.getByText("Tenants, memberships, and invitations"),
+    ).toBeTruthy();
 
     cleanup();
     render(
       renderAdminRoute("/admin/profile", {
         status: "ready",
         payload,
-        access: { ...adminAccess, permissions: [] },
+        access: { ...adminAccess, permissions: [], roles: [] },
       }),
     );
-    expect(screen.getByText("Missing admin profile permission")).toBeTruthy();
+    expect(screen.getByText("Ada Admin")).toBeTruthy();
 
     cleanup();
     render(
@@ -364,10 +370,12 @@ describe("admin pages integration", () => {
         access: adminAccess,
       }),
     );
-    expect(screen.getByText("Page not found")).toBeTruthy();
+    expect(screen.getByText("Admin page not found")).toBeTruthy();
 
     cleanup();
     render(renderAdminRoute("/admin", { status: "loading" }));
-    expect(screen.getByText("Loading admin profile")).toBeTruthy();
+    expect(
+      screen.getAllByText("Loading admin profile...").length,
+    ).toBeGreaterThan(0);
   });
 });

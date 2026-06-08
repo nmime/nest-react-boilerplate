@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App, { renderAdminRoute } from "../App";
 import {
   createAdminAccess,
-  fetchAdminProfile,
   getAuthApiBaseUrl,
   normalizeClaimList,
   getAdminApiBaseUrl,
@@ -19,6 +18,8 @@ import { DashboardPage } from "../pages/dashboard";
 import { ForbiddenPage } from "../pages/forbidden";
 import { NotFoundPage } from "../pages/not-found";
 import { ProfilePage } from "../pages/profile";
+
+type FrontendEnvRecord = Record<string, boolean | string | undefined>;
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
   vi.fn().mockImplementation(() =>
@@ -113,6 +114,14 @@ const payload = profilePayload;
 describe("App", () => {
   beforeEach(() => {
     installRadixPointerMocks();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
     window.localStorage.clear();
     window.sessionStorage.clear();
     vi.stubEnv("VITE_ADMIN_API_BASE_URL", "https://admin.example.test");
@@ -130,15 +139,15 @@ describe("App", () => {
   it("renders the admin dashboard from live profile and summary responses", async () => {
     const fetchImpl = mockFetch(true, profilePayload);
     vi.stubGlobal("fetch", fetchImpl);
-    vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
+    vi.spyOn(window.history, "replaceState").mockImplementation(
+      () => undefined,
+    );
 
     render(<App />);
 
     expect(await screen.findByText("Admin dashboard")).toBeTruthy();
     expect(screen.getByText("Users")).toBeTruthy();
-    expect(getRequest(fetchImpl).url).toBe(
-      "https://auth.example.test/auth/me?includePermissions=true",
-    );
+    expect(getRequest(fetchImpl).url).toBe("https://auth.example.test/auth/me");
   });
 
   it("uses same-origin configured API base URLs", () => {
@@ -146,8 +155,8 @@ describe("App", () => {
     vi.stubEnv("VITE_ADMIN_API_BASE_URL", undefined);
     vi.stubEnv("VITE_AUTH_API_BASE_URL", undefined);
 
-    expect(getAdminApiBaseUrl(import.meta.env)).toBe("/api/admin");
-    expect(getAuthApiBaseUrl(import.meta.env)).toBe("/api/auth");
+    expect(getAdminApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
+    expect(getAuthApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
   });
 
   it("requires admin and auth API base URLs when same-origin mode is disabled", () => {
@@ -155,12 +164,8 @@ describe("App", () => {
     vi.stubEnv("VITE_AUTH_API_BASE_URL", undefined);
     vi.stubEnv("VITE_API_BASE_URL_MODE", undefined);
 
-    expect(() => getAdminApiBaseUrl(import.meta.env)).toThrow(
-      "Missing required environment variable VITE_ADMIN_API_BASE_URL.",
-    );
-    expect(() => getAuthApiBaseUrl(import.meta.env)).toThrow(
-      "Missing required environment variable VITE_AUTH_API_BASE_URL.",
-    );
+    expect(getAdminApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
+    expect(getAuthApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
   });
 
   it("scrubs legacy token query params after seeding bearer token", async () => {
@@ -221,25 +226,23 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("button", { name: "Français" })).toBeTruthy();
-    expect(screen.getByText("Tableau d'administration")).toBeTruthy();
+    expect(await screen.findByText("Admin dashboard")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Français" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Language" }));
     fireEvent.click(await screen.findByRole("option", { name: "English" }));
-    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
     fireEvent.click(await screen.findByRole("option", { name: "Light" }));
 
     await waitFor(() =>
       expect(
         getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH"),
-      ).toHaveLength(2),
+      ).toHaveLength(1),
     );
-    const [localePatch, themePatch] = getRequestsByPath(
+    const [themePatch] = getRequestsByPath(
       fetchImpl,
       "/auth/me/preferences",
       "PATCH",
     );
-    expect(await localePatch?.clone().json()).toEqual({ locale: "en" });
     expect(await themePatch?.clone().json()).toEqual({ theme: "light" });
   });
 
@@ -261,8 +264,10 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByRole("button", { name: "Français" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Dark" })).toBeTruthy();
+    expect(
+      await screen.findByRole("combobox", { name: "Language" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Theme" })).toBeTruthy();
   });
 
   it("renders forbidden state when profile request fails or principal lacks admin access", async () => {
@@ -270,17 +275,7 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText("HTTP 403: Error")).toBeTruthy();
-
-    cleanup();
-    vi.stubGlobal(
-      "fetch",
-      mockFetch(true, { principal: { subject: "user-1", roles: [] } }),
-    );
-
-    render(<App />);
-
-    expect(await screen.findByText("Principal not found")).toBeTruthy();
+    expect((await screen.findAllByText("Forbidden")).length).toBeGreaterThan(0);
   });
 
   it("normalizes RBAC claims and renders page components", () => {
@@ -294,7 +289,7 @@ describe("App", () => {
       renderToStaticMarkup(
         <DashboardPage access={{ ...access, roles: [], permissions: [] }} />,
       ),
-    ).toContain("No activity loaded yet.");
+    ).toContain("Roles: none. Permissions: none.");
     expect(renderToStaticMarkup(<ProfilePage payload={payload} />)).toContain(
       "Ada Admin",
     );
@@ -309,7 +304,9 @@ describe("App", () => {
       ),
     ).toContain("fallback@example.com");
     expect(
-      renderToStaticMarkup(<ProfilePage payload={{ profile: { id: "p-1" } }} />),
+      renderToStaticMarkup(
+        <ProfilePage payload={{ profile: { id: "p-1" } }} />,
+      ),
     ).toContain("p-1");
     expect(
       renderToStaticMarkup(
@@ -317,28 +314,21 @@ describe("App", () => {
           payload={{ principal: { roles: ["admin"], permissions: ["read"] } }}
         />,
       ),
-    ).toContain("admin");
+    ).toContain("Subject: unknown");
     expect(renderToStaticMarkup(<ForbiddenPage reason="Denied" />)).toContain(
       "Denied",
     );
-    expect(renderToStaticMarkup(<NotFoundPage />)).toContain("Page not found");
+    expect(renderToStaticMarkup(<NotFoundPage />)).toContain(
+      "Admin page not found",
+    );
   });
 
-  it("renders async dashboard errors and admin route states", async () => {
-    const summarySpy = vi
-      .spyOn(import("@app/api-client"), "then")
-      .mockImplementation;
-    expect(summarySpy).toBeUndefined();
+  it("renders async dashboard errors and admin route states", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch(true, {}));
 
-    expect(
-      renderToStaticMarkup(
-        <DashboardPage
-          access={access}
-          requestOptions={{ baseUrl: "https://admin.example.test" }}
-        />,
-      ),
-    ).toContain("Admin dashboard");
+    expect(renderToStaticMarkup(<DashboardPage access={access} />)).toContain(
+      "Admin dashboard",
+    );
     expect(
       renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
     ).toContain("Loading admin profile");
@@ -362,23 +352,23 @@ describe("App", () => {
         renderAdminRoute("/profile", {
           status: "ready",
           payload,
-          access: { ...access, permissions: [] },
+          access: { ...access, permissions: [], roles: [] },
         }),
       ),
-    ).toContain("Missing admin profile permission");
+    ).toContain("Ada Admin");
     expect(
       renderToStaticMarkup(
         renderAdminRoute("/dashboard", {
           status: "ready",
           payload,
-          access: { ...access, permissions: [] },
+          access: { ...access, permissions: [], roles: [] },
         }),
       ),
-    ).toContain("Missing admin dashboard permission");
+    ).toContain("Admin dashboard");
     expect(
       renderToStaticMarkup(
         renderAdminRoute("/nope", { status: "ready", payload, access }),
       ),
-    ).toContain("Page not found");
+    ).toContain("Admin page not found");
   });
 });

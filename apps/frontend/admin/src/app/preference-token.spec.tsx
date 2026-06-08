@@ -90,13 +90,13 @@ describe("admin preference auth token handling", () => {
     render(<App />);
 
     expect(await screen.findByText("Admin dashboard")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
     fireEvent.click(await screen.findByRole("option", { name: "Light" }));
 
     await waitFor(() =>
-      expect(requests.some((request) => request.url.includes("preferences"))).toBe(
-        true,
-      ),
+      expect(
+        requests.some((request) => request.url.includes("preferences")),
+      ).toBe(true),
     );
     const preferenceRequest = requests.find((request) =>
       request.url.includes("preferences"),

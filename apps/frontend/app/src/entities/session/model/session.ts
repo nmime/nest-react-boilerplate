@@ -1,5 +1,5 @@
 import { readLegacyUrlBearerToken } from "@app/frontend-ui";
-import { getFrontendEnv } from "../../../shared/config/frontend-env";
+import { getFrontendEnv } from "../../../shared/config";
 
 export const readInitialBearerToken = (): string | null => {
   if (typeof window === "undefined") {

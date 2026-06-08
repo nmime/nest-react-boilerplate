@@ -1,5 +1,5 @@
 import { apiFetch } from "@app/api-client/support";
-import { getUserApiBaseUrl } from "../../../shared/config/frontend-env";
+import { getUserApiBaseUrl } from "../../../shared/config";
 import type { UserProfilePayload } from "../model/profile";
 
 interface ApiEnvelope<TData> {

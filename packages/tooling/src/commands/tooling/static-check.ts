@@ -40,6 +40,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const failures = [
     ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
+    ...checkFrontendFsd(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
   ];
 
@@ -53,6 +54,8 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       status: "ok",
       checkedSyntax: syntaxTargets.length,
       importSmoke: smokeCommands.length,
+      frontendFsdSelfTest: "ok",
+      frontendFsdWorkspaceCheck: "ok",
       packageScriptReferences: countPackageScriptReferences(workspaceRoot),
     }),
   );
@@ -109,6 +112,13 @@ function getSmokeCommands(): string[][] {
     ],
     [
       "packages/tooling/bin/repo-tooling.mjs",
+      "frontend",
+      "fsd",
+      "check",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
       "db",
       "migrations",
       "rollback-check",
@@ -125,6 +135,27 @@ function checkSmokeCommands(
     const result = run(process.execPath, args, { cwd: workspaceRoot });
     return result.status === 0 ? [] : [result];
   });
+}
+
+function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
+  const selfTest = run(
+    process.execPath,
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "frontend",
+      "fsd",
+      "check",
+      "--self-test",
+    ],
+    { cwd: workspaceRoot },
+  );
+  const workspaceCheck = run(
+    process.execPath,
+    ["packages/tooling/bin/repo-tooling.mjs", "frontend", "fsd", "check"],
+    { cwd: workspaceRoot },
+  );
+
+  return [selfTest, workspaceCheck].filter((result) => result.status !== 0);
 }
 
 function toPackageScriptFailure(failure: ReferencedScript): CheckFailure {

@@ -23,8 +23,8 @@ vi.mock("react-dom/client", () => ({
   createRoot: domMocks.createRootMock,
 }));
 
-vi.mock("./app/app", () => ({
-  default: function ThrowingLandingApp() {
+vi.mock("./app", () => ({
+  App: function ThrowingLandingApp() {
     throw new Error("Landing app crashed");
   },
 }));

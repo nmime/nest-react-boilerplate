@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { createAdminAccess } from "../entities/admin-session";
-import { AdminLayout, normalizeAdminPath, renderAdminRoute } from "../pages";
+import { renderAdminRoute } from "../App";
+import { normalizeAdminPath } from "../shared";
+import { AdminLayout } from "../widgets/admin-shell";
 
 describe("admin route base handling", () => {
   const access = createAdminAccess({

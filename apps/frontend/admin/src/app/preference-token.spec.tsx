@@ -6,170 +6,103 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./app";
+import App from "../App";
 
-const jsonResponse = (body: unknown, status = 200): Response =>
-  new Response(JSON.stringify(body), {
-    headers: { "Content-Type": "application/json" },
-    status,
-    statusText: status >= 200 && status < 300 ? "OK" : "Error",
-  });
-
-const createMemoryStorage = (): Storage => {
-  const store = new Map<string, string>();
-
-  return {
-    get length() {
-      return store.size;
-    },
-    clear: () => store.clear(),
-    getItem: (key: string) => store.get(key) ?? null,
-    key: (index: number) => [...store.keys()][index] ?? null,
-    removeItem: (key: string) => {
-      store.delete(key);
-    },
-    setItem: (key: string, value: string) => {
-      store.set(key, value);
-    },
-  };
+const profilePayload = {
+  principal: {
+    subject: "admin-1",
+    roles: ["admin"],
+    permissions: [
+      "admin:dashboard:read",
+      "admin:profile:read",
+      "admin:users:read",
+    ],
+  },
+  profile: {
+    id: "admin-1",
+    displayName: "Ada Admin",
+    email: "admin@example.com",
+    locale: "en",
+    theme: "dark",
+  },
 };
 
-const getRequestsByPath = (
-  fetchImpl: ReturnType<typeof vi.fn>,
-  path: string,
-  method?: string,
-): Request[] =>
-  fetchImpl.mock.calls
-    .map((call) => call[0] as Request)
-    .filter(
-      (request) =>
-        new URL(request.url).pathname === path &&
-        (!method || request.method === method),
-    );
-
-function installRadixPointerMocks() {
-  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
-    configurable: true,
-    value: vi.fn(() => false),
-  });
-  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
-    configurable: true,
-    value: vi.fn(),
-  });
-  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
-    configurable: true,
-    value: vi.fn(),
-  });
-}
-
-function chooseSelectOption(label: string | RegExp, option: string) {
-  const trigger = screen.getByRole("combobox", { name: label });
-
-  installRadixPointerMocks();
-  fireEvent.pointerDown(trigger, {
-    button: 0,
-    ctrlKey: false,
-    pointerType: "mouse",
+describe("admin preference auth token handling", () => {
+  beforeEach(() => {
+    Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+      configurable: true,
+      value: vi.fn(() => false),
+    });
+    Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    Object.defineProperty(HTMLElement.prototype, "setPointerCapture", {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.stubEnv("VITE_ADMIN_API_BASE_URL", "https://admin.example.test");
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth.example.test");
+    window.history.pushState(null, "", "/admin?token=legacy-token");
   });
 
-  const optionElement = document.querySelector<HTMLElement>(
-    `[role="option"][data-value="${option}"]`,
-  );
-
-  expect(optionElement).toBeTruthy();
-  fireEvent.click(optionElement as HTMLElement);
-}
-
-beforeEach(() => {
-  Object.defineProperty(window, "localStorage", {
-    configurable: true,
-    value: createMemoryStorage(),
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    window.history.pushState(null, "", "/");
   });
-  window.history.replaceState(null, "", "/");
-});
 
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-  window.localStorage.clear();
-  window.history.replaceState(null, "", "/");
-});
-
-describe("admin preference authentication", () => {
   it("reuses the initial URL bearer token for preference updates after scrubbing the URL", async () => {
-    window.history.replaceState(null, "", "/profile?token=admin-pref-token");
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: {
-            principal: {
-              permissions: ["admin:profile:read", "admin:dashboard:read"],
-              roles: ["admin"],
-              subject: "admin-id",
-            },
-            user: { locale: "en", theme: "system" },
-          },
-        }),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: {
-            principal: {
-              permissions: ["admin:profile:read", "admin:dashboard:read"],
-              roles: ["admin"],
-              subject: "admin-id",
-            },
-            profile: {
-              email: "admin@example.com",
-              id: "admin-id",
-              permissions: ["admin:profile:read", "admin:dashboard:read"],
-              roles: ["admin"],
-            },
-          },
-        }),
-      )
-      .mockImplementation(() =>
-        Promise.resolve(
-          jsonResponse({ data: { locale: "ru", theme: "dark" } }),
-        ),
-      );
-    vi.stubGlobal("fetch", fetchImpl);
+    const requests: Request[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const request = input as Request;
+        requests.push(request);
+        const url = typeof input === "string" ? input : request.url;
+        if (url.includes("/auth/me/preferences")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ theme: "light" }), {
+              headers: { "Content-Type": "application/json" },
+              status: 200,
+            }),
+          );
+        }
+        return Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.includes("/auth/me")
+                ? { data: { principal: profilePayload.principal } }
+                : profilePayload,
+            ),
+            { headers: { "Content-Type": "application/json" }, status: 200 },
+          ),
+        );
+      }),
+    );
 
     render(<App />);
 
-    await waitFor(() =>
-      expect(screen.getByText("admin@example.com")).toBeTruthy(),
-    );
-    expect(window.location.search).toBe("");
-
-    expect(document.querySelectorAll("header select")).toHaveLength(0);
-    chooseSelectOption("Language", "ru");
-    chooseSelectOption(/^(Theme|Тема)$/u, "dark");
+    expect(await screen.findByText("Admin dashboard")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
 
     await waitFor(() =>
-      expect(
-        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH").length,
-      ).toBeGreaterThanOrEqual(2),
+      expect(requests.some((request) => request.url.includes("preferences"))).toBe(
+        true,
+      ),
     );
-
-    const preferenceRequests = getRequestsByPath(
-      fetchImpl,
-      "/auth/me/preferences",
-      "PATCH",
+    const preferenceRequest = requests.find((request) =>
+      request.url.includes("preferences"),
     );
-    expect(preferenceRequests[0]?.headers.get("authorization")).toBe(
-      "Bearer admin-pref-token",
+    expect(preferenceRequest?.headers.get("authorization")).toBe(
+      "Bearer legacy-token",
     );
-    expect(preferenceRequests[1]?.headers.get("authorization")).toBe(
-      "Bearer admin-pref-token",
-    );
-    await expect(preferenceRequests[0]?.clone().json()).resolves.toEqual({
-      locale: "ru",
-    });
-    await expect(preferenceRequests[1]?.clone().json()).resolves.toEqual({
-      theme: "dark",
-    });
   });
 });

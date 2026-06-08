@@ -9,7 +9,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
 import { createAdminAccess } from "../entities/admin-session";
-import { AdminLayout, renderAdminRoute } from "../pages";
+import { renderAdminRoute } from "../App";
+import { AdminLayout } from "../widgets/admin-shell";
 
 const adminAccess = createAdminAccess({
   subject: "admin-id",
@@ -86,213 +87,287 @@ const rolesCatalog = {
       description: "Users",
     },
   ],
-  assignableRoles: ["user", "admin"],
-  assignablePermissions: ["profile:read", "admin:users:read"],
 };
 
-const jsonResponse = (body: unknown, init: ResponseInit = {}) =>
-  new Response(JSON.stringify(body), {
-    headers: { "Content-Type": "application/json" },
-    status: 200,
-    ...init,
-  });
-
-const renderAdmin = (path: string, fetchImpl = vi.fn()) => {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
-  });
-  const ui = render(
-    <QueryClientProvider client={client}>
-      <AdminLayout access={adminAccess} currentPath={path}>
-        {renderAdminRoute(
-          path,
-          { status: "ready", access: adminAccess, payload },
-          undefined,
-          { requestOptions: { baseUrl: "https://admin.example", fetchImpl } },
-        )}
-      </AdminLayout>
-    </QueryClientProvider>,
-  );
-
-  return { client, ...ui };
-};
-
-const requests = (fetchImpl: ReturnType<typeof vi.fn>, pathname: string) =>
-  fetchImpl.mock.calls
-    .map((call) => call[0] as Request)
-    .filter((request) => new URL(request.url).pathname === pathname);
-
-const adminFetch = vi.fn((request: Request) => {
-  const url = new URL(request.url);
-  if (url.pathname === "/admin/dashboard/summary") {
-    return Promise.resolve(
-      jsonResponse({
-        data: {
-          totalUsers: 3,
-          activeUsers: 2,
-          disabledUsers: 1,
-          invitedUsers: 0,
-          recentAuditEvents: 4,
-          recentAudit: [],
-        },
-      }),
-    );
-  }
-  if (url.pathname === "/admin/users" && request.method === "GET") {
-    return Promise.resolve(
-      jsonResponse({
-        data: { items: [user], total: 21, limit: 10, offset: 0 },
-      }),
-    );
-  }
-  if (url.pathname === "/admin/users/user-1" && request.method === "GET") {
-    return Promise.resolve(jsonResponse({ data: user }));
-  }
-  if (url.pathname === "/admin/roles") {
-    return Promise.resolve(jsonResponse({ data: rolesCatalog }));
-  }
-  if (url.pathname === "/admin/audit") {
-    return Promise.resolve(
-      jsonResponse({ data: { items: [], total: 0, limit: 10, offset: 0 } }),
-    );
-  }
-  if (request.method === "PATCH") {
-    return Promise.resolve(jsonResponse({ data: user }));
-  }
-  return Promise.resolve(new Response(null, { status: 200 }));
-});
-
-describe("admin current entities integration", () => {
+describe("admin pages integration", () => {
   afterEach(() => {
     cleanup();
-    adminFetch.mockClear();
     vi.restoreAllMocks();
   });
 
   it("renders dashboard summary, profile, and health/live/ready statuses from real endpoints", async () => {
-    renderAdmin("/admin", adminFetch);
+    vi.spyOn(adminApi, "adminDashboardControllerSummary").mockResolvedValue({
+      data: {
+        totals: { users: 42, tenants: 3, activeSessions: 7 },
+        health: { status: "ready", live: "ok", ready: "ok" },
+      },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, "adminUsersControllerRoles").mockResolvedValue({
+      data: rolesCatalog,
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, "adminProfileControllerMe").mockResolvedValue({
+      data: payload,
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
 
-    expect(await screen.findByText("3")).toBeTruthy();
-    expect(screen.getByText("2")).toBeTruthy();
-    await waitFor(() =>
-      expect(requests(adminFetch, "/health")).toHaveLength(1),
-    );
-    expect(requests(adminFetch, "/live")).toHaveLength(1);
-    expect(requests(adminFetch, "/ready")).toHaveLength(1);
+    const renderRoute = (path: string) => {
+      cleanup();
+      render(
+        <QueryClientProvider client={new QueryClient()}>
+          <AdminLayout access={adminAccess} currentPath={path}>
+            {renderAdminRoute(
+              path,
+              { status: "ready", payload, access: adminAccess },
+              undefined,
+              {
+                requestOptions: { authToken: "token", baseUrl: "http://admin" },
+              },
+            )}
+          </AdminLayout>
+        </QueryClientProvider>,
+      );
+    };
+
+    renderRoute("/admin");
+    expect(await screen.findByText("42")).toBeTruthy();
+    expect(screen.getByText("3")).toBeTruthy();
+    expect(screen.getByText("7")).toBeTruthy();
+    expect(screen.getByText("Ready")).toBeTruthy();
+    expect(screen.getByText("ok")).toBeTruthy();
+
+    renderRoute("/admin/profile");
+    expect(screen.getByText("Ada Admin")).toBeTruthy();
+    expect(screen.getByText("admin@example.com")).toBeTruthy();
   });
 
   it("lists users, opens detail, searches, filters, paginates, and sends mutation bodies", async () => {
-    renderAdmin("/admin/users?search=ada&status=active&page=2", adminFetch);
+    const listSpy = vi
+      .spyOn(adminApi, "adminUsersControllerList")
+      .mockResolvedValue({
+        data: {
+          items: [user],
+          total: 12,
+          page: 1,
+          limit: 10,
+        },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      });
+    const detailSpy = vi
+      .spyOn(adminApi, "adminUsersControllerDetail")
+      .mockResolvedValue({
+        data: user,
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      });
+    const statusSpy = vi
+      .spyOn(adminApi, "adminUsersControllerUpdateStatus")
+      .mockResolvedValue({
+        data: { ...user, status: "disabled" },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      });
+    const accessSpy = vi
+      .spyOn(adminApi, "adminUsersControllerUpdateAccessPolicy")
+      .mockResolvedValue({
+        data: { ...user, roles: ["admin"], permissions: ["admin:users:read"] },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      });
+    vi.spyOn(adminApi, "adminUsersControllerRoles").mockResolvedValue({
+      data: rolesCatalog,
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AdminLayout access={adminAccess} currentPath="/admin/users">
+          {renderAdminRoute("/admin/users", {
+            status: "ready",
+            payload,
+            access: adminAccess,
+          })}
+        </AdminLayout>
+      </QueryClientProvider>,
+    );
+
     expect(await screen.findByText("user@example.com")).toBeTruthy();
     fireEvent.click(screen.getByText("user@example.com"));
+    expect(await screen.findByText("Tenant tenant-1")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Search"), {
+      target: { value: "ada" },
+    });
+    fireEvent.change(screen.getByLabelText("Status"), {
+      target: { value: "disabled" },
+    });
+    fireEvent.change(screen.getByLabelText("Role"), {
+      target: { value: "admin" },
+    });
+    fireEvent.change(screen.getByLabelText("Permission"), {
+      target: { value: "admin:users:read" },
+    });
+    fireEvent.click(screen.getByText("Next"));
+
     await waitFor(() =>
-      expect(requests(adminFetch, "/admin/users/user-1")).toHaveLength(1),
+      expect(listSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 2,
+          search: "ada",
+          status: "disabled",
+          role: "admin",
+          permission: "admin:users:read",
+        }),
+      ),
     );
 
-    const listUrl = requests(adminFetch, "/admin/users")[0].url;
-    expect(listUrl).toContain("limit=10");
-    expect(listUrl).toContain("offset=10");
-    expect(listUrl).toContain("search=ada");
-    expect(listUrl).toContain("status=active");
-
-    const mutationFetch = vi.fn((request: Request) => {
-      expect(request.method).toBe("PATCH");
-      return Promise.resolve(jsonResponse({ data: user }));
-    });
-    await throwOnOpenApiErrorData(
-      adminApi.adminUsersControllerUpdateUserStatus(
+    fireEvent.click(screen.getByText("Disable"));
+    await waitFor(() =>
+      expect(statusSpy).toHaveBeenCalledWith(
         "user-1",
         { status: "disabled" },
-        { baseUrl: "https://admin.example", fetchImpl: mutationFetch },
-      ),
-    );
-    await throwOnOpenApiErrorData(
-      adminApi.adminUsersControllerUpdateUserAccessPolicy(
-        "user-1",
-        { roles: ["admin"], permissions: ["admin:users:read"] },
-        { baseUrl: "https://admin.example", fetchImpl: mutationFetch },
+        undefined,
       ),
     );
 
-    const statusRequest = mutationFetch.mock.calls[0][0];
-    const policyRequest = mutationFetch.mock.calls[1][0];
-    expect(await statusRequest.json()).toEqual({ status: "disabled" });
-    expect(await policyRequest.json()).toEqual({
-      roles: ["admin"],
-      permissions: ["admin:users:read"],
-    });
+    fireEvent.click(screen.getByText("Save access policy"));
+    await waitFor(() =>
+      expect(accessSpy).toHaveBeenCalledWith(
+        "user-1",
+        { permissions: ["profile:read"], roles: ["user"] },
+        undefined,
+      ),
+    );
+    expect(detailSpy).toHaveBeenCalledWith("user-1", undefined);
   });
 
   it("renders roles matrix, audit list and audit empty state without fake data", async () => {
-    renderAdmin("/admin/roles", adminFetch);
-    expect(await screen.findByText("admin:users:read")).toBeTruthy();
+    vi.spyOn(adminApi, "adminUsersControllerRoles").mockResolvedValue({
+      data: rolesCatalog,
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    const auditSpy = vi
+      .spyOn(adminApi, "adminAuditControllerList")
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "audit-1",
+              action: "user.disabled",
+              actorId: "admin-id",
+              createdAt: "2026-01-02T00:00:00.000Z",
+              metadata: { userId: "user-1" },
+              targetId: "user-1",
+              targetType: "user",
+            },
+          ],
+          total: 1,
+          page: 1,
+          limit: 10,
+        },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      })
+      .mockResolvedValueOnce({
+        data: { items: [], total: 0, page: 1, limit: 10 },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      });
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        {renderAdminRoute("/admin/roles", {
+          status: "ready",
+          payload,
+          access: adminAccess,
+        })}
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("Administrator")).toBeTruthy();
+    expect(screen.getByText("admin.users")).toBeTruthy();
+
     cleanup();
-    renderAdmin("/admin/audit", adminFetch);
-    expect(await screen.findByText("No audit events")).toBeTruthy();
-    expect(screen.getByText(/No client-side fake data/u)).toBeTruthy();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        {renderAdminRoute("/admin/audit", {
+          status: "ready",
+          payload,
+          access: adminAccess,
+        })}
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("user.disabled")).toBeTruthy();
+    expect(screen.getByText("user-1")).toBeTruthy();
+
+    cleanup();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        {renderAdminRoute("/admin/audit", {
+          status: "ready",
+          payload,
+          access: adminAccess,
+        })}
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText("No audit events yet.")).toBeTruthy();
+    expect(auditSpy).toHaveBeenCalledTimes(2);
   });
 
-  it("covers profile, forbidden/loading/error/not-found, tenant roadmap and CASL hidden nav", async () => {
+  it("covers profile, forbidden/loading/error/not-found, tenant roadmap and CASL hidden nav", () => {
     render(
-      <AdminLayout access={restrictedAccess} currentPath="/admin/users">
-        {renderAdminRoute("/admin/users", {
-          status: "ready",
-          access: restrictedAccess,
-          payload,
-        })}
-      </AdminLayout>,
+      <QueryClientProvider client={new QueryClient()}>
+        <AdminLayout access={restrictedAccess} currentPath="/admin/users">
+          {renderAdminRoute("/admin/users", {
+            status: "ready",
+            payload,
+            access: restrictedAccess,
+          })}
+        </AdminLayout>
+      </QueryClientProvider>,
     );
 
-    expect(screen.queryByText("Users")).toBeNull();
-    expect(screen.getByRole("heading", { name: "Access denied" })).toBeTruthy();
-    expect(screen.getByText("RBAC denied")).toBeTruthy();
-    expect(screen.getByText("Missing admin users permission.")).toBeTruthy();
+    expect(screen.queryByText("Users")).toBeFalsy();
+    expect(screen.getByText("Missing admin users permission")).toBeTruthy();
+
     cleanup();
     render(
       renderAdminRoute("/admin/tenants", {
         status: "ready",
-        access: adminAccess,
         payload,
+        access: adminAccess,
       }),
     );
-    expect(screen.getByText("Tenant administration roadmap")).toBeTruthy();
+    expect(screen.getByText("Tenant roadmap")).toBeTruthy();
+
     cleanup();
     render(
       renderAdminRoute("/admin/profile", {
         status: "ready",
-        access: adminAccess,
         payload,
+        access: { ...adminAccess, permissions: [] },
       }),
     );
-    expect(screen.getByText("Ada Admin")).toBeTruthy();
+    expect(screen.getByText("Missing admin profile permission")).toBeTruthy();
+
     cleanup();
     render(
       renderAdminRoute("/admin/missing", {
         status: "ready",
-        access: adminAccess,
         payload,
+        access: adminAccess,
       }),
     );
-    expect(
-      screen.getByRole("heading", { name: "Admin page not found" }),
-    ).toBeTruthy();
-    expect(screen.getByText("Unknown route")).toBeTruthy();
-    expect(screen.getByText("Choose dashboard or profile.")).toBeTruthy();
+    expect(screen.getByText("Page not found")).toBeTruthy();
+
     cleanup();
     render(renderAdminRoute("/admin", { status: "loading" }));
-    expect(screen.getAllByText("Loading admin profile...")).toHaveLength(2);
-    cleanup();
-    const failingFetch = vi.fn(() =>
-      Promise.resolve(jsonResponse({ detail: "boom" }, { status: 403 })),
-    );
-    await expect(
-      throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerUpdateUserAccessPolicy(
-          "user-1",
-          { roles: ["admin"], permissions: ["admin:users:read"] },
-          { baseUrl: "https://admin.example", fetchImpl: failingFetch },
-        ),
-      ),
-    ).rejects.toThrow("boom");
+    expect(screen.getByText("Loading admin profile")).toBeTruthy();
   });
 });

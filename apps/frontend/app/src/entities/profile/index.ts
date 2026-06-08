@@ -1,3 +1,4 @@
+export { fetchUserProfile, profileQueryKey } from "./api";
 export {
   getPayloadLocale,
   getPayloadTheme,

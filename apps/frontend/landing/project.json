@@ -7,7 +7,8 @@
     "platform:frontend",
     "type:frontend-app",
     "scope:landing",
-    "type:app"
+    "type:app",
+    "fsd:layer:app"
   ],
   "// targets": "to see all targets run: nx show project landing-app --web",
   "targets": {

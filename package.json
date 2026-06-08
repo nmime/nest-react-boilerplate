@@ -84,7 +84,8 @@
     "ci:workflows:check": "node scripts/validate-github-workflows.mjs",
     "branch:cleanup:check": "node packages/tooling/bin/repo-tooling.mjs git branch-cleanup --target HEAD",
     "branch:cleanup": "node packages/tooling/bin/repo-tooling.mjs git branch-cleanup",
-    "db:migrations:rollback-check": "node packages/tooling/bin/repo-tooling.mjs db migrations rollback-check"
+    "db:migrations:rollback-check": "node packages/tooling/bin/repo-tooling.mjs db migrations rollback-check",
+    "frontend:fsd:check": "node packages/tooling/bin/repo-tooling.mjs frontend fsd check"
   },
   "dependencies": {
     "@casl/ability": "6.8.1",

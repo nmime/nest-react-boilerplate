@@ -1,6 +1,6 @@
 import { apiFetch } from "@app/api-client/support";
-import { getAuthApiBaseUrl } from "../../../shared/config/frontend-env";
-import { formValueToString } from "../../../shared/lib/form";
+import { getAuthApiBaseUrl } from "../../../shared/config";
+import { formValueToString } from "../../../shared/lib";
 import type {
   AuthMePayload,
   AuthSessionPayload,

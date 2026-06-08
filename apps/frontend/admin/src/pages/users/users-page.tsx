@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { updateUserAccessPolicy } from "../../features/user-access-management";
+import { toUserListParams } from "../../features/user-filtering";
+import { updateUserStatus } from "../../features/user-status-management";
 import {
   adminApi,
   throwOnOpenApiErrorData,
@@ -12,83 +15,30 @@ import {
   UiCheckbox,
   UiConfirmDialog,
   UiDataTable,
-  UiEmptyState,
-  UiLoading,
   UiNotification,
   UiPagination,
-  UiResourceError,
   UiSection,
   UiSelect,
   UiStatusTag,
   UiTextarea,
   useI18n,
 } from "@app/frontend-ui";
-import type { AdminAccess } from "../auth-rbac";
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import type { UserRow, UserStatus } from "./types";
+import type { AdminAccess } from "../../entities/admin-session";
+import {
+  UserDetailCard,
+  type UserRow,
+  type UserStatus,
+} from "../../entities/admin-user";
 import {
   errorText,
-  join,
   pageSize,
   paramsFromPath,
   routeUserId,
+  join,
   statusLabelKey,
   statusTone,
   totalPages,
-} from "./utils";
-
-const renderUserDetail = (
-  detail: {
-    data?: adminApi.AdminUsersControllerGetUserData;
-    error: unknown;
-    isLoading: boolean;
-  },
-  t: (key: TranslationKey, params?: TranslationParams) => string,
-) => {
-  if (detail.isLoading) {
-    return <UiLoading label={t("admin.users.detail.loading")} />;
-  }
-  if (detail.error) {
-    return (
-      <UiResourceError
-        title={t("admin.users.error.detailRequestFailed")}
-        description={errorText(
-          detail.error,
-          "admin.users.error.detailRequestFailed",
-          t,
-        )}
-      />
-    );
-  }
-  if (!detail.data) {
-    return (
-      <UiEmptyState
-        title={t("admin.users.detail.emptyEyebrow")}
-        description={t("admin.users.detail.emptyTitle")}
-      />
-    );
-  }
-  return (
-    <dl className="xr-profile-list">
-      <div>
-        <dt>{t("admin.users.column.email")}</dt>
-        <dd>{detail.data.email}</dd>
-      </div>
-      <div>
-        <dt>{t("admin.users.column.status")}</dt>
-        <dd>{t(statusLabelKey[detail.data.status])}</dd>
-      </div>
-      <div>
-        <dt>{t("admin.users.column.roles")}</dt>
-        <dd>{join(detail.data.roles)}</dd>
-      </div>
-      <div>
-        <dt>{t("admin.users.filter.permission")}</dt>
-        <dd>{join(detail.data.permissions)}</dd>
-      </div>
-    </dl>
-  );
-};
+} from "../../shared";
 
 export const UsersPage = ({
   access,
@@ -127,17 +77,7 @@ export const UsersPage = ({
     new Set(),
   );
   const listParams = useMemo<adminApi.AdminUsersListQuery>(
-    () => ({
-      limit: pageSize,
-      offset: (Math.max(1, page) - 1) * pageSize,
-      search: search.trim() || undefined,
-      status: status === "all" ? undefined : (status as UserStatus),
-      role: role === "all" ? undefined : (role as "user" | "admin"),
-      permission:
-        permission === "all"
-          ? undefined
-          : (permission as adminApi.AdminUsersListQuery["permission"]),
-    }),
+    () => toUserListParams({ page, permission, role, search, status }),
     [page, permission, role, search, status],
   );
   const users = useQuery({
@@ -191,13 +131,7 @@ export const UsersPage = ({
   };
   const statusMutation = useMutation({
     mutationFn: ({ id, nextStatus }: { id: string; nextStatus: UserStatus }) =>
-      throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerUpdateUserStatus(
-          id,
-          { status: nextStatus },
-          requestOptions,
-        ),
-      ),
+      updateUserStatus(id, nextStatus, requestOptions),
     onSuccess: async () => {
       setNotice({
         tone: "success",
@@ -226,30 +160,12 @@ export const UsersPage = ({
       currentStatus?: UserStatus;
     }) => {
       if (nextStatus && nextStatus !== currentStatus) {
-        return throwOnOpenApiErrorData(
-          adminApi.adminUsersControllerUpdateUserStatus(
-            id,
-            { status: nextStatus },
-            requestOptions,
-          ),
-        ).then(() =>
-          throwOnOpenApiErrorData(
-            adminApi.adminUsersControllerUpdateUserAccessPolicy(
-              id,
-              { roles, permissions },
-              requestOptions,
-            ),
-          ),
+        return updateUserStatus(id, nextStatus, requestOptions).then(() =>
+          updateUserAccessPolicy(id, { roles, permissions }, requestOptions),
         );
       }
 
-      return throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerUpdateUserAccessPolicy(
-          id,
-          { roles, permissions },
-          requestOptions,
-        ),
-      );
+      return updateUserAccessPolicy(id, { roles, permissions }, requestOptions);
     },
     onSuccess: async () => {
       setNotice({
@@ -418,7 +334,7 @@ export const UsersPage = ({
         onPageChange={setPage}
       />
       <UiCard title={t("admin.users.detail.title")}>
-        {renderUserDetail(detail, t)}
+        <UserDetailCard detail={detail} t={t} />
       </UiCard>
       <UiConfirmDialog
         open={Boolean(statusTarget)}

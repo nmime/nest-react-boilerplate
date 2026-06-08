@@ -14,14 +14,14 @@ import {
   getAuthApiBaseUrl,
   normalizeClaimList,
   getAdminApiBaseUrl,
-} from "./auth-rbac";
+} from "../entities/admin-session";
 import {
   DashboardPage,
   ForbiddenPage,
   NotFoundPage,
   ProfilePage,
   renderAdminRoute,
-} from "./pages";
+} from "../pages";
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
   vi.fn().mockImplementation(() =>

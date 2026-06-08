@@ -13,8 +13,8 @@ import {
   UiStatusTag,
   useI18n,
 } from "@app/frontend-ui";
-import type { AdminAccess } from "../auth-rbac";
-import { errorText, statusTone } from "./utils";
+import type { AdminAccess } from "../../entities/admin-session";
+import { errorText, statusTone } from "../../shared";
 
 const HealthCard = ({
   label,

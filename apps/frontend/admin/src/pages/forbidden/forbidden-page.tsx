@@ -11,17 +11,3 @@ export const ForbiddenPage = ({ reason }: Readonly<{ reason: string }>) => {
     </UiSection>
   );
 };
-export const NotFoundPage = () => {
-  const { t } = useI18n();
-  return (
-    <UiSection
-      eyebrow={t("admin.notFound.eyebrow")}
-      title={t("admin.notFound.sectionTitle")}
-    >
-      <UiEmptyState
-        description={t("admin.notFound.description")}
-        title={t("admin.notFound.title")}
-      />
-    </UiSection>
-  );
-};

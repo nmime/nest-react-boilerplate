@@ -5,8 +5,8 @@ import {
   type ApiClientRequestOptions,
 } from "@app/api-client";
 import { UiCheckbox, UiDataTable, UiSection, useI18n } from "@app/frontend-ui";
-import type { RoleRow } from "./types";
-import { errorText } from "./utils";
+import type { RoleRow } from "../../entities/admin-role";
+import { errorText } from "../../shared";
 
 export const RolesPage = ({
   requestOptions,

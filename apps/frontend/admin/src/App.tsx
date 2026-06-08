@@ -1,25 +1,139 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
-import { adminApi, authApi, throwOnOpenApiErrorData } from "@app/api-client";
-import { FrontendI18nProvider, useI18n, type UiTheme } from "@app/frontend-ui";
 import {
-  createAdminAccess,
-  fetchAdminProfile,
-} from "../../entities/admin-session";
+  adminApi,
+  authApi,
+  throwOnOpenApiErrorData,
+  type ApiClientRequestOptions,
+} from "@app/api-client";
+import {
+  FrontendI18nProvider,
+  FrontendQueryProvider,
+  FrontendStateProvider,
+  UiErrorBoundary,
+  UiLoading,
+  UiSection,
+  useI18n,
+  type UiTheme,
+} from "@app/frontend-ui";
+import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";
 import {
   getBrowserPath,
   getConfiguredAdminApiBaseUrl,
   getConfiguredAuthApiBaseUrl,
   type AuthMePayload,
-} from "../../features/admin-auth";
-import { getPayloadTheme } from "../../features/admin-preferences";
-import { AdminLayout, type AdminProfileState, renderAdminRoute } from "..";
+} from "./features/admin-auth";
+import { getPayloadTheme } from "./features/admin-preferences";
+import { AuditPage } from "./pages/audit";
+import { DashboardPage } from "./pages/dashboard";
+import { ForbiddenPage } from "./pages/forbidden";
+import { NotFoundPage } from "./pages/not-found";
+import { ProfilePage } from "./pages/profile";
+import { RolesPage } from "./pages/roles";
+import { TenantRoadmapPage } from "./pages/tenants";
+import { UsersPage } from "./pages/users";
+import {
+  fallbackTranslate,
+  getInitialBearerToken,
+  normalizeAdminPath,
+  scrubLegacyAuthTokenParams,
+  type AdminProfileState,
+  type Translate,
+} from "./shared";
+import { AdminLayout } from "./widgets/admin-shell";
+
+export interface AdminRouteRuntime {
+  requestOptions?: ApiClientRequestOptions;
+}
 
 interface AdminAppProps {
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
   bearerToken: string | null;
+}
+
+/* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
+function renderReadyAdminRoute(
+  path: string,
+  state: Extract<AdminProfileState, { status: "ready" }>,
+  t: Translate,
+  runtime: AdminRouteRuntime,
+): ReactElement {
+  const routePath = normalizeAdminPath(path);
+  if (routePath === "/" || routePath === "/dashboard") {
+    return state.access.canReadDashboard ? (
+      <DashboardPage
+        access={state.access}
+        requestOptions={runtime.requestOptions}
+      />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.dashboardMissing")} />
+    );
+  }
+  if (routePath.startsWith("/users")) {
+    return state.access.canReadUsers ? (
+      <UsersPage
+        access={state.access}
+        currentPath={path}
+        requestOptions={runtime.requestOptions}
+      />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.usersMissing")} />
+    );
+  }
+  if (routePath === "/roles") {
+    return state.access.canReadRoles ? (
+      <RolesPage requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.rolesMissing")} />
+    );
+  }
+  if (routePath === "/audit") {
+    return state.access.canReadAudit ? (
+      <AuditPage requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.auditMissing")} />
+    );
+  }
+  if (routePath === "/profile") {
+    return state.access.canReadProfile ? (
+      <ProfilePage payload={state.payload} />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.profileMissing")} />
+    );
+  }
+  return routePath === "/tenants" ? <TenantRoadmapPage /> : <NotFoundPage />;
+}
+/* eslint-enable sonarjs/cognitive-complexity */
+
+export function renderAdminRoute(
+  path: string,
+  state: AdminProfileState,
+  t: Translate = fallbackTranslate,
+  runtime: AdminRouteRuntime = {},
+): ReactElement {
+  if (state.status === "loading") {
+    return (
+      <UiSection
+        eyebrow={t("admin.loadingEyebrow")}
+        title={t("admin.loadingProfile")}
+      >
+        <UiLoading label={t("admin.loadingProfile")} />
+      </UiSection>
+    );
+  }
+  if (state.status === "forbidden") {
+    return <ForbiddenPage reason={state.reason} />;
+  }
+  const rendered = renderReadyAdminRoute(path, state, t, runtime);
+  return rendered;
 }
 
 async function fetchAuthMe(
@@ -158,7 +272,7 @@ const AdminWorkspace = ({
   );
 };
 
-export const AdminRootPage = ({
+const AdminRoot = ({
   initialBearerToken,
 }: Readonly<{ initialBearerToken: string | null }>) => {
   const bearerToken = initialBearerToken;
@@ -239,3 +353,23 @@ export const AdminRootPage = ({
     </FrontendI18nProvider>
   );
 };
+
+const App = () => {
+  const [initialBearerToken] = useState(getInitialBearerToken);
+
+  useEffect(() => {
+    scrubLegacyAuthTokenParams();
+  }, []);
+
+  return (
+    <FrontendStateProvider initialBearerToken={initialBearerToken ?? ""}>
+      <FrontendQueryProvider>
+        <UiErrorBoundary>
+          <AdminRoot initialBearerToken={initialBearerToken} />
+        </UiErrorBoundary>
+      </FrontendQueryProvider>
+    </FrontendStateProvider>
+  );
+};
+
+export default App;

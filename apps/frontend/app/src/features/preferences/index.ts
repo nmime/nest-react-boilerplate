@@ -1,2 +1,7 @@
 export { updateUserPreferences, authPreferencesQueryKey } from "./api";
-export type { AppliedUserPreferences, UserPreferencePatch } from "./model";
+export { useUserPreferenceControls } from "./model";
+export type {
+  AppliedUserPreferences,
+  UserPreferenceControls,
+  UserPreferencePatch,
+} from "./model";

@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import App from "./app";
+import { App } from ".";
 
-describe("Landing app shell", () => {
+describe("Landing app", () => {
   it("renders generic boilerplate landing copy", () => {
     const html = renderToStaticMarkup(<App />);
 
@@ -12,5 +12,7 @@ describe("Landing app shell", () => {
     );
     expect(html).toContain("What is included");
     expect(html).toContain('href="/auth/docs"');
+    expect(html).toContain('href="/app"');
+    expect(html).toContain('href="/admin"');
   });
 });

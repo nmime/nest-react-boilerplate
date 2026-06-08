@@ -49,7 +49,7 @@ const isCheckedSourceFile = (path: string): boolean => {
   return (
     allowedExtensions.has(extname(path)) &&
     !relativePath
-      .split(/[\/]/u)
+      .split(/[/\\]/u)
       .some((segment) => ignoredDirectories.has(segment)) &&
     !ignoredSuffixes.some((suffix) => path.endsWith(suffix)) &&
     !rawFetchOwnerFiles.has(relativePath)

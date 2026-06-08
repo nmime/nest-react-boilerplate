@@ -3,7 +3,8 @@ import { extname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const workspaceRoot = join(import.meta.dirname, "../../../../../..");
-const frontendRoots = [
+
+const sourceRoots = [
   "apps/frontend/app/src",
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
@@ -15,8 +16,6 @@ const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [
   ".spec.ts",
   ".spec.tsx",
-  ".test.ts",
-  ".test.tsx",
   ".stories.ts",
   ".stories.tsx",
 ];
@@ -27,7 +26,7 @@ const ignoredDirectories = new Set([
   "dist",
   "node_modules",
 ]);
-const rawFetchAllowlist = new Set([
+const rawFetchOwnerFiles = new Set([
   "libs/frontend/api-support/lib/src/lib/api-client.ts",
 ]);
 
@@ -40,16 +39,7 @@ const walk = (directory: string): string[] => {
     const path = join(directory, entry);
     const stat = statSync(path);
 
-    if (
-      stat.isDirectory() &&
-      !relative(workspaceRoot, path)
-        .split(/[\\/]/u)
-        .some((segment) => ignoredDirectories.has(segment))
-    ) {
-      return walk(path);
-    }
-
-    return stat.isFile() ? [path] : [];
+    return stat.isDirectory() ? walk(path) : [path];
   });
 };
 
@@ -58,14 +48,17 @@ const isCheckedSourceFile = (path: string): boolean => {
 
   return (
     allowedExtensions.has(extname(path)) &&
+    !relativePath
+      .split(/[\/]/u)
+      .some((segment) => ignoredDirectories.has(segment)) &&
     !ignoredSuffixes.some((suffix) => path.endsWith(suffix)) &&
-    !rawFetchAllowlist.has(relativePath)
+    !rawFetchOwnerFiles.has(relativePath)
   );
 };
 
-describe("frontend request manager guard", () => {
-  it("keeps every frontend app/lib on approved API clients instead of raw fetch", () => {
-    const offenders = frontendRoots
+describe("frontend raw fetch boundary", () => {
+  it("keeps raw fetch centralized in @app/frontend-api-support", () => {
+    const offenders = sourceRoots
       .flatMap((root) => walk(join(workspaceRoot, root)))
       .filter(isCheckedSourceFile)
       .filter((path) => /\bfetch\s*\(/u.test(readFileSync(path, "utf8")))

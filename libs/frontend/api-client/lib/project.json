@@ -3,7 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/frontend/api-client/lib/src",
   "projectType": "library",
-  "tags": ["platform:frontend", "type:sdk", "scope:shared"],
+  "tags": ["platform:frontend", "type:sdk", "scope:shared", "fsd:layer:shared"],
   "targets": {
     "test": {
       "executor": "nx:run-commands",

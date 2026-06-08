@@ -1,4 +1,5 @@
 import { dirname, resolve } from "node:path";
+import { runCheckFrontendFsd } from "./commands/frontend/check-fsd";
 import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
@@ -32,6 +33,12 @@ register(
   "git:branch-cleanup",
   "Safely preview or delete local/remote branches already merged into the target branch.",
   runBranchCleanup,
+);
+
+register(
+  "frontend:fsd:check",
+  "Enforce strict frontend Feature-Sliced Design boundaries.",
+  ({ argv, workspaceRoot }) => runCheckFrontendFsd({ argv, workspaceRoot }),
 );
 
 register(

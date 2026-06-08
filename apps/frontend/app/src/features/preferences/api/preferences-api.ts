@@ -1,5 +1,5 @@
 import { apiFetch } from "@app/api-client/support";
-import { getAuthApiBaseUrl } from "../../../shared/config/frontend-env";
+import { getAuthApiBaseUrl } from "../../../shared/config";
 import type {
   AuthPreferencesPayload,
   UserPreferencePatch,

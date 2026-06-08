@@ -2,7 +2,19 @@
 import { fallbackLocale, translate, type Locale } from "@app/common/i18n";
 
 let currentApiLocale: Locale = fallbackLocale;
-let apiLocaleGetter: () => Locale = () => currentApiLocale;
+
+const resolveAmbientApiLocale = (): Locale => {
+  if (typeof document === "undefined") {
+    return currentApiLocale;
+  }
+
+  const documentLocale = document.documentElement.lang;
+  return documentLocale === "en" || documentLocale === "ru"
+    ? documentLocale
+    : currentApiLocale;
+};
+
+let apiLocaleGetter: () => Locale = resolveAmbientApiLocale;
 
 export interface ConfigureApiLocaleOptions {
   getLocale?: () => Locale;
@@ -20,7 +32,7 @@ export const configureApiLocale = ({
   if (locale) {
     setApiLocale(locale);
   }
-  apiLocaleGetter = getLocale ?? (() => currentApiLocale);
+  apiLocaleGetter = getLocale ?? resolveAmbientApiLocale;
 };
 
 export const getApiLocale = (): Locale => apiLocaleGetter();

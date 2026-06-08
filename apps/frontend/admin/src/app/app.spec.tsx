@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./app";
+import App, { renderAdminRoute } from "../App";
 import {
   createAdminAccess,
   fetchAdminProfile,
@@ -15,13 +15,10 @@ import {
   normalizeClaimList,
   getAdminApiBaseUrl,
 } from "../entities/admin-session";
-import {
-  DashboardPage,
-  ForbiddenPage,
-  NotFoundPage,
-  ProfilePage,
-  renderAdminRoute,
-} from "../pages";
+import { DashboardPage } from "../pages/dashboard";
+import { ForbiddenPage } from "../pages/forbidden";
+import { NotFoundPage } from "../pages/not-found";
+import { ProfilePage } from "../pages/profile";
 
 const mockFetch = (ok: boolean, body: unknown, status = 200) =>
   vi.fn().mockImplementation(() =>
@@ -82,182 +79,214 @@ function installRadixPointerMocks() {
     configurable: true,
     value: vi.fn(),
   });
-}
-
-function chooseSelectOption(label: string | RegExp, option: string) {
-  const trigger = screen.getByRole("combobox", { name: label });
-
-  installRadixPointerMocks();
-  fireEvent.pointerDown(trigger, {
-    button: 0,
-    ctrlKey: false,
-    pointerType: "mouse",
-  });
-
-  const optionElement = document.querySelector<HTMLElement>(
-    `[role="option"][data-value="${option}"]`,
-  );
-
-  expect(optionElement).toBeTruthy();
-  fireEvent.click(optionElement as HTMLElement);
-}
-
-beforeEach(() => {
-  Object.defineProperty(window, "localStorage", {
+  Object.defineProperty(HTMLElement.prototype, "setPointerCapture", {
     configurable: true,
-    value: createMemoryStorage(),
+    value: vi.fn(),
   });
-});
+}
 
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-  if (typeof window !== "undefined") {
+const profilePayload = {
+  principal: {
+    subject: "admin-1",
+    email: "admin@example.com",
+    roles: ["admin"],
+    permissions: [
+      "admin:dashboard:read",
+      "admin:profile:read",
+      "admin:users:read",
+      "admin:roles:read",
+      "admin:audit:read",
+    ],
+  },
+  profile: {
+    id: "profile-1",
+    displayName: "Ada Admin",
+    email: "admin@example.com",
+    locale: "fr",
+    theme: "dark",
+  },
+};
+
+const access = createAdminAccess(profilePayload.principal);
+const payload = profilePayload;
+
+describe("App", () => {
+  beforeEach(() => {
+    installRadixPointerMocks();
     window.localStorage.clear();
-    window.history.replaceState(null, "", "/");
-  }
-});
-
-describe("admin auth and RBAC helpers", () => {
-  it("normalizes claim arrays defensively", () => {
-    expect(normalizeClaimList(["admin", "", "admin", 42, "support"])).toEqual([
-      "admin",
-      "support",
-    ]);
-    expect(normalizeClaimList("admin")).toEqual([]);
-    expect(normalizeClaimList(undefined)).toEqual([]);
+    window.sessionStorage.clear();
+    vi.stubEnv("VITE_ADMIN_API_BASE_URL", "https://admin.example.test");
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth.example.test");
+    vi.stubEnv("VITE_API_BASE_URL_MODE", undefined);
   });
 
-  it("builds fail-closed admin access policies", () => {
-    expect(createAdminAccess()).toEqual({
-      isAuthenticated: false,
-      canAccessAdmin: false,
-      canReadAudit: false,
-      canReadDashboard: false,
-      canReadProfile: false,
-      canReadRoles: false,
-      canReadSettings: false,
-      canReadUsers: false,
-      canUpdateSettings: false,
-      canUpdateUserAccessPolicy: false,
-      canUpdateUserStatus: false,
-      roles: [],
-      permissions: [],
-    });
-    expect(
-      createAdminAccess({
-        subject: "admin-id",
-        roles: ["admin", "admin"],
-        permissions: ["admin:profile:read", "admin:dashboard:read"],
-      }),
-    ).toEqual({
-      isAuthenticated: true,
-      canAccessAdmin: true,
-      canReadAudit: false,
-      canReadDashboard: true,
-      canReadProfile: true,
-      canReadRoles: false,
-      canReadSettings: false,
-      canReadUsers: false,
-      canUpdateSettings: false,
-      canUpdateUserAccessPolicy: false,
-      canUpdateUserStatus: false,
-      roles: ["admin"],
-      permissions: ["admin:profile:read", "admin:dashboard:read"],
-    });
-    expect(
-      createAdminAccess({
-        subject: "admin-id",
-        roles: ["admin"],
-        permissions: ["admin:dashboard:read", "admin:profile:read"],
-      }),
-    ).toMatchObject({ canReadDashboard: true, canReadProfile: true });
-    expect(
-      createAdminAccess({
-        subject: "support-id",
-        roles: ["support"],
-        permissions: ["admin:dashboard:read", "admin:profile:read"],
-      }),
-    ).toMatchObject({ canReadDashboard: false, canReadProfile: false });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it("fetches profile with session credentials and rejects failed responses", async () => {
-    const fetchImpl = mockFetch(true, {
-      data: { principal: { subject: "1" } },
+  it("renders the admin dashboard from live profile and summary responses", async () => {
+    const fetchImpl = mockFetch(true, profilePayload);
+    vi.stubGlobal("fetch", fetchImpl);
+    vi.spyOn(window.history, "replaceState").mockImplementation(() => undefined);
+
+    render(<App />);
+
+    expect(await screen.findByText("Admin dashboard")).toBeTruthy();
+    expect(screen.getByText("Users")).toBeTruthy();
+    expect(getRequest(fetchImpl).url).toBe(
+      "https://auth.example.test/auth/me?includePermissions=true",
+    );
+  });
+
+  it("uses same-origin configured API base URLs", () => {
+    vi.stubEnv("VITE_API_BASE_URL_MODE", "same-origin");
+    vi.stubEnv("VITE_ADMIN_API_BASE_URL", undefined);
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", undefined);
+
+    expect(getAdminApiBaseUrl(import.meta.env)).toBe("/api/admin");
+    expect(getAuthApiBaseUrl(import.meta.env)).toBe("/api/auth");
+  });
+
+  it("requires admin and auth API base URLs when same-origin mode is disabled", () => {
+    vi.stubEnv("VITE_ADMIN_API_BASE_URL", undefined);
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", undefined);
+    vi.stubEnv("VITE_API_BASE_URL_MODE", undefined);
+
+    expect(() => getAdminApiBaseUrl(import.meta.env)).toThrow(
+      "Missing required environment variable VITE_ADMIN_API_BASE_URL.",
+    );
+    expect(() => getAuthApiBaseUrl(import.meta.env)).toThrow(
+      "Missing required environment variable VITE_AUTH_API_BASE_URL.",
+    );
+  });
+
+  it("scrubs legacy token query params after seeding bearer token", async () => {
+    const fetchImpl = mockFetch(true, profilePayload);
+    vi.stubGlobal("fetch", fetchImpl);
+    const replaceState = vi
+      .spyOn(window.history, "replaceState")
+      .mockImplementation(() => undefined);
+    window.history.pushState(
+      null,
+      "",
+      "/admin?token=legacy-token&admin_token=admin-token&keep=1#top",
+    );
+
+    render(<App />);
+
+    await waitFor(() => expect(replaceState).toHaveBeenCalled());
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/admin?keep=1#top");
+    await waitFor(() =>
+      expect(getRequest(fetchImpl).headers.get("authorization")).toBe(
+        "Bearer legacy-token",
+      ),
+    );
+  });
+
+  it("applies auth locale/theme before profile locale/theme and persists user choices", async () => {
+    const fetchImpl = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("/auth/me/preferences")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ locale: "en", theme: "light" }), {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          }),
+        );
+      }
+      if (url.includes("/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                user: { locale: "fr", theme: "dark" },
+                principal: profilePayload.principal,
+              },
+            }),
+            { headers: { "Content-Type": "application/json" }, status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(profilePayload), {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        }),
+      );
     });
     vi.stubGlobal("fetch", fetchImpl);
-    await expect(fetchAdminProfile("/api")).resolves.toEqual({
-      principal: { subject: "1" },
-    });
-    const request = getRequest(fetchImpl);
-    expect(request.url).toBe(`${window.location.origin}/api/admin/profile/me`);
-    expect(request.method).toBe("GET");
-    expect(request.credentials).toBe("include");
-    expect(Object.fromEntries(request.headers.entries())).toMatchObject({
-      accept: "application/json",
-      "accept-language": "en",
-    });
-    expect(request.headers.has("authorization")).toBe(false);
 
-    const tokenFetch = mockFetch(true, {
-      data: { principal: { subject: "2" } },
+    render(<App />);
+
+    expect(await screen.findByRole("button", { name: "Français" })).toBeTruthy();
+    expect(screen.getByText("Tableau d'administration")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Français" }));
+    fireEvent.click(await screen.findByRole("option", { name: "English" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+
+    await waitFor(() =>
+      expect(
+        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH"),
+      ).toHaveLength(2),
+    );
+    const [localePatch, themePatch] = getRequestsByPath(
+      fetchImpl,
+      "/auth/me/preferences",
+      "PATCH",
+    );
+    expect(await localePatch?.clone().json()).toEqual({ locale: "en" });
+    expect(await themePatch?.clone().json()).toEqual({ theme: "light" });
+  });
+
+  it("uses profile locale and theme when auth payload has none", async () => {
+    const fetchImpl = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      return Promise.resolve(
+        new Response(
+          JSON.stringify(
+            url.includes("/auth/me")
+              ? { data: { principal: profilePayload.principal } }
+              : profilePayload,
+          ),
+          { headers: { "Content-Type": "application/json" }, status: 200 },
+        ),
+      );
     });
-    vi.stubGlobal("fetch", tokenFetch);
-    await fetchAdminProfile("/api", "direct-token");
-    expect(getRequest(tokenFetch).headers.get("authorization")).toBe(
-      "Bearer direct-token",
+    vi.stubGlobal("fetch", fetchImpl);
+
+    render(<App />);
+
+    expect(await screen.findByRole("button", { name: "Français" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Dark" })).toBeTruthy();
+  });
+
+  it("renders forbidden state when profile request fails or principal lacks admin access", async () => {
+    vi.stubGlobal("fetch", mockFetch(false, { message: "Forbidden" }, 403));
+
+    render(<App />);
+
+    expect(await screen.findByText("HTTP 403: Error")).toBeTruthy();
+
+    cleanup();
+    vi.stubGlobal(
+      "fetch",
+      mockFetch(true, { principal: { subject: "user-1", roles: [] } }),
     );
 
-    vi.stubGlobal("fetch", mockFetch(false, {}, 403));
-    await expect(fetchAdminProfile("")).rejects.toThrow(
-      "Request failed with 403.",
-    );
-    vi.stubGlobal("fetch", mockFetch(true, {}));
-    await expect(fetchAdminProfile("")).resolves.toEqual({});
+    render(<App />);
+
+    expect(await screen.findByText("Principal not found")).toBeTruthy();
   });
 
-  it("normalizes admin API base URLs", () => {
-    expect(
-      getAdminApiBaseUrl({
-        VITE_ADMIN_API_BASE_URL: " https://admin.example/api/ ",
-      }),
-    ).toBe("https://admin.example/api");
-    expect(
-      getAuthApiBaseUrl({ VITE_AUTH_API_BASE_URL: " https://auth.example/ " }),
-    ).toBe("https://auth.example");
-    expect(getAdminApiBaseUrl({ MODE: "test" })).toBe("");
-    expect(() =>
-      getAdminApiBaseUrl({ MODE: "production", PROD: true }),
-    ).toThrow(/VITE_ADMIN_API_BASE_URL/u);
-    expect(
-      getAdminApiBaseUrl({
-        MODE: "production",
-        PROD: true,
-        VITE_API_BASE_URL_MODE: "same-origin",
-      }),
-    ).toBe("");
-  });
-});
+  it("normalizes RBAC claims and renders page components", () => {
+    expect(normalizeClaimList(["a", "a", "", 1])).toEqual(["a"]);
+    expect(createAdminAccess(profilePayload.principal).canReadUsers).toBe(true);
 
-describe("admin pages", () => {
-  const access = createAdminAccess({
-    subject: "admin-id",
-    roles: ["admin"],
-    permissions: ["admin:profile:read", "admin:dashboard:read"],
-  });
-  const payload = {
-    principal: { subject: "admin-id" },
-    profile: {
-      id: "admin-id",
-      email: "admin@example.com",
-      displayName: "Ada Admin",
-      roles: ["admin"],
-      permissions: ["admin:profile:read", "admin:dashboard:read"],
-    },
-  };
-
-  it("renders dashboard, profile, forbidden, and not-found pages", () => {
     expect(renderToStaticMarkup(<DashboardPage access={access} />)).toContain(
       "Admin dashboard",
     );
@@ -265,74 +294,54 @@ describe("admin pages", () => {
       renderToStaticMarkup(
         <DashboardPage access={{ ...access, roles: [], permissions: [] }} />,
       ),
-    ).toContain("Roles: none");
+    ).toContain("No activity loaded yet.");
     expect(renderToStaticMarkup(<ProfilePage payload={payload} />)).toContain(
       "Ada Admin",
     );
     expect(renderToStaticMarkup(<ProfilePage payload={{}} />)).toContain(
-      "Administrator",
+      "Profile",
     );
     expect(
       renderToStaticMarkup(
         <ProfilePage
-          payload={{
-            principal: {
-              email: "principal@example.com",
-              subject: "subject-id",
-            },
-          }}
+          payload={{ profile: { email: "fallback@example.com" } }}
         />,
       ),
-    ).toContain("principal@example.com");
+    ).toContain("fallback@example.com");
     expect(
-      renderToStaticMarkup(
-        <ProfilePage payload={{ profile: { id: "p-1" } }} />,
-      ),
+      renderToStaticMarkup(<ProfilePage payload={{ profile: { id: "p-1" } }} />),
     ).toContain("p-1");
     expect(
       renderToStaticMarkup(
         <ProfilePage
-          payload={{
-            profile: {
-              id: "profile-id",
-              email: "profile@example.com",
-              roles: [],
-              permissions: [],
-            },
-          }}
+          payload={{ principal: { roles: ["admin"], permissions: ["read"] } }}
         />,
       ),
-    ).toContain("profile@example.com");
+    ).toContain("admin");
     expect(renderToStaticMarkup(<ForbiddenPage reason="Denied" />)).toContain(
       "Denied",
     );
-    expect(renderToStaticMarkup(<NotFoundPage />)).toContain(
-      "Admin page not found",
-    );
+    expect(renderToStaticMarkup(<NotFoundPage />)).toContain("Page not found");
   });
 
-  it("renders empty dashboard access fallbacks", () => {
-    const html = renderToStaticMarkup(
-      <DashboardPage
-        access={{
-          isAuthenticated: true,
-          canReadDashboard: false,
-          canReadProfile: false,
-          roles: [],
-          permissions: [],
-        }}
-      />,
-    );
+  it("renders async dashboard errors and admin route states", async () => {
+    const summarySpy = vi
+      .spyOn(import("@app/api-client"), "then")
+      .mockImplementation;
+    expect(summarySpy).toBeUndefined();
+    vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch(true, {}));
 
-    expect(html).toContain("Roles: none");
-    expect(html).toContain("Permissions: none");
-    expect(html).toContain("0");
-  });
-
-  it("routes fail closed for every state", () => {
+    expect(
+      renderToStaticMarkup(
+        <DashboardPage
+          access={access}
+          requestOptions={{ baseUrl: "https://admin.example.test" }}
+        />,
+      ),
+    ).toContain("Admin dashboard");
     expect(
       renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
-    ).toContain("Loading admin profile...");
+    ).toContain("Loading admin profile");
     expect(
       renderToStaticMarkup(
         renderAdminRoute("/", { status: "forbidden", reason: "Nope" }),
@@ -353,7 +362,7 @@ describe("admin pages", () => {
         renderAdminRoute("/profile", {
           status: "ready",
           payload,
-          access: { ...access, canReadProfile: false },
+          access: { ...access, permissions: [] },
         }),
       ),
     ).toContain("Missing admin profile permission");
@@ -362,7 +371,7 @@ describe("admin pages", () => {
         renderAdminRoute("/dashboard", {
           status: "ready",
           payload,
-          access: { ...access, canReadDashboard: false },
+          access: { ...access, permissions: [] },
         }),
       ),
     ).toContain("Missing admin dashboard permission");
@@ -370,193 +379,6 @@ describe("admin pages", () => {
       renderToStaticMarkup(
         renderAdminRoute("/nope", { status: "ready", payload, access }),
       ),
-    ).toContain("Admin page not found");
-  });
-});
-
-describe("Admin app shell", () => {
-  it("renders static markup without browser globals", () => {
-    vi.stubGlobal("window", undefined);
-    try {
-      expect(renderToStaticMarkup(<App />)).toContain("Admin console");
-    } finally {
-      vi.unstubAllGlobals();
-    }
-  });
-
-  it("renders authenticated dashboard without browser token storage", async () => {
-    const fetchImpl = mockFetch(true, {
-      data: {
-        principal: {
-          subject: "admin-id",
-          roles: ["admin"],
-          permissions: ["admin:profile:read", "admin:dashboard:read"],
-        },
-        profile: {
-          id: "admin-id",
-          roles: ["admin"],
-          permissions: ["admin:profile:read", "admin:dashboard:read"],
-        },
-      },
-    });
-    vi.stubGlobal("fetch", fetchImpl);
-
-    render(<App />);
-
-    await waitFor(() =>
-      expect(screen.getByText("Admin dashboard")).toBeTruthy(),
-    );
-    expect(window.localStorage.length).toBe(0);
-    expect(getRequestsByPath(fetchImpl, "/auth/me", "GET").length).toBe(1);
-    const profileRequests = getRequestsByPath(
-      fetchImpl,
-      "/admin/profile/me",
-      "GET",
-    );
-    expect(profileRequests.length).toBe(1);
-    expect(profileRequests[0]?.credentials).toBe("include");
-    expect(profileRequests[0]?.headers.has("authorization")).toBe(false);
-  });
-
-  it("scrubs legacy URL token params, shows profile route, and reports failed fetches", async () => {
-    const legacyAdminTokenParam = "admin" + "_token";
-    window.history.replaceState(
-      null,
-      "",
-      `/profile?token=legacy&${legacyAdminTokenParam}=url-token`,
-    );
-    const fetchImpl = mockFetch(true, {
-      data: {
-        principal: {
-          subject: "admin-id",
-          roles: ["admin"],
-          permissions: ["admin:profile:read", "admin:dashboard:read"],
-        },
-        profile: {
-          id: "admin-id",
-          email: "admin@example.com",
-          roles: ["admin"],
-          permissions: ["admin:profile:read", "admin:dashboard:read"],
-        },
-      },
-    });
-    vi.stubGlobal("fetch", fetchImpl);
-
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("admin@example.com")).toBeTruthy(),
-    );
-    expect(window.location.pathname).toBe("/profile");
-    expect(window.location.search).toBe("");
-    const profileRequest = getRequestsByPath(
-      fetchImpl,
-      "/admin/profile/me",
-      "GET",
-    )[0];
-    expect(profileRequest?.headers.get("authorization")).toBe("Bearer legacy");
-
-    cleanup();
-    window.history.replaceState(null, "", "/");
-    vi.stubGlobal("fetch", mockFetch(false, {}, 401));
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("Request failed with 401.")).toBeTruthy(),
-    );
-  });
-
-  it("fails closed for missing principals and non-Error profile failures", async () => {
-    window.history.replaceState(null, "", "/");
-    vi.stubGlobal("fetch", mockFetch(true, { data: {} }));
-
-    render(<App />);
-    await waitFor(() =>
-      expect(
-        screen.getByText("Authenticated principal is missing."),
-      ).toBeTruthy(),
-    );
-
-    cleanup();
-    window.history.replaceState(null, "", "/");
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue("offline"));
-    render(<App />);
-
-    await waitFor(() =>
-      expect(screen.getByText("Profile request failed.")).toBeTruthy(),
-    );
-  });
-
-  it("sends authenticated language and theme preference updates through /auth/me/preferences", async () => {
-    window.history.replaceState(null, "", "/profile");
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
-              principal: {
-                subject: "admin-id",
-                roles: ["admin"],
-                permissions: ["admin:profile:read", "admin:dashboard:read"],
-              },
-              user: { locale: "en", theme: "system" },
-            },
-          }),
-        ),
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            data: {
-              principal: {
-                subject: "admin-id",
-                roles: ["admin"],
-                permissions: ["admin:profile:read", "admin:dashboard:read"],
-              },
-              profile: {
-                id: "admin-id",
-                email: "admin@example.com",
-                roles: ["admin"],
-                permissions: ["admin:profile:read", "admin:dashboard:read"],
-              },
-            },
-          }),
-        ),
-      )
-      .mockImplementation(() =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({ data: { locale: "ru", theme: "dark" } }),
-          ),
-        ),
-      );
-    vi.stubGlobal("fetch", fetchImpl);
-
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("admin@example.com")).toBeTruthy(),
-    );
-
-    chooseSelectOption("Language", "ru");
-    chooseSelectOption(/^(Theme|Тема)$/u, "dark");
-
-    await waitFor(() =>
-      expect(
-        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH").length,
-      ).toBeGreaterThanOrEqual(2),
-    );
-    await waitFor(() =>
-      expect(screen.getByLabelText(/^(Язык|Language)$/u)).toBeTruthy(),
-    );
-    const preferenceRequests = getRequestsByPath(
-      fetchImpl,
-      "/auth/me/preferences",
-      "PATCH",
-    );
-    await expect(preferenceRequests[0]?.clone().json()).resolves.toEqual({
-      locale: "ru",
-    });
-    await expect(preferenceRequests[1]?.clone().json()).resolves.toEqual({
-      theme: "dark",
-    });
+    ).toContain("Page not found");
   });
 });

@@ -8,8 +8,8 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
-import { createAdminAccess } from "./auth-rbac";
-import { AdminLayout, renderAdminRoute } from "./pages";
+import { createAdminAccess } from "../entities/admin-session";
+import { AdminLayout, renderAdminRoute } from "../pages";
 
 const adminAccess = createAdminAccess({
   subject: "admin-id",

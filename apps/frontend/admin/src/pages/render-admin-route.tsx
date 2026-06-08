@@ -1,27 +1,24 @@
 import { type ReactElement } from "react";
+import type { ApiClientRequestOptions } from "@app/api-client";
 import { UiLoading, UiSection } from "@app/frontend-ui";
-import { AuditPage } from "./admin-pages/audit-page";
-import { DashboardPage } from "./admin-pages/dashboard-page";
-import { ProfilePage, TenantRoadmapPage } from "./admin-pages/profile-pages";
-import { ForbiddenPage, NotFoundPage } from "./admin-pages/state-pages";
-import { RolesPage } from "./admin-pages/roles-page";
-import { UsersPage } from "./admin-pages/users-page";
-import type { AdminProfileState, AdminRouteRuntime } from "./admin-pages/types";
+import type { AdminProfileState } from "../entities/admin-profile";
+import { AuditPage } from "./audit";
+import { DashboardPage } from "./dashboard";
+import { ForbiddenPage } from "./forbidden";
+import { NotFoundPage } from "./not-found";
+import { ProfilePage } from "./profile";
+import { RolesPage } from "./roles";
+import { TenantRoadmapPage } from "./tenants";
+import { UsersPage } from "./users";
 import {
   fallbackTranslate,
   normalizeAdminPath,
   type Translate,
-} from "./admin-pages/utils";
+} from "../shared";
 
-export type { AdminProfileState, AdminRouteRuntime } from "./admin-pages/types";
-export { AdminLayout } from "./admin-pages/admin-layout";
-export { AuditPage } from "./admin-pages/audit-page";
-export { DashboardPage } from "./admin-pages/dashboard-page";
-export { ProfilePage, TenantRoadmapPage } from "./admin-pages/profile-pages";
-export { ForbiddenPage, NotFoundPage } from "./admin-pages/state-pages";
-export { RolesPage } from "./admin-pages/roles-page";
-export { UsersPage } from "./admin-pages/users-page";
-export { normalizeAdminPath } from "./admin-pages/utils";
+export interface AdminRouteRuntime {
+  requestOptions?: ApiClientRequestOptions;
+}
 
 /* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
 function renderReadyAdminRoute(

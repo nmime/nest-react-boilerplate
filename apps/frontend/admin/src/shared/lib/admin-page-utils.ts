@@ -3,7 +3,7 @@ import {
   type TranslationKey,
   type TranslationParams,
 } from "@app/common/i18n";
-import type { UserStatus } from "./types";
+type UserStatus = "active" | "disabled" | "invited";
 
 export type Translate = (
   key: TranslationKey,

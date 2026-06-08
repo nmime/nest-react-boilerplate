@@ -11,8 +11,8 @@ import {
   UiSection,
   useI18n,
 } from "@app/frontend-ui";
-import type { AuditRow } from "./types";
-import { errorText, formatDate, pageSize, totalPages } from "./utils";
+import type { AuditRow } from "../../entities/admin-audit";
+import { errorText, formatDate, pageSize, totalPages } from "../../shared";
 
 export const AuditPage = ({
   requestOptions,

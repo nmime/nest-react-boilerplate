@@ -23,7 +23,7 @@ vi.mock("react-dom/client", () => ({
   createRoot: domMocks.createRootMock,
 }));
 
-vi.mock("./app/app", () => ({
+vi.mock("./app", () => ({
   default: function ThrowingAdminApp() {
     throw new Error("Admin app crashed");
   },

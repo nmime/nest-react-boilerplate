@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { ProductShell, useI18n } from "@app/frontend-ui";
-import type { AdminAccess } from "../auth-rbac";
-import { normalizeAdminPath } from "./utils";
+import type { AdminAccess } from "../../entities/admin-session";
+import { normalizeAdminPath } from "../../shared";
 
 export const AdminLayout = ({
   access,

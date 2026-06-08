@@ -1,4 +1,3 @@
-/* v8 ignore file -- deprecated compatibility shim for the historic @app/frontend-ui API surface. */
 export type FrontendEnv = Readonly<
   Record<string, boolean | string | undefined>
 >;

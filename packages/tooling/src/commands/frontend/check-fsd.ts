@@ -80,12 +80,9 @@ const sourceExtensions = [
 const frontendSourceExtensions = new Set(sourceExtensions);
 const boundaryDisablePattern =
   /eslint-disable(?:-next-line|-line)?[^\n]*(?:@nx\/enforce-module-boundaries|import\/no-internal-modules|no-restricted-imports|frontend[:-]fsd|fsd)/;
-const importPatterns = [
-  /(?:^|\n)\s*import\s+(?:type\s+)?(?:[\s\S]*?\s+from\s+)?["']([^"']+)["']/g,
-  /(?:^|\n)\s*export\s+(?:type\s+)?[\s\S]*?\s+from\s+["']([^"']+)["']/g,
-  /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
-  /\brequire\s*\(\s*["']([^"']+)["']\s*\)/g,
-];
+const importSpecifierPattern = /["']([^"']+)["']/;
+const dynamicImportPattern =
+  /\b(?:import|require)\s*\(\s*["']([^"']+)["']\s*\)/g;
 
 export function runCheckFrontendFsd(
   options: CheckFrontendFsdOptions = {},
@@ -311,8 +308,8 @@ function classifyByLayerDirectory(
   const layer = segments[srcIndex + 1] as FsdLayer | undefined;
   if (layer === undefined || !isFsdLayer(layer)) return undefined;
 
-  const afterLayer = segments[srcIndex + 2];
-  if (afterLayer !== undefined && /^index\.[cm]?[jt]sx?$/.test(afterLayer)) {
+  const afterLayer = segments[srcIndex + 2] ?? "";
+  if (isIndexSourceFile(afterLayer)) {
     const appName =
       project?.slice ??
       (segments[0] === "apps" && segments[1] === "frontend" && segments[2]
@@ -354,7 +351,7 @@ function classifyByLayerDirectory(
     layer === "shared"
       ? (segments[srcIndex + 2] ?? "shared")
       : segments[srcIndex + 2];
-  if (slice === undefined) return undefined;
+  if (slice.length === 0) return undefined;
   const sourceRoot = resolve(
     workspaceRoot,
     segments.slice(0, srcIndex + 3).join("/"),
@@ -488,17 +485,36 @@ function collectFrontendSourceFiles(workspaceRoot: string): string[] {
 
 function collectImports(sourceText: string): ImportReference[] {
   const references: ImportReference[] = [];
-  for (const pattern of importPatterns) {
-    pattern.lastIndex = 0;
-    for (const match of sourceText.matchAll(pattern)) {
-      const specifier = match[1];
-      if (specifier === undefined) continue;
-      references.push({
-        specifier,
-        line: 1 + sourceText.slice(0, match.index).split("\n").length - 1,
-      });
-    }
+  const lines = sourceText.split("\n");
+
+  for (const [index, line] of lines.entries()) {
+    const trimmed = line.trimStart();
+    const isStaticImport =
+      trimmed.startsWith("import ") ||
+      trimmed.startsWith("import{") ||
+      trimmed.startsWith("import*") ||
+      trimmed.startsWith('import"') ||
+      trimmed.startsWith("import'");
+    const isStaticExport =
+      trimmed.startsWith("export ") && trimmed.includes(" from ");
+    if (!isStaticImport && !isStaticExport) continue;
+
+    const match = importSpecifierPattern.exec(line);
+    const specifier = match?.[1] ?? "";
+    if (specifier.length === 0) continue;
+    references.push({ specifier, line: index + 1 });
   }
+
+  dynamicImportPattern.lastIndex = 0;
+  for (const match of sourceText.matchAll(dynamicImportPattern)) {
+    const specifier = match[1] ?? "";
+    if (specifier.length === 0) continue;
+    references.push({
+      specifier,
+      line: 1 + sourceText.slice(0, match.index).split("\n").length - 1,
+    });
+  }
+
   return references;
 }
 
@@ -541,8 +557,8 @@ function readTsconfigPaths(workspaceRoot: string): Map<string, string> {
   return new Map(
     Object.entries(config.compilerOptions?.paths ?? {}).flatMap(
       ([alias, targets]) => {
-        const target = targets[0];
-        return target === undefined
+        const target = targets[0] ?? "";
+        return target.length === 0
           ? []
           : [[alias.replace(/\/\*$/, ""), target.replace(/\/\*$/, "")]];
       },
@@ -596,6 +612,10 @@ function isFsdLayer(value: string): value is FsdLayer {
   return (fsdLayers as readonly string[]).includes(value);
 }
 
+function isIndexSourceFile(path: string): boolean {
+  return sourceExtensions.includes(extname(path)) && path.startsWith("index.");
+}
+
 function walkFiles(
   root: string,
   predicate: (path: string) => boolean,
@@ -618,7 +638,7 @@ function walkFiles(
     }
     if (stat.isFile() && predicate(path)) files.push(path);
   }
-  return files.sort();
+  return files.sort((left, right) => left.localeCompare(right));
 }
 
 function runSelfTest(): number {

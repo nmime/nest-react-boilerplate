@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
+import { Migration20260609100000CreateFeatureFlags } from "../../../../../feature-flags/lib/src/lib/migrations/Migration20260609100000CreateFeatureFlags";
 import { authMigrations } from "./index";
 
 function collectSql(migration: { addSql(sql: string): void; up(): void }) {
@@ -26,9 +27,19 @@ describe("auth locale schema migration", () => {
     expect(sql).toContain(`check ("locale" in ('en', 'ru'))`);
   });
 
-  it("registers after the outbox migration on current main", () => {
-    expect(authMigrations.at(-1)).toBe(
+  it("keeps the locale migration before later feature flag migrations", () => {
+    expect(authMigrations).toContain(
       Migration20260607080000AlignAuthUserLocaleConstraint,
+    );
+    expect(authMigrations.at(-1)).toBe(
+      Migration20260609100000CreateFeatureFlags,
+    );
+    expect(
+      authMigrations.indexOf(
+        Migration20260607080000AlignAuthUserLocaleConstraint,
+      ),
+    ).toBeLessThan(
+      authMigrations.indexOf(Migration20260609100000CreateFeatureFlags),
     );
   });
 });

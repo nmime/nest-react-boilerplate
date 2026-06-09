@@ -1,0 +1,35 @@
+{
+  "name": "@app/common/network",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/network/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/network",
+        "main": "libs/backend/common/network/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/network/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/network/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/network"]
+    }
+  }
+}

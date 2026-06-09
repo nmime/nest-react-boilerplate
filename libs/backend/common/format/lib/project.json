@@ -1,0 +1,36 @@
+{
+  "name": "@app/common/format",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/format/lib/src",
+  "projectType": "library",
+  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/format",
+        "main": "libs/backend/common/format/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/format/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/format/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/format"]
+    }
+  }
+}

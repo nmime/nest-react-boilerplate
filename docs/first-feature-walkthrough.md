@@ -12,7 +12,7 @@ The scaffold lists the files it would create for:
 
 - shared DTOs and permissions under `libs/feature/<name>/shared/lib`;
 - Nest module, controller, service, and tests under `libs/feature/<name>/main/lib`;
-- PostgreSQL entity and migration placeholder under `libs/postgres/main/<name>/lib`;
+- PostgreSQL entity and migration placeholder under `libs/backend/postgres/main/<name>/lib`;
 - frontend API client stub under `libs/frontend/api-client/lib/src/features`;
 - React page stub under `apps/frontend/app/src/app/features/<name>`;
 - a test checklist under `docs/features/<name>/test-checklist.md`.

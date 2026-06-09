@@ -1,4 +1,6 @@
 import { Injectable } from "@nestjs/common";
+import { createConfig } from "@app/common-config";
+import Joi from "joi";
 import {
   createAnalyticsProviderPlugins,
   createNoopAnalyticsPlugin,
@@ -9,8 +11,67 @@ import type {
   AnalyticsProviderName,
 } from "../type";
 
+interface AnalyticsEnvironment {
+  ANALYTICS_APP_NAME?: string;
+  APP_NAME?: string;
+  ANALYTICS_ENVIRONMENT?: string;
+  NODE_ENV?: string;
+  ANALYTICS_ENABLED: boolean;
+  ANALYTICS_PROVIDER?: AnalyticsProviderName | "auto";
+  ANALYTICS_PROVIDERS?: Array<AnalyticsProviderName | "auto">;
+  ANALYTICS_GA4_MEASUREMENT_ID: string;
+  ANALYTICS_GA4_API_SECRET: string;
+  ANALYTICS_GA4_COLLECT_URL: string;
+  ANALYTICS_POSTHOG_API_KEY: string;
+  ANALYTICS_POSTHOG_HOST: string;
+  ANALYTICS_UMAMI_WEBSITE_ID: string;
+  ANALYTICS_UMAMI_ENDPOINT?: string;
+  ANALYTICS_UMAMI_HOST?: string;
+  ANALYTICS_UMAMI_HOSTNAME?: string;
+}
+
+const providerSchema = Joi.string().valid(
+  "noop",
+  "ga4",
+  "posthog",
+  "umami",
+  "auto",
+);
+
+const schema = Joi.object<AnalyticsEnvironment>({
+  ANALYTICS_APP_NAME: Joi.string().empty("").optional(),
+  APP_NAME: Joi.string().empty("").optional(),
+  ANALYTICS_ENVIRONMENT: Joi.string().empty("").optional(),
+  NODE_ENV: Joi.string().empty("").optional(),
+  ANALYTICS_ENABLED: Joi.boolean()
+    .truthy("1", "true", "yes", "on")
+    .falsy("0", "false", "no", "off")
+    .default(true),
+  ANALYTICS_PROVIDER: providerSchema.empty("").optional(),
+  ANALYTICS_PROVIDERS: Joi.alternatives()
+    .try(
+      Joi.array().items(providerSchema),
+      Joi.string().custom(parseProvidersConfig, "analytics providers list"),
+    )
+    .optional(),
+  ANALYTICS_GA4_MEASUREMENT_ID: Joi.string().empty("").default(""),
+  ANALYTICS_GA4_API_SECRET: Joi.string().empty("").default(""),
+  ANALYTICS_GA4_COLLECT_URL: Joi.string()
+    .empty("")
+    .default("https://www.google-analytics.com/mp/collect"),
+  ANALYTICS_POSTHOG_API_KEY: Joi.string().empty("").default(""),
+  ANALYTICS_POSTHOG_HOST: Joi.string()
+    .empty("")
+    .default("https://app.posthog.com"),
+  ANALYTICS_UMAMI_WEBSITE_ID: Joi.string().empty("").default(""),
+  ANALYTICS_UMAMI_ENDPOINT: Joi.string().empty("").optional(),
+  ANALYTICS_UMAMI_HOST: Joi.string().empty("").optional(),
+  ANALYTICS_UMAMI_HOSTNAME: Joi.string().empty("").optional(),
+});
+
 @Injectable()
 export class AnalyticsConfigService {
+  protected readonly configService = createConfig(schema);
   private cachedPlugins?: AnalyticsPlugin[];
 
   constructor(private readonly config: AnalyticsConfig = {}) {}
@@ -18,8 +79,8 @@ export class AnalyticsConfigService {
   get appName(): string {
     return (
       this.config.appName ??
-      process.env.ANALYTICS_APP_NAME ??
-      process.env.APP_NAME ??
+      this.configService.get("ANALYTICS_APP_NAME") ??
+      this.configService.get("APP_NAME") ??
       "application"
     );
   }
@@ -27,20 +88,18 @@ export class AnalyticsConfigService {
   get environment(): string {
     return (
       this.config.environment ??
-      process.env.ANALYTICS_ENVIRONMENT ??
-      process.env.NODE_ENV ??
+      this.configService.get("ANALYTICS_ENVIRONMENT") ??
+      this.configService.get("NODE_ENV") ??
       "development"
     );
   }
 
   get enabled(): boolean {
-    return this.config.enabled ?? readBooleanConfig("ANALYTICS_ENABLED", true);
+    return this.config.enabled ?? this.configService.get("ANALYTICS_ENABLED");
   }
 
   get provider(): AnalyticsProviderName | "auto" | undefined {
-    return (
-      this.config.provider ?? readProviderConfig(process.env.ANALYTICS_PROVIDER)
-    );
+    return this.config.provider ?? this.configService.get("ANALYTICS_PROVIDER");
   }
 
   get providers(): Array<AnalyticsProviderName | "auto"> | undefined {
@@ -48,62 +107,62 @@ export class AnalyticsConfigService {
       return this.config.providers;
     }
 
-    return readProviderListConfig(process.env.ANALYTICS_PROVIDERS);
+    return this.configService.get("ANALYTICS_PROVIDERS");
   }
 
   get ga4MeasurementId(): string {
     return (
       this.config.ga4?.measurementId ??
-      process.env.ANALYTICS_GA4_MEASUREMENT_ID ??
-      ""
+      this.configService.get("ANALYTICS_GA4_MEASUREMENT_ID")
     );
   }
 
   get ga4ApiSecret(): string {
     return (
-      this.config.ga4?.apiSecret ?? process.env.ANALYTICS_GA4_API_SECRET ?? ""
+      this.config.ga4?.apiSecret ??
+      this.configService.get("ANALYTICS_GA4_API_SECRET")
     );
   }
 
   get ga4CollectUrl(): string {
     return (
       this.config.ga4?.collectUrl ??
-      process.env.ANALYTICS_GA4_COLLECT_URL ??
-      "https://www.google-analytics.com/mp/collect"
+      this.configService.get("ANALYTICS_GA4_COLLECT_URL")
     );
   }
 
   get postHogApiKey(): string {
     return (
-      this.config.posthog?.apiKey ?? process.env.ANALYTICS_POSTHOG_API_KEY ?? ""
+      this.config.posthog?.apiKey ??
+      this.configService.get("ANALYTICS_POSTHOG_API_KEY")
     );
   }
 
   get postHogHost(): string {
     return (
       this.config.posthog?.host ??
-      process.env.ANALYTICS_POSTHOG_HOST ??
-      "https://app.posthog.com"
+      this.configService.get("ANALYTICS_POSTHOG_HOST")
     );
   }
 
   get umamiWebsiteId(): string {
     return (
       this.config.umami?.websiteId ??
-      process.env.ANALYTICS_UMAMI_WEBSITE_ID ??
-      ""
+      this.configService.get("ANALYTICS_UMAMI_WEBSITE_ID")
     );
   }
 
   get umamiEndpoint(): string {
     const configuredEndpoint =
-      this.config.umami?.endpoint ?? process.env.ANALYTICS_UMAMI_ENDPOINT;
+      this.config.umami?.endpoint ??
+      this.configService.get("ANALYTICS_UMAMI_ENDPOINT");
 
     if (configuredEndpoint) {
       return configuredEndpoint;
     }
 
-    const host = this.config.umami?.host ?? process.env.ANALYTICS_UMAMI_HOST;
+    const host =
+      this.config.umami?.host ?? this.configService.get("ANALYTICS_UMAMI_HOST");
 
     return host ? `${stripTrailingSlash(host)}/api/send` : "";
   }
@@ -111,7 +170,7 @@ export class AnalyticsConfigService {
   get umamiHostname(): string {
     return (
       this.config.umami?.hostname ??
-      process.env.ANALYTICS_UMAMI_HOSTNAME ??
+      this.configService.get("ANALYTICS_UMAMI_HOSTNAME") ??
       this.appName
     );
   }
@@ -160,60 +219,23 @@ export class AnalyticsConfigService {
   }
 }
 
-function readBooleanConfig(name: string, fallback: boolean): boolean {
-  const value = process.env[name];
-
-  if (value === undefined || value === "") {
-    return fallback;
-  }
-
-  switch (value.toLowerCase()) {
-    case "1":
-    case "true":
-    case "yes":
-    case "on":
-      return true;
-    case "0":
-    case "false":
-    case "no":
-    case "off":
-      return false;
-    default:
-      throw new Error(`Invalid boolean config ${name}: ${value}`);
-  }
-}
-
-function readProviderConfig(
-  value?: string,
-): AnalyticsProviderName | "auto" | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const normalized = value.trim().toLowerCase();
-
-  if (isProviderName(normalized) || normalized === "auto") {
-    return normalized;
-  }
-
-  throw new Error(`Invalid analytics provider: ${value}`);
-}
-
-function readProviderListConfig(
-  value?: string,
-): Array<AnalyticsProviderName | "auto"> | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  return value
+function parseProvidersConfig(
+  value: string,
+  helpers: Joi.CustomHelpers,
+): Array<AnalyticsProviderName | "auto"> {
+  const providers: Array<AnalyticsProviderName | "auto"> = [];
+  for (const provider of value
     .split(",")
-    .map((provider) => provider.trim())
-    .filter(Boolean)
-    .map(readProviderConfig)
-    .filter((provider): provider is AnalyticsProviderName | "auto" =>
-      Boolean(provider),
-    );
+    .map((entry) => entry.trim())
+    .filter(Boolean)) {
+    if (isProviderName(provider) || provider === "auto") {
+      providers.push(provider);
+    } else {
+      return helpers.error("any.only") as never;
+    }
+  }
+
+  return providers;
 }
 
 function isProviderName(value: string): value is AnalyticsProviderName {

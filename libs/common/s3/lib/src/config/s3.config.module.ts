@@ -1,6 +1,7 @@
-import { Module } from "@nestjs/common";
+import { Global, Module } from "@nestjs/common";
 import { S3ConfigService } from "./s3.config.service";
 
+@Global()
 @Module({
   providers: [S3ConfigService],
   exports: [S3ConfigService],

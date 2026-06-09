@@ -19,13 +19,13 @@ import {
 } from "./index";
 
 describe("@app/common/i18n", () => {
-  it("loads translation catalogs from locale JSON files", () => {
-    const localesPath = join(__dirname, "..", "locales");
+  it("loads translation catalogs from top-level locale JSON files", () => {
+    const localesPath = join(__dirname, "..", "..", "..", "..", "..", "i18n");
     const english = JSON.parse(
-      readFileSync(join(localesPath, "en.json"), "utf8"),
+      readFileSync(join(localesPath, "en", "common.json"), "utf8"),
     ) as Record<string, string>;
     const russian = JSON.parse(
-      readFileSync(join(localesPath, "ru.json"), "utf8"),
+      readFileSync(join(localesPath, "ru", "common.json"), "utf8"),
     ) as Record<string, string>;
 
     expect(translations.en).toEqual(english);

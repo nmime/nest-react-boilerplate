@@ -1,5 +1,5 @@
-import enCatalog from "../locales/en.json";
-import ruCatalog from "../locales/ru.json";
+import enCatalog from "../../../../../i18n/en/common.json";
+import ruCatalog from "../../../../../i18n/ru/common.json";
 
 export type Locale = "en" | "ru";
 export type TranslationKey =

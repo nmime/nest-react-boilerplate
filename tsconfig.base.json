@@ -59,11 +59,21 @@
       "@app/feature-admin-shared": [
         "libs/feature/admin/shared/lib/src/index.ts"
       ],
-      "@app/feature-admin-main": ["libs/feature/admin/main/lib/src/index.ts"],
-      "@app/feature-auth-shared": ["libs/feature/auth/shared/lib/src/index.ts"],
-      "@app/feature-auth-main": ["libs/feature/auth/main/lib/src/index.ts"],
-      "@app/feature-user-shared": ["libs/feature/user/shared/lib/src/index.ts"],
-      "@app/feature-user-main": ["libs/feature/user/main/lib/src/index.ts"],
+      "@app/feature-admin-main": [
+        "libs/backend/feature/admin/main/lib/src/index.ts"
+      ],
+      "@app/feature-auth-shared": [
+        "libs/backend/feature/auth/shared/lib/src/index.ts"
+      ],
+      "@app/feature-auth-main": [
+        "libs/backend/feature/auth/main/lib/src/index.ts"
+      ],
+      "@app/feature-user-shared": [
+        "libs/backend/feature/user/shared/lib/src/index.ts"
+      ],
+      "@app/feature-user-main": [
+        "libs/backend/feature/user/main/lib/src/index.ts"
+      ],
       "@app/common/swagger": ["libs/backend/common/swagger/lib/src/index.ts"],
       "@app/common/i18n": ["libs/common/i18n/lib/src/index.ts"],
       "@app/api-contracts": ["libs/common/api-contracts/lib/src/index.ts"],

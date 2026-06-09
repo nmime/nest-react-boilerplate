@@ -66,7 +66,7 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   const fileName = segments.at(-1);
 
   if (path.startsWith("libs/feature/auth/oauth/")) {
-    errors.push(`${path}: auth OAuth must live in libs/feature/auth/main/lib`);
+    errors.push(`${path}: auth OAuth must live in libs/backend/feature/auth/main/lib`);
   }
 
   if (

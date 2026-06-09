@@ -5,6 +5,14 @@ export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/auth-app-api-e2e",
   resolve: {
     alias: {
+      "@app/common/feature-flags": new URL(
+        "../../../libs/backend/common/feature-flags/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/common-config": new URL(
+        "../../../libs/common/config/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/i18n": new URL(
         "../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
@@ -38,11 +46,11 @@ export default defineConfig({
         import.meta.url,
       ).pathname,
       "@app/feature-auth-main": new URL(
-        "../../../libs/feature/auth/main/lib/src/index.ts",
+        "../../../libs/backend/feature/auth/main/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-shared": new URL(
-        "../../../libs/feature/auth/shared/lib/src/index.ts",
+        "../../../libs/backend/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-admin-shared": new URL(
@@ -51,6 +59,10 @@ export default defineConfig({
       ).pathname,
       "@app/postgres-main": new URL(
         "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/postgres-main-feature-flags": new URL(
+        "../../../libs/backend/postgres/main/feature-flags/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/postgres-main-auth": new URL(

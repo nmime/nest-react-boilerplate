@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/postgres/main/feature-flags-spec",
-    "types": ["node", "vitest"]
-  },
-  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]
-}

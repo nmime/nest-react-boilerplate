@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   I18nService,
@@ -11,9 +13,42 @@ import {
   resolveLocaleFromRequest,
   supportedLocales,
   translate,
+  translations,
+  type Locale,
+  type LocaleCatalog,
 } from "./index";
 
 describe("@app/common/i18n", () => {
+  it("loads translation catalogs from locale JSON files", () => {
+    const localesPath = join(__dirname, "..", "locales");
+    const english = JSON.parse(
+      readFileSync(join(localesPath, "en.json"), "utf8"),
+    ) as Record<string, string>;
+    const russian = JSON.parse(
+      readFileSync(join(localesPath, "ru.json"), "utf8"),
+    ) as Record<string, string>;
+
+    expect(translations.en).toEqual(english);
+    expect(translations.ru).toEqual(russian);
+    expect(english["common.language"]).toBe("Language");
+    expect(russian["common.language"]).toBe("Язык");
+  });
+
+  it("keeps every locale JSON catalog in key parity with the fallback catalog", () => {
+    const fallbackKeys = Object.keys(translations[fallbackLocale]).sort(
+      (left, right) => left.localeCompare(right),
+    );
+
+    for (const locale of supportedLocales) {
+      expect(
+        Object.keys(translations[locale]).sort((left, right) =>
+          left.localeCompare(right),
+        ),
+        locale,
+      ).toEqual(fallbackKeys);
+    }
+  });
+
   it("translates keys with interpolation and fallback", () => {
     expect(translate("common.language", { locale: "ru" })).toBe("Язык");
     expect(translate("common.theme.dark", { locale: "en" })).toBe("Dark");
@@ -24,6 +59,21 @@ describe("@app/common/i18n", () => {
       }),
     ).toBe("Ready: user-1");
     expect(translate("common.ready", { locale: "fr-CA" })).toBe("Ready");
+  });
+
+  it("falls back to the English catalog when a supported locale misses a key", () => {
+    const partialTranslations = translations as Record<
+      Locale,
+      Partial<LocaleCatalog>
+    >;
+    const original = partialTranslations.ru["common.ready"];
+    delete partialTranslations.ru["common.ready"];
+
+    try {
+      expect(translate("common.ready", { locale: "ru" })).toBe("Ready");
+    } finally {
+      partialTranslations.ru["common.ready"] = original;
+    }
   });
 
   it("resolves locales from exact, regional, accept-language, and fallback values", () => {
@@ -70,6 +120,14 @@ describe("@app/common/i18n", () => {
     expect(service.translate("common.ready", { locale: "ru" })).toBe("Готово");
     expect(service.resolveLocale("ru-RU")).toBe("ru");
     expect(service.resolveLocaleFromRequest({ language: "ru" })).toBe("ru");
+  });
+
+  it("keeps i18n focused on catalogs, translation lookup, and locale middleware", () => {
+    const source = readFileSync(join(__dirname, "i18n.ts"), "utf8");
+
+    expect(source).not.toContain("@app/common/intl");
+    expect(source).not.toContain("IntlContext");
+    expect(source).not.toContain("randomLocalizedText");
   });
 
   it("stores resolved locale on requests through middleware", () => {

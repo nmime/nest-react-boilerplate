@@ -1,76 +1,121 @@
 import { Injectable } from "@nestjs/common";
+import { createConfig } from "@app/common-config";
+import Joi from "joi";
 import type { NatsConfig, NatsConnectionConfig } from "../type";
+
+interface NatsEnvironment {
+  NATS_SERVERS: string[];
+  NATS_NAME?: string;
+  NATS_USER?: string;
+  NATS_PASS?: string;
+  NATS_TOKEN?: string;
+  NATS_TIMEOUT_MS?: number;
+  NATS_RECONNECT?: boolean;
+  NATS_MAX_RECONNECT_ATTEMPTS?: number;
+  NATS_RECONNECT_TIME_WAIT_MS?: number;
+  NATS_WAIT_ON_FIRST_CONNECT?: boolean;
+  NATS_PING_INTERVAL_MS?: number;
+  NATS_DRAIN_TIMEOUT_MS: number;
+}
+
+const optionalString = Joi.string().empty("").optional();
+const optionalBoolean = Joi.boolean()
+  .truthy("1", "true", "yes", "on")
+  .falsy("0", "false", "no", "off")
+  .optional();
+const optionalInteger = Joi.number().integer().optional();
+const optionalPositiveInteger = Joi.number().integer().positive().optional();
+
+const schema = Joi.object<NatsEnvironment>({
+  NATS_SERVERS: Joi.alternatives()
+    .try(
+      Joi.array().items(Joi.string().required()),
+      Joi.string().custom(parseServersConfig, "NATS server list"),
+    )
+    .default([]),
+  NATS_NAME: optionalString,
+  NATS_USER: optionalString,
+  NATS_PASS: optionalString,
+  NATS_TOKEN: optionalString,
+  NATS_TIMEOUT_MS: optionalPositiveInteger,
+  NATS_RECONNECT: optionalBoolean,
+  NATS_MAX_RECONNECT_ATTEMPTS: optionalInteger,
+  NATS_RECONNECT_TIME_WAIT_MS: optionalPositiveInteger,
+  NATS_WAIT_ON_FIRST_CONNECT: optionalBoolean,
+  NATS_PING_INTERVAL_MS: optionalPositiveInteger,
+  NATS_DRAIN_TIMEOUT_MS: Joi.number()
+    .integer()
+    .positive()
+    .empty("")
+    .default(5000),
+});
 
 @Injectable()
 export class NatsConfigService {
+  protected readonly configService = createConfig(schema);
+
   constructor(private readonly options: NatsConfig = {}) {}
 
   get servers(): string[] {
-    return this.options.servers ?? parseServers(process.env.NATS_SERVERS);
+    return this.options.servers ?? this.configService.get("NATS_SERVERS");
   }
 
   get name(): string | undefined {
-    return emptyToUndefined(this.options.name ?? process.env.NATS_NAME);
+    return this.options.name ?? this.configService.get("NATS_NAME");
   }
 
   get user(): string | undefined {
-    return emptyToUndefined(this.options.user ?? process.env.NATS_USER);
+    return this.options.user ?? this.configService.get("NATS_USER");
   }
 
   get pass(): string | undefined {
-    return emptyToUndefined(this.options.pass ?? process.env.NATS_PASS);
+    return this.options.pass ?? this.configService.get("NATS_PASS");
   }
 
   get token(): string | undefined {
-    return emptyToUndefined(this.options.token ?? process.env.NATS_TOKEN);
+    return this.options.token ?? this.configService.get("NATS_TOKEN");
   }
 
   get timeoutMs(): number | undefined {
-    return (
-      this.options.timeoutMs ??
-      parseOptionalPositiveInteger(process.env.NATS_TIMEOUT_MS)
-    );
+    return this.options.timeoutMs ?? this.configService.get("NATS_TIMEOUT_MS");
   }
 
   get reconnect(): boolean | undefined {
-    return (
-      this.options.reconnect ?? parseOptionalBoolean(process.env.NATS_RECONNECT)
-    );
+    return this.options.reconnect ?? this.configService.get("NATS_RECONNECT");
   }
 
   get maxReconnectAttempts(): number | undefined {
     return (
       this.options.maxReconnectAttempts ??
-      parseOptionalInteger(process.env.NATS_MAX_RECONNECT_ATTEMPTS)
+      this.configService.get("NATS_MAX_RECONNECT_ATTEMPTS")
     );
   }
 
   get reconnectTimeWaitMs(): number | undefined {
     return (
       this.options.reconnectTimeWaitMs ??
-      parseOptionalPositiveInteger(process.env.NATS_RECONNECT_TIME_WAIT_MS)
+      this.configService.get("NATS_RECONNECT_TIME_WAIT_MS")
     );
   }
 
   get waitOnFirstConnect(): boolean | undefined {
     return (
       this.options.waitOnFirstConnect ??
-      parseOptionalBoolean(process.env.NATS_WAIT_ON_FIRST_CONNECT)
+      this.configService.get("NATS_WAIT_ON_FIRST_CONNECT")
     );
   }
 
   get pingIntervalMs(): number | undefined {
     return (
       this.options.pingIntervalMs ??
-      parseOptionalPositiveInteger(process.env.NATS_PING_INTERVAL_MS)
+      this.configService.get("NATS_PING_INTERVAL_MS")
     );
   }
 
   get drainTimeoutMs(): number {
     return (
       this.options.drainTimeoutMs ??
-      parseOptionalPositiveInteger(process.env.NATS_DRAIN_TIMEOUT_MS) ??
-      5000
+      this.configService.get("NATS_DRAIN_TIMEOUT_MS")
     );
   }
 
@@ -109,8 +154,8 @@ export class NatsConfigService {
   }
 }
 
-function parseServers(value: string | undefined): string[] {
-  if (!value) {
+function parseServersConfig(value: string): string[] {
+  if (value === "") {
     return [];
   }
 
@@ -118,52 +163,4 @@ function parseServers(value: string | undefined): string[] {
     .split(",")
     .map((server) => server.trim())
     .filter(Boolean);
-}
-
-function parseOptionalInteger(value: string | undefined): number | undefined {
-  if (value === undefined || value === "") {
-    return undefined;
-  }
-
-  if (!/^-?\d+$/u.test(value)) {
-    throw new Error(`Invalid NATS integer value: ${value}`);
-  }
-
-  return Number.parseInt(value, 10);
-}
-
-function parseOptionalPositiveInteger(
-  value: string | undefined,
-): number | undefined {
-  const parsed = parseOptionalInteger(value);
-  if (parsed !== undefined && parsed <= 0) {
-    throw new Error(`Invalid positive NATS integer value: ${value}`);
-  }
-
-  return parsed;
-}
-
-function parseOptionalBoolean(value: string | undefined): boolean | undefined {
-  if (value === undefined || value === "") {
-    return undefined;
-  }
-
-  switch (value.toLowerCase()) {
-    case "1":
-    case "true":
-    case "yes":
-    case "on":
-      return true;
-    case "0":
-    case "false":
-    case "no":
-    case "off":
-      return false;
-    default:
-      throw new Error(`Invalid NATS boolean value: ${value}`);
-  }
-}
-
-function emptyToUndefined(value: string | undefined): string | undefined {
-  return value && value.length > 0 ? value : undefined;
 }

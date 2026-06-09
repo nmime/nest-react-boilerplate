@@ -10,6 +10,8 @@ import {
   DefaultPostgresHost,
   DefaultPostgresPort,
   DefaultPostgresUser,
+  PostgresDatabaseConfigService,
+  createPostgresEnvironment,
   readBoolean,
   readPort,
   readSslRejectUnauthorized,
@@ -109,6 +111,19 @@ describe("Postgres MikroORM options", () => {
       "Invalid POSTGRES_PORT: not-a-number",
     );
     expect(readSslRejectUnauthorized({ POSTGRES_SSL: "true" })).toBe(true);
+    expect(
+      createPostgresEnvironment({
+        POSTGRES_PORT: "15432",
+        POSTGRES_SSL: "true",
+        POSTGRES_LOGGING: "yes",
+      }),
+    ).toMatchObject({
+      POSTGRES_PORT: 15432,
+      POSTGRES_SSL: true,
+      POSTGRES_LOGGING: true,
+    });
+    const service = new PostgresDatabaseConfigService();
+    expect(service.port).toBe(DefaultPostgresPort);
     expect(() =>
       readSslRejectUnauthorized({
         POSTGRES_SSL_REJECT_UNAUTHORIZED: "definitely",
@@ -119,9 +134,9 @@ describe("Postgres MikroORM options", () => {
   it("rejects invalid SSL and logging booleans instead of silently disabling them", () => {
     expect(() =>
       createPostgresMikroOrmOptions({}, { POSTGRES_SSL: "treu" }),
-    ).toThrow("POSTGRES_SSL must be a boolean value.");
+    ).toThrow(/Invalid environment configuration.*POSTGRES_SSL/u);
     expect(() =>
       createPostgresMikroOrmOptions({}, { POSTGRES_LOGGING: "enabled" }),
-    ).toThrow("POSTGRES_LOGGING must be a boolean value.");
+    ).toThrow(/Invalid environment configuration.*POSTGRES_LOGGING/u);
   });
 });

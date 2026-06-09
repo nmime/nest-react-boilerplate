@@ -3,13 +3,8 @@ import { Migrator } from "@mikro-orm/migrations";
 import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
 import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import {
-  DefaultPostgresDatabase,
-  DefaultPostgresHost,
-  DefaultPostgresUser,
+  createPostgresEnvironment,
   type PostgresEnvironment,
-  readBoolean,
-  readPort,
-  readSslRejectUnauthorized,
 } from "./database.config";
 
 export const PostgresMigrationsTableName = "mikro_orm_migrations";
@@ -25,18 +20,22 @@ export type PostgresMikroOrmOverrides = Partial<PostgresMikroOrmOptions>;
 
 export function createPostgresMikroOrmOptions(
   overrides: PostgresMikroOrmOverrides = {},
-  env: PostgresEnvironment = process.env,
+  env:
+    | Partial<PostgresEnvironment>
+    | NodeJS.ProcessEnv
+    | Record<string, unknown> = process.env,
 ): PostgresMikroOrmOptions {
-  const connection: PostgresMikroOrmOptions = env.DATABASE_URL
+  const config = createPostgresEnvironment(env);
+  const connection: PostgresMikroOrmOptions = config.DATABASE_URL
     ? {
-        clientUrl: env.DATABASE_URL,
+        clientUrl: config.DATABASE_URL,
       }
     : {
-        host: env.POSTGRES_HOST ?? DefaultPostgresHost,
-        port: readPort(env.POSTGRES_PORT),
-        user: env.POSTGRES_USER ?? DefaultPostgresUser,
-        password: env.POSTGRES_PASSWORD ?? "postgres",
-        dbName: env.POSTGRES_DB ?? DefaultPostgresDatabase,
+        host: config.POSTGRES_HOST,
+        port: config.POSTGRES_PORT,
+        user: config.POSTGRES_USER,
+        password: config.POSTGRES_PASSWORD,
+        dbName: config.POSTGRES_DB,
       };
 
   return {
@@ -45,11 +44,13 @@ export function createPostgresMikroOrmOptions(
     entities: [],
     extensions: [Migrator],
     autoLoadEntities: true,
-    debug: readBoolean(env.POSTGRES_LOGGING, "POSTGRES_LOGGING") ?? false,
-    driverOptions: readBoolean(env.POSTGRES_SSL, "POSTGRES_SSL")
+    debug: config.POSTGRES_LOGGING,
+    driverOptions: config.POSTGRES_SSL
       ? {
           connection: {
-            ssl: { rejectUnauthorized: readSslRejectUnauthorized(env) },
+            ssl: {
+              rejectUnauthorized: config.POSTGRES_SSL_REJECT_UNAUTHORIZED,
+            },
           },
         }
       : {},

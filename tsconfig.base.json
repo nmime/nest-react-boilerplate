@@ -39,8 +39,12 @@
       "@app/frontend-api-support": [
         "libs/frontend/api-support/lib/src/index.ts"
       ],
-      "@app/postgres-main": ["libs/postgres/main/shared/lib/src/index.ts"],
-      "@app/postgres-main-auth": ["libs/postgres/main/auth/lib/src/index.ts"],
+      "@app/postgres-main": [
+        "libs/backend/postgres/main/shared/lib/src/index.ts"
+      ],
+      "@app/postgres-main-auth": [
+        "libs/backend/postgres/main/auth/lib/src/index.ts"
+      ],
       "@app/common-component-test": [
         "libs/common/component-test/lib/src/index.ts"
       ],
@@ -64,7 +68,7 @@
       ],
       "@app/api-client/support": ["libs/frontend/api-support/lib/src/index.ts"],
       "@app/postgres-main-feature-flags": [
-        "libs/postgres/main/feature-flags/lib/src/index.ts"
+        "libs/backend/postgres/main/feature-flags/lib/src/index.ts"
       ],
       "@app/backend/common/feature-flags": [
         "libs/backend/common/feature-flags/lib/src/index.ts"

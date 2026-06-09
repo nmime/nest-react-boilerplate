@@ -62,7 +62,10 @@
       "@app/common/notifications": [
         "libs/common/notifications/lib/src/index.ts"
       ],
-      "@app/api-client/support": ["libs/frontend/api-support/lib/src/index.ts"]
+      "@app/api-client/support": ["libs/frontend/api-support/lib/src/index.ts"],
+      "@app/postgres-main-feature-flags": [
+        "libs/postgres/main/feature-flags/lib/src/index.ts"
+      ]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

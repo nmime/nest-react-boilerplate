@@ -78,6 +78,13 @@ pnpm nx serve admin-app
 
 Default local API ports are configured through environment variables: admin API `3001`, user API `3002`, and auth API `3003`. Vite prints the frontend dev-server URL when each frontend starts.
 
+### Design-system and split-tooling checks
+
+- `pnpm run storybook`, `pnpm run storybook:build`, and `pnpm run test:storybook` use the shared UI Storybook config in `libs/frontend/ui/lib/.storybook`.
+- `pnpm run frontend:fsd:check` enforces frontend FSD boundaries and public APIs across the split frontend apps/libs.
+- `pnpm run lib:configs:check` verifies library config placement after library splits; `pnpm run tooling:static-check` verifies tooling module syntax/typecheck, safe CLI smoke checks, package script references, and the FSD checker.
+- API and persistence freshness gates are `pnpm run api:contracts:check`, `pnpm run api:clients:check`, `pnpm run api:openapi:lint`, and `pnpm run db:migrations:check`.
+
 ## Environment files and variables
 
 Start from the examples and keep real values out of git:

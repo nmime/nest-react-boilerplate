@@ -12,7 +12,8 @@
         "outputPath": "dist/libs/postgres/main/shared",
         "main": "libs/postgres/main/shared/lib/src/index.ts",
         "tsConfig": "libs/postgres/main/shared/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

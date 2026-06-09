@@ -12,7 +12,8 @@
         "outputPath": "dist/libs/common/analytics",
         "main": "libs/common/analytics/lib/src/index.ts",
         "tsConfig": "libs/common/analytics/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

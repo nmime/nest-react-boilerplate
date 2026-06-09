@@ -76,7 +76,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 ## Tooling and migration rollback checks
 
-`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/scripts/**/*.mjs`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. It does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
+`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/src/commands/**/*.ts`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. It does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
 
 `pnpm run db:migrations:rollback-check` (also exposed as `pnpm run test:migrations:rollback`) is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
 

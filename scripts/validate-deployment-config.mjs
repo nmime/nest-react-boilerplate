@@ -268,7 +268,7 @@ for (const [service, variable] of [
   );
 }
 
-const dockerSmoke = read("packages/tooling/scripts/docker/smoke.mjs");
+const dockerSmoke = read("packages/tooling/src/commands/docker/smoke.ts");
 const smokeJwtSecretDefault = dockerSmoke.match(
   /AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/,
 )?.[1];

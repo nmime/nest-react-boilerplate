@@ -46,7 +46,7 @@ pnpm install --frozen-lockfile
 pnpm run check:fast
 pnpm exec nx run @app/common/bootstrap:test
 pnpm exec vitest run apps/frontend/admin/src/app/preference-token.spec.tsx
-pnpm exec vitest run libs/backend/feature/auth/main/lib/src/lib/auth-token-store.spec.ts libs/postgres/main/auth/lib/src/lib/repository/auth-token.repository.spec.ts
+pnpm exec vitest run libs/backend/feature/auth/main/lib/src/lib/auth-token-store.spec.ts libs/backend/postgres/main/auth/lib/src/lib/repository/auth-token.repository.spec.ts
 ```
 
 For private-repository sandbox validation, prefer an authenticated full checkout or archive download before attempting file-by-file reconstruction. If credentials are not available inside the sandbox and nested source/archive retrieval is blocked, use GitHub Actions or a trusted local checkout for these commands rather than validating against a partial tree.

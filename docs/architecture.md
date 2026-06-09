@@ -20,13 +20,13 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 
 ## Shared libraries
 
-- `libs/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
-- `libs/common/exception` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiProblemExceptions`.
-- `libs/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ProblemResponseTransformer`/`ProblemExceptionFilter`.
-- `libs/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
-- `libs/common/feature-flags` defines the feature flag provider contract plus static/environment implementations.
-- `libs/common/notifications` defines notification/email provider contracts plus noop/in-memory implementations for local development and tests.
-- `libs/common/validation` creates `ProblemValidationPipe` validation problem details.
+- `libs/backend/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/backend/common/exception` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiProblemExceptions`.
+- `libs/backend/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ProblemResponseTransformer`/`ProblemExceptionFilter`.
+- `libs/backend/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
+- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; backend Nest module adapters live under `libs/backend/common/feature-flags`.
+- `libs/common/notifications` defines cross-platform notification/email provider contracts plus noop/in-memory implementations for local development and tests.
+- `libs/backend/common/validation` creates `ProblemValidationPipe` validation problem details.
 - `libs/backend/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/backend/feature/user/shared` and `libs/backend/feature/user/main` contain the protected user profile feature.

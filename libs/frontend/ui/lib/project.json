@@ -19,7 +19,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/dist/libs/frontend/ui-test"]
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/ui"]
     }
   }
 }

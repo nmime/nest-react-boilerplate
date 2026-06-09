@@ -89,6 +89,7 @@ module.exports = [
             {
               sourceTag: "type:frontend-app",
               onlyDependOnLibsWithTags: [
+                "type:feature-shared",
                 "type:ui",
                 "type:common",
                 "type:util",

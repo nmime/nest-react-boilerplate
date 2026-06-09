@@ -57,7 +57,7 @@
         "libs/backend/common/component-test/lib/src/index.ts"
       ],
       "@app/feature-admin-shared": [
-        "libs/feature/admin/shared/lib/src/index.ts"
+        "libs/frontend/feature/admin/shared/lib/src/index.ts"
       ],
       "@app/feature-admin-main": [
         "libs/backend/feature/admin/main/lib/src/index.ts"
@@ -90,6 +90,12 @@
       ],
       "@app/backend/common/feature-flags": [
         "libs/backend/common/feature-flags/lib/src/index.ts"
+      ],
+      "@app/frontend/feature-admin-shared": [
+        "libs/frontend/feature/admin/shared/lib/src/index.ts"
+      ],
+      "@app/backend/feature-admin-shared": [
+        "libs/backend/feature/admin/shared/lib/src/index.ts"
       ]
     },
     "esModuleInterop": true,

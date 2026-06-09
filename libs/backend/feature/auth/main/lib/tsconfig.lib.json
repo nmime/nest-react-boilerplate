@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../../dist/out-tsc/libs/backend/feature/auth/main",
+    "types": ["node"],
+    "declaration": true
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@app/feature-user-shared",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/user/shared/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:user"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/feature/user/shared",
+        "main": "libs/backend/feature/user/shared/lib/src/index.ts",
+        "tsConfig": "libs/backend/feature/user/shared/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/feature/user/shared/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/coverage/dist/libs/backend/feature/user/shared"
+      ]
+    }
+  }
+}

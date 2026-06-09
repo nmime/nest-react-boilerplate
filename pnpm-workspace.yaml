@@ -5,6 +5,7 @@ packages:
   - "libs/common/*/lib"
   - "libs/backend/common/*/lib"
   - "libs/feature/*/*/lib"
+  - "libs/backend/feature/*/*/lib"
   - "libs/backend/postgres/*/*/lib"
   - "packages/tooling"
 

@@ -1,0 +1,60 @@
+{
+  "name": "@app/feature-auth-main",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/auth/main/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-main", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/feature/auth/main",
+        "main": "libs/backend/feature/auth/main/lib/src/index.ts",
+        "tsConfig": "libs/backend/feature/auth/main/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/feature/auth/main/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/coverage/dist/libs/backend/feature/auth/main"
+      ]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/feature/auth/main/lib",
+        "command": "vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": [
+            "vitest",
+            "supertest",
+            "testcontainers",
+            "@testcontainers/postgresql"
+          ]
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/backend/feature/auth/main-component"
+      ]
+    }
+  }
+}

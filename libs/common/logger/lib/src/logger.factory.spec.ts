@@ -1,6 +1,14 @@
 import { EventEmitter } from "node:events";
 import type { LoggerService } from "@nestjs/common";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import {
   createLogger,
   createRequestLoggerMiddleware,
@@ -33,7 +41,7 @@ const withJsonLogger = () => {
   return { stderr, stdout };
 };
 
-const firstStdoutJson = (stdout: ReturnType<typeof vi.spyOn>) =>
+const firstStdoutJson = (stdout: MockInstance<typeof process.stdout.write>) =>
   JSON.parse(String(stdout.mock.calls[0]?.[0]).trim()) as Record<
     string,
     unknown
@@ -108,7 +116,7 @@ describe("redactProtectedVariables", () => {
         code: undefined,
         message: `cause token=${RedactedValue}`,
         name: "Error",
-        stack: expect.any(String),
+        stack: expect.any(String) as string,
         status: undefined,
         statusCode: undefined,
       },

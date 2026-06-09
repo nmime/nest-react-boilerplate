@@ -291,8 +291,7 @@ function normalizeMessage(message: unknown): LogPayload {
   }
 
   if (isJsonRecord(redacted)) {
-    const messageValue = redacted.message;
-    const { message: _message, ...fields } = redacted;
+    const { message: messageValue, ...fields } = redacted;
 
     return {
       fields,

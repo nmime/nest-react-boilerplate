@@ -4,3 +4,4 @@ export * from "./logger.plugin";
 export * from "./noop.plugin";
 export * from "./posthog.plugin";
 export * from "./umami.plugin";
+export * from "./providers";

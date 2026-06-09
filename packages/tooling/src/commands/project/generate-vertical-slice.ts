@@ -202,7 +202,7 @@ function createTsconfigAliases(names: Names): Record<string, string[]> {
       `libs/feature/${names.kebab}/shared/lib/src/index.ts`,
     ],
     [`@app/postgres-main-${names.kebab}`]: [
-      `libs/postgres/main/${names.kebab}/lib/src/index.ts`,
+      `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
     ],
   };
 }
@@ -254,30 +254,30 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     ),
     tsConfig(`${base}/main/lib`, 5),
     {
-      path: `libs/postgres/main/${names.kebab}/lib/src/index.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
       contents: `export * from "./lib/entity/${names.kebab}.entity";\nexport * from "./lib/migrations";\n`,
     },
     {
-      path: `libs/postgres/main/${names.kebab}/lib/src/lib/entity/${names.kebab}.entity.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/entity/${names.kebab}.entity.ts`,
       contents: `import { Entity, PrimaryKey, Property } from "@mikro-orm/core";\n\n@Entity({ tableName: "${names.kebab.replaceAll("-", "_")}" })\nexport class ${names.pascal}Entity {\n  @PrimaryKey({ type: "uuid" })\n  id!: string;\n\n  @Property()\n  name!: string;\n\n  @Property({ type: "timestamptz" })\n  createdAt: Date = new Date();\n}\n`,
     },
     {
-      path: `libs/postgres/main/${names.kebab}/lib/src/lib/migrations/Migration00000000000000Create${names.pascal}.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/migrations/Migration00000000000000Create${names.pascal}.ts`,
       contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override async up(): Promise<void> {\n    this.addSql('create table "${names.kebab.replaceAll("-", "_")}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll("-", "_")}_pkey" primary key ("id"));');\n  }\n\n  override async down(): Promise<void> {\n    this.addSql('drop table if exists "${names.kebab.replaceAll("-", "_")}" cascade;');\n  }\n}\n`,
     },
     {
-      path: `libs/postgres/main/${names.kebab}/lib/src/lib/migrations/index.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/migrations/index.ts`,
       contents: `export * from "./Migration00000000000000Create${names.pascal}";\n`,
     },
     projectJson(
-      `libs/postgres/main/${names.kebab}/lib/project.json`,
+      `libs/backend/postgres/main/${names.kebab}/lib/project.json`,
       `@app/postgres-main-${names.kebab}`,
-      `libs/postgres/main/${names.kebab}/lib/src`,
-      `dist/libs/postgres/main/${names.kebab}`,
-      `libs/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,
+      `libs/backend/postgres/main/${names.kebab}/lib/src`,
+      `dist/libs/backend/postgres/main/${names.kebab}`,
+      `libs/backend/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,
       ["platform:backend", "type:database", `scope:${names.kebab}`],
     ),
-    tsConfig(`libs/postgres/main/${names.kebab}/lib`, 5),
+    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`, 5),
     {
       path: `libs/frontend/api-client/lib/src/features/${names.kebab}.ts`,
       contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "@app/feature-${names.kebab}-shared";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) =>\n      request<${names.pascal}Dto>("/${names.kebab}", {\n        body: JSON.stringify(input),\n        headers: { "content-type": "application/json" },\n        method: "POST",\n      }),\n  };\n}\n`,
@@ -297,7 +297,7 @@ function createSupportConfigFiles(names: Names): TemplateFile[] {
   const roots = [
     `libs/feature/${names.kebab}/shared/lib`,
     `libs/feature/${names.kebab}/main/lib`,
-    `libs/postgres/main/${names.kebab}/lib`,
+    `libs/backend/postgres/main/${names.kebab}/lib`,
   ];
 
   return roots.flatMap((root) => [

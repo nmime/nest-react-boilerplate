@@ -5,7 +5,7 @@ packages:
   - "libs/common/*/lib"
   - "libs/backend/common/*/lib"
   - "libs/feature/*/*/lib"
-  - "libs/postgres/*/*/lib"
+  - "libs/backend/postgres/*/*/lib"
   - "packages/tooling"
 
 onlyBuiltDependencies:

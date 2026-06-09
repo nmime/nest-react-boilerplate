@@ -1,10 +1,6 @@
 import type { AnalyticsPlugin } from "../type";
+import { NoopAnalyticsProvider } from "./providers";
 
 export function createNoopAnalyticsPlugin(name = "noop"): AnalyticsPlugin {
-  return {
-    name,
-    track: () => undefined,
-    identify: () => undefined,
-    page: () => undefined,
-  };
+  return new NoopAnalyticsProvider(name);
 }

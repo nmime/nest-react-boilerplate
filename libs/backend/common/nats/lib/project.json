@@ -1,0 +1,36 @@
+{
+  "name": "@app/common/nats",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/nats/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/nats",
+        "main": "libs/backend/common/nats/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/nats/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/nats/lib",
+        "command": "vitest run --config vitest.config.mts --pool=threads --maxWorkers=1 --testTimeout=30000"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/nats"]
+    }
+  }
+}

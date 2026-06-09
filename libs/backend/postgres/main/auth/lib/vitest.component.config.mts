@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common-component-test": new URL(
-        "../../../../../../libs/common/component-test/lib/src/index.ts",
+        "../../../../../../libs/backend/common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },

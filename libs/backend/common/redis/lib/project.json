@@ -1,0 +1,36 @@
+{
+  "name": "@app/common/redis",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/redis/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/redis",
+        "main": "libs/backend/common/redis/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/redis/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/redis/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/redis"]
+    }
+  }
+}

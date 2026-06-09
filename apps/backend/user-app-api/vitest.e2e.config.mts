@@ -10,31 +10,31 @@ export default defineConfig({
         import.meta.url,
       ).pathname,
       "@app/common/network": new URL(
-        "../../../libs/common/network/lib/src/index.ts",
+        "../../../libs/backend/common/network/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/exception": new URL(
-        "../../../libs/common/exception/lib/src/index.ts",
+        "../../../libs/backend/common/exception/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/shared": new URL(
-        "../../../libs/common/shared/lib/src/index.ts",
+        "../../../libs/backend/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/bootstrap": new URL(
-        "../../../libs/common/bootstrap/lib/src/index.ts",
+        "../../../libs/backend/common/bootstrap/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/response": new URL(
-        "../../../libs/common/response/lib/src/index.ts",
+        "../../../libs/backend/common/response/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/swagger": new URL(
-        "../../../libs/common/swagger/lib/src/index.ts",
+        "../../../libs/backend/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/validation": new URL(
-        "../../../libs/common/validation/lib/src/index.ts",
+        "../../../libs/backend/common/validation/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/feature-auth-main": new URL(
@@ -66,8 +66,8 @@ export default defineConfig({
       reporter: ["text", "lcov", "json"],
       include: [
         "src/**/*.ts",
-        "../../../libs/common/response/lib/src/**/*.ts",
-        "../../../libs/common/validation/lib/src/**/*.ts",
+        "../../../libs/backend/common/response/lib/src/**/*.ts",
+        "../../../libs/backend/common/validation/lib/src/**/*.ts",
       ],
       exclude: [
         "src/main.ts",

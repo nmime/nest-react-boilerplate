@@ -113,7 +113,7 @@ export function readBoolean(
     ).get("VALUE");
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`${name} must be a boolean value.`);
+      throw new Error(`${name} must be a boolean value.`, { cause: error });
     }
 
     throw error;
@@ -134,7 +134,7 @@ export function readPort(value: string | undefined): number {
     ).get("POSTGRES_PORT");
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Invalid POSTGRES_PORT: ${value}`);
+      throw new Error(`Invalid POSTGRES_PORT: ${value}`, { cause: error });
     }
 
     throw error;
@@ -155,6 +155,7 @@ export function readSslRejectUnauthorized(env: {
     if (error instanceof Error) {
       throw new Error(
         "POSTGRES_SSL_REJECT_UNAUTHORIZED must be a boolean value.",
+        { cause: error },
       );
     }
 

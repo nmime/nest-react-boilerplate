@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import Joi from "joi";
 
 import { createConfig } from "./create-config";

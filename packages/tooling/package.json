@@ -3,24 +3,30 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Workspace-local project tooling scripts for API contracts, database operations, Docker, testing, and QA presets.",
+  "description": "Reusable TS-first repo tooling commands for API contracts, database operations, Docker, testing, QA presets, and repository checks.",
   "bin": {
     "repo-tooling": "./bin/repo-tooling.mjs"
   },
   "scripts": {
     "tooling": "node ./bin/repo-tooling.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "static-check": "node ./bin/repo-tooling.mjs tooling static-check"
+    "static-check": "node ./bin/repo-tooling.mjs tooling static-check",
+    "check": "pnpm run typecheck && pnpm run static-check"
   },
   "files": [
     "bin",
     "src",
-    "scripts",
     "baselines",
     "README.md",
     "tsconfig.json"
   ],
   "dependencies": {
     "jiti": "2.7.0"
+  },
+  "exports": {
+    ".": "./src/cli.ts",
+    "./commands/*": "./src/commands/*.ts",
+    "./runtime/*": "./src/runtime/*.ts",
+    "./package.json": "./package.json"
   }
 }

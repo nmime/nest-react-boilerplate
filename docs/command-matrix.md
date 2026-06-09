@@ -1,6 +1,6 @@
 # Command matrix
 
-Use this matrix as the supported DX contract for local development and CI. Prefer these package scripts over direct `nx` or ad-hoc `node packages/tooling/scripts/*` calls so command names stay stable while implementations move.
+Use this matrix as the supported DX contract for local development and CI. Prefer these package scripts over direct `nx` or ad-hoc direct implementation calls so command names stay stable while implementations move.
 
 | Goal                         | Command                                                                                                                                                                                 | When to run                               | Notes                                                                                                       |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |

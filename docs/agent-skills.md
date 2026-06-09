@@ -1,5 +1,7 @@
 # Template agent skills
 
+Canonical repo-wide AI agent rules live in [AGENTS.md](../AGENTS.md). Follow those first, then use this file for frontend design-skill workflow details.
+
 This template expects frontend agents to use UI/UX Pro Max first and LazyWeb for reference gathering before visual rewrites.
 
 ## UI/UX Pro Max priority hierarchy

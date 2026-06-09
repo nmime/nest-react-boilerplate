@@ -17,7 +17,7 @@ module.exports = [
       "**/playwright-report/**",
       "**/test-results/**",
       "**/vite.config.*.timestamp*",
-      "packages/tooling/scripts/**",
+      "packages/tooling/src/commands/**",
     ],
   },
   {

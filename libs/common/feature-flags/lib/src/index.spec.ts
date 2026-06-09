@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   EnvironmentFeatureFlagProvider,
-  FeatureFlagModule,
   FeatureFlagProviderToken,
   InMemoryFeatureFlagProvider,
   createFeatureFlagProvider,
@@ -41,22 +40,8 @@ describe("feature flags", () => {
     ).toBe(true);
   });
 
-  it("publishes a string injection token instead of a Symbol", () => {
+  it("publishes a stable string injection token", () => {
     expect(FeatureFlagProviderToken).toBe("app.feature-flags.provider");
     expect(typeof FeatureFlagProviderToken).toBe("string");
-
-    const provider = new InMemoryFeatureFlagProvider({
-      "billing.portal": true,
-    });
-    const dynamicModule = FeatureFlagModule.forRoot({ provider });
-
-    expect(dynamicModule.providers).toContainEqual({
-      provide: FeatureFlagProviderToken,
-      useValue: provider,
-    });
-    expect(dynamicModule.exports).toContainEqual({
-      provide: FeatureFlagProviderToken,
-      useValue: provider,
-    });
   });
 });

@@ -65,6 +65,9 @@
       "@app/api-client/support": ["libs/frontend/api-support/lib/src/index.ts"],
       "@app/postgres-main-feature-flags": [
         "libs/postgres/main/feature-flags/lib/src/index.ts"
+      ],
+      "@app/backend/common/feature-flags": [
+        "libs/backend/common/feature-flags/lib/src/index.ts"
       ]
     },
     "esModuleInterop": true,

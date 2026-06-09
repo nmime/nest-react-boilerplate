@@ -1,9 +1,9 @@
 import { DynamicModule, Module, type Provider } from "@nestjs/common";
-import { EnvironmentFeatureFlagProvider } from "./feature-flag.provider";
 import {
+  EnvironmentFeatureFlagProvider,
   FeatureFlagProviderToken,
   type FeatureFlagProvider,
-} from "./feature-flag.types";
+} from "@app/common/feature-flags";
 
 export interface FeatureFlagModuleOptions {
   provider?: FeatureFlagProvider;

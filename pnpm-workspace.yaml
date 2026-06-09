@@ -3,6 +3,7 @@ packages:
   - "apps/backend/*"
   - "libs/frontend/*/lib"
   - "libs/common/*/lib"
+  - "libs/backend/common/*/lib"
   - "libs/feature/*/*/lib"
   - "libs/postgres/*/*/lib"
   - "packages/tooling"

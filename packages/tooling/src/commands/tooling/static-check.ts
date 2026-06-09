@@ -39,6 +39,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const smokeCommands = getSmokeCommands();
   const failures = [
     ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
+    ...checkToolingTypecheck(workspaceRoot),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
     ...checkFrontendFsd(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
@@ -53,6 +54,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     JSON.stringify({
       status: "ok",
       checkedSyntax: syntaxTargets.length,
+      toolingTypecheck: "ok",
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
@@ -81,6 +83,14 @@ function checkSyntaxTargets(
       },
     ];
   });
+}
+
+function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
+  const result = run("pnpm", ["--filter", "@repo/tooling", "typecheck"], {
+    cwd: workspaceRoot,
+  });
+
+  return result.status === 0 ? [] : [result];
 }
 
 function getSmokeCommands(): string[][] {
@@ -241,7 +251,6 @@ export function runChangedFormatCheck(
 function collectToolingModuleScripts(workspaceRoot: string): string[] {
   return [
     ...walk(resolve(workspaceRoot, "packages/tooling/bin")),
-    ...walk(resolve(workspaceRoot, "packages/tooling/scripts")),
     ...walk(resolve(workspaceRoot, "scripts")),
   ]
     .filter((path) => path.endsWith(".mjs"))

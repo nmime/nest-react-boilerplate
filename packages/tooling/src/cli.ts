@@ -1,4 +1,5 @@
 import { dirname, resolve } from "node:path";
+import { existsSync } from "node:fs";
 import { runCheckFrontendFsd } from "./commands/frontend/check-fsd";
 import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
@@ -58,7 +59,7 @@ register(
 );
 register(
   "tooling:static-check",
-  "Run node --check and safe import smoke checks for repo tooling scripts.",
+  "Run TS-first static validation and safe import smoke checks for repo tooling commands.",
   ({ workspaceRoot }) => runStaticCheck({ workspaceRoot }),
 );
 register(
@@ -67,157 +68,139 @@ register(
   ({ argv, workspaceRoot }) => runChangedFormatCheck({ argv, workspaceRoot }),
 );
 
-registerLegacy(
+registerScript(
   "testing:storybook",
   "Run Storybook interaction tests.",
-  "scripts/testing/storybook-test.mjs",
+  "testing/storybook-test.ts",
 );
-registerLegacy(
+registerScript(
   "testing:storybook-visual",
   "Run Storybook visual regression tests.",
-  "scripts/testing/storybook-visual-regression.mjs",
+  "testing/storybook-visual-regression.ts",
 );
-registerLegacy(
-  "db:migrate",
-  "Run database migrations.",
-  "scripts/db/migrate.mjs",
+registerScript(
+  "testing:frontend-static-smoke",
+  "Smoke-test a built frontend app from static assets.",
+  "testing/frontend-static-smoke.ts",
 );
-registerLegacy(
+registerScript(
+  "testing:frontend-browser-e2e-coverage",
+  "Run browser e2e smoke coverage against a built frontend app.",
+  "testing/frontend-browser-e2e-coverage.ts",
+);
+registerScript("db:migrate", "Run database migrations.", "db/migrate.ts");
+registerScript(
   "db:migrations:check",
   "Check database migration naming and drift.",
-  "scripts/db/migrations-check.mjs",
+  "db/migrations-check.ts",
 );
-registerLegacy(
+registerScript(
   "db:migrations:rollback-check",
   "Run auth migrations up/down/up against disposable PostgreSQL.",
-  "scripts/db/migrations-rollback-check.mjs",
+  "db/migrations-rollback-check.ts",
 );
-registerLegacy("db:reset", "Reset the local database.", "scripts/db/reset.mjs");
-registerLegacy("db:seed", "Seed the local database.", "scripts/db/seed.mjs");
-registerLegacy(
-  "db:backup",
-  "Create a PostgreSQL backup.",
-  "scripts/db/backup.mjs",
-);
-registerLegacy(
-  "db:restore",
-  "Restore a PostgreSQL backup.",
-  "scripts/db/restore.mjs",
-);
-registerLegacy(
+registerScript("db:reset", "Reset the local database.", "db/reset.ts");
+registerScript("db:seed", "Seed the local database.", "db/seed.ts");
+registerScript("db:backup", "Create a PostgreSQL backup.", "db/backup.ts");
+registerScript("db:restore", "Restore a PostgreSQL backup.", "db/restore.ts");
+registerScript(
   "db:restore-drill",
   "Run a PostgreSQL backup/restore drill or CI-safe dry-run.",
-  "scripts/db/restore-drill.mjs",
+  "db/restore-drill.ts",
 );
-registerLegacy(
+registerScript(
   "dev:fullstack",
   "Run the local fullstack dev helper.",
-  "scripts/dev/fullstack.mjs",
+  "dev/fullstack.ts",
 );
-registerLegacy(
-  "docker:smoke",
-  "Run Docker smoke checks.",
-  "scripts/docker/smoke.mjs",
-);
-registerLegacy(
+registerScript("docker:smoke", "Run Docker smoke checks.", "docker/smoke.ts");
+registerScript(
   "docker:fullstack-e2e",
   "Run Docker fullstack e2e checks.",
-  "scripts/docker/fullstack-e2e.mjs",
+  "docker/fullstack-e2e.ts",
 );
-registerLegacy(
+registerScript(
   "project:init",
   "Initialize project placeholders.",
-  "scripts/project/init-project.mjs",
+  "project/init-project.ts",
 );
-registerLegacy(
+registerScript(
   "api:openapi",
   "Export OpenAPI contracts.",
-  "scripts/api/export-openapi.mjs",
+  "api/export-openapi.ts",
 );
-registerLegacy(
+registerScript(
   "api:client",
   "Generate one API client.",
-  "scripts/api/generate-client.mjs",
+  "api/generate-client.ts",
 );
-registerLegacy(
+registerScript(
   "api:clients",
   "Generate API clients.",
-  "scripts/api/generate-clients.mjs",
+  "api/generate-clients.ts",
 );
-registerLegacy(
+registerScript(
   "api:clients:check",
   "Check generated API clients.",
-  "scripts/api/check-clients.mjs",
+  "api/check-clients.ts",
 );
-registerLegacy(
+registerScript(
   "api:contracts",
   "Generate API contracts.",
-  "scripts/api/generate-contracts.mjs",
+  "api/generate-contracts.ts",
 );
-registerLegacy(
+registerScript(
   "api:contracts:check",
   "Check generated API contracts.",
-  "scripts/api/check-contracts.mjs",
+  "api/check-contracts.ts",
 );
-registerLegacy(
+registerScript(
   "qa:consumer-contracts",
   "Validate consumer contracts.",
-  "scripts/qa/consumer-contracts.mjs",
+  "qa/consumer-contracts.ts",
 );
-registerLegacy(
+registerScript(
   "qa:openapi-lint",
   "Lint OpenAPI contracts.",
-  "scripts/qa/openapi-lint.mjs",
+  "qa/openapi-lint.ts",
 );
-registerLegacy(
+registerScript(
   "qa:openapi-fuzz",
   "Generate OpenAPI fuzz cases.",
-  "scripts/qa/openapi-fuzz.mjs",
+  "qa/openapi-fuzz.ts",
 );
-registerLegacy(
+registerScript(
   "qa:accessibility",
   "Run accessibility checks.",
-  "scripts/qa/accessibility.mjs",
+  "qa/accessibility.ts",
 );
-registerLegacy(
+registerScript(
   "qa:cross-browser-e2e",
   "Run cross-browser e2e matrix.",
-  "scripts/qa/cross-browser-e2e.mjs",
+  "qa/cross-browser-e2e.ts",
 );
-registerLegacy(
+registerScript(
   "qa:performance",
   "Run performance checks.",
-  "scripts/qa/performance.mjs",
+  "qa/performance.ts",
 );
-registerLegacy(
-  "qa:security-sast",
-  "Run SAST checks.",
-  "scripts/qa/security-sast.mjs",
-);
-registerLegacy(
+registerScript("qa:security-sast", "Run SAST checks.", "qa/security-sast.ts");
+registerScript(
   "qa:secret-scan",
   "Run secret scanning checks.",
-  "scripts/qa/secret-scan.mjs",
+  "qa/secret-scan.ts",
 );
-registerLegacy(
-  "qa:security-dast",
-  "Run DAST checks.",
-  "scripts/qa/security-dast.mjs",
-);
-registerLegacy(
+registerScript("qa:security-dast", "Run DAST checks.", "qa/security-dast.ts");
+registerScript(
   "qa:security-suite",
   "Run the security suite.",
-  "scripts/qa/security-suite.mjs",
+  "qa/security-suite.ts",
 );
-registerLegacy(
-  "qa:property",
-  "Run property-based checks.",
-  "scripts/qa/property.mjs",
-);
-registerLegacy(
+registerScript("qa:property", "Run property-based checks.", "qa/property.ts");
+registerScript(
   "qa:world-class-gates",
   "Run world-class quality gates.",
-  "scripts/qa/world-class-gates.mjs",
+  "qa/world-class-gates.ts",
 );
 
 export async function main(
@@ -241,8 +224,11 @@ export async function main(
     return 0;
   }
 
+  const commandArgv =
+    resolved.argv[0] === "--" ? resolved.argv.slice(1) : resolved.argv;
+
   return await resolved.command.handler({
-    argv: resolved.argv,
+    argv: commandArgv,
     packageRoot,
     workspaceRoot,
   });
@@ -256,15 +242,22 @@ function register(
   commands.set(name, { description, handler });
 }
 
-function registerLegacy(
+function registerScript(
   name: string,
   description: string,
-  scriptPath: string,
+  commandPath: string,
 ): void {
   register(name, description, ({ argv, packageRoot, workspaceRoot }) => {
+    const commandModule = resolve(packageRoot, "src/commands", commandPath);
+
+    if (!existsSync(commandModule)) {
+      console.error(`Tooling command module not found: ${commandModule}`);
+      return 1;
+    }
+
     const result = run(
       process.execPath,
-      [resolve(packageRoot, scriptPath), ...argv],
+      [resolve(packageRoot, "bin/run-ts-command.mjs"), commandModule, ...argv],
       {
         cwd: workspaceRoot,
         stdio: "inherit",

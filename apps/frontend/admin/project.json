@@ -33,7 +33,7 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin pnpm exec vite build --config apps/frontend/admin/vite.config.mts && node packages/tooling/scripts/testing/frontend-browser-e2e-coverage.mjs --dist dist/apps/frontend/admin --app-name admin-app --contains \"Operate the product platform with a fail-closed admin experience.\" --coverage-dir coverage/e2e/apps/frontend/admin"
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin pnpm exec vite build --config apps/frontend/admin/vite.config.mts && pnpm --filter @repo/tooling tooling testing frontend-browser-e2e-coverage --dist dist/apps/frontend/admin --app-name admin-app --contains \"Operate the product platform with a fail-closed admin experience.\" --coverage-dir coverage/e2e/apps/frontend/admin"
       },
       "inputs": [
         "production",

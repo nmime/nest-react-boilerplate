@@ -15,25 +15,33 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@app/common/bootstrap": ["libs/common/bootstrap/lib/src/index.ts"],
+      "@app/common/bootstrap": [
+        "libs/backend/common/bootstrap/lib/src/index.ts"
+      ],
       "@app/common-config": ["libs/common/config/lib/src/index.ts"],
-      "@app/common/exception": ["libs/common/exception/lib/src/index.ts"],
-      "@app/common/response": ["libs/common/response/lib/src/index.ts"],
-      "@app/common/shared": ["libs/common/shared/lib/src/index.ts"],
-      "@app/common/validation": ["libs/common/validation/lib/src/index.ts"],
-      "@app/common/api": ["libs/common/api/lib/src/index.ts"],
-      "@app/common/analytics": ["libs/common/analytics/lib/src/index.ts"],
-      "@app/common/format": ["libs/common/format/lib/src/index.ts"],
-      "@app/common/health": ["libs/common/health/lib/src/index.ts"],
-      "@app/common/intl": ["libs/common/intl/lib/src/index.ts"],
-      "@app/common/logger": ["libs/common/logger/lib/src/index.ts"],
-      "@app/common/nats": ["libs/common/nats/lib/src/index.ts"],
-      "@app/common/network": ["libs/common/network/lib/src/index.ts"],
-      "@app/common/otel": ["libs/common/otel/lib/src/index.ts"],
-      "@app/common/redis": ["libs/common/redis/lib/src/index.ts"],
-      "@app/common/s3": ["libs/common/s3/lib/src/index.ts"],
-      "@app/common/static": ["libs/common/static/lib/src/index.ts"],
-      "@app/common/test": ["libs/common/test/lib/src/index.ts"],
+      "@app/common/exception": [
+        "libs/backend/common/exception/lib/src/index.ts"
+      ],
+      "@app/common/response": ["libs/backend/common/response/lib/src/index.ts"],
+      "@app/common/shared": ["libs/backend/common/shared/lib/src/index.ts"],
+      "@app/common/validation": [
+        "libs/backend/common/validation/lib/src/index.ts"
+      ],
+      "@app/common/api": ["libs/backend/common/api/lib/src/index.ts"],
+      "@app/common/analytics": [
+        "libs/backend/common/analytics/lib/src/index.ts"
+      ],
+      "@app/common/format": ["libs/backend/common/format/lib/src/index.ts"],
+      "@app/common/health": ["libs/backend/common/health/lib/src/index.ts"],
+      "@app/common/intl": ["libs/backend/common/intl/lib/src/index.ts"],
+      "@app/common/logger": ["libs/backend/common/logger/lib/src/index.ts"],
+      "@app/common/nats": ["libs/backend/common/nats/lib/src/index.ts"],
+      "@app/common/network": ["libs/backend/common/network/lib/src/index.ts"],
+      "@app/common/otel": ["libs/backend/common/otel/lib/src/index.ts"],
+      "@app/common/redis": ["libs/backend/common/redis/lib/src/index.ts"],
+      "@app/common/s3": ["libs/backend/common/s3/lib/src/index.ts"],
+      "@app/common/static": ["libs/backend/common/static/lib/src/index.ts"],
+      "@app/common/test": ["libs/backend/common/test/lib/src/index.ts"],
       "@app/common/websocket": ["libs/common/websocket/lib/src/index.ts"],
       "@app/frontend-ui": ["libs/frontend/ui/lib/src/index.ts"],
       "@app/frontend-api-support": [
@@ -46,7 +54,7 @@
         "libs/backend/postgres/main/auth/lib/src/index.ts"
       ],
       "@app/common-component-test": [
-        "libs/common/component-test/lib/src/index.ts"
+        "libs/backend/common/component-test/lib/src/index.ts"
       ],
       "@app/feature-admin-shared": [
         "libs/feature/admin/shared/lib/src/index.ts"
@@ -56,7 +64,7 @@
       "@app/feature-auth-main": ["libs/feature/auth/main/lib/src/index.ts"],
       "@app/feature-user-shared": ["libs/feature/user/shared/lib/src/index.ts"],
       "@app/feature-user-main": ["libs/feature/user/main/lib/src/index.ts"],
-      "@app/common/swagger": ["libs/common/swagger/lib/src/index.ts"],
+      "@app/common/swagger": ["libs/backend/common/swagger/lib/src/index.ts"],
       "@app/common/i18n": ["libs/common/i18n/lib/src/index.ts"],
       "@app/api-contracts": ["libs/common/api-contracts/lib/src/index.ts"],
       "@app/api-client": ["libs/frontend/api-client/lib/src/index.ts"],

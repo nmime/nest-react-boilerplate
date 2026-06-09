@@ -254,8 +254,8 @@ export type TranslationKey =
   | "validation.constraints.isOptional";
 export type LocaleCatalog = Record<TranslationKey, string>;
 
-export const en = enCatalog as unknown as LocaleCatalog;
-export const ru = ruCatalog as unknown as LocaleCatalog;
+export const en: LocaleCatalog = enCatalog;
+export const ru: LocaleCatalog = ruCatalog;
 
 export const translations = {
   en,

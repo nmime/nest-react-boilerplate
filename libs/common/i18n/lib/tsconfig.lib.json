@@ -3,8 +3,9 @@
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc/libs/common/i18n",
     "types": ["node"],
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true
   },
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "locales/*.json"]
 }

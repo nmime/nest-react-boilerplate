@@ -12,7 +12,7 @@
         "outputPath": "dist/libs/common/i18n",
         "main": "libs/common/i18n/lib/src/index.ts",
         "tsConfig": "libs/common/i18n/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": ["libs/common/i18n/lib/locales/*.json"]
       }
     },
     "test": {

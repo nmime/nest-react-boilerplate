@@ -27,7 +27,7 @@ The response shape is:
 
 ## Bootstrap and security baseline
 
-`libs/common/bootstrap` exposes `bootstrapNestApi()`. It applies:
+`libs/backend/common/bootstrap` exposes `bootstrapNestApi()`. It applies:
 
 - Helmet security middleware
 - raw request-body capture for webhook/signature use cases
@@ -39,18 +39,18 @@ The response shape is:
 - `ProblemResponseTransformer` and `ProblemExceptionFilter` response mapping
 - CORS from explicit app options or `CORS_ORIGINS`/`CORS_ORIGIN`
 - production CORS that does not reflect arbitrary origins when no origin is configured
-- optional Swagger/OpenAPI docs from `libs/common/swagger`
+- optional Swagger/OpenAPI docs from `libs/backend/common/swagger`
 
 ## Result responses and problem details
 
-`libs/common/response` exposes the response mapper layer for:
+`libs/backend/common/response` exposes the response mapper layer for:
 
 - `{ data }` success responses
 - RFC 7807 `application/problem+json` problem responses
 - mapping `neverthrow` results to API responses
 - global `ProblemResponseTransformer` and `ProblemExceptionFilter` wiring from bootstrap
 
-`libs/common/exception` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiProblemExceptions` for OpenAPI problem responses.
+`libs/backend/common/exception` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiProblemExceptions` for OpenAPI problem responses.
 
 ## OAuth foundation
 

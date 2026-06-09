@@ -12,7 +12,8 @@
         "outputPath": "dist/libs/common/static",
         "main": "libs/common/static/lib/src/index.ts",
         "tsConfig": "libs/common/static/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

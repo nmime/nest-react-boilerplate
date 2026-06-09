@@ -12,7 +12,8 @@
         "outputPath": "dist/libs/common/format",
         "main": "libs/common/format/lib/src/index.ts",
         "tsConfig": "libs/common/format/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

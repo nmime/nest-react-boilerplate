@@ -14,7 +14,7 @@ export class Migration20260609100000CreateFeatureFlags extends Migration {
         "updated_at" timestamptz not null default now(),
         constraint "pk__feature_flags" primary key ("id"),
         constraint "uq__feature_flags__tenant_id_key" unique ("tenant_id", "key"),
-        constraint "ck__feature_flags__key" check ("key" ~ '^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$')
+        constraint "ck__feature_flags__key" check ("key" ~ '^[a-z][a-z0-9]*([.][a-z][a-z0-9]*)*$')
       );
     `);
     this.addSql(

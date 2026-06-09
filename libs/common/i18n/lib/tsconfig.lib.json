@@ -7,5 +7,5 @@
     "resolveJsonModule": true
   },
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts", "locales/*.json"]
+  "include": ["src/**/*.ts", "../../../../i18n/**/*.json"]
 }

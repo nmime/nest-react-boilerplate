@@ -58,16 +58,18 @@ Coverage thresholds are defined in `config/vitest-coverage.mts`; run `pnpm run t
 
 ## Backend changes
 
-- Use `libs/common/bootstrap` for Nest app startup.
+- Use `@app/common/bootstrap` (`libs/backend/common/bootstrap`) for Nest app startup.
 - Preserve Helmet, strict validation, and secure production CORS behavior.
 - Keep `GET /health` available for deploy health checks.
 - Never log secrets or full environment objects.
 - Keep OAuth disabled unless an app explicitly supplies provider configuration and product-specific callback handling.
 - Follow [database migration standards](docs/database-migrations.md): explicit `NOT NULL`, `VARCHAR` plus checks instead of enums, and deterministic constraint/index names.
 
+- Run `pnpm run lib:configs:check` after library split/config changes, `pnpm run tooling:static-check` after tooling/script changes, and the API/client/OpenAPI or DB migration checks when those surfaces change.
+
 ## Frontend changes
 
-- Reuse `@app/frontend-ui` primitives for shared layout and components.
+- Reuse `@app/frontend-ui` primitives for shared layout and components; keep Storybook stories/config in `libs/frontend/ui/lib/.storybook` in sync for design-system changes.
 - Follow [frontend state architecture](docs/frontend-state.md) for TanStack Query, MobX shell state, theme/i18n ownership, raw-fetch limits, and copy rules.
 - Keep static smoke checks, Storybook stories, and user-visible copy assertions in sync when frontend shells change.
 - Keep browser-facing API base URLs documented with the matching `VITE_*` variable.

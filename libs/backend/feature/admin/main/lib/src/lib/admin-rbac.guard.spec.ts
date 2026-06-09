@@ -6,7 +6,7 @@ import {
   ADMIN_PROFILE_READ_PERMISSION,
   ADMIN_ROLE,
   ADMIN_USERS_READ_PERMISSION,
-} from "@app/feature-admin-shared";
+} from "@app/backend/feature-admin-shared";
 import {
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,

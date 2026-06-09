@@ -29,7 +29,7 @@ const adminPrincipal = {
   permissions: [ADMIN_PROFILE_READ_PERMISSION, ADMIN_DASHBOARD_READ_PERMISSION],
 };
 
-describe("@app/feature-admin-shared CASL RBAC", () => {
+describe("@app/backend/feature-admin-shared CASL RBAC", () => {
   it("derives an admin CASL ability from explicit RBAC roles and permissions", () => {
     const ability = createAdminAbility({
       subject: "admin-id",

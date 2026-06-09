@@ -53,8 +53,8 @@ export default defineConfig({
         "../../../libs/backend/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-admin-shared": new URL(
-        "../../../libs/feature/admin/shared/lib/src/index.ts",
+      "@app/backend/feature-admin-shared": new URL(
+        "../../../libs/backend/feature/admin/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/postgres-main": new URL(

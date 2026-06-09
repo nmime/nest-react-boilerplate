@@ -57,7 +57,7 @@ import {
   isAdminAssignablePermission,
   isAdminAssignableRole,
   toAdminRbacCatalogView,
-} from "@app/feature-admin-shared";
+} from "@app/backend/feature-admin-shared";
 import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,

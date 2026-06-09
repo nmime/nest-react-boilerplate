@@ -22,7 +22,7 @@ This is the canonical instruction source for AI coding agents working in this re
 - Backend PostgreSQL libraries live under `libs/backend/postgres/**`.
 - Frontend-only libraries live under `libs/frontend/**`.
 - True cross-runtime common libraries live under `libs/common/**`.
-- `libs/feature/admin/shared/lib` remains the shared frontend-admin feature boundary.
+- Admin feature shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` for frontend-safe admin contracts and `libs/backend/feature/admin/shared/lib` for backend admin RBAC/permission logic. Do not recreate an unsplit shared admin project.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do not rename, remove, or repoint aliases unless the task explicitly includes an alias migration and all consumers/docs are updated.
 
 ## Architecture and docs to follow

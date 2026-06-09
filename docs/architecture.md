@@ -43,7 +43,7 @@ Current `libs/common` placement decisions:
 - `libs/backend/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/backend/feature/user/shared` and `libs/backend/feature/user/main` contain the protected user profile feature.
-- `libs/frontend/feature/admin/shared`, `libs/backend/feature/admin/shared`, and `libs/backend/feature/admin/main` contain the protected admin RBAC/profile feature split by runtime.
+- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend/feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend/feature-admin-shared`) contains backend admin RBAC/permission logic. `libs/backend/feature/admin/main` contains the protected admin API orchestration.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
 - `libs/frontend/ui` contains shared React components, layout, providers, and a compatibility re-export for the existing API helper surface. New request implementation code belongs in API support, not UI.
@@ -56,7 +56,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:app` marks deployable applications.
 - `type:backend-app` and `type:frontend-app` keep app-specific constraints explicit.
 - `type:feature-main` is reserved for backend feature modules that own controllers, use cases, and application-facing orchestration.
-- `type:feature-shared` is for backend feature contracts/services shared by multiple apps or feature-main libs.
+- `type:feature-shared` is for feature-level contracts/services shared by multiple apps or feature-main libs within the same runtime platform. Admin uses both frontend and backend feature-shared libraries; keep their `platform:*` tags separate.
 - `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
@@ -64,12 +64,15 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 
 New libraries should use the taxonomy above and, where practical, the xRocket-inspired split between feature, data-access, and test-util layers.
 
+Platform boundaries are enforced by tags as well as paths: frontend projects must not import `platform:backend` libraries, backend projects must not import `platform:frontend` libraries, and admin shared code must stay on the correct side of the frontend/backend split.
+
 ## Library naming conventions
 
-Backend feature libraries use `libs/backend/feature/...` paths and singular `@app/feature-*` aliases, except admin shared runtime-specific aliases:
+Backend feature libraries use `libs/backend/feature/...` paths and singular `@app/feature-*` aliases, except admin shared runtime-specific aliases. New admin shared imports must use the explicit platform alias for their runtime:
 
 - Feature main: `@app/feature-auth-main`, `@app/feature-user-main`, `@app/feature-admin-main`.
 - Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/frontend/feature-admin-shared` (frontend admin contracts), and `@app/backend/feature-admin-shared` (backend admin RBAC/permission logic).
+- Legacy admin compatibility alias: `@app/feature-admin-shared` currently points at the frontend-safe admin contract only. Do not use it for new imports; prefer `@app/frontend/feature-admin-shared` or `@app/backend/feature-admin-shared`.
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
 - Frontend API support: `@app/frontend-api-support`.

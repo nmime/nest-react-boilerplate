@@ -25,11 +25,11 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `apps/backend/admin-app-api`
 - [ ] `apps/backend/user-app-api`
 - [ ] `apps/backend/auth-app-api`
-- [ ] `libs/frontend/ui`
-- [ ] `libs/common/bootstrap`
-- [ ] `libs/common/validation`
-- [ ] `libs/common/response`
-- [ ] `libs/feature/auth/shared`
+- [ ] `libs/frontend/ui` / design-system Storybook
+- [ ] `libs/backend/common/*`
+- [ ] `libs/common/*` shared cross-platform libraries
+- [ ] `libs/backend/feature/*` / `libs/feature/*`
+- [ ] `libs/backend/postgres/*`
 - [ ] Tooling / CI / docs
 
 ## Changes
@@ -46,11 +46,17 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 ## Nx quality gates
 
 - [ ] `pnpm install --frozen-lockfile` passes
-- [ ] `pnpm exec nx run-many -t lint --all` passes
-- [ ] `pnpm exec nx run-many -t typecheck --all` passes
-- [ ] `pnpm exec nx run-many -t test --all` passes
-- [ ] `pnpm exec nx run-many -t e2e --projects=admin-app,user-app,landing-app` passes when frontend app behavior changed
-- [ ] `pnpm exec nx run-many -t build --all` passes
+- [ ] `pnpm run tooling:static-check` passes
+- [ ] `pnpm run lib:configs:check` passes when libraries/tooling config changed
+- [ ] `pnpm run frontend:fsd:check` passes when frontend app/lib boundaries changed
+- [ ] `pnpm run api:contracts:check`, `pnpm run api:clients:check`, and `pnpm run api:openapi:lint` pass when API surfaces changed
+- [ ] `pnpm run db:migrations:check` passes when migrations changed
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run typecheck` passes
+- [ ] `pnpm run test` passes
+- [ ] `pnpm run test:e2e` passes when frontend app or API behavior changed
+- [ ] `pnpm run storybook:build` / `pnpm run test:storybook` pass when shared UI/design-system behavior changed
+- [ ] `pnpm run build` passes
 - [ ] Documentation updated when architecture, commands, or public behavior changed
 - [ ] Commit messages follow Conventional Commits (`type(scope): subject`)
 

@@ -6,7 +6,7 @@ import {
   adminPermissionToAbility,
   canAdmin,
   createAdminAbility,
-} from "@app/feature-admin-shared";
+} from "@app/backend/feature-admin-shared";
 import {
   type AuthenticatedRequest,
   type PermissionEvaluationContext,

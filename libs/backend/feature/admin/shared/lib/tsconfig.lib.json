@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/feature/admin/shared",
+    "outDir": "../../../../../../dist/out-tsc/libs/backend/feature/admin/shared",
     "types": ["node"],
     "declaration": true
   },

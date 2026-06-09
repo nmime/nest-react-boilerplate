@@ -1,18 +1,18 @@
 /// <reference types="vitest" />
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vitest/config";
-import { fullCoverage } from "../../../../../config/vitest-coverage.mts";
+import { fullCoverage } from "../../../../../../config/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir:
-    "../../../../../node_modules/.vitest/out-tsc/libs/feature/admin/shared",
+    "../../../../../../node_modules/.vitest/out-tsc/libs/frontend/feature/admin/shared",
   plugins: [nxViteTsPaths()],
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../../coverage/libs/feature/admin/shared",
+      "../../../../../../coverage/libs/frontend/feature/admin/shared",
       ["src/**/*.ts"],
       [],
     ),

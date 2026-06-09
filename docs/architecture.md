@@ -43,7 +43,7 @@ Current `libs/common` placement decisions:
 - `libs/backend/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/backend/feature/user/shared` and `libs/backend/feature/user/main` contain the protected user profile feature.
-- `libs/feature/admin/shared` and `libs/backend/feature/admin/main` contain the protected admin RBAC/profile feature.
+- `libs/frontend/feature/admin/shared`, `libs/backend/feature/admin/shared`, and `libs/backend/feature/admin/main` contain the protected admin RBAC/profile feature split by runtime.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
 - `libs/frontend/ui` contains shared React components, layout, providers, and a compatibility re-export for the existing API helper surface. New request implementation code belongs in API support, not UI.
@@ -66,10 +66,10 @@ New libraries should use the taxonomy above and, where practical, the xRocket-in
 
 ## Library naming conventions
 
-Backend feature libraries use singular `libs/feature/...` paths and singular `@app/feature-*` aliases:
+Backend feature libraries use `libs/backend/feature/...` paths and singular `@app/feature-*` aliases, except admin shared runtime-specific aliases:
 
 - Feature main: `@app/feature-auth-main`, `@app/feature-user-main`, `@app/feature-admin-main`.
-- Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/feature-admin-shared`.
+- Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/frontend/feature-admin-shared` (frontend admin contracts), and `@app/backend/feature-admin-shared` (backend admin RBAC/permission logic).
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
 - Frontend API support: `@app/frontend-api-support`.

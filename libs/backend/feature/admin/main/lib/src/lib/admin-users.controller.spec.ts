@@ -12,7 +12,7 @@ import {
   ADMIN_USERS_STATUS_UPDATE_PERMISSION,
   ADMIN_USERS_WRITE_PERMISSION,
   USER_PROFILE_READ_PERMISSION,
-} from "@app/feature-admin-shared";
+} from "@app/backend/feature-admin-shared";
 import type {
   AdminAuditLogEntity,
   AdminUserMutationResult,

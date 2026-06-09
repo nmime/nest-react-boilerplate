@@ -23,7 +23,7 @@ import {
   ADMIN_ROLE,
   type AdminProfileView,
   toAdminProfileView,
-} from "@app/feature-admin-shared";
+} from "@app/backend/feature-admin-shared";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 
 export interface AdminProfilePayload {

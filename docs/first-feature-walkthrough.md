@@ -10,8 +10,8 @@ pnpm generate:feature invoices -- --dry-run
 
 The scaffold lists the files it would create for:
 
-- shared DTOs and permissions under `libs/feature/<name>/shared/lib`;
-- Nest module, controller, service, and tests under `libs/feature/<name>/main/lib`;
+- backend shared DTOs/permissions under `libs/backend/feature/<name>/shared/lib`, with frontend-specific feature contracts under `libs/frontend/feature/<name>/shared/lib` when required;
+- Nest module, controller, service, and tests under `libs/backend/feature/<name>/main/lib`;
 - PostgreSQL entity and migration placeholder under `libs/backend/postgres/main/<name>/lib`;
 - frontend API client stub under `libs/frontend/api-client/lib/src/features`;
 - React page stub under `apps/frontend/app/src/app/features/<name>`;

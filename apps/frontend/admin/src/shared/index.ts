@@ -4,7 +4,7 @@ import {
   type TranslationParams,
 } from "@app/common/i18n";
 import type { adminApi } from "@app/api-client";
-import type { AdminAccessPolicy } from "@app/feature-admin-shared";
+import type { AdminAccessPolicy } from "@app/frontend/feature-admin-shared";
 import { readLegacyUrlBearerToken, type FrontendEnv } from "@app/frontend-ui";
 
 type UserStatus = "active" | "disabled" | "invited";

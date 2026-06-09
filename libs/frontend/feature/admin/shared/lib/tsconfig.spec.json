@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/feature/admin/shared-spec",
+    "outDir": "../../../../../../../dist/out-tsc/libs/frontend/feature/admin/shared-spec",
     "types": ["node", "vitest"]
   },
   "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]

@@ -1,4 +1,8 @@
+// Root-level locale catalogs are package assets for @app/common/i18n; keep the
+// imports explicit so the catalogs are bundled while documenting the Nx boundary exception.
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import enCatalog from "../../../../../i18n/en/common.json";
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import ruCatalog from "../../../../../i18n/ru/common.json";
 
 export type Locale = "en" | "ru";

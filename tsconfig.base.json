@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@app/common/bootstrap": ["libs/common/bootstrap/lib/src/index.ts"],
+      "@app/common-config": ["libs/common/config/lib/src/index.ts"],
       "@app/common/exception": ["libs/common/exception/lib/src/index.ts"],
       "@app/common/response": ["libs/common/response/lib/src/index.ts"],
       "@app/common/shared": ["libs/common/shared/lib/src/index.ts"],

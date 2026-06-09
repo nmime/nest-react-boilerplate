@@ -1,50 +1,89 @@
 import { Injectable } from "@nestjs/common";
+import { createConfig } from "@app/common-config";
+import Joi from "joi";
 import { RedisMode } from "../const";
 import type { RedisConfig, RedisConnectionConfig, RedisHost } from "../type";
 
+interface RedisEnvironment {
+  REDIS_MODE: RedisMode;
+  REDIS_URL?: string;
+  REDIS_HOSTS: RedisHost[];
+  REDIS_PASSWORD?: string;
+  REDIS_DB?: number;
+  REDIS_SENTINEL_GROUP_IDENTIFIER?: string;
+  REDIS_KEY_PREFIX?: string;
+  REDIS_LAZY_CONNECT: boolean;
+}
+
+const redisHostSchema = Joi.object<RedisHost>({
+  host: Joi.string().required(),
+  port: Joi.number().integer().port().required(),
+});
+
+const schema = Joi.object<RedisEnvironment>({
+  REDIS_MODE: Joi.string()
+    .valid(RedisMode.Single, RedisMode.Sentinel, RedisMode.Cluster)
+    .empty("")
+    .default(RedisMode.Single),
+  REDIS_URL: Joi.string().empty("").optional(),
+  REDIS_HOSTS: Joi.alternatives()
+    .try(
+      Joi.array().items(redisHostSchema),
+      Joi.string().custom(parseHostsConfig, "Redis hosts list"),
+    )
+    .default([]),
+  REDIS_PASSWORD: Joi.string().empty("").optional(),
+  REDIS_DB: Joi.number().integer().optional(),
+  REDIS_SENTINEL_GROUP_IDENTIFIER: Joi.string().empty("").optional(),
+  REDIS_KEY_PREFIX: Joi.string().empty("").optional(),
+  REDIS_LAZY_CONNECT: Joi.boolean()
+    .truthy("1", "true", "yes", "on")
+    .falsy("0", "false", "no", "off")
+    .default(true),
+});
+
 @Injectable()
 export class RedisConfigService {
+  protected readonly configService = createConfig(schema);
+
   constructor(private readonly options: RedisConfig = {}) {}
 
   get mode(): RedisMode {
-    return toRedisMode(this.options.mode ?? process.env.REDIS_MODE);
+    return this.options.mode === undefined
+      ? this.configService.get("REDIS_MODE")
+      : toRedisMode(this.options.mode);
   }
 
   get url(): string | undefined {
-    return emptyToUndefined(this.options.url ?? process.env.REDIS_URL);
+    return this.options.url ?? this.configService.get("REDIS_URL");
   }
 
   get hosts(): RedisHost[] {
-    return this.options.hosts ?? parseHosts(process.env.REDIS_HOSTS);
+    return this.options.hosts ?? this.configService.get("REDIS_HOSTS");
   }
 
   get password(): string | undefined {
-    return emptyToUndefined(
-      this.options.password ?? process.env.REDIS_PASSWORD,
-    );
+    return this.options.password ?? this.configService.get("REDIS_PASSWORD");
   }
 
   get db(): number | undefined {
-    return this.options.db ?? parseOptionalInteger(process.env.REDIS_DB);
+    return this.options.db ?? this.configService.get("REDIS_DB");
   }
 
   get sentinelGroupIdentifier(): string | undefined {
-    return emptyToUndefined(
+    return (
       this.options.sentinelGroupIdentifier ??
-        process.env.REDIS_SENTINEL_GROUP_IDENTIFIER,
+      this.configService.get("REDIS_SENTINEL_GROUP_IDENTIFIER")
     );
   }
 
   get keyPrefix(): string | undefined {
-    return emptyToUndefined(
-      this.options.keyPrefix ?? process.env.REDIS_KEY_PREFIX,
-    );
+    return this.options.keyPrefix ?? this.configService.get("REDIS_KEY_PREFIX");
   }
 
   get lazyConnect(): boolean {
     return (
-      this.options.lazyConnect ??
-      parseBoolean(process.env.REDIS_LAZY_CONNECT, true)
+      this.options.lazyConnect ?? this.configService.get("REDIS_LAZY_CONNECT")
     );
   }
 
@@ -72,10 +111,34 @@ export class RedisConfigService {
   }
 }
 
-function toRedisMode(value: string | undefined): RedisMode {
+function parseHostsConfig(
+  value: string,
+  helpers: Joi.CustomHelpers,
+): RedisHost[] {
+  if (value === "") {
+    return [];
+  }
+
+  const hosts: RedisHost[] = [];
+  for (const host of value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)) {
+    const [hostName, port = "6379"] = host.split(":");
+    const parsedPort = Number.parseInt(port, 10);
+
+    if (!hostName || !Number.isInteger(parsedPort)) {
+      return helpers.error("any.invalid") as never;
+    }
+
+    hosts.push({ host: hostName, port: parsedPort });
+  }
+
+  return hosts;
+}
+
+function toRedisMode(value: RedisConfig["mode"]): RedisMode {
   switch (value) {
-    case undefined:
-    case "":
     case RedisMode.Single:
       return RedisMode.Single;
     case RedisMode.Sentinel:
@@ -85,63 +148,4 @@ function toRedisMode(value: string | undefined): RedisMode {
     default:
       throw new Error(`Invalid Redis mode: ${value}`);
   }
-}
-
-function parseHosts(value: string | undefined): RedisHost[] {
-  if (!value) {
-    return [];
-  }
-
-  return value
-    .split(",")
-    .map((host) => host.trim())
-    .filter(Boolean)
-    .map((host) => {
-      const [hostName, port = "6379"] = host.split(":");
-      const parsedPort = Number.parseInt(port, 10);
-
-      if (!hostName || !Number.isInteger(parsedPort)) {
-        throw new Error(`Invalid Redis host entry: ${host}`);
-      }
-
-      return { host: hostName, port: parsedPort };
-    });
-}
-
-function parseOptionalInteger(value: string | undefined): number | undefined {
-  if (value === undefined || value === "") {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isInteger(parsed)) {
-    throw new Error(`Invalid Redis integer value: ${value}`);
-  }
-
-  return parsed;
-}
-
-function parseBoolean(value: string | undefined, fallback: boolean): boolean {
-  if (value === undefined || value === "") {
-    return fallback;
-  }
-
-  switch (value.toLowerCase()) {
-    case "1":
-    case "true":
-    case "yes":
-    case "on":
-      return true;
-    case "0":
-    case "false":
-    case "no":
-    case "off":
-      return false;
-    default:
-      throw new Error(`Invalid Redis boolean value: ${value}`);
-  }
-}
-
-function emptyToUndefined(value: string | undefined): string | undefined {
-  return value && value.length > 0 ? value : undefined;
 }

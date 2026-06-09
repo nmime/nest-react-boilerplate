@@ -83,14 +83,14 @@ describe("AnalyticsConfigService", () => {
     vi.stubEnv("ANALYTICS_ENABLED", "maybe");
 
     expect(() => new AnalyticsConfigService().enabled).toThrow(
-      "Invalid boolean config ANALYTICS_ENABLED: maybe",
+      /Invalid environment configuration.*ANALYTICS_ENABLED/u,
     );
 
     vi.unstubAllEnvs();
     vi.stubEnv("ANALYTICS_PROVIDER", "unknown");
 
     expect(() => new AnalyticsConfigService().provider).toThrow(
-      "Invalid analytics provider: unknown",
+      /Invalid environment configuration.*ANALYTICS_PROVIDER/u,
     );
   });
 });

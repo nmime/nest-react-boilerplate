@@ -159,7 +159,7 @@ describe("NATS foundation", () => {
     process.env.NATS_TIMEOUT_MS = "1500ms";
 
     expect(() => new NatsConfigService().connectionConfig).toThrow(
-      "Invalid NATS integer value: 1500ms",
+      /Invalid environment configuration.*NATS_TIMEOUT_MS/u,
     );
   });
 

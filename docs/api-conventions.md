@@ -54,7 +54,7 @@ The response shape is:
 
 ## OAuth foundation
 
-`libs/feature/auth/shared` OAuth support is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
+`libs/backend/feature/auth/shared` OAuth support is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
 
 ## Auth endpoints
 

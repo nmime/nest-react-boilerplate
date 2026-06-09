@@ -27,10 +27,10 @@ Each API exposes `GET /health`, has unit tests, and has HTTP smoke tests using N
 - `libs/common/feature-flags` defines the feature flag provider contract plus static/environment implementations.
 - `libs/common/notifications` defines notification/email provider contracts plus noop/in-memory implementations for local development and tests.
 - `libs/common/validation` creates `ProblemValidationPipe` validation problem details.
-- `libs/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
-- `libs/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
-- `libs/feature/user/shared` and `libs/feature/user/main` contain the protected user profile feature.
-- `libs/feature/admin/shared` and `libs/feature/admin/main` contain the protected admin RBAC/profile feature.
+- `libs/backend/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
+- `libs/backend/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
+- `libs/backend/feature/user/shared` and `libs/backend/feature/user/main` contain the protected user profile feature.
+- `libs/feature/admin/shared` and `libs/backend/feature/admin/main` contain the protected admin RBAC/profile feature.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
 - `libs/frontend/ui` contains shared React components, layout, providers, and a compatibility re-export for the existing API helper surface. New request implementation code belongs in API support, not UI.

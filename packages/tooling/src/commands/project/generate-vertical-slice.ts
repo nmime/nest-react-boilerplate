@@ -196,10 +196,10 @@ function updateTsconfigPaths(workspaceRoot: string, names: Names): void {
 function createTsconfigAliases(names: Names): Record<string, string[]> {
   return {
     [`@app/feature-${names.kebab}-main`]: [
-      `libs/feature/${names.kebab}/main/lib/src/index.ts`,
+      `libs/backend/feature/${names.kebab}/main/lib/src/index.ts`,
     ],
     [`@app/feature-${names.kebab}-shared`]: [
-      `libs/feature/${names.kebab}/shared/lib/src/index.ts`,
+      `libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`,
     ],
     [`@app/postgres-main-${names.kebab}`]: [
       `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
@@ -208,7 +208,7 @@ function createTsconfigAliases(names: Names): Record<string, string[]> {
 }
 
 function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
-  const base = `libs/feature/${names.kebab}`;
+  const base = `libs/backend/feature/${names.kebab}`;
 
   return [
     {
@@ -223,7 +223,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `${base}/shared/lib/tsconfig.lib.json`,
       ["platform:shared", "type:feature-shared", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/shared/lib`, 5),
+    tsConfig(`${base}/shared/lib`, 6),
     {
       path: `${base}/main/lib/src/index.ts`,
       contents: `export * from "./lib/${names.kebab}.module";\nexport * from "./lib/${names.kebab}.controller";\nexport * from "./lib/${names.kebab}.service";\nexport * from "@app/feature-${names.kebab}-shared";\n`,
@@ -252,7 +252,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `${base}/main/lib/tsconfig.lib.json`,
       ["platform:backend", "type:feature-main", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/main/lib`, 5),
+    tsConfig(`${base}/main/lib`, 6),
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
       contents: `export * from "./lib/entity/${names.kebab}.entity";\nexport * from "./lib/migrations";\n`,
@@ -295,8 +295,8 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
 
 function createSupportConfigFiles(names: Names): TemplateFile[] {
   const roots = [
-    `libs/feature/${names.kebab}/shared/lib`,
-    `libs/feature/${names.kebab}/main/lib`,
+    `libs/backend/feature/${names.kebab}/shared/lib`,
+    `libs/backend/feature/${names.kebab}/main/lib`,
     `libs/backend/postgres/main/${names.kebab}/lib`,
   ];
 

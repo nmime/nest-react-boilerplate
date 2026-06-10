@@ -30,9 +30,3 @@ export const IntlLocale = createParamDecorator(
   (_data: unknown, context: ExecutionContext): IntlContextValue =>
     IntlContext.resolve(localeFromRequest(requestFromContext(context))),
 );
-
-/**
- * @deprecated Use IntlLocale. The intl package owns locale context, while
- * @app/common/i18n owns translation catalogs and lookup.
- */
-export const I18n = IntlLocale;

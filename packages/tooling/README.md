@@ -38,4 +38,4 @@ All QA presets are designed to be useful locally without depending on GitHub Act
 - `pnpm run deploy:validate` is the no-deploy validation bundle for production Docker Compose, Helm, and deployment docs/config hardening.
 - `pnpm run branch:cleanup:check` previews merged-branch cleanup. `pnpm run branch:cleanup -- --apply` is required to delete local merged branches; remote deletion additionally requires `--remote`. Protected branches (`main`, `master`, `develop`, `release/*`, `hotfix/*`, production/staging names, and `origin/HEAD`) are never candidates.
 
-Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, `devEngines`, and `.npmrc` strictness. Use Node 26.x and pnpm 10.32.1 for local parity with CI.
+Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, `devEngines`, and `.npmrc` strictness. Use Node 26.x and pnpm 11.5.2 for local parity with CI.

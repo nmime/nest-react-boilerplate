@@ -22,6 +22,14 @@ export default defineConfig({
         "../../../libs/backend/common/network/lib/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/redis": new URL(
+        "../../../libs/backend/common/redis/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/common/nats": new URL(
+        "../../../libs/backend/common/nats/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/exception": new URL(
         "../../../libs/backend/common/exception/lib/src/index.ts",
         import.meta.url,
@@ -42,6 +50,10 @@ export default defineConfig({
         "../../../libs/backend/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/common/health": new URL(
+        "../../../libs/backend/common/health/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/common/validation": new URL(
         "../../../libs/backend/common/validation/lib/src/index.ts",
         import.meta.url,
@@ -60,6 +72,10 @@ export default defineConfig({
       ).pathname,
       "@app/feature-user-shared": new URL(
         "../../../libs/backend/feature/user/shared/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/postgres-main": new URL(
+        "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/postgres-main-feature-flags": new URL(

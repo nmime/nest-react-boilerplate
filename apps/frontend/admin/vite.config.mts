@@ -5,16 +5,10 @@ import tailwindcss from "@tailwindcss/vite";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
-import { assertRequiredFrontendApiBaseUrls } from "../../../libs/frontend/api-support/lib/src/lib/frontend-env";
 
 export default defineConfig(({ command, mode }) => {
   const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";
-  assertRequiredFrontendApiBaseUrls({
-    ...process.env,
-    DEV: command !== "build" || mode !== "production",
-    MODE: mode,
-    PROD: command === "build" && mode === "production",
-  });
+  assertRequiredFrontendApiBaseUrls(command, mode);
 
   return {
     root: import.meta.dirname,
@@ -60,3 +54,38 @@ export default defineConfig(({ command, mode }) => {
     },
   };
 });
+
+const frontendApiBaseUrlKeys = [
+  "VITE_AUTH_API_BASE_URL",
+  "VITE_USER_API_BASE_URL",
+  "VITE_ADMIN_API_BASE_URL",
+] as const;
+
+const sameOriginApiMode = "same-origin";
+
+const getEnvString = (key: string): string => {
+  const value = process.env[key];
+  return typeof value === "string" ? value.trim() : "";
+};
+
+const assertRequiredFrontendApiBaseUrls = (
+  command: string,
+  mode: string,
+): void => {
+  const isNonProduction =
+    command !== "build" || mode === "development" || mode === "test";
+  const isSameOrigin =
+    getEnvString("VITE_API_BASE_URL_MODE").toLowerCase() === sameOriginApiMode;
+
+  if (isNonProduction || isSameOrigin) {
+    return;
+  }
+
+  const missing = frontendApiBaseUrlKeys.filter((key) => !getEnvString(key));
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required production frontend API base URL env var(s): ${missing.join(", ")}. ` +
+        `Set explicit API origins or set VITE_API_BASE_URL_MODE=${sameOriginApiMode} to opt into a same-origin API proxy.`,
+    );
+  }
+};

@@ -1,4 +1,7 @@
-import { getRequiredApiBaseUrl, type FrontendEnv } from "@app/frontend-ui";
+import {
+  getRequiredApiBaseUrl,
+  type FrontendEnv,
+} from "@app/frontend-api-support";
 import { landingRoutes } from "../../../shared/config";
 
 export const getAuthApiDocsHref = (env: FrontendEnv) => {

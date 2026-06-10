@@ -68,24 +68,3 @@ export const assertRequiredFrontendApiBaseUrls = (
     );
   }
 };
-
-export const isLegacyUrlBearerTokenBootstrapAllowed = (
-  env: FrontendEnv,
-): boolean => isNonProductionFrontendEnv(env);
-
-export const readLegacyUrlBearerToken = (
-  env: FrontendEnv,
-  href: string,
-): string | null => {
-  if (!isLegacyUrlBearerTokenBootstrapAllowed(env)) {
-    return null;
-  }
-
-  const search = new URL(href).searchParams;
-
-  return (
-    search.get("token")?.trim() ||
-    search.get("admin" + "_token")?.trim() ||
-    null
-  );
-};

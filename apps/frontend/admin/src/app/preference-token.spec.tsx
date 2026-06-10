@@ -27,7 +27,7 @@ const profilePayload = {
   },
 };
 
-describe("admin preference auth token handling", () => {
+describe("admin preference session handling", () => {
   beforeEach(() => {
     Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
       configurable: true,
@@ -47,7 +47,6 @@ describe("admin preference auth token handling", () => {
     });
     vi.stubEnv("VITE_ADMIN_API_BASE_URL", "https://admin.example.test");
     vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth.example.test");
-    window.history.pushState(null, "", "/admin?token=legacy-token");
   });
 
   afterEach(() => {
@@ -58,7 +57,7 @@ describe("admin preference auth token handling", () => {
     window.history.pushState(null, "", "/");
   });
 
-  it("reuses the initial URL bearer token for preference updates after scrubbing the URL", async () => {
+  it("sends preference updates without URL bearer-token bootstrap", async () => {
     const requests: Request[] = [];
     vi.stubGlobal(
       "fetch",
@@ -101,8 +100,6 @@ describe("admin preference auth token handling", () => {
     const preferenceRequest = requests.find((request) =>
       request.url.includes("preferences"),
     );
-    expect(preferenceRequest?.headers.get("authorization")).toBe(
-      "Bearer legacy-token",
-    );
+    expect(preferenceRequest?.headers.has("authorization")).toBe(false);
   });
 });

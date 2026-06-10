@@ -1,21 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { observer } from "mobx-react-lite";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "../api/api-client";
 import {
   FrontendI18nProvider,
   LanguageSwitcher,
   useI18n,
 } from "../i18n/i18n-provider";
 import { FrontendStateProvider, createRootStore, useRootStore } from "./index";
-
-const jsonResponse = (body: unknown): Response =>
-  ({
-    headers: new Headers({ "content-type": "application/json" }),
-    json: vi.fn().mockResolvedValue(body),
-    ok: true,
-    status: 200,
-  }) as unknown as Response;
 
 const LocalePreview = observer(function LocalePreview() {
   const { locale } = useI18n();
@@ -70,12 +61,8 @@ describe("frontend MobX state foundation", () => {
     document.cookie = "locale=; path=/; max-age=0";
   });
 
-  it("drives i18n and apiFetch locale from the shared LocaleStore", async () => {
+  it("drives i18n locale from the shared LocaleStore", () => {
     const store = createRootStore({ initialLocale: "en" });
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(jsonResponse({ data: { ok: true } }));
-
     render(
       <FrontendStateProvider store={store}>
         <FrontendI18nProvider>
@@ -91,11 +78,6 @@ describe("frontend MobX state foundation", () => {
 
     expect(screen.getByText("ru")).toBeTruthy();
     expect(document.documentElement.lang).toBe("ru");
-    await apiFetch("/localized", { fetchImpl });
-
-    expect(fetchImpl.mock.calls[0]?.[1]?.headers).toMatchObject({
-      "Accept-Language": "ru",
-    });
   });
 
   it("keeps client-only shell state in MobX without server cache data", () => {

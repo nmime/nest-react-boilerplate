@@ -5,17 +5,11 @@ public surface is limited to reusable UI primitives, layout, i18n/theme shell
 widgets, and UI-only state helpers. Production UI sources must not import API
 clients, API contracts, backend modules, app sources, or call raw `fetch`.
 
-## Compatibility bridges
+## API boundaries
 
-Existing frontend apps historically imported API environment helpers from
-`@app/frontend-ui`. Those helpers are now implemented in
-`@app/frontend-api-support` and re-exported from
-`lib/config/frontend-env.ts` only as a deprecated migration bridge. New code
-should import these helpers from `@app/frontend-api-support`.
-
-The legacy `lib/api/api-client.ts` deep module is intentionally omitted from the
-public barrel. New code must import request helpers from
-`@app/frontend-api-support`.
+API environment and request helpers belong in `@app/frontend-api-support`.
+`@app/frontend-ui` does not export API clients, API environment helpers, or
+URL-based auth bootstrap helpers.
 
 ## Domain-ish components
 

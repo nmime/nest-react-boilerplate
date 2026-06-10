@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
-import { assertRequiredFrontendApiBaseUrls } from "../../../libs/frontend/ui/lib/src/lib/config/frontend-env";
+import { assertRequiredFrontendApiBaseUrls } from "../../../libs/frontend/api-support/lib/src/lib/frontend-env";
 
 export default defineConfig(({ command, mode }) => {
   const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";

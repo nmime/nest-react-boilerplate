@@ -7,6 +7,7 @@ import {
   RedisLockUnavailableError,
   RedisRedlockService,
 } from "./redis-redlock.service";
+import { RedisHealthIndicator } from "./redis.health";
 import {
   buildRateLimitKey,
   RedisRateLimitService,
@@ -137,6 +138,67 @@ describe("RedisConfigService", () => {
     });
   });
 });
+
+describe("RedisHealthIndicator", () => {
+  it("checks Redis health with ping", async () => {
+    const redis = new InMemoryRedisClient();
+    const health = new RedisHealthIndicator(redis);
+
+    await expect(health.check()).resolves.toEqual({
+      name: "redis",
+      status: "ok",
+    });
+  });
+
+  it("redacts connection URLs and secret-like fields from Redis health errors", async () => {
+    const unsafeMessage = [
+      "connect",
+      credentialUrl("redis", "user", "super-secret", "redis:6379/0"),
+      secretPair("password", "super-secret"),
+      secretPair("token", "abc"),
+    ].join(" ");
+    const redis = {
+      ...new InMemoryRedisClient(),
+      ping: vi.fn(() => Promise.reject(new Error(unsafeMessage))),
+    };
+    const health = new RedisHealthIndicator(redis);
+
+    await expect(health.check()).resolves.toEqual({
+      name: "redis",
+      status: "error",
+      details: {
+        message: [
+          "connect",
+          redactedUrl("redis", "redis:6379/0"),
+          redactedPair("password"),
+          redactedPair("token"),
+        ].join(" "),
+        type: "Error",
+      },
+    });
+  });
+});
+
+function credentialUrl(
+  protocol: string,
+  username: string,
+  password: string,
+  hostAndPath: string,
+): string {
+  return `${protocol}://${username}:${password}@${hostAndPath}`;
+}
+
+function redactedUrl(protocol: string, hostAndPath: string): string {
+  return `${protocol}://[redacted]@${hostAndPath}`;
+}
+
+function secretPair(key: string, value: string): string {
+  return `${key}=${value}`;
+}
+
+function redactedPair(key: string): string {
+  return `${key}=[redacted]`;
+}
 
 describe("RedisRedlockService", () => {
   it("acquires and releases a lock", async () => {

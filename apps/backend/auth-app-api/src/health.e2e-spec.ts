@@ -130,12 +130,23 @@ describe("auth-app-api e2e", () => {
     delete process.env.AUTH_JWT_SECRET;
   });
 
-  it("GET /health returns ok", async () => {
+  it("GET /health returns shared liveness-compatible health details", async () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
-      data: { app: "auth-app-api", status: "ok" },
+    expect(response.json()).toMatchObject({
+      status: expect.stringMatching(/^(ok|degraded)$/),
+      checks: expect.arrayContaining([
+        expect.objectContaining({ name: "runtime", status: "ok" }),
+        expect.objectContaining({ name: "config" }),
+        expect.objectContaining({ name: "i18n" }),
+        expect.objectContaining({
+          name: "auth-persistence",
+          status: "ok",
+          details: expect.objectContaining({ mode: "memory" }),
+        }),
+        expect.objectContaining({ name: "postgres", status: "ok", required: false }),
+      ]),
     });
   });
 
@@ -363,17 +374,35 @@ describe("auth-app-api e2e", () => {
     expect(sessionAfterLogout.statusCode).toBe(401);
   });
 
-  it("GET /live and /ready return ok", async () => {
+  it("GET /live and /ready return ok with memory persistence and skipped Postgres", async () => {
     const liveResponse = await app.inject({ method: "GET", url: "/live" });
     expect(liveResponse.statusCode).toBe(200);
-    expect(liveResponse.json()).toEqual({
-      data: { app: "auth-app-api", status: "ok" },
+    expect(liveResponse.json()).toMatchObject({
+      data: { app: "auth-app-api", status: expect.stringMatching(/^(ok|degraded)$/) },
     });
 
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
     expect(readyResponse.statusCode).toBe(200);
-    expect(readyResponse.json()).toEqual({
-      data: { app: "auth-app-api", status: "ok" },
+    expect(readyResponse.json()).toMatchObject({
+      data: {
+        app: "auth-app-api",
+        status: expect.stringMatching(/^(ok|degraded)$/),
+        dependencies: expect.arrayContaining([
+          expect.objectContaining({
+            name: "auth-persistence",
+            status: "ok",
+            details: expect.objectContaining({ mode: "memory" }),
+          }),
+          expect.objectContaining({
+            name: "postgres",
+            status: "ok",
+            required: false,
+            details: expect.objectContaining({ skipped: true }),
+          }),
+          expect.objectContaining({ name: "redis", status: "ok", required: false }),
+          expect.objectContaining({ name: "nats", status: "ok", required: false }),
+        ]),
+      },
     });
   });
 });

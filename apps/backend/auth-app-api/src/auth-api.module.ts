@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common";
+import { BaseHealthController, HealthPrivateNetworkIpGuard } from "@app/common/health";
 import { AuthMainModule } from "@app/feature-auth-main";
-import { HealthController } from "./health.controller";
+import { AuthAppHealthServiceProvider } from "./health.config";
 
 @Module({
   imports: [AuthMainModule.forRoot()],
-  controllers: [HealthController],
+  controllers: [BaseHealthController],
+  providers: [AuthAppHealthServiceProvider, HealthPrivateNetworkIpGuard],
 })
 export class AuthApiModule {}

@@ -1,23 +1,46 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  ServiceUnavailableException,
+  UseGuards,
+} from "@nestjs/common";
 import { Health } from "./decorator";
 import { HealthPrivateNetworkIpGuard } from "./guard";
-import { HealthService } from "./health.service";
-import type { HealthResponse } from "./dto";
+import { hasRequiredReadinessFailure, HealthService } from "./health.service";
+import type { HealthResponse, HealthResponseDto } from "./dto";
 
-@Controller("health")
+@Controller()
 export class BaseHealthController {
   constructor(private readonly healthService: HealthService) {}
 
-  @Get()
+  @Get("health")
   @Health()
   getHealth(): Promise<HealthResponse> {
-    return this.healthService.check();
+    return this.healthService.check("health");
   }
 
-  @Get("private")
+  @Get("health/private")
   @Health()
   @UseGuards(HealthPrivateNetworkIpGuard)
-  getPrivateHealth(): Promise<HealthResponse> {
-    return this.healthService.check();
+  getPrivateHealth(): Promise<HealthResponseDto> {
+    return this.healthService.checkPrivate();
+  }
+
+  @Get("live")
+  @Health()
+  getLiveness(): Promise<HealthResponseDto> {
+    return this.healthService.checkLiveness();
+  }
+
+  @Get("ready")
+  @Health()
+  async getReadiness(): Promise<HealthResponseDto> {
+    const response = await this.healthService.checkReadiness();
+
+    if (hasRequiredReadinessFailure(response)) {
+      throw new ServiceUnavailableException(response);
+    }
+
+    return response;
   }
 }

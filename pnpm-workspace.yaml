@@ -67,6 +67,7 @@ minimumReleaseAgeExclude:
   - "@swc/core@1.15.41"
   - "prettier@3.8.4"
   - "storybook@10.4.3"
+  - "@storybook/addon-vitest@10.4.3"
 
 allowBuilds:
   "@nestjs/core": true

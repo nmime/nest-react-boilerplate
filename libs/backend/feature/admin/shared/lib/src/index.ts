@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/triple-slash-reference -- CASL 7 publishes exported declarations behind package exports that TypeScript node resolution cannot associate with the CommonJS entry; this scoped reference loads a type-preserving re-export shim. */
+/// <reference path="./types/casl-ability.d.ts" />
 import {
   AbilityBuilder,
   createMongoAbility,

@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { NatsConnection } from "@nats-io/nats-core";
+import type { HealthIndicatorResult } from "@app/common/health";
 import { InjectNatsConnection } from "./decorator";
 
 @Injectable()
@@ -11,11 +12,7 @@ export class NatsHealthIndicator {
     private readonly connection: NatsConnection | null,
   ) {}
 
-  async check(): Promise<{
-    name: string;
-    status: "ok" | "error";
-    details?: Record<string, unknown>;
-  }> {
+  async check(): Promise<HealthIndicatorResult> {
     if (!this.connection) {
       return {
         name: this.name,
@@ -39,7 +36,7 @@ export class NatsHealthIndicator {
         status: "ok",
         details: {
           enabled: true,
-          server: this.connection.getServer(),
+          server: redactDependencyDetail(this.connection.getServer()),
         },
       };
     } catch (error) {
@@ -47,15 +44,23 @@ export class NatsHealthIndicator {
     }
   }
 
-  private error(message: string): {
-    name: string;
-    status: "error";
-    details: Record<string, unknown>;
-  } {
+  private error(message: string): HealthIndicatorResult {
     return {
       name: this.name,
       status: "error",
-      details: { message },
+      details: { message: redactDependencyDetail(message) },
     };
   }
+}
+
+function redactDependencyDetail(value: string): string {
+  return value
+    .replace(
+      /([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]+):([^\s/@]+)@/giu,
+      "$1[redacted]@",
+    )
+    .replace(
+      /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu,
+      "$1=[redacted]",
+    );
 }

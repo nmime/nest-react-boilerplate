@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { HealthIndicatorResult } from "@app/common/health";
 import { InjectRedis } from "./decorator";
 import type { RedisClientLike } from "./type";
 
@@ -8,11 +9,7 @@ export class RedisHealthIndicator {
 
   constructor(@InjectRedis() private readonly redis: RedisClientLike) {}
 
-  async check(): Promise<{
-    name: string;
-    status: "ok" | "error";
-    details?: Record<string, unknown>;
-  }> {
+  async check(): Promise<HealthIndicatorResult> {
     try {
       await this.redis.ping();
       return { name: this.name, status: "ok" };
@@ -20,10 +17,31 @@ export class RedisHealthIndicator {
       return {
         name: this.name,
         status: "error",
-        details: {
-          message: error instanceof Error ? error.message : String(error),
-        },
+        details: safeErrorDetails(error),
       };
     }
   }
+}
+
+function safeErrorDetails(error: unknown): Record<string, unknown> {
+  if (error instanceof Error) {
+    return {
+      message: redactDependencyDetail(error.message),
+      type: error.name,
+    };
+  }
+
+  return { message: redactDependencyDetail(String(error)) };
+}
+
+function redactDependencyDetail(value: string): string {
+  return value
+    .replace(
+      /([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]+):([^\s/@]+)@/giu,
+      "$1[redacted]@",
+    )
+    .replace(
+      /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu,
+      "$1=[redacted]",
+    );
 }

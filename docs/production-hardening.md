@@ -110,6 +110,9 @@ Before deploying, provide values for:
 7. Treat raw `X-Forwarded-For` as untrusted input; let the framework resolve `request.ip` only after `TRUST_PROXY` is explicitly configured.
 8. Run CI gates: format, lint, typecheck, unit/component/e2e tests, coverage, and dependency audit.
 
-## Frontend auth bootstrap migration
+## Frontend auth bootstrap
 
-Legacy `?token=` / `?admin_token=` bearer-token URL bootstrap is accepted only in development/test modes and the parameters are scrubbed from browser history. Production builds ignore URL bearer tokens to avoid leaking credentials through logs, referrers, browser history, and copied links. Migrate production entry points to a server-side session, OAuth/OIDC authorization-code flow, or a one-time code exchange endpoint that sets an HTTP-only session cookie before redirecting back to the frontend.
+Do not pass bearer tokens in frontend URLs. Production entry points should use a
+server-side session, OAuth/OIDC authorization-code flow, or a one-time code
+exchange endpoint that sets an HTTP-only session cookie before redirecting back
+to the frontend.

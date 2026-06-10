@@ -11,10 +11,6 @@ const ignoredSuffixes = [
   ".stories.ts",
   ".stories.tsx",
 ];
-const deprecatedCompatibilityFiles = new Set([
-  "libs/frontend/ui/lib/src/lib/api/api-client.ts",
-  "libs/frontend/ui/lib/src/lib/config/frontend-env.ts",
-]);
 const forbiddenProductionPatterns = [
   /@app\/api-client/u,
   /@app\/api-contracts/u,
@@ -49,15 +45,13 @@ describe("shared UI FSD boundary", () => {
           pattern.test(content),
         );
 
-        return isForbidden && !deprecatedCompatibilityFiles.has(relativePath)
-          ? [relativePath]
-          : [];
+        return isForbidden ? [relativePath] : [];
       });
 
     expect(offenders).toEqual([]);
   });
 
-  it("does not publicly re-export the API-support compatibility bridge", () => {
+  it("does not publicly re-export API-support helpers", () => {
     const publicBarrel = readFileSync(join(uiSourceRoot, "index.ts"), "utf8");
 
     expect(publicBarrel).not.toContain("./lib/api/api-client");

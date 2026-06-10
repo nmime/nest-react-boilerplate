@@ -17,8 +17,6 @@ export * from "./lib/layout/product-shell";
 
 export * from "./lib/i18n/i18n-provider";
 
-// Deprecated compatibility bridge; migrate API env helpers to the API support package.
-export * from "./lib/config/frontend-env";
 export * from "./lib/query/query-provider";
 
 export * from "./lib/state";

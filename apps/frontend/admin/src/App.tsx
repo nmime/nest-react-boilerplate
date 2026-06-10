@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { configureApiLocale } from "@app/api-client/support";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   adminApi,
@@ -41,9 +42,7 @@ import { TenantRoadmapPage } from "./pages/tenants";
 import { UsersPage } from "./pages/users";
 import {
   fallbackTranslate,
-  getInitialBearerToken,
   normalizeAdminPath,
-  scrubLegacyAuthTokenParams,
   type AdminProfileState,
   type Translate,
 } from "./shared";
@@ -177,6 +176,18 @@ const getProfileState = (
         status: "forbidden",
         reason: principalMissingMessage,
       };
+};
+
+const ApiClientLocaleBridge = ({
+  children,
+}: Readonly<{ children: ReactElement }>) => {
+  const { locale } = useI18n();
+
+  useEffect(() => {
+    configureApiLocale({ locale });
+  }, [locale]);
+
+  return children;
 };
 
 const AdminWorkspace = ({
@@ -345,31 +356,25 @@ const AdminRoot = ({
       userLocale={userLocale}
       userTheme={userTheme}
     >
-      <AdminWorkspace
-        applyUserLocale={applyUserLocale}
-        applyUserTheme={applyUserTheme}
-        bearerToken={bearerToken}
-      />
+      <ApiClientLocaleBridge>
+        <AdminWorkspace
+          applyUserLocale={applyUserLocale}
+          applyUserTheme={applyUserTheme}
+          bearerToken={bearerToken}
+        />
+      </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );
 };
 
-const App = () => {
-  const [initialBearerToken] = useState(getInitialBearerToken);
-
-  useEffect(() => {
-    scrubLegacyAuthTokenParams();
-  }, []);
-
-  return (
-    <FrontendStateProvider initialBearerToken={initialBearerToken ?? ""}>
-      <FrontendQueryProvider>
-        <UiErrorBoundary>
-          <AdminRoot initialBearerToken={initialBearerToken} />
-        </UiErrorBoundary>
-      </FrontendQueryProvider>
-    </FrontendStateProvider>
-  );
-};
+const App = () => (
+  <FrontendStateProvider>
+    <FrontendQueryProvider>
+      <UiErrorBoundary>
+        <AdminRoot initialBearerToken={null} />
+      </UiErrorBoundary>
+    </FrontendQueryProvider>
+  </FrontendStateProvider>
+);
 
 export default App;

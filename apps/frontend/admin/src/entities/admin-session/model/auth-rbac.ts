@@ -4,7 +4,10 @@ import {
   type AdminAccessPolicy,
   type AdminPrincipalClaims,
 } from "@app/frontend/feature-admin-shared";
-import { getRequiredApiBaseUrl, type FrontendEnv } from "@app/frontend-ui";
+import {
+  getRequiredApiBaseUrl,
+  type FrontendEnv,
+} from "@app/frontend-api-support";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 

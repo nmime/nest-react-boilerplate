@@ -168,29 +168,6 @@ describe("App", () => {
     expect(getAuthApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
   });
 
-  it("scrubs legacy token query params after seeding bearer token", async () => {
-    const fetchImpl = mockFetch(true, profilePayload);
-    vi.stubGlobal("fetch", fetchImpl);
-    const replaceState = vi
-      .spyOn(window.history, "replaceState")
-      .mockImplementation(() => undefined);
-    window.history.pushState(
-      null,
-      "",
-      "/admin?token=legacy-token&admin_token=admin-token&keep=1#top",
-    );
-
-    render(<App />);
-
-    await waitFor(() => expect(replaceState).toHaveBeenCalled());
-    expect(replaceState).toHaveBeenCalledWith(null, "", "/admin?keep=1#top");
-    await waitFor(() =>
-      expect(getRequest(fetchImpl).headers.get("authorization")).toBe(
-        "Bearer legacy-token",
-      ),
-    );
-  });
-
   it("applies auth locale/theme before profile locale/theme and persists user choices", async () => {
     const fetchImpl = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : (input as Request).url;

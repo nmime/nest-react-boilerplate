@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getApiLocale } from "../api/api-client";
 import { ThemeStorageKey } from "./ui-store";
 import {
   AuthShellStore,
@@ -85,7 +84,6 @@ describe("frontend auth and locale state", () => {
     expect(window.localStorage.getItem(LocaleStorageKey)).toBe("ru");
     expect(document.cookie).toContain("locale=ru");
     expect(document.documentElement.lang).toBe("ru");
-    expect(getApiLocale()).toBe("ru");
   });
 
   it("prioritizes query, storage, cookie, then navigator locale detection", () => {
@@ -123,7 +121,6 @@ describe("frontend auth and locale state", () => {
     expect(store.authShell.isAuthenticated).toBe(true);
     expect(store.locale.locale).toBe("ru");
     expect(store.ui.theme).toBe("dark");
-    expect(getApiLocale()).toBe("ru");
     expect(document.documentElement.lang).toBe("ru");
     expect(document.documentElement.dataset["themePreference"]).toBe("dark");
     expect(document.documentElement.dataset["theme"]).toBe("dark");

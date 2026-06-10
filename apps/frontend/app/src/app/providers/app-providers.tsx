@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { observer } from "mobx-react-lite";
 import { configureApiLocale } from "@app/api-client/support";
 import {
@@ -7,10 +7,6 @@ import {
   FrontendStateProvider,
   useI18n,
 } from "@app/frontend-ui";
-import {
-  readInitialBearerToken,
-  scrubLegacyAuthTokenParams,
-} from "../../entities/session";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { UiErrorBoundary } from "../../shared/ui";
 import { UserRouter } from "../router/user-router";
@@ -47,14 +43,8 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
 });
 
 export function AppProviders() {
-  const [initialBearerToken] = useState(readInitialBearerToken);
-
-  useEffect(() => {
-    scrubLegacyAuthTokenParams();
-  }, []);
-
   return (
-    <FrontendStateProvider initialBearerToken={initialBearerToken}>
+    <FrontendStateProvider>
       <FrontendQueryProvider>
         <UiErrorBoundary>
           <UserAppRouterProviders />

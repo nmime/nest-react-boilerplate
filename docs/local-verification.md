@@ -4,7 +4,7 @@ GitHub-hosted Actions may be unavailable for this repository/account. When that 
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node 26.1.0 and pnpm 10.32.1:
+Run the full gate from a clean `main` checkout with Node.js `>=26 <27` and pnpm `11.5.2`:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -41,7 +41,7 @@ When validating auth/session and preference-token fix-forward work, use the same
 
 ```bash
 nvm use 26.1.0
-pnpm --version # 10.32.1
+pnpm --version # 11.5.2
 pnpm install --frozen-lockfile
 pnpm run check:fast
 pnpm exec nx run @app/common/bootstrap:test

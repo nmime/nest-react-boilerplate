@@ -72,7 +72,6 @@ Backend feature libraries use `libs/backend/feature/...` paths and singular `@ap
 
 - Feature main: `@app/feature-auth-main`, `@app/feature-user-main`, `@app/feature-admin-main`.
 - Feature shared: `@app/feature-auth-shared`, `@app/feature-user-shared`, `@app/frontend/feature-admin-shared` (frontend admin contracts), and `@app/backend/feature-admin-shared` (backend admin RBAC/permission logic).
-- Legacy admin compatibility alias: `@app/feature-admin-shared` currently points at the frontend-safe admin contract only. Do not use it for new imports; prefer `@app/frontend/feature-admin-shared` or `@app/backend/feature-admin-shared`.
 - Data access: `@app/postgres-main`, `@app/postgres-main-auth`.
 - Test utilities: `@app/common-component-test`, `@app/feature-auth-test`.
 - Frontend API support: `@app/frontend-api-support`.

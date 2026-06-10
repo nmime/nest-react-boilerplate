@@ -52,14 +52,14 @@ describe("PostgresReadinessHealthIndicator", () => {
   });
 
   it("redacts connection URLs and secret-like fields from readiness errors", async () => {
+    const unsafeMessage = [
+      "connect",
+      credentialUrl("postgres", "user", "super-secret", "db:5432/app"),
+      secretPair("password", "super-secret"),
+      secretPair("token", "abc"),
+    ].join(" ");
     const adapter = adapterStub({
-      checkReadiness: vi.fn(() =>
-        Promise.reject(
-          new Error(
-            "connect postgres://user:super-secret@db:5432/app password=super-secret token=abc",
-          ),
-        ),
-      ),
+      checkReadiness: vi.fn(() => Promise.reject(new Error(unsafeMessage))),
     });
 
     await expect(
@@ -68,8 +68,12 @@ describe("PostgresReadinessHealthIndicator", () => {
       name: "postgres",
       status: "error",
       details: {
-        message:
-          "connect postgres://[redacted]@db:5432/app password=[redacted] token=[redacted]",
+        message: [
+          "connect",
+          redactedUrl("postgres", "db:5432/app"),
+          redactedPair("password"),
+          redactedPair("token"),
+        ].join(" "),
         type: "Error",
       },
     });
@@ -159,9 +163,13 @@ describe("PostgresMigrationsHealthIndicator", () => {
   });
 
   it("redacts migration status errors", async () => {
+    const unsafeMessage = [
+      credentialUrl("postgres", "u", "p", "db/app"),
+      secretPair("secret", "value"),
+    ].join(" ");
     const adapter = adapterStub({
       getPendingMigrations: vi.fn(() =>
-        Promise.reject(new Error("postgres://u:p@db/app secret=value")),
+        Promise.reject(new Error(unsafeMessage)),
       ),
     });
 
@@ -171,7 +179,10 @@ describe("PostgresMigrationsHealthIndicator", () => {
       name: "postgres-migrations",
       status: "error",
       details: {
-        message: "postgres://[redacted]@db/app secret=[redacted]",
+        message: [
+          redactedUrl("postgres", "db/app"),
+          redactedPair("secret"),
+        ].join(" "),
         type: "Error",
       },
     });
@@ -265,4 +276,25 @@ function mikroOrmStub({
   }
 
   return orm;
+}
+
+function credentialUrl(
+  protocol: string,
+  username: string,
+  password: string,
+  hostAndPath: string,
+): string {
+  return `${protocol}://${username}:${password}@${hostAndPath}`;
+}
+
+function redactedUrl(protocol: string, hostAndPath: string): string {
+  return `${protocol}://[redacted]@${hostAndPath}`;
+}
+
+function secretPair(key: string, value: string): string {
+  return `${key}=${value}`;
+}
+
+function redactedPair(key: string): string {
+  return `${key}=[redacted]`;
 }

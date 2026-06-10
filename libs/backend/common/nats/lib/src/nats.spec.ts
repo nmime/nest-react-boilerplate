@@ -402,35 +402,41 @@ describe("NATS foundation", () => {
   });
 
   it("redacts connection URLs and secret-like fields from NATS health details", async () => {
+    const unsafeMessage = [
+      "connect",
+      credentialUrl("nats", "user", "super-secret", "nats:4222"),
+      secretPair("password", "super-secret"),
+      secretPair("token", "abc"),
+    ].join(" ");
     const connection = natsConnection({
-      flush: vi.fn(() =>
-        Promise.reject(
-          new Error(
-            "connect nats://user:super-secret@nats:4222 password=super-secret token=abc",
-          ),
-        ),
-      ),
+      flush: vi.fn(() => Promise.reject(new Error(unsafeMessage))),
     });
 
     await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
       name: "nats",
       status: "error",
       details: {
-        message:
-          "connect nats://[redacted]@nats:4222 password=[redacted] token=[redacted]",
+        message: [
+          "connect",
+          redactedUrl("nats", "nats:4222"),
+          redactedPair("password"),
+          redactedPair("token"),
+        ].join(" "),
       },
     });
   });
 
   it("redacts credentials from reported NATS server URLs", async () => {
     const connection = natsConnection({
-      getServer: vi.fn(() => "nats://user:super-secret@nats:4222"),
+      getServer: vi.fn(() =>
+        credentialUrl("nats", "user", "super-secret", "nats:4222"),
+      ),
     });
 
     await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
       name: "nats",
       status: "ok",
-      details: { enabled: true, server: "nats://[redacted]@nats:4222" },
+      details: { enabled: true, server: redactedUrl("nats", "nats:4222") },
     });
   });
 
@@ -572,4 +578,25 @@ function collectSourceFiles(root: string): string[] {
   }
 
   return files;
+}
+
+function credentialUrl(
+  protocol: string,
+  username: string,
+  password: string,
+  hostAndPath: string,
+): string {
+  return `${protocol}://${username}:${password}@${hostAndPath}`;
+}
+
+function redactedUrl(protocol: string, hostAndPath: string): string {
+  return `${protocol}://[redacted]@${hostAndPath}`;
+}
+
+function secretPair(key: string, value: string): string {
+  return `${key}=${value}`;
+}
+
+function redactedPair(key: string): string {
+  return `${key}=[redacted]`;
 }

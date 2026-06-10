@@ -33,9 +33,3 @@ export function randomLocalizedText(
 }
 
 export const randomIntlText = randomLocalizedText;
-
-/**
- * @deprecated Use randomIntlText or randomLocalizedText. The intl package owns
- * locale-aware formatting/text selection, not i18n catalog lookup.
- */
-export const randomI18nText = randomIntlText;

@@ -1,7 +1,7 @@
 # Nest React Boilerplate
 
 [![Node.js](https://img.shields.io/badge/node-26-brightgreen)](https://nodejs.org)
-[![pnpm](https://img.shields.io/badge/pnpm-10.32.1-orange)](https://pnpm.io)
+[![pnpm](https://img.shields.io/badge/pnpm-11.5.2-orange)](https://pnpm.io)
 [![Nx](https://img.shields.io/badge/Nx-22-blue)](https://nx.dev)
 
 A production-oriented Nx monorepo starter for teams building React frontends and NestJS APIs on PostgreSQL. It includes three React apps, three NestJS APIs, shared libraries, OpenAPI contract generation, database migrations, Docker Compose stacks, and GitHub Actions quality gates.
@@ -27,19 +27,19 @@ Dockerfile        multi-stage backend/frontend/migrator image build
 
 ## Prerequisites
 
-| Tool           | Version / note                                                               |
-| -------------- | ---------------------------------------------------------------------------- |
-| Node.js        | `26.1.0` from `.nvmrc`                                                       |
-| pnpm           | `10.32.1` from `packageManager`; use Corepack                                |
-| Docker Compose | Required for local PostgreSQL, Docker smoke tests, and full-stack containers |
-| Git            | Required for normal contribution flow                                        |
+| Tool           | Version / note                                                                              |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| Node.js        | `>=26 <27` (the package engine is authoritative; `.nvmrc` provides the current local patch) |
+| pnpm           | `11.5.2` from `packageManager`; use Corepack                                                |
+| Docker Compose | Required for local PostgreSQL, Docker smoke tests, and full-stack containers                |
+| Git            | Required for normal contribution flow                                                       |
 
 Recommended setup:
 
 ```bash
 nvm use              # or install the Node version from .nvmrc
 corepack enable
-corepack prepare pnpm@10.32.1 --activate
+corepack prepare pnpm@11.5.2 --activate
 pnpm install --frozen-lockfile
 ```
 
@@ -195,13 +195,13 @@ GitHub Actions are configured for pull requests to `main`, pushes to `main`, and
 - Static/browser e2e coverage, Docker smoke stack, runtime QA/ops gates, and full-stack Playwright e2e.
 - CodeQL, dependency review, quality preset sweeps, release image builds, SBOM/signing, and image scanning.
 
-Run `pnpm run check:fast` before opening a PR and add the targeted commands above for the surfaces you changed. CI uses the Node version from `.nvmrc` and pnpm `10.32.1`.
+Run `pnpm run check:fast` before opening a PR and add the targeted commands above for the surfaces you changed. CI uses the repository Node engine (`>=26 <27`) through `.nvmrc`/workflow setup and pnpm `11.5.2`.
 
 ## Troubleshooting
 
 | Symptom                                                      | Checks / fix                                                                                                                                              |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm install --frozen-lockfile` fails because pnpm is wrong | Run `corepack enable && corepack prepare pnpm@10.32.1 --activate`, then retry.                                                                            |
+| `pnpm install --frozen-lockfile` fails because pnpm is wrong | Run `corepack enable && corepack prepare pnpm@11.5.2 --activate`, then retry.                                                                             |
 | PostgreSQL port is already in use                            | Set `POSTGRES_PORT` in `.env` or stop the conflicting local service, then rerun `pnpm run dev:db`.                                                        |
 | Migrations cannot connect                                    | Confirm `docker compose ps postgres`, verify `DATABASE_URL` or `POSTGRES_*`, then run `pnpm run db:migrate` again.                                        |
 | Browser calls are blocked by CORS                            | Add the exact frontend origin to `CORS_ORIGINS`; do not use wildcards for production.                                                                     |

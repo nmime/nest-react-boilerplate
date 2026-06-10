@@ -7,6 +7,7 @@ import {
   RedisLockUnavailableError,
   RedisRedlockService,
 } from "./redis-redlock.service";
+import { RedisHealthIndicator } from "./redis.health";
 import {
   buildRateLimitKey,
   RedisRateLimitService,
@@ -134,6 +135,42 @@ describe("RedisConfigService", () => {
       sentinelGroupIdentifier: "mymaster",
       keyPrefix: "app:",
       lazyConnect: false,
+    });
+  });
+});
+
+describe("RedisHealthIndicator", () => {
+  it("checks Redis health with ping", async () => {
+    const redis = new InMemoryRedisClient();
+    const health = new RedisHealthIndicator(redis);
+
+    await expect(health.check()).resolves.toEqual({
+      name: "redis",
+      status: "ok",
+    });
+  });
+
+  it("redacts connection URLs and secret-like fields from Redis health errors", async () => {
+    const redis = {
+      ...new InMemoryRedisClient(),
+      ping: vi.fn(() =>
+        Promise.reject(
+          new Error(
+            "connect redis://user:super-secret@redis:6379/0 password=super-secret token=abc",
+          ),
+        ),
+      ),
+    };
+    const health = new RedisHealthIndicator(redis);
+
+    await expect(health.check()).resolves.toEqual({
+      name: "redis",
+      status: "error",
+      details: {
+        message:
+          "connect redis://[redacted]@redis:6379/0 password=[redacted] token=[redacted]",
+        type: "Error",
+      },
     });
   });
 });

@@ -401,6 +401,39 @@ describe("NATS foundation", () => {
     });
   });
 
+  it("redacts connection URLs and secret-like fields from NATS health details", async () => {
+    const connection = natsConnection({
+      flush: vi.fn(() =>
+        Promise.reject(
+          new Error(
+            "connect nats://user:super-secret@nats:4222 password=super-secret token=abc",
+          ),
+        ),
+      ),
+    });
+
+    await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
+      name: "nats",
+      status: "error",
+      details: {
+        message:
+          "connect nats://[redacted]@nats:4222 password=[redacted] token=[redacted]",
+      },
+    });
+  });
+
+  it("redacts credentials from reported NATS server URLs", async () => {
+    const connection = natsConnection({
+      getServer: vi.fn(() => "nats://user:super-secret@nats:4222"),
+    });
+
+    await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
+      name: "nats",
+      status: "ok",
+      details: { enabled: true, server: "nats://[redacted]@nats:4222" },
+    });
+  });
+
   it("drains NATS connections during shutdown", async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const close = vi.fn(() => Promise.resolve(undefined));

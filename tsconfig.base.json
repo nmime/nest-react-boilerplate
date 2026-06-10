@@ -56,9 +56,6 @@
       "@app/common-component-test": [
         "libs/backend/common/component-test/lib/src/index.ts"
       ],
-      "@app/feature-admin-shared": [
-        "libs/frontend/feature/admin/shared/lib/src/index.ts"
-      ],
       "@app/feature-admin-main": [
         "libs/backend/feature/admin/main/lib/src/index.ts"
       ],

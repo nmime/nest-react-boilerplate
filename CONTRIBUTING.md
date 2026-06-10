@@ -29,7 +29,7 @@ cp .env.example .env
 - Put deployable apps under `apps/**`.
 - Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/**`, `libs/backend/postgres/**`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in `i18n/<locale>/common.json`.
 - Use Nx project names in commands.
-- Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend/feature-admin-shared` and `@app/backend/feature-admin-shared` for new admin shared imports. The legacy `@app/feature-admin-shared` alias is compatibility-only for the frontend-safe contract.
+- Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend/feature-admin-shared` and `@app/backend/feature-admin-shared` for admin shared imports.
 - Add public developer commands to `package.json` and [Command matrix](docs/command-matrix.md).
 - Add local automation under `packages/tooling/src` and expose supported commands through `packages/tooling/bin/repo-tooling.mjs`.
 

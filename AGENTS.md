@@ -26,7 +26,6 @@ This is the canonical instruction source for AI coding agents working in this re
   - Frontend admin shared lives at `libs/frontend/feature/admin/shared/lib`, uses alias `@app/frontend/feature-admin-shared`, and carries `platform:frontend`, `type:feature-shared`, `scope:admin`, and `fsd:layer:shared` tags.
   - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses alias `@app/backend/feature-admin-shared`, and carries `platform:backend`, `type:feature-shared`, and `scope:admin` tags.
   - Respect platform boundaries: frontend code must not import backend admin libraries, and backend code must not import frontend admin libraries.
-  - The legacy `@app/feature-admin-shared` alias is compatibility-only for the frontend-safe contract. Do not use it for new imports or documentation examples.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do not rename, remove, or repoint aliases unless the task explicitly includes an alias migration and all consumers/docs are updated.
 
 ## Architecture and docs to follow

@@ -4,14 +4,14 @@ Use this guide with the root `README.md`, [Command matrix](docs/command-matrix.m
 
 ## Prerequisites
 
-- Node.js `26.1.0` from `.nvmrc`.
-- pnpm `10.32.1` through Corepack.
+- Node.js `>=26 <27`; use `.nvmrc` for the current local patch version.
+- pnpm `11.5.2` through Corepack.
 - Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@10.32.1 --activate
+corepack prepare pnpm@11.5.2 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 ```
@@ -27,9 +27,9 @@ cp .env.example .env
 ## Workspace rules
 
 - Put deployable apps under `apps/**`.
-- Put shared libraries under `libs/**`.
+- Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/**`, `libs/backend/postgres/**`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in `i18n/<locale>/common.json`.
 - Use Nx project names in commands.
-- Keep cross-project imports on the configured `@app/*` path aliases.
+- Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend/feature-admin-shared` and `@app/backend/feature-admin-shared` for new admin shared imports. The legacy `@app/feature-admin-shared` alias is compatibility-only for the frontend-safe contract.
 - Add public developer commands to `package.json` and [Command matrix](docs/command-matrix.md).
 - Add local automation under `packages/tooling/src` and expose supported commands through `packages/tooling/bin/repo-tooling.mjs`.
 

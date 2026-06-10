@@ -28,7 +28,7 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `libs/frontend/ui` / design-system Storybook
 - [ ] `libs/backend/common/*`
 - [ ] `libs/common/*` shared cross-platform libraries
-- [ ] `libs/backend/feature/*` / `libs/feature/*`
+- [ ] `libs/backend/feature/*`
 - [ ] `libs/backend/postgres/*`
 - [ ] Tooling / CI / docs
 

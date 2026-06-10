@@ -50,11 +50,13 @@ describe("@app/common/intl", () => {
     );
 
     expect(indexSource).not.toContain("@app/common/i18n");
+    expect(indexSource).not.toContain("decorator/" + "i18n");
+    expect(textHelperSource).not.toContain("random" + "I18nText");
     expect(textHelperSource).not.toContain("translate(");
     expect(textHelperSource).not.toContain("translations");
   });
 
-  it("keeps new intl text helper aliases stable", () => {
+  it("keeps intl text helper export stable", () => {
     expect(randomIntlText).toBe(randomLocalizedText);
     expect(randomIntlText([], "en")).toBe("");
   });

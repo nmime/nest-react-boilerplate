@@ -1,5 +1,5 @@
 import type { authApi } from "@app/api-client";
-import { type FrontendEnv } from "@app/frontend-ui";
+import { type FrontendEnv } from "@app/frontend-api-support";
 import {
   getAdminApiBaseUrl,
   getAuthApiBaseUrl,

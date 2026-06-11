@@ -1,0 +1,21 @@
+{
+  "name": "user-app",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "@app/frontend-ui": "workspace:*",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@nx/react": "22.7.5",
+    "@nx/vite": "22.7.5",
+    "@vitejs/plugin-react": "6.0.2",
+    "vite": "8.0.16"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  }
+}

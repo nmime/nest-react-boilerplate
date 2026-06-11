@@ -1,0 +1,47 @@
+{
+  "name": "admin-app",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/admin/src",
+  "projectType": "application",
+  "tags": [
+    "platform:frontend",
+    "type:admin-app",
+    "type:frontend-app",
+    "scope:admin",
+    "type:app",
+    "fsd:layer:app"
+  ],
+  "// targets": "to see all targets run: nx show project admin-app --web",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/admin",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/frontend/admin"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin pnpm exec vite build --config apps/frontend/admin/vite.config.mts && pnpm --filter @repo/tooling tooling testing frontend-browser-e2e-coverage --dist dist/apps/frontend/admin --app-name admin-app --contains \"Operate the product platform with a fail-closed admin experience.\" --coverage-dir coverage/e2e/apps/frontend/admin"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/admin"]
+    }
+  }
+}

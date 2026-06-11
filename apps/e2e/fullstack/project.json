@@ -1,0 +1,28 @@
+{
+  "name": "fullstack-e2e",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/e2e/fullstack/src",
+  "projectType": "application",
+  "tags": ["platform:e2e", "type:e2e", "scope:fullstack"],
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "playwright test --config apps/e2e/fullstack/playwright.config.ts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["@playwright/test"]
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/coverage/e2e/fullstack",
+        "{workspaceRoot}/playwright-report/fullstack",
+        "{workspaceRoot}/test-results/fullstack"
+      ]
+    }
+  }
+}

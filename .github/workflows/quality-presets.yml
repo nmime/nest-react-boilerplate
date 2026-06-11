@@ -1,0 +1,70 @@
+name: Quality presets
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NX_DAEMON: "false"
+  NODE_VERSION_FILE: .nvmrc
+  PNPM_VERSION: 11.5.2
+
+jobs:
+  presets:
+    name: Modern QA presets
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
+      PLAYWRIGHT_AUTO_INSTALL: "1"
+      A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
+      PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+      QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+      QA_CHAOS_URLS: http://127.0.0.1:3002/health
+      QA_CHAOS_SERVICE: user-app-api
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser matrix
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Install PostgreSQL client tools
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Start local runtime stack
+        run: docker compose -f docker/docker-compose.yml up -d --build
+      - name: Run quality presets
+        run: pnpm run quality:presets
+      - name: Stop local runtime stack
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+      - name: Upload test result artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: quality-preset-results
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: ignore

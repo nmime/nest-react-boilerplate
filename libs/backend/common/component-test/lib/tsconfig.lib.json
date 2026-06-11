@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../dist/out-tsc/libs/backend/common/component-test",
+    "types": ["node"],
+    "declaration": true
+  },
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.component-spec.ts"
+  ],
+  "include": ["src/**/*.ts"]
+}

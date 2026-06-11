@@ -1,0 +1,35 @@
+{
+  "name": "@app/common/i18n",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/i18n/lib/src",
+  "projectType": "library",
+  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/common/i18n",
+        "main": "libs/common/i18n/lib/src/index.ts",
+        "tsConfig": "libs/common/i18n/lib/tsconfig.lib.json",
+        "assets": ["i18n/**/*.json"]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/common/i18n/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/common/i18n"]
+    }
+  }
+}

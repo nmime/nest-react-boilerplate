@@ -1,0 +1,54 @@
+<script>
+  (() => {
+    const ensureFallbackLandmark = () => {
+      if (document.getElementById("storybook-a11y-fallback")) {
+        return;
+      }
+
+      const landmark = document.createElement("section");
+      landmark.id = "storybook-a11y-fallback";
+      landmark.setAttribute("aria-label", "Storybook accessibility fallback");
+      landmark.setAttribute(
+        "style",
+        "position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;",
+      );
+
+      const heading = document.createElement("h1");
+      heading.textContent = "Storybook accessibility fallback";
+      landmark.append(heading);
+      document.body.prepend(landmark);
+    };
+
+    const updateResizeHandles = () => {
+      ensureFallbackLandmark();
+
+      for (const handle of document.querySelectorAll(
+        '[role="separator"][aria-label$="resize handle"]',
+      )) {
+        if (handle.closest("main,nav,header,footer,aside,[role='main']")) {
+          continue;
+        }
+
+        handle.setAttribute("role", "presentation");
+        handle.setAttribute("aria-hidden", "true");
+        handle.setAttribute("tabindex", "-1");
+      }
+    };
+
+    if (document.body) {
+      updateResizeHandles();
+    } else {
+      document.addEventListener("DOMContentLoaded", updateResizeHandles, {
+        once: true,
+      });
+    }
+
+    new MutationObserver(updateResizeHandles).observe(
+      document.documentElement,
+      {
+        childList: true,
+        subtree: true,
+      },
+    );
+  })();
+</script>

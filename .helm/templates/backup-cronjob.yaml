@@ -1,0 +1,122 @@
+{{- if .Values.backups.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-postgres-backup
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres-backup
+spec:
+  schedule: {{ .Values.backups.schedule | quote }}
+  {{- if .Values.backups.timeZone }}
+  timeZone: {{ .Values.backups.timeZone | quote }}
+  {{- end }}
+  concurrencyPolicy: {{ default "Forbid" .Values.backups.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ default 3 .Values.backups.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ default 3 .Values.backups.failedJobsHistoryLimit }}
+  startingDeadlineSeconds: {{ default 900 .Values.backups.startingDeadlineSeconds }}
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ default 1800 .Values.backups.activeDeadlineSeconds }}
+      {{- if .Values.backups.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ .Values.backups.ttlSecondsAfterFinished }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "boilerplate.labels" . | nindent 12 }}
+            app.kubernetes.io/component: postgres-backup
+        spec:
+          restartPolicy: Never
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backups.podSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: postgres-backup
+              image: {{ printf "%s:%s" .Values.backups.image.repository .Values.backups.image.tag | quote }}
+              imagePullPolicy: {{ default "IfNotPresent" .Values.backups.image.pullPolicy }}
+              {{- with .Values.backups.securityContext }}
+              securityContext:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  set -eu
+                  timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+                  backup_dir="${BACKUP_PATH:-/backups}"
+                  mkdir -p "${backup_dir}"
+                  backup_file="${backup_dir}/postgres-${timestamp}.dump"
+                  if [ -n "${PRE_BACKUP_HOOK:-}" ]; then eval "${PRE_BACKUP_HOOK}"; fi
+                  pg_dump --format=custom --no-owner --no-acl --file "${backup_file}" "${DATABASE_URL}"
+                  BACKUP_FILE="${backup_file}"
+                  export BACKUP_FILE
+                  if [ "${BACKUP_ENCRYPTION_ENABLED:-false}" = "true" ]; then
+                    if [ -z "${BACKUP_ENCRYPTION_COMMAND:-}" ]; then
+                      echo "BACKUP_ENCRYPTION_ENABLED=true but BACKUP_ENCRYPTION_COMMAND is empty" >&2
+                      exit 1
+                    fi
+                    eval "${BACKUP_ENCRYPTION_COMMAND}"
+                  fi
+                  if [ -n "${BACKUP_UPLOAD_COMMAND:-}" ]; then eval "${BACKUP_UPLOAD_COMMAND}"; fi
+                  if [ -n "${BACKUP_RETENTION_COMMAND:-}" ]; then
+                    eval "${BACKUP_RETENTION_COMMAND}"
+                  else
+                    keep="${BACKUP_RETENTION_KEEP_LAST:-168}"
+                    find "${backup_dir}" -maxdepth 1 -type f -name 'postgres-*' | sort -r | awk "NR > ${keep}" | while IFS= read -r old_backup; do rm -f "${old_backup}"; done
+                  fi
+                  if [ -n "${POST_BACKUP_HOOK:-}" ]; then eval "${POST_BACKUP_HOOK}"; fi
+              env:
+                - name: BACKUP_PATH
+                  value: {{ default "/backups" .Values.backups.destination.path | quote }}
+                - name: BACKUP_BUCKET
+                  value: {{ default "" .Values.backups.destination.objectStore.bucket | quote }}
+                - name: BACKUP_PREFIX
+                  value: {{ default "nest-react-boilerplate/postgres" .Values.backups.destination.objectStore.prefix | quote }}
+                - name: BACKUP_ENCRYPTION_ENABLED
+                  value: {{ ternary "true" "false" .Values.backups.encryption.enabled | quote }}
+                - name: BACKUP_ENCRYPTION_COMMAND
+                  value: {{ default "" .Values.backups.encryption.command | quote }}
+                - name: BACKUP_RETENTION_KEEP_LAST
+                  value: {{ default 168 .Values.backups.retention.keepLast | quote }}
+                - name: BACKUP_RETENTION_COMMAND
+                  value: {{ default "" .Values.backups.retention.command | quote }}
+                - name: PRE_BACKUP_HOOK
+                  value: {{ default "" .Values.backups.hooks.preBackup | quote }}
+                - name: BACKUP_UPLOAD_COMMAND
+                  value: {{ default "" .Values.backups.hooks.upload | quote }}
+                - name: POST_BACKUP_HOOK
+                  value: {{ default "" .Values.backups.hooks.postBackup | quote }}
+              envFrom:
+                - configMapRef:
+                    name: {{ include "boilerplate.fullname" . }}-config
+                - secretRef:
+                    name: {{ include "boilerplate.secretName" . }}
+                {{- if and .Values.backups.destination.objectStore.enabled .Values.backups.destination.objectStore.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backups.destination.objectStore.existingSecret | quote }}
+                {{- end }}
+                {{- if and .Values.backups.encryption.enabled .Values.backups.encryption.existingSecret }}
+                - secretRef:
+                    name: {{ .Values.backups.encryption.existingSecret | quote }}
+                {{- end }}
+              volumeMounts:
+                - name: backup-data
+                  mountPath: {{ default "/backups" .Values.backups.destination.path | quote }}
+              resources:
+                {{- toYaml .Values.backups.resources | nindent 16 }}
+          volumes:
+            - name: backup-data
+              {{- if .Values.backups.destination.pvc.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ required "backups.destination.pvc.claimName is required when backups.destination.pvc.enabled=true" .Values.backups.destination.pvc.claimName | quote }}
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+{{- end }}

@@ -1,0 +1,14 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.grafanaDashboard.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-grafana-dashboard
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.grafanaDashboard.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  nest-react-boilerplate-dashboard.json: |-
+{{ .Files.Get "dashboards/nest-react-boilerplate.json" | indent 4 }}
+{{- end }}

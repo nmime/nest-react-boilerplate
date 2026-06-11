@@ -1,0 +1,15 @@
+node_modules
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/coverage
+**/.nx
+**/playwright-report
+**/test-results
+**/*.log
+**/*.tsbuildinfo
+.git
+.gitignore
+.serena
+.agents

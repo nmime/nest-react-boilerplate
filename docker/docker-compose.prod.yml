@@ -1,0 +1,263 @@
+name: nest-react-boilerplate
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  PORT: 3000
+  CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
+  AUTH_PERSISTENCE: postgres
+  AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.example.com}
+  AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
+  AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  AUTH_TOKEN_CLEANUP_ENABLED: ${AUTH_TOKEN_CLEANUP_ENABLED:-true}
+  AUTH_TOKEN_CLEANUP_INTERVAL_MS: ${AUTH_TOKEN_CLEANUP_INTERVAL_MS:-3600000}
+  AUTH_TOKEN_CLEANUP_RUN_ON_START: ${AUTH_TOKEN_CLEANUP_RUN_ON_START:-true}
+  ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
+  AUTH_OAUTH_ENABLED: ${AUTH_OAUTH_ENABLED:-false}
+  AUTH_OAUTH_ISSUER_URL: ${AUTH_OAUTH_ISSUER_URL:-}
+  AUTH_OAUTH_CLIENT_ID: ${AUTH_OAUTH_CLIENT_ID:-}
+  AUTH_OAUTH_CLIENT_SECRET: ${AUTH_OAUTH_CLIENT_SECRET:-}
+  AUTH_OAUTH_REDIRECT_URI: ${AUTH_OAUTH_REDIRECT_URI:-}
+  RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+  RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}
+  RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+  RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}
+  OPENAPI_ENABLED: ${OPENAPI_ENABLED:-false}
+  OPENAPI_PATH: ${OPENAPI_PATH:-docs}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
+  POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+  POSTGRES_SSL: ${POSTGRES_SSL:-false}
+  POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_SSL_REJECT_UNAUTHORIZED:-true}
+  POSTGRES_SYNCHRONIZE: "false"
+  POSTGRES_LOGGING: ${POSTGRES_LOGGING:-false}
+  DATABASE_URL: ${DATABASE_URL:-}
+
+x-backend-command: &backend-command
+  - sh
+  - -ec
+  - |
+    export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)"
+    export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
+    if [ -z "$${DATABASE_URL:-}" ]; then
+      DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
+      export DATABASE_URL
+    fi
+    exec node "$$APP_MAIN"
+
+x-migrate-command: &migrate-command
+  - sh
+  - -ec
+  - |
+    export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)"
+    export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
+    if [ -z "$${DATABASE_URL:-}" ]; then
+      DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
+      export DATABASE_URL
+    fi
+    exec pnpm db:migrate
+
+x-backend-healthcheck: &backend-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      'node -e "fetch(''http://127.0.0.1:3000/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+    ]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 30s
+
+x-frontend-healthcheck: &frontend-healthcheck
+  test:
+    ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok"]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 10s
+
+x-backend-service: &backend-service
+  restart: unless-stopped
+  networks: [app, database]
+  secrets: [auth_jwt_secret, postgres_password]
+  environment: *backend-env
+  command: *backend-command
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
+  healthcheck: *backend-healthcheck
+
+x-frontend-service: &frontend-service
+  restart: unless-stopped
+  networks: [app]
+  healthcheck: *frontend-healthcheck
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
+      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [database]
+    secrets: [postgres_password]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-nest_react_boilerplate} -d $${POSTGRES_DB:-nest_react_boilerplate}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    networks: [database]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  migrate:
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: migrator
+    restart: "no"
+    networks: [database]
+    secrets: [auth_jwt_secret, postgres_password]
+    environment: *backend-env
+    command: *migrate-command
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend-admin-app-api:
+    <<: *backend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: backend-admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin-app-api
+    ports:
+      - "127.0.0.1:${ADMIN_APP_API_PORT:-3001}:3000"
+
+  user-app-api:
+    <<: *backend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user-app-api
+    ports:
+      - "127.0.0.1:${USER_APP_API_PORT:-3002}:3000"
+
+  auth-app-api:
+    <<: *backend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth-app-api
+    ports:
+      - "127.0.0.1:${AUTH_APP_API_PORT:-3003}:3000"
+
+  admin-app:
+    <<: *frontend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: admin-app
+        FRONTEND_OUTPUT: dist/apps/frontend/admin
+        VITE_API_BASE_URL_MODE: same-origin
+    depends_on:
+      backend-admin-app-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${ADMIN_APP_PORT:-8081}:8080"
+
+  user-app:
+    <<: *frontend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: user-app
+        FRONTEND_OUTPUT: dist/apps/frontend/app
+        VITE_API_BASE_URL_MODE: same-origin
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${USER_APP_PORT:-8082}:8080"
+
+  landing-app:
+    <<: *frontend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: landing-app
+        FRONTEND_OUTPUT: dist/apps/frontend/landing
+        VITE_API_BASE_URL_MODE: same-origin
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+      backend-admin-app-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${LANDING_APP_PORT:-8080}:8080"
+
+networks:
+  app:
+  database:
+    internal: true
+
+volumes:
+  postgres-data:
+  redis-data:
+
+secrets:
+  auth_jwt_secret:
+    file: ${AUTH_JWT_SECRET_FILE:-./secrets/auth_jwt_secret.txt}
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_FILE:-./secrets/postgres_password.txt}

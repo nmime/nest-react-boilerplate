@@ -1,0 +1,112 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.otelCollector.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-otel-collector
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+data:
+  collector.yaml: |-
+{{ tpl .Values.monitoring.otelCollector.config . | indent 4 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-otel-collector
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  replicas: {{ default 1 .Values.monitoring.otelCollector.replicas }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: otel-collector
+  template:
+    metadata:
+      labels:
+        {{- include "boilerplate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: otel-collector
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.monitoring.otelCollector.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: otel-collector
+          image: {{ printf "%s:%s" .Values.monitoring.otelCollector.image.repository .Values.monitoring.otelCollector.image.tag | quote }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.monitoring.otelCollector.image.pullPolicy }}
+          args: ["--config=/conf/collector.yaml"]
+          {{- with .Values.monitoring.otelCollector.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+            - name: otlp-http
+              containerPort: 4318
+            - name: prometheus
+              containerPort: 9464
+            - name: health
+              containerPort: 13133
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: collector-config
+              mountPath: /conf
+              readOnly: true
+          resources:
+            {{- toYaml .Values.monitoring.otelCollector.resources | nindent 12 }}
+      volumes:
+        - name: collector-config
+          configMap:
+            name: {{ include "boilerplate.fullname" . }}-otel-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-otel-collector
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: otlp-grpc
+    - name: otlp-http
+      port: 4318
+      targetPort: otlp-http
+    - name: prometheus
+      port: 9464
+      targetPort: prometheus
+    - name: health
+      port: 13133
+      targetPort: health
+{{- end }}

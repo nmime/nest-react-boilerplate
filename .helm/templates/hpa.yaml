@@ -1,0 +1,29 @@
+{{- if .Values.autoscaling.enabled }}
+{{- $root := . -}}
+{{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "boilerplate.fullname" $root }}-{{ kebabcase $name }}
+  labels:
+    {{- include "boilerplate.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
+spec:
+  minReplicas: {{ $root.Values.autoscaling.minReplicas }}
+  maxReplicas: {{ $root.Values.autoscaling.maxReplicas }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "boilerplate.fullname" $root }}-{{ kebabcase $name }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $root.Values.autoscaling.targetCPUUtilization }}
+{{- end }}
+{{- end }}
+{{- end }}

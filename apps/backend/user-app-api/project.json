@@ -1,0 +1,68 @@
+{
+  "name": "user-app-api",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/user-app-api/src",
+  "projectType": "application",
+  "tags": ["platform:backend", "type:backend-app", "scope:user", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend/user-app-api",
+        "main": "apps/backend/user-app-api/src/main.ts",
+        "tsConfig": "apps/backend/user-app-api/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "user-app-api:build",
+        "runBuildTargetDependencies": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "user-app-api:build:development"
+        },
+        "production": {
+          "buildTarget": "user-app-api:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/user-app-api",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/backend/user-app-api"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/user-app-api",
+        "command": "vitest run --config vitest.e2e.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "supertest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/backend/user-app-api"]
+    }
+  }
+}

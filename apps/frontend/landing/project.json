@@ -1,0 +1,46 @@
+{
+  "name": "landing-app",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/landing/src",
+  "projectType": "application",
+  "tags": [
+    "platform:frontend",
+    "type:frontend-app",
+    "scope:landing",
+    "type:app",
+    "fsd:layer:app"
+  ],
+  "// targets": "to see all targets run: nx show project landing-app --web",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/landing",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/frontend/landing"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin pnpm exec vite build --config apps/frontend/landing/vite.config.mts && pnpm --filter @repo/tooling tooling testing frontend-browser-e2e-coverage --dist dist/apps/frontend/landing --app-name landing-app --contains \"Launch a full-stack Nest and React product foundation.\" --coverage-dir coverage/e2e/apps/frontend/landing"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/landing"]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@app/common-component-test",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/component-test/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:test-util", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/component-test",
+        "main": "libs/backend/common/component-test/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/component-test/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/component-test/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/component-test"]
+    }
+  }
+}

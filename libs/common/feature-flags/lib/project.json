@@ -1,0 +1,33 @@
+{
+  "name": "@app/common/feature-flags",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/feature-flags/lib/src",
+  "projectType": "library",
+  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/common/feature-flags",
+        "main": "libs/common/feature-flags/lib/src/index.ts",
+        "tsConfig": "libs/common/feature-flags/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/common/feature-flags/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        { "externalDependencies": ["vitest"] }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/common/feature-flags"]
+    }
+  }
+}

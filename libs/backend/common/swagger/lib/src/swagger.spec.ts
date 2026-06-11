@@ -1,0 +1,281 @@
+import { HttpStatus } from "@nestjs/common";
+import { describe, expect, it, vi } from "vitest";
+import {
+  ApiOkDataResponse,
+  ApiExceptions,
+  ApiReadinessResponses,
+  ApiSessionCookieAuth,
+  okResponseOpenApiSchema,
+  problemDetailsOpenApiSchema,
+  readBoolean,
+  resolveSwaggerOptions,
+  setupSwagger,
+  getProblemDetailsSchema,
+} from "./index";
+
+const mocks = vi.hoisted(() => {
+  const builder = {
+    addBearerAuth: vi.fn(() => builder),
+    addCookieAuth: vi.fn(() => builder),
+    build: vi.fn(() => "config"),
+    setDescription: vi.fn(() => builder),
+    setTitle: vi.fn(() => builder),
+    setVersion: vi.fn(() => builder),
+  };
+  return {
+    apiExtraModels: vi.fn(() => vi.fn()),
+    apiOkResponse: vi.fn(() => vi.fn()),
+    apiResponse: vi.fn(() => vi.fn()),
+    builder,
+    createDocument: vi.fn(() => "document"),
+    setup: vi.fn(),
+  };
+});
+
+vi.mock("@nestjs/swagger", () => ({
+  ApiCookieAuth: vi.fn(() => vi.fn()),
+  ApiExtraModels: mocks.apiExtraModels,
+  ApiOkResponse: mocks.apiOkResponse,
+  ApiResponse: mocks.apiResponse,
+  DocumentBuilder: vi.fn(function DocumentBuilderMock() {
+    return mocks.builder;
+  }),
+  getSchemaPath: (model: { name: string }) =>
+    `#/components/schemas/${model.name}`,
+  SwaggerModule: {
+    createDocument: mocks.createDocument,
+    setup: mocks.setup,
+  },
+}));
+
+describe("common swagger", () => {
+  it("reads boolean flags and resolves environment overrides", () => {
+    expect(readBoolean(undefined)).toBeUndefined();
+    expect(readBoolean("true")).toBe(true);
+    expect(readBoolean("0")).toBe(false);
+    expect(
+      resolveSwaggerOptions(
+        { title: "api" },
+        {
+          OPENAPI_DESCRIPTION: "description",
+          OPENAPI_ENABLED: "yes",
+          OPENAPI_PATH: "openapi",
+          OPENAPI_TITLE: "env api",
+          OPENAPI_VERSION: "2.0.0",
+        },
+      ),
+    ).toEqual({
+      description: "description",
+      enabled: true,
+      path: "openapi",
+      title: "env api",
+      version: "2.0.0",
+    });
+  });
+
+  it("skips disabled documentation", () => {
+    setupSwagger({} as never, { enabled: false, title: "api" });
+    expect(mocks.createDocument).not.toHaveBeenCalled();
+  });
+
+  it("keeps production swagger disabled unless explicitly allowed", () => {
+    expect(
+      resolveSwaggerOptions(
+        { title: "api" },
+        { NODE_ENV: "production", OPENAPI_ENABLED: "true" },
+      ),
+    ).toMatchObject({ enabled: false });
+    expect(
+      resolveSwaggerOptions(
+        { enabled: true, title: "api" },
+        { NODE_ENV: "production" },
+      ),
+    ).toMatchObject({ enabled: false });
+    expect(
+      resolveSwaggerOptions(
+        { title: "api" },
+        {
+          NODE_ENV: "production",
+          OPENAPI_ALLOW_PRODUCTION: "true",
+          OPENAPI_ENABLED: "true",
+        },
+      ),
+    ).toMatchObject({ enabled: true });
+  });
+
+  it("creates bearer and session-cookie auth swagger docs with problem response support", () => {
+    mocks.builder.addCookieAuth.mockClear();
+    const app = {} as never;
+
+    setupSwagger(app, {
+      description: "API docs",
+      enabled: true,
+      path: "docs",
+      title: "api",
+      version: "1.2.3",
+    });
+
+    expect(mocks.builder.setTitle).toHaveBeenCalledWith("api");
+    expect(mocks.builder.setVersion).toHaveBeenCalledWith("1.2.3");
+    expect(mocks.builder.setDescription).toHaveBeenCalledWith("API docs");
+    expect(mocks.builder.addBearerAuth).toHaveBeenCalledOnce();
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
+      "nrb.sid",
+      {
+        description:
+          "Development/default HTTP session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+        type: "apiKey",
+      },
+      "nrb.sid",
+    );
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
+      "__Host-nrb.sid",
+      {
+        description:
+          "Production default HTTPS session cookie. SESSION_COOKIE_NAME may override the runtime name.",
+        type: "apiKey",
+      },
+      "__Host-nrb.sid",
+    );
+    expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
+    expect(mocks.setup).toHaveBeenCalledWith("docs", app, "document", {
+      jsonDocumentUrl: "docs/openapi.json",
+    });
+  });
+
+  it("exports success and problem response schemas and decorators", () => {
+    class PayloadDto {}
+
+    expect(problemDetailsOpenApiSchema).toMatchObject({
+      required: ["type", "title", "status"],
+      type: "object",
+    });
+    expect(okResponseOpenApiSchema(PayloadDto)).toEqual({
+      type: "object",
+      required: ["data"],
+      properties: {
+        data: { $ref: "#/components/schemas/PayloadDto" },
+      },
+    });
+    expect(ApiOkDataResponse(PayloadDto)).toEqual(expect.any(Function));
+    expect(mocks.apiExtraModels).toHaveBeenCalledWith(PayloadDto);
+    expect(mocks.apiOkResponse).toHaveBeenCalledWith({
+      description: "OK",
+      schema: okResponseOpenApiSchema(PayloadDto),
+    });
+    expect(typeof ApiExceptions).toBe("function");
+    expect(ApiSessionCookieAuth()).toEqual(expect.any(Function));
+  });
+
+  it("couples readiness success docs with explicit 503 problem details", () => {
+    expect(ApiReadinessResponses("API readiness check succeeded.")).toEqual(
+      expect.any(Function),
+    );
+    expect(mocks.apiOkResponse).toHaveBeenCalledWith({
+      description: "API readiness check succeeded.",
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.SERVICE_UNAVAILABLE,
+      description: "Service Unavailable",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.SERVICE_UNAVAILABLE),
+        },
+      },
+    });
+  });
+
+  it("resolves explicit defaults and option descriptions", () => {
+    expect(resolveSwaggerOptions({ title: "api" }, {})).toEqual({
+      enabled: false,
+      path: "docs",
+      title: "api",
+      version: "1.0.0",
+    });
+    expect(
+      resolveSwaggerOptions(
+        {
+          description: "option docs",
+          enabled: true,
+          path: "custom-docs",
+          title: "option api",
+          version: "3.0.0",
+        },
+        {
+          OPENAPI_DESCRIPTION: "env docs",
+          OPENAPI_TITLE: "env api",
+        },
+      ),
+    ).toEqual({
+      description: "option docs",
+      enabled: true,
+      path: "custom-docs",
+      title: "env api",
+      version: "3.0.0",
+    });
+  });
+
+  it("creates problem response decorators for known and custom statuses", () => {
+    expect(ApiExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
+      expect.any(Function),
+    );
+    expect(
+      ApiExceptions([HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN]),
+    ).toEqual(expect.any(Function));
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.BAD_REQUEST,
+      description: "Bad Request",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.BAD_REQUEST),
+        },
+      },
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.UNAUTHORIZED,
+      description: "Unauthorized",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.UNAUTHORIZED),
+        },
+      },
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.FORBIDDEN,
+      description: "Forbidden",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.FORBIDDEN),
+        },
+      },
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: 599,
+      description: "Unexpected Error",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(599),
+        },
+      },
+    });
+  });
+
+  it("creates swagger docs without an optional description", () => {
+    const app = {} as never;
+
+    setupSwagger(app, {
+      enabled: true,
+      path: "docs-no-description",
+      title: "api",
+      version: "1.2.3",
+    });
+
+    expect(mocks.createDocument).toHaveBeenCalledWith(app, "config");
+    expect(mocks.setup).toHaveBeenCalledWith(
+      "docs-no-description",
+      app,
+      "document",
+      { jsonDocumentUrl: "docs-no-description/openapi.json" },
+    );
+  });
+});

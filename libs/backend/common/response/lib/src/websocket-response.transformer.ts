@@ -6,7 +6,7 @@ import {
   type NestInterceptor,
 } from "@nestjs/common";
 import { catchError, map, of, type Observable } from "rxjs";
-import { BaseException, toProblemDetails } from "@app/common/exceptions";
+import { BaseException, toProblemDetails } from "@app/common/exception";
 
 export interface WebSocketResponse<T = unknown> {
   id: string | null;

@@ -50,7 +50,7 @@ The response shape is:
 - mapping `neverthrow` results to API responses
 - global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 
-`libs/backend/common/exceptions` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiExceptions` for OpenAPI Problem Details responses.
+`libs/backend/common/exception` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiExceptions` for OpenAPI Problem Details responses.
 
 ## OAuth foundation
 

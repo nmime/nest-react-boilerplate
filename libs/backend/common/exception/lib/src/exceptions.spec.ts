@@ -13,7 +13,7 @@ import {
   getProblemDetailsSchema,
 } from "./index";
 
-describe("@app/common/exceptions", () => {
+describe("@app/common/exception", () => {
   it("creates RFC 7807 problem details with optional fields", () => {
     expect(
       createProblemDetails({

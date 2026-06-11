@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus } from "@nestjs/common";
 import { err, ok } from "neverthrow";
 import { lastValueFrom, of, throwError } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
-import { BaseException } from "@app/common/exceptions";
+import { BaseException } from "@app/common/exception";
 import {
   createOkResponse,
   createProblemResponse,

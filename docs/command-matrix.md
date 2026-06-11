@@ -58,6 +58,28 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Full quality gate            | `pnpm check`                                                                                                                                                                            | Before merging release-risk work          | Runs formatting, API, QA, lint, typecheck, and tests.                                                       |
 | Quality preset sweep         | `pnpm run quality:presets`                                                                                                                                                              | Release-risk or scheduled QA sweeps       | Runs the modern QA preset bundle documented in `docs/testing/modern-qa.md`.                                 |
 
+## Public root script details
+
+These public root scripts are part of the supported DX/CI contract even when the primary table groups them under a broader goal:
+
+| Script | Actual command | Notes |
+| ------ | -------------- | ----- |
+| `pnpm run format:changed` | `pnpm --filter @repo/tooling tooling tooling changed-format-check` | Runs the tooling changed-file Prettier check against `origin/main...HEAD` by default; pass `--base`/`--head` through the tooling command for another range. |
+| `pnpm run docker:prod:config:check` | `node scripts/validate-docker-compose-prod.mjs` | Static production Compose config validation only; it does not start containers. |
+| `pnpm run deploy:validate` | `node scripts/validate-deployment-config.mjs && node scripts/validate-docker-compose-prod.mjs && node scripts/validate-helm-rate-limit-config.mjs && bash scripts/validate-helm.sh` | No-deploy validation bundle. Local runs require Helm because the final script renders/checks Helm; CI installs Helm before running it. |
+| `pnpm run security:scan` | `pnpm run test:security:secrets && pnpm run test:security:sast` | Runs the repository secret scan and SAST scripts in sequence. |
+| `pnpm run ci:pr` | `pnpm run tooling:static-check && pnpm run format:changed && pnpm run test:security:secrets && pnpm run test:security:sast && pnpm run audit:ci` | Lightweight PR gate for static tooling, changed formatting, security scans, and production dependency audit. |
+| `pnpm run ci:workflows:check` | `node scripts/validate-github-workflows.mjs` | Static GitHub Actions workflow validation. |
+| `pnpm run branch:cleanup` | `pnpm --filter @repo/tooling tooling git branch-cleanup` | Branch cleanup implementation entrypoint; use explicit flags such as `--apply` and `--remote` for destructive cleanup. |
+| `pnpm run branch:cleanup:check` | `pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD` | Safe preview of branches already merged into `HEAD`. |
+| `pnpm run db:migrations:rollback-check` | `pnpm --filter @repo/tooling tooling db migrations rollback-check` | Real Testcontainers/PostgreSQL migration up/down/up rollback validation; requires a Docker-capable environment. |
+
+Formatting uses Prettier defaults intentionally: the repository has `.prettierignore` but no explicit Prettier config, so `pnpm run format`, `pnpm run format:check`, and `pnpm run format:changed` should be interpreted as stock Prettier behavior with `--ignore-unknown`.
+
+Duplicate public aliases are retained for compatibility: `audit:ci` and `audit:lockfile` both run `pnpm audit --audit-level=moderate --prod`; `test:backup-restore` and `test:restore-drill` both run the CI dry-run restore drill. Prefer the descriptive names in new docs, but do not remove the aliases without checking workflow and documentation references.
+
+`pnpm run tooling:static-check` also enforces stale architecture/version wording guards. It blocks retired exception aliases/paths, project-owned problem-wrapper names, stale package-manager/current-Node references, and obsolete Problem Details RFC references while allowing generic Problem Details language and RFC9457 wording.
+
 ## Recommended PR preflight
 
 For most changes, run the fast local preflight before opening a PR:

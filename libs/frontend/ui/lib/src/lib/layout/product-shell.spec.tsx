@@ -13,7 +13,7 @@ describe("ProductShell", () => {
           { href: "/status", label: "Status", variant: "secondary" },
         ]}
         actionsLabel="Test primary navigation"
-        appName="xRocket Test"
+        appName="Product Test"
         description="Shared shell description"
         eyebrow="Shared shell"
         homeHref="/admin"
@@ -29,7 +29,7 @@ describe("ProductShell", () => {
     expect(html).toContain('href="#xr-content"');
     expect(html).toContain("Skip ahead");
     expect(html).toContain("<main");
-    expect(html).toContain('aria-label="xRocket Test home"');
+    expect(html).toContain('aria-label="Product Test home"');
     expect(html).toContain('href="/admin"');
     expect(html).toContain('aria-label="Test primary navigation"');
     expect(html).toContain('aria-current="page"');
@@ -46,7 +46,7 @@ describe("ProductShell", () => {
     const html = renderToStaticMarkup(
       <ProductShell
         actions={[{ href: "#primary", label: "Primary action" }]}
-        appName="xRocket Test"
+        appName="Product Test"
         description="Shared shell description"
         eyebrow="Shared shell"
         status="Ready"
@@ -57,7 +57,7 @@ describe("ProductShell", () => {
     );
 
     expect(html).toContain("Skip to content");
-    expect(html).toContain('aria-label="xRocket Test navigation"');
+    expect(html).toContain('aria-label="Product Test navigation"');
   });
 
   it("uses locale-aware default shell labels", () => {
@@ -65,7 +65,7 @@ describe("ProductShell", () => {
       <FrontendI18nProvider initialLocale="ru">
         <ProductShell
           actions={[{ href: "#primary", label: "Primary action" }]}
-          appName="xRocket Test"
+          appName="Product Test"
           description="Shared shell description"
           eyebrow="Shared shell"
           status="Ready"
@@ -77,15 +77,15 @@ describe("ProductShell", () => {
     );
 
     expect(html).toContain("Перейти к содержимому");
-    expect(html).toContain('aria-label="Домой в xRocket Test"');
-    expect(html).toContain('aria-label="Навигация xRocket Test"');
+    expect(html).toContain('aria-label="Домой в Product Test"');
+    expect(html).toContain('aria-label="Навигация Product Test"');
   });
 
   it("omits empty action navigation", () => {
     const html = renderToStaticMarkup(
       <ProductShell
         actions={[]}
-        appName="xRocket Test"
+        appName="Product Test"
         description="Shared shell description"
         eyebrow="Shared shell"
         status="Ready"

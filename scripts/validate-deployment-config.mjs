@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -222,33 +222,131 @@ has(
   "production Compose persists Redis data volume",
 );
 
-for (const [app, controllerPath] of [
-  ["auth-app-api", "apps/backend/auth-app-api/src/health.controller.ts"],
-  ["user-app-api", "apps/backend/user-app-api/src/health.controller.ts"],
-  [
-    "backend-admin-app-api",
-    "apps/backend/admin-app-api/src/health.controller.ts",
-  ],
+const sharedHealthController = read(
+  "libs/backend/common/health/lib/src/base-health.controller.ts",
+);
+has(
+  sharedHealthController,
+  '@Get("health")',
+  "shared health controller exposes /health",
+);
+has(
+  sharedHealthController,
+  'return this.healthService.check("health");',
+  "shared /health endpoint delegates to health service",
+);
+has(
+  sharedHealthController,
+  '@Get("live")',
+  "shared health controller exposes /live",
+);
+has(
+  sharedHealthController,
+  "return this.healthService.checkLiveness();",
+  "shared /live endpoint delegates to liveness checks",
+);
+has(
+  sharedHealthController,
+  '@Get("ready")',
+  "shared health controller exposes /ready",
+);
+has(
+  sharedHealthController,
+  "await this.healthService.checkReadiness();",
+  "shared /ready endpoint evaluates readiness checks",
+);
+has(
+  sharedHealthController,
+  "ServiceUnavailableException",
+  "shared /ready endpoint fails closed when required dependencies are unavailable",
+);
+
+for (const { app, healthProvider, modulePath, configPath, localControllerPath } of [
+  {
+    app: "auth-app-api",
+    healthProvider: "AuthAppHealthServiceProvider",
+    modulePath: "apps/backend/auth-app-api/src/auth-api.module.ts",
+    configPath: "apps/backend/auth-app-api/src/health.config.ts",
+    localControllerPath: "apps/backend/auth-app-api/src/health.controller.ts",
+  },
+  {
+    app: "user-app-api",
+    healthProvider: "UserAppHealthServiceProvider",
+    modulePath: "apps/backend/user-app-api/src/user-api.module.ts",
+    configPath: "apps/backend/user-app-api/src/health.config.ts",
+    localControllerPath: "apps/backend/user-app-api/src/health.controller.ts",
+  },
+  {
+    app: "backend-admin-app-api",
+    healthProvider: "AdminAppHealthServiceProvider",
+    modulePath: "apps/backend/admin-app-api/src/admin-app-api.module.ts",
+    configPath: "apps/backend/admin-app-api/src/health.config.ts",
+    localControllerPath: "apps/backend/admin-app-api/src/health.controller.ts",
+  },
 ]) {
-  const controller = read(controllerPath);
-  has(controller, '@Get("health")', `${app} exposes /health for liveness`);
-  has(
-    controller,
-    "return this.live();",
-    `${app} /health remains liveness-only`,
+  assert.ok(
+    !existsSync(new URL(`../${localControllerPath}`, import.meta.url)),
+    `${app} should use the shared BaseHealthController instead of an app-local health.controller.ts`,
   );
-  has(controller, '@Get("ready")', `${app} exposes /ready for readiness`);
+
+  const appModule = read(modulePath);
   has(
-    controller,
-    "await this.checkPostgres();",
-    `${app} /ready evaluates PostgreSQL readiness`,
+    appModule,
+    'BaseHealthController, HealthPrivateNetworkIpGuard } from "@app/common/health"',
+    `${app} imports the shared health controller and guard`,
   );
   has(
-    controller,
-    "ServiceUnavailableException",
-    `${app} /ready fails closed when dependencies are unavailable`,
+    appModule,
+    `import { ${healthProvider} } from "./health.config";`,
+    `${app} imports app-specific health service wiring`,
   );
-  has(controller, "select 1", `${app} /ready performs a PostgreSQL probe`);
+  has(
+    appModule,
+    "controllers: [BaseHealthController]",
+    `${app} registers the shared health controller`,
+  );
+  has(
+    appModule,
+    `providers: [${healthProvider}, HealthPrivateNetworkIpGuard]`,
+    `${app} registers app-specific health provider wiring`,
+  );
+
+  const healthConfig = read(configPath);
+  has(
+    healthConfig,
+    `const appName = "${app}";`,
+    `${app} health config sets the app name`,
+  );
+  has(
+    healthConfig,
+    `export const ${healthProvider}: Provider`,
+    `${app} health config exports the app-specific HealthService provider`,
+  );
+  has(
+    healthConfig,
+    "provide: HealthService",
+    `${app} health config wires HealthService`,
+  );
+  has(
+    healthConfig,
+    "new PostgresReadinessHealthIndicator",
+    `${app} /ready includes PostgreSQL readiness checks`,
+  );
+  has(
+    healthConfig,
+    "new PostgresMigrationsHealthIndicator",
+    `${app} health config includes PostgreSQL migration checks`,
+  );
+  has(
+    healthConfig,
+    "RedisHealthIndicator",
+    `${app} health config includes Redis health wiring`,
+  );
+  has(
+    healthConfig,
+    "NatsHealthIndicator",
+    `${app} health config includes NATS health wiring`,
+  );
 }
 
 for (const [service, variable] of [

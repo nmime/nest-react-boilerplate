@@ -101,14 +101,31 @@ Before deploying, provide values for:
 
 ## Deployment notes
 
+Deployment modes are optional and composable: Docker/Compose, PM2, Helm, and
+Helm + GitOps/Argo are selected per environment. Helm is required only for
+strict Helm render/lint validation and actual Helm releases, not for generic
+deployment validation.
+
 1. Build immutable images from a clean lockfile.
-2. Inject secrets via a secret manager, not committed files.
-3. Run migrations through a controlled release step before serving traffic.
-4. Keep `/health` and `/live` public for liveness, use `/ready` for dependency readiness, and protect business endpoints with bearer auth and RBAC metadata.
-5. Capture JSON logs centrally and index by `requestId`.
-6. Keep OpenAPI disabled publicly unless protected by SSO/VPN/edge auth.
-7. Treat raw `X-Forwarded-For` as untrusted input; let the framework resolve `request.ip` only after `TRUST_PROXY` is explicitly configured.
-8. Run CI gates: format, lint, typecheck, unit/component/e2e tests, coverage, and dependency audit.
+2. Inject secrets via Docker secret files, runtime environment variables,
+   Kubernetes Secrets, External Secrets/Vault, or another secret manager; do not
+   commit production secret values.
+3. Run migrations through the selected controlled release step before serving
+   traffic: Compose `migrate` service, a product-owned PM2 release step, or the
+   Helm migration hook.
+4. Run the no-deploy preflight for the selected mode: `pnpm run
+deploy:validate`, `pnpm run deploy:validate:docker`, `pnpm run
+deploy:validate:pm2`, `pnpm run deploy:validate:gitops`, or `pnpm run
+deploy:validate:helm`. Use `REQUIRE_HELM=true pnpm run deploy:validate` when
+   the generic bundle must require strict Helm rendering.
+5. Keep `/health` and `/live` public for liveness, use `/ready` for dependency
+   readiness, and protect business endpoints with bearer auth and RBAC metadata.
+6. Capture JSON logs centrally and index by `requestId`.
+7. Keep OpenAPI disabled publicly unless protected by SSO/VPN/edge auth.
+8. Treat raw `X-Forwarded-For` as untrusted input; let the framework resolve
+   `request.ip` only after `TRUST_PROXY` is explicitly configured.
+9. Run CI gates: format, lint, typecheck, unit/component/e2e tests, coverage,
+   dependency audit, and mode-specific deployment validation.
 
 ## Frontend auth bootstrap
 

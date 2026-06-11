@@ -129,7 +129,7 @@ NestJS APIs (auth/user/admin) ---- PostgreSQL via MikroORM migrations
 
 - Frontend apps share UI/state/i18n/query/client helpers from `@app/frontend-ui`.
 - Backend apps share Nest bootstrap, config, validation, security headers, auth/RBAC, shared health, RFC 9457 Problem Details, and database modules from shared libraries.
-- `@app/common/exception` is the singular exception package at `libs/backend/common/exception/lib`; do not introduce a plural exception library alias/path.
+- `@app/common/exception` is the singular exception package at `libs/backend/common/exception/lib`; do not introduce an alternate exception library alias/path.
 - Health uses `@app/common/health` (`BaseHealthController`, `HealthService`, and app-specific `health.config.ts` providers) for `/health`, `/health/private`, `/live`, and `/ready`.
 - Database schema changes are represented as MikroORM migrations and checked by repository tooling.
 - API shape changes flow through committed OpenAPI JSON, generated contract types, and generated frontend clients:
@@ -195,7 +195,8 @@ For production-oriented Compose guidance, secret files, Redis rate limiting, and
 
 GitHub Actions are configured for pull requests to `main`, pushes to `main`, and manual dispatch. The primary workflows cover:
 
-- Helm chart render validation.
+- Deployment validation for Docker/Compose plus optional PM2, Helm, and
+  GitOps/Argo modes.
 - Format, lint, typecheck, coverage, component tests, builds, Storybook, visual tests, and dependency audit.
 - Static/browser e2e coverage, Docker smoke stack, runtime QA/ops gates, and full-stack Playwright e2e.
 - CodeQL, dependency review, quality preset sweeps, release image builds, SBOM/signing, and image scanning.

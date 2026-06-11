@@ -13,7 +13,7 @@ import {
   localizeProblemDetails,
   toProblemDetails,
   type ProblemDetails,
-} from "@app/common/exceptions";
+} from "@app/common/exception";
 import { resolveLocaleFromRequest } from "@app/common/i18n";
 
 export interface OkResponse<T> {

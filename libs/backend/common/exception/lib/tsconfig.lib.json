@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/backend/common/exceptions",
+    "outDir": "../../../../../dist/out-tsc/libs/backend/common/exception",
     "types": ["node"],
     "declaration": true
   },

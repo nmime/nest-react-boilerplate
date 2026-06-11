@@ -34,7 +34,7 @@ Current `libs/common` placement decisions:
 | `libs/common/feature-flags` (`@app/common/feature-flags`) | Keep common                         | The flag key/value/context/provider contract is shared by backend providers and future frontend/client gates; backend-specific modules and persistence adapters already live under `libs/backend/common/feature-flags` and `libs/backend/postgres/main/feature-flags`.                                                                        |
 
 - `libs/backend/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
-- `libs/backend/common/exceptions` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiExceptions`.
+- `libs/backend/common/exception` provides RFC 7807 problem-details exceptions, the `BaseException` model, the `Exception` factory, status mapping, and `ApiExceptions`.
 - `libs/backend/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
 - `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; backend Nest module adapters live under `libs/backend/common/feature-flags`.

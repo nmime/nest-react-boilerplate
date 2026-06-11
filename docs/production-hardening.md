@@ -104,7 +104,7 @@ Before deploying, provide values for:
 1. Build immutable images from a clean lockfile.
 2. Inject secrets via a secret manager, not committed files.
 3. Run migrations through a controlled release step before serving traffic.
-4. Keep `/health` public for orchestration checks; protect business endpoints with bearer auth and RBAC metadata.
+4. Keep `/health` and `/live` public for liveness, use `/ready` for dependency readiness, and protect business endpoints with bearer auth and RBAC metadata.
 5. Capture JSON logs centrally and index by `requestId`.
 6. Keep OpenAPI disabled publicly unless protected by SSO/VPN/edge auth.
 7. Treat raw `X-Forwarded-For` as untrusted input; let the framework resolve `request.ip` only after `TRUST_PROXY` is explicitly configured.

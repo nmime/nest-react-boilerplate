@@ -18,7 +18,7 @@ A production-oriented Nx monorepo starter for teams building React frontends and
 ```text
 apps/             backend APIs, frontend apps, and e2e suites
 libs/             shared backend, frontend, feature, common, and PostgreSQL libraries
-contracts/        generated committed API contracts, including contracts/openapi
+libs/common/api-contracts/ API contract artifacts: OpenAPI, consumers, generated types
 packages/tooling/ domain-grouped repository tooling and QA preset scripts
 docs/             architecture, testing, deployment, and operations notes
 docker/           full-stack Compose and nginx files
@@ -139,7 +139,7 @@ pnpm api:contracts
 pnpm api:clients
 ```
 
-Commit generated JSON under `contracts/openapi/*.json`, contract types under `libs/common/api-contracts/lib/src/generated`, and frontend clients under `libs/frontend/api-client/lib/src/generated` when API surfaces change.
+Commit generated JSON under `libs/common/api-contracts/openapi/*.json`, contract types under `libs/common/api-contracts/lib/src/generated`, and frontend clients under `libs/frontend/api-client/lib/src/generated` when API surfaces change.
 
 See [OpenAPI and typed client scaffold](docs/api-client.md), [API lifecycle policy](docs/api-lifecycle-policy.md), and [Command matrix](docs/command-matrix.md).
 

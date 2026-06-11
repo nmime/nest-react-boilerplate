@@ -83,7 +83,7 @@ Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `statu
 
 ## Contracts and generated clients
 
-OpenAPI JSON is committed under `contracts/openapi/*.json`. Shared generated contract types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. API surface changes must update the source API, exported OpenAPI JSON, shared contracts, and frontend clients together.
+OpenAPI JSON is committed under `libs/common/api-contracts/openapi/*.json`. Shared generated contract types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. API surface changes must update the source API, exported OpenAPI JSON, shared contracts, and frontend clients together.
 
 ## OAuth foundation
 

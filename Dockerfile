@@ -15,7 +15,6 @@ COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
 COPY config ./config
-COPY contracts ./contracts
 RUN pnpm install --frozen-lockfile
 
 FROM workspace AS migrator

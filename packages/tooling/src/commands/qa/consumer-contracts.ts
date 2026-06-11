@@ -2,6 +2,7 @@
 // @ts-nocheck
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { CONSUMER_CONTRACTS_ROOT } from "../api/contract-layout";
 import {
   findOperation,
   loadOpenApiContracts,
@@ -15,7 +16,7 @@ const args = parseArgs();
 const root =
   args.options.get("contracts") ??
   process.env.CONSUMER_CONTRACTS_ROOT ??
-  "contracts/consumers";
+  CONSUMER_CONTRACTS_ROOT;
 const reportPath =
   args.options.get("report") ?? "test-results/consumer-contracts/report.json";
 const errors = [];

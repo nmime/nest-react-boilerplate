@@ -3,22 +3,27 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
+import {
+  FRONTEND_API_CLIENT_GENERATED_ROOT,
+  OPENAPI_CONTRACT_FILES,
+  OPENAPI_CONTRACTS_ROOT,
+} from "./contract-layout";
 
-const generatedRoot = "libs/frontend/api-client/lib/src/generated";
+const generatedRoot = FRONTEND_API_CLIENT_GENERATED_ROOT;
 const services = [
   {
     name: "auth",
-    input: "contracts/openapi/auth-app-api.json",
+    input: OPENAPI_CONTRACT_FILES.auth,
     output: "auth.ts",
   },
   {
     name: "user",
-    input: "contracts/openapi/user-app-api.json",
+    input: OPENAPI_CONTRACT_FILES.user,
     output: "user.ts",
   },
   {
     name: "admin",
-    input: "contracts/openapi/admin-app-api.json",
+    input: OPENAPI_CONTRACT_FILES.admin,
     output: "admin.ts",
   },
 ];
@@ -26,7 +31,7 @@ const services = [
 function parseArgs(argv) {
   const args = {
     dryRun: false,
-    contractsRoot: "contracts/openapi",
+    contractsRoot: OPENAPI_CONTRACTS_ROOT,
     generatedRoot,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -61,7 +66,7 @@ const planned = services.map((service) => ({
 
 if (args.help) {
   console.log(
-    "Usage: pnpm api:clients -- [--contracts-root contracts/openapi] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nAlias: --docs-root is accepted for compatibility.",
+    "Usage: pnpm api:clients -- [--contracts-root libs/common/api-contracts/openapi] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nAlias: --docs-root is accepted for compatibility.",
   );
   process.exit(0);
 }

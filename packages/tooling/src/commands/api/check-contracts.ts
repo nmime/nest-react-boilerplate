@@ -4,8 +4,9 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:f
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { spawnSync } from "node:child_process";
-const contractsRoot = "contracts/openapi";
-const typesRoot = "libs/common/api-contracts/lib/src/generated";
+import { API_CONTRACT_TYPES_ROOT, OPENAPI_CONTRACTS_ROOT } from "./contract-layout";
+const contractsRoot = OPENAPI_CONTRACTS_ROOT;
+const typesRoot = API_CONTRACT_TYPES_ROOT;
 function listFiles(root) { const files = []; const visit = (dir) => { for (const name of readdirSync(dir)) { const path = join(dir, name); if (statSync(path).isDirectory()) visit(path); else files.push(path); } }; visit(root); return files.sort(); }
 function compareTrees(expectedRoot, actualRoot) { const expected = listFiles(expectedRoot).map((f) => relative(expectedRoot, f)); const actual = listFiles(actualRoot).map((f) => relative(actualRoot, f)); const diffs = []; for (const name of [...new Set([...expected, ...actual])].sort()) { if (!expected.includes(name)) diffs.push(`extra committed file: ${join(actualRoot, name)}`); else if (!actual.includes(name)) diffs.push(`missing committed file: ${join(actualRoot, name)}`); else if (readFileSync(join(expectedRoot, name), "utf8") !== readFileSync(join(actualRoot, name), "utf8")) diffs.push(`stale file: ${join(actualRoot, name)}`); } return diffs; }
 const temp = mkdtempSync(join(tmpdir(), "api-contracts-"));

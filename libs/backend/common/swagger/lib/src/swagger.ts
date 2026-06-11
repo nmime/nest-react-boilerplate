@@ -8,9 +8,9 @@ import {
   getSchemaPath,
   SwaggerModule,
 } from "@nestjs/swagger";
-import { ApiProblemExceptions } from "@app/common/exception";
+import { ApiExceptions } from "@app/common/exceptions";
 
-export * from "@app/common/exception";
+export * from "@app/common/exceptions";
 
 export const sessionCookieSecuritySchemes = [
   {
@@ -59,7 +59,7 @@ export function ApiReadinessResponses(
 ): MethodDecorator & ClassDecorator {
   return applyDecorators(
     ApiOkResponse({ description }),
-    ApiProblemExceptions(HttpStatus.SERVICE_UNAVAILABLE),
+    ApiExceptions(HttpStatus.SERVICE_UNAVAILABLE),
   );
 }
 

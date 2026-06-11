@@ -3,7 +3,7 @@ import { Migrator } from "@mikro-orm/migrations";
 import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import supertest from "supertest";
-import { createProblemValidationPipe } from "@app/common/validation";
+import { createValidationPipe } from "@app/common/validation";
 import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
@@ -78,7 +78,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    app.useGlobalPipes(createProblemValidationPipe());
+    app.useGlobalPipes(createValidationPipe());
     await app.init();
 
     orm = moduleRef.get(MikroORM);

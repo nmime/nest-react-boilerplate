@@ -5,13 +5,13 @@ import { fullCoverage } from "../../../../../config/vitest-coverage.mts";
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../../dist/out-tsc/libs/backend/common/exception",
+  cacheDir: "../../../../../dist/out-tsc/libs/backend/common/exceptions",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../../coverage/libs/backend/common/exception",
+      "../../../../../coverage/libs/backend/common/exceptions",
       ["src/**/*.ts"],
       [],
     ),

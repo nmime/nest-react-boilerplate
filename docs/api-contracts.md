@@ -21,7 +21,7 @@ REST contracts are standardized on the NestJS Swagger/OpenAPI documents produced
 ## Migration rules and pitfalls
 
 - Keep runtime behavior in controllers unchanged; Swagger DTO classes describe existing responses only.
-- Use `@ApiBearerAuth`, `@ApiProblemExceptions`, and `@ApiOkDataResponse` on endpoints consumed by frontends.
+- Use `@ApiBearerAuth`, `@ApiExceptions`, and `@ApiOkDataResponse` on endpoints consumed by frontends.
 - Import generated service functions/types from `@app/api-client` in frontend apps instead of re-declaring DTO/envelope types or importing `@app/api-contracts` directly.
 - Do not put endpoint path strings in app code; path strings belong in `libs/frontend/api-client` wrappers and generated artifacts.
 - Treat generated files as read-only; fix source decorators/DTOs, OpenAPI metadata, or generator scripts and regenerate.

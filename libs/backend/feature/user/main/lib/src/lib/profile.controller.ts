@@ -7,7 +7,7 @@ import {
 import { supportedLocales } from "@app/common/i18n";
 import {
   ApiOkDataResponse,
-  ApiProblemExceptions,
+  ApiExceptions,
   ApiSessionCookieAuth,
 } from "@app/common/swagger";
 import { createOkResponse, type OkResponse } from "@app/common/response";
@@ -88,7 +88,7 @@ class ProfilePayloadDto {
   profile!: UserProfileViewDto;
 }
 
-@ApiProblemExceptions(400, 401, 403, 429, 500)
+@ApiExceptions(400, 401, 403, 429, 500)
 @Controller("profile")
 @UseGuards(new SessionAuthGuard(), new RbacGuard())
 export class ProfileController {

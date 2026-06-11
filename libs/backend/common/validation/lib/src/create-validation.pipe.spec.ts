@@ -5,19 +5,16 @@ import {
 } from "@nestjs/common";
 import { IsString } from "class-validator";
 import { describe, expect, it } from "vitest";
-import {
-  createProblemValidationBody,
-  createProblemValidationPipe,
-} from "./index";
+import { createValidationExceptionBody, createValidationPipe } from "./index";
 
-describe("createProblemValidationPipe", () => {
+describe("createValidationPipe", () => {
   it("creates a Nest validation pipe", () => {
-    expect(createProblemValidationPipe()).toBeInstanceOf(ValidationPipe);
+    expect(createValidationPipe()).toBeInstanceOf(ValidationPipe);
   });
 
   it("creates problem details for validation errors", () => {
     expect(
-      createProblemValidationBody([
+      createValidationExceptionBody([
         {
           property: "name",
           constraints: { isString: "name must be a string" },
@@ -40,7 +37,7 @@ describe("createProblemValidationPipe", () => {
 
   it("uses empty constraints when class-validator provides none", () => {
     expect(
-      createProblemValidationBody([
+      createValidationExceptionBody([
         {
           property: "nested",
         },
@@ -52,7 +49,7 @@ describe("createProblemValidationPipe", () => {
 
   it("flattens nested validation errors", () => {
     expect(
-      createProblemValidationBody([
+      createValidationExceptionBody([
         {
           property: "profile",
           children: [
@@ -97,7 +94,7 @@ describe("createProblemValidationPipe", () => {
       name!: string;
     }
 
-    const pipe = createProblemValidationPipe();
+    const pipe = createValidationPipe();
     const metadata: ArgumentMetadata = {
       data: undefined,
       metatype: CreateUserDto,

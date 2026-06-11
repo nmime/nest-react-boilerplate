@@ -2,7 +2,7 @@ import { HttpStatus } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import {
   ApiOkDataResponse,
-  ApiProblemExceptions,
+  ApiExceptions,
   ApiReadinessResponses,
   ApiSessionCookieAuth,
   okResponseOpenApiSchema,
@@ -163,7 +163,7 @@ describe("common swagger", () => {
       description: "OK",
       schema: okResponseOpenApiSchema(PayloadDto),
     });
-    expect(typeof ApiProblemExceptions).toBe("function");
+    expect(typeof ApiExceptions).toBe("function");
     expect(ApiSessionCookieAuth()).toEqual(expect.any(Function));
   });
 
@@ -216,7 +216,7 @@ describe("common swagger", () => {
   });
 
   it("creates problem response decorators for known and custom statuses", () => {
-    expect(ApiProblemExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
+    expect(ApiExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
       expect.any(Function),
     );
     expect(mocks.apiResponse).toHaveBeenCalledWith({

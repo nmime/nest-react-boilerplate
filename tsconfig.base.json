@@ -19,8 +19,8 @@
         "libs/backend/common/bootstrap/lib/src/index.ts"
       ],
       "@app/common-config": ["libs/common/config/lib/src/index.ts"],
-      "@app/common/exception": [
-        "libs/backend/common/exception/lib/src/index.ts"
+      "@app/common/exceptions": [
+        "libs/backend/common/exceptions/lib/src/index.ts"
       ],
       "@app/common/response": ["libs/backend/common/response/lib/src/index.ts"],
       "@app/common/shared": ["libs/backend/common/shared/lib/src/index.ts"],

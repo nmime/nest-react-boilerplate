@@ -8,7 +8,7 @@ import { catchError, map, throwError, type Observable } from "rxjs";
 import { mapValueToApiResponse } from "./response";
 
 @Injectable()
-export class ProblemResponseTransformer implements NestInterceptor {
+export class ExceptionsResponseTransformer implements NestInterceptor {
   intercept(
     _context: ExecutionContext,
     next: CallHandler,

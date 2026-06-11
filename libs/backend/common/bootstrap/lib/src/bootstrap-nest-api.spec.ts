@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     app,
-    createProblemValidationPipe: vi.fn(() => "validation-pipe"),
+    createValidationPipe: vi.fn(() => "validation-pipe"),
     createRequestLocaleMiddleware: vi.fn(() => localeMiddleware),
     fastifyAdapter: vi.fn(function FastifyAdapterMock(options: unknown) {
       return { options };
@@ -39,11 +39,11 @@ const mocks = vi.hoisted(() => {
     Pool: vi.fn(function PoolMock() {
       return { query: poolQuery };
     }),
-    problemExceptionFilter: vi.fn(function ProblemExceptionFilterMock() {
+    exceptionsFilter: vi.fn(function ExceptionsFilterMock() {
       return undefined;
     }),
-    problemResponseTransformer: vi.fn(
-      function ProblemResponseTransformerMock() {
+    exceptionsResponseTransformer: vi.fn(
+      function ExceptionsResponseTransformerMock() {
         return undefined;
       },
     ),
@@ -88,8 +88,8 @@ vi.mock("@app/common/i18n", () => ({
 }));
 
 vi.mock("@app/common/response", () => ({
-  ProblemExceptionFilter: mocks.problemExceptionFilter,
-  ProblemResponseTransformer: mocks.problemResponseTransformer,
+  ExceptionsFilter: mocks.exceptionsFilter,
+  ExceptionsResponseTransformer: mocks.exceptionsResponseTransformer,
 }));
 
 vi.mock("@app/common/swagger", () => ({
@@ -97,7 +97,7 @@ vi.mock("@app/common/swagger", () => ({
 }));
 
 vi.mock("@app/common/validation", () => ({
-  createProblemValidationPipe: mocks.createProblemValidationPipe,
+  createValidationPipe: mocks.createValidationPipe,
 }));
 
 import { bootstrapNestApi } from "./index";

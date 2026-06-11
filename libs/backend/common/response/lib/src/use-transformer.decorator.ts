@@ -1,9 +1,9 @@
 import { applyDecorators, UseFilters, UseInterceptors } from "@nestjs/common";
-import { ProblemResponseTransformer } from "./problem-response.transformer";
-import { ProblemExceptionFilter } from "./response";
+import { ExceptionsResponseTransformer } from "./exceptions-response.transformer";
+import { ExceptionsFilter } from "./response";
 
 export const UseTransformer = (): MethodDecorator & ClassDecorator =>
   applyDecorators(
-    UseInterceptors(ProblemResponseTransformer),
-    UseFilters(ProblemExceptionFilter),
+    UseInterceptors(ExceptionsResponseTransformer),
+    UseFilters(ExceptionsFilter),
   );

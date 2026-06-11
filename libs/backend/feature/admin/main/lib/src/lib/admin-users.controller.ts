@@ -31,7 +31,7 @@ import type { Result } from "neverthrow";
 import { createOkResponse, type OkResponse } from "@app/common/response";
 import {
   ApiOkDataResponse,
-  ApiProblemExceptions,
+  ApiExceptions,
   ApiSessionCookieAuth,
 } from "@app/common/swagger";
 import {
@@ -436,7 +436,7 @@ const normalizeHeaderScalar = (
   return trimmed ? trimmed.slice(0, 256) : undefined;
 };
 
-@ApiProblemExceptions(400, 401, 403, 404, 429, 500)
+@ApiExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new SessionAuthGuard(), new AdminRbacGuard())

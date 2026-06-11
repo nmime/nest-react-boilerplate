@@ -19,8 +19,8 @@ import {
   type RedisHost,
 } from "@app/common/redis";
 import {
-  ProblemExceptionFilter,
-  ProblemResponseTransformer,
+  ExceptionsFilter,
+  ExceptionsResponseTransformer,
 } from "@app/common/response";
 import {
   createRequestLocaleMiddleware,
@@ -28,7 +28,7 @@ import {
   translate,
 } from "@app/common/i18n";
 import { setupSwagger } from "@app/common/swagger";
-import { createProblemValidationPipe } from "@app/common/validation";
+import { createValidationPipe } from "@app/common/validation";
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -1012,9 +1012,9 @@ export async function bootstrapNestApi(
   app.use(createRobotsMiddleware());
   app.use(createRequestLocaleMiddleware());
   app.use(helmet());
-  app.useGlobalPipes(createProblemValidationPipe());
-  app.useGlobalInterceptors(new ProblemResponseTransformer());
-  app.useGlobalFilters(new ProblemExceptionFilter());
+  app.useGlobalPipes(createValidationPipe());
+  app.useGlobalInterceptors(new ExceptionsResponseTransformer());
+  app.useGlobalFilters(new ExceptionsFilter());
 
   if (config.rateLimit.enabled) {
     const rateLimitStore = createRateLimitStore(config.rateLimit);

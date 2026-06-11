@@ -5,7 +5,7 @@ import {
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createProblemValidationPipe } from "@app/common/validation";
+import { createValidationPipe } from "@app/common/validation";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedSession,
@@ -120,7 +120,7 @@ describe("auth-app-api e2e", () => {
       new FastifyAdapter(),
     );
     installInMemorySession(app);
-    app.useGlobalPipes(createProblemValidationPipe());
+    app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
 
@@ -145,7 +145,11 @@ describe("auth-app-api e2e", () => {
           status: "ok",
           details: expect.objectContaining({ mode: "memory" }),
         }),
-        expect.objectContaining({ name: "postgres", status: "ok", required: false }),
+        expect.objectContaining({
+          name: "postgres",
+          status: "ok",
+          required: false,
+        }),
       ]),
     });
   });
@@ -378,7 +382,10 @@ describe("auth-app-api e2e", () => {
     const liveResponse = await app.inject({ method: "GET", url: "/live" });
     expect(liveResponse.statusCode).toBe(200);
     expect(liveResponse.json()).toMatchObject({
-      data: { app: "auth-app-api", status: expect.stringMatching(/^(ok|degraded)$/) },
+      data: {
+        app: "auth-app-api",
+        status: expect.stringMatching(/^(ok|degraded)$/),
+      },
     });
 
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
@@ -399,8 +406,16 @@ describe("auth-app-api e2e", () => {
             required: false,
             details: expect.objectContaining({ skipped: true }),
           }),
-          expect.objectContaining({ name: "redis", status: "ok", required: false }),
-          expect.objectContaining({ name: "nats", status: "ok", required: false }),
+          expect.objectContaining({
+            name: "redis",
+            status: "ok",
+            required: false,
+          }),
+          expect.objectContaining({
+            name: "nats",
+            status: "ok",
+            required: false,
+          }),
         ]),
       },
     });

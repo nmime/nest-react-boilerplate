@@ -13,7 +13,7 @@ import {
   localizeProblemDetails,
   toProblemDetails,
   type ProblemDetails,
-} from "@app/common/exception";
+} from "@app/common/exceptions";
 import { resolveLocaleFromRequest } from "@app/common/i18n";
 
 export interface OkResponse<T> {
@@ -114,7 +114,7 @@ export const mapValueToApiResponse = <T>(
 };
 
 @Catch()
-export class ProblemExceptionFilter implements ExceptionFilter {
+export class ExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const request = http.getRequest<Request>();

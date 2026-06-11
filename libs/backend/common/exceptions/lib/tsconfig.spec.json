@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/backend/common/exception-spec",
+    "outDir": "../../../../../dist/out-tsc/libs/backend/common/exceptions-spec",
     "types": ["node", "vitest"]
   },
   "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]

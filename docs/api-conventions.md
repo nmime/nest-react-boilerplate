@@ -35,8 +35,8 @@ The response shape is:
 - deny-all `robots.txt` responses
 - extended query parsing and trust-proxy configuration
 - request IDs and structured completion logs
-- strict `ProblemValidationPipe` validation with transform, whitelist, and forbid-non-whitelisted settings
-- `ProblemResponseTransformer` and `ProblemExceptionFilter` response mapping
+- strict `createValidationPipe` validation with transform, whitelist, and forbid-non-whitelisted settings
+- `ExceptionsResponseTransformer` and `ExceptionsFilter` response mapping
 - CORS from explicit app options or `CORS_ORIGINS`/`CORS_ORIGIN`
 - production CORS that does not reflect arbitrary origins when no origin is configured
 - optional Swagger/OpenAPI docs from `libs/backend/common/swagger`
@@ -48,9 +48,9 @@ The response shape is:
 - `{ data }` success responses
 - RFC 7807 `application/problem+json` problem responses
 - mapping `neverthrow` results to API responses
-- global `ProblemResponseTransformer` and `ProblemExceptionFilter` wiring from bootstrap
+- global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 
-`libs/backend/common/exception` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiProblemExceptions` for OpenAPI problem responses.
+`libs/backend/common/exceptions` exposes `BaseException`, the `Exception` factory, problem status mapping, and `ApiExceptions` for OpenAPI Problem Details responses.
 
 ## OAuth foundation
 

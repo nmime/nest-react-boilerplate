@@ -1,7 +1,7 @@
 {
-  "name": "@app/common/exception",
+  "name": "@app/common/exceptions",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/backend/common/exception/lib/src",
+  "sourceRoot": "libs/backend/common/exceptions/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:common", "scope:shared"],
   "targets": {
@@ -9,9 +9,9 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/common/exception",
-        "main": "libs/backend/common/exception/lib/src/index.ts",
-        "tsConfig": "libs/backend/common/exception/lib/tsconfig.lib.json",
+        "outputPath": "dist/libs/backend/common/exceptions",
+        "main": "libs/backend/common/exceptions/lib/src/index.ts",
+        "tsConfig": "libs/backend/common/exceptions/lib/tsconfig.lib.json",
         "assets": []
       }
     },
@@ -19,7 +19,7 @@
       "executor": "nx:run-commands",
       "cache": true,
       "options": {
-        "cwd": "libs/backend/common/exception/lib",
+        "cwd": "libs/backend/common/exceptions/lib",
         "command": "vitest run --config vitest.config.mts"
       },
       "inputs": [
@@ -29,7 +29,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/exception"]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/exceptions"]
     }
   }
 }

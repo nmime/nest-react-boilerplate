@@ -52,6 +52,8 @@ jobs:
 
       - name: Validate deployment, Docker, and Helm config
         run: pnpm run deploy:validate
+        env:
+          REQUIRE_HELM: "true"
 
   fast-check:
     name: Fast PR gate (ci:pr)

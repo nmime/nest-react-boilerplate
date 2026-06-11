@@ -32,7 +32,7 @@ pnpm run test:docker-smoke
 pnpm run docker:down
 ```
 
-`docker/docker-compose.yml` includes Postgres health checks, a Node-based migration service that runs `pnpm db:migrate`, backend `/health` checks, frontend nginx health checks, restart policies, and healthy dependency ordering. Frontend containers use nginx same-origin API proxying:
+`docker/docker-compose.yml` includes Postgres health checks, a Node-based migration service that runs `pnpm db:migrate`, backend `/health` checks for the local development stack, frontend `/nginx-health` checks, restart policies, and healthy dependency ordering. Production Compose uses API `/ready`; Helm uses API `/live` and `/ready`. Frontend containers use nginx same-origin API proxying:
 
 - `/auth/*` -> `auth-app-api:3000`
 - `/profile/*` -> `user-app-api:3000`

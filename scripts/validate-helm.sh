@@ -61,11 +61,11 @@ done
 if command -v kubeconform >/dev/null 2>&1; then
   echo "==> kubeconform"
   kubeconform -strict -ignore-missing-schemas "${TMP_DIR}/production.yaml"
-elif command -v kubectl >/dev/null 2>&1; then
+elif command -v kubectl >/dev/null 2>&1 && kubectl cluster-info >/dev/null 2>&1; then
   echo "==> kubectl client-side dry-run"
   kubectl apply --dry-run=client --validate=false -f "${TMP_DIR}/production.yaml" >/dev/null
 else
-  echo "==> kubeconform/kubectl not installed; skipped Kubernetes schema dry-run"
+  echo "==> kubeconform/kubectl cluster unavailable; skipped Kubernetes schema dry-run"
 fi
 
 echo "Helm validation passed. Rendered manifests are in ${TMP_DIR} until script exit."

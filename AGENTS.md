@@ -10,7 +10,7 @@ This is the canonical instruction source for AI coding agents working in this re
 - Do not deploy, publish packages/images, rotate credentials, run destructive database commands, or spend funds unless a maintainer explicitly requests it for the current task.
 - Avoid external AI coding assistants according to repo/maintainer policy. Do the assigned work directly with the repository and approved tools.
 - Read existing docs, configs, tests, and public APIs before editing. Do not create contradictory instructions or compatibility shims.
-- Keep changes scoped. Do not edit generated artifacts (`libs/common/api-contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
+- Keep changes scoped. Do not edit generated artifacts (`apps/backend/*-app-api-contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
 
 ## Monorepo layout after the libs split
 

@@ -7,7 +7,7 @@ REST contracts are standardized on the NestJS Swagger/OpenAPI documents produced
 ## Rationale
 
 - Nest controllers remain the source of truth for routes, request/response shapes, auth metadata, and documented problem responses.
-- OpenAPI JSON is committed under `libs/common/api-contracts/openapi/` for review, audits, and external client generation.
+- OpenAPI JSON is committed under `apps/backend/*-app-api-contracts/openapi/` for review, audits, and external client generation.
 - Shared generated TypeScript contract types live in `libs/common/api-contracts` for DTO/path review.
 - Frontend service wrappers in `@app/api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, bearer headers, base URLs, and locale handling.
 

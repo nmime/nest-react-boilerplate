@@ -139,7 +139,7 @@ pnpm api:contracts
 pnpm api:clients
 ```
 
-Commit generated JSON under `libs/common/api-contracts/openapi/*.json`, contract types under `libs/common/api-contracts/lib/src/generated`, and frontend clients under `libs/frontend/api-client/lib/src/generated` when API surfaces change.
+Commit generated JSON under `apps/backend/*-app-api-contracts/openapi/*.json`, contract types under `libs/common/api-contracts/lib/src/generated`, and frontend clients under `libs/frontend/api-client/lib/src/generated` when API surfaces change.
 
 See [OpenAPI and typed client scaffold](docs/api-client.md), [API lifecycle policy](docs/api-lifecycle-policy.md), and [Command matrix](docs/command-matrix.md).
 

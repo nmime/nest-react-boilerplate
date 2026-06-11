@@ -1,5 +1,10 @@
 # Helm chart
 
+Helm is an optional deployment mode for this application. It is required for
+strict chart render/lint validation and actual Helm releases, but it is not a
+global prerequisite for generic deployment validation. Use Docker/Compose, PM2,
+Helm, or Helm + GitOps/Argo independently according to the target environment.
+
 This chart is intentionally small and application-owned. It mirrors the live
 `nmime/opwerf` pattern: the platform repository owns Kubernetes, ingress,
 cert-manager, ArgoCD, data services, monitoring, and secret controllers; this
@@ -25,17 +30,32 @@ routes.
 ## Render locally
 
 ```bash
+pnpm run deploy:validate:helm
+# or make the generic no-deploy bundle require Helm rendering:
+REQUIRE_HELM=true pnpm run deploy:validate
 bash scripts/validate-helm.sh
 helm template nest-react-boilerplate .helm \
   -f .helm/values-production.yaml \
   --set-string apps.authApi.image.tag=sha-$(git rev-parse HEAD)
 ```
 
+The generic `pnpm run deploy:validate` command remains a no-deploy preflight and
+skips Helm render validation when Helm is unavailable. It does not apply this
+chart, sync ArgoCD, or deploy traffic.
+
 ## GitOps
 
 Use `deploy/argocd/application.yaml` as a starting point. In production, point
 ArgoCD at an environment values file (for example `.helm/values-production.yaml`)
 and update image digests (preferred) or immutable `sha-[git-sha]` tags through your CI pipeline. See `docs/release-hardening.md`.
+
+For Helm + GitOps/Argo, this app repo owns the chart, values, image references,
+Secret references, migration hooks, Services, probes, and app ingress routes.
+The platform repo owns the cluster, ArgoCD installation/projects, ingress
+controllers/Gateway API, DNS/TLS issuers, External Secrets/Vault, databases,
+observability, backups, and disaster recovery. Validate the optional ArgoCD
+manifest with `pnpm run deploy:validate:gitops`; the command does not sync Argo
+or deploy.
 
 ## Observability and DR toggles
 

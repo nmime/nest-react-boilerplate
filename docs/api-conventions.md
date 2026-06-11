@@ -77,7 +77,7 @@ Probe policy:
 - mapping `neverthrow` results to API responses
 - global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 
-`libs/backend/common/exception` is the singular exception foundation. Its public alias is `@app/common/exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/common/exception`. Do not add a plural exception library alias or path.
+`libs/backend/common/exception` is the singular exception foundation. Its public alias is `@app/common/exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/common/exception`. Do not add an alternate exception library alias or path.
 
 Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Repository problem types use stable `urn:problem:*` values via the shared `ProblemDetails`/`BaseException` path. Validation responses use the `errors[]` extension; each issue carries a field `detail` and JSON Pointer `pointer` when available. Human-readable `title`/`detail` localization supports `en` and `ru` with fallback `en`; client logic should rely on stable status/code/type data rather than localized text.
 

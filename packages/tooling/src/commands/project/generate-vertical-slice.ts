@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { CommandContext } from "../../cli";
 
@@ -39,6 +45,17 @@ export function runGenerateVerticalSlice(
   }
 
   const names = toNames(parsed.name);
+  const validApiApps = listApiApps(options.workspaceRoot);
+
+  if (!validApiApps.includes(parsed.apiApp)) {
+    console.error(
+      `Invalid --api-app "${parsed.apiApp}". Expected one of: ${validApiApps.join(
+        ", ",
+      ) || "(none found under apps/backend)"}.`,
+    );
+    return 1;
+  }
+
   const files = [
     ...createTemplateFiles(names, parsed.apiApp),
     ...createSupportConfigFiles(names),
@@ -93,7 +110,7 @@ export function runGenerateVerticalSlice(
   console.log("");
   console.log("Next steps:");
   console.log(
-    `1. Add @app/feature-${names.kebab}-main to the target API module imports.`,
+    `1. Add @app/feature-${names.kebab}-main to the ${parsed.apiApp} API module imports.`,
   );
   console.log(
     "2. Wire the generated client from the React route/page that owns this feature.",
@@ -162,6 +179,20 @@ function parseOptions(argv: string[]): {
   }
 
   return parsed;
+}
+
+function listApiApps(workspaceRoot: string): string[] {
+  const appsRoot = join(workspaceRoot, "apps/backend");
+
+  try {
+    return readdirSync(appsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .filter((appName) => existsSync(join(appsRoot, appName, "project.json")))
+      .sort((left, right) => left.localeCompare(right));
+  } catch {
+    return [];
+  }
 }
 
 function findExistingTsconfigAliases(

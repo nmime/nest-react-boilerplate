@@ -96,7 +96,7 @@ Repository wrappers return `neverthrow` `ResultAsync` values so feature code can
 
 ## API contracts and clients
 
-OpenAPI producer output is committed as JSON under `contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
+OpenAPI producer output is committed as JSON under `libs/common/api-contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
 
 ## i18n and Problem Details
 

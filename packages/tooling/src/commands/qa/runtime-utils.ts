@@ -2,6 +2,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
+import { OPENAPI_CONTRACTS_ROOT } from "../api/contract-layout";
 
 export const workspaceRoot = process.cwd();
 export const httpMethods = new Set(["get", "put", "post", "delete", "patch", "options", "head", "trace"]);
@@ -123,7 +124,7 @@ export function dereference(doc, schema, seen = new Set()) {
   return target ? dereference(doc, target, seen) : schema;
 }
 
-export function loadOpenApiContracts(root = process.env.OPENAPI_CONTRACTS_ROOT ?? "contracts/openapi") {
+export function loadOpenApiContracts(root = process.env.OPENAPI_CONTRACTS_ROOT ?? OPENAPI_CONTRACTS_ROOT) {
   if (!existsSync(root)) throw new Error(`OpenAPI contracts directory not found: ${root}`);
   return readdirSync(root).filter((name) => name.endsWith(".json")).sort().map((file) => ({ file, path: join(root, file), doc: readJson(join(root, file)) }));
 }

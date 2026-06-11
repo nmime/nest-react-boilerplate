@@ -3,9 +3,10 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { OPENAPI_CONTRACT_FILES } from "./contract-layout";
 
 function parseArgs(argv) {
-  const args = { app: "auth-app-api", output: "contracts/openapi/auth-app-api.json", port: "3999", dryRun: false };
+  const args = { app: "auth-app-api", output: OPENAPI_CONTRACT_FILES.auth, port: "3999", dryRun: false };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;
@@ -22,7 +23,7 @@ function parseArgs(argv) {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (args.help) { console.log("Usage: repo-tooling api openapi [--app auth-app-api] [--output contracts/openapi/auth-app-api.json] [--dry-run]"); return; }
+  if (args.help) { console.log("Usage: repo-tooling api openapi [--app auth-app-api] [--output libs/common/api-contracts/openapi/auth-app-api.json] [--dry-run]"); return; }
   const env = { ...process.env, OPENAPI_ENABLED: "true", OPENAPI_PATH: "docs", AUTH_PERSISTENCE: "memory", AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET ?? "openapi-export-only", AUTH_OAUTH_ENABLED: "false", PORT: args.port };
   const command = ["pnpm", "exec", "nx", "serve", args.app];
   const url = `http://127.0.0.1:${args.port}/docs/openapi.json`;

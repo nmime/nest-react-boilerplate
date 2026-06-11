@@ -150,7 +150,7 @@ export class BaseException extends Error {
   }
 }
 
-export class ProblemHttpException extends HttpException {
+export class AppHttpException extends HttpException {
   constructor(input: ProblemDetailsInput) {
     super(createProblemDetails(input), input.status);
   }
@@ -319,7 +319,7 @@ export const toProblemDetails = (
     return localizeProblemDetails(error.toProblemDetails(instance), locale);
   }
 
-  if (error instanceof ProblemHttpException) {
+  if (error instanceof AppHttpException) {
     const response = error.getResponse();
     return localizeProblemDetails(
       isProblemDetails(response)
@@ -474,7 +474,7 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
   };
 }
 
-export function ApiProblemExceptions(
+export function ApiExceptions(
   ...statuses: number[]
 ): MethodDecorator & ClassDecorator {
   return applyDecorators(

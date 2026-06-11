@@ -5,7 +5,7 @@ import {
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createProblemValidationPipe } from "@app/common/validation";
+import { createValidationPipe } from "@app/common/validation";
 import { AdminAppApiModule } from "./admin-app-api.module";
 
 describe("backend-admin-app-api health e2e", () => {
@@ -15,7 +15,9 @@ describe("backend-admin-app-api health e2e", () => {
     em: {
       fork: vi.fn(() => ormMock.em),
       getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
-      getMigrator: () => ({ getPendingMigrations: vi.fn(() => Promise.resolve([])) }),
+      getMigrator: () => ({
+        getPendingMigrations: vi.fn(() => Promise.resolve([])),
+      }),
       getRepository: () => ({}),
     },
   };
@@ -31,7 +33,7 @@ describe("backend-admin-app-api health e2e", () => {
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
     );
-    app.useGlobalPipes(createProblemValidationPipe());
+    app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
 
@@ -51,8 +53,16 @@ describe("backend-admin-app-api health e2e", () => {
         expect.objectContaining({ name: "i18n" }),
         expect.objectContaining({ name: "postgres", status: "ok" }),
         expect.objectContaining({ name: "postgres-migrations", status: "ok" }),
-        expect.objectContaining({ name: "redis", status: "ok", required: false }),
-        expect.objectContaining({ name: "nats", status: "ok", required: false }),
+        expect.objectContaining({
+          name: "redis",
+          status: "ok",
+          required: false,
+        }),
+        expect.objectContaining({
+          name: "nats",
+          status: "ok",
+          required: false,
+        }),
       ]),
     });
   });
@@ -77,9 +87,20 @@ describe("backend-admin-app-api health e2e", () => {
         app: "backend-admin-app-api",
         dependencies: expect.arrayContaining([
           expect.objectContaining({ name: "postgres", status: "ok" }),
-          expect.objectContaining({ name: "postgres-migrations", status: "ok" }),
-          expect.objectContaining({ name: "redis", status: "ok", required: false }),
-          expect.objectContaining({ name: "nats", status: "ok", required: false }),
+          expect.objectContaining({
+            name: "postgres-migrations",
+            status: "ok",
+          }),
+          expect.objectContaining({
+            name: "redis",
+            status: "ok",
+            required: false,
+          }),
+          expect.objectContaining({
+            name: "nats",
+            status: "ok",
+            required: false,
+          }),
         ]),
         status: expect.stringMatching(/^(ok|degraded)$/),
       },
@@ -114,12 +135,16 @@ describe("backend-admin-app-api health e2e", () => {
 
     try {
       await failingApp.init();
-      const response = await failingApp.inject({ method: "GET", url: "/ready" });
+      const response = await failingApp.inject({
+        method: "GET",
+        url: "/ready",
+      });
       const body = response.json();
 
       expect(response.statusCode).toBe(503);
       expect(JSON.stringify(body)).not.toContain("super-secret");
-      const errorPayload = body.response?.data ?? body.data ?? body.response ?? body;
+      const errorPayload =
+        body.response?.data ?? body.data ?? body.response ?? body;
       expect(errorPayload.app).toBe("backend-admin-app-api");
       expect(errorPayload.dependencies).toEqual(
         expect.arrayContaining([

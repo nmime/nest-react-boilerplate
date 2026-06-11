@@ -1,10 +1,10 @@
 import { BadRequestException, HttpException, HttpStatus } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import {
-  ApiProblemExceptions,
+  ApiExceptions,
   BaseException,
   Exception,
-  ProblemHttpException,
+  AppHttpException,
   createProblemDetails,
   getProblemStatus,
   localizeProblemDetails,
@@ -13,7 +13,7 @@ import {
   getProblemDetailsSchema,
 } from "./index";
 
-describe("@app/common/exception", () => {
+describe("@app/common/exceptions", () => {
   it("creates RFC 7807 problem details with optional fields", () => {
     expect(
       createProblemDetails({
@@ -38,7 +38,7 @@ describe("@app/common/exception", () => {
   });
 
   it("wraps problem details in an HttpException", () => {
-    const exception = new ProblemHttpException({
+    const exception = new AppHttpException({
       title: "Unauthorized",
       status: HttpStatus.UNAUTHORIZED,
     });
@@ -52,7 +52,7 @@ describe("@app/common/exception", () => {
   });
 
   it("derives statuses and details from problem, Nest, and unknown errors", () => {
-    const problem = new ProblemHttpException({
+    const problem = new AppHttpException({
       title: "Conflict",
       status: 409,
     });
@@ -96,7 +96,7 @@ describe("@app/common/exception", () => {
       "Bad Request",
     );
     expect(mapHttpStatusToProblemTitle(599)).toBe("Unexpected Error");
-    expect(ApiProblemExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
+    expect(ApiExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
       expect.any(Function),
     );
 
@@ -169,16 +169,16 @@ describe("@app/common/exception", () => {
       status: HttpStatus.FORBIDDEN,
       title: "Forbidden",
     });
-    const problem = new ProblemHttpException({
+    const problem = new AppHttpException({
       instance: "/existing",
       status: HttpStatus.UNPROCESSABLE_ENTITY,
       title: "Invalid",
     });
-    const problemWithoutInstance = new ProblemHttpException({
+    const problemWithoutInstance = new AppHttpException({
       status: HttpStatus.CONFLICT,
       title: "Conflict",
     });
-    const patchedProblem = new ProblemHttpException({
+    const patchedProblem = new AppHttpException({
       status: HttpStatus.BAD_REQUEST,
       title: "Bad Request",
     });

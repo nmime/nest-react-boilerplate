@@ -29,8 +29,8 @@ export default defineConfig({
         "../../../libs/backend/common/nats/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/exception": new URL(
-        "../../../libs/backend/common/exception/lib/src/index.ts",
+      "@app/common/exceptions": new URL(
+        "../../../libs/backend/common/exceptions/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common/shared": new URL(

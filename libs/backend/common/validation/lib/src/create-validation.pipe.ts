@@ -1,19 +1,19 @@
 import { BadRequestException, ValidationPipe } from "@nestjs/common";
 import type { ValidationError } from "class-validator";
 
-export interface ProblemValidationIssue {
+export interface ValidationExceptionIssue {
   property: string;
   constraints: Record<string, string>;
   message?: string;
 }
 
-export interface ProblemValidationErrorBody {
+export interface ValidationExceptionBody {
   type: "urn:problem:nest-react-boilerplate:validation-error";
   title: "Validation failed";
   status: 400;
   detail: string;
   code: "validation-error";
-  errors: ProblemValidationIssue[];
+  errors: ValidationExceptionIssue[];
 }
 
 function getValidationPropertyPath(
@@ -26,10 +26,10 @@ function getValidationPropertyPath(
 function flattenValidationIssues(
   errors: ValidationError[],
   parentPath?: string,
-): ProblemValidationIssue[] {
+): ValidationExceptionIssue[] {
   return errors.flatMap((error) => {
     const property = getValidationPropertyPath(error, parentPath);
-    const issues: ProblemValidationIssue[] = [];
+    const issues: ValidationExceptionIssue[] = [];
 
     if (error.constraints && Object.keys(error.constraints).length > 0) {
       issues.push({
@@ -54,9 +54,9 @@ function flattenValidationIssues(
   });
 }
 
-export function createProblemValidationBody(
+export function createValidationExceptionBody(
   errors: ValidationError[],
-): ProblemValidationErrorBody {
+): ValidationExceptionBody {
   return {
     type: "urn:problem:nest-react-boilerplate:validation-error",
     title: "Validation failed",
@@ -67,14 +67,12 @@ export function createProblemValidationBody(
   };
 }
 
-export function createProblemValidationPipe(): ValidationPipe {
+export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     transform: true,
     whitelist: true,
     forbidNonWhitelisted: true,
     exceptionFactory: (errors) =>
-      new BadRequestException(createProblemValidationBody(errors)),
+      new BadRequestException(createValidationExceptionBody(errors)),
   });
 }
-
-export const ProblemValidationPipe = createProblemValidationPipe;

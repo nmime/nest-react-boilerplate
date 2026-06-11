@@ -10,7 +10,7 @@ A production-oriented Nx monorepo starter for teams building React frontends and
 
 - **Frontend apps:** `landing-app`, `user-app`, and `admin-app` under `apps/frontend/**`.
 - **Backend APIs:** `auth-app-api`, `user-app-api`, and `backend-admin-app-api` under `apps/backend/**`.
-- **Shared libraries:** domain/common, frontend, feature, and PostgreSQL libraries under `libs/**`.
+- **Shared libraries:** backend common/feature/PostgreSQL libraries, frontend UI/API/state libraries, and cross-runtime contracts/i18n libraries under `libs/**`.
 - **Productization:** committed OpenAPI contracts, generated clients, CI quality gates, Docker images, local/fullstack Compose, production Compose notes, operations docs, and security/dependency checks.
 
 ## Repository layout
@@ -27,12 +27,13 @@ Dockerfile        multi-stage backend/frontend/migrator image build
 
 ## Prerequisites
 
-| Tool           | Version / note                                                                              |
-| -------------- | ------------------------------------------------------------------------------------------- |
-| Node.js        | `>=26 <27` (the package engine is authoritative; `.nvmrc` provides the current local patch) |
-| pnpm           | `11.5.2` from `packageManager`; use Corepack                                                |
-| Docker Compose | Required for local PostgreSQL, Docker smoke tests, and full-stack containers                |
-| Git            | Required for normal contribution flow                                                       |
+| Tool           | Version / note                                                               |
+| -------------- | ---------------------------------------------------------------------------- |
+| Node.js        | `>=26 <27`; `.nvmrc` pins local development to `26.1.0`                      |
+| pnpm           | `11.5.2` from `packageManager`; use Corepack                                 |
+| Nx             | `22.7.5` local workspace version; run through `pnpm nx ...`                  |
+| Docker Compose | Required for local PostgreSQL, Docker smoke tests, and full-stack containers |
+| Git            | Required for normal contribution flow                                        |
 
 Recommended setup:
 
@@ -58,7 +59,7 @@ What this does:
 2. `db:migrate` runs the MikroORM migrations against `DATABASE_URL` or the local `POSTGRES_*` defaults.
 3. `dev:fullstack` starts the three APIs and three Vite frontends with local API base URL defaults.
 
-OpenAPI docs are available at each API's configured `OPENAPI_PATH` when `OPENAPI_ENABLED=true` (enabled in `.env.local.example`, disabled in production examples). The APIs expose `/health` for health checks.
+OpenAPI docs are available at each API's configured `OPENAPI_PATH` when `OPENAPI_ENABLED=true` (enabled in `.env.local.example`, disabled in production examples). APIs share health endpoints from `@app/common/health`: `/health`, `/health/private`, `/live`, and `/ready`; see [API conventions](docs/api-conventions.md#health).
 
 ## Running individual apps
 
@@ -127,14 +128,18 @@ NestJS APIs (auth/user/admin) ---- PostgreSQL via MikroORM migrations
 ```
 
 - Frontend apps share UI/state/i18n/query/client helpers from `@app/frontend-ui`.
-- Backend apps share Nest bootstrap, config, validation, security headers, auth/RBAC, health, and database modules from shared libraries.
+- Backend apps share Nest bootstrap, config, validation, security headers, auth/RBAC, shared health, RFC 9457 Problem Details, and database modules from shared libraries.
+- `@app/common/exception` is the singular exception package at `libs/backend/common/exception/lib`; do not introduce a plural exception library alias/path.
+- Health uses `@app/common/health` (`BaseHealthController`, `HealthService`, and app-specific `health.config.ts` providers) for `/health`, `/health/private`, `/live`, and `/ready`.
 - Database schema changes are represented as MikroORM migrations and checked by repository tooling.
-- API shape changes flow through OpenAPI export and client generation:
+- API shape changes flow through committed OpenAPI JSON, generated contract types, and generated frontend clients:
 
 ```bash
 pnpm api:contracts
 pnpm api:clients
 ```
+
+Commit generated JSON under `contracts/openapi/*.json`, contract types under `libs/common/api-contracts/lib/src/generated`, and frontend clients under `libs/frontend/api-client/lib/src/generated` when API surfaces change.
 
 See [OpenAPI and typed client scaffold](docs/api-client.md), [API lifecycle policy](docs/api-lifecycle-policy.md), and [Command matrix](docs/command-matrix.md).
 

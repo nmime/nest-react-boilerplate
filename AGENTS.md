@@ -27,6 +27,9 @@ This is the canonical instruction source for AI coding agents working in this re
   - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses alias `@app/backend/feature-admin-shared`, and carries `platform:backend`, `type:feature-shared`, and `scope:admin` tags.
   - Respect platform boundaries: frontend code must not import backend admin libraries, and backend code must not import frontend admin libraries.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do not rename, remove, or repoint aliases unless the task explicitly includes an alias migration and all consumers/docs are updated.
+- Exception foundation is singular: use `@app/common/exception`, path `libs/backend/common/exception/lib`, Nx project `@app/common/exception`. Do not introduce or document a plural exception alias/path.
+- RFC 9457 Problem Details wire terms are intentional and allowed: `ProblemDetails`, `application/problem+json`, `urn:problem:*`, `type`, `title`, `status`, `detail`, `instance`, and validation `errors[]` entries with `detail`/`pointer`. Do not add project-owned problem wrapper layers when the existing exception, validation, and response libraries cover the need.
+- Shared health uses `@app/common/health` (`BaseHealthController`, `HealthService`, app-specific health providers/config) for `/health`, `/health/private`, `/live`, and `/ready`; document exact response shapes from source/tests before changing docs.
 
 ## Architecture and docs to follow
 
@@ -46,6 +49,8 @@ Pick the smallest command set that proves the change, then broaden when touching
 
 - Always run formatting or at least whitespace checks for edited Markdown/docs:
   - `pnpm exec prettier --check <files>` when dependencies are available.
+  - a local Markdown link check when no repository docs-link script exists.
+  - grep gates for stale RFC/problem/exception-library wording when touching API, architecture, or AI guidance docs.
   - `git diff --check` for every change.
 - General code changes:
   - `pnpm run format:check` or `pnpm run format:changed`

@@ -33,6 +33,92 @@ const nodeScriptReference =
 const shellScriptReference = /(?:^|&&|\|\||;|\s)(?:bash|sh)\s+([^\s]+\.sh)/g;
 const pnpmRunReference = /(?:^|&&|\|\||;|\s)pnpm\s+run\s+([@\w:.-]+)/g;
 
+interface StaleReferencePattern {
+  label: string;
+  pattern: RegExp;
+}
+
+const staleReferencePatterns: StaleReferencePattern[] = [
+  { label: "retired xRocket product reference", pattern: /\bxrocket\b/iu },
+  { label: "retired wallet product reference", pattern: /\bwallet\b/iu },
+  { label: "retired common exceptions alias", pattern: /@app\/common\/exceptions/u },
+  {
+    label: "retired common exceptions path",
+    pattern: /libs\/backend\/common\/exceptions/u,
+  },
+  { label: "retired problem wrapper", pattern: /\bApiProblemExceptions\b/u },
+  {
+    label: "retired problem validation wrapper",
+    pattern: /\bClientDataProblemValidationException\b/u,
+  },
+  { label: "retired problem filter", pattern: /\bProblemExceptionFilter\b/u },
+  {
+    label: "retired problem transformer",
+    pattern: /\bProblemResponseTransformer\b/u,
+  },
+  { label: "retired problem HTTP exception", pattern: /\bProblemHttpException\b/u },
+  {
+    label: "retired problem validation pipe helper",
+    pattern: /\bcreateProblemValidationPipe\b/u,
+  },
+  {
+    label: "retired problem validation pipe file",
+    pattern: /problem-validation\.pipe/u,
+  },
+  { label: "retired pnpm major", pattern: /\bpnpm@10(?:\.\d+)?\b/u },
+  { label: "retired pnpm major", pattern: /\bpnpm\s+10(?:\.\d+)?\b/u },
+  {
+    label: "unsupported current Node version reference",
+    pattern: /\bNode(?:\.js)?\s+(?:20|22|24)\b/u,
+  },
+  {
+    label: "unsupported workflow Node version reference",
+    pattern: /\bnode-version:\s*['"]?(?:20|22|24)(?:\.x)?['"]?\b/u,
+  },
+  {
+    label: "unsupported workflow Node version reference",
+    pattern: /\bNODE_VERSION\b[^\n]*(?:20|22|24)\b/u,
+  },
+  { label: "retired Problem Details RFC", pattern: /\bRFC\s?7807\b/iu },
+];
+
+const staleReferenceIgnoredDirectories = new Set([
+  ".cache",
+  ".git",
+  ".nx",
+  ".turbo",
+  "coverage",
+  "dist",
+  "node_modules",
+  "playwright-report",
+  "test-results",
+  "tmp",
+]);
+
+const staleReferenceIgnoredFiles = new Set([
+  "packages/tooling/src/commands/tooling/static-check.ts",
+  "pnpm-lock.yaml",
+]);
+
+const staleReferenceExtensions = new Set([
+  "",
+  ".cjs",
+  ".cts",
+  ".js",
+  ".json",
+  ".jsx",
+  ".md",
+  ".mdx",
+  ".mjs",
+  ".mts",
+  ".sh",
+  ".ts",
+  ".tsx",
+  ".yaml",
+  ".yml",
+]);
+
+
 export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
   const syntaxTargets = collectToolingModuleScripts(workspaceRoot);
@@ -40,8 +126,10 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const failures = [
     ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
     ...checkToolingTypecheck(workspaceRoot),
+    ...checkGeneratorRegressionTests(workspaceRoot),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
     ...checkFrontendFsd(workspaceRoot),
+    ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
   ];
 
@@ -55,9 +143,11 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       status: "ok",
       checkedSyntax: syntaxTargets.length,
       toolingTypecheck: "ok",
+      generatorRegressionTests: "ok",
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
+      staleReferenceDenylist: staleReferencePatterns.length,
       packageScriptReferences: countPackageScriptReferences(workspaceRoot),
     }),
   );
@@ -89,6 +179,16 @@ function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
   const result = run("pnpm", ["--filter", "@repo/tooling", "typecheck"], {
     cwd: workspaceRoot,
   });
+
+  return result.status === 0 ? [] : [result];
+}
+
+function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
+  const result = run(
+    process.execPath,
+    ["--test", "packages/tooling/src/commands/project/generate-vertical-slice.test.ts"],
+    { cwd: workspaceRoot },
+  );
 
   return result.status === 0 ? [] : [result];
 }
@@ -168,6 +268,58 @@ function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
   return [selfTest, workspaceCheck].filter((result) => result.status !== 0);
 }
 
+function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
+  return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    text.split(/\r?\n/u).forEach((line, index) => {
+      for (const staleReference of staleReferencePatterns) {
+        if (!staleReference.pattern.test(line)) continue;
+
+        failures.push({
+          command: "stale architecture/version denylist",
+          file: `${relativeFile}:${index + 1}`,
+          status: 1,
+          stdout: "",
+          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, Problem Details RFC9457, Node 26, and pnpm 11.5.2 references.`,
+        });
+      }
+    });
+
+    return failures;
+  });
+}
+
+function collectStaleReferenceTargets(workspaceRoot: string): string[] {
+  const files: string[] = [];
+
+  function visit(directory: string): void {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (staleReferenceIgnoredDirectories.has(entry.name)) continue;
+        visit(join(directory, entry.name));
+        continue;
+      }
+
+      if (!entry.isFile()) continue;
+
+      const file = join(directory, entry.name);
+      const relativeFile = relativeToWorkspace(workspaceRoot, file);
+
+      if (staleReferenceIgnoredFiles.has(relativeFile)) continue;
+      if (file.endsWith(".tsbuildinfo")) continue;
+      if (!staleReferenceExtensions.has(extname(file).toLowerCase())) continue;
+
+      files.push(file);
+    }
+  }
+
+  visit(workspaceRoot);
+  return files.sort((left, right) => left.localeCompare(right));
+}
+
 function toPackageScriptFailure(failure: ReferencedScript): CheckFailure {
   return {
     command: `package.json script reference ${failure.owner}#${failure.script}`,
@@ -200,6 +352,8 @@ export function runChangedFormatCheck(
     parsed.options.get("base") ?? process.env.FORMAT_BASE_REF ?? "origin/main";
   const head =
     parsed.options.get("head") ?? process.env.FORMAT_HEAD_REF ?? "HEAD";
+  ensureFormatBaseRef(workspaceRoot, base);
+
   const mergeBaseResult = run("git", ["merge-base", base, head], {
     cwd: workspaceRoot,
   });
@@ -246,6 +400,19 @@ export function runChangedFormatCheck(
     JSON.stringify({ status: "ok", checkedFiles: files.length, base, head }),
   );
   return 0;
+}
+
+function ensureFormatBaseRef(workspaceRoot: string, base: string): void {
+  const revParse = run("git", ["rev-parse", "--verify", `${base}^{commit}`], {
+    cwd: workspaceRoot,
+  });
+
+  if (revParse.status === 0 || !base.startsWith("origin/")) return;
+
+  const branch = base.slice("origin/".length);
+  run("git", ["fetch", "--depth=1", "origin", `${branch}:refs/remotes/${base}`], {
+    cwd: workspaceRoot,
+  });
 }
 
 function collectToolingModuleScripts(workspaceRoot: string): string[] {

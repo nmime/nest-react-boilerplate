@@ -184,11 +184,13 @@ function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
 }
 
 function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
-  const result = run(
-    process.execPath,
-    ["--test", "packages/tooling/src/commands/project/generate-vertical-slice.test.ts"],
-    { cwd: workspaceRoot },
-  );
+  const testFiles = [
+    "packages/tooling/src/commands/project/generate-vertical-slice.test.ts",
+    "packages/tooling/src/commands/api/contracts-manifest.test.ts",
+  ];
+  const result = run(process.execPath, ["--test", ...testFiles], {
+    cwd: workspaceRoot,
+  });
 
   return result.status === 0 ? [] : [result];
 }

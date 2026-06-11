@@ -1,0 +1,7 @@
+{
+  "name": "frontend-app-contracts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["type:contract-artifact", "scope:frontend", "fsd:layer:app"],
+  "targets": {}
+}

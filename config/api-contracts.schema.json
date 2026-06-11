@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["openapi", "consumers"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "openapi": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "app",
+          "port",
+          "artifactPath",
+          "typesPath",
+          "clientOutputPath"
+        ],
+        "properties": {
+          "name": { "type": "string" },
+          "app": { "type": "string" },
+          "port": { "type": "integer" },
+          "artifactPath": { "type": "string" },
+          "typesPath": { "type": "string" },
+          "clientOutputPath": { "type": "string" }
+        }
+      }
+    },
+    "consumers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "provider", "artifactPath"],
+        "properties": {
+          "name": { "type": "string" },
+          "provider": { "type": "string" },
+          "artifactPath": { "type": "string" }
+        }
+      }
+    }
+  }
+}

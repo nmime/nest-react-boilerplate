@@ -2,38 +2,13 @@
 // @ts-nocheck
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
-import { dirname } from "node:path";
-import {
-  FRONTEND_API_CLIENT_GENERATED_ROOT,
-  OPENAPI_CONTRACT_FILES,
-  OPENAPI_CONTRACTS_ROOT,
-} from "./contract-layout";
+import { dirname, join } from "node:path";
+import { openApiContracts } from "./contracts-manifest.ts";
 
-const generatedRoot = FRONTEND_API_CLIENT_GENERATED_ROOT;
-const services = [
-  {
-    name: "auth",
-    input: OPENAPI_CONTRACT_FILES.auth,
-    output: "auth.ts",
-  },
-  {
-    name: "user",
-    input: OPENAPI_CONTRACT_FILES.user,
-    output: "user.ts",
-  },
-  {
-    name: "admin",
-    input: OPENAPI_CONTRACT_FILES.admin,
-    output: "admin.ts",
-  },
-];
+const generatedRoot = "libs/frontend/api-client/lib/src/generated";
 
 function parseArgs(argv) {
-  const args = {
-    dryRun: false,
-    contractsRoot: OPENAPI_CONTRACTS_ROOT,
-    generatedRoot,
-  };
+  const args = { dryRun: false, generatedRoot };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;
@@ -57,27 +32,35 @@ function run(command, args) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
+function serviceInput(contract, args) {
+  return args.contractsRoot
+    ? join(args.contractsRoot, `${contract.name}.json`)
+    : contract.artifactPath;
+}
+
+function serviceOutput(contract, args) {
+  return args.generatedRoot === generatedRoot
+    ? contract.clientOutputPath
+    : join(args.generatedRoot, contract.clientOutputPath.split("/").at(-1));
+}
+
 const args = parseArgs(process.argv.slice(2));
-const planned = services.map((service) => ({
-  ...service,
-  input: `${args.contractsRoot}/${service.input.split("/").at(-1)}`,
-  output: `${args.generatedRoot}/${service.output}`,
+const planned = openApiContracts().map((contract) => ({
+  name: contract.name,
+  input: serviceInput(contract, args),
+  output: serviceOutput(contract, args),
 }));
 
 if (args.help) {
   console.log(
-    "Usage: pnpm api:clients -- [--contracts-root libs/common/api-contracts/openapi] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nAlias: --docs-root is accepted for compatibility.",
+    "Usage: pnpm api:clients -- [--contracts-root <temporary-root>] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nDefault OpenAPI artifact paths come from config/api-contracts.json. Alias: --docs-root is accepted for compatibility.",
   );
   process.exit(0);
 }
 if (args.dryRun) {
   console.log(
     JSON.stringify(
-      {
-        status: "dry-run",
-        generatedRoot: args.generatedRoot,
-        services: planned,
-      },
+      { status: "dry-run", generatedRoot: args.generatedRoot, services: planned },
       null,
       2,
     ),
@@ -113,5 +96,6 @@ console.log(
     status: "generated",
     generatedRoot: args.generatedRoot,
     services: planned,
+    source: "config/api-contracts.json",
   }),
 );

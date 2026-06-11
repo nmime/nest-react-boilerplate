@@ -22,6 +22,15 @@ const section = (text, start, end) => {
   return text.slice(startIndex, endIndex >= 0 ? endIndex : undefined);
 };
 
+const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
+const selectedMode = modeArg?.split("=", 2)[1] ?? "all";
+const supportedModes = new Set(["all", "docker", "helm"]);
+assert.ok(
+  supportedModes.has(selectedMode),
+  `Unsupported deployment config validation mode: ${selectedMode}`,
+);
+const validateHelmStatic = selectedMode !== "docker";
+
 const yamlMapEntry = (text, key, indent = 2) => {
   const spaces = " ".repeat(indent);
   const marker = `${spaces}${key}:`;
@@ -261,7 +270,13 @@ has(
   "shared /ready endpoint fails closed when required dependencies are unavailable",
 );
 
-for (const { app, healthProvider, modulePath, configPath, localControllerPath } of [
+for (const {
+  app,
+  healthProvider,
+  modulePath,
+  configPath,
+  localControllerPath,
+} of [
   {
     app: "auth-app-api",
     healthProvider: "AuthAppHealthServiceProvider",
@@ -449,113 +464,120 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   );
 };
 assertNginxRoutes(read("docker/nginx-fullstack.conf"));
-assertNginxRoutes(read(".helm/templates/configmap.yaml"), { helm: true });
 
-const helmValues = read(".helm/values.yaml");
-has(helmValues, "listenPort: 8080", "Helm frontend listenPort default");
-for (const app of ["landing", "userFrontend", "adminFrontend"]) {
-  const appBlock = yamlMapEntry(helmValues, app);
-  has(appBlock, "port: 8080", `${app} container port`);
-  has(appBlock, "servicePort: 80", `${app} service port`);
-}
-const deploymentTemplate = read(".helm/templates/deployment.yaml");
-has(
-  deploymentTemplate,
-  "containerPort: {{ $app.port }}",
-  "Helm deployment uses per-app container port",
-);
-const apiEnvFromBlock = section(
-  deploymentTemplate,
-  '{{- if contains "Api" $name }}',
-  "{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}",
-);
-has(
-  apiEnvFromBlock,
-  "envFrom:",
-  "Helm deployment gates backend env on API apps",
-);
-has(
-  apiEnvFromBlock,
-  "secretRef:",
-  "Helm deployment gates backend secrets on API apps",
-);
-has(
-  read(".helm/templates/service.yaml"),
-  "targetPort: http",
-  "Helm service targets named container port",
-);
-const migrationJobTemplate = read(".helm/templates/migration-job.yaml");
-has(
-  migrationJobTemplate,
-  ".Values.migrations.podSecurityContext",
-  "Helm migration job renders pod security context",
-);
-has(
-  migrationJobTemplate,
-  ".Values.migrations.securityContext",
-  "Helm migration job renders container security context",
-);
+if (validateHelmStatic) {
+  assertNginxRoutes(read(".helm/templates/configmap.yaml"), { helm: true });
 
-const productionValues = read(".helm/values-production.yaml");
-for (const app of [
-  "authApi",
-  "userApi",
-  "adminApi",
-  "landing",
-  "userFrontend",
-  "adminFrontend",
-]) {
-  const appBlock = yamlMapEntry(productionValues, app);
+  const helmValues = read(".helm/values.yaml");
+  has(helmValues, "listenPort: 8080", "Helm frontend listenPort default");
+  for (const app of ["landing", "userFrontend", "adminFrontend"]) {
+    const appBlock = yamlMapEntry(helmValues, app);
+    has(appBlock, "port: 8080", `${app} container port`);
+    has(appBlock, "servicePort: 80", `${app} service port`);
+  }
+  const deploymentTemplate = read(".helm/templates/deployment.yaml");
   has(
-    appBlock,
+    deploymentTemplate,
+    "containerPort: {{ $app.port }}",
+    "Helm deployment uses per-app container port",
+  );
+  const apiEnvFromBlock = section(
+    deploymentTemplate,
+    '{{- if contains "Api" $name }}',
+    "{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}",
+  );
+  has(
+    apiEnvFromBlock,
+    "envFrom:",
+    "Helm deployment gates backend env on API apps",
+  );
+  has(
+    apiEnvFromBlock,
+    "secretRef:",
+    "Helm deployment gates backend secrets on API apps",
+  );
+  has(
+    read(".helm/templates/service.yaml"),
+    "targetPort: http",
+    "Helm service targets named container port",
+  );
+  const migrationJobTemplate = read(".helm/templates/migration-job.yaml");
+  has(
+    migrationJobTemplate,
+    ".Values.migrations.podSecurityContext",
+    "Helm migration job renders pod security context",
+  );
+  has(
+    migrationJobTemplate,
+    ".Values.migrations.securityContext",
+    "Helm migration job renders container security context",
+  );
+
+  const productionValues = read(".helm/values-production.yaml");
+  for (const app of [
+    "authApi",
+    "userApi",
+    "adminApi",
+    "landing",
+    "userFrontend",
+    "adminFrontend",
+  ]) {
+    const appBlock = yamlMapEntry(productionValues, app);
+    has(
+      appBlock,
+      "runAsNonRoot: true",
+      `${app} runs as non-root in production values`,
+    );
+    has(
+      appBlock,
+      "allowPrivilegeEscalation: false",
+      `${app} disables privilege escalation`,
+    );
+    has(
+      appBlock,
+      'capabilities: { drop: ["ALL"] }',
+      `${app} drops Linux capabilities`,
+    );
+  }
+  const migrationValuesBlock = section(
+    productionValues,
+    "migrations:",
+    "\n\napps:",
+  );
+  has(
+    migrationValuesBlock,
     "runAsNonRoot: true",
-    `${app} runs as non-root in production values`,
+    "migration job runs as non-root in production values",
   );
   has(
-    appBlock,
+    migrationValuesBlock,
+    "runAsUser: 1000",
+    "migration job uses node user UID in production values",
+  );
+  has(
+    migrationValuesBlock,
+    "runAsGroup: 1000",
+    "migration job uses node group GID in production values",
+  );
+  has(
+    migrationValuesBlock,
+    "seccompProfile: { type: RuntimeDefault }",
+    "migration job uses RuntimeDefault seccomp",
+  );
+  has(
+    migrationValuesBlock,
     "allowPrivilegeEscalation: false",
-    `${app} disables privilege escalation`,
+    "migration job disables privilege escalation",
   );
   has(
-    appBlock,
+    migrationValuesBlock,
     'capabilities: { drop: ["ALL"] }',
-    `${app} drops Linux capabilities`,
+    "migration job drops Linux capabilities",
   );
+} else {
+  console.log("Helm static deployment assertions skipped for docker mode.");
 }
-const migrationValuesBlock = section(
-  productionValues,
-  "migrations:",
-  "\n\napps:",
-);
-has(
-  migrationValuesBlock,
-  "runAsNonRoot: true",
-  "migration job runs as non-root in production values",
-);
-has(
-  migrationValuesBlock,
-  "runAsUser: 1000",
-  "migration job uses node user UID in production values",
-);
-has(
-  migrationValuesBlock,
-  "runAsGroup: 1000",
-  "migration job uses node group GID in production values",
-);
-has(
-  migrationValuesBlock,
-  "seccompProfile: { type: RuntimeDefault }",
-  "migration job uses RuntimeDefault seccomp",
-);
-has(
-  migrationValuesBlock,
-  "allowPrivilegeEscalation: false",
-  "migration job disables privilege escalation",
-);
-has(
-  migrationValuesBlock,
-  'capabilities: { drop: ["ALL"] }',
-  "migration job drops Linux capabilities",
-);
 
-console.log("deployment config static assertions passed");
+console.log(
+  `deployment config static assertions passed (${selectedMode} mode)`,
+);

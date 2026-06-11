@@ -35,7 +35,7 @@
     "docker:fullstack": "docker compose -f docker/docker-compose.yml up --build",
     "docker:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
     "docker:prod:config:check": "node scripts/validate-docker-compose-prod.mjs",
-    "deploy:validate": "node scripts/validate-deployment-config.mjs && node scripts/validate-docker-compose-prod.mjs && node scripts/validate-helm-rate-limit-config.mjs && bash scripts/validate-helm.sh",
+    "deploy:validate": "node scripts/deploy-validate.mjs",
     "test:docker-smoke": "pnpm --filter @repo/tooling tooling docker smoke",
     "test:fullstack": "pnpm --filter @repo/tooling tooling docker fullstack-e2e",
     "check:fast": "pnpm run tooling:static-check && pnpm run format:check && pnpm run lint && pnpm run typecheck && pnpm run test",
@@ -85,7 +85,11 @@
     "branch:cleanup:check": "pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD",
     "branch:cleanup": "pnpm --filter @repo/tooling tooling git branch-cleanup",
     "db:migrations:rollback-check": "pnpm --filter @repo/tooling tooling db migrations rollback-check",
-    "frontend:fsd:check": "pnpm --filter @repo/tooling tooling frontend fsd check"
+    "frontend:fsd:check": "pnpm --filter @repo/tooling tooling frontend fsd check",
+    "deploy:validate:docker": "node scripts/deploy-validate.mjs --mode=docker",
+    "deploy:validate:helm": "node scripts/deploy-validate.mjs --mode=helm",
+    "deploy:validate:gitops": "node scripts/deploy-validate.mjs --mode=gitops",
+    "deploy:validate:pm2": "node scripts/deploy-validate.mjs --mode=pm2"
   },
   "dependencies": {
     "@casl/ability": "7.0.0",

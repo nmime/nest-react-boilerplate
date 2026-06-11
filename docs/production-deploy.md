@@ -1,69 +1,115 @@
-# Production deployment with Kubernetes and Ansible
+# Production deployment modes
 
-This repository follows the same separation used by `nmime/opwerf` with `nmime/ansible-k8s-full-setup`:
+This repository supports optional, composable deployment modes instead of one
+global production path. Docker/Compose, PM2, Helm, and Helm + GitOps/Argo can be
+validated independently and combined with platform-owned infrastructure where
+appropriate. Helm and Kubernetes are required only when you choose a Helm-based
+mode.
 
-- the platform repository provisions Kubernetes, ingress, cert-manager, External Secrets, observability, databases, backups, and GitOps controllers;
-- this application repository owns only app images, a small `.helm/` chart, environment overlays, migration jobs, services, probes, ingress, and rollback notes;
-- production credentials are created outside the chart and referenced with `secrets.existingSecret`.
+The separation mirrors the `nmime/ansible-k8s-full-setup` pattern:
 
-The live `opwerf` chart pattern inspected for this pass uses `.helm/values*.yaml`, `secrets.existingSecret`, ConfigMaps, Deployments, Services, Ingress/TLS, optional autoscaling/monitoring/network policy, and an ArgoCD example. The live Ansible platform repo documents direct `ansible-playbook` deployment with `group_vars/all.yml`, `inventory/hosts.yml`, Gateway API, Vault/External Secrets-ready secret ownership, PostgreSQL backups, `kubectl`/`helm` verification, rollback, and troubleshooting commands.
+- the platform repository provisions Kubernetes, ingress/Gateway API,
+  cert-manager, ArgoCD, External Secrets/Vault, observability, databases,
+  backups, and other cluster services;
+- this application repository owns app images, Docker Compose definitions, the
+  optional `.helm/` chart, app values, migration jobs, services, probes, ingress
+  shape, and rollback notes;
+- production credentials are created outside committed files and passed through
+  Docker secret files, runtime environment variables, Kubernetes Secrets, or
+  External Secrets references such as `secrets.existingSecret`.
 
-## 1. Bootstrap platform
+## Validation commands are no-deploy checks
 
-Use `ansible-k8s-full-setup` from an operator workstation, matching the live repository README:
+Run the validation command for the mode you intend to use:
+
+| Mode                     | Command                                      | Requires Helm?                                                      | What it does                                                                           |
+| ------------------------ | -------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Generic bundle           | `pnpm run deploy:validate`                   | No global requirement; Helm rendering is skipped if Helm is missing | Runs Docker static checks, optional GitOps/PM2 checks, and Helm static checks          |
+| Docker/Compose           | `pnpm run deploy:validate:docker`            | No                                                                  | Validates deployment config and production Compose config                              |
+| PM2                      | `pnpm run deploy:validate:pm2`               | No                                                                  | Validates `ecosystem.config.{js,cjs,mjs}` when present; otherwise reports a no-op skip |
+| GitOps/Argo              | `pnpm run deploy:validate:gitops`            | No for manifest checks                                              | Validates `deploy/argocd/application.yaml` when GitOps mode is selected                |
+| Helm                     | `pnpm run deploy:validate:helm`              | Yes                                                                 | Runs static Helm checks plus strict Helm render validation                             |
+| Generic with strict Helm | `REQUIRE_HELM=true pnpm run deploy:validate` | Yes                                                                 | Makes the generic bundle fail if Helm render validation cannot run                     |
+
+These commands do not deploy: they do not run `docker compose up`, `helm
+upgrade`, `kubectl apply`, Argo sync, or image pushes.
+
+## Docker/Compose mode
+
+Use Compose for local full-stack testing or a small single-server deployment.
+See [docker-compose-production.md](docker-compose-production.md) for the actual
+runbook.
+
+Prerequisites for actual deployment:
+
+- Docker Engine and Docker Compose plugin on the target host;
+- an immutable image tag or digest for every service (`sha-<git-sha>` is the
+  documented tag shape);
+- `.env.production` derived from `.env.production.example` and edited for real
+  domains, ports, CORS origins, and registry names;
+- Docker secret files under `docker/secrets/` or an equivalent secret injection
+  path, with committed examples treated as placeholders only;
+- a backup plan for the PostgreSQL volume before migrations.
+
+Preflight only:
 
 ```bash
-git clone https://github.com/nmime/ansible-k8s-full-setup.git
-cd ansible-k8s-full-setup
-export HCLOUD_TOKEN="..."
-cp group_vars/all.yml.example group_vars/all.yml
-# edit group_vars/all.yml: domain, hcloud_token lookup, cluster size, optional PostgreSQL/Dragonfly/Temporal, edge CDN
-ansible-playbook -i inventory/hosts.yml site.yml
+pnpm run deploy:validate:docker
+docker compose --env-file .env.production -f docker/docker-compose.prod.yml config
+node scripts/validate-docker-compose-prod.mjs
 ```
 
-For app workloads, enable the platform services you depend on (PostgreSQL, ingress/Gateway API, cert-manager, Vault/External Secrets, monitoring, and backups) in `group_vars/all.yml`; keep app-specific chart values in this repository.
+Deployment, when intentionally performed by an operator, is the documented
+`docker compose ... up -d` flow. Rollback is tag/digest based: restore the
+previous immutable `IMAGE_TAG` or compose override, run the update command, and
+restore the database backup only if the migrated schema is not backward
+compatible.
 
-Keep application-specific values generic in this repo; put cluster addresses, secret backends, and DNS ownership in platform inventory.
+## PM2 mode
 
-## 2. Build and publish images
-
-Build each deployable target and publish immutable tags:
+PM2 is optional and not overclaimed as a supported default runtime. At the time
+of this documentation, the repository does not include an
+`ecosystem.config.{js,cjs,mjs}` file. Therefore:
 
 ```bash
-IMAGE_TAG=$(git rev-parse --short HEAD)
-docker build --target backend --build-arg NX_PROJECT=backend-admin-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api:$IMAGE_TAG .
-docker build --target backend --build-arg NX_PROJECT=user-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/user-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/user-app-api:$IMAGE_TAG .
-docker build --target backend --build-arg NX_PROJECT=auth-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/auth-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api:$IMAGE_TAG .
-docker build --target frontend --build-arg NX_PROJECT=landing-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/landing -t ghcr.io/your-github-org/nest-react-boilerplate/landing-app:$IMAGE_TAG .
-docker build --target frontend --build-arg NX_PROJECT=user-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/app -t ghcr.io/your-github-org/nest-react-boilerplate/user-app:$IMAGE_TAG .
-docker build --target frontend --build-arg NX_PROJECT=admin-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/admin -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app:$IMAGE_TAG .
-docker build --target migrator -t ghcr.io/your-github-org/nest-react-boilerplate/migrator:$IMAGE_TAG .
-docker push ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/user-app-api:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/landing-app:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/user-app:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/admin-app:$IMAGE_TAG
-docker push ghcr.io/your-github-org/nest-react-boilerplate/migrator:$IMAGE_TAG
+pnpm run deploy:validate:pm2
 ```
 
-The commands match the current multi-target Dockerfile (`backend`, `frontend`, `migrator`) and pass the Nx project/output arguments explicitly.
+is a no-op validation that reports the missing ecosystem config and exits
+successfully. If a product adds an ecosystem config later, keep secrets in the
+runtime environment or secret manager, do not reference committed production env
+files, and use this command as the static PM2 preflight.
 
-## 3. Create namespace and secrets
+Actual PM2 deployment and rollback are operator-owned: keep the previous release
+or image available, restart from the previous ecosystem config/environment on
+rollback, and handle database compatibility with backups or corrective
+migrations.
+
+## Helm mode
+
+Use Helm mode when directly releasing the app chart to Kubernetes. Helm 3 is
+required for strict render/lint validation and for actual `helm upgrade` or
+`helm rollback` commands.
+
+Prerequisites for actual Helm deployment:
+
+- a Kubernetes cluster and kubeconfig supplied by the platform/operator;
+- Helm 3 installed on the operator or CI runner;
+- immutable app and migrator image tags or digests;
+- a Kubernetes Secret or ExternalSecret-produced Secret referenced by
+  `secrets.existingSecret`;
+- platform-owned ingress/TLS, databases, observability, and backups ready before
+  enabling corresponding chart features.
+
+Strict preflight:
 
 ```bash
-kubectl create namespace nest-react-boilerplate
-export AUTH_JWT_SECRET_FILE=/secure/path/auth-jwt-secret.txt
-export DATABASE_URL_FILE=/secure/path/database-url.txt
-kubectl create secret generic nest-react-boilerplate-production-secrets \
-  -n nest-react-boilerplate \
-  --from-file=AUTH_JWT_SECRET="$AUTH_JWT_SECRET_FILE" \
-  --from-file=DATABASE_URL="$DATABASE_URL_FILE"
+pnpm run deploy:validate:helm
+# or make the generic bundle require Helm rendering:
+REQUIRE_HELM=true pnpm run deploy:validate
 ```
 
-Prefer External Secrets Operator/Vault in production. The command above is only a shape example and reads values from local secret files rather than shell history.
-
-## 4. Deploy with Helm
+Example direct deployment shape:
 
 ```bash
 helm upgrade --install nest-react-boilerplate .helm \
@@ -79,22 +125,11 @@ helm upgrade --install nest-react-boilerplate .helm \
   --wait --timeout 10m
 ```
 
-The chart runs the migration job as a Helm pre-install/pre-upgrade hook when `migrations.enabled=true`. See `.helm/README.md` for the chart contract, render checks, and GitOps notes.
+The chart runs the migration job as a Helm pre-install/pre-upgrade hook when
+`migrations.enabled=true`. Backend probes use `/live` and `/ready`; frontend
+probes use `/nginx-health` from the unprivileged nginx containers.
 
-## 5. Ingress, TLS, and probes
-
-Enable ingress once DNS and cert-manager are ready:
-
-```bash
-helm upgrade --install nest-react-boilerplate .helm \
-  --namespace nest-react-boilerplate \
-  --set ingress.enabled=true \
-  --set-string ingress.tls[0].secretName=nest-react-boilerplate-tls
-```
-
-Backend probes use `/live` and `/ready`; frontend probes use `/nginx-health` from the unprivileged nginx containers. `auth-app-api` readiness checks PostgreSQL because MikroORM is registered there.
-
-## 6. Verification
+Verification:
 
 ```bash
 kubectl get pods,svc,ingress -n nest-react-boilerplate
@@ -103,18 +138,7 @@ kubectl rollout status deploy/nest-react-boilerplate-auth-api -n nest-react-boil
 curl -fsS https://auth.example.com/ready
 ```
 
-## 7. Backup and restore
-
-Use platform-native PostgreSQL backups when available. For manual app-level backups:
-
-```bash
-pnpm db:backup -- --output backups/pre-release.dump
-pnpm db:restore -- --input backups/pre-release.dump --dry-run
-```
-
-For in-cluster restores, run from a locked-down job/pod with network access to the database and require `--yes`.
-
-## 8. Rollback
+Rollback:
 
 ```bash
 helm history nest-react-boilerplate -n nest-react-boilerplate
@@ -122,4 +146,64 @@ helm rollback nest-react-boilerplate <revision> -n nest-react-boilerplate
 kubectl rollout status deploy/nest-react-boilerplate-auth-api -n nest-react-boilerplate
 ```
 
-If a migration is not backward compatible, restore the database backup first or roll forward with a corrective migration.
+If a migration is not backward compatible, restore the database backup first or
+roll forward with a corrective migration.
+
+## Helm + GitOps/Argo mode
+
+Use GitOps mode when ArgoCD watches the app chart and values from Git. The
+optional `deploy/argocd/application.yaml` manifest is a starting point, not a
+requirement for non-GitOps deployments.
+
+Preflight for the manifest:
+
+```bash
+pnpm run deploy:validate:gitops
+```
+
+For this mode, keep the ownership boundary clear:
+
+- app repo: `.helm/`, app values, image tags/digests, app Secret references,
+  migration hooks, Services, probes, and app ingress routes;
+- platform repo: cluster creation, ArgoCD installation/projects, External
+  Secrets/Vault, ingress controllers/Gateway API, DNS/TLS issuers, managed or
+  in-cluster databases, observability, backup schedules, and disaster recovery.
+
+Rollbacks are Git or image rollbacks: revert the Argo-tracked commit, values
+change, image digest, or immutable tag, then let Argo reconcile. Use Argo health
+and sync status plus the same Kubernetes smoke checks as Helm mode. Database
+rollback rules remain migration-dependent.
+
+## Build and publish images
+
+All production modes that run containers need immutable images. Build each
+deployable target and publish immutable tags:
+
+```bash
+IMAGE_TAG=$(git rev-parse --short HEAD)
+docker build --target backend --build-arg NX_PROJECT=backend-admin-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api:$IMAGE_TAG .
+docker build --target backend --build-arg NX_PROJECT=user-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/user-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/user-app-api:$IMAGE_TAG .
+docker build --target backend --build-arg NX_PROJECT=auth-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/auth-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api:$IMAGE_TAG .
+docker build --target frontend --build-arg NX_PROJECT=landing-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/landing -t ghcr.io/your-github-org/nest-react-boilerplate/landing-app:$IMAGE_TAG .
+docker build --target frontend --build-arg NX_PROJECT=user-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/app -t ghcr.io/your-github-org/nest-react-boilerplate/user-app:$IMAGE_TAG .
+docker build --target frontend --build-arg NX_PROJECT=admin-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/admin -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app:$IMAGE_TAG .
+docker build --target migrator -t ghcr.io/your-github-org/nest-react-boilerplate/migrator:$IMAGE_TAG .
+```
+
+Push, scan, sign, and promote images according to the selected release process.
+The commands match the current multi-target Dockerfile (`backend`, `frontend`,
+`migrator`) and pass the Nx project/output arguments explicitly.
+
+## Backup and restore
+
+Use platform-native PostgreSQL backups when available. For manual app-level
+backups:
+
+```bash
+pnpm db:backup -- --output backups/pre-release.dump
+pnpm db:restore -- --input backups/pre-release.dump --dry-run
+```
+
+For in-cluster restores, run from a locked-down job/pod with network access to
+the database and require `--yes`. For Compose restores, follow
+[docker-compose-production.md](docker-compose-production.md#6-backup-and-restore).

@@ -219,12 +219,33 @@ describe("common swagger", () => {
     expect(ApiExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
       expect.any(Function),
     );
+    expect(
+      ApiExceptions([HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN]),
+    ).toEqual(expect.any(Function));
     expect(mocks.apiResponse).toHaveBeenCalledWith({
       status: HttpStatus.BAD_REQUEST,
       description: "Bad Request",
       content: {
         "application/problem+json": {
           schema: getProblemDetailsSchema(HttpStatus.BAD_REQUEST),
+        },
+      },
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.UNAUTHORIZED,
+      description: "Unauthorized",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.UNAUTHORIZED),
+        },
+      },
+    });
+    expect(mocks.apiResponse).toHaveBeenCalledWith({
+      status: HttpStatus.FORBIDDEN,
+      description: "Forbidden",
+      content: {
+        "application/problem+json": {
+          schema: getProblemDetailsSchema(HttpStatus.FORBIDDEN),
         },
       },
     });

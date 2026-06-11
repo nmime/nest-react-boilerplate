@@ -1,11 +1,11 @@
-import {
-  ArgumentMetadata,
-  BadRequestException,
-  ValidationPipe,
-} from "@nestjs/common";
+import { ArgumentMetadata, HttpStatus, ValidationPipe } from "@nestjs/common";
 import { IsString } from "class-validator";
 import { describe, expect, it } from "vitest";
-import { createValidationExceptionBody, createValidationPipe } from "./index";
+import {
+  ClientDataValidationException,
+  createValidationExceptionBody,
+  createValidationPipe,
+} from "./index";
 
 describe("createValidationPipe", () => {
   it("creates a Nest validation pipe", () => {
@@ -18,18 +18,24 @@ describe("createValidationPipe", () => {
         {
           property: "name",
           constraints: { isString: "name must be a string" },
+          detail: "name must be a string",
+          message: "name must be a string",
+          pointer: "/name",
         },
       ]),
     ).toEqual({
-      type: "urn:problem:nest-react-boilerplate:validation-error",
-      title: "Validation failed",
+      type: "urn:problem:nest-react-boilerplate:client-data-validation",
+      title: "Client data validation failed",
       status: 400,
-      code: "validation-error",
-      detail: "Request validation failed.",
+      code: "client-data-validation",
+      detail: "Request client data validation failed.",
       errors: [
         {
           property: "name",
           constraints: { isString: "name must be a string" },
+          detail: "name must be a string",
+          message: "name must be a string",
+          pointer: "/name",
         },
       ],
     });
@@ -43,7 +49,7 @@ describe("createValidationPipe", () => {
         },
       ]),
     ).toMatchObject({
-      errors: [{ property: "nested", constraints: {} }],
+      errors: [{ property: "nested", constraints: {}, pointer: "/nested" }],
     });
   });
 
@@ -56,6 +62,9 @@ describe("createValidationPipe", () => {
             {
               property: "displayName",
               constraints: { isString: "displayName must be a string" },
+              detail: "displayName must be a string",
+              message: "displayName must be a string",
+              pointer: "/profile/displayName",
             },
             {
               property: "addresses",
@@ -66,6 +75,9 @@ describe("createValidationPipe", () => {
                     {
                       property: "city",
                       constraints: { isString: "city must be a string" },
+                      detail: "city must be a string",
+                      message: "city must be a string",
+                      pointer: "/profile/addresses/0/city",
                     },
                   ],
                 },
@@ -79,10 +91,69 @@ describe("createValidationPipe", () => {
         {
           property: "profile.displayName",
           constraints: { isString: "displayName must be a string" },
+          detail: "displayName must be a string",
+          message: "displayName must be a string",
+          pointer: "/profile/displayName",
         },
         {
           property: "profile.addresses.0.city",
           constraints: { isString: "city must be a string" },
+          detail: "city must be a string",
+          message: "city must be a string",
+          pointer: "/profile/addresses/0/city",
+        },
+      ],
+    });
+  });
+
+  it("escapes JSON Pointer path segments", () => {
+    expect(
+      createValidationExceptionBody([
+        {
+          property: "profile/primary",
+          children: [
+            {
+              property: "tilde~field",
+              constraints: { isString: "tilde~field must be a string" },
+            },
+          ],
+        },
+      ]),
+    ).toMatchObject({
+      errors: [
+        {
+          property: "profile/primary.tilde~field",
+          pointer: "/profile~1primary/tilde~0field",
+        },
+      ],
+    });
+  });
+
+  it("creates full RFC 9457-compatible client data validation exceptions", () => {
+    const exception = new ClientDataValidationException([
+      {
+        property: "age",
+        constraints: { isInt: "age must be an integer number" },
+        message: "age must be an integer number",
+        detail: "age must be an integer number",
+        pointer: "/age",
+      },
+    ]);
+
+    expect(exception.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+    expect(exception.getResponse()).toEqual({
+      type: "urn:problem:nest-react-boilerplate:client-data-validation",
+      title: "Client data validation failed",
+      status: 400,
+      detail: "Request client data validation failed.",
+      code: "client-data-validation",
+      errors: [
+        {
+          property: "age",
+          constraints: { isInt: "age must be an integer number" },
+          message: "age must be an integer number",
+          detail: "age must be an integer number",
+          pointer: "/age",
         },
       ],
     });
@@ -103,20 +174,28 @@ describe("createValidationPipe", () => {
 
     await expect(
       pipe.transform({ name: 123 }, metadata),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(ClientDataValidationException);
 
     try {
       await pipe.transform({ name: 123 }, metadata);
     } catch (error) {
-      expect((error as BadRequestException).getResponse()).toMatchObject({
+      expect(
+        (error as ClientDataValidationException).getResponse(),
+      ).toMatchObject({
         errors: [
           {
             constraints: { isString: "name must be a string" },
+            detail: "name must be a string",
+            message: "name must be a string",
+            pointer: "/name",
             property: "name",
           },
         ],
+        code: "client-data-validation",
+        detail: "Request client data validation failed.",
         status: 400,
-        title: "Validation failed",
+        title: "Client data validation failed",
+        type: "urn:problem:nest-react-boilerplate:client-data-validation",
       });
     }
   });

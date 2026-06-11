@@ -489,6 +489,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -712,6 +719,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -951,6 +965,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -1194,6 +1215,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -1437,6 +1465,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -1674,6 +1709,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -1917,6 +1959,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;
@@ -2154,6 +2203,13 @@ export interface operations {
               property: string;
               /** @description The localized error message. */
               message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
               /** @description The validation constraints that failed. */
               constraints: {
                 [key: string]: string;

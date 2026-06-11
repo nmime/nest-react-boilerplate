@@ -3,15 +3,15 @@
 Frontend clients use `openapi-typescript`, `openapi-fetch`, and `openapi-react-query`.
 
 ```bash
-pnpm api:openapi -- --app auth-app-api --output libs/common/api-contracts/openapi/auth-app-api.json
-pnpm api:openapi -- --app user-app-api --output libs/common/api-contracts/openapi/user-app-api.json
-pnpm api:openapi -- --app backend-admin-app-api --output libs/common/api-contracts/openapi/admin-app-api.json
+pnpm api:openapi -- --app auth-app-api --output apps/backend/auth-app-api-contracts/openapi/auth-app-api.json
+pnpm api:openapi -- --app user-app-api --output apps/backend/user-app-api-contracts/openapi/user-app-api.json
+pnpm api:openapi -- --app backend-admin-app-api --output apps/backend/admin-app-api-contracts/openapi/admin-app-api.json
 pnpm api:contracts
 pnpm api:clients
 pnpm api:clients:check
 ```
 
-Committed generated OpenAPI contracts live under `libs/common/api-contracts/openapi`. They are generated API contracts, not hand-authored docs; regenerate with `pnpm api:contracts`. CLI compatibility aliases such as `--docs-root` remain accepted where simple, but new usage should prefer `--contracts-root`.
+Committed generated OpenAPI contracts live under `apps/backend/*-app-api-contracts/openapi`. They are generated API contracts, not hand-authored docs; regenerate with `pnpm api:contracts`. CLI compatibility aliases such as `--docs-root` remain accepted where simple, but new usage should prefer `--contracts-root`.
 
 Checked-in generated frontend artifacts live at:
 
@@ -25,5 +25,5 @@ When backend routes, DTOs, response wrappers, auth metadata, or error decorators
 
 1. Regenerate contracts with `pnpm api:contracts`.
 2. Regenerate frontend client types with `pnpm api:clients`.
-3. Commit both `libs/common/api-contracts/openapi` output and frontend generated artifacts.
+3. Commit both `apps/backend/*-app-api-contracts/openapi` output and frontend generated artifacts.
 4. Run `pnpm api:contracts:check`, `pnpm api:clients:check`, `pnpm api:openapi:lint`, and affected tests.

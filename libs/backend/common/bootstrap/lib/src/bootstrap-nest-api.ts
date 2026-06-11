@@ -931,7 +931,7 @@ function handleRateLimitHit(
       429,
       {
         type: "urn:problem:nest-react-boilerplate:rate-limited",
-        title: translate("errors.too-many-requests.title", { locale }),
+        title: translate("errors.rate-limited.title", { locale }),
         detail: translate("errors.rate-limited.detail", { locale }),
         code: "rate-limited",
       },

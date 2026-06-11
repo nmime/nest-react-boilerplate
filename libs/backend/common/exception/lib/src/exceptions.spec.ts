@@ -14,7 +14,7 @@ import {
 } from "./index";
 
 describe("@app/common/exception", () => {
-  it("creates RFC 7807 problem details with optional fields", () => {
+  it("creates RFC 9457 problem details with optional fields", () => {
     expect(
       createProblemDetails({
         title: "Forbidden",
@@ -34,6 +34,36 @@ describe("@app/common/exception", () => {
       type: "about:blank",
       title: "Bad",
       status: 400,
+    });
+  });
+
+  it("keeps RFC standard problem members when extensions contain reserved keys", () => {
+    expect(
+      createProblemDetails({
+        type: "urn:problem:test:conflict",
+        title: "Conflict",
+        status: 409,
+        detail: "Canonical detail",
+        instance: "/canonical",
+        code: "conflict",
+        extensions: {
+          type: "urn:problem:test:wrong",
+          title: "Wrong",
+          status: 418,
+          detail: "Wrong detail",
+          instance: "/wrong",
+          code: "wrong",
+          resource: "user",
+        },
+      }),
+    ).toEqual({
+      type: "urn:problem:test:conflict",
+      title: "Conflict",
+      status: 409,
+      detail: "Canonical detail",
+      instance: "/canonical",
+      code: "conflict",
+      resource: "user",
     });
   });
 
@@ -99,6 +129,9 @@ describe("@app/common/exception", () => {
     expect(ApiExceptions(HttpStatus.BAD_REQUEST, 599)).toEqual(
       expect.any(Function),
     );
+    expect(
+      ApiExceptions([HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED]),
+    ).toEqual(expect.any(Function));
 
     // Test getProblemDetailsSchema for 400 Bad Request
     const schema400 = getProblemDetailsSchema(HttpStatus.BAD_REQUEST);
@@ -243,7 +276,12 @@ describe("@app/common/exception", () => {
           errors: [
             {
               property: "email",
-              constraints: { isEmail: "bad", custom: "custom" },
+              detail: "email must be an email address",
+              message: "email must be an email address",
+              constraints: {
+                isEmail: "email must be an email address",
+                custom: "custom",
+              },
             },
             { constraints: { minLength: "short" } },
             "plain",
@@ -260,6 +298,8 @@ describe("@app/common/exception", () => {
             isEmail: "Поле email должно быть действительным email-адресом",
             custom: "custom",
           },
+          detail: "Поле email должно быть действительным email-адресом",
+          message: "Поле email должно быть действительным email-адресом",
         },
         { constraints: { minLength: "Поле value слишком короткое" } },
         "plain",

@@ -247,5 +247,13 @@
   "validation.constraints.isEmail": "{{property}} must be an email address",
   "validation.constraints.isString": "{{property}} must be a string",
   "validation.constraints.minLength": "{{property}} is too short",
-  "validation.constraints.isOptional": "{{property}} is optional"
+  "validation.constraints.isOptional": "{{property}} is optional",
+  "errors.client-data-validation.title": "Client data validation failed",
+  "errors.client-data-validation.detail": "Request client data validation failed.",
+  "validation.constraints.isInt": "{{property}} must be an integer number",
+  "validation.constraints.min": "{{property}} must not be less than the minimum allowed value",
+  "validation.constraints.max": "{{property}} must not be greater than the maximum allowed value",
+  "validation.constraints.isIn": "{{property}} must be one of the allowed values",
+  "validation.constraints.isUuid": "{{property}} must be a UUID",
+  "validation.constraints.isArray": "{{property}} must be an array"
 }

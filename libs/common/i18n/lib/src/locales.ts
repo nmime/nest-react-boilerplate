@@ -218,6 +218,8 @@ export type TranslationKey =
   | "user.profile.unknown"
   | "errors.bad-request.title"
   | "errors.bad-request.detail"
+  | "errors.client-data-validation.title"
+  | "errors.client-data-validation.detail"
   | "errors.conflict.title"
   | "errors.conflict.detail"
   | "errors.forbidden.title"
@@ -255,7 +257,13 @@ export type TranslationKey =
   | "validation.constraints.isEmail"
   | "validation.constraints.isString"
   | "validation.constraints.minLength"
-  | "validation.constraints.isOptional";
+  | "validation.constraints.isOptional"
+  | "validation.constraints.isInt"
+  | "validation.constraints.min"
+  | "validation.constraints.max"
+  | "validation.constraints.isIn"
+  | "validation.constraints.isUuid"
+  | "validation.constraints.isArray";
 export type LocaleCatalog = Record<TranslationKey, string>;
 
 export const en: LocaleCatalog = enCatalog;

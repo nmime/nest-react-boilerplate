@@ -2,7 +2,9 @@ import { applyDecorators, HttpException, HttpStatus } from "@nestjs/common";
 import { ApiResponse } from "@nestjs/swagger";
 import {
   hasTranslationKey,
+  interpolate,
   translate,
+  translations,
   type TranslationKey,
 } from "@app/common/i18n";
 
@@ -98,6 +100,25 @@ export const problemCodeForStatus = (status: number): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/gu, "-");
 
+const problemDetailsReservedExtensionKeys = new Set([
+  "type",
+  "title",
+  "status",
+  "detail",
+  "instance",
+  "code",
+]);
+
+function sanitizeProblemDetailsExtensions(
+  extensions: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(extensions).filter(
+      ([key]) => !problemDetailsReservedExtensionKeys.has(key),
+    ),
+  );
+}
+
 export const createProblemDetails = ({
   title,
   status,
@@ -113,7 +134,7 @@ export const createProblemDetails = ({
   ...(detail ? { detail } : {}),
   ...(instance ? { instance } : {}),
   ...(code ? { code } : {}),
-  ...extensions,
+  ...sanitizeProblemDetailsExtensions(extensions),
 });
 
 export class BaseException extends Error {
@@ -235,6 +256,22 @@ const detailKeyForProblem = (
   return hasTranslationKey(key) ? key : undefined;
 };
 
+function translateValidationIssueText(
+  message: string,
+  property: string,
+  locale: string | undefined,
+): string {
+  const key = Object.entries(translations.en).find(
+    ([translationKey, englishMessage]) =>
+      translationKey.startsWith("validation.constraints.") &&
+      interpolate(englishMessage, { property }) === message,
+  )?.[0];
+
+  return key && hasTranslationKey(key)
+    ? translate(key, { locale, params: { property } })
+    : message;
+}
+
 function localizeValidationIssues(
   value: unknown,
   locale: string | undefined,
@@ -262,12 +299,27 @@ function localizeValidationIssues(
       }),
     );
 
-    const firstMessage = Object.values(constraints)[0] as string | undefined;
-
     return {
       ...issue,
       constraints,
-      ...(firstMessage ? { message: firstMessage } : {}),
+      ...(typeof issue.message === "string"
+        ? {
+            message: translateValidationIssueText(
+              issue.message,
+              property,
+              locale,
+            ),
+          }
+        : {}),
+      ...(typeof issue.detail === "string"
+        ? {
+            detail: translateValidationIssueText(
+              issue.detail,
+              property,
+              locale,
+            ),
+          }
+        : {}),
     };
   });
 }
@@ -391,6 +443,8 @@ export const problemDetailsOpenApiSchema: OpenApiSchemaObject = {
         properties: {
           property: { type: "string" },
           message: { type: "string" },
+          detail: { type: "string" },
+          pointer: { type: "string", example: "/profile/email" },
           constraints: {
             type: "object",
             additionalProperties: { type: "string" },
@@ -456,6 +510,17 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
             type: "string",
             description: "The localized error message.",
           },
+          detail: {
+            type: "string",
+            description:
+              "A localized human-readable explanation for this validation issue.",
+          },
+          pointer: {
+            type: "string",
+            description:
+              "A JSON Pointer identifying the nested request member that failed validation.",
+            example: "/profile/email",
+          },
           constraints: {
             type: "object",
             additionalProperties: { type: "string" },
@@ -474,11 +539,35 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
   };
 }
 
+type ApiExceptionStatusInput = number | readonly number[];
+
+function isStatusArray(
+  status: ApiExceptionStatusInput,
+): status is readonly number[] {
+  return Array.isArray(status);
+}
+
+function normalizeApiExceptionStatuses(
+  statuses: readonly ApiExceptionStatusInput[],
+): number[] {
+  const normalized: number[] = [];
+
+  for (const status of statuses) {
+    if (isStatusArray(status)) {
+      normalized.push(...status);
+    } else {
+      normalized.push(status);
+    }
+  }
+
+  return normalized;
+}
+
 export function ApiExceptions(
-  ...statuses: number[]
+  ...statuses: ApiExceptionStatusInput[]
 ): MethodDecorator & ClassDecorator {
   return applyDecorators(
-    ...statuses.map((status) =>
+    ...normalizeApiExceptionStatuses(statuses).map((status) =>
       ApiResponse({
         status,
         description: mapHttpStatusToProblemTitle(status),

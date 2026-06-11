@@ -34,6 +34,27 @@ describe("@app/common/i18n", () => {
     expect(russian["common.language"]).toBe("Язык");
   });
 
+  it("exposes RFC 9457 validation and rate-limit translation keys", () => {
+    const requiredKeys = [
+      "errors.client-data-validation.title",
+      "errors.client-data-validation.detail",
+      "errors.rate-limited.title",
+      "errors.rate-limited.detail",
+      "validation.constraints.isInt",
+      "validation.constraints.min",
+      "validation.constraints.max",
+      "validation.constraints.isIn",
+      "validation.constraints.isUuid",
+      "validation.constraints.isArray",
+    ];
+
+    for (const key of requiredKeys) {
+      expect(hasTranslationKey(key)).toBe(true);
+      expect(translations.en[key]).toEqual(expect.any(String));
+      expect(translations.ru[key]).toEqual(expect.any(String));
+    }
+  });
+
   it("keeps every locale JSON catalog in key parity with the fallback catalog", () => {
     const fallbackKeys = Object.keys(translations[fallbackLocale]).sort(
       (left, right) => left.localeCompare(right),

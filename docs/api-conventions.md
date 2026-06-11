@@ -46,7 +46,7 @@ The response shape is:
 `libs/backend/common/response` exposes the response mapper layer for:
 
 - `{ data }` success responses
-- RFC 7807 `application/problem+json` problem responses
+- RFC 9457 `application/problem+json` problem responses
 - mapping `neverthrow` results to API responses
 - global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 

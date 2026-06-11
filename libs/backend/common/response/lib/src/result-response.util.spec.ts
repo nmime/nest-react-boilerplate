@@ -21,7 +21,7 @@ describe("exceptions response mapper", () => {
     });
   });
 
-  it("creates RFC 7807 problem details", () => {
+  it("creates RFC 9457 problem details", () => {
     expect(createProblemResponse("bad-request", "Invalid input")).toMatchObject(
       {
         code: "bad-request",

@@ -247,5 +247,13 @@
   "validation.constraints.isEmail": "Поле {{property}} должно быть действительным email-адресом",
   "validation.constraints.isString": "Поле {{property}} должно быть строкой",
   "validation.constraints.minLength": "Поле {{property}} слишком короткое",
-  "validation.constraints.isOptional": "Поле {{property}} необязательно"
+  "validation.constraints.isOptional": "Поле {{property}} необязательно",
+  "errors.client-data-validation.title": "Ошибка валидации данных клиента",
+  "errors.client-data-validation.detail": "Валидация данных клиента в запросе не удалась.",
+  "validation.constraints.isInt": "Поле {{property}} должно быть целым числом",
+  "validation.constraints.min": "Поле {{property}} не должно быть меньше минимально допустимого значения",
+  "validation.constraints.max": "Поле {{property}} не должно быть больше максимально допустимого значения",
+  "validation.constraints.isIn": "Поле {{property}} должно быть одним из допустимых значений",
+  "validation.constraints.isUuid": "Поле {{property}} должно быть UUID",
+  "validation.constraints.isArray": "Поле {{property}} должно быть массивом"
 }

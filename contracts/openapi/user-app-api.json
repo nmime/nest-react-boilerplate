@@ -120,6 +120,15 @@
                             "type": "string",
                             "description": "The localized error message."
                           },
+                          "detail": {
+                            "type": "string",
+                            "description": "A localized human-readable explanation for this validation issue."
+                          },
+                          "pointer": {
+                            "type": "string",
+                            "description": "A JSON Pointer identifying the nested request member that failed validation.",
+                            "example": "/profile/email"
+                          },
                           "constraints": {
                             "type": "object",
                             "additionalProperties": {

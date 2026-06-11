@@ -50,7 +50,7 @@ const mocks = vi.hoisted(() => {
     resolveLocaleFromRequest: vi.fn(() => "en"),
     setupSwagger: vi.fn(),
     translate: vi.fn((key: string) =>
-      key === "errors.too-many-requests.title"
+      key === "errors.rate-limited.title"
         ? "Too Many Requests"
         : "Too many requests.",
     ),
@@ -323,6 +323,9 @@ describe("bootstrapNestApi", () => {
     expect(response.statusCode).toBe(429);
     expect(response.end).toHaveBeenCalledWith(
       expect.stringContaining("Too Many Requests"),
+    );
+    expect(response.end).toHaveBeenCalledWith(
+      expect.stringContaining("rate-limited"),
     );
   });
 

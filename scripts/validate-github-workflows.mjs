@@ -63,6 +63,22 @@ const ci = workflows.find((workflow) => workflow.name === "ci.yml")?.text ?? "";
 for (const required of ["pnpm run ci:pr", "pnpm run deploy:validate"]) {
   assert.ok(ci.includes(required), `ci.yml missing required gate: ${required}`);
 }
+const qualityPresets =
+  workflows.find((workflow) => workflow.name === "quality-presets.yml")?.text ??
+  "";
+for (const [workflowName, workflowText] of [
+  ["ci.yml", ci],
+  ["quality-presets.yml", qualityPresets],
+]) {
+  assert.ok(
+    workflowText.includes('ADMIN_BOOTSTRAP_ENABLED: "true"'),
+    `${workflowName} runtime QA stack must enable the e2e bootstrap admin`,
+  );
+  assert.ok(
+    workflowText.includes("ADMIN_BOOTSTRAP_EMAILS: admin@example.com"),
+    `${workflowName} runtime QA stack must seed the e2e bootstrap admin email`,
+  );
+}
 for (const required of [
   "non-runtime-validation",
   "pnpm run db:migrations:check",

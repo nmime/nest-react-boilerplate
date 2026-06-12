@@ -332,6 +332,8 @@ jobs:
     timeout-minutes: 90
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      ADMIN_BOOTSTRAP_ENABLED: "true"
+      ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: "1"
       POSTGRES_PORT: "5432"

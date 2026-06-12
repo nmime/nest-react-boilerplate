@@ -105,6 +105,15 @@ has(
 );
 has(
   devBackendEnv,
+  "DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}",
+  "dev Compose keeps container DATABASE_URL on the Compose network",
+);
+assert.ok(
+  !devBackendEnv.includes("DATABASE_URL: ${DATABASE_URL:-"),
+  "Local Docker services must not inherit host DATABASE_URL; CI uses localhost for host-side QA tools.",
+);
+has(
+  devBackendEnv,
   "AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}",
   "dev Compose uses an intentionally short dev JWT default",
 );

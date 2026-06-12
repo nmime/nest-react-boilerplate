@@ -59,6 +59,11 @@ describe("admin preference session handling", () => {
 
   it("sends preference updates without URL bearer-token bootstrap", async () => {
     const requests: Request[] = [];
+    window.history.pushState(
+      null,
+      "",
+      "/dashboard?admin_token=leaked-admin-token&token=leaked-token&tab=profile",
+    );
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
@@ -89,6 +94,9 @@ describe("admin preference session handling", () => {
     render(<App />);
 
     expect(await screen.findByText("Admin dashboard")).toBeTruthy();
+    expect(window.location.href).not.toContain("admin_token=");
+    expect(window.location.href).not.toContain("token=");
+    expect(window.location.search).toBe("?tab=profile");
     fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
     fireEvent.click(await screen.findByRole("option", { name: "Light" }));
 

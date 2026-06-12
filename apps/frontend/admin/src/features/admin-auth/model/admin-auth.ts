@@ -7,8 +7,42 @@ import {
 
 export type AuthMePayload = authApi.AuthControllerMeData;
 
-export const getBrowserPath = (): string =>
-  typeof window === "undefined" ? "/" : window.location.pathname;
+const sensitiveUrlTokenParams = ["admin_token", "access_token", "token"];
+
+export const stripSensitiveBrowserTokenParams = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  const hadSensitiveParams = sensitiveUrlTokenParams.some((param) =>
+    url.searchParams.has(param),
+  );
+  if (!hadSensitiveParams) {
+    return;
+  }
+
+  for (const param of sensitiveUrlTokenParams) {
+    url.searchParams.delete(param);
+  }
+
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+};
+
+export const getBrowserPath = (): string => {
+  if (typeof window === "undefined") {
+    return "/";
+  }
+
+  stripSensitiveBrowserTokenParams();
+  return window.location.pathname;
+};
+
+export { sensitiveUrlTokenParams };
 
 export const getFrontendEnv = (): FrontendEnv =>
   import.meta.env as Readonly<Record<string, boolean | string | undefined>>;

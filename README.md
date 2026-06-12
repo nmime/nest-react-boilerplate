@@ -70,7 +70,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
 | `apps/frontend/app`                           | User-facing React app shell.                                                |
 | `apps/frontend/landing`                       | Public landing React app shell.                                             |
-| `apps/backend/admin-app-api`          | Admin NestJS API.                                                           |
+| `apps/backend/admin-app-api`                  | Admin NestJS API.                                                           |
 | `apps/backend/user-app-api`                   | User NestJS API.                                                            |
 | `apps/backend/auth-app-api`                   | Auth NestJS API.                                                            |
 | `apps/backend/*-app-api-contracts/openapi`    | Committed OpenAPI producer output for review and generation.                |

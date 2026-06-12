@@ -46,6 +46,19 @@ const staleReferencePatterns: StaleReferencePattern[] = [
     label: "retired common exceptions path",
     pattern: /libs\/backend\/common\/exceptions/u,
   },
+  {
+    label: "missing-backend Postgres shared path",
+    pattern: /(^|[^A-Za-z0-9_/.-])libs\/postgres\/main\/shared(?:\/|$)/u,
+  },
+  {
+    label: "duplicated Postgres shared lib path",
+    pattern:
+      /libs\/backend\/postgres\/main\/shared\/lib\/src\/lib\/(?:lib|src\/lib)(?:\/|$)/u,
+  },
+  {
+    label: "duplicated lib source path segment",
+    pattern: /\blib\/src\/lib\/src\/lib\b/u,
+  },
   { label: "retired problem wrapper", pattern: /\bApiProblemExceptions\b/u },
   {
     label: "retired problem validation wrapper",
@@ -285,7 +298,7 @@ function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
           file: `${relativeFile}:${index + 1}`,
           status: 1,
           stdout: "",
-          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, Problem Details RFC9457, Node 26, and pnpm 11.5.2 references.`,
+          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node 26, and pnpm 11.5.2 references.`,
         });
       }
     });

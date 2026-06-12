@@ -85,10 +85,10 @@ For the next DB stage, data-access libs should contain `entity/`, `repository/`,
 
 ## Postgres data-access layer
 
-The first data-access libraries live under `libs/backend/postgres/main/*`:
+The first data-access libraries live under `libs/backend/postgres/main/*/lib`; import them through their `@app/postgres-main*` aliases instead of spelling source-file paths in application code.
 
-- `@app/postgres-main` (`libs/backend/postgres/main/shared`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
-- `@app/postgres-main-auth` (`libs/backend/postgres/main/auth`) owns auth persistence objects such as `entity/` and `repository/` exports.
+- `@app/postgres-main` (`libs/backend/postgres/main/shared/lib`, source root `libs/backend/postgres/main/shared/lib/src`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
+- `@app/postgres-main-auth` (`libs/backend/postgres/main/auth/lib`, source root `libs/backend/postgres/main/auth/lib/src`) owns auth persistence objects such as `entity/` and `repository/` exports.
 
 Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. MikroORM does not auto-sync schemas in this boilerplate; schema changes are explicit MikroORM `Migration` classes under data-access libraries and are applied by `pnpm run db:migrate`, which records state in `mikro_orm_migrations`. Runtime migration does not read raw SQL files or use `psql` loops.
 

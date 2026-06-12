@@ -229,7 +229,7 @@ test("admin API accepts bearer tokens while production admin frontend ignores UR
   await expect(page).not.toHaveURL(/admin_token=|token=/u);
   await expect(
     page.getByText(
-      /Authenticated principal is missing\.|Request failed with 401\.|Unauthorized/u,
+      /Authenticated principal is missing\.|Request failed with 401\.|Unauthorized|Missing bearer token\./u,
     ),
   ).toBeVisible();
 });

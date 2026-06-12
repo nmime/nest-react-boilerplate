@@ -31,7 +31,7 @@ interface HealthEnvelope {
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
   response.json<HealthEnvelope>();
 
-describe("backend-admin-app-api health e2e", () => {
+describe("admin-app-api health e2e", () => {
   let app: NestFastifyApplication;
   const ormMock = {
     close: vi.fn(() => Promise.resolve()),
@@ -95,7 +95,7 @@ describe("backend-admin-app-api health e2e", () => {
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
-        app: "backend-admin-app-api",
+        app: "admin-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),
         dependencies: expect.arrayContaining([
           expect.objectContaining({ name: "runtime", status: "ok" }),
@@ -107,7 +107,7 @@ describe("backend-admin-app-api health e2e", () => {
     expect(readyResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
-        app: "backend-admin-app-api",
+        app: "admin-app-api",
         dependencies: expect.arrayContaining([
           expect.objectContaining({ name: "postgres", status: "ok" }),
           expect.objectContaining({
@@ -168,7 +168,7 @@ describe("backend-admin-app-api health e2e", () => {
       expect(JSON.stringify(body)).not.toContain("super-secret");
       const errorPayload =
         body.response?.data ?? body.data ?? body.response ?? body;
-      expect(errorPayload.app).toBe("backend-admin-app-api");
+      expect(errorPayload.app).toBe("admin-app-api");
       expect(errorPayload.dependencies).toEqual(
         expect.arrayContaining([
           expect.objectContaining({

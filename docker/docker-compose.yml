@@ -68,14 +68,14 @@ services:
     environment: *backend-env
     command: ["pnpm", "db:migrate"]
 
-  backend-admin-app-api:
+  admin-app-api:
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: backend
       args:
-        NX_PROJECT: backend-admin-app-api
+        NX_PROJECT: admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin-app-api
     restart: unless-stopped
     environment: *backend-env
@@ -140,7 +140,7 @@ services:
         VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
     depends_on:
-      backend-admin-app-api:
+      admin-app-api:
         condition: service_healthy
     ports:
       - "${ADMIN_APP_PORT:-8081}:8080"
@@ -182,7 +182,7 @@ services:
         condition: service_healthy
       user-app-api:
         condition: service_healthy
-      backend-admin-app-api:
+      admin-app-api:
         condition: service_healthy
     ports:
       - "${LANDING_APP_PORT:-8083}:8080"

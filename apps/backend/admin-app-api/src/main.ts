@@ -5,7 +5,7 @@ import {
 import { AdminAppApiModule } from "./admin-app-api.module";
 
 void bootstrapNestApi(AdminAppApiModule, {
-  appName: "backend-admin-app-api",
+  appName: "admin-app-api",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
   defaultPort: 3001,
 });

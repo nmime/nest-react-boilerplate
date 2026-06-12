@@ -5,7 +5,7 @@ Frontend clients use `openapi-typescript`, `openapi-fetch`, and `openapi-react-q
 ```bash
 pnpm api:openapi -- --app auth-app-api --output apps/backend/auth-app-api-contracts/openapi/auth-app-api.json
 pnpm api:openapi -- --app user-app-api --output apps/backend/user-app-api-contracts/openapi/user-app-api.json
-pnpm api:openapi -- --app backend-admin-app-api --output apps/backend/admin-app-api-contracts/openapi/admin-app-api.json
+pnpm api:openapi -- --app admin-app-api --output apps/backend/admin-app-api-contracts/openapi/admin-app-api.json
 pnpm api:contracts
 pnpm api:clients
 pnpm api:clients:check

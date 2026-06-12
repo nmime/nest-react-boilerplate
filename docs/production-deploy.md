@@ -208,7 +208,7 @@ deployable target and publish immutable tags:
 
 ```bash
 IMAGE_TAG=$(git rev-parse --short HEAD)
-docker build --target backend --build-arg NX_PROJECT=backend-admin-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api:$IMAGE_TAG .
+docker build --target backend --build-arg NX_PROJECT=admin-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/admin-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api:$IMAGE_TAG .
 docker build --target backend --build-arg NX_PROJECT=user-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/user-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/user-app-api:$IMAGE_TAG .
 docker build --target backend --build-arg NX_PROJECT=auth-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/auth-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api:$IMAGE_TAG .
 docker build --target frontend --build-arg NX_PROJECT=landing-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/landing -t ghcr.io/your-github-org/nest-react-boilerplate/landing-app:$IMAGE_TAG .

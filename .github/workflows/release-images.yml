@@ -58,7 +58,7 @@ jobs:
           - name: admin-app-api
             target: backend
             build-args: |
-              NX_PROJECT=backend-admin-app-api
+              NX_PROJECT=admin-app-api
               BUILD_OUTPUT=dist/apps/backend/admin-app-api
               PNPM_VERSION=11.5.2
           - name: user-app-api

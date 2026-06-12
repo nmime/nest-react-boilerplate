@@ -2,7 +2,7 @@
 
 The backend consists of three standalone NestJS API shells:
 
-- `backend-admin-app-api`
+- `admin-app-api`
 - `user-app-api`
 - `auth-app-api`
 
@@ -100,7 +100,7 @@ GET /auth/me
 POST /auth/logout
 ```
 
-Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`. Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `backend-admin-app-api`.
+Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`. Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `admin-app-api`.
 
 Admin access is fail-closed. A registered email listed in `ADMIN_BOOTSTRAP_EMAILS` receives the `admin` role plus granular `admin:profile:read` and `admin:dashboard:read` permissions.
 

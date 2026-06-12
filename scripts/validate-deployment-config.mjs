@@ -312,7 +312,7 @@ for (const {
     localControllerPath: "apps/backend/user-app-api/src/health.controller.ts",
   },
   {
-    app: "backend-admin-app-api",
+    app: "admin-app-api",
     healthProvider: "AdminAppHealthServiceProvider",
     modulePath: "apps/backend/admin-app-api/src/admin-app-api.module.ts",
     configPath: "apps/backend/admin-app-api/src/health.config.ts",
@@ -489,7 +489,7 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   );
   has(
     text,
-    helm ? "-admin-api:" : "backend-admin-app-api:3000",
+    helm ? "-admin-api:" : "admin-app-api:3000",
     "admin API upstream",
   );
 };

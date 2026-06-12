@@ -19,7 +19,7 @@ describe("AdminAppApiModule", () => {
         BaseHealthController,
       );
       expect(moduleRef.get(HealthService).appName).toBe(
-        "backend-admin-app-api",
+        "admin-app-api",
       );
       expect(moduleRef.get(AdminProfileController)).toBeInstanceOf(
         AdminProfileController,

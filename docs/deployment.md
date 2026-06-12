@@ -98,7 +98,7 @@ healthy dependency ordering. Production Compose uses API `/ready`; Helm uses API
 
 - `/auth/*` -> `auth-app-api:3000`
 - `/profile/*` -> `user-app-api:3000`
-- `/admin/*` -> `backend-admin-app-api:3000`
+- `/admin/*` -> `admin-app-api:3000`
 
 This lets Docker browser calls use empty Vite API base URLs without localhost
 hacks. Production secrets should be supplied from a secret manager; repository

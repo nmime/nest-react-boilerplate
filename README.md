@@ -17,7 +17,7 @@ flowchart TB
     Support["api-support, state, i18n"]
   end
   subgraph APIs["Backend APIs"]
-    AdminApi["backend-admin-app-api NestJS"]
+    AdminApi["admin-app-api NestJS"]
     UserApi["user-app-api NestJS"]
     AuthApi["auth-app-api NestJS"]
   end
@@ -70,7 +70,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
 | `apps/frontend/app`                           | User-facing React app shell.                                                |
 | `apps/frontend/landing`                       | Public landing React app shell.                                             |
-| `apps/backend/backend-admin-app-api`          | Admin NestJS API.                                                           |
+| `apps/backend/admin-app-api`          | Admin NestJS API.                                                           |
 | `apps/backend/user-app-api`                   | User NestJS API.                                                            |
 | `apps/backend/auth-app-api`                   | Auth NestJS API.                                                            |
 | `apps/backend/*-app-api-contracts/openapi`    | Committed OpenAPI producer output for review and generation.                |
@@ -99,7 +99,7 @@ pnpm run dev
 Default local services:
 
 - Frontends: `admin-app`, `user-app`, and `landing-app` are served by Nx/Vite targets.
-- APIs: `backend-admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
+- APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 
 If you need a narrower command, use the [Command matrix](docs/command-matrix.md) and [Local verification](docs/local-verification.md) guides instead of guessing target names.

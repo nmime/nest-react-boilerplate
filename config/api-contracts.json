@@ -19,7 +19,7 @@
     },
     {
       "name": "admin-app-api",
-      "app": "backend-admin-app-api",
+      "app": "admin-app-api",
       "port": 3993,
       "artifactPath": "apps/backend/admin-app-api-contracts/openapi/admin-app-api.json",
       "typesPath": "libs/common/api-contracts/lib/src/generated/admin-app-api.ts",

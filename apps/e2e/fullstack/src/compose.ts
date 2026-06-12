@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 export const composeArgs = ["compose", "-f", "docker/docker-compose.yml"];
 export const stackServices = [
   "migrate",
-  "backend-admin-app-api",
+  "admin-app-api",
   "user-app-api",
   "auth-app-api",
   "admin-app",

@@ -23,7 +23,7 @@ import {
   PostgresReadinessHealthIndicator,
 } from "@app/postgres-main";
 
-const appName = "backend-admin-app-api";
+const appName = "admin-app-api";
 
 export const AdminAppHealthServiceProvider: Provider = {
   provide: HealthService,

@@ -21,7 +21,7 @@ export default async function globalSetup(): Promise<void> {
   await waitForText(
     "admin api",
     `${urls.adminApi}/health`,
-    "backend-admin-app-api",
+    "admin-app-api",
   );
   await waitForText("user app", `${urls.userApp}/`, "User App");
   await waitForText("admin app", `${urls.adminApp}/`, "Admin App");

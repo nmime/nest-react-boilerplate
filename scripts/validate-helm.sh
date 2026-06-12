@@ -42,7 +42,7 @@ if grep -nE 'image: .*:latest"?$' "${TMP_DIR}/production.yaml"; then
   exit 1
 fi
 
-if grep -nE 'proxy_pass http://(auth-app-api|user-app-api|backend-admin-app-api)(:|/)' "${TMP_DIR}/production.yaml"; then
+if grep -nE 'proxy_pass http://(auth-app-api|user-app-api|admin-app-api)(:|/)' "${TMP_DIR}/production.yaml"; then
   echo "frontend nginx config must use Helm Service DNS names, not docker-compose upstream names" >&2
   exit 1
 fi

@@ -118,6 +118,10 @@ const staleReferencePatterns: StaleReferencePattern[] = [
     pattern: /\bNODE_VERSION\b[^\n]*(?:20|22|24)\b/u,
   },
   { label: "retired Problem Details RFC", pattern: /\bRFC\s?7807\b/iu },
+  {
+    label: "retired duplicated admin API project name",
+    pattern: /\bbackend-admin-app-api\b/u,
+  },
 ];
 
 const staleReferenceIgnoredDirectories = new Set([
@@ -362,7 +366,7 @@ function collectGeneratedContractImportTargets(workspaceRoot: string): string[] 
   );
 }
 
-function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
+export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
   return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
     const text = readFileSync(file, "utf8");

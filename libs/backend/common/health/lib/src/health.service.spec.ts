@@ -11,7 +11,7 @@ import type { HealthIndicatorResult, HealthResponse } from "./dto";
 describe("HealthService", () => {
   it("returns app-aware DTO envelopes preserving current API response contracts", async () => {
     const service = new HealthService({
-      appName: "backend-admin-app-api",
+      appName: "admin-app-api",
       indicators: [
         {
           name: "postgres",
@@ -23,7 +23,7 @@ describe("HealthService", () => {
     const response = await service.checkEnvelope("ready");
 
     expect(response.data).toMatchObject({
-      app: "backend-admin-app-api",
+      app: "admin-app-api",
       status: "ok",
       dependencies: [{ name: "postgres", status: "ok", required: true }],
       checks: [{ name: "postgres", status: "ok", required: true }],

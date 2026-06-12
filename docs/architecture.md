@@ -12,7 +12,7 @@ All three apps are Vite React apps. They share React UI primitives from `libs/fr
 
 ## Backend apps
 
-- `backend-admin-app-api` in `apps/backend/admin-app-api`
+- `admin-app-api` in `apps/backend/admin-app-api`
 - `user-app-api` in `apps/backend/user-app-api`
 - `auth-app-api` in `apps/backend/auth-app-api`
 
@@ -137,7 +137,7 @@ graph TD
   OpenApi --> SharedTypes[libs/common/api-contracts/lib/src/generated/**]
   UserApp --> ConsumerPact[apps/frontend/app-contracts/consumers/frontend-auth.pact.json]
   ConsumerPact --> AuthApi[auth-app-api]
-  AdminApi[backend-admin-app-api] --> Bootstrap[@app/common/bootstrap]
+  AdminApi[admin-app-api] --> Bootstrap[@app/common/bootstrap]
   UserApi[user-app-api] --> Bootstrap
   AuthApi --> Bootstrap
   Bootstrap --> Exception[@app/common/exception]

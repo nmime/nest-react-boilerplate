@@ -4,7 +4,7 @@ import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 
 const compose = ["compose", "-f", "docker/docker-compose.yml"];
 const backendServices = [
-  "backend-admin-app-api",
+  "admin-app-api",
   "user-app-api",
   "auth-app-api",
 ];
@@ -56,7 +56,7 @@ const env = {
 const probes = [
   ["auth health", url(ports.authApi, "/health"), "auth-app-api"],
   ["user health", url(ports.userApi, "/health"), "user-app-api"],
-  ["admin health", url(ports.adminApi, "/health"), "backend-admin-app-api"],
+  ["admin health", url(ports.adminApi, "/health"), "admin-app-api"],
   ["admin frontend", url(ports.adminApp, "/"), "Admin App"],
   ["user frontend", url(ports.userApp, "/"), "User App"],
   ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate"],

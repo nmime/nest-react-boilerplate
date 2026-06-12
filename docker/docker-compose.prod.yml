@@ -151,7 +151,7 @@ services:
       postgres:
         condition: service_healthy
 
-  backend-admin-app-api:
+  admin-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
@@ -159,7 +159,7 @@ services:
       dockerfile: Dockerfile
       target: backend
       args:
-        NX_PROJECT: backend-admin-app-api
+        NX_PROJECT: admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin-app-api
     ports:
       - "127.0.0.1:${ADMIN_APP_API_PORT:-3001}:3000"
@@ -202,7 +202,7 @@ services:
         FRONTEND_OUTPUT: dist/apps/frontend/admin
         VITE_API_BASE_URL_MODE: same-origin
     depends_on:
-      backend-admin-app-api:
+      admin-app-api:
         condition: service_healthy
     ports:
       - "127.0.0.1:${ADMIN_APP_PORT:-8081}:8080"
@@ -242,7 +242,7 @@ services:
         condition: service_healthy
       user-app-api:
         condition: service_healthy
-      backend-admin-app-api:
+      admin-app-api:
         condition: service_healthy
     ports:
       - "127.0.0.1:${LANDING_APP_PORT:-8080}:8080"

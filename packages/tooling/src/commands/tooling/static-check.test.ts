@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
-import { checkGeneratedContractImports } from "./static-check.ts";
+import { checkGeneratedContractImports, checkStaleReferences } from "./static-check.ts";
 
 function createWorkspace(): string {
   return mkdtempSync(join(tmpdir(), "static-check-generated-imports-"));
@@ -69,6 +69,30 @@ describe("static-check generated contract import guard", () => {
       );
 
       assert.deepEqual(checkGeneratedContractImports(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+
+describe("static-check stale admin API name guard", () => {
+  it("rejects the retired duplicated admin API project name", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "docs/stale-admin-api.md",
+        `Use ${"backend-"}admin-app-api for the admin API.\n`,
+      );
+
+      const failures = checkStaleReferences(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0].command, "stale architecture/version denylist");
+      assert.equal(failures[0].file, "docs/stale-admin-api.md:1");
+      assert.match(failures[0].stderr, /duplicated admin API project name/);
     } finally {
       removeWorkspace(workspaceRoot);
     }

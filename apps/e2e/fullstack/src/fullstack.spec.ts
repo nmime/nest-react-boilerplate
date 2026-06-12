@@ -164,7 +164,7 @@ test("health endpoints and frontends are reachable through the Docker stack", as
     })),
     fetch(`${urls.adminApi}/health`).then(async (response) => ({
       label: "admin api",
-      appName: "backend-admin-app-api",
+      appName: "admin-app-api",
       body: (await response.json()) as HealthResponse,
     })),
   ]);

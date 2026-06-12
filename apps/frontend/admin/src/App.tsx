@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { configureApiLocale } from "@app/api-client/support";
+import { configureApiLocale } from "@app/frontend-api-support";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   ApiClientProvider,

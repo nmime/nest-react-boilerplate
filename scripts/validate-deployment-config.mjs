@@ -64,20 +64,31 @@ has(
 );
 has(
   dockerfile,
-  "COPY docker/nginx-fullstack.conf /etc/nginx/conf.d/default.conf",
-  "frontend nginx config copy",
+  "ARG NGINX_CONFIG=docker/nginx-fullstack.conf",
+  "frontend nginx config build arg defaults to same-origin fullstack proxy",
+);
+has(
+  dockerfile,
+  "COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf",
+  "frontend nginx config copy is build-arg selectable",
 );
 const nginxFullstack = read("docker/nginx-fullstack.conf");
-for (const required of [
-  'add_header X-Content-Type-Options "nosniff" always;',
-  'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
-  "location = /.env",
-  "location ^~ /.git/",
-  "location = /server-status",
-  "location = /actuator/env",
-]) {
-  has(nginxFullstack, required, `frontend nginx DAST hardening: ${required}`);
-}
+const nginxSpa = read("docker/nginx-spa.conf");
+const assertNginxHardening = (text, label) => {
+  for (const required of [
+    'add_header X-Content-Type-Options "nosniff" always;',
+    'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
+    "location = /nginx-health",
+    "location = /.env",
+    "location ^~ /.git/",
+    "location = /server-status",
+    "location = /actuator/env",
+  ]) {
+    has(text, required, `${label} nginx DAST hardening: ${required}`);
+  }
+};
+assertNginxHardening(nginxFullstack, "same-origin fullstack");
+assertNginxHardening(nginxSpa, "standalone SPA");
 has(dockerfile, "USER 101", "frontend runtime user 101");
 has(dockerfile, "EXPOSE 8080", "frontend exposes unprivileged port 8080");
 const migratorStage = section(
@@ -166,6 +177,16 @@ has(
   "REDIS_URL=redis://redis:6379/0",
   "production env example points at Compose Redis",
 );
+has(
+  productionEnvExample,
+  "VITE_API_BASE_URL_MODE=same-origin",
+  "production env example defaults to same-origin frontend API routing",
+);
+has(
+  productionEnvExample,
+  "FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf",
+  "production env example selects same-origin nginx config",
+);
 for (const [service, variable] of [
   ["admin-app", "ADMIN_APP_PORT:-8081"],
   ["user-app", "USER_APP_PORT:-8082"],
@@ -192,6 +213,16 @@ has(
   prodCompose,
   "http://127.0.0.1:8080/nginx-health",
   "prod frontend healthcheck targets container port 8080",
+);
+has(
+  prodCompose,
+  "NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}",
+  "production Compose passes selectable frontend nginx config",
+);
+has(
+  prodCompose,
+  "VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}",
+  "production Compose defaults frontend builds to same-origin API routing",
 );
 const prodBackendEnv = section(
   prodCompose,
@@ -487,11 +518,7 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
     "location ^~ /admin/",
     "admin API prefix route cannot be shadowed by regex static assets",
   );
-  has(
-    text,
-    helm ? "-admin-api:" : "admin-app-api:3000",
-    "admin API upstream",
-  );
+  has(text, helm ? "-admin-api:" : "admin-app-api:3000", "admin API upstream");
 };
 assertNginxRoutes(read("docker/nginx-fullstack.conf"));
 

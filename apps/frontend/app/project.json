@@ -7,7 +7,6 @@
     "platform:frontend",
     "type:frontend-app",
     "scope:user",
-    "type:app",
     "fsd:layer:app"
   ],
   "// targets": "to see all targets run: nx show project user-app --web",

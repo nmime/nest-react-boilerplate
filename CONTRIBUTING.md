@@ -5,13 +5,13 @@ Use this guide with the root [README](README.md), [Command matrix](docs/command-
 ## Prerequisites
 
 - Node.js `>=26 <27`; use `.nvmrc` for the current local patch version.
-- pnpm `11.5.2` through Corepack.
+- pnpm `11.6.0` through Corepack.
 - Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.5.2 --activate
+corepack prepare pnpm@11.6.0 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 ```
@@ -70,7 +70,7 @@ pnpm run audit                    # dependency changes
 
 Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cutting changes before requesting merge.
 
-Coverage thresholds are defined in `config/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
+Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
 
 ## Backend changes
 

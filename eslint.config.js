@@ -102,6 +102,7 @@ module.exports = [
                 "type:feature-shared",
                 "type:common",
                 "type:data-access",
+                "type:test-util",
                 "type:util",
                 "type:sdk",
               ],
@@ -121,12 +122,17 @@ module.exports = [
               onlyDependOnLibsWithTags: [
                 "type:data-access",
                 "type:common",
+                "type:test-util",
                 "type:util",
               ],
             },
             {
               sourceTag: "type:common",
-              onlyDependOnLibsWithTags: ["type:common", "type:util"],
+              onlyDependOnLibsWithTags: [
+                "type:common",
+                "type:test-util",
+                "type:util",
+              ],
             },
             {
               sourceTag: "type:ui",
@@ -172,6 +178,7 @@ module.exports = [
               onlyDependOnLibsWithTags: [
                 "scope:auth",
                 "scope:admin",
+                "scope:feature-flags",
                 "scope:postgres",
                 "scope:shared",
               ],
@@ -188,6 +195,14 @@ module.exports = [
             {
               sourceTag: "scope:landing",
               onlyDependOnLibsWithTags: ["scope:landing", "scope:shared"],
+            },
+            {
+              sourceTag: "scope:feature-flags",
+              onlyDependOnLibsWithTags: [
+                "scope:feature-flags",
+                "scope:postgres",
+                "scope:shared",
+              ],
             },
             {
               sourceTag: "scope:postgres",

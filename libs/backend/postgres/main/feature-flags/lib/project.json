@@ -3,12 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/feature-flags/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:data-access",
-    "scope:postgres",
-    "scope:feature-flags"
-  ],
+  "tags": ["platform:backend", "type:data-access", "scope:feature-flags"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -30,7 +25,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": [
         "{workspaceRoot}/coverage/libs/backend/postgres/main/feature-flags"

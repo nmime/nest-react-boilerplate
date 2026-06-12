@@ -8,7 +8,7 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 - `user-app` in `apps/frontend/app`
 - `landing-app` in `apps/frontend/landing`
 
-All three apps are Vite React apps. They share React UI primitives from `libs/frontend/ui`, call typed backend wrappers from `libs/frontend/api-client`, and rely on `libs/frontend/api-support` for browser-safe request primitives such as `apiFetch`, locale-aware API headers, and fallback API error copy.
+All three apps are Vite React apps. They share React UI primitives from `libs/frontend/ui`, call typed backend wrappers from `libs/frontend/api-client`, and rely on `libs/frontend/api-support` (`@app/frontend-api-support`) for browser-safe request primitives such as `apiFetch`, locale-aware API headers, and fallback API error copy. Keep this API-support alias canonical; do not add secondary TS path aliases that point at the same source root.
 
 ## Backend apps
 
@@ -54,14 +54,13 @@ Current `libs/common` placement decisions:
 Projects use multiple tag dimensions so module-boundary rules can describe architecture without relying on folder names alone.
 
 - `platform:backend`, `platform:frontend`, `platform:shared` describe runtime surface.
-- `type:app` marks deployable applications.
-- `type:backend-app` and `type:frontend-app` keep app-specific constraints explicit.
+- `type:backend-app` and `type:frontend-app` mark deployable applications and keep app-specific constraints explicit; apps should not also carry a generic `type:app` tag.
 - `type:feature-main` is reserved for backend feature modules that own controllers, use cases, and application-facing orchestration.
 - `type:feature-shared` is for feature-level contracts/services shared by multiple apps or feature-main libs within the same runtime platform. Admin uses both frontend and backend feature-shared libraries; keep their `platform:*` tags separate.
 - `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
-- `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses.
+- `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
-- `scope:<domain>` identifies ownership such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, or `scope:shared`.
+- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Postgres is modeled by the `libs/backend/postgres/**` source root plus `type:data-access`, not by a second `scope:postgres` tag on domain data-access libraries.
 
 New libraries should use the taxonomy above and, where practical, keep feature, data-access, and test-util responsibilities split.
 
@@ -151,7 +150,7 @@ graph TD
 
 ## Current contract and persistence layout
 
-OpenAPI producer output is committed as JSON under `apps/backend/*-app-api-contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app-contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are `config/api-contracts.json`, `config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`.
+OpenAPI producer output is committed as JSON under `apps/backend/*-app-api-contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app-contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
 
 There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
 

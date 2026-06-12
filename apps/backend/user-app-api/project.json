@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/backend/user-app-api/src",
   "projectType": "application",
-  "tags": ["platform:backend", "type:backend-app", "scope:user", "type:app"],
+  "tags": ["platform:backend", "type:backend-app", "scope:user"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

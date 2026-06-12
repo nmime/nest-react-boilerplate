@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vitest/config";
-import { fullCoverage } from "../../../../../config/vitest-coverage.mts";
+// nx-ignore-next-line
+import { fullCoverage } from "../../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],

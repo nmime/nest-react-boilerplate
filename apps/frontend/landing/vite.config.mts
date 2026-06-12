@@ -35,6 +35,12 @@ export default defineConfig(({ command, mode }) => {
               extension: [".ts", ".tsx"],
               requireEnv: false,
               forceBuildInstrument: true,
+              // Vite 8/Rolldown validates pure annotations after Istanbul wraps JSX
+              // branch counters. Dropping generated comments keeps the browser
+              // coverage build instrumented without emitting invalid annotations.
+              generatorOpts: {
+                comments: false,
+              },
             }),
           ]
         : []),

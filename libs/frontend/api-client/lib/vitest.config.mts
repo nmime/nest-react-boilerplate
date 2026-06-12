@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
-import { fullCoverage } from "../../../../config/vitest-coverage.mts";
+// nx-ignore-next-line
+import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   root: import.meta.dirname,

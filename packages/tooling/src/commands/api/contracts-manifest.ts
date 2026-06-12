@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 export const apiContractsManifestPath = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../../config/api-contracts.json",
+  "../../../config/api-contracts.json",
 );
 
 function readManifest() {

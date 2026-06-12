@@ -101,8 +101,12 @@ healthy dependency ordering. Production Compose uses API `/ready`; Helm uses API
 - `/admin/*` -> `admin-app-api:3000`
 
 This lets Docker browser calls use empty Vite API base URLs without localhost
-hacks. Production secrets should be supplied from a secret manager; repository
-values are placeholders only.
+hacks. Production Compose uses the same default unless `.env.production` opts
+into standalone split-origin SPA builds with
+`FRONTEND_NGINX_CONFIG=docker/nginx-spa.conf` plus a non-`same-origin`
+`VITE_API_BASE_URL_MODE` value and explicit `VITE_*_API_BASE_URL` origins.
+Production secrets should be supplied from a secret manager; repository values
+are placeholders only.
 
 ## Docker Compose production readiness
 

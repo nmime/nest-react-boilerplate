@@ -121,9 +121,22 @@ for (const expected of [
   "AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt",
   "POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt",
   "IMAGE_TAG=sha-000000000000",
+  "VITE_API_BASE_URL_MODE=same-origin",
+  "FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf",
   "Never use latest/main/dev/prod-style mutable tags",
 ]) {
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
+}
+
+for (const expected of [
+  "NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}",
+  "VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}",
+]) {
+  has(
+    prodCompose,
+    expected,
+    `production Compose frontend build arg ${expected}`,
+  );
 }
 
 for (const expected of [

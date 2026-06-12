@@ -2,7 +2,7 @@
 
 ## Nx and pnpm
 
-Nx 22 provides project graph awareness, cached targets, module-boundary enforcement, and consistent commands across apps and libraries. pnpm 11.5.2 is pinned for deterministic workspace installs on the Node.js `>=26 <27` engine range.
+Nx 22 provides project graph awareness, cached targets, module-boundary enforcement, and consistent commands across apps and libraries. pnpm 11.6.0 is pinned for deterministic workspace installs on the Node.js `>=26 <27` engine range.
 
 ## React, Vite, and Vitest
 

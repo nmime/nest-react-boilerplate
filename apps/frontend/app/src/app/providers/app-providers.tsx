@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { observer } from "mobx-react-lite";
 import { ApiClientProvider } from "@app/api-client";
-import { configureApiLocale } from "@app/api-client/support";
+import { configureApiLocale } from "@app/frontend-api-support";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,

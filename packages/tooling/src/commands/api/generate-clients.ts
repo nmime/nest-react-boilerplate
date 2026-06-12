@@ -53,7 +53,7 @@ const planned = openApiContracts().map((contract) => ({
 
 if (args.help) {
   console.log(
-    "Usage: pnpm api:clients -- [--contracts-root <temporary-root>] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nDefault OpenAPI artifact paths come from config/api-contracts.json. Alias: --docs-root is accepted for compatibility.",
+    "Usage: pnpm api:clients -- [--contracts-root <temporary-root>] [--generated-root libs/frontend/api-client/lib/src/generated] [--dry-run]\nDefault OpenAPI artifact paths come from packages/tooling/config/api-contracts.json. Alias: --docs-root is accepted for compatibility.",
   );
   process.exit(0);
 }
@@ -96,6 +96,6 @@ console.log(
     status: "generated",
     generatedRoot: args.generatedRoot,
     services: planned,
-    source: "config/api-contracts.json",
+    source: "packages/tooling/config/api-contracts.json",
   }),
 );

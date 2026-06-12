@@ -16,7 +16,7 @@ env:
   CI: "true"
   NX_DAEMON: "false"
   NODE_VERSION_FILE: .nvmrc
-  PNPM_VERSION: 11.5.2
+  PNPM_VERSION: 11.6.0
 
 jobs:
   presets:

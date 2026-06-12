@@ -41,7 +41,7 @@ try {
     }
   }
 } catch (error) { errors.push(error instanceof Error ? error.message : String(error)); }
-writeJson(reportPath, { status: errors.length ? "failed" : "ok", root: root ?? "config/api-contracts.json", interactions: results, warnings, errors });
+writeJson(reportPath, { status: errors.length ? "failed" : "ok", root: root ?? "packages/tooling/config/api-contracts.json", interactions: results, warnings, errors });
 if (warnings.length) for (const warning of warnings) console.warn(`warning: ${warning}`);
 if (errors.length) { console.error("Consumer contract checks failed:"); for (const error of errors) console.error(`- ${error}`); process.exit(1); }
-console.log(JSON.stringify({ status: "ok", contractsRoot: root ?? "config/api-contracts.json", interactions: results.length, warnings: warnings.length, report: reportPath }));
+console.log(JSON.stringify({ status: "ok", contractsRoot: root ?? "packages/tooling/config/api-contracts.json", interactions: results.length, warnings: warnings.length, report: reportPath }));

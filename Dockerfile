@@ -56,8 +56,9 @@ CMD ["sh", "-c", "node \"$APP_MAIN\""]
 
 FROM nginxinc/nginx-unprivileged:1.31.1-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
+ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
-COPY docker/nginx-fullstack.conf /etc/nginx/conf.d/default.conf
+COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 USER 101
 EXPOSE 8080

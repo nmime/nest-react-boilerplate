@@ -200,7 +200,11 @@ services:
       args:
         NX_PROJECT: admin-app
         FRONTEND_OUTPUT: dist/apps/frontend/admin
-        VITE_API_BASE_URL_MODE: same-origin
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       admin-app-api:
         condition: service_healthy
@@ -217,7 +221,11 @@ services:
       args:
         NX_PROJECT: user-app
         FRONTEND_OUTPUT: dist/apps/frontend/app
-        VITE_API_BASE_URL_MODE: same-origin
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -236,7 +244,11 @@ services:
       args:
         NX_PROJECT: landing-app
         FRONTEND_OUTPUT: dist/apps/frontend/landing
-        VITE_API_BASE_URL_MODE: same-origin
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy

@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname } from "node:path";
-import { join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { run } from "../../runtime/process.ts";
 
 export interface StaticCheckOptions {
@@ -21,6 +21,47 @@ export interface CheckFailure {
   error?: string;
 }
 
+interface ProjectMetadata {
+  file: string;
+  name: string;
+  root: string;
+  sourceRoot?: string;
+  tags: string[];
+}
+
+interface WorkspacePackageManifest {
+  file: string;
+  name?: string;
+  exports?: unknown;
+}
+
+interface WorkspaceMetadata {
+  projects: ProjectMetadata[];
+  tsPathAliases: Record<string, string[]>;
+  packageManifests: WorkspacePackageManifest[];
+}
+
+const workspaceMetadataIgnoredProjectDirs = new Set([
+  ".cache",
+  ".git",
+  ".nx",
+  ".turbo",
+  "coverage",
+  "dist",
+  "node_modules",
+  "playwright-report",
+  "test-results",
+  "tmp",
+]);
+
+const multiTagPrefixAllowlist = new Map([
+  ["scope", new Set(["@app/postgres-main"])],
+]);
+
+const canonicalTsAliasTargets = new Map([
+  ["libs/frontend/api-support/lib/src/index.ts", "@app/frontend-api-support"],
+]);
+
 interface ReferencedScript {
   owner: string;
   script: string;
@@ -36,6 +77,12 @@ const pnpmRunReference = /(?:^|&&|\|\||;|\s)pnpm\s+run\s+([@\w:.-]+)/g;
 interface StaleReferencePattern {
   label: string;
   pattern: RegExp;
+}
+
+interface ProjectReferencePattern {
+  label: string;
+  packageScriptPattern: RegExp;
+  projectName: string;
 }
 
 interface RestrictedImportPattern {
@@ -124,6 +171,39 @@ const staleReferencePatterns: StaleReferencePattern[] = [
   },
 ];
 
+const projectReferencePatterns: ProjectReferencePattern[] = [
+  {
+    label: "admin API e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])admin-app-api(?:$|[\s,:])/u,
+    projectName: "admin-app-api",
+  },
+  {
+    label: "user API e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])user-app-api(?:$|[\s,:])/u,
+    projectName: "user-app-api",
+  },
+  {
+    label: "auth API e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])auth-app-api(?:$|[\s,:])/u,
+    projectName: "auth-app-api",
+  },
+  {
+    label: "admin frontend e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])admin-app(?:$|[\s,:])/u,
+    projectName: "admin-app",
+  },
+  {
+    label: "user frontend e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])user-app(?:$|[\s,:])/u,
+    projectName: "user-app",
+  },
+  {
+    label: "landing frontend e2e Nx target",
+    packageScriptPattern: /(?:^|[\s,=])landing-app(?:$|[\s,:])/u,
+    projectName: "landing-app",
+  },
+];
+
 const staleReferenceIgnoredDirectories = new Set([
   ".cache",
   ".git",
@@ -171,7 +251,6 @@ const staleReferenceExtensions = new Set([
   ".yml",
 ]);
 
-
 export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
   const syntaxTargets = collectToolingModuleScripts(workspaceRoot);
@@ -181,8 +260,11 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkToolingTypecheck(workspaceRoot),
     ...checkGeneratorRegressionTests(workspaceRoot),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
+    ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
+    ...checkWorkspaceMetadata(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
+    ...checkEnvExampleConsistency(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
   ];
@@ -201,6 +283,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
+      workspaceMetadata: "ok",
       generatedContractImportPatterns: generatedContractImportPatterns.length,
       staleReferenceDenylist: staleReferencePatterns.length,
       packageScriptReferences: countPackageScriptReferences(workspaceRoot),
@@ -326,6 +409,180 @@ function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
   return [selfTest, workspaceCheck].filter((result) => result.status !== 0);
 }
 
+export function checkWorkspaceMetadata(workspaceRoot: string): CheckFailure[] {
+  const metadata = readWorkspaceMetadata(workspaceRoot);
+  return [
+    ...checkProjectTags(metadata.projects),
+    ...checkTsPathAliases(metadata.tsPathAliases),
+    ...checkWorkspacePackageManifests(metadata),
+  ];
+}
+
+function checkProjectTags(projects: ProjectMetadata[]): CheckFailure[] {
+  return projects.flatMap((project) => {
+    const failures: CheckFailure[] = [];
+    const tagsByPrefix = new Map<string, string[]>();
+
+    for (const tag of project.tags) {
+      const [prefix] = tag.split(":", 1);
+      if (!prefix) continue;
+      const prefixedTags = tagsByPrefix.get(prefix) ?? [];
+      prefixedTags.push(tag);
+      tagsByPrefix.set(prefix, prefixedTags);
+    }
+
+    for (const [prefix, tags] of tagsByPrefix) {
+      if (tags.length <= 1) continue;
+      if (multiTagPrefixAllowlist.get(prefix)?.has(project.name)) continue;
+      failures.push({
+        command: "workspace metadata project tags",
+        file: project.file,
+        status: 1,
+        stdout: "",
+        stderr: `${project.name} has multiple ${prefix}: tags: ${tags.join(", ")}`,
+      });
+    }
+
+    return failures;
+  });
+}
+
+function checkTsPathAliases(paths: Record<string, string[]>): CheckFailure[] {
+  const aliasesByTarget = new Map<string, string[]>();
+
+  for (const [alias, targets] of Object.entries(paths)) {
+    for (const target of targets) {
+      const aliases = aliasesByTarget.get(target) ?? [];
+      aliases.push(alias);
+      aliasesByTarget.set(target, aliases);
+    }
+  }
+
+  return [...aliasesByTarget.entries()].flatMap(([target, aliases]) => {
+    if (aliases.length <= 1) return [];
+    const canonicalAlias = canonicalTsAliasTargets.get(target);
+    const canonicalHint = canonicalAlias
+      ? ` Keep the canonical ${canonicalAlias} alias only.`
+      : " Use one canonical alias for each source target.";
+
+    return [
+      {
+        command: "workspace metadata tsconfig paths",
+        file: "tsconfig.base.json",
+        status: 1,
+        stdout: "",
+        stderr: `Duplicate TS path target ${target} is mapped by ${aliases.join(", ")}.${canonicalHint}`,
+      },
+    ];
+  });
+}
+
+function checkWorkspacePackageManifests(
+  metadata: WorkspaceMetadata,
+): CheckFailure[] {
+  const packageWorkspaceFiles = metadata.packageManifests
+    .filter((manifest) => manifest.file.startsWith("packages/"))
+    .map((manifest) => manifest.file);
+
+  if (
+    packageWorkspaceFiles.length === 1 &&
+    packageWorkspaceFiles[0] === "packages/tooling/package.json"
+  ) {
+    return [];
+  }
+
+  return [
+    {
+      command: "workspace metadata package manifests",
+      file: "pnpm-workspace.yaml",
+      status: 1,
+      stdout: "",
+      stderr: `Expected packages/tooling to be the only packages/* workspace manifest; found ${packageWorkspaceFiles.join(", ") || "none"}. Update docs/static checks before adding package-style workspaces.`,
+    },
+  ];
+}
+
+function readWorkspaceMetadata(workspaceRoot: string): WorkspaceMetadata {
+  return {
+    projects: collectProjectMetadata(workspaceRoot),
+    tsPathAliases: readTsPathAliases(workspaceRoot),
+    packageManifests: collectWorkspacePackageManifests(workspaceRoot),
+  };
+}
+
+function collectProjectMetadata(workspaceRoot: string): ProjectMetadata[] {
+  return walkWorkspaceMetadata(workspaceRoot, workspaceRoot)
+    .filter((file) => file.endsWith("/project.json"))
+    .map((file) => {
+      const relativeFile = relativeToWorkspace(workspaceRoot, file);
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as {
+        name?: string;
+        sourceRoot?: string;
+        tags?: string[];
+      };
+
+      return {
+        file: relativeFile,
+        name: parsed.name ?? relativeFile,
+        root: dirname(relativeFile),
+        sourceRoot: parsed.sourceRoot,
+        tags: parsed.tags ?? [],
+      };
+    });
+}
+
+function readTsPathAliases(workspaceRoot: string): Record<string, string[]> {
+  const parsed = JSON.parse(
+    readFileSync(resolve(workspaceRoot, "tsconfig.base.json"), "utf8"),
+  ) as { compilerOptions?: { paths?: Record<string, string[]> } };
+
+  return parsed.compilerOptions?.paths ?? {};
+}
+
+function collectWorkspacePackageManifests(
+  workspaceRoot: string,
+): WorkspacePackageManifest[] {
+  return walkWorkspaceMetadata(workspaceRoot, workspaceRoot)
+    .filter((file) => file.endsWith("/package.json"))
+    .filter((file) => isWorkspacePackageManifest(workspaceRoot, file))
+    .map((file) => {
+      const relativeFile = relativeToWorkspace(workspaceRoot, file);
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as {
+        name?: string;
+        exports?: unknown;
+      };
+
+      return {
+        file: relativeFile,
+        name: parsed.name,
+        exports: parsed.exports,
+      };
+    });
+}
+
+function isWorkspacePackageManifest(workspaceRoot: string, file: string): boolean {
+  const relativeFile = relativeToWorkspace(workspaceRoot, file);
+  return (
+    relativeFile.startsWith("apps/") ||
+    relativeFile.startsWith("libs/") ||
+    relativeFile.startsWith("packages/")
+  );
+}
+
+function walkWorkspaceMetadata(workspaceRoot: string, current: string): string[] {
+  return readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(current, entry.name);
+    if (entry.isDirectory()) {
+      if (workspaceMetadataIgnoredProjectDirs.has(entry.name)) return [];
+      return walkWorkspaceMetadata(workspaceRoot, path);
+    }
+
+    if (!entry.isFile()) return [];
+    if (entry.name !== "project.json" && entry.name !== "package.json") return [];
+    return [path];
+  });
+}
+
 export function checkGeneratedContractImports(
   workspaceRoot: string,
 ): CheckFailure[] {
@@ -354,6 +611,72 @@ export function checkGeneratedContractImports(
   });
 }
 
+export function checkPackageProjectReferences(
+  workspaceRoot: string,
+): CheckFailure[] {
+  const workspaceProjects = collectWorkspaceProjects(workspaceRoot);
+
+  return ["package.json"].flatMap((owner) => {
+    const packageJson = readPackageJson(workspaceRoot, owner);
+    const scripts = packageJson.scripts ?? {};
+
+    return Object.entries(scripts).flatMap(([script, command]) =>
+      projectReferencePatterns.flatMap((reference) => {
+        if (!reference.packageScriptPattern.test(command)) return [];
+        if (workspaceProjects.has(reference.projectName)) return [];
+
+        return [
+          {
+            command: `package.json project reference ${owner}#${script}`,
+            file: owner,
+            status: 1,
+            stdout: "",
+            stderr: `Missing Nx project for ${reference.label}: ${reference.projectName}`,
+          },
+        ];
+      }),
+    );
+  });
+}
+
+function collectWorkspaceProjects(workspaceRoot: string): Set<string> {
+  const projects = new Set<string>();
+
+  for (const projectFile of walkProjectJsonFiles(workspaceRoot)) {
+    const project = readProjectJson(projectFile);
+    if (project.name) projects.add(project.name);
+  }
+
+  return projects;
+}
+
+function walkProjectJsonFiles(workspaceRoot: string): string[] {
+  const files: string[] = [];
+
+  const visit = (directory: string): void => {
+    if (!existsSync(directory)) return;
+
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = join(directory, entry.name);
+      if (entry.isDirectory()) {
+        if (staleReferenceIgnoredDirectories.has(entry.name)) continue;
+        visit(entryPath);
+        continue;
+      }
+      if (entry.isFile() && entry.name === "project.json") {
+        files.push(entryPath);
+      }
+    }
+  };
+
+  visit(workspaceRoot);
+  return files;
+}
+
+function readProjectJson(projectFile: string): { name?: string } {
+  return JSON.parse(readFileSync(projectFile, "utf8")) as { name?: string };
+}
+
 function isImportBoundaryLine(line: string): boolean {
   return (
     /^\s*(?:import|export)\b/u.test(line) || /\b(?:import|require)\s*\(/u.test(line)
@@ -364,6 +687,64 @@ function collectGeneratedContractImportTargets(workspaceRoot: string): string[] 
   return collectStaleReferenceTargets(workspaceRoot).filter((file) =>
     generatedContractImportExtensions.has(extname(file).toLowerCase()),
   );
+}
+
+function checkEnvExampleConsistency(workspaceRoot: string): CheckFailure[] {
+  const envKeys = readEnvExampleKeys(resolve(workspaceRoot, "./.env.example"));
+  const localEnvKeys = readEnvExampleKeys(resolve(workspaceRoot, "./.env.local.example"));
+  const failures: CheckFailure[] = [];
+
+  for (const duplicate of duplicateEnvKeys(envKeys)) {
+    failures.push(envExampleFailure("./.env.example", `Duplicate env key: ${duplicate}.`));
+  }
+
+  for (const duplicate of duplicateEnvKeys(localEnvKeys)) {
+    failures.push(envExampleFailure("./.env.local.example", `Duplicate env key: ${duplicate}.`));
+  }
+
+  const maxLength = Math.max(envKeys.length, localEnvKeys.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    if (envKeys[index] === localEnvKeys[index]) continue;
+
+    failures.push(
+      envExampleFailure(
+        "./.env.example / ./.env.local.example",
+        `.env.example and .env.local.example must keep identical active key order. First mismatch at position ${index + 1}: ${envKeys[index] ?? "<missing>"} !== ${localEnvKeys[index] ?? "<missing>"}.`,
+      ),
+    );
+    break;
+  }
+
+  return failures;
+}
+
+function duplicateEnvKeys(values: string[]): string[] {
+  const seen = new Set<string>();
+  const duplicateValues = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) duplicateValues.add(value);
+    seen.add(value);
+  }
+  return [...duplicateValues].sort((left, right) => left.localeCompare(right));
+}
+
+function readEnvExampleKeys(file: string): string[] {
+  return readFileSync(file, "utf8")
+    .split(/\r?\n/u)
+    .flatMap((line) => {
+      const match = /^([A-Za-z_][A-Za-z0-9_]*)=/u.exec(line);
+      return match?.[1] ? [match[1]] : [];
+    });
+}
+
+function envExampleFailure(file: string, message: string): CheckFailure {
+  return {
+    command: "env example consistency",
+    file,
+    status: 1,
+    stdout: "",
+    stderr: message,
+  };
 }
 
 export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
@@ -381,7 +762,7 @@ export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
           file: `${relativeFile}:${index + 1}`,
           status: 1,
           stdout: "",
-          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node 26, and pnpm 11.5.2 references.`,
+          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node 26, and pnpm 11.6.0 references.`,
         });
       }
     });

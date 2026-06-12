@@ -22,7 +22,7 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
-  PNPM_VERSION: 11.5.2
+  PNPM_VERSION: 11.6.0
   HELM_VERSION: v3.15.4
 
 jobs:
@@ -54,46 +54,46 @@ jobs:
           - name: migrator
             target: migrator
             build-args: |
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: admin-app-api
             target: backend
             build-args: |
               NX_PROJECT=admin-app-api
               BUILD_OUTPUT=dist/apps/backend/admin-app-api
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: user-app-api
             target: backend
             build-args: |
               NX_PROJECT=user-app-api
               BUILD_OUTPUT=dist/apps/backend/user-app-api
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: auth-app-api
             target: backend
             build-args: |
               NX_PROJECT=auth-app-api
               BUILD_OUTPUT=dist/apps/backend/auth-app-api
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: admin-app
             target: frontend
             build-args: |
               NX_PROJECT=admin-app
               FRONTEND_OUTPUT=dist/apps/frontend/admin
               VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: user-app
             target: frontend
             build-args: |
               NX_PROJECT=user-app
               FRONTEND_OUTPUT=dist/apps/frontend/app
               VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
           - name: landing-app
             target: frontend
             build-args: |
               NX_PROJECT=landing-app
               FRONTEND_OUTPUT=dist/apps/frontend/landing
               VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.5.2
+              PNPM_VERSION=11.6.0
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 

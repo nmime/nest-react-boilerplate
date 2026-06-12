@@ -1,7 +1,9 @@
 // @ts-nocheck
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { relative } from "node:path";
 import { describe, it } from "node:test";
-import { loadApiContractsManifest } from "./contracts-manifest.ts";
+import { apiContractsManifestPath, loadApiContractsManifest } from "./contracts-manifest.ts";
 
 describe("api contracts manifest", () => {
   it("keeps live JSON artifacts in non-buildable owner artifact projects", () => {
@@ -40,5 +42,13 @@ describe("api contracts manifest", () => {
       ),
       true,
     );
+  });
+
+  it("keeps the manifest in tooling-owned config instead of repository-root config", () => {
+    assert.equal(
+      relative(process.cwd(), apiContractsManifestPath).replaceAll("\\", "/"),
+      "packages/tooling/config/api-contracts.json",
+    );
+    assert.equal(existsSync("config" + "/api-contracts.json"), false);
   });
 });

@@ -18,11 +18,7 @@ export default async function globalSetup(): Promise<void> {
   await upStack();
   await waitForText("auth api", `${urls.authApi}/health`, "auth-app-api");
   await waitForText("user api", `${urls.userApi}/health`, "user-app-api");
-  await waitForText(
-    "admin api",
-    `${urls.adminApi}/health`,
-    "admin-app-api",
-  );
+  await waitForText("admin api", `${urls.adminApi}/health`, "admin-app-api");
   await waitForText("user app", `${urls.userApp}/`, "User App");
   await waitForText("admin app", `${urls.adminApp}/`, "Admin App");
   await waitForText(

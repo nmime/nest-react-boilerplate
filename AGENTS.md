@@ -6,7 +6,7 @@ This is the canonical instruction source for AI coding agents working in this re
 
 - Work only in `nmime/nest-react-boilerplate` unless a maintainer explicitly assigns another repository.
 - Verify the target repo, branch, and current `main` SHA before edits, commits, pushes, or deployment work.
-- Use Node.js `>=26 <27` and pnpm `11.5.2` (`packageManager: pnpm@11.5.2`). Prefer Corepack and `pnpm install --frozen-lockfile`.
+- Use Node.js `>=26 <27` and pnpm `11.6.0` (`packageManager: pnpm@11.6.0`). Prefer Corepack and `pnpm install --frozen-lockfile`.
 - Do not expose secrets, tokens, real `.env*` values, Docker secret files, credentials, or full environment dumps in logs, diffs, issues, PRs, generated docs, or final reports.
 - Do not deploy, publish packages/images, rotate credentials, run destructive database commands, or spend funds unless a maintainer explicitly requests it for the current task.
 - Do not use Copilot, copilor, or any external AI coding assistant. Do the assigned work directly with the repository and approved tools.

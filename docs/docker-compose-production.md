@@ -29,7 +29,8 @@ chmod 600 .env.production docker/secrets/*.txt
 ```
 
 Edit `.env.production` for real domains, CORS origins, image registry/tag, OAuth
-settings, and host ports. Do not commit `.env.production` or `docker/secrets/`.
+settings, frontend routing mode, and host ports. Do not commit `.env.production`
+or `docker/secrets/`.
 The example `IMAGE_TAG=sha-000000000000` is deliberately non-production; replace
 it with the exact `sha-<git-sha>` tag you built, or pin images by digest in a
 release-specific compose override. Never deploy `latest`, `main`, `dev`, or
@@ -64,7 +65,12 @@ docker compose --env-file .env.production -f docker/docker-compose.prod.yml up -
 ```
 
 The `migrate` service waits for PostgreSQL health, reads the same secrets, and
-runs `pnpm db:migrate` before the API services are allowed to start.
+runs `pnpm db:migrate` before the API services are allowed to start. Frontend
+images default to `VITE_API_BASE_URL_MODE=same-origin` with
+`FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf`, so browser API calls route
+through the colocated nginx container to Compose service DNS names
+(`auth-app-api`, `user-app-api`, and `admin-app-api`) instead of exposing Docker
+DNS or container ports to the browser.
 
 ## 4. Health checks and logs
 
@@ -95,11 +101,14 @@ Terminate TLS at the host reverse proxy and proxy to loopback ports:
 - `https://api.example.com` -> `127.0.0.1:${USER_APP_API_PORT:-3002}`
 - `https://admin-api.example.com` -> `127.0.0.1:${ADMIN_APP_API_PORT:-3001}`
 
-Keep `CORS_ORIGINS` aligned with the public browser origins. Keep the standalone
-SPA CSP connection allow-list aligned with the explicit API origins above when
-building with absolute `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, or
-`VITE_ADMIN_API_BASE_URL`. Keep OpenAPI off or protect it behind SSO/VPN/edge
-auth.
+Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
+build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to
+`docker/nginx-spa.conf`, set `VITE_API_BASE_URL_MODE` to a non-`same-origin`
+value such as `split-origin`, and provide absolute
+`VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and
+`VITE_ADMIN_API_BASE_URL` values; keep the standalone SPA CSP connection
+allow-list aligned with those explicit API origins. Keep OpenAPI off or protect
+it behind SSO/VPN/edge auth.
 
 ## 6. Backup and restore
 

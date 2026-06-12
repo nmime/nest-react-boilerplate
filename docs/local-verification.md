@@ -4,7 +4,7 @@ GitHub-hosted Actions may be unavailable for this repository/account. When that 
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node.js `>=26 <27` and pnpm `11.5.2`:
+Run the full gate from a clean `main` checkout with Node.js `>=26 <27` and pnpm `11.6.0`:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -61,7 +61,7 @@ When validating auth/session and preference-token fix-forward work, use the same
 
 ```bash
 nvm use 26.1.0
-pnpm --version # 11.5.2
+pnpm --version # 11.6.0
 pnpm install --frozen-lockfile
 pnpm run check:fast
 pnpm exec nx run @app/common/bootstrap:test
@@ -84,7 +84,7 @@ Use the connected GitHub API/MCP for targeted evidence instead:
 
 ## Coverage gates
 
-The Vitest coverage gate is configured in `config/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.
+The Vitest coverage gate is configured in `packages/tooling/src/testing/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.
 
 ## Tracked generated and binary artifacts
 

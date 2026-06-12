@@ -16,6 +16,7 @@
   "files": [
     "bin",
     "src",
+    "config",
     "baselines",
     "README.md",
     "tsconfig.json"

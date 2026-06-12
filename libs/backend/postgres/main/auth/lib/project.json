@@ -3,12 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/auth/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:data-access",
-    "scope:postgres",
-    "scope:auth"
-  ],
+  "tags": ["platform:backend", "type:data-access", "scope:auth"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

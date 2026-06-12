@@ -221,6 +221,7 @@ test("admin API accepts bearer tokens while production admin frontend ignores UR
   expect(adminProfile.status).toBe(200);
   expect(await adminProfile.text()).toContain("admin@example.com");
 
+  await page.context().clearCookies();
   await gotoWithRetry(
     page,
     `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`,

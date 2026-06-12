@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname } from "node:path";
 import { join, relative, resolve } from "node:path";
-import { run } from "../../runtime/process";
+import { run } from "../../runtime/process.ts";
 
 export interface StaticCheckOptions {
   workspaceRoot?: string;
@@ -12,7 +12,7 @@ export interface ChangedFormatCheckOptions {
   workspaceRoot?: string;
 }
 
-interface CheckFailure {
+export interface CheckFailure {
   command: string;
   file?: string;
   status: number;
@@ -51,7 +51,7 @@ const generatedContractImportPatterns: RestrictedImportPattern[] = [
       file.startsWith("packages/tooling/src/commands/api/"),
     label: "common generated contract internals",
     pattern:
-      /(?:libs\/common\/api-contracts\/lib\/src\/generated|@app\/api-contracts\/.*generated|\.\/generated\/(?:admin-app-api|auth-app-api|user-app-api))/u,
+      /(?:libs\/common\/api-contracts\/lib\/src\/generated|@app\/api-contracts\/.*generated|\.\/generated\/(?:admin-app-api|auth-app-api|user-app-api)(?=$|[\/"'\s;]))/u,
   },
   {
     allowed: (file) =>
@@ -59,7 +59,7 @@ const generatedContractImportPatterns: RestrictedImportPattern[] = [
       file.startsWith("packages/tooling/src/commands/api/"),
     label: "frontend generated client internals",
     pattern:
-      /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/api-client\/.*generated|\.\/generated\/(?:admin|auth|user))/u,
+      /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/api-client\/.*generated|\.\/generated\/(?:admin|auth|user)(?=$|[\/"'\s;]))/u,
   },
 ];
 
@@ -138,6 +138,17 @@ const staleReferenceIgnoredFiles = new Set([
   "pnpm-lock.yaml",
 ]);
 
+const generatedContractImportExtensions = new Set([
+  ".cjs",
+  ".cts",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".mts",
+  ".ts",
+  ".tsx",
+]);
+
 const staleReferenceExtensions = new Set([
   "",
   ".cjs",
@@ -167,6 +178,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkGeneratorRegressionTests(workspaceRoot),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
     ...checkFrontendFsd(workspaceRoot),
+    ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
   ];
@@ -185,6 +197,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
+      generatedContractImportPatterns: generatedContractImportPatterns.length,
       staleReferenceDenylist: staleReferencePatterns.length,
       packageScriptReferences: countPackageScriptReferences(workspaceRoot),
     }),
@@ -225,6 +238,7 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   const testFiles = [
     "packages/tooling/src/commands/project/generate-vertical-slice.test.ts",
     "packages/tooling/src/commands/api/contracts-manifest.test.ts",
+    "packages/tooling/src/commands/tooling/static-check.test.ts",
   ];
   const result = run(process.execPath, ["--test", ...testFiles], {
     cwd: workspaceRoot,
@@ -308,8 +322,10 @@ function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
   return [selfTest, workspaceCheck].filter((result) => result.status !== 0);
 }
 
-function checkGeneratedContractImports(workspaceRoot: string): CheckFailure[] {
-  return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
+export function checkGeneratedContractImports(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
     const text = readFileSync(file, "utf8");
     const failures: CheckFailure[] = [];
@@ -317,6 +333,7 @@ function checkGeneratedContractImports(workspaceRoot: string): CheckFailure[] {
     text.split(/\r?\n/u).forEach((line, index) => {
       for (const importPattern of generatedContractImportPatterns) {
         if (importPattern.allowed(relativeFile)) continue;
+        if (!isImportBoundaryLine(line)) continue;
         if (!importPattern.pattern.test(line)) continue;
 
         failures.push({
@@ -331,6 +348,18 @@ function checkGeneratedContractImports(workspaceRoot: string): CheckFailure[] {
 
     return failures;
   });
+}
+
+function isImportBoundaryLine(line: string): boolean {
+  return (
+    /^\s*(?:import|export)\b/u.test(line) || /\b(?:import|require)\s*\(/u.test(line)
+  );
+}
+
+function collectGeneratedContractImportTargets(workspaceRoot: string): string[] {
+  return collectStaleReferenceTargets(workspaceRoot).filter((file) =>
+    generatedContractImportExtensions.has(extname(file).toLowerCase()),
+  );
 }
 
 function checkStaleReferences(workspaceRoot: string): CheckFailure[] {

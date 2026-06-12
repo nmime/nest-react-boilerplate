@@ -14,7 +14,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml nx.json tsconfig.base.json 
 COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
-COPY config ./config
 COPY i18n ./i18n
 RUN pnpm install --frozen-lockfile \
   && chown -R node:node /workspace

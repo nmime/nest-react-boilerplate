@@ -1,4 +1,5 @@
 import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
+import type { ApiClientRequestOptions } from "@app/api-client";
 import {
   createAdminAccessPolicy,
   type AdminAccessPolicy,
@@ -48,13 +49,10 @@ export const getAuthApiBaseUrl = (env: FrontendEnv): string =>
   getRequiredApiBaseUrl(env, "VITE_AUTH_API_BASE_URL");
 
 export const fetchAdminProfile = async (
-  apiBaseUrl = "",
-  authToken?: string | null,
+  adminClient: Pick<typeof adminApi, "adminProfileControllerMe">,
+  requestOptions?: ApiClientRequestOptions,
 ): Promise<AdminProfilePayload> => {
   return throwOnOpenApiErrorData(
-    adminApi.adminProfileControllerMe({
-      authToken: authToken?.trim() || undefined,
-      baseUrl: apiBaseUrl,
-    }),
+    adminClient.adminProfileControllerMe(requestOptions),
   );
 };

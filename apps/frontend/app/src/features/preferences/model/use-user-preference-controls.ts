@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthApiClient } from "@app/api-client";
 import type { Locale } from "@app/common/i18n";
-import { useAuthShellStore, type UiTheme } from "@app/frontend-ui";
+import type { UiTheme } from "@app/frontend-ui";
 import {
   getPayloadLocale,
   getPayloadTheme,
@@ -23,12 +24,15 @@ export function useUserPreferenceControls(): UserPreferenceControls {
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
-  const authStore = useAuthShellStore();
-  const bearerToken = authStore.bearerToken;
+  const authClient = useAuthApiClient();
 
   const preferencesMutation = useMutation({
     mutationFn: (nextPreferences: UserPreferencePatch) =>
-      updateUserPreferences(bearerToken, nextPreferences),
+      updateUserPreferences(
+        authClient.api,
+        authClient.requestOptions,
+        nextPreferences,
+      ),
     onSuccess: (body, nextPreferences) => {
       /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
       setUserLocale(

@@ -38,6 +38,31 @@ interface StaleReferencePattern {
   pattern: RegExp;
 }
 
+interface RestrictedImportPattern {
+  allowed: (file: string) => boolean;
+  label: string;
+  pattern: RegExp;
+}
+
+const generatedContractImportPatterns: RestrictedImportPattern[] = [
+  {
+    allowed: (file) =>
+      file.startsWith("libs/common/api-contracts/lib/src/") ||
+      file.startsWith("packages/tooling/src/commands/api/"),
+    label: "common generated contract internals",
+    pattern:
+      /(?:libs\/common\/api-contracts\/lib\/src\/generated|@app\/api-contracts\/.*generated|\.\/generated\/(?:admin-app-api|auth-app-api|user-app-api))/u,
+  },
+  {
+    allowed: (file) =>
+      file.startsWith("libs/frontend/api-client/lib/src/") ||
+      file.startsWith("packages/tooling/src/commands/api/"),
+    label: "frontend generated client internals",
+    pattern:
+      /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/api-client\/.*generated|\.\/generated\/(?:admin|auth|user))/u,
+  },
+];
+
 const staleReferencePatterns: StaleReferencePattern[] = [
   { label: "retired xRocket product reference", pattern: /\bxrocket\b/iu },
   { label: "retired wallet product reference", pattern: /\bwallet\b/iu },
@@ -281,6 +306,31 @@ function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
   );
 
   return [selfTest, workspaceCheck].filter((result) => result.status !== 0);
+}
+
+function checkGeneratedContractImports(workspaceRoot: string): CheckFailure[] {
+  return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    text.split(/\r?\n/u).forEach((line, index) => {
+      for (const importPattern of generatedContractImportPatterns) {
+        if (importPattern.allowed(relativeFile)) continue;
+        if (!importPattern.pattern.test(line)) continue;
+
+        failures.push({
+          command: "generated contract public import boundary",
+          file: `${relativeFile}:${index + 1}`,
+          status: 1,
+          stdout: "",
+          stderr: `Found ${importPattern.label} import. Use stable public aliases @app/api-contracts and @app/api-client instead of generated internals.`,
+        });
+      }
+    });
+
+    return failures;
+  });
 }
 
 function checkStaleReferences(workspaceRoot: string): CheckFailure[] {

@@ -1,6 +1,7 @@
 import type { SubmitEvent } from "react";
 import { useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuthApiClient, useUserApiClient } from "@app/api-client";
 import type { Locale } from "@app/common/i18n";
 import { useAuthShellStore, type UiTheme } from "@app/frontend-ui";
 import {
@@ -44,12 +45,13 @@ export function useAuthSessionFlow({
 }: AuthSessionFlowInput): AuthSessionFlow {
   const queryClient = useQueryClient();
   const authStore = useAuthShellStore();
+  const authClient = useAuthApiClient();
+  const userClient = useUserApiClient();
   const bearerToken = authStore.bearerToken;
-  const bearerTokenForRequest = bearerToken ?? "";
 
   const authMeQuery = useQuery({
     enabled: Boolean(bearerToken),
-    queryFn: () => fetchAuthMe(bearerTokenForRequest),
+    queryFn: () => fetchAuthMe(authClient.api, authClient.requestOptions),
     queryKey: [...authMeQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
@@ -73,7 +75,7 @@ export function useAuthSessionFlow({
       Boolean(bearerToken) &&
       !authMeQuery.isLoading &&
       (!authLocale || authLocale === locale),
-    queryFn: () => fetchUserProfile(bearerTokenForRequest),
+    queryFn: () => fetchUserProfile(userClient.api, userClient.requestOptions),
     queryKey: [...profileQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
@@ -87,8 +89,13 @@ export function useAuthSessionFlow({
   }, [applyUserLocale, profileLocale]);
 
   const authMutation = useMutation({
-    mutationFn: (input: Parameters<typeof createAuthSession>[0]) =>
-      createAuthSession(input, locale),
+    mutationFn: (input: Parameters<typeof createAuthSession>[2]) =>
+      createAuthSession(
+        authClient.api,
+        authClient.requestOptions,
+        input,
+        locale,
+      ),
     onSuccess: (body) => {
       authStore.setBearerToken(body?.accessToken);
       const nextLocale = getPayloadLocale(body);

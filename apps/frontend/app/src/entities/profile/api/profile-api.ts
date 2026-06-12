@@ -1,24 +1,13 @@
-import { apiFetch } from "@app/api-client/support";
-import { getUserApiBaseUrl } from "../../../shared/config";
+import { throwOnOpenApiErrorData, userApi } from "@app/api-client";
 import type { UserProfilePayload } from "../model/profile";
 
-interface ApiEnvelope<TData> {
-  data: TData;
-}
-
-const unwrapData = <TData>(payload: TData | ApiEnvelope<TData>): TData =>
-  payload && typeof payload === "object" && "data" in payload
-    ? payload.data
-    : payload;
-
 export async function fetchUserProfile(
-  authToken: string,
+  userClient: Pick<typeof userApi, "profileControllerMe">,
+  requestOptions: Parameters<typeof userApi.profileControllerMe>[0],
 ): Promise<UserProfilePayload> {
-  const payload = await apiFetch<
-    UserProfilePayload | ApiEnvelope<UserProfilePayload>
-  >("/profile/me", { authToken, baseUrl: getUserApiBaseUrl() });
-
-  return unwrapData(payload);
+  return throwOnOpenApiErrorData(
+    userClient.profileControllerMe(requestOptions),
+  );
 }
 
-export const profileQueryKey = () => ["get", "/profile/me"] as const;
+export const profileQueryKey = userApi.getProfileControllerMeQueryKey;

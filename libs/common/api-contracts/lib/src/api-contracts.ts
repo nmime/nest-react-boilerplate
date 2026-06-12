@@ -28,6 +28,10 @@ export type UserApiComponents = UserComponents;
 export type UserApiOperations = UserOperations;
 export type UserApiPaths = UserPaths;
 
+export type AdminApiSchemas = AdminComponents["schemas"];
+export type AuthApiSchemas = AuthComponents["schemas"];
+export type UserApiSchemas = UserComponents["schemas"];
+
 type Schema<
   TComponents extends { schemas: object },
   TName extends keyof TComponents["schemas"],

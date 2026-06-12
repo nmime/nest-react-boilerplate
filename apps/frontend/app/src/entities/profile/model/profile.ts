@@ -19,8 +19,8 @@ export interface AuthUserPayload {
 
 export interface AuthMePayload {
   principal?: AuthPrincipalPayload;
-  user?: AuthUserPayload;
-  profile?: AuthUserPayload;
+  user?: AuthUserPayload | null;
+  profile?: AuthUserPayload | null;
   locale?: Locale;
   theme?: UiTheme;
 }
@@ -33,8 +33,8 @@ export type AuthPreferencesPayload = AuthMePayload;
 
 export interface UserProfilePayload {
   principal?: AuthPrincipalPayload;
-  profile?: AuthUserPayload;
-  user?: AuthUserPayload;
+  profile?: AuthUserPayload | null;
+  user?: AuthUserPayload | null;
   locale?: Locale;
   theme?: UiTheme;
 }

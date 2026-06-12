@@ -9,9 +9,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { configureApiLocale } from "@app/api-client/support";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
+  ApiClientProvider,
   adminApi,
   authApi,
   throwOnOpenApiErrorData,
+  useAdminApiClient,
+  useAuthApiClient,
   type ApiClientRequestOptions,
 } from "@app/api-client";
 import {
@@ -136,14 +139,11 @@ export function renderAdminRoute(
 }
 
 async function fetchAuthMe(
-  baseUrl: string,
-  authToken?: string | null,
+  authClient: Pick<typeof authApi, "authControllerMe">,
+  requestOptions?: ApiClientRequestOptions,
 ): Promise<AuthMePayload | null> {
   try {
-    const result = await authApi.authControllerMe({
-      authToken: authToken?.trim() || undefined,
-      baseUrl,
-    });
+    const result = await authClient.authControllerMe(requestOptions);
     return result.data?.data ?? null;
   } catch {
     return null;
@@ -196,11 +196,12 @@ const AdminWorkspace = ({
   bearerToken,
 }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
+  const authClient = useAuthApiClient();
+  const adminClient = useAdminApiClient();
   const [path] = useState(getBrowserPath);
-  const authBaseUrl = getConfiguredAuthApiBaseUrl();
 
   const authMeQuery = useQuery({
-    queryFn: () => fetchAuthMe(authBaseUrl, bearerToken),
+    queryFn: () => fetchAuthMe(authClient.api, authClient.requestOptions),
     queryKey: [...authApi.getAuthControllerMeQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
@@ -224,7 +225,7 @@ const AdminWorkspace = ({
   const profileQuery = useQuery({
     enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
     queryFn: () =>
-      fetchAdminProfile(getConfiguredAdminApiBaseUrl(), bearerToken),
+      fetchAdminProfile(adminClient.api, adminClient.requestOptions),
     queryKey: [
       ...adminApi.getAdminProfileControllerMeQueryKey(),
       locale,
@@ -263,13 +264,7 @@ const AdminWorkspace = ({
     ],
   );
 
-  const adminRequestOptions = useMemo(
-    () => ({
-      authToken: bearerToken?.trim() || undefined,
-      baseUrl: getConfiguredAdminApiBaseUrl(),
-    }),
-    [bearerToken],
-  );
+  const adminRequestOptions = adminClient.requestOptions;
 
   return (
     <AdminLayout
@@ -290,14 +285,13 @@ const AdminRoot = ({
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const queryClient = useQueryClient();
-  const authBaseUrl = getConfiguredAuthApiBaseUrl();
+  const authClient = useAuthApiClient();
 
   const preferencesMutation = useMutation({
     mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
       throwOnOpenApiErrorData(
         authApi.authControllerUpdatePreferences(nextPreferences, {
-          authToken: bearerToken?.trim() || undefined,
-          baseUrl: authBaseUrl,
+          ...authClient.requestOptions,
         }),
       ),
     onSuccess: (body, nextPreferences) => {
@@ -367,13 +361,31 @@ const AdminRoot = ({
   );
 };
 
-const App = () => (
+const AdminApiClientProvider = ({
+  children,
+  bearerToken,
+}: Readonly<{ children: ReactElement; bearerToken: string | null }>) => (
+  <ApiClientProvider
+    authToken={bearerToken}
+    baseUrls={{
+      admin: getConfiguredAdminApiBaseUrl(),
+      auth: getConfiguredAuthApiBaseUrl(),
+      user: "",
+    }}
+  >
+    {children}
+  </ApiClientProvider>
+);
+
+const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
   <FrontendStateProvider>
-    <FrontendQueryProvider>
-      <UiErrorBoundary>
-        <AdminRoot initialBearerToken={null} />
-      </UiErrorBoundary>
-    </FrontendQueryProvider>
+    <AdminApiClientProvider bearerToken={null}>
+      <FrontendQueryProvider>
+        <UiErrorBoundary>
+          {testChild ?? <AdminRoot initialBearerToken={null} />}
+        </UiErrorBoundary>
+      </FrontendQueryProvider>
+    </AdminApiClientProvider>
   </FrontendStateProvider>
 );
 

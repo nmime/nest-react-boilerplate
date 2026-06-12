@@ -1,5 +1,4 @@
-import { apiFetch } from "@app/api-client/support";
-import { getAuthApiBaseUrl } from "../../../shared/config";
+import { authApi, throwOnOpenApiErrorData } from "@app/api-client";
 import { formValueToString } from "../../../shared/lib";
 import type {
   AuthMePayload,
@@ -7,24 +6,14 @@ import type {
 } from "../../../entities/profile";
 import type { AuthFormInput, AuthRequest } from "../model";
 
-interface ApiEnvelope<TData> {
-  data: TData;
-}
-
-const unwrapData = <TData>(payload: TData | ApiEnvelope<TData>): TData =>
-  payload && typeof payload === "object" && "data" in payload
-    ? payload.data
-    : payload;
-
 export async function fetchAuthMe(
-  authToken: string,
+  authClient: Pick<typeof authApi, "authControllerMe">,
+  requestOptions: Parameters<typeof authApi.authControllerMe>[0],
 ): Promise<AuthMePayload | null> {
   try {
-    const payload = await apiFetch<AuthMePayload | ApiEnvelope<AuthMePayload>>(
-      "/auth/me",
-      { authToken, baseUrl: getAuthApiBaseUrl() },
+    return await throwOnOpenApiErrorData(
+      authClient.authControllerMe(requestOptions),
     );
-    return unwrapData(payload) ?? null;
   } catch {
     return null;
   }
@@ -42,31 +31,37 @@ const mapAuthFormInput = (
 });
 
 export async function createAuthSession(
+  authClient: Pick<
+    typeof authApi,
+    "authControllerLogin" | "authControllerRegister"
+  >,
+  requestOptions: Parameters<typeof authApi.authControllerLogin>[1],
   input: AuthFormInput,
   locale: AuthRequest["locale"],
 ): Promise<AuthSessionPayload> {
   const request = mapAuthFormInput(input, locale);
 
-  const payload = await apiFetch<
-    AuthSessionPayload | ApiEnvelope<AuthSessionPayload>
-  >(request.mode === "login" ? "/auth/login" : "/auth/register", {
-    baseUrl: getAuthApiBaseUrl(),
-    json:
-      request.mode === "login"
-        ? {
-            email: request.email,
-            password: request.password,
-          }
-        : {
-            displayName: request.displayName,
-            email: request.email,
-            locale: request.locale,
-            password: request.password,
-          },
-    method: "POST",
-  });
+  const payload =
+    request.mode === "login"
+      ? await throwOnOpenApiErrorData(
+          authClient.authControllerLogin(
+            { email: request.email, password: request.password },
+            requestOptions,
+          ),
+        )
+      : await throwOnOpenApiErrorData(
+          authClient.authControllerRegister(
+            {
+              displayName: request.displayName,
+              email: request.email,
+              locale: request.locale,
+              password: request.password,
+            },
+            requestOptions,
+          ),
+        );
 
-  return unwrapData(payload);
+  return payload;
 }
 
-export const authMeQueryKey = () => ["get", "/auth/me"] as const;
+export const authMeQueryKey = authApi.getAuthControllerMeQueryKey;

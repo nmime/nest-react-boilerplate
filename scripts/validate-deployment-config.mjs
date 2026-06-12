@@ -67,6 +67,17 @@ has(
   "COPY docker/nginx-fullstack.conf /etc/nginx/conf.d/default.conf",
   "frontend nginx config copy",
 );
+const nginxFullstack = read("docker/nginx-fullstack.conf");
+for (const required of [
+  'add_header X-Content-Type-Options "nosniff" always;',
+  'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
+  "location = /.env",
+  "location ^~ /.git/",
+  "location = /server-status",
+  "location = /actuator/env",
+]) {
+  has(nginxFullstack, required, `frontend nginx DAST hardening: ${required}`);
+}
 has(dockerfile, "USER 101", "frontend runtime user 101");
 has(dockerfile, "EXPOSE 8080", "frontend exposes unprivileged port 8080");
 const migratorStage = section(

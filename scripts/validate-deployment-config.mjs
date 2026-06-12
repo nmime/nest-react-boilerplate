@@ -307,8 +307,18 @@ for (const {
   const appModule = read(modulePath);
   has(
     appModule,
-    'BaseHealthController, HealthPrivateNetworkIpGuard } from "@app/common/health"',
-    `${app} imports the shared health controller and guard`,
+    "BaseHealthController",
+    `${app} imports the shared health controller`,
+  );
+  has(
+    appModule,
+    "HealthPrivateNetworkIpGuard",
+    `${app} imports the shared health private-network guard`,
+  );
+  has(
+    appModule,
+    'from "@app/common/health"',
+    `${app} imports shared health wiring from @app/common/health`,
   );
   has(
     appModule,

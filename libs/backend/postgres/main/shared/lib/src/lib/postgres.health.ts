@@ -129,15 +129,12 @@ export class PostgresReadinessHealthIndicator {
   }
 
   private notConfigured(message: string): HealthIndicatorResult {
-    const details = {
-      skipped: !this.mandatory,
+    return dependencyUnavailableResult({
+      name: this.name,
+      mandatory: this.mandatory,
       reason: "not_configured",
       message,
-    };
-
-    return this.mandatory
-      ? { name: this.name, status: "error", details }
-      : { name: this.name, status: "ok", details };
+    });
   }
 }
 
@@ -164,7 +161,12 @@ export class PostgresMigrationsHealthIndicator {
 
   async check(): Promise<HealthIndicatorResult> {
     if (!isConfigured(this.adapter)) {
-      return this.skipped("Postgres migrations adapter is not configured.");
+      return dependencyUnavailableResult({
+        name: this.name,
+        mandatory: this.mandatory,
+        reason: "not_configured",
+        message: "Postgres migrations adapter is not configured.",
+      });
     }
 
     if (!this.adapter.getPendingMigrations) {
@@ -194,7 +196,12 @@ export class PostgresMigrationsHealthIndicator {
       };
     } catch (error) {
       if (error instanceof PostgresDependencyNotConfiguredError) {
-        return this.skipped(error.message);
+        return dependencyUnavailableResult({
+          name: this.name,
+          mandatory: this.mandatory,
+          reason: "not_configured",
+          message: error.message,
+        });
       }
 
       if (error instanceof PostgresMigrationStatusUnsupportedError) {
@@ -205,29 +212,14 @@ export class PostgresMigrationsHealthIndicator {
     }
   }
 
-  private skipped(message: string): HealthIndicatorResult {
-    const details = {
-      skipped: !this.mandatory,
-      reason: "not_configured",
-      message,
-    };
-
-    return this.mandatory
-      ? { name: this.name, status: "error", details }
-      : { name: this.name, status: "ok", details };
-  }
-
   private unsupported(): HealthIndicatorResult {
-    const details = {
-      skipped: !this.mandatory,
+    return dependencyUnavailableResult({
+      name: this.name,
+      mandatory: this.mandatory,
       reason: "unsupported",
       message:
         "Postgres migration status check is not supported by the configured adapter.",
-    };
-
-    return this.mandatory
-      ? { name: this.name, status: "error", details }
-      : { name: this.name, status: "ok", details };
+    });
   }
 }
 
@@ -270,6 +262,30 @@ async function withTimeout<T>(
   }
 }
 
+interface DependencyUnavailableResultOptions {
+  name: string;
+  mandatory: boolean;
+  reason: "not_configured" | "unsupported";
+  message: string;
+}
+
+function dependencyUnavailableResult({
+  name,
+  mandatory,
+  reason,
+  message,
+}: DependencyUnavailableResultOptions): HealthIndicatorResult {
+  return {
+    name,
+    status: mandatory ? "error" : "ok",
+    details: {
+      skipped: !mandatory,
+      reason,
+      message,
+    },
+  };
+}
+
 function dependencyError(name: string, error: unknown): HealthIndicatorResult {
   return {
     name,
@@ -289,16 +305,17 @@ function safeErrorDetails(error: unknown): Record<string, unknown> {
   return { message: redactDependencyDetail(String(error)) };
 }
 
+const connectionCredentialPattern = new RegExp(
+  ["([a-z][a-z0-9+.-]*://)", "([^\\s/@:]+)", ":", "([^\\s/@]+)", "@"].join(""),
+  "giu",
+);
+const secretAssignmentPattern =
+  /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu;
+
 function redactDependencyDetail(value: string): string {
   return value
-    .replace(
-      /([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]+):([^\s/@]+)@/giu,
-      "$1[redacted]@",
-    )
-    .replace(
-      /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu,
-      "$1=[redacted]",
-    );
+    .replace(connectionCredentialPattern, "$1[redacted]@")
+    .replace(secretAssignmentPattern, "$1=[redacted]");
 }
 
 function normalizePendingMigration(

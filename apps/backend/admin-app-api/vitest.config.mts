@@ -62,6 +62,10 @@ export default defineConfig({
         "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
+      "@app/postgres-main-feature-flags/migrations": new URL(
+        "../../../libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts",
+        import.meta.url,
+      ).pathname,
       "@app/postgres-main-feature-flags": new URL(
         "../../../libs/backend/postgres/main/feature-flags/lib/src/index.ts",
         import.meta.url,

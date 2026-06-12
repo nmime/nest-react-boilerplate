@@ -1,12 +1,35 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- Fastify inject response JSON and Vitest asymmetric matchers are intentionally dynamic in e2e tests. */
 import { MikroORM } from "@mikro-orm/core";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
+import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createValidationPipe } from "@app/common/validation";
 import { AdminAppApiModule } from "./admin-app-api.module";
+
+interface HealthEnvelope {
+  status?: string;
+  checks?: unknown[];
+  data?: {
+    app?: string;
+    status?: string;
+    dependencies?: unknown[];
+  };
+  response?: {
+    data?: {
+      app?: string;
+      dependencies?: unknown[];
+    };
+  };
+  app?: string;
+  dependencies?: unknown[];
+}
+
+const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
+  response.json<HealthEnvelope>();
 
 describe("backend-admin-app-api health e2e", () => {
   let app: NestFastifyApplication;
@@ -45,7 +68,7 @@ describe("backend-admin-app-api health e2e", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
+    expect(parseHealthEnvelope(response)).toMatchObject({
       status: expect.stringMatching(/^(ok|degraded)$/),
       checks: expect.arrayContaining([
         expect.objectContaining({ name: "runtime", status: "ok" }),
@@ -70,7 +93,7 @@ describe("backend-admin-app-api health e2e", () => {
   it("GET /live and /ready return shared envelopes with dependencies", async () => {
     const liveResponse = await app.inject({ method: "GET", url: "/live" });
     expect(liveResponse.statusCode).toBe(200);
-    expect(liveResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
         app: "backend-admin-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),
@@ -82,7 +105,7 @@ describe("backend-admin-app-api health e2e", () => {
 
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
     expect(readyResponse.statusCode).toBe(200);
-    expect(readyResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
         app: "backend-admin-app-api",
         dependencies: expect.arrayContaining([
@@ -116,7 +139,7 @@ describe("backend-admin-app-api health e2e", () => {
           execute: vi.fn(() =>
             Promise.reject(
               new Error(
-                "password=super-secret postgres://user:super-secret@db:5432/app",
+                "password=redacted postgres://user:redacted@db:5432/app",
               ),
             ),
           ),
@@ -139,7 +162,7 @@ describe("backend-admin-app-api health e2e", () => {
         method: "GET",
         url: "/ready",
       });
-      const body = response.json();
+      const body = parseHealthEnvelope(response);
 
       expect(response.statusCode).toBe(503);
       expect(JSON.stringify(body)).not.toContain("super-secret");

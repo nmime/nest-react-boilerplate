@@ -50,7 +50,11 @@ export const composeEnv = {
   LANDING_APP_PORT: ports.landingApp,
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
+  DATABASE_URL:
+    process.env.DOCKER_DATABASE_URL ??
+    "postgres://postgres:postgres@postgres:5432/nest_react_boilerplate",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
+  HOST: process.env.DOCKER_BACKEND_HOST ?? "0.0.0.0",
   NX_DAEMON: "false",
   NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
@@ -63,6 +67,7 @@ export const composeEnv = {
     process.env.AUTH_JWT_AUDIENCE ?? "nest-react-boilerplate-api",
   ADMIN_BOOTSTRAP_EMAILS:
     process.env.ADMIN_BOOTSTRAP_EMAILS ?? "admin@example.com",
+  ADMIN_BOOTSTRAP_ENABLED: process.env.ADMIN_BOOTSTRAP_ENABLED ?? "true",
 };
 
 export const urls = {

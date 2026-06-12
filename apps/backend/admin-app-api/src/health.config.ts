@@ -61,7 +61,13 @@ function createHealthIndicators({
     new EnvHealthIndicator({
       name: "config",
       required: false,
-      optionalVariables: ["DATABASE_URL", "SESSION_SECRET", "AUTH_JWT_SECRET", "REDIS_URL", "NATS_SERVERS"],
+      optionalVariables: [
+        "DATABASE_URL",
+        "SESSION_SECRET",
+        "AUTH_JWT_SECRET",
+        "REDIS_URL",
+        "NATS_SERVERS",
+      ],
     }),
     new I18nAssetsHealthIndicator({
       rootPath: resolveI18nRootPath(),
@@ -69,11 +75,15 @@ function createHealthIndicators({
       required: false,
     }),
     withRequired(
-      new PostgresReadinessHealthIndicator(postgresAdapter, { mandatory: true }),
+      new PostgresReadinessHealthIndicator(postgresAdapter, {
+        mandatory: true,
+      }),
       true,
     ),
     withRequired(
-      new PostgresMigrationsHealthIndicator(postgresAdapter, { mandatory: false }),
+      new PostgresMigrationsHealthIndicator(postgresAdapter, {
+        mandatory: false,
+      }),
       false,
     ),
     redisHealth
@@ -85,7 +95,10 @@ function createHealthIndicators({
   ];
 }
 
-function withRequired(indicator: HealthIndicator, required: boolean): HealthIndicator {
+function withRequired(
+  indicator: HealthIndicator,
+  required: boolean,
+): HealthIndicator {
   return {
     name: indicator.name,
     required,
@@ -96,7 +109,10 @@ function withRequired(indicator: HealthIndicator, required: boolean): HealthIndi
 }
 
 function resolveI18nRootPath(): string | undefined {
-  const candidates = [join(process.cwd(), "i18n"), join(process.cwd(), "../../../i18n")];
+  const candidates = [
+    join(process.cwd(), "i18n"),
+    join(process.cwd(), "../../../i18n"),
+  ];
   return candidates.find((candidate) => existsSync(candidate));
 }
 

@@ -174,7 +174,9 @@ describeIfDocker("NATS runtime smoke", () => {
       await expect(
         store.putBlob({ name: "readme.txt" }, payload),
       ).resolves.toMatchObject({ name: "readme.txt" });
-      expect(await store.getBlob("readme.txt")).toEqual(payload);
+      expect(Buffer.from(await store.getBlob("readme.txt"))).toEqual(
+        Buffer.from(payload),
+      );
       await expect(store.delete("readme.txt")).resolves.toMatchObject({
         success: true,
       });

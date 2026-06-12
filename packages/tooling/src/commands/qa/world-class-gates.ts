@@ -136,6 +136,22 @@ function urlsFrom(...names) {
   return [...new Set(urls.map((url) => url.trim()).filter(Boolean))];
 }
 
+function positiveInt(value, fallback) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function errorContext(error) {
+  return {
+    message: error instanceof Error ? error.message : String(error),
+    details: error?.details ?? {},
+  };
+}
+
 async function probeUrl(url, options = {}) {
   let parsed;
   try {
@@ -145,16 +161,47 @@ async function probeUrl(url, options = {}) {
   }
   assertGate(["http:", "https:"].includes(parsed.protocol), "Runtime probe URL must be HTTP(S)", { url });
   const started = performance.now();
-  const response = await fetch(url, {
-    signal: AbortSignal.timeout(Number(process.env.QA_URL_TIMEOUT_MS ?? 15000)),
-    headers: process.env.QA_CANARY_USER_AGENT ? { "user-agent": process.env.QA_CANARY_USER_AGENT } : undefined,
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      signal: AbortSignal.timeout(Number(process.env.QA_URL_TIMEOUT_MS ?? 15000)),
+      headers: process.env.QA_CANARY_USER_AGENT ? { "user-agent": process.env.QA_CANARY_USER_AGENT } : undefined,
+    });
+  } catch (error) {
+    const durationMs = Math.round(performance.now() - started);
+    assertGate(false, "Runtime URL probe failed", { url, durationMs, error: errorContext(error).message });
+  }
   const body = await response.arrayBuffer();
   const durationMs = Math.round(performance.now() - started);
   const expected = options.expectedStatuses ?? new Set([200]);
   const ok = options.allowNonServerError ? response.status < 500 : expected.has(response.status);
   assertGate(ok, "Runtime URL probe failed", { url, status: response.status, durationMs, expectedStatuses: [...expected] });
   return { url, status: response.status, durationMs, bytes: body.byteLength };
+}
+
+async function probeUrlWithRetry(target, attempts, delay, options = {}) {
+  const cappedAttempts = Math.min(positiveInt(attempts, 1), 30);
+  const cappedDelay = Math.min(positiveInt(delay, 0), 30000);
+  const failures = [];
+  for (let attempt = 1; attempt <= cappedAttempts; attempt += 1) {
+    try {
+      const result = await probeUrl(target, options);
+      return { ...result, attempts: attempt, failures };
+    } catch (error) {
+      const context = errorContext(error);
+      failures.push({ attempt, ...context });
+      if (attempt === cappedAttempts) {
+        assertGate(false, "Runtime URL probe failed after retries", {
+          url: target,
+          attempts: cappedAttempts,
+          delayMs: cappedDelay,
+          lastError: context,
+          failures,
+        });
+      }
+      if (cappedDelay > 0) await sleep(cappedDelay);
+    }
+  }
 }
 
 async function runGate(name, check) {
@@ -221,7 +268,12 @@ async function chaosResilience() {
   const command = configuredCommand(["QA_CHAOS_COMMAND", "CHAOS_TEST_COMMAND"], defaultCommand);
   assertGate(Boolean(command), "Chaos gate requires QA_CHAOS_COMMAND or docker/docker-compose.yml local default", { env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"] });
   const commandEvidence = runShell("chaos injection", command.command);
-  const after = await probeUrl(target, { allowNonServerError: true });
+  const after = await probeUrlWithRetry(
+    target,
+    process.env.QA_CHAOS_PROBE_ATTEMPTS ?? 6,
+    process.env.QA_CHAOS_PROBE_DELAY_MS ?? 2000,
+    { allowNonServerError: true },
+  );
   return { mode: "command-and-probe", commandSource: command.source, before, after, ...commandEvidence };
 }
 

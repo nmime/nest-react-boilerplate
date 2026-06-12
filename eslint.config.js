@@ -181,6 +181,7 @@ module.exports = [
               onlyDependOnLibsWithTags: [
                 "scope:user",
                 "scope:auth",
+                "scope:postgres",
                 "scope:shared",
               ],
             },

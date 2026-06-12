@@ -1,11 +1,26 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- Fastify inject response JSON and Vitest asymmetric matchers are intentionally dynamic in e2e tests. */
 import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
+import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createValidationPipe } from "@app/common/validation";
 import { UserApiModule } from "./user-api.module";
+
+interface HealthEnvelope {
+  status?: string;
+  checks?: unknown[];
+  data?: {
+    app?: string;
+    status?: string;
+    dependencies?: unknown[];
+  };
+}
+
+const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
+  response.json<HealthEnvelope>();
 
 describe("user-app-api health e2e", () => {
   let app: NestFastifyApplication;
@@ -30,7 +45,7 @@ describe("user-app-api health e2e", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
+    expect(parseHealthEnvelope(response)).toMatchObject({
       status: expect.stringMatching(/^(ok|degraded)$/),
       checks: expect.arrayContaining([
         expect.objectContaining({ name: "runtime", status: "ok" }),
@@ -49,7 +64,7 @@ describe("user-app-api health e2e", () => {
   it("GET /live and /ready return ok without a MikroORM provider", async () => {
     const liveResponse = await app.inject({ method: "GET", url: "/live" });
     expect(liveResponse.statusCode).toBe(200);
-    expect(liveResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
         app: "user-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),
@@ -58,7 +73,7 @@ describe("user-app-api health e2e", () => {
 
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
     expect(readyResponse.statusCode).toBe(200);
-    expect(readyResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
         app: "user-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),

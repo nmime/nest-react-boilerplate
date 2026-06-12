@@ -1,8 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
-import { urls } from "./compose";
+import { composeEnv, urls } from "./compose";
+
+interface HealthCheckResponse {
+  name: string;
+  status: string;
+  details?: { app?: unknown };
+}
 
 interface HealthResponse {
-  data: { status: string };
+  status: string;
+  checks?: HealthCheckResponse[];
+  error?: unknown;
 }
 
 interface SessionResponse {
@@ -16,6 +24,84 @@ const authorizationScheme = "Bearer";
 
 const bearerAuthorization = (token: string): string =>
   [authorizationScheme, token].join(" ");
+
+const authPassword = "fullstack-secret";
+
+const successfulAuthStatuses = [200, 201];
+
+const healthyStatuses = ["ok", "degraded"];
+
+function bootstrapAdminEnabledFor(email: string): boolean {
+  if (composeEnv.ADMIN_BOOTSTRAP_ENABLED !== "true") {
+    return false;
+  }
+
+  const normalizedEmail = email.toLowerCase();
+  return (composeEnv.ADMIN_BOOTSTRAP_EMAILS ?? "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .includes(normalizedEmail);
+}
+
+async function parseSessionResponse(
+  response: Response,
+  action: string,
+): Promise<SessionResponse> {
+  expect(
+    successfulAuthStatuses,
+    `${action} should return a successful session response`,
+  ).toContain(response.status);
+  return (await response.json()) as SessionResponse;
+}
+
+async function login(baseUrl: string, email: string): Promise<SessionResponse> {
+  const response = await fetch(`${baseUrl}/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email,
+      password: authPassword,
+    }),
+  });
+
+  return parseSessionResponse(response, `login for ${email}`);
+}
+
+function assertBootstrapAdminSession(
+  session: SessionResponse,
+  email: string,
+): void {
+  if (!bootstrapAdminEnabledFor(email)) {
+    return;
+  }
+
+  expect(session.data.user.roles).toContain("admin");
+  expect(session.data.user.permissions).toContain("admin:profile:read");
+}
+
+function assertHealthyApp(
+  label: string,
+  body: HealthResponse,
+  appName: string,
+): void {
+  expect(healthyStatuses, `${label} health should be ok or degraded`).toContain(
+    body.status,
+  );
+  expect(
+    body.error,
+    `${label} health should not expose a top-level error`,
+  ).toBeUndefined();
+
+  const checks = body.checks ?? [];
+  expect(
+    checks.filter((check) => check.status === "error"),
+    `${label} health should not include failing checks`,
+  ).toEqual([]);
+  expect(
+    checks.find((check) => check.name === "runtime")?.details?.app,
+    `${label} health should identify the running app`,
+  ).toBe(appName);
+}
 
 async function gotoWithRetry(page: Page, url: string): Promise<void> {
   const started = Date.now();
@@ -43,29 +129,48 @@ async function register(
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       email,
-      password: "fullstack-secret",
+      password: authPassword,
       displayName: "Fullstack User",
     }),
   });
-  expect(response.status).toBe(201);
-  return (await response.json()) as SessionResponse;
+
+  if (response.status === 409) {
+    const session = await login(baseUrl, email);
+    assertBootstrapAdminSession(session, email);
+    return session;
+  }
+
+  const session = await parseSessionResponse(
+    response,
+    `registration for ${email}`,
+  );
+  assertBootstrapAdminSession(session, email);
+  return session;
 }
 
 test("health endpoints and frontends are reachable through the Docker stack", async ({
   page,
 }) => {
   const health = await Promise.all([
-    fetch(`${urls.authApi}/health`).then(
-      async (response) => (await response.json()) as HealthResponse,
-    ),
-    fetch(`${urls.userApi}/health`).then(
-      async (response) => (await response.json()) as HealthResponse,
-    ),
-    fetch(`${urls.adminApi}/health`).then(
-      async (response) => (await response.json()) as HealthResponse,
-    ),
+    fetch(`${urls.authApi}/health`).then(async (response) => ({
+      label: "auth api",
+      appName: "auth-app-api",
+      body: (await response.json()) as HealthResponse,
+    })),
+    fetch(`${urls.userApi}/health`).then(async (response) => ({
+      label: "user api",
+      appName: "user-app-api",
+      body: (await response.json()) as HealthResponse,
+    })),
+    fetch(`${urls.adminApi}/health`).then(async (response) => ({
+      label: "admin api",
+      appName: "backend-admin-app-api",
+      body: (await response.json()) as HealthResponse,
+    })),
   ]);
-  expect(health.map((body) => body.data.status)).toEqual(["ok", "ok", "ok"]);
+  for (const { label, body, appName } of health) {
+    assertHealthyApp(label, body, appName);
+  }
 
   await gotoWithRetry(page, urls.landingApp);
   await expect(
@@ -97,7 +202,7 @@ test("registered users can log in through the user frontend same-origin proxies"
 
   await gotoWithRetry(page, urls.userApp);
   await page.getByLabel("Login email").fill(email);
-  await page.getByLabel("Login password").fill("fullstack-secret");
+  await page.getByLabel("Login password").fill(authPassword);
   await page.getByRole("button", { name: "Login" }).click();
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
   await expect(page).not.toHaveURL(/token=/u);

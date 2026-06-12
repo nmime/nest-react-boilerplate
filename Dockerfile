@@ -15,7 +15,9 @@ COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
 COPY config ./config
-RUN pnpm install --frozen-lockfile
+COPY i18n ./i18n
+RUN pnpm install --frozen-lockfile \
+  && chown -R node:node /workspace
 
 FROM workspace AS migrator
 USER node
@@ -26,6 +28,14 @@ RUN pnpm prune --prod --config.confirmModulesPurge=false
 
 FROM workspace AS builder
 ARG NX_PROJECT
+ARG VITE_API_BASE_URL_MODE=same-origin
+ARG VITE_AUTH_API_BASE_URL
+ARG VITE_USER_API_BASE_URL
+ARG VITE_ADMIN_API_BASE_URL
+ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
+  VITE_AUTH_API_BASE_URL=${VITE_AUTH_API_BASE_URL} \
+  VITE_USER_API_BASE_URL=${VITE_USER_API_BASE_URL} \
+  VITE_ADMIN_API_BASE_URL=${VITE_ADMIN_API_BASE_URL}
 RUN test -n "${NX_PROJECT}" \
   && pnpm exec nx build "${NX_PROJECT}"
 
@@ -38,6 +48,8 @@ ENV APP_MAIN=${BUILD_OUTPUT}/src/main.js
 COPY --from=builder /workspace/package.json ./package.json
 COPY --from=prod-deps /workspace/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
+COPY --from=builder /workspace/i18n ./i18n
+RUN node -e "require('./dist/libs/common/i18n/src/locales.js')"
 USER node
 EXPOSE 3000
 CMD ["sh", "-c", "node \"$APP_MAIN\""]

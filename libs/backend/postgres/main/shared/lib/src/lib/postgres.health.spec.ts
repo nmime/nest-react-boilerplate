@@ -10,9 +10,8 @@ import {
 
 describe("PostgresReadinessHealthIndicator", () => {
   it("runs a bounded read-only readiness query through the adapter", async () => {
-    const adapter = adapterStub({
-      checkReadiness: vi.fn(() => Promise.resolve(undefined)),
-    });
+    const checkReadiness = vi.fn(() => Promise.resolve(undefined));
+    const adapter = adapterStub({ checkReadiness });
     const health = new PostgresReadinessHealthIndicator(adapter);
 
     await expect(health.check()).resolves.toEqual({
@@ -20,7 +19,7 @@ describe("PostgresReadinessHealthIndicator", () => {
       status: "ok",
       details: { skipped: false },
     });
-    expect(adapter.checkReadiness).toHaveBeenCalledTimes(1);
+    expect(checkReadiness).toHaveBeenCalledTimes(1);
   });
 
   it("skips optional apps when Postgres is not configured", async () => {
@@ -82,9 +81,8 @@ describe("PostgresReadinessHealthIndicator", () => {
 
 describe("PostgresMigrationsHealthIndicator", () => {
   it("reports ok when the adapter has no pending migrations", async () => {
-    const adapter = adapterStub({
-      getPendingMigrations: vi.fn(() => Promise.resolve([])),
-    });
+    const getPendingMigrations = vi.fn(() => Promise.resolve([]));
+    const adapter = adapterStub({ getPendingMigrations });
 
     await expect(
       new PostgresMigrationsHealthIndicator(adapter).check(),
@@ -93,7 +91,7 @@ describe("PostgresMigrationsHealthIndicator", () => {
       status: "ok",
       details: { pending: 0, skipped: false },
     });
-    expect(adapter.getPendingMigrations).toHaveBeenCalledTimes(1);
+    expect(getPendingMigrations).toHaveBeenCalledTimes(1);
   });
 
   it("reports pending migrations without leaking migration internals", async () => {
@@ -257,7 +255,7 @@ function mikroOrmStub({
   getPendingMigrations,
 }: {
   execute?: (query: string) => Promise<unknown>;
-  getMigrator?: (() => unknown) | undefined;
+  getMigrator?: () => unknown;
   getPendingMigrations?: () => Promise<unknown[]>;
 } = {}): unknown {
   const orm: {
@@ -269,10 +267,10 @@ function mikroOrmStub({
     em: { getConnection: () => ({ execute }) },
   };
 
-  if (getMigrator !== undefined) {
-    orm.getMigrator = getPendingMigrations
-      ? () => ({ getPendingMigrations })
-      : getMigrator;
+  if (getPendingMigrations) {
+    orm.getMigrator = () => ({ getPendingMigrations });
+  } else {
+    orm.getMigrator = getMigrator;
   }
 
   return orm;

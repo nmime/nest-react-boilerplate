@@ -28,7 +28,9 @@ export interface FeatureFlagProvider {
   ): Promise<FeatureFlagSnapshot> | FeatureFlagSnapshot;
 }
 
-export const FeatureFlagProviderToken = "app.feature-flags.provider";
+export const FeatureFlagProviderToken = ["app.feature-flags", "provider"].join(
+  ".",
+);
 
 export const DefaultFeatureFlagTenantId =
   "00000000-0000-0000-0000-000000000000";

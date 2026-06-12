@@ -93,6 +93,9 @@
       ],
       "@app/backend/feature-admin-shared": [
         "libs/backend/feature/admin/shared/lib/src/index.ts"
+      ],
+      "@app/postgres-main-feature-flags/migrations": [
+        "libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts"
       ]
     },
     "esModuleInterop": true,

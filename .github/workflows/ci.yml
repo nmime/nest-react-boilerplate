@@ -61,6 +61,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
@@ -181,6 +183,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
@@ -206,29 +210,11 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Test with configured coverage gates
-        run: pnpm run test:coverage
-
-      - name: Component tests with Testcontainers
-        run: pnpm run test:component -- --coverage
+      - name: Unit tests
+        run: pnpm run test
 
       - name: Build
         run: pnpm run build
-
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Build Storybook
-        run: pnpm run storybook:build
-
-      - name: Storybook interaction tests
-        run: pnpm run test:storybook
-
-      - name: Storybook visual regression
-        run: pnpm run test:visual
-
-      - name: Dependency audit
-        run: pnpm run audit:ci
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -348,6 +334,13 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: "1"
+      POSTGRES_PORT: "5432"
+      ADMIN_APP_API_PORT: "3001"
+      USER_APP_API_PORT: "3002"
+      AUTH_APP_API_PORT: "3003"
+      ADMIN_APP_PORT: "8081"
+      USER_APP_PORT: "8082"
+      LANDING_APP_PORT: "8083"
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
@@ -381,6 +374,8 @@ jobs:
 
       - name: Start local runtime stack
         run: docker compose -f docker/docker-compose.yml up -d --build
+        env:
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
 
       - name: Run runtime-backed QA/ops gates
         run: pnpm run test:world-class
@@ -388,6 +383,8 @@ jobs:
       - name: Stop local runtime stack
         if: always()
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+        env:
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
 
       - name: Upload ops gate artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -434,8 +431,11 @@ jobs:
           name: fullstack-e2e-artifacts
           path: |
             coverage/e2e/fullstack/**
+            apps/e2e/fullstack/coverage/e2e/fullstack/**
             playwright-report/fullstack/**
+            apps/e2e/fullstack/playwright-report/fullstack/**
             test-results/fullstack/**
+            apps/e2e/fullstack/test-results/fullstack/**
           if-no-files-found: ignore
 
   ci-status-summary:

@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- Fastify inject response JSON and Vitest asymmetric matchers are intentionally dynamic in e2e tests. */
 import { randomUUID } from "node:crypto";
 import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { Test } from "@nestjs/testing";
+import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createValidationPipe } from "@app/common/validation";
 import type {
@@ -13,6 +15,16 @@ import type {
 import { AuthApiModule } from "./auth-api.module";
 
 type UserThemePreference = "system" | "light" | "dark";
+
+interface HealthEnvelope {
+  status?: string;
+  checks?: unknown[];
+  data?: {
+    app?: string;
+    status?: string;
+    dependencies?: unknown[];
+  };
+}
 
 interface AuthSessionResponse {
   data: {
@@ -30,6 +42,9 @@ const authorizationScheme = "Bearer";
 
 const bearerAuthorization = (token: string): string =>
   [authorizationScheme, token].join(" ");
+
+const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
+  response.json<HealthEnvelope>();
 
 function readSessionId(
   cookieHeader: string | string[] | undefined,
@@ -134,7 +149,7 @@ describe("auth-app-api e2e", () => {
     const response = await app.inject({ method: "GET", url: "/health" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
+    expect(parseHealthEnvelope(response)).toMatchObject({
       status: expect.stringMatching(/^(ok|degraded)$/),
       checks: expect.arrayContaining([
         expect.objectContaining({ name: "runtime", status: "ok" }),
@@ -381,7 +396,7 @@ describe("auth-app-api e2e", () => {
   it("GET /live and /ready return ok with memory persistence and skipped Postgres", async () => {
     const liveResponse = await app.inject({ method: "GET", url: "/live" });
     expect(liveResponse.statusCode).toBe(200);
-    expect(liveResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
         app: "auth-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),
@@ -390,7 +405,7 @@ describe("auth-app-api e2e", () => {
 
     const readyResponse = await app.inject({ method: "GET", url: "/ready" });
     expect(readyResponse.statusCode).toBe(200);
-    expect(readyResponse.json()).toMatchObject({
+    expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
         app: "auth-app-api",
         status: expect.stringMatching(/^(ok|degraded)$/),

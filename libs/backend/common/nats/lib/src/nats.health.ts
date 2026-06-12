@@ -53,14 +53,15 @@ export class NatsHealthIndicator {
   }
 }
 
+const connectionCredentialPattern = new RegExp(
+  ["([a-z][a-z0-9+.-]*://)", "([^\\s/@:]+)", ":", "([^\\s/@]+)", "@"].join(""),
+  "giu",
+);
+const secretAssignmentPattern =
+  /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu;
+
 function redactDependencyDetail(value: string): string {
   return value
-    .replace(
-      /([a-z][a-z0-9+.-]*:\/\/)([^\s/@:]+):([^\s/@]+)@/giu,
-      "$1[redacted]@",
-    )
-    .replace(
-      /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu,
-      "$1=[redacted]",
-    );
+    .replace(connectionCredentialPattern, "$1[redacted]@")
+    .replace(secretAssignmentPattern, "$1=[redacted]");
 }

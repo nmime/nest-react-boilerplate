@@ -20,8 +20,11 @@
       ],
       "outputs": [
         "{workspaceRoot}/coverage/e2e/fullstack",
+        "{workspaceRoot}/apps/e2e/fullstack/coverage/e2e/fullstack",
         "{workspaceRoot}/playwright-report/fullstack",
-        "{workspaceRoot}/test-results/fullstack"
+        "{workspaceRoot}/apps/e2e/fullstack/playwright-report/fullstack",
+        "{workspaceRoot}/test-results/fullstack",
+        "{workspaceRoot}/apps/e2e/fullstack/test-results/fullstack"
       ]
     }
   }

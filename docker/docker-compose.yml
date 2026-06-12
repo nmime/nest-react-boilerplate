@@ -10,6 +10,7 @@ x-backend-env: &backend-env
   AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
   AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
   ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
+  ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-false}
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
   OPENAPI_PATH: ${OPENAPI_PATH:-docs}
 
@@ -136,6 +137,7 @@ services:
       args:
         NX_PROJECT: admin-app
         FRONTEND_OUTPUT: dist/apps/frontend/admin
+        VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
     depends_on:
       backend-admin-app-api:
@@ -153,6 +155,7 @@ services:
       args:
         NX_PROJECT: user-app
         FRONTEND_OUTPUT: dist/apps/frontend/app
+        VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
     depends_on:
       auth-app-api:
@@ -172,6 +175,7 @@ services:
       args:
         NX_PROJECT: landing-app
         FRONTEND_OUTPUT: dist/apps/frontend/landing
+        VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
     depends_on:
       auth-app-api:

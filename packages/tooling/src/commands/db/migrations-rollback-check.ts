@@ -27,21 +27,21 @@ try {
   };
 
   orm = await initAuthMigrationOrm(env);
-  const migrator = orm.getMigrator();
+  const migrator = orm.migrator;
 
-  const pendingBefore = await migrator.getPendingMigrations();
+  const pendingBefore = await migrator.getPending();
   if (pendingBefore.length === 0) {
     throw new Error("No auth migrations were discovered for rollback check.");
   }
 
   await migrator.up();
-  const executedAfterUp = await migrator.getExecutedMigrations();
+  const executedAfterUp = await migrator.getExecuted();
   if (executedAfterUp.length < pendingBefore.length) {
     throw new Error("Not all auth migrations were executed during up check.");
   }
 
   await migrator.down({ to: 0 });
-  const executedAfterDown = await migrator.getExecutedMigrations();
+  const executedAfterDown = await migrator.getExecuted();
   if (executedAfterDown.length !== 0) {
     throw new Error(
       `Rollback left ${executedAfterDown.length} executed migration(s).`,
@@ -49,7 +49,7 @@ try {
   }
 
   await migrator.up();
-  const pendingAfterSecondUp = await migrator.getPendingMigrations();
+  const pendingAfterSecondUp = await migrator.getPending();
   if (pendingAfterSecondUp.length !== 0) {
     throw new Error("Re-applying migrations after rollback left pending migrations.");
   }

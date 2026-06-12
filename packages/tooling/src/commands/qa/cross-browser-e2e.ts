@@ -12,13 +12,29 @@ const projects = selected.length ? selected : (process.env.PLAYWRIGHT_MATRIX_PRO
 const passthrough = args.positional;
 const reportPath = args.options.get("report") ?? "test-results/e2e-matrix/report.json";
 const command = ["exec", "playwright", "test", "-c", config, ...projects.flatMap((project) => ["--project", project]), ...passthrough];
+const fixedRuntimeStackPorts = {
+  POSTGRES_PORT: "5432",
+  ADMIN_APP_API_PORT: "3001",
+  USER_APP_API_PORT: "3002",
+  AUTH_APP_API_PORT: "3003",
+  ADMIN_APP_PORT: "8081",
+  USER_APP_PORT: "8082",
+  LANDING_APP_PORT: "8083",
+};
+const usesExternalRuntimeStack = Boolean(process.env.PLAYWRIGHT_BASE_URL);
+const matrixEnv = usesExternalRuntimeStack
+  ? Object.fromEntries(
+      Object.entries(fixedRuntimeStackPorts).filter(([name]) => !process.env[name]),
+    )
+  : {};
+Object.assign(process.env, matrixEnv);
 
 if (!existsSync(config)) {
   console.error(`Playwright matrix config not found: ${config}`);
   process.exit(1);
 }
 if (dryRun) {
-  console.log(JSON.stringify({ status: "dry-run", command: ["pnpm", ...command], projects, config }, null, 2));
+  console.log(JSON.stringify({ status: "dry-run", command: ["pnpm", ...command], projects, config, env: matrixEnv }, null, 2));
   process.exit(0);
 }
 if (!commandExists("pnpm")) {

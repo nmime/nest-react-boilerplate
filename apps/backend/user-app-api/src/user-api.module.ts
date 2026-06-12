@@ -1,5 +1,8 @@
 import { Module } from "@nestjs/common";
-import { BaseHealthController, HealthPrivateNetworkIpGuard } from "@app/common/health";
+import {
+  BaseHealthController,
+  HealthPrivateNetworkIpGuard,
+} from "@app/common/health";
 import { UserMainModule } from "@app/feature-user-main";
 import { UserAppHealthServiceProvider } from "./health.config";
 

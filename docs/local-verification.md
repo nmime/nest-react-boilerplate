@@ -33,7 +33,27 @@ pnpm run test:fullstack
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
-The PR/push CI workflow exposes a focused `Non-runtime validation gates` job after `ci:pr` and dependency installation. It hard-gates migration and library configuration standards, generated OpenAPI contract and client freshness, OpenAPI lint, consumer contracts, bounded OpenAPI fuzz case generation, and property-based invariants without adding Docker, Helm runtime, or deployed-service requirements to that job.
+The PR/push CI workflow exposes a focused `Non-runtime validation gates` job after `ci:pr` and dependency installation. It hard-gates migration and library configuration standards, generated OpenAPI contract and client freshness, OpenAPI lint, consumer contracts, bounded OpenAPI fuzz case generation, and property-based invariants without adding Docker runtime, Helm runtime, or deployed-service prerequisites to that job.
+
+## Current CI/local parity gates
+
+For documentation-only ops/QA/deployment changes, the focused parity slice is:
+
+```bash
+CI=true pnpm install --frozen-lockfile
+pnpm run ci:workflows:check
+pnpm run tooling:static-check
+pnpm run deploy:validate
+pnpm run test:security:secrets
+pnpm run format:changed
+git diff --check
+```
+
+The corresponding CI green surface includes supported lockfile audit, native
+secret scan, Docker smoke, Fullstack Playwright, Runtime QA/ops, CodeQL, and any
+external GitGuardian integration configured outside this repository. Keep local
+failures grouped by command and distinguish task-related failures from runner or
+optional-tool availability.
 
 ## Pass 3 targeted validation
 

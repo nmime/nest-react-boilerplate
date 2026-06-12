@@ -36,6 +36,34 @@ This repository treats QA as local-first. GitHub Actions can choose a different 
 | Mutation testing           | Mutation score for app/libs source                                                 | `pnpm run test:mutation`          | Manual/nightly                    | Uses a pinned Stryker `pnpm dlx @stryker-mutator/core` version. Dry run validates config and writes command report.                                                                                                                                                                                                                      |
 | Flake and quarantine       | Keep unstable e2e specs out of normal matrix                                       | `pnpm run test:e2e:matrix`        | Manual/nightly                    | Specs tagged `@quarantine` are skipped unless `PLAYWRIGHT_INCLUDE_QUARANTINED=1`. Playwright retries remain enabled in CI.                                                                                                                                                                                                  |
 
+
+## Runtime QA/world-class gate flow
+
+```mermaid
+flowchart LR
+  dev[Developer or CI runner] --> install[CI=true pnpm install --frozen-lockfile]
+  install --> static[pnpm run tooling:static-check]
+  install --> deploy[pnpm run deploy:validate]
+  install --> secrets[pnpm run test:security:secrets]
+  install --> qa[pnpm run test:world-class]
+  qa --> runtime{Runtime available?}
+  runtime -- Docker/Compose running --> gates[Run reliability, migration rollback, observability, load/security/a11y/perf gates]
+  runtime -- Missing locally --> partial[Local partial evidence with explicit skips]
+  runtime -- Missing in CI without allow flag --> fail[Fail closed]
+  gates --> artifacts[Playwright reports, QA logs, coverage, runtime artifacts]
+  static --> decision{Release confidence}
+  deploy --> decision
+  secrets --> decision
+  artifacts --> decision
+  partial --> decision
+  fail --> decision
+```
+
+Use this flow with the command matrix above: local developers may record partial
+runtime evidence when Docker, browsers, or optional scanners are unavailable,
+but CI and release candidates should fail closed unless a documented allow flag
+is set for a non-production dry run.
+
 ## Preset bundles
 
 - Cheap local gate: `pnpm run check`

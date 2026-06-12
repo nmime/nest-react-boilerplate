@@ -27,3 +27,10 @@ When backend routes, DTOs, response wrappers, auth metadata, or error decorators
 2. Regenerate frontend client types with `pnpm api:clients`.
 3. Commit both `apps/backend/*-app-api-contracts/openapi` output and frontend generated artifacts.
 4. Run `pnpm api:contracts:check`, `pnpm api:clients:check`, `pnpm api:openapi:lint`, and affected tests.
+
+## Runtime responsibilities
+
+- `@app/api-client` owns app-facing service names, endpoint wrapper functions, React Query helpers, and typed error aliases.
+- `@app/frontend-api-support` owns base URL resolution, bearer-token access, `Accept-Language`, response parsing, and raw `fetch` containment.
+- Generated frontend artifacts live in `libs/frontend/api-client/lib/src/generated/**`; matching shared contract review types live in `libs/common/api-contracts/lib/src/generated/**`.
+- Frontend apps should not spell backend endpoint path strings; update wrappers when a new route is consumed.

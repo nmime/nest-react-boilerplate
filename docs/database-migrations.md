@@ -36,15 +36,33 @@ constraint "fk__sessions__auth_user_id" foreign key ("auth_user_id") references 
 create index "ix__auth_users__status" on "auth_users" ("status")
 ```
 
-## Online DDL safety
+## PostgreSQL migration lifecycle
 
-For MySQL or MariaDB migrations, column add/drop statements must use online DDL hints:
-
-```sql
-alter table users add column nickname varchar(64) not null default '', algorithm=instant, lock=default;
+```mermaid
+flowchart TD
+  model[Entity/schema change] --> generate[Generate or write MikroORM migration class]
+  generate --> review[Review SQL for PostgreSQL syntax, deterministic names, NOT NULL/default/backfill safety]
+  review --> check[pnpm run db:migrations:check]
+  check --> rollback[pnpm run db:migrations:rollback-check on Docker/Testcontainers-capable runner]
+  rollback --> backup[Take pre-release PostgreSQL backup]
+  backup --> release[Run controlled migration step: Compose migrator, PM2 release step, or Helm hook]
+  release --> verify[Verify mikro_orm_migrations, /ready, logs, and app smoke]
+  verify --> decide{Backward compatible?}
+  decide -- Yes --> rollforward[Prefer corrective roll-forward migration]
+  decide -- No --> restore[Restore tested backup before rollback]
 ```
 
-PostgreSQL does not support `ALGORITHM=INSTANT` or `LOCK=DEFAULT`; do not add MySQL-only syntax to PostgreSQL migrations. For PostgreSQL, keep add-column migrations metadata-only where possible by using constant defaults, backfill deliberately, and avoid table rewrites on large tables.
+## PostgreSQL DDL safety
+
+PostgreSQL is the canonical database for this repository. Migrations must use
+PostgreSQL-compatible SQL emitted through MikroORM migration classes and must not
+include MySQL/MariaDB operational syntax. In particular, `ALGORITHM=INSTANT` and
+`LOCK=DEFAULT` are forbidden in committed migrations; they are useful guard terms
+only because the checker rejects them as non-PostgreSQL syntax.
+
+For PostgreSQL, keep add-column migrations metadata-only where possible by using
+constant defaults, backfill deliberately, avoid table rewrites on large tables,
+and split risky changes into expand/backfill/contract phases when needed.
 
 ## Validation
 
@@ -55,4 +73,4 @@ pnpm run db:migrations:check
 pnpm run check
 ```
 
-The checker rejects nullable migration columns, database enums, non-standard index/unique/FK/check names, and missing MySQL online DDL hints when a MySQL-style migration is detected.
+The checker rejects nullable migration columns, database enums, non-standard index/unique/FK/check names, and forbidden MySQL/MariaDB-only syntax such as `ALGORITHM=INSTANT` or `LOCK=DEFAULT`.

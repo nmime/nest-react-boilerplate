@@ -103,3 +103,34 @@ POST /auth/logout
 Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`. Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `backend-admin-app-api`.
 
 Admin access is fail-closed. A registered email listed in `ADMIN_BOOTSTRAP_EMAILS` receives the `admin` role plus granular `admin:profile:read` and `admin:dashboard:read` permissions.
+
+## Request flow diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Browser as Frontend app
+  participant Client as @app/api-client
+  participant Support as @app/frontend-api-support apiFetch
+  participant Api as Nest API shell
+  participant Bootstrap as bootstrapNestApi middleware
+  participant Controller as Controller/DTO layer
+  participant Feature as Feature library
+  participant Store as @app/postgres-main*
+  Browser->>Client: call service wrapper/query helper
+  Client->>Support: generated openapi-fetch request
+  Support->>Support: add base URL, bearer token, Accept-Language
+  Support->>Api: HTTP request
+  Api->>Bootstrap: request ID, CORS, validation, filters
+  Bootstrap->>Controller: validated DTO and route metadata
+  Controller->>Feature: application/use-case call
+  Feature->>Store: optional persistence
+  Store-->>Feature: domain result
+  Feature-->>Controller: success or typed exception
+  Controller-->>Bootstrap: data or exception
+  Bootstrap-->>Support: { data } or RFC 9457 application/problem+json
+  Support-->>Client: typed { data, error, response }
+  Client-->>Browser: app-facing namespace result
+```
+
+Frontend code should enter the flow through `@app/api-client` wrappers. RFC 9457 Problem Details responses come from the singular `@app/common/exception` foundation and shared response mapping.

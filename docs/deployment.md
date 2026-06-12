@@ -8,20 +8,44 @@ requirement for this repository.
 | ------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | Docker/Compose     | Local full-stack checks or one-server production                      | `pnpm run deploy:validate:docker`                                               | Docker Engine with the Compose plugin for actual runs                            |
 | PM2                | A Node process manager deployment outside this repo's default configs | `pnpm run deploy:validate:pm2`                                                  | Optional `ecosystem.config.{js,cjs,mjs}`; validation is a no-op until one exists |
-| Helm               | Direct Kubernetes release from the app chart                          | `pnpm run deploy:validate:helm` or `REQUIRE_HELM=true pnpm run deploy:validate` | Helm 3 for strict render/lint validation and actual Helm deployment              |
+| Helm               | Direct Kubernetes release from the app chart                          | `pnpm run deploy:validate:helm` or `REQUIRE_HELM=true pnpm run deploy:validate` | Install Helm 3 for strict render/lint validation and actual Helm deployment      |
 | Helm + GitOps/Argo | ArgoCD applies the app chart from Git                                 | `pnpm run deploy:validate:gitops` plus Helm validation when rendering charts    | ArgoCD and cluster platform services supplied by the platform repo               |
 
 `pnpm run deploy:validate` is a generic no-deploy bundle. It runs static
 Docker/Compose checks, GitOps checks when the ArgoCD manifest exists, PM2 checks
 when an ecosystem config exists, and Helm static checks. If Helm is not installed,
 the generic command skips Helm render validation with a clear message. Strict Helm
-rendering is required only for `pnpm run deploy:validate:helm`,
+rendering runs only for `pnpm run deploy:validate:helm`,
 `node scripts/deploy-validate.mjs --mode=helm`, or
 `REQUIRE_HELM=true pnpm run deploy:validate`.
 
 All validation commands in this section are preflight checks only. They do not
 start containers, apply Kubernetes manifests, sync ArgoCD, push images, or deploy
 traffic.
+
+## Deployment mode decision tree
+
+```mermaid
+flowchart TD
+  start([Choose deployment target]) --> single{Single Docker host or VPS?}
+  single -- Yes --> compose[Docker/Compose mode<br/>Validate: pnpm run deploy:validate:docker]
+  single -- No --> nodehost{Existing Node host with PM2 standard?}
+  nodehost -- Yes --> pm2[PM2 mode<br/>Validate: pnpm run deploy:validate:pm2]
+  nodehost -- No --> k8s{Kubernetes target?}
+  k8s -- No --> stop[Add a product-owned runbook before deploying]
+  k8s -- Yes --> gitops{ArgoCD/GitOps owns reconciliation?}
+  gitops -- Yes --> argo[Helm + GitOps/Argo mode<br/>Validate: pnpm run deploy:validate:gitops<br/>plus Helm rendering when charts change]
+  gitops -- No --> helm[Direct Helm mode<br/>Validate: pnpm run deploy:validate:helm]
+  compose --> backup[Take PostgreSQL backup before migrations]
+  pm2 --> backup
+  argo --> backup
+  helm --> backup
+  backup --> smoke[Run /ready, logs, and rollback smoke checks]
+```
+
+The decision is per environment. A repository can keep all validation commands
+green while only one or two modes are used in production. Install Helm only
+for the Helm branches of the tree.
 
 ## Local development flow
 
@@ -129,7 +153,7 @@ handle database compatibility the same way as other modes.
 
 ## Helm and GitOps readiness
 
-The `.helm/` chart is application-owned and optional. Helm is required only when
+The `.helm/` chart is application-owned and optional. Install Helm only when
 you choose Helm mode, run strict Helm validation, or perform an actual Helm
 release:
 

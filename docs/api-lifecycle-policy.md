@@ -27,3 +27,7 @@ The boilerplate treats APIs as product contracts. This policy defines how routes
 - [ ] `pnpm api:clients` was run when frontend clients need updates.
 - [ ] Consumer contract or e2e coverage exists for product-critical behavior.
 - [ ] Lifecycle state and any deprecation/removal date are documented in the PR.
+
+## Contract artifact policy
+
+Generated OpenAPI JSON, shared TypeScript contract types, generated frontend clients, and consumer Pact artifacts are versioned with the source API change in the same PR. Problem responses must follow RFC 9457 and the shared singular `@app/common/exception`/Swagger helpers so frontend clients can handle errors consistently.

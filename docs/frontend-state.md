@@ -39,3 +39,24 @@ Keep server ownership clear:
 All backend calls from frontend app source and shared frontend libraries must use `apiFetch` from `@app/frontend-api-support` (or the compatibility re-export from `@app/frontend-ui`) or generated `@app/api-client` wrappers that use API support. Raw `fetch` is reserved for the API-support implementation, tests, tooling, or e2e harnesses. `libs/frontend/ui/lib/src/lib/api/no-raw-fetch.spec.ts` enforces this across landing/user/admin/shared frontend source and allows raw fetch only in the API-support implementation plus ignored test files.
 
 User-facing landing/user/admin copy, including aria labels, placeholders, fallback error text, card/stat labels, theme labels, and shared UI defaults, must be represented by typed translation keys instead of inline literals. `libs/frontend/ui/lib/src/lib/i18n/no-hardcoded-copy.spec.ts` statically scans React app/shared UI source for direct JSX text and user-facing string props/properties.
+
+## State/request topology
+
+```mermaid
+flowchart TD
+  App[Frontend app shell]
+  StateProvider[FrontendStateProvider<br/>MobX RootStore]
+  QueryProvider[FrontendQueryProvider<br/>TanStack Query]
+  I18nProvider[FrontendI18nProvider]
+  ApiClient[@app/api-client wrappers]
+  ApiSupport[@app/frontend-api-support apiFetch]
+  Backend[Backend APIs]
+  App --> StateProvider --> QueryProvider --> I18nProvider
+  App --> ApiClient
+  QueryProvider --> ApiClient
+  ApiClient --> ApiSupport --> Backend
+  StateProvider --> ApiSupport
+  I18nProvider --> ApiSupport
+```
+
+TanStack Query remains the request-state owner; MobX stores own client/UI shell state; generated API-client mutations synchronize authenticated preferences back to the backend.

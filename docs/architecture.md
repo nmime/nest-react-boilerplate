@@ -121,3 +121,38 @@ Use `pnpm run test:e2e:coverage` to run all backend and frontend e2e coverage ta
 ## Deployable outputs
 
 Nx builds backend apps into `dist/apps/backend/*` and frontend apps into `dist/apps/frontend/*`. The root Dockerfile can package any backend app as a Node runtime image or any frontend app as an nginx static image.
+
+## Current Nx topology diagram
+
+```mermaid
+graph TD
+  AdminApp[admin-app] --> ApiClient[@app/api-client]
+  UserApp[user-app] --> ApiClient
+  LandingApp[landing-app] --> FrontendUi[@app/frontend-ui]
+  AdminApp --> FrontendUi
+  UserApp --> FrontendUi
+  ApiClient --> ApiSupport[@app/frontend-api-support]
+  ApiClient --> GeneratedClients[libs/frontend/api-client/lib/src/generated/**]
+  GeneratedClients --> OpenApi[apps/backend/*-app-api-contracts/openapi/*.json]
+  OpenApi --> SharedTypes[libs/common/api-contracts/lib/src/generated/**]
+  UserApp --> ConsumerPact[apps/frontend/app-contracts/consumers/frontend-auth.pact.json]
+  ConsumerPact --> AuthApi[auth-app-api]
+  AdminApi[backend-admin-app-api] --> Bootstrap[@app/common/bootstrap]
+  UserApi[user-app-api] --> Bootstrap
+  AuthApi --> Bootstrap
+  Bootstrap --> Exception[@app/common/exception]
+  Bootstrap --> Response[@app/common/response]
+  Bootstrap --> Validation[@app/common/validation]
+  AuthApi --> PgAuth[@app/postgres-main-auth]
+  AuthApi --> PgShared[@app/postgres-main]
+  AdminApi --> PgFlags[@app/postgres-main-feature-flags]
+  PgFlags --> PgShared
+```
+
+## Current contract and persistence layout
+
+OpenAPI producer output is committed as JSON under `apps/backend/*-app-api-contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app-contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are `config/api-contracts.json`, `config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`.
+
+There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
+
+Canonical Postgres data access lives under `libs/backend/postgres/**`. Use `@app/postgres-main`, `@app/postgres-main-auth`, and `@app/postgres-main-feature-flags` instead of non-canonical database paths. API errors standardize on RFC 9457 Problem Details through the singular `@app/common/exception` alias.

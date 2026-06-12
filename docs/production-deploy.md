@@ -3,7 +3,7 @@
 This repository supports optional, composable deployment modes instead of one
 global production path. Docker/Compose, PM2, Helm, and Helm + GitOps/Argo can be
 validated independently and combined with platform-owned infrastructure where
-appropriate. Helm and Kubernetes are required only when you choose a Helm-based
+appropriate. Use Helm and Kubernetes only when you choose a Helm-based
 mode.
 
 The separation mirrors the `nmime/ansible-k8s-full-setup` pattern:
@@ -18,18 +18,45 @@ The separation mirrors the `nmime/ansible-k8s-full-setup` pattern:
   Docker secret files, runtime environment variables, Kubernetes Secrets, or
   External Secrets references such as `secrets.existingSecret`.
 
+## Production artifact flow
+
+```mermaid
+flowchart LR
+  sha[Git commit SHA] --> build[Build Dockerfile targets<br/>backend, frontend, migrator]
+  build --> image[GHCR images tagged sha-git-sha or pinned by digest]
+  image --> sbom[SBOM/provenance artifacts]
+  image --> scan[Trivy/CodeQL/security gates]
+  scan --> sign[Cosign keyless signatures]
+  sbom --> promote{Selected runtime}
+  sign --> promote
+  promote --> compose[Compose .env.production immutable IMAGE_TAG]
+  promote --> helm[Helm values image tags/digests]
+  promote --> argo[Argo-tracked values commit or image updater]
+  promote --> pm2[PM2 release directory/image when product-owned]
+  compose --> migrate[Controlled PostgreSQL migration step]
+  helm --> migrate
+  argo --> migrate
+  pm2 --> migrate
+  migrate --> verify[/ready smoke, logs, rollback notes]
+```
+
+Every production mode starts from the same immutable source artifact: a reviewed
+Git commit and images tagged with that commit SHA or addressed by digest. Mode
+specific runbooks consume those artifacts; they should not rebuild from an
+uncommitted worktree or deploy mutable tags such as `latest`, `main`, or `dev`.
+
 ## Validation commands are no-deploy checks
 
 Run the validation command for the mode you intend to use:
 
-| Mode                     | Command                                      | Requires Helm?                                                      | What it does                                                                           |
+| Mode                     | Command                                      | Helm needed?                                                        | What it does                                                                           |
 | ------------------------ | -------------------------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Generic bundle           | `pnpm run deploy:validate`                   | No global requirement; Helm rendering is skipped if Helm is missing | Runs Docker static checks, optional GitOps/PM2 checks, and Helm static checks          |
 | Docker/Compose           | `pnpm run deploy:validate:docker`            | No                                                                  | Validates deployment config and production Compose config                              |
 | PM2                      | `pnpm run deploy:validate:pm2`               | No                                                                  | Validates `ecosystem.config.{js,cjs,mjs}` when present; otherwise reports a no-op skip |
 | GitOps/Argo              | `pnpm run deploy:validate:gitops`            | No for manifest checks                                              | Validates `deploy/argocd/application.yaml` when GitOps mode is selected                |
 | Helm                     | `pnpm run deploy:validate:helm`              | Yes                                                                 | Runs static Helm checks plus strict Helm render validation                             |
-| Generic with strict Helm | `REQUIRE_HELM=true pnpm run deploy:validate` | Yes                                                                 | Makes the generic bundle fail if Helm render validation cannot run                     |
+| Generic with Helm render | `REQUIRE_HELM=true pnpm run deploy:validate` | Yes                                                                 | Enforces Helm render validation in the generic bundle                                  |
 
 These commands do not deploy: they do not run `docker compose up`, `helm
 upgrade`, `kubectl apply`, Argo sync, or image pushes.
@@ -88,7 +115,7 @@ migrations.
 ## Helm mode
 
 Use Helm mode when directly releasing the app chart to Kubernetes. Helm 3 is
-required for strict render/lint validation and for actual `helm upgrade` or
+needed for strict render/lint validation and for actual `helm upgrade` or
 `helm rollback` commands.
 
 Prerequisites for actual Helm deployment:
@@ -105,7 +132,7 @@ Strict preflight:
 
 ```bash
 pnpm run deploy:validate:helm
-# or make the generic bundle require Helm rendering:
+# or make the generic bundle enforce Helm rendering:
 REQUIRE_HELM=true pnpm run deploy:validate
 ```
 

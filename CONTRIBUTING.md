@@ -1,6 +1,6 @@
 # Contributing
 
-Use this guide with the root `README.md`, [Command matrix](docs/command-matrix.md), and the documents in `docs/`.
+Use this guide with the root [README](README.md), [Command matrix](docs/command-matrix.md), and the documents in `docs/`.
 
 ## Prerequisites
 
@@ -16,22 +16,38 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 ```
 
-## Branch and PR workflow
+## Branch, commit, and PR workflow
 
-1. Branch from `main` with a focused name, for example `feature/billing-settings` or `fix/auth-cookie-flags`.
+1. Branch from current `main` with a focused name, for example `feature/billing-settings` or `fix/auth-cookie-flags`.
 2. Keep commits scoped and explain user-visible behavior in the commit message or PR body.
-3. Document any new runtime variable in `.env.example`, relevant environment examples, and `README.md`.
-4. Update generated contracts/clients when API shape changes.
-5. Do not commit secrets, `.env*` files with real values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
+3. For author-sensitive work, every commit must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`.
+4. Do not add `Co-authored-by`, `Signed-off-by`, Splox, Executor, bot, automation, or assistant trailers.
+5. Do not use GitHub web merge/squash or GitHub API merge/squash for author-sensitive work; use raw git branch commits and pushes.
+6. Document any new runtime variable in `.env.example`, relevant environment examples, and root/docs guidance.
+7. Update generated contract and client artifacts only when the API source changed and the task includes regeneration.
+8. Do not commit secrets, real `.env*` values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
 
 ## Workspace rules
 
 - Put deployable apps under `apps/**`.
 - Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/**`, `libs/backend/postgres/**`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in `i18n/<locale>/common.json`.
+- Canonical PostgreSQL shared infrastructure is `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below `libs/backend/postgres/main/<feature>/lib`.
+- Canonical OpenAPI producer output is `apps/backend/*-app-api-contracts/openapi/*.json`; shared generated contract review types are in `libs/common/api-contracts/lib/src/generated`; frontend generated clients are in `libs/frontend/api-client/lib/src/generated`.
+- Do not invent top-level contract directories, alternate OpenAPI consumer folders, or duplicate generated-client locations.
 - Use Nx project names in commands.
 - Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend/feature-admin-shared` and `@app/backend/feature-admin-shared` for admin shared imports.
 - Add public developer commands to `package.json` and [Command matrix](docs/command-matrix.md).
 - Add local automation under `packages/tooling/src` and expose supported commands through `packages/tooling/bin/repo-tooling.mjs`.
+- Do not use Copilot, copilor, or external AI coding assistants for repository changes.
+
+## Generated artifacts
+
+Generated files are review artifacts, not hand-authored design space.
+
+- API source changes flow from Nest controllers/DTOs/decorators to OpenAPI JSON, shared generated contract review types, and generated frontend clients.
+- Fix source metadata or generator scripts first; then run the repository generation/check commands.
+- Commit generated diffs together with the source changes that justify them.
+- Leave generated artifacts untouched for docs-only, tooling-only, or unrelated refactors.
 
 ## Required checks before a PR
 
@@ -64,7 +80,6 @@ Coverage thresholds are defined in `config/vitest-coverage.mts`; run `pnpm run t
 - Never log secrets or full environment objects.
 - Keep OAuth disabled unless an app explicitly supplies provider configuration and product-specific callback handling.
 - Follow [database migration standards](docs/database-migrations.md): explicit `NOT NULL`, `VARCHAR` plus checks instead of enums, and deterministic constraint/index names.
-
 - Run `pnpm run lib:configs:check` after library split/config changes, `pnpm run tooling:static-check` after tooling/script changes, and the API/client/OpenAPI or DB migration checks when those surfaces change.
 
 ## Frontend changes

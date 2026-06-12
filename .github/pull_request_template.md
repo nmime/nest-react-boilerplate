@@ -43,6 +43,16 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 
 -
 
+## Contributor policy checklist
+
+- [ ] I used current `main` as the base for this branch.
+- [ ] Author-sensitive commits use `nmime <66474195+nmime@users.noreply.github.com>` for both author and committer.
+- [ ] No commit message contains `Co-authored-by`, `Signed-off-by`, Splox, Executor, bot, automation, or assistant trailers.
+- [ ] This PR was not merged or squashed with GitHub web/API merge flows when author policy matters.
+- [ ] No secrets, real environment values, credentials, Docker secret files, tokens, or full environment dumps are included.
+- [ ] Generated artifacts are updated only when source changes require regeneration.
+- [ ] I did not use Copilot, copilor, or an external AI coding assistant for repository changes.
+
 ## Nx quality gates
 
 - [ ] `pnpm install --frozen-lockfile` passes

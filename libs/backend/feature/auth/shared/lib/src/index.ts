@@ -4,6 +4,10 @@ import {
   DEFAULT_AUTH_TENANT_ID,
   resolveTenantId,
 } from "./lib/oauth/tenant-context";
+import type {
+  AuthProvider,
+  AuthProviderChannel,
+} from "./lib/oauth/social-auth.types";
 
 export const USER_ROLE = "user";
 export const ADMIN_ROLE = "admin";
@@ -47,6 +51,11 @@ export interface JwtTokenPair {
 
 export interface AuthSessionView extends JwtTokenPair {
   user: AuthenticatedUserView;
+  amr?: string[];
+  authProvider?: AuthProvider;
+  authChannel?: AuthProviderChannel;
+  authTime?: number;
+  externalIdentityId?: string;
 }
 
 export function createDefaultAccessPolicy(
@@ -139,6 +148,7 @@ export * from "./lib/oauth/auth-oauth.types";
 export * from "./lib/oauth/bearer-auth.guard";
 export * from "./lib/oauth/rbac.guard";
 export * from "./lib/oauth/session-auth.guard";
+export * from "./lib/oauth/social-auth.types";
 export * from "./lib/oauth/tenant-context";
 export * from "./lib/oauth/tenant-lifecycle";
 export * from "./lib/oauth/language.enum";

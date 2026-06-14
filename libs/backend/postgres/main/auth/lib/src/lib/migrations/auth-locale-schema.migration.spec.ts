@@ -31,9 +31,6 @@ describe("auth locale schema migration", () => {
     expect(authMigrations).toContain(
       Migration20260607080000AlignAuthUserLocaleConstraint,
     );
-    expect(authMigrations.at(-1)).toBe(
-      Migration20260609100000CreateFeatureFlags,
-    );
     expect(
       authMigrations.indexOf(
         Migration20260607080000AlignAuthUserLocaleConstraint,

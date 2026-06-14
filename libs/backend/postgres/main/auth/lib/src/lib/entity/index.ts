@@ -3,3 +3,7 @@ export * from "./auth-user.entity";
 export * from "./auth-tenant.entity";
 export * from "./auth-token.entity";
 export * from "./transactional-outbox-event.entity";
+export * from "./external-identity.entity";
+export * from "./auth-method.entity";
+export * from "./auth-link-token.entity";
+export * from "./auth-provider-token.entity";

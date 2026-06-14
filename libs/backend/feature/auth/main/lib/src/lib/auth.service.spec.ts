@@ -43,8 +43,13 @@ describe("AuthService", () => {
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
         AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
-      }).subject,
-    ).toBe(registered.user.id);
+      }),
+    ).toMatchObject({
+      subject: registered.user.id,
+      amr: ["pwd"],
+      authProvider: "password",
+      authChannel: "password",
+    });
 
     const loggedIn = await service.login({
       email: "user@example.com",

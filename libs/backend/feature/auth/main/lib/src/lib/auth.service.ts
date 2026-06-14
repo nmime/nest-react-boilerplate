@@ -366,7 +366,7 @@ export function toSessionPrincipal(
   return {
     subject: session.user.id,
     tenantId: session.user.tenantId,
-    email: session.user.email,
+    email: session.user.email ?? undefined,
     displayName: session.user.displayName,
     locale: session.user.locale as Language,
     theme: session.user.theme,

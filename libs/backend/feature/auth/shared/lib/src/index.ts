@@ -30,7 +30,7 @@ export interface AuthAccessPolicy {
 export interface AuthenticatedUserView {
   id: string;
   tenantId: string;
-  email: string;
+  email: string | null;
   displayName?: string;
   locale?: Locale;
   theme: UserThemePreference;
@@ -102,7 +102,7 @@ export function isAdminBootstrapAllowed(
 export function toAuthenticatedUserView(input: {
   id: string;
   tenantId?: string | null;
-  email: string;
+  email: string | null;
   displayName?: string | null;
   locale?: Locale | null;
   theme?: UserThemePreference | null;

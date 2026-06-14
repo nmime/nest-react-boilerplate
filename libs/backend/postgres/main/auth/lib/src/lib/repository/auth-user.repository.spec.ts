@@ -66,9 +66,22 @@ describe("AuthUserRepository", () => {
 
     expect(result._unsafeUnwrap()).toBe(entity);
     expect(findOne).toHaveBeenCalledWith(AuthUserEntity, {
-      email: "user@example.com",
       tenantId: DefaultAuthTenantId,
+      email: { $ne: null, $eq: "user@example.com" },
     });
+  });
+
+  it("returns null without querying for blank or null email", async () => {
+    const { findOne, entityManager } = createEntityManagerMock();
+    const authUsers = new AuthUserRepository(entityManager);
+
+    await expect(
+      authUsers.findByEmail(null).then((result) => result._unsafeUnwrap()),
+    ).resolves.toBeNull();
+    await expect(
+      authUsers.findByEmail("   ").then((result) => result._unsafeUnwrap()),
+    ).resolves.toBeNull();
+    expect(findOne).not.toHaveBeenCalled();
   });
 
   it("finds an auth user by id", async () => {
@@ -118,7 +131,7 @@ describe("AuthUserRepository", () => {
       {
         tenantId: "tenant-id",
         $or: [
-          { email: { $ilike: "%Ada\\_\\%%" } },
+          { email: { $ne: null, $ilike: "%Ada\\_\\%%" } },
           { displayName: { $ilike: "%Ada\\_\\%%" } },
         ],
         status: "active",

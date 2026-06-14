@@ -49,7 +49,7 @@ describe("AuthUserEntity", () => {
     expect(new AuthUserEntity()).toBeInstanceOf(AuthUserEntity);
   });
 
-  it("registers table, primary key, unique tenant email, and access metadata", () => {
+  it("registers table, primary key, partial unique tenant email, and access metadata", () => {
     AuthUserEntitySchema.init();
     const metadata = AuthUserEntitySchema.meta;
 
@@ -58,6 +58,7 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.id.type).toBe("uuid");
     expect(metadata.properties.tenantId.fieldNames).toContain("tenant_id");
     expect(metadata.properties.email.name).toBe("email");
+    expect(metadata.properties.email.nullable).toBe(true);
     expect(metadata.properties.passwordHash.fieldNames).toContain(
       "password_hash",
     );
@@ -76,11 +77,16 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.theme.default).toBe("system");
     expect(metadata.properties.theme.nullable).not.toBe(true);
     expect(metadata.properties.lastLoginAt.nullable).not.toBe(true);
-    expect(metadata.uniques).toContainEqual(
+    expect(metadata.indexes).toContainEqual(
       expect.objectContaining({
-        name: "uq__auth_users__tenant_id_email",
+        name: "uq__auth_users__tenant_id_email_not_null",
         properties: ["tenantId", "email"],
+        where: '"email" is not null',
+        options: { unique: true },
       }),
+    );
+    expect(metadata.uniques).not.toContainEqual(
+      expect.objectContaining({ name: "uq__auth_users__tenant_id_email" }),
     );
   });
 

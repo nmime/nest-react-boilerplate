@@ -10,6 +10,7 @@ import { Migration20260605143000CreateAdminAuditLogs } from "./Migration20260605
 import { Migration20260606120000CreateTransactionalOutboxEvents } from "./Migration20260606120000CreateTransactionalOutboxEvents";
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
 import { Migration20260609100000CreateFeatureFlags } from "@app/postgres-main-feature-flags";
+import { Migration20260614120000CreateSocialAuthDataModel } from "./Migration20260614120000CreateSocialAuthDataModel";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";
 
@@ -25,6 +26,7 @@ export const authMigrations = [
   Migration20260606120000CreateTransactionalOutboxEvents,
   Migration20260607080000AlignAuthUserLocaleConstraint,
   Migration20260609100000CreateFeatureFlags,
+  Migration20260614120000CreateSocialAuthDataModel,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -48,4 +50,5 @@ export {
   Migration20260606120000CreateTransactionalOutboxEvents,
   Migration20260607080000AlignAuthUserLocaleConstraint,
   Migration20260609100000CreateFeatureFlags,
+  Migration20260614120000CreateSocialAuthDataModel,
 };

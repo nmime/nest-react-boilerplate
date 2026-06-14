@@ -334,7 +334,7 @@ function principalFromUserView(
     ...principal,
     subject: user.id,
     tenantId: user.tenantId,
-    email: user.email,
+    email: user.email ?? undefined,
     displayName: user.displayName,
     locale: user.locale as Language,
     theme: user.theme,

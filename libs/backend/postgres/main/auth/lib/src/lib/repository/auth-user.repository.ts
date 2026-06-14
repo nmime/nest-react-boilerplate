@@ -43,11 +43,19 @@ export class AuthUserRepository {
   }
 
   findByEmail(
-    email: string,
+    email: string | null | undefined,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail) {
+      return ResultAsync.fromSafePromise(Promise.resolve(null));
+    }
+
     return ResultAsync.fromPromise(
-      this.entityManager.findOne(AuthUserEntity, { email, tenantId }),
+      this.entityManager.findOne(AuthUserEntity, {
+        tenantId,
+        email: { $ne: null, $eq: normalizedEmail },
+      }),
       mapRepositoryError,
     );
   }
@@ -212,7 +220,7 @@ export class AuthUserRepository {
       ...(input.search
         ? {
             $or: [
-              { email: { $ilike: `%${escapeLike(input.search)}%` } },
+              { email: { $ne: null, $ilike: `%${escapeLike(input.search)}%` } },
               { displayName: { $ilike: `%${escapeLike(input.search)}%` } },
             ],
           }

@@ -11,7 +11,7 @@ import { AuthUserRepository } from "@app/postgres-main-auth";
 export interface AuthUserRecord {
   id: string;
   tenantId: string;
-  email: string;
+  email: string | null;
   displayName: string | null;
   passwordHash: string;
   roles: string[];
@@ -29,7 +29,7 @@ export interface AuthUserStoreError {
 
 export interface CreateAuthUserInput {
   tenantId?: string;
-  email: string;
+  email: string | null;
   displayName?: string | null;
   passwordHash: string;
   roles: string[];
@@ -43,7 +43,7 @@ export interface AuthUserStore {
     input: CreateAuthUserInput,
   ): ResultAsync<AuthUserRecord, AuthUserStoreError>;
   findByEmail(
-    email: string,
+    email: string | null | undefined,
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   findById(
@@ -72,7 +72,7 @@ export const AUTH_USER_STORE = Symbol("AUTH_USER_STORE");
 export function toAuthUserRecord(entity: {
   id: string;
   tenantId?: string | null;
-  email: string;
+  email: string | null;
   displayName: string | null;
   passwordHash: string;
   roles: string[];
@@ -163,9 +163,9 @@ export class InMemoryAuthUserStore implements AuthUserStore {
     input: CreateAuthUserInput,
   ): ResultAsync<AuthUserRecord, AuthUserStoreError> {
     const tenantId = input.tenantId ?? DEFAULT_AUTH_TENANT_ID;
-    const email = input.email.toLowerCase();
-    const key = tenantEmailKey(tenantId, email);
-    if (this.idsByTenantEmail.has(key)) {
+    const email = input.email?.trim().toLowerCase() || null;
+    const key = email ? tenantEmailKey(tenantId, email) : null;
+    if (key && this.idsByTenantEmail.has(key)) {
       return ResultAsync.fromPromise(
         Promise.reject(new Error("Email already exists for tenant.")),
         () => ({
@@ -189,16 +189,22 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       lastLoginAt: null,
     };
     this.usersById.set(record.id, record);
-    this.idsByTenantEmail.set(key, record.id);
+    if (key) {
+      this.idsByTenantEmail.set(key, record.id);
+    }
     return okAsync(record);
   }
 
   findByEmail(
-    email: string,
+    email: string | null | undefined,
     tenantId: string = DEFAULT_AUTH_TENANT_ID,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail) {
+      return okAsync(null);
+    }
     const id = this.idsByTenantEmail.get(
-      tenantEmailKey(tenantId, email.toLowerCase()),
+      tenantEmailKey(tenantId, normalizedEmail),
     );
     return okAsync(id ? (this.usersById.get(id) ?? null) : null);
   }

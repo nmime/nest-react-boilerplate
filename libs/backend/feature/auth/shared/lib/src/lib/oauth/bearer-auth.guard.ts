@@ -31,6 +31,11 @@ type JwtPayload = Record<string, unknown> & {
   iss?: string;
   jti?: string;
   locale?: unknown;
+  amr?: unknown;
+  auth_provider?: unknown;
+  auth_channel?: unknown;
+  auth_time?: unknown;
+  external_identity_id?: unknown;
   tenantId?: unknown;
   theme?: unknown;
   tid?: unknown;
@@ -251,7 +256,7 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
     ...claimToStrings(payload.scope),
   ]);
 
-  return {
+  const principal: AuthenticatedPrincipal = {
     subject: payload.sub,
     tenantId: resolveTenantId(readTenantClaim(payload)),
     email: payload.email,
@@ -264,6 +269,34 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
     permissions,
     tokenId: payload.jti,
   };
+  const amr = claimToStrings(payload.amr);
+  if (amr.length > 0) {
+    principal.amr = amr;
+  }
+  if (
+    payload.auth_provider === "password" ||
+    payload.auth_provider === "telegram" ||
+    payload.auth_provider === "discord"
+  ) {
+    principal.authProvider = payload.auth_provider;
+  }
+  if (
+    payload.auth_channel === "password" ||
+    payload.auth_channel === "telegram_web_login" ||
+    payload.auth_channel === "telegram_tma" ||
+    payload.auth_channel === "telegram_bot" ||
+    payload.auth_channel === "discord_oauth" ||
+    payload.auth_channel === "discord_bot"
+  ) {
+    principal.authChannel = payload.auth_channel;
+  }
+  if (typeof payload.auth_time === "number") {
+    principal.authTime = payload.auth_time;
+  }
+  if (typeof payload.external_identity_id === "string") {
+    principal.externalIdentityId = payload.external_identity_id;
+  }
+  return principal;
 }
 
 function readTenantClaim(payload: JwtPayload): string | undefined {

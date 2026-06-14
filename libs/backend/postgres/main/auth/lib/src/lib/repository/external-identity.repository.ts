@@ -75,6 +75,17 @@ export class ExternalIdentityRepository {
     );
   }
 
+  deleteById(
+    id: string,
+    userId: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<boolean, SocialAuthRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.deleteIdentity(id, userId, tenantId),
+      mapSocialAuthError,
+    );
+  }
+
   private async persistIdentity(
     input: UpsertExternalIdentityInput,
   ): Promise<ExternalIdentityEntity> {
@@ -112,6 +123,24 @@ export class ExternalIdentityRepository {
       await em.flush();
       return entity;
     });
+  }
+
+  private async deleteIdentity(
+    id: string,
+    userId: string,
+    tenantId: string,
+  ): Promise<boolean> {
+    const entity = await this.entityManager.findOne(ExternalIdentityEntity, {
+      id,
+      userId,
+      tenantId,
+    });
+    if (!entity) {
+      return false;
+    }
+    this.entityManager.remove(entity);
+    await this.entityManager.flush();
+    return true;
   }
 }
 

@@ -6,6 +6,7 @@ import {
 import { AuthPostgresModule } from "@app/postgres-main-auth";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { ExternalAuthService } from "./external-auth.service";
 import {
   AUTH_USER_STORE,
   InMemoryAuthUserStore,
@@ -16,6 +17,11 @@ import {
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
 } from "./auth-token-store";
+import {
+  InMemorySocialAuthStore,
+  PostgresSocialAuthStore,
+  SOCIAL_AUTH_STORE,
+} from "./social-auth-store";
 
 export type AuthPersistenceMode = "postgres" | "memory";
 
@@ -72,14 +78,18 @@ export class AuthMainModule {
       controllers: [AuthController],
       providers: [
         AuthService,
+        ExternalAuthService,
         useMemory
           ? { provide: AUTH_USER_STORE, useClass: InMemoryAuthUserStore }
           : { provide: AUTH_USER_STORE, useClass: PostgresAuthUserStore },
         useMemory
           ? { provide: AUTH_TOKEN_STORE, useClass: InMemoryAuthTokenStore }
           : { provide: AUTH_TOKEN_STORE, useClass: PostgresAuthTokenStore },
+        useMemory
+          ? { provide: SOCIAL_AUTH_STORE, useClass: InMemorySocialAuthStore }
+          : { provide: SOCIAL_AUTH_STORE, useClass: PostgresSocialAuthStore },
       ],
-      exports: [AuthService],
+      exports: [AuthService, ExternalAuthService],
     };
   }
 }

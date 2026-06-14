@@ -114,6 +114,8 @@ minimumReleaseAgeExclude:
   - "@opentelemetry/resource-detector-container@0.8.10"
   - "@opentelemetry/resource-detector-gcp@0.54.0"
   - "@opentelemetry/sql-common@0.42.0"
+  - "@grammyjs/types@3.28.0"
+  - grammy@1.44.0
 
 allowBuilds:
   "@nestjs/core": true

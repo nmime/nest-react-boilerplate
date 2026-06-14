@@ -5,9 +5,12 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import {
+  checkForbiddenSocialAuthDependencies,
+  checkForbiddenSocialAuthImports,
   checkGeneratedContractImports,
   checkPackageProjectReferences,
   checkStaleReferences,
+  checkTrackedSocialAuthSecrets,
   checkWorkspaceMetadata,
 } from "./static-check.ts";
 
@@ -74,6 +77,107 @@ describe("static-check generated contract import guard", () => {
       );
 
       assert.deepEqual(checkGeneratedContractImports(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check social auth package guard", () => {
+  it("rejects deprecated Telegram package imports from app source", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "apps/frontend/app/src/features/tma/deprecated.ts",
+        'import { useLaunchParams } from "@telegram-apps/sdk-react";\nimport legacyWebApp from "telegram-web-app";\n\nexport const value = useLaunchParams ?? legacyWebApp;\n',
+      );
+
+      const failures = checkForbiddenSocialAuthImports(workspaceRoot);
+
+      assert.equal(failures.length, 2);
+      assert.equal(failures[0].command, "social auth forbidden import boundary");
+      assert.match(failures.map((failure) => failure.stderr).join("\n"), /@tma\.js/);
+      assert.match(failures.map((failure) => failure.stderr).join("\n"), /grammY/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects deprecated Telegram packages in dependency manifests", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "apps/frontend/app/package.json",
+        JSON.stringify({
+          dependencies: {
+            "@telegram-apps/sdk-react": "latest",
+            "@vkruglikov/react-telegram-web-app": "latest",
+          },
+        }),
+      );
+
+      const failures = checkForbiddenSocialAuthDependencies(workspaceRoot);
+
+      assert.equal(failures.length, 2);
+      assert.equal(failures[0].command, "social auth forbidden dependency guard");
+      assert.match(failures.map((failure) => failure.stderr).join("\n"), /@tma\.js/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects Telegram and Discord token-shaped values in tracked files", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "docs/social-auth-secrets.md",
+        [
+          "Do not commit these values:",
+          "1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi_12345",
+          "mfa.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghi_12345",
+          "discordClientSecret = \"0123456789abcdefghijklmnopqrstuvwxyzABCD\"",
+        ].join("\n"),
+      );
+
+      const failures = checkTrackedSocialAuthSecrets(workspaceRoot);
+
+      assert.equal(failures.length, 3);
+      assert.deepEqual(
+        failures.map((failure) => failure.command),
+        [
+          "social auth tracked secret guard",
+          "social auth tracked secret guard",
+          "social auth tracked secret guard",
+        ],
+      );
+      assert.match(failures.map((failure) => failure.stderr).join("\n"), /secret-file/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("allows documented placeholders and secret-file examples", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        ".env.example",
+        [
+          "TELEGRAM_BOT_TOKEN=<set-telegram-bot-token>",
+          "TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt",
+          "DISCORD_BOT_TOKEN=<set-discord-bot-token>",
+          "DISCORD_CLIENT_SECRET=<set-discord-client-secret>",
+        ].join("\n"),
+      );
+
+      assert.deepEqual(checkTrackedSocialAuthSecrets(workspaceRoot), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }

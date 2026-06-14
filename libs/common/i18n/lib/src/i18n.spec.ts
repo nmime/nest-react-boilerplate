@@ -55,6 +55,52 @@ describe("@app/common/i18n", () => {
     }
   });
 
+  it("exposes planned social auth, TMA, bot, and Discord translation keys", () => {
+    const requiredKeys = [
+      "auth.provider.telegram",
+      "auth.provider.discord",
+      "auth.social.button.telegram",
+      "auth.social.conflict.accountExists",
+      "auth.social.stepUp.required",
+      "auth.social.lastMethod.blocked",
+      "auth.social.unlink.success",
+      "auth.social.link.error",
+      "auth.social.createAccount.error",
+      "tma.loading",
+      "tma.unsupported",
+      "tma.authenticated",
+      "tma.link.required",
+      "tma.deepNavigation.notFound",
+      "deepNav.linkRequired",
+      "bot.menu.main",
+      "bot.menu.profile",
+      "bot.menu.settings",
+      "bot.menu.language",
+      "bot.menu.support",
+      "bot.menu.link",
+      "bot.menu.unlink",
+      "bot.menu.back",
+      "bot.menu.home",
+      "bot.menu.cancel",
+      "bot.error.expired",
+      "bot.error.rateLimited",
+      "discord.commands.link.label",
+      "discord.commands.link.description",
+      "discord.commands.status.label",
+      "discord.commands.status.description",
+      "discord.commands.help.label",
+      "discord.commands.help.description",
+      "discord.components.linkButton",
+      "discord.messages.linkConflict",
+    ];
+
+    for (const key of requiredKeys) {
+      expect(hasTranslationKey(key)).toBe(true);
+      expect(translations.en[key]).toEqual(expect.any(String));
+      expect(translations.ru[key]).toEqual(expect.any(String));
+    }
+  });
+
   it("keeps every locale JSON catalog in key parity with the fallback catalog", () => {
     const fallbackKeys = Object.keys(translations[fallbackLocale]).sort(
       (left, right) => left.localeCompare(right),

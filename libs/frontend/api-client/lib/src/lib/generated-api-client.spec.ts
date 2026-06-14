@@ -1,29 +1,54 @@
 import { configureApiLocale } from "@app/frontend-api-support";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
+  authControllerCreateLinkToken,
+  authControllerDiscordAuthorizationRequest,
+  authControllerDiscordCallback,
   authControllerLogin,
   authControllerMe,
+  authControllerProviderIdentities,
   authControllerRegister,
+  authControllerTelegramBotLink,
+  authControllerTelegramTma,
+  authControllerTelegramWebLogin,
+  authControllerUnlinkProviderIdentity,
   authControllerUpdateLocale,
   authControllerUpdatePreferences,
+  getAuthControllerCreateLinkTokenMutationKey,
+  getAuthControllerDiscordAuthorizationRequestMutationKey,
   getAuthControllerLocalesQueryKey,
   getAuthControllerMeQueryKey,
+  getAuthControllerProviderIdentitiesQueryKey,
+  getAuthControllerTelegramBotLinkMutationKey,
+  getAuthControllerTelegramTmaMutationKey,
+  getAuthControllerTelegramWebLoginMutationKey,
+  getAuthControllerUnlinkProviderIdentityMutationKey,
   getAuthControllerUpdatePreferencesMutationKey,
+  type AuthControllerCreateLinkTokenData,
+  type AuthControllerDiscordAuthorizationRequestData,
   type AuthControllerLoginData,
   type AuthControllerLoginError,
-  type AuthControllerUpdatePreferencesData,
+  type AuthControllerProviderIdentitiesData,
   type AuthControllerRegisterData,
   type AuthControllerRegisterError,
+  type AuthControllerTelegramBotLinkData,
+  type AuthControllerTelegramTmaData,
+  type AuthControllerTelegramWebLoginData,
+  type AuthControllerUnlinkProviderIdentityData,
   type AuthControllerUpdateLocaleData,
+  type AuthControllerUpdatePreferencesData,
   type AuthSessionViewDto,
+  type ExternalAuthResultDto,
+  type LinkTokenResultDto,
   type LoginDto,
+  type ProviderIdentitiesPayloadDto,
   type RegisterDto,
   type UpdateLocaleDto,
   type UpdatePreferencesDto,
   useAuthControllerLoginMutation,
   useAuthControllerRegisterMutation,
-  useAuthControllerUpdatePreferencesMutation,
   useAuthControllerUpdateLocaleMutation,
+  useAuthControllerUpdatePreferencesMutation,
 } from "./auth";
 import {
   adminProfileControllerMe,
@@ -62,6 +87,39 @@ const session: AuthSessionViewDto = {
     permissions: ["profile:read"],
     roles: ["user"],
   },
+};
+
+const externalAuthResult: ExternalAuthResultDto = {
+  identity: {
+    email: null,
+    provider: "telegram",
+    providerSubject: "telegram-user-1",
+  },
+  session: {
+    ...session,
+    authChannel: "telegram_web_login",
+    authProvider: "telegram",
+    user: { ...session.user, email: null },
+  },
+  status: "authenticated",
+};
+
+const providerIdentities: ProviderIdentitiesPayloadDto = {
+  items: [
+    {
+      email: null,
+      id: "identity-1",
+      provider: "telegram",
+      providerSubject: "telegram-user-1",
+    },
+  ],
+};
+
+const linkTokenResult: LinkTokenResultDto = {
+  expiresAt: "2025-01-01T00:00:00.000Z",
+  intent: "link",
+  provider: "telegram",
+  token: "link-token",
 };
 
 type FetchMock = typeof fetch & {
@@ -271,6 +329,134 @@ describe("generated api clients", () => {
     );
   });
 
+  it("serializes social auth wrappers and preserves nullable social response email types", async () => {
+    const webLoginBody = {
+      intent: "login",
+      payload: {
+        auth_date: 1,
+        hash: "telegram-hash",
+        id: 123,
+      },
+      returnUrl: "/after-login",
+    } as const;
+    const webLoginFetch = mockFetch({ data: externalAuthResult });
+    await expect(
+      throwOnOpenApiErrorData(
+        authControllerTelegramWebLogin(webLoginBody, {
+          fetchImpl: webLoginFetch,
+        }),
+      ),
+    ).resolves.toEqual(externalAuthResult);
+    const webLoginRequest = firstRequest(webLoginFetch);
+    expect(webLoginRequest.method).toBe("POST");
+    expect(webLoginRequest.url).toBe(
+      `${globalThis.location.origin}/auth/telegram/web-login`,
+    );
+    await expect(webLoginRequest.clone().json()).resolves.toEqual(webLoginBody);
+
+    const tmaBody = { initData: "query_id=abc&hash=telegram-hash" };
+    const tmaFetch = mockFetch({ data: externalAuthResult });
+    await authControllerTelegramTma(tmaBody, { fetchImpl: tmaFetch });
+    const tmaRequest = firstRequest(tmaFetch);
+    expect(tmaRequest.url).toBe(
+      `${globalThis.location.origin}/auth/telegram/tma`,
+    );
+    await expect(tmaRequest.clone().json()).resolves.toEqual(tmaBody);
+
+    const botLinkBody = {
+      displayName: "Telegram User",
+      linkToken: "link-token",
+      providerSubject: "telegram-user-1",
+      username: "telegram_user",
+    };
+    const botLinkFetch = mockFetch({ data: externalAuthResult });
+    await authControllerTelegramBotLink(botLinkBody, {
+      fetchImpl: botLinkFetch,
+    });
+    const botLinkRequest = firstRequest(botLinkFetch);
+    expect(botLinkRequest.url).toBe(
+      `${globalThis.location.origin}/auth/telegram/bot-link`,
+    );
+    await expect(botLinkRequest.clone().json()).resolves.toEqual(botLinkBody);
+
+    const discordAuthorizationBody = {
+      intent: "link",
+      linkToken: "link-token",
+      returnUrl: "/after-discord",
+    } as const;
+    const discordAuthorizationFetch = mockFetch({
+      data: { authorizationUrl: "https://discord.example/oauth" },
+    });
+    await authControllerDiscordAuthorizationRequest(discordAuthorizationBody, {
+      fetchImpl: discordAuthorizationFetch,
+    });
+    const discordAuthorizationRequest = firstRequest(discordAuthorizationFetch);
+    expect(discordAuthorizationRequest.method).toBe("POST");
+    expect(discordAuthorizationRequest.url).toBe(
+      `${globalThis.location.origin}/auth/discord/authorization-request`,
+    );
+    await expect(discordAuthorizationRequest.clone().json()).resolves.toEqual(
+      discordAuthorizationBody,
+    );
+
+    const discordCallbackFetch = mockFetch(undefined);
+    await authControllerDiscordCallback(
+      { code: "oauth-code", state: "oauth-state", tenantId: "tenant-1" },
+      { fetchImpl: discordCallbackFetch },
+    );
+    const discordCallbackUrl = new URL(firstRequest(discordCallbackFetch).url);
+    expect(discordCallbackUrl.pathname).toBe("/auth/discord/callback");
+    expect(discordCallbackUrl.searchParams.get("code")).toBe("oauth-code");
+    expect(discordCallbackUrl.searchParams.get("state")).toBe("oauth-state");
+    expect(discordCallbackUrl.searchParams.get("tenantId")).toBe("tenant-1");
+
+    await expect(
+      throwOnOpenApiErrorData(
+        authControllerProviderIdentities({
+          fetchImpl: mockFetch({ data: providerIdentities }),
+        }),
+      ),
+    ).resolves.toEqual(providerIdentities);
+
+    const unlinkFetch = mockFetch({ data: {} });
+    await authControllerUnlinkProviderIdentity("identity-1", {
+      fetchImpl: unlinkFetch,
+    });
+    const unlinkRequest = firstRequest(unlinkFetch);
+    expect(unlinkRequest.method).toBe("DELETE");
+    expect(unlinkRequest.url).toBe(
+      `${globalThis.location.origin}/auth/provider-identities/identity-1`,
+    );
+
+    const linkTokenBody = {
+      intent: "link",
+      provider: "telegram",
+      returnUrl: "/settings/linked-accounts",
+    } as const;
+    const linkTokenFetch = mockFetch({ data: linkTokenResult });
+    await expect(
+      throwOnOpenApiErrorData(
+        authControllerCreateLinkToken(linkTokenBody, {
+          fetchImpl: linkTokenFetch,
+        }),
+      ),
+    ).resolves.toEqual(linkTokenResult);
+    const linkTokenRequest = firstRequest(linkTokenFetch);
+    expect(linkTokenRequest.url).toBe(
+      `${globalThis.location.origin}/auth/link-tokens`,
+    );
+    await expect(linkTokenRequest.clone().json()).resolves.toEqual(
+      linkTokenBody,
+    );
+
+    expectTypeOf<AuthSessionViewDto["user"]["email"]>().toEqualTypeOf<
+      string | null
+    >();
+    expectTypeOf<
+      NonNullable<ExternalAuthResultDto["session"]>["user"]["email"]
+    >().toEqualTypeOf<string | null>();
+  });
+
   it("serializes admin user filters and protected mutation bodies", async () => {
     const listFetch = mockFetch({
       data: { items: [], limit: 25, offset: 5, total: 0 },
@@ -333,6 +519,34 @@ describe("generated api clients", () => {
       "patch",
       "/auth/me/preferences",
     ]);
+    expect(getAuthControllerProviderIdentitiesQueryKey()).toEqual([
+      "get",
+      "/auth/provider-identities",
+    ]);
+    expect(getAuthControllerTelegramWebLoginMutationKey()).toEqual([
+      "post",
+      "/auth/telegram/web-login",
+    ]);
+    expect(getAuthControllerTelegramTmaMutationKey()).toEqual([
+      "post",
+      "/auth/telegram/tma",
+    ]);
+    expect(getAuthControllerTelegramBotLinkMutationKey()).toEqual([
+      "post",
+      "/auth/telegram/bot-link",
+    ]);
+    expect(getAuthControllerDiscordAuthorizationRequestMutationKey()).toEqual([
+      "post",
+      "/auth/discord/authorization-request",
+    ]);
+    expect(getAuthControllerUnlinkProviderIdentityMutationKey()).toEqual([
+      "delete",
+      "/auth/provider-identities/{identityId}",
+    ]);
+    expect(getAuthControllerCreateLinkTokenMutationKey()).toEqual([
+      "post",
+      "/auth/link-tokens",
+    ]);
     expect(
       getAdminUsersControllerListUsersQueryKey({ status: "active" }),
     ).toEqual(["get", "/admin/users", { status: "active" }]);
@@ -376,6 +590,13 @@ describe("generated api clients", () => {
     expectTypeOf<AuthControllerUpdatePreferencesData>().toEqualTypeOf<
       AuthSessionViewDto["user"]
     >();
+    expectTypeOf<AuthControllerTelegramWebLoginData>().toEqualTypeOf<ExternalAuthResultDto>();
+    expectTypeOf<AuthControllerTelegramTmaData>().toEqualTypeOf<ExternalAuthResultDto>();
+    expectTypeOf<AuthControllerTelegramBotLinkData>().toEqualTypeOf<ExternalAuthResultDto>();
+    expectTypeOf<AuthControllerDiscordAuthorizationRequestData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
+    expectTypeOf<AuthControllerProviderIdentitiesData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
+    expectTypeOf<AuthControllerUnlinkProviderIdentityData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
+    expectTypeOf<AuthControllerCreateLinkTokenData>().toEqualTypeOf<LinkTokenResultDto>();
     expectTypeOf<Parameters<LoginOnError>[0]>().toEqualTypeOf<
       ApiClientError<AuthControllerLoginError>
     >();

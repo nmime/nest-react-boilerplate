@@ -16,7 +16,7 @@ export interface AuthUserAccessPolicyInput {
 
 export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   tenantId?: string;
-  email: string;
+  email: string | null;
   displayName?: string | null;
   passwordHash?: string;
   locale?: Locale | null;
@@ -42,7 +42,7 @@ export class AuthUserEntity {
   constructor(input?: AuthUserEntityInput) {
     if (input) {
       this.tenantId = input.tenantId ?? DefaultAuthTenantId;
-      this.email = input.email;
+      this.email = input.email as string;
       this.displayName = input.displayName ?? "";
       this.passwordHash = input.passwordHash ?? "";
       this.status = input.status ?? "active";
@@ -65,7 +65,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       fieldName: "tenant_id",
       default: DefaultAuthTenantId,
     },
-    email: { type: "varchar", length: 320 },
+    email: { type: "varchar", length: 320, nullable: true },
     displayName: {
       type: "varchar",
       fieldName: "display_name",
@@ -100,17 +100,19 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       onUpdate: () => new Date(),
     },
   },
-  indexes: [{ name: "ix__auth_users__tenant_id", properties: ["tenantId"] }],
+  indexes: [
+    { name: "ix__auth_users__tenant_id", properties: ["tenantId"] },
+    {
+      name: "uq__auth_users__tenant_id_email_not_null",
+      properties: ["tenantId", "email"],
+      where: '"email" is not null',
+      options: { unique: true },
+    },
+  ],
   checks: [
     {
       name: "ck__auth_users__locale",
       expression: `"locale" in ('en', 'ru')`,
-    },
-  ],
-  uniques: [
-    {
-      name: "uq__auth_users__tenant_id_email",
-      properties: ["tenantId", "email"],
     },
   ],
 });

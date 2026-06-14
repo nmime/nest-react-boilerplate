@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
+  Query,
+  Redirect,
   Req,
   Res,
   UseGuards,
@@ -41,6 +45,10 @@ import {
   Language,
 } from "@app/feature-auth-shared";
 import { AuthService, toSessionPrincipal } from "./auth.service";
+import {
+  ExternalAuthService,
+  type ExternalAuthLoginResult,
+} from "./external-auth.service";
 
 export class RegisterDto {
   @ApiPropertyOptional({ format: "uuid" })
@@ -83,6 +91,115 @@ export class LoginDto {
   @IsString()
   @MinLength(8)
   password!: string;
+}
+
+export class ExternalAuthIntentDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiPropertyOptional({ enum: ["login", "link"] })
+  @IsOptional()
+  @IsString()
+  @IsIn(["login", "link"])
+  intent?: "login" | "link";
+
+  @ApiPropertyOptional({ writeOnly: true })
+  @IsOptional()
+  @IsString()
+  linkToken?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+}
+
+export class TelegramWebLoginDto extends ExternalAuthIntentDto {
+  @ApiProperty({ type: "object", additionalProperties: true })
+  payload!: Record<string, string | number | boolean | null | undefined>;
+}
+
+export class TelegramTmaDto extends ExternalAuthIntentDto {
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  initData!: string;
+}
+
+export class TelegramBotLinkDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  linkToken!: string;
+
+  @ApiProperty()
+  @IsString()
+  providerSubject!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  locale?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
+}
+
+export class LinkTokenDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ enum: ["telegram", "discord"] })
+  @IsString()
+  @IsIn(["telegram", "discord"])
+  provider!: "telegram" | "discord";
+
+  @ApiPropertyOptional({ enum: ["login", "link"] })
+  @IsOptional()
+  @IsString()
+  @IsIn(["login", "link"])
+  intent?: "login" | "link";
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+}
+
+export class DiscordAuthorizationRequestDto extends ExternalAuthIntentDto {}
+
+export class DiscordCallbackQueryDto {
+  @ApiPropertyOptional({ format: "uuid" })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty()
+  @IsString()
+  code!: string;
+
+  @ApiProperty()
+  @IsString()
+  state!: string;
 }
 
 export class RefreshTokenDto {
@@ -224,6 +341,64 @@ class AuthSessionViewDto {
 
   @ApiProperty({ type: () => AuthenticatedUserViewDto })
   user!: AuthenticatedUserViewDto;
+
+  @ApiPropertyOptional({ items: { type: "string" }, type: "array" })
+  amr?: string[];
+
+  @ApiPropertyOptional({ enum: ["password", "telegram", "discord"] })
+  authProvider?: string;
+
+  @ApiPropertyOptional({
+    enum: [
+      "password",
+      "telegram_web_login",
+      "telegram_tma",
+      "telegram_bot",
+      "discord_oauth",
+      "discord_bot",
+    ],
+  })
+  authChannel?: string;
+
+  @ApiPropertyOptional()
+  authTime?: number;
+
+  @ApiPropertyOptional({ format: "uuid" })
+  externalIdentityId?: string;
+}
+
+class ExternalAuthResultDto {
+  @ApiProperty({ enum: ["authenticated", "linked", "needs_link", "conflict"] })
+  status!: string;
+
+  @ApiPropertyOptional()
+  code?: string;
+
+  @ApiPropertyOptional()
+  message?: string;
+
+  @ApiPropertyOptional({ type: () => AuthSessionViewDto })
+  session?: AuthSessionViewDto;
+
+  @ApiPropertyOptional({ type: "object", additionalProperties: true })
+  identity?: unknown;
+
+  @ApiPropertyOptional()
+  returnUrl?: string;
+}
+
+class LinkTokenResultDto {
+  @ApiProperty({ writeOnly: true })
+  token!: string;
+
+  @ApiProperty()
+  expiresAt!: string;
+
+  @ApiProperty({ enum: ["telegram", "discord"] })
+  provider!: string;
+
+  @ApiProperty({ enum: ["login", "link"] })
+  intent!: string;
 }
 
 class UserActionTokenPayloadDto {
@@ -305,6 +480,15 @@ async function establishRequestSession(
   await callSessionMethod(request, "save");
 }
 
+async function establishExternalSessionIfPresent(
+  request: AuthenticatedRequest,
+  result: { session?: AuthSessionView },
+): Promise<void> {
+  if (result.session) {
+    await establishRequestSession(request, result.session);
+  }
+}
+
 function clearSessionCookie(
   request: AuthenticatedRequest,
   response?: AuthenticatedResponse,
@@ -346,7 +530,10 @@ function principalFromUserView(
 @ApiExceptions(400, 401, 403, 409, 429, 500)
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly externalAuth: ExternalAuthService,
+  ) {}
 
   @Post("register")
   @ApiOkDataResponse(AuthSessionViewDto)
@@ -379,6 +566,120 @@ export class AuthController {
     const session = await this.auth.refreshSession(input);
     await establishRequestSession(request, session);
     return createOkResponse(session);
+  }
+
+  @Post("telegram/web-login")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramWebLogin(
+    @Body() input: TelegramWebLoginDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const result = await this.externalAuth.telegramWebLogin({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return createOkResponse(result);
+  }
+
+  @Post("telegram/tma")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramTma(
+    @Body() input: TelegramTmaDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const result = await this.externalAuth.telegramTma({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return createOkResponse(result);
+  }
+
+  @Post("telegram/bot-link")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramBotLink(
+    @Body() input: TelegramBotLinkDto,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    return createOkResponse(await this.externalAuth.telegramBotLink(input));
+  }
+
+  @Post("discord/authorization-request")
+  @ApiOkDataResponse(Object)
+  discordAuthorizationRequest(
+    @Body() input: DiscordAuthorizationRequestDto,
+    @Req() request: AuthenticatedRequest,
+  ): OkResponse<{ authorizationUrl: string; stateExpiresAt: string }> {
+    return createOkResponse(
+      this.externalAuth.createDiscordAuthorizationRequest({
+        ...input,
+        principal: request.user ?? request.auth ?? null,
+      }),
+    );
+  }
+
+  @Get("discord/callback")
+  @Redirect(undefined, 302)
+  async discordCallback(
+    @Query() input: DiscordCallbackQueryDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult> | { url: string }> {
+    const result = await this.externalAuth.discordCallback({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return result.returnUrl
+      ? { url: result.returnUrl }
+      : createOkResponse(result);
+  }
+
+  @Get("provider-identities")
+  @ApiOkDataResponse(Object)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async providerIdentities(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<OkResponse<unknown>> {
+    return createOkResponse(
+      await this.externalAuth.listProviderIdentities(
+        principal.subject,
+        principal.tenantId,
+      ),
+    );
+  }
+
+  @Delete("provider-identities/:identityId")
+  @ApiOkDataResponse(Object)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async unlinkProviderIdentity(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param("identityId") identityId: string,
+  ): Promise<OkResponse<{ unlinked: boolean }>> {
+    return createOkResponse(
+      await this.externalAuth.unlinkProviderIdentity(identityId, principal),
+    );
+  }
+
+  @Post("link-tokens")
+  @ApiOkDataResponse(LinkTokenResultDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async createLinkToken(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: LinkTokenDto,
+  ): Promise<OkResponse<unknown>> {
+    return createOkResponse(
+      await this.externalAuth.createLinkToken({
+        ...input,
+        userId: principal.subject,
+        tenantId: input.tenantId ?? principal.tenantId,
+      }),
+    );
   }
 
   @Post("email-verification-token")

@@ -1,4 +1,5 @@
 import { Language } from "./language.enum";
+import type { AuthProvider, AuthProviderChannel } from "./social-auth.types";
 
 export type AuthenticatedLocale = Language;
 export type AuthenticatedTheme = "system" | "light" | "dark";
@@ -15,6 +16,11 @@ export interface AuthenticatedPrincipal {
   roles: string[];
   permissions: string[];
   tokenId?: string;
+  amr?: string[];
+  authProvider?: AuthProvider;
+  authChannel?: AuthProviderChannel;
+  authTime?: number;
+  externalIdentityId?: string;
 }
 
 type SessionCallback = (error?: unknown) => void;

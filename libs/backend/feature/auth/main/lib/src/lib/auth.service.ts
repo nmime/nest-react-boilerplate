@@ -21,6 +21,7 @@ import {
   normalizeTenantId,
   toAuthenticatedUserView,
   type AuthSessionView,
+  type AuthMethodClaims,
   type AuthenticatedUserView,
   type UserThemePreference,
   Language,
@@ -37,6 +38,7 @@ import {
   type AuthUserTokenPurpose,
   InMemoryAuthTokenStore,
 } from "./auth-token-store";
+import { SOCIAL_AUTH_STORE, type SocialAuthStore } from "./social-auth-store";
 
 export interface RegisterUserInput {
   tenantId?: string | null;
@@ -87,6 +89,9 @@ export class AuthService {
     @Optional()
     @Inject(AUTH_TOKEN_STORE)
     private readonly tokens: AuthTokenStore = new InMemoryAuthTokenStore(),
+    @Optional()
+    @Inject(SOCIAL_AUTH_STORE)
+    private readonly social?: SocialAuthStore,
   ) {}
 
   async register(input: RegisterUserInput): Promise<AuthSessionView> {
@@ -114,6 +119,7 @@ export class AuthService {
     if (created.isErr()) {
       throw new ConflictException(created.error.message);
     }
+    await this.recordPasswordMethod(created.value);
 
     return this.createSession(
       created.value,
@@ -144,6 +150,7 @@ export class AuthService {
     );
     const sessionUser =
       loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
+    await this.recordPasswordMethod(sessionUser);
     return this.createSession(
       sessionUser,
       process.env,
@@ -297,6 +304,12 @@ export class AuthService {
     user: AuthUserRecord,
     env: JwtSigningEnvironment = process.env,
     refreshToken?: string,
+    claims: AuthMethodClaims = {
+      amr: ["pwd"],
+      authProvider: "password",
+      authChannel: "password",
+      authTime: Math.floor(Date.now() / 1000),
+    },
   ): AuthSessionView {
     const expiresIn = readExpiresInSeconds(env.AUTH_JWT_EXPIRES_IN_SECONDS);
     const view = toAuthenticatedUserView(user);
@@ -313,12 +326,28 @@ export class AuthService {
           theme: view.theme,
           roles: view.roles,
           permissions: view.permissions,
+          ...(claims.amr ? { amr: claims.amr } : {}),
+          ...(claims.authProvider
+            ? { auth_provider: claims.authProvider }
+            : {}),
+          ...(claims.authChannel ? { auth_channel: claims.authChannel } : {}),
+          ...(claims.authTime ? { auth_time: claims.authTime } : {}),
+          ...(claims.externalIdentityId
+            ? { external_identity_id: claims.externalIdentityId }
+            : {}),
         },
         env,
         expiresIn,
       ),
       tokenType: "Bearer",
       expiresIn,
+      ...(claims.amr ? { amr: claims.amr } : {}),
+      ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
+      ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
+      ...(claims.authTime ? { authTime: claims.authTime } : {}),
+      ...(claims.externalIdentityId
+        ? { externalIdentityId: claims.externalIdentityId }
+        : {}),
       ...(refreshToken ? { refreshToken } : {}),
     };
   }
@@ -358,6 +387,19 @@ export class AuthService {
     });
     return issued.isOk() ? issued.value.token : null;
   }
+
+  private async recordPasswordMethod(user: AuthUserRecord): Promise<void> {
+    if (!this.social) {
+      return;
+    }
+    await this.social.upsertMethod({
+      tenantId: user.tenantId,
+      userId: user.id,
+      method: "password",
+      amr: ["pwd"],
+      lastUsedAt: new Date(),
+    });
+  }
 }
 
 export function toSessionPrincipal(
@@ -372,6 +414,11 @@ export function toSessionPrincipal(
     theme: session.user.theme,
     roles: session.user.roles,
     permissions: session.user.permissions,
+    amr: session.amr,
+    authProvider: session.authProvider,
+    authChannel: session.authChannel,
+    authTime: session.authTime,
+    externalIdentityId: session.externalIdentityId,
   };
 }
 

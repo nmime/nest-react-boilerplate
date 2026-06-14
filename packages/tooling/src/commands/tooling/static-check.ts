@@ -91,6 +91,11 @@ interface RestrictedImportPattern {
   pattern: RegExp;
 }
 
+interface SecretPattern {
+  id: string;
+  regex: RegExp;
+}
+
 const generatedContractImportPatterns: RestrictedImportPattern[] = [
   {
     allowed: (file) =>
@@ -109,6 +114,63 @@ const generatedContractImportPatterns: RestrictedImportPattern[] = [
       /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/api-client\/.*generated|\.\/generated\/(?:admin|auth|user)(?=$|[\/"'\s;]))/u,
   },
 ];
+
+const forbiddenSocialAuthImportPatterns: RestrictedImportPattern[] = [
+  {
+    allowed: (file) => file === "packages/tooling/src/commands/tooling/static-check.test.ts",
+    label: "deprecated Telegram Apps namespace",
+    pattern: /(?:from\s+["']|import\s*\(["']|require\(["'])@telegram-apps\//u,
+  },
+  {
+    allowed: (file) => file === "packages/tooling/src/commands/tooling/static-check.test.ts",
+    label: "deprecated TWA React SDK",
+    pattern: /(?:from\s+["']|import\s*\(["']|require\(["'])@twa-dev\//u,
+  },
+  {
+    allowed: (file) => file === "packages/tooling/src/commands/tooling/static-check.test.ts",
+    label: "deprecated Telegram auth package",
+    pattern: /(?:from\s+["']|import\s*\(["']|require\(["'])@telegram-auth\//u,
+  },
+  {
+    allowed: (file) => file === "packages/tooling/src/commands/tooling/static-check.test.ts",
+    label: "deprecated telegram-web-app package",
+    pattern: /(?:from\s+["']|import\s*\(["']|require\(["'])telegram-web-app["']/u,
+  },
+  {
+    allowed: (file) => file === "packages/tooling/src/commands/tooling/static-check.test.ts",
+    label: "deprecated react-telegram-web-app package",
+    pattern:
+      /(?:from\s+["']|import\s*\(["']|require\(["'])@vkruglikov\/react-telegram-web-app["']/u,
+  },
+];
+
+const socialAuthSecretPatterns: SecretPattern[] = [
+  {
+    id: "telegram-bot-token",
+    regex: /\b\d{8,12}:[A-Za-z0-9_-]{35,}\b/gu,
+  },
+  {
+    id: "discord-bot-token",
+    regex: /\b(?:mfa\.[A-Za-z0-9_-]{20,}|[A-Za-z0-9_-]{24,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,})\b/gu,
+  },
+  {
+    id: "discord-client-secret",
+    regex:
+      /\b(?:DISCORD_CLIENT_SECRET|discordClientSecret|client_secret)\s*[:=]\s*["']?[A-Za-z0-9_-]{32,}["']?/giu,
+  },
+];
+
+const forbiddenSocialAuthPackages = new Set([
+  "@telegram-apps/sdk",
+  "@telegram-apps/sdk-react",
+  "@telegram-apps/telegram-ui",
+  "@twa-dev/sdk",
+  "@twa-dev/types",
+  "@telegram-auth/server",
+  "@telegram-auth/react",
+  "telegram-web-app",
+  "@vkruglikov/react-telegram-web-app",
+]);
 
 const staleReferencePatterns: StaleReferencePattern[] = [
   { label: "retired xRocket product reference", pattern: /\bxrocket\b/iu },
@@ -264,6 +326,9 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkFrontendFsd(workspaceRoot),
     ...checkWorkspaceMetadata(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
+    ...checkForbiddenSocialAuthImports(workspaceRoot),
+    ...checkForbiddenSocialAuthDependencies(workspaceRoot),
+    ...checkTrackedSocialAuthSecrets(workspaceRoot),
     ...checkEnvExampleConsistency(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
@@ -611,6 +676,101 @@ export function checkGeneratedContractImports(
   });
 }
 
+export function checkForbiddenSocialAuthImports(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    text.split(/\r?\n/u).forEach((line, index) => {
+      for (const importPattern of forbiddenSocialAuthImportPatterns) {
+        if (importPattern.allowed(relativeFile)) continue;
+        if (!isImportBoundaryLine(line)) continue;
+        if (!importPattern.pattern.test(line)) continue;
+
+        failures.push({
+          command: "social auth forbidden import boundary",
+          file: `${relativeFile}:${index + 1}`,
+          status: 1,
+          stdout: "",
+          stderr: `Found ${importPattern.label} import. Use @tma.js for Telegram Mini Apps, grammY for Telegram bots, and the approved Discord stack instead.`,
+        });
+      }
+    });
+
+    return failures;
+  });
+}
+
+export function checkForbiddenSocialAuthDependencies(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectPackageManifests(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const manifest = JSON.parse(readFileSync(file, "utf8")) as Record<
+      string,
+      Record<string, string> | undefined
+    >;
+    const dependencySections = [
+      "dependencies",
+      "devDependencies",
+      "peerDependencies",
+      "optionalDependencies",
+    ];
+
+    return dependencySections.flatMap((section) => {
+      const dependencies = manifest[section] ?? {};
+      return Object.keys(dependencies).flatMap((dependency) => {
+        if (!forbiddenSocialAuthPackages.has(dependency)) return [];
+
+        return [
+          {
+            command: "social auth forbidden dependency guard",
+            file: relativeFile,
+            status: 1,
+            stdout: "",
+            stderr: `Found forbidden social-auth dependency ${dependency} in ${section}. Use @tma.js, grammY, and the approved Discord stack instead.`,
+          },
+        ];
+      });
+    });
+  });
+}
+
+export function checkTrackedSocialAuthSecrets(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    for (const secretPattern of socialAuthSecretPatterns) {
+      secretPattern.regex.lastIndex = 0;
+      for (const match of text.matchAll(secretPattern.regex)) {
+        const rawValue = match[0];
+        if (isAllowedSocialAuthSecretPlaceholder(rawValue, relativeFile, text, match.index ?? 0)) {
+          continue;
+        }
+
+        const line = text.slice(0, match.index).split("\n").length;
+        if (isKnownSocialAuthSecretFinding(failures, relativeFile, line)) continue;
+        failures.push({
+          command: "social auth tracked secret guard",
+          file: `${relativeFile}:${line}`,
+          status: 1,
+          stdout: "",
+          stderr: `Found ${secretPattern.id} shaped secret in a tracked text file. Replace it with a placeholder or secret-file reference.`,
+        });
+      }
+    }
+
+    return failures;
+  });
+}
+
 export function checkPackageProjectReferences(
   workspaceRoot: string,
 ): CheckFailure[] {
@@ -683,9 +843,41 @@ function isImportBoundaryLine(line: string): boolean {
   );
 }
 
+function isKnownSocialAuthSecretFinding(
+  failures: CheckFailure[],
+  file: string,
+  line: number,
+): boolean {
+  return failures.some((failure) => failure.file === `${file}:${line}`);
+}
+
+function isAllowedSocialAuthSecretPlaceholder(
+  value: string,
+  file: string,
+  text: string,
+  index: number,
+): boolean {
+  if (/example|sample|fixture|test|dummy|changeme|placeholder|local|set-/iu.test(value)) {
+    return true;
+  }
+  if (file === "packages/tooling/src/commands/tooling/static-check.test.ts") return true;
+
+  const lineStart = text.lastIndexOf("\n", Math.max(0, index - 1)) + 1;
+  const lineEnd = text.indexOf("\n", index);
+  const line = text.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+
+  return /^\s*#/u.test(line);
+}
+
 function collectGeneratedContractImportTargets(workspaceRoot: string): string[] {
   return collectStaleReferenceTargets(workspaceRoot).filter((file) =>
     generatedContractImportExtensions.has(extname(file).toLowerCase()),
+  );
+}
+
+function collectPackageManifests(workspaceRoot: string): string[] {
+  return collectStaleReferenceTargets(workspaceRoot).filter((file) =>
+    file.endsWith("package.json"),
   );
 }
 

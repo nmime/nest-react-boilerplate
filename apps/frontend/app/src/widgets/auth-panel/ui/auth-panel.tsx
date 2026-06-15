@@ -10,6 +10,7 @@ export interface AuthPanelProps {
   onAuthSubmit: (mode: AuthMode, event: SubmitEvent<HTMLFormElement>) => void;
   children: ReactNode;
   t: (key: TranslationKey, params?: TranslationParams) => string;
+  socialAuthSlot?: ReactNode;
 }
 
 export function AuthPanel({
@@ -19,6 +20,7 @@ export function AuthPanel({
   onAuthSubmit,
   children,
   t,
+  socialAuthSlot,
 }: Readonly<AuthPanelProps>) {
   return (
     <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
@@ -29,6 +31,7 @@ export function AuthPanel({
           loadingLabel={loadingLabel}
           onSubmit={onAuthSubmit}
           t={t}
+          socialAuthSlot={socialAuthSlot}
         />
         {children}
       </div>

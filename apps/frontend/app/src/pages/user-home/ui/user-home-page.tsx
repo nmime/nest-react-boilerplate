@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { Locale } from "@app/common/i18n";
 import { useI18n, type UiTheme } from "@app/frontend-ui";
 import { useAuthSessionFlow } from "../../../features/auth";
@@ -8,12 +9,23 @@ import { ProfileStatusCard } from "../../../widgets/profile-status";
 export interface UserHomePageProps {
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
+  actions?: Array<{
+    href: string;
+    label: string;
+    variant?: "primary" | "secondary";
+  }>;
+  children?: ReactNode;
 }
 
-export function UserHomePage({
+interface UserHomeContentProps {
+  applyUserLocale: (locale: Locale) => void;
+  applyUserTheme: (theme: UiTheme) => void;
+}
+
+function UserHomeContent({
   applyUserLocale,
   applyUserTheme,
-}: Readonly<UserHomePageProps>) {
+}: Readonly<UserHomeContentProps>) {
   const { locale, t } = useI18n();
   const authSession = useAuthSessionFlow({
     applyUserLocale,
@@ -28,15 +40,37 @@ export function UserHomePage({
   });
 
   return (
+    <AuthPanel
+      isLoginPending={authSession.isLoginPending}
+      isRegisterPending={authSession.isRegisterPending}
+      loadingLabel={t("user.loadingProfile")}
+      onAuthSubmit={authSession.submitAuth}
+      t={t}
+    >
+      <ProfileStatusCard state={authSession.profileState} t={t} />
+    </AuthPanel>
+  );
+}
+
+export function UserHomePage({
+  applyUserLocale,
+  actions,
+  applyUserTheme,
+  children,
+}: Readonly<UserHomePageProps>) {
+  const { t } = useI18n();
+  const productActions = actions ?? [
+    { href: "/auth", label: t("user.form.login") },
+    {
+      href: "/profile",
+      label: t("user.action.profile"),
+      variant: "secondary" as const,
+    },
+  ];
+
+  return (
     <ProductShell
-      actions={[
-        { href: "#auth", label: t("user.form.login") },
-        {
-          href: "#profile",
-          label: t("user.action.profile"),
-          variant: "secondary",
-        },
-      ]}
+      actions={productActions}
       appName={t("user.appName")}
       description={t("user.description")}
       eyebrow={t("user.eyebrow")}
@@ -44,15 +78,12 @@ export function UserHomePage({
       statusTone="success"
       title={t("user.title")}
     >
-      <AuthPanel
-        isLoginPending={authSession.isLoginPending}
-        isRegisterPending={authSession.isRegisterPending}
-        loadingLabel={t("user.loadingProfile")}
-        onAuthSubmit={authSession.submitAuth}
-        t={t}
-      >
-        <ProfileStatusCard state={authSession.profileState} t={t} />
-      </AuthPanel>
+      {children ?? (
+        <UserHomeContent
+          applyUserLocale={applyUserLocale}
+          applyUserTheme={applyUserTheme}
+        />
+      )}
     </ProductShell>
   );
 }

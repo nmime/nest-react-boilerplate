@@ -352,5 +352,11 @@
   "discord.messages.rateLimited": "Слишком много действий Discord. Подождите и повторите.",
   "discord.messages.authRequired": "Привяжите аккаунт перед использованием этого действия Discord.",
   "discord.messages.linkConflict": "Этот аккаунт Discord уже привязан к другому пользователю.",
-  "discord.messages.unlinkSuccess": "Аккаунт Discord отвязан."
+  "discord.messages.unlinkSuccess": "Аккаунт Discord отвязан.",
+  "user.nav.home": "Главная",
+  "user.nav.auth": "Вход",
+  "user.nav.profile": "Профиль",
+  "user.nav.settings": "Настройки",
+  "user.settings.title": "Настройки",
+  "user.profile.emailFallback": "Аккаунт провайдера"
 }

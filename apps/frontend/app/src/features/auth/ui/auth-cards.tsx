@@ -1,5 +1,5 @@
 import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import type { SubmitEvent } from "react";
+import type { ReactNode, SubmitEvent } from "react";
 import { UiButton, UiCard, UiForm, UiTextField } from "../../../shared/ui";
 import type { AuthMode } from "../model";
 
@@ -9,6 +9,7 @@ export interface AuthCardsProps {
   loadingLabel: string;
   onSubmit: (mode: AuthMode, event: SubmitEvent<HTMLFormElement>) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
+  socialAuthSlot?: ReactNode;
 }
 
 export function AuthCards({
@@ -17,6 +18,7 @@ export function AuthCards({
   loadingLabel,
   onSubmit,
   t,
+  socialAuthSlot,
 }: Readonly<AuthCardsProps>) {
   return (
     <>
@@ -50,6 +52,7 @@ export function AuthCards({
           </UiButton>
         </UiForm>
       </UiCard>
+      {socialAuthSlot}
       <UiCard title={t("user.register.title")}>
         <UiForm onSubmit={(event) => onSubmit("register", event)}>
           <UiTextField

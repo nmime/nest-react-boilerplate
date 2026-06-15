@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { TranslationKey, TranslationParams } from "@app/common/i18n";
 import { UiButton, UiCard, UiToast } from "../../../shared/ui";
 import type { SocialAuthIntent } from "../model";
@@ -17,6 +18,37 @@ export function SocialAuthButtons({
   onTelegramTma,
   t,
 }: Readonly<SocialAuthButtonsProps>) {
+  const telegramClickGuard = useRef(false);
+  const discordClickGuard = useRef(false);
+
+  useEffect(() => {
+    if (!isTelegramPending) {
+      telegramClickGuard.current = false;
+    }
+  }, [isTelegramPending]);
+
+  useEffect(() => {
+    if (!isDiscordPending) {
+      discordClickGuard.current = false;
+    }
+  }, [isDiscordPending]);
+
+  const handleTelegramTma = () => {
+    if (isTelegramPending || telegramClickGuard.current) {
+      return;
+    }
+    telegramClickGuard.current = true;
+    onTelegramTma("login");
+  };
+
+  const handleDiscord = () => {
+    if (isDiscordPending || discordClickGuard.current) {
+      return;
+    }
+    discordClickGuard.current = true;
+    onDiscord("login");
+  };
+
   return (
     <UiCard
       title={t("auth.social.createAccount.prompt", {
@@ -29,7 +61,7 @@ export function SocialAuthButtons({
           loadingLabel={t("auth.social.status.pending", {
             provider: t("auth.provider.telegram"),
           })}
-          onClick={() => onTelegramTma("login")}
+          onClick={handleTelegramTma}
           type="button"
           variant="secondary"
         >
@@ -40,7 +72,7 @@ export function SocialAuthButtons({
           loadingLabel={t("auth.social.status.pending", {
             provider: t("auth.provider.discord"),
           })}
-          onClick={() => onDiscord("login")}
+          onClick={handleDiscord}
           type="button"
           variant="secondary"
         >

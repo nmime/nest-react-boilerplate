@@ -93,6 +93,21 @@ function callbackUpdate(data: string) {
   };
 }
 
+function texts(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+) {
+  return calls
+    .filter((call) => call.method === "sendMessage")
+    .map((call) => call.payload.text);
+}
+
+function flattenButtons(payload: Record<string, unknown>) {
+  const markup = payload.reply_markup as
+    | { inline_keyboard?: Array<Array<Record<string, string>>> }
+    | undefined;
+  return markup?.inline_keyboard?.flat() ?? [];
+}
+
 function apiMock() {
   const calls: Array<{ method: string; payload: Record<string, unknown> }> = [];
   const fetchMock = vi.fn(
@@ -198,6 +213,28 @@ describe("createTelegramBot", () => {
     expect(calls.at(-1)?.payload.reply_markup).toBeDefined();
   });
 
+  it("renders stable short main-menu callback data", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/start") as never);
+
+    const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
+    const callbackData = buttons
+      .map((button) => button.callback_data)
+      .filter(Boolean);
+    expect(buttons.map((button) => button.text)).toEqual([
+      "Profile",
+      "Settings",
+      "Support",
+      "Link account",
+      "{{appName}} home",
+    ]);
+    expect(callbackData).toHaveLength(4);
+    expect(new Set(callbackData).size).toBe(callbackData.length);
+    expect(callbackData.every((data) => data.length <= 64)).toBe(true);
+  });
+
   it("consumes a valid start payload and reports expired payloads", async () => {
     const { calls, fetchMock } = apiMock();
     const consumeLinkPayload = vi.fn((payload: string) =>
@@ -232,6 +269,117 @@ describe("createTelegramBot", () => {
     expect(calls.map((call) => call.payload.text)).toContain(
       "Действие бота истекло. Начните заново.",
     );
+  });
+
+  it("applies link start payloads and keeps unknown payloads on the fallback path", async () => {
+    const { calls, fetchMock } = apiMock();
+    const consumeLinkPayload = vi.fn((payload: string) =>
+      Promise.resolve(
+        payload === "link-ok"
+          ? {
+              kind: "link" as const,
+              token: "opaque-link-token",
+              locale: "ru" as const,
+            }
+          : null,
+      ),
+    );
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload,
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() => Promise.resolve(null)),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/start link-ok") as never);
+    await bot.handleUpdate(messageUpdate("/start unknown") as never);
+
+    expect(texts(calls)).toEqual(
+      expect.arrayContaining([
+        "Ваш аккаунт привязан.",
+        "Добро пожаловать! Выберите действие.",
+        "Действие бота истекло. Начните заново.",
+      ]),
+    );
+    expect(consumeLinkPayload).toHaveBeenCalledWith(
+      "unknown",
+      expect.objectContaining({ channel: "telegram_bot" }),
+    );
+  });
+
+  it("falls back when a start payload cannot be consumed without an auth port", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/start route:settings") as never);
+
+    expect(texts(calls)).toEqual(
+      expect.arrayContaining([
+        "This bot action expired. Please start again.",
+        "Welcome! Choose an action.",
+      ]),
+    );
+  });
+
+  it("uses linked user locale before Telegram language code", async () => {
+    const { calls, fetchMock } = apiMock();
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() =>
+        Promise.resolve({
+          userId: "user-1",
+          tenantId: "tenant-1",
+          locale: "ru" as const,
+        }),
+      ),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/start", "en-US") as never);
+
+    expect(texts(calls)).toContain("Добро пожаловать! Выберите действие.");
+  });
+
+  it("creates link instructions from Telegram identity instead of frontend trust", async () => {
+    const { calls, fetchMock } = apiMock();
+    const createLinkInstructions = vi.fn(() =>
+      Promise.resolve("Open the account-link page from this Telegram chat."),
+    );
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions,
+      findLinkedUser: vi.fn(() => Promise.resolve(null)),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/link", "ru-RU") as never);
+
+    expect(createLinkInstructions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "telegram",
+        channel: "telegram_bot",
+        providerSubject: "100",
+        username: "ada",
+        displayName: "Ada",
+        locale: "ru",
+      }),
+    );
+    expect(texts(calls)).toContain(
+      "Open the account-link page from this Telegram chat.",
+    );
+  });
+
+  it("uses localized link instructions when auth is unavailable", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/link", "ru") as never);
+
+    expect(texts(calls)).toContain("Начинаем привязку аккаунта.");
   });
 
   it("updates language in session and calls linked-user preference update", async () => {

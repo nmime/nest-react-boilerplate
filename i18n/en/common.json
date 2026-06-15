@@ -352,5 +352,11 @@
   "discord.messages.rateLimited": "Too many Discord actions. Please wait and try again.",
   "discord.messages.authRequired": "Link your account before using this Discord action.",
   "discord.messages.linkConflict": "This Discord account is already linked to another user.",
-  "discord.messages.unlinkSuccess": "Discord account unlinked."
+  "discord.messages.unlinkSuccess": "Discord account unlinked.",
+  "user.nav.home": "Home",
+  "user.nav.auth": "Auth",
+  "user.nav.profile": "Profile",
+  "user.nav.settings": "Settings",
+  "user.settings.title": "Settings",
+  "user.profile.emailFallback": "Provider account"
 }

@@ -18,6 +18,9 @@
       "@app/common/bootstrap": [
         "libs/backend/common/bootstrap/lib/src/index.ts"
       ],
+      "@app/backend-bot-telegram": [
+        "libs/backend/bots/telegram/lib/src/index.ts"
+      ],
       "@app/common-config": ["libs/common/config/lib/src/index.ts"],
       "@app/common/exception": [
         "libs/backend/common/exception/lib/src/index.ts"

@@ -1,0 +1,48 @@
+{
+  "name": "telegram-bot-worker",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/telegram-bot-worker/src",
+  "projectType": "application",
+  "tags": ["platform:backend", "type:backend-app", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend/telegram-bot-worker",
+        "main": "apps/backend/telegram-bot-worker/src/main.ts",
+        "tsConfig": "apps/backend/telegram-bot-worker/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "telegram-bot-worker:build",
+        "runBuildTargetDependencies": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "telegram-bot-worker:build:development"
+        },
+        "production": { "buildTarget": "telegram-bot-worker:build:production" }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/telegram-bot-worker",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        { "externalDependencies": ["vitest"] }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/backend/telegram-bot-worker"]
+    }
+  }
+}

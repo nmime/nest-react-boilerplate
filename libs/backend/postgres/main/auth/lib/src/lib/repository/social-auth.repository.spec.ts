@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AuthLinkTokenEntity,
   AuthMethodEntity,
+  AuthProviderTokenEntity,
   ExternalIdentityEntity,
   toRedactedAuthProviderTokenView,
 } from "../entity";
@@ -150,6 +151,31 @@ describe("social auth repositories", () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
+  it("persists hashed link tokens with nullable users and never needs opaque token input", async () => {
+    const { persist, flush, entityManager } = createEntityManagerMock();
+    const repository = new AuthLinkTokenRepository(entityManager);
+
+    const created = await repository.createToken({
+      deepLinkMetadata: { returnUrl: "https://app.example.test/link" },
+      expiresAt,
+      provider: "discord",
+      purpose: "login",
+      tokenHash: "sha256-link-token-hash",
+    });
+
+    const entity = created._unsafeUnwrap();
+    expect(entity).toMatchObject({
+      deepLinkMetadata: { returnUrl: "https://app.example.test/link" },
+      provider: "discord",
+      purpose: "login",
+      tokenHash: "sha256-link-token-hash",
+      userId: null,
+    });
+    expect(entity).not.toHaveProperty("token");
+    expect(persist).toHaveBeenCalledWith(entity);
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
   it("supports last auth method policy queries", async () => {
     const method = new AuthMethodEntity();
     method.method = "discord_oauth";
@@ -208,5 +234,81 @@ describe("social auth repositories", () => {
     expect(JSON.stringify(redacted)).not.toContain("ciphertext-base64");
     expect(JSON.stringify(redacted)).not.toContain("iv-base64");
     expect(JSON.stringify(redacted)).not.toContain("tag-base64");
+  });
+
+  it("lists redacted provider tokens by external identity and tenant without ciphertext fields", async () => {
+    const token = new AuthProviderTokenEntity();
+    token.id = "provider-token-id";
+    token.tenantId = tenantId;
+    token.userId = userId;
+    token.externalIdentityId = "33333333-3333-4333-8333-333333333333";
+    token.provider = "discord";
+    token.tokenKind = "refresh";
+    token.ciphertext = "ciphertext-value";
+    token.iv = "iv-value";
+    token.authTag = "auth-tag-value";
+    token.keyId = "key-id";
+    token.revokedAt = now;
+    const { find, entityManager } = createEntityManagerMock();
+    find.mockResolvedValue([token]);
+    const repository = new AuthProviderTokenRepository(entityManager);
+
+    const listed = await repository.listRedactedByExternalIdentity(
+      token.externalIdentityId,
+      tenantId,
+    );
+
+    expect(find).toHaveBeenCalledWith(
+      AuthProviderTokenEntity,
+      { tenantId, externalIdentityId: token.externalIdentityId },
+      { orderBy: { createdAt: "DESC" } },
+    );
+    expect(listed._unsafeUnwrap()).toEqual([
+      expect.objectContaining({
+        id: "provider-token-id",
+        keyId: "key-id",
+        redacted: true,
+        revokedAt: now,
+        tokenKind: "refresh",
+      }),
+    ]);
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain(
+      "ciphertext-value",
+    );
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain("iv-value");
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain(
+      "auth-tag-value",
+    );
+  });
+
+  it("revokes provider tokens by id and tenant while returning null for tenant mismatches", async () => {
+    const token = new AuthProviderTokenEntity();
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(token);
+    const repository = new AuthProviderTokenRepository(entityManager);
+
+    const missing = await repository.revokeToken(
+      "provider-token-id",
+      "33333333-3333-4333-8333-333333333333",
+      now,
+    );
+    const revoked = await repository.revokeToken(
+      "provider-token-id",
+      tenantId,
+      now,
+    );
+
+    expect(missing._unsafeUnwrap()).toBeNull();
+    expect(revoked._unsafeUnwrap()).toBe(token);
+    expect(token.revokedAt).toBe(now);
+    expect(findOne).toHaveBeenNthCalledWith(1, AuthProviderTokenEntity, {
+      id: "provider-token-id",
+      tenantId: "33333333-3333-4333-8333-333333333333",
+    });
+    expect(findOne).toHaveBeenNthCalledWith(2, AuthProviderTokenEntity, {
+      id: "provider-token-id",
+      tenantId,
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
   });
 });

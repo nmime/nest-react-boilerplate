@@ -98,7 +98,8 @@
       ],
       "@app/postgres-main-feature-flags/migrations": [
         "libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts"
-      ]
+      ],
+      "@app/backend-bot-discord": ["libs/backend/bots/discord/lib/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

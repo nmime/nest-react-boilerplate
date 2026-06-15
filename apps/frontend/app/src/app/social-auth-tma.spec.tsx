@@ -1,4 +1,12 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
@@ -40,6 +48,15 @@ const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
     statusText: ok ? "OK" : "Error",
   });
 
+const deferredResponse = () => {
+  let resolveResponse!: (value: Response) => void;
+  const promise = new Promise<Response>((resolve) => {
+    resolveResponse = resolve;
+  });
+
+  return { promise, resolve: resolveResponse };
+};
+
 const setFetch = (...responses: Response[]) => {
   const fetchMock = vi.fn<typeof fetch>();
   for (const response of responses) {
@@ -57,25 +74,67 @@ describe("social auth and TMA UI", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth-api");
     vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api");
+    tma.useLaunchParams.mockReturnValue({});
+    tma.useRawInitData.mockReturnValue(undefined);
     resetPath();
   });
 
   afterEach(() => {
+    cleanup();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.clearAllMocks();
     resetPath();
   });
 
-  it("shows a localized TMA fallback outside Telegram without crashing", async () => {
-    resetPath("/tma");
-    tma.useRawInitData.mockReturnValue(undefined);
+  it.each(["/tma", "/tma/auth"])(
+    "shows a localized TMA fallback outside Telegram on %s without crashing",
+    async (path) => {
+      resetPath(path);
+      tma.useRawInitData.mockReturnValue(undefined);
+
+      render(<App />);
+
+      expect(
+        await screen.findByText("Open this page inside Telegram to continue."),
+      ).toBeTruthy();
+      expect(screen.getByText("Loading Telegram Mini App…")).toBeTruthy();
+    },
+  );
+
+  it("keeps Telegram auth on the launch route when verification fails", async () => {
+    resetPath("/tma/auth");
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=bad");
+    tma.useLaunchParams.mockReturnValue({ tgWebAppStartParam: "settings" });
+    const fetchMock = setFetch(jsonResponse({}, false, 401));
 
     render(<App />);
 
+    expect(await screen.findByText("Request failed with 401.")).toBeTruthy();
+    expect(window.location.pathname).toBe("/tma/auth");
     expect(
-      await screen.findByText("Open this page inside Telegram to continue."),
-    ).toBeTruthy();
+      fetchMock.mock.calls.some(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes(
+          "/auth/telegram/tma",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("shows Telegram verification loading until the backend responds", async () => {
+    resetPath("/tma/auth");
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=hash");
+    const pending = deferredResponse();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(pending.promise);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(await screen.findByText("Loading Telegram Mini App…")).toBeTruthy();
+    pending.resolve(jsonResponse({}, false, 409));
+    expect(await screen.findByText("Request failed with 409.")).toBeTruthy();
   });
 
   it("submits raw TMA initData to backend, stores session, and navigates", async () => {
@@ -152,6 +211,59 @@ describe("social auth and TMA UI", () => {
         ),
       ).toBe(true),
     );
+  });
+
+  it("prevents double Discord authorization requests while loading", async () => {
+    resetPath("/auth");
+    const pending = deferredResponse();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(pending.promise);
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+    const discordButton = await screen.findByRole("button", {
+      name: "Continue with Discord",
+    });
+    fireEvent.click(discordButton);
+    fireEvent.click(discordButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const loadingDiscordButton = await screen.findByRole("button", {
+      name: /Waiting for Discord confirmation\./u,
+    });
+    expect((loadingDiscordButton as HTMLButtonElement).disabled).toBe(true);
+    pending.resolve(jsonResponse({ data: {} }));
+  });
+
+  it("routes Telegram social entry to the outside-Telegram fallback", async () => {
+    resetPath("/auth");
+    tma.useRawInitData.mockReturnValue(undefined);
+
+    render(<App />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Continue with Telegram" }),
+    );
+
+    await waitFor(() => expect(window.location.pathname).toBe("/tma/auth"));
+    expect(
+      await screen.findByText("Open this page inside Telegram to continue."),
+    ).toBeTruthy();
+  });
+
+  it("production TMA auth code never reads initDataUnsafe", () => {
+    const tmaFeatureSource = readFileSync(
+      resolve("src/features/tma-auth/model/use-tma-auth.ts"),
+      "utf8",
+    );
+    const socialApiSource = readFileSync(
+      resolve("src/features/social-auth/api/social-auth-api.ts"),
+      "utf8",
+    );
+
+    expect(tmaFeatureSource).toContain("useRawInitData");
+    expect(tmaFeatureSource).not.toContain("initDataUnsafe");
+    expect(socialApiSource).not.toContain("initDataUnsafe");
   });
 
   it("navigates route links without a full page reload", async () => {

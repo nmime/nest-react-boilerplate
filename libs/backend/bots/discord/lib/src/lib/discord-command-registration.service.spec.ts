@@ -6,7 +6,7 @@ import { buildDiscordCommands } from "./discord-ui";
 const baseEnv = {
   DISCORD_APPLICATION_ID: "123456789012345678",
   DISCORD_PUBLIC_KEY: "a".repeat(64),
-  DISCORD_CUSTOM_ID_SECRET: "component-signing-secret",
+  DISCORD_CUSTOM_ID_SECRET: "test-key",
 };
 
 describe("Discord command registration", () => {

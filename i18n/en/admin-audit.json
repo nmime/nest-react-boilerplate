@@ -1,0 +1,13 @@
+{
+  "admin.audit.eyebrow": "Real admin audit events",
+  "admin.audit.title": "Audit log",
+  "admin.audit.loading": "Loading audit events",
+  "admin.audit.emptyEyebrow": "No audit events",
+  "admin.audit.emptyTitle": "No client-side fake data is shown; this table only renders real /admin/audit results.",
+  "admin.audit.error.requestFailed": "Audit log request failed",
+  "admin.audit.column.action": "Action",
+  "admin.audit.column.resource": "Resource",
+  "admin.audit.column.actor": "Actor",
+  "admin.audit.column.target": "Target",
+  "admin.audit.column.created": "Created"
+}

@@ -1,6 +1,6 @@
 import { translations, type Locale, type TranslationKey } from "./locales";
 
-export { translations } from "./locales";
+export { localeCatalogFileNames, translations } from "./locales";
 export type { Locale, LocaleCatalog, TranslationKey } from "./locales";
 
 export type TranslationParams = Record<

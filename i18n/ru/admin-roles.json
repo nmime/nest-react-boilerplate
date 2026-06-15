@@ -1,0 +1,12 @@
+{
+  "admin.roles.eyebrow": "Каталог RBAC",
+  "admin.roles.title": "Роли и разрешения",
+  "admin.roles.loading": "Загрузка матрицы ролей",
+  "admin.roles.emptyEyebrow": "Нет записей каталога ролей",
+  "admin.roles.emptyTitle": "Клиентские фиктивные данные не показываются; ожидаются реальные данные /admin/roles.",
+  "admin.roles.error.requestFailed": "Не удалось запросить каталог ролей",
+  "admin.roles.column.permission": "Разрешение",
+  "admin.roles.column.resource": "Ресурс",
+  "admin.roles.column.action": "Действие",
+  "admin.roles.assignmentLabel": "{{permission}} назначено роли {{role}}"
+}

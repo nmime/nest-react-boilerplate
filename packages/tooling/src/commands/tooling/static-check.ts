@@ -144,6 +144,27 @@ const forbiddenSocialAuthImportPatterns: RestrictedImportPattern[] = [
   },
 ];
 
+export const thinLocaleCatalogFileNames = [
+  "common.json",
+  "landing.json",
+  "admin.json",
+  "admin-dashboard.json",
+  "admin-users.json",
+  "admin-audit.json",
+  "admin-roles.json",
+  "user.json",
+  "errors.json",
+  "auth.json",
+  "social-auth.json",
+  "tma.json",
+  "bot.json",
+  "discord.json",
+] as const;
+
+const supportedThinLocaleDirectories = ["en", "ru"] as const;
+const thinLocaleCatalogMaxKeys = 60;
+const thinLocaleCatalogMaxNonEmptyLines = 90;
+
 const socialAuthSecretPatterns: SecretPattern[] = [
   {
     id: "telegram-bot-token",
@@ -329,6 +350,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkForbiddenSocialAuthImports(workspaceRoot),
     ...checkForbiddenSocialAuthDependencies(workspaceRoot),
     ...checkTrackedSocialAuthSecrets(workspaceRoot),
+    ...checkThinLocaleCatalogs(workspaceRoot),
     ...checkEnvExampleConsistency(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
@@ -769,6 +791,170 @@ export function checkTrackedSocialAuthSecrets(
 
     return failures;
   });
+}
+
+export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
+  const i18nRoot = join(workspaceRoot, "i18n");
+  const failures: CheckFailure[] = [];
+
+  for (const locale of supportedThinLocaleDirectories) {
+    const localeDirectory = join(i18nRoot, locale);
+    if (!existsSync(localeDirectory)) {
+      failures.push(thinLocaleFailure(`i18n/${locale}`, "missing locale directory"));
+      continue;
+    }
+
+    const actualFiles = readdirSync(localeDirectory)
+      .filter((file) => file.endsWith(".json"))
+      .sort((left, right) => left.localeCompare(right));
+    const expectedFiles = [...thinLocaleCatalogFileNames].sort((left, right) =>
+      left.localeCompare(right),
+    );
+
+    for (const missingFile of expectedFiles.filter(
+      (file) => !actualFiles.includes(file),
+    )) {
+      failures.push(
+        thinLocaleFailure(`i18n/${locale}/${missingFile}`, "missing thin locale file"),
+      );
+    }
+
+    for (const extraFile of actualFiles.filter(
+      (file) => !expectedFiles.includes(file as (typeof thinLocaleCatalogFileNames)[number]),
+    )) {
+      failures.push(
+        thinLocaleFailure(`i18n/${locale}/${extraFile}`, "unexpected locale JSON file"),
+      );
+    }
+  }
+
+  const localeKeys = new Map<string, Set<string>>();
+
+  for (const locale of supportedThinLocaleDirectories) {
+    const mergedKeys = new Set<string>();
+    const localeDirectory = join(i18nRoot, locale);
+    if (!existsSync(localeDirectory)) continue;
+
+    for (const fileName of thinLocaleCatalogFileNames) {
+      const relativeFile = `i18n/${locale}/${fileName}`;
+      const file = join(localeDirectory, fileName);
+      if (!existsSync(file)) continue;
+
+      const text = readFileSync(file, "utf8");
+      const nonEmptyLineCount = text
+        .split("\n")
+        .filter((line) => line.trim().length > 0).length;
+      if (nonEmptyLineCount > thinLocaleCatalogMaxNonEmptyLines) {
+        failures.push(
+          thinLocaleFailure(
+            relativeFile,
+            `has ${nonEmptyLineCount} non-empty lines; limit is ${thinLocaleCatalogMaxNonEmptyLines}`,
+          ),
+        );
+      }
+
+      for (const duplicateKey of duplicateEnvKeys(readRawJsonObjectKeys(text))) {
+        failures.push(
+          thinLocaleFailure(relativeFile, `duplicate raw JSON key ${duplicateKey}`),
+        );
+      }
+
+      let catalog: unknown;
+      try {
+        catalog = JSON.parse(text) as unknown;
+      } catch (error) {
+        failures.push(thinLocaleFailure(relativeFile, `invalid JSON: ${String(error)}`));
+        continue;
+      }
+
+      if (!catalog || Array.isArray(catalog) || typeof catalog !== "object") {
+        failures.push(
+          thinLocaleFailure(relativeFile, "locale file must be a flat JSON object"),
+        );
+        continue;
+      }
+
+      const entries = Object.entries(catalog as Record<string, unknown>);
+      if (entries.length > thinLocaleCatalogMaxKeys) {
+        failures.push(
+          thinLocaleFailure(
+            relativeFile,
+            `has ${entries.length} keys; limit is ${thinLocaleCatalogMaxKeys}`,
+          ),
+        );
+      }
+
+      for (const [key, value] of entries) {
+        if (typeof value !== "string") {
+          failures.push(
+            thinLocaleFailure(relativeFile, `key ${key} must have a string value`),
+          );
+        }
+
+        if (mergedKeys.has(key)) {
+          failures.push(
+            thinLocaleFailure(relativeFile, `duplicate merged locale key ${key}`),
+          );
+        }
+        mergedKeys.add(key);
+      }
+    }
+
+    localeKeys.set(locale, mergedKeys);
+  }
+
+  const fallbackKeys = localeKeys.get("en") ?? new Set<string>();
+  for (const [locale, keys] of localeKeys.entries()) {
+    const missingKeys = [...fallbackKeys].filter((key) => !keys.has(key));
+    const extraKeys = [...keys].filter((key) => !fallbackKeys.has(key));
+
+    if (missingKeys.length > 0) {
+      failures.push(
+        thinLocaleFailure(
+          `i18n/${locale}`,
+          `missing fallback locale keys: ${missingKeys
+            .sort((left, right) => left.localeCompare(right))
+            .join(", ")}`,
+        ),
+      );
+    }
+
+    if (extraKeys.length > 0) {
+      failures.push(
+        thinLocaleFailure(
+          `i18n/${locale}`,
+          `has keys absent from fallback locale: ${extraKeys
+            .sort((left, right) => left.localeCompare(right))
+            .join(", ")}`,
+        ),
+      );
+    }
+  }
+
+  return failures;
+}
+
+function readRawJsonObjectKeys(text: string): string[] {
+  return text.split("\n").flatMap((line) => {
+    const match = /^\s*"((?:\\.|[^"\\])+)"\s*:/u.exec(line);
+    if (!match?.[1]) return [];
+
+    try {
+      return [JSON.parse(`"${match[1]}"`) as string];
+    } catch {
+      return [match[1]];
+    }
+  });
+}
+
+function thinLocaleFailure(file: string, stderr: string): CheckFailure {
+  return {
+    command: "thin locale catalog guard",
+    file,
+    status: 1,
+    stdout: "",
+    stderr,
+  };
 }
 
 export function checkPackageProjectReferences(

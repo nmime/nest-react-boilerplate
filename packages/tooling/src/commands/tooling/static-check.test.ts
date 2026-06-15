@@ -8,10 +8,12 @@ import {
   checkForbiddenSocialAuthDependencies,
   checkForbiddenSocialAuthImports,
   checkGeneratedContractImports,
+  checkThinLocaleCatalogs,
   checkPackageProjectReferences,
   checkStaleReferences,
   checkTrackedSocialAuthSecrets,
   checkWorkspaceMetadata,
+  thinLocaleCatalogFileNames,
 } from "./static-check.ts";
 
 function createWorkspace(): string {
@@ -381,6 +383,84 @@ describe("static-check package project reference guard", () => {
       }
 
       assert.deepEqual(checkPackageProjectReferences(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+
+describe("static-check thin locale catalog guard", () => {
+  function writeThinLocaleWorkspace(workspaceRoot: string): void {
+    for (const locale of ["en", "ru"]) {
+      for (const fileName of thinLocaleCatalogFileNames) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/${fileName}`,
+          JSON.stringify({ [`${fileName}.key`]: `${locale}:${fileName}` }, null, 2),
+        );
+      }
+    }
+  }
+
+  it("accepts complete thin locale catalogs with identical key sets", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+
+      assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects overfull files, duplicate raw keys, merged duplicates, and locale key drift", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/common.json",
+        `{
+${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(",\n")}
+}
+`,
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/landing.json",
+        `{
+  "landing.duplicate": "first",
+  "landing.duplicate": "second"
+}
+`,
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/admin.json",
+        JSON.stringify({ "admin.shared": "first" }, null, 2),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/admin-dashboard.json",
+        JSON.stringify({ "admin.shared": "second" }, null, 2),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/user.json",
+        JSON.stringify({ "user.only-ru": "drift" }, null, 2),
+      );
+
+      const failures = checkThinLocaleCatalogs(workspaceRoot);
+      const stderr = failures.map((failure) => failure.stderr).join("\n");
+
+      assert.match(stderr, /has 61 keys/);
+      assert.match(stderr, /duplicate raw JSON key landing\.duplicate/);
+      assert.match(stderr, /duplicate merged locale key admin\.shared/);
+      assert.match(stderr, /missing fallback locale keys/);
+      assert.match(stderr, /has keys absent from fallback locale/);
     } finally {
       removeWorkspace(workspaceRoot);
     }

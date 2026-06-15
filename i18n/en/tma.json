@@ -1,0 +1,18 @@
+{
+  "tma.loading": "Loading Telegram Mini App…",
+  "tma.unsupported": "Open this page inside Telegram to continue.",
+  "tma.authenticated": "Telegram Mini App session verified.",
+  "tma.link.required": "Link your Telegram account to continue.",
+  "tma.link.pending": "Complete the link in Telegram.",
+  "tma.link.success": "Telegram account linked from the Mini App.",
+  "tma.link.error": "Could not link Telegram from the Mini App.",
+  "tma.deepNavigation.loading": "Opening the requested Mini App destination…",
+  "tma.deepNavigation.unsupported": "This Mini App destination is not supported yet.",
+  "tma.deepNavigation.notFound": "The requested Mini App destination was not found.",
+  "deepNav.loading": "Opening requested destination…",
+  "deepNav.unsupported": "This deep link is not supported.",
+  "deepNav.authenticated": "Deep link verified for your session.",
+  "deepNav.linkRequired": "Link your account before opening this destination.",
+  "deepNav.expired": "This deep link expired.",
+  "deepNav.notFound": "Destination not found."
+}

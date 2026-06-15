@@ -1,0 +1,23 @@
+{
+  "landing.appName": "Landing App",
+  "landing.eyebrow": "Nest + React boilerplate",
+  "landing.title": "Launch a full-stack Nest and React product foundation.",
+  "landing.description": "Production-ready defaults for APIs, frontends, testing, and deployment.",
+  "landing.action.user": "Open user app",
+  "landing.action.admin": "Open admin app",
+  "landing.action.docs": "API docs",
+  "landing.productName": "Nest React Boilerplate",
+  "landing.section.title": "What is included",
+  "landing.section.eyebrow": "Workspace",
+  "landing.card.api": "Nest APIs",
+  "landing.card.api.description": "auth-app-api, user-app-api, and admin-app-api.",
+  "landing.card.frontend": "React apps",
+  "landing.card.frontend.description": "landing, user, and admin React surfaces share one i18n provider.",
+  "landing.card.ops": "Deployment-ready ops",
+  "landing.card.ops.description": "Docker, health checks, OpenAPI, and deployment defaults stay wired.",
+  "landing.stat.apis": "APIs",
+  "landing.stat.apis.detail": "auth, user, admin",
+  "landing.stat.apps": "Apps",
+  "landing.stat.apps.detail": "landing, user, admin",
+  "landing.stat.libs": "Shared libraries"
+}

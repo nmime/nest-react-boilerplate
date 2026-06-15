@@ -1,0 +1,12 @@
+{
+  "admin.roles.eyebrow": "RBAC catalog",
+  "admin.roles.title": "Roles and permissions",
+  "admin.roles.loading": "Loading roles matrix",
+  "admin.roles.emptyEyebrow": "No roles catalog entries",
+  "admin.roles.emptyTitle": "No client-side fake data is shown; waiting for real /admin/roles data.",
+  "admin.roles.error.requestFailed": "Roles catalog request failed",
+  "admin.roles.column.permission": "Permission",
+  "admin.roles.column.resource": "Resource",
+  "admin.roles.column.action": "Action",
+  "admin.roles.assignmentLabel": "{{permission}} assigned to {{role}}"
+}

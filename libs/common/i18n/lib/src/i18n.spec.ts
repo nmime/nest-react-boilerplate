@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -14,24 +14,117 @@ import {
   supportedLocales,
   translate,
   translations,
+  localeCatalogFileNames,
   type Locale,
   type LocaleCatalog,
 } from "./index";
 
+const localeCatalogMaxKeys = 60;
+const localeCatalogMaxNonEmptyLines = 90;
+
+function localeRoot(): string {
+  return join(__dirname, "..", "..", "..", "..", "..", "i18n");
+}
+
+function readLocaleCatalogFile(
+  locale: Locale,
+  fileName: (typeof localeCatalogFileNames)[number],
+): Record<string, string> {
+  return JSON.parse(
+    readFileSync(join(localeRoot(), locale, fileName), "utf8"),
+  ) as Record<string, string>;
+}
+
+function readMergedLocale(locale: Locale): Record<string, string> {
+  return Object.assign(
+    {},
+    ...localeCatalogFileNames.map((fileName) =>
+      readLocaleCatalogFile(locale, fileName),
+    ),
+  ) as Record<string, string>;
+}
+
+function rawJsonKeys(text: string): string[] {
+  return text.split("\n").flatMap((line) => {
+    const match = /^\s*"((?:\\.|[^"\\])+)"\s*:/u.exec(line);
+    return match?.[1] ? [JSON.parse(`"${match[1]}"`) as string] : [];
+  });
+}
+
+function duplicateValues(values: string[]): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const value of values) {
+    if (seen.has(value)) duplicates.add(value);
+    seen.add(value);
+  }
+
+  return [...duplicates].sort((left, right) => left.localeCompare(right));
+}
+
 describe("@app/common/i18n", () => {
-  it("loads translation catalogs from top-level locale JSON files", () => {
-    const localesPath = join(__dirname, "..", "..", "..", "..", "..", "i18n");
-    const english = JSON.parse(
-      readFileSync(join(localesPath, "en", "common.json"), "utf8"),
-    ) as Record<string, string>;
-    const russian = JSON.parse(
-      readFileSync(join(localesPath, "ru", "common.json"), "utf8"),
-    ) as Record<string, string>;
+  it("loads translation catalogs from thin top-level locale JSON files", () => {
+    expect(
+      readdirSync(join(localeRoot(), "en")).sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    ).toEqual(
+      [...localeCatalogFileNames].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    );
+    expect(
+      readdirSync(join(localeRoot(), "ru")).sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    ).toEqual(
+      [...localeCatalogFileNames].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    );
+
+    const english = readMergedLocale("en");
+    const russian = readMergedLocale("ru");
 
     expect(translations.en).toEqual(english);
     expect(translations.ru).toEqual(russian);
     expect(english["common.language"]).toBe("Language");
     expect(russian["common.language"]).toBe("Язык");
+  });
+
+  it("keeps locale files thin and free of duplicate raw or merged keys", () => {
+    for (const locale of supportedLocales) {
+      const mergedKeys: string[] = [];
+
+      for (const fileName of localeCatalogFileNames) {
+        const text = readFileSync(join(localeRoot(), locale, fileName), "utf8");
+        const catalog = JSON.parse(text) as Record<string, string>;
+        const nonEmptyLines = text
+          .split("\n")
+          .filter((line) => line.trim().length > 0);
+        const rawKeys = rawJsonKeys(text);
+
+        expect(
+          Object.keys(catalog).length,
+          `${locale}/${fileName} key count`,
+        ).toBeLessThanOrEqual(localeCatalogMaxKeys);
+        expect(
+          nonEmptyLines.length,
+          `${locale}/${fileName} line count`,
+        ).toBeLessThanOrEqual(localeCatalogMaxNonEmptyLines);
+        expect(
+          duplicateValues(rawKeys),
+          `${locale}/${fileName} raw duplicates`,
+        ).toEqual([]);
+        mergedKeys.push(...Object.keys(catalog));
+      }
+
+      expect(
+        duplicateValues(mergedKeys),
+        `${locale} merged duplicates`,
+      ).toEqual([]);
+    }
   });
 
   it("exposes RFC 9457 validation and rate-limit translation keys", () => {

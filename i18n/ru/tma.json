@@ -1,0 +1,18 @@
+{
+  "tma.loading": "Загружаем Telegram Mini App…",
+  "tma.unsupported": "Откройте эту страницу в Telegram, чтобы продолжить.",
+  "tma.authenticated": "Сессия Telegram Mini App подтверждена.",
+  "tma.link.required": "Привяжите Telegram, чтобы продолжить.",
+  "tma.link.pending": "Завершите привязку в Telegram.",
+  "tma.link.success": "Аккаунт Telegram привязан из Mini App.",
+  "tma.link.error": "Не удалось привязать Telegram из Mini App.",
+  "tma.deepNavigation.loading": "Открываем запрошенный раздел Mini App…",
+  "tma.deepNavigation.unsupported": "Этот раздел Mini App пока не поддерживается.",
+  "tma.deepNavigation.notFound": "Запрошенный раздел Mini App не найден.",
+  "deepNav.loading": "Открываем запрошенный раздел…",
+  "deepNav.unsupported": "Эта глубокая ссылка не поддерживается.",
+  "deepNav.authenticated": "Глубокая ссылка подтверждена для вашей сессии.",
+  "deepNav.linkRequired": "Привяжите учетную запись перед открытием этого раздела.",
+  "deepNav.expired": "Срок действия этой глубокой ссылки истек.",
+  "deepNav.notFound": "Раздел не найден."
+}

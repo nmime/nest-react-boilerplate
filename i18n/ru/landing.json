@@ -1,0 +1,23 @@
+{
+  "landing.appName": "Начальное приложение",
+  "landing.eyebrow": "Шаблон Nest + React",
+  "landing.title": "Запустите готовую full-stack основу продукта на Nest и React.",
+  "landing.description": "Готовые к продакшену настройки для API, фронтендов, тестирования и развертывания.",
+  "landing.action.user": "Открыть приложение пользователя",
+  "landing.action.admin": "Открыть приложение администратора",
+  "landing.action.docs": "Документация API",
+  "landing.productName": "Nest React Boilerplate",
+  "landing.section.title": "Что включено",
+  "landing.section.eyebrow": "Рабочее пространство",
+  "landing.card.api": "Nest API",
+  "landing.card.api.description": "auth-app-api, user-app-api и admin-app-api.",
+  "landing.card.frontend": "React-приложения",
+  "landing.card.frontend.description": "Интерфейсы landing, user и admin имеют общий провайдер i18n.",
+  "landing.card.ops": "Готовая инфраструктура",
+  "landing.card.ops.description": "Docker, проверки работоспособности, OpenAPI и конфигурации развертывания настроены.",
+  "landing.stat.apis": "API",
+  "landing.stat.apis.detail": "auth, user, admin",
+  "landing.stat.apps": "Приложения",
+  "landing.stat.apps.detail": "landing, user, admin",
+  "landing.stat.libs": "Общие библиотеки"
+}

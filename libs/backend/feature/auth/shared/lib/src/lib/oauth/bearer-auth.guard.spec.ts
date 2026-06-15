@@ -111,6 +111,31 @@ describe("BearerAuthGuard", () => {
     });
   });
 
+  it("omits absent optional auth-method claims while preserving required principal fields", () => {
+    const token = signToken({
+      exp: now + 60,
+      sub: "user-with-minimal-claims",
+    });
+
+    const principal = validateBearerAuthorization(
+      `Bearer ${token}`,
+      { AUTH_JWT_SECRET: JWT_FIXTURE_MATERIAL },
+      now,
+    );
+
+    expect(principal).toMatchObject({
+      permissions: [],
+      roles: [],
+      subject: "user-with-minimal-claims",
+      tenantId: DEFAULT_AUTH_TENANT_ID,
+    });
+    expect(principal).not.toHaveProperty("amr");
+    expect(principal).not.toHaveProperty("authProvider");
+    expect(principal).not.toHaveProperty("authChannel");
+    expect(principal).not.toHaveProperty("authTime");
+    expect(principal).not.toHaveProperty("externalIdentityId");
+  });
+
   it("attaches principal to user and auth request fields", () => {
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
     const token = signToken({

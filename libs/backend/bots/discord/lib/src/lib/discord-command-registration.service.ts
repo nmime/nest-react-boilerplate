@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { REST } from "@discordjs/rest";
 import {
   Routes,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
@@ -37,12 +36,11 @@ export class DiscordCommandRegistrationService {
       );
     }
     const body = this.createSnapshot(snapshot);
-    const rest = new REST({ version: "10" }).setToken(snapshot.botToken);
     const route =
       body.scope === "guild" && body.guildId
         ? Routes.applicationGuildCommands(body.applicationId, body.guildId)
         : Routes.applicationCommands(body.applicationId);
-    await rest.put(route, { body: body.commands });
+    await putDiscordCommands(route, snapshot.botToken, body.commands);
     return body;
   }
 
@@ -55,5 +53,25 @@ export class DiscordCommandRegistrationService {
       guildId: snapshot.registrationGuildId,
       commands: buildDiscordCommands().map((command) => command.json),
     };
+  }
+}
+
+async function putDiscordCommands(
+  route: string,
+  botToken: string,
+  commands: RESTPostAPIChatInputApplicationCommandsJSONBody[],
+): Promise<void> {
+  const response = await fetch(`https://discord.com/api/v10${route}`, {
+    method: "PUT",
+    headers: {
+      authorization: `Bot ${botToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(commands),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Discord command registration failed with status ${response.status}.`,
+    );
   }
 }

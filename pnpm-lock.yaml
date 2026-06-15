@@ -36,12 +36,6 @@ importers:
       '@casl/ability':
         specifier: 7.0.0
         version: 7.0.0
-      '@discordjs/builders':
-        specifier: 1.14.1
-        version: 1.14.1
-      '@discordjs/rest':
-        specifier: 2.6.1
-        version: 2.6.1
       '@fastify/cookie':
         specifier: 11.0.2
         version: 11.0.2
@@ -53,37 +47,37 @@ importers:
         version: 9.1.3
       '@grammyjs/auto-retry':
         specifier: 2.0.2
-        version: 2.0.2(grammy@1.44.0(encoding@0.1.13))
+        version: 2.0.2(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))(supports-color@7.2.0)
       '@grammyjs/conversations':
         specifier: 2.1.1
-        version: 2.1.1(grammy@1.44.0(encoding@0.1.13))
+        version: 2.1.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/hydrate':
         specifier: 1.6.0
-        version: 1.6.0(grammy@1.44.0(encoding@0.1.13))
+        version: 1.6.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/i18n':
         specifier: 1.1.2
-        version: 1.1.2(grammy@1.44.0(encoding@0.1.13))
+        version: 1.1.2(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/menu':
         specifier: 1.3.1
-        version: 1.3.1(grammy@1.44.0(encoding@0.1.13))
+        version: 1.3.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/parse-mode':
         specifier: 2.3.0
-        version: 2.3.0(grammy@1.44.0(encoding@0.1.13))
+        version: 2.3.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/ratelimiter':
         specifier: 1.2.1
         version: 1.2.1
       '@grammyjs/router':
         specifier: 2.0.0
-        version: 2.0.0(grammy@1.44.0(encoding@0.1.13))
+        version: 2.0.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/runner':
         specifier: 2.0.3
-        version: 2.0.3(grammy@1.44.0(encoding@0.1.13))
+        version: 2.0.3(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@grammyjs/storage-redis':
         specifier: 2.5.1
         version: 2.5.1
       '@grammyjs/transformer-throttler':
         specifier: 1.2.1
-        version: 1.2.1(grammy@1.44.0(encoding@0.1.13))
+        version: 1.2.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))
       '@mikro-orm/core':
         specifier: 7.1.4
         version: 7.1.4(dataloader@2.2.3)
@@ -189,15 +183,12 @@ importers:
       discord-interactions:
         specifier: 4.4.0
         version: 4.4.0
-      discord.js:
-        specifier: 14.26.4
-        version: 14.26.4
       fastify:
         specifier: 5.8.5
         version: 5.8.5
       grammy:
         specifier: 1.44.0
-        version: 1.44.0(encoding@0.1.13)
+        version: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
       helmet:
         specifier: 8.2.0
         version: 8.2.0
@@ -1353,34 +1344,6 @@ packages:
 
   '@deno/shim-deno@0.18.2':
     resolution: {integrity: sha512-oQ0CVmOio63wlhwQF75zA4ioolPvOwAoK0yuzcS5bDC1JUvH3y1GS8xPh8EOpcoDQRU4FTG8OQfxhpR+c6DrzA==}
-
-  '@discordjs/builders@1.14.1':
-    resolution: {integrity: sha512-gSKkhXLqs96TCzk66VZuHHl8z2bQMJFGwrXC0f33ngK+FLNau4hU1PYny3DNJfNdSH+gVMzE85/d5FQ2BpcNwQ==}
-    engines: {node: '>=16.11.0'}
-
-  '@discordjs/collection@1.5.3':
-    resolution: {integrity: sha512-SVb428OMd3WO1paV3rm6tSjM4wC+Kecaa1EUGX7vc6/fddvw/6lg90z4QtCqm21zvVe92vMMDt9+DkIvjXImQQ==}
-    engines: {node: '>=16.11.0'}
-
-  '@discordjs/collection@2.1.1':
-    resolution: {integrity: sha512-LiSusze9Tc7qF03sLCujF5iZp7K+vRNEDBZ86FT9aQAv3vxMLihUvKvpsCWiQ2DJq1tVckopKm1rxomgNUc9hg==}
-    engines: {node: '>=18'}
-
-  '@discordjs/formatters@0.6.2':
-    resolution: {integrity: sha512-y4UPwWhH6vChKRkGdMB4odasUbHOUwy7KL+OVwF86PvT6QVOwElx+TiI1/6kcmcEe+g5YRXJFiXSXUdabqZOvQ==}
-    engines: {node: '>=16.11.0'}
-
-  '@discordjs/rest@2.6.1':
-    resolution: {integrity: sha512-wwQdgjeaoYFiaG+atbqx6aJDpqW7JHAo0HrQkBTbYzM3/PJ3GweQIpgElNcGZ26DCUOXMyawYd0YF7vtr+fZXg==}
-    engines: {node: '>=18'}
-
-  '@discordjs/util@1.2.0':
-    resolution: {integrity: sha512-3LKP7F2+atl9vJFhaBjn4nOaSWahZ/yWjOvA4e5pnXkt2qyXRCHLxoBQy81GFtLGCq7K9lPm9R517M1U+/90Qg==}
-    engines: {node: '>=18'}
-
-  '@discordjs/ws@1.2.3':
-    resolution: {integrity: sha512-wPlQDxEmlDg5IxhJPuxXr3Vy9AjYq5xCvFWGJyD7w7Np8ZGu+Mc+97LCoEc/+AYCo2IDpKioiH0/c/mj5ZR9Uw==}
-    engines: {node: '>=16.11.0'}
 
   '@discoveryjs/json-ext@1.1.0':
     resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
@@ -4264,22 +4227,6 @@ packages:
   '@rspack/lite-tapable@1.1.0':
     resolution: {integrity: sha512-E2B0JhYFmVAwdDiG14+DW0Di4Ze4Jg10Pc4/lILUrd5DRCaklduz2OvJ5HYQ6G+hd+WTzqQb3QnDNfK4yvAFYw==}
 
-  '@sapphire/async-queue@1.5.5':
-    resolution: {integrity: sha512-cvGzxbba6sav2zZkH8GPf2oGk9yYoD5qrNWdu9fRehifgnFZJMV+nuy2nON2roRO4yQQ+v7MK/Pktl/HgfsUXg==}
-    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
-
-  '@sapphire/shapeshift@4.0.0':
-    resolution: {integrity: sha512-d9dUmWVA7MMiKobL3VpLF8P2aeanRTu6ypG2OIaEv/ZHH/SUQ2iHOVyi5wAPjQ+HmnMuL0whK9ez8I/raWbtIg==}
-    engines: {node: '>=v16'}
-
-  '@sapphire/snowflake@3.5.3':
-    resolution: {integrity: sha512-jjmJywLAFoWeBi1W7994zZyiNWPIiqRRNAmSERxyg93xRGzNYvGjlZ0gR6x0F4gPRi2+0O6S71kOZYyr3cxaIQ==}
-    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
-
-  '@sapphire/snowflake@3.5.5':
-    resolution: {integrity: sha512-xzvBr1Q1c4lCe7i6sRnrofxeO1QTP/LKQ6A6qy0iB4x5yfiSfARMEQEghojzTNALDTcv8En04qYNIco9/K9eZQ==}
-    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
-
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
@@ -5284,10 +5231,6 @@ packages:
 
   '@vitest/utils@4.1.8':
     resolution: {integrity: sha512-uOJamYALNhfJ6iolExyQM40yIQwDqYnkKtQ5VCiSe17E33H0aQ/u+1GlRuz4LZBk6Mm3sg90G9hEbmEt37C1Zg==}
-
-  '@vladfrangu/async_event_emitter@2.4.7':
-    resolution: {integrity: sha512-Xfe6rpCTxSxfbswi/W/Pz7zp1WWSNn4A0eW4mLkQUewCrXXtMj31lCg+iQyTkh/CkusZSq9eDflu7tjEDXUY6g==}
-    engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -6344,10 +6287,6 @@ packages:
   discord-interactions@4.4.0:
     resolution: {integrity: sha512-jjJx8iwAeJcj8oEauV43fue9lNqkf38fy60aSs2+G8D1nJmDxUIrk08o3h0F3wgwuBWWJUZO+X/VgfXsxpCiJA==}
     engines: {node: '>=18.4.0'}
-
-  discord.js@14.26.4:
-    resolution: {integrity: sha512-4oBp8tc6Kf8IDBwAHhbsMaAqx1b5fob9SNasZT7V6yyyUydoO5i5fGuX7TmvRtR+q/WgKRnRViRoAWnG7fNyvA==}
-    engines: {node: '>=18'}
 
   dns-packet@5.6.1:
     resolution: {integrity: sha512-l4gcSouhcgIKRvyy99RNVOgxXiicE+2jZoNmaNmZ6JXiGajBOJAesk1OBlJuM5k2c+eudGdLxDqXuPCKIj6kpw==}
@@ -7769,9 +7708,6 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  lodash.snakecase@4.1.1:
-    resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
-
   lodash.uniq@4.5.0:
     resolution: {integrity: sha512-xfBaXQd9ryd9dlSDvnvI0lvxfLJlYAZzXomUYzLKtUeOQvOP5piqAWuGtrhWeqaXK9hhoM/iyJc5AV+XfsX3HQ==}
 
@@ -7811,9 +7747,6 @@ packages:
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
-
-  magic-bytes.js@1.13.0:
-    resolution: {integrity: sha512-afO2mnxW7GDTXMm5/AoN1WuOcdoKhtgXjIvHmobqTD1grNplhGdv3PFOyjCVmrnOZBIT/gD/koDKpYG+0mvHcg==}
 
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
@@ -9811,9 +9744,6 @@ packages:
       loader-utils:
         optional: true
 
-  ts-mixer@6.0.4:
-    resolution: {integrity: sha512-ufKpbmrugz5Aou4wcr5Wc1UUFWOLhq+Fm6qa6P0w0K5Qw2yhaUoiWszhCVuNQyNwrlGiscHOmqYoAox1PtvgjA==}
-
   ts-node@10.9.2:
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
@@ -9915,10 +9845,6 @@ packages:
 
   undici-types@7.24.6:
     resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
-
-  undici@6.24.1:
-    resolution: {integrity: sha512-sC+b0tB1whOCzbtlx20fx3WgCXwkW627p4EA9uM+/tNNPkSS+eSEld6pAs9nDv7WbY1UUljBMYPtu9BCOrCWKA==}
-    engines: {node: '>=18.17'}
 
   undici@7.24.7:
     resolution: {integrity: sha512-H/nlJ/h0ggGC+uRL3ovD+G0i4bqhvsDOpbDv7At5eFLlj2b41L8QliGbnl2H7SnDiYhENphh1tQFJZf+MyfLsQ==}
@@ -11324,55 +11250,6 @@ snapshots:
       '@deno/shim-deno-test': 0.5.0
       which: 4.0.0
 
-  '@discordjs/builders@1.14.1':
-    dependencies:
-      '@discordjs/formatters': 0.6.2
-      '@discordjs/util': 1.2.0
-      '@sapphire/shapeshift': 4.0.0
-      discord-api-types: 0.38.48
-      fast-deep-equal: 3.1.3
-      ts-mixer: 6.0.4
-      tslib: 2.8.1
-
-  '@discordjs/collection@1.5.3': {}
-
-  '@discordjs/collection@2.1.1': {}
-
-  '@discordjs/formatters@0.6.2':
-    dependencies:
-      discord-api-types: 0.38.48
-
-  '@discordjs/rest@2.6.1':
-    dependencies:
-      '@discordjs/collection': 2.1.1
-      '@discordjs/util': 1.2.0
-      '@sapphire/async-queue': 1.5.5
-      '@sapphire/snowflake': 3.5.5
-      '@vladfrangu/async_event_emitter': 2.4.7
-      discord-api-types: 0.38.48
-      magic-bytes.js: 1.13.0
-      tslib: 2.8.1
-      undici: 6.24.1
-
-  '@discordjs/util@1.2.0':
-    dependencies:
-      discord-api-types: 0.38.48
-
-  '@discordjs/ws@1.2.3':
-    dependencies:
-      '@discordjs/collection': 2.1.1
-      '@discordjs/rest': 2.6.1
-      '@discordjs/util': 1.2.0
-      '@sapphire/async-queue': 1.5.5
-      '@types/ws': 8.18.1
-      '@vladfrangu/async_event_emitter': 2.4.7
-      discord-api-types: 0.38.48
-      tslib: 2.8.1
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@discoveryjs/json-ext@1.1.0': {}
 
   '@emnapi/core@1.10.0':
@@ -11627,54 +11504,54 @@ snapshots:
 
   '@fluent/langneg@0.6.2': {}
 
-  '@grammyjs/auto-retry@2.0.2(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/auto-retry@2.0.2(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))(supports-color@7.2.0)':
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@grammyjs/conversations@2.1.1(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/conversations@2.1.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
-  '@grammyjs/hydrate@1.6.0(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/hydrate@1.6.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
       abort-controller: 3.0.0
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
-  '@grammyjs/i18n@1.1.2(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/i18n@1.1.2(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
       '@deno/shim-deno': 0.18.2
       '@fluent/bundle': 0.17.1
       '@fluent/langneg': 0.6.2
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
-  '@grammyjs/menu@1.3.1(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/menu@1.3.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
-  '@grammyjs/parse-mode@2.3.0(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/parse-mode@2.3.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
   '@grammyjs/ratelimiter@1.2.1': {}
 
-  '@grammyjs/router@2.0.0(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/router@2.0.0(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
-  '@grammyjs/runner@2.0.3(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/runner@2.0.3(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
       abort-controller: 3.0.0
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
   '@grammyjs/storage-redis@2.5.1': {}
 
-  '@grammyjs/transformer-throttler@1.2.1(grammy@1.44.0(encoding@0.1.13))':
+  '@grammyjs/transformer-throttler@1.2.1(grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0))':
     dependencies:
       bottleneck: 2.19.5
-      grammy: 1.44.0(encoding@0.1.13)
+      grammy: 1.44.0(encoding@0.1.13)(supports-color@7.2.0)
 
   '@grammyjs/types@3.28.0': {}
 
@@ -15337,17 +15214,6 @@ snapshots:
 
   '@rspack/lite-tapable@1.1.0': {}
 
-  '@sapphire/async-queue@1.5.5': {}
-
-  '@sapphire/shapeshift@4.0.0':
-    dependencies:
-      fast-deep-equal: 3.1.3
-      lodash: 4.18.1
-
-  '@sapphire/snowflake@3.5.3': {}
-
-  '@sapphire/snowflake@3.5.5': {}
-
   '@scarf/scarf@1.4.0': {}
 
   '@sinclair/typebox@0.34.49': {}
@@ -16523,8 +16389,6 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
-  '@vladfrangu/async_event_emitter@2.4.7': {}
-
   '@webassemblyjs/ast@1.14.1':
     dependencies:
       '@webassemblyjs/helper-numbers': 1.13.2
@@ -17623,25 +17487,6 @@ snapshots:
 
   discord-interactions@4.4.0: {}
 
-  discord.js@14.26.4:
-    dependencies:
-      '@discordjs/builders': 1.14.1
-      '@discordjs/collection': 1.5.3
-      '@discordjs/formatters': 0.6.2
-      '@discordjs/rest': 2.6.1
-      '@discordjs/util': 1.2.0
-      '@discordjs/ws': 1.2.3
-      '@sapphire/snowflake': 3.5.3
-      discord-api-types: 0.38.48
-      fast-deep-equal: 3.1.3
-      lodash.snakecase: 4.1.1
-      magic-bytes.js: 1.13.0
-      tslib: 2.8.1
-      undici: 6.24.1
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   dns-packet@5.6.1:
     dependencies:
       '@leichtgewicht/ip-codec': 2.0.5
@@ -18461,7 +18306,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  grammy@1.44.0(encoding@0.1.13):
+  grammy@1.44.0(encoding@0.1.13)(supports-color@7.2.0):
     dependencies:
       '@grammyjs/types': 3.28.0
       abort-controller: 3.0.0
@@ -19451,8 +19296,6 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lodash.snakecase@4.1.1: {}
-
   lodash.uniq@4.5.0: {}
 
   lodash@4.18.1: {}
@@ -19483,8 +19326,6 @@ snapshots:
   luxon@3.7.2: {}
 
   lz-string@1.5.0: {}
-
-  magic-bytes.js@1.13.0: {}
 
   magic-string@0.30.17:
     dependencies:
@@ -21824,8 +21665,6 @@ snapshots:
     optionalDependencies:
       loader-utils: 2.0.4
 
-  ts-mixer@6.0.4: {}
-
   ts-node@10.9.2(@swc/core@1.15.41(@swc/helpers@0.5.23))(@types/node@25.9.3)(typescript@6.0.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -21926,8 +21765,6 @@ snapshots:
   undici-types@5.26.5: {}
 
   undici-types@7.24.6: {}
-
-  undici@6.24.1: {}
 
   undici@7.24.7: {}
 

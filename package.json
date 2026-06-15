@@ -93,8 +93,6 @@
   },
   "dependencies": {
     "@casl/ability": "7.0.0",
-    "@discordjs/builders": "1.14.1",
-    "@discordjs/rest": "2.6.1",
     "@fastify/cookie": "11.0.2",
     "@fastify/session": "11.1.1",
     "@fastify/static": "9.1.3",
@@ -144,7 +142,6 @@
     "dataloader": "2.2.3",
     "discord-api-types": "0.38.48",
     "discord-interactions": "4.4.0",
-    "discord.js": "14.26.4",
     "fastify": "5.8.5",
     "grammy": "1.44.0",
     "helmet": "8.2.0",

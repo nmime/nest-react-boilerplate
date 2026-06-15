@@ -1,4 +1,3 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
 import {
   ButtonStyle,
   ComponentType,
@@ -21,40 +20,46 @@ export interface DiscordCommandDefinition {
 }
 
 export function buildDiscordCommands(): DiscordCommandDefinition[] {
-  const account = new SlashCommandBuilder()
-    .setName(DiscordAccountCommandName)
-    .setDescription("Manage account linking.")
-    .setNameLocalizations({})
-    .setDescriptionLocalizations({ ru: "Управление привязкой аккаунта." })
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("link")
-        .setDescription(t("discord.commands.link.description", "en"))
-        .setNameLocalizations(localizationsFor("discord.commands.link.label"))
-        .setDescriptionLocalizations(
-          localizationsFor("discord.commands.link.description"),
-        ),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("status")
-        .setDescription(t("discord.commands.status.description", "en"))
-        .setNameLocalizations(localizationsFor("discord.commands.status.label"))
-        .setDescriptionLocalizations(
-          localizationsFor("discord.commands.status.description"),
-        ),
-    );
-  const help = new SlashCommandBuilder()
-    .setName(DiscordHelpCommandName)
-    .setDescription(t("discord.commands.help.description", "en"))
-    .setNameLocalizations(localizationsFor("discord.commands.help.label"))
-    .setDescriptionLocalizations(
-      localizationsFor("discord.commands.help.description"),
-    );
+  const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [
+    {
+      name: DiscordAccountCommandName,
+      description: "Manage account linking.",
+      name_localizations: {},
+      description_localizations: {
+        ru: "Управление привязкой аккаунта.",
+      },
+      options: [
+        {
+          type: 1,
+          name: "link",
+          description: t("discord.commands.link.description", "en"),
+          name_localizations: localizationsFor("discord.commands.link.label"),
+          description_localizations: localizationsFor(
+            "discord.commands.link.description",
+          ),
+        },
+        {
+          type: 1,
+          name: "status",
+          description: t("discord.commands.status.description", "en"),
+          name_localizations: localizationsFor("discord.commands.status.label"),
+          description_localizations: localizationsFor(
+            "discord.commands.status.description",
+          ),
+        },
+      ],
+    },
+    {
+      name: DiscordHelpCommandName,
+      description: t("discord.commands.help.description", "en"),
+      name_localizations: localizationsFor("discord.commands.help.label"),
+      description_localizations: localizationsFor(
+        "discord.commands.help.description",
+      ),
+    },
+  ];
 
-  return [account, help].map((command) => {
-    const json: RESTPostAPIChatInputApplicationCommandsJSONBody =
-      command.toJSON();
+  return commands.map((json) => {
     validateCommandLocalization(json);
     return { name: json.name, description: json.description, json };
   });

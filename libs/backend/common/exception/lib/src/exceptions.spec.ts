@@ -20,7 +20,7 @@ describe("@app/common/exception", () => {
         title: "Forbidden",
         status: 403,
         detail: "Missing role",
-        instance: "/admin/profile/me",
+        instance: "urn:problem-instance:test:admin-profile-me",
         type: "urn:problem:test:forbidden",
       }),
     ).toEqual({
@@ -28,13 +28,30 @@ describe("@app/common/exception", () => {
       title: "Forbidden",
       status: 403,
       detail: "Missing role",
-      instance: "/admin/profile/me",
+      instance: "urn:problem-instance:test:admin-profile-me",
     });
     expect(createProblemDetails({ title: "Bad", status: 400 })).toEqual({
       type: "about:blank",
       title: "Bad",
       status: 400,
     });
+  });
+
+  it("omits raw request paths from problem instance", () => {
+    expect(
+      createProblemDetails({
+        title: "Not Found",
+        status: HttpStatus.NOT_FOUND,
+        instance: "/",
+      }),
+    ).not.toHaveProperty("instance");
+    expect(
+      createProblemDetails({
+        title: "Not Found",
+        status: HttpStatus.NOT_FOUND,
+        instance: "/missing",
+      }),
+    ).not.toHaveProperty("instance");
   });
 
   it("keeps RFC standard problem members when extensions contain reserved keys", () => {
@@ -44,14 +61,14 @@ describe("@app/common/exception", () => {
         title: "Conflict",
         status: 409,
         detail: "Canonical detail",
-        instance: "/canonical",
+        instance: "urn:problem-instance:test:canonical",
         code: "conflict",
         extensions: {
           type: "urn:problem:test:wrong",
           title: "Wrong",
           status: 418,
           detail: "Wrong detail",
-          instance: "/wrong",
+          instance: "urn:problem-instance:test:wrong",
           code: "wrong",
           resource: "user",
         },
@@ -61,7 +78,7 @@ describe("@app/common/exception", () => {
       title: "Conflict",
       status: 409,
       detail: "Canonical detail",
-      instance: "/canonical",
+      instance: "urn:problem-instance:test:canonical",
       code: "conflict",
       resource: "user",
     });
@@ -135,15 +152,15 @@ describe("@app/common/exception", () => {
 
     // Test getProblemDetailsSchema for 400 Bad Request
     const schema400 = getProblemDetailsSchema(HttpStatus.BAD_REQUEST);
-    expect(schema400.properties.status.example).toBe(400);
-    expect(schema400.properties.title.example).toBe("Bad Request");
-    expect(schema400.properties.errors).toBeDefined();
+    expect(schema400.properties?.status?.example).toBe(400);
+    expect(schema400.properties?.title?.example).toBe("Bad Request");
+    expect(schema400.properties?.errors).toBeDefined();
 
     // Test getProblemDetailsSchema for 401 Unauthorized
     const schema401 = getProblemDetailsSchema(HttpStatus.UNAUTHORIZED);
-    expect(schema401.properties.status.example).toBe(401);
-    expect(schema401.properties.title.example).toBe("Unauthorized");
-    expect(schema401.properties.errors).toBeUndefined();
+    expect(schema401.properties?.status?.example).toBe(401);
+    expect(schema401.properties?.title?.example).toBe("Unauthorized");
+    expect(schema401.properties?.errors).toBeUndefined();
   });
 
   it("creates coded problem details and reusable base exceptions", () => {
@@ -153,7 +170,7 @@ describe("@app/common/exception", () => {
       code: "domain-conflict",
       detail: "Already exists",
       extensions: { resource: "user" },
-      instance: "/users/1",
+      instance: "urn:problem-instance:test:users:1",
       status: HttpStatus.CONFLICT,
       title: "Conflict",
     });
@@ -171,7 +188,7 @@ describe("@app/common/exception", () => {
       title: "Conflict",
       status: HttpStatus.CONFLICT,
       detail: "Already exists",
-      instance: "/users/1",
+      instance: "urn:problem-instance:test:users:1",
       code: "domain-conflict",
       resource: "user",
     });
@@ -180,7 +197,7 @@ describe("@app/common/exception", () => {
         status: HttpStatus.BAD_REQUEST,
         title: "Bad Request",
       }).toProblemDetails("/fallback"),
-    ).toMatchObject({ instance: "/fallback", status: 400 });
+    ).not.toHaveProperty("instance");
   });
 
   it("creates standard domain exceptions", () => {
@@ -233,37 +250,44 @@ describe("@app/common/exception", () => {
     expect(getProblemStatus(new HttpException("Accepted", 202))).toBe(202);
     expect(toProblemDetails(base, "/base")).toMatchObject({
       code: "forbidden",
-      instance: "/base",
       status: HttpStatus.FORBIDDEN,
     });
+    expect(toProblemDetails(base, "/base")).not.toHaveProperty("instance");
     expect(toProblemDetails(problem, "/fallback")).toMatchObject({
-      instance: "/existing",
       status: HttpStatus.UNPROCESSABLE_ENTITY,
     });
+    expect(toProblemDetails(problem, "/fallback")).not.toHaveProperty(
+      "instance",
+    );
     expect(toProblemDetails(problemWithoutInstance, "/problem")).toMatchObject({
-      instance: "/problem",
       status: HttpStatus.CONFLICT,
     });
+    expect(
+      toProblemDetails(problemWithoutInstance, "/problem"),
+    ).not.toHaveProperty("instance");
     expect(toProblemDetails(patchedProblem, "/patched")).toEqual({
       code: "bad-request",
       detail: "The request could not be processed.",
       type: "urn:problem:nest-react-boilerplate:bad-request",
       title: "Bad Request",
       status: HttpStatus.BAD_REQUEST,
-      instance: "/patched",
     });
     expect(toProblemDetails(genericProblem, "/generic")).toMatchObject({
-      instance: "/generic",
+      status: 409,
+      title: "Conflict",
+    });
+    expect(toProblemDetails(genericProblem, "/generic")).not.toHaveProperty(
+      "instance",
+    );
+    expect(
+      toProblemDetails(genericProblemWithInstance, "/generic-fallback"),
+    ).toMatchObject({
       status: 409,
       title: "Conflict",
     });
     expect(
       toProblemDetails(genericProblemWithInstance, "/generic-fallback"),
-    ).toMatchObject({
-      instance: "/existing-generic",
-      status: 409,
-      title: "Conflict",
-    });
+    ).not.toHaveProperty("instance");
   });
 
   it("localizes validation issues and preserves unmapped problem fields", () => {
@@ -360,9 +384,10 @@ describe("@app/common/exception", () => {
       ),
     ).toMatchObject({
       code: "forbidden",
-      detail: "Отсутствует необходимая роль.",
+      detail: "Required role is missing.",
+      localizedDetail: "Отсутствует необходимая роль.",
       status: HttpStatus.FORBIDDEN,
-      title: "Доступ ограничен",
+      title: "Forbidden",
       type: "urn:problem:nest-react-boilerplate:forbidden",
     });
   });

@@ -147,7 +147,7 @@ describe("common swagger", () => {
     class PayloadDto {}
 
     expect(problemDetailsOpenApiSchema).toMatchObject({
-      required: ["type", "title", "status"],
+      required: ["type", "title", "status", "code"],
       type: "object",
     });
     expect(okResponseOpenApiSchema(PayloadDto)).toEqual({

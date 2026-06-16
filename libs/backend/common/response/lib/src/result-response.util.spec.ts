@@ -27,7 +27,7 @@ describe("exceptions response mapper", () => {
         code: "bad-request",
         detail: "Invalid input",
         status: 400,
-        title: "Invalid input",
+        title: "Bad Request",
         type: "urn:problem:nest-react-boilerplate:bad-request",
       },
     );
@@ -41,7 +41,7 @@ describe("exceptions response mapper", () => {
       code: "disabled",
       detail: "OAuth disabled",
       status: 400,
-      title: "OAuth disabled",
+      title: "Bad Request",
     });
     expect(
       mapResultToResponse(
@@ -63,9 +63,10 @@ describe("exceptions response mapper", () => {
     });
     expect(mapResultToResponse(err(new Error("Boom")), "ru")).toMatchObject({
       code: "bad-request",
-      detail: "Запрос не может быть обработан.",
+      detail: "The request could not be processed.",
+      localizedDetail: "Запрос не может быть обработан.",
       status: 400,
-      title: "Некорректный запрос",
+      title: "Bad Request",
     });
   });
 
@@ -113,9 +114,13 @@ describe("exceptions response mapper", () => {
 
     expect(status).toHaveBeenCalledWith(400);
     expect(type).toHaveBeenCalledWith("application/problem+json");
-    expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ instance: "/bad", status: 400 }),
-    );
+    const badRequestBody: unknown = json.mock.calls[0]?.[0];
+    expect(badRequestBody).not.toHaveProperty("instance");
+    expect(badRequestBody).toMatchObject({
+      code: "bad-request",
+      status: 400,
+      title: "Bad Request",
+    });
   });
 
   it("supports Fastify replies that send instead of json", () => {
@@ -135,12 +140,15 @@ describe("exceptions response mapper", () => {
     expect(status).toHaveBeenCalledWith(500);
     expect(type).toHaveBeenCalledWith("application/problem+json");
     expect(header).toHaveBeenCalledWith("content-language", "en");
-    expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({ instance: "/fastify", status: 500 }),
-    );
+    const fastifyBody: unknown = send.mock.calls[0]?.[0];
+    expect(fastifyBody).not.toHaveProperty("instance");
+    expect(fastifyBody).toMatchObject({
+      status: 500,
+      title: "Internal Server Error",
+    });
   });
 
-  it("uses request.url when originalUrl is unavailable", () => {
+  it("does not use request.url as a problem instance", () => {
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
     const status = vi.fn(() => ({ type }));
@@ -153,8 +161,51 @@ describe("exceptions response mapper", () => {
 
     new ExceptionsFilter().catch(new Error("boom"), host as never);
 
-    expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ instance: "/fallback-url", status: 500 }),
-    );
+    const fallbackBody: unknown = json.mock.calls[0]?.[0];
+    expect(fallbackBody).not.toHaveProperty("instance");
+    expect(fallbackBody).toMatchObject({
+      status: 500,
+      title: "Internal Server Error",
+    });
+  });
+
+  it("keeps machine fields stable and separates localized detail", () => {
+    expect(
+      mapResultToResponse(
+        err(
+          new BaseException({
+            code: "not-found",
+            status: HttpStatus.NOT_FOUND,
+            title: "Not Found",
+          }),
+        ),
+        "en",
+      ),
+    ).toMatchObject({
+      code: "not-found",
+      detail: "The requested resource was not found.",
+      status: 404,
+      title: "Not Found",
+      type: "urn:problem:nest-react-boilerplate:not-found",
+    });
+    expect(
+      mapResultToResponse(
+        err(
+          new BaseException({
+            code: "not-found",
+            status: HttpStatus.NOT_FOUND,
+            title: "Not Found",
+          }),
+        ),
+        "ru",
+      ),
+    ).toMatchObject({
+      code: "not-found",
+      detail: "The requested resource was not found.",
+      localizedDetail: "Запрашиваемый ресурс не найден.",
+      status: 404,
+      title: "Not Found",
+      type: "urn:problem:nest-react-boilerplate:not-found",
+    });
   });
 });

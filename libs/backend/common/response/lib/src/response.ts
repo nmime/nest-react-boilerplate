@@ -11,6 +11,7 @@ import {
   BaseException,
   createProblemDetails,
   localizeProblemDetails,
+  mapHttpStatusToProblemTitle,
   toProblemDetails,
   type ProblemDetails,
 } from "@app/common/exception";
@@ -37,7 +38,7 @@ export function createProblemResponse(
     code,
     detail: message,
     status,
-    title: message,
+    title: mapHttpStatusToProblemTitle(status),
   });
 }
 
@@ -120,11 +121,7 @@ export class ExceptionsFilter implements ExceptionFilter {
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
     const locale = resolveLocaleFromRequest(request);
-    const problem = toProblemDetails(
-      exception,
-      request.originalUrl ?? request.url,
-      locale,
-    );
+    const problem = toProblemDetails(exception, undefined, locale);
 
     const problemResponse = response
       .status(problem.status)

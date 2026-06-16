@@ -7,6 +7,10 @@ import {
 import { Test } from "@nestjs/testing";
 import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  ExceptionsFilter,
+  ExceptionsResponseTransformer,
+} from "@app/common/response";
 import { createValidationPipe } from "@app/common/validation";
 import type {
   AuthenticatedPrincipal,
@@ -136,6 +140,8 @@ describe("auth-app-api e2e", () => {
     );
     installInMemorySession(app);
     app.useGlobalPipes(createValidationPipe());
+    app.useGlobalInterceptors(new ExceptionsResponseTransformer());
+    app.useGlobalFilters(new ExceptionsFilter());
     await app.init();
   });
 
@@ -143,6 +149,41 @@ describe("auth-app-api e2e", () => {
     await app.close();
     delete process.env.AUTH_PERSISTENCE;
     delete process.env.AUTH_JWT_SECRET;
+  });
+
+  it("GET / returns standardized problem details without raw path instance", async () => {
+    const enResponse = await app.inject({
+      method: "GET",
+      url: "/",
+      headers: { "accept-language": "en" },
+    });
+    const ruResponse = await app.inject({
+      method: "GET",
+      url: "/",
+      headers: { "accept-language": "ru" },
+    });
+    const enBody = enResponse.json<Record<string, unknown>>();
+    const ruBody = ruResponse.json<Record<string, unknown>>();
+
+    expect(enResponse.statusCode).toBe(404);
+    expect(ruResponse.statusCode).toBe(404);
+    expect(enBody).not.toHaveProperty("instance");
+    expect(ruBody).not.toHaveProperty("instance");
+    expect(enBody).toMatchObject({
+      code: "not-found",
+      detail: "The requested resource was not found.",
+      status: 404,
+      title: "Not Found",
+      type: "urn:problem:nest-react-boilerplate:not-found",
+    });
+    expect(ruBody).toMatchObject({
+      code: enBody.code,
+      detail: enBody.detail,
+      localizedDetail: "Запрашиваемый ресурс не найден.",
+      status: enBody.status,
+      title: enBody.title,
+      type: enBody.type,
+    });
   });
 
   it("GET /health returns shared liveness-compatible health details", async () => {

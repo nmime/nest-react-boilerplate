@@ -15,6 +15,7 @@ export interface ProblemDetails {
   detail?: string;
   instance?: string;
   code?: string;
+  localizedDetail?: string;
   errors?: unknown;
   [extension: string]: unknown;
 }
@@ -107,6 +108,7 @@ const problemDetailsReservedExtensionKeys = new Set([
   "detail",
   "instance",
   "code",
+  "localizedDetail",
 ]);
 
 function sanitizeProblemDetailsExtensions(
@@ -119,6 +121,18 @@ function sanitizeProblemDetailsExtensions(
   );
 }
 
+function normalizeProblemInstance(
+  instance: string | undefined,
+): string | undefined {
+  const normalized = instance?.trim();
+
+  if (!normalized || normalized.startsWith("/")) {
+    return undefined;
+  }
+
+  return normalized;
+}
+
 export const createProblemDetails = ({
   title,
   status,
@@ -127,15 +141,19 @@ export const createProblemDetails = ({
   type = code ? `${ProblemTypeBaseUrl}:${code}` : "about:blank",
   instance,
   extensions = {},
-}: ProblemDetailsInput): ProblemDetails => ({
-  type,
-  title,
-  status,
-  ...(detail ? { detail } : {}),
-  ...(instance ? { instance } : {}),
-  ...(code ? { code } : {}),
-  ...sanitizeProblemDetailsExtensions(extensions),
-});
+}: ProblemDetailsInput): ProblemDetails => {
+  const normalizedInstance = normalizeProblemInstance(instance);
+
+  return {
+    type,
+    title,
+    status,
+    ...(detail ? { detail } : {}),
+    ...(normalizedInstance ? { instance: normalizedInstance } : {}),
+    ...(code ? { code } : {}),
+    ...sanitizeProblemDetailsExtensions(extensions),
+  };
+};
 
 export class BaseException extends Error {
   readonly code?: string;
@@ -239,11 +257,6 @@ const getHttpExceptionTitle = (error: HttpException): string =>
 const getHttpExceptionDetail = (error: HttpException): string | undefined =>
   getResponseMessage(error.getResponse()) || error.message || undefined;
 
-const titleKeyForProblem = (code: string): TranslationKey | undefined => {
-  const key = `errors.${code}.title`;
-  return hasTranslationKey(key) ? key : undefined;
-};
-
 const detailKeyForProblem = (
   problem: ProblemDetails,
   code: string,
@@ -332,8 +345,12 @@ export function localizeProblemDetails(
     typeof problem.code === "string"
       ? problem.code
       : problemCodeForStatus(problem.status);
-  const titleKey = titleKeyForProblem(code);
   const detailKey = detailKeyForProblem(problem, code);
+  const defaultDetail = detailKey
+    ? translate(detailKey, { locale: "en" })
+    : undefined;
+  const localizedDetail =
+    detailKey && locale ? translate(detailKey, { locale }) : undefined;
 
   return {
     ...problem,
@@ -342,8 +359,10 @@ export function localizeProblemDetails(
       problem.type === "about:blank"
         ? `${ProblemTypeBaseUrl}:${code}`
         : problem.type,
-    ...(titleKey ? { title: translate(titleKey, { locale }) } : {}),
-    ...(detailKey ? { detail: translate(detailKey, { locale }) } : {}),
+    ...(defaultDetail ? { detail: defaultDetail } : {}),
+    ...(localizedDetail && localizedDetail !== defaultDetail
+      ? { localizedDetail }
+      : {}),
     ...("errors" in problem
       ? { errors: localizeValidationIssues(problem.errors, locale) }
       : {}),
@@ -375,14 +394,10 @@ export const toProblemDetails = (
     const response = error.getResponse();
     return localizeProblemDetails(
       isProblemDetails(response)
-        ? {
-            ...response,
-            ...(instance && !response.instance ? { instance } : {}),
-          }
+        ? response
         : createProblemDetails({
             code: problemCodeForStatus(error.getStatus()),
             detail: getHttpExceptionDetail(error),
-            instance,
             status: error.getStatus(),
             title: getHttpExceptionTitle(error),
           }),
@@ -393,20 +408,13 @@ export const toProblemDetails = (
   if (error instanceof HttpException) {
     const response = error.getResponse();
     if (isProblemDetails(response)) {
-      return localizeProblemDetails(
-        {
-          ...response,
-          ...(instance && !response.instance ? { instance } : {}),
-        },
-        locale,
-      );
+      return localizeProblemDetails(response, locale);
     }
 
     return localizeProblemDetails(
       createProblemDetails({
         code: problemCodeForStatus(error.getStatus()),
         detail: getHttpExceptionDetail(error),
-        instance,
         status: error.getStatus(),
         title: getHttpExceptionTitle(error),
       }),
@@ -417,7 +425,6 @@ export const toProblemDetails = (
   return localizeProblemDetails(
     createProblemDetails({
       code: "internal-server-error",
-      instance,
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       title: "Internal Server Error",
     }),
@@ -428,7 +435,7 @@ export const toProblemDetails = (
 // RFC 9457 Compliant Problem Details OpenAPI Schema
 export const problemDetailsOpenApiSchema: OpenApiSchemaObject = {
   type: "object",
-  required: ["type", "title", "status"],
+  required: ["type", "title", "status", "code"],
   properties: {
     type: { type: "string", example: "about:blank" },
     title: { type: "string", example: "Bad Request" },
@@ -436,6 +443,11 @@ export const problemDetailsOpenApiSchema: OpenApiSchemaObject = {
     detail: { type: "string" },
     instance: { type: "string" },
     code: { type: "string" },
+    localizedDetail: {
+      type: "string",
+      description:
+        "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic.",
+    },
     errors: {
       type: "array",
       items: {
@@ -484,7 +496,12 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
     instance: {
       type: "string",
       description:
-        "A URI reference that identifies the specific occurrence of the problem.",
+        "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available.",
+    },
+    localizedDetail: {
+      type: "string",
+      description:
+        "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic.",
     },
     code: {
       type: "string",
@@ -534,7 +551,7 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
 
   return {
     type: "object",
-    required: ["type", "title", "status"],
+    required: ["type", "title", "status", "code"],
     properties,
   };
 }

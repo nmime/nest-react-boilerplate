@@ -102,11 +102,18 @@ const expectEphemeral = (response: APIInteractionResponse) => {
     MessageFlags.Ephemeral,
   );
 };
+const expectUpdate = (response: APIInteractionResponse) => {
+  expect(response.type).toBe(InteractionResponseType.UpdateMessage);
+  expect((response.data as { flags?: number } | undefined)?.flags).toBe(
+    undefined,
+  );
+};
 
 function validComponentId(
   setup: ReturnType<typeof harness>,
   action: DiscordCustomIdAction,
   owner: { userId?: string; guildId?: string | null; tenantId?: string } = {},
+  options: { expiresAt?: Date } = {},
 ) {
   const userId = owner.userId ?? user.id;
   const scopedGuildId = owner.guildId === undefined ? guildId : owner.guildId;
@@ -124,7 +131,7 @@ function validComponentId(
     tenantId: scopedTenantId,
     locale: "en",
     path: [action],
-    expiresAt: new Date(Date.now() + 60_000),
+    expiresAt: options.expiresAt ?? new Date(Date.now() + 60_000),
   });
   return customId;
 }
@@ -155,7 +162,7 @@ describe("DiscordInteractionRouter", () => {
     );
 
     expectEphemeral(response);
-    expect(text(response)).toContain("Используйте кнопку");
+    expect(text(response)).toContain("привязать аккаунт Discord");
     expect(buttons(response).map((button) => button.label)).toEqual([
       "Привязать аккаунт",
       "Отмена",
@@ -170,6 +177,24 @@ describe("DiscordInteractionRouter", () => {
       locale: "ru",
       returnUrl: "https://app.example.test",
     });
+  });
+
+  it("returns actionable missing-config text instead of a broken link URL", async () => {
+    const setup = harness(new DiscordAccountService());
+    const response = await setup.router.route(
+      command("account", "link"),
+      context({ webAppBaseUrl: undefined }),
+    );
+
+    expectEphemeral(response);
+    expect(text(response)).toContain("not configured yet");
+    expect(text(response)).toContain("Discord auth");
+    expect(buttons(response).map((button) => button.label)).toEqual([
+      "Back",
+      "Home",
+    ]);
+    expect(JSON.stringify(response)).not.toMatch(/api[-_ ]?root/iu);
+    expect(buttons(response).some((button) => Boolean(button.url))).toBe(false);
   });
 
   it("returns localized link error when auth is unavailable", async () => {
@@ -189,7 +214,7 @@ describe("DiscordInteractionRouter", () => {
     expect(text(response)).toBe("Не удалось привязать Discord.");
   });
 
-  it("routes /account status for linked and unlinked accounts", async () => {
+  it("routes /account status for linked and unlinked accounts with localized components", async () => {
     const linkedAccount = new DiscordAccountService({
       createDiscordAuthorizationRequest: vi.fn(),
       listProviderIdentities: vi.fn().mockResolvedValue([
@@ -211,27 +236,60 @@ describe("DiscordInteractionRouter", () => {
       context(),
     );
     const unlinked = await harness(unlinkedAccount).router.route(
-      command("account", "status"),
+      command("account", "status", { locale: "ru" }),
       context(),
     );
 
+    expectEphemeral(linked);
     expect(text(linked)).toBe("Your Discord account is linked.");
     expect(buttons(linked).map((button) => button.label)).toEqual([
       "Unlink account",
-      "Help",
+      "Home",
     ]);
     expect(buttons(linked)[0]?.style).toBe(ButtonStyle.Danger);
-    expect(text(unlinked)).toBe("Your Discord account is not linked.");
+    expectEphemeral(unlinked);
+    expect(text(unlinked)).toBe("Ваш аккаунт Discord не привязан.");
     expect(buttons(unlinked).map((button) => button.label)).toEqual([
-      "Link account",
-      "Help",
+      "Привязать аккаунт",
+      "Домой",
     ]);
     expect(buttons(unlinked)[0]?.style).toBe(ButtonStyle.Primary);
   });
 
-  it("routes /help and falls back for unknown command, subcommand, modal, and unsupported type", async () => {
+  it("routes /help with configured and missing app URLs without broken buttons", async () => {
     const setup = harness();
     const help = await setup.router.route(command("help"), context());
+    const missingApp = await setup.router.route(
+      command("help"),
+      context({ webAppBaseUrl: undefined }),
+    );
+
+    expectEphemeral(help);
+    expect(text(help)).toBe(
+      "Use /account link to connect your Discord account and /account status to check it.",
+    );
+    expect(buttons(help).map((button) => button.label)).toEqual([
+      "Link account",
+      "Check status",
+      "Home",
+      "Open App",
+    ]);
+    expect(buttons(help)[3]?.url).toBe("https://app.example.test");
+    expect(JSON.stringify(help)).not.toMatch(/api[-_ ]?root/iu);
+
+    expectEphemeral(missingApp);
+    expect(buttons(missingApp).map((button) => button.label)).toEqual([
+      "Link account",
+      "Check status",
+      "Home",
+      "Open App",
+    ]);
+    expect(buttons(missingApp)[3]?.custom_id).toEqual(expect.any(String));
+    expect(buttons(missingApp)[3]?.url).toBeUndefined();
+  });
+
+  it("falls back for unknown command, subcommand, modal, and unsupported type", async () => {
+    const setup = harness();
     const unknownCommand = await setup.router.route(
       command("unknown"),
       context(),
@@ -265,14 +323,6 @@ describe("DiscordInteractionRouter", () => {
       context(),
     );
 
-    expect(text(help)).toBe(
-      "Use /link to connect your account and /status to check it.",
-    );
-    expect(buttons(help).map((button) => button.label)).toEqual([
-      "Link account",
-      "Home",
-      "Open App",
-    ]);
     expect(text(unknownCommand)).toBe(
       "The bot could not complete this action.",
     );
@@ -288,9 +338,10 @@ describe("DiscordInteractionRouter", () => {
       "tampered",
       (setup: ReturnType<typeof harness>) =>
         validComponentId(setup, "home").replace(":h:", ":l:"),
+      "This bot action could not be verified. Please start again.",
     ],
     [
-      "expired",
+      "expired custom_id",
       (setup: ReturnType<typeof harness>) =>
         setup.customIds.encode(
           {
@@ -302,21 +353,38 @@ describe("DiscordInteractionRouter", () => {
           },
           { secret },
         ),
+      "This bot action expired. Please start again.",
+    ],
+    [
+      "expired navigation state",
+      (setup: ReturnType<typeof harness>) =>
+        validComponentId(
+          setup,
+          "home",
+          {},
+          {
+            expiresAt: new Date(Date.now() - 1_000),
+          },
+        ),
+      "This bot action expired. Please start again.",
     ],
     [
       "wrong owner",
       (setup: ReturnType<typeof harness>) =>
         validComponentId(setup, "home", { userId: "999999999999999999" }),
+      "This bot action belongs to another Discord user.",
     ],
     [
       "wrong guild",
       (setup: ReturnType<typeof harness>) =>
         validComponentId(setup, "home", { guildId: "345678901234567890" }),
+      "This bot action belongs to another Discord server.",
     ],
     [
       "wrong tenant",
       (setup: ReturnType<typeof harness>) =>
         validComponentId(setup, "home", { tenantId: "1" }),
+      "This bot action belongs to another workspace.",
     ],
     [
       "missing nonce",
@@ -325,10 +393,11 @@ describe("DiscordInteractionRouter", () => {
           { action: "home", userId: user.id, guildId, tenantId },
           { secret },
         ),
+      "This bot action expired. Please start again.",
     ],
   ])(
-    "returns an expired component response for %s custom_id",
-    async (_name, id) => {
+    "returns localized ephemeral component error for %s custom_id",
+    async (_name, id, expected) => {
       const setup = harness();
       const response = await setup.router.route(
         component(id(setup)),
@@ -336,28 +405,47 @@ describe("DiscordInteractionRouter", () => {
       );
 
       expectEphemeral(response);
-      expect(text(response)).toBe(
-        "This bot action expired. Please start again.",
-      );
+      expect(text(response)).toBe(expected);
     },
   );
 
   it.each([
-    ["home", "Use /link to connect your account and /status to check it."],
-    ["back", "Use /link to connect your account and /status to check it."],
-    ["open_app", "Use /link to connect your account and /status to check it."],
-    ["link", "Use the button below to link your account."],
-    ["unlink", "Could not unlink your account from the bot."],
-    ["confirm", "Link your account before using this Discord action."],
-  ] as const)("routes %s component action", async (action, expected) => {
+    [
+      "home",
+      "Use /account link to connect your Discord account and /account status to check it.",
+    ],
+    ["back", "Your Discord account is not linked."],
+    ["link", "Use the button below to link your Discord account."],
+    [
+      "unlink",
+      "Confirm that you want to unlink your Discord account from this workspace.",
+    ],
+    ["confirm", "Could not unlink your account from the bot."],
+  ] as const)(
+    "updates the existing message for %s component action",
+    async (action, expected) => {
+      const setup = harness();
+      const response = await setup.router.route(
+        component(validComponentId(setup, action)),
+        context(),
+      );
+
+      expectUpdate(response);
+      expect(text(response)).toBe(expected);
+    },
+  );
+
+  it("uses an ephemeral actionable error for Open App when the app URL is missing", async () => {
     const setup = harness();
     const response = await setup.router.route(
-      component(validComponentId(setup, action)),
-      context(),
+      component(validComponentId(setup, "open_app")),
+      context({ webAppBaseUrl: undefined }),
     );
 
     expectEphemeral(response);
-    expect(text(response)).toBe(expected);
+    expect(text(response)).toContain("web app URL is not configured");
+    expect(text(response)).toContain("/account link");
+    expect(JSON.stringify(response)).not.toMatch(/api[-_ ]?root/iu);
   });
 
   it("updates and clears buttons for Cancel component action", async () => {
@@ -365,11 +453,35 @@ describe("DiscordInteractionRouter", () => {
     const customId = validComponentId(setup, "cancel");
     const response = await setup.router.route(component(customId), context());
 
-    expect(response.type).toBe(InteractionResponseType.UpdateMessage);
-    expect(text(response)).toBe("The bot could not complete this action.");
+    expectUpdate(response);
+    expect(text(response)).toBe("Action cancelled.");
     expect(buttons(response)).toEqual([]);
     expect(text(await setup.router.route(component(customId), context()))).toBe(
       "This bot action expired. Please start again.",
     );
+  });
+
+  it("does not render raw template delimiters in Discord responses", async () => {
+    const setup = harness();
+    const openDelimiter = ["{", "{"].join("");
+    const closeDelimiter = ["}", "}"].join("");
+    const responses = await Promise.all([
+      setup.router.route(command("help"), context()),
+      setup.router.route(command("account", "status"), context()),
+      setup.router.route(command("account", "link"), context()),
+      setup.router.route(
+        component(validComponentId(setup, "open_app")),
+        context({ webAppBaseUrl: undefined }),
+      ),
+    ]);
+
+    for (const response of responses) {
+      const rendered = [
+        text(response),
+        ...buttons(response).flatMap((button) => [button.label, button.url]),
+      ].join("\n");
+      expect(rendered).not.toContain(openDelimiter);
+      expect(rendered).not.toContain(closeDelimiter);
+    }
   });
 });

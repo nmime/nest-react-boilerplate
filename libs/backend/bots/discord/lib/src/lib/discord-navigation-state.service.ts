@@ -22,24 +22,13 @@ export class DiscordNavigationStateService {
     this.states.set(state.nonce, { ...state });
   }
 
-  get(
-    nonce: string,
-    owner: { userId: string; guildId?: string | null; tenantId: string },
-    now = new Date(),
-  ): DiscordNavigationState | null {
+  get(nonce: string, now = new Date()): DiscordNavigationState | null {
     const state = this.states.get(nonce);
     if (!state) {
       return null;
     }
     if (state.expiresAt <= now) {
       this.states.delete(nonce);
-      return null;
-    }
-    if (
-      state.userId !== owner.userId ||
-      state.tenantId !== owner.tenantId ||
-      (state.guildId ?? "") !== (owner.guildId ?? "")
-    ) {
       return null;
     }
     return { ...state, path: [...state.path], data: { ...state.data } };

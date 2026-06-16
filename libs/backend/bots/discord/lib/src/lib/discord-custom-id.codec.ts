@@ -33,6 +33,19 @@ export interface DiscordDecodedCustomId extends Required<DiscordCustomIdPayload>
   version: "1";
 }
 
+export type DiscordCustomIdValidationFailure =
+  | "expired"
+  | "tampered"
+  | "wrong-owner"
+  | "wrong-guild"
+  | "wrong-tenant";
+
+export class DiscordCustomIdValidationError extends Error {
+  constructor(readonly failure: DiscordCustomIdValidationFailure) {
+    super(`Discord custom_id validation failed: ${failure}.`);
+  }
+}
+
 const prefix = "nrb";
 const version = "1";
 const maxCustomIdLength = 100;
@@ -79,7 +92,7 @@ export class DiscordCustomIdCodec {
   ): DiscordDecodedCustomId {
     const parts = customId.split(":");
     if (parts.length !== 10) {
-      throw new Error("Malformed Discord custom_id.");
+      throw new DiscordCustomIdValidationError("tampered");
     }
     const [
       actualPrefix,
@@ -94,23 +107,23 @@ export class DiscordCustomIdCodec {
       signature,
     ] = parts;
     if (actualPrefix !== prefix || actualVersion !== version) {
-      throw new Error("Unsupported Discord custom_id version.");
+      throw new DiscordCustomIdValidationError("tampered");
     }
     const action = codeToAction(actionCode);
     const body = parts.slice(0, -1).join(":");
     if (
       !safeEqual(signature, sign(body, options.secret, options.signatureBytes))
     ) {
-      throw new Error("Invalid Discord custom_id signature.");
+      throw new DiscordCustomIdValidationError("tampered");
     }
     const issuedAt = Number.parseInt(issued, 36);
     const expiresAt = Number.parseInt(expires, 36);
     const now = Math.floor((options.now?.() ?? Date.now()) / 1000);
     if (!Number.isFinite(issuedAt) || !Number.isFinite(expiresAt)) {
-      throw new Error("Invalid Discord custom_id timestamps.");
+      throw new DiscordCustomIdValidationError("tampered");
     }
     if (expiresAt <= now) {
-      throw new Error("Expired Discord custom_id.");
+      throw new DiscordCustomIdValidationError("expired");
     }
     return {
       version,
@@ -129,12 +142,14 @@ export class DiscordCustomIdCodec {
     decoded: DiscordDecodedCustomId,
     owner: { userId: string; guildId?: string | null; tenantId: string },
   ): void {
-    if (
-      decoded.userId !== owner.userId ||
-      normalizeTenant(decoded.tenantId) !== normalizeTenant(owner.tenantId) ||
-      (decoded.guildId || "") !== (owner.guildId?.trim() || "")
-    ) {
-      throw new Error("Discord custom_id owner mismatch.");
+    if (decoded.userId !== owner.userId) {
+      throw new DiscordCustomIdValidationError("wrong-owner");
+    }
+    if ((decoded.guildId || "") !== (owner.guildId?.trim() || "")) {
+      throw new DiscordCustomIdValidationError("wrong-guild");
+    }
+    if (normalizeTenant(decoded.tenantId) !== normalizeTenant(owner.tenantId)) {
+      throw new DiscordCustomIdValidationError("wrong-tenant");
     }
   }
 }
@@ -181,7 +196,7 @@ function codeToAction(code: string): DiscordCustomIdAction {
     ([, value]) => value === code,
   )?.[0] ?? "") as DiscordCustomIdAction;
   if (!action) {
-    throw new Error("Unsupported Discord component action.");
+    throw new DiscordCustomIdValidationError("tampered");
   }
   return action;
 }
@@ -208,10 +223,13 @@ function shortTenant(value: string): string {
 }
 
 function parseBase36BigInt(value: string): bigint {
+  if (!/^[0-9a-z]+$/iu.test(value)) {
+    throw new DiscordCustomIdValidationError("tampered");
+  }
   return [...value].reduce((sum, char) => {
     const digit = Number.parseInt(char, 36);
     if (!Number.isFinite(digit)) {
-      throw new Error("Invalid base36 snowflake.");
+      throw new DiscordCustomIdValidationError("tampered");
     }
     return sum * 36n + BigInt(digit);
   }, 0n);

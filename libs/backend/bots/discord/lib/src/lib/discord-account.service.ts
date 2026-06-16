@@ -12,6 +12,12 @@ export interface DiscordAccountStatusResult {
   displayName?: string | null;
 }
 
+export class DiscordAccountLinkNotConfiguredError extends Error {
+  constructor() {
+    super("Discord account link URL builder is not configured.");
+  }
+}
+
 interface DiscordExternalAuthPort {
   createDiscordAuthorizationRequest(input: {
     tenantId: string;
@@ -76,7 +82,7 @@ export class DiscordAccountService {
     }
     const configured = process.env.DISCORD_AUTH_LINK_URL_TEMPLATE;
     if (!configured) {
-      throw new Error("Discord account link URL builder is not configured.");
+      throw new DiscordAccountLinkNotConfiguredError();
     }
     return {
       authorizationUrl: configured

@@ -68,6 +68,23 @@ describe("Discord static policy", () => {
 
     expect(failures).toEqual([]);
   });
+
+  it("does not render raw template delimiters or placeholder API bases", () => {
+    const failures: string[] = [];
+
+    for (const file of sourceFiles()) {
+      const selfTestFile = file.endsWith("discord-static-policy.spec.ts");
+      const content = readFileSync(join(workspaceRoot, file), "utf8");
+      if (!selfTestFile && (/\{\{/u.test(content) || /\}\}/u.test(content))) {
+        failures.push(`${file}: raw template delimiter`);
+      }
+      if (!selfTestFile && /api[-_ ]?root/iu.test(content)) {
+        failures.push(`${file}: placeholder API base`);
+      }
+    }
+
+    expect(failures).toEqual([]);
+  });
 });
 
 function sourceFiles() {

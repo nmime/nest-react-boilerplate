@@ -393,6 +393,7 @@ export type TranslationKey =
   | "bot.menu.language"
   | "bot.menu.support"
   | "bot.menu.link"
+  | "bot.menu.openApp"
   | "bot.menu.unlink"
   | "bot.menu.back"
   | "bot.menu.home"

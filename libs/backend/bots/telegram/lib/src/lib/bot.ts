@@ -6,7 +6,7 @@ import { Router } from "@grammyjs/router";
 import { autoRetry } from "@grammyjs/auto-retry";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { resolveLocale } from "@app/common/i18n";
-import { resolveTelegramBotConfig } from "./config";
+import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from "./config";
 import { resolveTelegramIdentity } from "./identity";
 import { createI18nMiddleware, resolveTelegramLocale } from "./i18n";
 import { createTelegramMenus } from "./menus";
@@ -79,7 +79,10 @@ export function createTelegramBot(
 
   const menus = createTelegramMenus({
     auth: dependencies.auth,
-    appUrl: config.appUrl,
+    appUrl:
+      config.appUrl && isSafeTelegramAppUrl(config.appUrl)
+        ? config.appUrl
+        : undefined,
   });
   const renderMainMenu = () => menus.main;
   bot.use(menus.main);
@@ -109,6 +112,9 @@ export function createTelegramBot(
     await ctx.reply(ctx.t("bot.message.welcome"), { reply_markup: menus.main });
   });
   bot.use(router);
+  bot.on("callback_query:data", async (ctx) => {
+    await ctx.answerCallbackQuery({ text: ctx.t("bot.error.unknown") });
+  });
 
   return { bot, menus: { main: menus.main }, config };
 }

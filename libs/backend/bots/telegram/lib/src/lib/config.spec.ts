@@ -3,6 +3,7 @@ import {
   assertPollingRuntimeAllowed,
   assertWebhookRuntimeAllowed,
   resolveMode,
+  resolveSafeTelegramAppUrl,
   resolveTelegramBotConfig,
   signStartPayload,
   verifyStartPayload,
@@ -39,7 +40,7 @@ describe("Telegram bot config", () => {
       resolveTelegramBotConfig({
         TELEGRAM_BOT_TOKEN: " test-token ",
         VITEST: "true",
-        APP_URL: "https://app.example.test",
+        FRONTEND_URL: "https://app.example.test/tma",
         TELEGRAM_WEBHOOK_SECRET: " webhook-secret ",
         TELEGRAM_BOT_SESSION_TTL_SECONDS: "120",
         TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: "2500",
@@ -47,7 +48,7 @@ describe("Telegram bot config", () => {
       }),
     ).toMatchObject({
       token: "test-token",
-      appUrl: "https://app.example.test",
+      appUrl: "https://app.example.test/tma",
       webhookSecret: "webhook-secret",
       mode: "polling",
       environment: "test",
@@ -66,6 +67,34 @@ describe("Telegram bot config", () => {
       sessionTtlSeconds: 1_209_600,
       rateLimit: { timeFrameMs: 1_000, limit: 3 },
     });
+  });
+
+  it("only exposes safe frontend or TMA URLs to Telegram app buttons", () => {
+    expect(
+      resolveSafeTelegramAppUrl({
+        TELEGRAM_WEB_APP_URL: "https://app.example.test/tma",
+        FRONTEND_URL: "https://fallback.example.test/app",
+      }),
+    ).toBe("https://app.example.test/tma");
+
+    expect(
+      resolveSafeTelegramAppUrl({
+        APP_URL: "https://telegram-bot.n0xeid.xyz/",
+        FRONTEND_URL: "https://frontend.example.test/app",
+      }),
+    ).toBe("https://frontend.example.test/app");
+
+    for (const unsafe of [
+      "https://telegram-bot.n0xeid.xyz/",
+      "https://telegram-bot.n0xeid.xyz/telegram/webhook",
+      "https://api.example.test/",
+      "https://frontend.example.test/",
+      "not-a-url",
+    ]) {
+      expect(
+        resolveSafeTelegramAppUrl({ FRONTEND_URL: unsafe }),
+      ).toBeUndefined();
+    }
   });
 
   it("guards webhook and polling runtimes by configured mode/environment", () => {

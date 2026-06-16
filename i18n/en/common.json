@@ -10,7 +10,7 @@
   "common.ready": "Ready",
   "common.status.ready": "Ready",
   "common.status.secure": "Secure",
-  "common.homeLink": "{{appName}} home",
+  "common.homeLink": "Open app",
   "ui.errorBoundary.title": "Something went wrong",
   "ui.errorBoundary.description": "Try refreshing the page. If the issue continues, contact support with the request id from the API response."
 }

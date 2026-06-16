@@ -19,7 +19,7 @@ export function resolveTelegramBotConfig(
 
   return {
     token,
-    appUrl: env.APP_URL ?? env.FRONTEND_URL,
+    appUrl: resolveSafeTelegramAppUrl(env),
     webhookSecret: env.TELEGRAM_WEBHOOK_SECRET?.trim(),
     mode,
     environment,
@@ -35,6 +35,44 @@ export function resolveTelegramBotConfig(
       limit: readPositiveInt(env.TELEGRAM_BOT_RATE_LIMIT, DefaultRateLimit),
     },
   };
+}
+
+export function resolveSafeTelegramAppUrl(
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  for (const key of [
+    "TELEGRAM_WEB_APP_URL",
+    "TELEGRAM_TMA_URL",
+    "TMA_URL",
+    "FRONTEND_URL",
+  ]) {
+    const value = env[key]?.trim();
+    if (value && isSafeTelegramAppUrl(value)) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+export function isSafeTelegramAppUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    const protocol = url.protocol.toLowerCase();
+    if (protocol !== "https:" && protocol !== "http:") {
+      return false;
+    }
+
+    const host = url.hostname.toLowerCase();
+    if (!host || host.startsWith("telegram-bot.") || host.includes(".api.")) {
+      return false;
+    }
+
+    const pathname = normalizePathname(url.pathname);
+    return pathname !== "/" && pathname !== "/telegram/webhook";
+  } catch {
+    return false;
+  }
 }
 
 export function resolveMode(
@@ -137,4 +175,10 @@ export function verifyStartPayload(
 function readPositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizePathname(pathname: string): string {
+  return pathname.endsWith("/") && pathname !== "/"
+    ? pathname.slice(0, -1).toLowerCase()
+    : pathname.toLowerCase();
 }

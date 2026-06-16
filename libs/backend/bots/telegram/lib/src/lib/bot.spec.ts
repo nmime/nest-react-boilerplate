@@ -23,7 +23,7 @@ const botInfo = {
 function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
   return {
     token: "123:test",
-    appUrl: "https://app.example.test",
+    appUrl: "https://app.example.test/tma",
     webhookSecret: "secret",
     mode: "webhook",
     environment: "test",
@@ -32,6 +32,26 @@ function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
     botInfo,
     ...overrides,
   };
+}
+
+function configuredUrlButtons(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+): Array<{ text?: string; url?: string }> {
+  return calls.flatMap((call) =>
+    flattenButtons(call.payload).filter((button) => Boolean(button.url)),
+  );
+}
+
+function visibleTelegramText(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+): string[] {
+  return calls.flatMap((call) => [
+    typeof call.payload.text === "string" ? call.payload.text : "",
+    ...flattenButtons(call.payload).flatMap((button) => [
+      button.text ?? "",
+      button.url ?? "",
+    ]),
+  ]);
 }
 
 let updateSequence = 1;
@@ -147,7 +167,11 @@ function telegramResult(
   payload: Record<string, unknown>,
   sequence: number,
 ): Record<string, unknown> {
-  if (method !== "sendMessage") {
+  if (method === "answerCallbackQuery") {
+    return { ok: true };
+  }
+
+  if (method !== "sendMessage" && method !== "editMessageText") {
     return { ok: true };
   }
 
@@ -211,6 +235,18 @@ describe("createTelegramBot", () => {
       "Добро пожаловать! Выберите действие.",
     );
     expect(calls.at(-1)?.payload.reply_markup).toBeDefined();
+
+    const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
+    expect(buttons.map((button) => button.text)).toEqual([
+      "Профиль",
+      "Настройки",
+      "Поддержка",
+      "Привязать аккаунт",
+      "Открыть приложение",
+    ]);
+    expect(visibleTelegramText(calls).join("\n")).not.toContain(
+      "Welcome! Choose an action.",
+    );
   });
 
   it("renders stable short main-menu callback data", async () => {
@@ -228,11 +264,48 @@ describe("createTelegramBot", () => {
       "Settings",
       "Support",
       "Link account",
-      "{{appName}} home",
+      "Open app",
     ]);
     expect(callbackData).toHaveLength(4);
     expect(new Set(callbackData).size).toBe(callbackData.length);
     expect(callbackData.every((data) => data.length <= 64)).toBe(true);
+    expect(visibleTelegramText(calls).join("\n")).not.toMatch(/\{\{|\}\}/u);
+  });
+
+  it("hides Open App when no safe frontend or TMA URL is configured", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(
+      config({ appUrl: "https://telegram-bot.example.test/" }),
+      {
+        fetch: fetchMock,
+      },
+    );
+
+    await bot.handleUpdate(messageUpdate("/start", "ru") as never);
+
+    expect(configuredUrlButtons(calls)).toEqual([]);
+    expect(
+      flattenButtons(calls.at(-1)?.payload ?? {}).map((button) => button.text),
+    ).toEqual(["Профиль", "Настройки", "Поддержка", "Привязать аккаунт"]);
+  });
+
+  it("uses only a safe configured frontend or TMA URL for Open App", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(
+      config({ appUrl: "https://frontend.example.test/tma" }),
+      { fetch: fetchMock },
+    );
+
+    await bot.handleUpdate(messageUpdate("/start") as never);
+
+    expect(configuredUrlButtons(calls)).toEqual([
+      { text: "Open app", url: "https://frontend.example.test/tma" },
+    ]);
+    expect(
+      configuredUrlButtons(calls)
+        .map((button) => button.url)
+        .join("\n"),
+    ).not.toMatch(/telegram-bot\.n0xeid\.xyz\/?$|\/telegram\/webhook$/u);
   });
 
   it("consumes a valid start payload and reports expired payloads", async () => {
@@ -375,11 +448,58 @@ describe("createTelegramBot", () => {
 
   it("uses localized link instructions when auth is unavailable", async () => {
     const { calls, fetchMock } = apiMock();
-    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+    const { bot } = createTelegramBot(config({ appUrl: undefined }), {
+      fetch: fetchMock,
+    });
 
     await bot.handleUpdate(messageUpdate("/link", "ru") as never);
 
     expect(texts(calls)).toContain("Начинаем привязку аккаунта.");
+    expect(configuredUrlButtons(calls)).toEqual([]);
+  });
+
+  it("edits existing messages for callback navigation and keeps Back and Home compact", async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate("/start") as never);
+    const mainButtons = flattenButtons(calls.at(-1)?.payload ?? {});
+    const settings = mainButtons.find((button) => button.text === "Settings");
+
+    expect(settings?.callback_data).toBeDefined();
+    if (!settings?.callback_data) {
+      throw new Error("Settings callback was not rendered.");
+    }
+
+    await bot.handleUpdate(callbackUpdate(settings.callback_data) as never);
+
+    expect(calls.map((call) => call.method)).toContain("editMessageText");
+    expect(calls.filter((call) => call.method === "sendMessage")).toHaveLength(
+      1,
+    );
+    expect(calls.map((call) => call.method)).toContain("answerCallbackQuery");
+
+    const settingsEdit = [...calls]
+      .reverse()
+      .find((call) => call.method === "editMessageText");
+    expect(settingsEdit?.payload.text).toBe("Opening settings.");
+    const back = flattenButtons(settingsEdit?.payload ?? {}).find(
+      (button) => button.text === "Back",
+    );
+    expect(back?.callback_data).toBeDefined();
+    if (!back?.callback_data) {
+      throw new Error("Back callback was not rendered.");
+    }
+
+    await bot.handleUpdate(callbackUpdate(back.callback_data) as never);
+
+    const homeEdit = [...calls]
+      .reverse()
+      .find((call) => call.method === "editMessageText");
+    expect(homeEdit?.payload.text).toBe("Welcome! Choose an action.");
+    expect(calls.filter((call) => call.method === "sendMessage")).toHaveLength(
+      1,
+    );
   });
 
   it("updates language in session and calls linked-user preference update", async () => {

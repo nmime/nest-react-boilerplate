@@ -47,7 +47,7 @@ export function createTelegramMenus(input: {
     );
 
   if (input.appUrl) {
-    main.row().url((ctx) => ctx.t("common.homeLink"), input.appUrl);
+    main.row().url((ctx) => ctx.t("bot.menu.openApp"), input.appUrl);
   }
 
   const profile = new Menu<TelegramBotContext>("telegram:menu:profile", {
@@ -124,7 +124,7 @@ export function createTelegramMenus(input: {
       (ctx) => ctx.t("bot.route.support"),
       async (ctx) => {
         navigateTo(ctx, "support.contact");
-        await replyForRoute(ctx, "support.contact");
+        await renderRoute(ctx, "support.contact");
         ctx.menu.update();
       },
     )
@@ -154,7 +154,7 @@ export function createTelegramMenus(input: {
           ctx.identity && input.auth
             ? await input.auth.createLinkInstructions(ctx.identity)
             : null;
-        await ctx.reply(instructions ?? ctx.t("bot.route.link"));
+        await renderText(ctx, instructions ?? ctx.t("bot.route.link"));
         ctx.menu.update();
       },
     )
@@ -234,18 +234,18 @@ async function setRoute(
   route: TelegramBotRoute,
 ): Promise<void> {
   navigateTo(ctx, route);
-  await ctx.reply(routeText(ctx, route));
+  await renderRoute(ctx, route);
 }
 
 async function navigateBack(ctx: TelegramBotContext): Promise<void> {
   const route = goBack(ctx);
-  await ctx.reply(routeText(ctx, route));
+  await renderRoute(ctx, route);
   ctx.menu.back();
 }
 
 async function navigateHome(ctx: TelegramBotContext): Promise<void> {
   goHome(ctx);
-  await ctx.reply(routeText(ctx, "main"));
+  await renderRoute(ctx, "main");
   ctx.menu.nav("telegram:menu:main");
 }
 
@@ -265,8 +265,34 @@ async function updateLanguage(
       tenantId: ctx.session.auth.tenantId,
     });
   }
-  await ctx.reply(ctx.t("bot.message.chooseLanguage"));
+  await renderRoute(ctx, "settings.language.confirm");
   ctx.menu.update();
+}
+
+async function renderRoute(
+  ctx: TelegramBotContext,
+  route: TelegramBotRoute,
+): Promise<void> {
+  await renderText(ctx, routeText(ctx, route));
+}
+
+async function renderText(
+  ctx: TelegramBotContext,
+  text: string,
+): Promise<void> {
+  if (ctx.callbackQuery?.message) {
+    try {
+      await ctx.editMessageText(text);
+      return;
+    } catch {
+      await ctx
+        .answerCallbackQuery({ text: ctx.t("bot.error.unknown") })
+        .catch(() => undefined);
+      return;
+    }
+  }
+
+  await ctx.reply(text);
 }
 
 function languageLabel(ctx: TelegramBotContext, locale: Locale): string {

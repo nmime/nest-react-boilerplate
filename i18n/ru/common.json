@@ -10,7 +10,7 @@
   "common.ready": "Готово",
   "common.status.ready": "Готово",
   "common.status.secure": "Безопасно",
-  "common.homeLink": "Inicio de {{appName}}",
+  "common.homeLink": "Открыть приложение",
   "ui.errorBoundary.title": "Что-то пошло не так",
   "ui.errorBoundary.description": "Попробуйте обновить страницу. Если проблема повторится, обратитесь в службу поддержки, указав идентификатор запроса из ответа API."
 }

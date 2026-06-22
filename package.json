@@ -175,7 +175,7 @@
     "@nx/react": "22.7.5",
     "@nx/vite": "22.7.5",
     "@nx/web": "22.7.5",
-    "@nx/webpack": "22.7.5",
+    "@nx/webpack": "23.0.0",
     "@playwright/test": "1.60.0",
     "@storybook/addon-vitest": "10.4.4",
     "@storybook/react-vite": "10.4.4",

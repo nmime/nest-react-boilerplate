@@ -53,7 +53,7 @@ USER node
 EXPOSE 3000
 CMD ["sh", "-c", "node \"$APP_MAIN\""]
 
-FROM nginxinc/nginx-unprivileged:1.31.1-alpine AS frontend
+FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root

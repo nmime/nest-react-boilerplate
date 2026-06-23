@@ -8,8 +8,8 @@
     "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "@nx/react": "22.7.5",
-    "@nx/vite": "22.7.5",
+    "@nx/react": "23.0.0",
+    "@nx/vite": "23.0.0",
     "@vitejs/plugin-react": "6.0.2",
     "vite": "8.0.16"
   },

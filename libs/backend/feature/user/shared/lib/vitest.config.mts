@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 // nx-ignore-next-line
 import { fullCoverage } from "../../../../../../packages/tooling/src/testing/vitest-coverage.mts";
@@ -7,7 +7,7 @@ import { fullCoverage } from "../../../../../../packages/tooling/src/testing/vit
 export default defineConfig({
   cacheDir:
     "../../../../../../node_modules/.vitest/out-tsc/libs/backend/feature/user/shared",
-  plugins: [nxViteTsPaths()],
+  plugins: [tsconfigPaths()],
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],

@@ -1,9 +1,9 @@
 /// <reference types="vitest" />
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [nxViteTsPaths()],
+  plugins: [tsconfigPaths()],
   resolve: {
     alias: {
       "@app/common-component-test": new URL(

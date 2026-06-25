@@ -44,7 +44,8 @@ Provide secrets through the secret manager and non-secrets through the test tick
 
 - Telegram bot token secret key name: `<SECRET_KEY_TELEGRAM_BOT_TOKEN>`
 - Bot username: `<bot_username>`
-- Mini App/Web App URL: `<https://frontend.example.test/tma>`
+- Mini App/Web App URL: `<https://frontend.example.test/telegram-mini-app>`
+- Frontend API mode: `VITE_API_BASE_URL_MODE=same-origin` when the frontend proxy serves `/auth/telegram/tma`, or explicit `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` origins for split-origin deployments.
 - Allowed Mini App/Web App domain: `<frontend.example.test>`
 - Webhook secret secret key name: `<SECRET_KEY_TELEGRAM_WEBHOOK_SECRET>`
 - Webhook URL: `<https://telegram-bot-api.example.test/webhook/telegram>`

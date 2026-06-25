@@ -133,7 +133,11 @@ export function UserRouter({
       return <SettingsPage navigate={navigate} />;
     }
 
-    if (route === "/tma" || route === "/tma/auth") {
+    if (
+      route === "/tma" ||
+      route === "/tma/auth" ||
+      route === "/telegram-mini-app"
+    ) {
       return <TmaPage navigate={navigate} />;
     }
 

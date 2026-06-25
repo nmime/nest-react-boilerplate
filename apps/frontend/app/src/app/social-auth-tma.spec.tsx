@@ -74,6 +74,7 @@ describe("social auth and TMA UI", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth-api");
     vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api");
+    vi.stubEnv("VITE_API_BASE_URL_MODE", undefined);
     tma.useLaunchParams.mockReturnValue({});
     tma.useRawInitData.mockReturnValue(undefined);
     resetPath();
@@ -87,7 +88,7 @@ describe("social auth and TMA UI", () => {
     resetPath();
   });
 
-  it.each(["/tma", "/tma/auth"])(
+  it.each(["/tma", "/tma/auth", "/telegram-mini-app"])(
     "shows a localized TMA fallback outside Telegram on %s without crashing",
     async (path) => {
       resetPath(path);
@@ -102,6 +103,26 @@ describe("social auth and TMA UI", () => {
     },
   );
 
+  it("uses same-origin API URLs for Telegram Mini App verification when configured", async () => {
+    resetPath("/telegram-mini-app");
+    vi.stubEnv("VITE_API_BASE_URL_MODE", "same-origin");
+    vi.stubEnv("VITE_AUTH_API_BASE_URL", undefined);
+    vi.stubEnv("VITE_USER_API_BASE_URL", undefined);
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=same-origin");
+    const fetchMock = setFetch(jsonResponse({}, false, 409));
+
+    render(<App />);
+
+    expect(await screen.findByText("Request failed with 409.")).toBeTruthy();
+    expect(fetchMock.mock.calls).toHaveLength(1);
+    const input = fetchMock.mock.calls[0]?.[0];
+    const url = input instanceof Request ? input.url : String(input);
+    expect(new URL(url, window.location.origin).pathname).toBe(
+      "/auth/telegram/tma",
+    );
+    expect(new URL(url, window.location.origin).pathname).not.toBe("/");
+  });
+
   it("keeps Telegram auth on the launch route when verification fails", async () => {
     resetPath("/tma/auth");
     tma.useRawInitData.mockReturnValue("query_id=raw&hash=bad");
@@ -112,6 +133,24 @@ describe("social auth and TMA UI", () => {
 
     expect(await screen.findByText("Request failed with 401.")).toBeTruthy();
     expect(window.location.pathname).toBe("/tma/auth");
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes(
+          "/auth/telegram/tma",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("submits Telegram Mini App auth through the documented /telegram-mini-app route", async () => {
+    resetPath("/telegram-mini-app");
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=route");
+    const fetchMock = setFetch(jsonResponse({}, false, 409));
+
+    render(<App />);
+
+    expect(await screen.findByText("Request failed with 409.")).toBeTruthy();
+    expect(window.location.pathname).toBe("/telegram-mini-app");
     expect(
       fetchMock.mock.calls.some(([input]) =>
         (input instanceof Request ? input.url : String(input)).includes(

@@ -40,7 +40,7 @@ describe("Telegram bot config", () => {
       resolveTelegramBotConfig({
         TELEGRAM_BOT_TOKEN: " test-token ",
         VITEST: "true",
-        FRONTEND_URL: "https://app.example.test/tma",
+        FRONTEND_URL: "https://app.example.test/telegram-mini-app",
         TELEGRAM_WEBHOOK_SECRET: " webhook-secret ",
         TELEGRAM_BOT_SESSION_TTL_SECONDS: "120",
         TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: "2500",
@@ -48,7 +48,7 @@ describe("Telegram bot config", () => {
       }),
     ).toMatchObject({
       token: "test-token",
-      appUrl: "https://app.example.test/tma",
+      appUrl: "https://app.example.test/telegram-mini-app",
       webhookSecret: "webhook-secret",
       mode: "polling",
       environment: "test",
@@ -72,10 +72,10 @@ describe("Telegram bot config", () => {
   it("only exposes safe frontend or TMA URLs to Telegram app buttons", () => {
     expect(
       resolveSafeTelegramAppUrl({
-        TELEGRAM_WEB_APP_URL: "https://app.example.test/tma",
+        TELEGRAM_WEB_APP_URL: "https://app.example.test/telegram-mini-app",
         FRONTEND_URL: "https://fallback.example.test/app",
       }),
-    ).toBe("https://app.example.test/tma");
+    ).toBe("https://app.example.test/telegram-mini-app");
 
     expect(
       resolveSafeTelegramAppUrl({

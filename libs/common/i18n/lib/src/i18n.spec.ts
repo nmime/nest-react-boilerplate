@@ -160,6 +160,7 @@ describe("@app/common/i18n", () => {
       "auth.social.link.error",
       "auth.social.createAccount.error",
       "tma.loading",
+      "tma.idle",
       "tma.unsupported",
       "tma.authenticated",
       "tma.link.required",

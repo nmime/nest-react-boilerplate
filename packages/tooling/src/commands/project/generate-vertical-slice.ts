@@ -394,7 +394,7 @@ function vitestConfig(root: string): TemplateFile {
 
   return {
     path: `${root}/vitest.config.mts`,
-    contents: `/// <reference types="vitest" />\nimport tsconfigPaths from "vite-tsconfig-paths";\nimport { defineConfig } from "vitest/config";\n// nx-ignore-next-line\nimport { fullCoverage } from "${prefix}/packages/tooling/src/testing/vitest-coverage.mts";\n\nexport default defineConfig({\n  plugins: [tsconfigPaths()],\n  cacheDir: "${prefix}/dist/out-tsc/${coverageRoot}",\n  test: {\n    environment: "node",\n    include: ["src/**/*.spec.ts"],\n    globals: false,\n    coverage: fullCoverage("${prefix}/coverage/${coverageRoot}", ["src/**/*.ts"], []),\n  },\n});\n`,
+    contents: `/// <reference types="vitest" />\nimport { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";\nimport { defineConfig } from "vitest/config";\n// nx-ignore-next-line\nimport { fullCoverage } from "${prefix}/packages/tooling/src/testing/vitest-coverage.mts";\n\nexport default defineConfig({\n  plugins: [nxViteTsPaths()],\n  cacheDir: "${prefix}/dist/out-tsc/${coverageRoot}",\n  test: {\n    environment: "node",\n    include: ["src/**/*.spec.ts"],\n    globals: false,\n    coverage: fullCoverage("${prefix}/coverage/${coverageRoot}", ["src/**/*.ts"], []),\n  },\n});\n`,
   };
 }
 

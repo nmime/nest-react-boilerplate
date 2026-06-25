@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
-import tsconfigPaths from "vite-tsconfig-paths";
+import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vitest/config";
 // nx-ignore-next-line
 import { fullCoverage } from "../../../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  plugins: [nxViteTsPaths()],
   cacheDir:
     "../../../../../../dist/out-tsc/libs/backend/postgres/main/feature-flags",
   test: {

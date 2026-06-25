@@ -2,7 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
 
@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       tailwindcss(),
       react(),
-      tsconfigPaths(),
+      nxViteTsPaths(),
       nxCopyAssetsPlugin(["*.md"]),
       ...(isE2eCoverage
         ? [
@@ -47,7 +47,7 @@ export default defineConfig(({ command, mode }) => {
     ],
     // Uncomment this if you are using workers.
     // worker: {
-    //   plugins: () => [ tsconfigPaths() ],
+    //   plugins: () => [ nxViteTsPaths() ],
     // },
     build: {
       outDir: "../../../dist/apps/frontend/admin",

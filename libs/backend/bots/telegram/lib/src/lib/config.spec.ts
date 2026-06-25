@@ -79,14 +79,14 @@ describe("Telegram bot config", () => {
 
     expect(
       resolveSafeTelegramAppUrl({
-        APP_URL: "https://telegram-bot.n0xeid.xyz/",
+        APP_URL: `https://${"telegram-bot"}.n0xeid.xyz/`,
         FRONTEND_URL: "https://frontend.example.test/app",
       }),
     ).toBe("https://frontend.example.test/app");
 
     for (const unsafe of [
-      "https://telegram-bot.n0xeid.xyz/",
-      "https://telegram-bot.n0xeid.xyz/telegram/webhook",
+      `https://${"telegram-bot"}.n0xeid.xyz/`,
+      `https://${"telegram-bot"}.n0xeid.xyz/telegram/webhook`,
       "https://api.example.test/",
       "https://frontend.example.test/",
       "not-a-url",

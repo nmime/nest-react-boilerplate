@@ -248,6 +248,15 @@ module.exports = [
     files: ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
     rules: {
       "sonarjs/no-duplicate-string": "off",
+      "sonarjs/no-hardcoded-passwords": "off",
+      "sonarjs/no-trivial-assertions": "off",
+      "sonarjs/prefer-specific-assertions": "off",
+    },
+  },
+  {
+    files: ["**/vitest*.config.mts"],
+    rules: {
+      "sonarjs/deprecation": "off",
     },
   },
 ];

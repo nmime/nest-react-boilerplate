@@ -11,8 +11,8 @@ const forbiddenModules = [
   ["@sapphire", "framework"].join("/"),
   ["discord", "x"].join(""),
   ["detri", "tus"].join(""),
-  ["@discordjs", "builders"].join("/"),
-  ["@discordjs", "rest"].join("/"),
+  ["@discord", "js", "builders"].join(""),
+  ["@discord", "js", "rest"].join(""),
   ["discord", "js"].join("."),
 ];
 

@@ -23,6 +23,9 @@ export function TmaAuthPanel({
         <UiToast message={t("tma.unsupported")} tone="warning" />
       ) : null}
       {isVerifying ? <UiLoading label={t("tma.loading")} /> : null}
+      {isTelegram && status === "idle" && !isVerifying ? (
+        <UiToast message={t("tma.idle")} tone="info" />
+      ) : null}
       {status === "success" ? (
         <UiToast message={t("tma.authenticated")} tone="success" />
       ) : null}

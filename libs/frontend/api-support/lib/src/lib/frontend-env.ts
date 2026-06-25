@@ -30,7 +30,7 @@ export const isExplicitSameOriginApiMode = (env: FrontendEnv): boolean =>
 export const normalizeApiBaseUrl = (value: string): string =>
   value.trim().replace(/\/$/u, "");
 
-export const getRequiredApiBaseUrl = (
+export const getApiBaseUrl = (
   env: FrontendEnv,
   key: FrontendApiBaseUrlKey,
 ): string => {
@@ -49,6 +49,8 @@ export const getRequiredApiBaseUrl = (
       `or set VITE_API_BASE_URL_MODE=${sameOriginApiMode} to explicitly use a same-origin API proxy.`,
   );
 };
+
+export const getRequiredApiBaseUrl = getApiBaseUrl;
 
 export const assertRequiredFrontendApiBaseUrls = (
   env: FrontendEnv,

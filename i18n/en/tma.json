@@ -1,5 +1,6 @@
 {
   "tma.loading": "Loading Telegram Mini App…",
+  "tma.idle": "Waiting for Telegram to provide signed Mini App launch data.",
   "tma.unsupported": "Open this page inside Telegram to continue.",
   "tma.authenticated": "Telegram Mini App session verified.",
   "tma.link.required": "Link your Telegram account to continue.",

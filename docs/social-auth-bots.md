@@ -1,6 +1,6 @@
 # Social auth, Telegram Mini Apps, and bots
 
-This document records the planned social-auth and bot integration surface for Telegram, Telegram Mini Apps (TMA), and Discord. It is a setup and rollout guide for future implementation work; the current branch only adds translations, environment examples, documentation, and static guards. Do not assume the runtime endpoints or bot workers are implemented until a later feature branch wires them.
+This document records the social-auth and bot integration surface for Telegram, Telegram Mini Apps (TMA), and Discord. The user frontend includes a production Mini App entry at `/telegram-mini-app` and keeps the legacy `/tma` and `/tma/auth` aliases for existing bot links.
 
 ## Architecture
 
@@ -31,7 +31,8 @@ Important env values:
 - `TELEGRAM_AUTH_BOT_USERNAME`
 - `TELEGRAM_AUTH_MAX_AGE_SECONDS`
 - `TELEGRAM_AUTH_REPLAY_TTL_SECONDS`
-- `TELEGRAM_MINI_APP_URL`
+- `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://app.example.com/telegram-mini-app`)
+- `TELEGRAM_WEB_APP_URL` / `TELEGRAM_TMA_URL` (backward-compatible aliases consumed by the bot resolver)
 - `TELEGRAM_LINK_TOKEN_TTL_SECONDS`
 
 ## Telegram bots with grammY
@@ -116,7 +117,7 @@ Security checklist:
 1. Copy `.env.local.example` to `.env.local`.
 2. Keep provider features disabled until credentials and callback URLs are configured.
 3. For Telegram webhook testing, use a stable HTTPS tunnel and set `TELEGRAM_BOT_WEBHOOK_URL` to the tunneled callback; otherwise use polling in local-only workers.
-4. For TMA testing, set `TELEGRAM_MINI_APP_URL` to the local frontend URL exposed through a Telegram-compatible HTTPS tunnel.
+4. For TMA testing, set `TELEGRAM_MINI_APP_URL` to the local frontend `/telegram-mini-app` route exposed through a Telegram-compatible HTTPS tunnel. The Telegram Open App button is hidden when the configured URL is missing or fails the frontend-URL safety checks, so users get the localized bot fallback menu instead of an unsafe API/root link.
 5. For Discord interactions, set `DISCORD_INTERACTIONS_ENDPOINT` to a public HTTPS tunnel and configure the Discord application public key.
 6. Run `pnpm run tooling:static-check` and `pnpm run test:security:secrets` before committing.
 
@@ -142,3 +143,15 @@ When adding runtime features, add keys to both locale catalogs and the `Translat
 5. Implement Discord OAuth, command registration, and interaction verification.
 6. Add frontend/TMA UI behind feature flags.
 7. Run local validation, CI, staged rollout, and provider-specific smoke tests before enabling production flags.
+
+## Mini App frontend route and API URL mode
+
+Use `TELEGRAM_MINI_APP_URL=https://<user-frontend-host>/telegram-mini-app` for production.
+The same frontend bundle also supports `/tma` and `/tma/auth` as compatibility aliases. Configure BotFather's Mini App/Web App domain to the frontend host only; never point it at the auth API, bot webhook, backend root, or a raw backend service.
+
+The Mini App frontend can be built in either API URL mode:
+
+- Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. TMA verification posts to `/auth/telegram/tma` on the frontend origin and relies on the production proxy to route it to auth API.
+- Split-origin mode: set explicit `VITE_AUTH_API_BASE_URL` and `VITE_USER_API_BASE_URL` origins. Production builds fail closed unless explicit API origins or same-origin mode are configured.
+
+The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read `initDataUnsafe` or trust client-side Telegram user data.

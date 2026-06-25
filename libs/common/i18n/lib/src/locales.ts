@@ -372,6 +372,7 @@ export type TranslationKey =
   | "auth.social.error.invalidCallback"
   | "auth.social.error.replayDetected"
   | "tma.loading"
+  | "tma.idle"
   | "tma.unsupported"
   | "tma.authenticated"
   | "tma.link.required"

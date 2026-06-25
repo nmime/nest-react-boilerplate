@@ -289,17 +289,20 @@ describe("createTelegramBot", () => {
     ).toEqual(["Профиль", "Настройки", "Поддержка", "Привязать аккаунт"]);
   });
 
-  it("uses only a safe configured frontend or TMA URL for Open App", async () => {
+  it("uses only a safe configured frontend Mini App URL for Open App", async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(
-      config({ appUrl: "https://frontend.example.test/tma" }),
+      config({ appUrl: "https://frontend.example.test/telegram-mini-app" }),
       { fetch: fetchMock },
     );
 
     await bot.handleUpdate(messageUpdate("/start") as never);
 
     expect(configuredUrlButtons(calls)).toEqual([
-      { text: "Open app", url: "https://frontend.example.test/tma" },
+      {
+        text: "Open app",
+        url: "https://frontend.example.test/telegram-mini-app",
+      },
     ]);
     expect(
       configuredUrlButtons(calls)

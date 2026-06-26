@@ -27,5 +27,10 @@
   "auth.social.error.stateExpired": "The sign-in state expired. Start again.",
   "auth.social.error.providerUnavailable": "{{provider}} sign-in is temporarily unavailable.",
   "auth.social.error.invalidCallback": "The {{provider}} response could not be verified.",
-  "auth.social.error.replayDetected": "This authentication payload was already used."
+  "auth.social.error.replayDetected": "This authentication payload was already used.",
+  "auth.social.discord.callback.title": "Finishing Discord sign-in",
+  "auth.social.discord.callback.loading": "Waiting for Discord confirmation.",
+  "auth.social.discord.callback.success": "Discord sign-in completed.",
+  "auth.social.discord.callback.error": "The Discord response could not be verified.",
+  "auth.social.discord.callback.missingState": "Discord did not return the required sign-in state. Start again."
 }

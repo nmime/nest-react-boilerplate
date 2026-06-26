@@ -7,12 +7,13 @@ import {
   useRawInitData,
   viewport,
 } from "@tma.js/sdk-react";
-import { mapTmaStartParamToRoute } from "./tma-launch";
+import { parseTmaLaunchState, type TmaLaunchIntent } from "./tma-launch";
 
 interface UseTmaAuthInput {
+  fallbackStartParam?: string;
   onAuthenticate: (input: {
     initData: string;
-    intent: "login";
+    intent: TmaLaunchIntent;
     returnUrl?: string;
   }) => void;
   onBack: () => void;
@@ -29,8 +30,23 @@ const safely = (effect: () => void) => {
   }
 };
 
+const readBrowserStartParam = (): string | undefined => {
+  try {
+    const searchParams = new URLSearchParams(globalThis.location?.search ?? "");
+    return (
+      searchParams.get("startapp") ??
+      searchParams.get("start_param") ??
+      searchParams.get("tgWebAppStartParam") ??
+      undefined
+    );
+  } catch {
+    return undefined;
+  }
+};
+
 export function useTmaAuth({
   error,
+  fallbackStartParam,
   isVerifying,
   onAuthenticate,
   onBack,
@@ -47,15 +63,28 @@ export function useTmaAuth({
     }
   })();
 
-  const startParam =
+  const telegramStartParam =
     launchState.launchParams && "tgWebAppStartParam" in launchState.launchParams
       ? launchState.launchParams.tgWebAppStartParam
       : undefined;
   const rawInitData = launchState.rawInitData;
   const isTelegram = Boolean(rawInitData);
-  const mappedRoute = useMemo(
-    () => mapTmaStartParamToRoute(startParam),
-    [startParam],
+  const browserStartParam = readBrowserStartParam();
+  const parsedLaunchState = useMemo(
+    () =>
+      parseTmaLaunchState({
+        initData: rawInitData,
+        isTelegram,
+        startParam:
+          telegramStartParam ?? browserStartParam ?? fallbackStartParam,
+      }),
+    [
+      browserStartParam,
+      fallbackStartParam,
+      isTelegram,
+      rawInitData,
+      telegramStartParam,
+    ],
   );
 
   useEffect(() => {
@@ -93,16 +122,16 @@ export function useTmaAuth({
 
     onAuthenticate({
       initData: rawInitData,
-      intent: "login",
-      returnUrl: mappedRoute ?? undefined,
+      intent: parsedLaunchState.intent,
+      returnUrl: parsedLaunchState.returnUrl,
     });
-  }, [mappedRoute, onAuthenticate, rawInitData, status]);
+  }, [onAuthenticate, parsedLaunchState, rawInitData, status]);
 
   return {
+    ...parsedLaunchState,
     error,
     isTelegram,
     isVerifying,
-    mappedRoute,
     rawInitData,
     status,
   };

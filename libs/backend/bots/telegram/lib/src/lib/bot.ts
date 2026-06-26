@@ -25,6 +25,10 @@ export function createTelegramBot(
   config: TelegramBotConfig = resolveTelegramBotConfig(),
   dependencies: TelegramBotDependencies = {},
 ): TelegramBotInstance {
+  const safeAppUrl =
+    config.appUrl && isSafeTelegramAppUrl(config.appUrl)
+      ? config.appUrl
+      : undefined;
   const bot = new Bot<TelegramBotContext>(config.token, {
     botInfo: config.botInfo,
     client: dependencies.fetch
@@ -79,10 +83,7 @@ export function createTelegramBot(
 
   const menus = createTelegramMenus({
     auth: dependencies.auth,
-    appUrl:
-      config.appUrl && isSafeTelegramAppUrl(config.appUrl)
-        ? config.appUrl
-        : undefined,
+    appUrl: safeAppUrl,
   });
   const renderMainMenu = () => menus.main;
   bot.use(menus.main);
@@ -116,7 +117,28 @@ export function createTelegramBot(
     await ctx.answerCallbackQuery({ text: ctx.t("bot.error.unknown") });
   });
 
+  if (config.setupMenuButton && safeAppUrl) {
+    void setupTelegramMenuButton(bot.api, safeAppUrl);
+  }
+
   return { bot, menus: { main: menus.main }, config };
+}
+
+export async function setupTelegramMenuButton(
+  api: Pick<NonNullable<TelegramBotDependencies["api"]>, "setChatMenuButton">,
+  appUrl: string,
+): Promise<void> {
+  try {
+    await api.setChatMenuButton({
+      menu_button: {
+        type: "web_app",
+        text: "Open app",
+        web_app: { url: appUrl },
+      },
+    });
+  } catch (error) {
+    console.warn("Telegram bot menu button setup failed", error);
+  }
 }
 
 export async function handleStart(

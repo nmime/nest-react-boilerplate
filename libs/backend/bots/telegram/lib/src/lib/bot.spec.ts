@@ -34,11 +34,11 @@ function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
   };
 }
 
-function configuredUrlButtons(
+function configuredWebAppButtons(
   calls: Array<{ method: string; payload: Record<string, unknown> }>,
-): Array<{ text?: string; url?: string }> {
+): Array<{ text?: string; web_app?: { url?: string } }> {
   return calls.flatMap((call) =>
-    flattenButtons(call.payload).filter((button) => Boolean(button.url)),
+    flattenButtons(call.payload).filter((button) => Boolean(button.web_app)),
   );
 }
 
@@ -50,6 +50,7 @@ function visibleTelegramText(
     ...flattenButtons(call.payload).flatMap((button) => [
       button.text ?? "",
       button.url ?? "",
+      button.web_app?.url ?? "",
     ]),
   ]);
 }
@@ -123,7 +124,16 @@ function texts(
 
 function flattenButtons(payload: Record<string, unknown>) {
   const markup = payload.reply_markup as
-    | { inline_keyboard?: Array<Array<Record<string, string>>> }
+    | {
+        inline_keyboard?: Array<
+          Array<{
+            callback_data?: string;
+            text?: string;
+            url?: string;
+            web_app?: { url?: string };
+          }>
+        >;
+      }
     | undefined;
   return markup?.inline_keyboard?.flat() ?? [];
 }
@@ -256,9 +266,9 @@ describe("createTelegramBot", () => {
     await bot.handleUpdate(messageUpdate("/start") as never);
 
     const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
-    const callbackData = buttons
-      .map((button) => button.callback_data)
-      .filter(Boolean);
+    const callbackData = buttons.flatMap((button) =>
+      button.callback_data ? [button.callback_data] : [],
+    );
     expect(buttons.map((button) => button.text)).toEqual([
       "Profile",
       "Settings",
@@ -283,7 +293,7 @@ describe("createTelegramBot", () => {
 
     await bot.handleUpdate(messageUpdate("/start", "ru") as never);
 
-    expect(configuredUrlButtons(calls)).toEqual([]);
+    expect(configuredWebAppButtons(calls)).toEqual([]);
     expect(
       flattenButtons(calls.at(-1)?.payload ?? {}).map((button) => button.text),
     ).toEqual(["Профиль", "Настройки", "Поддержка", "Привязать аккаунт"]);
@@ -298,17 +308,83 @@ describe("createTelegramBot", () => {
 
     await bot.handleUpdate(messageUpdate("/start") as never);
 
-    expect(configuredUrlButtons(calls)).toEqual([
+    expect(configuredWebAppButtons(calls)).toEqual([
       {
         text: "Open app",
-        url: "https://frontend.example.test/telegram-mini-app",
+        web_app: { url: "https://frontend.example.test/telegram-mini-app" },
       },
     ]);
     expect(
-      configuredUrlButtons(calls)
-        .map((button) => button.url)
+      configuredWebAppButtons(calls)
+        .map((button) => button.web_app?.url)
         .join("\n"),
     ).not.toMatch(/telegram-bot\.n0xeid\.xyz\/?$|\/telegram\/webhook$/u);
+  });
+
+  it("sets persistent chat menu button only when explicitly enabled and app URL is safe", async () => {
+    const api = {
+      config: { use: vi.fn() },
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: "https://frontend.example.test/telegram-mini-app",
+        setupMenuButton: true,
+      }),
+      { api: api as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(api.setChatMenuButton).toHaveBeenCalledWith({
+      menu_button: {
+        type: "web_app",
+        text: "Open app",
+        web_app: { url: "https://frontend.example.test/telegram-mini-app" },
+      },
+    });
+
+    const unsafeApi = {
+      config: { use: vi.fn() },
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+    };
+    createTelegramBot(
+      config({
+        appUrl: "https://api.example.test/telegram/webhook",
+        setupMenuButton: true,
+      }),
+      { api: unsafeApi as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(unsafeApi.setChatMenuButton).not.toHaveBeenCalled();
+  });
+
+  it("does not fail startup when persistent chat menu button setup is rejected", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const api = {
+      config: { use: vi.fn() },
+      setChatMenuButton: vi.fn(() =>
+        Promise.reject(new Error("Telegram API unavailable")),
+      ),
+    };
+
+    expect(() =>
+      createTelegramBot(
+        config({
+          appUrl: "https://frontend.example.test/telegram-mini-app",
+          setupMenuButton: true,
+        }),
+        { api: api as never },
+      ),
+    ).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(warn).toHaveBeenCalledWith(
+      "Telegram bot menu button setup failed",
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 
   it("consumes a valid start payload and reports expired payloads", async () => {
@@ -458,7 +534,7 @@ describe("createTelegramBot", () => {
     await bot.handleUpdate(messageUpdate("/link", "ru") as never);
 
     expect(texts(calls)).toContain("Начинаем привязку аккаунта.");
-    expect(configuredUrlButtons(calls)).toEqual([]);
+    expect(configuredWebAppButtons(calls)).toEqual([]);
   });
 
   it("edits existing messages for callback navigation and keeps Back and Home compact", async () => {

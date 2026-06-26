@@ -49,6 +49,7 @@ describe("Telegram bot config", () => {
     ).toMatchObject({
       token: "test-token",
       appUrl: "https://app.example.test/telegram-mini-app",
+      setupMenuButton: false,
       webhookSecret: "webhook-secret",
       mode: "polling",
       environment: "test",
@@ -72,10 +73,11 @@ describe("Telegram bot config", () => {
   it("only exposes safe frontend or TMA URLs to Telegram app buttons", () => {
     expect(
       resolveSafeTelegramAppUrl({
+        TELEGRAM_MINI_APP_URL: "https://mini.example.test/telegram-mini-app",
         TELEGRAM_WEB_APP_URL: "https://app.example.test/telegram-mini-app",
         FRONTEND_URL: "https://fallback.example.test/app",
       }),
-    ).toBe("https://app.example.test/telegram-mini-app");
+    ).toBe("https://mini.example.test/telegram-mini-app");
 
     expect(
       resolveSafeTelegramAppUrl({
@@ -95,6 +97,24 @@ describe("Telegram bot config", () => {
         resolveSafeTelegramAppUrl({ FRONTEND_URL: unsafe }),
       ).toBeUndefined();
     }
+  });
+
+  it("enables persistent Telegram menu button setup only by explicit env toggle", () => {
+    expect(
+      resolveTelegramBotConfig({
+        TELEGRAM_BOT_TOKEN: "test-token",
+        TELEGRAM_MINI_APP_URL: "https://app.example.test/telegram-mini-app",
+        TELEGRAM_BOT_MENU_BUTTON_ENABLED: "true",
+      }).setupMenuButton,
+    ).toBe(true);
+
+    expect(
+      resolveTelegramBotConfig({
+        TELEGRAM_BOT_TOKEN: "test-token",
+        TELEGRAM_MINI_APP_URL: "https://app.example.test/telegram-mini-app",
+        TELEGRAM_BOT_MENU_BUTTON_ENABLED: "false",
+      }).setupMenuButton,
+    ).toBe(false);
   });
 
   it("guards webhook and polling runtimes by configured mode/environment", () => {

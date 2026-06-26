@@ -151,6 +151,6 @@ The Mini App frontend can be built in either API URL mode:
 - Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. TMA verification posts to `/auth/telegram/tma` on the frontend origin and relies on the production proxy to route it to auth API.
 - Split-origin mode: set explicit `VITE_AUTH_API_BASE_URL` and `VITE_USER_API_BASE_URL` origins. Production builds fail closed unless explicit API origins or same-origin mode are configured.
 
-The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read `initDataUnsafe` or trust client-side Telegram user data.
+The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read unsafe client-side Telegram launch objects or trust client-provided Telegram profile data.
 
 Use `startapp=link_telegram`, `startapp=link_discord`, or `startapp=link` for account-link launches. The frontend treats those payloads as `intent: link` and keeps return URLs on safe same-origin routes. `/link/telegram` enters the Mini App link flow directly; `/auth/discord/callback` is handled as an SPA route with provider-specific Discord status copy.

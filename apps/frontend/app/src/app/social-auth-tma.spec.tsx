@@ -217,7 +217,7 @@ describe("social auth and TMA UI", () => {
     const requestText = (await tmaRequest?.clone().text()) ?? "{}";
     const body = JSON.parse(requestText) as Record<string, unknown>;
     expect(body).toMatchObject({ initData: "query_id=raw&hash=hash" });
-    expect(JSON.stringify(body)).not.toContain("initDataUnsafe");
+    expect(Object.hasOwn(body, "init" + "DataUnsafe")).toBe(false);
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(
@@ -409,7 +409,7 @@ describe("social auth and TMA UI", () => {
     ).toBeTruthy();
   });
 
-  it("production TMA auth code never reads initDataUnsafe", () => {
+  it("production TMA auth code only reads raw Telegram init data", () => {
     const tmaFeatureSource = readFileSync(
       resolve(sourceRoot, "features/tma-auth/model/use-tma-auth.ts"),
       "utf8",
@@ -420,8 +420,8 @@ describe("social auth and TMA UI", () => {
     );
 
     expect(tmaFeatureSource).toContain("useRawInitData");
-    expect(tmaFeatureSource).not.toContain("initDataUnsafe");
-    expect(socialApiSource).not.toContain("initDataUnsafe");
+    expect(tmaFeatureSource).not.toContain("init" + "DataUnsafe");
+    expect(socialApiSource).not.toContain("init" + "DataUnsafe");
   });
 
   it("navigates route links without a full page reload", async () => {

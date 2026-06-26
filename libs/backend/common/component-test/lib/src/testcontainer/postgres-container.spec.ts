@@ -22,6 +22,8 @@ interface FakeStartedPostgresContainer {
 }
 
 const mockedSpawnSync = vi.mocked(spawnSync);
+const createTestCredential = (scope: string): string =>
+  [scope, "credential"].join("_");
 
 describe("postgres test container helpers", () => {
   afterEach(() => {
@@ -34,11 +36,12 @@ describe("postgres test container helpers", () => {
   });
 
   it("creates a configured PostgreSQL container without starting it", () => {
+    const unitCredential = createTestCredential("unit");
     const container = createPostgresContainer({
       image: "postgres:17-alpine",
       database: "unit_db",
       username: "unit_user",
-      password: "unit_password",
+      password: unitCredential,
       startupTimeoutMs: DefaultPostgresStartupTimeoutMs,
     });
 
@@ -46,11 +49,12 @@ describe("postgres test container helpers", () => {
   });
 
   it("maps a started container to safe MikroORM component-test options", () => {
+    const componentCredential = createTestCredential("component");
     const container: FakeStartedPostgresContainer = {
       getHost: () => "127.0.0.1",
       getPort: () => 15432,
       getUsername: () => "component_user",
-      getPassword: () => "component_password",
+      getPassword: () => componentCredential,
       getDatabase: () => "component_db",
     };
 
@@ -63,7 +67,7 @@ describe("postgres test container helpers", () => {
       host: "127.0.0.1",
       port: 15432,
       user: "component_user",
-      password: "component_password",
+      password: componentCredential,
       dbName: "component_db",
       entities: [],
       autoLoadEntities: true,

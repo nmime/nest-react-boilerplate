@@ -26,8 +26,8 @@ describe("public api-contracts import surface", () => {
 
   it("keeps the generated namespace available without deep imports", () => {
     type Paths = AuthApiContract.paths;
-    const path: keyof Paths = "/auth/me";
+    const publicAuthPaths = new Set<keyof Paths>(["/auth/me"]);
 
-    expect(path).toBe("/auth/me");
+    expect(publicAuthPaths.has("/auth/me")).toBe(true);
   });
 });

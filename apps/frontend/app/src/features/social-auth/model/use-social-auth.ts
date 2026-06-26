@@ -4,6 +4,7 @@ import { useAuthShellStore } from "@app/frontend-ui";
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,
+  submitDiscordCallback,
   submitTelegramTma,
   submitTelegramWebLogin,
   type SocialAuthRequestInput,
@@ -112,12 +113,23 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
     retry: false,
   });
 
+  const discordCallbackMutation = useMutation({
+    mutationFn: (input: Parameters<typeof submitDiscordCallback>[1]) =>
+      submitDiscordCallback(authClient, input),
+    onSuccess: finishExternalAuth,
+    retry: false,
+  });
+
   return {
     authenticateTelegramTma: telegramTmaMutation.mutate,
     authenticateTelegramTmaAsync: telegramTmaMutation.mutateAsync,
     authenticateTelegramWebLogin: telegramWebLoginMutation.mutate,
     continueWithDiscord: discordMutation.mutate,
+    completeDiscordCallback: discordCallbackMutation.mutate,
+    discordCallbackError: discordCallbackMutation.error,
+    discordCallbackStatus: discordCallbackMutation.status,
     discordStatus: discordMutation.status,
+    isDiscordCallbackPending: discordCallbackMutation.isPending,
     isDiscordPending: discordMutation.isPending,
     isTelegramTmaPending: telegramTmaMutation.isPending,
     isTelegramWebLoginPending: telegramWebLoginMutation.isPending,

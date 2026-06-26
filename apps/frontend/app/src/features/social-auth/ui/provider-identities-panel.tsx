@@ -48,6 +48,18 @@ const getIdentityLabel = (
   identity.providerSubject ??
   fallback;
 
+const getUnlinkProviderName = (
+  identityId: string | undefined,
+  identities: ProviderIdentity[],
+) => {
+  const provider = identities.find(
+    (identity) => identity.id === identityId,
+  )?.provider;
+  return provider
+    ? getProviderTranslationKey(provider)
+    : "auth.provider.telegram";
+};
+
 const getUnlinkErrorKey = (error: unknown): TranslationKey => {
   if (
     error &&
@@ -91,6 +103,9 @@ export function ProviderIdentitiesPanel({
     retry: false,
   });
   const state = normalizeProviderIdentities(identitiesQuery.data);
+  const unlinkProviderName = t(
+    getUnlinkProviderName(unlinkMutation.variables, state.identities),
+  );
 
   return (
     <UiCard title={t("user.settings.title")}>
@@ -173,7 +188,7 @@ export function ProviderIdentitiesPanel({
       {unlinkMutation.isError ? (
         <UiToast
           message={t(getUnlinkErrorKey(unlinkMutation.error), {
-            provider: t("auth.provider.telegram"),
+            provider: unlinkProviderName,
           })}
           tone="warning"
         />
@@ -181,7 +196,7 @@ export function ProviderIdentitiesPanel({
       {unlinkMutation.isSuccess ? (
         <UiToast
           message={t("auth.social.unlink.success", {
-            provider: t("auth.provider.telegram"),
+            provider: unlinkProviderName,
           })}
           tone="success"
         />

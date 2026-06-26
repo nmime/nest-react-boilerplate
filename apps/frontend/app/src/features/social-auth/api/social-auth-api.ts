@@ -14,6 +14,8 @@ export interface SocialAuthRequestInput {
   returnUrl?: string;
 }
 
+export type DiscordCallbackInput = authApi.DiscordCallbackQuery;
+
 export const requestDiscordAuthorization = async (
   authClient: AuthApiClient,
   input: SocialAuthRequestInput,
@@ -45,6 +47,17 @@ export const submitTelegramTma = async (
   throwOnOpenApiErrorData(
     authClient.api.authControllerTelegramTma(
       { ...input, initData },
+      authClient.requestOptions,
+    ),
+  );
+
+export const submitDiscordCallback = async (
+  authClient: AuthApiClient,
+  input: DiscordCallbackInput,
+) =>
+  throwOnOpenApiErrorData(
+    authClient.api.authControllerDiscordCallback(
+      input,
       authClient.requestOptions,
     ),
   );

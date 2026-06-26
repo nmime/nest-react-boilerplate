@@ -10,6 +10,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
+const sourceRoot = resolve(import.meta.dirname, "..");
+
 vi.mock("@tma.js/sdk-react", async () => {
   const actual =
     await vi.importActual<typeof import("@tma.js/sdk-react")>(
@@ -227,6 +229,123 @@ describe("social auth and TMA UI", () => {
     );
   });
 
+  it("starts Telegram link flow from /link/telegram instead of generic settings", async () => {
+    resetPath("/link/telegram");
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=link");
+    const fetchMock = setFetch(jsonResponse({}, false, 409));
+
+    render(<App />);
+
+    expect(await screen.findByText("Request failed with 409.")).toBeTruthy();
+    const tmaCall = fetchMock.mock.calls.find(([input]) =>
+      (input instanceof Request ? input.url : String(input)).includes(
+        "/auth/telegram/tma",
+      ),
+    );
+    const tmaRequest = tmaCall?.[0] as Request | undefined;
+    const requestText = (await tmaRequest?.clone().text()) ?? "{}";
+    const body = JSON.parse(requestText) as Record<string, unknown>;
+    expect(body).toMatchObject({
+      initData: "query_id=raw&hash=link",
+      intent: "link",
+      returnUrl: "/settings",
+    });
+  });
+
+  it("parses TMA startapp link_telegram as a link intent", async () => {
+    resetPath("/tma?startapp=link_telegram");
+    tma.useRawInitData.mockReturnValue("query_id=raw&hash=startapp");
+    const fetchMock = setFetch(jsonResponse({}, false, 409));
+
+    render(<App />);
+
+    expect(await screen.findByText("Request failed with 409.")).toBeTruthy();
+    const tmaCall = fetchMock.mock.calls.find(([input]) =>
+      (input instanceof Request ? input.url : String(input)).includes(
+        "/auth/telegram/tma",
+      ),
+    );
+    const tmaRequest = tmaCall?.[0] as Request | undefined;
+    const requestText = (await tmaRequest?.clone().text()) ?? "{}";
+    const body = JSON.parse(requestText) as Record<string, unknown>;
+    expect(body).toMatchObject({ intent: "link", returnUrl: "/settings" });
+  });
+
+  it("renders TMA deep navigation not-found state", async () => {
+    resetPath("/tma?startapp=missing_destination");
+    tma.useRawInitData.mockReturnValue(undefined);
+
+    render(<App />);
+
+    expect(
+      await screen.findByText(
+        "The requested Mini App destination was not found.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("finishes Discord callback through the SPA route", async () => {
+    resetPath("/auth/discord/callback?code=discord-code&state=oauth-state");
+    const pending = deferredResponse();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockReturnValueOnce(pending.promise)
+      .mockResolvedValueOnce(jsonResponse({ data: { user: { locale: "en" } } }))
+      .mockResolvedValueOnce(
+        jsonResponse({ data: { profile: { email: "discord@example.com" } } }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<App />);
+
+    expect(
+      await screen.findByText("Waiting for Discord confirmation."),
+    ).toBeTruthy();
+    pending.resolve(
+      jsonResponse({
+        data: {
+          session: {
+            accessToken: "discord-session",
+            expiresIn: 3600,
+            tokenType: "Bearer",
+            user: {
+              email: "discord@example.com",
+              id: "user-id",
+              permissions: [],
+              roles: [],
+              tenantId: "tenant-id",
+              theme: "system",
+            },
+          },
+          status: "authenticated",
+        },
+      }),
+    );
+    await waitFor(() => expect(window.location.pathname).toBe("/profile"));
+    expect(
+      fetchMock.mock.calls.some(([input]) => {
+        const url = input instanceof Request ? input.url : String(input);
+        return (
+          url.includes("/auth/discord/callback") &&
+          url.includes("code=discord-code") &&
+          url.includes("state=oauth-state")
+        );
+      }),
+    ).toBe(true);
+  });
+
+  it("renders provider-specific Discord callback errors", async () => {
+    resetPath("/auth/discord/callback");
+
+    render(<App />);
+
+    expect(
+      await screen.findByText(
+        "Discord did not return the required sign-in state. Start again.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("social auth buttons call wrapper-backed redirect logic", async () => {
     resetPath("/auth");
 
@@ -292,11 +411,11 @@ describe("social auth and TMA UI", () => {
 
   it("production TMA auth code never reads initDataUnsafe", () => {
     const tmaFeatureSource = readFileSync(
-      resolve("src/features/tma-auth/model/use-tma-auth.ts"),
+      resolve(sourceRoot, "features/tma-auth/model/use-tma-auth.ts"),
       "utf8",
     );
     const socialApiSource = readFileSync(
-      resolve("src/features/social-auth/api/social-auth-api.ts"),
+      resolve(sourceRoot, "features/social-auth/api/social-auth-api.ts"),
       "utf8",
     );
 

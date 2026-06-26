@@ -47,7 +47,7 @@ export function createTelegramMenus(input: {
     );
 
   if (input.appUrl) {
-    main.row().url((ctx) => ctx.t("bot.menu.openApp"), input.appUrl);
+    main.row().webApp((ctx) => ctx.t("bot.menu.openApp"), input.appUrl);
   }
 
   const profile = new Menu<TelegramBotContext>("telegram:menu:profile", {

@@ -79,6 +79,7 @@ export interface TelegramBotIdentity {
 export interface TelegramBotConfig {
   token: string;
   appUrl?: string;
+  setupMenuButton: boolean;
   webhookSecret?: string;
   mode: "webhook" | "polling";
   environment: "production" | "development" | "test";

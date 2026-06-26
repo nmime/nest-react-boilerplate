@@ -20,6 +20,7 @@ export function resolveTelegramBotConfig(
   return {
     token,
     appUrl: resolveSafeTelegramAppUrl(env),
+    setupMenuButton: readBoolean(env.TELEGRAM_BOT_MENU_BUTTON_ENABLED),
     webhookSecret: env.TELEGRAM_WEBHOOK_SECRET?.trim(),
     mode,
     environment,
@@ -41,6 +42,7 @@ export function resolveSafeTelegramAppUrl(
   env: NodeJS.ProcessEnv = process.env,
 ): string | undefined {
   for (const key of [
+    "TELEGRAM_MINI_APP_URL",
     "TELEGRAM_WEB_APP_URL",
     "TELEGRAM_TMA_URL",
     "TMA_URL",
@@ -170,6 +172,11 @@ export function verifyStartPayload(
   }
 
   return decoded.slice(separator + 1);
+}
+
+function readBoolean(value: string | undefined): boolean {
+  const normalized = value?.trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
 }
 
 function readPositiveInt(value: string | undefined, fallback: number): number {

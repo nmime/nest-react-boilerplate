@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import type { Locale } from "@app/common/i18n";
 import { useI18n, type UiTheme } from "@app/frontend-ui";
 import { AuthPage } from "../../pages/auth";
+import { AuthDiscordCallbackPage } from "../../pages/auth-discord-callback";
 import { ProfilePage } from "../../pages/profile";
 import { SettingsPage } from "../../pages/settings";
 import { TmaPage } from "../../pages/tma";
@@ -110,6 +111,10 @@ export function UserRouter({
   }, [navigate]);
 
   const renderRoute = () => {
+    if (route === "/auth/discord/callback") {
+      return <AuthDiscordCallbackPage navigate={navigate} />;
+    }
+
     if (route === "/auth") {
       return (
         <AuthPage
@@ -141,7 +146,11 @@ export function UserRouter({
       return <TmaPage navigate={navigate} />;
     }
 
-    if (linkRoute) {
+    if (linkRoute === "/link/telegram") {
+      return <TmaPage fallbackStartParam="link_telegram" navigate={navigate} />;
+    }
+
+    if (linkRoute === "/link/discord") {
       return <SettingsPage navigate={navigate} />;
     }
 

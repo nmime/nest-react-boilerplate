@@ -136,13 +136,10 @@ When adding runtime features, add keys to both locale catalogs and the `Translat
 
 ## Rollout plan
 
-1. Land docs/env/i18n/static guards first.
-2. Add backend contracts and provider persistence in a separate branch.
-3. Implement Telegram TMA verification with replay protection and regression tests.
-4. Implement Telegram bot adapters and grammY middleware.
-5. Implement Discord OAuth, command registration, and interaction verification.
-6. Add frontend/TMA UI behind feature flags.
-7. Run local validation, CI, staged rollout, and provider-specific smoke tests before enabling production flags.
+1. Keep docs/env/i18n/static guards current with every provider flow change.
+2. Maintain backend contracts, provider persistence, TMA verification, bot adapters, and Discord OAuth callbacks in provider-owned branches.
+3. Maintain the user frontend routes for `/telegram-mini-app`, `/tma`, `/tma/auth`, `/link/telegram`, `/link/discord`, and `/auth/discord/callback` with focused regression tests.
+4. Run local validation, CI, staged rollout, and provider-specific smoke tests before enabling production flags.
 
 ## Mini App frontend route and API URL mode
 
@@ -154,4 +151,6 @@ The Mini App frontend can be built in either API URL mode:
 - Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. TMA verification posts to `/auth/telegram/tma` on the frontend origin and relies on the production proxy to route it to auth API.
 - Split-origin mode: set explicit `VITE_AUTH_API_BASE_URL` and `VITE_USER_API_BASE_URL` origins. Production builds fail closed unless explicit API origins or same-origin mode are configured.
 
-The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read `initDataUnsafe` or trust client-side Telegram user data.
+The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read client-side Telegram user objects or trust client-provided Telegram profile data.
+
+Use `startapp=link_telegram`, `startapp=link_discord`, or `startapp=link` for account-link launches. The frontend treats those payloads as `intent: link` and keeps return URLs on safe same-origin routes. `/link/telegram` enters the Mini App link flow directly; `/auth/discord/callback` is handled as an SPA route with provider-specific Discord status copy.

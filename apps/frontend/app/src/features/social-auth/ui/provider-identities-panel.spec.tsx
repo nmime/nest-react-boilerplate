@@ -164,6 +164,9 @@ describe("ProviderIdentitiesPanel", () => {
     );
 
     expect(await screen.findByText("auth.social.unlink.success")).toBeTruthy();
+    expect(screen.getAllByText("auth.provider.discord").length).toBeGreaterThan(
+      0,
+    );
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: ["get", "/auth/provider-identities"],

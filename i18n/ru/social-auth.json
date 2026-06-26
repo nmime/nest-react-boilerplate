@@ -27,5 +27,10 @@
   "auth.social.error.stateExpired": "Состояние входа истекло. Начните заново.",
   "auth.social.error.providerUnavailable": "Вход через {{provider}} временно недоступен.",
   "auth.social.error.invalidCallback": "Ответ {{provider}} не удалось проверить.",
-  "auth.social.error.replayDetected": "Эти данные аутентификации уже использованы."
+  "auth.social.error.replayDetected": "Эти данные аутентификации уже использованы.",
+  "auth.social.discord.callback.title": "Завершаем вход через Discord",
+  "auth.social.discord.callback.loading": "Ожидаем подтверждение от Discord.",
+  "auth.social.discord.callback.success": "Вход через Discord завершен.",
+  "auth.social.discord.callback.error": "Ответ Discord не удалось проверить.",
+  "auth.social.discord.callback.missingState": "Discord не вернул обязательное состояние входа. Начните заново."
 }

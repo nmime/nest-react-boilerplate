@@ -10,6 +10,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./app";
 
+const sourceRoot = resolve(import.meta.dirname, "..");
+
 vi.mock("@tma.js/sdk-react", async () => {
   const actual =
     await vi.importActual<typeof import("@tma.js/sdk-react")>(
@@ -409,11 +411,11 @@ describe("social auth and TMA UI", () => {
 
   it("production TMA auth code never reads initDataUnsafe", () => {
     const tmaFeatureSource = readFileSync(
-      resolve("src/features/tma-auth/model/use-tma-auth.ts"),
+      resolve(sourceRoot, "features/tma-auth/model/use-tma-auth.ts"),
       "utf8",
     );
     const socialApiSource = readFileSync(
-      resolve("src/features/social-auth/api/social-auth-api.ts"),
+      resolve(sourceRoot, "features/social-auth/api/social-auth-api.ts"),
       "utf8",
     );
 

@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App, { renderAdminRoute } from "../App";
 import {
+  type AdminProfilePayload,
   createAdminAccess,
   getAuthApiBaseUrl,
   normalizeClaimList,
@@ -110,6 +111,7 @@ const profilePayload = {
 
 const access = createAdminAccess(profilePayload.principal);
 const payload = profilePayload;
+const emptyProfilePayload: AdminProfilePayload = {};
 
 describe("App", () => {
   beforeEach(() => {
@@ -270,9 +272,9 @@ describe("App", () => {
     expect(renderToStaticMarkup(<ProfilePage payload={payload} />)).toContain(
       "Ada Admin",
     );
-    expect(renderToStaticMarkup(<ProfilePage payload={{}} />)).toContain(
-      "Profile",
-    );
+    expect(
+      renderToStaticMarkup(<ProfilePage payload={emptyProfilePayload} />),
+    ).toContain("Profile");
     expect(
       renderToStaticMarkup(
         <ProfilePage

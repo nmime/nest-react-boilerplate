@@ -104,9 +104,9 @@ const expectEphemeral = (response: APIInteractionResponse) => {
 };
 const expectUpdate = (response: APIInteractionResponse) => {
   expect(response.type).toBe(InteractionResponseType.UpdateMessage);
-  expect((response.data as { flags?: number } | undefined)?.flags).toBe(
-    undefined,
-  );
+  expect(
+    (response.data as { flags?: number } | undefined)?.flags,
+  ).toBeUndefined();
 };
 
 function validComponentId(

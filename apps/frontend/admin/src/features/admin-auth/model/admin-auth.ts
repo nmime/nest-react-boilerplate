@@ -39,7 +39,7 @@ export const getBrowserPath = (): string => {
   }
 
   stripSensitiveBrowserTokenParams();
-  return window.location.pathname;
+  return `${window.location.pathname}${window.location.search}`;
 };
 
 export { sensitiveUrlTokenParams };

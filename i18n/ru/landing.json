@@ -19,5 +19,6 @@
   "landing.stat.apis.detail": "auth, user, admin",
   "landing.stat.apps": "Приложения",
   "landing.stat.apps.detail": "landing, user, admin",
-  "landing.stat.libs": "Общие библиотеки"
+  "landing.stat.libs": "Общие библиотеки",
+  "landing.statGrid.label": "Статистика продуктовой платформы"
 }

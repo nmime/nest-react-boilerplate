@@ -5,12 +5,42 @@
 
 @theme {
   --font-sans: var(--xr-font-family);
-  --color-background: var(--xr-color-background);
-  --color-foreground: var(--xr-color-text);
-  --color-primary: var(--xr-color-primary);
-  --color-muted: var(--xr-color-muted);
-  --radius-lg: var(--xr-radius-lg);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--xr-radius-md) - 4px);
   --radius-md: var(--xr-radius-md);
+  --radius-lg: var(--xr-radius-lg);
+  --radius-xl: calc(var(--xr-radius-lg) + 4px);
 }
 
 :root {
@@ -26,6 +56,8 @@
   --xr-color-primary-contrast: #06101f;
   --xr-color-success: #51e6a6;
   --xr-color-warning: #ffd166;
+  --xr-color-destructive: #ff8a8a;
+  --xr-color-destructive-contrast: #2a0507;
   --xr-focus-ring: 0 0 0 3px rgba(88, 213, 255, 0.36);
   --xr-body-gradient: linear-gradient(
     135deg,
@@ -44,6 +76,39 @@
   --xr-border: var(--xr-color-border);
   --xr-text: var(--xr-color-text);
   --xr-muted: var(--xr-color-muted);
+  --radius: var(--xr-radius-md);
+  --background: var(--xr-color-background);
+  --foreground: var(--xr-color-text);
+  --card: var(--xr-card-background);
+  --card-foreground: var(--xr-color-text);
+  --popover: var(--xr-color-surface-strong);
+  --popover-foreground: var(--xr-color-text);
+  --primary: var(--xr-color-primary);
+  --primary-foreground: var(--xr-color-primary-contrast);
+  --secondary: var(--xr-control-background);
+  --secondary-foreground: var(--xr-color-text);
+  --muted: var(--xr-control-background);
+  --muted-foreground: var(--xr-color-muted);
+  --accent: var(--xr-color-background-accent);
+  --accent-foreground: var(--xr-color-text);
+  --destructive: var(--xr-color-destructive);
+  --destructive-foreground: var(--xr-color-destructive-contrast);
+  --border: var(--xr-color-border);
+  --input: var(--xr-input-background);
+  --ring: var(--xr-color-primary);
+  --chart-1: var(--xr-color-primary);
+  --chart-2: var(--xr-color-success);
+  --chart-3: var(--xr-color-warning);
+  --chart-4: var(--xr-color-primary-strong);
+  --chart-5: var(--xr-color-muted);
+  --sidebar: var(--xr-color-surface);
+  --sidebar-foreground: var(--xr-color-text);
+  --sidebar-primary: var(--xr-color-primary);
+  --sidebar-primary-foreground: var(--xr-color-primary-contrast);
+  --sidebar-accent: var(--xr-control-background);
+  --sidebar-accent-foreground: var(--xr-color-text);
+  --sidebar-border: var(--xr-color-border);
+  --sidebar-ring: var(--xr-color-primary);
   --xr-font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -63,6 +128,8 @@
   --xr-color-primary-contrast: #ffffff;
   --xr-color-success: #0a7f4f;
   --xr-color-warning: #8a5a00;
+  --xr-color-destructive: #b42318;
+  --xr-color-destructive-contrast: #ffffff;
   --xr-focus-ring: 0 0 0 3px rgba(0, 111, 201, 0.28);
   --xr-body-gradient: linear-gradient(
     135deg,

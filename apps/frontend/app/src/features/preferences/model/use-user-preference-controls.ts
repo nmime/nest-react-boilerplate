@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient } from "@app/frontend/api-client";
-import type { Locale } from "@app/common/i18n";
-import type { UiTheme } from "@app/frontend/ui";
+import type { Locale, UiTheme } from "@app/frontend/ui";
 import {
   getPayloadLocale,
   getPayloadTheme,

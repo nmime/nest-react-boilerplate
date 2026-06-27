@@ -1,6 +1,6 @@
-import type { Locale } from "@app/common/i18n";
-import { useI18n, type UiTheme } from "@app/frontend/ui";
+import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
 import { useAuthSessionFlow } from "../../../features/auth";
+import { UiAlert, UiSection } from "../../../shared/ui";
 import { ProfileStatusCard } from "../../../widgets/profile-status";
 
 interface ProfilePageProps {
@@ -25,5 +25,10 @@ export function ProfilePage({
     },
   });
 
-  return <ProfileStatusCard state={authSession.profileState} t={t} />;
+  return (
+    <UiSection eyebrow={t("user.nav.profile")} title={t("user.profile.title")}>
+      <UiAlert tone="info">{t("user.description")}</UiAlert>
+      <ProfileStatusCard state={authSession.profileState} t={t} />
+    </UiSection>
+  );
 }

@@ -24,4 +24,16 @@ describe("email providers", () => {
       new NoopEmailProvider().send({ subject: "", text: "", to: [] }),
     ).rejects.toThrow("at least one recipient");
   });
+
+  it("keeps noop message ids stable without Node runtime primitives", async () => {
+    await expect(
+      new NoopEmailProvider().send({
+        subject: "Привет",
+        text: "Hello",
+        to: [{ email: "user@example.com" }],
+      }),
+    ).resolves.toMatchObject({
+      messageId: "noop:0J_RgNC40LLQtdGCOnVzZXJA",
+    });
+  });
 });

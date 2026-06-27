@@ -1,9 +1,7 @@
-import type { SubmitEvent } from "react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, type SubmitEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient, useUserApiClient } from "@app/frontend/api-client";
-import type { Locale } from "@app/common/i18n";
-import { useAuthShellStore, type UiTheme } from "@app/frontend/ui";
+import { useAuthShellStore, type Locale, type UiTheme } from "@app/frontend/ui";
 import {
   fetchUserProfile,
   getPayloadLocale,

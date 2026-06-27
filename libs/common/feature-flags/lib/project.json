@@ -3,7 +3,13 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/feature-flags/lib/src",
   "projectType": "library",
-  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:feature-flags",
+    "framework:neutral"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -25,7 +31,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/common/feature-flags"]
     }

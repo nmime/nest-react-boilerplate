@@ -1,6 +1,12 @@
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import type { ReactNode, SubmitEvent } from "react";
-import { UiButton, UiCard, UiForm, UiTextField } from "../../../shared/ui";
+import {
+  UiAlert,
+  UiButton,
+  UiCard,
+  UiForm,
+  UiTextField,
+} from "../../../shared/ui";
 import type { AuthMode } from "../model";
 
 export interface AuthCardsProps {
@@ -22,8 +28,14 @@ export function AuthCards({
 }: Readonly<AuthCardsProps>) {
   return (
     <>
-      <UiCard title={t("user.login.title")}>
-        <UiForm onSubmit={(event) => onSubmit("login", event)}>
+      <UiCard className="xr-auth-card" title={t("user.login.title")}>
+        <UiAlert className="xr-card-note" tone="info">
+          {t("user.description")}
+        </UiAlert>
+        <UiForm
+          aria-busy={isLoginPending}
+          onSubmit={(event) => onSubmit("login", event)}
+        >
           <UiTextField
             aria-label={t("user.form.loginEmailLabel")}
             autoComplete="email"
@@ -53,8 +65,16 @@ export function AuthCards({
         </UiForm>
       </UiCard>
       {socialAuthSlot}
-      <UiCard title={t("user.register.title")}>
-        <UiForm onSubmit={(event) => onSubmit("register", event)}>
+      <UiCard className="xr-auth-card" title={t("user.register.title")}>
+        <UiAlert className="xr-card-note" tone="info">
+          {t("auth.social.createAccount.prompt", {
+            provider: t("auth.provider.telegram"),
+          })}
+        </UiAlert>
+        <UiForm
+          aria-busy={isRegisterPending}
+          onSubmit={(event) => onSubmit("register", event)}
+        >
           <UiTextField
             aria-label={t("user.form.registerDisplayNameLabel")}
             label={t("user.form.displayName")}

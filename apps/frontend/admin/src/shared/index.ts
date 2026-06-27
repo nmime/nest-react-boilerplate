@@ -2,7 +2,7 @@ import {
   translate,
   type TranslationKey,
   type TranslationParams,
-} from "@app/common/i18n";
+} from "@app/frontend/ui";
 import type { adminApi } from "@app/frontend/api-client";
 import type { AdminAccessPolicy } from "@app/frontend/feature/admin/shared";
 
@@ -42,6 +42,11 @@ export const normalizeAdminPath = (path: string): string => {
   return normalizedPath.startsWith("/admin/")
     ? normalizedPath.slice("/admin".length) || "/"
     : normalizedPath;
+};
+
+export const isUsersRoute = (path: string): boolean => {
+  const routePath = normalizeAdminPath(path);
+  return routePath === "/users" || routePath.startsWith("/users/");
 };
 
 export const routeUserId = (path: string): string | undefined =>

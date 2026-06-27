@@ -1,5 +1,12 @@
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import { UiCard, UiEmptyState, UiLoading, UiToast } from "../../../shared/ui";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
+import {
+  UiAlert,
+  UiCard,
+  UiEmptyState,
+  UiLoading,
+  UiStatusPill,
+  UiToast,
+} from "../../../shared/ui";
 import type { ProfileState } from "../../../entities/profile";
 
 export interface ProfileStatusCardProps {
@@ -7,22 +14,60 @@ export interface ProfileStatusCardProps {
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 
+const getProfileTone = (status: ProfileState["status"]) => {
+  if (status === "forbidden") {
+    return "warning";
+  }
+
+  if (status === "ready") {
+    return "success";
+  }
+
+  return "info";
+};
+
 export function ProfileStatusCard({
   state,
   t,
 }: Readonly<ProfileStatusCardProps>) {
   return (
-    <UiCard title={t("user.profile.title")} id="profile">
+    <UiCard
+      className="xr-profile-card"
+      title={t("user.profile.title")}
+      id="profile"
+    >
+      <div className="xr-status-row">
+        <span>{t("user.profile.title")}</span>
+        <UiStatusPill
+          label={state.status}
+          live={state.status === "loading" ? "polite" : "off"}
+          tone={getProfileTone(state.status)}
+        />
+      </div>
       {state.status === "loading" ? (
-        <UiLoading label={t("user.loadingProfile")} />
+        <UiAlert tone="info">
+          <UiLoading label={t("user.loadingProfile")} />
+        </UiAlert>
       ) : null}
       {state.status === "ready" ? (
-        <UiToast
-          message={t("user.state.ready", {
-            subject: state.email ?? state.subject,
-          })}
-          tone="success"
-        />
+        <div className="xr-profile-ready">
+          <UiToast
+            message={t("user.state.ready", {
+              subject: state.email ?? state.subject,
+            })}
+            tone="success"
+          />
+          <dl className="xr-profile-facts">
+            <div>
+              <dt>{t("user.form.email")}</dt>
+              <dd>{state.email ?? t("user.profile.emailFallback")}</dd>
+            </div>
+            <div>
+              <dt>{t("user.profile.unknown")}</dt>
+              <dd>{state.subject}</dd>
+            </div>
+          </dl>
+        </div>
       ) : null}
       {state.status === "missing-token" ? (
         <UiEmptyState

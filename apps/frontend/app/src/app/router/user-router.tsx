@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import type { Locale } from "@app/common/i18n";
-import { useI18n, type UiTheme } from "@app/frontend/ui";
+import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
 import { AuthPage } from "../../pages/auth";
 import { AuthDiscordCallbackPage } from "../../pages/auth-discord-callback";
 import { ProfilePage } from "../../pages/profile";
@@ -49,6 +48,7 @@ export function UserRouter({
     () => "/",
   );
   const route = normalizePath(pathname);
+  const linkRoute = getLinkRoute(route);
   const navigate = useCallback((to: string, options: NavigateOptions = {}) => {
     const nextUrl = new URL(
       to,
@@ -67,27 +67,28 @@ export function UserRouter({
   }, []);
   const navActions = useMemo(
     () => [
-      { href: "/", label: t("user.nav.home") },
+      { href: "/", isCurrent: route === "/", label: t("user.nav.home") },
       {
         href: "/auth",
+        isCurrent: route === "/auth",
         label: t("user.nav.auth"),
         variant: "secondary" as const,
       },
       {
         href: "/profile",
+        isCurrent: route === "/profile",
         label: t("user.nav.profile"),
         variant: "secondary" as const,
       },
       {
         href: "/settings",
+        isCurrent: route === "/settings" || linkRoute === "/link/discord",
         label: t("user.nav.settings"),
         variant: "secondary" as const,
       },
     ],
-    [t],
+    [linkRoute, route, t],
   );
-  const linkRoute = getLinkRoute(route);
-
   useEffect(() => {
     const clickHandler = (event: MouseEvent) => {
       const target = event.target;

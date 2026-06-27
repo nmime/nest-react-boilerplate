@@ -1,4 +1,10 @@
-import { UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
+import {
+  UiCard,
+  UiEmptyState,
+  UiSection,
+  UiStatusTag,
+  useI18n,
+} from "@app/frontend/ui";
 
 export const TenantRoadmapPage = () => {
   const { t } = useI18n();
@@ -11,6 +17,23 @@ export const TenantRoadmapPage = () => {
         title={t("admin.tenants.cardTitle")}
         description={t("admin.tenants.description")}
       />
+      <UiCard title={t("admin.dashboard.stat.pages.label")}>
+        <div className="admin-readiness-grid">
+          {[
+            "/admin/tenants",
+            "/admin/tenants/:id",
+            "/admin/tenants/:id/users",
+          ].map((path) => (
+            <div className="admin-readiness-card" key={path}>
+              <div className="admin-readiness-card__header">
+                <code>{path}</code>
+                <UiStatusTag label={t("admin.tenants.eyebrow")} tone="info" />
+              </div>
+              <p>{t("admin.tenants.description")}</p>
+            </div>
+          ))}
+        </div>
+      </UiCard>
     </UiSection>
   );
 };

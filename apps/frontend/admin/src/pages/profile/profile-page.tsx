@@ -1,5 +1,6 @@
 import { UiCard, UiSection, useI18n } from "@app/frontend/ui";
 import type { AdminProfilePayload } from "../../entities/admin-session";
+import { join } from "../../shared";
 
 export const ProfilePage = ({
   payload,
@@ -35,6 +36,14 @@ export const ProfilePage = ({
                 value: payload.principal?.subject ?? profile?.id ?? unknown,
               })}
             </dd>
+          </div>
+          <div>
+            <dt>{t("admin.users.column.roles")}</dt>
+            <dd>{join(payload.principal?.roles)}</dd>
+          </div>
+          <div>
+            <dt>{t("admin.users.filter.permission")}</dt>
+            <dd>{join(payload.principal?.permissions)}</dd>
           </div>
         </dl>
       </UiCard>

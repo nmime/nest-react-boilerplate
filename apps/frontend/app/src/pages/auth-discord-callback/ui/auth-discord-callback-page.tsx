@@ -2,7 +2,13 @@ import { useEffect, useMemo } from "react";
 import { useI18n } from "@app/frontend/ui";
 import { useSocialAuth } from "../../../features/social-auth";
 import { getErrorReason } from "../../../shared/lib";
-import { UiCard, UiLoading, UiToast } from "../../../shared/ui";
+import {
+  UiAlert,
+  UiCard,
+  UiLoading,
+  UiStatusPill,
+  UiToast,
+} from "../../../shared/ui";
 
 interface AuthDiscordCallbackPageProps {
   navigate: (to: string, options?: { replace?: boolean }) => void;
@@ -32,6 +38,14 @@ const readDiscordCallbackQuery = (): DiscordCallbackQueryState => {
   return code && state ? { code, state, tenantId } : { tenantId };
 };
 
+const getDiscordCallbackTone = (status: string, hasRequiredQuery: boolean) => {
+  if (status === "success") {
+    return "success";
+  }
+
+  return hasRequiredQuery ? "info" : "warning";
+};
+
 export function AuthDiscordCallbackPage({
   navigate,
 }: Readonly<AuthDiscordCallbackPageProps>) {
@@ -49,9 +63,27 @@ export function AuthDiscordCallbackPage({
   }, [hasRequiredQuery, query, socialAuth]);
 
   return (
-    <UiCard title={t("auth.social.discord.callback.title")}>
+    <UiCard
+      className="xr-callback-card"
+      title={t("auth.social.discord.callback.title")}
+    >
+      <div className="xr-status-row">
+        <span>{t("auth.provider.discord")}</span>
+        <UiStatusPill
+          label={
+            hasRequiredQuery ? socialAuth.discordCallbackStatus : "missing"
+          }
+          live={socialAuth.isDiscordCallbackPending ? "polite" : "off"}
+          tone={getDiscordCallbackTone(
+            socialAuth.discordCallbackStatus,
+            hasRequiredQuery,
+          )}
+        />
+      </div>
       {hasRequiredQuery && socialAuth.isDiscordCallbackPending ? (
-        <UiLoading label={t("auth.social.discord.callback.loading")} />
+        <UiAlert tone="info">
+          <UiLoading label={t("auth.social.discord.callback.loading")} />
+        </UiAlert>
       ) : null}
       {!hasRequiredQuery ? (
         <UiToast

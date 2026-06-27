@@ -190,6 +190,10 @@ ingress:
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  # Defaults model split-host frontend/API origins. For same-origin/path-based
+  # routing, keep API prefixes (/auth, /profile, /admin) and SPA service paths
+  # explicit in an environment values file and verify asset routing before
+  # traffic cutover; see docs/frontend-deployment-topology.md.
   hosts:
     - host: example.com
       service: landing

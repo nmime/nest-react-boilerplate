@@ -19,5 +19,6 @@
   "landing.stat.apis.detail": "auth, user, admin",
   "landing.stat.apps": "Apps",
   "landing.stat.apps.detail": "landing, user, admin",
-  "landing.stat.libs": "Shared libraries"
+  "landing.stat.libs": "Shared libraries",
+  "landing.statGrid.label": "Product foundation statistics"
 }

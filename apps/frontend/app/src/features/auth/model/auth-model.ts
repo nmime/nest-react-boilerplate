@@ -1,4 +1,4 @@
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/frontend/ui";
 
 export type AuthMode = "login" | "register";
 

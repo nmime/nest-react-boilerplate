@@ -19,6 +19,7 @@ import type {
   AuthUserEntity,
   TransactionalOutboxEventEntity,
 } from "@app/backend/postgres/main/auth";
+import { AdminUsersUseCase } from "../../application/admin-users.use-case";
 import { AdminUsersController } from "./admin-users.controller";
 
 const tenantId = "00000000-0000-0000-0000-000000000000";
@@ -177,9 +178,11 @@ const createController = () => {
     adminUserMutations,
     auditLogs,
     controller: new AdminUsersController(
-      users as never,
-      auditLogs as never,
-      adminUserMutations as never,
+      new AdminUsersUseCase(
+        users as never,
+        auditLogs as never,
+        adminUserMutations as never,
+      ),
     ),
     users,
   };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
 import { ADMIN_PROFILE_READ_PERMISSION } from "@app/backend/feature/admin/shared";
+import { GetAdminProfileUseCase } from "../../application/admin-profile.use-case";
 import {
   AdminProfileController,
   AdminProfilePayloadDto,
@@ -20,7 +21,9 @@ describe("AdminProfileController", () => {
       permissions: [ADMIN_PROFILE_READ_PERMISSION, "profile:read"],
     };
 
-    expect(new AdminProfileController().me(principal)).toEqual({
+    expect(
+      new AdminProfileController(new GetAdminProfileUseCase()).me(principal),
+    ).toEqual({
       data: {
         principal,
         profile: {

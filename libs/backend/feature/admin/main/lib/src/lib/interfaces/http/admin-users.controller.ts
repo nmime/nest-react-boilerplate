@@ -27,7 +27,6 @@ import {
   Min,
 } from "class-validator";
 import { Type } from "class-transformer";
-import type { Result } from "neverthrow";
 import {
   createOkResponse,
   type OkResponse,
@@ -39,7 +38,6 @@ import {
 } from "@app/backend/common/swagger";
 import {
   CurrentUser,
-  DEFAULT_AUTH_TENANT_ID,
   RequirePermissions,
   RequireRoles,
   SessionAuthGuard,
@@ -57,37 +55,33 @@ import {
   ADMIN_USERS_WRITE_PERMISSION,
   adminAssignablePermissions,
   adminAssignableRoles,
-  isAdminAssignablePermission,
-  isAdminAssignableRole,
-  toAdminRbacCatalogView,
 } from "@app/backend/feature/admin/shared";
+import { AdminApplicationError } from "../../application/admin-errors";
+import { AdminUsersUseCase } from "../../application/admin-users.use-case";
 import {
-  AdminAuditLogRepository,
-  AdminUserMutationRepository,
-  AuthUserRepository,
-  type AdminUserMutationResult,
-  type AdminAuditLogEntity,
-  type AuthUserEntity,
-  type AuthUserStatus,
-} from "@app/backend/postgres/main/auth";
+  createAdminRequestContext,
+  type AdminRequestContext,
+} from "../../domain/admin-request-context";
+import {
+  ADMIN_MAX_PAGE_SIZE,
+  adminAuditActions,
+  adminUserStatuses,
+  type AdminAuditAction,
+  type AdminAuditLogListPayload,
+  type AdminDashboardSummary,
+  type AdminUserListPayload,
+  type AdminUserStatus,
+  type AdminUserView,
+} from "../../domain/admin-user";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 
-const userStatuses = ["active", "disabled", "invited"] as const;
-const adminAuditActions = [
-  "admin.user.status.update",
-  "admin.user.access_policy.update",
-] as const;
-const MAX_PAGE_SIZE = 100;
-
-type AdminAuditAction = (typeof adminAuditActions)[number];
-
 class AdminUserQueryDto {
-  @ApiPropertyOptional({ maximum: MAX_PAGE_SIZE, minimum: 1 })
+  @ApiPropertyOptional({ maximum: ADMIN_MAX_PAGE_SIZE, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(MAX_PAGE_SIZE)
+  @Max(ADMIN_MAX_PAGE_SIZE)
   limit?: number;
 
   @ApiPropertyOptional({ minimum: 0 })
@@ -104,10 +98,10 @@ class AdminUserQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: userStatuses })
+  @ApiPropertyOptional({ enum: adminUserStatuses })
   @IsOptional()
-  @IsIn(userStatuses)
-  status?: AuthUserStatus;
+  @IsIn(adminUserStatuses)
+  status?: AdminUserStatus;
 
   @ApiPropertyOptional({ enum: adminAssignableRoles })
   @IsOptional()
@@ -121,12 +115,12 @@ class AdminUserQueryDto {
 }
 
 class AdminAuditQueryDto {
-  @ApiPropertyOptional({ maximum: MAX_PAGE_SIZE, minimum: 1 })
+  @ApiPropertyOptional({ maximum: ADMIN_MAX_PAGE_SIZE, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(MAX_PAGE_SIZE)
+  @Max(ADMIN_MAX_PAGE_SIZE)
   limit?: number;
 
   @ApiPropertyOptional({ minimum: 0 })
@@ -153,9 +147,9 @@ class AdminAuditQueryDto {
 }
 
 class UpdateAdminUserStatusDto {
-  @ApiProperty({ enum: userStatuses })
-  @IsIn(userStatuses)
-  status!: AuthUserStatus;
+  @ApiProperty({ enum: adminUserStatuses })
+  @IsIn(adminUserStatuses)
+  status!: AdminUserStatus;
 }
 
 class UpdateAdminUserAccessPolicyDto {
@@ -183,8 +177,8 @@ class AdminUserViewDto {
   @ApiPropertyOptional()
   displayName?: string;
 
-  @ApiProperty({ enum: userStatuses })
-  status!: AuthUserStatus;
+  @ApiProperty({ enum: adminUserStatuses })
+  status!: AdminUserStatus;
 
   @ApiProperty({ items: { type: "string" }, type: "array" })
   roles!: string[];
@@ -333,102 +327,40 @@ class AdminDashboardSummaryDto {
   recentAudit!: AdminAuditLogViewDto[];
 }
 
-const normalizePage = (query: { limit?: number; offset?: number }) => ({
-  limit: Math.min(query.limit ?? 50, MAX_PAGE_SIZE),
-  offset: query.offset ?? 0,
-});
+const toHttpException = (error: unknown): never => {
+  if (error instanceof AdminApplicationError) {
+    if (error.code === "not_found") {
+      throw new NotFoundException(error.message);
+    }
+    if (
+      error.code === "invalid_access_policy" ||
+      error.code === "sensitive_policy_violation"
+    ) {
+      throw new BadRequestException(error.message);
+    }
 
-const resolveTenantId = (principal: AuthenticatedPrincipal): string =>
-  principal.tenantId ?? DEFAULT_AUTH_TENANT_ID;
+    throw new InternalServerErrorException(error.message);
+  }
 
-const requireAllowedPolicy = (input: UpdateAdminUserAccessPolicyDto): void => {
-  const unknownRoles = input.roles.filter(
-    (role) => !isAdminAssignableRole(role),
-  );
-  const unknownPermissions = input.permissions.filter(
-    (permission) => !isAdminAssignablePermission(permission),
-  );
-  if (unknownRoles.length > 0 || unknownPermissions.length > 0) {
-    throw new BadRequestException(
-      "Access policy contains roles or permissions outside the admin catalog.",
-    );
+  throw error;
+};
+
+const executeAdminUseCase = async <T>(
+  handler: () => Promise<T>,
+): Promise<T> => {
+  try {
+    return await handler();
+  } catch (error) {
+    return toHttpException(error);
   }
 };
 
-const unwrapRepositoryResult = <T>(
-  result: Result<T, { message?: string }>,
-): T => {
-  if (result.isOk()) {
-    return result.value;
-  }
-
-  throw new InternalServerErrorException(
-    result.error.message ?? "Admin repository operation failed.",
-  );
-};
-
-const unwrapSensitiveMutationResult = <T>(
-  result: Result<T, { message?: string }>,
-): T => {
-  if (result.isOk()) {
-    return result.value;
-  }
-
-  const message = result.error.message ?? "Admin repository operation failed.";
-  if (
-    message ===
-      "Administrators cannot remove their own active admin write access." ||
-    message ===
-      "At least one active administrator must retain admin write access."
-  ) {
-    throw new BadRequestException(message);
-  }
-
-  throw new InternalServerErrorException(message);
-};
-
-const toIso = (value: Date | undefined | null): string | undefined =>
-  value && value.getTime() > 0 ? value.toISOString() : undefined;
-
-const toAdminUserView = (entity: AuthUserEntity): AdminUserViewDto => ({
-  id: entity.id,
-  tenantId: entity.tenantId,
-  email: entity.email,
-  ...(entity.displayName ? { displayName: entity.displayName } : {}),
-  status: entity.status,
-  roles: entity.roles,
-  permissions: entity.permissions,
-  ...(entity.locale ? { locale: entity.locale } : {}),
-  ...(entity.theme ? { theme: entity.theme } : {}),
-  ...(toIso(entity.lastLoginAt)
-    ? { lastLoginAt: toIso(entity.lastLoginAt) }
-    : {}),
-  createdAt: entity.createdAt.toISOString(),
-  updatedAt: entity.updatedAt.toISOString(),
-});
-
-const toAdminAuditLogView = (
-  entity: AdminAuditLogEntity,
-): AdminAuditLogViewDto => ({
-  id: entity.id,
-  tenantId: entity.tenantId,
-  ...(entity.actorUserId ? { actorUserId: entity.actorUserId } : {}),
-  action: entity.action,
-  resource: entity.resource,
-  ...(entity.targetUserId ? { targetUserId: entity.targetUserId } : {}),
-  before: entity.before,
-  after: entity.after,
-  metadata: entity.metadata,
-  createdAt: entity.createdAt.toISOString(),
-});
-
-const metadataFromRequest = (
+const requestContextFromRequest = (
   request: AuthenticatedRequest,
-): Record<string, unknown> => ({
-  ...(normalizeHeaderScalar(request.headers?.["x-request-id"])
-    ? { requestId: normalizeHeaderScalar(request.headers?.["x-request-id"]) }
-    : {}),
-});
+): AdminRequestContext =>
+  createAdminRequestContext({
+    requestId: normalizeHeaderScalar(request.headers?.["x-request-id"]),
+  });
 
 const normalizeHeaderScalar = (
   value: string | string[] | undefined,
@@ -445,11 +377,7 @@ const normalizeHeaderScalar = (
 @UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
 @Controller("admin")
 export class AdminUsersController {
-  constructor(
-    private readonly users: AuthUserRepository,
-    private readonly auditLogs: AdminAuditLogRepository,
-    private readonly adminUserMutations: AdminUserMutationRepository,
-  ) {}
+  constructor(private readonly adminUsers: AdminUsersUseCase) {}
 
   @Get("users")
   @ApiOkDataResponse(AdminUserListPayloadDto)
@@ -458,29 +386,12 @@ export class AdminUsersController {
   async listUsers(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Query() query: AdminUserQueryDto,
-  ): Promise<OkResponse<AdminUserListPayloadDto>> {
-    const { limit, offset } = normalizePage(query);
-    const tenantId = resolveTenantId(principal);
-    const filter = {
-      tenantId,
-      search: query.search?.trim(),
-      status: query.status,
-      role: query.role,
-      permission: query.permission,
-      limit,
-      offset,
-    };
-    const [items, total] = await Promise.all([
-      this.users.listUsers(filter),
-      this.users.countUsers(filter),
-    ]);
-
-    return createOkResponse({
-      items: unwrapRepositoryResult(items).map(toAdminUserView),
-      total: unwrapRepositoryResult(total),
-      limit,
-      offset,
-    });
+  ): Promise<OkResponse<AdminUserListPayload>> {
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminUsers.listUsers(principal, query),
+      ),
+    );
   }
 
   @Get("users/:id")
@@ -490,14 +401,10 @@ export class AdminUsersController {
   async getUser(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Param("id") id: string,
-  ): Promise<OkResponse<AdminUserViewDto>> {
-    const user = await this.users.findById(id, resolveTenantId(principal));
-    const entity = unwrapRepositoryResult(user);
-    if (!entity) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    return createOkResponse(toAdminUserView(entity));
+  ): Promise<OkResponse<AdminUserView>> {
+    return createOkResponse(
+      await executeAdminUseCase(() => this.adminUsers.getUser(principal, id)),
+    );
   }
 
   @Patch("users/:id/status")
@@ -512,26 +419,17 @@ export class AdminUsersController {
     @Param("id") id: string,
     @Body() input: UpdateAdminUserStatusDto,
     @Req() request: AuthenticatedRequest,
-  ): Promise<OkResponse<AdminUserViewDto>> {
-    const tenantId = resolveTenantId(principal);
-    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
-      tenantId,
-      targetUserId: id,
-      actorUserId: principal.subject,
-      action: "admin.user.status.update",
-      policy: { status: input.status },
-      audit: {
-        actorUserId: principal.subject,
-        metadata: metadataFromRequest(request),
-      },
-    });
-    const result =
-      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
-    if (!result) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    return createOkResponse(toAdminUserView(result.after));
+  ): Promise<OkResponse<AdminUserView>> {
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminUsers.updateUserStatus(
+          principal,
+          id,
+          input,
+          requestContextFromRequest(request),
+        ),
+      ),
+    );
   }
 
   @Patch("users/:id/access-policy")
@@ -546,30 +444,17 @@ export class AdminUsersController {
     @Param("id") id: string,
     @Body() input: UpdateAdminUserAccessPolicyDto,
     @Req() request: AuthenticatedRequest,
-  ): Promise<OkResponse<AdminUserViewDto>> {
-    requireAllowedPolicy(input);
-    const tenantId = resolveTenantId(principal);
-    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
-      tenantId,
-      targetUserId: id,
-      actorUserId: principal.subject,
-      action: "admin.user.access_policy.update",
-      policy: {
-        roles: input.roles,
-        permissions: input.permissions,
-      },
-      audit: {
-        actorUserId: principal.subject,
-        metadata: metadataFromRequest(request),
-      },
-    });
-    const result =
-      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
-    if (!result) {
-      throw new NotFoundException("Admin user was not found.");
-    }
-
-    return createOkResponse(toAdminUserView(result.after));
+  ): Promise<OkResponse<AdminUserView>> {
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminUsers.updateUserAccessPolicy(
+          principal,
+          id,
+          input,
+          requestContextFromRequest(request),
+        ),
+      ),
+    );
   }
 
   @Get("roles")
@@ -577,7 +462,7 @@ export class AdminUsersController {
   @RequireRoles(ADMIN_ROLE)
   @RequirePermissions(ADMIN_ROLES_READ_PERMISSION)
   roles(): OkResponse<AdminRbacCatalogPayloadDto> {
-    const catalog = toAdminRbacCatalogView();
+    const catalog = this.adminUsers.roles();
 
     return createOkResponse({
       resources: [...catalog.resources],
@@ -598,27 +483,12 @@ export class AdminUsersController {
   async listAudit(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Query() query: AdminAuditQueryDto,
-  ): Promise<OkResponse<AdminAuditLogListPayloadDto>> {
-    const { limit, offset } = normalizePage(query);
-    const filter = {
-      tenantId: resolveTenantId(principal),
-      action: query.action,
-      actorUserId: query.actorUserId,
-      targetUserId: query.targetUserId,
-      limit,
-      offset,
-    };
-    const [items, total] = await Promise.all([
-      this.auditLogs.list(filter),
-      this.auditLogs.count(filter),
-    ]);
-
-    return createOkResponse({
-      items: unwrapRepositoryResult(items).map(toAdminAuditLogView),
-      total: unwrapRepositoryResult(total),
-      limit,
-      offset,
-    });
+  ): Promise<OkResponse<AdminAuditLogListPayload>> {
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminUsers.listAudit(principal, query),
+      ),
+    );
   }
 
   @Get("dashboard/summary")
@@ -627,31 +497,11 @@ export class AdminUsersController {
   @RequirePermissions(ADMIN_DASHBOARD_READ_PERMISSION)
   async dashboardSummary(
     @CurrentUser() principal: AuthenticatedPrincipal,
-  ): Promise<OkResponse<AdminDashboardSummaryDto>> {
-    const tenantId = resolveTenantId(principal);
-    const [
-      totalUsers,
-      activeUsers,
-      disabledUsers,
-      invitedUsers,
-      auditCount,
-      audit,
-    ] = await Promise.all([
-      this.users.countUsers({ tenantId }),
-      this.users.countUsers({ tenantId, status: "active" }),
-      this.users.countUsers({ tenantId, status: "disabled" }),
-      this.users.countUsers({ tenantId, status: "invited" }),
-      this.auditLogs.count({ tenantId }),
-      this.auditLogs.list({ tenantId, limit: 5, offset: 0 }),
-    ]);
-
-    return createOkResponse({
-      totalUsers: unwrapRepositoryResult(totalUsers),
-      activeUsers: unwrapRepositoryResult(activeUsers),
-      disabledUsers: unwrapRepositoryResult(disabledUsers),
-      invitedUsers: unwrapRepositoryResult(invitedUsers),
-      recentAuditEvents: unwrapRepositoryResult(auditCount),
-      recentAudit: unwrapRepositoryResult(audit).map(toAdminAuditLogView),
-    });
+  ): Promise<OkResponse<AdminDashboardSummary>> {
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminUsers.dashboardSummary(principal),
+      ),
+    );
   }
 }

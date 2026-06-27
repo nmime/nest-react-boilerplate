@@ -1,6 +1,6 @@
 import { MemorySessionStorage, session, type StorageAdapter } from "grammy";
 import { RedisAdapter } from "@grammyjs/storage-redis";
-import type { RedisClientLike } from "@app/common/redis";
+import type { RedisClientLike } from "@app/backend/common/redis";
 import type { TelegramBotContext, TelegramBotSession } from "./types";
 
 export function initialTelegramBotSession(): TelegramBotSession {

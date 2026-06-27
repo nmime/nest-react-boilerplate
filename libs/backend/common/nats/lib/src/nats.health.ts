@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { NatsConnection } from "@nats-io/nats-core";
-import type { HealthIndicatorResult } from "@app/common/health";
+import type { HealthIndicatorResult } from "@app/backend/common/health";
 import { InjectNatsConnection } from "./decorator";
 
 @Injectable()

@@ -11,10 +11,8 @@ import {
   type APIMessageComponentInteraction,
   type APIModalSubmitInteraction,
 } from "discord-api-types/v10";
-import {
-  DiscordAccountLinkNotConfiguredError,
-  DiscordAccountService,
-} from "./discord-account.service";
+import { DiscordAccountLinkNotConfiguredError } from "./discord-account.service";
+import { DiscordAccountApplicationPort } from "./discord-account.port";
 import { resolveDiscordTenantId } from "./discord-config";
 import {
   DiscordCustomIdCodec,
@@ -53,7 +51,7 @@ type ComponentRenderMode = "ephemeral" | "update";
 @Injectable()
 export class DiscordInteractionRouter {
   constructor(
-    private readonly accounts: DiscordAccountService,
+    private readonly accounts: DiscordAccountApplicationPort,
     private readonly customIds: DiscordCustomIdCodec,
     private readonly navigation: DiscordNavigationStateService,
   ) {}

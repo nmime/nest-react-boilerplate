@@ -7,8 +7,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiClientProvider } from "@app/api-client";
-import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend-ui";
+import { ApiClientProvider } from "@app/frontend/api-client";
+import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend/ui";
 import { ProviderIdentitiesPanel } from "./provider-identities-panel";
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>

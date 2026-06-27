@@ -57,7 +57,7 @@ const isCheckedSourceFile = (path: string): boolean => {
 };
 
 describe("frontend raw fetch boundary", () => {
-  it("keeps raw fetch centralized in @app/frontend-api-support", () => {
+  it("keeps raw fetch centralized in @app/frontend/api-support", () => {
     const offenders = sourceRoots
       .flatMap((root) => walk(join(workspaceRoot, root)))
       .filter(isCheckedSourceFile)

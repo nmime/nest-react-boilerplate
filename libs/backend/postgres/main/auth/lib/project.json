@@ -1,5 +1,5 @@
 {
-  "name": "@app/postgres-main-auth",
+  "name": "@app/backend/postgres/main/auth",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/auth/lib/src",
   "projectType": "library",

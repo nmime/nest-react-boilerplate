@@ -1,5 +1,5 @@
 import { HttpStatus } from "@nestjs/common";
-import { AppHttpException } from "@app/common/exception";
+import { AppHttpException } from "@app/backend/common/exception";
 
 export class ClientDataValidationException extends AppHttpException {
   constructor(errors: unknown) {

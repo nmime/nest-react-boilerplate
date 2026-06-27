@@ -5,4 +5,4 @@ export * from "./lib/external-auth.service";
 export * from "./lib/auth-user-store";
 export * from "./lib/auth-token-store";
 export * from "./lib/social-auth-store";
-export * from "@app/feature-auth-shared";
+export * from "@app/backend/feature/auth/shared";

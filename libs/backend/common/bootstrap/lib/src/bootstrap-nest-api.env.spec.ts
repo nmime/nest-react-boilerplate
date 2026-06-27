@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RedisMode } from "@app/common/redis";
+import { RedisMode } from "@app/backend/common/redis";
 import { resolveBackendEnvironmentConfig } from "./bootstrap-nest-api";
 
 describe("resolveBackendEnvironmentConfig", () => {

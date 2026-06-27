@@ -1,4 +1,4 @@
-import { throwOnOpenApiErrorData, userApi } from "@app/api-client";
+import { throwOnOpenApiErrorData, userApi } from "@app/frontend/api-client";
 import type { UserProfilePayload } from "../model/profile";
 
 export async function fetchUserProfile(

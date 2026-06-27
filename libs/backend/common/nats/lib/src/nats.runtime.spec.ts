@@ -18,7 +18,7 @@ import {
   startNatsContainer,
   stopNatsContainer,
   type StartedServiceContainer,
-} from "@app/common-component-test";
+} from "@app/backend/common/component-test";
 
 interface StartedNatsRuntimeContainer extends StartedServiceContainer {
   server: string;
@@ -61,7 +61,7 @@ describeIfDocker("NATS runtime smoke", () => {
     }).compile();
 
     connection = moduleRef.get<NatsConnection>(NatsInjectToken);
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await moduleRef?.close();

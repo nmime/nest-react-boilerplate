@@ -1,9 +1,14 @@
 {
-  "name": "@app/common/exception",
+  "name": "@app/backend/common/exception",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/exception/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "tags": [
+    "platform:backend",
+    "type:common",
+    "scope:shared",
+    "boundary:backend-kernel"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

@@ -1,1 +1,1 @@
-export * from "./feature-flag.entity";
+export * from "../infrastructure/data-access/entities";

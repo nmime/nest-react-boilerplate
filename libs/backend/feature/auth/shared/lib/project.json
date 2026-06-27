@@ -1,5 +1,5 @@
 {
-  "name": "@app/feature-auth-shared",
+  "name": "@app/backend/feature/auth/shared",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/feature/auth/shared/lib/src",
   "projectType": "library",

@@ -1,8 +1,8 @@
 import { okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
-import { FeatureFlagEntity } from "./entity";
+import { FeatureFlagEntity } from "./infrastructure/data-access/entities";
 import { PostgresFeatureFlagProvider } from "./feature-flag-postgres.service";
-import type { FeatureFlagRepository } from "./repository";
+import type { FeatureFlagRepository } from "./infrastructure/data-access/repositories";
 
 function createRepositoryMock(flags: Record<string, FeatureFlagEntity | null>) {
   return {

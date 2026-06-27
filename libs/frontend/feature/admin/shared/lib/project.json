@@ -1,5 +1,5 @@
 {
-  "name": "@app/frontend/feature-admin-shared",
+  "name": "@app/frontend/feature/admin/shared",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/frontend/feature/admin/shared/lib/src",
   "projectType": "library",

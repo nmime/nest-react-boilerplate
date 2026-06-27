@@ -1,6 +1,9 @@
 import { MikroORM } from "@mikro-orm/core";
 import { Inject, Injectable, Optional } from "@nestjs/common";
-import type { HealthIndicatorResult, HealthStatus } from "@app/common/health";
+import type {
+  HealthIndicatorResult,
+  HealthStatus,
+} from "@app/backend/common/health";
 
 export const POSTGRES_HEALTH_ADAPTER = "POSTGRES_HEALTH_ADAPTER";
 export const POSTGRES_READINESS_HEALTH_OPTIONS =

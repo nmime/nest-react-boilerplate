@@ -1,7 +1,7 @@
 import {
   getRequiredApiBaseUrl,
   type FrontendEnv,
-} from "@app/frontend-api-support";
+} from "@app/frontend/api-support";
 
 export const getFrontendEnv = (): FrontendEnv =>
   import.meta.env as Readonly<Record<string, boolean | string | undefined>>;

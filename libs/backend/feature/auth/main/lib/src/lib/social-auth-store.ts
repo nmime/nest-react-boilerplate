@@ -14,8 +14,8 @@ import {
   type ExternalAuthProviderChannel,
   type ExternalIdentityEntity,
   type ProviderTokenCrypto,
-} from "@app/postgres-main-auth";
-import type { AuthProviderTokenKind } from "@app/postgres-main-auth";
+} from "@app/backend/postgres/main/auth";
+import type { AuthProviderTokenKind } from "@app/backend/postgres/main/auth";
 
 export interface SocialAuthStoreError {
   code: "repository_error";

@@ -1,4 +1,4 @@
-import type { adminApi } from "@app/api-client";
+import type { adminApi } from "@app/frontend/api-client";
 import type { UserStatus } from "../../../entities/admin-user";
 import { pageSize } from "../../../shared";
 

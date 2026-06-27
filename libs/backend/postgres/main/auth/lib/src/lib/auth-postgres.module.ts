@@ -14,7 +14,7 @@ import {
   AuthUserTokenEntitySchema,
   ExternalIdentityEntitySchema,
   TransactionalOutboxEventEntitySchema,
-} from "./entity";
+} from "./infrastructure/data-access/entities";
 import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
@@ -24,7 +24,7 @@ import {
   AuthTokenRepository,
   AuthUserRepository,
   ExternalIdentityRepository,
-} from "./repository";
+} from "./infrastructure/data-access/repositories";
 
 @Module({
   imports: [

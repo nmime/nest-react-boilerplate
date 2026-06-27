@@ -10,8 +10,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, it } from "node:test";
+import { describe as nodeDescribe, it as nodeIt } from "node:test";
 import { runGenerateVerticalSlice } from "./generate-vertical-slice.ts";
+
+const { describe, it } = process.env.VITEST
+  ? await import("vitest")
+  : { describe: nodeDescribe, it: nodeIt };
 
 function createWorkspace(): string {
   const workspaceRoot = mkdtempSync(join(tmpdir(), "vertical-slice-"));
@@ -84,7 +88,7 @@ describe("project generate vertical slice", () => {
       assert.match(output, /UPDATE tsconfig\.base\.json path aliases/);
       assert.match(
         output,
-        /Add @app\/feature-support-cases-main to the auth-app-api API module imports/,
+        /Add @app\/backend\/feature\/support-cases\/main to the auth-app-api API module imports/,
       );
       assert.equal(
         existsSync(
@@ -131,7 +135,7 @@ describe("project generate vertical slice", () => {
 
       assert.match(controller, /from "@app\/common\/swagger"/);
       assert.match(controller, /from "@app\/common\/response"/);
-      assert.match(controller, /from "@app\/feature-billing-events-shared"/);
+      assert.match(controller, /from "@app\/backend\/feature\/billing-events\/shared"/);
       assert.equal(controller.includes("@app/common/" + "exceptions"), false);
       assert.equal(
         controller.includes("libs/backend/common/" + "exceptions"),
@@ -139,11 +143,15 @@ describe("project generate vertical slice", () => {
       );
       assert.match(page, /generated auth-app-api route/);
       assert.deepEqual(
-        tsconfig.compilerOptions.paths["@app/feature-billing-events-main"],
+        tsconfig.compilerOptions.paths[
+          "@app/backend/feature/billing-events/main"
+        ],
         ["libs/backend/feature/billing-events/main/lib/src/index.ts"],
       );
       assert.deepEqual(
-        tsconfig.compilerOptions.paths["@app/feature-billing-events-shared"],
+        tsconfig.compilerOptions.paths[
+          "@app/backend/feature/billing-events/shared"
+        ],
         ["libs/backend/feature/billing-events/shared/lib/src/index.ts"],
       );
     } finally {

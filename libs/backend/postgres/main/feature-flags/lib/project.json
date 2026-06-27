@@ -1,5 +1,5 @@
 {
-  "name": "@app/postgres-main-feature-flags",
+  "name": "@app/backend/postgres/main/feature-flags",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/feature-flags/lib/src",
   "projectType": "library",

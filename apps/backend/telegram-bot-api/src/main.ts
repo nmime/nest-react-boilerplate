@@ -1,7 +1,7 @@
 import {
   bootstrapNestApi,
   resolveDefaultDevelopmentCorsOrigins,
-} from "@app/common/bootstrap";
+} from "@app/backend/common/bootstrap";
 import { TelegramBotApiModule } from "./telegram-bot-api.module";
 
 void bootstrapNestApi(TelegramBotApiModule, {

@@ -10,4 +10,4 @@ export {
   UiStatCard,
   UiTextField,
   UiToast,
-} from "@app/frontend-ui";
+} from "@app/frontend/ui";

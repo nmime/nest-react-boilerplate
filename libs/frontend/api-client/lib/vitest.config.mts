@@ -13,7 +13,7 @@ export default defineConfig({
           import.meta.url,
         ),
       ),
-      "@app/frontend-api-support": fileURLToPath(
+      "@app/frontend/api-support": fileURLToPath(
         new URL(
           "../../../../libs/frontend/api-support/lib/src/index.ts",
           import.meta.url,

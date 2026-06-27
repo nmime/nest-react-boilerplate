@@ -7,7 +7,7 @@ import {
   uniqueStrings,
 } from "./index";
 
-describe("@app/common/shared", () => {
+describe("@app/backend/common/shared", () => {
   it("deduplicates strings while preserving order", () => {
     expect(uniqueStrings(["admin", "admin", "support"])).toEqual([
       "admin",

@@ -9,7 +9,7 @@ import {
 } from "./random-intl-text.util";
 import { BotLangResolver } from "./resolver";
 
-describe("@app/common/intl", () => {
+describe("@app/backend/common/intl", () => {
   it("owns locale context resolution without translation catalogs", () => {
     expect(IntlContext.resolve(" ru ")).toEqual({
       locale: "ru",

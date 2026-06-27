@@ -4,7 +4,7 @@ import {
   AuthTokenCleanupService,
   resolveAuthTokenCleanupConfig,
 } from "./auth-token-cleanup.service";
-import type { AuthTokenRepository } from "./repository";
+import type { AuthTokenRepository } from "./infrastructure/data-access/repositories";
 
 function createRepositoryMock(): {
   cleanupExpiredTokens: ReturnType<typeof vi.fn>;

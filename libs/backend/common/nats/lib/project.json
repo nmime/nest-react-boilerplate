@@ -1,9 +1,14 @@
 {
-  "name": "@app/common/nats",
+  "name": "@app/backend/common/nats",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/nats/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "tags": [
+    "platform:backend",
+    "type:common",
+    "scope:shared",
+    "boundary:infrastructure-adapter"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

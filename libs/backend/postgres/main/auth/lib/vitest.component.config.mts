@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [nxViteTsPaths()],
   resolve: {
     alias: {
-      "@app/common-component-test": new URL(
+      "@app/backend/common/component-test": new URL(
         "../../../../../../libs/backend/common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,

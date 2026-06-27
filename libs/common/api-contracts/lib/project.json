@@ -1,5 +1,5 @@
 {
-  "name": "@app/api-contracts",
+  "name": "@app/common/api-contracts",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/api-contracts/lib/src",
   "projectType": "library",

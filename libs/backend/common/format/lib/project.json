@@ -1,9 +1,14 @@
 {
-  "name": "@app/common/format",
+  "name": "@app/backend/common/format",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/format/lib/src",
   "projectType": "library",
-  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "tags": [
+    "platform:backend",
+    "type:common",
+    "scope:shared",
+    "boundary:interface-helper"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

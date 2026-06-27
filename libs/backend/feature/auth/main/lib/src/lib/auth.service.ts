@@ -1,10 +1,4 @@
 import {
-  createHmac,
-  pbkdf2Sync,
-  randomBytes,
-  timingSafeEqual,
-} from "node:crypto";
-import {
   BadRequestException,
   ConflictException,
   Inject,
@@ -15,17 +9,13 @@ import {
 } from "@nestjs/common";
 import {
   createDefaultAccessPolicy,
-  type AuthenticatedPrincipal,
   normalizeUserThemePreference,
-  resolveTenantId,
-  normalizeTenantId,
   toAuthenticatedUserView,
   type AuthSessionView,
   type AuthMethodClaims,
   type AuthenticatedUserView,
   type UserThemePreference,
-  Language,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import { normalizeLocale } from "@app/common/i18n";
 import {
   AUTH_USER_STORE,
@@ -39,6 +29,23 @@ import {
   InMemoryAuthTokenStore,
 } from "./auth-token-store";
 import { SOCIAL_AUTH_STORE, type SocialAuthStore } from "./social-auth-store";
+import { createAuthSession } from "./application/auth-session.factory";
+import { normalizeEmail } from "./domain/email-address";
+import {
+  AuthJwtSigningError,
+  signJwt as signDomainJwt,
+  type JwtSigningEnvironment,
+} from "./domain/jwt-signer";
+import { hashPassword, verifyPassword } from "./domain/password.service";
+import {
+  InvalidAuthTenantIdError,
+  parseTenantId as parseDomainTenantId,
+} from "./domain/tenant-id";
+
+export { toSessionPrincipal } from "./application/auth-session.factory";
+export { normalizeEmail } from "./domain/email-address";
+export type { JwtSigningEnvironment } from "./domain/jwt-signer";
+export { hashPassword, verifyPassword } from "./domain/password.service";
 
 export interface RegisterUserInput {
   tenantId?: string | null;
@@ -64,22 +71,6 @@ export interface UserActionTokenInput {
   tenantId?: string | null;
   email: string;
 }
-
-export interface JwtSigningEnvironment {
-  AUTH_JWT_SECRET?: string;
-  AUTH_JWT_ISSUER?: string;
-  AUTH_JWT_AUDIENCE?: string;
-  AUTH_JWT_EXPIRES_IN_SECONDS?: string;
-  ADMIN_BOOTSTRAP_EMAILS?: string;
-  NODE_ENV?: string;
-}
-
-const DefaultExpiresInSeconds = 3600;
-const PasswordIterations = 120_000;
-const PasswordKeyLength = 32;
-const MaximumPasswordHashIterations = 1_000_000;
-const MaximumPasswordDigestLength = 128;
-const MinimumProductionJwtSecretLength = 32;
 
 @Injectable()
 export class AuthService {
@@ -311,45 +302,15 @@ export class AuthService {
       authTime: Math.floor(Date.now() / 1000),
     },
   ): AuthSessionView {
-    const expiresIn = readExpiresInSeconds(env.AUTH_JWT_EXPIRES_IN_SECONDS);
-    const view = toAuthenticatedUserView(user);
-    return {
-      user: view,
-      accessToken: signJwt(
-        {
-          sub: view.id,
-          tid: view.tenantId,
-          tenantId: view.tenantId,
-          email: view.email,
-          name: view.displayName,
-          locale: view.locale,
-          theme: view.theme,
-          roles: view.roles,
-          permissions: view.permissions,
-          ...(claims.amr ? { amr: claims.amr } : {}),
-          ...(claims.authProvider
-            ? { auth_provider: claims.authProvider }
-            : {}),
-          ...(claims.authChannel ? { auth_channel: claims.authChannel } : {}),
-          ...(claims.authTime ? { auth_time: claims.authTime } : {}),
-          ...(claims.externalIdentityId
-            ? { external_identity_id: claims.externalIdentityId }
-            : {}),
-        },
-        env,
-        expiresIn,
-      ),
-      tokenType: "Bearer",
-      expiresIn,
-      ...(claims.amr ? { amr: claims.amr } : {}),
-      ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
-      ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
-      ...(claims.authTime ? { authTime: claims.authTime } : {}),
-      ...(claims.externalIdentityId
-        ? { externalIdentityId: claims.externalIdentityId }
-        : {}),
-      ...(refreshToken ? { refreshToken } : {}),
-    };
+    try {
+      return createAuthSession(user, env, refreshToken, claims);
+    } catch (error) {
+      if (error instanceof AuthJwtSigningError) {
+        throw new UnauthorizedException(error.message);
+      }
+
+      throw error;
+    }
   }
 
   createUserSession(
@@ -402,143 +363,30 @@ export class AuthService {
   }
 }
 
-export function toSessionPrincipal(
-  session: AuthSessionView,
-): AuthenticatedPrincipal {
-  return {
-    subject: session.user.id,
-    tenantId: session.user.tenantId,
-    email: session.user.email ?? undefined,
-    displayName: session.user.displayName,
-    locale: session.user.locale as Language,
-    theme: session.user.theme,
-    roles: session.user.roles,
-    permissions: session.user.permissions,
-    amr: session.amr,
-    authProvider: session.authProvider,
-    authChannel: session.authChannel,
-    authTime: session.authTime,
-    externalIdentityId: session.externalIdentityId,
-  };
-}
-
 export function parseTenantId(value: string | null | undefined): string {
-  if (value && !normalizeTenantId(value)) {
-    throw new BadRequestException("Invalid tenant id.");
-  }
-  return resolveTenantId(value);
-}
-
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-export function hashPassword(
-  password: string,
-  salt = randomBytes(16).toString("base64url"),
-): string {
-  const digest = pbkdf2Sync(
-    password,
-    salt,
-    PasswordIterations,
-    PasswordKeyLength,
-    "sha256",
-  ).toString("base64url");
-  return `pbkdf2_sha256$${PasswordIterations}$${salt}$${digest}`;
-}
-
-export function verifyPassword(password: string, encodedHash: string): boolean {
-  const [algorithm, iterations, salt, expectedDigest] = encodedHash.split("$");
-  if (algorithm !== "pbkdf2_sha256" || !salt || !expectedDigest) {
-    return false;
-  }
-
-  const parsedIterations = parsePasswordHashIterations(iterations);
-  if (!parsedIterations) {
-    return false;
-  }
-
-  let expected: Buffer;
   try {
-    expected = Buffer.from(expectedDigest, "base64url");
-  } catch {
-    return false;
-  }
+    return parseDomainTenantId(value);
+  } catch (error) {
+    if (error instanceof InvalidAuthTenantIdError) {
+      throw new BadRequestException(error.message);
+    }
 
-  if (expected.length === 0 || expected.length > MaximumPasswordDigestLength) {
-    return false;
+    throw error;
   }
-
-  const digest = pbkdf2Sync(
-    password,
-    salt,
-    parsedIterations,
-    expected.length,
-    "sha256",
-  );
-  return digest.length === expected.length && timingSafeEqual(digest, expected);
 }
 
 export function signJwt(
   payload: Record<string, unknown>,
   env: JwtSigningEnvironment,
-  expiresIn = DefaultExpiresInSeconds,
+  expiresIn?: number,
 ): string {
-  const secret = env.AUTH_JWT_SECRET?.trim();
-  if (!secret) {
-    throw new UnauthorizedException("AUTH_JWT_SECRET is not configured.");
-  }
-  if (
-    env.NODE_ENV === "production" &&
-    secret.length < MinimumProductionJwtSecretLength
-  ) {
-    throw new UnauthorizedException(
-      "AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.",
-    );
-  }
-  const now = Math.floor(Date.now() / 1000);
-  const fullPayload = {
-    ...payload,
-    ...(env.AUTH_JWT_ISSUER ? { iss: env.AUTH_JWT_ISSUER } : {}),
-    ...(env.AUTH_JWT_AUDIENCE ? { aud: env.AUTH_JWT_AUDIENCE } : {}),
-    iat: now,
-    exp: now + expiresIn,
-  };
-  const signingInput = `${base64UrlJson({ alg: "HS256", typ: "JWT" })}.${base64UrlJson(fullPayload)}`;
-  const signature = createHmac("sha256", secret)
-    .update(signingInput)
-    .digest("base64url");
-  return `${signingInput}.${signature}`;
-}
+  try {
+    return signDomainJwt(payload, env, expiresIn);
+  } catch (error) {
+    if (error instanceof AuthJwtSigningError) {
+      throw new UnauthorizedException(error.message);
+    }
 
-function base64UrlJson(value: unknown): string {
-  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
-}
-
-function parsePasswordHashIterations(value: string | undefined): number | null {
-  if (!value) {
-    return null;
+    throw error;
   }
-
-  const parsed = Number.parseInt(value, 10);
-  if (
-    !Number.isInteger(parsed) ||
-    String(parsed) !== value ||
-    parsed < 1 ||
-    parsed > MaximumPasswordHashIterations
-  ) {
-    return null;
-  }
-
-  return parsed;
-}
-
-function readExpiresInSeconds(value: string | undefined): number {
-  if (!value) {
-    return DefaultExpiresInSeconds;
-  }
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0
-    ? parsed
-    : DefaultExpiresInSeconds;
 }

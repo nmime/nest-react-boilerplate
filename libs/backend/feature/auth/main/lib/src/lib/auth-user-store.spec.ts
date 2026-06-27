@@ -1,6 +1,6 @@
 import { errAsync, okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_AUTH_TENANT_ID } from "@app/feature-auth-shared";
+import { DEFAULT_AUTH_TENANT_ID } from "@app/backend/feature/auth/shared";
 import {
   InMemoryAuthUserStore,
   PostgresAuthUserStore,

@@ -1,4 +1,4 @@
-import { useI18n } from "@app/frontend-ui";
+import { useI18n } from "@app/frontend/ui";
 import {
   ProviderIdentitiesPanel,
   useSocialAuth,

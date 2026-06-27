@@ -1,4 +1,4 @@
-import type { adminApi } from "@app/api-client";
+import type { adminApi } from "@app/frontend/api-client";
 
 export type RoleRow =
   adminApi.AdminRbacCatalogPayloadDto["permissions"][number] &

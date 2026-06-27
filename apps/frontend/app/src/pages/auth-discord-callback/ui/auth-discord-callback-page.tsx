@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useI18n } from "@app/frontend-ui";
+import { useI18n } from "@app/frontend/ui";
 import { useSocialAuth } from "../../../features/social-auth";
 import { getErrorReason } from "../../../shared/lib";
 import { UiCard, UiLoading, UiToast } from "../../../shared/ui";

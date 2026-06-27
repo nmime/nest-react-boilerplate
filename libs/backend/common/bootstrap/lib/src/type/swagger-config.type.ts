@@ -1,3 +1,3 @@
-import type { SetupSwaggerOptions } from "@app/common/swagger";
+import type { SetupSwaggerOptions } from "@app/backend/common/swagger";
 
 export type BootstrapSwaggerConfig = SetupSwaggerOptions;

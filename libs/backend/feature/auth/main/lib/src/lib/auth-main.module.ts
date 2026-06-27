@@ -2,8 +2,8 @@ import { DynamicModule, Module } from "@nestjs/common";
 import {
   PostgresMainModule,
   type PostgresMikroOrmOverrides,
-} from "@app/postgres-main";
-import { AuthPostgresModule } from "@app/postgres-main-auth";
+} from "@app/backend/postgres/main";
+import { AuthPostgresModule } from "@app/backend/postgres/main/auth";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { ExternalAuthService } from "./external-auth.service";

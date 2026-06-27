@@ -5,7 +5,7 @@ import {
   DiscordBotConfig,
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
-} from "@app/backend-bot-discord";
+} from "@app/backend/bots/discord";
 import { DiscordInteractionsController } from "./discord-interactions.controller";
 
 const snapshot = {

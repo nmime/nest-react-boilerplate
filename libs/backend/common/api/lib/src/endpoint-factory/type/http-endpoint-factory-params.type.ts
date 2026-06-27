@@ -1,4 +1,4 @@
-import type { CommonLogger } from "@app/common/shared";
+import type { CommonLogger } from "@app/backend/common/shared";
 import type { HttpClient } from "../../http-client";
 import type { HttpClientConfig } from "../../http-client/type";
 

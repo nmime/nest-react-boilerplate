@@ -1,4 +1,4 @@
-import { UiEmptyState, UiSection, useI18n } from "@app/frontend-ui";
+import { UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
 
 export const ForbiddenPage = ({ reason }: Readonly<{ reason: string }>) => {
   const { t } = useI18n();

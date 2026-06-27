@@ -110,7 +110,7 @@ export function runGenerateVerticalSlice(
   console.log("");
   console.log("Next steps:");
   console.log(
-    `1. Add @app/feature-${names.kebab}-main to the ${parsed.apiApp} API module imports.`,
+    `1. Add ${backendFeatureMainAlias(names)} to the ${parsed.apiApp} API module imports.`,
   );
   console.log(
     "2. Wire the generated client from the React route/page that owns this feature.",
@@ -226,10 +226,10 @@ function updateTsconfigPaths(workspaceRoot: string, names: Names): void {
 
 function createTsconfigAliases(names: Names): Record<string, string[]> {
   return {
-    [`@app/feature-${names.kebab}-main`]: [
+    [backendFeatureMainAlias(names)]: [
       `libs/backend/feature/${names.kebab}/main/lib/src/index.ts`,
     ],
-    [`@app/feature-${names.kebab}-shared`]: [
+    [backendFeatureSharedAlias(names)]: [
       `libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`,
     ],
     [`@app/postgres-main-${names.kebab}`]: [
@@ -238,8 +238,18 @@ function createTsconfigAliases(names: Names): Record<string, string[]> {
   };
 }
 
+function backendFeatureMainAlias(names: Names): string {
+  return `@app/backend/feature/${names.kebab}/main`;
+}
+
+function backendFeatureSharedAlias(names: Names): string {
+  return `@app/backend/feature/${names.kebab}/shared`;
+}
+
 function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
   const base = `libs/backend/feature/${names.kebab}`;
+  const mainAlias = backendFeatureMainAlias(names);
+  const sharedAlias = backendFeatureSharedAlias(names);
 
   return [
     {
@@ -248,7 +258,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     },
     projectJson(
       `${base}/shared/lib/project.json`,
-      `@app/feature-${names.kebab}-shared`,
+      sharedAlias,
       `${base}/shared/lib/src`,
       `dist/${base}/shared`,
       `${base}/shared/lib/tsconfig.lib.json`,
@@ -257,7 +267,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     tsConfig(`${base}/shared/lib`, 6),
     {
       path: `${base}/main/lib/src/index.ts`,
-      contents: `export * from "./lib/${names.kebab}.module";\nexport * from "./lib/${names.kebab}.controller";\nexport * from "./lib/${names.kebab}.service";\nexport * from "@app/feature-${names.kebab}-shared";\n`,
+      contents: `export * from "./lib/${names.kebab}.module";\nexport * from "./lib/${names.kebab}.controller";\nexport * from "./lib/${names.kebab}.service";\nexport * from "${sharedAlias}";\n`,
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.module.ts`,
@@ -265,11 +275,11 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.service.ts`,
-      contents: `import { Injectable } from "@nestjs/common";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "@app/feature-${names.kebab}-shared";\n\n@Injectable()\nexport class ${names.pascal}Service {\n  async list(): Promise<${names.pascal}Dto[]> {\n    return [];\n  }\n\n  async create(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto> {\n    const now = new Date().toISOString();\n\n    return {\n      id: crypto.randomUUID(),\n      name: input.name,\n      createdAt: now,\n    };\n  }\n}\n`,
+      contents: `import { Injectable } from "@nestjs/common";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\n@Injectable()\nexport class ${names.pascal}Service {\n  async list(): Promise<${names.pascal}Dto[]> {\n    return [];\n  }\n\n  async create(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto> {\n    const now = new Date().toISOString();\n\n    return {\n      id: crypto.randomUUID(),\n      name: input.name,\n      createdAt: now,\n    };\n  }\n}\n`,
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.controller.ts`,
-      contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/common/swagger";\nimport { createOkResponse, type OkResponse } from "@app/common/response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "@app/feature-${names.kebab}-shared";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
+      contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/common/swagger";\nimport { createOkResponse, type OkResponse } from "@app/common/response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.service.spec.ts`,
@@ -277,7 +287,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     },
     projectJson(
       `${base}/main/lib/project.json`,
-      `@app/feature-${names.kebab}-main`,
+      mainAlias,
       `${base}/main/lib/src`,
       `dist/${base}/main`,
       `${base}/main/lib/tsconfig.lib.json`,
@@ -311,7 +321,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`, 5),
     {
       path: `libs/frontend/api-client/lib/src/features/${names.kebab}.ts`,
-      contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "@app/feature-${names.kebab}-shared";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) =>\n      request<${names.pascal}Dto>("/${names.kebab}", {\n        body: JSON.stringify(input),\n        headers: { "content-type": "application/json" },\n        method: "POST",\n      }),\n  };\n}\n`,
+      contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) =>\n      request<${names.pascal}Dto>("/${names.kebab}", {\n        body: JSON.stringify(input),\n        headers: { "content-type": "application/json" },\n        method: "POST",\n      }),\n  };\n}\n`,
     },
     {
       path: `apps/frontend/app/src/app/features/${names.kebab}/${names.pascal}Page.tsx`,

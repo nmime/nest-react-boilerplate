@@ -3,7 +3,7 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/api-client";
+} from "@app/frontend/api-client";
 import {
   UiCard,
   UiLoading,
@@ -12,7 +12,7 @@ import {
   UiStatCard,
   UiStatusTag,
   useI18n,
-} from "@app/frontend-ui";
+} from "@app/frontend/ui";
 import type { AdminAccess } from "../../entities/admin-session";
 import { errorText, statusTone } from "../../shared";
 

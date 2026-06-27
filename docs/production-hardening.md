@@ -90,7 +90,7 @@ Before deploying, provide values for:
 - `TRUST_PROXY=false` unless explicitly set for a known proxy configuration
 - `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`
 - OAuth issuer/client values if OAuth is enabled
-- Explicit `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` origins, or `VITE_API_BASE_URL_MODE=same-origin` when a production reverse proxy intentionally serves API routes from the same origin. Production frontend builds/runtime fail fast without one of these explicit configurations.
+- Explicit `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` origins for split-origin frontend hosting, or `VITE_API_BASE_URL_MODE=same-origin` when a production reverse proxy intentionally serves API routes from the same origin. Direct frontend build targets default to same-origin only when no API mode or origins are configured; deployment env files should still make the intended topology explicit.
 - `DATABASE_URL` or `POSTGRES_*`
 - `POSTGRES_SSL=true` for managed databases where required
 - `POSTGRES_SYNCHRONIZE=false`

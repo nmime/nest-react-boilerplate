@@ -12,6 +12,8 @@ export type FrontendApiBaseUrlKey = (typeof frontendApiBaseUrlKeys)[number];
 
 const sameOriginApiMode = "same-origin";
 
+export type FrontendBuildEnv = Record<string, string | undefined>;
+
 const getEnvString = (env: FrontendEnv, key: string): string => {
   const value = env[key];
   return typeof value === "string" ? value.trim() : "";
@@ -26,6 +28,39 @@ export const isNonProductionFrontendEnv = (env: FrontendEnv): boolean => {
 export const isExplicitSameOriginApiMode = (env: FrontendEnv): boolean =>
   getEnvString(env, "VITE_API_BASE_URL_MODE").toLowerCase() ===
   sameOriginApiMode;
+
+const isNonProductionFrontendBuild = (command: string, mode: string): boolean =>
+  command !== "build" || mode === "development" || mode === "test";
+
+export const getDefaultFrontendBuildApiBaseUrlMode = (
+  env: FrontendEnv,
+  command: string,
+  mode: string,
+): string | undefined => {
+  if (
+    isNonProductionFrontendBuild(command, mode) ||
+    getEnvString(env, "VITE_API_BASE_URL_MODE") ||
+    frontendApiBaseUrlKeys.some((key) => getEnvString(env, key))
+  ) {
+    return undefined;
+  }
+
+  return sameOriginApiMode;
+};
+
+export const applyDefaultFrontendBuildApiBaseUrlMode = (
+  env: FrontendBuildEnv,
+  command: string,
+  mode: string,
+): boolean => {
+  const defaultMode = getDefaultFrontendBuildApiBaseUrlMode(env, command, mode);
+  if (!defaultMode) {
+    return false;
+  }
+
+  env["VITE_API_BASE_URL_MODE"] = defaultMode;
+  return true;
+};
 
 export const normalizeApiBaseUrl = (value: string): string =>
   value.trim().replace(/\/$/u, "");
@@ -69,4 +104,17 @@ export const assertRequiredFrontendApiBaseUrls = (
         `Set explicit API origins or set VITE_API_BASE_URL_MODE=${sameOriginApiMode} to opt into a same-origin API proxy.`,
     );
   }
+};
+
+export const assertRequiredFrontendBuildApiBaseUrls = (
+  env: FrontendEnv,
+  command: string,
+  mode: string,
+  keys: readonly FrontendApiBaseUrlKey[] = frontendApiBaseUrlKeys,
+): void => {
+  if (isNonProductionFrontendBuild(command, mode)) {
+    return;
+  }
+
+  assertRequiredFrontendApiBaseUrls(env, keys);
 };

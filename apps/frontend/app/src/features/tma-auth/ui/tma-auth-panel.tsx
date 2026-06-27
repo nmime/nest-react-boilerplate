@@ -1,6 +1,12 @@
 import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import { getErrorReason } from "../../../shared/lib";
-import { UiCard, UiLoading, UiToast } from "../../../shared/ui";
+import {
+  UiAlert,
+  UiCard,
+  UiLoading,
+  UiStatusPill,
+  UiToast,
+} from "../../../shared/ui";
 import type { TmaDeepNavigationState, TmaLaunchIntent } from "../model";
 
 interface TmaAuthPanelProps {
@@ -31,6 +37,33 @@ const getDeepNavigationMessageKey = (
   return null;
 };
 
+const getDeepNavigationTone = (state: TmaDeepNavigationState) =>
+  state === "not-found" ? "warning" : "info";
+
+const getTmaStatusTone = (status: string) => {
+  if (status === "success") {
+    return "success";
+  }
+
+  if (status === "error") {
+    return "warning";
+  }
+
+  return "info";
+};
+
+const getTmaIntroKey = (isLinkIntent: boolean): TranslationKey =>
+  isLinkIntent ? "tma.link.required" : "tma.idle";
+
+const getTmaIdleMessageKey = (isLinkIntent: boolean): TranslationKey =>
+  isLinkIntent ? "tma.link.pending" : "tma.idle";
+
+const getTmaSuccessMessageKey = (isLinkIntent: boolean): TranslationKey =>
+  isLinkIntent ? "tma.link.success" : "tma.authenticated";
+
+const getTmaErrorMessageKey = (isLinkIntent: boolean): TranslationKey =>
+  isLinkIntent ? "tma.link.error" : "auth.social.error.invalidCallback";
+
 export function TmaAuthPanel({
   deepNavigationState,
   error,
@@ -43,28 +76,38 @@ export function TmaAuthPanel({
   const isLinkIntent = intent === "link";
   const deepNavigationMessageKey =
     getDeepNavigationMessageKey(deepNavigationState);
+  const showIdleState = isTelegram && status === "idle" && !isVerifying;
 
   return (
-    <UiCard title={t("tma.loading")}>
+    <UiCard className="xr-tma-card" title={t("tma.loading")}>
+      <div className="xr-status-row">
+        <span>{t(getTmaIntroKey(isLinkIntent))}</span>
+        <UiStatusPill
+          label={status}
+          live={isVerifying ? "polite" : "off"}
+          tone={getTmaStatusTone(status)}
+        />
+      </div>
       {!isTelegram ? (
         <UiToast message={t("tma.unsupported")} tone="warning" />
       ) : null}
       {deepNavigationMessageKey ? (
         <UiToast
           message={t(deepNavigationMessageKey)}
-          tone={deepNavigationState === "not-found" ? "warning" : "info"}
+          tone={getDeepNavigationTone(deepNavigationState)}
         />
       ) : null}
-      {isVerifying ? <UiLoading label={t("tma.loading")} /> : null}
-      {isTelegram && status === "idle" && !isVerifying ? (
-        <UiToast
-          message={t(isLinkIntent ? "tma.link.pending" : "tma.idle")}
-          tone="info"
-        />
+      {isVerifying ? (
+        <UiAlert tone="info">
+          <UiLoading label={t("tma.loading")} />
+        </UiAlert>
+      ) : null}
+      {showIdleState ? (
+        <UiToast message={t(getTmaIdleMessageKey(isLinkIntent))} tone="info" />
       ) : null}
       {status === "success" ? (
         <UiToast
-          message={t(isLinkIntent ? "tma.link.success" : "tma.authenticated")}
+          message={t(getTmaSuccessMessageKey(isLinkIntent))}
           tone="success"
         />
       ) : null}
@@ -72,14 +115,9 @@ export function TmaAuthPanel({
         <UiToast
           message={getErrorReason(
             error,
-            t(
-              isLinkIntent
-                ? "tma.link.error"
-                : "auth.social.error.invalidCallback",
-              {
-                provider: t("auth.provider.telegram"),
-              },
-            ),
+            t(getTmaErrorMessageKey(isLinkIntent), {
+              provider: t("auth.provider.telegram"),
+            }),
           )}
           tone="warning"
         />

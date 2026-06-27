@@ -1,7 +1,13 @@
 import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import type { SubmitEvent, ReactNode } from "react";
 import { AuthCards, type AuthMode } from "../../../features/auth";
-import { UiSection, UiStatCard } from "../../../shared/ui";
+import { getUserAppApiModeLabel } from "../../../shared/config";
+import {
+  UiAlert,
+  UiSection,
+  UiStatCard,
+  UiStatusPill,
+} from "../../../shared/ui";
 
 export interface AuthPanelProps {
   isLoginPending: boolean;
@@ -22,8 +28,15 @@ export function AuthPanel({
   t,
   socialAuthSlot,
 }: Readonly<AuthPanelProps>) {
+  const apiModeLabel = getUserAppApiModeLabel();
+
   return (
     <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
+      <UiAlert className="xr-readiness-alert" tone="info">
+        <strong>{t("user.status")}</strong>
+        <span>{apiModeLabel}</span>
+        <UiStatusPill label={t("user.nav.auth")} tone="success" />
+      </UiAlert>
       <div className="xr-card-grid" id="auth">
         <AuthCards
           isLoginPending={isLoginPending}
@@ -46,6 +59,7 @@ export function AuthPanel({
           label={t("user.stat.userApi.label")}
           value="3002"
         />
+        <UiStatCard detail={apiModeLabel} label="API mode" value="ready" />
       </div>
     </UiSection>
   );

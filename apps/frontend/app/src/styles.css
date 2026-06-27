@@ -1,9 +1,84 @@
 /* App-level overrides can live here. Shared tokens and components are imported from @app/frontend/ui. */
 
 .xr-social-actions,
-.xr-provider-list {
+.xr-provider-list,
+.xr-preferences-controls,
+.xr-profile-ready,
+.xr-readiness-panel,
+.xr-settings-grid {
   display: grid;
   gap: 0.75rem;
+}
+
+.xr-readiness-panel {
+  gap: 1rem;
+}
+
+.xr-readiness-alert,
+.xr-card-note,
+.xr-status-row,
+.xr-route-chip {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.xr-readiness-alert,
+.xr-status-row {
+  justify-content: space-between;
+}
+
+.xr-route-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.xr-route-chip {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 999px;
+  color: inherit;
+  padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+  text-decoration: none;
+}
+
+.xr-route-chip:focus-visible,
+.xr-route-chip:hover {
+  border-color: color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.xr-stat-grid--compact {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.xr-profile-facts {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  margin: 0;
+}
+
+.xr-profile-facts div {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.xr-profile-facts dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.xr-profile-facts dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.xr-preferences-controls {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .xr-provider-row {
@@ -18,4 +93,13 @@
 
 .xr-provider-row p {
   margin: 0.25rem 0 0;
+}
+
+@media (max-width: 48rem) {
+  .xr-provider-row,
+  .xr-readiness-alert,
+  .xr-status-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

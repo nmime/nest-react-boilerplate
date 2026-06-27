@@ -61,7 +61,7 @@ describeIfDocker("NATS runtime smoke", () => {
     }).compile();
 
     connection = moduleRef.get<NatsConnection>(NatsInjectToken);
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await moduleRef?.close();

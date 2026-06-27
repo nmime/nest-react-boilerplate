@@ -3,7 +3,12 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/logger/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "tags": [
+    "platform:backend",
+    "type:common",
+    "scope:shared",
+    "boundary:infrastructure-adapter"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

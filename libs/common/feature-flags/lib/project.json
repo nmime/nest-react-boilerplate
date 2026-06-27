@@ -3,7 +3,14 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/feature-flags/lib/src",
   "projectType": "library",
-  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:shared-kernel",
+    "boundary:feature-flags",
+    "framework:neutral"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

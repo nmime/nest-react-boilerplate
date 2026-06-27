@@ -4,6 +4,7 @@ import type {
   FeatureFlagValue,
 } from "./feature-flag.types";
 import {
+  type FeatureFlagEnvironment,
   readEnvironmentFlags,
   toFeatureFlagBoolean,
 } from "./feature-flag-value";
@@ -33,7 +34,10 @@ export class InMemoryFeatureFlagProvider implements FeatureFlagProvider {
 export class EnvironmentFeatureFlagProvider extends InMemoryFeatureFlagProvider {
   override readonly name = "environment";
 
-  constructor(env: NodeJS.ProcessEnv = process.env, prefix = "FEATURE_") {
+  constructor(
+    env: FeatureFlagEnvironment = defaultFeatureFlagEnvironment(),
+    prefix = "FEATURE_",
+  ) {
     super(readEnvironmentFlags(env, prefix));
   }
 }
@@ -42,4 +46,12 @@ export function createFeatureFlagProvider(
   flags: Readonly<Record<string, FeatureFlagValue>> = {},
 ): FeatureFlagProvider {
   return new InMemoryFeatureFlagProvider(flags);
+}
+
+function defaultFeatureFlagEnvironment(): FeatureFlagEnvironment {
+  const runtime = globalThis as typeof globalThis & {
+    readonly process?: { readonly env?: FeatureFlagEnvironment };
+  };
+
+  return runtime.process?.env ?? {};
 }

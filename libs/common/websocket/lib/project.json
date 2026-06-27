@@ -3,7 +3,14 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/websocket/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:common", "scope:shared"],
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:websocket",
+    "boundary:contracts",
+    "framework:neutral"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

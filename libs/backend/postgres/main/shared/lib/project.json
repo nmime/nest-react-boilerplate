@@ -1,5 +1,5 @@
 {
-  "name": "@app/postgres-main",
+  "name": "@app/backend/postgres/main",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/shared/lib/src",
   "projectType": "library",

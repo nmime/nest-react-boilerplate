@@ -9,21 +9,24 @@ import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/common/swagger";
-import { createOkResponse, type OkResponse } from "@app/common/response";
+} from "@app/backend/common/swagger";
+import {
+  createOkResponse,
+  type OkResponse,
+} from "@app/backend/common/response";
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
   SessionAuthGuard,
   RequirePermissions,
   RequireRoles,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import {
   ADMIN_PROFILE_READ_PERMISSION,
   ADMIN_ROLE,
   type AdminProfileView,
   toAdminProfileView,
-} from "@app/backend/feature-admin-shared";
+} from "@app/backend/feature/admin/shared";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 
 export interface AdminProfilePayload {

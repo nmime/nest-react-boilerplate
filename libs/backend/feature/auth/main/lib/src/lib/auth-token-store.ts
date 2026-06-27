@@ -1,12 +1,12 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { okAsync, ResultAsync } from "neverthrow";
-import { DEFAULT_AUTH_TENANT_ID } from "@app/feature-auth-shared";
+import { DEFAULT_AUTH_TENANT_ID } from "@app/backend/feature/auth/shared";
 import {
   AuthTokenRepository,
   type AuthRefreshTokenEntity,
   type AuthUserTokenEntity,
-} from "@app/postgres-main-auth";
+} from "@app/backend/postgres/main/auth";
 
 export type AuthUserTokenPurpose = "email_verification" | "password_reset";
 

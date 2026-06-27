@@ -5,8 +5,8 @@ import {
   HealthService,
   RuntimeHealthIndicator,
   EnvHealthIndicator,
-} from "@app/common/health";
-import { TelegramBotModule } from "@app/backend-bot-telegram";
+} from "@app/backend/common/health";
+import { TelegramBotModule } from "@app/backend/bots/telegram";
 import { TelegramWebhookController } from "./telegram-webhook.controller";
 
 @Module({

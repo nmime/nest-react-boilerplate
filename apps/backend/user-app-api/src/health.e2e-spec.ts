@@ -6,8 +6,8 @@ import {
 import { Test } from "@nestjs/testing";
 import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createValidationPipe } from "@app/common/validation";
-import { UserApiModule } from "./user-api.module";
+import { createValidationPipe } from "@app/backend/common/validation";
+import { UserAppApiModule } from "./user-app-api.module";
 
 interface HealthEnvelope {
   status?: string;
@@ -27,7 +27,7 @@ describe("user-app-api health e2e", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [UserApiModule],
+      imports: [UserAppApiModule],
     }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(

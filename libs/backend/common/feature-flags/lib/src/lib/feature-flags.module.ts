@@ -5,20 +5,20 @@ import {
   type FeatureFlagProvider,
 } from "@app/common/feature-flags";
 
-export interface FeatureFlagModuleOptions {
+export interface FeatureFlagsModuleOptions {
   provider?: FeatureFlagProvider;
 }
 
 @Module({})
-export class FeatureFlagModule {
-  static forRoot(options: FeatureFlagModuleOptions = {}): DynamicModule {
+export class FeatureFlagsModule {
+  static forRoot(options: FeatureFlagsModuleOptions = {}): DynamicModule {
     const featureFlagProvider: Provider<FeatureFlagProvider> = {
       provide: FeatureFlagProviderToken,
       useValue: options.provider ?? new EnvironmentFeatureFlagProvider(),
     };
 
     return {
-      module: FeatureFlagModule,
+      module: FeatureFlagsModule,
       providers: [featureFlagProvider],
       exports: [featureFlagProvider],
     };

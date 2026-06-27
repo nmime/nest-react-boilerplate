@@ -28,12 +28,15 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import type { Result } from "neverthrow";
-import { createOkResponse, type OkResponse } from "@app/common/response";
+import {
+  createOkResponse,
+  type OkResponse,
+} from "@app/backend/common/response";
 import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/common/swagger";
+} from "@app/backend/common/swagger";
 import {
   CurrentUser,
   DEFAULT_AUTH_TENANT_ID,
@@ -42,7 +45,7 @@ import {
   SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import {
   ADMIN_AUDIT_READ_PERMISSION,
   ADMIN_DASHBOARD_READ_PERMISSION,
@@ -57,7 +60,7 @@ import {
   isAdminAssignablePermission,
   isAdminAssignableRole,
   toAdminRbacCatalogView,
-} from "@app/backend/feature-admin-shared";
+} from "@app/backend/feature/admin/shared";
 import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
@@ -66,7 +69,7 @@ import {
   type AdminAuditLogEntity,
   type AuthUserEntity,
   type AuthUserStatus,
-} from "@app/postgres-main-auth";
+} from "@app/backend/postgres/main/auth";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 
 const userStatuses = ["active", "disabled", "invited"] as const;

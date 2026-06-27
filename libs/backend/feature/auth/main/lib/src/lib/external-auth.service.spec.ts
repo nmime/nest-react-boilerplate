@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_AUTH_TENANT_ID,
   validateBearerAuthorization,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import { AuthService } from "./auth.service";
 import { InMemoryAuthUserStore } from "./auth-user-store";
 import { ExternalAuthService } from "./external-auth.service";

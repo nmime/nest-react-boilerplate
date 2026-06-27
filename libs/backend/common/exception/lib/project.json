@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/exception",
+  "name": "@app/backend/common/exception",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/exception/lib/src",
   "projectType": "library",

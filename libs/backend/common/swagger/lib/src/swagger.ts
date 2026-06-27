@@ -8,9 +8,9 @@ import {
   getSchemaPath,
   SwaggerModule,
 } from "@nestjs/swagger";
-import { ApiExceptions } from "@app/common/exception";
+import { ApiExceptions } from "@app/backend/common/exception";
 
-export * from "@app/common/exception";
+export * from "@app/backend/common/exception";
 
 export const sessionCookieSecuritySchemes = [
   {

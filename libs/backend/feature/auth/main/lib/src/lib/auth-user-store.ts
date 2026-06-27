@@ -5,8 +5,8 @@ import type { Locale } from "@app/common/i18n";
 import {
   DEFAULT_AUTH_TENANT_ID,
   type UserThemePreference,
-} from "@app/feature-auth-shared";
-import { AuthUserRepository } from "@app/postgres-main-auth";
+} from "@app/backend/feature/auth/shared";
+import { AuthUserRepository } from "@app/backend/postgres/main/auth";
 
 export interface AuthUserRecord {
   id: string;

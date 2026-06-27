@@ -19,72 +19,72 @@ export default defineConfig({
         "../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/network": new URL(
+      "@app/backend/common/network": new URL(
         "../../../libs/backend/common/network/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/redis": new URL(
+      "@app/backend/common/redis": new URL(
         "../../../libs/backend/common/redis/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/nats": new URL(
+      "@app/backend/common/nats": new URL(
         "../../../libs/backend/common/nats/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/exception": new URL(
+      "@app/backend/common/exception": new URL(
         "../../../libs/backend/common/exception/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/shared": new URL(
+      "@app/backend/common/shared": new URL(
         "../../../libs/backend/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/bootstrap": new URL(
+      "@app/backend/common/bootstrap": new URL(
         "../../../libs/backend/common/bootstrap/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/response": new URL(
+      "@app/backend/common/response": new URL(
         "../../../libs/backend/common/response/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/swagger": new URL(
+      "@app/backend/common/swagger": new URL(
         "../../../libs/backend/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/health": new URL(
+      "@app/backend/common/health": new URL(
         "../../../libs/backend/common/health/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/validation": new URL(
+      "@app/backend/common/validation": new URL(
         "../../../libs/backend/common/validation/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-auth-main": new URL(
+      "@app/backend/feature/auth/main": new URL(
         "../../../libs/backend/feature/auth/main/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-auth-shared": new URL(
+      "@app/backend/feature/auth/shared": new URL(
         "../../../libs/backend/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-user-main": new URL(
+      "@app/backend/feature/user/main": new URL(
         "../../../libs/backend/feature/user/main/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/feature-user-shared": new URL(
+      "@app/backend/feature/user/shared": new URL(
         "../../../libs/backend/feature/user/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/postgres-main": new URL(
-        "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@app/postgres-main-feature-flags/migrations": new URL(
+      "@app/backend/postgres/main/feature-flags/migrations": new URL(
         "../../../libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/postgres-main-feature-flags": new URL(
+      "@app/backend/postgres/main/feature-flags": new URL(
         "../../../libs/backend/postgres/main/feature-flags/lib/src/index.ts",
+        import.meta.url,
+      ).pathname,
+      "@app/backend/postgres/main": new URL(
+        "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },

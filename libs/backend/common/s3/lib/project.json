@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/s3",
+  "name": "@app/backend/common/s3",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/s3/lib/src",
   "projectType": "library",

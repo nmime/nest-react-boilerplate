@@ -10,13 +10,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   ExceptionsFilter,
   ExceptionsResponseTransformer,
-} from "@app/common/response";
-import { createValidationPipe } from "@app/common/validation";
+} from "@app/backend/common/response";
+import { createValidationPipe } from "@app/backend/common/validation";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedSession,
-} from "@app/feature-auth-shared";
-import { AuthApiModule } from "./auth-api.module";
+} from "@app/backend/feature/auth/shared";
+import { AuthAppApiModule } from "./auth-app-api.module";
 
 type UserThemePreference = "system" | "light" | "dark";
 
@@ -132,7 +132,7 @@ describe("auth-app-api e2e", () => {
     process.env.AUTH_PERSISTENCE = "memory";
     process.env.AUTH_JWT_SECRET = "e2e-secret";
     const moduleRef = await Test.createTestingModule({
-      imports: [AuthApiModule],
+      imports: [AuthAppApiModule],
     }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(

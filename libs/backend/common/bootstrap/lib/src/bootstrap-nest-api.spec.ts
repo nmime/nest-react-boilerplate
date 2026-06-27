@@ -87,16 +87,16 @@ vi.mock("@app/common/i18n", () => ({
   translate: mocks.translate,
 }));
 
-vi.mock("@app/common/response", () => ({
+vi.mock("@app/backend/common/response", () => ({
   ExceptionsFilter: mocks.exceptionsFilter,
   ExceptionsResponseTransformer: mocks.exceptionsResponseTransformer,
 }));
 
-vi.mock("@app/common/swagger", () => ({
+vi.mock("@app/backend/common/swagger", () => ({
   setupSwagger: mocks.setupSwagger,
 }));
 
-vi.mock("@app/common/validation", () => ({
+vi.mock("@app/backend/common/validation", () => ({
   createValidationPipe: mocks.createValidationPipe,
 }));
 

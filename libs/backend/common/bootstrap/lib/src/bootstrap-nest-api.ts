@@ -17,18 +17,18 @@ import {
   type RedisClientLike,
   type RedisConnectionConfig,
   type RedisHost,
-} from "@app/common/redis";
+} from "@app/backend/common/redis";
 import {
   ExceptionsFilter,
   ExceptionsResponseTransformer,
-} from "@app/common/response";
+} from "@app/backend/common/response";
 import {
   createRequestLocaleMiddleware,
   resolveLocaleFromRequest,
   translate,
 } from "@app/common/i18n";
-import { setupSwagger } from "@app/common/swagger";
-import { createValidationPipe } from "@app/common/validation";
+import { setupSwagger } from "@app/backend/common/swagger";
+import { createValidationPipe } from "@app/backend/common/validation";
 
 export interface BootstrapNestApiOptions {
   appName: string;

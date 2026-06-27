@@ -9,20 +9,23 @@ import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/common/swagger";
-import { createOkResponse, type OkResponse } from "@app/common/response";
+} from "@app/backend/common/swagger";
+import {
+  createOkResponse,
+  type OkResponse,
+} from "@app/backend/common/response";
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
   RbacGuard,
   SessionAuthGuard,
   RequirePermissions,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import {
   toUserProfileView,
   USER_PROFILE_READ_PERMISSION,
   type UserProfileView,
-} from "@app/feature-user-shared";
+} from "@app/backend/feature/user/shared";
 
 export interface ProfilePayload {
   principal: AuthenticatedPrincipal;

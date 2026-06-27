@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
-import { Migration20260609100000CreateFeatureFlags } from "@app/postgres-main-feature-flags";
+import { Migration20260609100000CreateFeatureFlags } from "@app/backend/postgres/main/feature-flags";
 import { authMigrations } from "./index";
 
 function collectSql(migration: { addSql(sql: string): void; up(): void }) {

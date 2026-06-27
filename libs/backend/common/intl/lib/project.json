@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/intl",
+  "name": "@app/backend/common/intl",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/intl/lib/src",
   "projectType": "library",

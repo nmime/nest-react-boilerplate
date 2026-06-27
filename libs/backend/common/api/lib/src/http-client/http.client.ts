@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { unknownToError } from "@app/common/shared";
+import { unknownToError } from "@app/backend/common/shared";
 import { ApiResponseKind, HttpMethod } from "../enum";
 import { getHttpApiFailureResponseKind } from "./util";
 import type {

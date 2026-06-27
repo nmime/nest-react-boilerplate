@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import { UiButton, UiCard, UiToast } from "../../../shared/ui";
 import type { SocialAuthIntent } from "../model";
 

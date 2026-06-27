@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import { getErrorReason } from "../../../shared/lib";
 import { UiCard, UiLoading, UiToast } from "../../../shared/ui";
 import type { TmaDeepNavigationState, TmaLaunchIntent } from "../model";

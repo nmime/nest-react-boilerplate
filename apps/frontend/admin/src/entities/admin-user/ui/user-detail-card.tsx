@@ -1,6 +1,11 @@
 import type { adminApi } from "@app/frontend/api-client";
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import { UiEmptyState, UiLoading, UiResourceError } from "@app/frontend/ui";
+import {
+  UiEmptyState,
+  UiLoading,
+  UiResourceError,
+  type TranslationKey,
+  type TranslationParams,
+} from "@app/frontend/ui";
 import { errorText, join, statusLabelKey } from "../../../shared";
 
 export const UserDetailCard = ({

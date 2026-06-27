@@ -1,4 +1,4 @@
-import type { TranslationKey } from "@app/common/i18n";
+import type { TranslationKey } from "@app/frontend/ui";
 import type { ProviderIdentity, SocialAuthProvider } from "./types";
 
 const providerKeys: Record<SocialAuthProvider, TranslationKey> = {

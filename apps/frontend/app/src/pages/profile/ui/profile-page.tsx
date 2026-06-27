@@ -1,5 +1,4 @@
-import type { Locale } from "@app/common/i18n";
-import { useI18n, type UiTheme } from "@app/frontend/ui";
+import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
 import { useAuthSessionFlow } from "../../../features/auth";
 import { ProfileStatusCard } from "../../../widgets/profile-status";
 

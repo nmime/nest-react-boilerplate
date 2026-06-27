@@ -1,5 +1,8 @@
-import { adminApi, throwOnOpenApiErrorData } from "@app/frontend/api-client";
-import type { ApiClientRequestOptions } from "@app/frontend/api-client";
+import {
+  adminApi,
+  throwOnOpenApiErrorData,
+  type ApiClientRequestOptions,
+} from "@app/frontend/api-client";
 import {
   createAdminAccessPolicy,
   type AdminAccessPolicy,

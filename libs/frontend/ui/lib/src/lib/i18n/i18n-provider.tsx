@@ -16,7 +16,7 @@ import {
   type Locale,
   type TranslationKey,
   type TranslationParams,
-} from "@app/common/i18n";
+} from "./locale";
 import {
   createRootStore,
   detectBrowserLocale,

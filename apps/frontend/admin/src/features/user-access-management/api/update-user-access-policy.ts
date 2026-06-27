@@ -2,7 +2,7 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/api-client";
+} from "@app/frontend/api-client";
 
 export const updateUserAccessPolicy = (
   id: string,

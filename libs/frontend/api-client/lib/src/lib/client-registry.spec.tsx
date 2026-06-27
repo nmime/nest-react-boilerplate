@@ -7,7 +7,7 @@ import {
   useAuthApiClient,
   useUserApiClient,
 } from "../index";
-import type { AuthSessionContract } from "@app/api-contracts";
+import type { AuthSessionContract } from "@app/common/api-contracts";
 import type { generatedAuthApi } from "../index";
 
 type StableAuthContractImport = Omit<Partial<AuthSessionContract>, "user"> &

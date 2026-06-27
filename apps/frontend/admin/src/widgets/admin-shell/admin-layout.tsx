@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { ProductShell, useI18n } from "@app/frontend-ui";
+import { ProductShell, useI18n } from "@app/frontend/ui";
 import type { AdminAccess } from "../../entities/admin-session";
 import { normalizeAdminPath } from "../../shared";
 

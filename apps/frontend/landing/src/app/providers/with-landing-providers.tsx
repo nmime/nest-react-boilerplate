@@ -1,4 +1,4 @@
-import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend-ui";
+import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend/ui";
 import type { ComponentType } from "react";
 
 export const withLandingProviders = <TProps extends object>(

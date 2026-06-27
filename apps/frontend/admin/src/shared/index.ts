@@ -3,8 +3,8 @@ import {
   type TranslationKey,
   type TranslationParams,
 } from "@app/common/i18n";
-import type { adminApi } from "@app/api-client";
-import type { AdminAccessPolicy } from "@app/frontend/feature-admin-shared";
+import type { adminApi } from "@app/frontend/api-client";
+import type { AdminAccessPolicy } from "@app/frontend/feature/admin/shared";
 
 type UserStatus = "active" | "disabled" | "invited";
 

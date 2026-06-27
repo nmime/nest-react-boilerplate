@@ -1,5 +1,5 @@
 import type { Locale } from "@app/common/i18n";
-import type { UiTheme } from "@app/frontend-ui";
+import type { UiTheme } from "@app/frontend/ui";
 
 export interface AppliedUserPreferences {
   locale: Locale | null;

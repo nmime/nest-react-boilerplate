@@ -1,4 +1,4 @@
-import { authApi, throwOnOpenApiErrorData } from "@app/api-client";
+import { authApi, throwOnOpenApiErrorData } from "@app/frontend/api-client";
 import { formValueToString } from "../../../shared/lib";
 import type {
   AuthMePayload,

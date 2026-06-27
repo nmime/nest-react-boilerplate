@@ -1,4 +1,4 @@
-import type { authApi } from "@app/api-client";
+import type { authApi } from "@app/frontend/api-client";
 
 export type SocialAuthProvider = "telegram" | "discord";
 export type SocialAuthIntent = "login" | "link";

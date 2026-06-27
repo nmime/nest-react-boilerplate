@@ -1,4 +1,4 @@
-import { UiCard, UiSection, useI18n } from "@app/frontend-ui";
+import { UiCard, UiSection, useI18n } from "@app/frontend/ui";
 import { LandingStatCard } from "../../../shared/ui";
 
 const includedCards = [

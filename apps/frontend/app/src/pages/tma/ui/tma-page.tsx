@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useI18n } from "@app/frontend-ui";
+import { useI18n } from "@app/frontend/ui";
 import { useSocialAuth } from "../../../features/social-auth";
 import { TmaAuthPanel, useTmaAuth } from "../../../features/tma-auth";
 

@@ -24,15 +24,12 @@ import {
 import {
   ADMIN_PROFILE_READ_PERMISSION,
   ADMIN_ROLE,
-  type AdminProfileView,
-  toAdminProfileView,
 } from "@app/backend/feature/admin/shared";
+import {
+  GetAdminProfileUseCase,
+  type AdminProfilePayload,
+} from "../../application/admin-profile.use-case";
 import { AdminRbacGuard } from "./admin-rbac.guard";
-
-export interface AdminProfilePayload {
-  principal: AuthenticatedPrincipal;
-  profile: AdminProfileView;
-}
 
 export class AuthenticatedPrincipalDto {
   @ApiProperty()
@@ -100,6 +97,8 @@ export class AdminProfilePayloadDto {
 @Controller("admin/profile")
 @UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
 export class AdminProfileController {
+  constructor(private readonly getProfile: GetAdminProfileUseCase) {}
+
   @Get("me")
   @ApiOkDataResponse(AdminProfilePayloadDto)
   @ApiBearerAuth()
@@ -109,9 +108,6 @@ export class AdminProfileController {
   me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): OkResponse<AdminProfilePayload> {
-    return createOkResponse({
-      principal,
-      profile: toAdminProfileView(principal),
-    });
+    return createOkResponse(this.getProfile.execute(principal));
   }
 }

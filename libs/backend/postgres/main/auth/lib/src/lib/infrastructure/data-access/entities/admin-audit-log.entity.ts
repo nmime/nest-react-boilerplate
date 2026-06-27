@@ -21,10 +21,10 @@ export interface AdminAuditLogEntityInput {
 export class AdminAuditLogEntity {
   id: string = randomUUID();
   tenantId: string = DefaultAuthTenantId;
-  actorUserId = "";
+  actorUserId: string | null = null;
   action!: string;
   resource!: string;
-  targetUserId = "";
+  targetUserId: string | null = null;
   before: Record<string, unknown> = {};
   after: Record<string, unknown> = {};
   metadata: Record<string, unknown> = {};
@@ -33,10 +33,10 @@ export class AdminAuditLogEntity {
   constructor(input?: AdminAuditLogEntityInput) {
     if (input) {
       this.tenantId = input.tenantId ?? DefaultAuthTenantId;
-      this.actorUserId = input.actorUserId ?? "";
+      this.actorUserId = input.actorUserId ?? null;
       this.action = input.action;
       this.resource = input.resource;
-      this.targetUserId = input.targetUserId ?? "";
+      this.targetUserId = input.targetUserId ?? null;
       this.before = input.before ?? {};
       this.after = input.after ?? {};
       this.metadata = input.metadata ?? {};

@@ -100,13 +100,12 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       onUpdate: () => new Date(),
     },
   },
-  indexes: [
-    { name: "ix__auth_users__tenant_id", properties: ["tenantId"] },
+  indexes: [{ name: "ix__auth_users__tenant_id", properties: ["tenantId"] }],
+  uniques: [
     {
       name: "uq__auth_users__tenant_id_email_not_null",
       properties: ["tenantId", "email"],
       where: '"email" is not null',
-      options: { unique: true },
     },
   ],
   checks: [

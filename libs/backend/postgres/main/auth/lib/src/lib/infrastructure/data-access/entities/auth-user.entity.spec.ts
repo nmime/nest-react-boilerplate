@@ -77,12 +77,11 @@ describe("AuthUserEntity", () => {
     expect(metadata.properties.theme.default).toBe("system");
     expect(metadata.properties.theme.nullable).not.toBe(true);
     expect(metadata.properties.lastLoginAt.nullable).not.toBe(true);
-    expect(metadata.indexes).toContainEqual(
+    expect(metadata.uniques).toContainEqual(
       expect.objectContaining({
         name: "uq__auth_users__tenant_id_email_not_null",
         properties: ["tenantId", "email"],
         where: '"email" is not null',
-        options: { unique: true },
       }),
     );
     expect(metadata.uniques).not.toContainEqual(

@@ -44,6 +44,11 @@ export const normalizeAdminPath = (path: string): string => {
     : normalizedPath;
 };
 
+export const isUsersRoute = (path: string): boolean => {
+  const routePath = normalizeAdminPath(path);
+  return routePath === "/users" || routePath.startsWith("/users/");
+};
+
 export const routeUserId = (path: string): string | undefined =>
   /^\/users\/([^/?]+)/u.exec(normalizeAdminPath(path))?.[1];
 

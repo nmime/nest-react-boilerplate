@@ -26,6 +26,9 @@ describe("admin route base handling", () => {
     expect(normalizeAdminPath("/admin/dashboard?tab=overview")).toBe(
       "/dashboard",
     );
+    expect(normalizeAdminPath("/admin/users/admin-id?panel=access")).toBe(
+      "/users/admin-id",
+    );
     expect(normalizeAdminPath("/admin/profile")).toBe("/profile");
     expect(normalizeAdminPath("/profile")).toBe("/profile");
   });
@@ -59,6 +62,47 @@ describe("admin route base handling", () => {
     expect(html).not.toContain('href="/admin/tenants"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="#xr-content"');
+  });
+
+  it("keeps user and tenant routes explicit and fail-closed", () => {
+    const fullAccess = createAdminAccess({
+      subject: "admin-id",
+      roles: ["admin"],
+      permissions: [
+        "admin:dashboard:read",
+        "admin:profile:read",
+        "admin:users:read",
+        "admin:roles:read",
+      ],
+    });
+
+    expect(
+      renderToStaticMarkup(
+        renderAdminRoute("/users-but-not-users", {
+          status: "ready",
+          payload,
+          access: fullAccess,
+        }),
+      ),
+    ).toContain("Admin page not found");
+    expect(
+      renderToStaticMarkup(
+        renderAdminRoute("/admin/tenants", {
+          status: "ready",
+          payload,
+          access,
+        }),
+      ),
+    ).toContain("Missing admin roles permission");
+    expect(
+      renderToStaticMarkup(
+        renderAdminRoute("/admin/tenants", {
+          status: "ready",
+          payload,
+          access: fullAccess,
+        }),
+      ),
+    ).toContain("Tenant administration roadmap");
   });
 });
 

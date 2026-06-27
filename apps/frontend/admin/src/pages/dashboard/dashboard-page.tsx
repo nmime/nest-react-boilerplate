@@ -59,7 +59,74 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
             access.permissions.join(", ") || t("admin.dashboard.access.none"),
         })}
       </UiCard>
+      <AdminRouteReadiness access={access} />
     </UiSection>
+  );
+};
+
+const AdminRouteReadiness = ({ access }: Readonly<{ access: AdminAccess }>) => {
+  const { t } = useI18n();
+  const routes = [
+    {
+      detail: t("admin.dashboard.card.rbac.description"),
+      isReady: access.canReadDashboard,
+      label: t("admin.action.dashboard"),
+      path: "/admin",
+    },
+    {
+      detail: t("admin.dashboard.card.visibility.description"),
+      isReady: access.canReadUsers,
+      label: t("admin.action.users"),
+      path: "/admin/users",
+    },
+    {
+      detail: t("admin.roles.title"),
+      isReady: access.canReadRoles,
+      label: t("admin.action.roles"),
+      path: "/admin/roles",
+    },
+    {
+      detail: t("admin.dashboard.summary.recentAuditDetail"),
+      isReady: access.canReadAudit,
+      label: t("admin.action.audit"),
+      path: "/admin/audit",
+    },
+    {
+      detail: t("admin.dashboard.stat.profile.detail"),
+      isReady: access.canReadProfile,
+      label: t("admin.action.profile"),
+      path: "/admin/profile",
+    },
+    {
+      detail: t("admin.tenants.description"),
+      isReady: access.canReadRoles,
+      label: t("admin.tenants.title"),
+      path: "/admin/tenants",
+    },
+  ];
+
+  return (
+    <UiCard title={t("admin.dashboard.stat.pages.label")}>
+      <div className="admin-readiness-grid">
+        {routes.map((route) => (
+          <div className="admin-readiness-card" key={route.path}>
+            <div className="admin-readiness-card__header">
+              <strong>{route.label}</strong>
+              <UiStatusTag
+                label={
+                  route.isReady
+                    ? t("admin.health.ready")
+                    : t("admin.health.unavailable")
+                }
+                tone={route.isReady ? "success" : "warning"}
+              />
+            </div>
+            <code>{route.path}</code>
+            <p>{route.detail}</p>
+          </div>
+        ))}
+      </div>
+    </UiCard>
   );
 };
 
@@ -161,6 +228,7 @@ const DashboardDataPage = ({
             access.permissions.join(", ") || t("admin.dashboard.access.none"),
         })}
       </UiCard>
+      <AdminRouteReadiness access={access} />
     </UiSection>
   );
 };

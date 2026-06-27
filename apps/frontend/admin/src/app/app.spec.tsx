@@ -15,6 +15,7 @@ import {
   normalizeClaimList,
   getAdminApiBaseUrl,
 } from "../entities/admin-session";
+import { getBrowserPath } from "../features/admin-auth";
 import { DashboardPage } from "../pages/dashboard";
 import { ForbiddenPage } from "../pages/forbidden";
 import { NotFoundPage } from "../pages/not-found";
@@ -147,8 +148,10 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText("Admin dashboard")).toBeTruthy();
-    expect(screen.getByText("Users")).toBeTruthy();
+    expect(
+      (await screen.findAllByText("Admin dashboard")).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText("Users").length).toBeGreaterThan(0);
     expect(getRequest(fetchImpl).url).toBe("https://auth.example.test/auth/me");
   });
 
@@ -159,6 +162,18 @@ describe("App", () => {
 
     expect(getAdminApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
     expect(getAuthApiBaseUrl(import.meta.env as FrontendEnvRecord)).toBe("");
+  });
+
+  it("preserves admin route filters while stripping sensitive token query params", () => {
+    window.history.pushState(
+      null,
+      "",
+      "/admin/users?search=ada&token=secret&status=active",
+    );
+
+    expect(getBrowserPath()).toBe("/admin/users?search=ada&status=active");
+    expect(window.location.search).toBe("?search=ada&status=active");
+    window.history.pushState(null, "", "/");
   });
 
   it("requires admin and auth API base URLs when same-origin mode is disabled", () => {
@@ -205,7 +220,9 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(await screen.findByText("Admin dashboard")).toBeTruthy();
+    expect(
+      (await screen.findAllByText("Admin dashboard")).length,
+    ).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole("combobox", { name: "Language" }));
     fireEvent.click(await screen.findByRole("option", { name: "English" }));

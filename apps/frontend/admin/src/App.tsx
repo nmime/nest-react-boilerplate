@@ -46,6 +46,7 @@ import { TenantRoadmapPage } from "./pages/tenants";
 import { UsersPage } from "./pages/users";
 import {
   fallbackTranslate,
+  isUsersRoute,
   normalizeAdminPath,
   type AdminProfileState,
   type Translate,
@@ -80,7 +81,7 @@ function renderReadyAdminRoute(
       <ForbiddenPage reason={t("admin.permission.dashboardMissing")} />
     );
   }
-  if (routePath.startsWith("/users")) {
+  if (isUsersRoute(routePath)) {
     return state.access.canReadUsers ? (
       <UsersPage
         access={state.access}
@@ -112,7 +113,14 @@ function renderReadyAdminRoute(
       <ForbiddenPage reason={t("admin.permission.profileMissing")} />
     );
   }
-  return routePath === "/tenants" ? <TenantRoadmapPage /> : <NotFoundPage />;
+  if (routePath === "/tenants") {
+    return state.access.canReadRoles ? (
+      <TenantRoadmapPage />
+    ) : (
+      <ForbiddenPage reason={t("admin.permission.rolesMissing")} />
+    );
+  }
+  return <NotFoundPage />;
 }
 /* eslint-enable sonarjs/cognitive-complexity */
 

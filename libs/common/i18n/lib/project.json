@@ -8,7 +8,6 @@
     "type:common",
     "scope:shared",
     "boundary:i18n",
-    "boundary:shared-kernel",
     "framework:neutral"
   ],
   "targets": {

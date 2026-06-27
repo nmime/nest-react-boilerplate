@@ -7,7 +7,6 @@
     "platform:shared",
     "type:common",
     "scope:shared",
-    "boundary:shared-kernel",
     "boundary:feature-flags",
     "framework:neutral"
   ],
@@ -32,7 +31,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/common/feature-flags"]
     }

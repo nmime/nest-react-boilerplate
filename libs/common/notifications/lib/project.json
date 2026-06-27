@@ -8,7 +8,6 @@
     "type:common",
     "scope:shared",
     "boundary:notifications",
-    "boundary:contracts",
     "framework:neutral"
   ],
   "targets": {
@@ -32,7 +31,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/common/notifications"]
     }

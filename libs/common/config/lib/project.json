@@ -8,7 +8,6 @@
     "type:common",
     "scope:shared",
     "boundary:config",
-    "boundary:shared-kernel",
     "framework:neutral"
   ],
   "targets": {
@@ -33,7 +32,9 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/common/config"]
     }

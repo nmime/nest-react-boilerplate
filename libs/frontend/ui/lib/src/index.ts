@@ -15,6 +15,7 @@ export * from "./lib/component/stat-card";
 export * from "./lib/component/feedback";
 export * from "./lib/layout/product-shell";
 
+export * from "./lib/i18n/locale";
 export * from "./lib/i18n/i18n-provider";
 
 export * from "./lib/query/query-provider";

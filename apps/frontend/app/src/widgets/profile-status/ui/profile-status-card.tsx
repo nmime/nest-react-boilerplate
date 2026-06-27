@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import { UiCard, UiEmptyState, UiLoading, UiToast } from "../../../shared/ui";
 import type { ProfileState } from "../../../entities/profile";
 

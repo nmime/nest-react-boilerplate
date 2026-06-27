@@ -11,6 +11,7 @@ const sourceRoots = [
   "libs/frontend/ui/lib/src",
   "libs/frontend/api-support/lib/src",
   "libs/frontend/api-client/lib/src",
+  "libs/frontend/feature/admin/shared/lib/src",
 ];
 const allowedExtensions = new Set([".ts", ".tsx"]);
 const ignoredSuffixes = [

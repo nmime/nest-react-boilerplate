@@ -6,7 +6,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { translate } from "@app/common/i18n";
+import { translate } from "../i18n/locale";
 
 type UiLiveMode = "polite" | "assertive";
 

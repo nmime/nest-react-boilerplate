@@ -1,6 +1,6 @@
 import type { EntityManager } from "@mikro-orm/postgresql";
 import { describe, expect, it, vi } from "vitest";
-import { AdminAuditLogEntity, DefaultAuthTenantId } from "../entity";
+import { AdminAuditLogEntity, DefaultAuthTenantId } from "../entities";
 import { AdminAuditLogRepository } from "./admin-audit-log.repository";
 
 function createEntityManagerMock() {

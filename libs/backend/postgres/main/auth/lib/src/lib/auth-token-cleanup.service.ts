@@ -4,7 +4,7 @@ import {
   type OnModuleDestroy,
   type OnModuleInit,
 } from "@nestjs/common";
-import { AuthTokenRepository } from "./repository";
+import { AuthTokenRepository } from "./infrastructure/data-access/repositories";
 
 export interface AuthTokenCleanupConfig {
   enabled: boolean;

@@ -6,9 +6,11 @@ describe("auth postgres exports", () => {
     expect(authPostgres.AuthPostgresModule).toBeDefined();
     expect(authPostgres.AuthTokenCleanupService).toBeDefined();
     expect(authPostgres.AuthUserEntity).toBeDefined();
+    expect(authPostgres.AuthUserEntitySchema).toBeDefined();
     expect(authPostgres.AuthRefreshTokenEntity).toBeDefined();
     expect(authPostgres.AuthUserTokenEntity).toBeDefined();
     expect(authPostgres.AuthUserRepository).toBeDefined();
     expect(authPostgres.AuthTokenRepository).toBeDefined();
+    expect(authPostgres.authMigrations.length).toBeGreaterThan(0);
   });
 });

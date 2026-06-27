@@ -6,7 +6,7 @@ import {
   type FeatureFlagValue,
   toFeatureFlagBoolean,
 } from "@app/common/feature-flags";
-import { FeatureFlagRepository } from "./repository";
+import { FeatureFlagRepository } from "./infrastructure/data-access/repositories";
 
 @Injectable()
 export class PostgresFeatureFlagProvider implements FeatureFlagProvider {

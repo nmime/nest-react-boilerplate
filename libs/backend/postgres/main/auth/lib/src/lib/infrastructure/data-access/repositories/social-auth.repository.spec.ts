@@ -7,7 +7,7 @@ import {
   AuthProviderTokenEntity,
   ExternalIdentityEntity,
   toRedactedAuthProviderTokenView,
-} from "../entity";
+} from "../entities";
 import { AuthLinkTokenRepository } from "./auth-link-token.repository";
 import { AuthMethodRepository } from "./auth-method.repository";
 import { AuthProviderTokenRepository } from "./auth-provider-token.repository";

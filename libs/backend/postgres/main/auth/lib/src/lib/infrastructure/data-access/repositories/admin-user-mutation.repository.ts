@@ -8,7 +8,7 @@ import {
   TransactionalOutboxEventEntity,
   type AdminAuditLogEntityInput,
   type AuthUserAccessPolicyInput,
-} from "../entity";
+} from "../entities";
 import type { AuthUserRepositoryError } from "./auth-user.repository";
 
 export type AdminUserMutationAction =

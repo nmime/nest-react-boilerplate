@@ -5,7 +5,7 @@ import {
   AuthRefreshTokenEntity,
   AuthUserTokenEntity,
   DefaultAuthTenantId,
-} from "../entity";
+} from "../entities";
 import { AuthTokenRepository } from "./auth-token.repository";
 
 function createEntityManagerMock() {

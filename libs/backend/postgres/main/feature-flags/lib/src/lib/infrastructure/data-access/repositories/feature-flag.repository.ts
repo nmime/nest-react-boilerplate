@@ -7,7 +7,7 @@ import {
   type FeatureFlagValue,
 } from "@app/common/feature-flags";
 import { ResultAsync } from "neverthrow";
-import { FeatureFlagEntity } from "../entity";
+import { FeatureFlagEntity } from "../entities";
 
 export interface FeatureFlagRepositoryError {
   code: "repository_error";

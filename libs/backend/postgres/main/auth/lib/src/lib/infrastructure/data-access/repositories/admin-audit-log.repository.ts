@@ -5,7 +5,7 @@ import {
   AdminAuditLogEntity,
   DefaultAuthTenantId,
   type AdminAuditLogEntityInput,
-} from "../entity";
+} from "../entities";
 import {
   normalizePageLimit,
   normalizePageOffset,

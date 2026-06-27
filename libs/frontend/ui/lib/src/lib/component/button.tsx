@@ -24,9 +24,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "xr-button--primary border-transparent bg-[linear-gradient(135deg,var(--xr-color-primary),var(--xr-color-primary-strong))] text-[var(--xr-color-primary-contrast)] hover:-translate-y-0.5 hover:shadow-lg",
+          "xr-button--primary border-transparent bg-primary bg-[linear-gradient(135deg,var(--xr-color-primary),var(--xr-color-primary-strong))] text-primary-foreground text-[var(--xr-color-primary-contrast)] hover:-translate-y-0.5 hover:shadow-lg",
         secondary:
-          "xr-button--secondary border-[var(--xr-color-border)] bg-[var(--xr-control-background)] text-[var(--xr-color-text)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--xr-color-primary)_58%,transparent)]",
+          "xr-button--secondary border-border border-[var(--xr-color-border)] bg-secondary bg-[var(--xr-control-background)] text-secondary-foreground text-[var(--xr-color-text)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--xr-color-primary)_58%,transparent)]",
       },
     },
     defaultVariants: {

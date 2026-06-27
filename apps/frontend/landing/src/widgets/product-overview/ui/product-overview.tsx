@@ -75,7 +75,7 @@ export const ProductOverview = ({
         ))}
       </div>
       <div
-        aria-label="Product foundation statistics"
+        aria-label={t("landing.statGrid.label")}
         className="landing-stat-grid"
       >
         {productStats.map((stat) => (

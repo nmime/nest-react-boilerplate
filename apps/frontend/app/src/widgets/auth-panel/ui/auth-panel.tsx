@@ -59,7 +59,11 @@ export function AuthPanel({
           label={t("user.stat.userApi.label")}
           value="3002"
         />
-        <UiStatCard detail={apiModeLabel} label="API mode" value="ready" />
+        <UiStatCard
+          detail={apiModeLabel}
+          label={t("user.stat.apiMode.label")}
+          value="ready"
+        />
       </div>
     </UiSection>
   );

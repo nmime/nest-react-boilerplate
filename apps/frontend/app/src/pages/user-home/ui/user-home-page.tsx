@@ -47,7 +47,10 @@ function UserReadinessOverview() {
     <UiSectionReadiness>
       <UiCard className="xr-route-card" title={t("user.status")}>
         <p>{t("user.description")}</p>
-        <div className="xr-route-list" aria-label="User app route readiness">
+        <div
+          className="xr-route-list"
+          aria-label={t("user.routeReadiness.label")}
+        >
           {routeReadiness.map((route) => (
             <a className="xr-route-chip" href={route} key={route}>
               <span>{route}</span>

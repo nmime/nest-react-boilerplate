@@ -64,7 +64,7 @@ export function SocialAuthButtons({
     >
       <UiAlert className="xr-card-note" tone="info">
         <span>{t("auth.social.stepUp.required")}</span>
-        <UiStatusPill label="OAuth" tone="info" />
+        <UiStatusPill label={t("auth.social.protocol.oauth")} tone="info" />
       </UiAlert>
       <div className="xr-social-actions">
         <UiButton

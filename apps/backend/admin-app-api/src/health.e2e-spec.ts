@@ -7,7 +7,7 @@ import {
 import { Test } from "@nestjs/testing";
 import type { Response as InjectResponse } from "light-my-request";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createValidationPipe } from "@app/common/validation";
+import { createValidationPipe } from "@app/backend/common/validation";
 import { AdminAppApiModule } from "./admin-app-api.module";
 
 interface HealthEnvelope {

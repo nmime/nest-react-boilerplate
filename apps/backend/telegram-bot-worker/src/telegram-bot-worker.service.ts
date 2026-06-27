@@ -9,7 +9,7 @@ import {
   TELEGRAM_BOT_INSTANCE,
   assertPollingRuntimeAllowed,
   type TelegramBotInstance,
-} from "@app/backend-bot-telegram";
+} from "@app/backend/bots/telegram";
 
 @Injectable()
 export class TelegramBotWorkerService

@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/redis",
+  "name": "@app/backend/common/redis",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/redis/lib/src",
   "projectType": "library",

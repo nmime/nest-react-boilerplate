@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/logger",
+  "name": "@app/backend/common/logger",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/logger/lib/src",
   "projectType": "library",

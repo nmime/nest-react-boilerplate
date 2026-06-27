@@ -4,13 +4,13 @@ import { StaticDataService } from "./static-data.service";
 
 export const StaticDataRootInjectToken = Symbol("StaticDataRoot");
 
-export interface StaticModuleOptions {
+export interface StaticDataModuleOptions {
   rootDir: string;
 }
 
 @Module({})
-export class StaticModule {
-  static forRoot(options: StaticModuleOptions): DynamicModule {
+export class StaticDataModule {
+  static forRoot(options: StaticDataModuleOptions): DynamicModule {
     const providers: Provider[] = [
       { provide: StaticDataRootInjectToken, useValue: options.rootDir },
       {
@@ -20,12 +20,9 @@ export class StaticModule {
     ];
 
     return {
-      module: StaticModule,
+      module: StaticDataModule,
       providers,
       exports: [StaticDataService],
     };
   }
 }
-
-export const StaticDataModule = StaticModule;
-export type StaticDataModuleOptions = StaticModuleOptions;

@@ -6,13 +6,13 @@ import {
   adminPermissionToAbility,
   canAdmin,
   createAdminAbility,
-} from "@app/backend/feature-admin-shared";
+} from "@app/backend/feature/admin/shared";
 import {
   type AuthenticatedRequest,
   type PermissionEvaluationContext,
   type PermissionEvaluationResult,
   RbacGuard,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 
 @Injectable()
 export class AdminRbacGuard extends RbacGuard {

@@ -25,7 +25,7 @@ import {
   type AuthenticatedUserView,
   type UserThemePreference,
   Language,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import { normalizeLocale } from "@app/common/i18n";
 import {
   AUTH_USER_STORE,

@@ -7,7 +7,7 @@ import {
   hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
-} from "@app/common-component-test";
+} from "@app/backend/common/component-test";
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthPostgresModule } from "../auth-postgres.module";

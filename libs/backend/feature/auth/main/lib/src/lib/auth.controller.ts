@@ -30,8 +30,11 @@ import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/common/swagger";
-import { createOkResponse, type OkResponse } from "@app/common/response";
+} from "@app/backend/common/swagger";
+import {
+  createOkResponse,
+  type OkResponse,
+} from "@app/backend/common/response";
 import {
   clearSessionPrincipal,
   CurrentUser,
@@ -43,7 +46,7 @@ import {
   type AuthSessionView,
   userThemePreferences,
   Language,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import { AuthService, toSessionPrincipal } from "./auth.service";
 import {
   ExternalAuthService,

@@ -1,7 +1,7 @@
 import {
   bootstrapNestApi,
   resolveDefaultDevelopmentCorsOrigins,
-} from "@app/common/bootstrap";
+} from "@app/backend/common/bootstrap";
 import { AdminAppApiModule } from "./admin-app-api.module";
 
 void bootstrapNestApi(AdminAppApiModule, {

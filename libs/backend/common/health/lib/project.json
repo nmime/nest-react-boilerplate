@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/health",
+  "name": "@app/backend/common/health",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/health/lib/src",
   "projectType": "library",

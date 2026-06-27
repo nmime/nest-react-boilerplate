@@ -13,7 +13,7 @@ import {
   assertWebhookRuntimeAllowed,
   verifyWebhookSecret,
   type TelegramBotInstance,
-} from "@app/backend-bot-telegram";
+} from "@app/backend/bots/telegram";
 
 @Controller("telegram/webhook")
 export class TelegramWebhookController implements OnApplicationBootstrap {

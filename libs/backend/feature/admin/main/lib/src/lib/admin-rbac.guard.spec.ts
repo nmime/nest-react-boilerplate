@@ -6,14 +6,14 @@ import {
   ADMIN_PROFILE_READ_PERMISSION,
   ADMIN_ROLE,
   ADMIN_USERS_READ_PERMISSION,
-} from "@app/backend/feature-admin-shared";
+} from "@app/backend/feature/admin/shared";
 import {
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   DEFAULT_AUTH_TENANT_ID,
   REQUIRED_PERMISSIONS_METADATA_KEY,
   REQUIRED_ROLES_METADATA_KEY,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 import { AdminProfileController } from "./admin-profile.controller";
 import { AdminUsersController } from "./admin-users.controller";

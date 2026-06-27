@@ -1,3 +1,3 @@
-import { PrivateNetworkCidrs } from "@app/common/network";
+import { PrivateNetworkCidrs } from "@app/backend/common/network";
 
 export const PrivateNetworkIps = PrivateNetworkCidrs;

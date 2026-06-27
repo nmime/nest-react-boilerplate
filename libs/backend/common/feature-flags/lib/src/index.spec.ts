@@ -3,14 +3,14 @@ import {
   FeatureFlagProviderToken,
   InMemoryFeatureFlagProvider,
 } from "@app/common/feature-flags";
-import { FeatureFlagModule } from "./index";
+import { FeatureFlagsModule } from "./index";
 
 describe("backend feature flag module", () => {
   it("registers the shared feature flag provider token", () => {
     const provider = new InMemoryFeatureFlagProvider({
       "billing.portal": true,
     });
-    const dynamicModule = FeatureFlagModule.forRoot({ provider });
+    const dynamicModule = FeatureFlagsModule.forRoot({ provider });
 
     expect(dynamicModule.providers).toContainEqual({
       provide: FeatureFlagProviderToken,

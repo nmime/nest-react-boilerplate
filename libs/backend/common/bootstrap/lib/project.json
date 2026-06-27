@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/bootstrap",
+  "name": "@app/backend/common/bootstrap",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/bootstrap/lib/src",
   "projectType": "library",

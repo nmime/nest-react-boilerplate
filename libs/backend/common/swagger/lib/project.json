@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/swagger",
+  "name": "@app/backend/common/swagger",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/swagger/lib/src",
   "projectType": "library",

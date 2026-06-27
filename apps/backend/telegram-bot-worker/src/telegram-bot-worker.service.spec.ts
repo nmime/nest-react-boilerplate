@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { run } from "@grammyjs/runner";
 import { TelegramBotWorkerService } from "./telegram-bot-worker.service";
-import type { TelegramBotInstance } from "@app/backend-bot-telegram";
+import type { TelegramBotInstance } from "@app/backend/bots/telegram";
 
 const stop = vi.fn(() => Promise.resolve(undefined));
 const isRunning = vi.fn(() => true);

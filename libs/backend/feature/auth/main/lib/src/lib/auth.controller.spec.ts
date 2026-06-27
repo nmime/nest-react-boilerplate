@@ -6,7 +6,7 @@ import {
   type AuthenticatedResponse,
   type AuthenticatedSession,
   type AuthSessionView,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import type { AuthService } from "./auth.service";
 import { AuthController, SESSION_COOKIE_NAME } from "./auth.controller";
 

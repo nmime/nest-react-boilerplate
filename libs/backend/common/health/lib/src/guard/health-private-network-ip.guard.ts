@@ -6,7 +6,7 @@ import {
 import {
   isRequestFromPrivateNetwork,
   type RequestWithClientAddress,
-} from "@app/common/network";
+} from "@app/backend/common/network";
 
 @Injectable()
 export class HealthPrivateNetworkIpGuard implements CanActivate {

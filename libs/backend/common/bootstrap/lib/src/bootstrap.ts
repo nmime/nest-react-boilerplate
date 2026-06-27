@@ -1,9 +1,9 @@
 import type { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import helmet from "helmet";
-import { createLogger } from "@app/common/logger";
-import { initOpenTelemetry } from "@app/common/otel";
-import { setupSwagger } from "@app/common/swagger";
+import { createLogger } from "@app/backend/common/logger";
+import { initOpenTelemetry } from "@app/backend/common/otel";
+import { setupSwagger } from "@app/backend/common/swagger";
 import type { BootstrapParams } from "./type/bootstrap.type";
 import { defaultPortFactory, getPortEnvVarName } from "./util/port.util";
 import { robotsMiddleware } from "./util/robots.util";

@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { errAsync, okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/feature-auth-shared";
+import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
 import {
   ADMIN_AUDIT_READ_PERMISSION,
   ADMIN_DASHBOARD_READ_PERMISSION,
@@ -12,13 +12,13 @@ import {
   ADMIN_USERS_STATUS_UPDATE_PERMISSION,
   ADMIN_USERS_WRITE_PERMISSION,
   USER_PROFILE_READ_PERMISSION,
-} from "@app/backend/feature-admin-shared";
+} from "@app/backend/feature/admin/shared";
 import type {
   AdminAuditLogEntity,
   AdminUserMutationResult,
   AuthUserEntity,
   TransactionalOutboxEventEntity,
-} from "@app/postgres-main-auth";
+} from "@app/backend/postgres/main/auth";
 import { AdminUsersController } from "./admin-users.controller";
 
 const tenantId = "00000000-0000-0000-0000-000000000000";

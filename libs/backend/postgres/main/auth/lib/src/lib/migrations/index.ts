@@ -9,7 +9,7 @@ import { Migration20260601130000AddAuthTokenExpiryIndexes } from "./Migration202
 import { Migration20260605143000CreateAdminAuditLogs } from "./Migration20260605143000CreateAdminAuditLogs";
 import { Migration20260606120000CreateTransactionalOutboxEvents } from "./Migration20260606120000CreateTransactionalOutboxEvents";
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
-import { Migration20260609100000CreateFeatureFlags } from "@app/postgres-main-feature-flags";
+import { Migration20260609100000CreateFeatureFlags } from "@app/backend/postgres/main/feature-flags";
 import { Migration20260614120000CreateSocialAuthDataModel } from "./Migration20260614120000CreateSocialAuthDataModel";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";

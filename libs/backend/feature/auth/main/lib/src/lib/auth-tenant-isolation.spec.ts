@@ -1,6 +1,6 @@
 import { UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
-import { validateBearerAuthorization } from "@app/feature-auth-shared";
+import { validateBearerAuthorization } from "@app/backend/feature/auth/shared";
 import { InMemoryAuthUserStore } from "./auth-user-store";
 import { AuthService } from "./auth.service";
 

@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/otel",
+  "name": "@app/backend/common/otel",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/otel/lib/src",
   "projectType": "library",

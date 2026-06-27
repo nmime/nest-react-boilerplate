@@ -1,9 +1,9 @@
 import type { Locale } from "@app/common/i18n";
-import { normalizeStringList } from "@app/common/shared";
+import { normalizeStringList } from "@app/backend/common/shared";
 import {
   type AuthenticatedPrincipal,
   USER_PROFILE_READ_PERMISSION,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 
 export { USER_PROFILE_READ_PERMISSION };
 

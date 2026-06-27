@@ -1,5 +1,5 @@
 import type { Locale } from "@app/common/i18n";
-import { normalizeStringList } from "@app/common/shared";
+import { normalizeStringList } from "@app/backend/common/shared";
 import {
   DEFAULT_AUTH_TENANT_ID,
   resolveTenantId,

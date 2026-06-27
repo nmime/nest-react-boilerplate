@@ -1,4 +1,4 @@
-import { bootstrap } from "@app/common/bootstrap";
+import { bootstrap } from "@app/backend/common/bootstrap";
 import { TelegramBotWorkerModule } from "./telegram-bot-worker.module";
 
 void bootstrap({

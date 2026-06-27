@@ -28,7 +28,7 @@ import {
   type ExternalAuthProvider,
   type ExternalAuthProviderChannel,
   type LinkTokenResult,
-} from "@app/feature-auth-shared";
+} from "@app/backend/feature/auth/shared";
 import type { OAuth2Tokens } from "arctic";
 import {
   AuthService,

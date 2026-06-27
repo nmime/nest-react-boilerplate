@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/validation",
+  "name": "@app/backend/common/validation",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/validation/lib/src",
   "projectType": "library",

@@ -5,7 +5,7 @@ import {
   createTelegramBot,
   type TelegramBotConfig,
   type TelegramBotInstance,
-} from "@app/backend-bot-telegram";
+} from "@app/backend/bots/telegram";
 
 const botInfo = {
   id: 42,

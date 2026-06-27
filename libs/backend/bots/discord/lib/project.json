@@ -1,5 +1,5 @@
 {
-  "name": "@app/backend-bot-discord",
+  "name": "@app/backend/bots/discord",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/bots/discord/lib/src",
   "projectType": "library",

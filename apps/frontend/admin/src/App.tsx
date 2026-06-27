@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { configureApiLocale } from "@app/frontend-api-support";
+import { configureApiLocale } from "@app/frontend/api-support";
 import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   ApiClientProvider,
@@ -16,7 +16,7 @@ import {
   useAdminApiClient,
   useAuthApiClient,
   type ApiClientRequestOptions,
-} from "@app/api-client";
+} from "@app/frontend/api-client";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
@@ -26,7 +26,7 @@ import {
   UiSection,
   useI18n,
   type UiTheme,
-} from "@app/frontend-ui";
+} from "@app/frontend/ui";
 import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";
 import {
   getBrowserPath,

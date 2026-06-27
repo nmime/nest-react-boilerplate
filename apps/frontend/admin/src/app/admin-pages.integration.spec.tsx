@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { adminApi } from "@app/api-client";
+import { adminApi } from "@app/frontend/api-client";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { AdminLayout } from "../widgets/admin-shell";

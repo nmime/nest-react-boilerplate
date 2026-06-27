@@ -1,4 +1,4 @@
-import { UiCard, UiSection, useI18n } from "@app/frontend-ui";
+import { UiCard, UiSection, useI18n } from "@app/frontend/ui";
 import type { AdminProfilePayload } from "../../entities/admin-session";
 
 export const ProfilePage = ({

@@ -1,4 +1,4 @@
-import { UiEmptyState, UiSection, useI18n } from "@app/frontend-ui";
+import { UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
 
 export const TenantRoadmapPage = () => {
   const { t } = useI18n();

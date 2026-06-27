@@ -1,4 +1,4 @@
-import { ProductShell, useI18n } from "@app/frontend-ui";
+import { ProductShell, useI18n } from "@app/frontend/ui";
 import { useLandingActions } from "../../../features/landing-actions";
 import { ProductOverview } from "../../../widgets/product-overview";
 

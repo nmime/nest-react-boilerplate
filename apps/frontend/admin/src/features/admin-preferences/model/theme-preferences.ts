@@ -1,5 +1,5 @@
-import type { authApi } from "@app/api-client";
-import type { UiTheme } from "@app/frontend-ui";
+import type { authApi } from "@app/frontend/api-client";
+import type { UiTheme } from "@app/frontend/ui";
 import type { fetchAdminProfile } from "../../../entities/admin-session";
 
 export type ThemePayload =

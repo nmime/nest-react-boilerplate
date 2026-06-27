@@ -4,13 +4,13 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/api-client";
+} from "@app/frontend/api-client";
 import {
   UiDataTable,
   UiPagination,
   UiSection,
   useI18n,
-} from "@app/frontend-ui";
+} from "@app/frontend/ui";
 import type { AuditRow } from "../../entities/admin-audit";
 import { errorText, formatDate, pageSize, totalPages } from "../../shared";
 

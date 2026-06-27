@@ -3,8 +3,8 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/api-client";
-import { UiCheckbox, UiDataTable, UiSection, useI18n } from "@app/frontend-ui";
+} from "@app/frontend/api-client";
+import { UiCheckbox, UiDataTable, UiSection, useI18n } from "@app/frontend/ui";
 import type { RoleRow } from "../../entities/admin-role";
 import { errorText } from "../../shared";
 

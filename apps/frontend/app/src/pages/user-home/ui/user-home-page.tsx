@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Locale } from "@app/common/i18n";
-import { useI18n, type UiTheme } from "@app/frontend-ui";
+import { useI18n, type UiTheme } from "@app/frontend/ui";
 import { useAuthSessionFlow } from "../../../features/auth";
 import { ProductShell } from "../../../shared/ui";
 import { AuthPanel } from "../../../widgets/auth-panel";

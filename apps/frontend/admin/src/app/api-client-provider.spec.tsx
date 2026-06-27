@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { useAdminApiClient, useAuthApiClient } from "@app/api-client";
+import { useAdminApiClient, useAuthApiClient } from "@app/frontend/api-client";
 import App from "../App";
 
 const Probe = () => {

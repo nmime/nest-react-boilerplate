@@ -1,5 +1,5 @@
 {
-  "name": "@app/frontend-ui",
+  "name": "@app/frontend/ui",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/frontend/ui/lib/src",
   "projectType": "library",

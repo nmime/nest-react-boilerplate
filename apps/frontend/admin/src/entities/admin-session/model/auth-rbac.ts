@@ -1,14 +1,14 @@
-import { adminApi, throwOnOpenApiErrorData } from "@app/api-client";
-import type { ApiClientRequestOptions } from "@app/api-client";
+import { adminApi, throwOnOpenApiErrorData } from "@app/frontend/api-client";
+import type { ApiClientRequestOptions } from "@app/frontend/api-client";
 import {
   createAdminAccessPolicy,
   type AdminAccessPolicy,
   type AdminPrincipalClaims,
-} from "@app/frontend/feature-admin-shared";
+} from "@app/frontend/feature/admin/shared";
 import {
   getRequiredApiBaseUrl,
   type FrontendEnv,
-} from "@app/frontend-api-support";
+} from "@app/frontend/api-support";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 

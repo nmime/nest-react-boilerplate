@@ -1,14 +1,14 @@
 import { useEffect, type ReactNode } from "react";
 import { observer } from "mobx-react-lite";
-import { ApiClientProvider } from "@app/api-client";
-import { configureApiLocale } from "@app/frontend-api-support";
+import { ApiClientProvider } from "@app/frontend/api-client";
+import { configureApiLocale } from "@app/frontend/api-support";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
   useAuthShellStore,
   useI18n,
-} from "@app/frontend-ui";
+} from "@app/frontend/ui";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
 import { UiErrorBoundary } from "../../shared/ui";

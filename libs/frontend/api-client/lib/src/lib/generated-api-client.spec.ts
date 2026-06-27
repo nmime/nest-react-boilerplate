@@ -1,4 +1,4 @@
-import { configureApiLocale } from "@app/frontend-api-support";
+import { configureApiLocale } from "@app/frontend/api-support";
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   authControllerCreateLinkToken,

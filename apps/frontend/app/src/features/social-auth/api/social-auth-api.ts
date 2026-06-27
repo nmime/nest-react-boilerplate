@@ -2,7 +2,7 @@ import {
   authApi,
   throwOnOpenApiErrorData,
   type AuthApiClient,
-} from "@app/api-client";
+} from "@app/frontend/api-client";
 import type { SocialAuthIntent } from "../model/types";
 
 export const providerIdentitiesQueryKey = () =>

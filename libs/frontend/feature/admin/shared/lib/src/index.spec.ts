@@ -11,7 +11,7 @@ import {
   normalizeStringList,
 } from "./index";
 
-describe("@app/frontend/feature-admin-shared access policy", () => {
+describe("@app/frontend/feature/admin/shared access policy", () => {
   it("derives a frontend-safe admin access policy from principal claims", () => {
     expect(
       createAdminAccessPolicy({

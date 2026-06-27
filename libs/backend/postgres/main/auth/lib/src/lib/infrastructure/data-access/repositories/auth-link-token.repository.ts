@@ -6,7 +6,7 @@ import {
   DefaultAuthTenantId,
   type AuthLinkTokenPurpose,
   type ExternalAuthProvider,
-} from "../entity";
+} from "../entities";
 import {
   mapSocialAuthError,
   type SocialAuthRepositoryError,

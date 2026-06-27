@@ -8,8 +8,8 @@ import {
   type AuthProviderTokenKind,
   type ExternalAuthProvider,
   type RedactedAuthProviderTokenView,
-} from "../entity";
-import type { ProviderTokenCiphertext } from "../provider-token-crypto.service";
+} from "../entities";
+import type { ProviderTokenCiphertext } from "../../../provider-token-crypto.service";
 import {
   mapSocialAuthError,
   type SocialAuthRepositoryError,

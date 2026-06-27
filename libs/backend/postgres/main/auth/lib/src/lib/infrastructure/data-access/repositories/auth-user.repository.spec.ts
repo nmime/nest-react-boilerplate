@@ -4,7 +4,7 @@ import {
   AuthUserEntity,
   DefaultAuthTenantId,
   type AuthUserEntityInput,
-} from "../entity";
+} from "../entities";
 import { AuthUserRepository } from "./auth-user.repository";
 
 function createEntityManagerMock() {

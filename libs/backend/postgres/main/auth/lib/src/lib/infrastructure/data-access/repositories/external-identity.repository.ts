@@ -6,7 +6,7 @@ import {
   ExternalIdentityEntity,
   type ExternalAuthProvider,
   type ExternalAuthProviderChannel,
-} from "../entity";
+} from "../entities";
 
 export interface SocialAuthRepositoryError {
   code: "repository_error";

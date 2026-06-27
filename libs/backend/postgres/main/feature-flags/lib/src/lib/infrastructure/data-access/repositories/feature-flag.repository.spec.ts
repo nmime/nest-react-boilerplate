@@ -1,7 +1,7 @@
 import type { EntityManager } from "@mikro-orm/postgresql";
 import { describe, expect, it, vi } from "vitest";
 import { DefaultFeatureFlagTenantId } from "@app/common/feature-flags";
-import { FeatureFlagEntity } from "../entity";
+import { FeatureFlagEntity } from "../entities";
 import {
   FeatureFlagRepository,
   resolveTenantId,

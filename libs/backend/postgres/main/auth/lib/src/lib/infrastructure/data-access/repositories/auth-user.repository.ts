@@ -8,7 +8,7 @@ import {
   type AuthUserThemePreference,
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
-} from "../entity";
+} from "../entities";
 import {
   normalizePageLimit,
   normalizePageOffset,

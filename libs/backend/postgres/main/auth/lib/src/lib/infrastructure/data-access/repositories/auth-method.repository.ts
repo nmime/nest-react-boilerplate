@@ -5,7 +5,7 @@ import {
   AuthMethodEntity,
   DefaultAuthTenantId,
   type AuthMethodType,
-} from "../entity";
+} from "../entities";
 import {
   mapSocialAuthError,
   type SocialAuthRepositoryError,

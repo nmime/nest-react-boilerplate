@@ -5,8 +5,11 @@ import {
   AuthRefreshTokenEntity,
   AuthUserEntity,
   AuthUserTokenEntity,
-} from "./entity";
-import { AuthTokenRepository, AuthUserRepository } from "./repository";
+} from "./infrastructure/data-access/entities";
+import {
+  AuthTokenRepository,
+  AuthUserRepository,
+} from "./infrastructure/data-access/repositories";
 
 describe("AuthPostgresModule", () => {
   it("exposes the auth data-access module pieces", () => {

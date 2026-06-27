@@ -6,7 +6,7 @@ import {
   AuthUserTokenEntity,
   DefaultAuthTenantId,
   type AuthUserTokenPurpose,
-} from "../entity";
+} from "../entities";
 
 export interface AuthTokenRepositoryError {
   code: "repository_error";

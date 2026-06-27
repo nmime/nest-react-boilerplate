@@ -4,7 +4,7 @@ import {
   AdminAuditLogEntity,
   AuthUserEntity,
   TransactionalOutboxEventEntity,
-} from "../entity";
+} from "../entities";
 import {
   ADMIN_ROLE_NAME,
   ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,

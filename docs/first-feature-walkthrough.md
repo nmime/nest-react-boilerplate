@@ -25,7 +25,7 @@ pnpm generate:feature invoices
 
 ## 2. Wire backend ownership
 
-1. Import the generated `<Feature>Module` into the API that owns the route, usually `apps/backend/user-app-api/src/user-api.module.ts` or `apps/backend/admin-app-api/src/admin-app-api.module.ts`.
+1. Import the generated `<Feature>Module` into the API that owns the route, usually `apps/backend/user-app-api/src/user-app-api.module.ts` or `apps/backend/admin-app-api/src/admin-app-api.module.ts`.
 2. Replace placeholder service logic with a repository/provider boundary.
 3. Replace `Migration00000000000000...` with a timestamped MikroORM migration generated from the real model.
 4. Add RBAC guards and permissions before exposing non-public routes.

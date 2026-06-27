@@ -16,7 +16,7 @@ All three apps are Vite React apps. They share React UI primitives from `libs/fr
 - `user-app-api` in `apps/backend/user-app-api`
 - `auth-app-api` in `apps/backend/auth-app-api`
 
-Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/common/health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
+Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend/common/health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
 
 ## Shared libraries
 
@@ -78,7 +78,7 @@ Backend feature libraries use `libs/backend/feature/...` paths and singular `@ap
 - Frontend API SDK: `@app/api-client`.
 - Frontend UI: `@app/frontend-ui`.
 - Backend exception foundation: `@app/common/exception` only. Keep the path singular at `libs/backend/common/exception/lib` and Nx project name `@app/common/exception`.
-- Backend health foundation: `@app/common/health` at `libs/backend/common/health/lib`.
+- Backend health foundation: `@app/backend/common/health` at `libs/backend/common/health/lib`.
 
 For the next DB stage, data-access libs should contain `entity/`, `repository/`, and module/config exports. Feature libs should consume repositories through Nest providers instead of importing app code.
 

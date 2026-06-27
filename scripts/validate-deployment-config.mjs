@@ -331,14 +331,14 @@ for (const {
   {
     app: "auth-app-api",
     healthProvider: "AuthAppHealthServiceProvider",
-    modulePath: "apps/backend/auth-app-api/src/auth-api.module.ts",
+    modulePath: "apps/backend/auth-app-api/src/auth-app-api.module.ts",
     configPath: "apps/backend/auth-app-api/src/health.config.ts",
     localControllerPath: "apps/backend/auth-app-api/src/health.controller.ts",
   },
   {
     app: "user-app-api",
     healthProvider: "UserAppHealthServiceProvider",
-    modulePath: "apps/backend/user-app-api/src/user-api.module.ts",
+    modulePath: "apps/backend/user-app-api/src/user-app-api.module.ts",
     configPath: "apps/backend/user-app-api/src/health.config.ts",
     localControllerPath: "apps/backend/user-app-api/src/health.controller.ts",
   },
@@ -368,8 +368,8 @@ for (const {
   );
   has(
     appModule,
-    'from "@app/common/health"',
-    `${app} imports shared health wiring from @app/common/health`,
+    'from "@app/backend/common/health"',
+    `${app} imports shared health wiring from @app/backend/common/health`,
   );
   has(
     appModule,

@@ -8,7 +8,7 @@ The backend consists of three standalone NestJS API shells:
 
 ## Health
 
-All APIs use the shared health library `@app/common/health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
+All APIs use the shared health library `@app/backend/common/health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
 
 ```http
 GET /health

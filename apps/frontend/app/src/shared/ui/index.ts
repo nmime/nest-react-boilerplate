@@ -1,5 +1,8 @@
 export {
+  LanguageSwitcher,
   ProductShell,
+  ThemeSwitcher,
+  UiAlert,
   UiButton,
   UiCard,
   UiEmptyState,
@@ -8,6 +11,7 @@ export {
   UiLoading,
   UiSection,
   UiStatCard,
+  UiStatusPill,
   UiTextField,
   UiToast,
 } from "@app/frontend/ui";

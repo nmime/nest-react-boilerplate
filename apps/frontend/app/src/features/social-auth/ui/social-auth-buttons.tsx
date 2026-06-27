@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
-import { UiButton, UiCard, UiToast } from "../../../shared/ui";
+import {
+  UiAlert,
+  UiButton,
+  UiCard,
+  UiStatusPill,
+  UiToast,
+} from "../../../shared/ui";
 import type { SocialAuthIntent } from "../model";
 
 interface SocialAuthButtonsProps {
@@ -51,10 +57,15 @@ export function SocialAuthButtons({
 
   return (
     <UiCard
+      className="xr-social-card"
       title={t("auth.social.createAccount.prompt", {
         provider: t("auth.provider.telegram"),
       })}
     >
+      <UiAlert className="xr-card-note" tone="info">
+        <span>{t("auth.social.stepUp.required")}</span>
+        <UiStatusPill label="OAuth" tone="info" />
+      </UiAlert>
       <div className="xr-social-actions">
         <UiButton
           isLoading={isTelegramPending}

@@ -11,6 +11,7 @@ import {
   UiCard,
   UiEmptyState,
   UiLoading,
+  UiStatusPill,
   UiToast,
 } from "../../../shared/ui";
 import {
@@ -111,7 +112,14 @@ export function ProviderIdentitiesPanel({
   );
 
   return (
-    <UiCard title={t("user.settings.title")}>
+    <UiCard className="xr-provider-card" title={t("user.settings.title")}>
+      <div className="xr-status-row">
+        <span>{t("auth.social.stepUp.required")}</span>
+        <UiStatusPill
+          label={authStore.isAuthenticated ? "session" : "signed out"}
+          tone={authStore.isAuthenticated ? "success" : "warning"}
+        />
+      </div>
       {!authStore.isAuthenticated ? (
         <UiEmptyState
           description={t("user.state.missingToken")}

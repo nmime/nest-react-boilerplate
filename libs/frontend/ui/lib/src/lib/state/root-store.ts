@@ -1,4 +1,4 @@
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "../i18n/locale";
 import { AuthShellStore } from "./auth-shell-store";
 import { LocaleStore } from "./locale-store";
 import { UiStore, type UiTheme } from "./ui-store";

@@ -5,7 +5,7 @@ import {
   resolveLocale,
   supportedLocales,
   type Locale,
-} from "@app/common/i18n";
+} from "../i18n/locale";
 
 export const LocaleStorageKey = "boilerplate.locale";
 

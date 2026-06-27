@@ -7,7 +7,6 @@ import {
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { configureApiLocale } from "@app/frontend/api-support";
-import { normalizeLocale, type Locale } from "@app/common/i18n";
 import {
   ApiClientProvider,
   adminApi,
@@ -25,6 +24,8 @@ import {
   UiLoading,
   UiSection,
   useI18n,
+  normalizeLocale,
+  type Locale,
   type UiTheme,
 } from "@app/frontend/ui";
 import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";

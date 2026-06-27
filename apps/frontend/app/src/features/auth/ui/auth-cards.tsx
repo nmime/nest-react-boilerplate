@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
+import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
 import type { ReactNode, SubmitEvent } from "react";
 import { UiButton, UiCard, UiForm, UiTextField } from "../../../shared/ui";
 import type { AuthMode } from "../model";

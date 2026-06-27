@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient } from "@app/frontend/api-client";
-import type { TranslationKey, TranslationParams } from "@app/common/i18n";
-import { useAuthShellStore } from "@app/frontend/ui";
+import {
+  useAuthShellStore,
+  type TranslationKey,
+  type TranslationParams,
+} from "@app/frontend/ui";
 import { getErrorReason } from "../../../shared/lib";
 import {
   UiButton,

@@ -46,6 +46,14 @@ export const AdminLayout = ({
           variant: "secondary" as const,
         }
       : undefined,
+    access?.canReadRoles
+      ? {
+          href: "/admin/tenants",
+          isCurrent: path === "/tenants",
+          label: t("admin.tenants.title"),
+          variant: "secondary" as const,
+        }
+      : undefined,
     (access?.canReadProfile ?? true)
       ? {
           href: "/admin/profile",

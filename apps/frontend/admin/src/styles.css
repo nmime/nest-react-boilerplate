@@ -1,1 +1,31 @@
-/* App-level overrides can live here. Shared tokens and components are imported from @app/frontend/ui. */
+/* App-level polish that composes shared tokens and @app/frontend/ui primitives. */
+
+.admin-readiness-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.admin-readiness-card {
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-md);
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.85rem;
+}
+
+.admin-readiness-card__header {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.admin-readiness-card code {
+  color: var(--xr-color-text);
+  font-size: 0.85rem;
+}
+
+.admin-readiness-card p {
+  margin: 0;
+}

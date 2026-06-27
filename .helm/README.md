@@ -20,6 +20,10 @@ routes.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
 - APIs probe `/live` and `/ready`; nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap.
+- Frontend nginx supports same-origin API proxying for `/auth/*`, `/profile/*`,
+  and `/admin/*` while serving `index.html` for HTML SPA navigations such as
+  `/admin/users/:id`. Keep split-host and path-based routing choices aligned
+  with `docs/frontend-deployment-topology.md`.
 - Keep persisted auth token cleanup explicit in `config.authTokenCleanup*` values.
   The service defaults to enabled hourly cleanup on startup and clamps intervals
   below 60000ms to avoid tight cleanup loops.

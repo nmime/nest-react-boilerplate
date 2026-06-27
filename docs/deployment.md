@@ -100,9 +100,13 @@ healthy dependency ordering. Production Compose uses API `/ready`; Helm uses API
 - `/profile/*` -> `user-app-api:3000`
 - `/admin/*` -> `admin-app-api:3000`
 
-This lets Docker browser calls use empty Vite API base URLs without localhost
-hacks. Production Compose uses the same default unless `.env.production` opts
-into standalone split-origin SPA builds with
+HTML navigations under those prefixes fall back to the SPA while non-HTML API
+requests continue to proxy to the backend, so admin/user deep-link reloads do
+not steal generated-client API routes. See
+[frontend-deployment-topology.md](frontend-deployment-topology.md) for the
+same-origin and split-host contracts. This lets Docker browser calls use empty
+Vite API base URLs without localhost hacks. Production Compose uses the same
+default unless `.env.production` opts into standalone split-origin SPA builds with
 `FRONTEND_NGINX_CONFIG=docker/nginx-spa.conf` plus a non-`same-origin`
 `VITE_API_BASE_URL_MODE` value and explicit `VITE_*_API_BASE_URL` origins.
 Production secrets should be supplied from a secret manager; repository values

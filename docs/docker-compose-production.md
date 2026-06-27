@@ -70,7 +70,9 @@ images default to `VITE_API_BASE_URL_MODE=same-origin` with
 `FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf`, so browser API calls route
 through the colocated nginx container to Compose service DNS names
 (`auth-app-api`, `user-app-api`, and `admin-app-api`) instead of exposing Docker
-DNS or container ports to the browser.
+DNS or container ports to the browser. Nginx treats `GET`/`HEAD` requests with
+`Accept: text/html` as SPA navigations, so reloads of user/admin deep links serve
+`index.html`; generated-client API calls keep proxying because they request JSON.
 
 ## 4. Health checks and logs
 
@@ -107,8 +109,9 @@ build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to
 value such as `split-origin`, and provide absolute
 `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and
 `VITE_ADMIN_API_BASE_URL` values; keep the standalone SPA CSP connection
-allow-list aligned with those explicit API origins. Keep OpenAPI off or protect
-it behind SSO/VPN/edge auth.
+allow-list aligned with those explicit API origins. See
+[frontend-deployment-topology.md](frontend-deployment-topology.md) for the full
+mode matrix. Keep OpenAPI off or protect it behind SSO/VPN/edge auth.
 
 ## 6. Backup and restore
 

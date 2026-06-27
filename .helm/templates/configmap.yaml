@@ -61,6 +61,22 @@ metadata:
     app.kubernetes.io/component: frontend-nginx
 data:
   default.conf: |
+    map $http_accept $frontend_accepts_html {
+      default 0;
+      "~*text/html" 1;
+    }
+
+    map $request_method $frontend_is_navigation_method {
+      default 0;
+      GET 1;
+      HEAD 1;
+    }
+
+    map "$frontend_is_navigation_method:$frontend_accepts_html" $frontend_spa_navigation {
+      default 0;
+      "1:1" 1;
+    }
+
     server {
       listen {{ default 8080 .Values.frontendNginx.listenPort }};
       server_name _;
@@ -90,6 +106,14 @@ data:
         try_files /index.html =404;
       }
 
+      location = /app {
+        try_files /index.html =404;
+      }
+
+      location = /app/ {
+        try_files /index.html =404;
+      }
+
       location = /admin {
         try_files /index.html =404;
       }
@@ -114,7 +138,25 @@ data:
         try_files /index.html =404;
       }
 
+      error_page 418 = @frontend_spa;
+
+      location @frontend_spa {
+        try_files /index.html =404;
+      }
+
+      location ^~ /auth/docs {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-api:{{ default .Values.apps.authApi.port .Values.apps.authApi.servicePort }};
+      }
+
       location ^~ /auth/ {
+        if ($frontend_spa_navigation) {
+          return 418;
+        }
+
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -123,6 +165,10 @@ data:
       }
 
       location ^~ /profile/ {
+        if ($frontend_spa_navigation) {
+          return 418;
+        }
+
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -130,7 +176,19 @@ data:
         proxy_pass http://{{ include "boilerplate.fullname" . }}-user-api:{{ default .Values.apps.userApi.port .Values.apps.userApi.servicePort }};
       }
 
+      location ^~ /admin/docs {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-api:{{ default .Values.apps.adminApi.port .Values.apps.adminApi.servicePort }};
+      }
+
       location ^~ /admin/ {
+        if ($frontend_spa_navigation) {
+          return 418;
+        }
+
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

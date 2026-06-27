@@ -6,6 +6,11 @@ import { Router } from "@grammyjs/router";
 import { autoRetry } from "@grammyjs/auto-retry";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { resolveLocale } from "@app/common/i18n";
+import {
+  createTelegramApplication,
+  resolveTelegramApplication,
+  type TelegramBotApplicationPort,
+} from "./application";
 import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from "./config";
 import { resolveTelegramIdentity } from "./identity";
 import { createI18nMiddleware, resolveTelegramLocale } from "./i18n";
@@ -79,10 +84,11 @@ export function createTelegramBot(
       alwaysReply: true,
     }),
   );
-  bot.use(createIdentityAndLocaleMiddleware(dependencies));
+  const application = createTelegramApplication(dependencies);
+  bot.use(createIdentityAndLocaleMiddleware(application));
 
   const menus = createTelegramMenus({
-    auth: dependencies.auth,
+    application,
     appUrl: safeAppUrl,
   });
   const renderMainMenu = () => menus.main;
@@ -91,9 +97,9 @@ export function createTelegramBot(
   bot.use(createConversation(linkConversation));
 
   bot.command("start", async (ctx) =>
-    handleStart(ctx, dependencies, renderMainMenu),
+    handleStart(ctx, application, renderMainMenu),
   );
-  bot.command("link", async (ctx) => handleLink(ctx, dependencies));
+  bot.command("link", async (ctx) => handleLink(ctx, application));
   bot.command("language", async (ctx) => {
     navigateTo(ctx, "settings.language");
     await ctx.reply(ctx.t("bot.message.chooseLanguage"), {
@@ -143,14 +149,19 @@ export async function setupTelegramMenuButton(
 
 export async function handleStart(
   ctx: TelegramBotContext,
-  dependencies: TelegramBotDependencies = {},
+  applicationOrDependencies:
+    | TelegramBotApplicationPort
+    | TelegramBotDependencies = {},
   renderMainMenu: () => ReturnType<typeof createTelegramMenus>["main"] = () =>
-    createTelegramMenus({ auth: dependencies.auth }).main,
+    createTelegramMenus({
+      application: resolveTelegramApplication(applicationOrDependencies),
+    }).main,
 ): Promise<void> {
+  const application = resolveTelegramApplication(applicationOrDependencies);
   goHome(ctx);
   const payload = ctx.match?.toString().trim();
   if (payload) {
-    const handled = await handleStartPayload(ctx, payload, dependencies);
+    const handled = await handleStartPayload(ctx, payload, application);
     if (!handled) {
       await ctx.reply(ctx.t("bot.error.expired"));
     }
@@ -163,29 +174,28 @@ export async function handleStart(
 
 export async function handleLink(
   ctx: TelegramBotContext,
-  dependencies: TelegramBotDependencies = {},
+  applicationOrDependencies:
+    | TelegramBotApplicationPort
+    | TelegramBotDependencies = {},
 ): Promise<void> {
+  const application = resolveTelegramApplication(applicationOrDependencies);
   navigateTo(ctx, "link");
-  const instructions =
-    ctx.identity && dependencies.auth
-      ? await dependencies.auth.createLinkInstructions(ctx.identity)
-      : null;
+  const instructions = ctx.identity
+    ? await application.createLinkInstructions(ctx.identity)
+    : null;
   await ctx.reply(instructions ?? ctx.t("bot.route.link"));
 }
 
 async function handleStartPayload(
   ctx: TelegramBotContext,
   payload: string,
-  dependencies: TelegramBotDependencies,
+  application: TelegramBotApplicationPort,
 ): Promise<boolean> {
-  if (!ctx.identity || !dependencies.auth) {
+  if (!ctx.identity) {
     return false;
   }
 
-  const resolved = await dependencies.auth.consumeLinkPayload(
-    payload,
-    ctx.identity,
-  );
+  const resolved = await application.consumeStartPayload(payload, ctx.identity);
   if (!resolved) {
     return false;
   }
@@ -216,13 +226,13 @@ function applyPayload(
 }
 
 function createIdentityAndLocaleMiddleware(
-  dependencies: TelegramBotDependencies,
+  application: TelegramBotApplicationPort,
 ) {
   return async (ctx: TelegramBotContext, next: () => Promise<void>) => {
     const identity = resolveTelegramIdentity(ctx);
     ctx.identity = identity;
     const linkedUser = identity
-      ? await dependencies.auth?.findLinkedUser(identity)
+      ? await application.findLinkedUser(identity)
       : null;
     ctx.session.auth = {
       linked: Boolean(linkedUser) || ctx.session.auth.linked,

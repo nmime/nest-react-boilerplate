@@ -1,9 +1,14 @@
 {
-  "name": "@app/common/test",
+  "name": "@app/backend/common/test",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/test/lib/src",
   "projectType": "library",
-  "tags": ["platform:shared", "type:test-util", "scope:shared"],
+  "tags": [
+    "platform:backend",
+    "type:test-util",
+    "scope:shared",
+    "boundary:test-util"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

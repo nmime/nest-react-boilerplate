@@ -1,7 +1,11 @@
 import type { FeatureFlagValue } from "./feature-flag.types";
 
+export type FeatureFlagEnvironment = Readonly<
+  Record<string, string | undefined>
+>;
+
 export function readEnvironmentFlags(
-  env: NodeJS.ProcessEnv,
+  env: FeatureFlagEnvironment,
   prefix = "FEATURE_",
 ): Record<string, FeatureFlagValue> {
   const values: Record<string, FeatureFlagValue> = {};

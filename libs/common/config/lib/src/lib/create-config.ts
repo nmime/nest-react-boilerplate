@@ -1,7 +1,24 @@
-import type Joi from "joi";
-
 export interface ConfigAccessorOptions {
-  readonly env?: Record<string, unknown>;
+  readonly env?: ConfigEnvironment;
+}
+
+export type ConfigEnvironment = Readonly<Record<string, unknown>>;
+
+export interface ConfigValidationResult<TConfig> {
+  readonly value: TConfig;
+  readonly error?: { readonly message: string };
+}
+
+export interface ConfigSchema<TConfig> {
+  validate(
+    value: ConfigEnvironment,
+    options: {
+      readonly abortEarly: boolean;
+      readonly allowUnknown: boolean;
+      readonly convert: boolean;
+      readonly stripUnknown: boolean;
+    },
+  ): ConfigValidationResult<TConfig>;
 }
 
 export interface ConfigAccessor<TConfig> {
@@ -10,11 +27,11 @@ export interface ConfigAccessor<TConfig> {
 }
 
 export function createConfig<TConfig>(
-  schema: Joi.ObjectSchema<TConfig>,
+  schema: ConfigSchema<TConfig>,
   options: ConfigAccessorOptions = {},
 ): ConfigAccessor<TConfig> {
-  const validation: Joi.ValidationResult<TConfig> = schema.validate(
-    options.env ?? process.env,
+  const validation = schema.validate(
+    options.env ?? defaultConfigEnvironment(),
     {
       abortEarly: false,
       allowUnknown: true,
@@ -37,4 +54,12 @@ export function createConfig<TConfig>(
       return values[key];
     },
   };
+}
+
+function defaultConfigEnvironment(): ConfigEnvironment {
+  const runtime = globalThis as typeof globalThis & {
+    readonly process?: { readonly env?: ConfigEnvironment };
+  };
+
+  return runtime.process?.env ?? {};
 }

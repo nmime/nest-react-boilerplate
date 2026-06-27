@@ -3,7 +3,13 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/lib/src",
   "projectType": "library",
-  "tags": ["platform:shared", "type:common", "scope:shared"],
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:i18n",
+    "framework:neutral"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

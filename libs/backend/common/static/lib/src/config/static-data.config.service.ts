@@ -12,7 +12,8 @@ const schema = Joi.object<StaticDataEnvironment>({
 
 @Injectable()
 export class StaticDataConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService =
+    createConfig<StaticDataEnvironment>(schema);
 
   constructor(private readonly rootDir?: string) {}
 

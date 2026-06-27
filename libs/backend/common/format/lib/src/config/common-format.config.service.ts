@@ -12,7 +12,8 @@ const schema = Joi.object<CommonFormatEnvironment>({
 
 @Injectable()
 export class CommonFormatConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService =
+    createConfig<CommonFormatEnvironment>(schema);
 
   constructor(private readonly locale?: string) {}
 

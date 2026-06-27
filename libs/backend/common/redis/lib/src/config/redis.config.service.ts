@@ -44,7 +44,7 @@ const schema = Joi.object<RedisEnvironment>({
 
 @Injectable()
 export class RedisConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService = createConfig<RedisEnvironment>(schema);
 
   constructor(private readonly options: RedisConfig = {}) {}
 

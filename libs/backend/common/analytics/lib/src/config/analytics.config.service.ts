@@ -71,7 +71,7 @@ const schema = Joi.object<AnalyticsEnvironment>({
 
 @Injectable()
 export class AnalyticsConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService = createConfig<AnalyticsEnvironment>(schema);
   private cachedPlugins?: AnalyticsPlugin[];
 
   constructor(private readonly config: AnalyticsConfig = {}) {}

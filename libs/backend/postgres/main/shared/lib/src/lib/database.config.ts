@@ -43,7 +43,7 @@ const schema = Joi.object<PostgresEnvironment>({
 
 @Injectable()
 export class PostgresDatabaseConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService = createConfig<PostgresEnvironment>(schema);
 
   get databaseUrl(): string | undefined {
     return this.configService.get("DATABASE_URL");
@@ -93,7 +93,7 @@ export class PostgresDatabaseConfigService {
 export function createPostgresEnvironment(
   env: NodeJS.ProcessEnv | Record<string, unknown> = process.env,
 ): Readonly<PostgresEnvironment> {
-  return createConfig(schema, { env }).values;
+  return createConfig<PostgresEnvironment>(schema, { env }).values;
 }
 
 export function readBoolean(
@@ -105,7 +105,7 @@ export function readBoolean(
   }
 
   try {
-    return createConfig(
+    return createConfig<{ VALUE?: boolean }>(
       Joi.object<{ VALUE?: boolean }>({
         VALUE: booleanSchema.empty("").optional(),
       }),
@@ -122,7 +122,7 @@ export function readBoolean(
 
 export function readPort(value: string | undefined): number {
   try {
-    return createConfig(
+    return createConfig<{ POSTGRES_PORT: number }>(
       Joi.object<{ POSTGRES_PORT: number }>({
         POSTGRES_PORT: Joi.number()
           .integer()
@@ -145,7 +145,7 @@ export function readSslRejectUnauthorized(env: {
   POSTGRES_SSL_REJECT_UNAUTHORIZED?: string | boolean;
 }): boolean {
   try {
-    return createConfig(
+    return createConfig<{ POSTGRES_SSL_REJECT_UNAUTHORIZED: boolean }>(
       Joi.object<{ POSTGRES_SSL_REJECT_UNAUTHORIZED: boolean }>({
         POSTGRES_SSL_REJECT_UNAUTHORIZED: booleanSchema.empty("").default(true),
       }),

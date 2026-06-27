@@ -52,7 +52,7 @@ const schema = Joi.object<NatsEnvironment>({
 
 @Injectable()
 export class NatsConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService = createConfig<NatsEnvironment>(schema);
 
   constructor(private readonly options: NatsConfig = {}) {}
 

@@ -22,7 +22,7 @@ const schema = Joi.object<S3Environment>({
 
 @Injectable()
 export class S3ConfigService {
-  protected readonly configService = createConfig(schema);
+  protected readonly configService = createConfig<S3Environment>(schema);
 
   constructor(private readonly config: S3Config = {}) {}
 

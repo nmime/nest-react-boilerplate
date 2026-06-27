@@ -1,3 +1,4 @@
+export * from "./lib/discord-account.port";
 export * from "./lib/discord-account.service";
 export * from "./lib/discord-bot.module";
 export * from "./lib/discord-command-registration.service";

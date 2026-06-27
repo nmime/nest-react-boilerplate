@@ -1,16 +1,13 @@
 import { Injectable, Optional } from "@nestjs/common";
 import type { Locale } from "@app/common/i18n";
 import { DefaultDiscordTenantId } from "./discord-config";
-
-export interface DiscordAccountLinkResult {
-  authorizationUrl: string;
-  expiresAt?: string;
-}
-
-export interface DiscordAccountStatusResult {
-  linked: boolean;
-  displayName?: string | null;
-}
+import {
+  DiscordAccountApplicationPort,
+  type DiscordAccountLinkResult,
+  type DiscordAccountStatusResult,
+  type DiscordAccountStatusInput,
+  type DiscordCreateAccountLinkInput,
+} from "./discord-account.port";
 
 export class DiscordAccountLinkNotConfiguredError extends Error {
   constructor() {
@@ -49,21 +46,19 @@ export interface DiscordAccountLinkUrlBuilder {
 }
 
 @Injectable()
-export class DiscordAccountService {
+export class DiscordAccountService extends DiscordAccountApplicationPort {
   constructor(
     @Optional()
     private readonly externalAuth?: DiscordExternalAuthPort,
     @Optional()
     private readonly linkUrlBuilder?: DiscordAccountLinkUrlBuilder,
-  ) {}
+  ) {
+    super();
+  }
 
-  async createLink(input: {
-    userId: string;
-    guildId?: string | null;
-    tenantId?: string | null;
-    locale: Locale;
-    returnUrl?: string | null;
-  }): Promise<DiscordAccountLinkResult> {
+  async createLink(
+    input: DiscordCreateAccountLinkInput,
+  ): Promise<DiscordAccountLinkResult> {
     const tenantId = input.tenantId ?? DefaultDiscordTenantId;
     if (this.linkUrlBuilder) {
       return this.linkUrlBuilder.build({ ...input, tenantId });
@@ -93,10 +88,9 @@ export class DiscordAccountService {
     };
   }
 
-  async status(input: {
-    userId: string;
-    tenantId?: string | null;
-  }): Promise<DiscordAccountStatusResult> {
+  async status(
+    input: DiscordAccountStatusInput,
+  ): Promise<DiscordAccountStatusResult> {
     if (!this.externalAuth) {
       return { linked: false };
     }

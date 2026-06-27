@@ -1,3 +1,4 @@
+export * from "./lib/application";
 export * from "./lib/bot";
 export * from "./lib/config";
 export * from "./lib/i18n";

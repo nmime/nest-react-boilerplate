@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { DiscordAccountApplicationPort } from "./discord-account.port";
 import { DiscordAccountService } from "./discord-account.service";
 import { DiscordCommandRegistrationService } from "./discord-command-registration.service";
 import { DiscordBotConfig } from "./discord-config";
@@ -10,6 +11,10 @@ import { DiscordNavigationStateService } from "./discord-navigation-state.servic
 @Module({
   providers: [
     DiscordAccountService,
+    {
+      provide: DiscordAccountApplicationPort,
+      useExisting: DiscordAccountService,
+    },
     DiscordBotConfig,
     DiscordCommandRegistrationService,
     DiscordCustomIdCodec,
@@ -19,6 +24,7 @@ import { DiscordNavigationStateService } from "./discord-navigation-state.servic
   ],
   exports: [
     DiscordAccountService,
+    DiscordAccountApplicationPort,
     DiscordBotConfig,
     DiscordCommandRegistrationService,
     DiscordCustomIdCodec,

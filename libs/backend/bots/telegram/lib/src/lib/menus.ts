@@ -1,6 +1,10 @@
 import { Menu } from "@grammyjs/menu";
 import { FormattedString, fmt } from "@grammyjs/parse-mode";
 import type { Locale } from "@app/common/i18n";
+import {
+  resolveTelegramApplication,
+  type TelegramBotApplicationPort,
+} from "./application";
 import { goBack, goHome, navigateTo } from "./navigation";
 import type {
   TelegramBotAuthPort,
@@ -18,9 +22,12 @@ export interface TelegramBotMenus {
 }
 
 export function createTelegramMenus(input: {
+  application?: TelegramBotApplicationPort;
   auth?: TelegramBotAuthPort;
   appUrl?: string;
 }): TelegramBotMenus {
+  const application =
+    input.application ?? resolveTelegramApplication({ auth: input.auth });
   const main = new Menu<TelegramBotContext>("telegram:menu:main", {
     fingerprint: (ctx) => menuFingerprint(ctx),
   })
@@ -101,11 +108,11 @@ export function createTelegramMenus(input: {
   })
     .text(
       (ctx) => languageLabel(ctx, "en"),
-      async (ctx) => updateLanguage(ctx, "en", input.auth),
+      async (ctx) => updateLanguage(ctx, "en", application),
     )
     .text(
       (ctx) => languageLabel(ctx, "ru"),
-      async (ctx) => updateLanguage(ctx, "ru", input.auth),
+      async (ctx) => updateLanguage(ctx, "ru", application),
     )
     .row()
     .text(
@@ -150,10 +157,9 @@ export function createTelegramMenus(input: {
       (ctx) => ctx.t("auth.social.button.linkTelegram"),
       async (ctx) => {
         navigateTo(ctx, "link.instructions");
-        const instructions =
-          ctx.identity && input.auth
-            ? await input.auth.createLinkInstructions(ctx.identity)
-            : null;
+        const instructions = ctx.identity
+          ? await application.createLinkInstructions(ctx.identity)
+          : null;
         await renderText(ctx, instructions ?? ctx.t("bot.route.link"));
         ctx.menu.update();
       },
@@ -252,13 +258,13 @@ async function navigateHome(ctx: TelegramBotContext): Promise<void> {
 async function updateLanguage(
   ctx: TelegramBotContext,
   locale: Locale,
-  auth: TelegramBotAuthPort | undefined,
+  application: TelegramBotApplicationPort,
 ): Promise<void> {
   ctx.session.locale = locale;
   ctx.session.identityLocale = locale;
   navigateTo(ctx, "settings.language.confirm", { locale });
-  if (ctx.identity && auth) {
-    await auth.updateLinkedUserLocale({
+  if (ctx.identity) {
+    await application.updateLinkedUserLocale({
       identity: ctx.identity,
       locale,
       userId: ctx.session.auth.userId,

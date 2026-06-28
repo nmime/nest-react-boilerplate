@@ -8,7 +8,7 @@ export type UiLabelProps = ComponentPropsWithoutRef<typeof LabelPrimitive.Root>;
 export const UiLabel = ({ className, ...props }: Readonly<UiLabelProps>) => (
   <LabelPrimitive.Root
     className={cn(
-      "xr-field__label text-sm font-bold leading-none text-[var(--xr-color-text)] peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "xr-field__label text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className,
     )}
     {...props}

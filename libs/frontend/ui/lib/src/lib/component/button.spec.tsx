@@ -270,7 +270,7 @@ describe("shared UI components", () => {
     expect(trigger.getAttribute("tabindex")).not.toBe("-1");
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(trigger.className).toContain("xr-select-trigger");
-    expect(trigger.className).toContain("rounded-full");
+    expect(trigger.className).toContain("rounded-[var(--xr-radius-md)]");
     trigger.focus();
     expect(document.activeElement).toBe(trigger);
     expect(trigger.textContent).toContain("English");

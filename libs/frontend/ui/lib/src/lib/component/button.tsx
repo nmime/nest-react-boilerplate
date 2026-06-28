@@ -16,17 +16,17 @@ type ButtonVariant = NonNullable<
 
 const buttonVariants = cva(
   [
-    "xr-button inline-flex min-h-11 max-w-full min-w-0 items-center justify-center gap-2 rounded-full border px-5 text-center text-sm font-bold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
-    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--xr-color-primary)_34%,transparent)]",
-    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
+    "xr-button inline-flex h-10 max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border px-4 text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
   ],
   {
     variants: {
       variant: {
         primary:
-          "xr-button--primary border-transparent bg-primary bg-[linear-gradient(135deg,var(--xr-color-primary),var(--xr-color-primary-strong))] text-primary-foreground text-[var(--xr-color-primary-contrast)] hover:-translate-y-0.5 hover:shadow-lg",
+          "xr-button--primary border-transparent bg-primary text-primary-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
         secondary:
-          "xr-button--secondary border-border border-[var(--xr-color-border)] bg-secondary bg-[var(--xr-control-background)] text-secondary-foreground text-[var(--xr-color-text)] hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--xr-color-primary)_58%,transparent)]",
+          "xr-button--secondary border-border bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0",
       },
     },
     defaultVariants: {

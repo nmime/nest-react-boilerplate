@@ -4,15 +4,13 @@ import { type HTMLAttributes, type PropsWithChildren } from "react";
 import { cn } from "../utils/cn";
 
 const alertVariants = cva(
-  "xr-alert rounded-[var(--xr-radius-md)] border border-[var(--xr-color-border)] bg-[var(--xr-feedback-background)] p-4 text-sm text-[var(--xr-color-text)] shadow-sm",
+  "xr-alert rounded-[var(--xr-radius-md)] border border-border bg-card p-4 text-sm text-card-foreground shadow-sm",
   {
     variants: {
       tone: {
         info: "xr-alert--info",
-        success:
-          "xr-alert--success border-[color-mix(in_srgb,var(--xr-color-success)_55%,transparent)]",
-        warning:
-          "xr-alert--warning border-[color-mix(in_srgb,var(--xr-color-warning)_55%,transparent)]",
+        success: "xr-alert--success",
+        warning: "xr-alert--warning",
       },
     },
     defaultVariants: {

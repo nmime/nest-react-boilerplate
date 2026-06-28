@@ -94,7 +94,7 @@ export function TmaAuthPanel({
         className="xr-tma-stage-grid"
         aria-label="Telegram verification stages"
       >
-        <span data-active={deepNavigationState !== "idle"}>
+        <span data-active={deepNavigationState !== "none"}>
           <strong>1</strong>
           <small>Deep link</small>
         </span>

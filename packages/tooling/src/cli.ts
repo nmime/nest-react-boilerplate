@@ -6,6 +6,7 @@ import { runCheckLibraryConfigs } from "./commands/project/check-library-configs
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
 import { runMutation } from "./commands/qa/mutation";
 import { runBranchCleanup } from "./commands/git/branch-cleanup";
+import { runWebpCommand } from "./commands/images/webp";
 import {
   runChangedFormatCheck,
   runStaticCheck,
@@ -34,6 +35,11 @@ register(
   "git:branch-cleanup",
   "Safely preview or delete local/remote branches already merged into the target branch.",
   runBranchCleanup,
+);
+register(
+  "images:webp",
+  "Find PNG/JPG/JPEG assets and convert them to WebP.",
+  ({ argv, workspaceRoot }) => runWebpCommand({ argv, workspaceRoot }),
 );
 
 register(

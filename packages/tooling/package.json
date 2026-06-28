@@ -22,7 +22,8 @@
     "tsconfig.json"
   ],
   "dependencies": {
-    "jiti": "2.7.0"
+    "jiti": "2.7.0",
+    "sharp": "0.34.5"
   },
   "exports": {
     ".": "./src/cli.ts",

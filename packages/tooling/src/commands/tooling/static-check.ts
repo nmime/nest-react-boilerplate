@@ -412,6 +412,7 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   const testFiles = [
     "packages/tooling/src/commands/project/generate-vertical-slice.test.ts",
     "packages/tooling/src/commands/api/contracts-manifest.test.ts",
+    "packages/tooling/src/commands/images/webp.test.ts",
     "packages/tooling/src/commands/tooling/static-check.test.ts",
   ];
   const result = run(process.execPath, ["--test", ...testFiles], {

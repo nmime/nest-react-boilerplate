@@ -7,6 +7,7 @@ pnpm --filter @repo/tooling tooling --help
 pnpm --filter @repo/tooling tooling project check-library-configs
 pnpm --filter @repo/tooling tooling project generate-vertical-slice invoices --dry-run
 pnpm --filter @repo/tooling tooling qa mutation --dry-run
+pnpm --filter @repo/tooling tooling images webp --dry-run
 pnpm --filter @repo/tooling tooling tooling static-check
 pnpm --filter @repo/tooling tooling db migrations rollback-check
 ```
@@ -20,6 +21,7 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
 - `docker/` Docker runtime checks, smoke tests, and fullstack e2e wrappers.
 - `dev/` local fullstack orchestration.
 - `project/` repository/project maintenance helpers.
+- `images/` asset optimization helpers such as PNG/JPG/JPEG to WebP conversion.
 - `testing/` Storybook, browser e2e coverage, and visual regression helpers.
 - `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
 
@@ -33,6 +35,7 @@ All QA presets are designed to be useful locally without depending on GitHub Act
 
 - `pnpm run tooling:static-check` performs syntax checks for repository tooling, safe CLI help smoke tests, package-script reference checks, generator regression tests, and stale architecture/version/Postgres path wording guards. It intentionally avoids running Docker, deployment, or destructive database commands.
 - `pnpm run format:changed` checks only changed Prettier-supported files against `origin/main...HEAD`; use it in PR-sized gates when full-repository formatting is too memory-heavy. Formatting intentionally uses stock Prettier defaults plus `.prettierignore`; no explicit Prettier config is required unless style requirements change.
+- `pnpm run images:webp` converts PNG/JPG/JPEG assets to WebP side-by-side by default. Use `pnpm run images:webp:check` for a non-mutating dry-run, pass input directories after `--`, and use `--replace` only when source image deletion is intended.
 - `pnpm run test:security:secrets` runs the native secret scanner by default and can be promoted to gitleaks with `SECRET_SCAN_ENGINE=gitleaks`. If an external engine is explicitly requested and unavailable, the command fails unless `SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL=false` is set for local dry-runs.
 - `pnpm run test:security:sast` runs native SAST rules by default and can be promoted to semgrep with `SECURITY_SAST_ENGINE=semgrep`. External engine unavailability is fail-closed by default.
 - `pnpm run deploy:validate` is the no-deploy validation bundle for production Docker Compose plus optional Helm, GitOps/Argo, and PM2 modes. Local runs do not require Helm globally: Helm rendering is skipped when Helm is unavailable unless `pnpm run deploy:validate:helm`, `--mode=helm`, or `REQUIRE_HELM=true` is used.

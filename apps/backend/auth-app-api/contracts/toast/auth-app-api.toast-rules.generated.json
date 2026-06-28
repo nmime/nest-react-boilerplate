@@ -1,0 +1,4311 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json",
+    "app": "auth-app-api"
+  },
+  "runtimeContract": {
+    "resolutionOrder": [
+      "endpoint+method+status+errorCode",
+      "endpoint+method+status",
+      "endpoint+method+network",
+      "endpoint+method+errorFallback"
+    ],
+    "displayModes": ["toast", "modal", "custom", "silent"],
+    "categories": ["success", "error", "warning", "info"]
+  },
+  "rules": [
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.200",
+          "default": "Auth discord Authorization Request completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.400.bad-request",
+          "default": "Auth discord Authorization Request failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.401.unauthorized",
+          "default": "Auth discord Authorization Request failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.403.forbidden",
+          "default": "Auth discord Authorization Request failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.409.conflict",
+          "default": "Auth discord Authorization Request failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.429.rate-limited",
+          "default": "Auth discord Authorization Request failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.500.internal-server-error",
+          "default": "Auth discord Authorization Request failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.200",
+          "default": "Auth discord Callback completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.400.bad-request",
+          "default": "Auth discord Callback failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.401.unauthorized",
+          "default": "Auth discord Callback failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.403.forbidden",
+          "default": "Auth discord Callback failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "GET_409_conflict",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.409.conflict",
+          "default": "Auth discord Callback failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.429.rate-limited",
+          "default": "Auth discord Callback failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.500.internal-server-error",
+          "default": "Auth discord Callback failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.200",
+          "default": "Auth request Email Verification completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.400.bad-request",
+          "default": "Auth request Email Verification failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.401.unauthorized",
+          "default": "Auth request Email Verification failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.403.forbidden",
+          "default": "Auth request Email Verification failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.409.conflict",
+          "default": "Auth request Email Verification failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.429.rate-limited",
+          "default": "Auth request Email Verification failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.500.internal-server-error",
+          "default": "Auth request Email Verification failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.200",
+          "default": "Auth create Link Token completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.400.bad-request",
+          "default": "Auth create Link Token failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.401.unauthorized",
+          "default": "Auth create Link Token failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.403.forbidden",
+          "default": "Auth create Link Token failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.409.conflict",
+          "default": "Auth create Link Token failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.429.rate-limited",
+          "default": "Auth create Link Token failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.500.internal-server-error",
+          "default": "Auth create Link Token failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.200",
+          "default": "Auth locales completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.400.bad-request",
+          "default": "Auth locales failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.401.unauthorized",
+          "default": "Auth locales failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.403.forbidden",
+          "default": "Auth locales failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "GET_409_conflict",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.409.conflict",
+          "default": "Auth locales failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.429.rate-limited",
+          "default": "Auth locales failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.500.internal-server-error",
+          "default": "Auth locales failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.200",
+          "default": "Auth login completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.400.bad-request",
+          "default": "Auth login failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.401.unauthorized",
+          "default": "Auth login failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.403.forbidden",
+          "default": "Auth login failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.409.conflict",
+          "default": "Auth login failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.429.rate-limited",
+          "default": "Auth login failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.500.internal-server-error",
+          "default": "Auth login failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.200",
+          "default": "Auth logout completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.400.bad-request",
+          "default": "Auth logout failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.401.unauthorized",
+          "default": "Auth logout failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.403.forbidden",
+          "default": "Auth logout failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.409.conflict",
+          "default": "Auth logout failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.429.rate-limited",
+          "default": "Auth logout failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.500.internal-server-error",
+          "default": "Auth logout failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.200",
+          "default": "Auth me completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.400.bad-request",
+          "default": "Auth me failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.401.unauthorized",
+          "default": "Auth me failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.403.forbidden",
+          "default": "Auth me failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "GET_409_conflict",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.409.conflict",
+          "default": "Auth me failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.429.rate-limited",
+          "default": "Auth me failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.500.internal-server-error",
+          "default": "Auth me failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.200",
+          "default": "Auth update Locale completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "PATCH_400_bad-request",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.400.bad-request",
+          "default": "Auth update Locale failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "PATCH_401_unauthorized",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.401.unauthorized",
+          "default": "Auth update Locale failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "PATCH_403_forbidden",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.403.forbidden",
+          "default": "Auth update Locale failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "PATCH_409_conflict",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.409.conflict",
+          "default": "Auth update Locale failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "PATCH_429_rate-limited",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.429.rate-limited",
+          "default": "Auth update Locale failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "PATCH_500_internal-server-error",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.500.internal-server-error",
+          "default": "Auth update Locale failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.200",
+          "default": "Auth update Preferences completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "PATCH_400_bad-request",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.400.bad-request",
+          "default": "Auth update Preferences failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "PATCH_401_unauthorized",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.401.unauthorized",
+          "default": "Auth update Preferences failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "PATCH_403_forbidden",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.403.forbidden",
+          "default": "Auth update Preferences failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "PATCH_409_conflict",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.409.conflict",
+          "default": "Auth update Preferences failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "PATCH_429_rate-limited",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.429.rate-limited",
+          "default": "Auth update Preferences failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "PATCH_500_internal-server-error",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.500.internal-server-error",
+          "default": "Auth update Preferences failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.200",
+          "default": "Auth request Password Reset completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.400.bad-request",
+          "default": "Auth request Password Reset failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.401.unauthorized",
+          "default": "Auth request Password Reset failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.403.forbidden",
+          "default": "Auth request Password Reset failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.409.conflict",
+          "default": "Auth request Password Reset failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.429.rate-limited",
+          "default": "Auth request Password Reset failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.500.internal-server-error",
+          "default": "Auth request Password Reset failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.200",
+          "default": "Auth provider Identities completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.400.bad-request",
+          "default": "Auth provider Identities failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.401.unauthorized",
+          "default": "Auth provider Identities failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.403.forbidden",
+          "default": "Auth provider Identities failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "GET_409_conflict",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.409.conflict",
+          "default": "Auth provider Identities failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.429.rate-limited",
+          "default": "Auth provider Identities failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.500.internal-server-error",
+          "default": "Auth provider Identities failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_200",
+        "fallbackVariant": null,
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.200",
+          "default": "Auth unlink Provider Identity completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "DELETE_400_bad-request",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.400.bad-request",
+          "default": "Auth unlink Provider Identity failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "DELETE_401_unauthorized",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.401.unauthorized",
+          "default": "Auth unlink Provider Identity failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "DELETE_403_forbidden",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.403.forbidden",
+          "default": "Auth unlink Provider Identity failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "DELETE_409_conflict",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.409.conflict",
+          "default": "Auth unlink Provider Identity failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "DELETE_429_rate-limited",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.429.rate-limited",
+          "default": "Auth unlink Provider Identity failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "DELETE_500_internal-server-error",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.500.internal-server-error",
+          "default": "Auth unlink Provider Identity failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.200",
+          "default": "Auth refresh completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.400.bad-request",
+          "default": "Auth refresh failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.401.unauthorized",
+          "default": "Auth refresh failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.403.forbidden",
+          "default": "Auth refresh failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.409.conflict",
+          "default": "Auth refresh failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.429.rate-limited",
+          "default": "Auth refresh failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.500.internal-server-error",
+          "default": "Auth refresh failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.200",
+          "default": "Auth register completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.400.bad-request",
+          "default": "Auth register failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.401.unauthorized",
+          "default": "Auth register failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.403.forbidden",
+          "default": "Auth register failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.409.conflict",
+          "default": "Auth register failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.429.rate-limited",
+          "default": "Auth register failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.500.internal-server-error",
+          "default": "Auth register failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.200",
+          "default": "Auth telegram Bot Link completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.400.bad-request",
+          "default": "Auth telegram Bot Link failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.401.unauthorized",
+          "default": "Auth telegram Bot Link failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.403.forbidden",
+          "default": "Auth telegram Bot Link failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.409.conflict",
+          "default": "Auth telegram Bot Link failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.429.rate-limited",
+          "default": "Auth telegram Bot Link failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.500.internal-server-error",
+          "default": "Auth telegram Bot Link failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.200",
+          "default": "Auth telegram Tma completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.400.bad-request",
+          "default": "Auth telegram Tma failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.401.unauthorized",
+          "default": "Auth telegram Tma failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.403.forbidden",
+          "default": "Auth telegram Tma failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.409.conflict",
+          "default": "Auth telegram Tma failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.429.rate-limited",
+          "default": "Auth telegram Tma failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.500.internal-server-error",
+          "default": "Auth telegram Tma failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.200",
+          "default": "Auth telegram Web Login completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.400.bad-request",
+          "default": "Auth telegram Web Login failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.401.unauthorized",
+          "default": "Auth telegram Web Login failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.403.forbidden",
+          "default": "Auth telegram Web Login failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.409.conflict",
+          "default": "Auth telegram Web Login failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.429.rate-limited",
+          "default": "Auth telegram Web Login failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/web-login:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/web-login",
+        "operationId": "AuthController_telegramWebLogin",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.500.internal-server-error",
+          "default": "Auth telegram Web Login failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/health:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-gethealth.get.200",
+          "default": "Base Health get Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/health/private:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getprivatehealth.get.200",
+          "default": "Base Health get Private Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/live:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getliveness.get.200",
+          "default": "Base Health get Liveness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/ready:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getreadiness.get.200",
+          "default": "Base Health get Readiness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    }
+  ]
+}

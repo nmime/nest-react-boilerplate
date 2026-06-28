@@ -54,6 +54,8 @@
     "api:clients:check": "pnpm --filter @repo/tooling tooling api clients check",
     "api:openapi:lint": "pnpm --filter @repo/tooling tooling qa openapi-lint",
     "api:openapi:fuzz": "pnpm --filter @repo/tooling tooling qa openapi-fuzz",
+    "api:toast-config:generate": "pnpm --filter @repo/tooling tooling api toast-config generate",
+    "api:toast-config:check": "pnpm --filter @repo/tooling tooling api toast-config check",
     "test:a11y": "pnpm --filter @repo/tooling tooling qa accessibility",
     "test:e2e:matrix": "pnpm --filter @repo/tooling tooling qa cross-browser-e2e",
     "test:perf": "pnpm --filter @repo/tooling tooling qa performance",

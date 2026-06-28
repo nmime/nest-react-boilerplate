@@ -412,6 +412,7 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   const testFiles = [
     "packages/tooling/src/commands/project/generate-vertical-slice.test.ts",
     "packages/tooling/src/commands/api/contracts-manifest.test.ts",
+    "packages/tooling/src/commands/api/toast-config.test.ts",
     "packages/tooling/src/commands/tooling/static-check.test.ts",
   ];
   const result = run(process.execPath, ["--test", ...testFiles], {
@@ -446,6 +447,20 @@ function getSmokeCommands(): string[][] {
       "packages/tooling/bin/repo-tooling.mjs",
       "tooling",
       "changed-format-check",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "api",
+      "toast-config",
+      "generate",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
+      "api",
+      "toast-config",
+      "check",
       "--help",
     ],
     [

@@ -95,7 +95,7 @@ Repository wrappers return `neverthrow` `ResultAsync` values so feature code can
 
 ## API contracts and clients
 
-OpenAPI producer output is committed as JSON under `apps/backend/*-app-api-contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
+OpenAPI producer output is committed as JSON under `apps/backend/*-app-api/contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
 
 ## i18n and Problem Details
 
@@ -132,9 +132,9 @@ graph TD
   UserApp --> FrontendUi
   ApiClient --> ApiSupport[@app/frontend-api-support]
   ApiClient --> GeneratedClients[libs/frontend/api-client/lib/src/generated/**]
-  GeneratedClients --> OpenApi[apps/backend/*-app-api-contracts/openapi/*.json]
+  GeneratedClients --> OpenApi[apps/backend/*-app-api/contracts/openapi/*.json]
   OpenApi --> SharedTypes[libs/common/api-contracts/lib/src/generated/**]
-  UserApp --> ConsumerPact[apps/frontend/app-contracts/consumers/frontend-auth.pact.json]
+  UserApp --> ConsumerPact[apps/frontend/app/contracts/consumers/frontend-auth.pact.json]
   ConsumerPact --> AuthApi[auth-app-api]
   AdminApi[admin-app-api] --> Bootstrap[@app/common/bootstrap]
   UserApi[user-app-api] --> Bootstrap
@@ -150,7 +150,7 @@ graph TD
 
 ## Current contract and persistence layout
 
-OpenAPI producer output is committed as JSON under `apps/backend/*-app-api-contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app-contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
+OpenAPI producer output is committed as JSON under `apps/backend/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
 
 There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
 

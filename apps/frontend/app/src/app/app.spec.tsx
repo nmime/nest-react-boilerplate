@@ -225,11 +225,38 @@ describe("User app shell", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain("User App");
+    expect(html).toContain("User design v3");
     expect(html).toContain(
       "Sign in, register, and load your protected profile.",
     );
     expect(html).toContain("Development login/register flow");
     expect(html).toContain("Profile state");
+  });
+
+  it("renders a nonblank v3 marker on every preserved user route", () => {
+    const routes = [
+      "/",
+      "/auth",
+      "/auth/discord/callback",
+      "/profile",
+      "/settings",
+      "/tma",
+      "/tma/auth",
+      "/telegram-mini-app",
+      "/link/telegram",
+      "/link/discord",
+    ];
+
+    for (const route of routes) {
+      window.history.pushState({}, "", route);
+      const html = renderToStaticMarkup(<App />);
+
+      expect(html).toContain(
+        'data-design-marker="user-app-frontend-design-v3"',
+      );
+      expect(html).toContain("User design v3");
+      expect(html).toContain(route);
+    }
   });
 
   it("renders static markup without browser globals or usable storage", () => {

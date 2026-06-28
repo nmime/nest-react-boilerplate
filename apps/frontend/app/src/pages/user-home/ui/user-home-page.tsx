@@ -22,6 +22,7 @@ export interface UserHomePageProps {
     label: string;
     variant?: "primary" | "secondary";
   }>;
+  activeRoute?: string;
   children?: ReactNode;
 }
 
@@ -31,23 +32,110 @@ interface UserHomeContentProps {
 }
 
 const routeReadiness = [
-  "/",
-  "/auth",
-  "/auth/discord/callback",
-  "/profile",
-  "/settings",
-  "/tma",
-  "/tma/auth",
-  "/telegram-mini-app",
-  "/link/telegram",
-  "/link/discord",
+  { route: "/", group: "Home", value: "dashboard" },
+  { route: "/auth", group: "Auth", value: "password + social" },
+  { route: "/auth/discord/callback", group: "OAuth", value: "callback" },
+  { route: "/profile", group: "Account", value: "profile" },
+  { route: "/settings", group: "Account", value: "settings" },
+  { route: "/tma", group: "Telegram", value: "mini app" },
+  { route: "/tma/auth", group: "Telegram", value: "auth" },
+  { route: "/telegram-mini-app", group: "Telegram", value: "alias" },
+  { route: "/link/telegram", group: "Linking", value: "telegram" },
+  { route: "/link/discord", group: "Linking", value: "discord" },
 ] as const;
+
+const experienceSignals = [
+  { label: "Responsive shell", value: "mobile-first" },
+  { label: "State coverage", value: "loading / empty / error / success" },
+  { label: "Social linking", value: "Telegram + Discord" },
+] as const;
+
+function UserExperienceBanner({
+  activeRoute,
+}: Readonly<{ activeRoute: string }>) {
+  const { t } = useI18n();
+
+  return (
+    <section
+      aria-label="User app design v3 command center"
+      className="xr-v3-banner xr-surface-glow"
+      data-design-marker="user-app-frontend-design-v3"
+    >
+      <div className="xr-v3-banner__copy">
+        <span className="xr-v3-kicker">User design v3</span>
+        <h2>{t("user.appName")} command center</h2>
+        <p>{t("user.description")}</p>
+      </div>
+      <div className="xr-v3-banner__meta" aria-label="Current route status">
+        <UiStatusPill label={activeRoute} tone="info" />
+        <UiStatusPill label="nonblank smoke marker" tone="success" />
+      </div>
+    </section>
+  );
+}
+
+function UserRouteRail({ activeRoute }: Readonly<{ activeRoute: string }>) {
+  const activeIndex = routeReadiness.findIndex(
+    ({ route }) => route === activeRoute,
+  );
+
+  return (
+    <aside className="xr-route-rail" aria-label="User route experience map">
+      {routeReadiness.map(({ group, route, value }, index) => {
+        const isActive = route === activeRoute;
+        const readinessLabel = index < activeIndex ? "ready" : "wired";
+        const statusLabel = isActive ? "current" : readinessLabel;
+        return (
+          <a
+            aria-current={isActive ? "page" : undefined}
+            className="xr-route-rail__item"
+            data-active={isActive}
+            href={route}
+            key={route}
+          >
+            <span className="xr-route-rail__step">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span>
+              <strong>{route}</strong>
+              <small>
+                {group} · {value}
+              </small>
+            </span>
+            <UiStatusPill
+              label={statusLabel}
+              tone={isActive ? "success" : "info"}
+            />
+          </a>
+        );
+      })}
+    </aside>
+  );
+}
+
+function UserExperienceFrame({
+  activeRoute,
+  children,
+}: Readonly<{ activeRoute: string; children: ReactNode }>) {
+  return (
+    <div className="xr-v3-frame">
+      <UserExperienceBanner activeRoute={activeRoute} />
+      <div className="xr-v3-workspace">
+        <div className="xr-v3-primary">{children}</div>
+        <UserRouteRail activeRoute={activeRoute} />
+      </div>
+    </div>
+  );
+}
 
 function UserReadinessOverview() {
   const { t } = useI18n();
 
   return (
-    <UiSectionReadiness>
+    <section
+      className="xr-readiness-panel"
+      aria-label={t("user.routeReadiness.label")}
+    >
       <UiCard
         className="xr-route-card xr-surface-glow"
         title={t("user.status")}
@@ -55,39 +143,36 @@ function UserReadinessOverview() {
         <div className="xr-card-stack">
           <UiAlert className="xr-inline-alert" tone="info">
             <strong>{t("user.routeReadiness.label")}</strong>
-            <span>{t("user.description")}</span>
+            <span>
+              Every preserved route now has a visible v3 landing state.
+            </span>
           </UiAlert>
-        </div>
-        <div
-          className="xr-route-list"
-          aria-label={t("user.routeReadiness.label")}
-        >
-          {routeReadiness.map((route) => (
-            <a className="xr-route-chip" href={route} key={route}>
-              <span>{route}</span>
-              <UiStatusPill label="wired" tone="success" />
-            </a>
-          ))}
+          <div
+            className="xr-route-list"
+            aria-label={t("user.routeReadiness.label")}
+          >
+            {routeReadiness.map(({ group, route, value }) => (
+              <a className="xr-route-chip" href={route} key={route}>
+                <span>{route}</span>
+                <small>{group}</small>
+                <UiStatusPill label={value} tone="success" />
+              </a>
+            ))}
+          </div>
         </div>
       </UiCard>
       <div className="xr-stat-grid xr-stat-grid--compact">
-        <UiStatCard
-          detail={t("user.auth.title")}
-          label={t("user.nav.auth")}
-          value="forms"
-        />
-        <UiStatCard
-          detail={t("user.settings.title")}
-          label={t("user.nav.settings")}
-          value="links"
-        />
+        {experienceSignals.map((signal) => (
+          <UiStatCard
+            detail={signal.value}
+            key={signal.label}
+            label={signal.label}
+            value="v3"
+          />
+        ))}
       </div>
-    </UiSectionReadiness>
+    </section>
   );
-}
-
-function UiSectionReadiness({ children }: Readonly<{ children: ReactNode }>) {
-  return <section className="xr-readiness-panel">{children}</section>;
 }
 
 function UserHomeContent({
@@ -116,8 +201,8 @@ function UserHomeContent({
       >
         <div className="xr-home-grid">
           <UiCard
-            className="xr-command-card xr-surface-glow"
-            title={t("user.status")}
+            className="xr-command-card xr-command-card--hero xr-surface-glow"
+            title="Start from the safest path"
           >
             <div className="xr-card-stack">
               <p className="xr-lead-copy">{t("user.description")}</p>
@@ -132,23 +217,26 @@ function UserHomeContent({
                 <UiButton href="/settings" variant="secondary">
                   {t("user.nav.settings")}
                 </UiButton>
+                <UiButton href="/tma" variant="secondary">
+                  Telegram mini app
+                </UiButton>
               </div>
             </div>
           </UiCard>
           <UiCard
             className="xr-command-card xr-surface-glow"
-            title={t("user.profile.title")}
+            title="Account pulse"
           >
             <div className="xr-card-stack">
               <UiAlert className="xr-inline-alert" tone="info">
                 <strong>{t("user.nav.profile")}</strong>
-                <span>{t("user.routeReadiness.label")}</span>
+                <span>
+                  Profile, preferences, and linked identities share one flow.
+                </span>
               </UiAlert>
               <div className="xr-status-row">
-                <span className="xr-status-heading">
-                  {t("user.nav.settings")}
-                </span>
-                <UiStatusPill label={t("user.status")} tone="success" />
+                <span className="xr-status-heading">Design readiness</span>
+                <UiStatusPill label="v3 ready" tone="success" />
               </div>
             </div>
           </UiCard>
@@ -169,6 +257,7 @@ function UserHomeContent({
 }
 
 export function UserHomePage({
+  activeRoute = "/",
   applyUserLocale,
   actions,
   applyUserTheme,
@@ -182,6 +271,11 @@ export function UserHomePage({
       label: t("user.action.profile"),
       variant: "secondary" as const,
     },
+    {
+      href: "/tma",
+      label: "Telegram",
+      variant: "secondary" as const,
+    },
   ];
 
   return (
@@ -190,16 +284,18 @@ export function UserHomePage({
       appName={t("user.appName")}
       description={t("user.description")}
       eyebrow={t("user.eyebrow")}
-      status={t("user.status")}
+      status="design v3"
       statusTone="success"
       title={t("user.title")}
     >
-      {children ?? (
-        <UserHomeContent
-          applyUserLocale={applyUserLocale}
-          applyUserTheme={applyUserTheme}
-        />
-      )}
+      <UserExperienceFrame activeRoute={activeRoute}>
+        {children ?? (
+          <UserHomeContent
+            applyUserLocale={applyUserLocale}
+            applyUserTheme={applyUserTheme}
+          />
+        )}
+      </UserExperienceFrame>
     </ProductShell>
   );
 }

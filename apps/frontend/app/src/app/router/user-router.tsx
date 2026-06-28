@@ -86,6 +86,16 @@ export function UserRouter({
         label: t("user.nav.settings"),
         variant: "secondary" as const,
       },
+      {
+        href: "/tma",
+        isCurrent:
+          route === "/tma" ||
+          route === "/tma/auth" ||
+          route === "/telegram-mini-app" ||
+          linkRoute === "/link/telegram",
+        label: "Telegram",
+        variant: "secondary" as const,
+      },
     ],
     [linkRoute, route, t],
   );
@@ -166,6 +176,7 @@ export function UserRouter({
   if (route === "/") {
     return (
       <UserHomePage
+        activeRoute="/"
         actions={navActions}
         applyUserLocale={applyUserLocale}
         applyUserTheme={applyUserTheme}
@@ -175,6 +186,7 @@ export function UserRouter({
 
   return (
     <UserHomePage
+      activeRoute={linkRoute ?? route}
       actions={navActions}
       applyUserLocale={applyUserLocale}
       applyUserTheme={applyUserTheme}

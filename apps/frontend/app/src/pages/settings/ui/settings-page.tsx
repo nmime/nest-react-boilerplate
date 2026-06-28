@@ -10,6 +10,7 @@ import {
   UiAlert,
   UiCard,
   UiSection,
+  UiStatCard,
   UiStatusPill,
 } from "../../../shared/ui";
 
@@ -31,6 +32,35 @@ export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
       eyebrow={t("user.nav.settings")}
       title={t("user.settings.title")}
     >
+      <div className="xr-settings-command" data-design-marker="settings-v3">
+        <UiCard
+          className="xr-settings-hero xr-surface-glow"
+          title="Account control room"
+        >
+          <div className="xr-card-stack">
+            <UiAlert className="xr-inline-alert" tone="info">
+              <strong>{t("user.nav.settings")}</strong>
+              <span>
+                Preferences, linked identities, and recovery paths stay visible
+                together.
+              </span>
+            </UiAlert>
+            <div className="xr-status-row">
+              <span className="xr-status-heading">Linking routes</span>
+              <UiStatusPill label="Telegram + Discord" tone="success" />
+            </div>
+          </div>
+        </UiCard>
+        <div className="xr-stat-grid xr-stat-grid--compact">
+          <UiStatCard detail="language" label="Locale" value="ready" />
+          <UiStatCard
+            detail="system / light / dark"
+            label="Theme"
+            value="ready"
+          />
+          <UiStatCard detail="OAuth + TMA" label="Providers" value="2" />
+        </div>
+      </div>
       <div className="xr-settings-grid">
         <UiCard
           className="xr-preferences-card xr-surface-glow"

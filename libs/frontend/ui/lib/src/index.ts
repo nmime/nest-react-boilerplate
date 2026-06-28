@@ -4,6 +4,7 @@ export * from "./lib/utils/cn";
 export * from "./lib/utils/platform-utils";
 export * from "./lib/hooks/platform-hooks";
 export * from "./lib/component/alert";
+export * from "./lib/component/api-runtime-overlay";
 export * from "./lib/component/badge";
 export * from "./lib/component/button";
 export * from "./lib/component/card";

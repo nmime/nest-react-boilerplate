@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createAuthRefreshMiddleware } from "./auth-middleware";
 import { FRONTEND_ERROR_KEY } from "./error-normalization";
 import { createApiResilienceMiddleware } from "./resilience-middleware";
+import { createApiRuntimeFetch } from "./runtime-fetch";
 import { createApiRuntimeEventHub } from "./runtime-events";
 import {
   ApiToastRuntime,
@@ -47,6 +48,59 @@ const invokeOnResponse = async (
 };
 
 describe("API resilience middleware", () => {
+  it("wraps generated-client fetches with offline, auth-required, toast, and enriched error handling", async () => {
+    const eventHub = createApiRuntimeEventHub();
+    const events: string[] = [];
+    eventHub.subscribe((event) => events.push(event.type));
+    const toastRuntime = new ApiToastRuntime({
+      clock: () => 1,
+      createId: () => "toast-auth",
+      eventHub,
+    });
+    const authFetch = createApiRuntimeFetch({
+      baseFetch: vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ message: "Sign in first" }), {
+          headers: { "content-type": "application/json" },
+          status: 401,
+        }),
+      ),
+      emitMissingTokenAuthRequired: true,
+      eventHub,
+      toastRuntime,
+    });
+
+    const authResponse = await authFetch("https://api.example.test/profile/me");
+    const authBody = (await authResponse.json()) as Record<string, unknown>;
+
+    expect(eventHub.getState()).toMatchObject({
+      authRequired: true,
+      redirectTo: "/auth",
+    });
+    expect(authBody[FRONTEND_ERROR_KEY]).toMatchObject({
+      kind: "auth",
+      message: "Sign in first",
+      status: 401,
+    });
+    expect(events).toContain("auth-required");
+
+    const offlineFetch = createApiRuntimeFetch({
+      baseFetch: vi
+        .fn<typeof fetch>()
+        .mockRejectedValue(new TypeError("offline")),
+      eventHub,
+      toastRuntime,
+    });
+
+    await expect(
+      offlineFetch("https://api.example.test/profile/me"),
+    ).rejects.toThrow(TypeError);
+    expect(eventHub.getState()).toMatchObject({ status: "offline" });
+    expect(toastRuntime.visible.at(-1)).toMatchObject({
+      category: "warning",
+      title: "Connection lost",
+    });
+  });
+
   it("normalizes offline failures and 5xx responses into runtime events", async () => {
     const eventHub = createApiRuntimeEventHub();
     const events: string[] = [];

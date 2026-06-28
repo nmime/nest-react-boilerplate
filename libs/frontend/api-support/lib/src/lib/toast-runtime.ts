@@ -1,4 +1,4 @@
-import type { ApiRuntimeEventHub } from "./runtime-events";
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
 
 export type ApiToastCategory = "error" | "info" | "success" | "warning";
 export type ApiToastDisplay = "custom" | "modal" | "silent" | "toast";
@@ -244,4 +244,6 @@ export class ApiToastRuntime {
   }
 }
 
-export const apiToastRuntime = new ApiToastRuntime();
+export const apiToastRuntime = new ApiToastRuntime({
+  eventHub: apiRuntimeEvents,
+});

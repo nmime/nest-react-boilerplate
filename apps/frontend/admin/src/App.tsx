@@ -6,7 +6,11 @@ import {
   useState,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { configureApiLocale } from "@app/frontend/api-support";
+import {
+  configureApiLocale,
+  createApiRuntimeFetch,
+  useApiRuntimeOverlayModel,
+} from "@app/frontend/api-support";
 import {
   ApiClientProvider,
   adminApi,
@@ -21,8 +25,11 @@ import {
   FrontendQueryProvider,
   FrontendStateProvider,
   UiErrorBoundary,
+  UiApiRuntimeOverlay,
   UiLoading,
   UiSection,
+  observer,
+  useAppStore,
   useI18n,
   normalizeLocale,
   type Locale,
@@ -373,17 +380,44 @@ const AdminRoot = ({
 const AdminApiClientProvider = ({
   children,
   bearerToken,
-}: Readonly<{ children: ReactElement; bearerToken: string | null }>) => (
-  <ApiClientProvider
-    authToken={bearerToken}
-    baseUrls={{
-      admin: getConfiguredAdminApiBaseUrl(),
-      auth: getConfiguredAuthApiBaseUrl(),
-      user: "",
-    }}
-  >
-    {children}
-  </ApiClientProvider>
+}: Readonly<{ children: ReactElement; bearerToken: string | null }>) => {
+  const runtimeFetch = useMemo(
+    () => createApiRuntimeFetch({ redirectTo: "/admin" }),
+    [],
+  );
+
+  return (
+    <ApiClientProvider
+      authToken={bearerToken}
+      baseUrls={{
+        admin: getConfiguredAdminApiBaseUrl(),
+        auth: getConfiguredAuthApiBaseUrl(),
+        user: "",
+      }}
+      fetchImpl={runtimeFetch}
+    >
+      {children}
+    </ApiClientProvider>
+  );
+};
+
+const ApiRuntimeOverlayProvider = observer(
+  function ApiRuntimeOverlayProvider() {
+    const appStore = useAppStore();
+    const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
+
+    return (
+      <UiApiRuntimeOverlay
+        authRequired={state.authRequired}
+        className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
+        lastError={state.lastError}
+        onDismissToast={dismissToast}
+        redirectTo={state.redirectTo ?? "/admin"}
+        status={state.status}
+        toasts={toasts}
+      />
+    );
+  },
 );
 
 const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
@@ -392,6 +426,7 @@ const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
       <FrontendQueryProvider>
         <UiErrorBoundary>
           {testChild ?? <AdminRoot initialBearerToken={null} />}
+          <ApiRuntimeOverlayProvider />
         </UiErrorBoundary>
       </FrontendQueryProvider>
     </AdminApiClientProvider>

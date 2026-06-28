@@ -2,7 +2,9 @@ import { type ReactNode } from "react";
 import {
   ProductShell,
   UiStatusTag,
+  observer,
   useI18n,
+  useOptionalRootStore,
   type ProductShellAction,
 } from "@app/frontend/ui";
 import type { AdminAccess } from "../../entities/admin-session";
@@ -13,7 +15,7 @@ interface AdminNavItem extends Omit<ProductShellAction, "isCurrent"> {
   isCurrent: boolean;
 }
 
-export const AdminLayout = ({
+export const AdminLayout = observer(function AdminLayout({
   access,
   children,
   currentPath = "/",
@@ -21,7 +23,9 @@ export const AdminLayout = ({
   access?: AdminAccess;
   children: ReactNode;
   currentPath?: string;
-}>) => {
+}>) {
+  const currentBreakpoint =
+    useOptionalRootStore()?.app.currentBreakpoint ?? "desktop";
   const { t } = useI18n();
   const path = normalizeAdminPath(currentPath);
   const navItems: AdminNavItem[] = [];
@@ -110,11 +114,14 @@ export const AdminLayout = ({
       description={t("admin.description")}
       homeHref="/admin"
       eyebrow={t("admin.eyebrow")}
-      status={t("admin.status")}
+      status={`${t("admin.status")} · ${currentBreakpoint}`}
       statusTone="warning"
       title={t("admin.title")}
     >
-      <div className="admin-shell">
+      <div
+        className="admin-shell"
+        data-responsive-breakpoint={currentBreakpoint}
+      >
         <aside className="admin-sidebar" aria-label={t("admin.appName")}>
           <div className="admin-sidebar__card">
             <p className="xr-eyebrow">{t("admin.eyebrow")}</p>
@@ -175,4 +182,4 @@ export const AdminLayout = ({
       </div>
     </ProductShell>
   );
-};
+});

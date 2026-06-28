@@ -62,6 +62,34 @@ describe("admin route base handling", () => {
     expect(html).not.toContain('href="/admin/tenants"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="#xr-content"');
+    expect(html).toContain('class="admin-shell"');
+    expect(html).toContain('class="admin-sidebar"');
+    expect(html).toContain('class="admin-main-panel"');
+  });
+
+  it("renders the production admin sidebar for permissioned routes", () => {
+    const fullAccess = createAdminAccess({
+      subject: "admin-id",
+      roles: ["admin"],
+      permissions: [
+        "admin:dashboard:read",
+        "admin:profile:read",
+        "admin:users:read",
+        "admin:roles:read",
+        "admin:audit:read",
+      ],
+    });
+
+    const html = renderToStaticMarkup(
+      <AdminLayout access={fullAccess} currentPath="/admin/users">
+        <span>Users content</span>
+      </AdminLayout>,
+    );
+
+    expect(html).toContain('href="/admin/users"');
+    expect(html).toContain('href="/admin/roles"');
+    expect(html).toContain('href="/admin/audit"');
+    expect(html).toContain('data-current="true"');
   });
 
   it("keeps user and tenant routes explicit and fail-closed", () => {

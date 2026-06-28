@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import * as ReactDOM from "react-dom/client";
 import { UiErrorBoundary } from "@app/frontend/ui";
 import App from "./App";
+import "./styles.css";
 
 const container = document.getElementById("root");
 

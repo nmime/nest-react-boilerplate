@@ -26,6 +26,13 @@ import {
 } from "../state";
 import { UiSelect } from "../component/select";
 
+export {
+  createDomainTranslationKey,
+  createDomainTranslator,
+  type DomainNamespace,
+  type DomainTranslate,
+} from "./domain-namespace";
+
 export { detectBrowserLocale } from "../state";
 
 export interface FrontendI18nContextValue {

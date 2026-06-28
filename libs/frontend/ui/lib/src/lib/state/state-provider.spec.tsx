@@ -6,15 +6,23 @@ import {
   LanguageSwitcher,
   useI18n,
 } from "../i18n/i18n-provider";
-import { FrontendStateProvider, createRootStore, useRootStore } from "./index";
+import {
+  AppStore,
+  FrontendStateProvider,
+  createRootStore,
+  useRootStore,
+  useStore,
+} from "./index";
 
 const LocalePreview = observer(function LocalePreview() {
   const { locale } = useI18n();
   const { ui } = useRootStore();
+  const appStore = useStore(AppStore);
 
   return (
     <div>
       <span>{locale}</span>
+      <span>{appStore.currentBreakpoint}</span>
       <button onClick={() => ui.toggleSidebar()} type="button">
         {ui.sidebarOpen ? "open" : "closed"}
       </button>
@@ -91,5 +99,6 @@ describe("frontend MobX state foundation", () => {
     expect(store.ui.activeModal).toBe("profile-menu");
     expect(store.ui.sidebarOpen).toBe(false);
     expect(store.ui.theme).toBe("dark");
+    expect(store.app.breakpoints.gte("mobile")).toBe(true);
   });
 });

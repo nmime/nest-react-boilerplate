@@ -36,8 +36,39 @@ const HealthCard = ({
     ready: t("admin.health.ready"),
   }[state];
   return (
-    <UiCard title={label}>
+    <UiCard className="admin-health-card" title={label}>
       <UiStatusTag label={stateLabel} tone={statusTone[state]} />
+    </UiCard>
+  );
+};
+
+const AccessSummaryCard = ({ access }: Readonly<{ access: AdminAccess }>) => {
+  const { t } = useI18n();
+  return (
+    <UiCard
+      className="admin-access-card"
+      title={t("admin.dashboard.card.access.title")}
+    >
+      <p>
+        {t("admin.dashboard.accessSummary", {
+          roles: access.roles.join(", ") || t("admin.dashboard.access.none"),
+          permissions:
+            access.permissions.join(", ") || t("admin.dashboard.access.none"),
+        })}
+      </p>
+      <div
+        className="admin-chip-row"
+        aria-label={t("admin.users.column.roles")}
+      >
+        {(access.roles.length
+          ? access.roles
+          : [t("admin.dashboard.access.none")]
+        ).map((role) => (
+          <span className="admin-chip" key={role}>
+            {role}
+          </span>
+        ))}
+      </div>
     </UiCard>
   );
 };
@@ -46,19 +77,25 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
   return (
     <UiSection
+      className="admin-page admin-dashboard-page"
       eyebrow={t("admin.dashboard.eyebrow")}
       title={t("admin.dashboard.title")}
     >
-      <UiCard title={t("admin.dashboard.card.visibility.title")}>
-        {t("admin.dashboard.card.visibility.description")}
-      </UiCard>
-      <UiCard title={t("admin.dashboard.card.access.title")}>
-        {t("admin.dashboard.accessSummary", {
-          roles: access.roles.join(", ") || t("admin.dashboard.access.none"),
-          permissions:
-            access.permissions.join(", ") || t("admin.dashboard.access.none"),
-        })}
-      </UiCard>
+      <div className="admin-dashboard-hero">
+        <UiCard
+          className="admin-dashboard-hero__card"
+          title={t("admin.dashboard.card.visibility.title")}
+        >
+          {t("admin.dashboard.card.visibility.description")}
+        </UiCard>
+        <UiCard
+          className="admin-dashboard-hero__card"
+          title={t("admin.dashboard.card.rbac.title")}
+        >
+          {t("admin.dashboard.card.rbac.description")}
+        </UiCard>
+      </div>
+      <AccessSummaryCard access={access} />
       <AdminRouteReadiness access={access} />
     </UiSection>
   );
@@ -106,10 +143,17 @@ const AdminRouteReadiness = ({ access }: Readonly<{ access: AdminAccess }>) => {
   ];
 
   return (
-    <UiCard title={t("admin.dashboard.stat.pages.label")}>
+    <UiCard
+      className="admin-route-card"
+      title={t("admin.dashboard.stat.pages.label")}
+    >
       <div className="admin-readiness-grid">
         {routes.map((route) => (
-          <div className="admin-readiness-card" key={route.path}>
+          <div
+            className="admin-readiness-card"
+            data-ready={route.isReady}
+            key={route.path}
+          >
             <div className="admin-readiness-card__header">
               <strong>{route.label}</strong>
               <UiStatusTag
@@ -178,26 +222,31 @@ const DashboardDataPage = ({
   });
   return (
     <UiSection
+      className="admin-page admin-dashboard-page"
       eyebrow={t("admin.dashboard.eyebrow")}
       title={t("admin.dashboard.title")}
     >
-      <div className="xr-stat-grid">
+      <div className="admin-stat-grid xr-stat-grid">
         <UiStatCard
+          className="admin-stat-card"
           label={t("admin.dashboard.summary.totalUsers")}
           value={`${summary.data?.totalUsers ?? "—"}`}
           detail={t("admin.dashboard.summary.totalUsersDetail")}
         />
         <UiStatCard
+          className="admin-stat-card"
           label={t("admin.dashboard.summary.activeUsers")}
           value={`${summary.data?.activeUsers ?? "—"}`}
           detail={t("admin.dashboard.summary.activeUsersDetail")}
         />
         <UiStatCard
+          className="admin-stat-card"
           label={t("admin.dashboard.summary.disabledUsers")}
           value={`${summary.data?.disabledUsers ?? "—"}`}
           detail={t("admin.dashboard.summary.disabledUsersDetail")}
         />
         <UiStatCard
+          className="admin-stat-card"
           label={t("admin.dashboard.summary.recentAudit")}
           value={`${summary.data?.recentAuditEvents ?? "—"}`}
           detail={t("admin.dashboard.summary.recentAuditDetail")}
@@ -216,18 +265,12 @@ const DashboardDataPage = ({
           )}
         />
       ) : null}
-      <div className="xr-card-grid">
+      <div className="admin-health-grid xr-card-grid">
         <HealthCard label={t("admin.health.eyebrow")} query={health} />
         <HealthCard label={t("admin.health.live")} query={live} />
         <HealthCard label={t("admin.health.ready")} query={ready} />
       </div>
-      <UiCard title={t("admin.dashboard.card.access.title")}>
-        {t("admin.dashboard.accessSummary", {
-          roles: access.roles.join(", ") || t("admin.dashboard.access.none"),
-          permissions:
-            access.permissions.join(", ") || t("admin.dashboard.access.none"),
-        })}
-      </UiCard>
+      <AccessSummaryCard access={access} />
       <AdminRouteReadiness access={access} />
     </UiSection>
   );

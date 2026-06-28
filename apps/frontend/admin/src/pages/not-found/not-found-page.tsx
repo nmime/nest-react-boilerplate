@@ -4,6 +4,7 @@ export const NotFoundPage = () => {
   const { t } = useI18n();
   return (
     <UiSection
+      className="admin-page admin-state-page"
       eyebrow={t("admin.notFound.eyebrow")}
       title={t("admin.notFound.sectionTitle")}
     >

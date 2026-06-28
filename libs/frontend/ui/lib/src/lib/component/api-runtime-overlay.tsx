@@ -36,6 +36,7 @@ const toastMessage = (toast: UiRuntimeToast): string =>
   toast.message ? `${toast.title}: ${toast.message}` : toast.title;
 
 const apiNotificationsLabel = "API notifications";
+const apiRuntimeStatusLabel = "API runtime status";
 const authRequiredTitle = "Authentication required";
 const continueToSignInLabel = "Continue to sign in";
 const defaultAuthDescription =
@@ -62,7 +63,8 @@ export const UiApiRuntimeOverlay = ({
   const isServerError = status === "server-error";
 
   return (
-    <div
+    <aside
+      aria-label={apiRuntimeStatusLabel}
       className={cn("xr-runtime-overlay", className)}
       data-runtime-status={status}
     >
@@ -79,8 +81,10 @@ export const UiApiRuntimeOverlay = ({
         />
       ) : null}
       <div
-        className="xr-runtime-overlay__toasts"
         aria-label={apiNotificationsLabel}
+        aria-live="polite"
+        className="xr-runtime-overlay__toasts"
+        role="status"
       >
         {toasts.map((toast) => (
           <div className="xr-runtime-overlay__toast" key={toast.id}>
@@ -112,6 +116,6 @@ export const UiApiRuntimeOverlay = ({
           </UiButton>
         )}
       </UiDialog>
-    </div>
+    </aside>
   );
 };

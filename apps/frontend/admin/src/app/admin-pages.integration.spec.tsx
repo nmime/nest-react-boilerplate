@@ -159,15 +159,19 @@ describe("admin pages integration", () => {
     };
 
     renderRoute("/admin");
-    expect(await screen.findByText("42")).toBeTruthy();
+    expect((await screen.findAllByText("42")).length).toBeGreaterThan(0);
     expect(screen.getByText("7")).toBeTruthy();
     expect(screen.getByText("3")).toBeTruthy();
     expect(screen.getByText("4")).toBeTruthy();
+    expect(screen.getByText("Operations command center")).toBeTruthy();
+    expect(screen.getByText("Pending invitations")).toBeTruthy();
     expect(screen.getAllByText("Ready").length).toBeGreaterThanOrEqual(3);
 
     renderRoute("/admin/profile");
-    expect(screen.getByText("Ada Admin")).toBeTruthy();
+    expect(screen.getAllByText("Ada Admin").length).toBeGreaterThan(0);
     expect(screen.getByText("Email: admin@example.com")).toBeTruthy();
+    expect(screen.getByText("Session control plane")).toBeTruthy();
+    expect(screen.getByText("Frontend guardrails")).toBeTruthy();
   });
 
   it("lists users, opens detail, searches, filters, paginates, and sends mutation bodies", async () => {
@@ -229,8 +233,12 @@ describe("admin pages integration", () => {
     );
 
     expect(await screen.findByText("user@example.com")).toBeTruthy();
+    expect(screen.getByText("Visible users")).toBeTruthy();
+    expect(screen.getByText("User directory")).toBeTruthy();
+    expect(screen.getByText("Focused directory view")).toBeTruthy();
     fireEvent.click(screen.getByText("user@example.com"));
     expect(await screen.findByText("profile:read")).toBeTruthy();
+    expect(screen.getByText("Access policy snapshot")).toBeTruthy();
 
     await waitFor(() =>
       expect(listSpy).toHaveBeenCalledWith(
@@ -294,7 +302,10 @@ describe("admin pages integration", () => {
         })}
       </QueryClientProvider>,
     );
-    expect(await screen.findByText("Administrator")).toBeTruthy();
+    expect(
+      (await screen.findAllByText("Administrator")).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Role governance map")).toBeTruthy();
     expect(screen.getByText("admin.users")).toBeTruthy();
 
     cleanup();
@@ -308,6 +319,7 @@ describe("admin pages integration", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByText("user.disabled")).toBeTruthy();
+    expect(screen.getByText("Audit operations timeline")).toBeTruthy();
     expect(screen.getByText("user-1")).toBeTruthy();
 
     cleanup();
@@ -338,7 +350,10 @@ describe("admin pages integration", () => {
     );
 
     expect(screen.queryByRole("link", { name: "Users" })).toBeFalsy();
-    expect(screen.getByText("Missing admin users permission.")).toBeTruthy();
+    expect(
+      screen.getAllByText("Missing admin users permission.").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Fail-closed route guard")).toBeTruthy();
 
     cleanup();
     render(
@@ -351,6 +366,7 @@ describe("admin pages integration", () => {
     expect(
       screen.getByText("Tenants, memberships, and invitations"),
     ).toBeTruthy();
+    expect(screen.getByText("Tenant console runway")).toBeTruthy();
 
     cleanup();
     render(
@@ -360,7 +376,7 @@ describe("admin pages integration", () => {
         access: { ...adminAccess, permissions: [], roles: [] },
       }),
     );
-    expect(screen.getByText("Ada Admin")).toBeTruthy();
+    expect(screen.getAllByText("Ada Admin").length).toBeGreaterThan(0);
 
     cleanup();
     render(
@@ -371,6 +387,7 @@ describe("admin pages integration", () => {
       }),
     );
     expect(screen.getByText("Admin page not found")).toBeTruthy();
+    expect(screen.getByText("Route recovery")).toBeTruthy();
 
     cleanup();
     render(renderAdminRoute("/admin", { status: "loading" }));

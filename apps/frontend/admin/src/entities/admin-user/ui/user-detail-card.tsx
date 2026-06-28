@@ -43,14 +43,36 @@ export const UserDetailCard = ({
       />
     );
   }
+  const initials = detail.data.email.slice(0, 1);
   return (
     <div className="admin-user-detail">
       <div className="admin-user-detail__header">
-        <strong>{detail.data.email}</strong>
-        <UiStatusTag
-          label={t(statusLabelKey[detail.data.status])}
-          tone={statusTone[detail.data.status]}
-        />
+        <div className="admin-user-detail__identity">
+          <span className="admin-avatar admin-avatar--sm" aria-hidden="true">
+            {initials}
+          </span>
+          <span>
+            <strong>{detail.data.email}</strong>
+            <small>Tenant {detail.data.tenantId}</small>
+          </span>
+        </div>
+        <div className="admin-user-detail__status-stack">
+          <UiStatusTag
+            label={t(statusLabelKey[detail.data.status])}
+            tone={statusTone[detail.data.status]}
+          />
+          <span>Access policy snapshot</span>
+        </div>
+      </div>
+      <div className="admin-detail-metrics">
+        <div>
+          <span>{detail.data.roles.length}</span>
+          <small>{t("admin.users.column.roles")}</small>
+        </div>
+        <div>
+          <span>{detail.data.permissions.length}</span>
+          <small>{t("admin.users.filter.permission")}</small>
+        </div>
       </div>
       <dl className="xr-profile-list">
         <div>

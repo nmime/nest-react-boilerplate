@@ -11,6 +11,7 @@ import {
   UiPagination,
   UiSection,
   UiStatCard,
+  UiStatusTag,
   useI18n,
 } from "@app/frontend/ui";
 import type { AuditRow } from "../../entities/admin-audit";
@@ -43,6 +44,25 @@ export const AuditPage = ({
       eyebrow={t("admin.audit.eyebrow")}
       title={t("admin.audit.title")}
     >
+      <UiCard
+        className="admin-command-center"
+        title="Audit operations timeline"
+      >
+        <div className="admin-command-center__hero">
+          <div>
+            <p className="xr-eyebrow">Tamper-aware review</p>
+            <strong>Newest events stay readable before pagination.</strong>
+            <span>
+              Actor, target, resource, and timestamp columns are optimized for
+              incident triage and empty-state clarity.
+            </span>
+          </div>
+          <UiStatusTag
+            label={audit.error ? t("admin.health.unavailable") : "Audit stream"}
+            tone={audit.error ? "warning" : "success"}
+          />
+        </div>
+      </UiCard>
       <div className="admin-stat-grid xr-stat-grid">
         <UiStatCard
           className="admin-stat-card"
@@ -68,12 +88,19 @@ export const AuditPage = ({
             {
               id: "action",
               header: t("admin.audit.column.action"),
-              render: (row) => row.action,
+              render: (row) => (
+                <span className="admin-audit-action">
+                  <strong>{row.action}</strong>
+                  <small>{row.id}</small>
+                </span>
+              ),
             },
             {
               id: "resource",
               header: t("admin.audit.column.resource"),
-              render: (row) => row.resource,
+              render: (row) => (
+                <span className="admin-chip">{row.resource}</span>
+              ),
             },
             {
               id: "actor",

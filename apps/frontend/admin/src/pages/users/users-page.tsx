@@ -19,6 +19,7 @@ import {
   UiPagination,
   UiSection,
   UiSelect,
+  UiStatCard,
   UiStatusTag,
   UiTextarea,
   useI18n,
@@ -198,12 +199,49 @@ export const UsersPage = ({
       (value) => ({ label: value, value }),
     ),
   ];
+  const selectedRow = rows.find((row) => row.id === selected);
+  const activeRowCount = rows.filter((row) => row.status === "active").length;
+  const disabledRowCount = rows.filter(
+    (row) => row.status === "disabled",
+  ).length;
+  const activeFilterCount = [
+    search.trim(),
+    status !== "all",
+    role !== "all",
+    permission !== "all",
+  ].filter(Boolean).length;
+  let directoryTone: "info" | "success" | "warning" = "success";
+  if (users.isLoading) {
+    directoryTone = "info";
+  } else if (users.error) {
+    directoryTone = "warning";
+  }
   return (
     <UiSection
       className="admin-page admin-users-page"
       eyebrow={t("admin.users.eyebrow")}
       title={t("admin.users.title")}
     >
+      <div className="admin-users-command admin-stat-grid xr-stat-grid">
+        <UiStatCard
+          className="admin-stat-card"
+          label="Visible users"
+          value={`${users.data?.total ?? rows.length}`}
+          detail={`${activeRowCount} active · ${disabledRowCount} disabled on this page`}
+        />
+        <UiStatCard
+          className="admin-stat-card"
+          label="Selected identity"
+          value={selectedRow?.email ?? selected ?? "None"}
+          detail="Detail panel stays docked for quick access review."
+        />
+        <UiStatCard
+          className="admin-stat-card"
+          label="Filter stack"
+          value={`${activeFilterCount}`}
+          detail="Search, status, role, and permission filters update together."
+        />
+      </div>
       <UiCard
         className="admin-filter-card"
         title={t("admin.users.searchLabel")}
@@ -251,90 +289,131 @@ export const UsersPage = ({
             options={permissionOptions}
           />
         </AdminSearchFilterToolbar>
+        <div className="admin-filter-summary" aria-live="polite">
+          <span>
+            {activeFilterCount
+              ? "Focused directory view"
+              : "Full directory view"}
+          </span>
+          <small>
+            {search.trim() ? `Search “${search.trim()}” · ` : ""}
+            {status !== "all" ? `${status} status · ` : ""}
+            {role !== "all" ? `${role} role · ` : ""}
+            {permission !== "all"
+              ? `${permission} permission`
+              : "All access policies"}
+          </small>
+        </div>
       </UiCard>
       {notice ? (
         <UiNotification message={notice.message} tone={notice.tone} />
       ) : null}
       <div className="admin-users-split">
         <div className="admin-users-table-panel">
-          <UiDataTable<UserRow>
-            rows={rows}
-            rowKey={(row) => row.id}
-            isLoading={users.isLoading}
-            loadingLabel={t("admin.users.loading")}
-            error={
-              users.error
-                ? errorText(users.error, "admin.users.error.requestFailed", t)
-                : undefined
-            }
-            emptyTitle={t("admin.users.emptyEyebrow")}
-            emptyDescription={t("admin.users.emptyTitle")}
-            onRowClick={(row) => setSelected(row.id)}
-            getRowAriaLabel={(row) =>
-              t("admin.users.row.open", { email: row.email })
-            }
-            columns={[
-              {
-                id: "email",
-                header: t("admin.users.column.email"),
-                render: (row) => row.email,
-              },
-              {
-                id: "status",
-                header: t("admin.users.column.status"),
-                render: (row) => (
-                  <UiStatusTag
-                    label={t(statusLabelKey[row.status])}
-                    tone={statusTone[row.status]}
-                  />
-                ),
-              },
-              {
-                id: "roles",
-                header: t("admin.users.column.roles"),
-                render: (row) => join(row.roles),
-              },
-              {
-                id: "actions",
-                header: t("admin.users.column.actions"),
-                render: (row) => {
-                  const nextStatus =
-                    row.status === "active" ? "disabled" : "active";
-                  return (
-                    <UiActionsMenu
-                      items={[
-                        {
-                          label: t("admin.users.action.changeStatus"),
-                          disabled: !access.canUpdateUserStatus,
-                          tone:
-                            nextStatus === "disabled" ? "warning" : "default",
-                          onSelect: () => {
-                            setReason("");
-                            setStatusTarget({
-                              id: row.id,
-                              email: row.email,
-                              nextStatus,
-                            });
-                          },
-                        },
-                        {
-                          label: t("admin.users.action.editAccessPolicy"),
-                          disabled: !access.canUpdateUserAccessPolicy,
-                          onSelect: () => {
-                            setReason("");
-                            setPolicyTarget(row);
-                            setPolicyStatus(row.status);
-                            setPolicyRoles(new Set(row.roles));
-                            setPolicyPermissions(new Set(row.permissions));
-                          },
-                        },
-                      ]}
-                    />
-                  );
+          <UiCard className="admin-table-card" title="User directory">
+            <div className="admin-table-toolbar">
+              <span>Policy-aware records</span>
+              <UiStatusTag
+                label={
+                  users.isLoading ? t("admin.state.loading") : "Directory ready"
+                }
+                tone={directoryTone}
+              />
+            </div>
+            <UiDataTable<UserRow>
+              rows={rows}
+              rowKey={(row) => row.id}
+              isLoading={users.isLoading}
+              loadingLabel={t("admin.users.loading")}
+              error={
+                users.error
+                  ? errorText(users.error, "admin.users.error.requestFailed", t)
+                  : undefined
+              }
+              emptyTitle={t("admin.users.emptyEyebrow")}
+              emptyDescription={t("admin.users.emptyTitle")}
+              onRowClick={(row) => setSelected(row.id)}
+              getRowAriaLabel={(row) =>
+                t("admin.users.row.open", { email: row.email })
+              }
+              columns={[
+                {
+                  id: "email",
+                  header: t("admin.users.column.email"),
+                  render: (row) => (
+                    <span className="admin-user-cell">
+                      <strong>{row.email}</strong>
+                      <small>{row.tenantId}</small>
+                    </span>
+                  ),
                 },
-              },
-            ]}
-          />
+                {
+                  id: "status",
+                  header: t("admin.users.column.status"),
+                  render: (row) => (
+                    <UiStatusTag
+                      label={t(statusLabelKey[row.status])}
+                      tone={statusTone[row.status]}
+                    />
+                  ),
+                },
+                {
+                  id: "roles",
+                  header: t("admin.users.column.roles"),
+                  render: (row) => (
+                    <span className="admin-chip-row">
+                      {row.roles.length
+                        ? row.roles.map((rowRole) => (
+                            <span className="admin-chip" key={rowRole}>
+                              {rowRole}
+                            </span>
+                          ))
+                        : join(row.roles)}
+                    </span>
+                  ),
+                },
+                {
+                  id: "actions",
+                  header: t("admin.users.column.actions"),
+                  render: (row) => {
+                    const nextStatus =
+                      row.status === "active" ? "disabled" : "active";
+                    return (
+                      <UiActionsMenu
+                        items={[
+                          {
+                            label: t("admin.users.action.changeStatus"),
+                            disabled: !access.canUpdateUserStatus,
+                            tone:
+                              nextStatus === "disabled" ? "warning" : "default",
+                            onSelect: () => {
+                              setReason("");
+                              setStatusTarget({
+                                id: row.id,
+                                email: row.email,
+                                nextStatus,
+                              });
+                            },
+                          },
+                          {
+                            label: t("admin.users.action.editAccessPolicy"),
+                            disabled: !access.canUpdateUserAccessPolicy,
+                            onSelect: () => {
+                              setReason("");
+                              setPolicyTarget(row);
+                              setPolicyStatus(row.status);
+                              setPolicyRoles(new Set(row.roles));
+                              setPolicyPermissions(new Set(row.permissions));
+                            },
+                          },
+                        ]}
+                      />
+                    );
+                  },
+                },
+              ]}
+            />
+          </UiCard>
           <UiPagination
             currentPage={page}
             pageSize={users.data?.limit ?? pageSize}

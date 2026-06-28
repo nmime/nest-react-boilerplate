@@ -8,8 +8,9 @@ import {
 import type { AdminAccess } from "../../entities/admin-session";
 import { normalizeAdminPath } from "../../shared";
 
-interface AdminNavItem extends ProductShellAction {
+interface AdminNavItem extends Omit<ProductShellAction, "isCurrent"> {
   detail: string;
+  isCurrent: boolean;
 }
 
 export const AdminLayout = ({
@@ -23,61 +24,61 @@ export const AdminLayout = ({
 }>) => {
   const { t } = useI18n();
   const path = normalizeAdminPath(currentPath);
-  const navItems: AdminNavItem[] = [
-    (access?.canReadDashboard ?? true)
-      ? {
-          href: "/admin",
-          isCurrent: path === "/" || path === "/dashboard",
-          label: t("admin.action.dashboard"),
-          detail: t("admin.dashboard.description"),
-        }
-      : undefined,
-    access?.canReadUsers
-      ? {
-          href: "/admin/users",
-          isCurrent: path.startsWith("/users"),
-          label: t("admin.action.users"),
-          detail: t("admin.dashboard.card.visibility.description"),
-          variant: "secondary" as const,
-        }
-      : undefined,
-    access?.canReadRoles
-      ? {
-          href: "/admin/roles",
-          isCurrent: path === "/roles",
-          label: t("admin.action.roles"),
-          detail: t("admin.roles.title"),
-          variant: "secondary" as const,
-        }
-      : undefined,
-    access?.canReadAudit
-      ? {
-          href: "/admin/audit",
-          isCurrent: path === "/audit",
-          label: t("admin.action.audit"),
-          detail: t("admin.dashboard.summary.recentAuditDetail"),
-          variant: "secondary" as const,
-        }
-      : undefined,
-    access?.canReadRoles
-      ? {
-          href: "/admin/tenants",
-          isCurrent: path === "/tenants",
-          label: t("admin.tenants.title"),
-          detail: t("admin.tenants.description"),
-          variant: "secondary" as const,
-        }
-      : undefined,
-    (access?.canReadProfile ?? true)
-      ? {
-          href: "/admin/profile",
-          isCurrent: path === "/profile",
-          label: t("admin.action.profile"),
-          detail: t("admin.dashboard.stat.profile.detail"),
-          variant: "secondary" as const,
-        }
-      : undefined,
-  ].filter((item): item is AdminNavItem => Boolean(item));
+  const navItems: AdminNavItem[] = [];
+
+  if (access?.canReadDashboard ?? true) {
+    navItems.push({
+      href: "/admin",
+      isCurrent: path === "/" || path === "/dashboard",
+      label: t("admin.action.dashboard"),
+      detail: t("admin.dashboard.description"),
+    });
+  }
+  if (access?.canReadUsers) {
+    navItems.push({
+      href: "/admin/users",
+      isCurrent: path.startsWith("/users"),
+      label: t("admin.action.users"),
+      detail: t("admin.dashboard.card.visibility.description"),
+      variant: "secondary",
+    });
+  }
+  if (access?.canReadRoles) {
+    navItems.push({
+      href: "/admin/roles",
+      isCurrent: path === "/roles",
+      label: t("admin.action.roles"),
+      detail: t("admin.roles.title"),
+      variant: "secondary",
+    });
+  }
+  if (access?.canReadAudit) {
+    navItems.push({
+      href: "/admin/audit",
+      isCurrent: path === "/audit",
+      label: t("admin.action.audit"),
+      detail: t("admin.dashboard.summary.recentAuditDetail"),
+      variant: "secondary",
+    });
+  }
+  if (access?.canReadRoles) {
+    navItems.push({
+      href: "/admin/tenants",
+      isCurrent: path === "/tenants",
+      label: t("admin.tenants.title"),
+      detail: t("admin.tenants.description"),
+      variant: "secondary",
+    });
+  }
+  if (access?.canReadProfile ?? true) {
+    navItems.push({
+      href: "/admin/profile",
+      isCurrent: path === "/profile",
+      label: t("admin.action.profile"),
+      detail: t("admin.dashboard.stat.profile.detail"),
+      variant: "secondary",
+    });
+  }
   const currentItem = navItems.find((item) => item.isCurrent);
 
   return (

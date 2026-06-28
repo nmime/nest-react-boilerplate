@@ -7,66 +7,78 @@ import {
 } from "@app/frontend/ui";
 import { LandingStatCard } from "../../../shared/ui";
 
+const overviewHeading =
+  "A polished starter kit for shipping secure Nest + React products";
+const valueGridLabel = "Product value pillars";
+const featureGridLabel = "Product architecture and deployment highlights";
+const actionPanelLabel = "Application route readiness";
+const routeReadiness = "Route readiness";
+const readinessLabel = "Deployment readiness";
+const productionPosture = "Production posture";
+const routePanelHeading =
+  "Explore the full stack without losing the landing context";
+const routePanelCopy =
+  "The primary application, admin workspace, and auth API documentation remain available through accessible links for deployment smoke tests.";
+const readinessHeading =
+  "Designed to feel ready before the first sprint begins";
+
 const valueCards = [
   {
-    description:
-      "Auth, user, and admin APIs are already split by responsibility with OpenAPI contracts, health probes, and production-safe defaults.",
+    body: "Auth, user, and admin APIs are already split by responsibility with OpenAPI contracts, health probes, and production-safe defaults.",
     marker: "01",
-    title: "Domain-ready backend surface",
+    heading: "Domain-ready backend surface",
   },
   {
-    description:
-      "Three React experiences share one provider stack, translations, typed clients, and a UI facade that keeps product teams moving together.",
+    body: "Three React experiences share one provider stack, translations, typed clients, and a UI facade that keeps product teams moving together.",
     marker: "02",
-    title: "Composable frontend workspace",
+    heading: "Composable frontend workspace",
   },
   {
-    description:
-      "Docker Compose, CI quality gates, migrations, and deployment conventions are wired so teams can validate before every release.",
+    body: "Docker Compose, CI quality gates, migrations, and deployment conventions are wired so teams can validate before every release.",
     marker: "03",
-    title: "Operational runway included",
+    heading: "Operational runway included",
   },
 ] as const;
 
 const productStats = [
   {
-    detail: "auth-app-api, user-app-api, admin-app-api",
-    label: "Nest APIs",
+    meta: "auth-app-api, user-app-api, admin-app-api",
+    name: "Nest APIs",
     value: "3",
   },
   {
-    detail: "landing, user, and admin experiences",
-    label: "React apps",
+    meta: "landing, user, and admin experiences",
+    name: "React apps",
     value: "3",
   },
   {
-    detail: "typed contracts, i18n, UI, config, and testing",
-    label: "Shared packages",
+    meta: "typed contracts, i18n, UI, config, and testing",
+    name: "Shared packages",
     value: "12+",
   },
   {
-    detail: "lint, tests, build, FSD boundaries, and formatting",
-    label: "Quality gates",
+    meta: "lint, tests, build, FSD boundaries, and formatting",
+    name: "Quality gates",
     value: "5",
   },
 ] as const;
 
 const featureSections = [
   {
-    eyebrow: "Architecture",
+    eyebrowText: "Architecture",
     items: [
       "Nx project boundaries and FSD checks keep apps, widgets, features, and shared code intentional.",
       "OpenAPI-driven clients and explicit env fallbacks reduce integration drift between frontend and backend.",
     ],
-    title: "Built for real product teams",
+    heading: "Built for real product teams",
   },
   {
-    eyebrow: "Delivery",
+    eyebrowText: "Delivery",
     items: [
       "Local and CI scripts cover dependency integrity, formatting, linting, unit tests, and production builds.",
       "Container and health-check conventions make the path from workstation to deployment predictable.",
     ],
-    title: "Release readiness from day one",
+    heading: "Release readiness from day one",
   },
 ] as const;
 
@@ -76,10 +88,6 @@ const readinessItems = [
   "Dark and light themes inherit shared shadcn-style tokens.",
 ] as const;
 
-interface ProductOverviewProps {
-  actions: ProductShellAction[];
-}
-
 const actionTones = [
   "Primary launch path",
   "Admin control plane",
@@ -87,6 +95,10 @@ const actionTones = [
 ] as const;
 
 const getActionTone = (index: number) => actionTones[index] ?? "Route check";
+
+interface ProductOverviewProps {
+  actions: ProductShellAction[];
+}
 
 export const ProductOverview = ({
   actions,
@@ -98,19 +110,19 @@ export const ProductOverview = ({
       <UiSection
         className="landing-overview"
         eyebrow={t("landing.section.eyebrow")}
-        title="A polished starter kit for shipping secure Nest + React products"
+        title={overviewHeading}
       >
-        <div className="landing-value-grid" aria-label="Product value pillars">
+        <div className="landing-value-grid" aria-label={valueGridLabel}>
           {valueCards.map((card) => (
             <UiCard
               className="landing-value-card"
-              key={card.title}
-              title={card.title}
+              key={card.heading}
+              title={card.heading}
             >
               <span aria-hidden="true" className="landing-value-card__marker">
                 {card.marker}
               </span>
-              <p>{card.description}</p>
+              <p>{card.body}</p>
             </UiCard>
           ))}
         </div>
@@ -122,23 +134,22 @@ export const ProductOverview = ({
           {productStats.map((stat) => (
             <LandingStatCard
               className="landing-stat-card"
-              detail={stat.detail}
-              key={stat.label}
-              label={stat.label}
+              detail={stat.meta}
+              key={stat.name}
+              label={stat.name}
               value={stat.value}
             />
           ))}
         </div>
       </UiSection>
 
-      <section
-        aria-label="Product architecture and deployment highlights"
-        className="landing-feature-grid"
-      >
+      <section aria-label={featureGridLabel} className="landing-feature-grid">
         {featureSections.map((section) => (
-          <UiCard className="landing-feature-card" key={section.title}>
-            <p className="landing-feature-card__eyebrow">{section.eyebrow}</p>
-            <h3>{section.title}</h3>
+          <UiCard className="landing-feature-card" key={section.heading}>
+            <p className="landing-feature-card__eyebrow">
+              {section.eyebrowText}
+            </p>
+            <h3>{section.heading}</h3>
             <ul>
               {section.items.map((item) => (
                 <li key={item}>{item}</li>
@@ -148,18 +159,11 @@ export const ProductOverview = ({
         ))}
       </section>
 
-      <UiCard
-        aria-label="Application route readiness"
-        className="landing-action-panel"
-      >
+      <UiCard aria-label={actionPanelLabel} className="landing-action-panel">
         <div className="landing-action-panel__copy">
-          <p className="landing-feature-card__eyebrow">Route readiness</p>
-          <h2>Explore the full stack without losing the landing context</h2>
-          <p>
-            The primary application, admin workspace, and auth API documentation
-            remain available through accessible links for deployment smoke
-            tests.
-          </p>
+          <p className="landing-feature-card__eyebrow">{routeReadiness}</p>
+          <h2>{routePanelHeading}</h2>
+          <p>{routePanelCopy}</p>
         </div>
 
         <div className="landing-action-panel__grid">
@@ -178,10 +182,10 @@ export const ProductOverview = ({
         </div>
       </UiCard>
 
-      <section className="landing-readiness" aria-label="Deployment readiness">
+      <section className="landing-readiness" aria-label={readinessLabel}>
         <div>
-          <p className="landing-feature-card__eyebrow">Production posture</p>
-          <h2>Designed to feel ready before the first sprint begins</h2>
+          <p className="landing-feature-card__eyebrow">{productionPosture}</p>
+          <h2>{readinessHeading}</h2>
         </div>
         <ul>
           {readinessItems.map((item) => (

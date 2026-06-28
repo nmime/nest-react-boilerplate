@@ -1,11 +1,16 @@
 import { dirname, resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { runCheckFrontendFsd } from "./commands/frontend/check-fsd";
+import {
+  runToastConfigCheck,
+  runToastConfigGenerate,
+} from "./commands/api/toast-config";
 import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
 import { runMutation } from "./commands/qa/mutation";
 import { runBranchCleanup } from "./commands/git/branch-cleanup";
+import { runWebpCommand } from "./commands/images/webp";
 import {
   runChangedFormatCheck,
   runStaticCheck,
@@ -34,6 +39,11 @@ register(
   "git:branch-cleanup",
   "Safely preview or delete local/remote branches already merged into the target branch.",
   runBranchCleanup,
+);
+register(
+  "images:webp",
+  "Find PNG/JPG/JPEG assets and convert them to WebP.",
+  ({ argv, workspaceRoot }) => runWebpCommand({ argv, workspaceRoot }),
 );
 
 register(
@@ -153,6 +163,16 @@ registerScript(
   "api:contracts:check",
   "Check generated API contracts.",
   "api/check-contracts.ts",
+);
+register(
+  "api:toast-config:generate",
+  "Generate app-local API toast rule JSON from OpenAPI contracts.",
+  ({ argv, workspaceRoot }) => runToastConfigGenerate({ argv, workspaceRoot }),
+);
+register(
+  "api:toast-config:check",
+  "Validate app-local API toast rule JSON against OpenAPI contracts.",
+  ({ argv, workspaceRoot }) => runToastConfigCheck({ argv, workspaceRoot }),
 );
 registerScript(
   "qa:consumer-contracts",

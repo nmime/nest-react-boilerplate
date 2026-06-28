@@ -65,6 +65,8 @@ These public root scripts are part of the supported DX/CI contract even when the
 | Script | Actual command | Notes |
 | ------ | -------------- | ----- |
 | `pnpm run format:changed` | `pnpm --filter @repo/tooling tooling tooling changed-format-check` | Runs the tooling changed-file Prettier check against `origin/main...HEAD` by default; pass `--base`/`--head` through the tooling command for another range. |
+| `pnpm run images:webp` | `pnpm --filter @repo/tooling tooling images webp` | Converts PNG/JPG/JPEG assets to WebP side-by-side by default; pass inputs and options after `--`. |
+| `pnpm run images:webp:check` | `pnpm --filter @repo/tooling tooling images webp --dry-run` | Non-mutating image conversion preview for local and PR checks. |
 | `pnpm run docker:prod:config:check` | `node scripts/validate-docker-compose-prod.mjs` | Static production Compose config validation only; it does not start containers. |
 | `pnpm run deploy:validate` | `node scripts/deploy-validate.mjs` | No-deploy validation bundle. Docker/Compose, GitOps/Argo, and PM2 checks are mode-specific and optional; Helm rendering is skipped when Helm is unavailable unless `--mode=helm` or `REQUIRE_HELM=true` is used. Use `deploy:validate:docker`, `deploy:validate:helm`, `deploy:validate:gitops`, or `deploy:validate:pm2` for one mode. |
 | `pnpm run deploy:validate:docker` | `node scripts/deploy-validate.mjs --mode=docker` | No-deploy Docker/Compose validation. Runs static deployment config checks and production Compose config validation; actual `docker compose up` is separate. |

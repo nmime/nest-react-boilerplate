@@ -1,0 +1,1968 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/admin-app-api/contracts/openapi/admin-app-api.json",
+    "app": "admin-app-api"
+  },
+  "runtimeContract": {
+    "resolutionOrder": [
+      "endpoint+method+status+errorCode",
+      "endpoint+method+status",
+      "endpoint+method+network",
+      "endpoint+method+errorFallback"
+    ],
+    "displayModes": ["toast", "modal", "custom", "silent"],
+    "categories": ["success", "error", "warning", "info"]
+  },
+  "rules": [
+    {
+      "id": "admin-app-api:GET:/admin/audit:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.200",
+          "default": "Admin Users list Audit completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.400.bad-request",
+          "default": "Admin Users list Audit failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.401.unauthorized",
+          "default": "Admin Users list Audit failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.403.forbidden",
+          "default": "Admin Users list Audit failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "GET_404_not-found",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.404.not-found",
+          "default": "Admin Users list Audit failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.429.rate-limited",
+          "default": "Admin Users list Audit failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.500.internal-server-error",
+          "default": "Admin Users list Audit failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.200",
+          "default": "Admin Users dashboard Summary completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.400.bad-request",
+          "default": "Admin Users dashboard Summary failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.401.unauthorized",
+          "default": "Admin Users dashboard Summary failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.403.forbidden",
+          "default": "Admin Users dashboard Summary failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "GET_404_not-found",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.404.not-found",
+          "default": "Admin Users dashboard Summary failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.429.rate-limited",
+          "default": "Admin Users dashboard Summary failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.500.internal-server-error",
+          "default": "Admin Users dashboard Summary failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.200",
+          "default": "Admin Profile me completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.400.bad-request",
+          "default": "Admin Profile me failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.401.unauthorized",
+          "default": "Admin Profile me failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.403.forbidden",
+          "default": "Admin Profile me failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.429.rate-limited",
+          "default": "Admin Profile me failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.500.internal-server-error",
+          "default": "Admin Profile me failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.200",
+          "default": "Admin Users roles completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.400.bad-request",
+          "default": "Admin Users roles failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.401.unauthorized",
+          "default": "Admin Users roles failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.403.forbidden",
+          "default": "Admin Users roles failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "GET_404_not-found",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.404.not-found",
+          "default": "Admin Users roles failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.429.rate-limited",
+          "default": "Admin Users roles failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminUsersController_roles",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-roles.get.500.internal-server-error",
+          "default": "Admin Users roles failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.200",
+          "default": "Admin Users list Users completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.400.bad-request",
+          "default": "Admin Users list Users failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.401.unauthorized",
+          "default": "Admin Users list Users failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.403.forbidden",
+          "default": "Admin Users list Users failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "GET_404_not-found",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.404.not-found",
+          "default": "Admin Users list Users failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.429.rate-limited",
+          "default": "Admin Users list Users failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.500.internal-server-error",
+          "default": "Admin Users list Users failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.200",
+          "default": "Admin Users get User completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.400.bad-request",
+          "default": "Admin Users get User failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.401.unauthorized",
+          "default": "Admin Users get User failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.403.forbidden",
+          "default": "Admin Users get User failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "GET_404_not-found",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.404.not-found",
+          "default": "Admin Users get User failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.429.rate-limited",
+          "default": "Admin Users get User failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.500.internal-server-error",
+          "default": "Admin Users get User failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.200",
+          "default": "Admin Users update User Access Policy completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "PATCH_400_bad-request",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.400.bad-request",
+          "default": "Admin Users update User Access Policy failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "PATCH_401_unauthorized",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.401.unauthorized",
+          "default": "Admin Users update User Access Policy failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "PATCH_403_forbidden",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.403.forbidden",
+          "default": "Admin Users update User Access Policy failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "PATCH_404_not-found",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.404.not-found",
+          "default": "Admin Users update User Access Policy failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "PATCH_429_rate-limited",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.429.rate-limited",
+          "default": "Admin Users update User Access Policy failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "PATCH_500_internal-server-error",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.500.internal-server-error",
+          "default": "Admin Users update User Access Policy failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.200",
+          "default": "Admin Users update User Status completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400:bad-request",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "PATCH_400_bad-request",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.400.bad-request",
+          "default": "Admin Users update User Status failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401:unauthorized",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "PATCH_401_unauthorized",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.401.unauthorized",
+          "default": "Admin Users update User Status failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403:forbidden",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "PATCH_403_forbidden",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.403.forbidden",
+          "default": "Admin Users update User Status failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404:not-found",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 404,
+      "errorCode": "not-found",
+      "match": {
+        "variant": "PATCH_404_not-found",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.404.not-found",
+          "default": "Admin Users update User Status failed: Not found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429:rate-limited",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "PATCH_429_rate-limited",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.429.rate-limited",
+          "default": "Admin Users update User Status failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500:internal-server-error",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "PATCH_500_internal-server-error",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.500.internal-server-error",
+          "default": "Admin Users update User Status failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/health:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-gethealth.get.200",
+          "default": "Base Health get Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/health/private:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getprivatehealth.get.200",
+          "default": "Base Health get Private Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/live:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getliveness.get.200",
+          "default": "Base Health get Liveness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/ready:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getreadiness.get.200",
+          "default": "Base Health get Readiness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    }
+  ]
+}

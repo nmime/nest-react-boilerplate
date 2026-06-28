@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
+import {
+  observer,
+  useAppStore,
+  useI18n,
+  type Locale,
+  type UiTheme,
+} from "@app/frontend/ui";
 import { useAuthSessionFlow } from "../../../features/auth";
 import {
   UiAlert,
@@ -50,9 +56,10 @@ const experienceSignals = [
   { label: "Social linking", value: "Telegram + Discord" },
 ] as const;
 
-function UserExperienceBanner({
+const UserExperienceBanner = observer(function UserExperienceBanner({
   activeRoute,
 }: Readonly<{ activeRoute: string }>) {
+  const appStore = useAppStore();
   const { t } = useI18n();
 
   return (
@@ -60,6 +67,7 @@ function UserExperienceBanner({
       aria-label="User app design v3 command center"
       className="xr-v3-banner xr-surface-glow"
       data-design-marker="user-app-frontend-design-v3"
+      data-responsive-breakpoint={appStore.currentBreakpoint}
     >
       <div className="xr-v3-banner__copy">
         <span className="xr-v3-kicker">User design v3</span>
@@ -68,11 +76,15 @@ function UserExperienceBanner({
       </div>
       <div className="xr-v3-banner__meta" aria-label="Current route status">
         <UiStatusPill label={activeRoute} tone="info" />
+        <UiStatusPill
+          label={`layout ${appStore.currentBreakpoint}`}
+          tone="info"
+        />
         <UiStatusPill label="nonblank smoke marker" tone="success" />
       </div>
     </section>
   );
-}
+});
 
 function UserRouteRail({ activeRoute }: Readonly<{ activeRoute: string }>) {
   const activeIndex = routeReadiness.findIndex(
@@ -256,13 +268,14 @@ function UserHomeContent({
   );
 }
 
-export function UserHomePage({
+export const UserHomePage = observer(function UserHomePage({
   activeRoute = "/",
   applyUserLocale,
   actions,
   applyUserTheme,
   children,
 }: Readonly<UserHomePageProps>) {
+  const appStore = useAppStore();
   const { t } = useI18n();
   const productActions = actions ?? [
     { href: "/auth", label: t("user.form.login") },
@@ -284,7 +297,7 @@ export function UserHomePage({
       appName={t("user.appName")}
       description={t("user.description")}
       eyebrow={t("user.eyebrow")}
-      status="design v3"
+      status={`design v3 · ${appStore.currentBreakpoint}`}
       statusTone="success"
       title={t("user.title")}
     >
@@ -298,4 +311,4 @@ export function UserHomePage({
       </UserExperienceFrame>
     </ProductShell>
   );
-}
+});

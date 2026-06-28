@@ -12,5 +12,15 @@
   "common.status.secure": "Безопасно",
   "common.homeLink": "Открыть приложение",
   "ui.errorBoundary.title": "Что-то пошло не так",
-  "ui.errorBoundary.description": "Попробуйте обновить страницу. Если проблема повторится, обратитесь в службу поддержки, указав идентификатор запроса из ответа API."
+  "ui.errorBoundary.description": "Попробуйте обновить страницу. Если проблема повторится, обратитесь в службу поддержки, указав идентификатор запроса из ответа API.",
+  "ui.runtime.authRequired.title": "Требуется вход",
+  "ui.runtime.authRequired.description": "Войдите снова, чтобы продолжить. Текущий маршрут сохранён.",
+  "ui.runtime.authRequired.continue": "Продолжить вход",
+  "ui.runtime.offline.title": "Нет подключения",
+  "ui.runtime.offline.description": "Подключитесь к сети, чтобы продолжить. Экран остаётся на текущем маршруте и безопасно повторяет запрос.",
+  "ui.runtime.serverUnavailable.title": "Сервис временно недоступен",
+  "ui.runtime.serverUnavailable.description": "API сейчас не отвечает. Повторите запрос, не покидая страницу.",
+  "ui.runtime.notifications.label": "Уведомления API",
+  "ui.runtime.retry": "Повторить",
+  "ui.runtime.dismissToast": "Закрыть"
 }

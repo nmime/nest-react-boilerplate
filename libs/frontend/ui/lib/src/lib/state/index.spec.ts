@@ -5,6 +5,7 @@ describe("state public exports", () => {
   it("exposes the state package surface through the barrel", () => {
     const exportNames = Object.keys(stateExports);
     const expectedExports = [
+      "AppStore",
       "AuthShellStore",
       "FrontendStateProvider",
       "LocaleStorageKey",
@@ -12,14 +13,20 @@ describe("state public exports", () => {
       "RootStore",
       "ThemeStorageKey",
       "UiStore",
+      "breakpointPixels",
       "createRootStore",
       "detectBrowserLocale",
+      "getBreakpointForWidth",
+      "observer",
+      "orderedBreakpoints",
       "persistLocale",
       "resolveTheme",
       "useAuthShellStore",
+      "useAppStore",
       "useLocaleStore",
       "useOptionalRootStore",
       "useRootStore",
+      "useStore",
       "useUiStore",
     ];
 

@@ -773,6 +773,34 @@ a {
   box-shadow: var(--xr-shadow-md);
 }
 
+.xr-runtime-overlay {
+  display: contents;
+}
+
+.xr-runtime-overlay__banner {
+  bottom: var(--xr-space-4);
+  left: var(--xr-space-4);
+  max-width: min(32rem, calc(100vw - var(--xr-space-8)));
+  position: fixed;
+  z-index: 55;
+}
+
+.xr-runtime-overlay__toasts {
+  display: grid;
+  gap: var(--xr-space-3);
+  position: fixed;
+  right: var(--xr-space-4);
+  top: var(--xr-space-4);
+  width: min(28rem, calc(100vw - var(--xr-space-8)));
+  z-index: 60;
+}
+
+.xr-runtime-overlay__toast {
+  align-items: stretch;
+  display: grid;
+  gap: var(--xr-space-2);
+}
+
 .xr-alert--success,
 .xr-toast--success,
 .xr-notification--success,

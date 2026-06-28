@@ -130,5 +130,6 @@ allowBuilds:
   less: false
   nx: true
   protobufjs: false
+  sharp: true
   ssh2: false
   unrs-resolver: false

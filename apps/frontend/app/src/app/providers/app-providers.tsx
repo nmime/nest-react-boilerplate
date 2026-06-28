@@ -1,13 +1,21 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { observer } from "mobx-react-lite";
 import { ApiClientProvider } from "@app/frontend/api-client";
-import { configureApiLocale } from "@app/frontend/api-support";
+import {
+  configureApiLocale,
+  createApiRuntimeFetch,
+  useApiRuntimeOverlayModel,
+} from "@app/frontend/api-support";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
+  UiApiRuntimeOverlay,
+  translate,
   useAuthShellStore,
+  useAppStore,
   useI18n,
+  useStore,
 } from "@app/frontend/ui";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
@@ -29,6 +37,10 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const authStore = useAuthShellStore();
+  const runtimeFetch = useMemo(
+    () => createApiRuntimeFetch({ redirectTo: "/auth" }),
+    [],
+  );
 
   return (
     <ApiClientProvider
@@ -38,11 +50,59 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
         auth: getAuthApiBaseUrl(),
         user: getUserApiBaseUrl(),
       }}
+      fetchImpl={runtimeFetch}
     >
       {children}
     </ApiClientProvider>
   );
 });
+
+const ApiRuntimeOverlayProvider = observer(
+  function ApiRuntimeOverlayProvider() {
+    const appStore = useAppStore();
+    const locale = useStore().locale.locale;
+    const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
+
+    return (
+      <UiApiRuntimeOverlay
+        authRequired={state.authRequired}
+        className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
+        copy={{
+          apiNotificationsLabel: translate("ui.runtime.notifications.label", {
+            locale,
+          }),
+          authRequiredTitle: translate("ui.runtime.authRequired.title", {
+            locale,
+          }),
+          continueToSignInLabel: translate("ui.runtime.authRequired.continue", {
+            locale,
+          }),
+          defaultAuthDescription: translate(
+            "ui.runtime.authRequired.description",
+            { locale },
+          ),
+          defaultOfflineMessage: translate("ui.runtime.offline.description", {
+            locale,
+          }),
+          defaultServerErrorMessage: translate(
+            "ui.runtime.serverUnavailable.description",
+            { locale },
+          ),
+          dismissLabel: translate("ui.runtime.dismissToast", { locale }),
+          offlineTitle: translate("ui.runtime.offline.title", { locale }),
+          serverErrorTitle: translate("ui.runtime.serverUnavailable.title", {
+            locale,
+          }),
+        }}
+        lastError={state.lastError}
+        onDismissToast={dismissToast}
+        redirectTo={state.redirectTo ?? "/auth"}
+        status={state.status}
+        toasts={toasts}
+      />
+    );
+  },
+);
 
 const UserAppRouterProviders = observer(function UserAppRouterProviders() {
   const preferences = useUserPreferenceControls();
@@ -73,6 +133,7 @@ export function AppProviders({
         <FrontendQueryProvider>
           <UiErrorBoundary>
             {children ?? <UserAppRouterProviders />}
+            <ApiRuntimeOverlayProvider />
           </UiErrorBoundary>
         </FrontendQueryProvider>
       </UserAppApiClientProvider>

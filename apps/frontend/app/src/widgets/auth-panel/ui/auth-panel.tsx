@@ -31,11 +31,20 @@ export function AuthPanel({
   const apiModeLabel = getUserAppApiModeLabel();
 
   return (
-    <UiSection eyebrow={t("user.auth.eyebrow")} title={t("user.auth.title")}>
-      <UiAlert className="xr-readiness-alert" tone="info">
-        <strong>{t("user.status")}</strong>
-        <span>{apiModeLabel}</span>
-        <UiStatusPill label={t("user.nav.auth")} tone="success" />
+    <UiSection
+      className="xr-auth-section"
+      eyebrow={t("user.auth.eyebrow")}
+      title={t("user.auth.title")}
+    >
+      <UiAlert className="xr-readiness-alert xr-surface-glow" tone="info">
+        <span className="xr-alert-copy">
+          <strong>{t("user.status")}</strong>
+          <span>{apiModeLabel}</span>
+        </span>
+        <span className="xr-status-cluster">
+          <UiStatusPill label={t("user.nav.auth")} tone="success" />
+          <UiStatusPill label={t("user.stat.apiMode.label")} tone="info" />
+        </span>
       </UiAlert>
       <div className="xr-card-grid" id="auth">
         <AuthCards

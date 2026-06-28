@@ -32,12 +32,12 @@ export function ProfileStatusCard({
 }: Readonly<ProfileStatusCardProps>) {
   return (
     <UiCard
-      className="xr-profile-card"
+      className="xr-profile-card xr-surface-glow"
       title={t("user.profile.title")}
       id="profile"
     >
       <div className="xr-status-row">
-        <span>{t("user.profile.title")}</span>
+        <span className="xr-status-heading">{t("user.profile.title")}</span>
         <UiStatusPill
           label={state.status}
           live={state.status === "loading" ? "polite" : "off"}
@@ -45,7 +45,7 @@ export function ProfileStatusCard({
         />
       </div>
       {state.status === "loading" ? (
-        <UiAlert tone="info">
+        <UiAlert className="xr-state-panel" tone="info">
           <UiLoading label={t("user.loadingProfile")} />
         </UiAlert>
       ) : null}
@@ -70,16 +70,20 @@ export function ProfileStatusCard({
         </div>
       ) : null}
       {state.status === "missing-token" ? (
-        <UiEmptyState
-          description={state.reason}
-          title={t("user.profile.title")}
-        />
+        <div className="xr-state-panel xr-state-panel--empty">
+          <UiEmptyState
+            description={state.reason}
+            title={t("user.profile.title")}
+          />
+        </div>
       ) : null}
       {state.status === "forbidden" ? (
-        <UiToast
-          message={t("user.state.forbidden", { reason: state.reason })}
-          tone="warning"
-        />
+        <div className="xr-state-panel">
+          <UiToast
+            message={t("user.state.forbidden", { reason: state.reason })}
+            tone="warning"
+          />
+        </div>
       ) : null}
     </UiCard>
   );

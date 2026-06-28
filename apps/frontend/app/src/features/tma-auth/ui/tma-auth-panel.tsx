@@ -79,9 +79,11 @@ export function TmaAuthPanel({
   const showIdleState = isTelegram && status === "idle" && !isVerifying;
 
   return (
-    <UiCard className="xr-tma-card" title={t("tma.loading")}>
+    <UiCard className="xr-tma-card xr-surface-glow" title={t("tma.loading")}>
       <div className="xr-status-row">
-        <span>{t(getTmaIntroKey(isLinkIntent))}</span>
+        <span className="xr-status-heading">
+          {t(getTmaIntroKey(isLinkIntent))}
+        </span>
         <UiStatusPill
           label={status}
           live={isVerifying ? "polite" : "off"}

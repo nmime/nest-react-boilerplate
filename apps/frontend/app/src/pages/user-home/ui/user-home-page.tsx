@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
 import { useAuthSessionFlow } from "../../../features/auth";
 import {
+  UiAlert,
+  UiButton,
   ProductShell,
   UiCard,
+  UiSection,
   UiStatCard,
   UiStatusPill,
 } from "../../../shared/ui";
@@ -45,8 +48,16 @@ function UserReadinessOverview() {
 
   return (
     <UiSectionReadiness>
-      <UiCard className="xr-route-card" title={t("user.status")}>
-        <p>{t("user.description")}</p>
+      <UiCard
+        className="xr-route-card xr-surface-glow"
+        title={t("user.status")}
+      >
+        <div className="xr-card-stack">
+          <UiAlert className="xr-inline-alert" tone="info">
+            <strong>{t("user.routeReadiness.label")}</strong>
+            <span>{t("user.description")}</span>
+          </UiAlert>
+        </div>
         <div
           className="xr-route-list"
           aria-label={t("user.routeReadiness.label")}
@@ -98,6 +109,51 @@ function UserHomeContent({
 
   return (
     <>
+      <UiSection
+        className="xr-home-section"
+        eyebrow={t("user.eyebrow")}
+        title={t("user.title")}
+      >
+        <div className="xr-home-grid">
+          <UiCard
+            className="xr-command-card xr-surface-glow"
+            title={t("user.status")}
+          >
+            <div className="xr-card-stack">
+              <p className="xr-lead-copy">{t("user.description")}</p>
+              <div
+                className="xr-command-actions"
+                aria-label={t("user.appName")}
+              >
+                <UiButton href="/auth">{t("user.form.login")}</UiButton>
+                <UiButton href="/profile" variant="secondary">
+                  {t("user.action.profile")}
+                </UiButton>
+                <UiButton href="/settings" variant="secondary">
+                  {t("user.nav.settings")}
+                </UiButton>
+              </div>
+            </div>
+          </UiCard>
+          <UiCard
+            className="xr-command-card xr-surface-glow"
+            title={t("user.profile.title")}
+          >
+            <div className="xr-card-stack">
+              <UiAlert className="xr-inline-alert" tone="info">
+                <strong>{t("user.nav.profile")}</strong>
+                <span>{t("user.routeReadiness.label")}</span>
+              </UiAlert>
+              <div className="xr-status-row">
+                <span className="xr-status-heading">
+                  {t("user.nav.settings")}
+                </span>
+                <UiStatusPill label={t("user.status")} tone="success" />
+              </div>
+            </div>
+          </UiCard>
+        </div>
+      </UiSection>
       <UserReadinessOverview />
       <AuthPanel
         isLoginPending={authSession.isLoginPending}

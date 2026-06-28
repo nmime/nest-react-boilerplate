@@ -174,17 +174,24 @@ test("health endpoints and frontends are reachable through the Docker stack", as
 
   await gotoWithRetry(page, urls.landingApp);
   await expect(
-    page.getByText("Launch a full-stack Nest and React product foundation."),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Launch a full-stack Nest and React product foundation.",
+    }),
   ).toBeVisible();
   await gotoWithRetry(page, urls.userApp);
   await expect(
-    page.getByText("Sign in, register, and load your protected profile."),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Sign in, register, and load your protected profile.",
+    }),
   ).toBeVisible();
   await gotoWithRetry(page, urls.adminApp);
   await expect(
-    page.getByText(
-      "Operate the product platform with a fail-closed admin experience.",
-    ),
+    page.getByRole("heading", {
+      level: 1,
+      name: "Operate the product platform with a fail-closed admin experience.",
+    }),
   ).toBeVisible();
 });
 
@@ -228,8 +235,10 @@ test("admin API accepts bearer tokens while production admin frontend ignores UR
   );
   await expect(page).not.toHaveURL(/admin_token=|token=/u);
   await expect(
-    page.getByText(
-      /Authenticated principal is missing\.|Request failed with 401\.|Unauthorized|Missing bearer token\./u,
-    ),
+    page
+      .getByLabel("Fail-closed route guard")
+      .getByText(
+        /Authenticated principal is missing\.|Request failed with 401\.|Unauthorized|Missing bearer token\./u,
+      ),
   ).toBeVisible();
 });

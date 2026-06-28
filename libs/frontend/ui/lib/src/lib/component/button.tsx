@@ -13,10 +13,11 @@ import { cn } from "../utils/cn";
 type ButtonVariant = NonNullable<
   VariantProps<typeof buttonVariants>["variant"]
 >;
+type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
 
-const buttonVariants = cva(
+export const buttonVariants = cva(
   [
-    "xr-button inline-flex h-10 max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border px-4 text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
+    "xr-button inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
     "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
   ],
@@ -27,9 +28,23 @@ const buttonVariants = cva(
           "xr-button--primary border-transparent bg-primary text-primary-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
         secondary:
           "xr-button--secondary border-border bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0",
+        outline:
+          "xr-button--outline border-input bg-background text-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0",
+        ghost:
+          "xr-button--ghost border-transparent bg-transparent text-foreground shadow-none hover:bg-accent hover:text-accent-foreground",
+        destructive:
+          "xr-button--destructive border-transparent bg-destructive text-destructive-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
+        link: "xr-button--link h-auto border-transparent bg-transparent p-0 text-primary shadow-none underline-offset-4 hover:underline",
+      },
+      size: {
+        sm: "h-9 px-3 text-xs",
+        md: "h-10 px-4",
+        lg: "h-11 px-5 text-base",
+        icon: "size-10 p-0",
       },
     },
     defaultVariants: {
+      size: "md",
       variant: "primary",
     },
   },
@@ -63,10 +78,14 @@ export type UiButtonProps = NativeButtonProps | AnchorButtonProps;
 const buildClassName = ({
   className,
   isLoading,
+  size,
   variant,
-}: Pick<BaseUiButtonProps, "className" | "isLoading" | "variant">) =>
+}: Pick<BaseUiButtonProps, "className" | "isLoading" | "size" | "variant">) =>
   cn(
-    buttonVariants({ variant: variant as ButtonVariant }),
+    buttonVariants({
+      size: size as ButtonSize,
+      variant: variant as ButtonVariant,
+    }),
     isLoading && "xr-button--loading",
     className,
   );
@@ -115,11 +134,17 @@ export const UiButton = ({
   disabled = false,
   isLoading = false,
   loadingLabel = "Loading",
+  size = "md",
   variant = "primary",
   ...interactiveProps
 }: Readonly<UiButtonProps>) => {
   const isUnavailable = disabled || isLoading;
-  const buttonClassName = buildClassName({ className, isLoading, variant });
+  const buttonClassName = buildClassName({
+    className,
+    isLoading,
+    size,
+    variant,
+  });
   const content = renderButtonContent(children, isLoading, loadingLabel);
 
   if ("href" in interactiveProps && interactiveProps.href !== undefined) {

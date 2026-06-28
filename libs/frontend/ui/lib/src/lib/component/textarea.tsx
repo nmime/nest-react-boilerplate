@@ -8,7 +8,7 @@ export const UiTextarea = forwardRef<HTMLTextAreaElement, UiTextareaProps>(
   ({ className, rows = 4, ...props }, ref) => (
     <textarea
       className={cn(
-        "xr-textarea flex min-h-28 w-full min-w-0 rounded-[var(--xr-radius-md)] border border-[var(--xr-color-border)] bg-[var(--xr-input-background)] px-3 py-2 text-sm text-[var(--xr-color-text)] shadow-sm outline-none transition-[background-color,border-color,box-shadow] placeholder:text-[color-mix(in_srgb,var(--xr-color-muted)_72%,transparent)] focus-visible:border-[color-mix(in_srgb,var(--xr-color-primary)_72%,transparent)] focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--xr-color-primary)_28%,transparent)] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color-mix(in_srgb,var(--xr-color-warning)_76%,transparent)]",
+        "xr-textarea flex min-h-28 w-full min-w-0 rounded-[var(--xr-radius-md)] border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
         className,
       )}
       ref={ref}

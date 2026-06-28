@@ -11,7 +11,8 @@ describe("UiButton shadcn-style rendering", () => {
     expect(element?.tagName).toBe("BUTTON");
     expect(element?.getAttribute("type")).toBe("button");
     expect(element?.className).toContain("xr-button--primary");
-    expect(element?.className).toContain("bg-[linear-gradient");
+    expect(element?.className).toContain("rounded-[var(--xr-radius-md)]");
+    expect(element?.className).toContain("focus-visible:ring-ring/25");
   });
 
   it("renders a secondary anchor", () => {
@@ -25,7 +26,8 @@ describe("UiButton shadcn-style rendering", () => {
     expect(element?.tagName).toBe("A");
     expect(element?.getAttribute("href")).toBe("/docs");
     expect(element?.className).toContain("xr-button--secondary");
-    expect(element?.className).toContain("border-[var(--xr-color-border)]");
+    expect(element?.className).toContain("border-border");
+    expect(element?.className).toContain("hover:bg-accent");
   });
 
   it("renders a busy button", () => {

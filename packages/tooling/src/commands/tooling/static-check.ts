@@ -599,7 +599,7 @@ function readWorkspaceMetadata(workspaceRoot: string): WorkspaceMetadata {
 
 function collectProjectMetadata(workspaceRoot: string): ProjectMetadata[] {
   return walkWorkspaceMetadata(workspaceRoot, workspaceRoot)
-    .filter((file) => file.endsWith("/project.json"))
+    .filter((file) => isWorkspaceMetadataFileName(file, "project.json"))
     .map((file) => {
       const relativeFile = relativeToWorkspace(workspaceRoot, file);
       const parsed = JSON.parse(readFileSync(file, "utf8")) as {
@@ -630,7 +630,7 @@ function collectWorkspacePackageManifests(
   workspaceRoot: string,
 ): WorkspacePackageManifest[] {
   return walkWorkspaceMetadata(workspaceRoot, workspaceRoot)
-    .filter((file) => file.endsWith("/package.json"))
+    .filter((file) => isWorkspaceMetadataFileName(file, "package.json"))
     .filter((file) => isWorkspacePackageManifest(workspaceRoot, file))
     .map((file) => {
       const relativeFile = relativeToWorkspace(workspaceRoot, file);
@@ -645,6 +645,14 @@ function collectWorkspacePackageManifests(
         exports: parsed.exports,
       };
     });
+}
+
+export function isWorkspaceMetadataFileName(
+  file: string,
+  fileName: "package.json" | "project.json",
+): boolean {
+  const normalizedFile = file.replaceAll("\\", "/");
+  return normalizedFile === fileName || normalizedFile.endsWith(`/${fileName}`);
 }
 
 function isWorkspacePackageManifest(workspaceRoot: string, file: string): boolean {

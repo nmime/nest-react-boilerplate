@@ -13,6 +13,7 @@ import {
   checkStaleReferences,
   checkTrackedSocialAuthSecrets,
   checkWorkspaceMetadata,
+  isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
 } from "./static-check.ts";
 
@@ -188,6 +189,30 @@ describe("static-check social auth package guard", () => {
 
 
 describe("static-check workspace metadata guard", () => {
+  it("recognizes metadata file names in Windows-style absolute paths", () => {
+    assert.equal(
+      isWorkspaceMetadataFileName(
+        "C:\\repo\\packages\\tooling\\package.json",
+        "package.json",
+      ),
+      true,
+    );
+    assert.equal(
+      isWorkspaceMetadataFileName(
+        "C:\\repo\\apps\\frontend\\landing-app\\project.json",
+        "project.json",
+      ),
+      true,
+    );
+    assert.equal(
+      isWorkspaceMetadataFileName(
+        "C:\\repo\\packages\\tooling\\project.json.bak",
+        "project.json",
+      ),
+      false,
+    );
+  });
+
   it("rejects duplicate tag prefixes and duplicate TS path targets", () => {
     const workspaceRoot = createWorkspace();
 

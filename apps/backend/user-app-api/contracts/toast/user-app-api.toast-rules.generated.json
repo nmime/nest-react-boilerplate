@@ -1,0 +1,351 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/user-app-api/contracts/openapi/user-app-api.json",
+    "app": "user-app-api"
+  },
+  "runtimeContract": {
+    "resolutionOrder": [
+      "endpoint+method+status+errorCode",
+      "endpoint+method+status",
+      "endpoint+method+network",
+      "endpoint+method+errorFallback"
+    ],
+    "displayModes": ["toast", "modal", "custom", "silent"],
+    "categories": ["success", "error", "warning", "info"]
+  },
+  "rules": [
+    {
+      "id": "user-app-api:GET:/health:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-gethealth.get.200",
+          "default": "Base Health get Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/health/private:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getprivatehealth.get.200",
+          "default": "Base Health get Private Health completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/live:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getliveness.get.200",
+          "default": "Base Health get Liveness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.200",
+          "default": "Profile me completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:400:bad-request",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "GET_400_bad-request",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.400.bad-request",
+          "default": "Profile me failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:401:unauthorized",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "GET_401_unauthorized",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.401.unauthorized",
+          "default": "Profile me failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:403:forbidden",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "GET_403_forbidden",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.403.forbidden",
+          "default": "Profile me failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:429:rate-limited",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "GET_429_rate-limited",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.429.rate-limited",
+          "default": "Profile me failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:500:internal-server-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "GET_500_internal-server-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.500.internal-server-error",
+          "default": "Profile me failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/ready:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getreadiness.get.200",
+          "default": "Base Health get Readiness completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    }
+  ]
+}

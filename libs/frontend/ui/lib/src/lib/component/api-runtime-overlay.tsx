@@ -15,6 +15,7 @@ export interface UiRuntimeToast {
 
 export interface UiApiRuntimeOverlayCopy {
   apiNotificationsLabel: string;
+  apiRuntimeStatusLabel: string;
   authRequiredTitle: string;
   continueToSignInLabel: string;
   defaultAuthDescription: string;
@@ -50,6 +51,7 @@ const toastMessage = (toast: UiRuntimeToast): string =>
 
 const defaultOverlayCopy: UiApiRuntimeOverlayCopy = {
   apiNotificationsLabel: "API notifications",
+  apiRuntimeStatusLabel: "API runtime status",
   authRequiredTitle: "Authentication required",
   continueToSignInLabel: "Continue to sign in",
   defaultAuthDescription:
@@ -78,7 +80,8 @@ export const UiApiRuntimeOverlay = ({
   const overlayCopy = { ...defaultOverlayCopy, ...copy };
 
   return (
-    <div
+    <aside
+      aria-label={overlayCopy.apiRuntimeStatusLabel}
       className={cn("xr-runtime-overlay", className)}
       data-runtime-status={status}
     >
@@ -98,8 +101,10 @@ export const UiApiRuntimeOverlay = ({
         />
       ) : null}
       <div
-        className="xr-runtime-overlay__toasts"
         aria-label={overlayCopy.apiNotificationsLabel}
+        aria-live="polite"
+        className="xr-runtime-overlay__toasts"
+        role="status"
       >
         {toasts.map((toast) => (
           <div className="xr-runtime-overlay__toast" key={toast.id}>
@@ -131,6 +136,6 @@ export const UiApiRuntimeOverlay = ({
           </UiButton>
         )}
       </UiDialog>
-    </div>
+    </aside>
   );
 };

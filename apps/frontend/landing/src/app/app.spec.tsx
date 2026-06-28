@@ -7,26 +7,30 @@ describe("Landing app", () => {
     vi.unstubAllEnvs();
   });
 
-  it("renders generic boilerplate landing copy", () => {
+  it("renders generic boilerplate landing copy and preserves route links", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain("Nest React Boilerplate");
     expect(html).toContain(
       "Launch a full-stack Nest and React product foundation.",
     );
-    expect(html).toContain("What is included");
+    expect(html).toContain(
+      "A polished starter kit for shipping secure Nest + React products",
+    );
     expect(html).toContain('href="/auth/docs"');
     expect(html).toContain('href="/app"');
     expect(html).toContain('href="/admin"');
   });
 
-  it("renders polished overview and action readiness sections", () => {
+  it("renders polished shadcn-style marketing and readiness sections", () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("landing-overview__grid");
+    expect(html).toContain("landing-value-grid");
     expect(html).toContain("landing-stat-grid");
-    expect(html).toContain("Shared libraries");
-    expect(html).toContain("landing-action-panel");
+    expect(html).toContain("Shared packages");
+    expect(html).toContain("landing-feature-grid");
+    expect(html).toContain("Route readiness");
+    expect(html).toContain("Production posture");
   });
 
   it("uses a configured auth API docs URL when provided", () => {

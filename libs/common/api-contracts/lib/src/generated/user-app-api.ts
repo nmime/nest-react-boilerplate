@@ -236,13 +236,15 @@ export interface operations {
             status: number;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. */
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
             instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
             /**
              * @description A stable machine-readable error code for programmatic handling.
              * @example bad-request
              */
-            code?: string;
+            code: string;
             /** @description An array of validation errors (present for validation failures). */
             errors?: {
               /** @description The field that failed validation. */
@@ -288,13 +290,15 @@ export interface operations {
             status: number;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. */
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
             instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
             /**
              * @description A stable machine-readable error code for programmatic handling.
              * @example unauthorized
              */
-            code?: string;
+            code: string;
           };
         };
       };
@@ -322,13 +326,15 @@ export interface operations {
             status: number;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. */
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
             instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
             /**
              * @description A stable machine-readable error code for programmatic handling.
              * @example forbidden
              */
-            code?: string;
+            code: string;
           };
         };
       };
@@ -356,13 +362,15 @@ export interface operations {
             status: number;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. */
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
             instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
             /**
              * @description A stable machine-readable error code for programmatic handling.
              * @example rate-limited
              */
-            code?: string;
+            code: string;
           };
         };
       };
@@ -390,13 +398,15 @@ export interface operations {
             status: number;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. */
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
             instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
             /**
              * @description A stable machine-readable error code for programmatic handling.
              * @example internal-server-error
              */
-            code?: string;
+            code: string;
           };
         };
       };

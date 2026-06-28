@@ -35,7 +35,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
     console.log(
-      "Usage: repo-tooling api openapi [--app auth-app-api] [--output apps/backend/auth-app-api-contracts/openapi/auth-app-api.json] [--dry-run]",
+      "Usage: repo-tooling api openapi [--app auth-app-api] [--output apps/backend/auth-app-api/contracts/openapi/auth-app-api.json] [--dry-run]",
     );
     return;
   }

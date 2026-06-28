@@ -11,7 +11,7 @@ This is the canonical instruction source for AI coding agents working in this re
 - Do not deploy, publish packages/images, rotate credentials, run destructive database commands, or spend funds unless a maintainer explicitly requests it for the current task.
 - Do not use Copilot, copilor, or any external AI coding assistant. Do the assigned work directly with the repository and approved tools.
 - Read existing docs, configs, tests, and public APIs before editing. Do not create contradictory instructions or compatibility shims.
-- Keep changes scoped. Do not edit generated artifacts (`apps/backend/*-app-api-contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
+- Keep changes scoped. Do not edit generated artifacts (`apps/backend/*-app-api/contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
 
 ## Commit, merge, and branch policy
 
@@ -44,7 +44,7 @@ This is the canonical instruction source for AI coding agents working in this re
 ## API contracts and generated artifacts
 
 - Nest controllers and DTOs are the source of truth for API shape.
-- Committed OpenAPI producer output lives under `apps/backend/*-app-api-contracts/openapi/*.json`.
+- Committed OpenAPI producer output lives under `apps/backend/*-app-api/contracts/openapi/*.json`.
 - Shared generated contract review types live under `libs/common/api-contracts/lib/src/generated`.
 - Generated frontend clients live under `libs/frontend/api-client/lib/src/generated` and wrappers in `libs/frontend/api-client` keep endpoint paths out of app code.
 - Do not invent top-level contract directories or alternate OpenAPI consumer locations.

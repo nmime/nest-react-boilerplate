@@ -5,7 +5,7 @@
       "name": "auth-app-api",
       "app": "auth-app-api",
       "port": 3991,
-      "artifactPath": "apps/backend/auth-app-api-contracts/openapi/auth-app-api.json",
+      "artifactPath": "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json",
       "typesPath": "libs/common/api-contracts/lib/src/generated/auth-app-api.ts",
       "clientOutputPath": "libs/frontend/api-client/lib/src/generated/auth.ts"
     },
@@ -13,7 +13,7 @@
       "name": "user-app-api",
       "app": "user-app-api",
       "port": 3992,
-      "artifactPath": "apps/backend/user-app-api-contracts/openapi/user-app-api.json",
+      "artifactPath": "apps/backend/user-app-api/contracts/openapi/user-app-api.json",
       "typesPath": "libs/common/api-contracts/lib/src/generated/user-app-api.ts",
       "clientOutputPath": "libs/frontend/api-client/lib/src/generated/user.ts"
     },
@@ -21,7 +21,7 @@
       "name": "admin-app-api",
       "app": "admin-app-api",
       "port": 3993,
-      "artifactPath": "apps/backend/admin-app-api-contracts/openapi/admin-app-api.json",
+      "artifactPath": "apps/backend/admin-app-api/contracts/openapi/admin-app-api.json",
       "typesPath": "libs/common/api-contracts/lib/src/generated/admin-app-api.ts",
       "clientOutputPath": "libs/frontend/api-client/lib/src/generated/admin.ts"
     }
@@ -30,7 +30,7 @@
     {
       "name": "frontend-auth",
       "provider": "auth-app-api",
-      "artifactPath": "apps/frontend/app-contracts/consumers/frontend-auth.pact.json"
+      "artifactPath": "apps/frontend/app/contracts/consumers/frontend-auth.pact.json"
     }
   ]
 }

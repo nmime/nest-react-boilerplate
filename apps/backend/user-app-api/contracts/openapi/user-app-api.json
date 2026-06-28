@@ -76,7 +76,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -99,7 +99,11 @@
                     },
                     "instance": {
                       "type": "string",
-                      "description": "A URI reference that identifies the specific occurrence of the problem."
+                      "description": "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available."
+                    },
+                    "localizedDetail": {
+                      "type": "string",
+                      "description": "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic."
                     },
                     "code": {
                       "type": "string",
@@ -151,7 +155,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -174,7 +178,11 @@
                     },
                     "instance": {
                       "type": "string",
-                      "description": "A URI reference that identifies the specific occurrence of the problem."
+                      "description": "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available."
+                    },
+                    "localizedDetail": {
+                      "type": "string",
+                      "description": "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic."
                     },
                     "code": {
                       "type": "string",
@@ -192,7 +200,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -215,7 +223,11 @@
                     },
                     "instance": {
                       "type": "string",
-                      "description": "A URI reference that identifies the specific occurrence of the problem."
+                      "description": "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available."
+                    },
+                    "localizedDetail": {
+                      "type": "string",
+                      "description": "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic."
                     },
                     "code": {
                       "type": "string",
@@ -233,7 +245,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -256,7 +268,11 @@
                     },
                     "instance": {
                       "type": "string",
-                      "description": "A URI reference that identifies the specific occurrence of the problem."
+                      "description": "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available."
+                    },
+                    "localizedDetail": {
+                      "type": "string",
+                      "description": "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic."
                     },
                     "code": {
                       "type": "string",
@@ -274,7 +290,7 @@
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
@@ -297,7 +313,11 @@
                     },
                     "instance": {
                       "type": "string",
-                      "description": "A URI reference that identifies the specific occurrence of the problem."
+                      "description": "A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available."
+                    },
+                    "localizedDetail": {
+                      "type": "string",
+                      "description": "A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic."
                     },
                     "code": {
                       "type": "string",

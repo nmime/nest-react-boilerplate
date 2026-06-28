@@ -73,7 +73,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/backend/admin-app-api`                  | Admin NestJS API.                                                           |
 | `apps/backend/user-app-api`                   | User NestJS API.                                                            |
 | `apps/backend/auth-app-api`                   | Auth NestJS API.                                                            |
-| `apps/backend/*-app-api-contracts/openapi`    | Committed OpenAPI producer output for review and generation.                |
+| `apps/backend/*-app-api/contracts/openapi`    | Committed OpenAPI producer output for review and generation.                |
 | `libs/frontend/ui`                            | Shared UI primitives and Storybook configuration.                           |
 | `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                     |
 | `libs/backend/common`                         | Backend bootstrap, health, exception, validation, and response foundations. |

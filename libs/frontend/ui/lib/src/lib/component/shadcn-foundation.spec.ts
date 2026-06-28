@@ -18,7 +18,11 @@ describe("shadcn/ui frontend foundation", () => {
       "--color-border: var(--border);",
       "--color-input: var(--input);",
       "--color-ring: var(--ring);",
+      "--radius-sm: var(--xr-radius-sm);",
       "--radius-md: var(--xr-radius-md);",
+      "--radius-xl: var(--xr-radius-xl);",
+      "--xr-space-4: 1rem;",
+      "--xr-focus-ring-strong:",
     ]) {
       expect(styles).toContain(token);
     }
@@ -28,6 +32,9 @@ describe("shadcn/ui frontend foundation", () => {
     expect(styles).toContain("--background: var(--xr-color-background);");
     expect(styles).toContain("--primary: var(--xr-color-primary);");
     expect(styles).toContain("--sidebar-ring: var(--xr-color-primary);");
+    expect(styles).toContain(".xr-button--destructive");
+    expect(styles).toContain(".xr-badge--solid");
+    expect(styles).toContain(".xr-action-group--compact");
   });
 
   it("keeps the shadcn registry pointed at the public UI package", () => {

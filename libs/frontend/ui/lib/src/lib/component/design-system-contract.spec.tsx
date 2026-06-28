@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import {
   ProductShell,
   UiAlert,
+  UiActionGroup,
+  UiBadge,
   UiButton,
   UiCard,
   UiCheckbox,
@@ -20,6 +22,7 @@ import {
   UiStatCard,
   UiStatusPill,
   UiStatusTag,
+  UiShellSurface,
   UiSwitch,
   UiTabs,
   UiTextarea,
@@ -32,6 +35,8 @@ describe("public @app/frontend/ui shadcn design-system contract", () => {
     for (const component of [
       ProductShell,
       UiAlert,
+      UiActionGroup,
+      UiBadge,
       UiButton,
       UiCard,
       UiCheckbox,
@@ -48,6 +53,7 @@ describe("public @app/frontend/ui shadcn design-system contract", () => {
       UiStatCard,
       UiStatusPill,
       UiStatusTag,
+      UiShellSurface,
       UiSwitch,
       UiTabs,
       UiTextarea,
@@ -80,6 +86,36 @@ describe("public @app/frontend/ui shadcn design-system contract", () => {
     expect(busy).toContain("xr-button--loading");
   });
 
+  it("adds v3 button, badge, and action-group variants without changing legacy defaults", () => {
+    const html = renderToStaticMarkup(
+      <>
+        <UiButton size="sm" variant="outline">
+          Filter
+        </UiButton>
+        <UiButton aria-label="Delete" size="icon" variant="destructive">
+          ×
+        </UiButton>
+        <UiBadge tone="destructive" variant="solid">
+          Failed
+        </UiBadge>
+        <UiActionGroup align="end" density="compact">
+          <UiButton variant="ghost">Cancel</UiButton>
+        </UiActionGroup>
+        <UiShellSurface aria-label="Summary surface">Surface</UiShellSurface>
+      </>,
+    );
+
+    expect(html).toContain("xr-button--outline");
+    expect(html).toContain("h-9 px-3");
+    expect(html).toContain("xr-button--destructive");
+    expect(html).toContain("size-10 p-0");
+    expect(html).toContain("xr-badge--destructive");
+    expect(html).toContain("xr-badge--solid");
+    expect(html).toContain("xr-action-group--end");
+    expect(html).toContain("xr-action-group--compact");
+    expect(html).toContain("xr-shell-surface");
+  });
+
   it("renders form controls with semantic shadcn token classes and a11y wiring", () => {
     const html = renderToStaticMarkup(
       <UiForm aria-label="Account form">
@@ -109,6 +145,7 @@ describe("public @app/frontend/ui shadcn design-system contract", () => {
           <UiStatCard detail="Last hour" label="Requests" value="42" />
         </UiCard>
         <UiAlert tone="success">Synced</UiAlert>
+        <UiBadge tone="info">Beta</UiBadge>
         <UiNotification message="Invite sent" title="Done" tone="success" />
         <UiEmptyState description="No rows" title="Empty" />
         <UiToast message="Saved" tone="success" />
@@ -136,6 +173,7 @@ describe("public @app/frontend/ui shadcn design-system contract", () => {
     expect(document.querySelector(".xr-card")).toBeTruthy();
     expect(document.querySelector(".xr-stat-card")).toBeTruthy();
     expect(document.querySelector(".xr-alert--success")).toBeTruthy();
+    expect(document.querySelector(".xr-badge--info")).toBeTruthy();
     expect(document.querySelector(".xr-notification--success")).toBeTruthy();
     expect(document.querySelector(".xr-feedback--empty")).toBeTruthy();
     expect(document.querySelector(".xr-toast--success")).toBeTruthy();

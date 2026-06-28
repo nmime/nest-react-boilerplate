@@ -2,6 +2,7 @@ import "./styles.css";
 
 export * from "./lib/utils/cn";
 export * from "./lib/component/alert";
+export * from "./lib/component/badge";
 export * from "./lib/component/button";
 export * from "./lib/component/card";
 export * from "./lib/component/form";
@@ -32,3 +33,4 @@ export * from "./lib/component/textarea";
 export * from "./lib/component/notification";
 export * from "./lib/component/resource-error";
 export * from "./lib/component/status-tag";
+export * from "./lib/component/layout-primitives";

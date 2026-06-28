@@ -142,9 +142,13 @@ function base64UrlEncodeUtf8(value: string): string {
 }
 
 function base64UrlCharacter(index: number): string {
-  return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[
-    index
-  ];
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+    "abcdefghijklmnopqrstuvwxyz" +
+    "0123456789" +
+    "-_";
+
+  return alphabet[index];
 }
 
 function utf8Bytes(value: string): number[] {

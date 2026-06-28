@@ -66,6 +66,16 @@ export function SocialAuthButtons({
         <span>{t("auth.social.stepUp.required")}</span>
         <UiStatusPill label={t("auth.social.protocol.oauth")} tone="info" />
       </UiAlert>
+      <div className="xr-social-choice-grid" aria-label="Social auth options">
+        <span>
+          <strong>{t("auth.provider.telegram")}</strong>
+          <small>Mini App verification</small>
+        </span>
+        <span>
+          <strong>{t("auth.provider.discord")}</strong>
+          <small>OAuth redirect</small>
+        </span>
+      </div>
       <div className="xr-social-actions">
         <UiButton
           isLoading={isTelegramPending}

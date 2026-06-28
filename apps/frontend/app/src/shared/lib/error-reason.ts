@@ -1,6 +1,6 @@
 export const getErrorReason = (error: unknown, fallback: string): string => {
   if (error instanceof Error) {
-    return error.message;
+    return error.message.trim().length > 0 ? error.message : fallback;
   }
   if (error && typeof error === "object") {
     const record = error as Record<string, unknown>;

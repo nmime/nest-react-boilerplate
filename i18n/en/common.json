@@ -12,5 +12,15 @@
   "common.status.secure": "Secure",
   "common.homeLink": "Open app",
   "ui.errorBoundary.title": "Something went wrong",
-  "ui.errorBoundary.description": "Try refreshing the page. If the issue continues, contact support with the request id from the API response."
+  "ui.errorBoundary.description": "Try refreshing the page. If the issue continues, contact support with the request id from the API response.",
+  "ui.runtime.authRequired.title": "Authentication required",
+  "ui.runtime.authRequired.description": "Sign in again to continue. Your current route is preserved.",
+  "ui.runtime.authRequired.continue": "Continue to sign in",
+  "ui.runtime.offline.title": "You are offline",
+  "ui.runtime.offline.description": "Reconnect to continue. This screen stays on the current route and retries safely.",
+  "ui.runtime.serverUnavailable.title": "Service temporarily unavailable",
+  "ui.runtime.serverUnavailable.description": "The API is not responding right now. You can retry without leaving this page.",
+  "ui.runtime.notifications.label": "API notifications",
+  "ui.runtime.retry": "Retry",
+  "ui.runtime.dismissToast": "Dismiss"
 }

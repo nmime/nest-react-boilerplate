@@ -13,10 +13,23 @@ export interface UiRuntimeToast {
   title: string;
 }
 
+export interface UiApiRuntimeOverlayCopy {
+  apiNotificationsLabel: string;
+  authRequiredTitle: string;
+  continueToSignInLabel: string;
+  defaultAuthDescription: string;
+  defaultOfflineMessage: string;
+  defaultServerErrorMessage: string;
+  dismissLabel: string;
+  offlineTitle: string;
+  serverErrorTitle: string;
+}
+
 export interface UiApiRuntimeOverlayProps {
   authAction?: ReactNode;
   authRequired?: boolean;
   className?: string;
+  copy?: Partial<UiApiRuntimeOverlayCopy>;
   lastError?: { message: string } | null;
   onDismissToast?: (id: string) => void;
   redirectTo?: string | null;
@@ -35,24 +48,26 @@ const toastTone = (
 const toastMessage = (toast: UiRuntimeToast): string =>
   toast.message ? `${toast.title}: ${toast.message}` : toast.title;
 
-const apiNotificationsLabel = "API notifications";
-const authRequiredTitle = "Authentication required";
-const continueToSignInLabel = "Continue to sign in";
-const defaultAuthDescription =
-  "Your session must be refreshed before this route can load protected data.";
-const defaultOfflineMessage =
-  "You are offline. We will keep this route mounted while the connection recovers.";
-const defaultServerErrorMessage =
-  "The API is temporarily unavailable. Please retry in a moment.";
-const dismissLabel = "Dismiss";
-const offlineTitle = "Offline mode";
-const serverErrorTitle = "Service interruption";
+const defaultOverlayCopy: UiApiRuntimeOverlayCopy = {
+  apiNotificationsLabel: "API notifications",
+  authRequiredTitle: "Authentication required",
+  continueToSignInLabel: "Continue to sign in",
+  defaultAuthDescription:
+    "Your session must be refreshed before this route can load protected data.",
+  defaultOfflineMessage:
+    "You are offline. We will keep this route mounted while the connection recovers.",
+  defaultServerErrorMessage:
+    "The API is temporarily unavailable. Please retry in a moment.",
+  dismissLabel: "Dismiss",
+  offlineTitle: "Offline mode",
+  serverErrorTitle: "Service interruption",
+};
 
 export const UiApiRuntimeOverlay = ({
   authAction,
   authRequired = false,
   className,
-  lastError,
+  copy,
   onDismissToast,
   redirectTo,
   status = "online",
@@ -60,6 +75,7 @@ export const UiApiRuntimeOverlay = ({
 }: Readonly<UiApiRuntimeOverlayProps>) => {
   const isOffline = status === "offline";
   const isServerError = status === "server-error";
+  const overlayCopy = { ...defaultOverlayCopy, ...copy };
 
   return (
     <div
@@ -70,17 +86,20 @@ export const UiApiRuntimeOverlay = ({
         <UiNotification
           className="xr-runtime-overlay__banner"
           message={
-            lastError?.message ??
-            (isOffline ? defaultOfflineMessage : defaultServerErrorMessage)
+            isOffline
+              ? overlayCopy.defaultOfflineMessage
+              : overlayCopy.defaultServerErrorMessage
           }
           role="alert"
-          title={isOffline ? offlineTitle : serverErrorTitle}
+          title={
+            isOffline ? overlayCopy.offlineTitle : overlayCopy.serverErrorTitle
+          }
           tone="warning"
         />
       ) : null}
       <div
         className="xr-runtime-overlay__toasts"
-        aria-label={apiNotificationsLabel}
+        aria-label={overlayCopy.apiNotificationsLabel}
       >
         {toasts.map((toast) => (
           <div className="xr-runtime-overlay__toast" key={toast.id}>
@@ -94,7 +113,7 @@ export const UiApiRuntimeOverlay = ({
                 onClick={() => onDismissToast(toast.id)}
                 variant="secondary"
               >
-                {dismissLabel}
+                {overlayCopy.dismissLabel}
               </UiButton>
             ) : null}
           </div>
@@ -102,13 +121,13 @@ export const UiApiRuntimeOverlay = ({
       </div>
       <UiDialog
         className="xr-api-runtime-dialog"
-        description={lastError?.message ?? defaultAuthDescription}
+        description={overlayCopy.defaultAuthDescription}
         open={authRequired}
-        title={authRequiredTitle}
+        title={overlayCopy.authRequiredTitle}
       >
         {authAction ?? (
           <UiButton href={redirectTo ?? "/auth"}>
-            {continueToSignInLabel}
+            {overlayCopy.continueToSignInLabel}
           </UiButton>
         )}
       </UiDialog>

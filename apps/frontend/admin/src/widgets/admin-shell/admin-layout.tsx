@@ -80,6 +80,23 @@ export const AdminLayout = ({
     });
   }
   const currentItem = navItems.find((item) => item.isCurrent);
+  const routeSignals = [
+    {
+      label: "RBAC fail-closed",
+      tone: access?.canAccessAdmin === false ? "warning" : "success",
+    },
+    {
+      label: `${navItems.length} scoped routes`,
+      tone: "info",
+    },
+    {
+      label: currentItem?.label ?? t("admin.notFound.title"),
+      tone: currentItem ? "success" : "warning",
+    },
+  ] satisfies Array<{
+    label: string;
+    tone: "info" | "success" | "warning";
+  }>;
 
   return (
     <ProductShell
@@ -106,7 +123,7 @@ export const AdminLayout = ({
             <UiStatusTag label={t("admin.status")} tone="warning" />
           </div>
           <nav className="admin-sidebar__nav" aria-label={t("admin.appName")}>
-            {navItems.map((item) => (
+            {navItems.map((item, index) => (
               <a
                 aria-current={item.isCurrent ? "page" : undefined}
                 className="admin-sidebar__link"
@@ -115,16 +132,44 @@ export const AdminLayout = ({
                 key={item.href}
               >
                 <span className="admin-sidebar__indicator" />
+                <span className="admin-sidebar__number">
+                  {(index + 1).toString().padStart(2, "0")}
+                </span>
                 <span className="admin-sidebar__label">{item.label}</span>
                 <small>{item.detail}</small>
               </a>
             ))}
           </nav>
+          <div className="admin-sidebar__footnote">
+            Permission-scoped navigation hides unavailable routes before render.
+          </div>
         </aside>
         <section
           aria-label={currentItem?.label ?? t("admin.title")}
           className="admin-main-panel"
         >
+          <div
+            className="admin-command-bar"
+            data-design-version="admin-frontend-v3"
+          >
+            <div>
+              <p className="xr-eyebrow">Admin console v3</p>
+              <h2>{currentItem?.label ?? t("admin.notFound.title")}</h2>
+              <span>
+                Product-ops workspace with guarded routing, quick context, and
+                nonblank empty/error/loading states.
+              </span>
+            </div>
+            <div className="admin-command-bar__signals">
+              {routeSignals.map((signal) => (
+                <UiStatusTag
+                  key={signal.label}
+                  label={signal.label}
+                  tone={signal.tone}
+                />
+              ))}
+            </div>
+          </div>
           {children}
         </section>
       </div>

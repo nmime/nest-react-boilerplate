@@ -64,11 +64,11 @@ export function AuthDiscordCallbackPage({
 
   return (
     <UiCard
-      className="xr-callback-card"
+      className="xr-callback-card xr-surface-glow"
       title={t("auth.social.discord.callback.title")}
     >
       <div className="xr-status-row">
-        <span>{t("auth.provider.discord")}</span>
+        <span className="xr-status-heading">{t("auth.provider.discord")}</span>
         <UiStatusPill
           label={
             hasRequiredQuery ? socialAuth.discordCallbackStatus : "missing"

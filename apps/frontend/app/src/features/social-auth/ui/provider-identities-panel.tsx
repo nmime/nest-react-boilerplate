@@ -112,9 +112,14 @@ export function ProviderIdentitiesPanel({
   );
 
   return (
-    <UiCard className="xr-provider-card" title={t("user.settings.title")}>
+    <UiCard
+      className="xr-provider-card xr-surface-glow"
+      title={t("user.settings.title")}
+    >
       <div className="xr-status-row">
-        <span>{t("auth.social.stepUp.required")}</span>
+        <span className="xr-status-heading">
+          {t("auth.social.stepUp.required")}
+        </span>
         <UiStatusPill
           label={authStore.isAuthenticated ? "session" : "signed out"}
           tone={authStore.isAuthenticated ? "success" : "warning"}
@@ -147,7 +152,13 @@ export function ProviderIdentitiesPanel({
           return (
             <section className="xr-provider-row" key={provider}>
               <div>
-                <strong>{providerName}</strong>
+                <div className="xr-provider-heading">
+                  <strong>{providerName}</strong>
+                  <UiStatusPill
+                    label={identity ? "linked" : "not linked"}
+                    tone={identity ? "success" : "info"}
+                  />
+                </div>
                 <p>
                   {identity
                     ? t("auth.social.status.linked", { provider: providerName })

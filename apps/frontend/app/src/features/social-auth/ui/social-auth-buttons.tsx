@@ -57,7 +57,7 @@ export function SocialAuthButtons({
 
   return (
     <UiCard
-      className="xr-social-card"
+      className="xr-social-card xr-surface-glow"
       title={t("auth.social.createAccount.prompt", {
         provider: t("auth.provider.telegram"),
       })}

@@ -5,6 +5,7 @@ import {
   UiButton,
   UiCard,
   UiForm,
+  UiStatusPill,
   UiTextField,
 } from "../../../shared/ui";
 import type { AuthMode } from "../model";
@@ -28,12 +29,19 @@ export function AuthCards({
 }: Readonly<AuthCardsProps>) {
   return (
     <>
-      <UiCard className="xr-auth-card" title={t("user.login.title")}>
-        <UiAlert className="xr-card-note" tone="info">
-          {t("user.description")}
-        </UiAlert>
+      <UiCard
+        className="xr-auth-card xr-surface-glow"
+        title={t("user.login.title")}
+      >
+        <div className="xr-card-stack">
+          <UiAlert className="xr-card-note" tone="info">
+            <span>{t("user.description")}</span>
+            <UiStatusPill label={t("user.form.login")} tone="success" />
+          </UiAlert>
+        </div>
         <UiForm
           aria-busy={isLoginPending}
+          className="xr-auth-form"
           onSubmit={(event) => onSubmit("login", event)}
         >
           <UiTextField
@@ -56,6 +64,7 @@ export function AuthCards({
             type="password"
           />
           <UiButton
+            className="xr-submit-button"
             isLoading={isLoginPending}
             loadingLabel={loadingLabel}
             type="submit"
@@ -65,14 +74,23 @@ export function AuthCards({
         </UiForm>
       </UiCard>
       {socialAuthSlot}
-      <UiCard className="xr-auth-card" title={t("user.register.title")}>
-        <UiAlert className="xr-card-note" tone="info">
-          {t("auth.social.createAccount.prompt", {
-            provider: t("auth.provider.telegram"),
-          })}
-        </UiAlert>
+      <UiCard
+        className="xr-auth-card xr-surface-glow"
+        title={t("user.register.title")}
+      >
+        <div className="xr-card-stack">
+          <UiAlert className="xr-card-note" tone="info">
+            <span>
+              {t("auth.social.createAccount.prompt", {
+                provider: t("auth.provider.telegram"),
+              })}
+            </span>
+            <UiStatusPill label={t("user.form.register")} tone="info" />
+          </UiAlert>
+        </div>
         <UiForm
           aria-busy={isRegisterPending}
+          className="xr-auth-form"
           onSubmit={(event) => onSubmit("register", event)}
         >
           <UiTextField
@@ -101,6 +119,7 @@ export function AuthCards({
             type="password"
           />
           <UiButton
+            className="xr-submit-button"
             isLoading={isRegisterPending}
             loadingLabel={loadingLabel}
             type="submit"

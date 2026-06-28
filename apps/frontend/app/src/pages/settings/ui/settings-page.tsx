@@ -33,10 +33,13 @@ export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
     >
       <div className="xr-settings-grid">
         <UiCard
-          className="xr-preferences-card"
+          className="xr-preferences-card xr-surface-glow"
           title={t("user.settings.title")}
         >
-          <UiAlert tone="info">{t("user.description")}</UiAlert>
+          <UiAlert className="xr-inline-alert" tone="info">
+            <strong>{t("user.nav.settings")}</strong>
+            <span>{t("user.description")}</span>
+          </UiAlert>
           <div className="xr-preferences-controls">
             <LanguageSwitcher />
             <ThemeSwitcher />

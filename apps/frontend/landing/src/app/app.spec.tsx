@@ -15,20 +15,24 @@ describe("Landing app", () => {
       "Launch a full-stack Nest and React product foundation.",
     );
     expect(html).toContain(
-      "A polished starter kit for shipping secure Nest + React products",
+      "A launch cockpit for teams turning the boilerplate into a production product",
     );
     expect(html).toContain('href="/auth/docs"');
     expect(html).toContain('href="/app"');
     expect(html).toContain('href="/admin"');
   });
 
-  it("renders polished shadcn-style marketing and readiness sections", () => {
+  it("renders design v3 marketing, route readiness, and deployment sections", () => {
     const html = renderToStaticMarkup(<App />);
 
+    expect(html).toContain('data-smoke-marker="landing-v3-overview"');
+    expect(html).toContain("Design v3");
     expect(html).toContain("landing-value-grid");
     expect(html).toContain("landing-stat-grid");
-    expect(html).toContain("Shared packages");
+    expect(html).toContain("Release gates");
     expect(html).toContain("landing-feature-grid");
+    expect(html).toContain("Implementation path");
+    expect(html).toContain("Docs + deployment");
     expect(html).toContain("Route readiness");
     expect(html).toContain("Production posture");
   });

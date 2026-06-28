@@ -35,6 +35,7 @@ export function ProfileStatusCard({
       className="xr-profile-card xr-surface-glow"
       title={t("user.profile.title")}
       id="profile"
+      data-design-marker="profile-status-v3"
     >
       <div className="xr-status-row">
         <span className="xr-status-heading">{t("user.profile.title")}</span>

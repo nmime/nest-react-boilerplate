@@ -12,7 +12,13 @@ import { useOptionalRootStore } from "../state";
 export interface ProductShellAction {
   label: string;
   href: string;
-  variant?: "primary" | "secondary";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "destructive"
+    | "link";
   isCurrent?: boolean;
 }
 

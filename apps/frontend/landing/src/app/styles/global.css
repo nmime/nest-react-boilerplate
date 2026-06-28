@@ -4,13 +4,18 @@
   background:
     radial-gradient(
       circle at top left,
-      color-mix(in srgb, var(--xr-color-primary) 22%, transparent),
+      color-mix(in srgb, var(--xr-color-primary) 24%, transparent),
       transparent 34rem
     ),
     radial-gradient(
-      circle at top right,
+      circle at 85% 8%,
       color-mix(in srgb, var(--xr-color-success) 18%, transparent),
       transparent 30rem
+    ),
+    radial-gradient(
+      circle at 50% 42rem,
+      color-mix(in srgb, var(--xr-color-primary) 9%, transparent),
+      transparent 34rem
     ),
     linear-gradient(
       180deg,
@@ -35,10 +40,34 @@
   background-size: 72px 72px;
   content: "";
   inset: 0;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 46rem);
-  opacity: 0.22;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent 48rem);
+  opacity: 0.2;
   pointer-events: none;
   position: absolute;
+}
+
+.xr-shell::after {
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--xr-color-primary) 11%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in srgb, var(--xr-color-success) 14%, transparent),
+      transparent 66%
+    );
+  content: "";
+  filter: blur(12px);
+  height: 22rem;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  top: 13rem;
+  transform: translateX(-50%) rotate(-6deg);
+  width: min(66rem, 86vw);
 }
 
 .xr-header,
@@ -50,7 +79,7 @@
 
 .xr-header {
   backdrop-filter: blur(20px);
-  background: color-mix(in srgb, var(--xr-card-background) 72%, transparent);
+  background: color-mix(in srgb, var(--xr-card-background) 74%, transparent);
   border: 1px solid color-mix(in srgb, var(--xr-color-border) 80%, transparent);
   border-radius: calc(var(--xr-radius-lg) + 0.35rem);
   box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
@@ -65,31 +94,81 @@
 
 .xr-hero {
   align-items: center;
+  display: grid;
   grid-template-columns: minmax(0, 1fr);
+  isolation: isolate;
   margin: 0 auto clamp(2.5rem, 6vw, 5rem);
-  max-width: 72rem;
+  max-width: 76rem;
+  min-height: clamp(31rem, 58vw, 45rem);
   text-align: center;
+}
+
+.xr-hero::before,
+.xr-hero::after {
+  border: 1px solid color-mix(in srgb, var(--xr-color-border) 78%, transparent);
+  border-radius: calc(var(--xr-radius-lg) + 1rem);
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+}
+
+.xr-hero::before {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--xr-card-background) 70%, transparent),
+      color-mix(in srgb, var(--xr-card-background) 34%, transparent)
+    ),
+    radial-gradient(
+      circle at 32% 28%,
+      color-mix(in srgb, var(--xr-color-primary) 16%, transparent),
+      transparent 34%
+    );
+  box-shadow: 0 34px 110px rgba(15, 23, 42, 0.12);
+  inset: clamp(1.5rem, 4vw, 3rem) 0 0;
+}
+
+.xr-hero::after {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 38px 38px;
+  inset: clamp(3.2rem, 7vw, 5.8rem) clamp(1rem, 5vw, 5rem) 2rem;
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.72), transparent 70%);
+  opacity: 0.18;
 }
 
 .xr-hero__copy {
   align-items: center;
   display: flex;
   flex-direction: column;
+  margin-inline: auto;
+  max-width: 66rem;
+  padding: clamp(2rem, 7vw, 5rem) clamp(1rem, 5vw, 4rem);
 }
 
 .xr-hero h1 {
-  font-size: clamp(3rem, 8vw, 6.9rem);
-  letter-spacing: -0.075em;
+  font-size: clamp(3.2rem, 8.4vw, 7.25rem);
+  letter-spacing: -0.08em;
   line-height: 0.88;
   margin-inline: auto;
   max-width: 12ch;
+  text-wrap: balance;
 }
 
 .xr-hero__description {
   color: var(--xr-color-muted);
-  font-size: clamp(1.08rem, 2vw, 1.35rem);
+  font-size: clamp(1.08rem, 2vw, 1.38rem);
   line-height: 1.7;
-  max-width: 45rem;
+  max-width: 47rem;
 }
 
 .xr-eyebrow,
@@ -127,38 +206,110 @@
   gap: clamp(1.2rem, 3vw, 2rem);
 }
 
-.landing-overview {
-  background: color-mix(in srgb, var(--xr-card-background) 68%, transparent);
+.landing-overview,
+.landing-journey,
+.landing-operations {
+  background: color-mix(in srgb, var(--xr-card-background) 70%, transparent);
   border: 1px solid color-mix(in srgb, var(--xr-color-border) 80%, transparent);
   border-radius: calc(var(--xr-radius-lg) + 0.65rem);
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
   padding: clamp(1.15rem, 3vw, 2rem);
+  position: relative;
+}
+
+.landing-overview::before,
+.landing-journey::before,
+.landing-operations::before {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--xr-color-primary) 13%, transparent),
+    transparent 68%
+  );
+  content: "";
+  height: 20rem;
+  pointer-events: none;
+  position: absolute;
+  right: -8rem;
+  top: -9rem;
+  width: 20rem;
+}
+
+.landing-overview > *,
+.landing-journey > *,
+.landing-operations > * {
+  position: relative;
+  z-index: 1;
 }
 
 .landing-overview h2,
 .landing-action-panel h2,
-.landing-readiness h2 {
+.landing-readiness h2,
+.landing-journey h2,
+.landing-operations h2 {
   font-size: clamp(1.8rem, 4vw, 3rem);
   letter-spacing: -0.045em;
   line-height: 1.02;
   margin: 0;
+  text-wrap: balance;
+}
+
+.landing-overview__intro {
+  align-items: end;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: clamp(1rem, 3vw, 1.6rem);
+}
+
+.landing-overview__intro p,
+.landing-operations__copy p {
+  color: var(--xr-color-muted);
+  line-height: 1.75;
+  margin: 0;
+  max-width: 58rem;
+}
+
+.landing-overview__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.landing-overview__badges span,
+.landing-operations-card span {
+  background: color-mix(in srgb, var(--xr-color-primary) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--xr-color-primary) 24%, transparent);
+  border-radius: 999px;
+  color: var(--xr-color-primary);
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  padding: 0.38rem 0.7rem;
+  text-transform: uppercase;
 }
 
 .landing-value-grid,
 .landing-feature-grid,
-.landing-stat-grid {
+.landing-stat-grid,
+.landing-journey__steps,
+.landing-operations__grid {
   display: grid;
   gap: 1rem;
 }
 
 .landing-value-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .landing-value-card,
 .landing-feature-card,
 .landing-action-panel,
-.landing-readiness {
+.landing-readiness,
+.landing-journey-card,
+.landing-operations-card {
   background:
     linear-gradient(
         145deg,
@@ -177,7 +328,7 @@
 }
 
 .landing-value-card {
-  min-height: 17rem;
+  min-height: 18rem;
   overflow: hidden;
   position: relative;
 }
@@ -220,7 +371,9 @@
 .landing-value-card p,
 .landing-action-panel p,
 .landing-readiness li,
-.landing-feature-card li {
+.landing-feature-card li,
+.landing-journey-card span,
+.landing-operations-card p {
   color: var(--xr-color-muted);
   line-height: 1.75;
   margin: 0;
@@ -228,6 +381,7 @@
 
 .landing-stat-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1rem;
 }
 
 .landing-stat-card {
@@ -255,8 +409,10 @@
   gap: 1rem;
 }
 
-.landing-feature-card h3 {
-  font-size: clamp(1.4rem, 3vw, 2rem);
+.landing-feature-card h3,
+.landing-journey-card h3,
+.landing-operations-card h3 {
+  font-size: clamp(1.35rem, 3vw, 2rem);
   letter-spacing: -0.04em;
   line-height: 1.1;
   margin: 0;
@@ -295,6 +451,39 @@
   width: 0.56rem;
 }
 
+.landing-journey {
+  display: grid;
+  gap: clamp(1.2rem, 3vw, 1.7rem);
+}
+
+.landing-journey__header {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 58rem;
+}
+
+.landing-journey__steps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.landing-journey-card,
+.landing-operations-card {
+  border: 1px solid transparent;
+  border-radius: var(--xr-radius-lg);
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1rem, 3vw, 1.35rem);
+}
+
+.landing-journey-card p {
+  color: var(--xr-color-primary);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
 .landing-action-panel {
   align-items: center;
   display: grid;
@@ -331,6 +520,26 @@
   opacity: 0.72;
 }
 
+.landing-operations {
+  display: grid;
+  gap: clamp(1.2rem, 4vw, 2rem);
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+}
+
+.landing-operations__copy,
+.landing-operations__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-operations__copy {
+  align-content: center;
+}
+
+.landing-operations-card h3 {
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+}
+
 .landing-readiness {
   align-items: start;
   border: 1px solid transparent;
@@ -347,22 +556,47 @@
 
 @media (prefers-color-scheme: dark) {
   .xr-header,
+  .xr-hero::before,
   .landing-overview,
   .landing-value-card,
   .landing-feature-card,
   .landing-action-panel,
-  .landing-readiness {
+  .landing-readiness,
+  .landing-journey,
+  .landing-journey-card,
+  .landing-operations,
+  .landing-operations-card {
     box-shadow: 0 24px 90px rgba(0, 0, 0, 0.28);
+  }
+
+  .xr-shell::after {
+    opacity: 0.72;
+  }
+}
+
+@media (max-width: 1180px) {
+  .landing-value-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 980px) {
-  .landing-value-grid,
   .landing-feature-grid,
   .landing-stat-grid,
   .landing-action-panel,
-  .landing-readiness {
+  .landing-readiness,
+  .landing-journey__steps,
+  .landing-operations {
     grid-template-columns: 1fr;
+  }
+
+  .landing-overview__intro {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .landing-overview__badges {
+    justify-content: flex-start;
   }
 
   .landing-value-card {
@@ -375,14 +609,24 @@
     align-items: stretch;
   }
 
+  .xr-hero {
+    min-height: 30rem;
+  }
+
   .xr-hero h1 {
     font-size: clamp(2.65rem, 16vw, 4rem);
   }
 
   .landing-overview,
   .landing-action-panel,
-  .landing-readiness {
+  .landing-readiness,
+  .landing-journey,
+  .landing-operations {
     border-radius: var(--xr-radius-lg);
+  }
+
+  .landing-value-grid {
+    grid-template-columns: 1fr;
   }
 
   .landing-action-panel__button {

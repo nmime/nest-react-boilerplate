@@ -145,7 +145,13 @@ export function ProviderIdentitiesPanel({
           tone="warning"
         />
       ) : null}
-      <div className="xr-provider-list">
+      <div className="xr-provider-list" data-design-marker="social-linking-v3">
+        <div className="xr-provider-list__intro">
+          <strong>Connected identity map</strong>
+          <span>
+            Review linked providers, add a recovery path, or unlink safely.
+          </span>
+        </div>
         {socialAuthProviders.map((provider) => {
           const identity = state.providers[provider];
           const providerName = t(getProviderTranslationKey(provider));

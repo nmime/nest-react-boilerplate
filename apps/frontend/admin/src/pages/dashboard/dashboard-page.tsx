@@ -73,6 +73,70 @@ const AccessSummaryCard = ({ access }: Readonly<{ access: AdminAccess }>) => {
   );
 };
 
+const DashboardCommandCenter = ({
+  access,
+  invitedUsers,
+  totalUsers,
+}: Readonly<{
+  access: AdminAccess;
+  invitedUsers?: number;
+  totalUsers?: number;
+}>) => {
+  const protectedRoutes = [
+    access.canReadDashboard,
+    access.canReadUsers,
+    access.canReadRoles,
+    access.canReadAudit,
+    access.canReadProfile,
+    access.canReadRoles,
+  ];
+  const readyRoutes = protectedRoutes.filter(Boolean).length;
+  return (
+    <UiCard className="admin-command-center" title="Operations command center">
+      <div className="admin-command-center__hero">
+        <div>
+          <p className="xr-eyebrow">Design v3 console</p>
+          <strong>
+            Admin workspace tuned for triage, access review, and safe action.
+          </strong>
+          <span>
+            Live widgets degrade to explicit loading, empty, and error states
+            while RBAC keeps restricted routes out of reach.
+          </span>
+        </div>
+        <div
+          className="admin-command-center__score"
+          aria-label="Route readiness"
+        >
+          <span>{readyRoutes}/6</span>
+          <small>routes ready</small>
+        </div>
+      </div>
+      <div className="admin-signal-grid">
+        <div className="admin-signal-card">
+          <span>Directory coverage</span>
+          <strong>{totalUsers ?? "—"}</strong>
+          <small>Total users currently visible to the admin API.</small>
+        </div>
+        <div className="admin-signal-card">
+          <span>Pending invites</span>
+          <strong>{invitedUsers ?? "—"}</strong>
+          <small>
+            Invitation queue is called out before it becomes an access risk.
+          </small>
+        </div>
+        <div className="admin-signal-card">
+          <span>Guardrail</span>
+          <strong>{access.canAccessAdmin ? "closed" : "blocked"}</strong>
+          <small>
+            Every page still renders from explicit frontend permissions.
+          </small>
+        </div>
+      </div>
+    </UiCard>
+  );
+};
+
 const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
   return (
@@ -95,6 +159,7 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
           {t("admin.dashboard.card.rbac.description")}
         </UiCard>
       </div>
+      <DashboardCommandCenter access={access} />
       <AccessSummaryCard access={access} />
       <AdminRouteReadiness access={access} />
     </UiSection>
@@ -251,6 +316,12 @@ const DashboardDataPage = ({
           value={`${summary.data?.recentAuditEvents ?? "—"}`}
           detail={t("admin.dashboard.summary.recentAuditDetail")}
         />
+        <UiStatCard
+          className="admin-stat-card"
+          label="Pending invitations"
+          value={`${summary.data?.invitedUsers ?? "—"}`}
+          detail="Invite queue surfaced in the v3 admin console."
+        />
       </div>
       {summary.isLoading ? (
         <UiLoading label={t("admin.dashboard.loadingSummary")} />
@@ -270,6 +341,11 @@ const DashboardDataPage = ({
         <HealthCard label={t("admin.health.live")} query={live} />
         <HealthCard label={t("admin.health.ready")} query={ready} />
       </div>
+      <DashboardCommandCenter
+        access={access}
+        invitedUsers={summary.data?.invitedUsers}
+        totalUsers={summary.data?.totalUsers}
+      />
       <AccessSummaryCard access={access} />
       <AdminRouteReadiness access={access} />
     </UiSection>

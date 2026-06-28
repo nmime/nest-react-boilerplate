@@ -1,4 +1,4 @@
-import { UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
+import { UiCard, UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
 
 export const NotFoundPage = () => {
   const { t } = useI18n();
@@ -12,6 +12,15 @@ export const NotFoundPage = () => {
         description={t("admin.notFound.description")}
         title={t("admin.notFound.title")}
       />
+      <UiCard className="admin-route-card" title="Route recovery">
+        <div className="admin-readiness-grid">
+          {["/admin", "/admin/users", "/admin/profile"].map((path) => (
+            <a className="admin-route-link" href={path} key={path}>
+              {path}
+            </a>
+          ))}
+        </div>
+      </UiCard>
     </UiSection>
   );
 };

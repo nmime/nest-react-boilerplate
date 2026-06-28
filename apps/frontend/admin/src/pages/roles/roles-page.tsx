@@ -10,6 +10,7 @@ import {
   UiDataTable,
   UiSection,
   UiStatCard,
+  UiStatusTag,
   useI18n,
 } from "@app/frontend/ui";
 import type { RoleRow } from "../../entities/admin-role";
@@ -31,12 +32,41 @@ export const RolesPage = ({
     retry: false,
   });
   const rows = (roles.data?.permissions ?? []) as RoleRow[];
+  const roleCatalog = roles.data?.roles ?? [];
   return (
     <UiSection
       className="admin-page admin-roles-page"
       eyebrow={t("admin.roles.eyebrow")}
       title={t("admin.roles.title")}
     >
+      <UiCard className="admin-command-center" title="Role governance map">
+        <div className="admin-command-center__hero">
+          <div>
+            <p className="xr-eyebrow">Access model v3</p>
+            <strong>
+              Matrix-first role review with read-only assignments.
+            </strong>
+            <span>
+              Administrators can compare roles, permissions, resources, and
+              actions without enabling accidental edits.
+            </span>
+          </div>
+          <UiStatusTag
+            label={roles.isLoading ? t("admin.state.loading") : "RBAC catalog"}
+            tone={roles.error ? "warning" : "info"}
+          />
+        </div>
+        <div
+          className="admin-chip-row"
+          aria-label={t("admin.users.filter.role")}
+        >
+          {(roleCatalog.length ? roleCatalog : []).map((role) => (
+            <span className="admin-chip admin-chip--strong" key={role.role}>
+              {role.label}
+            </span>
+          ))}
+        </div>
+      </UiCard>
       <div className="admin-stat-grid xr-stat-grid">
         <UiStatCard
           className="admin-stat-card"
@@ -80,7 +110,7 @@ export const RolesPage = ({
               header: t("admin.roles.column.action"),
               render: (row) => row.action,
             },
-            ...(roles.data?.roles ?? []).map((role) => ({
+            ...roleCatalog.map((role) => ({
               id: role.role,
               header: role.label,
               align: "center" as const,

@@ -90,6 +90,23 @@ export function TmaAuthPanel({
           tone={getTmaStatusTone(status)}
         />
       </div>
+      <div
+        className="xr-tma-stage-grid"
+        aria-label="Telegram verification stages"
+      >
+        <span data-active={deepNavigationState !== "none"}>
+          <strong>1</strong>
+          <small>Deep link</small>
+        </span>
+        <span data-active={isTelegram}>
+          <strong>2</strong>
+          <small>Telegram context</small>
+        </span>
+        <span data-active={isVerifying || status === "success"}>
+          <strong>3</strong>
+          <small>Session exchange</small>
+        </span>
+      </div>
       {!isTelegram ? (
         <UiToast message={t("tma.unsupported")} tone="warning" />
       ) : null}

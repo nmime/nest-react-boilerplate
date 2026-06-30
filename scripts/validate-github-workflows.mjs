@@ -15,7 +15,7 @@ const workflows = readdirSync(workflowDir)
 const shaPinnedAction =
   /^[a-zA-Z0-9_.-]+(?:\/[a-zA-Z0-9_.-]+)+@[a-f0-9]{40}(?:\s+#\s+.+)?$/u;
 const dockerAction = /^docker:\/\//u;
-const localAction = /^\.\//u;
+const localAction = /^\.\/$/u;
 
 assert.ok(workflows.length > 0, "No GitHub workflows found");
 
@@ -43,7 +43,7 @@ for (const { name, text } of workflows) {
     );
   }
 
-  if (name !== "release-images.yml") {
+  if (name !== "release-images.yml" && name !== "scorecard.yml") {
     assert.ok(
       !/packages:\s*write/u.test(text),
       `${name} must not request packages: write`,

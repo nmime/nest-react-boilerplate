@@ -18,13 +18,28 @@ Kubernetes Secret values, or PM2 runtime secrets.
 
 All Nest APIs expose:
 
-- `GET /live` and `GET /health` for process liveness;
-- `GET /ready` for dependency readiness. Services with MikroORM registered check
-  `select 1` against PostgreSQL and return HTTP 503 when unavailable.
+- `GET /live` for process liveness;
+- `GET /health` for general health with indicator details;
+- `GET /ready` for dependency readiness — returns HTTP 503 when required
+  dependencies are unavailable;
+- `GET /health/private` (private-network only) for unsanitized indicator details.
 
 Request logs are JSON lines with app name, method, path, status, duration, and
 request id. Use `LOG_LEVEL=debug` locally, `info` in production, and route logs
 to the platform collector.
+
+### Operations runbooks
+
+- [Health, readiness, and liveness](operations/health-checks.md) — endpoints,
+  response shapes, status resolution, and /ready 503 triage.
+- [Dependency readiness failure triage](operations/dependency-triage.md) —
+  Postgres/Redis/NATS connection failure procedures.
+- [Structured logging and request-id](operations/logging.md) — log format,
+  levels, request-id correlation, sensitive-data redaction.
+- [OpenTelemetry configuration](operations/otel.md) — env var reference,
+  activation behavior, exported signals, Prometheus/Sentry status.
+- [Test reliability](testing/test-reliability.md) — deterministic time,
+  seed factories, flaky-test quarantining, CI commands.
 
 ## Database lifecycle
 

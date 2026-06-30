@@ -17,6 +17,10 @@ pnpm run test
 
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
 
+## Reliability
+
+For deterministic testing practices (fake timers, seed factories, quarantining), see [test reliability runbook](testing/test-reliability.md).
+
 ## Design-system and frontend tooling
 
 - `pnpm run storybook` serves the shared design-system Storybook from `libs/frontend/ui/lib/.storybook`.

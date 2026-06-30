@@ -5,12 +5,12 @@ See [architecture docs](architecture.md) for module boundaries and [API conventi
 
 ## Endpoints
 
-| Endpoint                | Method | Auth          | Purpose                                              |
-| ----------------------- | ------ | ------------- | ---------------------------------------------------- |
-| `GET /live`             | GET    | None          | Process liveness — always returns 200 if the process is running. |
-| `GET /health`           | GET    | None          | General health with indicator details (safe subset). |
-| `GET /ready`            | GET    | None          | Dependency readiness — returns 503 when required dependencies are down. |
-| `GET /health/private`   | GET    | Private IP    | Full health details including unsanitized indicator details; guarded by private-network IP allow-list. |
+| Endpoint              | Method | Auth       | Purpose                                                                                                |
+| --------------------- | ------ | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /live`           | GET    | None       | Process liveness — always returns 200 if the process is running.                                       |
+| `GET /health`         | GET    | None       | General health with indicator details (safe subset).                                                   |
+| `GET /ready`          | GET    | None       | Dependency readiness — returns 503 when required dependencies are down.                                |
+| `GET /health/private` | GET    | Private IP | Full health details including unsanitized indicator details; guarded by private-network IP allow-list. |
 
 ## Expected response shapes
 
@@ -43,11 +43,11 @@ See [architecture docs](architecture.md) for module boundaries and [API conventi
 
 ## Status resolution
 
-| Condition                                          | Status     | HTTP |
-| -------------------------------------------------- | ---------- | ---- |
-| All checks `ok`                                    | `ok`       | 200  |
-| Any check `degraded`, or optional check `error`    | `degraded` | 200  |
-| Required check `error`                             | `error`    | 200 (`/health`) or 503 (`/ready`) |
+| Condition                                       | Status     | HTTP                              |
+| ----------------------------------------------- | ---------- | --------------------------------- |
+| All checks `ok`                                 | `ok`       | 200                               |
+| Any check `degraded`, or optional check `error` | `degraded` | 200                               |
+| Required check `error`                          | `error`    | 200 (`/health`) or 503 (`/ready`) |
 
 Sensitive detail keys (e.g. `password`, `token`, `secret`, `private_key`) are always redacted to `[redacted]` in public endpoints.
 

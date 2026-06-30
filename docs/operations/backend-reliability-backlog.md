@@ -17,21 +17,21 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ## Verification Summary
 
-| Gap | Verified Against | Evidence |
-|-----|-----------------|----------|
-| No `/metrics` endpoint | `search_code: prometheus metrics` returns only Helm OTLP collector references | No application-level metrics endpoint found; OTel exports metrics only to collector sidecar |
-| No business/custom metrics | `search_code: opentelemetry` shows auto-instrumentation only | `libs/backend/common/otel/lib/src/otel.ts` uses `getNodeAutoInstrumentations`; no custom counters/histograms |
-| No circuit breaker | `search_code: circuit breaker` returns 0 results | No `opossum`, `@nestjs/circuit-breaker`, or equivalent pattern |
-| No idempotency middleware/store | `search_code: idempotency` returns only doc references (notifications.md, test checklist template) | No middleware, interceptor, or Redis-backed idempotency store implementation |
-| Outbox entity exists but no consumer | `search_code: outbox` finds entity, migration, spec under auth lib | `TransactionalOutboxEventEntity` with schema and tests exist, but no polling consumer or publisher service found |
-| No tini/seccomp/read-only hardening | `search_code: tini seccomp read-only` returns 0 results; `Dockerfile` exists at root | `Dockerfile` uses `node:26.1.0-alpine` base; no `tini`, `USER nonroot`, `--read-only`, or seccomp profile |
-| Limited e2e for edge cases | `search_code: e2e integration test` shows existing test:e2e targets | `health.e2e-spec.ts` covers basic health and problem-details; no e2e for rate-limit, exception filter, or shutdown |
+| Gap                                  | Verified Against                                                                                   | Evidence                                                                                                           |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| No `/metrics` endpoint               | `search_code: prometheus metrics` returns only Helm OTLP collector references                      | No application-level metrics endpoint found; OTel exports metrics only to collector sidecar                        |
+| No business/custom metrics           | `search_code: opentelemetry` shows auto-instrumentation only                                       | `libs/backend/common/otel/lib/src/otel.ts` uses `getNodeAutoInstrumentations`; no custom counters/histograms       |
+| No circuit breaker                   | `search_code: circuit breaker` returns 0 results                                                   | No `opossum`, `@nestjs/circuit-breaker`, or equivalent pattern                                                     |
+| No idempotency middleware/store      | `search_code: idempotency` returns only doc references (notifications.md, test checklist template) | No middleware, interceptor, or Redis-backed idempotency store implementation                                       |
+| Outbox entity exists but no consumer | `search_code: outbox` finds entity, migration, spec under auth lib                                 | `TransactionalOutboxEventEntity` with schema and tests exist, but no polling consumer or publisher service found   |
+| No tini/seccomp/read-only hardening  | `search_code: tini seccomp read-only` returns 0 results; `Dockerfile` exists at root               | `Dockerfile` uses `node:26.1.0-alpine` base; no `tini`, `USER nonroot`, `--read-only`, or seccomp profile          |
+| Limited e2e for edge cases           | `search_code: e2e integration test` shows existing test:e2e targets                                | `health.e2e-spec.ts` covers basic health and problem-details; no e2e for rate-limit, exception filter, or shutdown |
 
 ---
 
 ## Phase 1 — Observability & Metrics (Week 1–2)
 
-**Risk:** Low  **Cost:** 3–5 days  **Depends on:** Nothing
+**Risk:** Low **Cost:** 3–5 days **Depends on:** Nothing
 
 ### 1.1 Application-level Prometheus `/metrics` endpoint
 
@@ -89,7 +89,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ## Phase 2 — Fault Isolation & Resilience (Week 3–4)
 
-**Risk:** Medium  **Cost:** 5–7 days  **Depends on:** Phase 1 (observability needed for validation)
+**Risk:** Medium **Cost:** 5–7 days **Depends on:** Phase 1 (observability needed for validation)
 
 ### 2.1 Circuit Breaker Abstraction
 
@@ -148,7 +148,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ## Phase 3 — Eventual Consistency (Week 5–6)
 
-**Risk:** Medium  **Cost:** 5–8 days  **Depends on:** Phase 2 (circuit breaker for robustness)
+**Risk:** Medium **Cost:** 5–8 days **Depends on:** Phase 2 (circuit breaker for robustness)
 
 ### 3.1 Outbox Consumer & Publisher
 
@@ -180,7 +180,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ## Phase 4 — E2E Coverage Expansion (Week 7–8)
 
-**Risk:** Low  **Cost:** 4–6 days  **Depends on:** Phases 1–3 (test the new capabilities)
+**Risk:** Low **Cost:** 4–6 days **Depends on:** Phases 1–3 (test the new capabilities)
 
 ### 4.1 Exception Filter E2E
 
@@ -248,7 +248,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ## Phase 5 — Container Hardening (Week 9–10)
 
-**Risk:** Low  **Cost:** 2–3 days  **Depends on:** Nothing (independent)
+**Risk:** Low **Cost:** 2–3 days **Depends on:** Nothing (independent)
 
 ### 5.1 Docker Hardening
 
@@ -286,33 +286,33 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 Items that should be deferred until after a dependency update campaign (`integration/deps-latest-npm` branch exists):
 
-| Item | Reason |
-|------|--------|
-| Phase 1.1 (`prom-client` or Prometheus exporter) | May conflict with newer OpenTelemetry packages; update campaign first |
-| Phase 2.1 (`opossum` or `@nestjs/circuit-breaker`) | Check compatibility with latest NestJS version from update campaign |
-| Phase 4.2 (`@nestjs/throttler`) | May require NestJS 11+; verify after update campaign |
+| Item                                               | Reason                                                                |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| Phase 1.1 (`prom-client` or Prometheus exporter)   | May conflict with newer OpenTelemetry packages; update campaign first |
+| Phase 2.1 (`opossum` or `@nestjs/circuit-breaker`) | Check compatibility with latest NestJS version from update campaign   |
+| Phase 4.2 (`@nestjs/throttler`)                    | May require NestJS 11+; verify after update campaign                  |
 
 Items safe to implement now:
 
-| Item | Reason |
-|------|--------|
-| Phase 1.2 (custom metrics) | Uses existing `@opentelemetry/api` already in the repo |
-| Phase 3.1 (outbox consumer) | Uses existing NATS and DB libs |
-| Phase 4.1 (exception filter e2e) | Tests existing behavior |
-| Phase 4.3 (shutdown e2e) | Tests existing behavior |
-| Phase 5.1 (container hardening) | No npm dependencies; Docker/Compose only |
+| Item                             | Reason                                                 |
+| -------------------------------- | ------------------------------------------------------ |
+| Phase 1.2 (custom metrics)       | Uses existing `@opentelemetry/api` already in the repo |
+| Phase 3.1 (outbox consumer)      | Uses existing NATS and DB libs                         |
+| Phase 4.1 (exception filter e2e) | Tests existing behavior                                |
+| Phase 4.3 (shutdown e2e)         | Tests existing behavior                                |
+| Phase 5.1 (container hardening)  | No npm dependencies; Docker/Compose only               |
 
 ---
 
 ## Risk Matrix
 
-| Phase | Risk | Blast Radius | Rollback |
-|-------|------|-------------|----------|
-| 1 — Observability | Low | None (additive) | Remove `/metrics` route |
-| 2 — Fault Isolation | Medium | Middleware affects all requests | Disable via feature flag |
-| 3 — Outbox | Medium | DB writes, NATS topics | Disable consumer; events remain `pending` |
-| 4 — E2E | Low | No runtime impact | Delete test files |
-| 5 — Container | Low | Deployment config only | Revert Dockerfile/Compose |
+| Phase               | Risk   | Blast Radius                    | Rollback                                  |
+| ------------------- | ------ | ------------------------------- | ----------------------------------------- |
+| 1 — Observability   | Low    | None (additive)                 | Remove `/metrics` route                   |
+| 2 — Fault Isolation | Medium | Middleware affects all requests | Disable via feature flag                  |
+| 3 — Outbox          | Medium | DB writes, NATS topics          | Disable consumer; events remain `pending` |
+| 4 — E2E             | Low    | No runtime impact               | Delete test files                         |
+| 5 — Container       | Low    | Deployment config only          | Revert Dockerfile/Compose                 |
 
 ---
 

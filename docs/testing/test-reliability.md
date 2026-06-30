@@ -9,7 +9,7 @@ Tests that depend on the current time must use a controlled clock:
 
 ```ts
 // Use `useFakeTimers` in Jest/Mocha
-jest.useFakeTimers().setSystemTime(new Date('2025-01-01T00:00:00Z'));
+jest.useFakeTimers().setSystemTime(new Date("2025-01-01T00:00:00Z"));
 // ... assertions ...
 jest.useRealTimers();
 ```
@@ -17,7 +17,7 @@ jest.useRealTimers();
 Or inject a time provider:
 
 ```ts
-const timeProvider = () => new Date('2025-01-01T00:00:00Z');
+const timeProvider = () => new Date("2025-01-01T00:00:00Z");
 // Pass timeProvider to services that read Date.now()
 ```
 
@@ -39,8 +39,8 @@ Tests tagged `@quarantine` are excluded from normal CI runs:
 
 ```ts
 // playwright test
-test.describe('@quarantine flaky feature', () => {
-  test('flaky scenario', async ({ page }) => {
+test.describe("@quarantine flaky feature", () => {
+  test("flaky scenario", async ({ page }) => {
     // ...
   });
 });
@@ -57,19 +57,19 @@ Track quarantined tests in the issue tracker with the `flaky-test` label.
 
 ## CI commands
 
-| Command                              | Purpose                                |
-|--------------------------------------|----------------------------------------|
-| `pnpm run check`                     | Full local deterministic gate (format, lint, typecheck, contracts, property, unit) |
-| `pnpm run check:fast`                | Fast PR gate (format, lint, typecheck, unit) |
-| `pnpm run test`                      | Unit tests (Jest)                      |
-| `pnpm run test:property`             | Property-based tests                   |
-| `pnpm run test:coverage`             | Unit tests with coverage report        |
-| `pnpm run test:component`            | Component-level tests                  |
-| `pnpm run test:e2e`                  | Playwright end-to-end (Chromium)       |
-| `pnpm run test:e2e:matrix`           | Cross-browser e2e matrix               |
-| `pnpm run test:docker-smoke`         | Docker stack smoke tests               |
-| `pnpm run test:fullstack`            | Fullstack Playwright e2e               |
-| `pnpm run test:world-class`          | Runtime QA/ops gates (requires runtime) |
+| Command                      | Purpose                                                                            |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm run check`             | Full local deterministic gate (format, lint, typecheck, contracts, property, unit) |
+| `pnpm run check:fast`        | Fast PR gate (format, lint, typecheck, unit)                                       |
+| `pnpm run test`              | Unit tests (Jest)                                                                  |
+| `pnpm run test:property`     | Property-based tests                                                               |
+| `pnpm run test:coverage`     | Unit tests with coverage report                                                    |
+| `pnpm run test:component`    | Component-level tests                                                              |
+| `pnpm run test:e2e`          | Playwright end-to-end (Chromium)                                                   |
+| `pnpm run test:e2e:matrix`   | Cross-browser e2e matrix                                                           |
+| `pnpm run test:docker-smoke` | Docker stack smoke tests                                                           |
+| `pnpm run test:fullstack`    | Fullstack Playwright e2e                                                           |
+| `pnpm run test:world-class`  | Runtime QA/ops gates (requires runtime)                                            |
 
 ## Investigating CI test failures
 

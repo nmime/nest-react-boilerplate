@@ -5,9 +5,9 @@ See [production hardening](production-hardening.md) for security-related logging
 
 ## Log format
 
-| Environment | Format       | Controlled by                          |
-|-------------|--------------|----------------------------------------|
-| Development | Pretty-print | `NODE_ENV=development`                 |
+| Environment | Format       | Controlled by                                |
+| ----------- | ------------ | -------------------------------------------- |
+| Development | Pretty-print | `NODE_ENV=development`                       |
 | Production  | JSON lines   | `NODE_ENV=production` (or `LOG_FORMAT=json`) |
 
 Override format explicitly with `LOG_FORMAT` or `LOGGER_FORMAT` (`json` or `pretty`).
@@ -15,16 +15,19 @@ Override format explicitly with `LOG_FORMAT` or `LOGGER_FORMAT` (`json` or `pret
 ## Log level
 
 Set via `LOG_LEVEL`: `debug`, `info`, `warn`, `error`, `fatal`.
+
 - **Local development:** `LOG_LEVEL=debug`
 - **Production:** `LOG_LEVEL=info` (recommended minimum)
 
 ## Request ID correlation
 
 Every HTTP request receives or preserves an `x-request-id` header:
+
 - If the client sends `x-request-id`, the value is preserved.
 - If not, a random UUID v4 is generated and returned in the response `x-request-id` header.
 
 Each completion log line includes the `requestId` field for end-to-end correlation across:
+
 - Request start/completion logs (method, path, status, duration)
 - Application logs tied to the request context
 - OpenTelemetry trace IDs (when OTel is enabled)
@@ -50,6 +53,7 @@ Completion logs include (in JSON mode):
 ## Sensitive data redaction
 
 The logger automatically redacts:
+
 - Values for protected keys: `authorization`, `cookie`, `credential`, `passwd`, `password`, `private-key`, `secret`, `token`
 - Bearer token patterns in headers
 - API keys in query strings for protected field names

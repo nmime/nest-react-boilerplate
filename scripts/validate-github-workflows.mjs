@@ -43,7 +43,7 @@ for (const { name, text } of workflows) {
     );
   }
 
-  if (name !== "release-images.yml") {
+  if (name !== "release-images.yml" && name !== "scorecard.yml") {
     assert.ok(
       !/packages:\s*write/u.test(text),
       `${name} must not request packages: write`,

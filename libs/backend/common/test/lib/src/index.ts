@@ -3,6 +3,13 @@ import { vi } from "vitest";
 
 export * from "./test.module";
 
+export {
+  installFixedSystemTime,
+  uninstallFixedSystemTime,
+  advanceFixedSystemTime,
+  withFixedSystemTime,
+} from "./deterministic-clock";
+
 export function createTestingLogger(): LoggerService {
   return {
     log: vi.fn(),

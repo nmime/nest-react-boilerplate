@@ -15,7 +15,7 @@ const workflows = readdirSync(workflowDir)
 const shaPinnedAction =
   /^[a-zA-Z0-9_.-]+(?:\/[a-zA-Z0-9_.-]+)+@[a-f0-9]{40}(?:\s+#\s+.+)?$/u;
 const dockerAction = /^docker:\/\//u;
-const localAction = /^\.\/u;
+const localAction = /^\.\//u;
 
 assert.ok(workflows.length > 0, "No GitHub workflows found");
 

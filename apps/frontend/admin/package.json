@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@nx/react": "23.0.1",
-    "@nx/vite": "22.7.5",
+    "@nx/vite": "23.0.1",
     "@vitejs/plugin-react": "6.0.3",
     "vite": "8.1.0"
   },

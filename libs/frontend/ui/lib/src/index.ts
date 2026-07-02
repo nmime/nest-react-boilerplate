@@ -23,6 +23,7 @@ export * from "./lib/i18n/locale";
 export * from "./lib/i18n/i18n-provider";
 export * from "./lib/i18n/domain-namespace";
 
+export * from "./lib/query/mobx-query";
 export * from "./lib/query/query-provider";
 
 export * from "./lib/state";

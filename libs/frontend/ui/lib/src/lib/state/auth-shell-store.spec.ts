@@ -73,6 +73,16 @@ describe("frontend auth and locale state", () => {
 
     store.clearBearerToken();
     expect(store.bearerToken).toBeNull();
+
+    store.setSession(" access-token ", " refresh-token ");
+    expect(store.bearerToken).toBe("access-token");
+    expect(store.refreshToken).toBe("refresh-token");
+    expect(store.isAuthenticated).toBe(true);
+
+    store.clearSession();
+    expect(store.bearerToken).toBeNull();
+    expect(store.refreshToken).toBeNull();
+    expect(store.isAuthenticated).toBe(false);
   });
 
   it("persists locale changes and applies document language", () => {

@@ -54,7 +54,7 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
   ) => {
     const session = getSessionFromExternalAuthResult(result);
     if (session?.accessToken) {
-      authStore.setBearerToken(session.accessToken);
+      authStore.setSession(session.accessToken, session.refreshToken);
       void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
       void queryClient.invalidateQueries({
         queryKey: providerIdentitiesQueryKey(),

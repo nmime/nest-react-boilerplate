@@ -1,0 +1,1523 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json",
+    "app": "auth-app-api"
+  },
+  "rules": [
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Authorization Request failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth discord Callback failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Email Verification failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth create Link Token failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth locales failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth login failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth logout failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth me failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Locale failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth update Preferences failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth request Password Reset failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth provider Identities failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth unlink Provider Identity failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth refresh failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth register failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Bot Link failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Tma failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/web-login:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/telegram/web-login",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Web Login failed: Internal server error."
+      }
+    }
+  ]
+}

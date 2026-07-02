@@ -96,8 +96,43 @@ export function generateToastConfigs({ workspaceRoot = process.cwd(), contracts,
     const configPath = toastConfigPath(workspaceRoot, contract, outputRoot);
     if (write) writeJson(configPath, config);
     generated.push({ path: relative(workspaceRoot, configPath).replaceAll("\\", "/"), config });
+
+    const frontendConfig = buildFrontendToastConfig(contract, rules);
+    const frontendPath = frontendToastRulesPath(workspaceRoot, contract);
+    if (write) writeJson(frontendPath, frontendConfig);
+    generated.push({ path: relative(workspaceRoot, frontendPath).replaceAll("\\", "/"), config: frontendConfig });
   }
   return generated;
+}
+
+export function buildFrontendToastConfig(contract, rules) {
+  return {
+    $schema: "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
+    version: 1,
+    generatedBy: "@repo/tooling api toast-config generate",
+    source: {
+      openapi: contract.relativePath,
+      app: contract.app,
+    },
+    rules: rules.filter((rule) => rule.enabled).map((rule) => ({
+      display: rule.display.mode,
+      id: rule.id,
+      match: {
+        ...(rule.errorCode ? { code: rule.errorCode } : {}),
+        endpoint: rule.endpoint.path,
+        method: rule.endpoint.method,
+        ...(typeof rule.status === "number" ? { status: rule.status } : {}),
+      },
+      toast: {
+        category: rule.display.category,
+        title: rule.display.text.default,
+      },
+    })),
+  };
+}
+
+function frontendToastRulesPath(workspaceRoot, contract) {
+  return join(workspaceRoot, "libs/frontend/api-client/lib/src/generated/toast", `${contract.app}.toast-rules.frontend.generated.json`);
 }
 
 export function checkToastConfigs({ workspaceRoot = process.cwd(), contracts, outputRoot = "apps/backend" }) {
@@ -146,6 +181,23 @@ export function checkToastConfigs({ workspaceRoot = process.cwd(), contracts, ou
       const key = ruleKey(expectedRule);
       if (!seen.has(key)) errors.push(`${relativeConfigPath}: missing endpoint/status/error-code rule ${key}`);
     }
+
+    const frontendPath = frontendToastRulesPath(workspaceRoot, contract);
+    const relativeFrontendPath = relative(workspaceRoot, frontendPath).replaceAll("\\", "/");
+    if (!existsSync(frontendPath)) {
+      errors.push(`${relativeFrontendPath}: missing frontend toast rules; run pnpm run api:toast-config:generate`);
+      continue;
+    }
+
+    const expectedFrontend = formatJson(buildFrontendToastConfig(contract, expected));
+    let actualFrontend;
+    try {
+      actualFrontend = formatJson(readJson(frontendPath));
+    } catch (error) {
+      errors.push(`${relativeFrontendPath}: invalid JSON: ${error.message}`);
+      continue;
+    }
+    if (actualFrontend !== expectedFrontend) errors.push(`${relativeFrontendPath}: stale frontend toast rules; run pnpm run api:toast-config:generate`);
   }
 
   return { errors, contracts: contracts.length, rules: ruleCount };

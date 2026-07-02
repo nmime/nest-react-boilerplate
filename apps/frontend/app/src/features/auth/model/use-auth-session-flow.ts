@@ -95,7 +95,7 @@ export function useAuthSessionFlow({
         locale,
       ),
     onSuccess: (body) => {
-      authStore.setBearerToken(body?.accessToken);
+      authStore.setSession(body?.accessToken, body?.refreshToken);
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);
       if (nextLocale) {

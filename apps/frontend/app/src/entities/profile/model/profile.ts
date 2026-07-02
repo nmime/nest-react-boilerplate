@@ -26,6 +26,7 @@ export interface AuthMePayload {
 
 export interface AuthSessionPayload extends AuthMePayload {
   accessToken?: string;
+  refreshToken?: string;
 }
 
 export type AuthPreferencesPayload = AuthMePayload;

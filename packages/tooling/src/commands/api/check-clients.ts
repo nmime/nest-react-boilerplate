@@ -19,6 +19,8 @@ function listFiles(root) {
   const visit = (dir) => {
     for (const name of readdirSync(dir)) {
       if (name === ".prettier-cache") continue;
+      // Frontend toast rules are generated and verified by `api toast-config`.
+      if (name === "toast" && dir === root) continue;
       const path = join(dir, name);
       if (statSync(path).isDirectory()) visit(path);
       else files.push(path);

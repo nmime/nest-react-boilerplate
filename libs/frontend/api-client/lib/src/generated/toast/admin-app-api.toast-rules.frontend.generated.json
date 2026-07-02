@@ -1,0 +1,669 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/admin-app-api/contracts/openapi/admin-app-api.json",
+    "app": "admin-app-api"
+  },
+  "rules": [
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Audit failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users dashboard Summary failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Profile me failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Profile me failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Profile me failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Profile me failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Profile me failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users roles failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users list Users failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users get User failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Access Policy failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Users update User Status failed: Internal server error."
+      }
+    }
+  ]
+}

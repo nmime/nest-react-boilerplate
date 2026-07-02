@@ -1,9 +1,17 @@
 import { useEffect, useMemo, type ReactNode } from "react";
 import { observer } from "mobx-react-lite";
-import { ApiClientProvider } from "@app/frontend/api-client";
+import {
+  ApiClientProvider,
+  authApi,
+  authApiToastRules,
+  throwOnOpenApiErrorData,
+  userApiToastRules,
+} from "@app/frontend/api-client";
 import {
   configureApiLocale,
   createApiRuntimeFetch,
+  createAuthRefreshFetch,
+  defaultApiToastRules,
   useApiRuntimeOverlayModel,
 } from "@app/frontend/api-support";
 import {
@@ -38,8 +46,38 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
 }: Readonly<{ children: ReactNode }>) {
   const authStore = useAuthShellStore();
   const runtimeFetch = useMemo(
-    () => createApiRuntimeFetch({ redirectTo: "/auth" }),
-    [],
+    () =>
+      createApiRuntimeFetch({
+        baseFetch: createAuthRefreshFetch({
+          clearAuth: () => authStore.clearSession(),
+          refreshAccessToken: async () => {
+            const refreshToken = authStore.refreshToken;
+            if (!refreshToken) {
+              return null;
+            }
+
+            const session = await throwOnOpenApiErrorData(
+              authApi.authControllerRefresh(
+                { refreshToken },
+                { baseUrl: getAuthApiBaseUrl() },
+              ),
+            );
+            authStore.setSession(
+              session.accessToken,
+              session.refreshToken ?? refreshToken,
+            );
+
+            return session.accessToken;
+          },
+        }),
+        redirectTo: "/auth",
+        toastRules: [
+          ...authApiToastRules,
+          ...userApiToastRules,
+          ...defaultApiToastRules,
+        ],
+      }),
+    [authStore],
   );
 
   return (

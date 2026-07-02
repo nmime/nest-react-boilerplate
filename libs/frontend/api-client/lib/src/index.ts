@@ -5,6 +5,11 @@ export * as generatedAdminApi from "./generated/admin";
 export * as generatedAuthApi from "./generated/auth";
 export * as generatedUserApi from "./generated/user";
 export {
+  adminApiToastRules,
+  authApiToastRules,
+  userApiToastRules,
+} from "./lib/toast-rules";
+export {
   ApiClientError,
   isApiClientError,
   throwOnOpenApiError,

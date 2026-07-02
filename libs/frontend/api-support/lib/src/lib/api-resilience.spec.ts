@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createAuthRefreshMiddleware } from "./auth-middleware";
+import {
+  createAuthRefreshFetch,
+  createAuthRefreshMiddleware,
+} from "./auth-middleware";
 import { FRONTEND_ERROR_KEY } from "./error-normalization";
 import { createApiResilienceMiddleware } from "./resilience-middleware";
 import { createApiRuntimeFetch } from "./runtime-fetch";
@@ -316,5 +319,89 @@ describe("auth refresh middleware", () => {
       authRequired: true,
       redirectTo: "/sign-in",
     });
+  });
+
+  it("single-flights refresh across parallel 401 responses in the fetch wrapper", async () => {
+    const refreshAccessToken = vi
+      .fn<() => Promise<string>>()
+      .mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve("fresh"), 1)),
+      );
+    const clearAuth = vi.fn<() => void>();
+    const baseFetch = vi.fn<typeof fetch>().mockImplementation((input) => {
+      const request = input as Request;
+      return Promise.resolve(
+        request.headers.get("Authorization") === "Bearer fresh"
+          ? new Response(JSON.stringify({ data: true }), { status: 200 })
+          : new Response(null, { status: 401 }),
+      );
+    });
+
+    const refreshFetch = createAuthRefreshFetch({
+      baseFetch,
+      clearAuth,
+      refreshAccessToken,
+    });
+
+    const responses = await Promise.all([
+      refreshFetch(
+        new Request("https://api.example.test/a", {
+          headers: { Authorization: "Bearer expired" },
+        }),
+      ),
+      refreshFetch(
+        new Request("https://api.example.test/b", {
+          headers: { Authorization: "Bearer expired" },
+        }),
+      ),
+    ]);
+
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(clearAuth).not.toHaveBeenCalled();
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    expect(baseFetch).toHaveBeenCalledTimes(4);
+  });
+
+  it("clears auth and returns the original 401 when the fetch wrapper cannot refresh", async () => {
+    const clearAuth = vi.fn<() => void>();
+    const baseFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 401 }));
+
+    const refreshFetch = createAuthRefreshFetch({
+      baseFetch,
+      clearAuth,
+      refreshAccessToken: () => Promise.resolve(null),
+    });
+
+    const response = await refreshFetch(
+      new Request("https://api.example.test/profile", {
+        headers: { Authorization: "Bearer expired" },
+      }),
+    );
+
+    expect(clearAuth).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(401);
+    expect(baseFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not attempt refresh for unauthenticated 401 responses", async () => {
+    const refreshAccessToken = vi.fn<() => Promise<string>>();
+    const baseFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 401 }));
+
+    const refreshFetch = createAuthRefreshFetch({
+      baseFetch,
+      clearAuth: vi.fn<() => void>(),
+      refreshAccessToken,
+    });
+
+    const response = await refreshFetch("https://api.example.test/login", {
+      method: "POST",
+    });
+
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+    expect(response.status).toBe(401);
   });
 });

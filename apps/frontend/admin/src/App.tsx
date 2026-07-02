@@ -9,12 +9,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   configureApiLocale,
   createApiRuntimeFetch,
+  defaultApiToastRules,
   useApiRuntimeOverlayModel,
 } from "@app/frontend/api-support";
 import {
   ApiClientProvider,
   adminApi,
+  adminApiToastRules,
   authApi,
+  authApiToastRules,
   throwOnOpenApiErrorData,
   useAdminApiClient,
   useAuthApiClient,
@@ -384,7 +387,15 @@ const AdminApiClientProvider = ({
   bearerToken,
 }: Readonly<{ children: ReactElement; bearerToken: string | null }>) => {
   const runtimeFetch = useMemo(
-    () => createApiRuntimeFetch({ redirectTo: "/admin" }),
+    () =>
+      createApiRuntimeFetch({
+        redirectTo: "/admin",
+        toastRules: [
+          ...adminApiToastRules,
+          ...authApiToastRules,
+          ...defaultApiToastRules,
+        ],
+      }),
     [],
   );
 

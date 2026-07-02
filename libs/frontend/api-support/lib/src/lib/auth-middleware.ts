@@ -38,18 +38,12 @@ const toAccessToken = (
   return result?.accessToken.trim() || null;
 };
 
-export const createAuthRefreshMiddleware = ({
-  clearAuth,
-  eventHub = apiRuntimeEvents,
-  fetchImpl = globalThis.fetch,
-  getAccessToken,
-  redirectTo = "/login",
-  refreshAccessToken,
-  shouldHandle401 = () => true,
-}: ApiAuthMiddlewareOptions): Middleware => {
+const createSingleFlightRefresh = (
+  refreshAccessToken: ApiAuthMiddlewareOptions["refreshAccessToken"],
+): (() => Promise<string | null>) => {
   let refreshPromise: Promise<string | null> | null = null;
 
-  const refreshOnce = (): Promise<string | null> => {
+  return () => {
     if (!refreshPromise) {
       refreshPromise = Promise.resolve()
         .then(refreshAccessToken)
@@ -62,6 +56,18 @@ export const createAuthRefreshMiddleware = ({
 
     return refreshPromise;
   };
+};
+
+export const createAuthRefreshMiddleware = ({
+  clearAuth,
+  eventHub = apiRuntimeEvents,
+  fetchImpl = globalThis.fetch,
+  getAccessToken,
+  redirectTo = "/login",
+  refreshAccessToken,
+  shouldHandle401 = () => true,
+}: ApiAuthMiddlewareOptions): Middleware => {
+  const refreshOnce = createSingleFlightRefresh(refreshAccessToken);
 
   const clearAndEmit = async (
     request: Request,
@@ -125,5 +131,57 @@ export const createAuthRefreshMiddleware = ({
 
       return retryResponse;
     },
+  };
+};
+
+export interface AuthRefreshFetchOptions {
+  baseFetch?: typeof fetch;
+  clearAuth: () => Promise<void> | void;
+  refreshAccessToken: ApiAuthMiddlewareOptions["refreshAccessToken"];
+  shouldHandle401?: (request: Request) => boolean;
+}
+
+const hasAuthorizationHeader = (request: Request): boolean =>
+  Boolean(request.headers.get("Authorization")?.trim());
+
+/**
+ * Fetch wrapper variant of the auth-refresh middleware for clients that
+ * inject `fetchImpl` instead of registering openapi-fetch middleware. It
+ * performs the same single-flight refresh + one retry on 401, but leaves
+ * `auth-required` event emission to a downstream runtime fetch so the
+ * failure surfaces exactly once.
+ */
+export const createAuthRefreshFetch = ({
+  baseFetch = globalThis.fetch.bind(globalThis),
+  clearAuth,
+  refreshAccessToken,
+  shouldHandle401 = hasAuthorizationHeader,
+}: AuthRefreshFetchOptions): typeof fetch => {
+  const refreshOnce = createSingleFlightRefresh(refreshAccessToken);
+
+  return async (input, init) => {
+    const request = new Request(input, init);
+    const retryable = request.clone();
+    const response = await baseFetch(request);
+
+    if (response.status !== 401 || !shouldHandle401(retryable)) {
+      return response;
+    }
+
+    const token = await refreshOnce();
+
+    if (!token) {
+      await clearAuth();
+      return response;
+    }
+
+    retryable.headers.set("Authorization", `Bearer ${token}`);
+    const retryResponse = await baseFetch(retryable);
+
+    if (retryResponse.status === 401) {
+      await clearAuth();
+    }
+
+    return retryResponse;
   };
 };

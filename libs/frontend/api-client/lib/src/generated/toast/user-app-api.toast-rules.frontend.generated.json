@@ -1,0 +1,81 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
+  "version": 1,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/user-app-api/contracts/openapi/user-app-api.json",
+    "app": "user-app-api"
+  },
+  "rules": [
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Profile me failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Profile me failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Profile me failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Profile me failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Profile me failed: Internal server error."
+      }
+    }
+  ]
+}

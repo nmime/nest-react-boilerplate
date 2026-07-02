@@ -13,7 +13,7 @@ import {
   type LocaleRequestSource,
   type TranslateOptions,
   type TranslationParams,
-} from "./runtime";
+} from "@app/common/i18n-runtime";
 
 export { localeCatalogFileNames, translations } from "./locales";
 export type { LocaleCatalog, TranslationKey } from "./locales";

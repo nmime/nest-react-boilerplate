@@ -1,0 +1,26 @@
+{
+  "name": "@app/common/i18n-runtime",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/i18n/runtime/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:i18n",
+    "framework:neutral"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/common/i18n-runtime",
+        "main": "libs/common/i18n/runtime/lib/src/index.ts",
+        "tsConfig": "libs/common/i18n/runtime/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    }
+  }
+}

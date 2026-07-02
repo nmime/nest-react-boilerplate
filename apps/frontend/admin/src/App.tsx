@@ -35,12 +35,12 @@ import {
   translate,
   useAppStore,
   useI18n,
-  adminFrontendTranslations,
   useStore,
   normalizeLocale,
   type Locale,
   type UiTheme,
 } from "@app/frontend/ui";
+import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
 import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";
 import {
   getBrowserPath,

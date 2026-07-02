@@ -59,6 +59,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:feature-shared` is for feature-level contracts/services shared by multiple apps or feature-main libs within the same runtime platform. Admin uses both frontend and backend feature-shared libraries; keep their `platform:*` tags separate.
 - `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
+- `type:asset` is for source-controlled static inputs such as scoped i18n catalog projects; common catalog adapters may depend on these assets, but assets should not import application code.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
 - `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Postgres is modeled by the `libs/backend/postgres/**` source root plus `type:data-access`, not by a second `scope:postgres` tag on domain data-access libraries.
 
@@ -99,7 +100,7 @@ OpenAPI producer output is committed as JSON under `apps/backend/*-app-api/contr
 
 ## i18n and Problem Details
 
-Supported locales are `en` and `ru`; root locale catalogs live as thin scoped files under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend apps pass scoped catalog sets so landing, user, and admin bundles do not import bot/Discord interaction catalogs. Backend exception localization preserves RFC 9457 wire terms: `type`, `title`, `status`, `detail`, `instance`, `application/problem+json`, and stable `urn:problem:*` values. Client logic should key off status/code/type rather than localized text.
+Supported locales are `en` and `ru`; root locale catalogs live as thin scoped files under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend apps pass scoped catalog sets from `@app/common/i18n/frontend-*` so landing, user, and admin builds do not import each other or bot/Discord interaction catalogs. The scoped frontend i18n entrypoints and root locale asset folders are separate Nx projects, so feature catalog changes affect only the owning app; shared common catalogs remain intentionally shared. Backend exception localization preserves RFC 9457 wire terms: `type`, `title`, `status`, `detail`, `instance`, `application/problem+json`, and stable `urn:problem:*` values. Client logic should key off status/code/type rather than localized text.
 
 ## Planned testing layers
 

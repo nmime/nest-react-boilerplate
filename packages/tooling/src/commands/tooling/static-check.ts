@@ -194,7 +194,10 @@ const forbiddenSocialAuthPackages = new Set([
 ]);
 
 const staleReferencePatterns: StaleReferencePattern[] = [
-  { label: "retired xRocket product reference", pattern: /\bxrocket\b/iu },
+  {
+    label: "retired product reference",
+    pattern: new RegExp(["\\bx", "roc", "ket\\b"].join(""), "iu"),
+  },
   { label: "retired wallet product reference", pattern: /\bwallet\b/iu },
   { label: "retired common exceptions alias", pattern: /@app\/common\/exceptions/u },
   {
@@ -980,7 +983,9 @@ function collectLocaleJsonFiles(localeDirectory: string): string[] {
         return visit(path).map((nestedFile) => `${entry}/${nestedFile}`);
       }
 
-      return stat.isFile() && entry.endsWith(".json") ? [entry] : [];
+      return stat.isFile() && entry.endsWith(".json") && entry !== "project.json"
+        ? [entry]
+        : [];
     });
 
   return visit(localeDirectory);

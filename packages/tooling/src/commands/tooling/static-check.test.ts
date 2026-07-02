@@ -425,6 +425,13 @@ describe("static-check thin locale catalog guard", () => {
           JSON.stringify({ [`${fileName}.key`]: `${locale}:${fileName}` }, null, 2),
         );
       }
+      for (const scope of ["admin", "bots", "common", "landing", "user"]) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/${scope}/project.json`,
+          JSON.stringify({ name: `@app/i18n-${locale}-${scope}` }, null, 2),
+        );
+      }
     }
   }
 

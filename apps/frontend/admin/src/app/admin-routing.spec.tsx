@@ -1,11 +1,8 @@
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import {
-  FrontendI18nProvider,
-  FrontendStateProvider,
-  adminFrontendTranslations,
-} from "@app/frontend/ui";
+import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend/ui";
+import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { normalizeAdminPath } from "../shared";

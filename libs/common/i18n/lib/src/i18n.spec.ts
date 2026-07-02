@@ -1,9 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { adminFrontendTranslations } from "./frontend/admin";
-import { landingFrontendTranslations } from "./frontend/landing";
-import { userFrontendTranslations } from "./frontend/user";
 import {
   I18nService,
   createRequestLocaleMiddleware,
@@ -39,7 +36,9 @@ function readLocaleCatalogFileNames(locale: Locale): string[] {
         return visit(path);
       }
 
-      return stat.isFile() && entry.endsWith(".json")
+      return stat.isFile() &&
+        entry.endsWith(".json") &&
+        entry !== "project.json"
         ? [path.slice(root.length + 1).replaceAll("\\", "/")]
         : [];
     });
@@ -85,13 +84,17 @@ function duplicateValues(values: string[]): string[] {
 }
 
 describe("@app/common/i18n", () => {
-  it("loads translation catalogs from scoped root locale JSON files", () => {
+  it("loads backend/runtime translation catalogs from scoped root locale JSON files", () => {
     const expectedFiles = [...localeCatalogFileNames].sort((left, right) =>
       left.localeCompare(right),
     );
 
-    expect(readLocaleCatalogFileNames("en")).toEqual(expectedFiles);
-    expect(readLocaleCatalogFileNames("ru")).toEqual(expectedFiles);
+    expect(readLocaleCatalogFileNames("en")).toEqual(
+      expect.arrayContaining(expectedFiles),
+    );
+    expect(readLocaleCatalogFileNames("ru")).toEqual(
+      expect.arrayContaining(expectedFiles),
+    );
 
     const english = readMergedLocale("en");
     const russian = readMergedLocale("ru");
@@ -102,23 +105,7 @@ describe("@app/common/i18n", () => {
     expect(russian["common.language"]).toBe("Язык");
   });
 
-  it("keeps frontend scoped catalogs out of bot and Discord localization", () => {
-    const frontendCatalogs = [
-      userFrontendTranslations,
-      adminFrontendTranslations,
-      landingFrontendTranslations,
-    ];
-
-    for (const catalog of frontendCatalogs) {
-      for (const locale of supportedLocales) {
-        expect(
-          Object.keys(catalog[locale]).filter(
-            (key) => key.startsWith("bot.") || key.startsWith("discord."),
-          ),
-        ).toEqual([]);
-      }
-    }
-
+  it("keeps backend bot and Discord localization in the runtime catalog", () => {
     expect(translations.en["bot.menu.main"]).toBe("Main menu");
     expect(translations.en["discord.commands.link.label"]).toBe("link");
   });
@@ -127,7 +114,7 @@ describe("@app/common/i18n", () => {
     for (const locale of supportedLocales) {
       const mergedKeys: string[] = [];
 
-      for (const fileName of localeCatalogFileNames) {
+      for (const fileName of readLocaleCatalogFileNames(locale)) {
         const text = readFileSync(join(localeRoot(), locale, fileName), "utf8");
         const catalog = JSON.parse(text) as Record<string, string>;
         const nonEmptyLines = text
@@ -178,24 +165,8 @@ describe("@app/common/i18n", () => {
     }
   });
 
-  it("exposes planned social auth, TMA, bot, and Discord translation keys", () => {
+  it("exposes backend bot and Discord translation keys in the runtime catalog", () => {
     const requiredKeys = [
-      "auth.provider.telegram",
-      "auth.provider.discord",
-      "auth.social.button.telegram",
-      "auth.social.conflict.accountExists",
-      "auth.social.stepUp.required",
-      "auth.social.lastMethod.blocked",
-      "auth.social.unlink.success",
-      "auth.social.link.error",
-      "auth.social.createAccount.error",
-      "tma.loading",
-      "tma.idle",
-      "tma.unsupported",
-      "tma.authenticated",
-      "tma.link.required",
-      "tma.deepNavigation.notFound",
-      "deepNav.linkRequired",
       "bot.menu.main",
       "bot.menu.profile",
       "bot.menu.settings",
@@ -244,11 +215,11 @@ describe("@app/common/i18n", () => {
     expect(translate("common.language", { locale: "ru" })).toBe("Язык");
     expect(translate("common.theme.dark", { locale: "en" })).toBe("Dark");
     expect(
-      translate("user.state.ready", {
+      translate("errors.api.requestFailed", {
         locale: "en",
-        params: { subject: "user-1" },
+        params: { status: 503 },
       }),
-    ).toBe("Ready: user-1");
+    ).toBe("Request failed with 503.");
     expect(translate("common.ready", { locale: "fr-CA" })).toBe("Ready");
   });
 

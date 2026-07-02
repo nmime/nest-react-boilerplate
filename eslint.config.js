@@ -133,6 +133,7 @@ module.exports = [
             {
               sourceTag: "type:common",
               onlyDependOnLibsWithTags: [
+                "type:asset",
                 "type:common",
                 "type:test-util",
                 "type:util",

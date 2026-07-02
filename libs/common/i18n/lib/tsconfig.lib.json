@@ -2,10 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../dist/out-tsc/libs/common/i18n",
+    "rootDir": "..",
     "types": ["node"],
     "declaration": true,
     "resolveJsonModule": true
   },
   "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts", "../../../../../i18n/**/*.json"]
+  "include": [
+    "src/**/*.ts",
+    "../keys/lib/src/**/*.ts",
+    "../runtime/lib/src/**/*.ts",
+    "../../../../../i18n/**/*.json"
+  ]
 }

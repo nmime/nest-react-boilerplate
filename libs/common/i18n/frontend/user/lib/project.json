@@ -1,0 +1,14 @@
+{
+  "name": "@app/common/i18n-frontend-user",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/i18n/frontend/user/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:frontend",
+    "type:common",
+    "scope:user",
+    "boundary:i18n",
+    "fsd:layer:shared",
+    "framework:neutral"
+  ]
+}

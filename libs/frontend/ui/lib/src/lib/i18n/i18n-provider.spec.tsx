@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { landingFrontendTranslations } from "@app/common/i18n/frontend-landing";
+import {
+  sharedFrontendTranslations,
+  type FrontendTranslations,
+} from "./locale";
 import {
   FrontendI18nProvider,
   LanguageSwitcher,
@@ -9,6 +12,17 @@ import {
   detectBrowserLocale,
   useI18n,
 } from "./i18n-provider";
+
+const testTranslations = {
+  en: {
+    ...sharedFrontendTranslations.en,
+    "landing.title": "Launch a production-ready full-stack foundation",
+  },
+  ru: {
+    ...sharedFrontendTranslations.ru,
+    "landing.title": "Запустите готовую full-stack основу",
+  },
+} satisfies FrontendTranslations;
 
 function Example() {
   const { t } = useI18n();
@@ -67,10 +81,7 @@ describe("FrontendI18nProvider", () => {
 
   it("renders translated content from provider locale", () => {
     const html = renderToStaticMarkup(
-      <FrontendI18nProvider
-        initialLocale="ru"
-        translations={landingFrontendTranslations}
-      >
+      <FrontendI18nProvider initialLocale="ru" translations={testTranslations}>
         <LanguageSwitcher />
         <ThemeSwitcher />
         <Example />
@@ -93,10 +104,7 @@ describe("FrontendI18nProvider", () => {
     });
 
     render(
-      <FrontendI18nProvider
-        translations={landingFrontendTranslations}
-        userLocale="ru"
-      >
+      <FrontendI18nProvider translations={testTranslations} userLocale="ru">
         <LanguageSwitcher />
         <Example />
       </FrontendI18nProvider>,

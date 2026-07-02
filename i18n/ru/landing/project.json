@@ -1,0 +1,12 @@
+{
+  "name": "@app/i18n-ru-landing",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n/ru/landing",
+  "projectType": "library",
+  "tags": [
+    "platform:frontend",
+    "type:asset",
+    "scope:landing",
+    "boundary:i18n-assets"
+  ]
+}

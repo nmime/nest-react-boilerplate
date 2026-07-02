@@ -47,7 +47,6 @@ const tmaEnvironment = (): TmaEnvironment => {
   >;
   return {
     VITE_TMA_APP: env.VITE_TMA_APP,
-    VITE_XROCKET_WEB_APP: env.VITE_XROCKET_WEB_APP,
   };
 };
 

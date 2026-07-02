@@ -1,9 +1,9 @@
 import {
-  adminFrontendTranslations,
   translate,
   type TranslationKey,
   type TranslationParams,
 } from "@app/frontend/ui";
+import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
 import type { adminApi } from "@app/frontend/api-client";
 import type { AdminAccessPolicy } from "@app/frontend/feature/admin/shared";
 

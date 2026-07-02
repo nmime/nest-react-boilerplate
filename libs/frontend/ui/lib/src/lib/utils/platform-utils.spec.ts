@@ -67,7 +67,6 @@ describe("frontend platform utilities", () => {
   });
 
   it("detects Telegram mini app environments without requiring TMA globals", () => {
-    expect(isTmaApp({ VITE_XROCKET_WEB_APP: "true" })).toBe(true);
     expect(isTmaApp({ VITE_TMA_APP: "true" })).toBe(true);
     expect(isTmaApp({})).toBe(false);
   });

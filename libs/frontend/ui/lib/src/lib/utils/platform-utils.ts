@@ -118,14 +118,10 @@ export function add3DotsInTheStringMiddle(
 
 export interface TmaEnvironment {
   VITE_TMA_APP?: string;
-  VITE_XROCKET_WEB_APP?: string;
 }
 
 export function isTmaApp(environment: TmaEnvironment = {}): boolean {
-  if (
-    environment.VITE_TMA_APP === "true" ||
-    environment.VITE_XROCKET_WEB_APP === "true"
-  ) {
+  if (environment.VITE_TMA_APP === "true") {
     return true;
   }
 

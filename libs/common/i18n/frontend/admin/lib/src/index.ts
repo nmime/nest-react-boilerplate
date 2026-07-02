@@ -1,22 +1,22 @@
-import enAdminAuditCatalog from "../../../../../../i18n/en/admin/audit.json";
-import enAdminDashboardCatalog from "../../../../../../i18n/en/admin/dashboard.json";
-import enAdminRolesCatalog from "../../../../../../i18n/en/admin/roles.json";
-import enAdminCatalog from "../../../../../../i18n/en/admin/shell.json";
-import enAdminUsersCatalog from "../../../../../../i18n/en/admin/users.json";
-import enCommonCatalog from "../../../../../../i18n/en/common/shared.json";
-import enErrorsCatalog from "../../../../../../i18n/en/common/errors.json";
-import ruAdminAuditCatalog from "../../../../../../i18n/ru/admin/audit.json";
-import ruAdminDashboardCatalog from "../../../../../../i18n/ru/admin/dashboard.json";
-import ruAdminRolesCatalog from "../../../../../../i18n/ru/admin/roles.json";
-import ruAdminCatalog from "../../../../../../i18n/ru/admin/shell.json";
-import ruAdminUsersCatalog from "../../../../../../i18n/ru/admin/users.json";
-import ruCommonCatalog from "../../../../../../i18n/ru/common/shared.json";
-import ruErrorsCatalog from "../../../../../../i18n/ru/common/errors.json";
-import { mergeLocaleCatalogFiles } from "../runtime";
+import enAdminAuditCatalog from "@app/i18n/en/admin/audit.json";
+import enAdminDashboardCatalog from "@app/i18n/en/admin/dashboard.json";
+import enAdminRolesCatalog from "@app/i18n/en/admin/roles.json";
+import enAdminCatalog from "@app/i18n/en/admin/shell.json";
+import enAdminUsersCatalog from "@app/i18n/en/admin/users.json";
+import enErrorsCatalog from "@app/i18n/en/common/errors.json";
+import enCommonCatalog from "@app/i18n/en/common/shared.json";
+import ruAdminAuditCatalog from "@app/i18n/ru/admin/audit.json";
+import ruAdminDashboardCatalog from "@app/i18n/ru/admin/dashboard.json";
+import ruAdminRolesCatalog from "@app/i18n/ru/admin/roles.json";
+import ruAdminCatalog from "@app/i18n/ru/admin/shell.json";
+import ruAdminUsersCatalog from "@app/i18n/ru/admin/users.json";
+import ruErrorsCatalog from "@app/i18n/ru/common/errors.json";
+import ruCommonCatalog from "@app/i18n/ru/common/shared.json";
+import { mergeLocaleCatalogFiles } from "@app/common/i18n-runtime";
 import type {
   FrontendLocaleCatalogFileEntry,
   FrontendTranslations,
-} from "./shared";
+} from "@app/common/i18n/frontend-shared";
 
 export const adminFrontendCatalogFileNames = [
   "common/shared.json",

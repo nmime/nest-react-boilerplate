@@ -22,10 +22,10 @@ import {
   translate,
   useAuthShellStore,
   useAppStore,
-  userFrontendTranslations,
   useI18n,
   useStore,
 } from "@app/frontend/ui";
+import { userFrontendTranslations } from "@app/frontend/feature/user/i18n";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
 import { UiErrorBoundary } from "../../shared/ui";

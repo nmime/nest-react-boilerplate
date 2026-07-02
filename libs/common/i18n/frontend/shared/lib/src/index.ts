@@ -1,8 +1,8 @@
-import enCommonCatalog from "../../../../../../i18n/en/common/shared.json";
-import enErrorsCatalog from "../../../../../../i18n/en/common/errors.json";
-import ruCommonCatalog from "../../../../../../i18n/ru/common/shared.json";
-import ruErrorsCatalog from "../../../../../../i18n/ru/common/errors.json";
-import type { TranslationKey } from "../locales";
+import enErrorsCatalog from "@app/i18n/en/common/errors.json";
+import enCommonCatalog from "@app/i18n/en/common/shared.json";
+import ruErrorsCatalog from "@app/i18n/ru/common/errors.json";
+import ruCommonCatalog from "@app/i18n/ru/common/shared.json";
+import type { TranslationKey } from "@app/common/i18n-keys";
 import {
   fallbackLocale,
   hasTranslationKeyIn,
@@ -17,7 +17,7 @@ import {
   type RuntimeLocaleCatalog,
   type TranslateOptions,
   type TranslationParams,
-} from "../runtime";
+} from "@app/common/i18n-runtime";
 
 export type FrontendLocaleCatalog = Partial<Record<TranslationKey, string>>;
 export type FrontendTranslations = Record<Locale, FrontendLocaleCatalog>;

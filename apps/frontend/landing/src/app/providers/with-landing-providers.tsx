@@ -3,12 +3,12 @@ import {
   FrontendI18nProvider,
   FrontendStateProvider,
   UiApiRuntimeOverlay,
-  landingFrontendTranslations,
   observer,
   translate,
   useAppStore,
   useStore,
 } from "@app/frontend/ui";
+import { landingFrontendTranslations } from "@app/frontend/feature/landing/i18n";
 import type { ComponentType } from "react";
 
 const LandingRuntimeOverlayProvider = observer(

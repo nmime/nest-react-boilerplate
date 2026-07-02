@@ -76,18 +76,30 @@
       ],
       "@app/common/swagger": ["libs/backend/common/swagger/lib/src/index.ts"],
       "@app/common/i18n": ["libs/common/i18n/lib/src/index.ts"],
+      "@app/common/i18n-keys": ["libs/common/i18n/keys/lib/src/index.ts"],
+      "@app/common/i18n-runtime": ["libs/common/i18n/runtime/lib/src/index.ts"],
       "@app/common/i18n/frontend-admin": [
-        "libs/common/i18n/lib/src/frontend/admin.ts"
+        "libs/common/i18n/frontend/admin/lib/src/index.ts"
       ],
       "@app/common/i18n/frontend-landing": [
-        "libs/common/i18n/lib/src/frontend/landing.ts"
+        "libs/common/i18n/frontend/landing/lib/src/index.ts"
       ],
       "@app/common/i18n/frontend-shared": [
-        "libs/common/i18n/lib/src/frontend/shared.ts"
+        "libs/common/i18n/frontend/shared/lib/src/index.ts"
       ],
       "@app/common/i18n/frontend-user": [
-        "libs/common/i18n/lib/src/frontend/user.ts"
+        "libs/common/i18n/frontend/user/lib/src/index.ts"
       ],
+      "@app/i18n/en/admin/*": ["i18n/en/admin/*"],
+      "@app/i18n/en/bots/*": ["i18n/en/bots/*"],
+      "@app/i18n/en/common/*": ["i18n/en/common/*"],
+      "@app/i18n/en/landing/*": ["i18n/en/landing/*"],
+      "@app/i18n/en/user/*": ["i18n/en/user/*"],
+      "@app/i18n/ru/admin/*": ["i18n/ru/admin/*"],
+      "@app/i18n/ru/bots/*": ["i18n/ru/bots/*"],
+      "@app/i18n/ru/common/*": ["i18n/ru/common/*"],
+      "@app/i18n/ru/landing/*": ["i18n/ru/landing/*"],
+      "@app/i18n/ru/user/*": ["i18n/ru/user/*"],
       "@app/api-contracts": ["libs/common/api-contracts/lib/src/index.ts"],
       "@app/api-client": ["libs/frontend/api-client/lib/src/index.ts"],
       "@app/common/feature-flags": [
@@ -105,8 +117,17 @@
       "@app/frontend/feature-admin-shared": [
         "libs/frontend/feature/admin/shared/lib/src/index.ts"
       ],
+      "@app/frontend/feature/admin/i18n": [
+        "libs/frontend/feature/admin/i18n/lib/src/index.ts"
+      ],
       "@app/backend/feature-admin-shared": [
         "libs/backend/feature/admin/shared/lib/src/index.ts"
+      ],
+      "@app/frontend/feature/landing/i18n": [
+        "libs/frontend/feature/landing/i18n/lib/src/index.ts"
+      ],
+      "@app/frontend/feature/user/i18n": [
+        "libs/frontend/feature/user/i18n/lib/src/index.ts"
       ],
       "@app/postgres-main-feature-flags/migrations": [
         "libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts"

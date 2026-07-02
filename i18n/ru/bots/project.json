@@ -1,0 +1,12 @@
+{
+  "name": "@app/i18n-ru-bots",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n/ru/bots",
+  "projectType": "library",
+  "tags": [
+    "platform:backend",
+    "type:asset",
+    "scope:bots",
+    "boundary:i18n-assets"
+  ]
+}

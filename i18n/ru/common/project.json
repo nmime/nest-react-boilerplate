@@ -1,0 +1,12 @@
+{
+  "name": "@app/i18n-ru-common",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n/ru/common",
+  "projectType": "library",
+  "tags": [
+    "platform:shared",
+    "type:asset",
+    "scope:shared",
+    "boundary:i18n-assets"
+  ]
+}

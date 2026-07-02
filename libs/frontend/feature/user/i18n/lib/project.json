@@ -1,0 +1,12 @@
+{
+  "name": "@app/frontend/feature/user/i18n",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/feature/user/i18n/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:frontend",
+    "type:feature-shared",
+    "scope:user",
+    "fsd:layer:shared"
+  ]
+}

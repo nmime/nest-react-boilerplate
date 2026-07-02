@@ -70,10 +70,7 @@ const isNeverthrowResult = <T, E>(value: unknown): value is Result<T, E> =>
 export function mapResultToResponse<
   T,
   E extends
-    | BaseException
-    | HttpException
-    | Error
-    | { code: string; message: string },
+    BaseException | HttpException | Error | { code: string; message: string },
 >(result: Result<T, E>, locale?: string): ApiResponse<T> {
   if (result.isOk()) {
     return createOkResponse(result.value);

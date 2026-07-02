@@ -241,8 +241,7 @@ class FastifyPostgresSessionStore {
 
   private reviveSession(session: Session): Session {
     const cookie = session.cookie as
-      | (Session["cookie"] & { expires?: Date | string | null })
-      | undefined;
+      (Session["cookie"] & { expires?: Date | string | null }) | undefined;
     if (cookie?.expires && !(cookie.expires instanceof Date)) {
       const expires = new Date(cookie.expires);
       if (!Number.isNaN(expires.getTime())) {
@@ -255,8 +254,7 @@ class FastifyPostgresSessionStore {
 
   private resolveExpiry(session: Session): Date {
     const cookie = session.cookie as
-      | (Session["cookie"] & { expires?: Date | string | null })
-      | undefined;
+      (Session["cookie"] & { expires?: Date | string | null }) | undefined;
     if (cookie?.expires) {
       const expires =
         cookie.expires instanceof Date

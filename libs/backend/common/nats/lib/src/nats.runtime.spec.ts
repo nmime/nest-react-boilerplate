@@ -211,10 +211,11 @@ describeIfDocker("NATS runtime smoke", () => {
       await expect(
         moduleRef
           .get(NatsService)
-          .requestJson<
-            { echo: string },
-            { ping: boolean }
-          >("echo", { ping: true }, { timeout: 5_000 }),
+          .requestJson<{ echo: string }, { ping: boolean }>(
+            "echo",
+            { ping: true },
+            { timeout: 5_000 },
+          ),
       ).resolves.toEqual({ echo: JSON.stringify({ ping: true }) });
     } finally {
       await service.stop();

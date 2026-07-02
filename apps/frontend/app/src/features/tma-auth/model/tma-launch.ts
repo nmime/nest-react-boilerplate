@@ -1,9 +1,6 @@
 export type TmaLaunchIntent = "login" | "link";
 export type TmaDeepNavigationState =
-  | "none"
-  | "loading"
-  | "unsupported"
-  | "not-found";
+  "none" | "loading" | "unsupported" | "not-found";
 
 export interface TmaLaunchState {
   initData?: string;

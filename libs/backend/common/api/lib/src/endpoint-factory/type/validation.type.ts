@@ -9,5 +9,4 @@ export interface ValidationFailure {
 }
 
 export type ValidationResult<T = unknown> =
-  | ValidationSuccess<T>
-  | ValidationFailure;
+  ValidationSuccess<T> | ValidationFailure;

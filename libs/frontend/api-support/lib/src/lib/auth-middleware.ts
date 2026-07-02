@@ -12,10 +12,7 @@ export interface ApiAuthMiddlewareOptions {
   eventHub?: ApiRuntimeEventHub;
   fetchImpl?: typeof fetch;
   getAccessToken: () =>
-    | Promise<string | null | undefined>
-    | string
-    | null
-    | undefined;
+    Promise<string | null | undefined> | string | null | undefined;
   redirectTo?: string;
   refreshAccessToken: () => Promise<
     AuthRefreshResult | string | null | undefined

@@ -3,13 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { DefaultDiscordCustomIdTtlSeconds } from "./discord-config";
 
 export type DiscordCustomIdAction =
-  | "back"
-  | "home"
-  | "cancel"
-  | "open_app"
-  | "link"
-  | "unlink"
-  | "confirm";
+  "back" | "home" | "cancel" | "open_app" | "link" | "unlink" | "confirm";
 
 export interface DiscordCustomIdPayload {
   action: DiscordCustomIdAction;
@@ -34,11 +28,7 @@ export interface DiscordDecodedCustomId extends Required<DiscordCustomIdPayload>
 }
 
 export type DiscordCustomIdValidationFailure =
-  | "expired"
-  | "tampered"
-  | "wrong-owner"
-  | "wrong-guild"
-  | "wrong-tenant";
+  "expired" | "tampered" | "wrong-owner" | "wrong-guild" | "wrong-tenant";
 
 export class DiscordCustomIdValidationError extends Error {
   constructor(readonly failure: DiscordCustomIdValidationFailure) {

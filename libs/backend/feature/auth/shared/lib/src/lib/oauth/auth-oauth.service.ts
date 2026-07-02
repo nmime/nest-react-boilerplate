@@ -19,8 +19,7 @@ const DefaultStateTtlMs = 10 * 60 * 1000;
 const PlaceholderOrigin = "https://return.invalid";
 
 type ReturnUrlValidation =
-  | { ok: true; returnUrl?: string }
-  | { ok: false; error: AuthOAuthError };
+  { ok: true; returnUrl?: string } | { ok: false; error: AuthOAuthError };
 
 export class InMemoryAuthOAuthStateStore implements AuthOAuthStateStore {
   private readonly statesBySession = new Map<string, AuthOAuthStoredState[]>();

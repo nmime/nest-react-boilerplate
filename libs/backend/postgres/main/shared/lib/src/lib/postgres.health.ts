@@ -60,8 +60,7 @@ export class MikroOrmPostgresHealthAdapter implements PostgresDependencyHealthAd
 
     const pendingMigrationsReader = migrator as {
       getPendingMigrations?: () =>
-        | Promise<readonly unknown[]>
-        | readonly unknown[];
+        Promise<readonly unknown[]> | readonly unknown[];
     };
     if (!pendingMigrationsReader.getPendingMigrations) {
       throw new PostgresMigrationStatusUnsupportedError();

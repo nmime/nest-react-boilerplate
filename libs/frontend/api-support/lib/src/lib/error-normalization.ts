@@ -1,10 +1,5 @@
 export type NormalizedApiErrorKind =
-  | "auth"
-  | "client"
-  | "network"
-  | "server"
-  | "unknown"
-  | "validation";
+  "auth" | "client" | "network" | "server" | "unknown" | "validation";
 
 export interface NormalizedValidationIssue {
   field?: string;

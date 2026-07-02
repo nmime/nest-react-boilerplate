@@ -13,12 +13,7 @@ export interface ProductShellAction {
   label: string;
   href: string;
   variant?:
-    | "primary"
-    | "secondary"
-    | "outline"
-    | "ghost"
-    | "destructive"
-    | "link";
+    "primary" | "secondary" | "outline" | "ghost" | "destructive" | "link";
   isCurrent?: boolean;
 }
 

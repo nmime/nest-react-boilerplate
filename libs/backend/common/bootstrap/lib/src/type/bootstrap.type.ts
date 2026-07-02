@@ -8,13 +8,10 @@ import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-option
 import type { BootstrapSwaggerConfig } from "./swagger-config.type";
 
 export type ResolvedEntryNestModule =
-  | Type<unknown>
-  | DynamicModule
-  | ForwardReference;
+  Type<unknown> | DynamicModule | ForwardReference;
 
 export type EntryNestModule =
-  | ResolvedEntryNestModule
-  | Promise<ResolvedEntryNestModule>;
+  ResolvedEntryNestModule | Promise<ResolvedEntryNestModule>;
 
 export type PortFactory = (app: INestApplication) => number | Promise<number>;
 

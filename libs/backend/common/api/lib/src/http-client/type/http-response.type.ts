@@ -20,5 +20,4 @@ export interface HttpFailureResponse<E = unknown> {
 }
 
 export type HttpResponse<T, E = unknown> =
-  | HttpSuccessResponse<T>
-  | HttpFailureResponse<E>;
+  HttpSuccessResponse<T> | HttpFailureResponse<E>;

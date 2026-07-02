@@ -39,10 +39,7 @@ export interface UserProfilePayload {
 }
 
 export type LocalePayload =
-  | AuthMePayload
-  | AuthSessionPayload
-  | UserProfilePayload
-  | undefined;
+  AuthMePayload | AuthSessionPayload | UserProfilePayload | undefined;
 
 export type ProfileState =
   | { status: "loading" }

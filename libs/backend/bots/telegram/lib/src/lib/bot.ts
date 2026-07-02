@@ -150,8 +150,7 @@ export async function setupTelegramMenuButton(
 export async function handleStart(
   ctx: TelegramBotContext,
   applicationOrDependencies:
-    | TelegramBotApplicationPort
-    | TelegramBotDependencies = {},
+    TelegramBotApplicationPort | TelegramBotDependencies = {},
   renderMainMenu: () => ReturnType<typeof createTelegramMenus>["main"] = () =>
     createTelegramMenus({
       application: resolveTelegramApplication(applicationOrDependencies),
@@ -175,8 +174,7 @@ export async function handleStart(
 export async function handleLink(
   ctx: TelegramBotContext,
   applicationOrDependencies:
-    | TelegramBotApplicationPort
-    | TelegramBotDependencies = {},
+    TelegramBotApplicationPort | TelegramBotDependencies = {},
 ): Promise<void> {
   const application = resolveTelegramApplication(applicationOrDependencies);
   navigateTo(ctx, "link");

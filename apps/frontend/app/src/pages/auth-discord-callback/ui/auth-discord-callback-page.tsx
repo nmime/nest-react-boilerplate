@@ -23,8 +23,7 @@ type ValidDiscordCallbackQueryState = {
 };
 
 type DiscordCallbackQueryState =
-  | ValidDiscordCallbackQueryState
-  | { tenantId?: string };
+  ValidDiscordCallbackQueryState | { tenantId?: string };
 
 const isValidDiscordCallbackQueryState = (
   query: DiscordCallbackQueryState,

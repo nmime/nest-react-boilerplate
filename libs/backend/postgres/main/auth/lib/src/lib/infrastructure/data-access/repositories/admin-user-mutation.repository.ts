@@ -12,8 +12,7 @@ import {
 import type { AuthUserRepositoryError } from "./auth-user.repository";
 
 export type AdminUserMutationAction =
-  | "admin.user.status.update"
-  | "admin.user.access_policy.update";
+  "admin.user.status.update" | "admin.user.access_policy.update";
 
 export interface AdminUserMutationAuditInput {
   actorUserId?: string | null;

@@ -267,8 +267,7 @@ function isLevelEnabled(
   }
 
   const configuredLevel = process.env.LOG_LEVEL?.toLowerCase() as
-    | LogLevel
-    | undefined;
+    LogLevel | undefined;
   if (configuredLevel) {
     return levelRank(level) <= levelRank(configuredLevel);
   }

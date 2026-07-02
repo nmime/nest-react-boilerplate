@@ -28,9 +28,7 @@ export interface PostgresContainerOptions {
 }
 
 export type PostgresEntityList = (
-  | string
-  | EntityClass<AnyEntity>
-  | EntitySchema
+  string | EntityClass<AnyEntity> | EntitySchema
 )[];
 
 export type PostgresMikroOrmTestOptions = MikroOrmModuleSyncOptions;

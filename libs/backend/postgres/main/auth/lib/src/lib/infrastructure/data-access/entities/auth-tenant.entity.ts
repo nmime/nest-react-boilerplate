@@ -4,10 +4,7 @@ import { EntitySchema } from "@mikro-orm/core";
 export type AuthTenantStatus = "active" | "suspended" | "deleted";
 export type AuthTenantRole = "owner" | "admin" | "member" | "billing";
 export type AuthTenantInvitationStatus =
-  | "pending"
-  | "accepted"
-  | "revoked"
-  | "expired";
+  "pending" | "accepted" | "revoked" | "expired";
 
 export class AuthTenantEntity {
   id: string = randomUUID();

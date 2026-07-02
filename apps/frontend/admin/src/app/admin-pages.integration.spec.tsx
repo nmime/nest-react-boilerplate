@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import {
   cleanup,
   fireEvent,
@@ -8,6 +9,11 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { adminApi } from "@app/frontend/api-client";
+import {
+  FrontendI18nProvider,
+  FrontendStateProvider,
+  adminFrontendTranslations,
+} from "@app/frontend/ui";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { AdminLayout } from "../widgets/admin-shell";
@@ -89,6 +95,21 @@ const rolesCatalog = {
   ],
 };
 
+const AdminTestProviders = ({
+  children,
+}: Readonly<{ children: ReactElement }>) => (
+  <FrontendStateProvider>
+    <FrontendI18nProvider translations={adminFrontendTranslations}>
+      <QueryClientProvider client={new QueryClient()}>
+        {children}
+      </QueryClientProvider>
+    </FrontendI18nProvider>
+  </FrontendStateProvider>
+);
+
+const renderAdminRouteForTest = (element: ReactElement) =>
+  render(<AdminTestProviders>{element}</AdminTestProviders>);
+
 describe("admin pages integration", () => {
   afterEach(() => {
     cleanup();
@@ -139,22 +160,20 @@ describe("admin pages integration", () => {
 
     const renderRoute = (path: string) => {
       cleanup();
-      render(
-        <QueryClientProvider client={new QueryClient()}>
-          <AdminLayout access={adminAccess} currentPath={path}>
-            {renderAdminRoute(
-              path,
-              { status: "ready", payload, access: adminAccess },
-              undefined,
-              {
-                requestOptions: {
-                  authToken: "token",
-                  baseUrl: "https://admin.example.test",
-                },
+      renderAdminRouteForTest(
+        <AdminLayout access={adminAccess} currentPath={path}>
+          {renderAdminRoute(
+            path,
+            { status: "ready", payload, access: adminAccess },
+            undefined,
+            {
+              requestOptions: {
+                authToken: "token",
+                baseUrl: "https://admin.example.test",
               },
-            )}
-          </AdminLayout>
-        </QueryClientProvider>,
+            },
+          )}
+        </AdminLayout>,
       );
     };
 
@@ -214,22 +233,20 @@ describe("admin pages integration", () => {
       response: new Response(null, { status: 200 }),
     });
 
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <AdminLayout
-          access={adminAccess}
-          currentPath="/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2"
-        >
-          {renderAdminRoute(
-            "/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2",
-            {
-              status: "ready",
-              payload,
-              access: adminAccess,
-            },
-          )}
-        </AdminLayout>
-      </QueryClientProvider>,
+    renderAdminRouteForTest(
+      <AdminLayout
+        access={adminAccess}
+        currentPath="/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2"
+      >
+        {renderAdminRoute(
+          "/admin/users?search=ada&status=disabled&role=admin&permission=admin:users:read&page=2",
+          {
+            status: "ready",
+            payload,
+            access: adminAccess,
+          },
+        )}
+      </AdminLayout>,
     );
 
     expect(await screen.findByText("user@example.com")).toBeTruthy();
@@ -293,14 +310,12 @@ describe("admin pages integration", () => {
         response: new Response(null, { status: 200 }),
       });
 
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        {renderAdminRoute("/admin/roles", {
-          status: "ready",
-          payload,
-          access: adminAccess,
-        })}
-      </QueryClientProvider>,
+    renderAdminRouteForTest(
+      renderAdminRoute("/admin/roles", {
+        status: "ready",
+        payload,
+        access: adminAccess,
+      }),
     );
     expect(
       (await screen.findAllByText("Administrator")).length,
@@ -309,44 +324,38 @@ describe("admin pages integration", () => {
     expect(screen.getByText("admin.users")).toBeTruthy();
 
     cleanup();
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        {renderAdminRoute("/admin/audit", {
-          status: "ready",
-          payload,
-          access: adminAccess,
-        })}
-      </QueryClientProvider>,
+    renderAdminRouteForTest(
+      renderAdminRoute("/admin/audit", {
+        status: "ready",
+        payload,
+        access: adminAccess,
+      }),
     );
     expect(await screen.findByText("user.disabled")).toBeTruthy();
     expect(screen.getByText("Audit operations timeline")).toBeTruthy();
     expect(screen.getByText("user-1")).toBeTruthy();
 
     cleanup();
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        {renderAdminRoute("/admin/audit", {
-          status: "ready",
-          payload,
-          access: adminAccess,
-        })}
-      </QueryClientProvider>,
+    renderAdminRouteForTest(
+      renderAdminRoute("/admin/audit", {
+        status: "ready",
+        payload,
+        access: adminAccess,
+      }),
     );
     expect(await screen.findByText("No audit events")).toBeTruthy();
     expect(auditSpy).toHaveBeenCalledTimes(2);
   });
 
   it("covers profile, forbidden/loading/error/not-found, tenant roadmap and CASL hidden nav", () => {
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <AdminLayout access={restrictedAccess} currentPath="/admin/users">
-          {renderAdminRoute("/admin/users", {
-            status: "ready",
-            payload,
-            access: restrictedAccess,
-          })}
-        </AdminLayout>
-      </QueryClientProvider>,
+    renderAdminRouteForTest(
+      <AdminLayout access={restrictedAccess} currentPath="/admin/users">
+        {renderAdminRoute("/admin/users", {
+          status: "ready",
+          payload,
+          access: restrictedAccess,
+        })}
+      </AdminLayout>,
     );
 
     expect(screen.queryByRole("link", { name: "Users" })).toBeFalsy();
@@ -356,7 +365,7 @@ describe("admin pages integration", () => {
     expect(screen.getByText("Fail-closed route guard")).toBeTruthy();
 
     cleanup();
-    render(
+    renderAdminRouteForTest(
       renderAdminRoute("/admin/tenants", {
         status: "ready",
         payload,
@@ -369,7 +378,7 @@ describe("admin pages integration", () => {
     expect(screen.getByText("Tenant console runway")).toBeTruthy();
 
     cleanup();
-    render(
+    renderAdminRouteForTest(
       renderAdminRoute("/admin/profile", {
         status: "ready",
         payload,
@@ -379,7 +388,7 @@ describe("admin pages integration", () => {
     expect(screen.getAllByText("Ada Admin").length).toBeGreaterThan(0);
 
     cleanup();
-    render(
+    renderAdminRouteForTest(
       renderAdminRoute("/admin/missing", {
         status: "ready",
         payload,
@@ -390,7 +399,7 @@ describe("admin pages integration", () => {
     expect(screen.getByText("Route recovery")).toBeTruthy();
 
     cleanup();
-    render(renderAdminRoute("/admin", { status: "loading" }));
+    renderAdminRouteForTest(renderAdminRoute("/admin", { status: "loading" }));
     expect(
       screen.getAllByText("Loading admin profile...").length,
     ).toBeGreaterThan(0);

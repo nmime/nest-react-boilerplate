@@ -1,8 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
+import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
 export default defineConfig({
   cacheDir: "../../../node_modules/.vitest/apps/backend/user-app-api-e2e",
+  plugins: [nxViteTsPaths()],
   resolve: {
     alias: {
       "@app/common/feature-flags": new URL(

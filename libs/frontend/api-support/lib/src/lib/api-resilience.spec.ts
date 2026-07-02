@@ -85,6 +85,11 @@ describe("API resilience middleware", () => {
       status: 401,
     });
     expect(events).toContain("auth-required");
+    eventHub.clearAuthRequired();
+    expect(eventHub.getState()).toMatchObject({
+      authRequired: false,
+      redirectTo: null,
+    });
 
     const offlineFetch = createApiRuntimeFetch({
       baseFetch: vi

@@ -26,6 +26,9 @@ export function AuthPage({
   navigate,
 }: Readonly<AuthPageProps>) {
   const { locale, t } = useI18n();
+  const returnUrl =
+    new URLSearchParams(globalThis.location?.search ?? "").get("returnUrl") ??
+    null;
   const authSession = useAuthSessionFlow({
     applyUserLocale,
     applyUserTheme,
@@ -36,6 +39,8 @@ export function AuthPage({
       profileRequestFailed: t("user.error.profileRequestFailed"),
       profileUnknown: t("user.profile.unknown"),
     },
+    navigate,
+    returnUrl,
   });
   const socialAuth = useSocialAuth({ navigate });
 

@@ -22,12 +22,14 @@ import {
   translate,
   useAuthShellStore,
   useAppStore,
+  userFrontendTranslations,
   useI18n,
   useStore,
 } from "@app/frontend/ui";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
 import { UiErrorBoundary } from "../../shared/ui";
+import { AuthRedirectBridge } from "./auth-redirect-bridge";
 import { UserRouter } from "../router/user-router";
 
 const ApiClientLocaleBridge = ({
@@ -149,6 +151,7 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
     <FrontendI18nProvider
       onLocaleChange={preferences.persistUserLocale}
       onThemeChange={preferences.persistUserTheme}
+      translations={userFrontendTranslations}
       userLocale={preferences.userLocale}
       userTheme={preferences.userTheme}
     >
@@ -170,6 +173,7 @@ export function AppProviders({
       <UserAppApiClientProvider>
         <FrontendQueryProvider>
           <UiErrorBoundary>
+            <AuthRedirectBridge />
             {children ?? <UserAppRouterProviders />}
             <ApiRuntimeOverlayProvider />
           </UiErrorBoundary>

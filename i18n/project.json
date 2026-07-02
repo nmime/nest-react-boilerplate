@@ -1,0 +1,18 @@
+{
+  "name": "@app/i18n-assets",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n",
+  "projectType": "library",
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:i18n-assets",
+    "framework:neutral"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:noop"
+    }
+  }
+}

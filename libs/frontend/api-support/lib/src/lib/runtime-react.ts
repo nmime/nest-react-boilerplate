@@ -15,6 +15,12 @@ export const resetApiRuntimeForOnline = (
   eventHub.reset();
 };
 
+export const clearApiAuthRequired = (
+  eventHub: ApiRuntimeEventHub = apiRuntimeEvents,
+): void => {
+  eventHub.clearAuthRequired();
+};
+
 export function useApiRuntimeOverlayModel({
   eventHub = apiRuntimeEvents,
   toastRuntime = apiToastRuntime,

@@ -1,6 +1,9 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { adminFrontendTranslations } from "./frontend/admin";
+import { landingFrontendTranslations } from "./frontend/landing";
+import { userFrontendTranslations } from "./frontend/user";
 import {
   I18nService,
   createRequestLocaleMiddleware,
@@ -24,6 +27,24 @@ const localeCatalogMaxNonEmptyLines = 90;
 
 function localeRoot(): string {
   return join(__dirname, "..", "..", "..", "..", "..", "i18n");
+}
+
+function readLocaleCatalogFileNames(locale: Locale): string[] {
+  const root = join(localeRoot(), locale);
+  const visit = (directory: string): string[] =>
+    readdirSync(directory).flatMap((entry) => {
+      const path = join(directory, entry);
+      const stat = statSync(path);
+      if (stat.isDirectory()) {
+        return visit(path);
+      }
+
+      return stat.isFile() && entry.endsWith(".json")
+        ? [path.slice(root.length + 1).replaceAll("\\", "/")]
+        : [];
+    });
+
+  return visit(root).sort((left, right) => left.localeCompare(right));
 }
 
 function readLocaleCatalogFile(
@@ -64,25 +85,13 @@ function duplicateValues(values: string[]): string[] {
 }
 
 describe("@app/common/i18n", () => {
-  it("loads translation catalogs from thin top-level locale JSON files", () => {
-    expect(
-      readdirSync(join(localeRoot(), "en")).sort((left, right) =>
-        left.localeCompare(right),
-      ),
-    ).toEqual(
-      [...localeCatalogFileNames].sort((left, right) =>
-        left.localeCompare(right),
-      ),
+  it("loads translation catalogs from scoped root locale JSON files", () => {
+    const expectedFiles = [...localeCatalogFileNames].sort((left, right) =>
+      left.localeCompare(right),
     );
-    expect(
-      readdirSync(join(localeRoot(), "ru")).sort((left, right) =>
-        left.localeCompare(right),
-      ),
-    ).toEqual(
-      [...localeCatalogFileNames].sort((left, right) =>
-        left.localeCompare(right),
-      ),
-    );
+
+    expect(readLocaleCatalogFileNames("en")).toEqual(expectedFiles);
+    expect(readLocaleCatalogFileNames("ru")).toEqual(expectedFiles);
 
     const english = readMergedLocale("en");
     const russian = readMergedLocale("ru");
@@ -91,6 +100,27 @@ describe("@app/common/i18n", () => {
     expect(translations.ru).toEqual(russian);
     expect(english["common.language"]).toBe("Language");
     expect(russian["common.language"]).toBe("Язык");
+  });
+
+  it("keeps frontend scoped catalogs out of bot and Discord localization", () => {
+    const frontendCatalogs = [
+      userFrontendTranslations,
+      adminFrontendTranslations,
+      landingFrontendTranslations,
+    ];
+
+    for (const catalog of frontendCatalogs) {
+      for (const locale of supportedLocales) {
+        expect(
+          Object.keys(catalog[locale]).filter(
+            (key) => key.startsWith("bot.") || key.startsWith("discord."),
+          ),
+        ).toEqual([]);
+      }
+    }
+
+    expect(translations.en["bot.menu.main"]).toBe("Main menu");
+    expect(translations.en["discord.commands.link.label"]).toBe("link");
   });
 
   it("keeps locale files thin and free of duplicate raw or merged keys", () => {

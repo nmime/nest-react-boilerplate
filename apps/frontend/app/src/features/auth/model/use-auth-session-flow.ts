@@ -1,6 +1,7 @@
 import { useEffect, useMemo, type SubmitEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthApiClient, useUserApiClient } from "@app/frontend/api-client";
+import { clearApiAuthRequired } from "@app/frontend/api-support";
 import { useAuthShellStore, type Locale, type UiTheme } from "@app/frontend/ui";
 import {
   fetchUserProfile,
@@ -26,6 +27,8 @@ export interface AuthSessionFlowInput {
   applyUserTheme: (theme: UiTheme) => void;
   locale: Locale;
   messages: AuthSessionFlowMessages;
+  navigate?: (to: string, options?: { replace?: boolean }) => void;
+  returnUrl?: string | null;
 }
 
 export interface AuthSessionFlow {
@@ -40,12 +43,18 @@ export function useAuthSessionFlow({
   applyUserTheme,
   locale,
   messages,
+  navigate,
+  returnUrl,
 }: AuthSessionFlowInput): AuthSessionFlow {
   const queryClient = useQueryClient();
   const authStore = useAuthShellStore();
   const authClient = useAuthApiClient();
   const userClient = useUserApiClient();
   const bearerToken = authStore.bearerToken;
+  const safeReturnUrl =
+    returnUrl?.startsWith("/") && !returnUrl.startsWith("//")
+      ? returnUrl
+      : null;
 
   const authMeQuery = useQuery({
     enabled: Boolean(bearerToken),
@@ -96,6 +105,7 @@ export function useAuthSessionFlow({
       ),
     onSuccess: (body) => {
       authStore.setSession(body?.accessToken, body?.refreshToken);
+      clearApiAuthRequired();
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);
       if (nextLocale) {
@@ -106,6 +116,9 @@ export function useAuthSessionFlow({
       }
       void queryClient.invalidateQueries({ queryKey: authMeQueryKey() });
       void queryClient.invalidateQueries({ queryKey: profileQueryKey() });
+      if (safeReturnUrl) {
+        navigate?.(safeReturnUrl, { replace: true });
+      }
     },
     retry: false,
   });

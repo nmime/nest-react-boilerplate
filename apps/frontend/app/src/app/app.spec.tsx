@@ -303,6 +303,25 @@ describe("User app shell", () => {
     });
   });
 
+  it("returns to the protected route after auth redirect login", async () => {
+    window.history.pushState({}, "", "/auth?returnUrl=/profile");
+    setFetch(
+      jsonResponse({ data: { accessToken: "return-token" } }),
+      jsonResponse({ data: { user: { locale: "en" } } }),
+      jsonResponse({
+        data: {
+          principal: { subject: "return-subject", email: "return@example.com" },
+        },
+      }),
+    );
+
+    render(<App />);
+    submitLogin("return@example.com");
+
+    await waitFor(() => expect(window.location.pathname).toBe("/profile"));
+    expect(await screen.findByText("Ready: return@example.com")).toBeTruthy();
+  });
+
   it("shows forbidden states for profile response and thrown failures", async () => {
     setFetch(
       jsonResponse({ data: { accessToken: "bad-token" } }),

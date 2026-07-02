@@ -76,6 +76,18 @@
       ],
       "@app/common/swagger": ["libs/backend/common/swagger/lib/src/index.ts"],
       "@app/common/i18n": ["libs/common/i18n/lib/src/index.ts"],
+      "@app/common/i18n/frontend-admin": [
+        "libs/common/i18n/lib/src/frontend/admin.ts"
+      ],
+      "@app/common/i18n/frontend-landing": [
+        "libs/common/i18n/lib/src/frontend/landing.ts"
+      ],
+      "@app/common/i18n/frontend-shared": [
+        "libs/common/i18n/lib/src/frontend/shared.ts"
+      ],
+      "@app/common/i18n/frontend-user": [
+        "libs/common/i18n/lib/src/frontend/user.ts"
+      ],
       "@app/api-contracts": ["libs/common/api-contracts/lib/src/index.ts"],
       "@app/api-client": ["libs/frontend/api-client/lib/src/index.ts"],
       "@app/common/feature-flags": [

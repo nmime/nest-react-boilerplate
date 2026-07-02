@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import {
   cleanup,
   fireEvent,
@@ -7,6 +8,11 @@ import {
 } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  FrontendI18nProvider,
+  FrontendStateProvider,
+  adminFrontendTranslations,
+} from "@app/frontend/ui";
 import App, { renderAdminRoute } from "../App";
 import {
   type AdminProfilePayload,
@@ -113,6 +119,14 @@ const profilePayload = {
 const access = createAdminAccess(profilePayload.principal);
 const payload = profilePayload;
 const emptyProfilePayload: AdminProfilePayload = {};
+const renderAdminMarkup = (element: ReactElement): string =>
+  renderToStaticMarkup(
+    <FrontendStateProvider>
+      <FrontendI18nProvider translations={adminFrontendTranslations}>
+        {element}
+      </FrontendI18nProvider>
+    </FrontendStateProvider>,
+  );
 
 describe("App", () => {
   beforeEach(() => {
@@ -278,43 +292,41 @@ describe("App", () => {
     expect(normalizeClaimList(["a", "a", "", 1])).toEqual(["a"]);
     expect(createAdminAccess(profilePayload.principal).canReadUsers).toBe(true);
 
-    expect(renderToStaticMarkup(<DashboardPage access={access} />)).toContain(
+    expect(renderAdminMarkup(<DashboardPage access={access} />)).toContain(
       "Admin dashboard",
     );
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         <DashboardPage access={{ ...access, roles: [], permissions: [] }} />,
       ),
     ).toContain("Roles: none. Permissions: none.");
-    expect(renderToStaticMarkup(<ProfilePage payload={payload} />)).toContain(
+    expect(renderAdminMarkup(<ProfilePage payload={payload} />)).toContain(
       "Ada Admin",
     );
     expect(
-      renderToStaticMarkup(<ProfilePage payload={emptyProfilePayload} />),
+      renderAdminMarkup(<ProfilePage payload={emptyProfilePayload} />),
     ).toContain("Profile");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         <ProfilePage
           payload={{ profile: { email: "fallback@example.com" } }}
         />,
       ),
     ).toContain("fallback@example.com");
     expect(
-      renderToStaticMarkup(
-        <ProfilePage payload={{ profile: { id: "p-1" } }} />,
-      ),
+      renderAdminMarkup(<ProfilePage payload={{ profile: { id: "p-1" } }} />),
     ).toContain("p-1");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         <ProfilePage
           payload={{ principal: { roles: ["admin"], permissions: ["read"] } }}
         />,
       ),
     ).toContain("Subject: unknown");
-    expect(renderToStaticMarkup(<ForbiddenPage reason="Denied" />)).toContain(
+    expect(renderAdminMarkup(<ForbiddenPage reason="Denied" />)).toContain(
       "Denied",
     );
-    expect(renderToStaticMarkup(<NotFoundPage />)).toContain(
+    expect(renderAdminMarkup(<NotFoundPage />)).toContain(
       "Admin page not found",
     );
   });
@@ -322,29 +334,29 @@ describe("App", () => {
   it("renders async dashboard errors and admin route states", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch(true, {}));
 
-    expect(renderToStaticMarkup(<DashboardPage access={access} />)).toContain(
+    expect(renderAdminMarkup(<DashboardPage access={access} />)).toContain(
       "Admin dashboard",
     );
     expect(
-      renderToStaticMarkup(renderAdminRoute("/", { status: "loading" })),
+      renderAdminMarkup(renderAdminRoute("/", { status: "loading" })),
     ).toContain("Loading admin profile");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/", { status: "forbidden", reason: "Nope" }),
       ),
     ).toContain("Nope");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/dashboard", { status: "ready", payload, access }),
       ),
     ).toContain("Admin dashboard");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/profile", { status: "ready", payload, access }),
       ),
     ).toContain("Ada Admin");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/profile", {
           status: "ready",
           payload,
@@ -353,7 +365,7 @@ describe("App", () => {
       ),
     ).toContain("Ada Admin");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/dashboard", {
           status: "ready",
           payload,
@@ -362,7 +374,7 @@ describe("App", () => {
       ),
     ).toContain("Admin dashboard");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/nope", { status: "ready", payload, access }),
       ),
     ).toContain("Admin page not found");

@@ -3,6 +3,7 @@ import {
   FrontendI18nProvider,
   FrontendStateProvider,
   UiApiRuntimeOverlay,
+  landingFrontendTranslations,
   observer,
   translate,
   useAppStore,
@@ -62,7 +63,7 @@ export const withLandingProviders = <TProps extends object>(
 ) => {
   const ComponentWithLandingProviders = (props: TProps) => (
     <FrontendStateProvider>
-      <FrontendI18nProvider>
+      <FrontendI18nProvider translations={landingFrontendTranslations}>
         <Component {...props} />
         <LandingRuntimeOverlayProvider />
       </FrontendI18nProvider>

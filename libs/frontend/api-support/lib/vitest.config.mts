@@ -1,20 +1,11 @@
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
+import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 // nx-ignore-next-line
 import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   root: import.meta.dirname,
-  resolve: {
-    alias: {
-      "@app/common/i18n": fileURLToPath(
-        new URL(
-          "../../../../libs/common/i18n/lib/src/index.ts",
-          import.meta.url,
-        ),
-      ),
-    },
-  },
+  plugins: [nxViteTsPaths()],
   test: {
     environment: "jsdom",
     globals: true,

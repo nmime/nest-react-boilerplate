@@ -44,7 +44,11 @@ module.exports = [
         "error",
         {
           enforceBuildableLibDependency: true,
-          allow: ["^.*/eslint(\\.base)?\\.config\\.[cm]?js$"],
+          allow: [
+            "^.*/eslint(\\.base)?\\.config\\.[cm]?js$",
+            "^../../../../../i18n/.+\\.json$",
+            "^../../../../../../i18n/.+\\.json$",
+          ],
           depConstraints: [
             {
               sourceTag: "platform:backend",

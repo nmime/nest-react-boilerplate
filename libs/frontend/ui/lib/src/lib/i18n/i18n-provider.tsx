@@ -11,8 +11,10 @@ import {
 import { observer } from "mobx-react-lite";
 import {
   fallbackLocale,
+  sharedFrontendTranslations,
   supportedLocales,
   translate,
+  type FrontendTranslations,
   type Locale,
   type TranslationKey,
   type TranslationParams,
@@ -60,6 +62,7 @@ export interface FrontendI18nProviderProps {
   children: ReactNode;
   initialLocale?: Locale;
   initialTheme?: UiTheme;
+  translations?: FrontendTranslations;
   userLocale?: Locale | null;
   userTheme?: UiTheme | null;
   onLocaleChange?: (locale: Locale) => Promise<void> | void;
@@ -86,6 +89,7 @@ export const FrontendI18nProvider = observer(function FrontendI18nProvider({
   initialTheme,
   onLocaleChange,
   onThemeChange,
+  translations = sharedFrontendTranslations,
   userLocale,
   userTheme,
 }: Readonly<FrontendI18nProviderProps>) {
@@ -146,9 +150,16 @@ export const FrontendI18nProvider = observer(function FrontendI18nProvider({
       theme,
       setTheme,
       supportedLocales: localeStore.supportedLocales,
-      t: (key, params) => translate(key, { locale, params }),
+      t: (key, params) => translate(key, { locale, params, translations }),
     }),
-    [locale, localeStore.supportedLocales, setLocale, setTheme, theme],
+    [
+      locale,
+      localeStore.supportedLocales,
+      setLocale,
+      setTheme,
+      theme,
+      translations,
+    ],
   );
 
   return (

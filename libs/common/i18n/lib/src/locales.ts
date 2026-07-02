@@ -1,87 +1,60 @@
-// Root-level locale catalogs are package assets for @app/common/i18n; keep the
-// imports explicit so the catalogs are bundled while documenting the Nx boundary exception.
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enCommonCatalog from "../../../../../i18n/en/common.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enLandingCatalog from "../../../../../i18n/en/landing.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAdminCatalog from "../../../../../i18n/en/admin.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAdminDashboardCatalog from "../../../../../i18n/en/admin-dashboard.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAdminUsersCatalog from "../../../../../i18n/en/admin-users.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAdminAuditCatalog from "../../../../../i18n/en/admin-audit.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAdminRolesCatalog from "../../../../../i18n/en/admin-roles.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enUserCatalog from "../../../../../i18n/en/user.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enErrorsCatalog from "../../../../../i18n/en/errors.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enAuthCatalog from "../../../../../i18n/en/auth.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enSocialAuthCatalog from "../../../../../i18n/en/social-auth.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enTmaCatalog from "../../../../../i18n/en/tma.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enBotCatalog from "../../../../../i18n/en/bot.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import enDiscordCatalog from "../../../../../i18n/en/discord.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruCommonCatalog from "../../../../../i18n/ru/common.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruLandingCatalog from "../../../../../i18n/ru/landing.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAdminCatalog from "../../../../../i18n/ru/admin.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAdminDashboardCatalog from "../../../../../i18n/ru/admin-dashboard.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAdminUsersCatalog from "../../../../../i18n/ru/admin-users.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAdminAuditCatalog from "../../../../../i18n/ru/admin-audit.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAdminRolesCatalog from "../../../../../i18n/ru/admin-roles.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruUserCatalog from "../../../../../i18n/ru/user.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruErrorsCatalog from "../../../../../i18n/ru/errors.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruAuthCatalog from "../../../../../i18n/ru/auth.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruSocialAuthCatalog from "../../../../../i18n/ru/social-auth.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruTmaCatalog from "../../../../../i18n/ru/tma.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruBotCatalog from "../../../../../i18n/ru/bot.json";
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import ruDiscordCatalog from "../../../../../i18n/ru/discord.json";
+import enAdminAuditCatalog from "../../../../../i18n/en/admin/audit.json";
+import enAdminDashboardCatalog from "../../../../../i18n/en/admin/dashboard.json";
+import enAdminRolesCatalog from "../../../../../i18n/en/admin/roles.json";
+import enAdminCatalog from "../../../../../i18n/en/admin/shell.json";
+import enAdminUsersCatalog from "../../../../../i18n/en/admin/users.json";
+import enBotCatalog from "../../../../../i18n/en/bots/telegram.json";
+import enCommonCatalog from "../../../../../i18n/en/common/shared.json";
+import enDiscordCatalog from "../../../../../i18n/en/bots/discord.json";
+import enErrorsCatalog from "../../../../../i18n/en/common/errors.json";
+import enLandingCatalog from "../../../../../i18n/en/landing/app.json";
+import enAuthCatalog from "../../../../../i18n/en/user/auth.json";
+import enSocialAuthCatalog from "../../../../../i18n/en/user/social-auth.json";
+import enUserCatalog from "../../../../../i18n/en/user/shell.json";
+import enTmaCatalog from "../../../../../i18n/en/user/tma.json";
+import ruAdminAuditCatalog from "../../../../../i18n/ru/admin/audit.json";
+import ruAdminDashboardCatalog from "../../../../../i18n/ru/admin/dashboard.json";
+import ruAdminRolesCatalog from "../../../../../i18n/ru/admin/roles.json";
+import ruAdminCatalog from "../../../../../i18n/ru/admin/shell.json";
+import ruAdminUsersCatalog from "../../../../../i18n/ru/admin/users.json";
+import ruBotCatalog from "../../../../../i18n/ru/bots/telegram.json";
+import ruCommonCatalog from "../../../../../i18n/ru/common/shared.json";
+import ruDiscordCatalog from "../../../../../i18n/ru/bots/discord.json";
+import ruErrorsCatalog from "../../../../../i18n/ru/common/errors.json";
+import ruLandingCatalog from "../../../../../i18n/ru/landing/app.json";
+import ruAuthCatalog from "../../../../../i18n/ru/user/auth.json";
+import ruSocialAuthCatalog from "../../../../../i18n/ru/user/social-auth.json";
+import ruUserCatalog from "../../../../../i18n/ru/user/shell.json";
+import ruTmaCatalog from "../../../../../i18n/ru/user/tma.json";
+import {
+  mergeLocaleCatalogFiles,
+  type Locale,
+  type RuntimeLocaleCatalog,
+} from "./runtime";
 
 export const localeCatalogFileNames = [
-  "common.json",
-  "landing.json",
-  "admin.json",
-  "admin-dashboard.json",
-  "admin-users.json",
-  "admin-audit.json",
-  "admin-roles.json",
-  "user.json",
-  "errors.json",
-  "auth.json",
-  "social-auth.json",
-  "tma.json",
-  "bot.json",
-  "discord.json",
+  "common/shared.json",
+  "common/errors.json",
+  "landing/app.json",
+  "admin/shell.json",
+  "admin/dashboard.json",
+  "admin/users.json",
+  "admin/audit.json",
+  "admin/roles.json",
+  "user/shell.json",
+  "user/auth.json",
+  "user/social-auth.json",
+  "user/tma.json",
+  "bots/telegram.json",
+  "bots/discord.json",
 ] as const;
 
 type LocaleCatalogFileName = (typeof localeCatalogFileNames)[number];
-type LocaleCatalogFile = Record<string, string>;
 type LocaleCatalogFileEntry = readonly [
   LocaleCatalogFileName,
-  LocaleCatalogFile,
+  RuntimeLocaleCatalog,
 ];
 
-export type Locale = "en" | "ru";
 export type TranslationKey =
   | "common.language"
   | "common.language.en"
@@ -479,62 +452,41 @@ export type TranslationKey =
 
 export type LocaleCatalog = Record<TranslationKey, string>;
 
-function mergeLocaleCatalogFiles(
-  locale: Locale,
-  files: readonly LocaleCatalogFileEntry[],
-): LocaleCatalog {
-  const merged: Record<string, string> = {};
-
-  for (const [fileName, catalog] of files) {
-    for (const [key, value] of Object.entries(catalog)) {
-      if (Object.hasOwn(merged, key)) {
-        throw new Error(
-          `Duplicate i18n key ${key} while merging ${locale}/${fileName}`,
-        );
-      }
-
-      merged[key] = value;
-    }
-  }
-
-  return merged as LocaleCatalog;
-}
-
 const enFiles = [
-  ["common.json", enCommonCatalog],
-  ["landing.json", enLandingCatalog],
-  ["admin.json", enAdminCatalog],
-  ["admin-dashboard.json", enAdminDashboardCatalog],
-  ["admin-users.json", enAdminUsersCatalog],
-  ["admin-audit.json", enAdminAuditCatalog],
-  ["admin-roles.json", enAdminRolesCatalog],
-  ["user.json", enUserCatalog],
-  ["errors.json", enErrorsCatalog],
-  ["auth.json", enAuthCatalog],
-  ["social-auth.json", enSocialAuthCatalog],
-  ["tma.json", enTmaCatalog],
-  ["bot.json", enBotCatalog],
-  ["discord.json", enDiscordCatalog],
-] as const;
+  ["common/shared.json", enCommonCatalog],
+  ["common/errors.json", enErrorsCatalog],
+  ["landing/app.json", enLandingCatalog],
+  ["admin/shell.json", enAdminCatalog],
+  ["admin/dashboard.json", enAdminDashboardCatalog],
+  ["admin/users.json", enAdminUsersCatalog],
+  ["admin/audit.json", enAdminAuditCatalog],
+  ["admin/roles.json", enAdminRolesCatalog],
+  ["user/shell.json", enUserCatalog],
+  ["user/auth.json", enAuthCatalog],
+  ["user/social-auth.json", enSocialAuthCatalog],
+  ["user/tma.json", enTmaCatalog],
+  ["bots/telegram.json", enBotCatalog],
+  ["bots/discord.json", enDiscordCatalog],
+] as const satisfies readonly LocaleCatalogFileEntry[];
 const ruFiles = [
-  ["common.json", ruCommonCatalog],
-  ["landing.json", ruLandingCatalog],
-  ["admin.json", ruAdminCatalog],
-  ["admin-dashboard.json", ruAdminDashboardCatalog],
-  ["admin-users.json", ruAdminUsersCatalog],
-  ["admin-audit.json", ruAdminAuditCatalog],
-  ["admin-roles.json", ruAdminRolesCatalog],
-  ["user.json", ruUserCatalog],
-  ["errors.json", ruErrorsCatalog],
-  ["auth.json", ruAuthCatalog],
-  ["social-auth.json", ruSocialAuthCatalog],
-  ["tma.json", ruTmaCatalog],
-  ["bot.json", ruBotCatalog],
-  ["discord.json", ruDiscordCatalog],
-] as const;
+  ["common/shared.json", ruCommonCatalog],
+  ["common/errors.json", ruErrorsCatalog],
+  ["landing/app.json", ruLandingCatalog],
+  ["admin/shell.json", ruAdminCatalog],
+  ["admin/dashboard.json", ruAdminDashboardCatalog],
+  ["admin/users.json", ruAdminUsersCatalog],
+  ["admin/audit.json", ruAdminAuditCatalog],
+  ["admin/roles.json", ruAdminRolesCatalog],
+  ["user/shell.json", ruUserCatalog],
+  ["user/auth.json", ruAuthCatalog],
+  ["user/social-auth.json", ruSocialAuthCatalog],
+  ["user/tma.json", ruTmaCatalog],
+  ["bots/telegram.json", ruBotCatalog],
+  ["bots/discord.json", ruDiscordCatalog],
+] as const satisfies readonly LocaleCatalogFileEntry[];
 
-export const en: LocaleCatalog = mergeLocaleCatalogFiles("en", enFiles);
-export const ru: LocaleCatalog = mergeLocaleCatalogFiles("ru", ruFiles);
+export const en = mergeLocaleCatalogFiles("en", enFiles) as LocaleCatalog;
+export const ru = mergeLocaleCatalogFiles("ru", ruFiles) as LocaleCatalog;
 
 export const translations = {
   en,

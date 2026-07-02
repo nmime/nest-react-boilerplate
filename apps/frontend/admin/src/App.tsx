@@ -35,6 +35,7 @@ import {
   translate,
   useAppStore,
   useI18n,
+  adminFrontendTranslations,
   useStore,
   normalizeLocale,
   type Locale,
@@ -368,6 +369,7 @@ const AdminRoot = ({
     <FrontendI18nProvider
       onLocaleChange={persistUserLocale}
       onThemeChange={persistUserTheme}
+      translations={adminFrontendTranslations}
       userLocale={userLocale}
       userTheme={userTheme}
     >

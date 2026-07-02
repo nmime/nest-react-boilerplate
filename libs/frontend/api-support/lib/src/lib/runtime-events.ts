@@ -47,6 +47,7 @@ export interface ApiRuntimeState {
 export type ApiRuntimeEventListener = (event: ApiRuntimeEvent) => void;
 
 export interface ApiRuntimeEventHub {
+  clearAuthRequired: () => void;
   emit: (event: ApiRuntimeEvent) => void;
   getState: () => ApiRuntimeState;
   reset: () => void;
@@ -86,6 +87,13 @@ export const createApiRuntimeEventHub = (): ApiRuntimeEventHub => {
   };
 
   return {
+    clearAuthRequired: () => {
+      state = {
+        ...state,
+        authRequired: false,
+        redirectTo: null,
+      };
+    },
     emit,
     getState: () => state,
     reset: () => {

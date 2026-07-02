@@ -145,20 +145,20 @@ const forbiddenSocialAuthImportPatterns: RestrictedImportPattern[] = [
 ];
 
 export const thinLocaleCatalogFileNames = [
-  "common.json",
-  "landing.json",
-  "admin.json",
-  "admin-dashboard.json",
-  "admin-users.json",
-  "admin-audit.json",
-  "admin-roles.json",
-  "user.json",
-  "errors.json",
-  "auth.json",
-  "social-auth.json",
-  "tma.json",
-  "bot.json",
-  "discord.json",
+  "common/shared.json",
+  "common/errors.json",
+  "landing/app.json",
+  "admin/shell.json",
+  "admin/dashboard.json",
+  "admin/users.json",
+  "admin/audit.json",
+  "admin/roles.json",
+  "user/shell.json",
+  "user/auth.json",
+  "user/social-auth.json",
+  "user/tma.json",
+  "bots/telegram.json",
+  "bots/discord.json",
 ] as const;
 
 const supportedThinLocaleDirectories = ["en", "ru"] as const;
@@ -828,9 +828,9 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
       continue;
     }
 
-    const actualFiles = readdirSync(localeDirectory)
-      .filter((file) => file.endsWith(".json"))
-      .sort((left, right) => left.localeCompare(right));
+    const actualFiles = collectLocaleJsonFiles(localeDirectory).sort(
+      (left, right) => left.localeCompare(right),
+    );
     const expectedFiles = [...thinLocaleCatalogFileNames].sort((left, right) =>
       left.localeCompare(right),
     );
@@ -915,6 +915,18 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
           );
         }
 
+        if (
+          !relativeFile.includes("/bots/") &&
+          (key.startsWith("bot.") || key.startsWith("discord."))
+        ) {
+          failures.push(
+            thinLocaleFailure(
+              relativeFile,
+              `bot/Discord key ${key} must stay under the bots scope`,
+            ),
+          );
+        }
+
         if (mergedKeys.has(key)) {
           failures.push(
             thinLocaleFailure(relativeFile, `duplicate merged locale key ${key}`),
@@ -956,6 +968,22 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
   }
 
   return failures;
+}
+
+function collectLocaleJsonFiles(localeDirectory: string): string[] {
+  const visit = (directory: string): string[] =>
+    readdirSync(directory).flatMap((entry) => {
+      const path = join(directory, entry);
+      const stat = statSync(path);
+
+      if (stat.isDirectory()) {
+        return visit(path).map((nestedFile) => `${entry}/${nestedFile}`);
+      }
+
+      return stat.isFile() && entry.endsWith(".json") ? [entry] : [];
+    });
+
+  return visit(localeDirectory);
 }
 
 function readRawJsonObjectKeys(text: string): string[] {

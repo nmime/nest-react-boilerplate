@@ -1,4 +1,5 @@
 import {
+  adminFrontendTranslations,
   translate,
   type TranslationKey,
   type TranslationParams,
@@ -14,7 +15,7 @@ export type Translate = (
 ) => string;
 
 export const fallbackTranslate: Translate = (key, params) =>
-  translate(key, { params });
+  translate(key, { params, translations: adminFrontendTranslations });
 
 export const pageSize = 10;
 

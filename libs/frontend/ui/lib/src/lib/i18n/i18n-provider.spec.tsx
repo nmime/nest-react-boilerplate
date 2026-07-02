@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { landingFrontendTranslations } from "@app/common/i18n/frontend-landing";
 import {
   FrontendI18nProvider,
   LanguageSwitcher,
@@ -66,7 +67,10 @@ describe("FrontendI18nProvider", () => {
 
   it("renders translated content from provider locale", () => {
     const html = renderToStaticMarkup(
-      <FrontendI18nProvider initialLocale="ru">
+      <FrontendI18nProvider
+        initialLocale="ru"
+        translations={landingFrontendTranslations}
+      >
         <LanguageSwitcher />
         <ThemeSwitcher />
         <Example />
@@ -89,7 +93,10 @@ describe("FrontendI18nProvider", () => {
     });
 
     render(
-      <FrontendI18nProvider userLocale="ru">
+      <FrontendI18nProvider
+        translations={landingFrontendTranslations}
+        userLocale="ru"
+      >
         <LanguageSwitcher />
         <Example />
       </FrontendI18nProvider>,

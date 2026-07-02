@@ -447,7 +447,7 @@ describe("static-check thin locale catalog guard", () => {
       writeThinLocaleWorkspace(workspaceRoot);
       writeText(
         workspaceRoot,
-        "i18n/en/common.json",
+        "i18n/en/common/shared.json",
         `{
 ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(",\n")}
 }
@@ -455,7 +455,7 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
       );
       writeText(
         workspaceRoot,
-        "i18n/en/landing.json",
+        "i18n/en/landing/app.json",
         `{
   "landing.duplicate": "first",
   "landing.duplicate": "second"
@@ -464,18 +464,23 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
       );
       writeText(
         workspaceRoot,
-        "i18n/en/admin.json",
+        "i18n/en/admin/shell.json",
         JSON.stringify({ "admin.shared": "first" }, null, 2),
       );
       writeText(
         workspaceRoot,
-        "i18n/en/admin-dashboard.json",
+        "i18n/en/admin/dashboard.json",
         JSON.stringify({ "admin.shared": "second" }, null, 2),
       );
       writeText(
         workspaceRoot,
-        "i18n/ru/user.json",
+        "i18n/ru/user/shell.json",
         JSON.stringify({ "user.only-ru": "drift" }, null, 2),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/user/tma.json",
+        JSON.stringify({ "bot.menu.main": "wrong scope" }, null, 2),
       );
 
       const failures = checkThinLocaleCatalogs(workspaceRoot);
@@ -484,6 +489,7 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
       assert.match(stderr, /has 61 keys/);
       assert.match(stderr, /duplicate raw JSON key landing\.duplicate/);
       assert.match(stderr, /duplicate merged locale key admin\.shared/);
+      assert.match(stderr, /bot\/Discord key bot\.menu\.main/);
       assert.match(stderr, /missing fallback locale keys/);
       assert.match(stderr, /has keys absent from fallback locale/);
     } finally {

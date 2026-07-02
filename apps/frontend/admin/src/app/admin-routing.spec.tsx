@@ -1,9 +1,24 @@
+import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import {
+  FrontendI18nProvider,
+  FrontendStateProvider,
+  adminFrontendTranslations,
+} from "@app/frontend/ui";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { normalizeAdminPath } from "../shared";
 import { AdminLayout } from "../widgets/admin-shell";
+
+const renderAdminMarkup = (element: ReactElement): string =>
+  renderToStaticMarkup(
+    <FrontendStateProvider>
+      <FrontendI18nProvider translations={adminFrontendTranslations}>
+        {element}
+      </FrontendI18nProvider>
+    </FrontendStateProvider>,
+  );
 
 describe("admin route base handling", () => {
   const access = createAdminAccess({
@@ -35,12 +50,12 @@ describe("admin route base handling", () => {
 
   it("renders dashboard and profile routes when mounted at /admin", () => {
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/admin", { status: "ready", payload, access }),
       ),
     ).toContain("Admin dashboard");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/admin/profile", {
           status: "ready",
           payload,
@@ -51,7 +66,7 @@ describe("admin route base handling", () => {
   });
 
   it("keeps admin shell navigation scoped and exposes the current page", () => {
-    const html = renderToStaticMarkup(
+    const html = renderAdminMarkup(
       <AdminLayout currentPath="/admin/profile">
         <span>Profile content</span>
       </AdminLayout>,
@@ -80,7 +95,7 @@ describe("admin route base handling", () => {
       ],
     });
 
-    const html = renderToStaticMarkup(
+    const html = renderAdminMarkup(
       <AdminLayout access={fullAccess} currentPath="/admin/users">
         <span>Users content</span>
       </AdminLayout>,
@@ -105,7 +120,7 @@ describe("admin route base handling", () => {
     });
 
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/users-but-not-users", {
           status: "ready",
           payload,
@@ -114,7 +129,7 @@ describe("admin route base handling", () => {
       ),
     ).toContain("Admin page not found");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/admin/tenants", {
           status: "ready",
           payload,
@@ -123,7 +138,7 @@ describe("admin route base handling", () => {
       ),
     ).toContain("Missing admin roles permission");
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/admin/tenants", {
           status: "ready",
           payload,
@@ -146,7 +161,7 @@ describe("admin frontend CASL RBAC gating", () => {
     expect(access.canReadDashboard).toBe(false);
     expect(access.canReadProfile).toBe(false);
     expect(
-      renderToStaticMarkup(
+      renderAdminMarkup(
         renderAdminRoute("/admin", { status: "ready", payload: {}, access }),
       ),
     ).toContain("Missing admin dashboard permission");

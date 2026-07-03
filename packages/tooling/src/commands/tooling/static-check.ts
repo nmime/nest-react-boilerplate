@@ -80,8 +80,8 @@ const exportedAllCapsConstDeclaration =
 const injectTokenIdentifier = /^[A-Z][A-Za-z0-9]*InjectToken$/u;
 const localNamedBarrelReExport =
   /export\s+(?:type\s+)?\{[\s\S]*?\}\s+from\s+["'](\.{1,2}\/[^"']+)["']\s*;?/gu;
-const duplicatedFrontendSourceLibPath =
-  /libs\/frontend\/[A-Za-z0-9_./-]+\/lib\/src\/lib(?:\/|\b)/u;
+const duplicatedLibrarySourceLibPath =
+  /libs\/[A-Za-z0-9_./-]+\/lib\/src\/lib(?:\/|\b)/u;
 const staleSlashStyleAppAliasImport =
   /(?:from\s+["']|import\s+(?:type\s+)?["']|import\s*\(["']|require\(["'])(@app\/(?:backend|common|frontend)\/[A-Za-z0-9_./-]+)["']/u;
 
@@ -363,7 +363,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkExportedAllCapsConstantConventions(workspaceRoot),
     ...checkExportedSymbolTokenConventions(workspaceRoot),
     ...checkLocalBarrelExportConventions(workspaceRoot),
-    ...checkDuplicatedFrontendSourceLibPaths(workspaceRoot),
+    ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
     ...checkFrontendUiCompatibilityFacade(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
@@ -894,26 +894,24 @@ export function checkLocalBarrelExportConventions(
   });
 }
 
-export function checkDuplicatedFrontendSourceLibPaths(
+export function checkDuplicatedLibrarySourceLibPaths(
   workspaceRoot: string,
 ): CheckFailure[] {
-  const frontendSourceLibDirectories = collectProjectMetadata(workspaceRoot)
+  const librarySourceLibDirectories = collectProjectMetadata(workspaceRoot)
     .map((project) => `${project.root}/src/lib`)
-    .filter((sourceDirectory) =>
-      sourceDirectory.startsWith("libs/frontend/"),
-    );
+    .filter((sourceDirectory) => sourceDirectory.startsWith("libs/"));
   const failures: CheckFailure[] = [];
 
-  for (const sourceDirectory of frontendSourceLibDirectories) {
+  for (const sourceDirectory of librarySourceLibDirectories) {
     if (!existsSync(resolve(workspaceRoot, sourceDirectory))) continue;
 
     failures.push({
-      command: "frontend duplicated source lib path convention",
+      command: "library duplicated source lib path convention",
       file: sourceDirectory,
       status: 1,
       stdout: "",
       stderr:
-        "Frontend libraries must not use lib/src/lib. Keep source folders directly below src, for example libs/frontend/ui/lib/src/component.",
+        "Libraries must not use lib/src/lib. Keep source folders directly below src, for example libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui/lib/src/component.",
     });
   }
 
@@ -925,15 +923,15 @@ export function checkDuplicatedFrontendSourceLibPaths(
 
     const text = readFileSync(file, "utf8");
     text.split(/\r?\n/u).forEach((line, index) => {
-      if (!duplicatedFrontendSourceLibPath.test(line)) return;
+      if (!duplicatedLibrarySourceLibPath.test(line)) return;
 
       failures.push({
-        command: "frontend duplicated source lib path convention",
+        command: "library duplicated source lib path convention",
         file: `${relativeFile}:${index + 1}`,
         status: 1,
         stdout: "",
         stderr:
-          "Found a frontend lib/src/lib path. Use lib/src/<domain> paths such as libs/frontend/ui/lib/src/component.",
+          "Found a lib/src/lib path. Use lib/src/<domain> paths such as libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui/lib/src/component.",
       });
     });
   }

@@ -1,3 +1,3 @@
-export * from "./lib/feature-flag.provider";
-export * from "./lib/feature-flag.types";
-export * from "./lib/feature-flag-value";
+export * from "./feature-flag.provider";
+export * from "./feature-flag.types";
+export * from "./feature-flag-value";

@@ -79,7 +79,7 @@ describe("project generate vertical slice", () => {
       assert.equal(result.status, 0);
       assert.match(
         output,
-        /CREATE libs\/backend\/feature\/support-cases\/main\/lib\/src\/lib\/support-cases\.controller\.ts/,
+        /CREATE libs\/backend\/feature\/support-cases\/main\/lib\/src\/support-cases\.controller\.ts/,
       );
       assert.match(
         output,
@@ -94,7 +94,7 @@ describe("project generate vertical slice", () => {
         existsSync(
           join(
             workspaceRoot,
-            "libs/backend/feature/support-cases/main/lib/src/lib/support-cases.controller.ts",
+            "libs/backend/feature/support-cases/main/lib/src/support-cases.controller.ts",
           ),
         ),
         false,
@@ -118,7 +118,7 @@ describe("project generate vertical slice", () => {
       const controller = readFileSync(
         join(
           workspaceRoot,
-          "libs/backend/feature/billing-events/main/lib/src/lib/billing-events.controller.ts",
+          "libs/backend/feature/billing-events/main/lib/src/billing-events.controller.ts",
         ),
         "utf8",
       );

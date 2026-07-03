@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const workspaceRoot = join(__dirname, "../../../../../../../");
+const workspaceRoot = join(__dirname, "../../../../../../");
 const discordRoots = [
   "libs/backend/bots/discord/lib",
   "apps/backend/discord-app-api",

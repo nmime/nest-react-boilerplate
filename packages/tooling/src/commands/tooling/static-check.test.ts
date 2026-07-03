@@ -11,7 +11,7 @@ import {
   checkForbiddenSocialAuthDependencies,
   checkForbiddenSocialAuthImports,
   checkGeneratedContractImports,
-  checkDuplicatedFrontendSourceLibPaths,
+  checkDuplicatedLibrarySourceLibPaths,
   checkLocalBarrelExportConventions,
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
@@ -249,7 +249,7 @@ describe("static-check exported constant naming guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "libs/backend/feature/auth/shared/lib/src/lib/oauth/tenant-context.ts",
+        "libs/backend/feature/auth/shared/lib/src/oauth/tenant-context.ts",
         [
           'export const DEFAULT_AUTH_TENANT_ID = "00000000-0000-0000-0000-000000000000";',
           'const LOCAL_ONLY = "allowed";',
@@ -263,7 +263,7 @@ describe("static-check exported constant naming guard", () => {
       assert.equal(failures[0].command, "exported constant naming convention");
       assert.equal(
         failures[0].file,
-        "libs/backend/feature/auth/shared/lib/src/lib/oauth/tenant-context.ts:1",
+        "libs/backend/feature/auth/shared/lib/src/oauth/tenant-context.ts:1",
       );
       assert.match(failures[0].stderr, /DEFAULT_AUTH_TENANT_ID/);
       assert.match(failures[0].stderr, /PascalCase/);
@@ -278,7 +278,7 @@ describe("static-check exported constant naming guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "libs/backend/feature/auth/shared/lib/src/lib/oauth/tenant-context.ts",
+        "libs/backend/feature/auth/shared/lib/src/oauth/tenant-context.ts",
         [
           'export const DefaultAuthTenantId = "00000000-0000-0000-0000-000000000000";',
           'export const tenantIdHeaders = ["x-tenant-id"] as const;',
@@ -299,7 +299,7 @@ describe("static-check exported symbol token guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "libs/backend/feature/auth/main/lib/src/lib/auth-user-store.ts",
+        "libs/backend/feature/auth/main/lib/src/auth-user-store.ts",
         'export const AUTH_USER_STORE = Symbol("AUTH_USER_STORE");\n',
       );
 
@@ -320,7 +320,7 @@ describe("static-check exported symbol token guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "libs/backend/feature/auth/main/lib/src/lib/auth-user-store.ts",
+        "libs/backend/feature/auth/main/lib/src/auth-user-store.ts",
         'export const AuthUserStore = Symbol("AuthUserStore");\n',
       );
 
@@ -341,7 +341,7 @@ describe("static-check exported symbol token guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "libs/backend/feature/auth/main/lib/src/lib/auth-user-store.ts",
+        "libs/backend/feature/auth/main/lib/src/auth-user-store.ts",
         'export const AuthUserStoreInjectToken = Symbol("AuthUserStoreInjectToken");\n',
       );
 
@@ -407,34 +407,34 @@ describe("static-check local re-export guard", () => {
   });
 });
 
-describe("static-check frontend source path guard", () => {
-  it("rejects duplicated frontend lib/src/lib paths", () => {
+describe("static-check library source path guard", () => {
+  it("rejects duplicated library lib/src/lib paths", () => {
     const workspaceRoot = createWorkspace();
 
     try {
       writeText(
         workspaceRoot,
-        "libs/frontend/ui/lib/project.json",
-        JSON.stringify({ name: "@app/frontend-ui" }),
+        "libs/backend/feature/auth/main/lib/project.json",
+        JSON.stringify({ name: "@app/backend-feature-auth-main" }),
       );
       writeText(
         workspaceRoot,
-        "libs/frontend/ui/lib/src/lib/component/button.tsx",
-        "export const UiButton = () => null;\n",
+        "libs/backend/feature/auth/main/lib/src/lib/auth-user-store.ts",
+        "export const AuthUserStoreInjectToken = Symbol('AuthUserStoreInjectToken');\n",
       );
       writeText(
         workspaceRoot,
         "docs/frontend-state.md",
-        "Old path: libs/frontend/ui/lib/src/lib/component/button.tsx\n",
+        "Old path: libs/backend/feature/auth/main/lib/src/lib/auth-user-store.ts\n",
       );
 
-      const failures = checkDuplicatedFrontendSourceLibPaths(workspaceRoot);
+      const failures = checkDuplicatedLibrarySourceLibPaths(workspaceRoot);
 
       assert.equal(failures.length, 2);
       assert.deepEqual(
         failures.map((failure) => failure.file),
         [
-          "libs/frontend/ui/lib/src/lib",
+          "libs/backend/feature/auth/main/lib/src/lib",
           "docs/frontend-state.md:1",
         ],
       );
@@ -447,27 +447,27 @@ describe("static-check frontend source path guard", () => {
     }
   });
 
-  it("accepts frontend source folders directly below src", () => {
+  it("accepts library source folders directly below src", () => {
     const workspaceRoot = createWorkspace();
 
     try {
       writeText(
         workspaceRoot,
-        "libs/frontend/ui/lib/project.json",
-        JSON.stringify({ name: "@app/frontend-ui" }),
+        "libs/backend/feature/auth/main/lib/project.json",
+        JSON.stringify({ name: "@app/backend-feature-auth-main" }),
       );
       writeText(
         workspaceRoot,
-        "libs/frontend/ui/lib/src/component/button.tsx",
-        "export const UiButton = () => null;\n",
+        "libs/backend/feature/auth/main/lib/src/auth-user-store.ts",
+        "export const AuthUserStoreInjectToken = Symbol('AuthUserStoreInjectToken');\n",
       );
       writeText(
         workspaceRoot,
         "docs/frontend-state.md",
-        "Current path: libs/frontend/ui/lib/src/component/button.tsx\n",
+        "Current path: libs/backend/feature/auth/main/lib/src/auth-user-store.ts\n",
       );
 
-      assert.deepEqual(checkDuplicatedFrontendSourceLibPaths(workspaceRoot), []);
+      assert.deepEqual(checkDuplicatedLibrarySourceLibPaths(workspaceRoot), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }

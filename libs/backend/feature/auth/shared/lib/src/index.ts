@@ -1,18 +1,15 @@
 import type { Locale } from "@app/common-i18n";
 import { normalizeStringList } from "@app/backend-common-shared";
-import {
-  DefaultAuthTenantId,
-  resolveTenantId,
-} from "./lib/oauth/tenant-context";
+import { DefaultAuthTenantId, resolveTenantId } from "./oauth/tenant-context";
 import {
   AuthenticatedTheme,
   isAuthenticatedTheme,
   type UserThemePreference,
-} from "./lib/oauth/access-control.types";
+} from "./oauth/access-control.types";
 import type {
   AuthProvider,
   AuthProviderChannel,
-} from "./lib/oauth/social-auth.types";
+} from "./oauth/social-auth.types";
 
 export const UserRole = "user";
 export const AdminRole = "admin";
@@ -144,15 +141,15 @@ export function normalizeUserThemePreference(
   const normalized = value.trim().toLowerCase();
   return isAuthenticatedTheme(normalized) ? normalized : undefined;
 }
-export * from "./lib/oauth/access-control.decorators";
-export * from "./lib/oauth/access-control.types";
-export * from "./lib/oauth/auth-oauth.module";
-export * from "./lib/oauth/auth-oauth.service";
-export * from "./lib/oauth/auth-oauth.types";
-export * from "./lib/oauth/bearer-auth.guard";
-export * from "./lib/oauth/rbac.guard";
-export * from "./lib/oauth/session-auth.guard";
-export * from "./lib/oauth/social-auth.types";
-export * from "./lib/oauth/tenant-context";
-export * from "./lib/oauth/tenant-lifecycle";
-export * from "./lib/oauth/language.enum";
+export * from "./oauth/access-control.decorators";
+export * from "./oauth/access-control.types";
+export * from "./oauth/auth-oauth.module";
+export * from "./oauth/auth-oauth.service";
+export * from "./oauth/auth-oauth.types";
+export * from "./oauth/bearer-auth.guard";
+export * from "./oauth/rbac.guard";
+export * from "./oauth/session-auth.guard";
+export * from "./oauth/social-auth.types";
+export * from "./oauth/tenant-context";
+export * from "./oauth/tenant-lifecycle";
+export * from "./oauth/language.enum";

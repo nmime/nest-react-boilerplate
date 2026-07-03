@@ -1,2 +1,2 @@
-export * from "./lib/user-main.module";
-export * from "./lib/profile.controller";
+export * from "./user-main.module";
+export * from "./profile.controller";

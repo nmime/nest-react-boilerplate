@@ -271,22 +271,22 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     tsConfig(`${base}/shared/lib`, 6),
     {
       path: `${base}/main/lib/src/index.ts`,
-      contents: `export * from "./lib/${names.kebab}.module";\nexport * from "./lib/${names.kebab}.controller";\nexport * from "./lib/${names.kebab}.service";\nexport * from "${sharedAlias}";\n`,
+      contents: `export * from "./${names.kebab}.module";\nexport * from "./${names.kebab}.controller";\nexport * from "./${names.kebab}.service";\nexport * from "${sharedAlias}";\n`,
     },
     {
-      path: `${base}/main/lib/src/lib/${names.kebab}.module.ts`,
+      path: `${base}/main/lib/src/${names.kebab}.module.ts`,
       contents: `import { Module } from "@nestjs/common";\nimport { ${names.pascal}Controller } from "./${names.kebab}.controller";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\n@Module({\n  controllers: [${names.pascal}Controller],\n  providers: [${names.pascal}Service],\n  exports: [${names.pascal}Service],\n})\nexport class ${names.pascal}Module {}\n`,
     },
     {
-      path: `${base}/main/lib/src/lib/${names.kebab}.service.ts`,
+      path: `${base}/main/lib/src/${names.kebab}.service.ts`,
       contents: `import { Injectable } from "@nestjs/common";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\n@Injectable()\nexport class ${names.pascal}Service {\n  async list(): Promise<${names.pascal}Dto[]> {\n    return [];\n  }\n\n  async create(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto> {\n    const now = new Date().toISOString();\n\n    return {\n      id: crypto.randomUUID(),\n      name: input.name,\n      createdAt: now,\n    };\n  }\n}\n`,
     },
     {
-      path: `${base}/main/lib/src/lib/${names.kebab}.controller.ts`,
+      path: `${base}/main/lib/src/${names.kebab}.controller.ts`,
       contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/backend-common-swagger";\nimport { createOkResponse, type OkResponse } from "@app/backend-common-response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
     },
     {
-      path: `${base}/main/lib/src/lib/${names.kebab}.service.spec.ts`,
+      path: `${base}/main/lib/src/${names.kebab}.service.spec.ts`,
       contents: `import { describe, expect, it } from "vitest";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("creates a ${names.title.toLowerCase()} placeholder", async () => {\n    await expect(new ${names.pascal}Service().create({ name: "Example" })).resolves.toMatchObject({\n      name: "Example",\n    });\n  });\n});\n`,
     },
     projectJson(
@@ -300,18 +300,18 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     tsConfig(`${base}/main/lib`, 6),
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
-      contents: `export * from "./lib/entity/${names.kebab}.entity";\nexport * from "./lib/migrations";\n`,
+      contents: `export * from "./entity/${names.kebab}.entity";\nexport * from "./migrations";\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/entity/${names.kebab}.entity.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/entity/${names.kebab}.entity.ts`,
       contents: `import { Entity, PrimaryKey, Property } from "@mikro-orm/core";\n\n@Entity({ tableName: "${names.kebab.replaceAll("-", "_")}" })\nexport class ${names.pascal}Entity {\n  @PrimaryKey({ type: "uuid" })\n  id!: string;\n\n  @Property()\n  name!: string;\n\n  @Property({ type: "timestamptz" })\n  createdAt: Date = new Date();\n}\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/migrations/Migration00000000000000Create${names.pascal}.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/migrations/Migration00000000000000Create${names.pascal}.ts`,
       contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override async up(): Promise<void> {\n    this.addSql('create table "${names.kebab.replaceAll("-", "_")}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll("-", "_")}_pkey" primary key ("id"));');\n  }\n\n  override async down(): Promise<void> {\n    this.addSql('drop table if exists "${names.kebab.replaceAll("-", "_")}" cascade;');\n  }\n}\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/lib/migrations/index.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/migrations/index.ts`,
       contents: `export * from "./Migration00000000000000Create${names.pascal}";\n`,
     },
     projectJson(

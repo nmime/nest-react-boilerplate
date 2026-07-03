@@ -1,1 +1,1 @@
-export * from "./lib/feature-flags.module";
+export * from "./feature-flags.module";

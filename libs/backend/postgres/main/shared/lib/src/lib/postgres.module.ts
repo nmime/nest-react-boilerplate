@@ -6,7 +6,7 @@ import {
 } from "./data-source-options";
 import {
   MikroOrmPostgresHealthAdapter,
-  POSTGRES_HEALTH_ADAPTER,
+  PostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
 } from "./postgres.health";
@@ -22,14 +22,14 @@ export class PostgresMainModule {
       providers: [
         MikroOrmPostgresHealthAdapter,
         {
-          provide: POSTGRES_HEALTH_ADAPTER,
+          provide: PostgresHealthAdapter,
           useExisting: MikroOrmPostgresHealthAdapter,
         },
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,
       ],
       exports: [
-        POSTGRES_HEALTH_ADAPTER,
+        PostgresHealthAdapter,
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,
       ],

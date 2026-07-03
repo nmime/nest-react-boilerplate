@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
-import { GetCurrentUserProfileUseCase } from "@app/backend/feature/user/shared";
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
+import { GetCurrentUserProfileUseCase } from "@app/backend-feature-user-shared";
 import { ProfileController } from "./profile.controller";
 
 describe("User ProfileController", () => {

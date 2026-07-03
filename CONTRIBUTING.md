@@ -35,7 +35,7 @@ cp .env.example .env
 - Canonical OpenAPI producer output is `apps/backend/*-app-api/contracts/openapi/*.json`; shared generated contract review types are in `libs/common/api-contracts/lib/src/generated`; frontend generated clients are in `libs/frontend/api-client/lib/src/generated`.
 - Do not invent top-level contract directories, alternate OpenAPI consumer folders, or duplicate generated-client locations.
 - Use Nx project names in commands.
-- Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend/feature-admin-shared` and `@app/backend/feature-admin-shared` for admin shared imports.
+- Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend-feature-admin-shared` and `@app/backend-feature-admin-shared` for admin shared imports.
 - Add public developer commands to `package.json` and [Command matrix](docs/command-matrix.md).
 - Add local automation under `packages/tooling/src` and expose supported commands through `packages/tooling/bin/repo-tooling.mjs`.
 - Do not use Copilot, copilor, or external AI coding assistants for repository changes.
@@ -74,7 +74,7 @@ Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage
 
 ## Backend changes
 
-- Use `@app/common/bootstrap` (`libs/backend/common/bootstrap`) for Nest app startup.
+- Use `@app/backend-common-bootstrap` (`libs/backend/common/bootstrap`) for Nest app startup.
 - Preserve Helmet, strict validation, and secure production CORS behavior.
 - Keep `GET /health` available for deploy health checks.
 - Never log secrets or full environment objects.

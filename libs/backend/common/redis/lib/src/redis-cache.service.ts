@@ -10,6 +10,9 @@ import type { RedisClientLike } from "./type";
 
 type CacheableErrorListener = (error: unknown) => void;
 
+const isPresent = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
+
 @Injectable()
 export class RedisCacheService {
   private readonly cache: Cacheable;
@@ -134,7 +137,7 @@ export class RedisCacheService {
     skip?: (value: T) => boolean;
   }): Promise<T> {
     const value = await params.action();
-    if (value != null && !params.skip?.(value)) {
+    if (isPresent(value) && !params.skip?.(value)) {
       await this.runCacheableOperation(() =>
         this.cache.set(
           params.key,

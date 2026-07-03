@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useAdminApiClient, useAuthApiClient } from "@app/frontend/api-client";
-import { resetApiRuntimeForOnline } from "@app/frontend/api-support";
+import { useAdminApiClient, useAuthApiClient } from "@app/frontend-api-client";
+import { resetApiRuntimeForOnline } from "@app/frontend-api-support";
 import App from "../App";
 
 const Probe = () => {

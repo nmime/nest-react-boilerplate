@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
-import { PostgresMainModule } from "@app/backend/postgres/main";
+import { PostgresMainModule } from "@app/backend-postgres-main";
 import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
   AuthPostgresModule,
   AuthUserRepository,
-} from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
 import { GetAdminProfileUseCase } from "./application/admin-profile.use-case";
 import { AdminUsersUseCase } from "./application/admin-users.use-case";
 import { AdminProfileController } from "./interfaces/http/admin-profile.controller";

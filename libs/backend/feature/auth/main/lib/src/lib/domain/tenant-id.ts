@@ -1,7 +1,7 @@
 import {
   normalizeTenantId,
   resolveTenantId,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 
 export class InvalidAuthTenantIdError extends Error {
   constructor() {

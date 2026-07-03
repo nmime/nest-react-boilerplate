@@ -5,7 +5,11 @@ import {
 } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { errAsync, okAsync } from "neverthrow";
-import { validateBearerAuthorization } from "@app/backend/feature/auth/shared";
+import {
+  AuthenticatedTheme,
+  DefaultAuthTenantId,
+  validateBearerAuthorization,
+} from "@app/backend-feature-auth-shared";
 import { InMemoryAuthUserStore } from "./auth-user-store";
 import {
   AuthService,
@@ -15,7 +19,7 @@ import {
   verifyPassword,
 } from "./auth.service";
 
-const TEST_JWT_SECRET_VALUE = "TEST_JWT_SECRET_VALUE_at_least_32_chars";
+const testJwtSecretValue = "TEST_JWT_SECRET_VALUE_at_least_32_chars";
 const authorizationScheme = "Bearer";
 
 const bearerAuthorization = (token: string): string =>
@@ -23,7 +27,7 @@ const bearerAuthorization = (token: string): string =>
 
 describe("AuthService", () => {
   it("registers, logs in, records sessions, and signs verifiable JWTs", async () => {
-    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const service = new AuthService(new InMemoryAuthUserStore());
 
     const registered = await service.register({
@@ -42,7 +46,7 @@ describe("AuthService", () => {
     expect(registered.tokenType).toBe("Bearer");
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
       }),
     ).toMatchObject({
       subject: registered.user.id,
@@ -65,7 +69,7 @@ describe("AuthService", () => {
   });
 
   it("persists normalized locale/theme in sessions, JWT principals, and updates", async () => {
-    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const service = new AuthService(new InMemoryAuthUserStore());
 
     const registered = await service.register({
@@ -79,12 +83,12 @@ describe("AuthService", () => {
     expect(registered.user.theme).toBe("dark");
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
       }).locale,
     ).toBe("ru");
     expect(
       validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
       }).theme,
     ).toBe("dark");
 
@@ -135,7 +139,7 @@ describe("AuthService", () => {
   });
 
   it("rejects duplicate registrations and invalid credentials", async () => {
-    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const service = new AuthService(new InMemoryAuthUserStore());
     await service.register({ email: "a@example.com", password: "password123" });
 
@@ -148,7 +152,7 @@ describe("AuthService", () => {
   });
 
   it("maps store failures, inactive users, and fallback login records", async () => {
-    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const failingStore = {
       findByEmail: () =>
         errAsync({ code: "repository_error" as const, message: "find failed" }),
@@ -194,13 +198,14 @@ describe("AuthService", () => {
       findByEmail: () =>
         okAsync({
           id: "disabled-id",
+          tenantId: DefaultAuthTenantId,
           email: "disabled@example.com",
           displayName: null,
           passwordHash: inactiveHash,
           roles: ["user"],
           permissions: ["profile:read"],
           locale: null,
-          theme: "system" as const,
+          theme: AuthenticatedTheme.System,
           status: "disabled" as const,
           lastLoginAt: null,
         }),
@@ -218,13 +223,14 @@ describe("AuthService", () => {
     const activeHash = hashPassword("password123", "active-salt");
     const activeRecord = {
       id: "active-id",
+      tenantId: DefaultAuthTenantId,
       email: "active@example.com",
       displayName: null,
       passwordHash: activeHash,
       roles: ["user"],
       permissions: ["profile:read"],
       locale: null,
-      theme: "system" as const,
+      theme: AuthenticatedTheme.System,
       status: "active" as const,
       lastLoginAt: null,
     };
@@ -243,7 +249,7 @@ describe("AuthService", () => {
     const token = signJwt(
       { sub: "user" },
       {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
         AUTH_JWT_ISSUER: "issuer",
         AUTH_JWT_AUDIENCE: "audience",
       },
@@ -254,19 +260,20 @@ describe("AuthService", () => {
     const service = new AuthService(new InMemoryAuthUserStore());
     const baseUser = {
       id: "id",
+      tenantId: DefaultAuthTenantId,
       email: "user@example.com",
       displayName: null,
       passwordHash: "hash",
       roles: [],
       permissions: [],
       locale: null,
-      theme: "system",
+      theme: AuthenticatedTheme.System,
       status: "active" as const,
       lastLoginAt: null,
     };
     expect(
       service.createSession(baseUser, {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
         AUTH_JWT_EXPIRES_IN_SECONDS: "60",
       }).expiresIn,
     ).toBe(60);
@@ -274,18 +281,19 @@ describe("AuthService", () => {
     const session = service.createSession(
       {
         id: "id",
+        tenantId: DefaultAuthTenantId,
         email: "user@example.com",
         displayName: null,
         passwordHash: "hash",
         roles: [],
         permissions: [],
         locale: null,
-        theme: "system",
+        theme: AuthenticatedTheme.System,
         status: "active",
         lastLoginAt: null,
       },
       {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
         AUTH_JWT_EXPIRES_IN_SECONDS: "bad",
       },
     );
@@ -294,18 +302,19 @@ describe("AuthService", () => {
       service.createSession(
         {
           id: "id",
+          tenantId: DefaultAuthTenantId,
           email: "user@example.com",
           displayName: null,
           passwordHash: "hash",
           roles: [],
           permissions: [],
           locale: null,
-          theme: "system",
+          theme: AuthenticatedTheme.System,
           status: "active",
           lastLoginAt: null,
         },
         {
-          AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+          AUTH_JWT_SECRET: testJwtSecretValue,
           AUTH_JWT_EXPIRES_IN_SECONDS: "0",
         },
       ).expiresIn,

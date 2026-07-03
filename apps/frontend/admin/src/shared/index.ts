@@ -2,10 +2,10 @@ import {
   translate,
   type TranslationKey,
   type TranslationParams,
-} from "@app/frontend/ui";
-import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
-import type { adminApi } from "@app/frontend/api-client";
-import type { AdminAccessPolicy } from "@app/frontend/feature/admin/shared";
+} from "@app/frontend-runtime";
+import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
+import type { adminApi } from "@app/frontend-api-client";
+import type { AdminAccessPolicy } from "@app/frontend-feature-admin-shared";
 
 type UserStatus = "active" | "disabled" | "invited";
 
@@ -39,7 +39,9 @@ export const statusLabelKey: Record<UserStatus, TranslationKey> = {
 
 export const normalizeAdminPath = (path: string): string => {
   const normalizedPath = path.split("?")[0]?.replace(/\/$/u, "") || "/";
-  if (normalizedPath === "/admin") return "/";
+  if (normalizedPath === "/admin") {
+    return "/";
+  }
   return normalizedPath.startsWith("/admin/")
     ? normalizedPath.slice("/admin".length) || "/"
     : normalizedPath;

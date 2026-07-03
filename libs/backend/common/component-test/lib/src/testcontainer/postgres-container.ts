@@ -5,7 +5,6 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from "@testcontainers/postgresql";
-import { hasDockerRuntime } from "./docker-runtime";
 
 export const DefaultPostgresTestImage = "postgres:17-alpine";
 export const DefaultPostgresTestDatabase = "app_component_test";
@@ -17,7 +16,7 @@ export const DefaultPostgresTestPassword = [
 ].join("_");
 export const DefaultPostgresStartupTimeoutMs = 120_000;
 
-export { hasDockerRuntime };
+export * from "./docker-runtime";
 
 export interface PostgresContainerOptions {
   image?: string;

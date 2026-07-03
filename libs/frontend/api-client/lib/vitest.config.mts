@@ -12,8 +12,8 @@ export default defineConfig({
     passWithNoTests: true,
     coverage: fullCoverage(
       "../../../../coverage/libs/frontend/api-client",
-      ["src/lib/**/*.ts"],
-      ["src/lib/admin.ts", "src/lib/auth.ts", "src/lib/user.ts"],
+      ["src/**/*.ts"],
+      ["src/admin.ts", "src/auth.ts", "src/user.ts"],
     ),
   },
 });

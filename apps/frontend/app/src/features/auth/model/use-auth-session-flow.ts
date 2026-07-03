@@ -1,8 +1,12 @@
 import { useEffect, useMemo, type SubmitEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient, useUserApiClient } from "@app/frontend/api-client";
-import { clearApiAuthRequired } from "@app/frontend/api-support";
-import { useAuthShellStore, type Locale, type UiTheme } from "@app/frontend/ui";
+import { useAuthApiClient, useUserApiClient } from "@app/frontend-api-client";
+import { clearApiAuthRequired } from "@app/frontend-api-support";
+import {
+  useAuthShellStore,
+  type Locale,
+  type UiTheme,
+} from "@app/frontend-runtime";
 import {
   fetchUserProfile,
   getPayloadLocale,
@@ -13,7 +17,7 @@ import {
 } from "../../../entities/profile";
 import { getErrorReason } from "../../../shared/lib";
 import { authMeQueryKey, createAuthSession, fetchAuthMe } from "../api";
-import type { AuthMode } from "./auth-model";
+import { AuthMode } from "./auth-model";
 
 export interface AuthSessionFlowMessages {
   authenticationFailed: string;
@@ -176,9 +180,10 @@ export function useAuthSessionFlow({
 
   return {
     isLoginPending:
-      authMutation.isPending && authMutation.variables?.mode === "login",
+      authMutation.isPending && authMutation.variables?.mode === AuthMode.Login,
     isRegisterPending:
-      authMutation.isPending && authMutation.variables?.mode === "register",
+      authMutation.isPending &&
+      authMutation.variables?.mode === AuthMode.Register,
     profileState,
     submitAuth,
   };

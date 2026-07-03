@@ -5,7 +5,7 @@ export const adminAuditActions = [
   "admin.user.access_policy.update",
 ] as const;
 
-export const ADMIN_MAX_PAGE_SIZE = 100;
+export const AdminMaxPageSize = 100;
 
 export type AdminUserStatus = (typeof adminUserStatuses)[number];
 export type AdminAuditAction = (typeof adminAuditActions)[number];
@@ -94,6 +94,6 @@ export interface AdminDashboardSummary {
 }
 
 export const normalizeAdminPage = (query: AdminPageQuery): AdminPage => ({
-  limit: Math.min(query.limit ?? 50, ADMIN_MAX_PAGE_SIZE),
+  limit: Math.min(query.limit ?? 50, AdminMaxPageSize),
   offset: query.offset ?? 0,
 });

@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/websocket",
+  "name": "@app/common-websocket",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/websocket/lib/src",
   "projectType": "library",

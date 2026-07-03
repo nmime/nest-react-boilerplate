@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
-import { ADMIN_PROFILE_READ_PERMISSION } from "@app/backend/feature/admin/shared";
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
+import { AdminProfileReadPermission } from "@app/backend-feature-admin-shared";
 import { GetAdminProfileUseCase } from "../../application/admin-profile.use-case";
 import {
   AdminProfileController,
@@ -18,7 +18,7 @@ describe("AdminProfileController", () => {
       displayName: "Ada Admin",
       locale: "ru",
       roles: ["admin", "admin"],
-      permissions: [ADMIN_PROFILE_READ_PERMISSION, "profile:read"],
+      permissions: [AdminProfileReadPermission, "profile:read"],
     };
 
     expect(
@@ -32,7 +32,7 @@ describe("AdminProfileController", () => {
           displayName: "Ada Admin",
           locale: "ru",
           roles: ["admin"],
-          permissions: [ADMIN_PROFILE_READ_PERMISSION, "profile:read"],
+          permissions: [AdminProfileReadPermission, "profile:read"],
         },
       },
     });

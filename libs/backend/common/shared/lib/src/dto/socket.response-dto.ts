@@ -1,6 +1,6 @@
 export class SocketResponseDto<T = unknown> {
   constructor(
-    public readonly data: {
+    readonly data: {
       id: string | null;
       result?: T;
       error?: unknown;

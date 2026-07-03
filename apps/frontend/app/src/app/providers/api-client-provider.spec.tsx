@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuthApiClient, useUserApiClient } from "@app/frontend/api-client";
-import { resetApiRuntimeForOnline } from "@app/frontend/api-support";
-import { useAuthShellStore } from "@app/frontend/ui";
+import { useAuthApiClient, useUserApiClient } from "@app/frontend-api-client";
+import { resetApiRuntimeForOnline } from "@app/frontend-api-support";
+import { useAuthShellStore } from "@app/frontend-runtime";
 import { AppProviders } from "./app-providers";
 
 const TokenSeeder = () => {

@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus } from "@nestjs/common";
 import { err, ok } from "neverthrow";
 import { lastValueFrom, of, throwError } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
-import { BaseException } from "@app/backend/common/exception";
+import { BaseException } from "@app/backend-common-exception";
 import {
   createOkResponse,
   createProblemResponse,
@@ -13,6 +13,8 @@ import {
   ExceptionsFilter,
   ExceptionsResponseTransformer,
 } from "./index";
+
+const testValue = <T>(value: unknown): T => value as T;
 
 describe("exceptions response mapper", () => {
   it("wraps successful data", () => {
@@ -82,14 +84,15 @@ describe("exceptions response mapper", () => {
 
   it("intercepts successful values and preserves thrown errors", async () => {
     const transformer = new ExceptionsResponseTransformer();
+    const context = testValue<Parameters<typeof transformer.intercept>[0]>({});
     await expect(
       lastValueFrom(
-        transformer.intercept({} as never, { handle: () => of(ok("ready")) }),
+        transformer.intercept(context, { handle: () => of(ok("ready")) }),
       ),
     ).resolves.toEqual({ data: "ready" });
     await expect(
       lastValueFrom(
-        transformer.intercept({} as never, {
+        transformer.intercept(context, {
           handle: () => throwError(() => new Error("boom")),
         }),
       ),

@@ -11,7 +11,7 @@ export interface ContainerStopFailureContext {
 export class ContainerStopError extends Error {
   constructor(
     message: string,
-    public readonly context: ContainerStopFailureContext,
+    readonly context: ContainerStopFailureContext,
     options: ErrorOptions,
   ) {
     super(message, options);

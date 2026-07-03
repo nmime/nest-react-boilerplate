@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import type { DynamicModule, Provider } from "@nestjs/common";
 import { StaticDataService } from "./static-data.service";
 
-export const StaticDataRootInjectToken = Symbol("StaticDataRoot");
+export const StaticDataRootInjectToken = Symbol("StaticDataRootInjectToken");
 
 export interface StaticDataModuleOptions {
   rootDir: string;

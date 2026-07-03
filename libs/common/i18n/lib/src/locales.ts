@@ -10,7 +10,7 @@ import {
   mergeLocaleCatalogFiles,
   type Locale,
   type RuntimeLocaleCatalog,
-} from "@app/common/i18n-runtime";
+} from "@app/common-i18n-runtime";
 
 export const localeCatalogFileNames = [
   "common/shared.json",
@@ -25,7 +25,7 @@ type LocaleCatalogFileEntry = readonly [
   RuntimeLocaleCatalog,
 ];
 
-export type { TranslationKey } from "@app/common/i18n-keys";
+export type { TranslationKey } from "@app/common-i18n-keys";
 
 export type LocaleCatalog = RuntimeLocaleCatalog;
 

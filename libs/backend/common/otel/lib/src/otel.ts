@@ -71,10 +71,10 @@ export interface OpenTelemetryOptions {
   sdkFactory?: (config: OpenTelemetrySdkConfig) => TelemetrySdk;
 }
 
-type OtelSpanHolder = TraceSpan & { [otelSpanSymbol]?: Span };
-
 const DefaultMetricExportIntervalMs = 60_000;
 const otelSpanSymbol = Symbol("otelSpan");
+
+type OtelSpanHolder = TraceSpan & { [otelSpanSymbol]?: Span };
 
 export class NoopTracer implements TracerLike {
   startSpan(name: string, attributes: Record<string, unknown> = {}): TraceSpan {

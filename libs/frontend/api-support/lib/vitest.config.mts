@@ -11,7 +11,7 @@ export default defineConfig({
     globals: true,
     passWithNoTests: false,
     coverage: fullCoverage("../../../../coverage/libs/frontend/api-support", [
-      "src/lib/**/*.ts",
+      "src/**/*.ts",
     ]),
   },
 });

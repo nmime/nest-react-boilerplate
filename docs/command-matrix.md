@@ -11,7 +11,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Unit/component tests         | `pnpm test`                                                                                                                                                                             | Before every PR                           | Runs all Nx test targets.                                                                                   |
 | Coverage gate                | `pnpm run test:coverage`                                                                                                                                                                | Runtime TypeScript changes                | Runs configured coverage gates for testable app and library source.                                         |
 | Frontend component tests     | `pnpm test:component`                                                                                                                                                                   | UI library or page changes                | Runs component-test targets.                                                                                |
-| E2E smoke                    | `pnpm test:e2e`                                                                                                                                                                         | Cross-app behavior changes                | Covers `admin-app`, `user-app`, `landing-app`, `admin-app-api`, `user-app-api`, and `auth-app-api`. |
+| E2E smoke                    | `pnpm test:e2e`                                                                                                                                                                         | Cross-app behavior changes                | Covers `admin-app`, `user-app`, `landing-app`, `site-app`, `admin-app-api`, `user-app-api`, and `auth-app-api`. |
 | Docker fullstack             | `pnpm run docker:fullstack`                                                                                                                                                             | Docker/local stack validation             | Builds and starts the full-stack `docker/docker-compose.yml` stack with Docker Compose.                     |
 | Docker smoke                 | `pnpm run test:docker-smoke`                                                                                                                                                            | Docker image or Compose changes           | Runs the Docker smoke stack validation used by CI.                                                          |
 | Deployment config validation | `node scripts/validate-deployment-config.mjs`                                                                                                                                           | Docker, Helm, env, or deployment changes  | Runs static deployment assertions for the selected mode; CI runs it before strict Helm rendering.           |
@@ -36,7 +36,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | Database backup/restore      | `pnpm db:backup` / `pnpm db:restore`                                                                                                                                                    | Backup or restore validation              | Run database backup and restore helpers.                                                                    |
 | Restore drill                | `pnpm db:restore:drill` / `pnpm test:restore-drill`                                                                                                                                     | DR or backup changes                      | Validate restore drill automation.                                                                          |
 | Migration rollback check     | `pnpm test:migrations:rollback`                                                                                                                                                         | Migration changes                         | Runs the rollback-focused migration preset.                                                                 |
-| Storybook dev/build | `pnpm storybook` / `pnpm run storybook:build` | UI documentation and review | Serves or builds the `@app/frontend-ui` design-system Storybook from `libs/frontend/ui/lib/.storybook` (`dist/storybook/frontend-ui` for builds). |
+| Storybook dev/build | `pnpm storybook` / `pnpm run storybook:build` | UI documentation and review | Serves or builds the `@app/frontend-ui-web` design-system stories through the compatibility Storybook config in `libs/frontend/ui/lib/.storybook` (`dist/storybook/frontend-ui` for builds). |
 | Storybook test | `pnpm run test:storybook` | UI behavior/accessibility checks | Builds and serves the shared UI Storybook config, then runs `test-storybook`. |
 | Visual regression            | `pnpm run test:visual` / `pnpm run test:visual:update`                                                                                                                                  | UI baseline changes                       | Check or update visual Storybook baselines.                                                                 |
 | E2E coverage                 | `pnpm run test:e2e:coverage`                                                                                                                                                            | Cross-app coverage changes                | Runs e2e targets with coverage enabled.                                                                     |
@@ -96,17 +96,33 @@ pnpm run check:fast
 
 Add targeted checks from the table above for migrations, dependency changes, cross-app behavior, Docker/deployment work, or release-risk changes.
 
+## Planned frontend migration checks
+
+These target checks apply after the corresponding migration scaffold lands.
+
+| Target | Validation commands | Notes |
+| ------ | ------------------- | ----- |
+| Astro landing `landing-app` | `pnpm exec nx build landing-app`; `pnpm exec nx run landing-app:e2e`; `pnpm run frontend:fsd:check` | Final landing target remains `landing-app` at `apps/frontend/landing`. |
+| Vike site `site-app` | `pnpm exec nx build site-app`; `pnpm exec nx run site-app:e2e`; `pnpm run typecheck`; `pnpm run frontend:fsd:check` | Final authenticated site target is `site-app` at `apps/frontend/site`; retire `user-app` only after parity. |
+| shadcn web UI `@app/frontend-ui-web` | `pnpm exec nx run @app/frontend-ui-web:build`; `pnpm exec nx run @app/frontend-ui-web:test`; `pnpm run storybook:build`; `pnpm run test:storybook`; `pnpm run frontend:fsd:check` | Final React DOM UI target for Astro, Vike, and admin web. Storybook config remains under the compatibility package but reads `ui-web` stories/styles. |
+| Tamagui native UI `@app/frontend-ui-native` | `pnpm exec nx run @app/frontend-ui-native:build`; `pnpm run frontend:fsd:check` | Final Expo/React Native UI target. Add a test target with the first native component suite. |
+
 ## Project names and paths
 
 | Project                 | Path                         | Purpose                                         |
 | ----------------------- | ---------------------------- | ----------------------------------------------- |
-| `landing-app`           | `apps/frontend/landing`      | Marketing/landing React app.                    |
-| `user-app`              | `apps/frontend/app`          | Authenticated user React app.                   |
+| `landing-app`           | `apps/frontend/landing`      | Final Astro marketing/landing app; keeps the current landing project name. |
+| `site-app`              | `apps/frontend/site`         | Final Vike authenticated site SSR app; replaces `user-app` after parity. |
+| `user-app`              | `apps/frontend/app`          | Current Vite authenticated user app; retire after `site-app` parity. |
 | `admin-app`             | `apps/frontend/admin`        | Admin React app.                                |
 | `auth-app-api`          | `apps/backend/auth-app-api`  | Auth/session API.                               |
 | `user-app-api`          | `apps/backend/user-app-api`  | User-facing API.                                |
 | `admin-app-api` | `apps/backend/admin-app-api` | Admin-facing API.                               |
-| `@app/frontend-ui`      | `libs/frontend/ui/lib`       | Shared design-system/UI primitives. Storybook config lives in `libs/frontend/ui/lib/.storybook`; API request helpers belong in `@app/frontend-api-support`. |
+| `@app/frontend-ui-web`  | `libs/frontend/ui-web/lib`   | Final shadcn/Radix/Tailwind web UI target for Astro, Vike, and admin web. |
+| `@app/frontend-ui-native` | `libs/frontend/ui-native/lib` | Final Tamagui native UI target for Expo/React Native. |
+| `@app/frontend-runtime` | `libs/frontend/runtime/lib` | Non-visual frontend runtime helpers for i18n, query, shell state, locale, and platform guards. |
+| `@app/frontend-ui` | `libs/frontend/ui/lib` | Legacy shared web UI compatibility facade. Storybook config lives in `libs/frontend/ui/lib/.storybook`; API request helpers belong in `@app/frontend-api-support`. |
+| `@app/common-design-tokens` | `libs/common/design-tokens/lib` | Shared renderer-neutral design tokens for web CSS variables and native Tamagui config. |
 
 ## Tooling policy
 

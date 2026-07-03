@@ -5,7 +5,7 @@ import {
   createMongoAbility,
   type MongoAbility,
 } from "@casl/ability";
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 
 const normalizeStringList = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -21,25 +21,25 @@ const normalizeStringList = (value: unknown): string[] => {
   ];
 };
 
-export const ADMIN_ROLE = "admin";
-export const USER_ROLE = "user";
-export const USER_PROFILE_READ_PERMISSION = "profile:read";
+export const AdminRole = "admin";
+export const UserRole = "user";
+export const UserProfileReadPermission = "profile:read";
 
-export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
-export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
-export const ADMIN_USERS_READ_PERMISSION = "admin:users:read";
-export const ADMIN_USERS_WRITE_PERMISSION = "admin:users:write";
-export const ADMIN_USERS_STATUS_UPDATE_PERMISSION = "admin:users:status:update";
-export const ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION =
+export const AdminProfileReadPermission = "admin:profile:read";
+export const AdminDashboardReadPermission = "admin:dashboard:read";
+export const AdminUsersReadPermission = "admin:users:read";
+export const AdminUsersWritePermission = "admin:users:write";
+export const AdminUsersStatusUpdatePermission = "admin:users:status:update";
+export const AdminUsersAccessPolicyUpdatePermission =
   "admin:users:access-policy:update";
-export const ADMIN_ROLES_READ_PERMISSION = "admin:roles:read";
-export const ADMIN_AUDIT_READ_PERMISSION = "admin:audit:read";
-export const ADMIN_SETTINGS_READ_PERMISSION = "admin:settings:read";
-export const ADMIN_SETTINGS_UPDATE_PERMISSION = "admin:settings:update";
-export const ADMIN_MANAGE_ALL_PERMISSION = "admin:manage:all";
+export const AdminRolesReadPermission = "admin:roles:read";
+export const AdminAuditReadPermission = "admin:audit:read";
+export const AdminSettingsReadPermission = "admin:settings:read";
+export const AdminSettingsUpdatePermission = "admin:settings:update";
+export const AdminManageAllPermission = "admin:manage:all";
 
-export const ADMIN_MANAGE_ACTION = "manage";
-export const ADMIN_ALL_RESOURCE = "all";
+export const AdminManageAction = "manage";
+export const AdminAllResource = "all";
 
 export const adminActions = [
   "read",
@@ -47,7 +47,7 @@ export const adminActions = [
   "status:update",
   "access-policy:update",
   "update",
-  ADMIN_MANAGE_ACTION,
+  AdminManageAction,
 ] as const;
 
 export const adminResources = [
@@ -61,7 +61,7 @@ export const adminResources = [
 
 export type AdminAction = (typeof adminActions)[number];
 export type AdminResource = (typeof adminResources)[number];
-export type AdminSubject = AdminResource | typeof ADMIN_ALL_RESOURCE;
+export type AdminSubject = AdminResource | typeof AdminAllResource;
 export type AdminAbility = MongoAbility<[AdminAction, AdminSubject]>;
 
 export interface AdminPrincipalClaims {
@@ -72,69 +72,69 @@ export interface AdminPrincipalClaims {
 
 export const adminPermissionCatalog = [
   {
-    permission: ADMIN_DASHBOARD_READ_PERMISSION,
+    permission: AdminDashboardReadPermission,
     resource: "admin.dashboard",
     action: "read",
     description: "Read admin dashboard metrics and summaries.",
   },
   {
-    permission: ADMIN_PROFILE_READ_PERMISSION,
+    permission: AdminProfileReadPermission,
     resource: "admin.profile",
     action: "read",
     description: "Read the current administrator profile.",
   },
   {
-    permission: ADMIN_USERS_READ_PERMISSION,
+    permission: AdminUsersReadPermission,
     resource: "admin.users",
     action: "read",
     description: "Search and inspect admin-visible user records.",
   },
   {
-    permission: ADMIN_USERS_WRITE_PERMISSION,
+    permission: AdminUsersWritePermission,
     resource: "admin.users",
     action: "write",
     description: "General guarded admin user write capability.",
   },
   {
-    permission: ADMIN_USERS_STATUS_UPDATE_PERMISSION,
+    permission: AdminUsersStatusUpdatePermission,
     resource: "admin.users",
     action: "status:update",
     description: "Enable, disable, or invite admin-visible users.",
   },
   {
-    permission: ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+    permission: AdminUsersAccessPolicyUpdatePermission,
     resource: "admin.users",
     action: "access-policy:update",
     description: "Update user roles and permission assignments.",
   },
   {
-    permission: ADMIN_ROLES_READ_PERMISSION,
+    permission: AdminRolesReadPermission,
     resource: "admin.roles",
     action: "read",
     description: "Read the admin RBAC roles and permissions catalog.",
   },
   {
-    permission: ADMIN_AUDIT_READ_PERMISSION,
+    permission: AdminAuditReadPermission,
     resource: "admin.audit",
     action: "read",
     description: "Read redacted admin audit events.",
   },
   {
-    permission: ADMIN_SETTINGS_READ_PERMISSION,
+    permission: AdminSettingsReadPermission,
     resource: "admin.settings",
     action: "read",
     description: "Read admin settings metadata.",
   },
   {
-    permission: ADMIN_SETTINGS_UPDATE_PERMISSION,
+    permission: AdminSettingsUpdatePermission,
     resource: "admin.settings",
     action: "update",
     description: "Update guarded admin settings.",
   },
   {
-    permission: ADMIN_MANAGE_ALL_PERMISSION,
-    resource: ADMIN_ALL_RESOURCE,
-    action: ADMIN_MANAGE_ACTION,
+    permission: AdminManageAllPermission,
+    resource: AdminAllResource,
+    action: AdminManageAction,
     description:
       "Explicit break-glass permission to manage every admin resource.",
   },
@@ -154,28 +154,28 @@ const adminPermissionByName: ReadonlyMap<
 > = new Map(adminPermissionCatalog.map((item) => [item.permission, item]));
 
 export const adminRolePermissionMatrix = {
-  [USER_ROLE]: [USER_PROFILE_READ_PERMISSION],
-  [ADMIN_ROLE]: adminPermissionCatalog.map((item) => item.permission),
+  [UserRole]: [UserProfileReadPermission],
+  [AdminRole]: adminPermissionCatalog.map((item) => item.permission),
 } as const satisfies Record<string, readonly string[]>;
 
 export const adminRoleCatalog = [
   {
-    role: USER_ROLE,
+    role: UserRole,
     label: "User",
     description: "Baseline application user role.",
-    permissions: [...adminRolePermissionMatrix[USER_ROLE]],
+    permissions: [...adminRolePermissionMatrix[UserRole]],
   },
   {
-    role: ADMIN_ROLE,
+    role: AdminRole,
     label: "Administrator",
     description: "Back-office administrator with explicit granular grants.",
-    permissions: [...adminRolePermissionMatrix[ADMIN_ROLE]],
+    permissions: [...adminRolePermissionMatrix[AdminRole]],
   },
 ] as const;
 
 export const adminAssignableRoles = adminRoleCatalog.map((item) => item.role);
 export const adminAssignablePermissions = [
-  USER_PROFILE_READ_PERMISSION,
+  UserProfileReadPermission,
   ...adminPermissionCatalog.map((item) => item.permission),
 ] as const;
 
@@ -212,7 +212,7 @@ export const createAdminAbility = (
   const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
 
-  if (!principal?.subject || !roles.includes(ADMIN_ROLE)) {
+  if (!principal?.subject || !roles.includes(AdminRole)) {
     return build();
   }
 
@@ -321,7 +321,7 @@ export const createAdminAccessPolicy = (
       canReadRoles ||
       canReadAudit ||
       canReadSettings ||
-      canAdmin(ability, ADMIN_MANAGE_ACTION, ADMIN_ALL_RESOURCE),
+      canAdmin(ability, AdminManageAction, AdminAllResource),
     canReadDashboard,
     canReadProfile,
     canReadUsers,

@@ -4,27 +4,27 @@ import {
   ApiProperty,
   ApiPropertyOptional,
 } from "@nestjs/swagger";
-import { supportedLocales } from "@app/common/i18n";
+import { supportedLocales } from "@app/common-i18n";
 import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/backend/common/swagger";
+} from "@app/backend-common-swagger";
 import {
   createOkResponse,
   type OkResponse,
-} from "@app/backend/common/response";
+} from "@app/backend-common-response";
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
   SessionAuthGuard,
   RequirePermissions,
   RequireRoles,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import {
-  ADMIN_PROFILE_READ_PERMISSION,
-  ADMIN_ROLE,
-} from "@app/backend/feature/admin/shared";
+  AdminProfileReadPermission,
+  AdminRole,
+} from "@app/backend-feature-admin-shared";
 import {
   GetAdminProfileUseCase,
   type AdminProfilePayload,
@@ -103,8 +103,8 @@ export class AdminProfileController {
   @ApiOkDataResponse(AdminProfilePayloadDto)
   @ApiBearerAuth()
   @ApiSessionCookieAuth()
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_PROFILE_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminProfileReadPermission)
   me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): OkResponse<AdminProfilePayload> {

@@ -1,5 +1,5 @@
 {
-  "name": "@app/frontend/feature/landing/i18n",
+  "name": "@app/frontend-feature-landing-i18n",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/frontend/feature/landing/i18n/lib/src",
   "projectType": "library",

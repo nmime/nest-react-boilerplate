@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
+import type { TranslationKey, TranslationParams } from "@app/frontend-runtime";
 import type { SubmitEvent, ReactNode } from "react";
 import { AuthCards, type AuthMode } from "../../../features/auth";
 import { getUserAppApiModeLabel } from "../../../shared/config";

@@ -3,7 +3,8 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
+import { useI18n } from "@app/frontend-runtime";
 import {
   UiCard,
   UiCheckbox,
@@ -11,8 +12,7 @@ import {
   UiSection,
   UiStatCard,
   UiStatusTag,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import type { RoleRow } from "../../entities/admin-role";
 import { errorText } from "../../shared";
 

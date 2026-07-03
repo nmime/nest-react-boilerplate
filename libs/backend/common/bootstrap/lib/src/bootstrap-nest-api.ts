@@ -7,7 +7,7 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import type { FastifyPluginCallback, Session } from "fastify";
+import type { Session } from "fastify";
 import helmet from "helmet";
 import { Pool, type PoolClient } from "pg";
 import {
@@ -17,18 +17,18 @@ import {
   type RedisClientLike,
   type RedisConnectionConfig,
   type RedisHost,
-} from "@app/backend/common/redis";
+} from "@app/backend-common-redis";
 import {
   ExceptionsFilter,
   ExceptionsResponseTransformer,
-} from "@app/backend/common/response";
+} from "@app/backend-common-response";
 import {
   createRequestLocaleMiddleware,
   resolveLocaleFromRequest,
   translate,
-} from "@app/common/i18n";
-import { setupSwagger } from "@app/backend/common/swagger";
-import { createValidationPipe } from "@app/backend/common/validation";
+} from "@app/common-i18n";
+import { setupSwagger } from "@app/backend-common-swagger";
+import { createValidationPipe } from "@app/backend-common-validation";
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -100,6 +100,10 @@ interface ResponseLike {
 type NextFunctionLike = () => void;
 
 type FastifySessionOptions = Parameters<typeof fastifySession>[1];
+type FastifyPluginRegister = (
+  plugin: unknown,
+  options?: unknown,
+) => PromiseLike<unknown>;
 type SessionSameSite = "lax" | "strict" | "none";
 type SessionStoreCallback = (error?: unknown) => void;
 type SessionStoreGetCallback = (
@@ -543,11 +547,11 @@ async function registerFastifySession(
     ...(store ? { store } : {}),
   };
 
-  await fastify.register(fastifyCookie as unknown as FastifyPluginCallback);
-  await fastify.register(
-    fastifySession as unknown as FastifyPluginCallback<FastifySessionOptions>,
-    sessionOptions,
-  );
+  const registerFastifyPlugin = fastify.register.bind(
+    fastify,
+  ) as FastifyPluginRegister;
+  await registerFastifyPlugin(fastifyCookie);
+  await registerFastifyPlugin(fastifySession, sessionOptions);
 }
 
 function resolveHost(env: NodeJS.ProcessEnv): string | undefined {
@@ -799,7 +803,7 @@ function createRequestLoggingMiddleware(appName: string) {
         requestId,
         status: response.statusCode,
       };
-      console.log(JSON.stringify(logEntry));
+      process.stdout.write(`${JSON.stringify(logEntry)}\n`);
     });
 
     next();
@@ -855,10 +859,10 @@ function warnAboutRateLimitStore(config: BackendEnvironmentConfig): void {
     config.rateLimit.enabled &&
     config.rateLimit.store === "memory"
   ) {
-    console.warn(
+    process.stderr.write(
       "Production rate limiting is using in-memory per-process storage. " +
         "Set RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS for shared multi-instance enforcement, " +
-        "or enforce equivalent limits at the ingress/API gateway before setting RATE_LIMIT_IN_MEMORY_ALLOWED=true.",
+        "or enforce equivalent limits at the ingress/API gateway before setting RATE_LIMIT_IN_MEMORY_ALLOWED=true.\n",
     );
   }
 }
@@ -945,11 +949,11 @@ function handleRateLimitStoreError(
   error: unknown,
   response: ResponseLike,
 ): void {
-  console.error(
-    JSON.stringify({
+  process.stderr.write(
+    `${JSON.stringify({
       event: "rate_limit_store_error",
       message: error instanceof Error ? error.message : String(error),
-    }),
+    })}\n`,
   );
   writeProblemResponse(response, 503, {
     type: "urn:problem:nest-react-boilerplate:rate-limit-unavailable",

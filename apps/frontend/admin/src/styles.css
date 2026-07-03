@@ -1,4 +1,4 @@
-/* Admin app production polish that composes shared shadcn-style tokens and @app/frontend/ui primitives. */
+/* Admin app production polish that composes shared shadcn-style tokens and @app/frontend-ui-web primitives. */
 
 .xr-shell {
   width: min(1440px, calc(100% - 32px));

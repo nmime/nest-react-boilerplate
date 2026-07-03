@@ -6,7 +6,7 @@ import {
   translate,
   translations,
   type TranslationKey,
-} from "@app/common/i18n";
+} from "@app/common-i18n";
 
 export interface ProblemDetails {
   type: string;

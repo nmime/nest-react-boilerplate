@@ -178,7 +178,7 @@ export class RedisClientAdapter implements RedisClientLike {
     await this.ensureConnected();
     return await this.client.sendCommand([
       "EVAL",
-      REDIS_LUA_SCRIPTS[scriptName],
+      redisLuaScripts[scriptName],
       "1",
       this.key(key),
       ...args,
@@ -343,7 +343,7 @@ function firstHost(hosts: RedisHost[]): RedisHost {
   return host;
 }
 
-const DELETE_IF_VALUE_SCRIPT = `
+const deleteIfValueScript = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("del", KEYS[1])
 end
@@ -351,7 +351,7 @@ end
 return 0
 `;
 
-const EXTEND_IF_VALUE_SCRIPT = `
+const extendIfValueScript = `
 if redis.call("get", KEYS[1]) == ARGV[1] then
   return redis.call("pexpire", KEYS[1], ARGV[2])
 end
@@ -359,9 +359,9 @@ end
 return 0
 `;
 
-const REDIS_LUA_SCRIPTS = Object.freeze({
-  "delete-if-value": DELETE_IF_VALUE_SCRIPT,
-  "extend-if-value": EXTEND_IF_VALUE_SCRIPT,
+const redisLuaScripts = Object.freeze({
+  "delete-if-value": deleteIfValueScript,
+  "extend-if-value": extendIfValueScript,
 } as const);
 
-type RedisLuaScriptName = keyof typeof REDIS_LUA_SCRIPTS;
+type RedisLuaScriptName = keyof typeof redisLuaScripts;

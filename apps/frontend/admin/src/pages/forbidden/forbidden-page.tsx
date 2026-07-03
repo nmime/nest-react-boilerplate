@@ -1,10 +1,10 @@
+import { useI18n } from "@app/frontend-runtime";
 import {
   UiCard,
   UiEmptyState,
   UiSection,
   UiStatusTag,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 
 export const ForbiddenPage = ({ reason }: Readonly<{ reason: string }>) => {
   const { t } = useI18n();

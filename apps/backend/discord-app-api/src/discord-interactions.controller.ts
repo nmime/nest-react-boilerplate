@@ -8,7 +8,7 @@ import {
   DiscordBotConfig,
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
-} from "@app/backend/bots/discord";
+} from "@app/backend-bots-discord";
 
 interface RawBodyRequest extends FastifyRequest {
   rawBody?: Buffer | string;

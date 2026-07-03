@@ -1,12 +1,11 @@
-import type { adminApi } from "@app/frontend/api-client";
+import type { adminApi } from "@app/frontend-api-client";
+import type { TranslationKey, TranslationParams } from "@app/frontend-runtime";
 import {
   UiEmptyState,
   UiLoading,
   UiResourceError,
   UiStatusTag,
-  type TranslationKey,
-  type TranslationParams,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import { errorText, join, statusLabelKey, statusTone } from "../../../shared";
 
 export const UserDetailCard = ({

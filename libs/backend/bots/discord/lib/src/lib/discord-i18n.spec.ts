@@ -7,6 +7,8 @@ import {
   t,
 } from "./discord-i18n";
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("Discord i18n helpers", () => {
   it("resolves locale order and fallback", () => {
     expect(resolveDiscordLocale("fr", "ru")).toBe("ru");
@@ -71,7 +73,7 @@ describe("Discord i18n helpers", () => {
 });
 
 function interaction(overrides: { locale?: string; guild_locale?: string }) {
-  return {
+  return testValue<Parameters<typeof resolveInteractionLocale>[0]>({
     type: InteractionType.ApplicationCommand,
     id: "1",
     application_id: "2",
@@ -79,5 +81,5 @@ function interaction(overrides: { locale?: string; guild_locale?: string }) {
     user: { id: "123456789012345678" },
     data: { id: "3", name: "help", type: 1 },
     ...overrides,
-  } as never;
+  });
 }

@@ -1,6 +1,6 @@
 # NATS foundation
 
-`@app/common/nats` provides a backend Nest foundation for NATS without wiring any runtime application to require a broker by default.
+`@app/backend-common-nats` provides a backend Nest foundation for NATS without wiring any runtime application to require a broker by default.
 
 It uses the official NATS.js v3 mono-repo packages from [`nats-io/nats.js`](https://github.com/nats-io/nats.js/). The v3 client is split into runtime and feature packages instead of the legacy single `nats` package:
 
@@ -37,7 +37,7 @@ These values are mapped to `NodeConnectionOptions` from `@nats-io/transport-node
 
 ```ts
 import { Module } from "@nestjs/common";
-import { NatsModule } from "@app/common/nats";
+import { NatsModule } from "@app/backend-common-nats";
 
 @Module({
   imports: [NatsModule.forRoot()],
@@ -53,7 +53,7 @@ Inject `NatsService` for ready-to-use JSON/string Core helpers, or inject the ra
 
 ```ts
 import { Injectable } from "@nestjs/common";
-import { NatsService } from "@app/common/nats";
+import { NatsService } from "@app/backend-common-nats";
 
 @Injectable()
 export class UserEvents {
@@ -76,7 +76,7 @@ export class UserEvents {
 NATS.js v3 removed the old codec helpers. Publish strings or bytes directly, use `JSON.stringify(value)` for JSON payloads, and use `msg.string()` or `msg.json<T>()` on received messages.
 
 ```ts
-import { InjectNatsConnection } from "@app/common/nats";
+import { InjectNatsConnection } from "@app/backend-common-nats";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 export class RawCoreExample {
@@ -100,7 +100,7 @@ import {
   createJetStream,
   createJetStreamManager,
   InjectNatsConnection,
-} from "@app/common/nats";
+} from "@app/backend-common-nats";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 export class JetStreamExample {
@@ -125,7 +125,7 @@ import {
   createJetStream,
   createKvm,
   InjectNatsConnection,
-} from "@app/common/nats";
+} from "@app/backend-common-nats";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 export class KvExample {
@@ -149,7 +149,7 @@ import {
   createJetStream,
   createObjm,
   InjectNatsConnection,
-} from "@app/common/nats";
+} from "@app/backend-common-nats";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 export class ObjectStoreExample {
@@ -168,10 +168,10 @@ export class ObjectStoreExample {
 
 ## Services
 
-The published services manager export is `Svcm` from `@nats-io/services`; `@app/common/nats` exposes `createServices(nc)`.
+The published services manager export is `Svcm` from `@nats-io/services`; `@app/backend-common-nats` exposes `createServices(nc)`.
 
 ```ts
-import { createServices, InjectNatsConnection } from "@app/common/nats";
+import { createServices, InjectNatsConnection } from "@app/backend-common-nats";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 export class ServicesExample {

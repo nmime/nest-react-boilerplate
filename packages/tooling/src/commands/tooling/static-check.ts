@@ -55,7 +55,7 @@ const workspaceMetadataIgnoredProjectDirs = new Set([
 ]);
 
 const multiTagPrefixAllowlist = new Map([
-  ["scope", new Set(["@app/postgres-main"])],
+  ["scope", new Set(["@app/backend-postgres-main"])],
 ]);
 
 const canonicalTsAliasTargets = new Map([
@@ -73,6 +73,17 @@ const nodeScriptReference =
   /(?:^|&&|\|\||;|\s)node\s+([^\s]+\.(?:cjs|js|mjs|mts|ts))/g;
 const shellScriptReference = /(?:^|&&|\|\||;|\s)(?:bash|sh)\s+([^\s]+\.sh)/g;
 const pnpmRunReference = /(?:^|&&|\|\||;|\s)pnpm\s+run\s+([@\w:.-]+)/g;
+const exportedSymbolDeclaration =
+  /export\s+const\s+([A-Za-z_$][\w$]*)\s*=\s*Symbol\(\s*["']([^"']+)["']\s*,?\s*\)\s*;/gu;
+const exportedAllCapsConstDeclaration =
+  /^\s*export\s+(?:declare\s+)?const\s+([A-Z][A-Z0-9_]*)(?=\s*(?::|=))/u;
+const injectTokenIdentifier = /^[A-Z][A-Za-z0-9]*InjectToken$/u;
+const localNamedBarrelReExport =
+  /export\s+(?:type\s+)?\{[\s\S]*?\}\s+from\s+["'](\.{1,2}\/[^"']+)["']\s*;?/gu;
+const duplicatedFrontendSourceLibPath =
+  /libs\/frontend\/[A-Za-z0-9_./-]+\/lib\/src\/lib(?:\/|\b)/u;
+const staleSlashStyleAppAliasImport =
+  /(?:from\s+["']|import\s+(?:type\s+)?["']|import\s*\(["']|require\(["'])(@app\/(?:backend|common|frontend)\/[A-Za-z0-9_./-]+)["']/u;
 
 interface StaleReferencePattern {
   label: string;
@@ -103,7 +114,7 @@ const generatedContractImportPatterns: RestrictedImportPattern[] = [
       file.startsWith("packages/tooling/src/commands/api/"),
     label: "common generated contract internals",
     pattern:
-      /(?:libs\/common\/api-contracts\/lib\/src\/generated|@app\/api-contracts\/.*generated|\.\/generated\/(?:admin-app-api|auth-app-api|user-app-api)(?=$|[\/"'\s;]))/u,
+      /(?:libs\/common\/api-contracts\/lib\/src\/generated|@app\/common\/api\/contracts\/.*generated|\.\/generated\/(?:admin-app-api|auth-app-api|user-app-api)(?=$|[\/"'\s;]))/u,
   },
   {
     allowed: (file) =>
@@ -111,7 +122,7 @@ const generatedContractImportPatterns: RestrictedImportPattern[] = [
       file.startsWith("packages/tooling/src/commands/api/"),
     label: "frontend generated client internals",
     pattern:
-      /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/api-client\/.*generated|\.\/generated\/(?:admin|auth|user)(?=$|[\/"'\s;]))/u,
+      /(?:libs\/frontend\/api-client\/lib\/src\/generated|@app\/frontend\/api\/client\/.*generated|\.\/generated\/(?:admin|auth|user)(?=$|[\/"'\s;]))/u,
   },
 ];
 
@@ -349,7 +360,13 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
     ...checkWorkspaceMetadata(workspaceRoot),
+    ...checkExportedAllCapsConstantConventions(workspaceRoot),
+    ...checkExportedSymbolTokenConventions(workspaceRoot),
+    ...checkLocalBarrelExportConventions(workspaceRoot),
+    ...checkDuplicatedFrontendSourceLibPaths(workspaceRoot),
+    ...checkFrontendUiCompatibilityFacade(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
+    ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
     ...checkForbiddenSocialAuthDependencies(workspaceRoot),
     ...checkTrackedSocialAuthSecrets(workspaceRoot),
@@ -404,9 +421,18 @@ function checkSyntaxTargets(
 }
 
 function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
-  const result = run("pnpm", ["--filter", "@repo/tooling", "typecheck"], {
-    cwd: workspaceRoot,
-  });
+  const result = run(
+    process.execPath,
+    [
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "packages/tooling/tsconfig.json",
+    ],
+    {
+      cwd: workspaceRoot,
+    },
+  );
 
   return result.status === 0 ? [] : [result];
 }
@@ -529,6 +555,16 @@ function checkProjectTags(projects: ProjectMetadata[]): CheckFailure[] {
     const failures: CheckFailure[] = [];
     const tagsByPrefix = new Map<string, string[]>();
 
+    if (isNonPackageStyleAppName(project.name)) {
+      failures.push({
+        command: "workspace metadata project names",
+        file: project.file,
+        status: 1,
+        stdout: "",
+        stderr: `Nx project name ${project.name} must use package-style flattened naming with only the @app scope slash; stale slash-style @app aliases are not allowed.`,
+      });
+    }
+
     for (const tag of project.tags) {
       const [prefix] = tag.split(":", 1);
       if (!prefix) continue;
@@ -555,8 +591,19 @@ function checkProjectTags(projects: ProjectMetadata[]): CheckFailure[] {
 
 function checkTsPathAliases(paths: Record<string, string[]>): CheckFailure[] {
   const aliasesByTarget = new Map<string, string[]>();
+  const failures: CheckFailure[] = [];
 
   for (const [alias, targets] of Object.entries(paths)) {
+    if (isNonPackageStyleAppName(alias)) {
+      failures.push({
+        command: "workspace metadata tsconfig paths",
+        file: "tsconfig.base.json",
+        status: 1,
+        stdout: "",
+        stderr: `TS path alias ${alias} must use package-style flattened naming with only the @app scope slash; stale slash-style @app aliases are not allowed.`,
+      });
+    }
+
     for (const target of targets) {
       const aliases = aliasesByTarget.get(target) ?? [];
       aliases.push(alias);
@@ -564,31 +611,59 @@ function checkTsPathAliases(paths: Record<string, string[]>): CheckFailure[] {
     }
   }
 
-  return [...aliasesByTarget.entries()].flatMap(([target, aliases]) => {
-    if (aliases.length <= 1) return [];
-    const canonicalAlias = canonicalTsAliasTargets.get(target);
-    const canonicalHint = canonicalAlias
-      ? ` Keep the canonical ${canonicalAlias} alias only.`
-      : " Use one canonical alias for each source target.";
+  failures.push(
+    ...[...aliasesByTarget.entries()].flatMap(([target, aliases]) => {
+      if (aliases.length <= 1) return [];
+      const canonicalAlias = canonicalTsAliasTargets.get(target);
+      const canonicalHint = canonicalAlias
+        ? ` Keep the canonical ${canonicalAlias} alias only.`
+        : " Use one canonical alias for each source target.";
 
-    return [
-      {
-        command: "workspace metadata tsconfig paths",
-        file: "tsconfig.base.json",
-        status: 1,
-        stdout: "",
-        stderr: `Duplicate TS path target ${target} is mapped by ${aliases.join(", ")}.${canonicalHint}`,
-      },
-    ];
-  });
+      return [
+        {
+          command: "workspace metadata tsconfig paths",
+          file: "tsconfig.base.json",
+          status: 1,
+          stdout: "",
+          stderr: `Duplicate TS path target ${target} is mapped by ${aliases.join(", ")}.${canonicalHint}`,
+        },
+      ];
+    }),
+  );
+
+  return failures;
+}
+
+function isNonPackageStyleAppName(name: string): boolean {
+  if (!name.startsWith("@app/")) return false;
+
+  const segments = name.slice("@app/".length).split("/");
+  if (segments.length <= 1) return false;
+
+  return !(segments.length === 2 && segments[1] === "*");
 }
 
 function checkWorkspacePackageManifests(
   metadata: WorkspaceMetadata,
 ): CheckFailure[] {
+  const libraryPackageFiles = metadata.packageManifests
+    .filter((manifest) => manifest.file.startsWith("libs/"))
+    .map((manifest) => manifest.file);
   const packageWorkspaceFiles = metadata.packageManifests
     .filter((manifest) => manifest.file.startsWith("packages/"))
     .map((manifest) => manifest.file);
+
+  if (libraryPackageFiles.length > 0) {
+    return [
+      {
+        command: "workspace metadata package manifests",
+        file: "pnpm-workspace.yaml",
+        status: 1,
+        stdout: "",
+        stderr: `Libraries must not define package.json manifests; keep dependencies in the root or deployable app manifests. Found ${libraryPackageFiles.join(", ")}.`,
+      },
+    ];
+  }
 
   if (
     packageWorkspaceFiles.length === 1 &&
@@ -716,9 +791,200 @@ export function checkGeneratedContractImports(
           file: `${relativeFile}:${index + 1}`,
           status: 1,
           stdout: "",
-          stderr: `Found ${importPattern.label} import. Use stable public aliases @app/api-contracts and @app/api-client instead of generated internals.`,
+          stderr: `Found ${importPattern.label} import. Use stable public aliases @app/common-api-contracts and @app/frontend-api-client instead of generated internals.`,
         });
       }
+    });
+
+    return failures;
+  });
+}
+
+export function checkExportedSymbolTokenConventions(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile === "packages/tooling/src/commands/tooling/static-check.test.ts") {
+      return [];
+    }
+
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    exportedSymbolDeclaration.lastIndex = 0;
+    for (const match of text.matchAll(exportedSymbolDeclaration)) {
+      const name = match[1] ?? "";
+      const description = match[2] ?? "";
+      if (injectTokenIdentifier.test(name) && description === name) {
+        continue;
+      }
+
+      const line = text.slice(0, match.index).split("\n").length;
+      failures.push({
+        command: "exported symbol token convention",
+        file: `${relativeFile}:${line}`,
+        status: 1,
+        stdout: "",
+        stderr: `Exported Symbol token ${name} must use a PascalCase InjectToken name and matching Symbol("${name}") description, following the reference inject-token convention.`,
+      });
+    }
+
+    return failures;
+  });
+}
+
+export function checkExportedAllCapsConstantConventions(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile === "packages/tooling/src/commands/tooling/static-check.test.ts") {
+      return [];
+    }
+
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    text.split(/\r?\n/u).forEach((line, index) => {
+      const match = exportedAllCapsConstDeclaration.exec(line);
+      const name = match?.[1];
+      if (!name) return;
+
+      failures.push({
+        command: "exported constant naming convention",
+        file: `${relativeFile}:${index + 1}`,
+        status: 1,
+        stdout: "",
+        stderr: `Exported constant ${name} must not use ALL_CAPS naming. Use a descriptive PascalCase or camelCase exported name such as DefaultAuthTenantId.`,
+      });
+    });
+
+    return failures;
+  });
+}
+
+export function checkLocalBarrelExportConventions(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile === "packages/tooling/src/commands/tooling/static-check.test.ts") {
+      return [];
+    }
+
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    localNamedBarrelReExport.lastIndex = 0;
+    for (const match of text.matchAll(localNamedBarrelReExport)) {
+      const specifier = match[1] ?? "";
+      const line = text.slice(0, match.index).split("\n").length;
+
+      failures.push({
+        command: "local re-export convention",
+        file: `${relativeFile}:${line}`,
+        status: 1,
+        stdout: "",
+        stderr: `Local re-export ${specifier} by name. Use export * from "${specifier}"; for local re-exports.`,
+      });
+    }
+
+    return failures;
+  });
+}
+
+export function checkDuplicatedFrontendSourceLibPaths(
+  workspaceRoot: string,
+): CheckFailure[] {
+  const frontendSourceLibDirectories = collectProjectMetadata(workspaceRoot)
+    .map((project) => `${project.root}/src/lib`)
+    .filter((sourceDirectory) =>
+      sourceDirectory.startsWith("libs/frontend/"),
+    );
+  const failures: CheckFailure[] = [];
+
+  for (const sourceDirectory of frontendSourceLibDirectories) {
+    if (!existsSync(resolve(workspaceRoot, sourceDirectory))) continue;
+
+    failures.push({
+      command: "frontend duplicated source lib path convention",
+      file: sourceDirectory,
+      status: 1,
+      stdout: "",
+      stderr:
+        "Frontend libraries must not use lib/src/lib. Keep source folders directly below src, for example libs/frontend/ui/lib/src/component.",
+    });
+  }
+
+  for (const file of collectStaleReferenceTargets(workspaceRoot)) {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile === "packages/tooling/src/commands/tooling/static-check.test.ts") {
+      continue;
+    }
+
+    const text = readFileSync(file, "utf8");
+    text.split(/\r?\n/u).forEach((line, index) => {
+      if (!duplicatedFrontendSourceLibPath.test(line)) return;
+
+      failures.push({
+        command: "frontend duplicated source lib path convention",
+        file: `${relativeFile}:${index + 1}`,
+        status: 1,
+        stdout: "",
+        stderr:
+          "Found a frontend lib/src/lib path. Use lib/src/<domain> paths such as libs/frontend/ui/lib/src/component.",
+      });
+    });
+  }
+
+  return failures;
+}
+
+export function checkFrontendUiCompatibilityFacade(
+  workspaceRoot: string,
+): CheckFailure[] {
+  const allowedFiles = new Set([
+    "libs/frontend/ui/lib/src/index.spec.ts",
+    "libs/frontend/ui/lib/src/index.ts",
+  ]);
+
+  return collectStaleReferenceTargets(workspaceRoot)
+    .map((file) => relativeToWorkspace(workspaceRoot, file))
+    .filter((file) => file.startsWith("libs/frontend/ui/lib/src/"))
+    .filter((file) => !allowedFiles.has(file))
+    .map((file) => ({
+      command: "frontend UI compatibility facade convention",
+      file,
+      status: 1,
+      stdout: "",
+      stderr:
+        "@app/frontend-ui must stay a facade-only package. Move implementation and tests to @app/frontend-runtime or @app/frontend-ui-web.",
+    }));
+}
+
+export function checkStaleSlashStyleAliasImports(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    text.split(/\r?\n/u).forEach((line, index) => {
+      if (!isImportBoundaryLine(line)) return;
+
+      const match = staleSlashStyleAppAliasImport.exec(line);
+      const alias = match?.[1];
+      if (!alias) return;
+
+      failures.push({
+        command: "stale slash-style alias import",
+        file: `${relativeFile}:${index + 1}`,
+        status: 1,
+        stdout: "",
+        stderr: `Found stale slash-style alias ${alias}. Use flattened @app aliases such as @app/common-api-contracts or @app/frontend-api-client instead of @app/<platform>/... imports.`,
+      });
     });
 
     return failures;

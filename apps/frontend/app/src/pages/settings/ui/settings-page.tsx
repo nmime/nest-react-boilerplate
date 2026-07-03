@@ -1,8 +1,8 @@
-import { useI18n } from "@app/frontend/ui";
+import { useI18n } from "@app/frontend-runtime";
 import {
   ProviderIdentitiesPanel,
+  SocialAuthProvider,
   useSocialAuth,
-  type SocialAuthProvider,
 } from "../../../features/social-auth";
 import {
   LanguageSwitcher,
@@ -19,8 +19,8 @@ interface SettingsPageProps {
 }
 
 const linkRoute: Record<SocialAuthProvider, string> = {
-  discord: "/link/discord",
-  telegram: "/link/telegram",
+  [SocialAuthProvider.Discord]: "/link/discord",
+  [SocialAuthProvider.Telegram]: "/link/telegram",
 };
 
 export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
@@ -81,7 +81,7 @@ export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
         </UiCard>
         <ProviderIdentitiesPanel
           onLink={(provider) => {
-            if (provider === "discord") {
+            if (provider === SocialAuthProvider.Discord) {
               socialAuth.continueWithDiscord({ intent: "link" });
               return;
             }

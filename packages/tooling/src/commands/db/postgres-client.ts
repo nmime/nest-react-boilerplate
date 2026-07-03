@@ -2,7 +2,7 @@
 import { spawnSync } from "node:child_process";
 import { relative, resolve } from "node:path";
 
-export const DEFAULT_POSTGRES_CLIENT_IMAGE = "postgres:17-alpine";
+export const DefaultPostgresClientImage = "postgres:17-alpine";
 
 export function isTruthy(value) {
   return /^(1|true|yes|on)$/iu.test(String(value ?? "").trim());

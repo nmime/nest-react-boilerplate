@@ -1,14 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  AuthenticatedTheme,
+  DefaultAuthTenantId,
+  Language,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
   type AuthenticatedSession,
   type AuthSessionView,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import type { AuthService } from "./auth.service";
-import { AuthController, SESSION_COOKIE_NAME } from "./auth.controller";
+import { AuthController, SessionCookieName } from "./auth.controller";
 
 type AuthControllerService = Pick<
   AuthService,
@@ -29,11 +31,11 @@ interface RequestFixture {
 const sessionView: AuthSessionView = {
   user: {
     id: "user-id",
-    tenantId: DEFAULT_AUTH_TENANT_ID,
+    tenantId: DefaultAuthTenantId,
     email: "user@example.com",
     displayName: "Ada Lovelace",
-    locale: "ru",
-    theme: "dark",
+    locale: Language.Ru,
+    theme: AuthenticatedTheme.Dark,
     roles: ["user", "admin"],
     permissions: ["profile:read", "admin:profile:read"],
   },
@@ -93,7 +95,7 @@ function toController(service: AuthControllerService): AuthController {
 
 describe("AuthController", () => {
   afterEach(() => {
-    delete process.env[SESSION_COOKIE_NAME];
+    delete process.env[SessionCookieName];
   });
 
   it("registers and exposes current session state in ok responses", async () => {
@@ -102,6 +104,7 @@ describe("AuthController", () => {
     const { request, session } = createRequest();
     const principal: AuthenticatedPrincipal = {
       subject: sessionView.user.id,
+      tenantId: sessionView.user.tenantId,
       email: sessionView.user.email,
       displayName: sessionView.user.displayName,
       locale: sessionView.user.locale,
@@ -179,8 +182,8 @@ describe("AuthController", () => {
     const updatedUser = {
       ...sessionView.user,
       displayName: "Ada Byron",
-      locale: "en" as const,
-      theme: "light" as const,
+      locale: Language.En,
+      theme: AuthenticatedTheme.Light,
     };
     const service = createService({
       updateUserPreferences: vi.fn(() => Promise.resolve(updatedUser)),
@@ -188,11 +191,11 @@ describe("AuthController", () => {
     const controller = toController(service);
     const principal: AuthenticatedPrincipal = {
       subject: "user-id",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       email: "user@example.com",
       displayName: "Ada Lovelace",
-      locale: "ru",
-      theme: "dark",
+      locale: Language.Ru,
+      theme: AuthenticatedTheme.Dark,
       issuer: "issuer",
       audience: ["web", "mobile"],
       tokenId: "token-id",
@@ -211,7 +214,7 @@ describe("AuthController", () => {
 
     expect(service.updateUserPreferences).toHaveBeenCalledWith(
       "user-id",
-      DEFAULT_AUTH_TENANT_ID,
+      DefaultAuthTenantId,
       {
         locale: "en",
         theme: "light",
@@ -219,7 +222,7 @@ describe("AuthController", () => {
     );
     expect(session.user).toEqual({
       subject: "user-id",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       email: "user@example.com",
       displayName: "Ada Byron",
       locale: "en",
@@ -238,7 +241,7 @@ describe("AuthController", () => {
   it("updates locale and persists the refreshed principal", async () => {
     const updatedUser = {
       ...sessionView.user,
-      locale: "ru" as const,
+      locale: Language.Ru,
     };
     const service = createService({
       updateUserPreferences: vi.fn(() => Promise.resolve(updatedUser)),
@@ -246,7 +249,7 @@ describe("AuthController", () => {
     const controller = toController(service);
     const principal: AuthenticatedPrincipal = {
       subject: "user-id",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       roles: ["user"],
       permissions: ["profile:read"],
     };
@@ -258,7 +261,7 @@ describe("AuthController", () => {
 
     expect(service.updateUserPreferences).toHaveBeenCalledWith(
       "user-id",
-      DEFAULT_AUTH_TENANT_ID,
+      DefaultAuthTenantId,
       {
         locale: "ru",
       },
@@ -272,13 +275,14 @@ describe("AuthController", () => {
   });
 
   it("clears the session principal and all response adapters on logout", async () => {
-    process.env[SESSION_COOKIE_NAME] = "custom.sid";
+    process.env[SessionCookieName] = "custom.sid";
     const principal: AuthenticatedPrincipal = {
       subject: "user-id",
+      tenantId: DefaultAuthTenantId,
       email: "user@example.com",
       displayName: "Ada Lovelace",
-      locale: "ru",
-      theme: "dark",
+      locale: Language.Ru,
+      theme: AuthenticatedTheme.Dark,
       roles: ["user"],
       permissions: ["profile:read"],
     };

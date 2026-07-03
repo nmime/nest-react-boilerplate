@@ -1,17 +1,21 @@
 # Frontend deployment topology
 
-This repository supports two safe frontend/API wiring modes. Choose one per
-environment and keep the build-time Vite variables, nginx config, ingress paths,
-and public DNS/CORS values aligned.
+This repository supports two safe frontend/API wiring modes across the current
+frontend shapes: Astro static landing, Vite SPA admin/user, and the Vike SSR
+site scaffold. Choose one mode per environment and keep build-time variables,
+nginx config, Vike server routing, ingress paths, and public DNS/CORS values
+aligned.
 
 ## Mode 1: same-origin API proxy
 
-Use this when a browser should call APIs through the same origin that serves the
-SPA. Direct production frontend build targets default to this mode when neither
-`VITE_API_BASE_URL_MODE` nor any `VITE_*_API_BASE_URL` values are configured:
+Use this when browser and SSR requests should call APIs through the same origin
+that serves the frontend. Direct production frontend build targets default to
+this mode when neither `VITE_API_BASE_URL_MODE` nor any `VITE_*_API_BASE_URL`
+values are configured:
 
 ```bash
 pnpm exec nx build landing-app
+pnpm exec nx build site-app
 pnpm exec nx build user-app
 pnpm exec nx build admin-app
 ```
@@ -21,6 +25,7 @@ pipelines so the intended reverse-proxy topology is visible in logs:
 
 ```bash
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app
+VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
 ```
@@ -33,14 +38,18 @@ API prefixes server-side:
 - `/profile/*` -> user API.
 - `/admin/*` -> admin API, with `/admin/docs` kept as an API/docs route.
 
-SPA navigations are detected as `GET`/`HEAD` requests with `Accept: text/html`.
-Those requests fall back to `index.html`, so reloads work for landing `/`, user
-routes such as `/auth`, `/auth/discord/callback`, `/profile`, `/settings`,
-`/tma`, `/telegram-mini-app`, `/link/telegram`, and `/app`, plus admin routes
-such as `/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:id`,
+Static frontend navigations are detected as `GET`/`HEAD` requests with
+`Accept: text/html`. Those requests fall back to `index.html`, so reloads work
+for landing `/`, current user SPA routes such as `/auth`,
+`/auth/discord/callback`, `/profile`, `/settings`, `/tma`,
+`/telegram-mini-app`, `/link/telegram`, and `/app`, plus admin routes such as
+`/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:id`,
 `/admin/roles`, `/admin/audit`, `/admin/profile`, `/admin/tenants`, and unknown
-admin SPA routes. Non-HTML API requests continue to proxy to the backend, which
-prevents SPA fallbacks from stealing generated-client API calls.
+admin SPA routes. `site-app` is not an nginx SPA fallback; it is a Node/Vike SSR
+service that serves `dist/apps/frontend/site/client` assets and renders document
+HTML through `apps/frontend/site/server`. Non-HTML API requests continue to
+proxy to the backend, which prevents frontend fallbacks from stealing
+generated-client API calls.
 
 For Helm path-based frontend routing, keep the frontend service paths explicit
 and longest-prefix first in the ingress controller behavior. Split-host remains
@@ -70,6 +79,10 @@ origins. For Helm, keep the default host-oriented values (`example.com`,
 `app.example.com`, `admin.example.com`, and `auth.example.com`) or set equivalent
 environment hostnames in values files.
 
+`site-app` split-host deployments still need a Node SSR host. Static asset
+requests should go to the Vike client output, while document requests should be
+handled by the Vike/Fastify server.
+
 ## Production build defaults and fail-closed cases
 
 Direct production frontend app build targets default to same-origin mode only
@@ -98,11 +111,14 @@ CI=true pnpm install --frozen-lockfile
 pnpm run tooling:static-check
 pnpm run typecheck
 CI=true pnpm exec nx build landing-app --skip-nx-cache
+CI=true pnpm exec nx build site-app --skip-nx-cache
 CI=true pnpm exec nx build user-app --skip-nx-cache
 CI=true pnpm exec nx build admin-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app --skip-nx-cache
+CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app --skip-nx-cache
+CI=true pnpm exec nx run site-app:e2e --skip-nx-cache
 pnpm run deploy:validate:docker
 pnpm run deploy:validate:helm
 pnpm run format:changed

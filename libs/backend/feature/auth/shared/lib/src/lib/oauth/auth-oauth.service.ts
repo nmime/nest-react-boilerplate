@@ -13,7 +13,7 @@ import type {
   AuthOAuthStoredState,
 } from "./auth-oauth.types";
 
-export const AUTH_OAUTH_CONFIG = Symbol("AUTH_OAUTH_CONFIG");
+export const AuthOAuthConfigInjectToken = Symbol("AuthOAuthConfigInjectToken");
 
 const DefaultStateTtlMs = 10 * 60 * 1000;
 const PlaceholderOrigin = "https://return.invalid";
@@ -81,7 +81,7 @@ export class AuthOAuthService {
 
   constructor(
     @Optional()
-    @Inject(AUTH_OAUTH_CONFIG)
+    @Inject(AuthOAuthConfigInjectToken)
     private readonly config: AuthOAuthConfig = {},
   ) {
     this.stateStore = config.stateStore ?? new InMemoryAuthOAuthStateStore();

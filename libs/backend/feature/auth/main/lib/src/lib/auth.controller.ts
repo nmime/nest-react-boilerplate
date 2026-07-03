@@ -25,16 +25,16 @@ import {
   IsUUID,
   MinLength,
 } from "class-validator";
-import { supportedLocales } from "@app/common/i18n";
+import { supportedLocales } from "@app/common-i18n";
 import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/backend/common/swagger";
+} from "@app/backend-common-swagger";
 import {
   createOkResponse,
   type OkResponse,
-} from "@app/backend/common/response";
+} from "@app/backend-common-response";
 import {
   clearSessionPrincipal,
   CurrentUser,
@@ -44,9 +44,16 @@ import {
   type AuthenticatedRequest,
   type AuthenticatedResponse,
   type AuthSessionView,
+  type ExternalAuthProvider,
+  ExternalAuthIntent,
+  authProviderChannels,
+  authProviders,
+  externalAuthIntents,
+  externalAuthProviders,
   userThemePreferences,
   Language,
-} from "@app/backend/feature/auth/shared";
+  isLanguage,
+} from "@app/backend-feature-auth-shared";
 import { AuthService, toSessionPrincipal } from "./auth.service";
 import {
   ExternalAuthService,
@@ -102,11 +109,11 @@ export class ExternalAuthIntentDto {
   @IsUUID()
   tenantId?: string;
 
-  @ApiPropertyOptional({ enum: ["login", "link"] })
+  @ApiPropertyOptional({ enum: externalAuthIntents })
   @IsOptional()
   @IsString()
-  @IsIn(["login", "link"])
-  intent?: "login" | "link";
+  @IsIn(externalAuthIntents)
+  intent?: ExternalAuthIntent;
 
   @ApiPropertyOptional({ writeOnly: true })
   @IsOptional()
@@ -171,16 +178,16 @@ export class LinkTokenDto {
   @IsUUID()
   tenantId?: string;
 
-  @ApiProperty({ enum: ["telegram", "discord"] })
+  @ApiProperty({ enum: externalAuthProviders })
   @IsString()
-  @IsIn(["telegram", "discord"])
-  provider!: "telegram" | "discord";
+  @IsIn(externalAuthProviders)
+  provider!: ExternalAuthProvider;
 
-  @ApiPropertyOptional({ enum: ["login", "link"] })
+  @ApiPropertyOptional({ enum: externalAuthIntents })
   @IsOptional()
   @IsString()
-  @IsIn(["login", "link"])
-  intent?: "login" | "link";
+  @IsIn(externalAuthIntents)
+  intent?: ExternalAuthIntent;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -348,19 +355,10 @@ class AuthSessionViewDto {
   @ApiPropertyOptional({ items: { type: "string" }, type: "array" })
   amr?: string[];
 
-  @ApiPropertyOptional({ enum: ["password", "telegram", "discord"] })
+  @ApiPropertyOptional({ enum: authProviders })
   authProvider?: string;
 
-  @ApiPropertyOptional({
-    enum: [
-      "password",
-      "telegram_web_login",
-      "telegram_tma",
-      "telegram_bot",
-      "discord_oauth",
-      "discord_bot",
-    ],
-  })
+  @ApiPropertyOptional({ enum: authProviderChannels })
   authChannel?: string;
 
   @ApiPropertyOptional()
@@ -397,10 +395,10 @@ class LinkTokenResultDto {
   @ApiProperty()
   expiresAt!: string;
 
-  @ApiProperty({ enum: ["telegram", "discord"] })
+  @ApiProperty({ enum: externalAuthProviders })
   provider!: string;
 
-  @ApiProperty({ enum: ["login", "link"] })
+  @ApiProperty({ enum: externalAuthIntents })
   intent!: string;
 }
 
@@ -428,10 +426,10 @@ class LogoutPayloadDto {
 }
 
 type SessionMethod = "destroy" | "regenerate" | "save";
-export const SESSION_COOKIE_NAME = "SESSION_COOKIE_NAME";
+export const SessionCookieName = "SESSION_COOKIE_NAME";
 
 function getSessionCookieName(): string {
-  const configured = process.env[SESSION_COOKIE_NAME]?.trim();
+  const configured = process.env[SessionCookieName]?.trim();
   if (configured) {
     return configured;
   }
@@ -523,11 +521,23 @@ function principalFromUserView(
     tenantId: user.tenantId,
     email: user.email ?? undefined,
     displayName: user.displayName,
-    locale: user.locale as Language,
+    locale: normalizePrincipalLocale(user.locale),
     theme: user.theme,
     roles: user.roles,
     permissions: user.permissions,
   };
+}
+
+function normalizePrincipalLocale(
+  locale: AuthSessionView["user"]["locale"],
+): Language | undefined {
+  return locale && isLanguage(locale) ? locale : undefined;
+}
+
+function hasRefreshTokenInput(
+  input: Partial<RefreshTokenDto> | undefined,
+): input is RefreshTokenDto {
+  return typeof input?.refreshToken === "string";
 }
 
 @ApiExceptions(400, 401, 403, 409, 429, 500)
@@ -773,8 +783,8 @@ export class AuthController {
     @Res({ passthrough: true }) response: AuthenticatedResponse,
     @Body() input?: Partial<RefreshTokenDto>,
   ): Promise<OkResponse<LogoutPayload>> {
-    if (input?.refreshToken) {
-      await this.auth.revokeRefreshToken(input as RefreshTokenDto);
+    if (hasRefreshTokenInput(input)) {
+      await this.auth.revokeRefreshToken(input);
     }
     await clearRequestSession(request, response);
     return createOkResponse({ loggedOut: true });

@@ -1,8 +1,18 @@
 import { Language } from "./language.enum";
 import type { AuthProvider, AuthProviderChannel } from "./social-auth.types";
+import { createIsEnum } from "../util/enum.util";
 
 export type AuthenticatedLocale = Language;
-export type AuthenticatedTheme = "system" | "light" | "dark";
+
+export enum AuthenticatedTheme {
+  System = "system",
+  Light = "light",
+  Dark = "dark",
+}
+
+export const userThemePreferences = Object.values(AuthenticatedTheme);
+export const isAuthenticatedTheme = createIsEnum(AuthenticatedTheme);
+export type UserThemePreference = AuthenticatedTheme;
 
 export interface AuthenticatedPrincipal {
   subject: string;

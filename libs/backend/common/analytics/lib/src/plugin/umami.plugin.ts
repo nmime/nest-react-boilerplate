@@ -4,7 +4,7 @@ import {
   type UmamiAnalyticsPluginOptions,
 } from "./providers";
 
-export type { UmamiAnalyticsPluginOptions };
+export * from "./providers/umami";
 
 export function createUmamiAnalyticsPlugin(
   options: UmamiAnalyticsPluginOptions,

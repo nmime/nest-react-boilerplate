@@ -1,5 +1,5 @@
 import { Global, Module } from "@nestjs/common";
-import { TELEGRAM_BOT_INSTANCE } from "./tokens";
+import { TelegramBotInstanceInjectToken } from "./tokens";
 import { createTelegramBot } from "./bot";
 import { resolveTelegramBotConfig } from "./config";
 
@@ -7,10 +7,10 @@ import { resolveTelegramBotConfig } from "./config";
 @Module({
   providers: [
     {
-      provide: TELEGRAM_BOT_INSTANCE,
+      provide: TelegramBotInstanceInjectToken,
       useFactory: () => createTelegramBot(resolveTelegramBotConfig()),
     },
   ],
-  exports: [TELEGRAM_BOT_INSTANCE],
+  exports: [TelegramBotInstanceInjectToken],
 })
 export class TelegramBotModule {}

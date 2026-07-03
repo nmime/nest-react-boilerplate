@@ -1,7 +1,7 @@
 import { useEffect, type JSX } from "react";
 import type { Preview } from "@storybook/react-vite";
 
-import "../src/styles.css";
+import "../../../ui-web/lib/src/styles.css";
 
 const useStorybookLandmarkGuard = () => {
   useEffect(() => {

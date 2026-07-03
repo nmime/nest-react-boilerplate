@@ -4,8 +4,17 @@ Use this checklist when changing the frontend/admin product shell, routing, auth
 
 ## Template stack expectation
 
-- Shared UI primitives live in `libs/frontend/ui/lib/src/lib/component` and should follow shadcn/ui architecture: token-driven components, `cn` utility, Tailwind classes, and Radix primitives where behavior or semantics benefit from them.
-- Vite frontend apps (`admin-app`, `user-app`, `landing-app`) run Tailwind through `@tailwindcss/vite`; keep Tailwind wiring in each app config.
+- Shared web UI primitives live behind `@app/frontend-ui-web` in
+  `libs/frontend/ui-web/lib` and should follow shadcn/ui architecture:
+  token-driven components, `cn` utility, Tailwind classes, and Radix primitives
+  where behavior or semantics benefit from them. The legacy package under
+  `libs/frontend/ui/lib` is a compatibility facade only.
+- Native UI primitives live behind `@app/frontend-ui-native` and use Tamagui
+  with shared design tokens from `@app/common-design-tokens`.
+- Current web apps use different renderers: `landing-app` is Astro with React
+  islands, `site-app` is Vike with React SSR, and `admin-app`/`user-app` are
+  Vite React apps during the transition. Keep Tailwind wiring in the owning web
+  app config.
 - Use real Radix imports for primitive behavior (`@radix-ui/react-slot`, `@radix-ui/react-label`, `@radix-ui/react-select`) rather than native-only lookalikes.
 
 ## UI/UX Pro Max priority hierarchy

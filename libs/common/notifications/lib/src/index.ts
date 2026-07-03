@@ -33,7 +33,7 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<SendEmailResult>;
 }
 
-export const EMAIL_PROVIDER = Symbol("EMAIL_PROVIDER");
+export const EmailProviderInjectToken = Symbol("EmailProviderInjectToken");
 
 export class NoopEmailProvider implements EmailProvider {
   readonly name = "noop";

@@ -1,7 +1,7 @@
 import { EntityManager } from "@mikro-orm/core";
 import { Inject, Injectable } from "@nestjs/common";
 import { ResultAsync } from "neverthrow";
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 import {
   AuthUserEntity,
   DefaultAuthTenantId,
@@ -214,7 +214,7 @@ export class AuthUserRepository {
     return entity;
   }
 
-  private toUserFilter(input: AuthUserListInput): object {
+  private toUserFilter(input: AuthUserListInput): Record<string, unknown> {
     return {
       tenantId: input.tenantId ?? DefaultAuthTenantId,
       ...(input.search

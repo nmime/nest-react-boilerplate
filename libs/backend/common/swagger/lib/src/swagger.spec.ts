@@ -48,6 +48,8 @@ vi.mock("@nestjs/swagger", () => ({
   },
 }));
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("common swagger", () => {
   it("reads boolean flags and resolves environment overrides", () => {
     expect(readBoolean(undefined)).toBeUndefined();
@@ -74,7 +76,10 @@ describe("common swagger", () => {
   });
 
   it("skips disabled documentation", () => {
-    setupSwagger({} as never, { enabled: false, title: "api" });
+    setupSwagger(testValue<Parameters<typeof setupSwagger>[0]>({}), {
+      enabled: false,
+      title: "api",
+    });
     expect(mocks.createDocument).not.toHaveBeenCalled();
   });
 
@@ -105,7 +110,7 @@ describe("common swagger", () => {
 
   it("creates bearer and session-cookie auth swagger docs with problem response support", () => {
     mocks.builder.addCookieAuth.mockClear();
-    const app = {} as never;
+    const app = testValue<Parameters<typeof setupSwagger>[0]>({});
 
     setupSwagger(app, {
       description: "API docs",
@@ -261,7 +266,7 @@ describe("common swagger", () => {
   });
 
   it("creates swagger docs without an optional description", () => {
-    const app = {} as never;
+    const app = testValue<Parameters<typeof setupSwagger>[0]>({});
 
     setupSwagger(app, {
       enabled: true,

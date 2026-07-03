@@ -1,8 +1,12 @@
-export const NatsInjectToken = Symbol("NatsConnection");
-export const NatsJetStreamInjectToken = Symbol("NatsJetStream");
-export const NatsJetStreamManagerInjectToken = Symbol("NatsJetStreamManager");
-export const NatsKvManagerInjectToken = Symbol("NatsKvManager");
-export const NatsObjectStoreManagerInjectToken = Symbol(
-  "NatsObjectStoreManager",
+export const NatsInjectToken = Symbol("NatsInjectToken");
+export const NatsJetStreamInjectToken = Symbol("NatsJetStreamInjectToken");
+export const NatsJetStreamManagerInjectToken = Symbol(
+  "NatsJetStreamManagerInjectToken",
 );
-export const NatsServiceManagerInjectToken = Symbol("NatsServiceManager");
+export const NatsKvManagerInjectToken = Symbol("NatsKvManagerInjectToken");
+export const NatsObjectStoreManagerInjectToken = Symbol(
+  "NatsObjectStoreManagerInjectToken",
+);
+export const NatsServiceManagerInjectToken = Symbol(
+  "NatsServiceManagerInjectToken",
+);

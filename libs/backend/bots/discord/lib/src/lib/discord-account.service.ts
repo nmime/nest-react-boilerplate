@@ -1,5 +1,5 @@
 import { Injectable, Optional } from "@nestjs/common";
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 import { DefaultDiscordTenantId } from "./discord-config";
 import {
   DiscordAccountApplicationPort,

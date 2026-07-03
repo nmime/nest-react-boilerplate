@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createI18nMiddleware, resolveTelegramLocale } from "./i18n";
 import type { TelegramBotContext } from "./types";
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("Telegram bot i18n", () => {
   it("resolves locale by linked user, session, identity, Telegram language, then fallback", () => {
     expect(
@@ -33,7 +35,9 @@ describe("Telegram bot i18n", () => {
 
   it("exposes ctx.t using the current session locale for public replies", async () => {
     const middleware = createI18nMiddleware();
-    const ctx = { session: { locale: "ru" } } as TelegramBotContext;
+    const ctx = testValue<TelegramBotContext>({
+      session: { locale: "ru" },
+    });
     let translated = "";
 
     await middleware(ctx, () => {

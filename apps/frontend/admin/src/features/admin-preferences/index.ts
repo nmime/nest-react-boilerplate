@@ -1,6 +1,1 @@
-export {
-  getPayloadTheme,
-  normalizeTheme,
-  readTheme,
-  type ThemePayload,
-} from "./model/theme-preferences";
+export * from "./model/theme-preferences";

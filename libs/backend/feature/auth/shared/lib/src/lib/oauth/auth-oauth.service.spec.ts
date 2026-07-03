@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { AUTH_OAUTH_CONFIG, AuthOAuthService } from "./auth-oauth.service";
+import {
+  AuthOAuthConfigInjectToken,
+  AuthOAuthService,
+} from "./auth-oauth.service";
 import type { AuthOAuthConfig } from "./auth-oauth.types";
 
 const SessionId = "session-1";
@@ -266,6 +269,8 @@ describe("AuthOAuthService", () => {
   });
 
   it("exports a stable injection token for optional configuration", () => {
-    expect(AUTH_OAUTH_CONFIG.description).toBe("AUTH_OAUTH_CONFIG");
+    expect(AuthOAuthConfigInjectToken.description).toBe(
+      "AuthOAuthConfigInjectToken",
+    );
   });
 });

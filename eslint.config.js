@@ -16,6 +16,7 @@ module.exports = [
       "**/coverage/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      "**/.astro/**",
       "**/vite.config.*.timestamp*",
       "packages/tooling/src/commands/**",
     ],
@@ -28,7 +29,7 @@ module.exports = [
         "error",
         {
           ignoredFiles: ["{projectRoot}/eslint.config.{js,cjs,mjs}"],
-          ignoredDependencies: ["@app/frontend-ui", "@app/frontend/ui"],
+          ignoredDependencies: ["@app/frontend-ui", "@app/frontend-ui"],
           checkMissingDependencies: false,
         },
       ],
@@ -234,6 +235,101 @@ module.exports = [
     },
     rules: {
       ...typescriptEslintPlugin.configs["recommended-type-checked"].rules,
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          selector: "default",
+          format: ["camelCase"],
+          leadingUnderscore: "allow",
+          trailingUnderscore: "allow",
+        },
+        {
+          selector: "import",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "variable",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "function",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "method",
+          format: ["camelCase", "PascalCase"],
+        },
+        {
+          selector: "parameter",
+          format: ["camelCase", "PascalCase"],
+          leadingUnderscore: "allow",
+        },
+        {
+          selector: "typeLike",
+          format: ["PascalCase"],
+        },
+        {
+          selector: "enumMember",
+          format: ["StrictPascalCase"],
+          leadingUnderscore: "forbid",
+          trailingUnderscore: "forbid",
+        },
+        {
+          selector: "objectLiteralProperty",
+          format: null,
+        },
+        {
+          selector: "typeProperty",
+          format: null,
+        },
+      ],
+      "@typescript-eslint/no-restricted-types": [
+        "error",
+        {
+          types: {
+            object:
+              "Use Record<string, unknown>, UnknownRecord, or a more specific object shape.",
+          },
+        },
+      ],
+      "@typescript-eslint/no-non-null-assertion": "error",
+      "@typescript-eslint/consistent-type-assertions": [
+        "error",
+        {
+          assertionStyle: "as",
+          objectLiteralTypeAssertions: "never",
+        },
+      ],
+      "@typescript-eslint/explicit-member-accessibility": [
+        "error",
+        {
+          accessibility: "no-public",
+        },
+      ],
+      curly: ["error", "all"],
+      eqeqeq: ["error", "always"],
+      "no-console": "error",
+      "no-template-curly-in-string": "error",
+      "no-use-before-define": "off",
+      "@typescript-eslint/no-use-before-define": [
+        "error",
+        {
+          functions: false,
+          classes: false,
+          variables: false,
+          typedefs: false,
+        },
+      ],
+      "no-useless-escape": "error",
+      "no-var": "error",
+      "object-shorthand": ["error", "always"],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSEnumDeclaration[id.name=/Enum$/]",
+          message: 'Enum names must not end with "Enum".',
+        },
+      ],
     },
   },
   {

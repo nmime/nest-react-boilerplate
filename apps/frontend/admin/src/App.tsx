@@ -11,7 +11,7 @@ import {
   createApiRuntimeFetch,
   defaultApiToastRules,
   useApiRuntimeOverlayModel,
-} from "@app/frontend/api-support";
+} from "@app/frontend-api-support";
 import {
   ApiClientProvider,
   adminApi,
@@ -22,15 +22,11 @@ import {
   useAdminApiClient,
   useAuthApiClient,
   type ApiClientRequestOptions,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
-  UiErrorBoundary,
-  UiApiRuntimeOverlay,
-  UiLoading,
-  UiSection,
   observer,
   translate,
   useAppStore,
@@ -39,8 +35,14 @@ import {
   normalizeLocale,
   type Locale,
   type UiTheme,
-} from "@app/frontend/ui";
-import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
+} from "@app/frontend-runtime";
+import {
+  UiErrorBoundary,
+  UiApiRuntimeOverlay,
+  UiLoading,
+  UiSection,
+} from "@app/frontend-ui-web";
+import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
 import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";
 import {
   getBrowserPath,

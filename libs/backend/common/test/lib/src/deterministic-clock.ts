@@ -1,29 +1,29 @@
 import { vi } from "vitest";
 
-let _fakeTimerActive = false;
+let fakeTimerActive = false;
 
 export function installFixedSystemTime(
   baseTime: Date = new Date("2025-01-01T00:00:00Z"),
 ): number {
-  if (_fakeTimerActive) {
+  if (fakeTimerActive) {
     throw new Error(
       "Fixed system time is already installed. Call uninstallFixedSystemTime() first or use withFixedSystemTime().",
     );
   }
   vi.useFakeTimers({ toFake: ["Date"], now: baseTime });
-  _fakeTimerActive = true;
+  fakeTimerActive = true;
   return baseTime.getTime();
 }
 
 export function uninstallFixedSystemTime(): void {
-  if (_fakeTimerActive) {
+  if (fakeTimerActive) {
     vi.useRealTimers();
-    _fakeTimerActive = false;
+    fakeTimerActive = false;
   }
 }
 
 export function advanceFixedSystemTime(ms: number): void {
-  if (!_fakeTimerActive) {
+  if (!fakeTimerActive) {
     throw new Error(
       "No fixed system time is installed. Call installFixedSystemTime() first.",
     );

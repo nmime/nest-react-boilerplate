@@ -8,6 +8,8 @@ import {
 } from "./nats-container";
 import { hasDockerRuntime } from "./postgres-container";
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("nats test container helpers", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -46,8 +48,11 @@ describe("nats test container helpers", () => {
 
   it("stops started NATS containers when provided and ignores undefined", async () => {
     const stop = vi.fn(() => Promise.resolve());
+    const container = testValue<Parameters<typeof stopNatsContainer>[0]>({
+      container: { stop },
+    });
 
-    await stopNatsContainer({ container: { stop } } as never);
+    await stopNatsContainer(container);
     await stopNatsContainer(undefined);
 
     expect(stop).toHaveBeenCalledTimes(1);

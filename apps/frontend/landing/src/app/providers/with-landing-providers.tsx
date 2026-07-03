@@ -1,14 +1,14 @@
-import { useApiRuntimeOverlayModel } from "@app/frontend/api-support";
+import { useApiRuntimeOverlayModel } from "@app/frontend-api-support";
 import {
   FrontendI18nProvider,
   FrontendStateProvider,
-  UiApiRuntimeOverlay,
   observer,
   translate,
   useAppStore,
   useStore,
-} from "@app/frontend/ui";
-import { landingFrontendTranslations } from "@app/frontend/feature/landing/i18n";
+} from "@app/frontend-runtime";
+import { UiApiRuntimeOverlay } from "@app/frontend-ui-web";
+import { landingFrontendTranslations } from "@app/frontend-feature-landing-i18n";
 import type { ComponentType } from "react";
 
 const LandingRuntimeOverlayProvider = observer(
@@ -58,7 +58,7 @@ const LandingRuntimeOverlayProvider = observer(
   },
 );
 
-export const withLandingProviders = <TProps extends object>(
+export const withLandingProviders = <TProps extends Record<string, unknown>>(
   Component: ComponentType<TProps>,
 ) => {
   const ComponentWithLandingProviders = (props: TProps) => (

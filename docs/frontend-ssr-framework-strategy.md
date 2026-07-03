@@ -6,16 +6,33 @@ Date: 2026-07-02.
 
 ## Decision
 
-Use two SSR-capable web frameworks with different ownership boundaries:
+Use two SSR-capable web app targets with different ownership boundaries:
 
-- `apps/frontend/landing`: Astro with React islands.
-- `apps/frontend/site`: Vike with React SSR for the product/user site.
-- `apps/frontend/admin`: keep the existing Vite React SPA unless admin SEO,
-  first-load SSR, or server auth gates become product requirements.
+- `landing-app` at `apps/frontend/landing`: Astro with React islands.
+- `site-app` at `apps/frontend/site`: Vike with React SSR for the product/user
+  site.
+- `admin-app` at `apps/frontend/admin`: keep the existing Vite React SPA unless
+  admin SEO, first-load SSR, or server auth gates become product requirements.
 
 This resolves the current framework choice as Astro for landing and Vike for
 the product site. Do not introduce Next.js for these two surfaces unless Vike
 fails a repo-local proof of authenticated SSR, route guards, and deployment.
+
+The final shared UI Nx project names and canonical aliases are split by
+platform. These package-style flattened names are the source import aliases and
+Nx project names:
+`@app/frontend-ui-web`, `@app/frontend-ui-native`, `@app/frontend-runtime`, and
+`@app/common-design-tokens`.
+
+- `@app/frontend-ui-web` at `libs/frontend/ui-web/lib`: shadcn-style React DOM
+  components for Astro, Vike, and admin web.
+- `@app/frontend-ui-native` at `libs/frontend/ui-native/lib`: Tamagui
+  components for Expo/React Native.
+- `@app/frontend-runtime` at `libs/frontend/runtime/lib`: non-visual web runtime
+  concerns such as i18n, query defaults, shell state, theme, and locale
+  behavior.
+- Shared feature core must sit below both renderers and must not import either
+  UI package.
 
 This is intentionally not a single universal framework choice. Landing and the
 authenticated site have different runtime needs:
@@ -70,13 +87,14 @@ and cache updates after hydration.
 The site should be a new app boundary, not a hidden mutation of the current
 `user-app` until parity is proven. Migrate routes incrementally:
 
-1. Create `apps/frontend/site` with Vike and React SSR.
-2. Move route-independent runtime and business logic out of
-   `@app/frontend-ui`.
+1. Create `site-app` at `apps/frontend/site` with Vike and React SSR.
+2. Move route-independent runtime out of `@app/frontend-ui` into
+   `@app/frontend-runtime`; move business logic into
+   feature-core libraries.
 3. Move auth, profile, settings, and preference hooks into feature-core
    libraries with no DOM, Vite, Vike, Astro, or React Native dependency.
 4. Rebuild each user route in `site` against the shared feature core and
-   `ui-web`.
+   `@app/frontend-ui-web`.
 5. Retire `user-app` after route, auth, e2e, and deployment parity.
 
 ## Nx integration
@@ -141,7 +159,7 @@ Use the same pattern for Vike:
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "node dist/server/index.mjs",
+        "command": "NODE_ENV=production node --experimental-strip-types server/index.ts",
         "cwd": "apps/frontend/site"
       }
     }
@@ -164,8 +182,8 @@ libs/
   frontend/api-client
   frontend/api-support
   frontend/feature/*/core
-  frontend/ui-web
-  frontend/ui-native
+  frontend/ui-web/lib
+  frontend/ui-native/lib
 ```
 
 Rules:
@@ -176,11 +194,40 @@ Rules:
 - `frontend/runtime` owns i18n, query provider defaults, shell state, theme, and
   locale behavior. Runtime code must keep storage and document access guarded
   for SSR.
-- `frontend/ui-web` owns DOM/React components for Astro islands and Vike pages.
-- `frontend/ui-native` is the future Expo renderer and imports the same feature
-  core, not the web UI.
-- `@app/frontend-ui` can remain as a compatibility alias during migration, but
-  new shared runtime code should not be added there.
+- `@app/frontend-ui-web` owns DOM/React components for Astro islands and Vike
+  pages.
+- `@app/frontend-ui-native` is the future Expo renderer and imports the same
+  feature core, not the web UI.
+- `@app/frontend-ui` can remain as a compatibility alias
+  during migration, but new shared runtime code should not be added there.
+
+## UI renderer split
+
+Web UI uses shadcn-style open component code. In this repository that means the
+owned `@app/frontend-ui-web` package keeps the component source and uses the
+same web primitives already present in the current UI layer: Tailwind CSS,
+Radix primitives, `class-variance-authority`, `tailwind-merge`, and React DOM.
+
+`@app/frontend-ui-web` is consumed by:
+
+- Astro React islands in `apps/frontend/landing`.
+- Vike React SSR pages in `apps/frontend/site`.
+- The existing Vite admin SPA in `apps/frontend/admin`.
+
+Native UI uses Tamagui in `@app/frontend-ui-native`. Tamagui is the native
+renderer choice because it gives Expo/React Native components, theming, and a
+compiler path without forcing the web apps to abandon their
+shadcn/Radix/Tailwind component model.
+
+Do not mix the renderers:
+
+- `@app/frontend-ui-web` must not import Tamagui, Expo, or React Native.
+- `@app/frontend-ui-native` must not import shadcn/Radix DOM components.
+- `frontend/feature/*/core` must not import either UI renderer.
+
+Design consistency comes from shared design tokens, not from sharing component
+implementations. The token package should expose CSS variables for shadcn/web
+and a Tamagui theme/config adapter for native.
 
 ## Deployment shape
 
@@ -204,30 +251,60 @@ Admin:
 
 ## Validation expectations
 
-For landing framework changes:
+For Astro landing changes:
 
 ```bash
 pnpm exec nx build landing-app
 pnpm exec nx run landing-app:e2e
-pnpm run format:check
 pnpm run frontend:fsd:check
-git diff --check
 ```
 
-For site framework changes:
+For Vike site changes:
 
 ```bash
 pnpm exec nx build site-app
 pnpm exec nx run site-app:e2e
 pnpm run typecheck
 pnpm run frontend:fsd:check
+```
+
+For shared design-token or runtime changes:
+
+```bash
+pnpm exec nx run @app/common-design-tokens:build
+pnpm exec nx run @app/frontend-runtime:build
+pnpm run frontend:fsd:check
+```
+
+For shadcn `ui-web` changes:
+
+```bash
+pnpm exec nx run @app/frontend-ui-web:build
+pnpm run frontend:fsd:check
+```
+
+Storybook still uses the compatibility config under `libs/frontend/ui/lib`, but
+it loads stories and styles from `@app/frontend-ui-web`. Run Storybook gates for
+web UI changes until a dedicated `ui-web` Storybook target replaces that config
+shell.
+
+For Tamagui `ui-native` changes:
+
+```bash
+pnpm exec nx run @app/frontend-ui-native:build
+pnpm run frontend:fsd:check
+```
+
+For every docs/config migration patch, also run:
+
+```bash
+pnpm run format:check
 git diff --check
 ```
 
-Adjust project names after scaffolding. If Astro/Vike app names replace the
-current `landing-app` or `user-app`, update `docs/command-matrix.md`,
-deployment docs, Docker targets, CI project lists, and smoke-test coverage in
-the same migration.
+These target names are final for the migration plan. When scaffolding lands,
+update `docs/command-matrix.md`, deployment docs, Docker targets, CI project
+lists, and smoke-test coverage in the same migration.
 
 ## Source research
 

@@ -1,6 +1,6 @@
 # Notification and email provider abstraction
 
-`@app/common/notifications` defines the email provider contract used by product features. The current package ships low-risk `NoopEmailProvider` and `InMemoryEmailProvider` implementations for local development and tests.
+`@app/common-notifications` defines the email provider contract used by product features. The current package ships low-risk `NoopEmailProvider` and `InMemoryEmailProvider` implementations for local development and tests.
 
 ## API
 
@@ -8,7 +8,7 @@
 import {
   NoopEmailProvider,
   type EmailProvider,
-} from "@app/common/notifications";
+} from "@app/common-notifications";
 
 const email: EmailProvider = new NoopEmailProvider();
 await email.send({

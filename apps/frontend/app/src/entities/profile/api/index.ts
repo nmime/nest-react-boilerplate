@@ -1,1 +1,1 @@
-export { fetchUserProfile, profileQueryKey } from "./profile-api";
+export * from "./profile-api";

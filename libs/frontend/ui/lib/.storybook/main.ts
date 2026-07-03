@@ -7,7 +7,7 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  stories: ["../src/**/*.stories.{ts,tsx,mdx}"],
+  stories: ["../../../ui-web/lib/src/**/*.stories.{ts,tsx,mdx}"],
   addons: ["@storybook/addon-vitest"],
   viteFinal: async (viteConfig) =>
     mergeConfig(viteConfig, {

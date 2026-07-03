@@ -1,1 +1,1 @@
-export { AuditPage } from "./audit-page";
+export * from "./audit-page";

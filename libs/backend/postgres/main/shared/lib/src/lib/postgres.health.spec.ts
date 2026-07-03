@@ -8,6 +8,8 @@ import {
   type PostgresDependencyHealthAdapter,
 } from "./postgres.health";
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("PostgresReadinessHealthIndicator", () => {
   it("runs a bounded read-only readiness query through the adapter", async () => {
     const checkReadiness = vi.fn(() => Promise.resolve(undefined));
@@ -226,9 +228,13 @@ describe("MikroOrmPostgresHealthAdapter", () => {
   });
 
   it("throws a clear error when the migrator API is unavailable", async () => {
-    const adapter = new MikroOrmPostgresHealthAdapter({
-      em: { getConnection: () => ({ execute: vi.fn() }) },
-    } as never);
+    const adapter = new MikroOrmPostgresHealthAdapter(
+      testValue<ConstructorParameters<typeof MikroOrmPostgresHealthAdapter>[0]>(
+        {
+          em: { getConnection: () => ({ execute: vi.fn() }) },
+        },
+      ),
+    );
 
     await expect(adapter.getPendingMigrations()).rejects.toBeInstanceOf(
       PostgresMigrationStatusUnsupportedError,

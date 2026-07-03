@@ -3,7 +3,7 @@ import {
   EnvHealthIndicator,
   HealthService,
   RuntimeHealthIndicator,
-} from "@app/backend/common/health";
+} from "@app/backend-common-health";
 
 const appName = "telegram-bot-api";
 

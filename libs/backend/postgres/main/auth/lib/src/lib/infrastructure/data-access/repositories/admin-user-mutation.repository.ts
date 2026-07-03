@@ -47,13 +47,13 @@ export interface AdminUserMutationSafetyViolation {
   message: string;
 }
 
-export const ADMIN_USER_MUTATION_REPOSITORY_ERROR = "repository_error";
-export const ADMIN_ROLE_NAME = "admin";
-export const ADMIN_USERS_WRITE_PERMISSION_NAME = "admin:users:write";
-export const ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME =
+export const AdminUserMutationRepositoryError = "repository_error";
+export const AdminRoleName = "admin";
+export const AdminUsersWritePermissionName = "admin:users:write";
+export const AdminUsersAccessPolicyUpdatePermissionName =
   "admin:users:access-policy:update";
-const ADMIN_USER_MUTATION_OUTBOX_AGGREGATE_TYPE = "admin.user";
-const MAX_PAGE_SIZE = 100;
+const adminUserMutationOutboxAggregateType = "admin.user";
+const maxPageSize = 100;
 
 @Injectable()
 export class AdminUserMutationRepository {
@@ -78,11 +78,11 @@ export class AdminUserMutationRepository {
     return entityManager.count(AuthUserEntity, {
       tenantId,
       status: "active",
-      roles: { $contains: [ADMIN_ROLE_NAME] },
+      roles: { $contains: [AdminRoleName] },
       permissions: {
         $contains: [
-          ADMIN_USERS_WRITE_PERMISSION_NAME,
-          ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,
+          AdminUsersWritePermissionName,
+          AdminUsersAccessPolicyUpdatePermissionName,
         ],
       },
     });
@@ -182,7 +182,7 @@ export class AdminUserMutationRepository {
         });
         const outboxEvent = new TransactionalOutboxEventEntity({
           tenantId,
-          aggregateType: ADMIN_USER_MUTATION_OUTBOX_AGGREGATE_TYPE,
+          aggregateType: adminUserMutationOutboxAggregateType,
           aggregateId: input.targetUserId,
           eventType: input.action,
           payload: {
@@ -221,7 +221,7 @@ export function normalizePageLimit(value: number | undefined): number {
     return 50;
   }
 
-  return Math.min(Math.max(Math.trunc(value ?? 50), 1), MAX_PAGE_SIZE);
+  return Math.min(Math.max(Math.trunc(value ?? 50), 1), maxPageSize);
 }
 
 export function normalizePageOffset(value: number | undefined): number {
@@ -237,11 +237,9 @@ export function hasActivePowerfulAdminAccess(
 ): boolean {
   return (
     entity.status === "active" &&
-    entity.roles.includes(ADMIN_ROLE_NAME) &&
-    entity.permissions.includes(ADMIN_USERS_WRITE_PERMISSION_NAME) &&
-    entity.permissions.includes(
-      ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,
-    )
+    entity.roles.includes(AdminRoleName) &&
+    entity.permissions.includes(AdminUsersWritePermissionName) &&
+    entity.permissions.includes(AdminUsersAccessPolicyUpdatePermissionName)
   );
 }
 
@@ -298,13 +296,13 @@ function cloneAuthUser(entity: AuthUserEntity): AuthUserEntity {
 function mapRepositoryError(cause: unknown): AuthUserRepositoryError {
   if (cause instanceof AdminUserMutationSafetyError) {
     return {
-      code: ADMIN_USER_MUTATION_REPOSITORY_ERROR,
+      code: AdminUserMutationRepositoryError,
       message: cause.message,
     };
   }
 
   return {
-    code: ADMIN_USER_MUTATION_REPOSITORY_ERROR,
+    code: AdminUserMutationRepositoryError,
     message:
       cause instanceof Error
         ? cause.message

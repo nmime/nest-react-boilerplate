@@ -1,10 +1,5 @@
-import {
-  ProductShell,
-  UiAlert,
-  observer,
-  useAppStore,
-  useI18n,
-} from "@app/frontend/ui";
+import { observer, useAppStore, useI18n } from "@app/frontend-runtime";
+import { ProductShell, UiAlert } from "@app/frontend-ui-web";
 import { useLandingActionsState } from "../../../features/landing-actions";
 import { ProductOverview } from "../../../widgets/product-overview";
 

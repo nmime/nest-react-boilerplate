@@ -1,14 +1,14 @@
-import type { TranslationKey } from "@app/frontend/ui";
-import type { ProviderIdentity, SocialAuthProvider } from "./types";
+import type { TranslationKey } from "@app/frontend-runtime";
+import { SocialAuthProvider, type ProviderIdentity } from "./types";
 
 const providerKeys: Record<SocialAuthProvider, TranslationKey> = {
-  discord: "auth.provider.discord",
-  telegram: "auth.provider.telegram",
+  [SocialAuthProvider.Discord]: "auth.provider.discord",
+  [SocialAuthProvider.Telegram]: "auth.provider.telegram",
 };
 
 export const socialAuthProviders: SocialAuthProvider[] = [
-  "telegram",
-  "discord",
+  SocialAuthProvider.Telegram,
+  SocialAuthProvider.Discord,
 ];
 
 export const getProviderTranslationKey = (
@@ -21,20 +21,22 @@ const readString = (value: unknown): string | undefined =>
 const readBoolean = (value: unknown): boolean | undefined =>
   typeof value === "boolean" ? value : undefined;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object";
+
 const isSocialProvider = (value: unknown): value is SocialAuthProvider =>
-  value === "telegram" || value === "discord";
+  value === SocialAuthProvider.Telegram || value === SocialAuthProvider.Discord;
 
 export const normalizeProviderIdentity = (
   value: unknown,
 ): ProviderIdentity | null => {
-  if (!value || typeof value !== "object") {
+  if (!isRecord(value)) {
     return null;
   }
 
-  const record = value as Record<string, unknown>;
-  const provider = record.provider ?? record.authProvider;
+  const provider = value.provider ?? value.authProvider;
   const id = readString(
-    record.id ?? record.identityId ?? record.externalIdentityId,
+    value.id ?? value.identityId ?? value.externalIdentityId,
   );
 
   if (!id || !isSocialProvider(provider)) {
@@ -42,15 +44,15 @@ export const normalizeProviderIdentity = (
   }
 
   return {
-    avatarUrl: readString(record.avatarUrl),
-    displayName: readString(record.displayName ?? record.name),
-    email: readString(record.email) ?? null,
+    avatarUrl: readString(value.avatarUrl),
+    displayName: readString(value.displayName ?? value.name),
+    email: readString(value.email) ?? null,
     id,
-    isLastMethod: readBoolean(record.isLastMethod ?? record.lastMethod),
-    linkedAt: readString(record.linkedAt ?? record.createdAt),
+    isLastMethod: readBoolean(value.isLastMethod ?? value.lastMethod),
+    linkedAt: readString(value.linkedAt ?? value.createdAt),
     provider,
-    providerSubject: readString(record.providerSubject ?? record.subject),
-    username: readString(record.username),
+    providerSubject: readString(value.providerSubject ?? value.subject),
+    username: readString(value.username),
   };
 };
 
@@ -59,13 +61,12 @@ const readIdentityList = (payload: unknown): unknown[] => {
     return payload;
   }
 
-  if (!payload || typeof payload !== "object") {
+  if (!isRecord(payload)) {
     return [];
   }
 
-  const record = payload as Record<string, unknown>;
   for (const key of ["identities", "items", "providerIdentities", "data"]) {
-    const candidate = record[key];
+    const candidate = payload[key];
     if (Array.isArray(candidate)) {
       return candidate;
     }
@@ -83,10 +84,14 @@ export const normalizeProviderIdentities = (payload: unknown) => {
   return {
     identities,
     providers: {
-      discord:
-        identities.find((identity) => identity.provider === "discord") ?? null,
-      telegram:
-        identities.find((identity) => identity.provider === "telegram") ?? null,
+      [SocialAuthProvider.Discord]:
+        identities.find(
+          (identity) => identity.provider === SocialAuthProvider.Discord,
+        ) ?? null,
+      [SocialAuthProvider.Telegram]:
+        identities.find(
+          (identity) => identity.provider === SocialAuthProvider.Telegram,
+        ) ?? null,
     },
   };
 };

@@ -32,14 +32,14 @@ This is the canonical instruction source for AI coding agents working in this re
 - Frontend-only libraries live under `libs/frontend/**`.
 - True cross-runtime common libraries live under `libs/common/**`.
 - Admin feature shared code is split by runtime. Do not recreate an unsplit shared admin project:
-  - Frontend admin shared lives at `libs/frontend/feature/admin/shared/lib`, uses alias `@app/frontend/feature-admin-shared`, and carries `platform:frontend`, `type:feature-shared`, `scope:admin`, and `fsd:layer:shared` tags.
-  - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses alias `@app/backend/feature-admin-shared`, and carries `platform:backend`, `type:feature-shared`, and `scope:admin` tags.
+  - Frontend admin shared lives at `libs/frontend/feature/admin/shared/lib`, uses alias `@app/frontend-feature-admin-shared`, and carries `platform:frontend`, `type:feature-shared`, `scope:admin`, and `fsd:layer:shared` tags.
+  - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses alias `@app/backend-feature-admin-shared`, and carries `platform:backend`, `type:feature-shared`, and `scope:admin` tags.
   - Respect platform boundaries: frontend code must not import backend admin libraries, and backend code must not import frontend admin libraries.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do not rename, remove, or repoint aliases unless the task explicitly includes an alias migration and all consumers/docs are updated.
 - PostgreSQL shared infrastructure lives at `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below `libs/backend/postgres/main/<feature>/lib`.
-- Exception foundation is singular: use `@app/common/exception`, path `libs/backend/common/exception/lib`, Nx project `@app/common/exception`. Do not introduce or document an `exceptions` alias/path.
+- Exception foundation is singular: use `@app/backend-common-exception`, path `libs/backend/common/exception/lib`, Nx project `@app/backend-common-exception`. Do not introduce or document an `exceptions` alias/path.
 - RFC 9457 Problem Details wire terms are intentional and allowed: `ProblemDetails`, `application/problem+json`, `urn:problem:*`, `type`, `title`, `status`, `detail`, `instance`, and validation `errors[]` entries with `detail`/`pointer`. Do not add project-owned problem wrapper layers when the existing exception, validation, and response libraries cover the need.
-- Shared health uses `@app/common/health` (`BaseHealthController`, `HealthService`, app-specific health providers/config) for `/health`, `/health/private`, `/live`, and `/ready`; document exact response shapes from source/tests before changing docs.
+- Shared health uses `@app/backend-common-health` (`BaseHealthController`, `HealthService`, app-specific health providers/config) for `/health`, `/health/private`, `/live`, and `/ready`; document exact response shapes from source/tests before changing docs.
 
 ## API contracts and generated artifacts
 

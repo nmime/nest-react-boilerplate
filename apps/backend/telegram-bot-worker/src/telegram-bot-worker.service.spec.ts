@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { run } from "@grammyjs/runner";
 import { TelegramBotWorkerService } from "./telegram-bot-worker.service";
-import type { TelegramBotInstance } from "@app/backend/bots/telegram";
+import type { TelegramBotInstance } from "@app/backend-bots-telegram";
 
 const stop = vi.fn(() => Promise.resolve(undefined));
 const isRunning = vi.fn(() => true);
@@ -16,6 +16,8 @@ vi.mock("@grammyjs/runner", () => ({
   })),
 }));
 
+const testValue = <T>(value: unknown): T => value as T;
+
 function instance(
   mode: "webhook" | "polling",
   environment: "production" | "development" | "test" = "development",
@@ -29,8 +31,8 @@ function instance(
       sessionTtlSeconds: 60,
       rateLimit: { timeFrameMs: 1_000, limit: 10 },
     },
-    menus: {} as never,
-    bot: {} as never,
+    menus: testValue<TelegramBotInstance["menus"]>({}),
+    bot: testValue<TelegramBotInstance["bot"]>({}),
   };
 }
 

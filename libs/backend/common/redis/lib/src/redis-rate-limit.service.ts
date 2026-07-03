@@ -18,7 +18,9 @@ export interface SharedRateLimiter {
   hit(params: RateLimitHitInput): Promise<RateLimitHitResult>;
 }
 
-export const SHARED_RATE_LIMITER = Symbol("SHARED_RATE_LIMITER");
+export const SharedRateLimiterInjectToken = Symbol(
+  "SharedRateLimiterInjectToken",
+);
 
 @Injectable()
 export class RedisRateLimitService implements SharedRateLimiter {

@@ -1,40 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { AuthMainModule } from "./auth-main.module";
+import { AuthMainModule, AuthPersistenceMode } from "./auth-main.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import {
-  AUTH_TOKEN_STORE,
+  AuthTokenStoreInjectToken,
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
 } from "./auth-token-store";
 import {
-  AUTH_USER_STORE,
+  AuthUserStoreInjectToken,
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
 } from "./auth-user-store";
 
 describe("AuthMainModule", () => {
   it("creates memory and Postgres dynamic modules", () => {
-    const memoryModule = AuthMainModule.forRoot("memory");
-    const postgresModule = AuthMainModule.forRoot("postgres");
+    const memoryModule = AuthMainModule.forRoot(AuthPersistenceMode.Memory);
+    const postgresModule = AuthMainModule.forRoot(AuthPersistenceMode.Postgres);
 
     expect(memoryModule.controllers).toEqual([AuthController]);
     expect(memoryModule.providers).toContain(AuthService);
     expect(memoryModule.providers).toContainEqual({
-      provide: AUTH_USER_STORE,
+      provide: AuthUserStoreInjectToken,
       useClass: InMemoryAuthUserStore,
     });
     expect(memoryModule.providers).toContainEqual({
-      provide: AUTH_TOKEN_STORE,
+      provide: AuthTokenStoreInjectToken,
       useClass: InMemoryAuthTokenStore,
     });
     expect(memoryModule.imports).toEqual([]);
     expect(postgresModule.providers).toContainEqual({
-      provide: AUTH_USER_STORE,
+      provide: AuthUserStoreInjectToken,
       useClass: PostgresAuthUserStore,
     });
     expect(postgresModule.providers).toContainEqual({
-      provide: AUTH_TOKEN_STORE,
+      provide: AuthTokenStoreInjectToken,
       useClass: PostgresAuthTokenStore,
     });
     expect(postgresModule.imports).toHaveLength(2);
@@ -71,7 +71,7 @@ describe("AuthMainModule", () => {
     expect(() => AuthMainModule.forRoot()).toThrow(
       "AUTH_PERSISTENCE=memory is not allowed in production.",
     );
-    expect(() => AuthMainModule.forRoot("memory")).toThrow(
+    expect(() => AuthMainModule.forRoot(AuthPersistenceMode.Memory)).toThrow(
       "AUTH_PERSISTENCE=memory is not allowed in production.",
     );
 

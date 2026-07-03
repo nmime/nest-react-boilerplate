@@ -1,0 +1,10 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["node"]
+  },
+  "include": [],
+  "files": [],
+  "references": [{ "path": "./tsconfig.lib.json" }]
+}

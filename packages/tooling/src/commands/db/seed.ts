@@ -4,8 +4,8 @@ import { pbkdf2Sync, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import {
   assertSeedSafety,
-  DEFAULT_ADMIN_EMAIL,
-  DEFAULT_ADMIN_PASSWORD,
+  DefaultAdminEmail,
+  DefaultAdminPassword,
   resolvePassword,
 } from "./seed-safety.ts";
 import {
@@ -19,8 +19,8 @@ function parseArgs(argv) {
   const args = {
     dryRun: false,
     force: false,
-    email: DEFAULT_ADMIN_EMAIL,
-    password: DEFAULT_ADMIN_PASSWORD,
+    email: DefaultAdminEmail,
+    password: DefaultAdminPassword,
     passwordEnv: "",
     displayName: "Local Admin",
   };

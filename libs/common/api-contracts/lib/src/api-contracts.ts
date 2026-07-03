@@ -33,7 +33,7 @@ export type AuthApiSchemas = AuthComponents["schemas"];
 export type UserApiSchemas = UserComponents["schemas"];
 
 type Schema<
-  TComponents extends { schemas: object },
+  TComponents extends { schemas: Record<string, unknown> },
   TName extends keyof TComponents["schemas"],
 > = TComponents["schemas"][TName];
 

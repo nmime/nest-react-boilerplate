@@ -3,12 +3,12 @@ import { Inject, Injectable, Optional } from "@nestjs/common";
 import type {
   HealthIndicatorResult,
   HealthStatus,
-} from "@app/backend/common/health";
+} from "@app/backend-common-health";
 
-export const POSTGRES_HEALTH_ADAPTER = "POSTGRES_HEALTH_ADAPTER";
-export const POSTGRES_READINESS_HEALTH_OPTIONS =
+export const PostgresHealthAdapter = "POSTGRES_HEALTH_ADAPTER";
+export const PostgresReadinessHealthOptions =
   "POSTGRES_READINESS_HEALTH_OPTIONS";
-export const POSTGRES_MIGRATIONS_HEALTH_OPTIONS =
+export const PostgresMigrationsHealthOptions =
   "POSTGRES_MIGRATIONS_HEALTH_OPTIONS";
 
 export interface PostgresHealthIndicatorOptions {
@@ -91,10 +91,10 @@ export class PostgresReadinessHealthIndicator {
 
   constructor(
     @Optional()
-    @Inject(POSTGRES_HEALTH_ADAPTER)
+    @Inject(PostgresHealthAdapter)
     private readonly adapter?: PostgresDependencyHealthAdapter | null,
     @Optional()
-    @Inject(POSTGRES_READINESS_HEALTH_OPTIONS)
+    @Inject(PostgresReadinessHealthOptions)
     options: PostgresHealthIndicatorOptions = {},
   ) {
     this.name = options.name ?? DefaultPostgresReadinessName;
@@ -149,10 +149,10 @@ export class PostgresMigrationsHealthIndicator {
 
   constructor(
     @Optional()
-    @Inject(POSTGRES_HEALTH_ADAPTER)
+    @Inject(PostgresHealthAdapter)
     private readonly adapter?: PostgresDependencyHealthAdapter | null,
     @Optional()
-    @Inject(POSTGRES_MIGRATIONS_HEALTH_OPTIONS)
+    @Inject(PostgresMigrationsHealthOptions)
     options: PostgresMigrationsHealthIndicatorOptions = {},
   ) {
     this.name = options.name ?? DefaultPostgresMigrationsName;
@@ -242,7 +242,9 @@ export class PostgresMigrationStatusUnsupportedError extends Error {
 function isConfigured(
   adapter: PostgresDependencyHealthAdapter | null | undefined,
 ): adapter is PostgresDependencyHealthAdapter {
-  return adapter != null && adapter.configured !== false;
+  return (
+    adapter !== null && adapter !== undefined && adapter.configured !== false
+  );
 }
 
 async function withTimeout<T>(

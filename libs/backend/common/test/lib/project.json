@@ -1,5 +1,5 @@
 {
-  "name": "@app/backend/common/test",
+  "name": "@app/backend-common-test",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/test/lib/src",
   "projectType": "library",

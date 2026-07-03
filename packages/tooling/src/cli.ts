@@ -32,6 +32,12 @@ interface CommandDefinition {
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workspaceRoot = resolve(packageRoot, "../..");
+const writeStdoutLine = (message = ""): void => {
+  process.stdout.write(`${message}\n`);
+};
+const writeStderrLine = (message: string): void => {
+  process.stderr.write(`${message}\n`);
+};
 
 const commands = new Map<string, CommandDefinition>();
 
@@ -234,7 +240,7 @@ export async function main(
   const resolved = resolveCommand(argv);
 
   if (resolved === undefined) {
-    console.error(`Unknown tooling command: ${argv[0] ?? ""}`);
+    writeStderrLine(`Unknown tooling command: ${argv[0] ?? ""}`);
     printHelp();
     return 1;
   }
@@ -271,7 +277,7 @@ function registerScript(
     const commandModule = resolve(packageRoot, "src/commands", commandPath);
 
     if (!existsSync(commandModule)) {
-      console.error(`Tooling command module not found: ${commandModule}`);
+      writeStderrLine(`Tooling command module not found: ${commandModule}`);
       return 1;
     }
 
@@ -312,19 +318,19 @@ function resolveCommand(
 }
 
 function printHelp(): void {
-  console.log("Usage: repo-tooling <command> [args]");
-  console.log("");
-  console.log("Commands:");
+  writeStdoutLine("Usage: repo-tooling <command> [args]");
+  writeStdoutLine();
+  writeStdoutLine("Commands:");
 
   for (const [name, command] of [...commands.entries()].sort(
     ([left], [right]) => left.localeCompare(right),
   )) {
-    console.log(`  ${name.padEnd(30)} ${command.description}`);
+    writeStdoutLine(`  ${name.padEnd(30)} ${command.description}`);
   }
 }
 
 function printCommandHelp(name: string, command: CommandDefinition): void {
-  console.log(`Usage: repo-tooling ${name} [args]`);
-  console.log("");
-  console.log(command.description);
+  writeStdoutLine(`Usage: repo-tooling ${name} [args]`);
+  writeStdoutLine();
+  writeStdoutLine(command.description);
 }

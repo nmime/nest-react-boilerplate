@@ -1,12 +1,15 @@
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 import {
   type AuthenticatedPrincipal,
   type AuthMethodClaims,
   type AuthSessionView,
   type UserThemePreference,
+  AuthProvider,
+  AuthProviderChannel,
   Language,
+  isLanguage,
   toAuthenticatedUserView,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import {
   readExpiresInSeconds,
   signJwt,
@@ -33,8 +36,8 @@ export function createAuthSession(
   refreshToken?: string,
   claims: AuthMethodClaims = {
     amr: ["pwd"],
-    authProvider: "password",
-    authChannel: "password",
+    authProvider: AuthProvider.Password,
+    authChannel: AuthProviderChannel.Password,
     authTime: Math.floor(Date.now() / 1000),
   },
 ): AuthSessionView {
@@ -85,7 +88,7 @@ export function toSessionPrincipal(
     tenantId: session.user.tenantId,
     email: session.user.email ?? undefined,
     displayName: session.user.displayName,
-    locale: session.user.locale as Language,
+    locale: normalizeSessionLocale(session.user.locale),
     theme: session.user.theme,
     roles: session.user.roles,
     permissions: session.user.permissions,
@@ -95,4 +98,10 @@ export function toSessionPrincipal(
     authTime: session.authTime,
     externalIdentityId: session.externalIdentityId,
   };
+}
+
+function normalizeSessionLocale(
+  locale: Locale | undefined,
+): Language | undefined {
+  return locale && isLanguage(locale) ? locale : undefined;
 }

@@ -8,7 +8,7 @@ import istanbul from "vite-plugin-istanbul";
 import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
-} from "../../../libs/frontend/api-support/lib/src/lib/frontend-env";
+} from "../../../libs/frontend/api-support/lib/src/frontend-env";
 
 export default defineConfig(({ command, mode }) => {
   const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";

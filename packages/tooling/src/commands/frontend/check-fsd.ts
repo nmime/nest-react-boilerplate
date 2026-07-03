@@ -727,7 +727,7 @@ function runSelfTest(): number {
     writeFixture(
       workspaceRoot,
       "apps/frontend/web/src/app/index.ts",
-      "export { App } from './app';\n",
+      "export * from './app';\n",
     );
     writeFixture(
       workspaceRoot,
@@ -737,7 +737,7 @@ function runSelfTest(): number {
     writeFixture(
       workspaceRoot,
       "apps/frontend/web/src/pages/index.ts",
-      "export { HomePage } from './home';\nexport { SettingsPage } from './settings';\n",
+      "export * from './home';\nexport * from './settings';\n",
     );
     writeFixture(
       workspaceRoot,
@@ -752,7 +752,7 @@ function runSelfTest(): number {
     writeFixture(
       workspaceRoot,
       "apps/frontend/web/src/shared/lib/index.ts",
-      "export { App } from '../../app/app';\nexport { Page } from '../../pages/home';\n",
+      "export * from '../../app/app';\nexport * from '../../pages/home';\n",
     );
     writeFixture(
       workspaceRoot,

@@ -25,6 +25,7 @@ out/
 # Cache directories
 .cache/
 .parcel-cache/
+apps/frontend/landing/.astro/
 .npm/
 .yarn/cache/
 .pnpm-store/

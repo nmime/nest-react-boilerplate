@@ -1,1 +1,1 @@
-export const RedisInjectToken = Symbol("RedisClient");
+export const RedisInjectToken = Symbol("RedisInjectToken");

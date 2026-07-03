@@ -1,6 +1,6 @@
 # Feature flags
 
-`@app/common/feature-flags` provides the repository-level feature flag contract. It is intentionally small so apps can start with environment flags and later swap in LaunchDarkly, ConfigCat, Unleash, or a database-backed provider without changing feature code.
+`@app/common-feature-flags` provides the repository-level feature flag contract. It is intentionally small so apps can start with environment flags and later swap in LaunchDarkly, ConfigCat, Unleash, or a database-backed provider without changing feature code.
 
 ## API
 
@@ -8,7 +8,7 @@
 import {
   EnvironmentFeatureFlagProvider,
   type FeatureFlagProvider,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 
 const flags: FeatureFlagProvider = new EnvironmentFeatureFlagProvider();
 const enabled = await flags.isEnabled("billing.portal", {

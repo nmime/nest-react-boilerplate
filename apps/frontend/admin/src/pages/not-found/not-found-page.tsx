@@ -1,4 +1,5 @@
-import { UiCard, UiEmptyState, UiSection, useI18n } from "@app/frontend/ui";
+import { useI18n } from "@app/frontend-runtime";
+import { UiCard, UiEmptyState, UiSection } from "@app/frontend-ui-web";
 
 export const NotFoundPage = () => {
   const { t } = useI18n();

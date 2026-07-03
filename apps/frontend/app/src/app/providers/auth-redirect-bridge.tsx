@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import {
   apiRuntimeEvents,
   clearApiAuthRequired,
-} from "@app/frontend/api-support";
-import { isTmaApp, type TmaEnvironment } from "@app/frontend/ui";
+} from "@app/frontend-api-support";
+import { isTmaApp, type TmaEnvironment } from "@app/frontend-runtime";
 
 const defaultAuthRoute = "/auth";
 

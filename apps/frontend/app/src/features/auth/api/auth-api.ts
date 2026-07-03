@@ -1,10 +1,14 @@
-import { authApi, throwOnOpenApiErrorData } from "@app/frontend/api-client";
+import { authApi, throwOnOpenApiErrorData } from "@app/frontend-api-client";
 import { formValueToString } from "../../../shared/lib";
 import type {
   AuthMePayload,
   AuthSessionPayload,
 } from "../../../entities/profile";
-import type { AuthFormInput, AuthRequest } from "../model";
+import {
+  AuthMode,
+  type AuthFormInput,
+  type AuthRequest,
+} from "../model/auth-model";
 
 export async function fetchAuthMe(
   authClient: Pick<typeof authApi, "authControllerMe">,
@@ -42,7 +46,7 @@ export async function createAuthSession(
   const request = mapAuthFormInput(input, locale);
 
   const payload =
-    request.mode === "login"
+    request.mode === AuthMode.Login
       ? await throwOnOpenApiErrorData(
           authClient.authControllerLogin(
             { email: request.email, password: request.password },

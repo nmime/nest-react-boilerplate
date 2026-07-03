@@ -2,28 +2,31 @@ import { DynamicModule, Module } from "@nestjs/common";
 import {
   PostgresMainModule,
   type PostgresMikroOrmOverrides,
-} from "@app/backend/postgres/main";
-import { AuthPostgresModule } from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main";
+import { AuthPostgresModule } from "@app/backend-postgres-main-auth";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { ExternalAuthService } from "./external-auth.service";
 import {
-  AUTH_USER_STORE,
+  AuthUserStoreInjectToken,
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
 } from "./auth-user-store";
 import {
-  AUTH_TOKEN_STORE,
+  AuthTokenStoreInjectToken,
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
 } from "./auth-token-store";
 import {
   InMemorySocialAuthStore,
   PostgresSocialAuthStore,
-  SOCIAL_AUTH_STORE,
+  SocialAuthStoreInjectToken,
 } from "./social-auth-store";
 
-export type AuthPersistenceMode = "postgres" | "memory";
+export enum AuthPersistenceMode {
+  Postgres = "postgres",
+  Memory = "memory",
+}
 
 export interface AuthMainModuleOptions {
   mode?: AuthPersistenceMode;
@@ -31,7 +34,10 @@ export interface AuthMainModuleOptions {
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
-  if (process.env.NODE_ENV === "production" && mode === "memory") {
+  if (
+    process.env.NODE_ENV === "production" &&
+    mode === AuthPersistenceMode.Memory
+  ) {
     throw new Error(
       "AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres with DATABASE_URL-backed storage.",
     );
@@ -40,13 +46,14 @@ function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
 
 function resolvePersistenceMode(): AuthPersistenceMode {
   if (
-    process.env.AUTH_PERSISTENCE === "memory" ||
-    (process.env.VITEST && process.env.AUTH_PERSISTENCE !== "postgres")
+    process.env.AUTH_PERSISTENCE === AuthPersistenceMode.Memory ||
+    (process.env.VITEST &&
+      process.env.AUTH_PERSISTENCE !== AuthPersistenceMode.Postgres)
   ) {
-    return "memory";
+    return AuthPersistenceMode.Memory;
   }
 
-  return "postgres";
+  return AuthPersistenceMode.Postgres;
 }
 
 function normalizeOptions(
@@ -69,7 +76,7 @@ export class AuthMainModule {
   ): DynamicModule {
     const options = normalizeOptions(optionsOrMode);
     assertSafePersistenceMode(options.mode);
-    const useMemory = options.mode === "memory";
+    const useMemory = options.mode === AuthPersistenceMode.Memory;
     return {
       module: AuthMainModule,
       imports: useMemory
@@ -80,14 +87,32 @@ export class AuthMainModule {
         AuthService,
         ExternalAuthService,
         useMemory
-          ? { provide: AUTH_USER_STORE, useClass: InMemoryAuthUserStore }
-          : { provide: AUTH_USER_STORE, useClass: PostgresAuthUserStore },
+          ? {
+              provide: AuthUserStoreInjectToken,
+              useClass: InMemoryAuthUserStore,
+            }
+          : {
+              provide: AuthUserStoreInjectToken,
+              useClass: PostgresAuthUserStore,
+            },
         useMemory
-          ? { provide: AUTH_TOKEN_STORE, useClass: InMemoryAuthTokenStore }
-          : { provide: AUTH_TOKEN_STORE, useClass: PostgresAuthTokenStore },
+          ? {
+              provide: AuthTokenStoreInjectToken,
+              useClass: InMemoryAuthTokenStore,
+            }
+          : {
+              provide: AuthTokenStoreInjectToken,
+              useClass: PostgresAuthTokenStore,
+            },
         useMemory
-          ? { provide: SOCIAL_AUTH_STORE, useClass: InMemorySocialAuthStore }
-          : { provide: SOCIAL_AUTH_STORE, useClass: PostgresSocialAuthStore },
+          ? {
+              provide: SocialAuthStoreInjectToken,
+              useClass: InMemorySocialAuthStore,
+            }
+          : {
+              provide: SocialAuthStoreInjectToken,
+              useClass: PostgresSocialAuthStore,
+            },
       ],
       exports: [AuthService, ExternalAuthService],
     };

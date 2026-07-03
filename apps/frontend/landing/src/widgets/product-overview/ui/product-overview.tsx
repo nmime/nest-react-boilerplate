@@ -1,10 +1,10 @@
+import { useI18n } from "@app/frontend-runtime";
 import {
   UiButton,
   UiCard,
   UiSection,
   type ProductShellAction,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import { LandingStatCard } from "../../../shared/ui";
 
 const overviewHeading =

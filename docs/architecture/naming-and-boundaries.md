@@ -1,43 +1,44 @@
 # Naming and boundary policy
 
-This policy defines the canonical project and import alias shape for the DDD/Clean Architecture migration. Existing aliases remain supported temporarily so current imports keep compiling while future slices migrate source code.
+This policy defines the canonical project, import alias, and package-name shape for the DDD/Clean Architecture migration.
 
 ## Canonical alias shapes
 
-Use path aliases that mirror the library location and runtime boundary:
+Use package-style flattened aliases for TypeScript imports and scoped Nx project names. Physical folders still mirror ownership boundaries; public aliases flatten those folders into one npm-compatible name after `@app/`.
 
 | Library path shape                          | Canonical alias shape                   |
 | ------------------------------------------- | --------------------------------------- |
-| `libs/common/<name>/lib`                    | `@app/common/<name>`                    |
-| `libs/backend/common/<name>/lib`            | `@app/backend/common/<name>`            |
-| `libs/backend/feature/<scope>/<layer>/lib`  | `@app/backend/feature/<scope>/<layer>`  |
-| `libs/backend/bots/<bot>/lib`               | `@app/backend/bots/<bot>`               |
-| `libs/backend/postgres/main/shared/lib`     | `@app/backend/postgres/main`            |
-| `libs/backend/postgres/main/<domain>/lib`   | `@app/backend/postgres/main/<domain>`   |
-| `libs/frontend/<name>/lib`                  | `@app/frontend/<name>`                  |
-| `libs/frontend/feature/<scope>/<layer>/lib` | `@app/frontend/feature/<scope>/<layer>` |
+| `libs/common/<name>/lib`                    | `@app/common-<name>`                    |
+| `libs/backend/common/<name>/lib`            | `@app/backend-common-<name>`            |
+| `libs/backend/feature/<scope>/<layer>/lib`  | `@app/backend-feature-<scope>-<layer>`  |
+| `libs/backend/bots/<bot>/lib`               | `@app/backend-bots-<bot>`               |
+| `libs/backend/postgres/main/shared/lib`     | `@app/backend-postgres-main`            |
+| `libs/backend/postgres/main/<domain>/lib`   | `@app/backend-postgres-main-<domain>`   |
+| `libs/frontend/<name>/lib`                  | `@app/frontend-<name>`                  |
+| `libs/frontend/feature/<scope>/<layer>/lib` | `@app/frontend-feature-<scope>-<layer>` |
 
-These aliases intentionally avoid legacy collapsed names such as `@app/feature-auth-main`, `@app/postgres-main-auth`, `@app/frontend-ui`, and runtime-ambiguous aliases such as backend libraries under `@app/common/*`.
+These aliases intentionally avoid extra ownership slashes such as `@app/backend/feature/auth/main` and runtime-ambiguous aliases such as backend libraries under `@app/common-*`.
 
 ## Boundary meaning in aliases
 
-- `@app/common/*` is framework-neutral shared kernel or contract code under `libs/common/**`.
-- `@app/backend/common/*` is backend-runtime shared infrastructure, Nest helpers, backend adapters, or backend-only utilities.
-- `@app/backend/feature/<scope>/<layer>` is backend bounded-context code. The `<layer>` segment must become an explicit Clean Architecture layer (`domain`, `application`, `infrastructure`, or `interfaces`) as each context migrates. Existing `main` and `shared` layers are transitional names.
-- `@app/backend/postgres/main/*` is persistence infrastructure for the main Postgres database.
-- `@app/frontend/*` is frontend-runtime shared code.
-- `@app/frontend/feature/<scope>/<layer>` is frontend bounded-context or feature-slice code.
+- `@app/common-*` is framework-neutral shared kernel or contract code under `libs/common/**`.
+- `@app/backend-common-*` is backend-runtime shared infrastructure, Nest helpers, backend adapters, or backend-only utilities.
+- `@app/backend-feature-<scope>-<layer>` is backend bounded-context code. The `<layer>` segment must become an explicit Clean Architecture layer (`domain`, `application`, `infrastructure`, or `interfaces`) as each context migrates. Existing `main` and `shared` layers are transitional names.
+- `@app/backend-postgres-main-*` is persistence infrastructure for the main Postgres database.
+- `@app/frontend-*` is frontend-runtime shared code.
+- `@app/frontend-feature-<scope>-<layer>` is frontend bounded-context or feature-slice code.
 
-## Temporary compatibility aliases
+## Package manifests
 
-The current `tsconfig.base.json` keeps all existing aliases and adds canonical aliases for existing projects. During migration:
+Libraries must not define `package.json` manifests in this repository. Keep dependencies in the root manifest or in deployable app/tooling manifests.
 
-1. New code should import through the canonical alias for its library path.
-2. Existing code may keep legacy aliases until the owning feature slice is migrated.
-3. Do not add new legacy aliases.
-4. Do not remove compatibility aliases until all imports, generated templates, lint rules, and project documentation have switched to canonical aliases.
+Allowed manifests:
 
-Compatibility aliases are source-compatible only; they do not change project ownership or allowed dependencies. A library imported through a legacy alias still belongs to the runtime and layer implied by its physical path.
+- root `package.json`
+- deployable app manifests under `apps/**`
+- `packages/tooling/package.json`
+
+Do not add `libs/**/package.json`. Internal libraries are linked by Nx project metadata and `tsconfig.base.json` paths, not package-manager workspaces.
 
 ## Layer naming target
 
@@ -54,4 +55,4 @@ When a deployable app wires a feature, keep the wiring in the composition root r
 
 ## Generator policy
 
-Generators should emit canonical aliases once their templates and tests are updated in a dedicated slice. Until then, generator output may still require a follow-up migration step. This foundation slice does not change generator code.
+Generators must emit canonical flattened aliases and Nx project names. Generators must not create library `package.json` manifests.

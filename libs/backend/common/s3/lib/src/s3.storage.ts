@@ -1,4 +1,4 @@
-export const ObjectStorageInjectToken = Symbol("ObjectStorageClient");
+export const ObjectStorageInjectToken = Symbol("ObjectStorageInjectToken");
 
 export interface ObjectStorageObject {
   key: string;

@@ -19,16 +19,16 @@ import {
   validate as validateTmaInitData,
 } from "@tma.js/init-data-node";
 import {
+  AuthProvider,
+  AuthProviderChannel,
   createDefaultAccessPolicy,
-  type AuthProvider,
-  type AuthProviderChannel,
+  ExternalAuthIntent,
   type AuthSessionView,
   type ExternalAuthIdentityView,
-  type ExternalAuthIntent,
   type ExternalAuthProvider,
   type ExternalAuthProviderChannel,
   type LinkTokenResult,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import type { OAuth2Tokens } from "arctic";
 import {
   AuthService,
@@ -37,12 +37,12 @@ import {
   type JwtSigningEnvironment,
 } from "./auth.service";
 import {
-  AUTH_USER_STORE,
+  AuthUserStoreInjectToken,
   type AuthUserRecord,
   type AuthUserStore,
 } from "./auth-user-store";
 import {
-  SOCIAL_AUTH_STORE,
+  SocialAuthStoreInjectToken,
   InMemorySocialAuthStore,
   type ExternalIdentityRecord,
   type SocialAuthStore,
@@ -55,6 +55,20 @@ const ExternalAccountPasswordSeed = [
   "external-auth-account",
   "without-local-credential",
 ].join(":");
+const externalAuthProviderByStorageValue = {
+  [AuthProvider.Telegram]: AuthProvider.Telegram,
+  [AuthProvider.Discord]: AuthProvider.Discord,
+} satisfies Record<ExternalIdentityRecord["provider"], ExternalAuthProvider>;
+const externalAuthProviderChannelByStorageValue = {
+  [AuthProviderChannel.TelegramWebLogin]: AuthProviderChannel.TelegramWebLogin,
+  [AuthProviderChannel.TelegramTma]: AuthProviderChannel.TelegramTma,
+  [AuthProviderChannel.TelegramBot]: AuthProviderChannel.TelegramBot,
+  [AuthProviderChannel.DiscordOauth]: AuthProviderChannel.DiscordOauth,
+  [AuthProviderChannel.DiscordBot]: AuthProviderChannel.DiscordBot,
+} satisfies Record<
+  ExternalIdentityRecord["channel"],
+  ExternalAuthProviderChannel
+>;
 
 export interface ExternalAuthSessionClaims {
   amr: string[];
@@ -151,17 +165,17 @@ export class ExternalAuthService {
 
   constructor(
     private readonly auth: AuthService,
-    @Inject(AUTH_USER_STORE)
+    @Inject(AuthUserStoreInjectToken)
     private readonly users: AuthUserStore,
     @Optional()
-    @Inject(SOCIAL_AUTH_STORE)
+    @Inject(SocialAuthStoreInjectToken)
     private readonly social: SocialAuthStore = new InMemorySocialAuthStore(),
   ) {}
 
   async telegramWebLogin(
     input: TelegramWebLoginInput,
   ): Promise<ExternalAuthLoginResult> {
-    assertProviderEnabled("telegram");
+    assertProviderEnabled(AuthProvider.Telegram);
     const botToken = requireEnv(
       "TELEGRAM_BOT_TOKEN",
       "provider_not_configured",
@@ -169,7 +183,7 @@ export class ExternalAuthService {
     const profile = verifyTelegramWebLoginPayload(input.payload, botToken);
     return this.resolveVerifiedProfile({
       tenantId: parseTenantId(input.tenantId),
-      intent: input.intent ?? "login",
+      intent: input.intent ?? ExternalAuthIntent.Login,
       linkToken: input.linkToken,
       returnUrl: input.returnUrl,
       principal: input.principal,
@@ -178,7 +192,7 @@ export class ExternalAuthService {
   }
 
   async telegramTma(input: TelegramTmaInput): Promise<ExternalAuthLoginResult> {
-    assertProviderEnabled("telegram");
+    assertProviderEnabled(AuthProvider.Telegram);
     const botToken = requireEnv(
       "TELEGRAM_BOT_TOKEN",
       "provider_not_configured",
@@ -202,13 +216,13 @@ export class ExternalAuthService {
       [user.first_name, user.last_name].filter(Boolean).join(" ") || null;
     return this.resolveVerifiedProfile({
       tenantId: parseTenantId(input.tenantId),
-      intent: input.intent ?? "login",
+      intent: input.intent ?? ExternalAuthIntent.Login,
       linkToken: input.linkToken,
       returnUrl: input.returnUrl,
       principal: input.principal,
       profile: {
-        provider: "telegram",
-        channel: "telegram_tma",
+        provider: AuthProvider.Telegram,
+        channel: AuthProviderChannel.TelegramTma,
         providerSubject: String(user.id),
         displayName,
         username: user.username ?? null,
@@ -225,11 +239,11 @@ export class ExternalAuthService {
   async telegramBotLink(
     input: TelegramBotLinkInput,
   ): Promise<ExternalAuthLoginResult> {
-    assertProviderEnabled("telegram");
+    assertProviderEnabled(AuthProvider.Telegram);
     const tenantId = parseTenantId(input.tenantId);
     const consumed = await this.consumeLinkTokenOrThrow(
       input.linkToken,
-      "link",
+      ExternalAuthIntent.Link,
       tenantId,
     );
     if (!consumed.userId) {
@@ -239,8 +253,8 @@ export class ExternalAuthService {
       tenantId,
       userId: consumed.userId,
       profile: {
-        provider: "telegram",
-        channel: "telegram_bot",
+        provider: AuthProvider.Telegram,
+        channel: AuthProviderChannel.TelegramBot,
         providerSubject: input.providerSubject,
         username: input.username,
         displayName: input.displayName,
@@ -273,7 +287,7 @@ export class ExternalAuthService {
       tenantId,
       userId: input.userId,
       provider: input.provider,
-      purpose: input.intent ?? "link",
+      purpose: input.intent ?? ExternalAuthIntent.Link,
       tokenHash: hashOpaqueToken(token),
       deepLinkMetadata: input.returnUrl ? { returnUrl: input.returnUrl } : {},
       expiresAt,
@@ -285,7 +299,7 @@ export class ExternalAuthService {
       token,
       expiresAt: expiresAt.toISOString(),
       provider: input.provider,
-      intent: input.intent ?? "link",
+      intent: input.intent ?? ExternalAuthIntent.Link,
     };
   }
 
@@ -331,13 +345,13 @@ export class ExternalAuthService {
   createDiscordAuthorizationRequest(
     input: DiscordAuthorizationRequestInput,
   ): DiscordAuthorizationRequestResult {
-    assertProviderEnabled("discord");
+    assertProviderEnabled(AuthProvider.Discord);
     const tenantId = parseTenantId(input.tenantId);
     assertReturnUrlAllowed(input.returnUrl);
     const provider = createDiscordProvider();
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
-    const intent = input.intent ?? "login";
+    const intent = input.intent ?? ExternalAuthIntent.Login;
     const expiresAt = new Date(
       Date.now() +
         readPositiveInt(
@@ -374,7 +388,7 @@ export class ExternalAuthService {
   async discordCallback(
     input: DiscordCallbackInput,
   ): Promise<ExternalAuthLoginResult> {
-    assertProviderEnabled("discord");
+    assertProviderEnabled(AuthProvider.Discord);
     if (!input.code || !input.state) {
       throw new UnauthorizedException("invalid_state");
     }
@@ -390,8 +404,8 @@ export class ExternalAuthService {
     );
     const discordUser = await fetchDiscordUser(tokens.accessToken());
     const profile: VerifiedExternalProfile = {
-      provider: "discord",
-      channel: "discord_oauth",
+      provider: AuthProvider.Discord,
+      channel: AuthProviderChannel.DiscordOauth,
       providerSubject: discordUser.id,
       email: discordUser.verified ? discordUser.email : null,
       emailVerified: discordUser.verified ?? false,
@@ -428,14 +442,14 @@ export class ExternalAuthService {
     discordTokens?: OAuth2Tokens;
   }): Promise<ExternalAuthLoginResult> {
     assertReturnUrlAllowed(input.returnUrl);
-    if (input.intent === "link") {
+    if (input.intent === ExternalAuthIntent.Link) {
       const userId =
         input.principal?.subject ??
         (input.linkToken
           ? (
               await this.consumeLinkTokenOrThrow(
                 input.linkToken,
-                "link",
+                ExternalAuthIntent.Link,
                 input.tenantId,
               )
             ).userId
@@ -610,7 +624,9 @@ export class ExternalAuthService {
     externalIdentityId: string,
   ): AuthSessionView {
     return this.createSessionWithClaims(user, {
-      amr: [profile.provider === "telegram" ? "telegram" : "discord"],
+      amr: [
+        profile.provider === AuthProvider.Telegram ? "telegram" : "discord",
+      ],
       authProvider: profile.provider,
       authChannel: profile.channel,
       authTime: Math.floor(Date.now() / 1000),
@@ -636,7 +652,7 @@ export class ExternalAuthService {
       tenantId,
       userId,
       method: channel,
-      amr: [channel.startsWith("telegram") ? "telegram" : "discord"],
+      amr: [channel.startsWith(AuthProvider.Telegram) ? "telegram" : "discord"],
       externalIdentityId,
       lastUsedAt: new Date(),
     });
@@ -689,7 +705,7 @@ export class ExternalAuthService {
       tenantId,
       userId,
       externalIdentityId,
-      provider: "discord",
+      provider: AuthProvider.Discord,
       tokenKind: "access",
       plaintext: tokens.accessToken(),
       scopes,
@@ -700,7 +716,7 @@ export class ExternalAuthService {
         tenantId,
         userId,
         externalIdentityId,
-        provider: "discord",
+        provider: AuthProvider.Discord,
         tokenKind: "refresh",
         plaintext: tokens.refreshToken(),
         scopes,
@@ -760,8 +776,8 @@ export function verifyTelegramWebLoginPayload(
       .map(String)
       .join(" ") || null;
   return {
-    provider: "telegram",
-    channel: "telegram_web_login",
+    provider: AuthProvider.Telegram,
+    channel: AuthProviderChannel.TelegramWebLogin,
     providerSubject: String(id),
     displayName,
     username: payload.username ? String(payload.username) : null,
@@ -797,9 +813,9 @@ function toIdentityView(
 ): ExternalAuthIdentityView {
   return {
     id: identity.id,
-    provider: identity.provider,
+    provider: externalAuthProviderByStorageValue[identity.provider],
     providerSubject: identity.providerSubject,
-    channel: identity.channel,
+    channel: externalAuthProviderChannelByStorageValue[identity.channel],
     email: identity.email,
     emailVerified: identity.emailVerified,
     displayName: identity.displayName,

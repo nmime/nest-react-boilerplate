@@ -5,7 +5,9 @@ import {
   initialTelegramBotSession,
   toRatelimiterRedisClient,
 } from "./session";
-import type { TelegramBotSession } from "./types";
+import type { TelegramBotContext, TelegramBotSession } from "./types";
+
+const testValue = <T>(value: unknown): T => value as T;
 
 describe("Telegram bot sessions", () => {
   it("creates an isolated public main-menu session", () => {
@@ -63,7 +65,10 @@ describe("Telegram bot sessions", () => {
       }),
       delete: vi.fn(),
     });
-    const ctx = { from: { id: 123 }, chat: { id: 999 } } as never;
+    const ctx = testValue<TelegramBotContext>({
+      from: { id: 123 },
+      chat: { id: 999 },
+    });
 
     await middleware(ctx, () => Promise.resolve());
 

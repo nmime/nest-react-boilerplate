@@ -35,4 +35,4 @@ pnpm run tooling:static-check
 
 ## API boundary rule
 
-Frontend app and feature code should consume backend data through `@app/api-client` wrappers. Generated files under `libs/frontend/api-client/lib/src/generated/**` are implementation details of the API-client library, and request plumbing belongs in `@app/frontend-api-support`. This keeps FSD slices independent from backend endpoint strings and generated OpenAPI internals.
+Frontend app and feature code should consume backend data through `@app/frontend-api-client` wrappers. Generated files under `libs/frontend/api-client/lib/src/generated/**` are implementation details of the API-client library, and request plumbing belongs in `@app/frontend-api-support`. This keeps FSD slices independent from backend endpoint strings and generated OpenAPI internals.

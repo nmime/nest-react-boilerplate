@@ -1,4 +1,8 @@
-import { normalizeLocale, type Locale, type UiTheme } from "@app/frontend/ui";
+import {
+  normalizeLocale,
+  type Locale,
+  type UiTheme,
+} from "@app/frontend-runtime";
 import { getErrorReason } from "../../../shared/lib";
 
 export interface AuthPrincipalPayload {

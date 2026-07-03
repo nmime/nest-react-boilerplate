@@ -1,6 +1,10 @@
-import type { authApi } from "@app/frontend/api-client";
+import type { authApi } from "@app/frontend-api-client";
 
-export type SocialAuthProvider = "telegram" | "discord";
+export enum SocialAuthProvider {
+  Telegram = "telegram",
+  Discord = "discord",
+}
+
 export type SocialAuthIntent = "login" | "link";
 
 export type ExternalAuthResult = authApi.AuthControllerTelegramTmaData;

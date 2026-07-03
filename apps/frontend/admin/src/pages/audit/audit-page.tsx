@@ -4,7 +4,8 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
+import { useI18n } from "@app/frontend-runtime";
 import {
   UiCard,
   UiDataTable,
@@ -12,8 +13,7 @@ import {
   UiSection,
   UiStatCard,
   UiStatusTag,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import type { AuditRow } from "../../entities/admin-audit";
 import { errorText, formatDate, pageSize, totalPages } from "../../shared";
 

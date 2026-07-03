@@ -4,24 +4,24 @@ import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/backend/common/swagger";
+} from "@app/backend-common-swagger";
 import {
   createOkResponse,
   type OkResponse,
-} from "@app/backend/common/response";
+} from "@app/backend-common-response";
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
   RbacGuard,
   SessionAuthGuard,
   RequirePermissions,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import {
   GetCurrentUserProfileUseCase,
   toUserProfilePayload,
-  USER_PROFILE_READ_PERMISSION,
+  UserProfileReadPermission,
   type UserProfilePayload,
-} from "@app/backend/feature/user/shared";
+} from "@app/backend-feature-user-shared";
 import { ProfilePayloadDto } from "./profile.dto";
 
 export type ProfilePayload = UserProfilePayload;
@@ -38,7 +38,7 @@ export class ProfileController {
   @ApiOkDataResponse(ProfilePayloadDto)
   @ApiBearerAuth()
   @ApiSessionCookieAuth()
-  @RequirePermissions(USER_PROFILE_READ_PERMISSION)
+  @RequirePermissions(UserProfileReadPermission)
   me(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): OkResponse<ProfilePayload> {

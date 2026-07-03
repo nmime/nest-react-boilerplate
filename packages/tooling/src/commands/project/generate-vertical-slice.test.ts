@@ -88,7 +88,7 @@ describe("project generate vertical slice", () => {
       assert.match(output, /UPDATE tsconfig\.base\.json path aliases/);
       assert.match(
         output,
-        /Add @app\/backend\/feature\/support-cases\/main to the auth-app-api API module imports/,
+        /Add @app\/backend-feature-support-cases-main to the auth-app-api API module imports/,
       );
       assert.equal(
         existsSync(
@@ -133,9 +133,9 @@ describe("project generate vertical slice", () => {
         readFileSync(join(workspaceRoot, "tsconfig.base.json"), "utf8"),
       );
 
-      assert.match(controller, /from "@app\/common\/swagger"/);
-      assert.match(controller, /from "@app\/common\/response"/);
-      assert.match(controller, /from "@app\/backend\/feature\/billing-events\/shared"/);
+      assert.match(controller, /from "@app\/backend-common-swagger"/);
+      assert.match(controller, /from "@app\/backend-common-response"/);
+      assert.match(controller, /from "@app\/backend-feature-billing-events-shared"/);
       assert.equal(controller.includes("@app/common/" + "exceptions"), false);
       assert.equal(
         controller.includes("libs/backend/common/" + "exceptions"),
@@ -143,16 +143,20 @@ describe("project generate vertical slice", () => {
       );
       assert.match(page, /generated auth-app-api route/);
       assert.deepEqual(
-        tsconfig.compilerOptions.paths[
-          "@app/backend/feature/billing-events/main"
-        ],
+        tsconfig.compilerOptions.paths["@app/backend-feature-billing-events-main"],
         ["libs/backend/feature/billing-events/main/lib/src/index.ts"],
       );
       assert.deepEqual(
         tsconfig.compilerOptions.paths[
-          "@app/backend/feature/billing-events/shared"
+          "@app/backend-feature-billing-events-shared"
         ],
         ["libs/backend/feature/billing-events/shared/lib/src/index.ts"],
+      );
+      assert.deepEqual(
+        tsconfig.compilerOptions.paths[
+          "@app/backend-postgres-main-billing-events"
+        ],
+        ["libs/backend/postgres/main/billing-events/lib/src/index.ts"],
       );
     } finally {
       removeWorkspace(workspaceRoot);

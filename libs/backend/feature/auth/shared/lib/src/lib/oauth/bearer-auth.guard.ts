@@ -6,13 +6,18 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PUBLIC_AUTH_METADATA_KEY } from "./access-control.decorators";
+import { PublicAuthMetadataKey } from "./access-control.decorators";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedRequest,
   JwtValidationEnvironment,
 } from "./access-control.types";
+import {
+  AuthenticatedTheme,
+  isAuthenticatedTheme,
+} from "./access-control.types";
 import { Language, isLanguage } from "./language.enum";
+import { isAuthProvider, isAuthProviderChannel } from "./social-auth.types";
 import {
   assertRequestTenantMatchesPrincipal,
   resolveTenantId,
@@ -47,7 +52,7 @@ type JwtPayload = Record<string, unknown> & {
   sub?: string;
 };
 
-const HMAC_ALGORITHMS: Record<string, string> = {
+const hmacAlgorithms: Record<string, string> = {
   HS256: "sha256",
   HS384: "sha384",
   HS512: "sha512",
@@ -77,7 +82,7 @@ export class BearerAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PUBLIC_AUTH_METADATA_KEY, [
+      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
         context.getHandler(),
         context.getClass(),
       ]) ?? false
@@ -160,11 +165,9 @@ function parseJwt(token: string): {
     throw new UnauthorizedException("Malformed JWT.");
   }
 
-  const [encodedHeader, encodedPayload, signature] = parts as [
-    string,
-    string,
-    string,
-  ];
+  const encodedHeader = parts[0] ?? "";
+  const encodedPayload = parts[1] ?? "";
+  const signature = parts[2] ?? "";
 
   return {
     header: decodeJson<JwtHeader>(encodedHeader, "JWT header"),
@@ -186,7 +189,7 @@ function verifyHeader(header: JwtHeader): void {
   if (header.alg === "none") {
     throw new UnauthorizedException("JWT alg none is not allowed.");
   }
-  if (!header.alg || !HMAC_ALGORITHMS[header.alg]) {
+  if (!header.alg || !hmacAlgorithms[header.alg]) {
     throw new UnauthorizedException("Unsupported JWT algorithm.");
   }
 }
@@ -197,7 +200,12 @@ function verifySignature(
   signature: string,
   secret: string,
 ): void {
-  const digest = createHmac(HMAC_ALGORITHMS[header.alg as string], secret)
+  const hmacAlgorithm = header.alg ? hmacAlgorithms[header.alg] : undefined;
+  if (!hmacAlgorithm) {
+    throw new UnauthorizedException("Unsupported JWT algorithm.");
+  }
+
+  const digest = createHmac(hmacAlgorithm, secret)
     .update(signingInput)
     .digest();
   const provided = base64UrlDecode(signature);
@@ -273,21 +281,10 @@ function principalFromPayload(payload: JwtPayload): AuthenticatedPrincipal {
   if (amr.length > 0) {
     principal.amr = amr;
   }
-  if (
-    payload.auth_provider === "password" ||
-    payload.auth_provider === "telegram" ||
-    payload.auth_provider === "discord"
-  ) {
+  if (isAuthProvider(payload.auth_provider)) {
     principal.authProvider = payload.auth_provider;
   }
-  if (
-    payload.auth_channel === "password" ||
-    payload.auth_channel === "telegram_web_login" ||
-    payload.auth_channel === "telegram_tma" ||
-    payload.auth_channel === "telegram_bot" ||
-    payload.auth_channel === "discord_oauth" ||
-    payload.auth_channel === "discord_bot"
-  ) {
+  if (isAuthProviderChannel(payload.auth_channel)) {
     principal.authChannel = payload.auth_channel;
   }
   if (typeof payload.auth_time === "number") {
@@ -320,17 +317,13 @@ function normalizePrincipalLocale(value: unknown): Language | undefined {
 
 function normalizePrincipalTheme(
   value: unknown,
-): "system" | "light" | "dark" | undefined {
+): AuthenticatedTheme | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
   const normalized = value.trim().toLowerCase();
-  return normalized === "system" ||
-    normalized === "light" ||
-    normalized === "dark"
-    ? normalized
-    : undefined;
+  return isAuthenticatedTheme(normalized) ? normalized : undefined;
 }
 
 function claimToStrings(value: unknown): string[] {

@@ -3,7 +3,8 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
+import { useI18n } from "@app/frontend-runtime";
 import {
   UiCard,
   UiLoading,
@@ -11,8 +12,7 @@ import {
   UiSection,
   UiStatCard,
   UiStatusTag,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import type { AdminAccess } from "../../entities/admin-session";
 import { errorText, statusTone } from "../../shared";
 
@@ -137,35 +137,6 @@ const DashboardCommandCenter = ({
   );
 };
 
-const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
-  const { t } = useI18n();
-  return (
-    <UiSection
-      className="admin-page admin-dashboard-page"
-      eyebrow={t("admin.dashboard.eyebrow")}
-      title={t("admin.dashboard.title")}
-    >
-      <div className="admin-dashboard-hero">
-        <UiCard
-          className="admin-dashboard-hero__card"
-          title={t("admin.dashboard.card.visibility.title")}
-        >
-          {t("admin.dashboard.card.visibility.description")}
-        </UiCard>
-        <UiCard
-          className="admin-dashboard-hero__card"
-          title={t("admin.dashboard.card.rbac.title")}
-        >
-          {t("admin.dashboard.card.rbac.description")}
-        </UiCard>
-      </div>
-      <DashboardCommandCenter access={access} />
-      <AccessSummaryCard access={access} />
-      <AdminRouteReadiness access={access} />
-    </UiSection>
-  );
-};
-
 const AdminRouteReadiness = ({ access }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
   const routes = [
@@ -239,6 +210,35 @@ const AdminRouteReadiness = ({ access }: Readonly<{ access: AdminAccess }>) => {
   );
 };
 
+const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
+  const { t } = useI18n();
+  return (
+    <UiSection
+      className="admin-page admin-dashboard-page"
+      eyebrow={t("admin.dashboard.eyebrow")}
+      title={t("admin.dashboard.title")}
+    >
+      <div className="admin-dashboard-hero">
+        <UiCard
+          className="admin-dashboard-hero__card"
+          title={t("admin.dashboard.card.visibility.title")}
+        >
+          {t("admin.dashboard.card.visibility.description")}
+        </UiCard>
+        <UiCard
+          className="admin-dashboard-hero__card"
+          title={t("admin.dashboard.card.rbac.title")}
+        >
+          {t("admin.dashboard.card.rbac.description")}
+        </UiCard>
+      </div>
+      <DashboardCommandCenter access={access} />
+      <AccessSummaryCard access={access} />
+      <AdminRouteReadiness access={access} />
+    </UiSection>
+  );
+};
+
 const DashboardDataPage = ({
   access,
   requestOptions,
@@ -262,7 +262,9 @@ const DashboardDataPage = ({
     queryKey: ["admin-health", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerHealth(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) throw new Error("health");
+        if (r.error || !r.response.ok) {
+          throw new Error("health");
+        }
         return true;
       }),
     retry: false,
@@ -271,7 +273,9 @@ const DashboardDataPage = ({
     queryKey: ["admin-live", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerLive(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) throw new Error("live");
+        if (r.error || !r.response.ok) {
+          throw new Error("live");
+        }
         return true;
       }),
     retry: false,
@@ -280,7 +284,9 @@ const DashboardDataPage = ({
     queryKey: ["admin-ready", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerReady(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) throw new Error("ready");
+        if (r.error || !r.response.ok) {
+          throw new Error("ready");
+        }
         return true;
       }),
     retry: false,

@@ -1,2 +1,2 @@
-export type { UserRow, UserStatus } from "./model/types";
-export { UserDetailCard } from "./ui/user-detail-card";
+export * from "./model/types";
+export * from "./ui/user-detail-card";

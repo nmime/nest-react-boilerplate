@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADMIN_AUDIT_READ_PERMISSION,
-  ADMIN_DASHBOARD_READ_PERMISSION,
-  ADMIN_MANAGE_ACTION,
-  ADMIN_MANAGE_ALL_PERMISSION,
-  ADMIN_ALL_RESOURCE,
-  ADMIN_PROFILE_READ_PERMISSION,
-  ADMIN_ROLE,
-  ADMIN_ROLES_READ_PERMISSION,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-  ADMIN_USERS_READ_PERMISSION,
-  ADMIN_USERS_STATUS_UPDATE_PERMISSION,
+  AdminAuditReadPermission,
+  AdminDashboardReadPermission,
+  AdminManageAction,
+  AdminManageAllPermission,
+  AdminAllResource,
+  AdminProfileReadPermission,
+  AdminRole,
+  AdminRolesReadPermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
   assertAdminProfilePermission,
   canAdmin,
   cannotAdmin,
@@ -25,20 +25,20 @@ const adminPrincipal = {
   email: "admin@example.com",
   displayName: "Ada Admin",
   locale: "ru",
-  roles: [ADMIN_ROLE, ADMIN_ROLE],
-  permissions: [ADMIN_PROFILE_READ_PERMISSION, ADMIN_DASHBOARD_READ_PERMISSION],
+  roles: [AdminRole, AdminRole],
+  permissions: [AdminProfileReadPermission, AdminDashboardReadPermission],
 };
 
-describe("@app/backend/feature/admin/shared CASL RBAC", () => {
+describe("@app/backend-feature-admin-shared CASL RBAC", () => {
   it("derives an admin CASL ability from explicit RBAC roles and permissions", () => {
     const ability = createAdminAbility({
       subject: "admin-id",
-      roles: [ADMIN_ROLE],
+      roles: [AdminRole],
       permissions: [
-        ADMIN_DASHBOARD_READ_PERMISSION,
-        ADMIN_USERS_READ_PERMISSION,
-        ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-        ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+        AdminDashboardReadPermission,
+        AdminUsersReadPermission,
+        AdminUsersStatusUpdatePermission,
+        AdminUsersAccessPolicyUpdatePermission,
       ],
     });
 
@@ -52,11 +52,8 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
   it("grants profile and dashboard access for admin principals", () => {
     expect(createAdminAccessPolicy(adminPrincipal)).toEqual({
       isAuthenticated: true,
-      roles: [ADMIN_ROLE],
-      permissions: [
-        ADMIN_PROFILE_READ_PERMISSION,
-        ADMIN_DASHBOARD_READ_PERMISSION,
-      ],
+      roles: [AdminRole],
+      permissions: [AdminProfileReadPermission, AdminDashboardReadPermission],
       canAccessAdmin: true,
       canReadDashboard: true,
       canReadProfile: true,
@@ -90,7 +87,7 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
       createAdminAccessPolicy({
         subject: "support-id",
         roles: ["support"],
-        permissions: [ADMIN_PROFILE_READ_PERMISSION],
+        permissions: [AdminProfileReadPermission],
       }),
     ).toMatchObject({ canAccessAdmin: false, canReadProfile: false });
   });
@@ -99,7 +96,7 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
     expect(
       createAdminAccessPolicy({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
+        roles: [AdminRole],
         permissions: [],
       }),
     ).toMatchObject({
@@ -115,7 +112,7 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
       createAdminAccessPolicy({
         subject: "support-id",
         roles: ["support"],
-        permissions: [ADMIN_USERS_READ_PERMISSION, ADMIN_AUDIT_READ_PERMISSION],
+        permissions: [AdminUsersReadPermission, AdminAuditReadPermission],
       }),
     ).toMatchObject({
       canAccessAdmin: false,
@@ -129,8 +126,8 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
     expect(
       createAdminAccessPolicy({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
-        permissions: ["admin:unknown:read", ADMIN_ROLES_READ_PERMISSION],
+        roles: [AdminRole],
+        permissions: ["admin:unknown:read", AdminRolesReadPermission],
       }),
     ).toMatchObject({
       canAccessAdmin: true,
@@ -142,31 +139,27 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
   it("requires explicit manage/all permission for global admin management", () => {
     const abilityWithoutManageAll = createAdminAbility({
       subject: "admin-id",
-      roles: [ADMIN_ROLE],
-      permissions: [ADMIN_DASHBOARD_READ_PERMISSION],
+      roles: [AdminRole],
+      permissions: [AdminDashboardReadPermission],
     });
     const abilityWithManageAll = createAdminAbility({
       subject: "admin-id",
-      roles: [ADMIN_ROLE],
-      permissions: [ADMIN_MANAGE_ALL_PERMISSION],
+      roles: [AdminRole],
+      permissions: [AdminManageAllPermission],
     });
 
     expect(
-      canAdmin(
-        abilityWithoutManageAll,
-        ADMIN_MANAGE_ACTION,
-        ADMIN_ALL_RESOURCE,
-      ),
+      canAdmin(abilityWithoutManageAll, AdminManageAction, AdminAllResource),
     ).toBe(false);
     expect(
-      canAdmin(abilityWithManageAll, ADMIN_MANAGE_ACTION, ADMIN_ALL_RESOURCE),
+      canAdmin(abilityWithManageAll, AdminManageAction, AdminAllResource),
     ).toBe(true);
     expect(canAdmin(abilityWithManageAll, "read", "admin.audit")).toBe(true);
     expect(
       createAdminAccessPolicy({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
-        permissions: [ADMIN_MANAGE_ALL_PERMISSION],
+        roles: [AdminRole],
+        permissions: [AdminManageAllPermission],
       }).canAccessAdmin,
     ).toBe(true);
   });
@@ -177,17 +170,14 @@ describe("@app/backend/feature/admin/shared CASL RBAC", () => {
       email: "admin@example.com",
       displayName: "Ada Admin",
       locale: "ru",
-      roles: [ADMIN_ROLE],
-      permissions: [
-        ADMIN_PROFILE_READ_PERMISSION,
-        ADMIN_DASHBOARD_READ_PERMISSION,
-      ],
+      roles: [AdminRole],
+      permissions: [AdminProfileReadPermission, AdminDashboardReadPermission],
     });
     expect(assertAdminProfilePermission(adminPrincipal)).toBe(adminPrincipal);
     expect(() =>
       assertAdminProfilePermission({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
+        roles: [AdminRole],
         permissions: [],
       }),
     ).toThrow("Admin profile permission is required.");

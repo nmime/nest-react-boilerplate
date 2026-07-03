@@ -14,4 +14,4 @@ export const featureFlagMigrationOptions: MigrationsOptions = {
   migrationsList: [...featureFlagMigrations],
 };
 
-export { Migration20260609100000CreateFeatureFlags };
+export * from "./Migration20260609100000CreateFeatureFlags";

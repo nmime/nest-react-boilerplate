@@ -1,0 +1,25 @@
+{
+  "name": "@app/common-design-tokens",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/design-tokens/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:shared",
+    "type:common",
+    "scope:shared",
+    "boundary:design-system",
+    "framework:neutral"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/common/design-tokens",
+        "main": "libs/common/design-tokens/lib/src/index.ts",
+        "tsConfig": "libs/common/design-tokens/lib/tsconfig.lib.json",
+        "assets": []
+      }
+    }
+  }
+}

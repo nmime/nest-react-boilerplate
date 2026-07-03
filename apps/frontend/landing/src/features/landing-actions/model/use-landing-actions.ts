@@ -1,4 +1,5 @@
-import { useI18n, type ProductShellAction } from "@app/frontend/ui";
+import { useI18n } from "@app/frontend-runtime";
+import type { ProductShellAction } from "@app/frontend-ui-web";
 import { getLandingFrontendEnv, landingRoutes } from "../../../shared/config";
 import { getAuthApiDocsHref } from "./get-auth-api-docs-href";
 

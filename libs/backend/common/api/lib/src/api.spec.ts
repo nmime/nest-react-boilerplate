@@ -18,6 +18,6 @@ describe("common api", () => {
   });
 
   it("exports stable HTTP method constants", () => {
-    expect(HttpMethod.POST).toBe("POST");
+    expect(HttpMethod.Post).toBe("POST");
   });
 });

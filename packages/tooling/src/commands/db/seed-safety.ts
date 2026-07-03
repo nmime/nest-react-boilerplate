@@ -1,6 +1,6 @@
 // @ts-nocheck
-export const DEFAULT_ADMIN_EMAIL = "admin@example.com";
-export const DEFAULT_ADMIN_PASSWORD = "ChangeMe123!";
+export const DefaultAdminEmail = "admin@example.com";
+export const DefaultAdminPassword = "ChangeMe123!";
 
 function isTruthy(value) {
   return ["1", "true", "yes", "on"].includes(

@@ -3,13 +3,13 @@ import { Migrator } from "@mikro-orm/migrations";
 import { type INestApplication } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import supertest from "supertest";
-import { createValidationPipe } from "@app/backend/common/validation";
+import { createValidationPipe } from "@app/backend-common-validation";
 import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
-} from "@app/backend/common/component-test";
+} from "@app/backend-common-component-test";
 import {
   AuthRefreshTokenEntitySchema,
   AuthTenantEntitySchema,
@@ -18,10 +18,10 @@ import {
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
   authMigrationOptions,
-} from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
 import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { AuthMainModule } from "./auth-main.module";
+import { AuthMainModule, AuthPersistenceMode } from "./auth-main.module";
 
 interface AuthSessionResponse {
   data: {
@@ -57,7 +57,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
     moduleRef = await Test.createTestingModule({
       imports: [
         AuthMainModule.forRoot({
-          mode: "postgres",
+          mode: AuthPersistenceMode.Postgres,
           postgres: createPostgresContainerMikroOrmOptions(
             container,
             [

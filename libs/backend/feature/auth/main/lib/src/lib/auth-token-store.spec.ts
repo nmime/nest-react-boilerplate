@@ -6,14 +6,14 @@ import {
   PostgresAuthTokenStore,
 } from "./auth-token-store";
 
-const TENANT_A = "11111111-1111-4111-8111-111111111111";
-const TENANT_B = "22222222-2222-4222-8222-222222222222";
+const tenantA = "11111111-1111-4111-8111-111111111111";
+const tenantB = "22222222-2222-4222-8222-222222222222";
 
 describe("InMemoryAuthTokenStore", () => {
   it("rotates and revokes refresh tokens per tenant", async () => {
     const store = new InMemoryAuthTokenStore();
     const issued = await store.issueRefreshToken({
-      tenantId: TENANT_A,
+      tenantId: tenantA,
       userId: "user-1",
     });
     expect(issued.isOk()).toBe(true);
@@ -22,15 +22,12 @@ describe("InMemoryAuthTokenStore", () => {
     }
 
     await expect(
-      store.findRefreshToken(issued.value.token, TENANT_B),
+      store.findRefreshToken(issued.value.token, tenantB),
     ).resolves.toMatchObject({
       value: null,
     });
 
-    const rotated = await store.rotateRefreshToken(
-      issued.value.token,
-      TENANT_A,
-    );
+    const rotated = await store.rotateRefreshToken(issued.value.token, tenantA);
     expect(rotated.isOk()).toBe(true);
     if (rotated.isErr() || !rotated.value) {
       throw new Error("expected refresh rotation");
@@ -38,17 +35,17 @@ describe("InMemoryAuthTokenStore", () => {
     expect(rotated.value.token).not.toBe(issued.value.token);
 
     await expect(
-      store.rotateRefreshToken(issued.value.token, TENANT_A),
+      store.rotateRefreshToken(issued.value.token, tenantA),
     ).resolves.toMatchObject({
       value: null,
     });
     await expect(
-      store.revokeRefreshToken(rotated.value.token, TENANT_A),
+      store.revokeRefreshToken(rotated.value.token, tenantA),
     ).resolves.toMatchObject({
       value: true,
     });
     await expect(
-      store.findRefreshToken(rotated.value.token, TENANT_A),
+      store.findRefreshToken(rotated.value.token, tenantA),
     ).resolves.toMatchObject({
       value: null,
     });
@@ -57,7 +54,7 @@ describe("InMemoryAuthTokenStore", () => {
   it("consumes email verification and password reset tokens once", async () => {
     const store = new InMemoryAuthTokenStore();
     const issued = await store.issueUserActionToken({
-      tenantId: TENANT_A,
+      tenantId: tenantA,
       userId: "user-1",
       purpose: "password_reset",
     });
@@ -70,13 +67,13 @@ describe("InMemoryAuthTokenStore", () => {
       store.consumeUserActionToken(
         issued.value.token,
         "email_verification",
-        TENANT_A,
+        tenantA,
       ),
     ).resolves.toMatchObject({ value: null });
     const consumed = await store.consumeUserActionToken(
       issued.value.token,
       "password_reset",
-      TENANT_A,
+      tenantA,
     );
     expect(consumed.isOk()).toBe(true);
     if (consumed.isErr() || !consumed.value) {
@@ -87,7 +84,7 @@ describe("InMemoryAuthTokenStore", () => {
       store.consumeUserActionToken(
         issued.value.token,
         "password_reset",
-        TENANT_A,
+        tenantA,
       ),
     ).resolves.toMatchObject({ value: null });
   });
@@ -102,11 +99,11 @@ describe("PostgresAuthTokenStore", () => {
     const store = new PostgresAuthTokenStore(repository as never);
 
     const refresh = await store.issueRefreshToken({
-      tenantId: TENANT_A,
+      tenantId: tenantA,
       userId: "user-1",
     });
     const action = await store.issueUserActionToken({
-      tenantId: TENANT_A,
+      tenantId: tenantA,
       userId: "user-1",
       purpose: "password_reset",
     });
@@ -119,14 +116,14 @@ describe("PostgresAuthTokenStore", () => {
 
     expect(repository.createRefreshToken).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenantId: TENANT_A,
+        tenantId: tenantA,
         userId: "user-1",
         tokenHash: hashOpaqueToken(refresh.value.token),
       }),
     );
     expect(repository.createUserToken).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenantId: TENANT_A,
+        tenantId: tenantA,
         userId: "user-1",
         purpose: "password_reset",
         tokenHash: hashOpaqueToken(action.value.token),

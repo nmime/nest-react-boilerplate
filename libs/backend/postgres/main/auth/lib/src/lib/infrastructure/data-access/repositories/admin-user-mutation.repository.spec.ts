@@ -6,9 +6,9 @@ import {
   TransactionalOutboxEventEntity,
 } from "../entities";
 import {
-  ADMIN_ROLE_NAME,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,
-  ADMIN_USERS_WRITE_PERMISSION_NAME,
+  AdminRoleName,
+  AdminUsersAccessPolicyUpdatePermissionName,
+  AdminUsersWritePermissionName,
   AdminUserMutationRepository,
   hasActivePowerfulAdminAccess,
 } from "./admin-user-mutation.repository";
@@ -22,10 +22,10 @@ function createPowerfulAdmin(partial: Partial<AuthUserEntity> = {}) {
     tenantId,
     email: "admin@example.com",
     status: "active",
-    roles: [ADMIN_ROLE_NAME],
+    roles: [AdminRoleName],
     permissions: [
-      ADMIN_USERS_WRITE_PERMISSION_NAME,
-      ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,
+      AdminUsersWritePermissionName,
+      AdminUsersAccessPolicyUpdatePermissionName,
     ],
   });
   entity.id = targetUserId;
@@ -91,13 +91,13 @@ describe("AdminUserMutationRepository", () => {
     expect(
       hasActivePowerfulAdminAccess(
         createPowerfulAdmin({
-          permissions: [ADMIN_USERS_WRITE_PERMISSION_NAME],
+          permissions: [AdminUsersWritePermissionName],
         }),
       ),
     ).toBe(false);
     expect(
       hasActivePowerfulAdminAccess(
-        createPowerfulAdmin({ roles: [ADMIN_ROLE_NAME] }),
+        createPowerfulAdmin({ roles: [AdminRoleName] }),
       ),
     ).toBe(true);
     expect(
@@ -135,11 +135,11 @@ describe("AdminUserMutationRepository", () => {
     expect(count).toHaveBeenCalledWith(AuthUserEntity, {
       tenantId,
       status: "active",
-      roles: { $contains: [ADMIN_ROLE_NAME] },
+      roles: { $contains: [AdminRoleName] },
       permissions: {
         $contains: [
-          ADMIN_USERS_WRITE_PERMISSION_NAME,
-          ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION_NAME,
+          AdminUsersWritePermissionName,
+          AdminUsersAccessPolicyUpdatePermissionName,
         ],
       },
     });
@@ -175,8 +175,8 @@ describe("AdminUserMutationRepository", () => {
       actorUserId,
       action: "admin.user.access_policy.update",
       policy: {
-        roles: [ADMIN_ROLE_NAME],
-        permissions: [ADMIN_USERS_WRITE_PERMISSION_NAME],
+        roles: [AdminRoleName],
+        permissions: [AdminUsersWritePermissionName],
       },
       audit: { metadata: { requestId: "req-1" } },
     });

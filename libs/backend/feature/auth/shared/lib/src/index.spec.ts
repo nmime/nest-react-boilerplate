@@ -1,37 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADMIN_DASHBOARD_READ_PERMISSION,
-  ADMIN_AUDIT_READ_PERMISSION,
-  ADMIN_PROFILE_READ_PERMISSION,
-  ADMIN_ROLES_READ_PERMISSION,
-  ADMIN_SETTINGS_READ_PERMISSION,
-  ADMIN_SETTINGS_UPDATE_PERMISSION,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-  ADMIN_USERS_READ_PERMISSION,
-  ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-  ADMIN_USERS_WRITE_PERMISSION,
+  AdminDashboardReadPermission,
+  AdminAuditReadPermission,
+  AdminProfileReadPermission,
+  AdminRolesReadPermission,
+  AdminSettingsReadPermission,
+  AdminSettingsUpdatePermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersWritePermission,
   createDefaultAccessPolicy,
-  DEFAULT_AUTH_TENANT_ID,
+  DefaultAuthTenantId,
   normalizeUserThemePreference,
-  USER_PROFILE_READ_PERMISSION,
+  UserProfileReadPermission,
   toAuthenticatedUserView,
-  USER_ROLE,
-  ADMIN_ROLE,
+  UserRole,
+  AdminRole,
 } from "./index";
 
 describe("auth shared", () => {
   it("creates default user and bootstrap admin access policies", () => {
     expect(createDefaultAccessPolicy("user@example.com", {})).toEqual({
-      roles: [USER_ROLE],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      roles: [UserRole],
+      permissions: [UserProfileReadPermission],
     });
     expect(
       createDefaultAccessPolicy("Admin@Example.com", {
         ADMIN_BOOTSTRAP_EMAILS: "admin@example.com,other@example.com",
       }),
     ).toEqual({
-      roles: [USER_ROLE],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      roles: [UserRole],
+      permissions: [UserProfileReadPermission],
     });
     expect(
       createDefaultAccessPolicy("Admin@Example.com", {
@@ -39,19 +39,19 @@ describe("auth shared", () => {
         ADMIN_BOOTSTRAP_EMAILS: "admin@example.com,other@example.com",
       }),
     ).toEqual({
-      roles: [USER_ROLE, ADMIN_ROLE],
+      roles: [UserRole, AdminRole],
       permissions: [
-        USER_PROFILE_READ_PERMISSION,
-        ADMIN_PROFILE_READ_PERMISSION,
-        ADMIN_DASHBOARD_READ_PERMISSION,
-        ADMIN_USERS_READ_PERMISSION,
-        ADMIN_USERS_WRITE_PERMISSION,
-        ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-        ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-        ADMIN_ROLES_READ_PERMISSION,
-        ADMIN_AUDIT_READ_PERMISSION,
-        ADMIN_SETTINGS_READ_PERMISSION,
-        ADMIN_SETTINGS_UPDATE_PERMISSION,
+        UserProfileReadPermission,
+        AdminProfileReadPermission,
+        AdminDashboardReadPermission,
+        AdminUsersReadPermission,
+        AdminUsersWritePermission,
+        AdminUsersStatusUpdatePermission,
+        AdminUsersAccessPolicyUpdatePermission,
+        AdminRolesReadPermission,
+        AdminAuditReadPermission,
+        AdminSettingsReadPermission,
+        AdminSettingsUpdatePermission,
       ],
     });
   });
@@ -69,7 +69,7 @@ describe("auth shared", () => {
       }),
     ).toEqual({
       id: "id",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       email: "user@example.com",
       displayName: "User",
       locale: "ru",
@@ -79,7 +79,7 @@ describe("auth shared", () => {
     });
     expect(toAuthenticatedUserView({ id: "id", email: "e" })).toEqual({
       id: "id",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       email: "e",
       theme: "system",
       roles: [],

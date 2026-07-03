@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend/api-client";
-import { clearApiAuthRequired } from "@app/frontend/api-support";
-import { useAuthShellStore } from "@app/frontend/ui";
+import { useAuthApiClient } from "@app/frontend-api-client";
+import { clearApiAuthRequired } from "@app/frontend-api-support";
+import { useAuthShellStore } from "@app/frontend-runtime";
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,

@@ -6,7 +6,7 @@ import {
   translations,
   type Locale,
   type TranslationKey,
-} from "@app/common/i18n";
+} from "@app/common-i18n";
 import type { APIInteraction } from "discord-api-types/v10";
 
 export function t(

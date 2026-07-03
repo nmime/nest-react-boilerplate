@@ -1,5 +1,5 @@
 {
-  "name": "@app/backend/common/feature-flags",
+  "name": "@app/backend-common-feature-flags",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/feature-flags/lib/src",
   "projectType": "library",

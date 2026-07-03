@@ -10,12 +10,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   ExceptionsFilter,
   ExceptionsResponseTransformer,
-} from "@app/backend/common/response";
-import { createValidationPipe } from "@app/backend/common/validation";
+} from "@app/backend-common-response";
+import { createValidationPipe } from "@app/backend-common-validation";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedSession,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import { AuthAppApiModule } from "./auth-app-api.module";
 
 type UserThemePreference = "system" | "light" | "dark";
@@ -77,7 +77,7 @@ function installInMemorySession(app: NestFastifyApplication): void {
 
   fastify.addHook("preHandler", (request, reply, done) => {
     let sessionId = readSessionId(request.headers.cookie);
-    const session = {
+    const session: AuthenticatedSession = {
       ...(sessionId && sessions.has(sessionId)
         ? { user: sessions.get(sessionId) }
         : {}),
@@ -100,7 +100,7 @@ function installInMemorySession(app: NestFastifyApplication): void {
         }
         callback?.();
       },
-    } as AuthenticatedSession;
+    };
 
     (request as { session?: AuthenticatedSession }).session = session;
     done();

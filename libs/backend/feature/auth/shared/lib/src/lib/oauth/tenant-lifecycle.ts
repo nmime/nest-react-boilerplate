@@ -1,29 +1,42 @@
 import type { AuthenticatedRequest } from "./access-control.types";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  DefaultAuthTenantId,
   normalizeTenantId,
   readTenantIdHeader,
   resolveTenantId,
 } from "./tenant-context";
 
-export const TENANT_DOMAIN_HEADERS = [
+export const TenantDomainHeaders = [
   "x-tenant-domain",
   "x-nrb-tenant-domain",
 ] as const;
 
-export const tenantRoles = ["owner", "admin", "member", "billing"] as const;
-export type TenantRole = (typeof tenantRoles)[number];
+export enum TenantRole {
+  Owner = "owner",
+  Admin = "admin",
+  Member = "member",
+  Billing = "billing",
+}
 
-export const tenantStatuses = ["active", "suspended", "deleted"] as const;
-export type TenantStatus = (typeof tenantStatuses)[number];
+export const tenantRoles = Object.values(TenantRole);
+const tenantRoleValues = new Set<string>(tenantRoles);
 
-export const tenantInvitationStatuses = [
-  "pending",
-  "accepted",
-  "revoked",
-  "expired",
-] as const;
-export type TenantInvitationStatus = (typeof tenantInvitationStatuses)[number];
+export enum TenantStatus {
+  Active = "active",
+  Suspended = "suspended",
+  Deleted = "deleted",
+}
+
+export const tenantStatuses = Object.values(TenantStatus);
+
+export enum TenantInvitationStatus {
+  Pending = "pending",
+  Accepted = "accepted",
+  Revoked = "revoked",
+  Expired = "expired",
+}
+
+export const tenantInvitationStatuses = Object.values(TenantInvitationStatus);
 
 export interface TenantView {
   id: string;
@@ -57,8 +70,8 @@ export interface TenantRequestContext {
   source: "header" | "host" | "default";
 }
 
-const TENANT_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u;
-const HOST_PORT_PATTERN = /:\d+$/u;
+const tenantSlugPattern = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u;
+const hostPortPattern = /:\d+$/u;
 
 export function normalizeTenantSlug(
   value: string | null | undefined,
@@ -68,7 +81,7 @@ export function normalizeTenantSlug(
   }
 
   const normalized = value.trim().toLowerCase();
-  return TENANT_SLUG_PATTERN.test(normalized) ? normalized : undefined;
+  return tenantSlugPattern.test(normalized) ? normalized : undefined;
 }
 
 export function normalizeTenantDomain(
@@ -78,7 +91,7 @@ export function normalizeTenantDomain(
     return undefined;
   }
 
-  const normalized = value.trim().toLowerCase().replace(HOST_PORT_PATTERN, "");
+  const normalized = value.trim().toLowerCase().replace(hostPortPattern, "");
   if (
     normalized.length > 253 ||
     normalized.includes("..") ||
@@ -93,16 +106,14 @@ export function normalizeTenantDomain(
 export function normalizeTenantRoles(values: readonly string[]): TenantRole[] {
   const roles = values
     .map((value) => value.trim().toLowerCase())
-    .filter((value): value is TenantRole =>
-      tenantRoles.includes(value as TenantRole),
-    );
-  return roles.length > 0 ? [...new Set(roles)] : ["member"];
+    .filter((value): value is TenantRole => isTenantRole(value));
+  return roles.length > 0 ? [...new Set(roles)] : [TenantRole.Member];
 }
 
 export function readTenantDomainHeader(
   request: AuthenticatedRequest,
 ): string | undefined {
-  for (const header of TENANT_DOMAIN_HEADERS) {
+  for (const header of TenantDomainHeaders) {
     const directHeader =
       request.headers?.[header] ?? request.headers?.[header.toUpperCase()];
     const value = Array.isArray(directHeader) ? directHeader[0] : directHeader;
@@ -118,6 +129,10 @@ export function readTenantDomainHeader(
   }
 
   return undefined;
+}
+
+function isTenantRole(value: string): value is TenantRole {
+  return tenantRoleValues.has(value);
 }
 
 export function resolveTenantRequestContext(
@@ -143,7 +158,7 @@ export function resolveTenantRequestContext(
     };
   }
 
-  return { tenantId: DEFAULT_AUTH_TENANT_ID, source: "default" };
+  return { tenantId: DefaultAuthTenantId, source: "default" };
 }
 
 function firstHeaderValue(

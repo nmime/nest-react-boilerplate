@@ -1,5 +1,5 @@
 {
-  "name": "@app/backend/bots/telegram",
+  "name": "@app/backend-bots-telegram",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/bots/telegram/lib/src",
   "projectType": "library",

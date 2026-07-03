@@ -32,10 +32,11 @@ const expectedProjects = {
 } as const;
 
 const forbiddenImports = [
-  ["@app", "backend", "feature"].join("/"),
-  ["@app", "backend", "postgres"].join("/"),
-  ["@app", "backend", "bots"].join("/"),
+  "@app/backend-feature",
+  "@app/backend-postgres",
+  "@app/backend-bots",
   ["@app", "frontend"].join("/"),
+  "@app/frontend-",
   ["libs", "backend", "feature"].join("/"),
   ["libs", "backend", "postgres"].join("/"),
   ["libs", "backend", "bots"].join("/"),
@@ -52,7 +53,7 @@ describe("backend common clean boundaries", () => {
     for (const [library, boundaryTag] of Object.entries(expectedProjects)) {
       const project = readProjectConfig(commonRoot, library);
 
-      expect(project.name).toBe(`@app/backend/common/${library}`);
+      expect(project.name).toBe(`@app/backend-common-${library}`);
       expect(project.tags).toEqual(
         expect.arrayContaining([
           "platform:backend",

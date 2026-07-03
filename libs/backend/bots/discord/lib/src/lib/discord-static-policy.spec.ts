@@ -47,23 +47,28 @@ describe("Discord static policy", () => {
           `(?:from\\s+["']${escaped}["']|import\\(["']${escaped}["']\\)|require\\(["']${escaped}["']\\))`,
           "u",
         );
-        if (importPattern.test(content))
+        if (importPattern.test(content)) {
           failures.push(`${file}: forbidden import ${moduleName}`);
+        }
       }
-      if (/from\s+["'][^"']*(?:telegram|grammy)[^"']*["']/iu.test(content))
+      if (/from\s+["'][^"']*(?:telegram|grammy)[^"']*["']/iu.test(content)) {
         failures.push(`${file}: forbidden Telegram import`);
-      if (/Bot\s+[A-Za-z0-9._=-]{24,}/u.test(content))
+      }
+      if (/Bot\s+[A-Za-z0-9._=-]{24,}/u.test(content)) {
         failures.push(`${file}: bot credential literal`);
+      }
       const selfTestFile = file.endsWith("discord-static-policy.spec.ts");
       if (
         !selfTestFile &&
         /(?:client_secret|client-secret|clientSecret).{0,8}\S{16,}/iu.test(
           content,
         )
-      )
+      ) {
         failures.push(`${file}: client credential literal`);
-      if (/discord\s+admin/iu.test(content))
+      }
+      if (/discord\s+admin/iu.test(content)) {
         failures.push(`${file}: stale admin name`);
+      }
     }
 
     expect(failures).toEqual([]);
@@ -94,8 +99,12 @@ function sourceFiles() {
 function walk(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return walk(path);
-    if (!entry.isFile() || !/\.[cm]?tsx?$/u.test(entry.name)) return [];
+    if (entry.isDirectory()) {
+      return walk(path);
+    }
+    if (!entry.isFile() || !/\.[cm]?tsx?$/u.test(entry.name)) {
+      return [];
+    }
     return [relative(workspaceRoot, path)];
   });
 }

@@ -8,9 +8,12 @@ import {
 } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { adminApi } from "@app/frontend/api-client";
-import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend/ui";
-import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
+import { adminApi } from "@app/frontend-api-client";
+import {
+  FrontendI18nProvider,
+  FrontendStateProvider,
+} from "@app/frontend-runtime";
+import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
 import { createAdminAccess } from "../entities/admin-session";
 import { renderAdminRoute } from "../App";
 import { AdminLayout } from "../widgets/admin-shell";

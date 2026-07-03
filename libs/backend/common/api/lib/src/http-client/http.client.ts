@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { unknownToError } from "@app/backend/common/shared";
+import { unknownToError } from "@app/backend-common-shared";
 import { ApiResponseKind, HttpMethod } from "../enum";
 import { getHttpApiFailureResponseKind } from "./util";
 import type {
@@ -124,7 +124,7 @@ export class HttpClient {
 
     try {
       const response = await this.fetcher(url, {
-        method: config.method ?? HttpMethod.GET,
+        method: config.method ?? HttpMethod.Get,
         headers,
         body: encodeBody(config.data, headers),
         signal: controller.signal,
@@ -132,7 +132,7 @@ export class HttpClient {
       const data = await parseBody(response);
       this.logger?.debug?.("HTTP client response", {
         durationMs: Date.now() - startedAt,
-        method: config.method ?? HttpMethod.GET,
+        method: config.method ?? HttpMethod.Get,
         requestId,
         status: response.status,
         url,
@@ -168,7 +168,7 @@ export class HttpClient {
           : ApiResponseKind.NetworkError;
       this.logger?.error("HTTP client request failed", {
         error: error.message,
-        method: config.method ?? HttpMethod.GET,
+        method: config.method ?? HttpMethod.Get,
         requestId,
         url,
       });
@@ -190,7 +190,7 @@ export class HttpClient {
   ): Promise<HttpResponse<TSuccess, TError>> {
     return this.request<TSuccess, TError>({
       ...config,
-      method: HttpMethod.GET,
+      method: HttpMethod.Get,
       url,
     });
   }
@@ -203,7 +203,7 @@ export class HttpClient {
     return this.request<TSuccess, TError, TBody>({
       ...config,
       data,
-      method: HttpMethod.POST,
+      method: HttpMethod.Post,
       url,
     });
   }
@@ -216,7 +216,7 @@ export class HttpClient {
     return this.request<TSuccess, TError, TBody>({
       ...config,
       data,
-      method: HttpMethod.PUT,
+      method: HttpMethod.Put,
       url,
     });
   }
@@ -229,7 +229,7 @@ export class HttpClient {
     return this.request<TSuccess, TError, TBody>({
       ...config,
       data,
-      method: HttpMethod.PATCH,
+      method: HttpMethod.Patch,
       url,
     });
   }
@@ -240,7 +240,7 @@ export class HttpClient {
   ): Promise<HttpResponse<TSuccess, TError>> {
     return this.request<TSuccess, TError>({
       ...config,
-      method: HttpMethod.DELETE,
+      method: HttpMethod.Delete,
       url,
     });
   }

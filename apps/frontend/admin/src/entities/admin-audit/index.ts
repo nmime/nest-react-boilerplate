@@ -1,1 +1,1 @@
-export type { AuditRow } from "./model/types";
+export * from "./model/types";

@@ -2,18 +2,18 @@ import { ExecutionContext, ForbiddenException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { describe, expect, it } from "vitest";
 import {
-  ADMIN_MANAGE_ALL_PERMISSION,
-  ADMIN_PROFILE_READ_PERMISSION,
-  ADMIN_ROLE,
-  ADMIN_USERS_READ_PERMISSION,
-} from "@app/backend/feature/admin/shared";
+  AdminManageAllPermission,
+  AdminProfileReadPermission,
+  AdminRole,
+  AdminUsersReadPermission,
+} from "@app/backend-feature-admin-shared";
 import {
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
-  DEFAULT_AUTH_TENANT_ID,
-  REQUIRED_PERMISSIONS_METADATA_KEY,
-  REQUIRED_ROLES_METADATA_KEY,
-} from "@app/backend/feature/auth/shared";
+  DefaultAuthTenantId,
+  RequiredPermissionsMetadataKey,
+  RequiredRolesMetadataKey,
+} from "@app/backend-feature-auth-shared";
 import { AdminRbacGuard } from "./admin-rbac.guard";
 import { AdminProfileController } from "./admin-profile.controller";
 import { AdminUsersController } from "./admin-users.controller";
@@ -23,11 +23,12 @@ function createContext(
   handler: () => undefined = () => undefined,
   controller: new () => unknown = class AdminTestController {},
 ): ExecutionContext {
-  return {
+  const context: ExecutionContext = {
     getClass: () => controller,
     getHandler: () => handler,
     switchToHttp: () => ({ getRequest: () => request }),
-  } as ExecutionContext;
+  };
+  return context;
 }
 
 function createPrincipal(
@@ -37,19 +38,15 @@ function createPrincipal(
     permissions: [],
     roles: [],
     subject: "admin-id",
-    tenantId: DEFAULT_AUTH_TENANT_ID,
+    tenantId: DefaultAuthTenantId,
     ...partial,
   };
 }
 
 function createGuardedHandler(permission: string): () => undefined {
   const handler = () => undefined;
-  Reflect.defineMetadata(REQUIRED_ROLES_METADATA_KEY, [ADMIN_ROLE], handler);
-  Reflect.defineMetadata(
-    REQUIRED_PERMISSIONS_METADATA_KEY,
-    [permission],
-    handler,
-  );
+  Reflect.defineMetadata(RequiredRolesMetadataKey, [AdminRole], handler);
+  Reflect.defineMetadata(RequiredPermissionsMetadataKey, [permission], handler);
 
   return handler;
 }
@@ -72,7 +69,7 @@ describe("AdminRbacGuard", () => {
       guard.canActivate(
         createContext(
           {
-            user: createPrincipal({ roles: [ADMIN_ROLE] }),
+            user: createPrincipal({ roles: [AdminRole] }),
             url: "/admin/nope",
           },
           () => undefined,
@@ -92,7 +89,7 @@ describe("AdminRbacGuard", () => {
           {
             user: createPrincipal({
               permissions: ["admin:unknown:read"],
-              roles: [ADMIN_ROLE],
+              roles: [AdminRole],
             }),
           },
           handler,
@@ -102,13 +99,13 @@ describe("AdminRbacGuard", () => {
   });
 
   it("denies admin role alone", () => {
-    const handler = createGuardedHandler(ADMIN_USERS_READ_PERMISSION);
+    const handler = createGuardedHandler(AdminUsersReadPermission);
     const guard = new AdminRbacGuard(new Reflector());
 
     expect(() =>
       guard.canActivate(
         createContext(
-          { user: createPrincipal({ roles: [ADMIN_ROLE] }) },
+          { user: createPrincipal({ roles: [AdminRole] }) },
           handler,
         ),
       ),
@@ -116,7 +113,7 @@ describe("AdminRbacGuard", () => {
   });
 
   it("ignores admin permissions without the admin role", () => {
-    const handler = createGuardedHandler(ADMIN_USERS_READ_PERMISSION);
+    const handler = createGuardedHandler(AdminUsersReadPermission);
     const guard = new AdminRbacGuard(new Reflector());
 
     expect(() =>
@@ -124,7 +121,7 @@ describe("AdminRbacGuard", () => {
         createContext(
           {
             user: createPrincipal({
-              permissions: [ADMIN_USERS_READ_PERMISSION],
+              permissions: [AdminUsersReadPermission],
               roles: ["support"],
             }),
           },
@@ -135,15 +132,15 @@ describe("AdminRbacGuard", () => {
   });
 
   it("allows explicit manage/all admin permission for admin route permissions", () => {
-    const handler = createGuardedHandler(ADMIN_PROFILE_READ_PERMISSION);
+    const handler = createGuardedHandler(AdminProfileReadPermission);
 
     expect(
       new AdminRbacGuard(new Reflector()).canActivate(
         createContext(
           {
             user: createPrincipal({
-              permissions: [ADMIN_MANAGE_ALL_PERMISSION],
-              roles: [ADMIN_ROLE],
+              permissions: [AdminManageAllPermission],
+              roles: [AdminRole],
             }),
           },
           handler,

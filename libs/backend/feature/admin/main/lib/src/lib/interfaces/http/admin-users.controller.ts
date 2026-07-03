@@ -30,12 +30,12 @@ import { Type } from "class-transformer";
 import {
   createOkResponse,
   type OkResponse,
-} from "@app/backend/common/response";
+} from "@app/backend-common-response";
 import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiSessionCookieAuth,
-} from "@app/backend/common/swagger";
+} from "@app/backend-common-swagger";
 import {
   CurrentUser,
   RequirePermissions,
@@ -43,19 +43,19 @@ import {
   SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import {
-  ADMIN_AUDIT_READ_PERMISSION,
-  ADMIN_DASHBOARD_READ_PERMISSION,
-  ADMIN_ROLE,
-  ADMIN_ROLES_READ_PERMISSION,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-  ADMIN_USERS_READ_PERMISSION,
-  ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-  ADMIN_USERS_WRITE_PERMISSION,
+  AdminAuditReadPermission,
+  AdminDashboardReadPermission,
+  AdminRole,
+  AdminRolesReadPermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersWritePermission,
   adminAssignablePermissions,
   adminAssignableRoles,
-} from "@app/backend/feature/admin/shared";
+} from "@app/backend-feature-admin-shared";
 import { AdminApplicationError } from "../../application/admin-errors";
 import { AdminUsersUseCase } from "../../application/admin-users.use-case";
 import {
@@ -63,7 +63,7 @@ import {
   type AdminRequestContext,
 } from "../../domain/admin-request-context";
 import {
-  ADMIN_MAX_PAGE_SIZE,
+  AdminMaxPageSize,
   adminAuditActions,
   adminUserStatuses,
   type AdminAuditAction,
@@ -76,12 +76,12 @@ import {
 import { AdminRbacGuard } from "./admin-rbac.guard";
 
 class AdminUserQueryDto {
-  @ApiPropertyOptional({ maximum: ADMIN_MAX_PAGE_SIZE, minimum: 1 })
+  @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(ADMIN_MAX_PAGE_SIZE)
+  @Max(AdminMaxPageSize)
   limit?: number;
 
   @ApiPropertyOptional({ minimum: 0 })
@@ -115,12 +115,12 @@ class AdminUserQueryDto {
 }
 
 class AdminAuditQueryDto {
-  @ApiPropertyOptional({ maximum: ADMIN_MAX_PAGE_SIZE, minimum: 1 })
+  @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(ADMIN_MAX_PAGE_SIZE)
+  @Max(AdminMaxPageSize)
   limit?: number;
 
   @ApiPropertyOptional({ minimum: 0 })
@@ -381,8 +381,8 @@ export class AdminUsersController {
 
   @Get("users")
   @ApiOkDataResponse(AdminUserListPayloadDto)
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_USERS_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminUsersReadPermission)
   async listUsers(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Query() query: AdminUserQueryDto,
@@ -396,8 +396,8 @@ export class AdminUsersController {
 
   @Get("users/:id")
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_USERS_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminUsersReadPermission)
   async getUser(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Param("id") id: string,
@@ -409,10 +409,10 @@ export class AdminUsersController {
 
   @Patch("users/:id/status")
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(ADMIN_ROLE)
+  @RequireRoles(AdminRole)
   @RequirePermissions(
-    ADMIN_USERS_WRITE_PERMISSION,
-    ADMIN_USERS_STATUS_UPDATE_PERMISSION,
+    AdminUsersWritePermission,
+    AdminUsersStatusUpdatePermission,
   )
   async updateUserStatus(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -434,10 +434,10 @@ export class AdminUsersController {
 
   @Patch("users/:id/access-policy")
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(ADMIN_ROLE)
+  @RequireRoles(AdminRole)
   @RequirePermissions(
-    ADMIN_USERS_WRITE_PERMISSION,
-    ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+    AdminUsersWritePermission,
+    AdminUsersAccessPolicyUpdatePermission,
   )
   async updateUserAccessPolicy(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -459,8 +459,8 @@ export class AdminUsersController {
 
   @Get("roles")
   @ApiOkDataResponse(AdminRbacCatalogPayloadDto)
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_ROLES_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminRolesReadPermission)
   roles(): OkResponse<AdminRbacCatalogPayloadDto> {
     const catalog = this.adminUsers.roles();
 
@@ -478,8 +478,8 @@ export class AdminUsersController {
 
   @Get("audit")
   @ApiOkDataResponse(AdminAuditLogListPayloadDto)
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_AUDIT_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminAuditReadPermission)
   async listAudit(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Query() query: AdminAuditQueryDto,
@@ -493,8 +493,8 @@ export class AdminUsersController {
 
   @Get("dashboard/summary")
   @ApiOkDataResponse(AdminDashboardSummaryDto)
-  @RequireRoles(ADMIN_ROLE)
-  @RequirePermissions(ADMIN_DASHBOARD_READ_PERMISSION)
+  @RequireRoles(AdminRole)
+  @RequirePermissions(AdminDashboardReadPermission)
   async dashboardSummary(
     @CurrentUser() principal: AuthenticatedPrincipal,
   ): Promise<OkResponse<AdminDashboardSummary>> {

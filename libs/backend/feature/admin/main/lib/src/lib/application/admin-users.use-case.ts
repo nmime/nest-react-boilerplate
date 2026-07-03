@@ -1,14 +1,14 @@
 import type { Result } from "neverthrow";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  DefaultAuthTenantId,
   type AuthenticatedPrincipal,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import {
   isAdminAssignablePermission,
   isAdminAssignableRole,
   toAdminRbacCatalogView,
   type AdminRbacCatalogView,
-} from "@app/backend/feature/admin/shared";
+} from "@app/backend-feature-admin-shared";
 import type {
   AdminAuditLogEntity,
   AdminAuditLogRepository,
@@ -16,7 +16,7 @@ import type {
   AdminUserMutationResult,
   AuthUserEntity,
   AuthUserRepository,
-} from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
 import {
   AdminApplicationError,
   isSensitiveAdminPolicyMessage,
@@ -203,7 +203,7 @@ export class AdminUsersUseCase {
 }
 
 const resolveTenantId = (principal: AuthenticatedPrincipal): string =>
-  principal.tenantId ?? DEFAULT_AUTH_TENANT_ID;
+  principal.tenantId ?? DefaultAuthTenantId;
 
 const requireAllowedPolicy = (
   input: UpdateAdminUserAccessPolicyCommand,

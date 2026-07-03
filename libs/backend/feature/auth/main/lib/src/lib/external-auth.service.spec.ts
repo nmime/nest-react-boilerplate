@@ -1,9 +1,13 @@
 import { createHash, createHmac } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  AuthenticatedTheme,
+  AuthProvider,
+  AuthProviderChannel,
+  DefaultAuthTenantId,
+  ExternalAuthIntent,
   validateBearerAuthorization,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 import { AuthService } from "./auth.service";
 import { InMemoryAuthUserStore } from "./auth-user-store";
 import { ExternalAuthService } from "./external-auth.service";
@@ -40,10 +44,10 @@ vi.mock("arctic", () => ({
   generateState: arcticMocks.generateState,
 }));
 
-const TEST_JWT_SECRET_VALUE = "TEST_JWT_SECRET_VALUE_at_least_32_chars";
-const BOT_TOKEN = "123456:telegram-bot-token";
-const DISCORD_ACCESS_VALUE = ["discord", "access", "value"].join("-");
-const DISCORD_REFRESH_VALUE = ["discord", "refresh", "value"].join("-");
+const testJwtSecretValue = "testJwtSecretValue_at_least_32_chars";
+const botToken = "123456:telegram-bot-token";
+const discordAccessValue = ["discord", "access", "value"].join("-");
+const discordRefreshValue = ["discord", "refresh", "value"].join("-");
 
 function signedTelegramPayload(
   overrides: Record<string, string | number> = {},
@@ -59,7 +63,7 @@ function signedTelegramPayload(
     .map(([key, value]) => `${key}=${String(value)}`)
     .sort((left, right) => left.localeCompare(right))
     .join("\n");
-  const secret = createHash("sha256").update(BOT_TOKEN, "utf8").digest();
+  const secret = createHash("sha256").update(botToken, "utf8").digest();
   payload.hash = createHmac("sha256", secret)
     .update(dataCheckString)
     .digest("hex");
@@ -82,13 +86,13 @@ function discordTokens(
   } = {},
 ) {
   return {
-    accessToken: vi.fn(() => input.accessValue ?? DISCORD_ACCESS_VALUE),
+    accessToken: vi.fn(() => input.accessValue ?? discordAccessValue),
     accessTokenExpiresAt: vi.fn(
       () => input.expiresAt ?? new Date("2026-06-14T12:10:00.000Z"),
     ),
     hasRefreshToken: vi.fn(() => input.refreshValue !== null),
     hasScopes: vi.fn(() => Boolean(input.scopes)),
-    refreshToken: vi.fn(() => input.refreshValue ?? DISCORD_REFRESH_VALUE),
+    refreshToken: vi.fn(() => input.refreshValue ?? discordRefreshValue),
     scopes: vi.fn(() => input.scopes ?? []),
   };
 }
@@ -120,8 +124,8 @@ describe("ExternalAuthService", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    process.env.AUTH_JWT_SECRET = TEST_JWT_SECRET_VALUE;
-    process.env.TELEGRAM_BOT_TOKEN = BOT_TOKEN;
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+    process.env.TELEGRAM_BOT_TOKEN = botToken;
     process.env.DISCORD_CLIENT_ID = "discord-client-id";
     process.env.DISCORD_CLIENT_SECRET = "discord-client-secret";
     process.env.DISCORD_REDIRECT_URI = "https://auth.example.test/callback";
@@ -182,7 +186,7 @@ describe("ExternalAuthService", () => {
     });
     expect(
       validateBearerAuthorization(`Bearer ${result.session?.accessToken}`, {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
       }),
     ).toMatchObject({
       amr: ["telegram"],
@@ -216,7 +220,7 @@ describe("ExternalAuthService", () => {
 
     const linkToken = await service.createLinkToken({
       userId: passwordSession.user.id,
-      provider: "telegram",
+      provider: AuthProvider.Telegram,
     });
     expect(linkToken.token).toHaveLength(43);
 
@@ -299,7 +303,7 @@ describe("ExternalAuthService", () => {
 
     expect(tmaMocks.validate).toHaveBeenCalledWith(
       "query_id=raw&user=untrusted",
-      BOT_TOKEN,
+      botToken,
       { expiresIn: 86_400 },
     );
     expect(tmaMocks.parse).not.toHaveBeenCalled();
@@ -324,9 +328,9 @@ describe("ExternalAuthService", () => {
       returnUrl: null,
     });
     const identity = await social.findIdentity(
-      "telegram",
+      AuthProvider.Telegram,
       "777",
-      DEFAULT_AUTH_TENANT_ID,
+      DefaultAuthTenantId,
     );
 
     expect(result).toMatchObject({
@@ -428,16 +432,16 @@ describe("ExternalAuthService", () => {
 
   it("maps Discord verified versus unverified email without trusting unverified email for users", async () => {
     const { service } = createService();
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
           email: "unverified@example.com",
           id: "discord-unverified",
           username: "discord-unverified",
           verified: false,
         }),
-    } as Response);
+      ),
+    );
 
     service.createDiscordAuthorizationRequest({});
     const unverified = await service.discordCallback({
@@ -453,17 +457,17 @@ describe("ExternalAuthService", () => {
     expect(unverified.session?.user.email).toBeNull();
 
     arcticMocks.generateState.mockReturnValueOnce("discord-state-2");
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
           email: "verified@example.com",
           global_name: "Verified User",
           id: "discord-verified",
           username: "discord-verified",
           verified: true,
         }),
-    } as Response);
+      ),
+    );
 
     service.createDiscordAuthorizationRequest({});
     const verified = await service.discordCallback({
@@ -489,8 +493,8 @@ describe("ExternalAuthService", () => {
     });
 
     expect(social.persistedProviderTokens).toHaveLength(0);
-    expect(JSON.stringify(disabled)).not.toContain(DISCORD_ACCESS_VALUE);
-    expect(JSON.stringify(disabled)).not.toContain(DISCORD_REFRESH_VALUE);
+    expect(JSON.stringify(disabled)).not.toContain(discordAccessValue);
+    expect(JSON.stringify(disabled)).not.toContain(discordRefreshValue);
 
     arcticMocks.generateState.mockReturnValueOnce("discord-state-2");
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(
@@ -505,20 +509,20 @@ describe("ExternalAuthService", () => {
 
     expect(social.persistedProviderTokens).toEqual([
       expect.objectContaining({
-        plaintext: DISCORD_ACCESS_VALUE,
+        plaintext: discordAccessValue,
         provider: "discord",
         scopes: ["identify", "email"],
         tokenKind: "access",
       }),
       expect.objectContaining({
-        plaintext: DISCORD_REFRESH_VALUE,
+        plaintext: discordRefreshValue,
         provider: "discord",
         scopes: ["identify", "email"],
         tokenKind: "refresh",
       }),
     ]);
-    expect(JSON.stringify(enabled)).not.toContain(DISCORD_ACCESS_VALUE);
-    expect(JSON.stringify(enabled)).not.toContain(DISCORD_REFRESH_VALUE);
+    expect(JSON.stringify(enabled)).not.toContain(discordAccessValue);
+    expect(JSON.stringify(enabled)).not.toContain(discordRefreshValue);
   });
 
   it("enforces link token TTL, purpose, revoke, replay, and hash-only persistence", async () => {
@@ -533,8 +537,8 @@ describe("ExternalAuthService", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-14T12:00:00.000Z"));
     const expiring = await service.createLinkToken({
-      intent: "link",
-      provider: "telegram",
+      intent: ExternalAuthIntent.Link,
+      provider: AuthProvider.Telegram,
       userId: passwordSession.user.id,
     });
 
@@ -543,8 +547,8 @@ describe("ExternalAuthService", () => {
     await expect(
       social.consumeLinkToken(
         social.createdLinkTokenHashes[0],
-        "login",
-        DEFAULT_AUTH_TENANT_ID,
+        ExternalAuthIntent.Login,
+        DefaultAuthTenantId,
         new Date(),
       ),
     ).resolves.toMatchObject({ value: null });
@@ -559,13 +563,13 @@ describe("ExternalAuthService", () => {
 
     vi.setSystemTime(new Date("2026-06-14T12:01:00.000Z"));
     const revoked = await service.createLinkToken({
-      provider: "telegram",
+      provider: AuthProvider.Telegram,
       userId: passwordSession.user.id,
     });
     await expect(
       social.revokeLinkToken(
         social.createdLinkTokenHashes.at(-1) ?? "missing-hash",
-        DEFAULT_AUTH_TENANT_ID,
+        DefaultAuthTenantId,
         new Date(),
       ),
     ).resolves.toMatchObject({ value: true });
@@ -577,7 +581,7 @@ describe("ExternalAuthService", () => {
     ).rejects.toThrow("link_token_expired");
 
     const usable = await service.createLinkToken({
-      provider: "telegram",
+      provider: AuthProvider.Telegram,
       userId: passwordSession.user.id,
     });
     await expect(
@@ -606,11 +610,11 @@ describe("ExternalAuthService", () => {
       password: "password123",
     });
     const linked = await social.upsertIdentity({
-      channel: "telegram_bot",
+      channel: AuthProviderChannel.TelegramBot,
       email: null,
-      provider: "telegram",
+      provider: AuthProvider.Telegram,
       providerSubject: "conflict-subject",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      tenantId: DefaultAuthTenantId,
       userId: first.user.id,
     });
 
@@ -618,7 +622,7 @@ describe("ExternalAuthService", () => {
       service.telegramBotLink({
         linkToken: (
           await service.createLinkToken({
-            provider: "telegram",
+            provider: AuthProvider.Telegram,
             userId: second.user.id,
           })
         ).token,
@@ -633,7 +637,7 @@ describe("ExternalAuthService", () => {
     await expect(
       service.unlinkProviderIdentity(linked._unsafeUnwrap().id, {
         subject: first.user.id,
-        tenantId: DEFAULT_AUTH_TENANT_ID,
+        tenantId: DefaultAuthTenantId,
       }),
     ).rejects.toThrow("step_up_required");
 
@@ -641,22 +645,22 @@ describe("ExternalAuthService", () => {
       service.unlinkProviderIdentity(linked._unsafeUnwrap().id, {
         authTime: Math.floor(Date.now() / 1000),
         subject: first.user.id,
-        tenantId: DEFAULT_AUTH_TENANT_ID,
+        tenantId: DefaultAuthTenantId,
       }),
     ).rejects.toThrow("last_method_unlink_forbidden");
 
     await social.upsertMethod({
       amr: ["pwd"],
       externalIdentityId: linked._unsafeUnwrap().id,
-      method: "telegram_bot",
-      tenantId: DEFAULT_AUTH_TENANT_ID,
+      method: AuthProviderChannel.TelegramBot,
+      tenantId: DefaultAuthTenantId,
       userId: first.user.id,
     });
     await expect(
       service.unlinkProviderIdentity(linked._unsafeUnwrap().id, {
         authTime: Math.floor(Date.now() / 1000),
         subject: first.user.id,
-        tenantId: DEFAULT_AUTH_TENANT_ID,
+        tenantId: DefaultAuthTenantId,
       }),
     ).resolves.toEqual({ unlinked: true });
     expect(social.revokedProviderTokenCalls).toBe(1);
@@ -683,23 +687,23 @@ describe("ExternalAuthService", () => {
         permissions: ["profile:read"],
         roles: ["user"],
         status: "active",
-        tenantId: DEFAULT_AUTH_TENANT_ID,
-        theme: "system",
+        tenantId: DefaultAuthTenantId,
+        theme: AuthenticatedTheme.System,
       },
       {
         amr: ["telegram"],
-        authChannel: "telegram_tma",
-        authProvider: "telegram",
+        authChannel: AuthProviderChannel.TelegramTma,
+        authProvider: AuthProvider.Telegram,
         authTime: 1_797_204_800,
         externalIdentityId: "external-identity-id",
       },
-      { AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE },
+      { AUTH_JWT_SECRET: testJwtSecretValue },
     );
 
     expect(external.user.email).toBeNull();
     expect(
       validateBearerAuthorization(`Bearer ${external.accessToken}`, {
-        AUTH_JWT_SECRET: TEST_JWT_SECRET_VALUE,
+        AUTH_JWT_SECRET: testJwtSecretValue,
       }),
     ).toMatchObject({
       amr: ["telegram"],

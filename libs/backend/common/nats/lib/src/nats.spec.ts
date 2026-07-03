@@ -75,7 +75,7 @@ vi.mock("@nats-io/services", () => ({
   },
 }));
 
-const NATS_ENV_KEYS = [
+const natsEnvKeys = [
   "NATS_SERVERS",
   "NATS_NAME",
   "NATS_USER",
@@ -92,7 +92,7 @@ const NATS_ENV_KEYS = [
 
 describe("NATS foundation", () => {
   const originalEnvironment = Object.fromEntries(
-    NATS_ENV_KEYS.map((key) => [key, process.env[key]]),
+    natsEnvKeys.map((key) => [key, process.env[key]]),
   );
 
   beforeEach(() => {
@@ -100,13 +100,13 @@ describe("NATS foundation", () => {
       mock.mockReset();
     }
 
-    for (const key of NATS_ENV_KEYS) {
+    for (const key of natsEnvKeys) {
       delete process.env[key];
     }
   });
 
   afterEach(() => {
-    for (const key of NATS_ENV_KEYS) {
+    for (const key of natsEnvKeys) {
       const value = originalEnvironment[key];
       if (value === undefined) {
         delete process.env[key];

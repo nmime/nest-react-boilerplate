@@ -5,9 +5,11 @@ import {
   type TransactionCapable,
 } from "./transaction";
 
+const testValue = <T>(value: unknown): T => value as T;
+
 describe("runInPostgresTransaction", () => {
   it("returns the handler value when the transaction commits", async () => {
-    const entityManager = {} as EntityManager;
+    const entityManager = testValue<EntityManager>({});
     const transactionalManager: TransactionCapable = {
       transactional: (handler) => Promise.resolve(handler(entityManager)),
     };

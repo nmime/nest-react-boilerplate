@@ -1,37 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADMIN_DASHBOARD_READ_PERMISSION,
-  ADMIN_MANAGE_ALL_PERMISSION,
-  ADMIN_PROFILE_READ_PERMISSION,
-  ADMIN_ROLE,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-  ADMIN_USERS_STATUS_UPDATE_PERMISSION,
+  AdminDashboardReadPermission,
+  AdminManageAllPermission,
+  AdminProfileReadPermission,
+  AdminRole,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersStatusUpdatePermission,
   createAdminAccessPolicy,
   assertCanReadAdminProfile,
   normalizeStringList,
 } from "./index";
 
-describe("@app/frontend/feature/admin/shared access policy", () => {
+describe("@app/frontend-feature-admin-shared access policy", () => {
   it("derives a frontend-safe admin access policy from principal claims", () => {
     expect(
       createAdminAccessPolicy({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
+        roles: [AdminRole],
         permissions: [
-          ADMIN_PROFILE_READ_PERMISSION,
-          ADMIN_DASHBOARD_READ_PERMISSION,
-          ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-          ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+          AdminProfileReadPermission,
+          AdminDashboardReadPermission,
+          AdminUsersStatusUpdatePermission,
+          AdminUsersAccessPolicyUpdatePermission,
         ],
       }),
     ).toEqual({
       isAuthenticated: true,
-      roles: [ADMIN_ROLE],
+      roles: [AdminRole],
       permissions: [
-        ADMIN_PROFILE_READ_PERMISSION,
-        ADMIN_DASHBOARD_READ_PERMISSION,
-        ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-        ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
+        AdminProfileReadPermission,
+        AdminDashboardReadPermission,
+        AdminUsersStatusUpdatePermission,
+        AdminUsersAccessPolicyUpdatePermission,
       ],
       canAccessAdmin: true,
       canReadProfile: true,
@@ -49,14 +49,14 @@ describe("@app/frontend/feature/admin/shared access policy", () => {
   it("fails closed when subject or admin role is missing", () => {
     expect(
       createAdminAccessPolicy({
-        permissions: [ADMIN_MANAGE_ALL_PERMISSION],
-        roles: [ADMIN_ROLE],
+        permissions: [AdminManageAllPermission],
+        roles: [AdminRole],
       }).canAccessAdmin,
     ).toBe(false);
     expect(
       createAdminAccessPolicy({
         subject: "user-id",
-        permissions: [ADMIN_MANAGE_ALL_PERMISSION],
+        permissions: [AdminManageAllPermission],
         roles: ["user"],
       }).canAccessAdmin,
     ).toBe(false);
@@ -66,8 +66,8 @@ describe("@app/frontend/feature/admin/shared access policy", () => {
     expect(
       createAdminAccessPolicy({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
-        permissions: [ADMIN_MANAGE_ALL_PERMISSION],
+        roles: [AdminRole],
+        permissions: [AdminManageAllPermission],
       }),
     ).toMatchObject({
       canAccessAdmin: true,
@@ -96,8 +96,8 @@ describe("@app/frontend/feature/admin/shared access policy", () => {
     expect(() =>
       assertCanReadAdminProfile({
         subject: "admin-id",
-        roles: [ADMIN_ROLE],
-        permissions: [ADMIN_PROFILE_READ_PERMISSION],
+        roles: [AdminRole],
+        permissions: [AdminProfileReadPermission],
       }),
     ).not.toThrow();
   });

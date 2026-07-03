@@ -13,15 +13,15 @@ import {
   RuntimeHealthIndicator,
   type HealthIndicator,
   type HealthIndicatorResult,
-} from "@app/backend/common/health";
-import { supportedLocales } from "@app/common/i18n";
-import { NatsHealthIndicator } from "@app/backend/common/nats";
-import { RedisHealthIndicator } from "@app/backend/common/redis";
+} from "@app/backend-common-health";
+import { supportedLocales } from "@app/common-i18n";
+import { NatsHealthIndicator } from "@app/backend-common-nats";
+import { RedisHealthIndicator } from "@app/backend-common-redis";
 import {
   MikroOrmPostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
-} from "@app/backend/postgres/main";
+} from "@app/backend-postgres-main";
 
 const appName = "admin-app-api";
 

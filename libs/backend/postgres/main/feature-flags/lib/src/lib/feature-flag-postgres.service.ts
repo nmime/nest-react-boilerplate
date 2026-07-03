@@ -5,7 +5,7 @@ import {
   type FeatureFlagSnapshot,
   type FeatureFlagValue,
   toFeatureFlagBoolean,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 import { FeatureFlagRepository } from "./infrastructure/data-access/repositories";
 
 @Injectable()

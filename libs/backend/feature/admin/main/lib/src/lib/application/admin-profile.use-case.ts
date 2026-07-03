@@ -1,8 +1,8 @@
-import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
 import {
   type AdminProfileView,
   toAdminProfileView,
-} from "@app/backend/feature/admin/shared";
+} from "@app/backend-feature-admin-shared";
 
 export interface AdminProfilePayload {
   principal: AuthenticatedPrincipal;

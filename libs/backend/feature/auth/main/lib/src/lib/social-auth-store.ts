@@ -14,8 +14,8 @@ import {
   type ExternalAuthProviderChannel,
   type ExternalIdentityEntity,
   type ProviderTokenCrypto,
-} from "@app/backend/postgres/main/auth";
-import type { AuthProviderTokenKind } from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
+import type { AuthProviderTokenKind } from "@app/backend-postgres-main-auth";
 
 export interface SocialAuthStoreError {
   code: "repository_error";
@@ -159,7 +159,7 @@ export interface SocialAuthStore {
   ): ResultAsync<number, SocialAuthStoreError>;
 }
 
-export const SOCIAL_AUTH_STORE = Symbol("SOCIAL_AUTH_STORE");
+export const SocialAuthStoreInjectToken = Symbol("SocialAuthStoreInjectToken");
 
 @Injectable()
 export class PostgresSocialAuthStore implements SocialAuthStore {

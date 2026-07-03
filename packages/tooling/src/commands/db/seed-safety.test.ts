@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assertSeedSafety,
-  DEFAULT_ADMIN_EMAIL,
-  DEFAULT_ADMIN_PASSWORD,
+  DefaultAdminEmail,
+  DefaultAdminPassword,
   resolvePassword,
 } from "./seed-safety.ts";
 
@@ -13,9 +13,9 @@ const productionDatabase = "postgres://postgres:postgres@db.example.com:5432/app
 
 function defaultArgs(overrides = {}) {
   return {
-    email: DEFAULT_ADMIN_EMAIL,
+    email: DefaultAdminEmail,
     force: false,
-    password: DEFAULT_ADMIN_PASSWORD,
+    password: DefaultAdminPassword,
     passwordEnv: "",
     ...overrides,
   };

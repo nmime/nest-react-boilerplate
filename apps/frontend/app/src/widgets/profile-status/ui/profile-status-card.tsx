@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
+import type { TranslationKey, TranslationParams } from "@app/frontend-runtime";
 import {
   UiAlert,
   UiCard,

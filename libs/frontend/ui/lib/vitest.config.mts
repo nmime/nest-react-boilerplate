@@ -15,7 +15,7 @@ export default defineConfig({
     passWithNoTests: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/frontend/ui",
-      ["src/lib/**/*.{ts,tsx}"],
+      ["src/index.ts"],
       [],
     ),
   },

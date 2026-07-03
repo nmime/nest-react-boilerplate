@@ -8,8 +8,11 @@ import {
 } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FrontendI18nProvider, FrontendStateProvider } from "@app/frontend/ui";
-import { adminFrontendTranslations } from "@app/frontend/feature/admin/i18n";
+import {
+  FrontendI18nProvider,
+  FrontendStateProvider,
+} from "@app/frontend-runtime";
+import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
 import App, { renderAdminRoute } from "../App";
 import {
   type AdminProfilePayload,

@@ -1,1 +1,1 @@
-export { RolesPage } from "./roles-page";
+export * from "./roles-page";

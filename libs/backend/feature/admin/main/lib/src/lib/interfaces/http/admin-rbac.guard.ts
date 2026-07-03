@@ -1,18 +1,18 @@
 import { ExecutionContext, Injectable } from "@nestjs/common";
 import {
-  ADMIN_ALL_RESOURCE,
-  ADMIN_MANAGE_ACTION,
-  ADMIN_ROLE,
+  AdminAllResource,
+  AdminManageAction,
+  AdminRole,
   adminPermissionToAbility,
   canAdmin,
   createAdminAbility,
-} from "@app/backend/feature/admin/shared";
+} from "@app/backend-feature-admin-shared";
 import {
   type AuthenticatedRequest,
   type PermissionEvaluationContext,
   type PermissionEvaluationResult,
   RbacGuard,
-} from "@app/backend/feature/auth/shared";
+} from "@app/backend-feature-auth-shared";
 
 @Injectable()
 export class AdminRbacGuard extends RbacGuard {
@@ -30,9 +30,9 @@ export class AdminRbacGuard extends RbacGuard {
       const adminAbility = createAdminAbility(principal);
 
       return (
-        requiredRoles.includes(ADMIN_ROLE) &&
+        requiredRoles.includes(AdminRole) &&
         (canAdmin(adminAbility, adminRule.action, adminRule.resource) ||
-          canAdmin(adminAbility, ADMIN_MANAGE_ACTION, ADMIN_ALL_RESOURCE))
+          canAdmin(adminAbility, AdminManageAction, AdminAllResource))
       );
     }
 

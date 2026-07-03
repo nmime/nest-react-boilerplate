@@ -14,8 +14,8 @@ import {
   mapHttpStatusToProblemTitle,
   toProblemDetails,
   type ProblemDetails,
-} from "@app/backend/common/exception";
-import { resolveLocaleFromRequest } from "@app/common/i18n";
+} from "@app/backend-common-exception";
+import { resolveLocaleFromRequest } from "@app/common-i18n";
 
 export interface OkResponse<T> {
   data: T;

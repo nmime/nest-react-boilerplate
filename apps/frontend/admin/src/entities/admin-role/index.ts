@@ -1,1 +1,1 @@
-export type { RoleRow } from "./model/types";
+export * from "./model/types";

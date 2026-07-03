@@ -1,4 +1,4 @@
-import { normalizeLocale } from "@app/common/i18n";
+import { normalizeLocale } from "@app/common-i18n";
 import type { TelegramBotContext, TelegramBotIdentity } from "./types";
 
 export function resolveTelegramIdentity(

@@ -9,11 +9,11 @@ import {
 import type { OnApplicationBootstrap } from "@nestjs/common";
 import { webhookCallback } from "grammy";
 import {
-  TELEGRAM_BOT_INSTANCE,
+  TelegramBotInstanceInjectToken,
   assertWebhookRuntimeAllowed,
   verifyWebhookSecret,
   type TelegramBotInstance,
-} from "@app/backend/bots/telegram";
+} from "@app/backend-bots-telegram";
 
 @Controller("telegram/webhook")
 export class TelegramWebhookController implements OnApplicationBootstrap {
@@ -21,7 +21,7 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
   private botInitPromise: Promise<void> | null = null;
 
   constructor(
-    @Inject(TELEGRAM_BOT_INSTANCE)
+    @Inject(TelegramBotInstanceInjectToken)
     private readonly telegram: TelegramBotInstance,
   ) {
     assertWebhookRuntimeAllowed(telegram.config);

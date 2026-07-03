@@ -24,6 +24,7 @@ interface FakeStartedPostgresContainer {
 const mockedSpawnSync = vi.mocked(spawnSync);
 const createTestCredential = (scope: string): string =>
   [scope, "credential"].join("_");
+const testValue = <T>(value: unknown): T => value as T;
 
 describe("postgres test container helpers", () => {
   afterEach(() => {
@@ -104,7 +105,9 @@ describe("postgres test container helpers", () => {
     expect(mockedSpawnSync).not.toHaveBeenCalled();
 
     vi.stubEnv("CI", "false");
-    mockedSpawnSync.mockReturnValueOnce({ status: 0 } as never);
+    mockedSpawnSync.mockReturnValueOnce(
+      testValue<ReturnType<typeof spawnSync>>({ status: 0 }),
+    );
     expect(hasDockerRuntime()).toBe(true);
     expect(mockedSpawnSync).toHaveBeenCalledWith("docker", ["version"], {
       stdio: "ignore",
@@ -116,15 +119,20 @@ describe("postgres test container helpers", () => {
       .mockImplementationOnce(() => {
         throw new Error("missing docker");
       })
-      .mockReturnValueOnce({ status: 1 } as never);
+      .mockReturnValueOnce(
+        testValue<ReturnType<typeof spawnSync>>({ status: 1 }),
+      );
 
     expect(hasDockerRuntime()).toBe(false);
   });
 
   it("stops containers when provided and ignores undefined", async () => {
     const stop = vi.fn(() => Promise.resolve());
+    const container = testValue<Parameters<typeof stopPostgresContainer>[0]>({
+      stop,
+    });
 
-    await stopPostgresContainer({ stop } as never);
+    await stopPostgresContainer(container);
     await stopPostgresContainer(undefined);
 
     expect(stop).toHaveBeenCalledTimes(1);

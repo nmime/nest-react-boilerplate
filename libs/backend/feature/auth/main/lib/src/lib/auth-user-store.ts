@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { ResultAsync, okAsync } from "neverthrow";
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  AuthenticatedTheme,
+  DefaultAuthTenantId,
+  normalizeUserThemePreference,
   type UserThemePreference,
-} from "@app/backend/feature/auth/shared";
-import { AuthUserRepository } from "@app/backend/postgres/main/auth";
+} from "@app/backend-feature-auth-shared";
+import { AuthUserRepository } from "@app/backend-postgres-main-auth";
 
 export interface AuthUserRecord {
   id: string;
@@ -67,7 +69,7 @@ export interface AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
 }
 
-export const AUTH_USER_STORE = Symbol("AUTH_USER_STORE");
+export const AuthUserStoreInjectToken = Symbol("AuthUserStoreInjectToken");
 
 export function toAuthUserRecord(entity: {
   id: string;
@@ -78,20 +80,21 @@ export function toAuthUserRecord(entity: {
   roles: string[];
   permissions: string[];
   locale: Locale | null;
-  theme: UserThemePreference;
+  theme: string | null;
   status: "active" | "disabled" | "invited";
   lastLoginAt: Date | null;
 }): AuthUserRecord {
   return {
     id: entity.id,
-    tenantId: entity.tenantId ?? DEFAULT_AUTH_TENANT_ID,
+    tenantId: entity.tenantId ?? DefaultAuthTenantId,
     email: entity.email,
     displayName: entity.displayName,
     passwordHash: entity.passwordHash,
     roles: entity.roles,
     permissions: entity.permissions,
     locale: entity.locale,
-    theme: entity.theme,
+    theme:
+      normalizeUserThemePreference(entity.theme) ?? AuthenticatedTheme.System,
     status: entity.status,
     lastLoginAt: entity.lastLoginAt,
   };
@@ -109,7 +112,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
 
   findByEmail(
     email: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findByEmail(email, tenantId)
@@ -118,7 +121,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
 
   findById(
     id: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findById(id, tenantId)
@@ -128,7 +131,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   setLocale(
     id: string,
     locale: Locale,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.setPreferences(id, { locale }, tenantId);
   }
@@ -136,7 +139,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setPreferences(id, preferences, tenantId)
@@ -146,7 +149,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   recordLogin(
     id: string,
     loggedInAt?: Date,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .recordLogin(id, loggedInAt, tenantId)
@@ -162,7 +165,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   create(
     input: CreateAuthUserInput,
   ): ResultAsync<AuthUserRecord, AuthUserStoreError> {
-    const tenantId = input.tenantId ?? DEFAULT_AUTH_TENANT_ID;
+    const tenantId = input.tenantId ?? DefaultAuthTenantId;
     const email = input.email?.trim().toLowerCase() || null;
     const key = email ? tenantEmailKey(tenantId, email) : null;
     if (key && this.idsByTenantEmail.has(key)) {
@@ -184,7 +187,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       roles: input.roles,
       permissions: input.permissions,
       locale: input.locale ?? null,
-      theme: input.theme ?? "system",
+      theme: input.theme ?? AuthenticatedTheme.System,
       status: "active",
       lastLoginAt: null,
     };
@@ -197,7 +200,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
 
   findByEmail(
     email: string | null | undefined,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const normalizedEmail = email?.trim().toLowerCase();
     if (!normalizedEmail) {
@@ -211,7 +214,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
 
   findById(
     id: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id) ?? null;
     return okAsync(record?.tenantId === tenantId ? record : null);
@@ -220,7 +223,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   setLocale(
     id: string,
     locale: Locale,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.setPreferences(id, { locale }, tenantId);
   }
@@ -228,7 +231,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   setPreferences(
     id: string,
     preferences: { locale?: Locale; theme?: UserThemePreference },
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id);
     if (!record || record.tenantId !== tenantId) {
@@ -246,7 +249,7 @@ export class InMemoryAuthUserStore implements AuthUserStore {
   recordLogin(
     id: string,
     loggedInAt: Date = new Date(),
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     const record = this.usersById.get(id);
     if (!record || record.tenantId !== tenantId) {

@@ -15,11 +15,11 @@ import type {
   AuthenticatedPrincipal,
   AuthenticatedRequest,
 } from "./access-control.types";
-import { DEFAULT_AUTH_TENANT_ID } from "./tenant-context";
+import { DefaultAuthTenantId } from "./tenant-context";
 
 const principal: AuthenticatedPrincipal = {
   subject: "decorated-user-id",
-  tenantId: DEFAULT_AUTH_TENANT_ID,
+  tenantId: DefaultAuthTenantId,
   roles: ["admin"],
   permissions: ["profile:read"],
 };

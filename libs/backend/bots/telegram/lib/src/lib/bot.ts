@@ -5,7 +5,7 @@ import { limit } from "@grammyjs/ratelimiter";
 import { Router } from "@grammyjs/router";
 import { autoRetry } from "@grammyjs/auto-retry";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
-import { resolveLocale } from "@app/common/i18n";
+import { resolveLocale } from "@app/common-i18n";
 import {
   createTelegramApplication,
   resolveTelegramApplication,
@@ -25,6 +25,10 @@ import type {
   TelegramBotSession,
   TelegramLinkPayload,
 } from "./types";
+
+const writeStderrLine = (message: string): void => {
+  process.stderr.write(`${message}\n`);
+};
 
 export function createTelegramBot(
   config: TelegramBotConfig = resolveTelegramBotConfig(),
@@ -55,7 +59,7 @@ export function createTelegramBot(
     if (config.environment === "test") {
       throw error.error;
     }
-    console.error("Telegram bot update failed", error.error);
+    writeStderrLine(`Telegram bot update failed ${String(error.error)}`);
   });
 
   const storage =
@@ -143,7 +147,7 @@ export async function setupTelegramMenuButton(
       },
     });
   } catch (error) {
-    console.warn("Telegram bot menu button setup failed", error);
+    writeStderrLine(`Telegram bot menu button setup failed ${String(error)}`);
   }
 }
 

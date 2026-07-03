@@ -1,4 +1,5 @@
-import { UiCard, UiSection, UiStatusTag, useI18n } from "@app/frontend/ui";
+import { useI18n } from "@app/frontend-runtime";
+import { UiCard, UiSection, UiStatusTag } from "@app/frontend-ui-web";
 import type { AdminProfilePayload } from "../../entities/admin-session";
 import { join } from "../../shared";
 

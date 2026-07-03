@@ -6,10 +6,10 @@ import {
 } from "@nestjs/common";
 import { run, type RunnerHandle } from "@grammyjs/runner";
 import {
-  TELEGRAM_BOT_INSTANCE,
+  TelegramBotInstanceInjectToken,
   assertPollingRuntimeAllowed,
   type TelegramBotInstance,
-} from "@app/backend/bots/telegram";
+} from "@app/backend-bots-telegram";
 
 @Injectable()
 export class TelegramBotWorkerService
@@ -18,7 +18,7 @@ export class TelegramBotWorkerService
   private handle: RunnerHandle | null = null;
 
   constructor(
-    @Inject(TELEGRAM_BOT_INSTANCE)
+    @Inject(TelegramBotInstanceInjectToken)
     private readonly telegram: TelegramBotInstance,
   ) {}
 

@@ -37,6 +37,14 @@ const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
   .map((port) => url(port))
   .join(",");
 
+const writeStdoutLine = (message: string): void => {
+  process.stdout.write(`${message}\n`);
+};
+
+const writeStderrLine = (message: string): void => {
+  process.stderr.write(`${message}\n`);
+};
+
 export const composeEnv = {
   ...process.env,
   COMPOSE_PROJECT_NAME:
@@ -96,7 +104,7 @@ export async function upStack(): Promise<void> {
   try {
     await run("docker", [...composeArgs, "up", "--no-build", "-d"]);
   } catch (error) {
-    console.warn(
+    writeStderrLine(
       `docker compose up reported a transient startup failure; retrying once: ${
         error instanceof Error ? error.message : String(error)
       }`,
@@ -107,7 +115,7 @@ export async function upStack(): Promise<void> {
 }
 
 export async function buildStackImages(): Promise<void> {
-  console.log(
+  writeStdoutLine(
     `fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
   );
   for (const service of stackServices) {
@@ -127,7 +135,7 @@ export async function waitForText(
       const response = await fetch(url);
       const text = await response.text();
       if (text.includes(contains)) {
-        console.log(`${label}: ok (${response.status})`);
+        writeStdoutLine(`${label}: ok (${response.status})`);
         return;
       }
       lastError = `${response.status} missing expected text`;

@@ -366,12 +366,12 @@ describe("User app shell", () => {
     const rejectAuthJson = vi
       .fn<() => Promise<unknown>>()
       .mockRejectedValue("auth offline");
-    setFetch({
-      ok: true,
+    const rejectAuthResponse = new Response(null, {
+      headers: { "Content-Type": "application/json" },
       status: 200,
-      headers: new Headers({ "Content-Type": "application/json" }),
-      json: rejectAuthJson,
-    } as Response);
+    });
+    vi.spyOn(rejectAuthResponse, "json").mockImplementation(rejectAuthJson);
+    setFetch(rejectAuthResponse);
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
 

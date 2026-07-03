@@ -64,7 +64,7 @@ nvm use 26.1.0
 pnpm --version # 11.6.0
 pnpm install --frozen-lockfile
 pnpm run check:fast
-pnpm exec nx run @app/common/bootstrap:test
+pnpm exec nx run @app/backend-common-bootstrap:test
 pnpm exec vitest run apps/frontend/admin/src/app/preference-token.spec.tsx
 pnpm exec vitest run libs/backend/feature/auth/main/lib/src/lib/auth-token-store.spec.ts libs/backend/postgres/main/auth/lib/src/lib/repository/auth-token.repository.spec.ts
 ```

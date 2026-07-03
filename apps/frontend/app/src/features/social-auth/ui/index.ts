@@ -1,2 +1,2 @@
-export { ProviderIdentitiesPanel } from "./provider-identities-panel";
-export { SocialAuthButtons } from "./social-auth-buttons";
+export * from "./provider-identities-panel";
+export * from "./social-auth-buttons";

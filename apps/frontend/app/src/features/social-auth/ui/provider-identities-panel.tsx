@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend/api-client";
+import { useAuthApiClient } from "@app/frontend-api-client";
 import {
   useAuthShellStore,
   type TranslationKey,
   type TranslationParams,
-} from "@app/frontend/ui";
+} from "@app/frontend-runtime";
 import { getErrorReason } from "../../../shared/lib";
 import {
   UiButton,
@@ -22,9 +22,9 @@ import {
 import {
   getProviderTranslationKey,
   normalizeProviderIdentities,
+  SocialAuthProvider,
   socialAuthProviders,
   type ProviderIdentity,
-  type SocialAuthProvider,
 } from "../model";
 
 interface ProviderIdentitiesPanelProps {
@@ -33,13 +33,13 @@ interface ProviderIdentitiesPanelProps {
 }
 
 const unlinkButtonKey: Record<SocialAuthProvider, TranslationKey> = {
-  discord: "auth.social.button.unlinkDiscord",
-  telegram: "auth.social.button.unlinkTelegram",
+  [SocialAuthProvider.Discord]: "auth.social.button.unlinkDiscord",
+  [SocialAuthProvider.Telegram]: "auth.social.button.unlinkTelegram",
 };
 
 const linkButtonKey: Record<SocialAuthProvider, TranslationKey> = {
-  discord: "auth.social.button.linkDiscord",
-  telegram: "auth.social.button.linkTelegram",
+  [SocialAuthProvider.Discord]: "auth.social.button.linkDiscord",
+  [SocialAuthProvider.Telegram]: "auth.social.button.linkTelegram",
 };
 
 const getIdentityLabel = (
@@ -65,22 +65,14 @@ const getUnlinkProviderName = (
 };
 
 const getUnlinkErrorKey = (error: unknown): TranslationKey => {
-  if (
-    error &&
-    typeof error === "object" &&
-    "status" in error &&
-    (error as { status?: unknown }).status === 409
-  ) {
-    return "auth.social.lastMethod.blocked";
-  }
+  if (error && typeof error === "object" && "status" in error) {
+    if (error.status === 409) {
+      return "auth.social.lastMethod.blocked";
+    }
 
-  if (
-    error &&
-    typeof error === "object" &&
-    "status" in error &&
-    (error as { status?: unknown }).status === 403
-  ) {
-    return "auth.social.stepUp.required";
+    if (error.status === 403) {
+      return "auth.social.stepUp.required";
+    }
   }
 
   return "auth.social.unlink.error";

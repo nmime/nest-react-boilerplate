@@ -1,10 +1,10 @@
-export const TELEGRAM_USERNAME_MIN_LENGTH = 5;
-export const TELEGRAM_USERNAME_MAX_LENGTH = 32;
+export const TelegramUsernameMinLength = 5;
+export const TelegramUsernameMaxLength = 32;
 
-const TELEGRAM_USERNAME_PATTERN = new RegExp(
-  `^[A-Za-z][A-Za-z0-9_]{${TELEGRAM_USERNAME_MIN_LENGTH - 1},${TELEGRAM_USERNAME_MAX_LENGTH - 1}}$`,
+const telegramUsernamePattern = new RegExp(
+  `^[A-Za-z][A-Za-z0-9_]{${TelegramUsernameMinLength - 1},${TelegramUsernameMaxLength - 1}}$`,
 );
-const TELEGRAM_USERNAME_SEPARATOR_PATTERN = /[,\s]+/u;
+const telegramUsernameSeparatorPattern = /[,\s]+/u;
 
 function parseTelegramUsernameCandidate(value: string): string | null {
   const normalized = value.trim().replace(/^@/u, "");
@@ -13,7 +13,7 @@ function parseTelegramUsernameCandidate(value: string): string | null {
     return null;
   }
 
-  return TELEGRAM_USERNAME_PATTERN.test(normalized) ? normalized : null;
+  return telegramUsernamePattern.test(normalized) ? normalized : null;
 }
 
 export function normalizeTelegramUsernames(
@@ -24,7 +24,7 @@ export function normalizeTelegramUsernames(
 
   for (const usernameListItem of usernames) {
     const usernameCandidates = usernameListItem
-      .split(TELEGRAM_USERNAME_SEPARATOR_PATTERN)
+      .split(telegramUsernameSeparatorPattern)
       .map(parseTelegramUsernameCandidate)
       .filter((username): username is string => username !== null);
 

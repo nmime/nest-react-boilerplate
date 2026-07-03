@@ -5,7 +5,7 @@ import {
   useI18n,
   type Locale,
   type UiTheme,
-} from "@app/frontend/ui";
+} from "@app/frontend-runtime";
 import { useAuthSessionFlow } from "../../../features/auth";
 import {
   UiAlert,

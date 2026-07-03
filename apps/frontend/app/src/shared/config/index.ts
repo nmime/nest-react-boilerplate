@@ -1,6 +1,1 @@
-export {
-  getAuthApiBaseUrl,
-  getFrontendEnv,
-  getUserAppApiModeLabel,
-  getUserApiBaseUrl,
-} from "./frontend-env";
+export * from "./frontend-env";

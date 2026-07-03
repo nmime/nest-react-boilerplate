@@ -3,10 +3,10 @@
 The frontend stack intentionally separates request state from client/UI shell state:
 
 - **TanStack Query** owns server/request state: backend reads, mutations, loading and error lifecycles, retries, and query invalidation. User profiles, admin principals, lists, authenticated preference saves, and other server-fetched domain data should stay here.
-- **MobX** owns observable client/UI shell state through `@app/frontend-ui` stores under `libs/frontend/ui/lib/src/lib/state/`: `LocaleStore`, `AuthShellStore`, `UiStore`, and the composed `RootStore` exposed by `FrontendStateProvider`. User/admin bearer-token shell state belongs in `AuthShellStore`; server-fetched session/profile data remains in TanStack Query.
+- **MobX** owns observable client/UI shell state through `@app/frontend-runtime` stores under `libs/frontend/runtime/lib/src/state/`: `LocaleStore`, `AuthShellStore`, `UiStore`, and the composed `RootStore` exposed by `FrontendStateProvider`. User/admin bearer-token shell state belongs in `AuthShellStore`; server-fetched session/profile data remains in TanStack Query.
 - **React local state** remains fine for component-private transient details such as current form input, route snapshots, authenticated preference overrides, hover/disclosure flags, or one-off dialog fields.
 
-`LocaleStore` is the bridge between i18n and API requests. It persists the selected locale, drives `FrontendI18nProvider`, updates `document.documentElement.lang`, and keeps `apiFetch` from `@app/frontend-api-support` configured with a locale getter so every request receives the latest `Accept-Language` value at call time. `@app/frontend-ui` re-exports these API helpers only for compatibility; the request implementation lives in API support so generated SDK code does not depend on React UI.
+`LocaleStore` is the bridge between i18n and API requests. It persists the selected locale, drives `FrontendI18nProvider`, updates `document.documentElement.lang`, and app providers pass the active locale into `@app/frontend-api-support` so every request receives the latest `Accept-Language` value at call time. The request implementation lives in API support so generated SDK code does not depend on React UI.
 
 `UiStore` owns the active theme preference. It validates any `boilerplate.theme` value from `localStorage`, defaults to `system`, writes `data-theme-preference` with the saved preference, writes `data-theme` with the resolved `light` or `dark` value, and subscribes to `prefers-color-scheme` changes while the preference is `system`. Storage and DOM access are guarded so SSR, tests, and restricted browser storage keep working.
 
@@ -36,9 +36,9 @@ Keep server ownership clear:
 4. Invalidate or update relevant auth/profile query keys after successful saves.
 5. Keep guest fallback behavior local when no bearer token is available.
 
-All backend calls from frontend app source and shared frontend libraries must use `apiFetch` from `@app/frontend-api-support` (or the compatibility re-export from `@app/frontend-ui`) or generated `@app/api-client` wrappers that use API support. Raw `fetch` is reserved for the API-support implementation, tests, tooling, or e2e harnesses. `libs/frontend/ui/lib/src/lib/api/no-raw-fetch.spec.ts` enforces this across landing/user/admin/shared frontend source and allows raw fetch only in the API-support implementation plus ignored test files.
+All backend calls from frontend app source and shared frontend libraries must use `apiFetch` from `@app/frontend-api-support` or generated `@app/frontend-api-client` wrappers that use API support. Raw `fetch` is reserved for the API-support implementation, tests, tooling, or e2e harnesses. `libs/frontend/api-support/lib/src/no-raw-fetch.spec.ts` enforces this across landing/user/admin/site/shared frontend source and allows raw fetch only in the API-support implementation plus ignored test files.
 
-User-facing landing/user/admin copy, including aria labels, placeholders, fallback error text, card/stat labels, theme labels, and shared UI defaults, must be represented by typed translation keys instead of inline literals. `libs/frontend/ui/lib/src/lib/i18n/no-hardcoded-copy.spec.ts` statically scans React app/shared UI source for direct JSX text and user-facing string props/properties.
+User-facing landing/user/admin/site copy, including aria labels, placeholders, fallback error text, card/stat labels, theme labels, and shared UI defaults, must be represented by typed translation keys instead of inline literals. `libs/frontend/ui-web/lib/src/no-hardcoded-copy.spec.ts` statically scans React app/shared UI source for direct JSX text and user-facing string props/properties.
 
 ## State/request topology
 
@@ -48,15 +48,14 @@ flowchart TD
   StateProvider[FrontendStateProvider<br/>MobX RootStore]
   QueryProvider[FrontendQueryProvider<br/>TanStack Query]
   I18nProvider[FrontendI18nProvider]
-  ApiClient[@app/api-client wrappers]
+  ApiClient[@app/frontend-api-client wrappers]
   ApiSupport[@app/frontend-api-support apiFetch]
   Backend[Backend APIs]
   App --> StateProvider --> QueryProvider --> I18nProvider
   App --> ApiClient
   QueryProvider --> ApiClient
   ApiClient --> ApiSupport --> Backend
-  StateProvider --> ApiSupport
-  I18nProvider --> ApiSupport
+  App --> ApiSupport
 ```
 
 TanStack Query remains the request-state owner; MobX stores own client/UI shell state; generated API-client mutations synchronize authenticated preferences back to the backend.

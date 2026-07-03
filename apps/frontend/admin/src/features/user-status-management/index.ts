@@ -1,1 +1,1 @@
-export { updateUserStatus } from "./api/update-user-status";
+export * from "./api/update-user-status";

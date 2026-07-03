@@ -62,7 +62,7 @@ function nextId(): number {
   return updateSequence;
 }
 
-function messageUpdate(text: string, language_code = "en") {
+function messageUpdate(text: string, languageCode = "en") {
   return {
     update_id: nextId(),
     message: {
@@ -74,7 +74,7 @@ function messageUpdate(text: string, language_code = "en") {
         is_bot: false,
         first_name: "Ada",
         username: "ada",
-        language_code,
+        language_code: languageCode,
       },
       text,
       entities: text.startsWith("/")
@@ -361,7 +361,9 @@ describe("createTelegramBot", () => {
   });
 
   it("does not fail startup when persistent chat menu button setup is rejected", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const stderrWrite = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
     const api = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() =>
@@ -380,11 +382,10 @@ describe("createTelegramBot", () => {
     ).not.toThrow();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(warn).toHaveBeenCalledWith(
-      "Telegram bot menu button setup failed",
-      expect.any(Error),
+    expect(stderrWrite).toHaveBeenCalledWith(
+      "Telegram bot menu button setup failed Error: Telegram API unavailable\n",
     );
-    warn.mockRestore();
+    stderrWrite.mockRestore();
   });
 
   it("consumes a valid start payload and reports expired payloads", async () => {

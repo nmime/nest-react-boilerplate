@@ -1,12 +1,12 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { okAsync, ResultAsync } from "neverthrow";
-import { DEFAULT_AUTH_TENANT_ID } from "@app/backend/feature/auth/shared";
+import { DefaultAuthTenantId } from "@app/backend-feature-auth-shared";
 import {
   AuthTokenRepository,
   type AuthRefreshTokenEntity,
   type AuthUserTokenEntity,
-} from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
 
 export type AuthUserTokenPurpose = "email_verification" | "password_reset";
 
@@ -98,7 +98,7 @@ export interface AuthTokenStore {
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError>;
 }
 
-export const AUTH_TOKEN_STORE = Symbol("AUTH_TOKEN_STORE");
+export const AuthTokenStoreInjectToken = Symbol("AuthTokenStoreInjectToken");
 
 const DefaultRefreshTokenTtlSeconds = 30 * 24 * 60 * 60;
 const DefaultEmailVerificationTtlSeconds = 24 * 60 * 60;
@@ -128,7 +128,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
 
   rotateRefreshToken(
     token: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError> {
     const nextToken = createOpaqueToken();
     const nextTokenHash = hashOpaqueToken(nextToken);
@@ -163,7 +163,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
 
   revokeRefreshToken(
     token: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<boolean, AuthTokenStoreError> {
     return this.repository
       .revokeRefreshToken(hashOpaqueToken(token), tenantId)
@@ -172,7 +172,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
 
   findRefreshToken(
     token: string,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .findUsableRefreshToken(hashOpaqueToken(token), tenantId)
@@ -200,7 +200,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
   consumeUserActionToken(
     token: string,
     purpose: AuthUserTokenPurpose,
-    tenantId: string = DEFAULT_AUTH_TENANT_ID,
+    tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .consumeUserToken(hashOpaqueToken(token), purpose, tenantId)
@@ -361,7 +361,7 @@ function createIssuedRefreshToken(
   const tokenHash = hashOpaqueToken(token);
   return {
     id: randomUUID(),
-    tenantId: input.tenantId || DEFAULT_AUTH_TENANT_ID,
+    tenantId: input.tenantId || DefaultAuthTenantId,
     userId: input.userId,
     token,
     tokenHash,
@@ -379,7 +379,7 @@ function createIssuedUserActionToken(
   const tokenHash = hashOpaqueToken(token);
   return {
     id: randomUUID(),
-    tenantId: input.tenantId || DEFAULT_AUTH_TENANT_ID,
+    tenantId: input.tenantId || DefaultAuthTenantId,
     userId: input.userId,
     purpose: input.purpose,
     token,

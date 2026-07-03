@@ -3,7 +3,7 @@ import { EntitySchema } from "@mikro-orm/core";
 import {
   DefaultFeatureFlagTenantId,
   type FeatureFlagValue,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 
 export interface FeatureFlagEntityInput {
   tenantId?: string;

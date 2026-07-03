@@ -1,45 +1,64 @@
-export const authProviders = ["password", "telegram", "discord"] as const;
-export type AuthProvider = (typeof authProviders)[number];
+import { createIsEnum } from "../util/enum.util";
 
-export const authProviderChannels = [
-  "password",
-  "telegram_web_login",
-  "telegram_tma",
-  "telegram_bot",
-  "discord_oauth",
-  "discord_bot",
+export enum AuthProvider {
+  Password = "password",
+  Telegram = "telegram",
+  Discord = "discord",
+}
+
+export const authProviders = Object.values(AuthProvider);
+export const isAuthProvider = createIsEnum(AuthProvider);
+
+export enum AuthProviderChannel {
+  Password = "password",
+  TelegramWebLogin = "telegram_web_login",
+  TelegramTma = "telegram_tma",
+  TelegramBot = "telegram_bot",
+  DiscordOauth = "discord_oauth",
+  DiscordBot = "discord_bot",
+}
+
+export const authProviderChannels = Object.values(AuthProviderChannel);
+export const isAuthProviderChannel = createIsEnum(AuthProviderChannel);
+
+export const externalAuthProviders = [
+  AuthProvider.Telegram,
+  AuthProvider.Discord,
 ] as const;
-export type AuthProviderChannel = (typeof authProviderChannels)[number];
-
-export const externalAuthProviders = ["telegram", "discord"] as const;
 export type ExternalAuthProvider = (typeof externalAuthProviders)[number];
 
 export const externalAuthProviderChannels = [
-  "telegram_web_login",
-  "telegram_tma",
-  "telegram_bot",
-  "discord_oauth",
-  "discord_bot",
+  AuthProviderChannel.TelegramWebLogin,
+  AuthProviderChannel.TelegramTma,
+  AuthProviderChannel.TelegramBot,
+  AuthProviderChannel.DiscordOauth,
+  AuthProviderChannel.DiscordBot,
 ] as const;
 export type ExternalAuthProviderChannel =
   (typeof externalAuthProviderChannels)[number];
 
-export type ExternalAuthIntent = "login" | "link";
+export enum ExternalAuthIntent {
+  Login = "login",
+  Link = "link",
+}
 
-export const externalAuthErrorCodes = [
-  "provider_disabled",
-  "provider_not_configured",
-  "invalid_signature",
-  "invalid_state",
-  "account_conflict",
-  "needs_link",
-  "link_token_expired",
-  "link_token_consumed",
-  "step_up_required",
-  "last_method_unlink_forbidden",
-  "return_url_not_allowed",
-] as const;
-export type ExternalAuthErrorCode = (typeof externalAuthErrorCodes)[number];
+export const externalAuthIntents = Object.values(ExternalAuthIntent);
+
+export enum ExternalAuthErrorCode {
+  ProviderDisabled = "provider_disabled",
+  ProviderNotConfigured = "provider_not_configured",
+  InvalidSignature = "invalid_signature",
+  InvalidState = "invalid_state",
+  AccountConflict = "account_conflict",
+  NeedsLink = "needs_link",
+  LinkTokenExpired = "link_token_expired",
+  LinkTokenConsumed = "link_token_consumed",
+  StepUpRequired = "step_up_required",
+  LastMethodUnlinkForbidden = "last_method_unlink_forbidden",
+  ReturnUrlNotAllowed = "return_url_not_allowed",
+}
+
+export const externalAuthErrorCodes = Object.values(ExternalAuthErrorCode);
 
 export interface AuthMethodClaims {
   amr?: string[];

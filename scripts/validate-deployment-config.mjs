@@ -368,8 +368,8 @@ for (const {
   );
   has(
     appModule,
-    'from "@app/backend/common/health"',
-    `${app} imports shared health wiring from @app/backend/common/health`,
+    'from "@app/backend-common-health"',
+    `${app} imports shared health wiring from @app/backend-common-health`,
   );
   has(
     appModule,

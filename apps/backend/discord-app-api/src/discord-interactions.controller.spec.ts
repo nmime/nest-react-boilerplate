@@ -5,7 +5,7 @@ import {
   DiscordBotConfig,
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
-} from "@app/backend/bots/discord";
+} from "@app/backend-bots-discord";
 import { DiscordInteractionsController } from "./discord-interactions.controller";
 
 const snapshot = {
@@ -38,12 +38,22 @@ async function controller(
   };
 }
 
-const pingBody = {
-  type: InteractionType.Ping,
-  id: "1",
+const toControllerRequest = (
+  request: Record<string, unknown>,
+): Parameters<DiscordInteractionsController["interactions"]>[0] =>
+  request as Parameters<DiscordInteractionsController["interactions"]>[0];
+
+const toInteractionBody = (
+  body: Record<string, unknown>,
+): Parameters<DiscordInteractionsController["interactions"]>[3] =>
+  body as Parameters<DiscordInteractionsController["interactions"]>[3];
+
+const pingBody = toInteractionBody({
   application_id: "2",
+  id: "1",
+  type: InteractionType.Ping,
   version: 1,
-} as never;
+});
 
 describe("DiscordInteractionsController", () => {
   it("verifies exact raw body before routing the parsed interaction", async () => {
@@ -52,7 +62,7 @@ describe("DiscordInteractionsController", () => {
 
     await expect(
       setup.controller.interactions(
-        { rawBody } as never,
+        toControllerRequest({ rawBody }),
         "sig",
         "ts",
         pingBody,
@@ -75,7 +85,12 @@ describe("DiscordInteractionsController", () => {
     const setup = await controller();
 
     await expect(
-      setup.controller.interactions({} as never, "sig", "ts", pingBody),
+      setup.controller.interactions(
+        toControllerRequest({}),
+        "sig",
+        "ts",
+        pingBody,
+      ),
     ).resolves.toEqual({ type: 1 });
     expect(setup.verify).toHaveBeenCalledWith(
       expect.objectContaining({ rawBody: JSON.stringify(pingBody) }),
@@ -91,7 +106,7 @@ describe("DiscordInteractionsController", () => {
 
     await expect(
       setup.controller.interactions(
-        { rawBody: Buffer.from('{"type":1}') } as never,
+        toControllerRequest({ rawBody: Buffer.from('{"type":1}') }),
         "sig",
         "ts",
         pingBody,

@@ -56,9 +56,14 @@ const resolveRelativeLayer = (
   }
   const stack = importer.split("/").slice(0, -1);
   for (const part of specifier.split("/")) {
-    if (part === ".") continue;
-    if (part === "..") stack.pop();
-    else stack.push(part);
+    if (part === ".") {
+      continue;
+    }
+    if (part === "..") {
+      stack.pop();
+    } else {
+      stack.push(part);
+    }
   }
   return getLayer(stack.join("/"));
 };
@@ -68,16 +73,22 @@ describe("admin strict FSD boundaries", () => {
     const violations: string[] = [];
 
     for (const [path, source] of Object.entries(sourceFiles)) {
-      if (path.endsWith(".spec.ts") || path.endsWith(".spec.tsx")) continue;
+      if (path.endsWith(".spec.ts") || path.endsWith(".spec.tsx")) {
+        continue;
+      }
       const importerLayer = getLayer(path);
-      if (!importerLayer) continue;
+      if (!importerLayer) {
+        continue;
+      }
       const importerRank =
         layerRank.get(importerLayer) ?? Number.POSITIVE_INFINITY;
 
       for (const match of source.matchAll(importPattern)) {
         const specifier = match[1] ?? match[2] ?? "";
         const importedLayer = resolveRelativeLayer(path, specifier);
-        if (!importedLayer) continue;
+        if (!importedLayer) {
+          continue;
+        }
         const importedRank =
           layerRank.get(importedLayer) ?? Number.POSITIVE_INFINITY;
         if (importedRank < importerRank) {

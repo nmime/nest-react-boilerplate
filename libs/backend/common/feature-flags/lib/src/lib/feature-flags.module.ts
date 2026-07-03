@@ -3,7 +3,7 @@ import {
   EnvironmentFeatureFlagProvider,
   FeatureFlagProviderToken,
   type FeatureFlagProvider,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 
 export interface FeatureFlagsModuleOptions {
   provider?: FeatureFlagProvider;

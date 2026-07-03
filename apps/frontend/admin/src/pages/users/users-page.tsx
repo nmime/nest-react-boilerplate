@@ -7,7 +7,8 @@ import {
   adminApi,
   throwOnOpenApiErrorData,
   type ApiClientRequestOptions,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
+import { useI18n } from "@app/frontend-runtime";
 import {
   AdminSearchFilterToolbar,
   UiActionsMenu,
@@ -22,8 +23,7 @@ import {
   UiStatCard,
   UiStatusTag,
   UiTextarea,
-  useI18n,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import type { AdminAccess } from "../../entities/admin-session";
 import {
   UserDetailCard,
@@ -448,11 +448,12 @@ export const UsersPage = ({
             });
             return;
           }
-          if (statusTarget)
+          if (statusTarget) {
             statusMutation.mutate({
               id: statusTarget.id,
               nextStatus: statusTarget.nextStatus,
             });
+          }
           setStatusTarget(undefined);
         }}
       >
@@ -491,7 +492,7 @@ export const UsersPage = ({
             });
             return;
           }
-          if (policyTarget)
+          if (policyTarget) {
             policyMutation.mutate({
               id: policyTarget.id,
               currentStatus: policyTarget.status,
@@ -501,6 +502,7 @@ export const UsersPage = ({
                 ...policyPermissions,
               ] as adminApi.UpdateAdminUserAccessPolicyDto["permissions"],
             });
+          }
           setPolicyTarget(undefined);
           setPolicyStatus(undefined);
         }}

@@ -1,6 +1,10 @@
 import { errAsync, okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_AUTH_TENANT_ID } from "@app/backend/feature/auth/shared";
+import {
+  AuthenticatedTheme,
+  DefaultAuthTenantId,
+  Language,
+} from "@app/backend-feature-auth-shared";
 import {
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
@@ -10,14 +14,14 @@ import {
 
 const record: AuthUserRecord = {
   id: "user-id",
-  tenantId: DEFAULT_AUTH_TENANT_ID,
+  tenantId: DefaultAuthTenantId,
   email: "user@example.com",
   displayName: null,
   passwordHash: "hash",
   roles: ["user"],
   permissions: ["profile:read"],
   locale: null,
-  theme: "system",
+  theme: AuthenticatedTheme.System,
   status: "active",
   lastLoginAt: null,
 };
@@ -32,15 +36,15 @@ describe("auth user stores", () => {
       findById: vi.fn((id: string) =>
         okAsync(id === record.id ? record : null),
       ),
-      setLocale: vi.fn((id: string, locale: "en" | "ru") =>
+      setLocale: vi.fn((id: string, locale: Language) =>
         okAsync(id === record.id ? { ...record, locale } : null),
       ),
       setPreferences: vi.fn(
         (
           id: string,
           preferences: {
-            locale?: "en" | "ru";
-            theme?: "system" | "light" | "dark";
+            locale?: Language;
+            theme?: AuthenticatedTheme;
           },
         ) => okAsync(id === record.id ? { ...record, ...preferences } : null),
       ),
@@ -65,12 +69,17 @@ describe("auth user stores", () => {
     expect((await store.findById(record.id))._unsafeUnwrap()).toEqual(record);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
     expect(
-      (await store.setLocale(record.id, "ru"))._unsafeUnwrap(),
+      (await store.setLocale(record.id, Language.Ru))._unsafeUnwrap(),
     ).toMatchObject({ locale: "ru" });
-    expect((await store.setLocale("missing", "ru"))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await store.setLocale("missing", Language.Ru))._unsafeUnwrap(),
+    ).toBeNull();
     expect(
       (
-        await store.setPreferences(record.id, { locale: "en", theme: "dark" })
+        await store.setPreferences(record.id, {
+          locale: Language.En,
+          theme: AuthenticatedTheme.Dark,
+        })
       )._unsafeUnwrap(),
     ).toMatchObject({ locale: "en", theme: "dark" });
     expect(
@@ -96,12 +105,14 @@ describe("auth user stores", () => {
       error,
     );
     expect((await store.findById(record.id))._unsafeUnwrapErr()).toEqual(error);
-    expect((await store.setLocale(record.id, "ru"))._unsafeUnwrapErr()).toEqual(
-      error,
-    );
+    expect(
+      (await store.setLocale(record.id, Language.Ru))._unsafeUnwrapErr(),
+    ).toEqual(error);
     expect(
       (
-        await store.setPreferences(record.id, { theme: "light" })
+        await store.setPreferences(record.id, {
+          theme: AuthenticatedTheme.Light,
+        })
       )._unsafeUnwrapErr(),
     ).toEqual(error);
     expect((await store.recordLogin(record.id))._unsafeUnwrapErr()).toEqual(
@@ -143,12 +154,16 @@ describe("auth user stores", () => {
     expect((await store.findById(created.id))._unsafeUnwrap()).toEqual(created);
     expect((await store.findById("missing"))._unsafeUnwrap()).toBeNull();
     expect(
-      (await store.setLocale(created.id, "ru"))._unsafeUnwrap(),
+      (await store.setLocale(created.id, Language.Ru))._unsafeUnwrap(),
     ).toMatchObject({ locale: "ru" });
-    expect((await store.setLocale("missing", "ru"))._unsafeUnwrap()).toBeNull();
+    expect(
+      (await store.setLocale("missing", Language.Ru))._unsafeUnwrap(),
+    ).toBeNull();
     expect(
       (
-        await store.setPreferences(created.id, { theme: "dark" })
+        await store.setPreferences(created.id, {
+          theme: AuthenticatedTheme.Dark,
+        })
       )._unsafeUnwrap(),
     ).toMatchObject({ theme: "dark" });
     expect(

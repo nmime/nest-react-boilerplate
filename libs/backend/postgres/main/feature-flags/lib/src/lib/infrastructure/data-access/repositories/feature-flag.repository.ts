@@ -5,7 +5,7 @@ import {
   type FeatureFlagContext,
   type FeatureFlagSnapshot,
   type FeatureFlagValue,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 import { ResultAsync } from "neverthrow";
 import { FeatureFlagEntity } from "../entities";
 

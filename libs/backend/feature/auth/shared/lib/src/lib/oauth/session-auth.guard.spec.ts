@@ -1,30 +1,44 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { UnauthorizedException } from "@nestjs/common";
+import { UnauthorizedException, type ExecutionContext } from "@nestjs/common";
 import { SessionAuthGuard, setSessionPrincipal } from "./session-auth.guard";
 import type {
   AuthenticatedPrincipal,
   AuthenticatedRequest,
 } from "./access-control.types";
-import { DEFAULT_AUTH_TENANT_ID } from "./tenant-context";
+import { DefaultAuthTenantId } from "./tenant-context";
 
 const principal: AuthenticatedPrincipal = {
   subject: "user-1",
-  tenantId: DEFAULT_AUTH_TENANT_ID,
+  tenantId: DefaultAuthTenantId,
   email: "user@example.com",
   roles: ["user"],
   permissions: ["profile:read"],
 };
 
-const createContext = (request: AuthenticatedRequest) =>
-  ({
+const createContext = (request: AuthenticatedRequest): ExecutionContext => {
+  const context: ExecutionContext = {
+    getArgByIndex: () => request,
+    getArgs: () => [request],
     getClass: () => class TestController {},
     getHandler: () =>
       function handler() {
         return undefined;
       },
+    getType: () => "http",
     switchToHttp: () => ({ getRequest: () => request }),
-  }) as never;
+    switchToRpc: () => ({
+      getContext: () => undefined,
+      getData: () => undefined,
+    }),
+    switchToWs: () => ({
+      getClient: () => undefined,
+      getData: () => undefined,
+      getPattern: () => undefined,
+    }),
+  };
+  return context;
+};
 
 describe("SessionAuthGuard", () => {
   it("accepts a persisted session principal", () => {

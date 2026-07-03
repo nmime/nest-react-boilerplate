@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc/apps/frontend/site",
+    "types": ["node", "vite/client"],
+    "module": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
+  "include": [
+    "pages/**/*.ts",
+    "pages/**/*.tsx",
+    "server/**/*.ts",
+    "site.vite.config.mts"
+  ]
+}

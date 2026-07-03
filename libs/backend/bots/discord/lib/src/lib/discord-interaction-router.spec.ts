@@ -24,6 +24,8 @@ const user = {
   discriminator: "0",
   avatar: null,
 };
+type RouterInteraction = Parameters<DiscordInteractionRouter["route"]>[0];
+const testValue = <T>(value: unknown): T => value as T;
 
 function harness(
   account = new DiscordAccountService(undefined, {
@@ -44,7 +46,7 @@ function command(
   subcommand?: string,
   overrides: Record<string, unknown> = {},
 ) {
-  return {
+  return testValue<RouterInteraction>({
     type: InteractionType.ApplicationCommand,
     id: "1",
     application_id: "2",
@@ -61,11 +63,11 @@ function command(
       options: subcommand ? [{ name: subcommand, type: 1 }] : undefined,
     },
     ...overrides,
-  } as never;
+  });
 }
 
 function component(customId: string, overrides: Record<string, unknown> = {}) {
-  return {
+  return testValue<RouterInteraction>({
     type: InteractionType.MessageComponent,
     id: "1",
     application_id: "2",
@@ -77,7 +79,7 @@ function component(customId: string, overrides: Record<string, unknown> = {}) {
     user,
     data: { component_type: ComponentType.Button, custom_id: customId },
     ...overrides,
-  } as never;
+  });
 }
 
 const context = (overrides: Record<string, unknown> = {}) => ({
@@ -140,12 +142,12 @@ describe("DiscordInteractionRouter", () => {
   it("responds to PING with Pong", async () => {
     await expect(
       harness().router.route(
-        {
+        testValue<RouterInteraction>({
           type: InteractionType.Ping,
           id: "1",
           application_id: "2",
           version: 1,
-        } as never,
+        }),
         { customIdSecret: secret },
       ),
     ).resolves.toEqual({ type: InteractionResponseType.Pong });
@@ -299,7 +301,7 @@ describe("DiscordInteractionRouter", () => {
       context(),
     );
     const modal = await setup.router.route(
-      {
+      testValue<RouterInteraction>({
         type: InteractionType.ModalSubmit,
         id: "1",
         application_id: "2",
@@ -308,18 +310,18 @@ describe("DiscordInteractionRouter", () => {
         locale: "ru",
         data: { custom_id: "modal" },
         user,
-      } as never,
+      }),
       context(),
     );
     const unsupported = await setup.router.route(
-      {
+      testValue<RouterInteraction>({
         type: 99,
         id: "1",
         application_id: "2",
         version: 1,
         locale: "ru",
         user,
-      } as never,
+      }),
       context(),
     );
 

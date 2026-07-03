@@ -9,20 +9,20 @@ import type {
   AuthenticatedRequest,
 } from "./access-control.types";
 
-export const PUBLIC_AUTH_METADATA_KEY = "auth:public";
-export const REQUIRED_ROLES_METADATA_KEY = "auth:roles";
-export const REQUIRED_PERMISSIONS_METADATA_KEY = "auth:permissions";
+export const PublicAuthMetadataKey = "auth:public";
+export const RequiredRolesMetadataKey = "auth:roles";
+export const RequiredPermissionsMetadataKey = "auth:permissions";
 
 export const Public = (): CustomDecorator<string> =>
-  SetMetadata(PUBLIC_AUTH_METADATA_KEY, true);
+  SetMetadata(PublicAuthMetadataKey, true);
 
 export const RequireRoles = (...roles: string[]): CustomDecorator<string> =>
-  SetMetadata(REQUIRED_ROLES_METADATA_KEY, roles);
+  SetMetadata(RequiredRolesMetadataKey, roles);
 
 export const RequirePermissions = (
   ...permissions: string[]
 ): CustomDecorator<string> =>
-  SetMetadata(REQUIRED_PERMISSIONS_METADATA_KEY, permissions);
+  SetMetadata(RequiredPermissionsMetadataKey, permissions);
 
 export const CurrentUser = createParamDecorator(
   (

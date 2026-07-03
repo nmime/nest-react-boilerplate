@@ -1,0 +1,34 @@
+{
+  "name": "@app/frontend-ui-web",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/ui-web/lib/src",
+  "projectType": "library",
+  "tags": ["platform:frontend", "type:ui", "scope:shared", "fsd:layer:shared"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/ui-web/lib",
+        "command": "node ../../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json"
+      },
+      "outputs": []
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/ui-web/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/ui-web"]
+    }
+  }
+}

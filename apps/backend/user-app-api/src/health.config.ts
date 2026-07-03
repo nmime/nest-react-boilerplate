@@ -13,15 +13,15 @@ import {
   RuntimeHealthIndicator,
   type HealthIndicator,
   type HealthIndicatorResult,
-} from "@app/backend/common/health";
-import { supportedLocales } from "@app/common/i18n";
-import { NatsHealthIndicator } from "@app/backend/common/nats";
-import { RedisHealthIndicator } from "@app/backend/common/redis";
+} from "@app/backend-common-health";
+import { supportedLocales } from "@app/common-i18n";
+import { NatsHealthIndicator } from "@app/backend-common-nats";
+import { RedisHealthIndicator } from "@app/backend-common-redis";
 import {
   MikroOrmPostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
-} from "@app/backend/postgres/main";
+} from "@app/backend-postgres-main";
 
 const appName = "user-app-api";
 
@@ -151,7 +151,7 @@ function createSessionConfigHealthIndicator(): HealthIndicator {
         status: hasSessionSecret || hasAuthSecret ? "ok" : "degraded",
         required: false,
         details: {
-          cookieNameConfigured: hasValue(process.env.SESSION_COOKIE_NAME),
+          cookieNameConfigured: hasValue(process.env.SessionCookieName),
           secretConfigured: hasSessionSecret || hasAuthSecret,
         },
       };

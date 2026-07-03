@@ -4,9 +4,9 @@ import type {
   AuthenticatedRequest,
 } from "./access-control.types";
 
-export const DEFAULT_AUTH_TENANT_ID = "00000000-0000-0000-0000-000000000000";
-export const TENANT_ID_HEADERS = ["x-tenant-id", "x-nrb-tenant-id"] as const;
-const UUID_PATTERN =
+export const DefaultAuthTenantId = "00000000-0000-0000-0000-000000000000";
+export const TenantIdHeaders = ["x-tenant-id", "x-nrb-tenant-id"] as const;
+const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 
 export function normalizeTenantId(
@@ -17,17 +17,17 @@ export function normalizeTenantId(
   }
 
   const normalized = value.trim().toLowerCase();
-  return UUID_PATTERN.test(normalized) ? normalized : undefined;
+  return uuidPattern.test(normalized) ? normalized : undefined;
 }
 
 export function resolveTenantId(value: string | null | undefined): string {
-  return normalizeTenantId(value) ?? DEFAULT_AUTH_TENANT_ID;
+  return normalizeTenantId(value) ?? DefaultAuthTenantId;
 }
 
 export function readTenantIdHeader(
   request: AuthenticatedRequest,
 ): string | undefined {
-  for (const header of TENANT_ID_HEADERS) {
+  for (const header of TenantIdHeaders) {
     const directHeader =
       request.headers?.[header] ?? request.headers?.[header.toUpperCase()];
     const value = Array.isArray(directHeader) ? directHeader[0] : directHeader;

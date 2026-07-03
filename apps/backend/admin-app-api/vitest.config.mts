@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [nxViteTsPaths()],
   resolve: {
     alias: {
-      "@app/common/feature-flags": new URL(
+      "@app/common-feature-flags": new URL(
         "../../../libs/backend/common/feature-flags/lib/src/index.ts",
         import.meta.url,
       ).pathname,
@@ -17,79 +17,79 @@ export default defineConfig({
         "../../../libs/common/config/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/common/i18n": new URL(
+      "@app/common-i18n": new URL(
         "../../../libs/common/i18n/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/network": new URL(
+      "@app/backend-common-network": new URL(
         "../../../libs/backend/common/network/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/redis": new URL(
+      "@app/backend-common-redis": new URL(
         "../../../libs/backend/common/redis/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/nats": new URL(
+      "@app/backend-common-nats": new URL(
         "../../../libs/backend/common/nats/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/exception": new URL(
+      "@app/backend-common-exception": new URL(
         "../../../libs/backend/common/exception/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/bootstrap": new URL(
+      "@app/backend-common-bootstrap": new URL(
         "../../../libs/backend/common/bootstrap/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/response": new URL(
+      "@app/backend-common-response": new URL(
         "../../../libs/backend/common/response/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/swagger": new URL(
+      "@app/backend-common-swagger": new URL(
         "../../../libs/backend/common/swagger/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/health": new URL(
+      "@app/backend-common-health": new URL(
         "../../../libs/backend/common/health/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/validation": new URL(
+      "@app/backend-common-validation": new URL(
         "../../../libs/backend/common/validation/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/common/shared": new URL(
+      "@app/backend-common-shared": new URL(
         "../../../libs/backend/common/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/postgres/main/feature-flags/migrations": new URL(
+      "@app/backend-postgres-main-feature-flags-migrations": new URL(
         "../../../libs/backend/postgres/main/feature-flags/lib/src/lib/migrations/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/postgres/main/feature-flags": new URL(
+      "@app/backend-postgres-main-feature-flags": new URL(
         "../../../libs/backend/postgres/main/feature-flags/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/postgres/main/auth": new URL(
+      "@app/backend-postgres-main-auth": new URL(
         "../../../libs/backend/postgres/main/auth/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/postgres/main": new URL(
+      "@app/backend-postgres-main": new URL(
         "../../../libs/backend/postgres/main/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/feature/admin/main": new URL(
+      "@app/backend-feature-admin-main": new URL(
         "../../../libs/backend/feature/admin/main/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/feature/admin/shared": new URL(
+      "@app/backend-feature-admin-shared": new URL(
         "../../../libs/backend/feature/admin/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/feature/auth/main": new URL(
+      "@app/backend-feature-auth-main": new URL(
         "../../../libs/backend/feature/auth/main/lib/src/index.ts",
         import.meta.url,
       ).pathname,
-      "@app/backend/feature/auth/shared": new URL(
+      "@app/backend-feature-auth-shared": new URL(
         "../../../libs/backend/feature/auth/shared/lib/src/index.ts",
         import.meta.url,
       ).pathname,

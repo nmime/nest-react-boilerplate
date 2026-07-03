@@ -4,7 +4,7 @@ import {
   type PostHogAnalyticsPluginOptions,
 } from "./providers";
 
-export type { PostHogAnalyticsPluginOptions };
+export * from "./providers/posthog";
 
 export function createPostHogAnalyticsPlugin(
   options: PostHogAnalyticsPluginOptions,

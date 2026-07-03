@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BaseHealthController,
   HealthService,
-} from "@app/backend/common/health";
+} from "@app/backend-common-health";
 import { TelegramWebhookController } from "./telegram-webhook.controller";
 import { TelegramBotApiModule } from "./telegram-bot-api.module";
 

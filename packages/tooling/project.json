@@ -1,0 +1,54 @@
+{
+  "name": "@repo/tooling",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/tooling/src",
+  "projectType": "library",
+  "tags": ["platform:tooling", "type:tooling", "scope:repo"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": ".",
+        "command": "node_modules/.bin/tsc --noEmit -p packages/tooling/tsconfig.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    },
+    "static-check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": ".",
+        "command": "node packages/tooling/bin/repo-tooling.mjs tooling static-check"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    },
+    "check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": ".",
+        "command": "node_modules/.bin/tsc --noEmit -p packages/tooling/tsconfig.json && node packages/tooling/bin/repo-tooling.mjs tooling static-check"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    }
+  }
+}

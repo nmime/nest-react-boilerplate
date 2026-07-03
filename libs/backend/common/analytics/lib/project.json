@@ -1,5 +1,5 @@
 {
-  "name": "@app/backend/common/analytics",
+  "name": "@app/backend-common-analytics",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/analytics/lib/src",
   "projectType": "library",

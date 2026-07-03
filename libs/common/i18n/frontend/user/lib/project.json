@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/i18n-frontend-user",
+  "name": "@app/common-i18n-frontend-user",
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/frontend/user/lib/src",
   "projectType": "library",

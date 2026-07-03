@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
-import { useI18n, type Locale, type UiTheme } from "@app/frontend/ui";
+import { useI18n, type Locale, type UiTheme } from "@app/frontend-runtime";
 import { AuthPage } from "../../pages/auth";
 import { AuthDiscordCallbackPage } from "../../pages/auth-discord-callback";
 import { ProfilePage } from "../../pages/profile";

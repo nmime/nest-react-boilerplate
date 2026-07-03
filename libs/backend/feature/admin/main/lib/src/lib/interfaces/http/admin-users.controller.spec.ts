@@ -1,24 +1,24 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { errAsync, okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/backend/feature/auth/shared";
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
 import {
-  ADMIN_AUDIT_READ_PERMISSION,
-  ADMIN_DASHBOARD_READ_PERMISSION,
-  ADMIN_ROLE,
-  ADMIN_ROLES_READ_PERMISSION,
-  ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-  ADMIN_USERS_READ_PERMISSION,
-  ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-  ADMIN_USERS_WRITE_PERMISSION,
-  USER_PROFILE_READ_PERMISSION,
-} from "@app/backend/feature/admin/shared";
+  AdminAuditReadPermission,
+  AdminDashboardReadPermission,
+  AdminRole,
+  AdminRolesReadPermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersWritePermission,
+  UserProfileReadPermission,
+} from "@app/backend-feature-admin-shared";
 import type {
   AdminAuditLogEntity,
   AdminUserMutationResult,
   AuthUserEntity,
   TransactionalOutboxEventEntity,
-} from "@app/backend/postgres/main/auth";
+} from "@app/backend-postgres-main-auth";
 import { AdminUsersUseCase } from "../../application/admin-users.use-case";
 import { AdminUsersController } from "./admin-users.controller";
 
@@ -28,15 +28,15 @@ const principal: AuthenticatedPrincipal = {
   subject: "actor-id",
   tenantId,
   email: "admin@example.com",
-  roles: [ADMIN_ROLE],
+  roles: [AdminRole],
   permissions: [
-    ADMIN_USERS_READ_PERMISSION,
-    ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-    ADMIN_USERS_WRITE_PERMISSION,
-    ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-    ADMIN_ROLES_READ_PERMISSION,
-    ADMIN_AUDIT_READ_PERMISSION,
-    ADMIN_DASHBOARD_READ_PERMISSION,
+    AdminUsersReadPermission,
+    AdminUsersStatusUpdatePermission,
+    AdminUsersWritePermission,
+    AdminUsersAccessPolicyUpdatePermission,
+    AdminRolesReadPermission,
+    AdminAuditReadPermission,
+    AdminDashboardReadPermission,
   ],
 };
 
@@ -93,7 +93,7 @@ const createUser = (partial: Partial<TestAuthUser> = {}): TestAuthUser => ({
   passwordHash: "redacted-hash",
   status: "active",
   roles: ["user"],
-  permissions: [USER_PROFILE_READ_PERMISSION],
+  permissions: [UserProfileReadPermission],
   locale: "en",
   theme: "system",
   lastLoginAt: new Date(0),
@@ -199,7 +199,7 @@ describe("AdminUsersController", () => {
         search: " user ",
         status: "active",
         role: "user",
-        permission: USER_PROFILE_READ_PERMISSION,
+        permission: UserProfileReadPermission,
       }),
     ).resolves.toEqual({
       data: {
@@ -211,7 +211,7 @@ describe("AdminUsersController", () => {
             displayName: "User",
             status: "active",
             roles: ["user"],
-            permissions: [USER_PROFILE_READ_PERMISSION],
+            permissions: [UserProfileReadPermission],
             locale: "en",
             theme: "system",
             createdAt: "2026-01-01T00:00:00.000Z",
@@ -230,7 +230,7 @@ describe("AdminUsersController", () => {
       search: "user",
       status: "active",
       role: "user",
-      permission: USER_PROFILE_READ_PERMISSION,
+      permission: UserProfileReadPermission,
     });
   });
 
@@ -272,14 +272,11 @@ describe("AdminUsersController", () => {
           action: "admin.user.access_policy.update",
           before: {
             roles: ["user"],
-            permissions: [USER_PROFILE_READ_PERMISSION],
+            permissions: [UserProfileReadPermission],
           },
           after: {
-            roles: ["user", ADMIN_ROLE],
-            permissions: [
-              USER_PROFILE_READ_PERMISSION,
-              ADMIN_USERS_READ_PERMISSION,
-            ],
+            roles: ["user", AdminRole],
+            permissions: [UserProfileReadPermission, AdminUsersReadPermission],
           },
         }),
       ),
@@ -290,24 +287,18 @@ describe("AdminUsersController", () => {
         principal,
         "user-id",
         {
-          roles: ["user", ADMIN_ROLE],
-          permissions: [
-            USER_PROFILE_READ_PERMISSION,
-            ADMIN_USERS_READ_PERMISSION,
-          ],
+          roles: ["user", AdminRole],
+          permissions: [UserProfileReadPermission, AdminUsersReadPermission],
         },
         { headers: {} },
       ),
-    ).resolves.toMatchObject({ data: { roles: ["user", ADMIN_ROLE] } });
+    ).resolves.toMatchObject({ data: { roles: ["user", AdminRole] } });
     expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "admin.user.access_policy.update",
         policy: {
-          roles: ["user", ADMIN_ROLE],
-          permissions: [
-            USER_PROFILE_READ_PERMISSION,
-            ADMIN_USERS_READ_PERMISSION,
-          ],
+          roles: ["user", AdminRole],
+          permissions: [UserProfileReadPermission, AdminUsersReadPermission],
         },
       }),
     );
@@ -371,12 +362,12 @@ describe("AdminUsersController", () => {
       controller.updateUserAccessPolicy(
         principal,
         "other-admin",
-        { roles: ["user"], permissions: [USER_PROFILE_READ_PERMISSION] },
+        { roles: ["user"], permissions: [UserProfileReadPermission] },
         { headers: {} },
       ),
     ).resolves.toMatchObject({ data: { status: "disabled" } });
     expect(users.countUsers).not.toHaveBeenCalledWith(
-      expect.objectContaining({ role: ADMIN_ROLE, status: "active" }),
+      expect.objectContaining({ role: AdminRole, status: "active" }),
     );
   });
 
@@ -384,9 +375,9 @@ describe("AdminUsersController", () => {
     const { controller, users } = createController();
 
     const roles = controller.roles();
-    expect(roles.data.assignableRoles).toEqual(["user", ADMIN_ROLE]);
+    expect(roles.data.assignableRoles).toEqual(["user", AdminRole]);
     expect(roles.data.permissions).toContainEqual(
-      expect.objectContaining({ permission: ADMIN_USERS_READ_PERMISSION }),
+      expect.objectContaining({ permission: AdminUsersReadPermission }),
     );
     await expect(controller.listAudit(principal, {})).resolves.toMatchObject({
       data: { total: 1, items: [expect.objectContaining({ id: "audit-id" })] },

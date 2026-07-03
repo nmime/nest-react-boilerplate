@@ -9,7 +9,7 @@ import {
 } from "./random-intl-text.util";
 import { BotLangResolver } from "./resolver";
 
-describe("@app/backend/common/intl", () => {
+describe("@app/backend-common-intl", () => {
   it("owns locale context resolution without translation catalogs", () => {
     expect(IntlContext.resolve(" ru ")).toEqual({
       locale: "ru",
@@ -49,7 +49,7 @@ describe("@app/backend/common/intl", () => {
       "utf8",
     );
 
-    expect(indexSource).not.toContain("@app/common/i18n");
+    expect(indexSource).not.toContain("@app/common-i18n");
     expect(indexSource).not.toContain("decorator/" + "i18n");
     expect(textHelperSource).not.toContain("random" + "I18nText");
     expect(textHelperSource).not.toContain("translate(");

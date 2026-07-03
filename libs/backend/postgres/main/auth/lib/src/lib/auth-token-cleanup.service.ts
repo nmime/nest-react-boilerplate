@@ -15,6 +15,9 @@ export interface AuthTokenCleanupConfig {
 const DefaultCleanupIntervalMs = 60 * 60 * 1000;
 const MinimumCleanupIntervalMs = 60 * 1000;
 type CleanupInterval = ReturnType<typeof setInterval>;
+interface UnrefableTimer {
+  unref(): void;
+}
 
 @Injectable()
 export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
@@ -38,7 +41,7 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
     this.interval = setInterval(() => {
       void this.runCleanup();
     }, this.config.intervalMs);
-    this.interval.unref?.();
+    unrefTimer(this.interval);
 
     this.logger.log(
       `Auth token cleanup job scheduled every ${this.config.intervalMs}ms.`,
@@ -78,6 +81,23 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
       this.cleanupInProgress = false;
     }
   }
+}
+
+function unrefTimer(timer: CleanupInterval): void {
+  if (isUnrefableTimer(timer)) {
+    timer.unref();
+  }
+}
+
+function isUnrefableTimer(
+  timer: CleanupInterval,
+): timer is CleanupInterval & UnrefableTimer {
+  return (
+    typeof timer === "object" &&
+    timer !== null &&
+    "unref" in timer &&
+    typeof timer.unref === "function"
+  );
 }
 
 export function resolveAuthTokenCleanupConfig(

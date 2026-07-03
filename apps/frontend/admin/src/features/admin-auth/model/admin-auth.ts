@@ -1,5 +1,5 @@
-import type { authApi } from "@app/frontend/api-client";
-import { type FrontendEnv } from "@app/frontend/api-support";
+import type { authApi } from "@app/frontend-api-client";
+import { type FrontendEnv } from "@app/frontend-api-support";
 import {
   getAdminApiBaseUrl,
   getAuthApiBaseUrl,
@@ -7,7 +7,7 @@ import {
 
 export type AuthMePayload = authApi.AuthControllerMeData;
 
-const sensitiveUrlTokenParams = ["admin_token", "access_token", "token"];
+export const sensitiveUrlTokenParams = ["admin_token", "access_token", "token"];
 
 export const stripSensitiveBrowserTokenParams = (): void => {
   if (typeof window === "undefined") {
@@ -41,8 +41,6 @@ export const getBrowserPath = (): string => {
   stripSensitiveBrowserTokenParams();
   return `${window.location.pathname}${window.location.search}`;
 };
-
-export { sensitiveUrlTokenParams };
 
 export const getFrontendEnv = (): FrontendEnv =>
   import.meta.env as Readonly<Record<string, boolean | string | undefined>>;

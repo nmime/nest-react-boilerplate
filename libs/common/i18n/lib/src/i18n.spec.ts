@@ -76,14 +76,16 @@ function duplicateValues(values: string[]): string[] {
   const duplicates = new Set<string>();
 
   for (const value of values) {
-    if (seen.has(value)) duplicates.add(value);
+    if (seen.has(value)) {
+      duplicates.add(value);
+    }
     seen.add(value);
   }
 
   return [...duplicates].sort((left, right) => left.localeCompare(right));
 }
 
-describe("@app/common/i18n", () => {
+describe("@app/common-i18n", () => {
   it("loads backend/runtime translation catalogs from scoped root locale JSON files", () => {
     const expectedFiles = [...localeCatalogFileNames].sort((left, right) =>
       left.localeCompare(right),
@@ -287,7 +289,7 @@ describe("@app/common/i18n", () => {
   it("keeps i18n focused on catalogs, translation lookup, and locale middleware", () => {
     const source = readFileSync(join(__dirname, "i18n.ts"), "utf8");
 
-    expect(source).not.toContain("@app/common/intl");
+    expect(source).not.toContain("@app/backend-common-intl");
     expect(source).not.toContain("IntlContext");
     expect(source).not.toContain("randomLocalizedText");
   });

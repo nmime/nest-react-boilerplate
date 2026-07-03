@@ -4,7 +4,7 @@ import {
   translate,
   type Locale,
   type TranslationKey,
-} from "@app/common/i18n";
+} from "@app/common-i18n";
 import type { TelegramBotContext, TelegramLinkedUserProfile } from "./types";
 
 export function resolveTelegramLocale(input: {

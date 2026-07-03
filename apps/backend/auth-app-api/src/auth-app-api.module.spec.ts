@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   BaseHealthController,
   HealthService,
-} from "@app/backend/common/health";
-import { AuthController } from "@app/backend/feature/auth/main";
+} from "@app/backend-common-health";
+import { AuthController } from "@app/backend-feature-auth-main";
 import { AuthAppApiModule } from "./auth-app-api.module";
 
-// The app imports the shared health controller from @app/backend/common/health instead
+// The app imports the shared health controller from @app/backend-common-health instead
 // of declaring an app-local duplicate controller.
 describe("AuthAppApiModule", () => {
   it("wires the app, feature controllers, and shared health service", async () => {

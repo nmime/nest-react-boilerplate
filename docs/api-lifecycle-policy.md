@@ -30,4 +30,4 @@ The boilerplate treats APIs as product contracts. This policy defines how routes
 
 ## Contract artifact policy
 
-Generated OpenAPI JSON, shared TypeScript contract types, generated frontend clients, and consumer Pact artifacts are versioned with the source API change in the same PR. Problem responses must follow RFC 9457 and the shared singular `@app/common/exception`/Swagger helpers so frontend clients can handle errors consistently.
+Generated OpenAPI JSON, shared TypeScript contract types, generated frontend clients, and consumer Pact artifacts are versioned with the source API change in the same PR. Problem responses must follow RFC 9457 and the shared singular `@app/backend-common-exception`/Swagger helpers so frontend clients can handle errors consistently.

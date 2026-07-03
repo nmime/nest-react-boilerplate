@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/i18n-runtime",
+  "name": "@app/common-i18n-runtime",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/runtime/lib/src",
   "projectType": "library",

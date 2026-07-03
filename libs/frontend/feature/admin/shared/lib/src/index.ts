@@ -1,19 +1,19 @@
-export const ADMIN_ROLE = "admin";
-export const USER_ROLE = "user";
-export const USER_PROFILE_READ_PERMISSION = "profile:read";
+export const AdminRole = "admin";
+export const UserRole = "user";
+export const UserProfileReadPermission = "profile:read";
 
-export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
-export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
-export const ADMIN_USERS_READ_PERMISSION = "admin:users:read";
-export const ADMIN_USERS_WRITE_PERMISSION = "admin:users:write";
-export const ADMIN_USERS_STATUS_UPDATE_PERMISSION = "admin:users:status:update";
-export const ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION =
+export const AdminProfileReadPermission = "admin:profile:read";
+export const AdminDashboardReadPermission = "admin:dashboard:read";
+export const AdminUsersReadPermission = "admin:users:read";
+export const AdminUsersWritePermission = "admin:users:write";
+export const AdminUsersStatusUpdatePermission = "admin:users:status:update";
+export const AdminUsersAccessPolicyUpdatePermission =
   "admin:users:access-policy:update";
-export const ADMIN_ROLES_READ_PERMISSION = "admin:roles:read";
-export const ADMIN_AUDIT_READ_PERMISSION = "admin:audit:read";
-export const ADMIN_SETTINGS_READ_PERMISSION = "admin:settings:read";
-export const ADMIN_SETTINGS_UPDATE_PERMISSION = "admin:settings:update";
-export const ADMIN_MANAGE_ALL_PERMISSION = "admin:manage:all";
+export const AdminRolesReadPermission = "admin:roles:read";
+export const AdminAuditReadPermission = "admin:audit:read";
+export const AdminSettingsReadPermission = "admin:settings:read";
+export const AdminSettingsUpdatePermission = "admin:settings:update";
+export const AdminManageAllPermission = "admin:manage:all";
 
 export interface AdminPrincipalClaims {
   subject?: string;
@@ -56,34 +56,34 @@ const hasPermission = (
   permission: string,
 ): boolean =>
   permissions.includes(permission) ||
-  permissions.includes(ADMIN_MANAGE_ALL_PERMISSION);
+  permissions.includes(AdminManageAllPermission);
 
 export const createAdminAccessPolicy = (
   principal?: AdminPrincipalClaims,
 ): AdminAccessPolicy => {
   const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
-  const isAdmin = Boolean(principal?.subject && roles.includes(ADMIN_ROLE));
+  const isAdmin = Boolean(principal?.subject && roles.includes(AdminRole));
 
   const canReadProfile =
-    isAdmin && hasPermission(permissions, ADMIN_PROFILE_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminProfileReadPermission);
   const canReadDashboard =
-    isAdmin && hasPermission(permissions, ADMIN_DASHBOARD_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminDashboardReadPermission);
   const canReadUsers =
-    isAdmin && hasPermission(permissions, ADMIN_USERS_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminUsersReadPermission);
   const canUpdateUserStatus =
-    isAdmin && hasPermission(permissions, ADMIN_USERS_STATUS_UPDATE_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminUsersStatusUpdatePermission);
   const canUpdateUserAccessPolicy =
     isAdmin &&
-    hasPermission(permissions, ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION);
+    hasPermission(permissions, AdminUsersAccessPolicyUpdatePermission);
   const canReadRoles =
-    isAdmin && hasPermission(permissions, ADMIN_ROLES_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminRolesReadPermission);
   const canReadAudit =
-    isAdmin && hasPermission(permissions, ADMIN_AUDIT_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminAuditReadPermission);
   const canReadSettings =
-    isAdmin && hasPermission(permissions, ADMIN_SETTINGS_READ_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminSettingsReadPermission);
   const canUpdateSettings =
-    isAdmin && hasPermission(permissions, ADMIN_SETTINGS_UPDATE_PERMISSION);
+    isAdmin && hasPermission(permissions, AdminSettingsUpdatePermission);
 
   return {
     isAuthenticated: isAdmin,

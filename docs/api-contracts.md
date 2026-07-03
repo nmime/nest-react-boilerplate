@@ -11,7 +11,7 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 - Nest controllers remain the source of truth for routes, request/response shapes, auth metadata, and documented problem responses.
 - OpenAPI JSON is committed under `apps/backend/*-app-api/contracts/openapi/` for review, audits, and external client generation.
 - Shared generated TypeScript contract types live in `libs/common/api-contracts` for DTO/path review.
-- Frontend service wrappers in `@app/api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, bearer headers, base URLs, and locale handling.
+- Frontend service wrappers in `@app/frontend-api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, bearer headers, base URLs, and locale handling.
 
 ## Workflow
 
@@ -24,7 +24,7 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 
 - Keep runtime behavior in controllers unchanged; Swagger DTO classes describe existing responses only.
 - Use `@ApiBearerAuth`, `@ApiExceptions`, and `@ApiOkDataResponse` on endpoints consumed by frontends.
-- Import generated service functions/types from `@app/api-client` in frontend apps instead of re-declaring DTO/envelope types or importing `@app/api-contracts` directly.
+- Import generated service functions/types from `@app/frontend-api-client` in frontend apps instead of re-declaring DTO/envelope types or importing `@app/common-api-contracts` directly.
 - Do not put endpoint path strings in app code; path strings belong in `libs/frontend/api-client` wrappers and generated artifacts.
 - Treat generated files as read-only; fix source decorators/DTOs, OpenAPI metadata, or generator scripts and regenerate.
 - Be careful with optional frontend handling: generated contracts describe successful backend responses, while UI code may still handle missing data during failed/partial requests.
@@ -43,12 +43,12 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 | Tooling-owned manifest/layout | `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, `packages/tooling/src/commands/api/contracts-manifest.ts` | Authoritative local contract inventory; no root `config/` manifest. |
 | Absent by design              | No repository-root contract artifact directory; no `openapi` or `consumers` artifact subtree under `libs/common/api-contracts`.                                                                                      | Keep artifacts with apps and generated source with libraries.       |
 
-| Contract owner         | Artifacts                                                       | Consumers                                                 | Local check                       |
-| ---------------------- | --------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
-| Auth REST API          | auth OpenAPI, `auth-app-api.ts`, `auth.ts`                      | `@app/api-client` auth namespace and `frontend-auth` Pact | `pnpm run api:contracts:check`    |
-| User REST API          | user OpenAPI, `user-app-api.ts`, `user.ts`                      | `@app/api-client` user namespace                          | `pnpm run api:contracts:check`    |
-| Admin REST API         | admin OpenAPI, `admin-app-api.ts`, `admin.ts`                   | `@app/api-client` admin namespace                         | `pnpm run api:contracts:check`    |
-| Frontend auth consumer | `apps/frontend/app/contracts/consumers/frontend-auth.pact.json` | Auth provider verification/review                         | consumer-contract check when used |
+| Contract owner         | Artifacts                                                       | Consumers                                                          | Local check                       |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------- |
+| Auth REST API          | auth OpenAPI, `auth-app-api.ts`, `auth.ts`                      | `@app/frontend-api-client` auth namespace and `frontend-auth` Pact | `pnpm run api:contracts:check`    |
+| User REST API          | user OpenAPI, `user-app-api.ts`, `user.ts`                      | `@app/frontend-api-client` user namespace                          | `pnpm run api:contracts:check`    |
+| Admin REST API         | admin OpenAPI, `admin-app-api.ts`, `admin.ts`                   | `@app/frontend-api-client` admin namespace                         | `pnpm run api:contracts:check`    |
+| Frontend auth consumer | `apps/frontend/app/contracts/consumers/frontend-auth.pact.json` | Auth provider verification/review                                  | consumer-contract check when used |
 
 ## Contract pipeline diagram
 
@@ -60,7 +60,7 @@ flowchart LR
   Manifest[packages/tooling/config/api-contracts.json<br/>schema + layout helpers]
   SharedTypes[Generated shared TS<br/>libs/common/api-contracts/lib/src/generated/**]
   FrontendGenerated[Generated frontend clients<br/>libs/frontend/api-client/lib/src/generated/**]
-  Wrappers[@app/api-client wrappers<br/>authApi / userApi / adminApi]
+  Wrappers[@app/frontend-api-client wrappers<br/>authApi / userApi / adminApi]
   Frontends[frontend apps]
   Pact[consumer Pact<br/>apps/frontend/app/contracts/consumers/frontend-auth.pact.json]
   Checks[Freshness checks]

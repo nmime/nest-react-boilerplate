@@ -1,4 +1,1 @@
-export {
-  updateUserPreferences,
-  authPreferencesQueryKey,
-} from "./preferences-api";
+export * from "./preferences-api";

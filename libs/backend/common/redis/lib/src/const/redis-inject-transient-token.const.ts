@@ -1,1 +1,1 @@
-export const RedisTransientInjectToken = Symbol("RedisTransientClient");
+export const RedisTransientInjectToken = Symbol("RedisTransientInjectToken");

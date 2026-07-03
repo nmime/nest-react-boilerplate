@@ -4,7 +4,7 @@ import {
   GetCurrentUserProfileUseCase,
   toUserProfilePayload,
   toUserProfileView,
-  USER_PROFILE_READ_PERMISSION,
+  UserProfileReadPermission,
 } from "./index";
 
 describe("user shared", () => {
@@ -16,10 +16,7 @@ describe("user shared", () => {
         displayName: "User",
         locale: "ru",
         roles: [" user ", "user", ""],
-        permissions: [
-          USER_PROFILE_READ_PERMISSION,
-          USER_PROFILE_READ_PERMISSION,
-        ],
+        permissions: [UserProfileReadPermission, UserProfileReadPermission],
       }),
     ).toEqual({
       id: "user-id",
@@ -27,7 +24,7 @@ describe("user shared", () => {
       displayName: "User",
       locale: "ru",
       roles: ["user"],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      permissions: [UserProfileReadPermission],
     });
   });
 
@@ -38,7 +35,7 @@ describe("user shared", () => {
       displayName: "User",
       locale: "ru",
       roles: ["user"],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      permissions: [UserProfileReadPermission],
     };
 
     expect(new GetCurrentUserProfileUseCase().execute(principal)).toEqual({
@@ -49,7 +46,7 @@ describe("user shared", () => {
         displayName: "User",
         locale: "ru",
         roles: ["user"],
-        permissions: [USER_PROFILE_READ_PERMISSION],
+        permissions: [UserProfileReadPermission],
       },
     });
   });
@@ -62,7 +59,7 @@ describe("user shared", () => {
         displayName: "User",
         locale: "ru",
         roles: ["user", "user"],
-        permissions: [USER_PROFILE_READ_PERMISSION],
+        permissions: [UserProfileReadPermission],
       }),
     ).toEqual({
       id: "user-id",
@@ -70,7 +67,7 @@ describe("user shared", () => {
       displayName: "User",
       locale: "ru",
       roles: ["user"],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      permissions: [UserProfileReadPermission],
     });
   });
 
@@ -79,7 +76,7 @@ describe("user shared", () => {
       subject: "user-id",
       email: "user@example.com",
       roles: ["user"],
-      permissions: [USER_PROFILE_READ_PERMISSION],
+      permissions: [UserProfileReadPermission],
     };
 
     expect(toUserProfilePayload(principal)).toEqual({
@@ -88,7 +85,7 @@ describe("user shared", () => {
         id: "user-id",
         email: "user@example.com",
         roles: ["user"],
-        permissions: [USER_PROFILE_READ_PERMISSION],
+        permissions: [UserProfileReadPermission],
       },
     });
   });

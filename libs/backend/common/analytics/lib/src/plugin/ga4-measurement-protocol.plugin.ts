@@ -4,7 +4,7 @@ import {
   type Ga4MeasurementProtocolPluginOptions,
 } from "./providers";
 
-export type { Ga4MeasurementProtocolPluginOptions };
+export * from "./providers/ga4";
 
 export function createGa4MeasurementProtocolPlugin(
   options: Ga4MeasurementProtocolPluginOptions,

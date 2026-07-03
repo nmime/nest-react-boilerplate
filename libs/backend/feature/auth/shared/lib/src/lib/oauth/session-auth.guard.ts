@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PUBLIC_AUTH_METADATA_KEY } from "./access-control.decorators";
+import { PublicAuthMetadataKey } from "./access-control.decorators";
 import { validateBearerAuthorization } from "./bearer-auth.guard";
 import type {
   AuthenticatedPrincipal,
@@ -36,7 +36,7 @@ export class SessionAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PUBLIC_AUTH_METADATA_KEY, [
+      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
         context.getHandler(),
         context.getClass(),
       ]) ?? false

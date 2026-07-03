@@ -1,5 +1,5 @@
 {
-  "name": "@app/common/i18n-keys",
+  "name": "@app/common-i18n-keys",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/keys/lib/src",
   "projectType": "library",

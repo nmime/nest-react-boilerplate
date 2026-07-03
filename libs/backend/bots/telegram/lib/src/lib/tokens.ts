@@ -1,2 +1,4 @@
-export const TELEGRAM_BOT_AUTH = Symbol("TELEGRAM_BOT_AUTH");
-export const TELEGRAM_BOT_INSTANCE = Symbol("TELEGRAM_BOT_INSTANCE");
+export const TelegramBotAuthInjectToken = Symbol("TelegramBotAuthInjectToken");
+export const TelegramBotInstanceInjectToken = Symbol(
+  "TelegramBotInstanceInjectToken",
+);

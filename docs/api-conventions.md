@@ -8,7 +8,7 @@ The backend consists of three standalone NestJS API shells:
 
 ## Health
 
-All APIs use the shared health library `@app/backend/common/health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
+All APIs use the shared health library `@app/backend-common-health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
 
 ```http
 GET /health
@@ -77,7 +77,7 @@ Probe policy:
 - mapping `neverthrow` results to API responses
 - global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 
-`libs/backend/common/exception` is the singular exception foundation. Its public alias is `@app/common/exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/common/exception`. Do not add an alternate exception library alias or path.
+`libs/backend/common/exception` is the singular exception foundation. Its public alias is `@app/backend-common-exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/backend-common-exception`. Do not add an alternate exception library alias or path.
 
 Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Repository problem types use stable `urn:problem:*` values via the shared `ProblemDetails`/`BaseException` path. Validation responses use the `errors[]` extension; each issue carries a field `detail` and JSON Pointer `pointer` when available. Human-readable `title`/`detail` localization supports `en` and `ru` with fallback `en`; client logic should rely on stable status/code/type data rather than localized text.
 
@@ -110,13 +110,13 @@ Admin access is fail-closed. A registered email listed in `ADMIN_BOOTSTRAP_EMAIL
 sequenceDiagram
   autonumber
   participant Browser as Frontend app
-  participant Client as @app/api-client
+  participant Client as @app/frontend-api-client
   participant Support as @app/frontend-api-support apiFetch
   participant Api as Nest API shell
   participant Bootstrap as bootstrapNestApi middleware
   participant Controller as Controller/DTO layer
   participant Feature as Feature library
-  participant Store as @app/postgres-main*
+  participant Store as @app/backend-postgres-main*
   Browser->>Client: call service wrapper/query helper
   Client->>Support: generated openapi-fetch request
   Support->>Support: add base URL, bearer token, Accept-Language
@@ -133,4 +133,4 @@ sequenceDiagram
   Client-->>Browser: app-facing namespace result
 ```
 
-Frontend code should enter the flow through `@app/api-client` wrappers. RFC 9457 Problem Details responses come from the singular `@app/common/exception` foundation and shared response mapping.
+Frontend code should enter the flow through `@app/frontend-api-client` wrappers. RFC 9457 Problem Details responses come from the singular `@app/backend-common-exception` foundation and shared response mapping.

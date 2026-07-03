@@ -3,12 +3,7 @@ import { vi } from "vitest";
 
 export * from "./test.module";
 
-export {
-  installFixedSystemTime,
-  uninstallFixedSystemTime,
-  advanceFixedSystemTime,
-  withFixedSystemTime,
-} from "./deterministic-clock";
+export * from "./deterministic-clock";
 
 export function createTestingLogger(): LoggerService {
   return {
@@ -20,16 +15,23 @@ export function createTestingLogger(): LoggerService {
   };
 }
 
-export function createMock<T extends object>(overrides: Partial<T> = {}): T {
+export function createMock<T extends Record<string, unknown>>(
+  overrides: Partial<T> = {},
+): T {
   return overrides as T;
 }
 
-export function createRepositoryMock<T extends object>(): {
+export function createRepositoryMock<T extends Record<string, unknown>>(): {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
     ? ReturnType<typeof vi.fn<(...args: A) => R>>
     : T[K];
 } {
-  return {} as never;
+  const mock = {};
+  return mock as {
+    [K in keyof T]: T[K] extends (...args: infer A) => infer R
+      ? ReturnType<typeof vi.fn<(...args: A) => R>>
+      : T[K];
+  };
 }
 
 export function deferred<T>(): {

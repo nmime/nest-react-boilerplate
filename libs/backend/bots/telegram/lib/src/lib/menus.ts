@@ -1,6 +1,6 @@
 import { Menu } from "@grammyjs/menu";
 import { FormattedString, fmt } from "@grammyjs/parse-mode";
-import type { Locale } from "@app/common/i18n";
+import type { Locale } from "@app/common-i18n";
 import {
   resolveTelegramApplication,
   type TelegramBotApplicationPort,

@@ -232,18 +232,22 @@ function createTsconfigAliases(names: Names): Record<string, string[]> {
     [backendFeatureSharedAlias(names)]: [
       `libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`,
     ],
-    [`@app/postgres-main-${names.kebab}`]: [
+    [backendPostgresMainAlias(names)]: [
       `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
     ],
   };
 }
 
 function backendFeatureMainAlias(names: Names): string {
-  return `@app/backend/feature/${names.kebab}/main`;
+  return `@app/backend-feature-${names.kebab}-main`;
 }
 
 function backendFeatureSharedAlias(names: Names): string {
-  return `@app/backend/feature/${names.kebab}/shared`;
+  return `@app/backend-feature-${names.kebab}-shared`;
+}
+
+function backendPostgresMainAlias(names: Names): string {
+  return `@app/backend-postgres-main-${names.kebab}`;
 }
 
 function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
@@ -279,7 +283,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.controller.ts`,
-      contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/common/swagger";\nimport { createOkResponse, type OkResponse } from "@app/common/response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
+      contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/backend-common-swagger";\nimport { createOkResponse, type OkResponse } from "@app/backend-common-response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
     },
     {
       path: `${base}/main/lib/src/lib/${names.kebab}.service.spec.ts`,
@@ -312,7 +316,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     },
     projectJson(
       `libs/backend/postgres/main/${names.kebab}/lib/project.json`,
-      `@app/postgres-main-${names.kebab}`,
+      backendPostgresMainAlias(names),
       `libs/backend/postgres/main/${names.kebab}/lib/src`,
       `dist/libs/backend/postgres/main/${names.kebab}`,
       `libs/backend/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,

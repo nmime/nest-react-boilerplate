@@ -8,6 +8,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import {
+  AuthProvider,
+  AuthProviderChannel,
   createDefaultAccessPolicy,
   normalizeUserThemePreference,
   toAuthenticatedUserView,
@@ -15,20 +17,23 @@ import {
   type AuthMethodClaims,
   type AuthenticatedUserView,
   type UserThemePreference,
-} from "@app/backend/feature/auth/shared";
-import { normalizeLocale } from "@app/common/i18n";
+} from "@app/backend-feature-auth-shared";
+import { normalizeLocale } from "@app/common-i18n";
 import {
-  AUTH_USER_STORE,
+  AuthUserStoreInjectToken,
   type AuthUserRecord,
   type AuthUserStore,
 } from "./auth-user-store";
 import {
-  AUTH_TOKEN_STORE,
+  AuthTokenStoreInjectToken,
   type AuthTokenStore,
   type AuthUserTokenPurpose,
   InMemoryAuthTokenStore,
 } from "./auth-token-store";
-import { SOCIAL_AUTH_STORE, type SocialAuthStore } from "./social-auth-store";
+import {
+  SocialAuthStoreInjectToken,
+  type SocialAuthStore,
+} from "./social-auth-store";
 import { createAuthSession } from "./application/auth-session.factory";
 import { normalizeEmail } from "./domain/email-address";
 import {
@@ -42,10 +47,10 @@ import {
   parseTenantId as parseDomainTenantId,
 } from "./domain/tenant-id";
 
-export { toSessionPrincipal } from "./application/auth-session.factory";
-export { normalizeEmail } from "./domain/email-address";
-export type { JwtSigningEnvironment } from "./domain/jwt-signer";
-export { hashPassword, verifyPassword } from "./domain/password.service";
+export * from "./application/auth-session.factory";
+export * from "./domain/email-address";
+export * from "./domain/jwt-signer";
+export * from "./domain/password.service";
 
 export interface RegisterUserInput {
   tenantId?: string | null;
@@ -75,13 +80,13 @@ export interface UserActionTokenInput {
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(AUTH_USER_STORE)
+    @Inject(AuthUserStoreInjectToken)
     private readonly users: AuthUserStore,
     @Optional()
-    @Inject(AUTH_TOKEN_STORE)
+    @Inject(AuthTokenStoreInjectToken)
     private readonly tokens: AuthTokenStore = new InMemoryAuthTokenStore(),
     @Optional()
-    @Inject(SOCIAL_AUTH_STORE)
+    @Inject(SocialAuthStoreInjectToken)
     private readonly social?: SocialAuthStore,
   ) {}
 
@@ -246,11 +251,14 @@ export class AuthService {
   ): Promise<AuthenticatedUserView> {
     const hasExplicitTenant =
       typeof tenantIdOrInput === "string" || arguments.length >= 3;
-    const resolvedTenantId = parseTenantId(
-      hasExplicitTenant
-        ? (tenantIdOrInput as string | null | undefined)
-        : undefined,
-    );
+    const tenantIdInput =
+      hasExplicitTenant &&
+      (typeof tenantIdOrInput === "string" ||
+        tenantIdOrInput === null ||
+        tenantIdOrInput === undefined)
+        ? tenantIdOrInput
+        : undefined;
+    const resolvedTenantId = parseTenantId(tenantIdInput);
     const input = hasExplicitTenant ? maybeInput : tenantIdOrInput;
     if (input === null || typeof input !== "object" || Array.isArray(input)) {
       throw new BadRequestException("Preferences payload must be an object.");
@@ -297,8 +305,8 @@ export class AuthService {
     refreshToken?: string,
     claims: AuthMethodClaims = {
       amr: ["pwd"],
-      authProvider: "password",
-      authChannel: "password",
+      authProvider: AuthProvider.Password,
+      authChannel: AuthProviderChannel.Password,
       authTime: Math.floor(Date.now() / 1000),
     },
   ): AuthSessionView {
@@ -356,7 +364,7 @@ export class AuthService {
     await this.social.upsertMethod({
       tenantId: user.tenantId,
       userId: user.id,
-      method: "password",
+      method: AuthProviderChannel.Password,
       amr: ["pwd"],
       lastUsedAt: new Date(),
     });

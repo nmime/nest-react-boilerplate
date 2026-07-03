@@ -67,7 +67,7 @@ export class AdminAuditLogRepository {
   }
 }
 
-function toAuditFilter(input: AdminAuditLogListInput): object {
+function toAuditFilter(input: AdminAuditLogListInput): Record<string, unknown> {
   return {
     tenantId: input.tenantId ?? DefaultAuthTenantId,
     ...(input.action ? { action: input.action } : {}),

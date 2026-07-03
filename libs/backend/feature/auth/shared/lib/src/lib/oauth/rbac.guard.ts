@@ -7,9 +7,9 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import {
-  PUBLIC_AUTH_METADATA_KEY,
-  REQUIRED_PERMISSIONS_METADATA_KEY,
-  REQUIRED_ROLES_METADATA_KEY,
+  PublicAuthMetadataKey,
+  RequiredPermissionsMetadataKey,
+  RequiredRolesMetadataKey,
 } from "./access-control.decorators";
 import type {
   AuthenticatedPrincipal,
@@ -33,12 +33,9 @@ export class RbacGuard implements CanActivate {
       return true;
     }
 
-    const requiredRoles = this.getMetadata(
-      REQUIRED_ROLES_METADATA_KEY,
-      context,
-    );
+    const requiredRoles = this.getMetadata(RequiredRolesMetadataKey, context);
     const requiredPermissions = this.getMetadata(
-      REQUIRED_PERMISSIONS_METADATA_KEY,
+      RequiredPermissionsMetadataKey,
       context,
     );
     const principal = this.getPrincipal(context);
@@ -64,7 +61,7 @@ export class RbacGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PUBLIC_AUTH_METADATA_KEY, [
+      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
         context.getHandler(),
         context.getClass(),
       ]) ?? false

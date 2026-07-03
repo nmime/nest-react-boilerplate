@@ -1,4 +1,4 @@
-import type { TranslationKey, TranslationParams } from "@app/frontend/ui";
+import type { TranslationKey, TranslationParams } from "@app/frontend-runtime";
 import type { ReactNode, SubmitEvent } from "react";
 import {
   UiAlert,
@@ -8,7 +8,7 @@ import {
   UiStatusPill,
   UiTextField,
 } from "../../../shared/ui";
-import type { AuthMode } from "../model";
+import { AuthMode } from "../model";
 
 export interface AuthCardsProps {
   isLoginPending: boolean;
@@ -42,7 +42,7 @@ export function AuthCards({
         <UiForm
           aria-busy={isLoginPending}
           className="xr-auth-form"
-          onSubmit={(event) => onSubmit("login", event)}
+          onSubmit={(event) => onSubmit(AuthMode.Login, event)}
         >
           <UiTextField
             aria-label={t("user.form.loginEmailLabel")}
@@ -91,7 +91,7 @@ export function AuthCards({
         <UiForm
           aria-busy={isRegisterPending}
           className="xr-auth-form"
-          onSubmit={(event) => onSubmit("register", event)}
+          onSubmit={(event) => onSubmit(AuthMode.Register, event)}
         >
           <UiTextField
             aria-label={t("user.form.registerDisplayNameLabel")}

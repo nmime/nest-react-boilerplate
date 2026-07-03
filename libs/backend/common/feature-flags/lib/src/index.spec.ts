@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   FeatureFlagProviderToken,
   InMemoryFeatureFlagProvider,
-} from "@app/common/feature-flags";
+} from "@app/common-feature-flags";
 import { FeatureFlagsModule } from "./index";
 
 describe("backend feature flag module", () => {

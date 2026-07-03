@@ -19,7 +19,7 @@ Checked-in generated frontend artifacts live at:
 - `libs/frontend/api-client/lib/src/generated/user.ts`
 - `libs/frontend/api-client/lib/src/generated/admin.ts`
 
-`@app/api-client` wraps those generated `paths/components/operations` types in service modules exported as `authApi`, `userApi`, and `adminApi`. Apps import DTOs, success payload aliases, typed error aliases, query keys/options, and mutation/query helpers from those namespaces instead of importing contracts directly or embedding endpoint path strings.
+`@app/frontend-api-client` wraps those generated `paths/components/operations` types in service modules exported as `authApi`, `userApi`, and `adminApi`. Apps import DTOs, success payload aliases, typed error aliases, query keys/options, and mutation/query helpers from those namespaces instead of importing contracts directly or embedding endpoint path strings.
 
 When backend routes, DTOs, response wrappers, auth metadata, or error decorators change:
 
@@ -30,7 +30,7 @@ When backend routes, DTOs, response wrappers, auth metadata, or error decorators
 
 ## Runtime responsibilities
 
-- `@app/api-client` owns app-facing service names, endpoint wrapper functions, React Query helpers, and typed error aliases.
+- `@app/frontend-api-client` owns app-facing service names, endpoint wrapper functions, React Query helpers, and typed error aliases.
 - `@app/frontend-api-support` owns base URL resolution, bearer-token access, `Accept-Language`, response parsing, and raw `fetch` containment.
 - Generated frontend artifacts live in `libs/frontend/api-client/lib/src/generated/**`; matching shared contract review types live in `libs/common/api-contracts/lib/src/generated/**`.
 - Frontend apps should not spell backend endpoint path strings; update wrappers when a new route is consumed.

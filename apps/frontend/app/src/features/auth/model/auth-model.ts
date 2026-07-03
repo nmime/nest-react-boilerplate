@@ -1,6 +1,9 @@
-import type { Locale } from "@app/frontend/ui";
+import type { Locale } from "@app/frontend-runtime";
 
-export type AuthMode = "login" | "register";
+export enum AuthMode {
+  Login = "login",
+  Register = "register",
+}
 
 export interface AuthFormInput {
   displayName?: FormDataEntryValue | null;

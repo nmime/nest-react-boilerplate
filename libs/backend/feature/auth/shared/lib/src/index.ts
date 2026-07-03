@@ -1,30 +1,33 @@
-import type { Locale } from "@app/common/i18n";
-import { normalizeStringList } from "@app/backend/common/shared";
+import type { Locale } from "@app/common-i18n";
+import { normalizeStringList } from "@app/backend-common-shared";
 import {
-  DEFAULT_AUTH_TENANT_ID,
+  DefaultAuthTenantId,
   resolveTenantId,
 } from "./lib/oauth/tenant-context";
+import {
+  AuthenticatedTheme,
+  isAuthenticatedTheme,
+  type UserThemePreference,
+} from "./lib/oauth/access-control.types";
 import type {
   AuthProvider,
   AuthProviderChannel,
 } from "./lib/oauth/social-auth.types";
 
-export const USER_ROLE = "user";
-export const ADMIN_ROLE = "admin";
-export const USER_PROFILE_READ_PERMISSION = "profile:read";
-export const ADMIN_PROFILE_READ_PERMISSION = "admin:profile:read";
-export const ADMIN_DASHBOARD_READ_PERMISSION = "admin:dashboard:read";
-export const ADMIN_USERS_READ_PERMISSION = "admin:users:read";
-export const ADMIN_USERS_WRITE_PERMISSION = "admin:users:write";
-export const ADMIN_USERS_STATUS_UPDATE_PERMISSION = "admin:users:status:update";
-export const ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION =
+export const UserRole = "user";
+export const AdminRole = "admin";
+export const UserProfileReadPermission = "profile:read";
+export const AdminProfileReadPermission = "admin:profile:read";
+export const AdminDashboardReadPermission = "admin:dashboard:read";
+export const AdminUsersReadPermission = "admin:users:read";
+export const AdminUsersWritePermission = "admin:users:write";
+export const AdminUsersStatusUpdatePermission = "admin:users:status:update";
+export const AdminUsersAccessPolicyUpdatePermission =
   "admin:users:access-policy:update";
-export const ADMIN_ROLES_READ_PERMISSION = "admin:roles:read";
-export const ADMIN_AUDIT_READ_PERMISSION = "admin:audit:read";
-export const ADMIN_SETTINGS_READ_PERMISSION = "admin:settings:read";
-export const ADMIN_SETTINGS_UPDATE_PERMISSION = "admin:settings:update";
-export const userThemePreferences = ["system", "light", "dark"] as const;
-export type UserThemePreference = (typeof userThemePreferences)[number];
+export const AdminRolesReadPermission = "admin:roles:read";
+export const AdminAuditReadPermission = "admin:audit:read";
+export const AdminSettingsReadPermission = "admin:settings:read";
+export const AdminSettingsUpdatePermission = "admin:settings:update";
 
 export interface AuthAccessPolicy {
   roles: string[];
@@ -61,34 +64,34 @@ export interface AuthSessionView extends JwtTokenPair {
 export function createDefaultAccessPolicy(
   email: string,
   env: Record<string, string | undefined> = process.env,
-  tenantId = DEFAULT_AUTH_TENANT_ID,
+  tenantId = DefaultAuthTenantId,
 ): AuthAccessPolicy {
   const normalizedEmail = email.trim().toLowerCase();
   const isAdmin = isAdminBootstrapAllowed(normalizedEmail, tenantId, env);
 
   return {
-    roles: isAdmin ? [USER_ROLE, ADMIN_ROLE] : [USER_ROLE],
+    roles: isAdmin ? [UserRole, AdminRole] : [UserRole],
     permissions: isAdmin
       ? [
-          USER_PROFILE_READ_PERMISSION,
-          ADMIN_PROFILE_READ_PERMISSION,
-          ADMIN_DASHBOARD_READ_PERMISSION,
-          ADMIN_USERS_READ_PERMISSION,
-          ADMIN_USERS_WRITE_PERMISSION,
-          ADMIN_USERS_STATUS_UPDATE_PERMISSION,
-          ADMIN_USERS_ACCESS_POLICY_UPDATE_PERMISSION,
-          ADMIN_ROLES_READ_PERMISSION,
-          ADMIN_AUDIT_READ_PERMISSION,
-          ADMIN_SETTINGS_READ_PERMISSION,
-          ADMIN_SETTINGS_UPDATE_PERMISSION,
+          UserProfileReadPermission,
+          AdminProfileReadPermission,
+          AdminDashboardReadPermission,
+          AdminUsersReadPermission,
+          AdminUsersWritePermission,
+          AdminUsersStatusUpdatePermission,
+          AdminUsersAccessPolicyUpdatePermission,
+          AdminRolesReadPermission,
+          AdminAuditReadPermission,
+          AdminSettingsReadPermission,
+          AdminSettingsUpdatePermission,
         ]
-      : [USER_PROFILE_READ_PERMISSION],
+      : [UserProfileReadPermission],
   };
 }
 
 export function isAdminBootstrapAllowed(
   normalizedEmail: string,
-  tenantId = DEFAULT_AUTH_TENANT_ID,
+  tenantId = DefaultAuthTenantId,
   env: Record<string, string | undefined> = process.env,
 ): boolean {
   if (env.ADMIN_BOOTSTRAP_ENABLED !== "true") {
@@ -104,7 +107,7 @@ export function isAdminBootstrapAllowed(
 
   const allowedTenantIds = normalizeStringList(env.ADMIN_BOOTSTRAP_TENANT_IDS);
   return (
-    tenantId === DEFAULT_AUTH_TENANT_ID || allowedTenantIds.includes(tenantId)
+    tenantId === DefaultAuthTenantId || allowedTenantIds.includes(tenantId)
   );
 }
 
@@ -114,7 +117,7 @@ export function toAuthenticatedUserView(input: {
   email: string | null;
   displayName?: string | null;
   locale?: Locale | null;
-  theme?: UserThemePreference | null;
+  theme?: string | null;
   roles?: string[];
   permissions?: string[];
 }): AuthenticatedUserView {
@@ -124,7 +127,8 @@ export function toAuthenticatedUserView(input: {
     email: input.email,
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.locale ? { locale: input.locale } : {}),
-    theme: normalizeUserThemePreference(input.theme) ?? "system",
+    theme:
+      normalizeUserThemePreference(input.theme) ?? AuthenticatedTheme.System,
     roles: normalizeStringList(input.roles),
     permissions: normalizeStringList(input.permissions),
   };
@@ -138,7 +142,7 @@ export function normalizeUserThemePreference(
   }
 
   const normalized = value.trim().toLowerCase();
-  return userThemePreferences.find((theme) => theme === normalized);
+  return isAuthenticatedTheme(normalized) ? normalized : undefined;
 }
 export * from "./lib/oauth/access-control.decorators";
 export * from "./lib/oauth/access-control.types";

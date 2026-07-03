@@ -81,22 +81,22 @@ vi.mock("pg", () => ({
   Pool: mocks.Pool,
 }));
 
-vi.mock("@app/common/i18n", () => ({
+vi.mock("@app/common-i18n", () => ({
   createRequestLocaleMiddleware: mocks.createRequestLocaleMiddleware,
   resolveLocaleFromRequest: mocks.resolveLocaleFromRequest,
   translate: mocks.translate,
 }));
 
-vi.mock("@app/backend/common/response", () => ({
+vi.mock("@app/backend-common-response", () => ({
   ExceptionsFilter: mocks.exceptionsFilter,
   ExceptionsResponseTransformer: mocks.exceptionsResponseTransformer,
 }));
 
-vi.mock("@app/backend/common/swagger", () => ({
+vi.mock("@app/backend-common-swagger", () => ({
   setupSwagger: mocks.setupSwagger,
 }));
 
-vi.mock("@app/backend/common/validation", () => ({
+vi.mock("@app/backend-common-validation", () => ({
   createValidationPipe: mocks.createValidationPipe,
 }));
 
@@ -556,7 +556,9 @@ describe("bootstrapNestApi", () => {
     process.env.CORS_ORIGINS = "https://a.example, https://b.example";
     process.env.SESSION_COOKIE_SECURE = "true";
 
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const stdoutWrite = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation(() => true);
     await bootstrapNestApi(TestModule, {
       appName: "test-api",
       defaultPort: 3010,
@@ -608,7 +610,7 @@ describe("bootstrapNestApi", () => {
       "request-1",
     );
     expect(next).toHaveBeenCalledTimes(3);
-    expect(logSpy).toHaveBeenCalledWith(
+    expect(stdoutWrite).toHaveBeenCalledWith(
       expect.stringContaining('"requestId":"request-1"'),
     );
 
@@ -623,7 +625,7 @@ describe("bootstrapNestApi", () => {
     );
     middlewareAt(1)({ originalUrl: "/not-robots" }, createResponse(), next);
 
-    logSpy.mockRestore();
+    stdoutWrite.mockRestore();
     vi.clearAllMocks();
     process.env.CORS_ORIGINS = "";
     await bootstrapNestApi(TestModule, {

@@ -12,7 +12,7 @@ import { RedisCacheService } from "./redis-cache.service";
 import { RedisHealthIndicator } from "./redis.health";
 import {
   RedisRateLimitService,
-  SHARED_RATE_LIMITER,
+  SharedRateLimiterInjectToken,
 } from "./redis-rate-limit.service";
 import { RedisRedlockService } from "./redis-redlock.service";
 import type { RedisClientLike, RedisConfig } from "./type";
@@ -62,7 +62,10 @@ export class RedisModule {
       RedisHealthIndicator,
       RedisCacheService,
       RedisRateLimitService,
-      { provide: SHARED_RATE_LIMITER, useExisting: RedisRateLimitService },
+      {
+        provide: SharedRateLimiterInjectToken,
+        useExisting: RedisRateLimitService,
+      },
       RedisRedlockService,
     ];
 

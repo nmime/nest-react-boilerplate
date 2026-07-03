@@ -1,1 +1,1 @@
-export type { AdminProfileState } from "../../../shared";
+export * from "../../../shared";

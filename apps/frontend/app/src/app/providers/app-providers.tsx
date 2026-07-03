@@ -6,26 +6,26 @@ import {
   authApiToastRules,
   throwOnOpenApiErrorData,
   userApiToastRules,
-} from "@app/frontend/api-client";
+} from "@app/frontend-api-client";
 import {
   configureApiLocale,
   createApiRuntimeFetch,
   createAuthRefreshFetch,
   defaultApiToastRules,
   useApiRuntimeOverlayModel,
-} from "@app/frontend/api-support";
+} from "@app/frontend-api-support";
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
-  UiApiRuntimeOverlay,
   translate,
   useAuthShellStore,
   useAppStore,
   useI18n,
   useStore,
-} from "@app/frontend/ui";
-import { userFrontendTranslations } from "@app/frontend/feature/user/i18n";
+} from "@app/frontend-runtime";
+import { UiApiRuntimeOverlay } from "@app/frontend-ui-web";
+import { userFrontendTranslations } from "@app/frontend-feature-user-i18n";
 import { useUserPreferenceControls } from "../../features/preferences";
 import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
 import { UiErrorBoundary } from "../../shared/ui";

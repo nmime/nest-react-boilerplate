@@ -1,12 +1,10 @@
 import { type ReactNode } from "react";
+import { observer, useI18n, useOptionalRootStore } from "@app/frontend-runtime";
 import {
   ProductShell,
   UiStatusTag,
-  observer,
-  useI18n,
-  useOptionalRootStore,
   type ProductShellAction,
-} from "@app/frontend/ui";
+} from "@app/frontend-ui-web";
 import type { AdminAccess } from "../../entities/admin-session";
 import { normalizeAdminPath } from "../../shared";
 

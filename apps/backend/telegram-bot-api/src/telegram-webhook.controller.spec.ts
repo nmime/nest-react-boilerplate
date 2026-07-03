@@ -5,7 +5,7 @@ import {
   createTelegramBot,
   type TelegramBotConfig,
   type TelegramBotInstance,
-} from "@app/backend/bots/telegram";
+} from "@app/backend-bots-telegram";
 
 const botInfo = {
   id: 42,
@@ -19,6 +19,8 @@ const botInfo = {
   has_main_web_app: false,
 } as const;
 
+const testValue = <T>(value: unknown): T => value as T;
+
 function instance() {
   const init = vi.fn(() => Promise.resolve(undefined));
   const handleUpdate = vi.fn(() => Promise.resolve(undefined));
@@ -31,13 +33,13 @@ function instance() {
       sessionTtlSeconds: 60,
       rateLimit: { timeFrameMs: 1_000, limit: 10 },
     },
-    menus: {} as never,
-    bot: {
+    menus: testValue<TelegramBotInstance["menus"]>({}),
+    bot: testValue<TelegramBotInstance["bot"]>({
       init,
       handleUpdate,
       isRunning: () => false,
       start: vi.fn(),
-    } as never,
+    }),
   };
   return { telegram, init, handleUpdate };
 }

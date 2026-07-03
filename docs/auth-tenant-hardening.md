@@ -26,7 +26,7 @@ values.
 
 Existing `auth_users` remain tenant-scoped by `tenant_id`; the default tenant id is `00000000-0000-0000-0000-000000000000` for single-tenant starter apps.
 
-HTTP tenant helpers live in `@app/feature-auth-shared`:
+HTTP tenant helpers live in `@app/backend-feature-auth-shared`:
 
 - `x-tenant-id` / `x-nrb-tenant-id` are authoritative when present.
 - `x-tenant-domain` / `x-nrb-tenant-domain` and `Host` are normalized as domain hints for future tenant lookup.
@@ -67,16 +67,16 @@ Postgres tables are migrated for durable storage (`auth_refresh_tokens`, `auth_u
 
 ## Rate limiting
 
-`@app/common/redis` exports `SharedRateLimiter`, `SHARED_RATE_LIMITER`, and `buildRateLimitKey()` for tenant-aware limits. `RedisRateLimitService` implements the interface with Redis/in-memory clients.
+`@app/backend-common-redis` exports `SharedRateLimiter`, `SHARED_RATE_LIMITER`, and `buildRateLimitKey()` for tenant-aware limits. `RedisRateLimitService` implements the interface with Redis/in-memory clients.
 
 ## Verification
 
 Relevant tests:
 
 ```bash
-pnpm nx test @app/feature-auth-shared --skip-nx-cache
-pnpm nx test @app/feature-auth-main --skip-nx-cache
-pnpm nx test @app/postgres-main-auth --skip-nx-cache
-pnpm nx test @app/common/redis --skip-nx-cache
+pnpm nx test @app/backend-feature-auth-shared --skip-nx-cache
+pnpm nx test @app/backend-feature-auth-main --skip-nx-cache
+pnpm nx test @app/backend-postgres-main-auth --skip-nx-cache
+pnpm nx test @app/backend-common-redis --skip-nx-cache
 pnpm nx test auth-app-api --skip-nx-cache
 ```

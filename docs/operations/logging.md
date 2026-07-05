@@ -1,6 +1,6 @@
 # Structured logging and request-id runbook
 
-The shared logger (`libs/backend/common/logger`) produces structured JSON logs in production and pretty-printed logs in development.
+The shared logger (`libs/backend/common/logger/lib`) produces structured JSON logs in production and pretty-printed logs in development.
 See [production hardening](production-hardening.md) for security-related logging rules.
 
 ## Log format

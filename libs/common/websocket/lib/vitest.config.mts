@@ -6,12 +6,12 @@ import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-co
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../dist/out-tsc/libs/common/websocket",
+  cacheDir: "../../../../node_modules/.vitest/libs/common/websocket/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
-    coverage: fullCoverage("../../../../coverage/libs/common/websocket", [
+    coverage: fullCoverage("../../../../coverage/libs/common/websocket/lib", [
       "src/**/*.ts",
     ]),
   },

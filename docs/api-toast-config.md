@@ -1,9 +1,9 @@
 # API toast configuration
 
-The boilerplate ships tooling for API response toast configuration without adding a separate hosted admin app. The tooling reads the app-local OpenAPI contracts in `apps/backend/*-app-api/contracts/openapi/**` and writes app-local JSON artifacts beside them:
+The boilerplate ships tooling for API response toast configuration without adding a separate hosted admin app. The tooling reads the app-local OpenAPI contracts in `apps/backend/*/*-app-api/contracts/openapi/**` and writes app-local JSON artifacts beside them:
 
 ```text
-apps/backend/<app>-app-api/contracts/toast/<app>-app-api.toast-rules.generated.json
+backend/<app>-app-api/contracts/toast/<app>-app-api.toast-rules.generated.json
 ```
 
 ## Generate

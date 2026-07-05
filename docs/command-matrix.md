@@ -115,9 +115,9 @@ These target checks apply after the corresponding migration scaffold lands.
 | `site-app`              | `apps/frontend/site`         | Final Vike authenticated site SSR app; replaces `user-app` after parity. |
 | `user-app`              | `apps/frontend/app`          | Current Vite authenticated user app; retire after `site-app` parity. |
 | `admin-app`             | `apps/frontend/admin`        | Admin React app.                                |
-| `auth-app-api`          | `apps/backend/auth-app-api`  | Auth/session API.                               |
-| `user-app-api`          | `apps/backend/user-app-api`  | User-facing API.                                |
-| `admin-app-api` | `apps/backend/admin-app-api` | Admin-facing API.                               |
+| `auth-app-api`          | `apps/backend/auth/auth-app-api`  | Auth/session API.                               |
+| `user-app-api`          | `apps/backend/user/user-app-api`  | User-facing API.                                |
+| `admin-app-api` | `apps/backend/admin/admin-app-api` | Admin-facing API.                               |
 | `@app/frontend-ui-web`  | `libs/frontend/ui-web/lib`   | Final shadcn/Radix/Tailwind web UI target for Astro, Vike, and admin web. |
 | `@app/frontend-ui-native` | `libs/frontend/ui-native/lib` | Final Tamagui native UI target for Expo/React Native. |
 | `@app/frontend-runtime` | `libs/frontend/runtime/lib` | Non-visual frontend runtime helpers for i18n, query, shell state, locale, and platform guards. |

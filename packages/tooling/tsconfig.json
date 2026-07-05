@@ -7,7 +7,6 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "rootDir": ".",
-
     "target": "es2022",
     "types": ["node"],
     "allowImportingTsExtensions": true

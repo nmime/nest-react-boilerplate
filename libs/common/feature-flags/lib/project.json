@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/feature-flags",
         "main": "libs/common/feature-flags/lib/src/index.ts",
         "tsConfig": "libs/common/feature-flags/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

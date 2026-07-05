@@ -231,6 +231,26 @@ const staleReferencePatterns: StaleReferencePattern[] = [
     label: "duplicated lib source path segment",
     pattern: /\blib\/src\/lib\/src\/lib\b/u,
   },
+  {
+    label: "retired root backend app path",
+    pattern: /(^|[^A-Za-z0-9_/.-])backend\/[^/\s]+\/apps(?:\/|$)/u,
+  },
+  {
+    label: "retired root backend library path",
+    pattern: /(^|[^A-Za-z0-9_/.-])backend\/[^/\s]+\/libs(?:\/|$)/u,
+  },
+  {
+    label: "retired flat backend app path",
+    pattern: /(^|[^A-Za-z0-9_/.-])apps\/backend\/[^/\s]+-app-api(?:\/|$)/u,
+  },
+  {
+    label: "retired backend bots library path",
+    pattern: /(^|[^A-Za-z0-9_/.-])libs\/backend\/bots(?:\/|$)/u,
+  },
+  {
+    label: "retired backend dist path",
+    pattern: /(^|[^A-Za-z0-9_/.-])dist\/backend(?:\/|$)/u,
+  },
   { label: "retired problem wrapper", pattern: /\bApiProblemExceptions\b/u },
   {
     label: "retired problem validation wrapper",

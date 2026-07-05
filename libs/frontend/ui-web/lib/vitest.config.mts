@@ -7,7 +7,7 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
 export default defineConfig({
   root: import.meta.dirname,
-  cacheDir: "../../../../node_modules/.vitest/libs/frontend/ui-web",
+  cacheDir: "../../../../node_modules/.vitest/libs/frontend/ui-web/lib",
   plugins: [react(), nxViteTsPaths()],
   test: {
     environment: "jsdom",

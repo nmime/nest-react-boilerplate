@@ -11,7 +11,7 @@ This is the canonical instruction source for AI coding agents working in this re
 - Do not deploy, publish packages/images, rotate credentials, run destructive database commands, or spend funds unless a maintainer explicitly requests it for the current task.
 - Do not use Copilot, copilor, or any external AI coding assistant. Do the assigned work directly with the repository and approved tools.
 - Read existing docs, configs, tests, and public APIs before editing. Do not create contradictory instructions or compatibility shims.
-- Keep changes scoped. Do not edit generated artifacts (`apps/backend/*-app-api/contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
+- Keep changes scoped. Do not edit generated artifacts (`apps/backend/*/*-app-api/contracts/openapi/**`, generated clients, snapshots, lockfiles) unless the task requires regenerating them.
 
 ## Commit, merge, and branch policy
 
@@ -23,12 +23,11 @@ This is the canonical instruction source for AI coding agents working in this re
 
 ## Monorepo layout after the libs split
 
-- Apps live under `apps/**`:
-  - backend APIs: `apps/backend/**`
-  - Vite React frontends: `apps/frontend/**`
+- Backend deployables live under `apps/backend/<scope>/**`, so APIs, consumers, workers, schedulers, and other backend runtimes stay beside their feature scope.
+- Vite React frontends live under `apps/frontend/**`.
 - Backend common libraries live under `libs/backend/common/**`.
-- Backend feature libraries live under `libs/backend/feature/**`.
-- Backend PostgreSQL libraries live under `libs/backend/postgres/**`.
+- Backend feature libraries live under `libs/backend/feature/<scope>/<layer>/lib/**`; bot libraries are feature libraries such as `libs/backend/feature/discord/bot/lib` and `libs/backend/feature/telegram/bot/lib`.
+- Backend shared PostgreSQL infrastructure lives under `libs/backend/postgres/main/shared/lib`; feature-owned persistence lives under `libs/backend/postgres/main/<scope>/lib`.
 - Frontend-only libraries live under `libs/frontend/**`.
 - True cross-runtime common libraries live under `libs/common/**`.
 - Admin feature shared code is split by runtime. Do not recreate an unsplit shared admin project:
@@ -36,7 +35,7 @@ This is the canonical instruction source for AI coding agents working in this re
   - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses alias `@app/backend-feature-admin-shared`, and carries `platform:backend`, `type:feature-shared`, and `scope:admin` tags.
   - Respect platform boundaries: frontend code must not import backend admin libraries, and backend code must not import frontend admin libraries.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do not rename, remove, or repoint aliases unless the task explicitly includes an alias migration and all consumers/docs are updated.
-- PostgreSQL shared infrastructure lives at `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below `libs/backend/postgres/main/<feature>/lib`.
+- PostgreSQL shared infrastructure lives at `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below the owning scope, for example `libs/backend/postgres/main/auth/lib`.
 - Exception foundation is singular: use `@app/backend-common-exception`, path `libs/backend/common/exception/lib`, Nx project `@app/backend-common-exception`. Do not introduce or document an `exceptions` alias/path.
 - RFC 9457 Problem Details wire terms are intentional and allowed: `ProblemDetails`, `application/problem+json`, `urn:problem:*`, `type`, `title`, `status`, `detail`, `instance`, and validation `errors[]` entries with `detail`/`pointer`. Do not add project-owned problem wrapper layers when the existing exception, validation, and response libraries cover the need.
 - Shared health uses `@app/backend-common-health` (`BaseHealthController`, `HealthService`, app-specific health providers/config) for `/health`, `/health/private`, `/live`, and `/ready`; document exact response shapes from source/tests before changing docs.
@@ -44,7 +43,7 @@ This is the canonical instruction source for AI coding agents working in this re
 ## API contracts and generated artifacts
 
 - Nest controllers and DTOs are the source of truth for API shape.
-- Committed OpenAPI producer output lives under `apps/backend/*-app-api/contracts/openapi/*.json`.
+- Committed OpenAPI producer output lives under `apps/backend/*/*-app-api/contracts/openapi/*.json`.
 - Shared generated contract review types live under `libs/common/api-contracts/lib/src/generated`.
 - Generated frontend clients live under `libs/frontend/api-client/lib/src/generated` and wrappers in `libs/frontend/api-client` keep endpoint paths out of app code.
 - Do not invent top-level contract directories or alternate OpenAPI consumer locations.

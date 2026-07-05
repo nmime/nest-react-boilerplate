@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
+    "outDir": "../../../dist/out-tsc/apps/frontend/app-spec",
     "module": "esnext",
     "moduleResolution": "bundler",
     "types": [

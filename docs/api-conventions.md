@@ -8,7 +8,7 @@ The backend consists of three standalone NestJS API shells:
 
 ## Health
 
-All APIs use the shared health library `@app/backend-common-health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
+All APIs use the shared health library `@app/backend-common-health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
 
 ```http
 GET /health
@@ -54,7 +54,7 @@ Probe policy:
 
 ## Bootstrap and security baseline
 
-`libs/backend/common/bootstrap` exposes `bootstrapNestApi()`. It applies:
+`libs/backend/common/bootstrap/lib` exposes `bootstrapNestApi()`. It applies:
 
 - Helmet security middleware
 - raw request-body capture for webhook/signature use cases
@@ -66,28 +66,28 @@ Probe policy:
 - `ExceptionsResponseTransformer` and `ExceptionsFilter` response mapping
 - CORS from explicit app options or `CORS_ORIGINS`/`CORS_ORIGIN`
 - production CORS that does not reflect arbitrary origins when no origin is configured
-- optional Swagger/OpenAPI docs from `libs/backend/common/swagger`
+- optional Swagger/OpenAPI docs from `libs/backend/common/swagger/lib`
 
 ## Result responses and RFC 9457 Problem Details
 
-`libs/backend/common/response` exposes the response mapper layer for:
+`libs/backend/common/response/lib` exposes the response mapper layer for:
 
 - `{ data }` success responses
 - RFC 9457 `application/problem+json` problem responses
 - mapping `neverthrow` results to API responses
 - global `ExceptionsResponseTransformer` and `ExceptionsFilter` wiring from bootstrap
 
-`libs/backend/common/exception` is the singular exception foundation. Its public alias is `@app/backend-common-exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/backend-common-exception`. Do not add an alternate exception library alias or path.
+`libs/backend/common/exception/lib` is the singular exception foundation. Its public alias is `@app/backend-common-exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/backend-common-exception`. Do not add an alternate exception library alias or path.
 
 Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Repository problem types use stable `urn:problem:*` values via the shared `ProblemDetails`/`BaseException` path. Validation responses use the `errors[]` extension; each issue carries a field `detail` and JSON Pointer `pointer` when available. Human-readable `title`/`detail` localization supports `en` and `ru` with fallback `en`; client logic should rely on stable status/code/type data rather than localized text.
 
 ## Contracts and generated clients
 
-OpenAPI JSON is committed under `apps/backend/*-app-api/contracts/openapi/*.json`. Shared generated contract types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. API surface changes must update the source API, exported OpenAPI JSON, shared contracts, and frontend clients together.
+OpenAPI JSON is committed under `apps/backend/*/*-app-api/contracts/openapi/*.json`. Shared generated contract types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. API surface changes must update the source API, exported OpenAPI JSON, shared contracts, and frontend clients together.
 
 ## OAuth foundation
 
-`libs/backend/feature/auth/shared` OAuth support is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
+`libs/backend/feature/auth/shared/lib` OAuth support is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
 
 ## Auth endpoints
 

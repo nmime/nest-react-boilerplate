@@ -9,10 +9,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/feature/user/shared",
+        "outputPath": "dist/libs/backend/feature/user/shared/lib",
         "main": "libs/backend/feature/user/shared/lib/src/index.ts",
         "tsConfig": "libs/backend/feature/user/shared/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -29,7 +30,9 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/feature/user/shared"]
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/backend/feature/user/shared/lib"
+      ]
     }
   }
 }

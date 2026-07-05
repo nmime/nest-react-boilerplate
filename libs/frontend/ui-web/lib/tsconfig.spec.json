@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/frontend/ui-web/spec",
+    "outDir": "../../../../dist/out-tsc/libs/frontend/ui-web-spec",
     "types": ["vitest/globals", "vite/client"]
   },
   "include": ["src/**/*.spec.ts", "src/**/*.spec.tsx"]

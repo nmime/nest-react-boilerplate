@@ -14,10 +14,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/common/validation",
+        "outputPath": "dist/libs/backend/common/validation/lib",
         "main": "libs/backend/common/validation/lib/src/index.ts",
         "tsConfig": "libs/backend/common/validation/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -34,7 +35,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/validation"]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/validation/lib"]
     }
   }
 }

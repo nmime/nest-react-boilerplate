@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/websocket",
         "main": "libs/common/websocket/lib/src/index.ts",
         "tsConfig": "libs/common/websocket/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

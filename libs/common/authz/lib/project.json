@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/authz",
         "main": "libs/common/authz/lib/src/index.ts",
         "tsConfig": "libs/common/authz/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

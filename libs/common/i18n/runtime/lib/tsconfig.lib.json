@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../dist/out-tsc/libs/common/i18n-runtime",
+    "outDir": "../../../../../dist/out-tsc/libs/common/i18n/runtime",
     "declaration": true,
     "types": ["node"],
     "composite": true

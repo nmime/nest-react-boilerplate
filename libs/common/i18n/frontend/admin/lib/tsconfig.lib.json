@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../../dist/out-tsc/libs/common/i18n-frontend-admin",
+    "outDir": "../../../../../../dist/out-tsc/libs/common/i18n/frontend/admin",
     "declaration": true,
     "types": ["node"]
   },

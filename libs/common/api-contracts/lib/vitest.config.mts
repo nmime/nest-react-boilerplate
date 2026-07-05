@@ -6,7 +6,7 @@ import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-co
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../dist/out-tsc/libs/common/api-contracts",
+  cacheDir: "../../../../node_modules/.vitest/libs/common/api-contracts/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],

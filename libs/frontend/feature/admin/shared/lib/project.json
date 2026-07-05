@@ -17,7 +17,8 @@
         "outputPath": "dist/libs/frontend/feature/admin/shared",
         "main": "libs/frontend/feature/admin/shared/lib/src/index.ts",
         "tsConfig": "libs/frontend/feature/admin/shared/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

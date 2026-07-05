@@ -21,7 +21,7 @@ flowchart TB
     UserApi["user-app-api NestJS"]
     AuthApi["auth-app-api NestJS"]
   end
-  subgraph Backend["libs/backend/**"]
+  subgraph Backend["backend/**"]
     Bootstrap["bootstrap + health"]
     Exception["singular exception foundation"]
     Features["feature modules"]
@@ -70,15 +70,15 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
 | `apps/frontend/app`                           | User-facing React app shell.                                                |
 | `apps/frontend/landing`                       | Public landing React app shell.                                             |
-| `apps/backend/admin-app-api`                  | Admin NestJS API.                                                           |
-| `apps/backend/user-app-api`                   | User NestJS API.                                                            |
-| `apps/backend/auth-app-api`                   | Auth NestJS API.                                                            |
-| `apps/backend/*-app-api/contracts/openapi`    | Committed OpenAPI producer output for review and generation.                |
+| `apps/backend/admin/admin-app-api`            | Admin NestJS API.                                                           |
+| `apps/backend/user/user-app-api`              | User NestJS API.                                                            |
+| `apps/backend/auth/auth-app-api`              | Auth NestJS API.                                                            |
+| `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                |
 | `libs/frontend/ui`                            | Shared UI primitives and Storybook configuration.                           |
 | `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                     |
 | `libs/backend/common`                         | Backend bootstrap, health, exception, validation, and response foundations. |
-| `libs/backend/feature`                        | Backend feature modules and use cases.                                      |
-| `libs/backend/postgres`                       | PostgreSQL configuration, repositories, entities, and migrations.           |
+| `libs/backend/feature/<scope>/<layer>/lib`    | Backend feature modules, bot libraries, and feature-owned persistence.      |
+| `libs/backend/postgres/main/shared/lib`       | Shared PostgreSQL configuration and MikroORM infrastructure.                |
 | `libs/common/api-contracts/lib/src/generated` | Shared generated contract review types.                                     |
 | `packages/tooling`                            | Repository automation used by local checks and CI.                          |
 | `docs`                                        | Architecture, API, testing, operations, deployment, and workflow guides.    |

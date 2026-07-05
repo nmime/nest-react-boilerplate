@@ -3,7 +3,7 @@
   "version": 1,
   "generatedBy": "@repo/tooling api toast-config generate",
   "source": {
-    "openapi": "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json",
+    "openapi": "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json",
     "app": "auth-app-api"
   },
   "rules": [

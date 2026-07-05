@@ -6,13 +6,14 @@ import { fullCoverage } from "../../../../../packages/tooling/src/testing/vitest
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../../dist/out-tsc/libs/backend/common/health",
+  cacheDir:
+    "../../../../../node_modules/.vitest/libs/backend/common/health/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../../coverage/libs/backend/common/health",
+      "../../../../coverage/libs/backend/common/health/lib",
       ["src/**/*.ts"],
       [],
     ),

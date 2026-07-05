@@ -382,23 +382,26 @@ for (const {
   {
     app: "auth-app-api",
     healthProvider: "AuthAppHealthServiceProvider",
-    modulePath: "apps/backend/auth-app-api/src/auth-app-api.module.ts",
-    configPath: "apps/backend/auth-app-api/src/health.config.ts",
-    localControllerPath: "apps/backend/auth-app-api/src/health.controller.ts",
+    modulePath: "apps/backend/auth/auth-app-api/src/auth-app-api.module.ts",
+    configPath: "apps/backend/auth/auth-app-api/src/health.config.ts",
+    localControllerPath:
+      "apps/backend/auth/auth-app-api/src/health.controller.ts",
   },
   {
     app: "user-app-api",
     healthProvider: "UserAppHealthServiceProvider",
-    modulePath: "apps/backend/user-app-api/src/user-app-api.module.ts",
-    configPath: "apps/backend/user-app-api/src/health.config.ts",
-    localControllerPath: "apps/backend/user-app-api/src/health.controller.ts",
+    modulePath: "apps/backend/user/user-app-api/src/user-app-api.module.ts",
+    configPath: "apps/backend/user/user-app-api/src/health.config.ts",
+    localControllerPath:
+      "apps/backend/user/user-app-api/src/health.controller.ts",
   },
   {
     app: "admin-app-api",
     healthProvider: "AdminAppHealthServiceProvider",
-    modulePath: "apps/backend/admin-app-api/src/admin-app-api.module.ts",
-    configPath: "apps/backend/admin-app-api/src/health.config.ts",
-    localControllerPath: "apps/backend/admin-app-api/src/health.controller.ts",
+    modulePath: "apps/backend/admin/admin-app-api/src/admin-app-api.module.ts",
+    configPath: "apps/backend/admin/admin-app-api/src/health.config.ts",
+    localControllerPath:
+      "apps/backend/admin/admin-app-api/src/health.controller.ts",
   },
 ]) {
   assert.ok(

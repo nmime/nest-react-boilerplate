@@ -20,11 +20,23 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@app/backend-bots-discord": [
-        "libs/backend/bots/discord/lib/src/index.ts"
+      "@app/backend-feature-admin-main": [
+        "libs/backend/feature/admin/main/lib/src/index.ts"
       ],
-      "@app/backend-bots-telegram": [
-        "libs/backend/bots/telegram/lib/src/index.ts"
+      "@app/backend-feature-admin-shared": [
+        "libs/backend/feature/admin/shared/lib/src/index.ts"
+      ],
+      "@app/backend-feature-auth-main": [
+        "libs/backend/feature/auth/main/lib/src/index.ts"
+      ],
+      "@app/backend-postgres-main-auth": [
+        "libs/backend/postgres/main/auth/lib/src/index.ts"
+      ],
+      "@app/backend-feature-auth-shared": [
+        "libs/backend/feature/auth/shared/lib/src/index.ts"
+      ],
+      "@app/backend-feature-auth-test": [
+        "libs/backend/feature/auth/test/lib/src/index.ts"
       ],
       "@app/backend-common-analytics": [
         "libs/backend/common/analytics/lib/src/index.ts"
@@ -70,35 +82,23 @@
       "@app/backend-common-validation": [
         "libs/backend/common/validation/lib/src/index.ts"
       ],
-      "@app/backend-feature-admin-main": [
-        "libs/backend/feature/admin/main/lib/src/index.ts"
+      "@app/backend-feature-discord-bot": [
+        "libs/backend/feature/discord/bot/lib/src/index.ts"
       ],
-      "@app/backend-feature-admin-shared": [
-        "libs/backend/feature/admin/shared/lib/src/index.ts"
+      "@app/backend-postgres-main-feature-flags": [
+        "libs/backend/postgres/main/feature-flags/lib/src/index.ts"
       ],
-      "@app/backend-feature-auth-main": [
-        "libs/backend/feature/auth/main/lib/src/index.ts"
+      "@app/backend-postgres-main": [
+        "libs/backend/postgres/main/shared/lib/src/index.ts"
       ],
-      "@app/backend-feature-auth-shared": [
-        "libs/backend/feature/auth/shared/lib/src/index.ts"
-      ],
-      "@app/backend-feature-auth-test": [
-        "libs/backend/feature/auth/test/lib/src/index.ts"
+      "@app/backend-feature-telegram-bot": [
+        "libs/backend/feature/telegram/bot/lib/src/index.ts"
       ],
       "@app/backend-feature-user-main": [
         "libs/backend/feature/user/main/lib/src/index.ts"
       ],
       "@app/backend-feature-user-shared": [
         "libs/backend/feature/user/shared/lib/src/index.ts"
-      ],
-      "@app/backend-postgres-main": [
-        "libs/backend/postgres/main/shared/lib/src/index.ts"
-      ],
-      "@app/backend-postgres-main-auth": [
-        "libs/backend/postgres/main/auth/lib/src/index.ts"
-      ],
-      "@app/backend-postgres-main-feature-flags": [
-        "libs/backend/postgres/main/feature-flags/lib/src/index.ts"
       ],
       "@app/common-api-contracts": [
         "libs/common/api-contracts/lib/src/index.ts"

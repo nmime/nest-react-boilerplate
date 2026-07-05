@@ -9,10 +9,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/postgres/main/shared",
+        "outputPath": "dist/libs/backend/postgres/main/shared/lib",
         "main": "libs/backend/postgres/main/shared/lib/src/index.ts",
         "tsConfig": "libs/backend/postgres/main/shared/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -25,9 +26,13 @@
       "inputs": [
         "default",
         "^production",
-        { "externalDependencies": ["vitest"] }
+        {
+          "externalDependencies": ["vitest"]
+        }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/postgres/main/shared"]
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/backend/postgres/main/shared/lib"
+      ]
     }
   }
 }

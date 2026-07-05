@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/design-tokens",
         "main": "libs/common/design-tokens/lib/src/index.ts",
         "tsConfig": "libs/common/design-tokens/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     }
   }

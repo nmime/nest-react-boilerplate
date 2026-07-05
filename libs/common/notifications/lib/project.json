@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/notifications",
         "main": "libs/common/notifications/lib/src/index.ts",
         "tsConfig": "libs/common/notifications/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

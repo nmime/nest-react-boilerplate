@@ -1,6 +1,6 @@
 # Health, readiness, and liveness runbook
 
-Endpoints are provided by the shared `BaseHealthController` (`libs/backend/common/health`).
+Endpoints are provided by the shared `BaseHealthController` (`libs/backend/common/health/lib`).
 See [architecture docs](architecture.md) for module boundaries and [API conventions](api-conventions.md) for response envelope shapes.
 
 ## Endpoints

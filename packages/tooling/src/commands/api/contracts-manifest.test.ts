@@ -10,9 +10,9 @@ describe("api contracts manifest", () => {
     assert.deepEqual(
       manifest.openapi.map((contract) => contract.artifactPath),
       [
-        "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json",
-        "apps/backend/user-app-api/contracts/openapi/user-app-api.json",
-        "apps/backend/admin-app-api/contracts/openapi/admin-app-api.json",
+        "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json",
+        "apps/backend/user/user-app-api/contracts/openapi/user-app-api.json",
+        "apps/backend/admin/admin-app-api/contracts/openapi/admin-app-api.json",
       ],
     );
     assert.deepEqual(

@@ -22,9 +22,12 @@ secondary TS path aliases that point at the same source root.
 
 ## Backend apps
 
-- `admin-app-api` in `apps/backend/admin-app-api`
-- `user-app-api` in `apps/backend/user-app-api`
-- `auth-app-api` in `apps/backend/auth-app-api`
+- `admin-app-api` in `apps/backend/admin/admin-app-api`
+- `user-app-api` in `apps/backend/user/user-app-api`
+- `auth-app-api` in `apps/backend/auth/auth-app-api`
+- `discord-app-api` in `apps/backend/discord/discord-app-api`
+- `telegram-bot-api` in `apps/backend/telegram/telegram-bot-api`
+- `telegram-bot-worker` in `apps/backend/telegram/telegram-bot-worker`
 
 Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend-common-health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
 
@@ -41,20 +44,21 @@ Current `libs/common` placement decisions:
 | `libs/common/i18n` (`@app/common-i18n`)                   | Keep common                         | Locale types, translation lookup, fallback behavior, interpolation, and request-locale helpers are shared by frontend UI/API support and backend response/locale middleware. Locale JSON assets live outside the library as thin scoped files under root `i18n/<locale>/<scope>/<component>.json`, with `en` as fallback.               |
 | `libs/common/notifications` (`@app/common-notifications`) | Keep common                         | The package exposes provider-neutral notification/email contracts plus noop/in-memory implementations for tests and local development. Real delivery adapters should be added under backend-specific infrastructure, but the message/result contract can remain shared.                                                                 |
 | `libs/common/websocket` (`@app/common-websocket`)         | Keep common for now; backend-tagged | It is currently an adapter/client abstraction and broadcast operation contract with no browser or Nest dependency. It is tagged `platform:backend` because no frontend consumer exists today; split into backend/frontend packages only when a browser websocket client or backend gateway implementation needs platform-specific code. |
-| `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common                         | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags`.                                                                                  |
+| `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common                         | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.                                                                              |
 
-- `libs/backend/common/bootstrap` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
-- `libs/backend/common/exception` provides RFC 9457 Problem Details exceptions, the `ProblemDetails` model, the `BaseException` model, the `Exception` factory, status mapping, and `ApiExceptions`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
-- `libs/backend/common/health` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
-- `libs/backend/common/response` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
-- `libs/backend/common/swagger` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
-- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags`.
+- `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions, the `ProblemDetails` model, the `BaseException` model, the `Exception` factory, status mapping, and `ApiExceptions`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
+- `libs/backend/common/health/lib` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
+- `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
+- `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
+- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.
 - `libs/common/notifications` defines cross-platform notification/email provider contracts plus noop/in-memory implementations for local development and tests.
-- `libs/backend/common/validation` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
-- `libs/backend/feature/auth/shared` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
-- `libs/backend/feature/auth/main` contains register/login/me/logout controllers and JWT/password application services.
-- `libs/backend/feature/user/shared` and `libs/backend/feature/user/main` contain the protected user profile feature.
-- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC/permission logic. `libs/backend/feature/admin/main` contains the protected admin API orchestration.
+- `libs/backend/common/validation/lib` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
+- `libs/backend/feature/auth/shared/lib` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
+- `libs/backend/feature/auth/main/lib` contains register/login/me/logout controllers and JWT/password application services.
+- `libs/backend/feature/user/shared/lib` and `libs/backend/feature/user/main/lib` contain the protected user profile feature.
+- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC/permission logic. `libs/backend/feature/admin/main/lib` contains the protected admin API orchestration.
+- Bot behavior is feature code: Discord bot logic lives in `libs/backend/feature/discord/bot/lib` (`@app/backend-feature-discord-bot`) and Telegram bot logic lives in `libs/backend/feature/telegram/bot/lib` (`@app/backend-feature-telegram-bot`). Deployable bot HTTP/worker processes stay under `apps/backend/<scope>/<app>` beside other deployables for that scope.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
 - `libs/common/design-tokens` is the renderer-neutral design-token package for web CSS variables and native Tamagui theme values.
@@ -75,7 +79,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
 - `type:asset` is for source-controlled static inputs such as scoped i18n catalog projects; common catalog adapters may depend on these assets, but assets should not import application code.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
-- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Postgres is modeled by the `libs/backend/postgres/**` source root plus `type:data-access`, not by a second `scope:postgres` tag on domain data-access libraries.
+- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Feature-owned Postgres libraries live under the owning scope, use `type:data-access`, and keep the same `scope:<domain>` tag instead of inventing a second database scope.
 
 New libraries should use the taxonomy above and, where practical, keep feature, data-access, and test-util responsibilities split.
 
@@ -83,10 +87,11 @@ Platform boundaries are enforced by tags as well as paths: frontend projects mus
 
 ## Library naming conventions
 
-Backend feature libraries use `libs/backend/feature/...` paths and flattened `@app/backend-feature-*` aliases. Admin shared imports must use the explicit platform alias for their runtime:
+Backend feature libraries use `libs/backend/feature/<scope>/<layer>/lib/...` paths and flattened `@app/backend-feature-<scope>-<layer>` aliases. Admin shared imports must use the explicit platform alias for their runtime:
 
 - Feature main: `@app/backend-feature-auth-main`, `@app/backend-feature-user-main`, `@app/backend-feature-admin-main`.
 - Feature shared: `@app/backend-feature-auth-shared`, `@app/backend-feature-user-shared`, `@app/frontend-feature-admin-shared` (frontend admin contracts), and `@app/backend-feature-admin-shared` (backend admin RBAC/permission logic).
+- Bot features: `@app/backend-feature-discord-bot`, `@app/backend-feature-telegram-bot`.
 - Data access: `@app/backend-postgres-main`, `@app/backend-postgres-main-auth`.
 - Test utilities: `@app/backend-common-component-test`.
 - Frontend API support: `@app/frontend-api-support`.
@@ -103,7 +108,7 @@ For the next DB stage, data-access libs should contain `entity/`, `repository/`,
 
 ## Postgres data-access layer
 
-The first data-access libraries live under `libs/backend/postgres/main/*/lib`; import them through their `@app/backend-postgres-main*` aliases instead of spelling source-file paths in application code.
+Shared Postgres infrastructure lives under `libs/backend/postgres/main/shared/lib`; feature-owned data-access libraries live under the owning scope, such as `libs/backend/postgres/main/auth/lib`. Import them through their `@app/backend-postgres-main-*` aliases instead of spelling source-file paths in application code.
 
 - `@app/backend-postgres-main` (`libs/backend/postgres/main/shared/lib`, source root `libs/backend/postgres/main/shared/lib/src`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
 - `@app/backend-postgres-main-auth` (`libs/backend/postgres/main/auth/lib`, source root `libs/backend/postgres/main/auth/lib/src`) owns auth persistence objects such as `entity/` and `repository/` exports.
@@ -114,7 +119,7 @@ Repository wrappers return `neverthrow` `ResultAsync` values so feature code can
 
 ## API contracts and clients
 
-OpenAPI producer output is committed as JSON under `apps/backend/*-app-api/contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
+OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
 
 ## i18n and Problem Details
 
@@ -167,7 +172,7 @@ graph TD
   LegacyFrontendUi --> FrontendRuntime
   ApiClient --> ApiSupport[@app/frontend-api-support]
   ApiClient --> GeneratedClients[libs/frontend/api-client/lib/src/generated/**]
-  GeneratedClients --> OpenApi[apps/backend/*-app-api/contracts/openapi/*.json]
+  GeneratedClients --> OpenApi[apps/backend/*/*-app-api/contracts/openapi/*.json]
   OpenApi --> SharedTypes[libs/common/api-contracts/lib/src/generated/**]
   UserApp --> ConsumerPact[apps/frontend/app/contracts/consumers/frontend-auth.pact.json]
   ConsumerPact --> AuthApi[auth-app-api]
@@ -185,8 +190,8 @@ graph TD
 
 ## Current contract and persistence layout
 
-OpenAPI producer output is committed as JSON under `apps/backend/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
+OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest and layout helpers are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, `packages/tooling/src/commands/api/contract-layout.ts`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
 
 There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
 
-Canonical Postgres data access lives under `libs/backend/postgres/**`. Use `@app/backend-postgres-main`, `@app/backend-postgres-main-auth`, and `@app/backend-postgres-main-feature-flags` instead of non-canonical database paths. API errors standardize on RFC 9457 Problem Details through the singular `@app/backend-common-exception` alias.
+Canonical Postgres data access lives under `libs/backend/postgres/main/shared/lib` for shared database infrastructure and `libs/backend/postgres/main/<scope>/lib` for feature-owned persistence. Use `@app/backend-postgres-main`, `@app/backend-postgres-main-auth`, and `@app/backend-postgres-main-feature-flags` instead of non-canonical database paths. API errors standardize on RFC 9457 Problem Details through the singular `@app/backend-common-exception` alias.

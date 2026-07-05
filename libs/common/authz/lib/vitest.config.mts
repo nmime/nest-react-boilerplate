@@ -6,12 +6,12 @@ import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-co
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../dist/out-tsc/libs/common/authz",
+  cacheDir: "../../../../node_modules/.vitest/libs/common/authz/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
-    coverage: fullCoverage("../../../../coverage/libs/common/authz", [
+    coverage: fullCoverage("../../../../coverage/libs/common/authz/lib", [
       "src/**/*.ts",
     ]),
   },

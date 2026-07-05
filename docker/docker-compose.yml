@@ -76,7 +76,7 @@ services:
       target: backend
       args:
         NX_PROJECT: admin-app-api
-        BUILD_OUTPUT: dist/apps/backend/admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     restart: unless-stopped
     environment: *backend-env
     depends_on:
@@ -96,7 +96,7 @@ services:
       target: backend
       args:
         NX_PROJECT: user-app-api
-        BUILD_OUTPUT: dist/apps/backend/user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     restart: unless-stopped
     environment: *backend-env
     depends_on:
@@ -116,7 +116,7 @@ services:
       target: backend
       args:
         NX_PROJECT: auth-app-api
-        BUILD_OUTPUT: dist/apps/backend/auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     restart: unless-stopped
     environment: *backend-env
     depends_on:

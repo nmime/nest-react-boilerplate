@@ -14,10 +14,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/common/network",
+        "outputPath": "dist/libs/backend/common/network/lib",
         "main": "libs/backend/common/network/lib/src/index.ts",
         "tsConfig": "libs/backend/common/network/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -34,7 +35,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/network"]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/network/lib"]
     }
   }
 }

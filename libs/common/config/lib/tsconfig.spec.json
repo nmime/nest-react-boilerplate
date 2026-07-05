@@ -1,9 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/libs/common/config/spec",
+    "outDir": "../../../../dist/out-tsc/libs/common/config-spec",
     "types": ["node", "vitest/globals"]
   },
   "include": ["src/**/*.ts", "vitest.config.mts"],
-  "references": [{ "path": "./tsconfig.lib.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
 }

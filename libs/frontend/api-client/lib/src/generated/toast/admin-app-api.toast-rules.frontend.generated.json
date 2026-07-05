@@ -3,7 +3,7 @@
   "version": 1,
   "generatedBy": "@repo/tooling api toast-config generate",
   "source": {
-    "openapi": "apps/backend/admin-app-api/contracts/openapi/admin-app-api.json",
+    "openapi": "apps/backend/admin/admin-app-api/contracts/openapi/admin-app-api.json",
     "app": "admin-app-api"
   },
   "rules": [

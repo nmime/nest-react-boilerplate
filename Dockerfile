@@ -58,7 +58,7 @@ RUN test -n "${NX_PROJECT}" \
 #                     would fail on unapproved build scripts; backend runtime deps are
 #                     pure JS and need none
 FROM builder AS backend-deps
-ARG BUILD_OUTPUT=dist/apps/backend/admin-app-api
+ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 WORKDIR /workspace/${BUILD_OUTPUT}
 RUN pnpm install --prod --offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
 
@@ -66,10 +66,10 @@ FROM node:${NODE_VERSION} AS backend
 ENV NODE_ENV=production \
   PORT=3000
 WORKDIR /app
-ARG BUILD_OUTPUT=dist/apps/backend/admin-app-api
-ENV APP_MAIN=${BUILD_OUTPUT}/src/main.js
-# Placed at /app so both the app (dist/apps/**) and the libs it inlines
-# (dist/libs/**) resolve modules from a shared ancestor node_modules.
+ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
+ENV BUILD_OUTPUT=${BUILD_OUTPUT}
+# Placed at /app so both the app and the libs it inlines resolve modules from
+# a shared ancestor node_modules.
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
@@ -77,7 +77,7 @@ COPY --from=builder /workspace/i18n ./i18n
 RUN node -e "require('./dist/libs/common/i18n/src/locales.js')"
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "node \"$APP_MAIN\""]
+CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 
 FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

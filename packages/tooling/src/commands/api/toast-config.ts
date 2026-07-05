@@ -61,7 +61,7 @@ export interface ToastConfigRunOptions {
 
 export function runToastConfigGenerate({ argv = [], workspaceRoot = process.cwd() }: ToastConfigRunOptions = {}): number {
   const parsed = parseArgs(argv);
-  const outputRoot = parsed.options.get("output-root") ?? "apps/backend";
+  const outputRoot = parsed.options.get("output-root") ?? "backend";
   const write = !parsed.flags.has("dry-run");
   const contracts = discoverOpenApiContracts(workspaceRoot, parsed.options.get("contracts-root"));
   const generated = generateToastConfigs({ workspaceRoot, contracts, outputRoot, write });
@@ -71,7 +71,7 @@ export function runToastConfigGenerate({ argv = [], workspaceRoot = process.cwd(
 
 export function runToastConfigCheck({ argv = [], workspaceRoot = process.cwd() }: ToastConfigRunOptions = {}): number {
   const parsed = parseArgs(argv);
-  const outputRoot = parsed.options.get("output-root") ?? "apps/backend";
+  const outputRoot = parsed.options.get("output-root") ?? "backend";
   const contracts = discoverOpenApiContracts(workspaceRoot, parsed.options.get("contracts-root"));
   const result = checkToastConfigs({ workspaceRoot, contracts, outputRoot });
 
@@ -86,7 +86,7 @@ export function runToastConfigCheck({ argv = [], workspaceRoot = process.cwd() }
 }
 
 export function discoverOpenApiContracts(workspaceRoot = process.cwd(), contractsRoot?: string): DiscoveredContract[] {
-  const roots = contractsRoot ? [join(workspaceRoot, contractsRoot)] : [join(workspaceRoot, "apps/backend")];
+  const roots = contractsRoot ? [join(workspaceRoot, contractsRoot)] : [join(workspaceRoot, "apps", "backend")];
   const contracts: DiscoveredContract[] = [];
 
   for (const root of roots) visit(root);
@@ -106,14 +106,21 @@ export function discoverOpenApiContracts(workspaceRoot = process.cwd(), contract
       }
       if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
       const relativePath = relative(workspaceRoot, entryPath).replaceAll("\\", "/");
-      if (!/apps\/backend\/[^/]+-app-api\/contracts\/openapi\/[^/]+\.json$/u.test(relativePath) && !contractsRoot) continue;
+      if (
+        !/apps\/backend\/[^/]+\/[^/]+-app-api\/contracts\/openapi\/[^/]+\.json$/u.test(
+          relativePath,
+        ) &&
+        !contractsRoot
+      ) {
+        continue;
+      }
       const app = relativePath.split("/").at(-1)?.replace(/\.json$/u, "") ?? "";
       contracts.push({ app, path: entryPath, relativePath });
     }
   }
 }
 
-export function generateToastConfigs({ workspaceRoot = process.cwd(), contracts, outputRoot = "apps/backend", write = true }: { workspaceRoot?: string; contracts: DiscoveredContract[]; outputRoot?: string; write?: boolean }): GeneratedConfig[] {
+export function generateToastConfigs({ workspaceRoot = process.cwd(), contracts, outputRoot = "backend", write = true }: { workspaceRoot?: string; contracts: DiscoveredContract[]; outputRoot?: string; write?: boolean }): GeneratedConfig[] {
   const generated: GeneratedConfig[] = [];
   for (const contract of contracts) {
     const doc = readJson<OpenApiDocument>(contract.path);
@@ -175,7 +182,7 @@ function frontendToastRulesPath(workspaceRoot: string, contract: DiscoveredContr
   return join(workspaceRoot, "libs/frontend/api-client/lib/src/generated/toast", `${contract.app}.toast-rules.frontend.generated.json`);
 }
 
-export function checkToastConfigs({ workspaceRoot = process.cwd(), contracts, outputRoot = "apps/backend" }: { workspaceRoot?: string; contracts: DiscoveredContract[]; outputRoot?: string }): { errors: string[]; contracts: number; rules: number } {
+export function checkToastConfigs({ workspaceRoot = process.cwd(), contracts, outputRoot = "backend" }: { workspaceRoot?: string; contracts: DiscoveredContract[]; outputRoot?: string }): { errors: string[]; contracts: number; rules: number } {
   const errors: string[] = [];
   let ruleCount = 0;
   const contractBySource = new Map(contracts.map((contract) => [contract.relativePath, contract]));
@@ -389,7 +396,7 @@ function ruleKey(rule: unknown): string {
 
 function toastConfigPath(workspaceRoot: string, contract: DiscoveredContract, outputRoot: string): string {
   const relativeContractDir = dirname(contract.relativePath).replace(/\/openapi$/u, "/toast");
-  if (outputRoot === "apps/backend") return join(workspaceRoot, relativeContractDir, `${contract.app}.toast-rules.generated.json`);
+  if (outputRoot === "backend") return join(workspaceRoot, relativeContractDir, `${contract.app}.toast-rules.generated.json`);
   return join(workspaceRoot, outputRoot, `${contract.app}.toast-rules.generated.json`);
 }
 

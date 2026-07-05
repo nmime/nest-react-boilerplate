@@ -1,4 +1,4 @@
-import { lstatSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 const rootConfigFileNames = new Set([
@@ -21,8 +21,17 @@ export function runCheckLibraryConfigs(
 ): number {
   const root = options.workspaceRoot ?? process.cwd();
   const errors: string[] = [];
+  const legacyBackendRoot = join(root, "backend");
 
-  walk(join(root, "libs"), root, errors);
+  if (existsSync(legacyBackendRoot)) {
+    errors.push(
+      "backend: root backend directory is retired; backend apps live under apps/backend/<scope>/<app> and backend libraries live under libs/backend/**",
+    );
+  }
+
+  for (const directory of [join(root, "libs")]) {
+    if (existsSync(directory)) walk(directory, root, errors);
+  }
 
   if (errors.length > 0) {
     console.error("Library config placement check failed:");
@@ -78,10 +87,10 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   if (
     fileName !== undefined &&
     rootConfigFileNames.has(fileName) &&
-    segments.at(-2) !== "lib"
+    !isAllowedLibraryConfigPath(segments)
   ) {
     errors.push(
-      `${path}: library config file must be inside the library lib/ folder`,
+      `${path}: library config file must be inside a library root such as libs/backend/feature/<scope>/<layer>/lib or libs/<scope>/<name>/lib`,
     );
   }
 
@@ -99,9 +108,20 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
 
   const storybookIndex = segments.indexOf(".storybook");
 
-  if (storybookIndex >= 0 && segments.at(storybookIndex - 1) !== "lib") {
+  if (storybookIndex >= 0 && !isAllowedStorybookPath(segments, storybookIndex)) {
     errors.push(
-      `${path}: library Storybook config must be inside the library lib/ folder`,
+      `${path}: library Storybook config must be inside a library root such as libs/backend/feature/<scope>/<layer>/lib or libs/<scope>/<name>/lib`,
     );
   }
+}
+
+function isAllowedLibraryConfigPath(segments: string[]): boolean {
+  return segments[0] === "libs" && segments.at(-2) === "lib";
+}
+
+function isAllowedStorybookPath(
+  segments: string[],
+  storybookIndex: number,
+): boolean {
+  return segments[0] === "libs" && segments.at(storybookIndex - 1) === "lib";
 }

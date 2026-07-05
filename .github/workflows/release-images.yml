@@ -59,19 +59,19 @@ jobs:
             target: backend
             build-args: |
               NX_PROJECT=admin-app-api
-              BUILD_OUTPUT=dist/apps/backend/admin-app-api
+              BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
               PNPM_VERSION=11.6.0
           - name: user-app-api
             target: backend
             build-args: |
               NX_PROJECT=user-app-api
-              BUILD_OUTPUT=dist/apps/backend/user-app-api
+              BUILD_OUTPUT=dist/apps/backend/user/user-app-api
               PNPM_VERSION=11.6.0
           - name: auth-app-api
             target: backend
             build-args: |
               NX_PROJECT=auth-app-api
-              BUILD_OUTPUT=dist/apps/backend/auth-app-api
+              BUILD_OUTPUT=dist/apps/backend/auth/auth-app-api
               PNPM_VERSION=11.6.0
           - name: admin-app
             target: frontend

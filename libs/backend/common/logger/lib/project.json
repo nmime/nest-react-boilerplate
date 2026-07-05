@@ -14,10 +14,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/common/logger",
+        "outputPath": "dist/libs/backend/common/logger/lib",
         "main": "libs/backend/common/logger/lib/src/index.ts",
         "tsConfig": "libs/backend/common/logger/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -34,7 +35,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/logger"]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/logger/lib"]
     }
   }
 }

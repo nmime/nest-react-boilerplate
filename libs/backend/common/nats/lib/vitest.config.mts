@@ -6,7 +6,7 @@ import { fullCoverage } from "../../../../../packages/tooling/src/testing/vitest
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../../dist/out-tsc/libs/backend/common/nats",
+  cacheDir: "../../../../../node_modules/.vitest/libs/backend/common/nats/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
@@ -15,7 +15,7 @@ export default defineConfig({
     maxWorkers: 1,
     testTimeout: 30_000,
     coverage: fullCoverage(
-      "../../../../../coverage/libs/backend/common/nats",
+      "../../../../coverage/libs/backend/common/nats/lib",
       ["src/**/*.ts"],
       [],
     ),

@@ -54,7 +54,7 @@ describe("api toast config tooling", () => {
     try {
       const contracts = discoverOpenApiContracts(workspaceRoot);
       assert.equal(contracts.length, 1);
-      assert.equal(contracts[0].relativePath, "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json");
+      assert.equal(contracts[0].relativePath, "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json");
 
       const rules = collectToastRules(openApi, "auth-app-api");
       assert.deepEqual(
@@ -79,7 +79,7 @@ describe("api toast config tooling", () => {
     try {
       const contracts = discoverOpenApiContracts(workspaceRoot);
       const generated = generateToastConfigs({ workspaceRoot, contracts, write: true });
-      assert.equal(generated[0].path, "apps/backend/auth-app-api/contracts/toast/auth-app-api.toast-rules.generated.json");
+      assert.equal(generated[0].path, "apps/backend/auth/auth-app-api/contracts/toast/auth-app-api.toast-rules.generated.json");
 
       let result = checkToastConfigs({ workspaceRoot, contracts });
       assert.deepEqual(result.errors, []);
@@ -102,7 +102,7 @@ describe("api toast config tooling", () => {
 
 function makeWorkspace() {
   const workspaceRoot = mkdtempSync(join(tmpdir(), "toast-config-test-"));
-  const contractPath = join(workspaceRoot, "apps/backend/auth-app-api/contracts/openapi/auth-app-api.json");
+  const contractPath = join(workspaceRoot, "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json");
   mkdirSync(dirname(contractPath), { recursive: true });
   writeFileSync(contractPath, `${JSON.stringify(openApi, null, 2)}\n`);
   return workspaceRoot;

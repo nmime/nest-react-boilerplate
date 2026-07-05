@@ -9,10 +9,11 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/backend/postgres/main/feature-flags",
+        "outputPath": "dist/libs/backend/postgres/main/feature-flags/lib",
         "main": "libs/backend/postgres/main/feature-flags/lib/src/index.ts",
         "tsConfig": "libs/backend/postgres/main/feature-flags/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {
@@ -30,7 +31,7 @@
         }
       ],
       "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/postgres/main/feature-flags"
+        "{workspaceRoot}/coverage/libs/backend/postgres/main/feature-flags/lib"
       ]
     }
   }

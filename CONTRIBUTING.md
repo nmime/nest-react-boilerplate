@@ -29,10 +29,10 @@ cp .env.example .env
 
 ## Workspace rules
 
-- Put deployable apps under `apps/**`.
-- Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/**`, `libs/backend/postgres/**`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in thin scoped files under `i18n/<locale>/<scope>/<component>.json`; keep each file under 60 keys and 90 non-empty lines.
-- Canonical PostgreSQL shared infrastructure is `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below `libs/backend/postgres/main/<feature>/lib`.
-- Canonical OpenAPI producer output is `apps/backend/*-app-api/contracts/openapi/*.json`; shared generated contract review types are in `libs/common/api-contracts/lib/src/generated`; frontend generated clients are in `libs/frontend/api-client/lib/src/generated`.
+- Put backend deployables under `apps/backend/<scope>/**` and frontend deployables under `apps/frontend/**`.
+- Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/<scope>/<layer>/lib/**`, `libs/backend/postgres/main/shared/lib`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in thin scoped files under `i18n/<locale>/<scope>/<component>.json`; keep each file under 60 keys and 90 non-empty lines.
+- Canonical PostgreSQL shared infrastructure is `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below the owning scope, for example `libs/backend/postgres/main/auth/lib`.
+- Canonical OpenAPI producer output is `apps/backend/*/*-app-api/contracts/openapi/*.json`; shared generated contract review types are in `libs/common/api-contracts/lib/src/generated`; frontend generated clients are in `libs/frontend/api-client/lib/src/generated`.
 - Do not invent top-level contract directories, alternate OpenAPI consumer folders, or duplicate generated-client locations.
 - Use Nx project names in commands.
 - Keep cross-project imports on the configured `@app/*` path aliases; use `@app/frontend-feature-admin-shared` and `@app/backend-feature-admin-shared` for admin shared imports.
@@ -74,7 +74,7 @@ Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage
 
 ## Backend changes
 
-- Use `@app/backend-common-bootstrap` (`libs/backend/common/bootstrap`) for Nest app startup.
+- Use `@app/backend-common-bootstrap` (`libs/backend/common/bootstrap/lib`) for Nest app startup.
 - Preserve Helmet, strict validation, and secure production CORS behavior.
 - Keep `GET /health` available for deploy health checks.
 - Never log secrets or full environment objects.

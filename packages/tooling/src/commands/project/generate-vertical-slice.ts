@@ -5,7 +5,7 @@ import {
   readdirSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import type { CommandContext } from "../../cli";
 
 interface GenerateVerticalSliceOptions {
@@ -182,13 +182,22 @@ function parseOptions(argv: string[]): {
 }
 
 function listApiApps(workspaceRoot: string): string[] {
-  const appsRoot = join(workspaceRoot, "apps/backend");
+  const appsRoot = join(workspaceRoot, "apps", "backend");
 
   try {
     return readdirSync(appsRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
-      .filter((appName) => existsSync(join(appsRoot, appName, "project.json")))
+      .filter((scope) => scope.isDirectory())
+      .flatMap((scope) => {
+        const scopeAppsRoot = join(appsRoot, scope.name);
+        if (!existsSync(scopeAppsRoot)) return [];
+
+        return readdirSync(scopeAppsRoot, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => entry.name)
+          .filter((appName) =>
+            existsSync(join(scopeAppsRoot, appName, "project.json")),
+          );
+      })
       .sort((left, right) => left.localeCompare(right));
   } catch {
     return [];
@@ -266,9 +275,9 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `${base}/shared/lib/src`,
       `dist/${base}/shared`,
       `${base}/shared/lib/tsconfig.lib.json`,
-      ["platform:shared", "type:feature-shared", `scope:${names.kebab}`],
+      ["platform:backend", "type:feature-shared", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/shared/lib`, 6),
+    tsConfig(`${base}/shared/lib`),
     {
       path: `${base}/main/lib/src/index.ts`,
       contents: `export * from "./${names.kebab}.module";\nexport * from "./${names.kebab}.controller";\nexport * from "./${names.kebab}.service";\nexport * from "${sharedAlias}";\n`,
@@ -297,7 +306,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `${base}/main/lib/tsconfig.lib.json`,
       ["platform:backend", "type:feature-main", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/main/lib`, 6),
+    tsConfig(`${base}/main/lib`),
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
       contents: `export * from "./infrastructure/data-access";\n`,
@@ -336,9 +345,9 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `libs/backend/postgres/main/${names.kebab}/lib/src`,
       `dist/libs/backend/postgres/main/${names.kebab}`,
       `libs/backend/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,
-      ["platform:backend", "type:database", `scope:${names.kebab}`],
+      ["platform:backend", "type:data-access", `scope:${names.kebab}`],
     ),
-    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`, 6),
+    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`),
     {
       path: `libs/frontend/api-client/lib/src/features/${names.kebab}.ts`,
       contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) =>\n      request<${names.pascal}Dto>("/${names.kebab}", {\n        body: JSON.stringify(input),\n        headers: { "content-type": "application/json" },\n        method: "POST",\n      }),\n  };\n}\n`,
@@ -420,11 +429,10 @@ function tsConfigSpec(root: string): TemplateFile {
 
 function vitestConfig(root: string): TemplateFile {
   const prefix = relativePrefix(root);
-  const coverageRoot = root.replace("/lib", "");
 
   return {
     path: `${root}/vitest.config.mts`,
-    contents: `/// <reference types="vitest" />\nimport { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";\nimport { defineConfig } from "vitest/config";\n// nx-ignore-next-line\nimport { fullCoverage } from "${prefix}/packages/tooling/src/testing/vitest-coverage.mts";\n\nexport default defineConfig({\n  plugins: [nxViteTsPaths()],\n  cacheDir: "${prefix}/dist/out-tsc/${coverageRoot}",\n  test: {\n    environment: "node",\n    include: ["src/**/*.spec.ts"],\n    globals: false,\n    coverage: fullCoverage("${prefix}/coverage/${coverageRoot}", ["src/**/*.ts"], []),\n  },\n});\n`,
+    contents: `/// <reference types="vitest" />\nimport { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";\nimport { defineConfig } from "vitest/config";\n// nx-ignore-next-line\nimport { fullCoverage } from "${prefix}/packages/tooling/src/testing/vitest-coverage.mts";\n\nexport default defineConfig({\n  plugins: [nxViteTsPaths()],\n  cacheDir: "${prefix}/node_modules/.vitest/${root}",\n  test: {\n    environment: "node",\n    include: ["src/**/*.spec.ts"],\n    globals: false,\n    coverage: fullCoverage("${prefix}/coverage/${root}", ["src/**/*.ts"], []),\n  },\n});\n`,
   };
 }
 
@@ -466,6 +474,7 @@ function projectJson(
               main: `${sourceRoot}/index.ts`,
               tsConfig,
               assets: [],
+              rootDir: ".",
             },
           },
           test: {
@@ -492,8 +501,8 @@ function projectJson(
   };
 }
 
-function tsConfig(root: string, depth: number): TemplateFile {
-  const prefix = Array.from({ length: depth }, () => "..").join("/");
+function tsConfig(root: string): TemplateFile {
+  const prefix = relative(root, ".").split("/").map(() => "..").join("/");
 
   return {
     path: `${root}/tsconfig.json`,

@@ -7,13 +7,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/backend-common-component-test": new URL(
-        "../../../../../../libs/backend/common/component-test/lib/src/index.ts",
+        "../../../../libs/backend/common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },
   },
   cacheDir:
-    "../../../../../../dist/out-tsc/libs/backend/feature/auth/test-component",
+    "../../../../dist/out-tsc/libs/backend/feature/auth/test/lib-component",
   test: {
     environment: "node",
     include: ["src/**/*.component-spec.ts"],
@@ -24,7 +24,7 @@ export default defineConfig({
       enabled: false,
       provider: "v8",
       reportsDirectory:
-        "../../../../../../coverage/libs/backend/feature/auth/test-component",
+        "../../../../coverage/libs/backend/feature/auth/test/lib-component",
       reporter: ["text", "lcov"],
       exclude: ["src/**/*.component-spec.ts"],
     },

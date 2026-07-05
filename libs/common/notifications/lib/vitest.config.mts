@@ -6,7 +6,7 @@ import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-co
 
 export default defineConfig({
   plugins: [nxViteTsPaths()],
-  cacheDir: "../../../../dist/out-tsc/libs/common/notifications",
+  cacheDir: "../../../../node_modules/.vitest/libs/common/notifications/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],

@@ -1,6 +1,6 @@
 # OpenTelemetry configuration runbook
 
-This repository ships an OpenTelemetry SDK wrapper in `libs/backend/common/otel`.
+This repository ships an OpenTelemetry SDK wrapper in `libs/backend/common/otel/lib`.
 The SDK uses `@opentelemetry/api` for tracing and `@opentelemetry/sdk-node` for the full pipeline.
 
 ## Environment variables

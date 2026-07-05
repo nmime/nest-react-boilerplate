@@ -4,7 +4,7 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
-  cacheDir: "../../../../dist/out-tsc/libs/common/i18n",
+  cacheDir: "../../../../node_modules/.vitest/libs/common/i18n/lib",
   plugins: [nxViteTsPaths()],
   test: {
     environment: "node",

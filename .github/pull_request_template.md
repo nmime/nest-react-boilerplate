@@ -22,14 +22,14 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `apps/frontend/admin`
 - [ ] `apps/frontend/app`
 - [ ] `apps/frontend/landing`
-- [ ] `apps/backend/admin-app-api`
-- [ ] `apps/backend/user-app-api`
-- [ ] `apps/backend/auth-app-api`
+- [ ] `apps/backend/admin/admin-app-api`
+- [ ] `apps/backend/user/user-app-api`
+- [ ] `apps/backend/auth/auth-app-api`
 - [ ] `libs/frontend/ui` / design-system Storybook
 - [ ] `libs/backend/common/*`
 - [ ] `libs/common/*` shared cross-platform libraries
-- [ ] `libs/backend/feature/*`
-- [ ] `libs/backend/postgres/*`
+- [ ] `libs/backend/postgres/main/shared/lib`
+- [ ] `libs/backend/postgres/main/*/lib`
 - [ ] Tooling / CI / docs
 
 ## Changes

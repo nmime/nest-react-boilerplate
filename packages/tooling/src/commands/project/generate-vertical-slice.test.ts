@@ -30,8 +30,13 @@ function createWorkspace(): string {
     JSON.stringify({ compilerOptions: { paths: {} } }, null, 2),
   );
 
-  for (const appName of ["auth-app-api", "user-app-api"]) {
-    const appRoot = join(workspaceRoot, "apps/backend", appName);
+  const apps = [
+    ["auth", "auth-app-api"],
+    ["user", "user-app-api"],
+  ];
+
+  for (const [scope, appName] of apps) {
+    const appRoot = join(workspaceRoot, "apps", "backend", scope, appName);
     mkdirSync(appRoot, { recursive: true });
     writeFileSync(join(appRoot, "project.json"), JSON.stringify({ name: appName }));
   }
@@ -259,12 +264,13 @@ describe("project generate vertical slice", () => {
         readFileSync(join(workspaceRoot, postgresLib, "project.json"), "utf8"),
       );
 
-      // The lib is six directories deep, so both references must climb six levels.
+      // The lib is six directories deep, so both references climb six levels.
       assert.equal(tsconfig.extends, "../../../../../../tsconfig.base.json");
       assert.equal(
         projectJson.$schema,
         "../../../../../../node_modules/nx/schemas/project-schema.json",
       );
+      assert.equal(projectJson.targets.build.options.rootDir, ".");
     } finally {
       removeWorkspace(workspaceRoot);
     }

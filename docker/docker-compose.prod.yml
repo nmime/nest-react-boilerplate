@@ -46,7 +46,7 @@ x-backend-command: &backend-command
       DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
       export DATABASE_URL
     fi
-    exec node "$$APP_MAIN"
+    exec node "$${BUILD_OUTPUT:?set BUILD_OUTPUT}"
 
 x-migrate-command: &migrate-command
   - sh
@@ -160,7 +160,7 @@ services:
       target: backend
       args:
         NX_PROJECT: admin-app-api
-        BUILD_OUTPUT: dist/apps/backend/admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     ports:
       - "127.0.0.1:${ADMIN_APP_API_PORT:-3001}:3000"
 
@@ -173,7 +173,7 @@ services:
       target: backend
       args:
         NX_PROJECT: user-app-api
-        BUILD_OUTPUT: dist/apps/backend/user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     ports:
       - "127.0.0.1:${USER_APP_API_PORT:-3002}:3000"
 
@@ -186,7 +186,7 @@ services:
       target: backend
       args:
         NX_PROJECT: auth-app-api
-        BUILD_OUTPUT: dist/apps/backend/auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     ports:
       - "127.0.0.1:${AUTH_APP_API_PORT:-3003}:3000"
 

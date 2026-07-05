@@ -17,7 +17,7 @@
       "options": {
         "outputPath": "dist/libs/common/i18n",
         "main": "libs/common/i18n/lib/src/index.ts",
-        "rootDir": "libs/common/i18n/lib",
+        "rootDir": ".",
         "tsConfig": "libs/common/i18n/lib/tsconfig.lib.json",
         "assets": ["i18n/**/*.json"]
       }

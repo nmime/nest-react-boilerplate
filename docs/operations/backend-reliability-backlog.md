@@ -45,7 +45,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 - `libs/backend/common/otel/lib/src/otel.ts` — add a Prometheus HTTP server (`prom-client`) or expose OTLP metrics via a `/metrics` route.
 - `libs/backend/common/health/lib/src/` — consider adding a `metrics.controller.ts` under the health module.
-- `apps/backend/*/src/main.ts` — wire the metrics endpoint if not auto-mounted.
+- `backend/*/src/main.ts` — wire the metrics endpoint if not auto-mounted.
 
 **Dependencies:**
 
@@ -156,7 +156,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 **Target area:**
 
-- `libs/backend/postgres/main/auth/lib/` or a new `libs/backend/common/outbox/lib/`:
+- `libs/backend/postgres/main/auth/lib/` or a new `libs/backend/common/outbox/`:
   - `OutboxConsumerService` — polls `transactional_outbox_events` where `status = 'pending'`.
   - `OutboxPublisherService` — publishes to NATS (using existing `libs/backend/common/nats/lib`) or RabbitMQ.
   - Retry with exponential backoff and dead-letter handling.
@@ -188,7 +188,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 **Target area:**
 
-- `apps/backend/auth-app-api/src/health.e2e-spec.ts` — expand or add new e2e specs.
+- `apps/backend/auth/auth-app-api/src/health.e2e-spec.ts` — expand or add new e2e specs.
 - Test scenarios:
   - Unknown route returns RFC 9457 Problem Details (404).
   - Validation pipe failure returns Problem Details (422).
@@ -210,7 +210,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 **Target area:**
 
-- `apps/backend/*/src/` — e2e specs for rate-limited endpoints.
+- `backend/*/src/` — e2e specs for rate-limited endpoints.
 - Test scenarios:
   - Nth request exceeds limit → 429.
   - Rate limit headers present (`X-RateLimit-Limit`, `X-RateLimit-Remaining`).
@@ -234,7 +234,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 **Target area:**
 
-- `apps/backend/*/src/` — e2e spec for shutdown:
+- `backend/*/src/` — e2e spec for shutdown:
   - Send SIGTERM to running NestJS app.
   - Verify: active requests complete, NATS disconnects, Redis disconnects, health endpoint returns 503.
 

@@ -839,17 +839,17 @@ describe("static-check package project reference guard", () => {
       );
       writeText(
         workspaceRoot,
-        "apps/backend/admin-app-api/project.json",
+        "apps/backend/admin/admin-app-api/project.json",
         JSON.stringify({ name: "retired-admin-app-api" }),
       );
       writeText(
         workspaceRoot,
-        "apps/backend/user-app-api/project.json",
+        "apps/backend/user/user-app-api/project.json",
         JSON.stringify({ name: "user-app-api" }),
       );
       writeText(
         workspaceRoot,
-        "apps/backend/auth-app-api/project.json",
+        "apps/backend/auth/auth-app-api/project.json",
         JSON.stringify({ name: "auth-app-api" }),
       );
 

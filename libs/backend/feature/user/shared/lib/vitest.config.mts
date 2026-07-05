@@ -6,14 +6,14 @@ import { fullCoverage } from "../../../../../../packages/tooling/src/testing/vit
 
 export default defineConfig({
   cacheDir:
-    "../../../../../../node_modules/.vitest/out-tsc/libs/backend/feature/user/shared",
+    "../../../../../../node_modules/.vitest/libs/backend/feature/user/shared/lib",
   plugins: [nxViteTsPaths()],
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../../../coverage/libs/backend/feature/user/shared",
+      "../../../../coverage/libs/backend/feature/user/shared/lib",
       ["src/**/*.ts"],
       [],
     ),

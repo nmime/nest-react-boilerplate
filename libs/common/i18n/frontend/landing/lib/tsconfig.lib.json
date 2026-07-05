@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../../../../dist/out-tsc/libs/common/i18n-frontend-landing",
+    "outDir": "../../../../../../dist/out-tsc/libs/common/i18n/frontend/landing",
     "declaration": true,
     "types": ["node"]
   },

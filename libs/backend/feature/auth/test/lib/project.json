@@ -25,7 +25,7 @@
         }
       ],
       "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/feature/auth/test-component"
+        "{workspaceRoot}/coverage/libs/backend/feature/auth/test/lib-component"
       ]
     }
   }

@@ -18,7 +18,8 @@
         "outputPath": "dist/libs/common/api-contracts",
         "main": "libs/common/api-contracts/lib/src/index.ts",
         "tsConfig": "libs/common/api-contracts/lib/tsconfig.lib.json",
-        "assets": []
+        "assets": [],
+        "rootDir": "."
       }
     },
     "test": {

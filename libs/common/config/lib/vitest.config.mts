@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "node",
     globals: true,
     include: ["src/**/*.spec.ts"],
-    coverage: fullCoverage("../../../../coverage/libs/common/config", [
+    coverage: fullCoverage("../../../../coverage/libs/common/config/lib", [
       "src/**/*.ts",
     ]),
   },

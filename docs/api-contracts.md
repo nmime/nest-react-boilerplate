@@ -9,7 +9,7 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 ## Rationale
 
 - Nest controllers remain the source of truth for routes, request/response shapes, auth metadata, and documented problem responses.
-- OpenAPI JSON is committed under `apps/backend/*-app-api/contracts/openapi/` for review, audits, and external client generation.
+- OpenAPI JSON is committed under `apps/backend/*/*-app-api/contracts/openapi/` for review, audits, and external client generation.
 - Shared generated TypeScript contract types live in `libs/common/api-contracts` for DTO/path review.
 - Frontend service wrappers in `@app/frontend-api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, bearer headers, base URLs, and locale handling.
 
@@ -33,10 +33,10 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 
 | Surface                       | Current path or owner                                                                                                                                                                                                | Notes                                                               |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| OpenAPI artifacts             | `apps/backend/*-app-api/contracts/openapi/*.json`                                                                                                                                                                    | One committed producer JSON artifact per backend API.               |
-| Auth OpenAPI                  | `apps/backend/auth-app-api/contracts/openapi/auth-app-api.json`                                                                                                                                                      | Produced from `auth-app-api`.                                       |
-| User OpenAPI                  | `apps/backend/user-app-api/contracts/openapi/user-app-api.json`                                                                                                                                                      | Produced from `user-app-api`.                                       |
-| Admin OpenAPI                 | `apps/backend/admin-app-api/contracts/openapi/admin-app-api.json`                                                                                                                                                    | Produced from `admin-app-api`; manifest name is `admin-app-api`.    |
+| OpenAPI artifacts             | `apps/backend/*/*-app-api/contracts/openapi/*.json`                                                                                                                                                                  | One committed producer JSON artifact per backend API.               |
+| Auth OpenAPI                  | `apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json`                                                                                                                                                 | Produced from `auth-app-api`.                                       |
+| User OpenAPI                  | `apps/backend/user/user-app-api/contracts/openapi/user-app-api.json`                                                                                                                                                 | Produced from `user-app-api`.                                       |
+| Admin OpenAPI                 | `apps/backend/admin/admin-app-api/contracts/openapi/admin-app-api.json`                                                                                                                                              | Produced from `admin-app-api`; manifest name is `admin-app-api`.    |
 | Consumer Pact                 | `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`                                                                                                                                                      | Current frontend consumer contract for auth flows.                  |
 | Shared generated TS           | `libs/common/api-contracts/lib/src/generated/**`                                                                                                                                                                     | Review/DTO/path types generated from OpenAPI.                       |
 | Frontend generated clients    | `libs/frontend/api-client/lib/src/generated/**`                                                                                                                                                                      | Per-service generated client types used by wrappers.                |
@@ -56,7 +56,7 @@ The repository-root `config/` directory is intentionally absent. The API contrac
 flowchart LR
   Controllers[Nest controllers, DTOs, decorators<br/>@ApiBearerAuth / @ApiExceptions / @ApiOkDataResponse]
   Swagger[Swagger export tooling]
-  OpenApi[Committed OpenAPI JSON<br/>apps/backend/*-app-api/contracts/openapi/*.json]
+  OpenApi[Committed OpenAPI JSON<br/>apps/backend/*/*-app-api/contracts/openapi/*.json]
   Manifest[packages/tooling/config/api-contracts.json<br/>schema + layout helpers]
   SharedTypes[Generated shared TS<br/>libs/common/api-contracts/lib/src/generated/**]
   FrontendGenerated[Generated frontend clients<br/>libs/frontend/api-client/lib/src/generated/**]

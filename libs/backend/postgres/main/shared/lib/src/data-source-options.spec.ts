@@ -8,6 +8,9 @@ import {
 import {
   DefaultPostgresDatabase,
   DefaultPostgresHost,
+  DefaultPostgresPoolIdleTimeoutMs,
+  DefaultPostgresPoolMax,
+  DefaultPostgresPoolMin,
   DefaultPostgresPort,
   DefaultPostgresUser,
   PostgresDatabaseConfigService,
@@ -35,7 +38,47 @@ describe("Postgres MikroORM options", () => {
         allOrNothing: true,
       },
       autoLoadEntities: true,
+      pool: {
+        min: DefaultPostgresPoolMin,
+        max: DefaultPostgresPoolMax,
+        idleTimeoutMillis: DefaultPostgresPoolIdleTimeoutMs,
+      },
     });
+    expect(createPostgresMikroOrmOptions({}, {})).not.toHaveProperty(
+      "slowQueryThreshold",
+    );
+  });
+
+  it("reads env-driven pool sizing and slow-query threshold", () => {
+    const options = createPostgresMikroOrmOptions(
+      {},
+      {
+        POSTGRES_POOL_MIN: "5",
+        POSTGRES_POOL_MAX: "50",
+        POSTGRES_POOL_IDLE_TIMEOUT_MS: "30000",
+        POSTGRES_SLOW_QUERY_MS: "250",
+      },
+    );
+
+    expect(options).toMatchObject({
+      pool: { min: 5, max: 50, idleTimeoutMillis: 30000 },
+      slowQueryThreshold: 250,
+    });
+
+    const service = new PostgresDatabaseConfigService();
+    expect(service.poolMin).toBe(DefaultPostgresPoolMin);
+    expect(service.poolMax).toBe(DefaultPostgresPoolMax);
+    expect(service.poolIdleTimeoutMs).toBe(DefaultPostgresPoolIdleTimeoutMs);
+    expect(service.slowQueryMs).toBeUndefined();
+  });
+
+  it("rejects non-numeric pool and slow-query values", () => {
+    expect(() =>
+      createPostgresMikroOrmOptions({}, { POSTGRES_POOL_MAX: "lots" }),
+    ).toThrow(/Invalid environment configuration.*POSTGRES_POOL_MAX/u);
+    expect(() =>
+      createPostgresMikroOrmOptions({}, { POSTGRES_SLOW_QUERY_MS: "slow" }),
+    ).toThrow(/Invalid environment configuration.*POSTGRES_SLOW_QUERY_MS/u);
   });
 
   it("prefers DATABASE_URL when provided", () => {
@@ -129,6 +172,54 @@ describe("Postgres MikroORM options", () => {
         POSTGRES_SSL_REJECT_UNAUTHORIZED: "definitely",
       }),
     ).toThrow("POSTGRES_SSL_REJECT_UNAUTHORIZED must be a boolean value.");
+  });
+
+  it("exposes every resolved setting through the config service getters", () => {
+    const previousEnv = process.env;
+    process.env = {
+      ...previousEnv,
+      DATABASE_URL: "postgres://app:secret@db.example:5432/app_db",
+      POSTGRES_HOST: "db.example",
+      POSTGRES_PORT: "15432",
+      POSTGRES_USER: "app",
+      POSTGRES_PASSWORD: "secret",
+      POSTGRES_DB: "app_db",
+      POSTGRES_SSL: "true",
+      POSTGRES_SSL_REJECT_UNAUTHORIZED: "false",
+      POSTGRES_SYNCHRONIZE: "false",
+      POSTGRES_LOGGING: "true",
+      POSTGRES_POOL_MIN: "3",
+      POSTGRES_POOL_MAX: "42",
+      POSTGRES_POOL_IDLE_TIMEOUT_MS: "12345",
+      POSTGRES_SLOW_QUERY_MS: "500",
+    };
+
+    try {
+      const service = new PostgresDatabaseConfigService();
+      expect(service.databaseUrl).toBe(
+        "postgres://app:secret@db.example:5432/app_db",
+      );
+      expect(service.host).toBe("db.example");
+      expect(service.port).toBe(15432);
+      expect(service.user).toBe("app");
+      expect(service.password).toBe("secret");
+      expect(service.database).toBe("app_db");
+      expect(service.ssl).toBe(true);
+      expect(service.sslRejectUnauthorized).toBe(false);
+      expect(service.synchronize).toBe(false);
+      expect(service.logging).toBe(true);
+      expect(service.poolMin).toBe(3);
+      expect(service.poolMax).toBe(42);
+      expect(service.poolIdleTimeoutMs).toBe(12345);
+      expect(service.slowQueryMs).toBe(500);
+      expect(service.values).toMatchObject({
+        POSTGRES_HOST: "db.example",
+        POSTGRES_POOL_MAX: 42,
+        POSTGRES_SLOW_QUERY_MS: 500,
+      });
+    } finally {
+      process.env = previousEnv;
+    }
   });
 
   it("rejects invalid SSL and logging booleans instead of silently disabling them", () => {

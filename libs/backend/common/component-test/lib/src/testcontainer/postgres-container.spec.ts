@@ -6,6 +6,7 @@ import {
   createPostgresContainer,
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
+  shouldSkipDockerTest,
   stopPostgresContainer,
 } from "./postgres-container";
 
@@ -124,6 +125,15 @@ describe("postgres test container helpers", () => {
       );
 
     expect(hasDockerRuntime()).toBe(false);
+  });
+
+  it("mirrors Docker availability through the skip helper", () => {
+    vi.stubEnv("SKIP_TESTCONTAINERS", "true");
+    expect(shouldSkipDockerTest()).toBe(true);
+
+    vi.stubEnv("SKIP_TESTCONTAINERS", "false");
+    vi.stubEnv("CI", "true");
+    expect(shouldSkipDockerTest()).toBe(false);
   });
 
   it("stops containers when provided and ignores undefined", async () => {

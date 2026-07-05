@@ -11,10 +11,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
-    coverage: fullCoverage(
-      "../../../../../coverage/libs/backend/common/otel",
-      ["src/**/*.ts"],
-      [],
-    ),
+    coverage: fullCoverage("../../../../../coverage/libs/backend/common/otel", [
+      "src/**/*.ts",
+    ]),
   },
 });

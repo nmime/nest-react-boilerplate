@@ -76,6 +76,7 @@ export interface BackendEnvironmentConfig {
     sameSite: SessionSameSite;
     secure: boolean;
     secret: string;
+    sweepIntervalMs: number;
   };
   trustProxy: boolean | number | string;
 }
@@ -134,23 +135,36 @@ interface RateLimitStore {
 const DefaultRateLimitWindowMs = 60_000;
 const DefaultRateLimitMax = 100;
 const DefaultSessionCookieMaxAgeSeconds = 604_800;
+const DefaultSessionSweepIntervalMs = 600_000;
 const MinimumSessionSecretLength = 32;
 const DevelopmentSessionSecretPadding = ":development-session-padding";
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
 class FastifyPostgresSessionStore {
   private initialized: Promise<void> | undefined;
+  private sweepTimer: NodeJS.Timeout | undefined;
   private readonly pool: Pool;
 
   constructor(
     databaseUrl: string,
     private readonly defaultMaxAgeSeconds: number,
+    private readonly sweepIntervalMs: number = DefaultSessionSweepIntervalMs,
   ) {
     this.pool = new Pool({ connectionString: databaseUrl });
   }
 
   async init(): Promise<void> {
     await this.ensureInitialized();
+    this.startExpiredSessionSweep();
+  }
+
+  close(): Promise<void> {
+    if (this.sweepTimer) {
+      clearInterval(this.sweepTimer);
+      this.sweepTimer = undefined;
+    }
+
+    return Promise.resolve();
   }
 
   private ensureInitialized(): Promise<void> {
@@ -158,10 +172,32 @@ class FastifyPostgresSessionStore {
     return this.initialized;
   }
 
+  private startExpiredSessionSweep(): void {
+    if (this.sweepTimer || this.sweepIntervalMs <= 0) {
+      return;
+    }
+
+    this.sweepTimer = setInterval(() => {
+      void this.deleteExpiredSessions();
+    }, this.sweepIntervalMs);
+    // Do not keep the event loop alive solely for the sweep timer.
+    this.sweepTimer.unref();
+  }
+
+  private async deleteExpiredSessions(): Promise<void> {
+    await this.pool.query("DELETE FROM fastify_sessions WHERE expire <= $1", [
+      new Date(),
+    ]);
+  }
+
   get(sessionId: string, callback: SessionStoreGetCallback): void {
     void this.getSession(sessionId)
-      .then((session) => callback(null, session))
-      .catch((error: unknown) => callback(error));
+      .then((session) => {
+        callback(null, session);
+      })
+      .catch((error: unknown) => {
+        callback(error);
+      });
   }
 
   set(
@@ -170,14 +206,22 @@ class FastifyPostgresSessionStore {
     callback: SessionStoreCallback,
   ): void {
     void this.setSession(sessionId, session)
-      .then(() => callback())
-      .catch((error: unknown) => callback(error));
+      .then(() => {
+        callback();
+      })
+      .catch((error: unknown) => {
+        callback(error);
+      });
   }
 
   destroy(sessionId: string, callback: SessionStoreCallback): void {
     void this.destroySession(sessionId)
-      .then(() => callback())
-      .catch((error: unknown) => callback(error));
+      .then(() => {
+        callback();
+      })
+      .catch((error: unknown) => {
+        callback(error);
+      });
   }
 
   private async createTable(client: Pool | PoolClient): Promise<void> {
@@ -200,7 +244,7 @@ class FastifyPostgresSessionStore {
       "SELECT sess, expire FROM fastify_sessions WHERE sid = $1",
       [sessionId],
     );
-    const row = result.rows[0];
+    const row = result.rows.at(0);
     if (!row) {
       return null;
     }
@@ -313,7 +357,7 @@ class MemoryRateLimitStore implements RateLimitStore {
   }
 }
 
-class RedisRateLimitStore implements RateLimitStore {
+export class RedisRateLimitStore implements RateLimitStore {
   readonly name = "redis" as const;
 
   constructor(private readonly redis: RedisClientLike) {}
@@ -323,12 +367,12 @@ class RedisRateLimitStore implements RateLimitStore {
   }
 
   async increment(key: string, windowMs: number): Promise<RateLimitStoreHit> {
-    const count = await this.redis.incr(key);
-    if (count === 1) {
-      await this.redis.expire(key, Math.ceil(windowMs / 1000));
-    }
-
-    return { count, resetAt: Date.now() + windowMs };
+    // A single atomic primitive performs the counter INCR and attaches the
+    // window TTL together, closing the sub-millisecond race where the counter
+    // key could expire between a separate reset-marker SET and the INCR. The
+    // reset time is derived from the key's actual remaining TTL, so it stays
+    // fixed across hits within the window instead of sliding forward.
+    return await this.redis.incrementWithWindow(key, Math.max(windowMs, 1));
   }
 
   async close(): Promise<unknown> {
@@ -520,8 +564,21 @@ function createSessionStore(
     ? new FastifyPostgresSessionStore(
         config.session.databaseUrl,
         config.session.maxAgeSeconds,
+        config.session.sweepIntervalMs,
       )
     : undefined;
+}
+
+function registerSessionStoreShutdown(
+  app: NestFastifyApplication,
+  store: FastifyPostgresSessionStore,
+): void {
+  const fastify = app.getHttpAdapter().getInstance() as {
+    addHook?: (hook: "onClose", handler: () => Promise<void> | void) => void;
+  };
+  fastify.addHook?.("onClose", async () => {
+    await store.close();
+  });
 }
 
 async function registerFastifySession(
@@ -530,6 +587,9 @@ async function registerFastifySession(
 ): Promise<void> {
   const store = createSessionStore(config);
   await store?.init();
+  if (store) {
+    registerSessionStoreShutdown(app, store);
+  }
 
   const fastify = app.getHttpAdapter().getInstance();
   const sessionOptions: FastifySessionOptions = {
@@ -765,6 +825,11 @@ export function resolveBackendEnvironmentConfig(
       sameSite: resolveSessionCookieSameSite(env),
       secure: resolveSessionCookieSecure(isProduction, env),
       secret: resolveSessionSecret(isProduction, env),
+      sweepIntervalMs: readPositiveInteger(
+        "SESSION_SWEEP_INTERVAL_MS",
+        env.SESSION_SWEEP_INTERVAL_MS,
+        DefaultSessionSweepIntervalMs,
+      ),
     },
     trustProxy:
       options.trustProxy ??
@@ -980,10 +1045,12 @@ function createRateLimitMiddleware(
 
     if (hit instanceof Promise) {
       void hit
-        .then((resolvedHit) =>
-          handleRateLimitHit(resolvedHit, rateLimit, request, response, next),
-        )
-        .catch((error: unknown) => handleRateLimitStoreError(error, response));
+        .then((resolvedHit) => {
+          handleRateLimitHit(resolvedHit, rateLimit, request, response, next);
+        })
+        .catch((error: unknown) => {
+          handleRateLimitStoreError(error, response);
+        });
       return;
     }
 

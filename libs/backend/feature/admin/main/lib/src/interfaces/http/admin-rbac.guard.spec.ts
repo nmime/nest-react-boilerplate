@@ -10,6 +10,7 @@ import {
 import {
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
+  type PermissionEvaluationContext,
   DefaultAuthTenantId,
   RequiredPermissionsMetadataKey,
   RequiredRolesMetadataKey,
@@ -147,5 +148,58 @@ describe("AdminRbacGuard", () => {
         ),
       ),
     ).toBe(true);
+  });
+
+  it("defers non-admin permissions to the base RBAC evaluation", () => {
+    class ExposedAdminRbacGuard extends AdminRbacGuard {
+      evaluate(context: PermissionEvaluationContext): boolean | undefined {
+        return this.evaluateDomainPermission(context);
+      }
+    }
+    const guard = new ExposedAdminRbacGuard(new Reflector());
+
+    expect(
+      guard.evaluate({
+        permission: "profile:read",
+        principal: createPrincipal({
+          permissions: ["profile:read"],
+          roles: ["user"],
+        }),
+        requiredRoles: ["user"],
+      }),
+    ).toBeUndefined();
+  });
+
+  it("treats the /admin root path as an admin route for non-admin classes", () => {
+    class PlainController {}
+    const guard = new AdminRbacGuard(new Reflector());
+
+    expect(() =>
+      guard.canActivate(
+        createContext(
+          { user: createPrincipal({ roles: [AdminRole] }), url: "/admin" },
+          () => undefined,
+          PlainController,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
+  });
+
+  it("treats nested /admin/ paths as admin routes for non-admin classes", () => {
+    class PlainController {}
+    const guard = new AdminRbacGuard(new Reflector());
+
+    expect(() =>
+      guard.canActivate(
+        createContext(
+          {
+            user: createPrincipal({ roles: [AdminRole] }),
+            url: "/admin/users",
+          },
+          () => undefined,
+          PlainController,
+        ),
+      ),
+    ).toThrow(ForbiddenException);
   });
 });

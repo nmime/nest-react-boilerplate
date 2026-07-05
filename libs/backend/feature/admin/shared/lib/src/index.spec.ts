@@ -8,16 +8,25 @@ import {
   AdminProfileReadPermission,
   AdminRole,
   AdminRolesReadPermission,
+  AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersReadPermission,
   AdminUsersStatusUpdatePermission,
+  UserProfileReadPermission,
+  UserRole,
+  adminPermissionCatalog,
+  adminResources,
+  adminRoleCatalog,
   assertAdminProfilePermission,
   canAdmin,
   cannotAdmin,
   createAdminAbility,
   createAdminAccessPolicy,
+  isAdminAssignablePermission,
+  isAdminAssignableRole,
   isKnownAdminPermission,
   toAdminProfileView,
+  toAdminRbacCatalogView,
 } from "./index";
 
 const adminPrincipal = {
@@ -181,5 +190,76 @@ describe("@app/backend-feature-admin-shared CASL RBAC", () => {
         permissions: [],
       }),
     ).toThrow("Admin profile permission is required.");
+  });
+
+  it("exposes the DB-manageable admin:roles:write grant in the shared catalog", () => {
+    expect(isKnownAdminPermission(AdminRolesWritePermission)).toBe(true);
+    expect(isAdminAssignablePermission(AdminRolesWritePermission)).toBe(true);
+    expect(
+      adminPermissionCatalog.some(
+        (entry) => entry.permission === AdminRolesWritePermission,
+      ),
+    ).toBe(true);
+  });
+
+  it("classifies assignable roles and permissions for RBAC admin UIs", () => {
+    expect(isAdminAssignableRole(AdminRole)).toBe(true);
+    expect(isAdminAssignableRole(UserRole)).toBe(true);
+    expect(isAdminAssignableRole("superadmin")).toBe(false);
+    expect(isAdminAssignablePermission(AdminProfileReadPermission)).toBe(true);
+    expect(isAdminAssignablePermission(UserProfileReadPermission)).toBe(true);
+    expect(isAdminAssignablePermission("admin:unknown:read")).toBe(false);
+  });
+
+  it("exposes the RBAC catalog view consumed by admin clients", () => {
+    const view = toAdminRbacCatalogView();
+
+    expect(view.resources).toBe(adminResources);
+    expect(view.roles).toBe(adminRoleCatalog);
+    expect(view.permissions).toBe(adminPermissionCatalog);
+    expect(view.assignableRoles).toContain(AdminRole);
+    expect(view.assignablePermissions).toContain(AdminProfileReadPermission);
+  });
+
+  it("evaluates permissions from raw principal claims without a prebuilt ability", () => {
+    const principal = {
+      subject: "admin-id",
+      roles: [AdminRole],
+      permissions: [AdminDashboardReadPermission],
+    };
+
+    expect(canAdmin(principal, "read", "admin.dashboard")).toBe(true);
+    expect(cannotAdmin(principal, "read", "admin.audit")).toBe(true);
+  });
+
+  it("ignores roles absent from the RBAC matrix while still honoring the admin role", () => {
+    const ability = createAdminAbility({
+      subject: "admin-id",
+      roles: ["ghost-role", AdminRole],
+      permissions: [AdminDashboardReadPermission],
+    });
+
+    expect(canAdmin(ability, "read", "admin.dashboard")).toBe(true);
+  });
+
+  it("normalizes raw role and permission claims defensively", () => {
+    const policy = createAdminAccessPolicy({
+      subject: "admin-id",
+      roles: "admin" as unknown as string[],
+      permissions: [
+        AdminDashboardReadPermission,
+        AdminDashboardReadPermission,
+        "   ",
+        42 as unknown as string,
+        ` ${AdminProfileReadPermission} `,
+      ],
+    });
+
+    expect(policy.roles).toEqual([]);
+    expect(policy.permissions).toEqual([
+      AdminDashboardReadPermission,
+      AdminProfileReadPermission,
+    ]);
+    expect(policy.canAccessAdmin).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus } from "@nestjs/common";
+import { BadRequestException, HttpStatus, Logger } from "@nestjs/common";
 import { err, ok } from "neverthrow";
 import { lastValueFrom, of, throwError } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
@@ -151,6 +151,68 @@ describe("exceptions response mapper", () => {
     });
   });
 
+  it("logs 500 responses with the exception stack for production traceability", () => {
+    const errorSpy = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const debugSpy = vi
+      .spyOn(Logger.prototype, "debug")
+      .mockImplementation(() => undefined);
+    const json = vi.fn();
+    const type = vi.fn(() => ({ json }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ url: "/boom" }),
+        getResponse: () => ({ status }),
+      }),
+    };
+    const boom = new Error("kaboom");
+
+    new ExceptionsFilter().catch(boom, host as never);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("500"),
+      boom.stack,
+    );
+    expect(debugSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+    debugSpy.mockRestore();
+  });
+
+  it("logs expected 4xx problems at debug without error noise", () => {
+    const errorSpy = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const debugSpy = vi
+      .spyOn(Logger.prototype, "debug")
+      .mockImplementation(() => undefined);
+    const json = vi.fn();
+    const type = vi.fn(() => ({ json }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ originalUrl: "/bad" }),
+        getResponse: () => ({ status }),
+      }),
+    };
+
+    new ExceptionsFilter().catch(
+      new BadRequestException("Invalid input"),
+      host as never,
+    );
+
+    expect(status).toHaveBeenCalledWith(400);
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(debugSpy).toHaveBeenCalledTimes(1);
+
+    errorSpy.mockRestore();
+    debugSpy.mockRestore();
+  });
+
   it("does not use request.url as a problem instance", () => {
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
@@ -170,6 +232,68 @@ describe("exceptions response mapper", () => {
       status: 500,
       title: "Internal Server Error",
     });
+  });
+
+  it("includes code and instance in the 500 error log descriptor", () => {
+    const errorSpy = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const json = vi.fn();
+    const type = vi.fn(() => ({ json }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ url: "/boom" }),
+        getResponse: () => ({ status }),
+      }),
+    };
+    const exception = new BaseException({
+      code: "engine-failure",
+      instance: "urn:instance:req-42",
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      title: "Internal Server Error",
+    });
+
+    new ExceptionsFilter().catch(exception, host as never);
+
+    expect(status).toHaveBeenCalledWith(500);
+    const descriptor: unknown = errorSpy.mock.calls[0]?.[0];
+    expect(descriptor).toContain("code=engine-failure");
+    expect(descriptor).toContain("instance=urn:instance:req-42");
+
+    errorSpy.mockRestore();
+  });
+
+  it("logs non-Error 500 rejections without a stack trace", () => {
+    const errorSpy = vi
+      .spyOn(Logger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const json = vi.fn();
+    const type = vi.fn(() => ({ json }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ url: "/boom" }),
+        getResponse: () => ({ status }),
+      }),
+    };
+
+    new ExceptionsFilter().catch("string rejection", host as never);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("500"),
+      undefined,
+    );
+    const body: unknown = json.mock.calls[0]?.[0];
+    expect(body).toMatchObject({
+      code: "internal-server-error",
+      status: 500,
+      title: "Internal Server Error",
+    });
+
+    errorSpy.mockRestore();
   });
 
   it("keeps machine fields stable and separates localized detail", () => {

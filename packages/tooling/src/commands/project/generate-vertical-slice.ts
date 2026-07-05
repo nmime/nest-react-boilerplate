@@ -300,18 +300,34 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
     tsConfig(`${base}/main/lib`, 6),
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
-      contents: `export * from "./entity/${names.kebab}.entity";\nexport * from "./migrations";\n`,
+      contents: `export * from "./infrastructure/data-access";\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/entity/${names.kebab}.entity.ts`,
-      contents: `import { Entity, PrimaryKey, Property } from "@mikro-orm/core";\n\n@Entity({ tableName: "${names.kebab.replaceAll("-", "_")}" })\nexport class ${names.pascal}Entity {\n  @PrimaryKey({ type: "uuid" })\n  id!: string;\n\n  @Property()\n  name!: string;\n\n  @Property({ type: "timestamptz" })\n  createdAt: Date = new Date();\n}\n`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/index.ts`,
+      contents: `export * from "./entities";\nexport * from "./repositories";\nexport * from "./migrations";\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/migrations/Migration00000000000000Create${names.pascal}.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/entities/${names.kebab}.entity.ts`,
+      contents: `import { randomUUID } from "node:crypto";\nimport { EntitySchema } from "@mikro-orm/core";\n\nexport interface ${names.pascal}EntityInput {\n  name: string;\n}\n\nexport class ${names.pascal}Entity {\n  id: string = randomUUID();\n  name!: string;\n  createdAt: Date = new Date();\n\n  constructor(input?: ${names.pascal}EntityInput) {\n    if (input) {\n      this.name = input.name;\n    }\n  }\n}\n\nexport const ${names.pascal}EntitySchema = new EntitySchema<${names.pascal}Entity>({\n  class: ${names.pascal}Entity,\n  tableName: "${names.kebab.replaceAll("-", "_")}",\n  properties: {\n    id: { type: "uuid", primary: true },\n    name: { type: "varchar", length: 255 },\n    createdAt: {\n      type: "timestamptz",\n      fieldName: "created_at",\n      onCreate: () => new Date(),\n    },\n  },\n});\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/entities/index.ts`,
+      contents: `export * from "./${names.kebab}.entity";\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/${names.kebab}.repository.ts`,
+      contents: `import { EntityManager } from "@mikro-orm/core";\nimport { Inject, Injectable } from "@nestjs/common";\nimport { ${names.pascal}Entity } from "../entities";\n\n@Injectable()\nexport class ${names.pascal}Repository {\n  constructor(\n    @Inject(EntityManager)\n    private readonly entityManager: EntityManager,\n  ) {}\n\n  async list(): Promise<${names.pascal}Entity[]> {\n    return this.entityManager.find(${names.pascal}Entity, {});\n  }\n\n  async create(name: string): Promise<${names.pascal}Entity> {\n    const entity = new ${names.pascal}Entity({ name });\n    this.entityManager.persist(entity);\n    await this.entityManager.flush();\n\n    return entity;\n  }\n}\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/index.ts`,
+      contents: `export * from "./${names.kebab}.repository";\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.ts`,
       contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override async up(): Promise<void> {\n    this.addSql('create table "${names.kebab.replaceAll("-", "_")}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll("-", "_")}_pkey" primary key ("id"));');\n  }\n\n  override async down(): Promise<void> {\n    this.addSql('drop table if exists "${names.kebab.replaceAll("-", "_")}" cascade;');\n  }\n}\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/migrations/index.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/index.ts`,
       contents: `export * from "./Migration00000000000000Create${names.pascal}";\n`,
     },
     projectJson(
@@ -322,7 +338,7 @@ function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
       `libs/backend/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,
       ["platform:backend", "type:database", `scope:${names.kebab}`],
     ),
-    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`, 5),
+    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`, 6),
     {
       path: `libs/frontend/api-client/lib/src/features/${names.kebab}.ts`,
       contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) =>\n      request<${names.pascal}Dto>("/${names.kebab}", {\n        body: JSON.stringify(input),\n        headers: { "content-type": "application/json" },\n        method: "POST",\n      }),\n  };\n}\n`,
@@ -434,10 +450,10 @@ function projectJson(
     contents: `${JSON.stringify(
       {
         name,
-        $schema:
-          path.split("/").length > 5
-            ? "../../../../../node_modules/nx/schemas/project-schema.json"
-            : "../../../../node_modules/nx/schemas/project-schema.json",
+        $schema: `${Array.from(
+          { length: path.split("/").length - 1 },
+          () => "..",
+        ).join("/")}/node_modules/nx/schemas/project-schema.json`,
         sourceRoot,
         projectType: "library",
         tags,
@@ -519,7 +535,7 @@ function constantName(names: Names): string {
 
 function printUsage(): void {
   console.log(
-    `Usage: repo-tooling project generate-vertical-slice <feature-name> [--api-app user-app-api] [--dry-run] [--force]\n\nCreates a checklist-driven vertical slice scaffold: shared DTOs, Nest module/controller/service, PostgreSQL entity/migration placeholder, frontend API client, React page stub, and feature test checklist.`,
+    `Usage: repo-tooling project generate-vertical-slice <feature-name> [--api-app user-app-api] [--dry-run] [--force]\n\nCreates a checklist-driven vertical slice scaffold: shared DTOs, Nest module/controller/service, PostgreSQL infrastructure/data-access placeholder (entities, repositories, migrations), frontend API client, React page stub, and feature test checklist.`,
   );
 }
 

@@ -84,7 +84,10 @@ describe("admin strict FSD boundaries", () => {
         layerRank.get(importerLayer) ?? Number.POSITIVE_INFINITY;
 
       for (const match of source.matchAll(importPattern)) {
-        const specifier = match[1] ?? match[2] ?? "";
+        // Regex capture groups are typed as `string` but are undefined at
+        // runtime when the alternative group does not participate in the match.
+        const groups: readonly (string | undefined)[] = match;
+        const specifier = groups[1] ?? groups[2] ?? "";
         const importedLayer = resolveRelativeLayer(path, specifier);
         if (!importedLayer) {
           continue;

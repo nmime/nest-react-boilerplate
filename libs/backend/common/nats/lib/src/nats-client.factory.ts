@@ -1,6 +1,7 @@
 import { connect, type NodeConnectionOptions } from "@nats-io/transport-node";
 import type { NatsConnection } from "@nats-io/nats-core";
 import type { NatsConnectionConfig } from "./type";
+import { stripUndefined, withTimeout } from "./util";
 
 export async function createNatsConnection(
   config: NatsConnectionConfig,
@@ -46,35 +47,4 @@ export async function closeNatsConnection(
       await connection.close().catch(() => undefined);
     }
   }
-}
-
-function stripUndefined<T extends Record<string, unknown>>(value: T): T {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined),
-  ) as T;
-}
-
-function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number | undefined,
-): Promise<T> {
-  if (!timeoutMs) {
-    return promise;
-  }
-
-  return new Promise<T>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error(`NATS drain timed out after ${timeoutMs}ms.`));
-    }, timeoutMs);
-
-    promise
-      .then((value) => {
-        clearTimeout(timeout);
-        resolve(value);
-      })
-      .catch((error: unknown) => {
-        clearTimeout(timeout);
-        reject(error instanceof Error ? error : new Error(String(error)));
-      });
-  });
 }

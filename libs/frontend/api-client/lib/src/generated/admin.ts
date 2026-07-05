@@ -84,6 +84,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/admin/roles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["AdminRolesController_listRoles"];
+    put?: never;
+    post: operations["AdminRolesController_createRole"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/admin/roles/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations["AdminRolesController_updateRole"];
+    trace?: never;
+  };
+  "/admin/roles/{id}/permissions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations["AdminRolesController_setRolePermissions"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/admin/users/{id}/roles": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations["AdminRolesController_assignUserRoles"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/admin/users": {
     parameters: {
       query?: never;
@@ -146,22 +210,6 @@ export interface paths {
     options?: never;
     head?: never;
     patch: operations["AdminUsersController_updateUserAccessPolicy"];
-    trace?: never;
-  };
-  "/admin/roles": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["AdminUsersController_roles"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
     trace?: never;
   };
   "/admin/audit": {
@@ -227,6 +275,78 @@ export interface components {
       principal: components["schemas"]["AuthenticatedPrincipalDto"];
       profile: components["schemas"]["AdminProfileViewDto"];
     };
+    AdminRbacRoleDto: {
+      /** Format: uuid */
+      id: string;
+      role: string;
+      label: string;
+      description: string;
+      isSystem: boolean;
+      permissions: string[];
+    };
+    AdminRbacPermissionDto: {
+      permission: string;
+      resource: string;
+      action: string;
+      description: string;
+    };
+    AdminRbacCatalogPayloadDto: {
+      resources: string[];
+      roles: components["schemas"]["AdminRbacRoleDto"][];
+      permissions: components["schemas"]["AdminRbacPermissionDto"][];
+      assignableRoles: string[];
+      assignablePermissions: string[];
+    };
+    AdminRoleViewDto: {
+      /** Format: uuid */
+      id: string;
+      role: string;
+      label: string;
+      description: string;
+      isSystem: boolean;
+      permissions: string[];
+    };
+    CreateAdminRoleDto: {
+      key: string;
+      label?: string;
+      description?: string;
+      permissions?: (
+        | "profile:read"
+        | "admin:dashboard:read"
+        | "admin:profile:read"
+        | "admin:users:read"
+        | "admin:users:write"
+        | "admin:users:status:update"
+        | "admin:users:access-policy:update"
+        | "admin:roles:read"
+        | "admin:roles:write"
+        | "admin:audit:read"
+        | "admin:settings:read"
+        | "admin:settings:update"
+        | "admin:manage:all"
+      )[];
+    };
+    UpdateAdminRoleDto: {
+      label?: string;
+      description?: string;
+    };
+    SetAdminRolePermissionsDto: {
+      permissions: (
+        | "profile:read"
+        | "admin:dashboard:read"
+        | "admin:profile:read"
+        | "admin:users:read"
+        | "admin:users:write"
+        | "admin:users:status:update"
+        | "admin:users:access-policy:update"
+        | "admin:roles:read"
+        | "admin:roles:write"
+        | "admin:audit:read"
+        | "admin:settings:read"
+        | "admin:settings:update"
+        | "admin:manage:all"
+      )[];
+    };
     AdminUserViewDto: {
       /** Format: uuid */
       id: string;
@@ -249,6 +369,9 @@ export interface components {
       /** Format: date-time */
       updatedAt: string;
     };
+    AssignAdminUserRolesDto: {
+      roles: ("user" | "admin")[];
+    };
     AdminUserListPayloadDto: {
       items: components["schemas"]["AdminUserViewDto"][];
       total: number;
@@ -270,30 +393,12 @@ export interface components {
         | "admin:users:status:update"
         | "admin:users:access-policy:update"
         | "admin:roles:read"
+        | "admin:roles:write"
         | "admin:audit:read"
         | "admin:settings:read"
         | "admin:settings:update"
         | "admin:manage:all"
       )[];
-    };
-    AdminRbacRoleDto: {
-      role: string;
-      label: string;
-      description: string;
-      permissions: string[];
-    };
-    AdminRbacPermissionDto: {
-      permission: string;
-      resource: string;
-      action: string;
-      description: string;
-    };
-    AdminRbacCatalogPayloadDto: {
-      resources: string[];
-      roles: components["schemas"]["AdminRbacRoleDto"][];
-      permissions: components["schemas"]["AdminRbacPermissionDto"][];
-      assignableRoles: string[];
-      assignablePermissions: string[];
     };
     AdminAuditLogViewDto: {
       /** Format: uuid */
@@ -344,18 +449,25 @@ export type AuthenticatedPrincipalDto =
 export type AdminProfileViewDto = components["schemas"]["AdminProfileViewDto"];
 export type AdminProfilePayloadDto =
   components["schemas"]["AdminProfilePayloadDto"];
+export type AdminRbacRoleDto = components["schemas"]["AdminRbacRoleDto"];
+export type AdminRbacPermissionDto =
+  components["schemas"]["AdminRbacPermissionDto"];
+export type AdminRbacCatalogPayloadDto =
+  components["schemas"]["AdminRbacCatalogPayloadDto"];
+export type AdminRoleViewDto = components["schemas"]["AdminRoleViewDto"];
+export type CreateAdminRoleDto = components["schemas"]["CreateAdminRoleDto"];
+export type UpdateAdminRoleDto = components["schemas"]["UpdateAdminRoleDto"];
+export type SetAdminRolePermissionsDto =
+  components["schemas"]["SetAdminRolePermissionsDto"];
 export type AdminUserViewDto = components["schemas"]["AdminUserViewDto"];
+export type AssignAdminUserRolesDto =
+  components["schemas"]["AssignAdminUserRolesDto"];
 export type AdminUserListPayloadDto =
   components["schemas"]["AdminUserListPayloadDto"];
 export type UpdateAdminUserStatusDto =
   components["schemas"]["UpdateAdminUserStatusDto"];
 export type UpdateAdminUserAccessPolicyDto =
   components["schemas"]["UpdateAdminUserAccessPolicyDto"];
-export type AdminRbacRoleDto = components["schemas"]["AdminRbacRoleDto"];
-export type AdminRbacPermissionDto =
-  components["schemas"]["AdminRbacPermissionDto"];
-export type AdminRbacCatalogPayloadDto =
-  components["schemas"]["AdminRbacCatalogPayloadDto"];
 export type AdminAuditLogViewDto =
   components["schemas"]["AdminAuditLogViewDto"];
 export type AdminAuditLogListPayloadDto =
@@ -652,6 +764,1488 @@ export interface operations {
       };
     };
   };
+  AdminRolesController_listRoles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminRbacCatalogPayloadDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:bad-request
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 400
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example bad-request
+             */
+            code: string;
+            /** @description An array of validation errors (present for validation failures). */
+            errors?: {
+              /** @description The field that failed validation. */
+              property: string;
+              /** @description The localized error message. */
+              message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
+              /** @description The validation constraints that failed. */
+              constraints: {
+                [key: string]: string;
+              };
+            }[];
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:unauthorized
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 401
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example unauthorized
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:forbidden
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 403
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example forbidden
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:not-found
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 404
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example not-found
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:conflict
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 409
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example conflict
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:rate-limited
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Too Many Requests
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 429
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example rate-limited
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 500
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example internal-server-error
+             */
+            code: string;
+          };
+        };
+      };
+    };
+  };
+  AdminRolesController_createRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateAdminRoleDto"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminRoleViewDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:bad-request
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 400
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example bad-request
+             */
+            code: string;
+            /** @description An array of validation errors (present for validation failures). */
+            errors?: {
+              /** @description The field that failed validation. */
+              property: string;
+              /** @description The localized error message. */
+              message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
+              /** @description The validation constraints that failed. */
+              constraints: {
+                [key: string]: string;
+              };
+            }[];
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:unauthorized
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 401
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example unauthorized
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:forbidden
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 403
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example forbidden
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:not-found
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 404
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example not-found
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:conflict
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 409
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example conflict
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:rate-limited
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Too Many Requests
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 429
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example rate-limited
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 500
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example internal-server-error
+             */
+            code: string;
+          };
+        };
+      };
+    };
+  };
+  AdminRolesController_updateRole: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateAdminRoleDto"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminRoleViewDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:bad-request
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 400
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example bad-request
+             */
+            code: string;
+            /** @description An array of validation errors (present for validation failures). */
+            errors?: {
+              /** @description The field that failed validation. */
+              property: string;
+              /** @description The localized error message. */
+              message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
+              /** @description The validation constraints that failed. */
+              constraints: {
+                [key: string]: string;
+              };
+            }[];
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:unauthorized
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 401
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example unauthorized
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:forbidden
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 403
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example forbidden
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:not-found
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 404
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example not-found
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:conflict
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 409
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example conflict
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:rate-limited
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Too Many Requests
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 429
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example rate-limited
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 500
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example internal-server-error
+             */
+            code: string;
+          };
+        };
+      };
+    };
+  };
+  AdminRolesController_setRolePermissions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SetAdminRolePermissionsDto"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminRoleViewDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:bad-request
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 400
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example bad-request
+             */
+            code: string;
+            /** @description An array of validation errors (present for validation failures). */
+            errors?: {
+              /** @description The field that failed validation. */
+              property: string;
+              /** @description The localized error message. */
+              message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
+              /** @description The validation constraints that failed. */
+              constraints: {
+                [key: string]: string;
+              };
+            }[];
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:unauthorized
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 401
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example unauthorized
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:forbidden
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 403
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example forbidden
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:not-found
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 404
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example not-found
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:conflict
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 409
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example conflict
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:rate-limited
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Too Many Requests
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 429
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example rate-limited
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 500
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example internal-server-error
+             */
+            code: string;
+          };
+        };
+      };
+    };
+  };
+  AdminRolesController_assignUserRoles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AssignAdminUserRolesDto"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: components["schemas"]["AdminUserViewDto"];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:bad-request
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 400
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example bad-request
+             */
+            code: string;
+            /** @description An array of validation errors (present for validation failures). */
+            errors?: {
+              /** @description The field that failed validation. */
+              property: string;
+              /** @description The localized error message. */
+              message?: string;
+              /** @description A localized human-readable explanation for this validation issue. */
+              detail?: string;
+              /**
+               * @description A JSON Pointer identifying the nested request member that failed validation.
+               * @example /profile/email
+               */
+              pointer?: string;
+              /** @description The validation constraints that failed. */
+              constraints: {
+                [key: string]: string;
+              };
+            }[];
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:unauthorized
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 401
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example unauthorized
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:forbidden
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 403
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example forbidden
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:not-found
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 404
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example not-found
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:conflict
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 409
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example conflict
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:rate-limited
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Too Many Requests
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 429
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example rate-limited
+             */
+            code: string;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": {
+            /**
+             * @description A URI reference that identifies the problem type.
+             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             */
+            type: string;
+            /**
+             * @description A short, human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server.
+             * @example 500
+             */
+            status: number;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
+            instance?: string;
+            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
+            localizedDetail?: string;
+            /**
+             * @description A stable machine-readable error code for programmatic handling.
+             * @example internal-server-error
+             */
+            code: string;
+          };
+        };
+      };
+    };
+  };
   AdminUsersController_listUsers: {
     parameters: {
       query?: {
@@ -670,6 +2264,7 @@ export interface operations {
           | "admin:users:status:update"
           | "admin:users:access-policy:update"
           | "admin:roles:read"
+          | "admin:roles:write"
           | "admin:audit:read"
           | "admin:settings:read"
           | "admin:settings:update"
@@ -1710,268 +3305,15 @@ export interface operations {
       };
     };
   };
-  AdminUsersController_roles: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            data: components["schemas"]["AdminRbacCatalogPayloadDto"];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 400
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example bad-request
-             */
-            code: string;
-            /** @description An array of validation errors (present for validation failures). */
-            errors?: {
-              /** @description The field that failed validation. */
-              property: string;
-              /** @description The localized error message. */
-              message?: string;
-              /** @description A localized human-readable explanation for this validation issue. */
-              detail?: string;
-              /**
-               * @description A JSON Pointer identifying the nested request member that failed validation.
-               * @example /profile/email
-               */
-              pointer?: string;
-              /** @description The validation constraints that failed. */
-              constraints: {
-                [key: string]: string;
-              };
-            }[];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 401
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example unauthorized
-             */
-            code: string;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 403
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example forbidden
-             */
-            code: string;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:not-found
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 404
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example not-found
-             */
-            code: string;
-          };
-        };
-      };
-      /** @description Too Many Requests */
-      429: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Too Many Requests
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 429
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example rate-limited
-             */
-            code: string;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": {
-            /**
-             * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
-             */
-            type: string;
-            /**
-             * @description A short, human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server.
-             * @example 500
-             */
-            status: number;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /** @description A URI reference that identifies the specific occurrence of the problem. Omitted unless a real occurrence URI/reference is available. */
-            instance?: string;
-            /** @description A localized human-display explanation for this occurrence. Display-only extension; do not use for program logic. */
-            localizedDetail?: string;
-            /**
-             * @description A stable machine-readable error code for programmatic handling.
-             * @example internal-server-error
-             */
-            code: string;
-          };
-        };
-      };
-    };
-  };
   AdminUsersController_listAudit: {
     parameters: {
       query?: {
         limit?: number;
         offset?: number;
-        action?: "admin.user.status.update" | "admin.user.access_policy.update";
+        action?:
+          | "admin.user.status.update"
+          | "admin.user.access_policy.update"
+          | "admin.user.roles.update";
         actorUserId?: string;
         targetUserId?: string;
       };

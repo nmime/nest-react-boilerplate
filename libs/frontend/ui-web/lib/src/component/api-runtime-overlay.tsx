@@ -4,7 +4,7 @@ import { UiButton } from "./button";
 import { UiDialog } from "./dialog";
 import { UiToast } from "./feedback";
 import { UiNotification } from "./notification";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiRuntimeToast {
   category: "error" | "info" | "success" | "warning";
@@ -119,7 +119,9 @@ export const UiApiRuntimeOverlay = ({
             {onDismissToast ? (
               <UiButton
                 aria-label={`Dismiss ${toast.title}`}
-                onClick={() => onDismissToast(toast.id)}
+                onClick={() => {
+                  onDismissToast(toast.id);
+                }}
                 variant="secondary"
               >
                 {overlayCopy.dismissLabel}

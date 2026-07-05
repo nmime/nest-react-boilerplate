@@ -51,7 +51,9 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
     () =>
       createApiRuntimeFetch({
         baseFetch: createAuthRefreshFetch({
-          clearAuth: () => authStore.clearSession(),
+          clearAuth: () => {
+            authStore.clearSession();
+          },
           refreshAccessToken: async () => {
             const refreshToken = authStore.refreshToken;
             if (!refreshToken) {

@@ -23,13 +23,13 @@ export class Ga4MeasurementProtocolProvider extends AbstractAnalyticsProvider {
     this.fetcher = options.fetch ?? fetch;
   }
 
-  async track(payload: AnalyticsPayload): Promise<void> {
+  override async track(payload: AnalyticsPayload): Promise<void> {
     const clientId = payload.anonymousId ?? payload.userId ?? "server";
     const url = new URL(this.endpoint);
     url.searchParams.set("measurement_id", this.options.measurementId);
     url.searchParams.set("api_secret", this.options.apiSecret);
 
-    await this.fetcher(url, {
+    const response = await this.fetcher(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -44,6 +44,10 @@ export class Ga4MeasurementProtocolProvider extends AbstractAnalyticsProvider {
         ],
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`GA4 analytics request failed: ${response.status}`);
+    }
   }
 }
 
@@ -109,7 +113,11 @@ function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
   }
 
   try {
-    return JSON.stringify(value) ?? undefined;
+    // `JSON.stringify` returns `undefined` for values it cannot serialize
+    // (functions, symbols), even though its lib type claims `string`, so widen
+    // the result to keep the nullish fallback load-bearing.
+    const serialized = JSON.stringify(value) as string | undefined;
+    return serialized ?? undefined;
   } catch {
     return Object.prototype.toString.call(value);
   }

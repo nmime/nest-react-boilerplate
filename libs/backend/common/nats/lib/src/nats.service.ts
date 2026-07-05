@@ -2,13 +2,9 @@ import { Injectable } from "@nestjs/common";
 import type { Msg, PublishOptions, RequestOptions } from "@nats-io/nats-core";
 import type { NatsConnection } from "@nats-io/nats-core";
 import { InjectNatsConnection } from "./decorator";
+import { NatsConnectionUnavailableError } from "./exception";
 
-export class NatsConnectionUnavailableError extends Error {
-  constructor(reason: string) {
-    super(`NATS connection is unavailable: ${reason}.`);
-    this.name = "NatsConnectionUnavailableError";
-  }
-}
+export * from "./exception";
 
 @Injectable()
 export class NatsService {

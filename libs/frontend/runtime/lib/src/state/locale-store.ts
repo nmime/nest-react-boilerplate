@@ -33,7 +33,7 @@ function readStoredLocale(): string | undefined {
   }
 
   try {
-    return window.localStorage?.getItem(LocaleStorageKey) ?? undefined;
+    return window.localStorage.getItem(LocaleStorageKey) ?? undefined;
   } catch {
     return undefined;
   }
@@ -42,7 +42,7 @@ function readStoredLocale(): string | undefined {
 export function persistLocale(locale: Locale): void {
   if (typeof window !== "undefined") {
     try {
-      window.localStorage?.setItem(LocaleStorageKey, locale);
+      window.localStorage.setItem(LocaleStorageKey, locale);
     } catch {
       // Ignore storage failures in private browsing or SSR shims.
     }
@@ -67,7 +67,9 @@ export function detectBrowserLocale(): Locale {
     readStoredLocale(),
     readCookie("locale"),
     readCookie("lang"),
-    window.navigator.languages?.join(","),
+    // `navigator.languages` is typed as always present but is undefined in
+    // older browsers and when tests stub a partial navigator.
+    (window.navigator.languages as readonly string[] | undefined)?.join(","),
     window.navigator.language,
   );
 }

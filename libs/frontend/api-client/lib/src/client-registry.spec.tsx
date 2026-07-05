@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   ApiClientProvider,
   createApiClientRegistry,
   useAdminApiClient,
+  useApiClientRegistry,
   useAuthApiClient,
   useUserApiClient,
   type generatedAuthApi,
@@ -91,6 +92,43 @@ describe("api client registry", () => {
         userBaseUrl: "/user-api",
       }),
     );
+  });
+
+  it("normalizes absent and blank auth tokens to undefined", () => {
+    const baseUrls = {
+      admin: "https://admin.example.test",
+      auth: "https://auth.example.test",
+      user: "https://user.example.test",
+    };
+
+    const withoutToken = createApiClientRegistry({ baseUrls });
+    expect(withoutToken.auth.requestOptions.authToken).toBeUndefined();
+
+    const withBlankToken = createApiClientRegistry({
+      authToken: "   ",
+      baseUrls,
+    });
+    expect(withBlankToken.auth.requestOptions.authToken).toBeUndefined();
+
+    const withNullToken = createApiClientRegistry({
+      authToken: null,
+      baseUrls,
+    });
+    expect(withNullToken.auth.requestOptions.authToken).toBeUndefined();
+  });
+
+  it("throws when a registry hook is used outside an ApiClientRegistryProvider", () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    try {
+      expect(() => renderHook(() => useApiClientRegistry())).toThrow(
+        "useApiClientRegistry must be used within ApiClientRegistryProvider.",
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it("keeps stable public aliases usable for generated contracts and clients", () => {

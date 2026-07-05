@@ -20,6 +20,15 @@
         }
       ]
     },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": ".",
+        "command": "node --test \"packages/tooling/src/**/*.test.ts\""
+      },
+      "inputs": ["default"]
+    },
     "static-check": {
       "executor": "nx:run-commands",
       "cache": true,

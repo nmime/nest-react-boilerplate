@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { existsSync } from "node:fs";
 import {
   createPostgresClientInvocation,
@@ -11,9 +10,10 @@ import {
   postgresConnectionString,
   redactedConnectionString,
 } from "./env-loader.ts";
+import { assertRestoreSafety } from "./restore-safety.ts";
 
-function parseArgs(argv) {
-  const args = { dryRun: false, force: false, yes: false, input: "" };
+function parseArgs(argv: string[]) {
+  const args = { dryRun: false, force: false, yes: false, input: "", help: false };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;
@@ -41,7 +41,7 @@ if (!args.input) throw new Error("--input is required.");
 
 loadDotEnv();
 const connectionString = postgresConnectionString();
-if (!args.force) assertLocalDevelopmentDatabase(connectionString);
+assertRestoreSafety(args, connectionString, { assertLocalDevelopmentDatabase });
 const plan = createPostgresClientInvocation({
   connectionString,
   operation: "restore",

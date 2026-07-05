@@ -1,4 +1,5 @@
 export * from "./base-health.controller";
+export * from "./const";
 export * from "./decorator";
 export * from "./dto";
 export * from "./guard";
@@ -6,5 +7,6 @@ export * from "./health.module";
 export * from "./health.service";
 export * from "./indicator";
 export * from "./interceptor";
+export * from "./mapper";
 export * from "./shutdown.service";
 export * from "./util";

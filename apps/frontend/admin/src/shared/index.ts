@@ -43,7 +43,7 @@ export const normalizeAdminPath = (path: string): string => {
     return "/";
   }
   return normalizedPath.startsWith("/admin/")
-    ? normalizedPath.slice("/admin".length) || "/"
+    ? normalizedPath.slice("/admin".length)
     : normalizedPath;
 };
 

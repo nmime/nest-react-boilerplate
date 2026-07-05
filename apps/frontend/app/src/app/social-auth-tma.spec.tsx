@@ -207,7 +207,9 @@ describe("social auth and TMA UI", () => {
 
     render(<App />);
 
-    await waitFor(() => expect(window.location.pathname).toBe("/profile"));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/profile");
+    });
     const tmaCall = fetchMock.mock.calls.find(([input]) =>
       (input instanceof Request ? input.url : String(input)).includes(
         "/auth/telegram/tma",
@@ -218,15 +220,15 @@ describe("social auth and TMA UI", () => {
     const body = JSON.parse(requestText) as Record<string, unknown>;
     expect(body).toMatchObject({ initData: "query_id=raw&hash=hash" });
     expect(Object.hasOwn(body, "init" + "DataUnsafe")).toBe(false);
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(
           ([input]) =>
             input instanceof Request &&
             input.headers.get("authorization") === "Bearer tma-session",
         ),
-      ).toBe(true),
-    );
+      ).toBe(true);
+    });
   });
 
   it("starts Telegram link flow from /link/telegram instead of generic settings", async () => {
@@ -321,7 +323,9 @@ describe("social auth and TMA UI", () => {
         },
       }),
     );
-    await waitFor(() => expect(window.location.pathname).toBe("/profile"));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/profile");
+    });
     expect(
       fetchMock.mock.calls.some(([input]) => {
         const url = input instanceof Request ? input.url : String(input);
@@ -360,15 +364,15 @@ describe("social auth and TMA UI", () => {
       await screen.findByRole("button", { name: "Continue with Discord" }),
     );
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([input]) =>
           (input instanceof Request ? input.url : String(input)).includes(
             "/auth/discord/authorization-request",
           ),
         ),
-      ).toBe(true),
-    );
+      ).toBe(true);
+    });
   });
 
   it("prevents double Discord authorization requests while loading", async () => {
@@ -386,7 +390,9 @@ describe("social auth and TMA UI", () => {
     fireEvent.click(discordButton);
     fireEvent.click(discordButton);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
     const loadingDiscordButton = await screen.findByRole("button", {
       name: /Waiting for Discord confirmation\./u,
     });
@@ -403,7 +409,9 @@ describe("social auth and TMA UI", () => {
       await screen.findByRole("button", { name: "Continue with Telegram" }),
     );
 
-    await waitFor(() => expect(window.location.pathname).toBe("/tma/auth"));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/tma/auth");
+    });
     expect(
       await screen.findByText("Open this page inside Telegram to continue."),
     ).toBeTruthy();
@@ -429,6 +437,8 @@ describe("social auth and TMA UI", () => {
 
     fireEvent.click(screen.getAllByRole("link", { name: "Settings" })[0]);
 
-    await waitFor(() => expect(window.location.pathname).toBe("/settings"));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/settings");
+    });
   });
 });

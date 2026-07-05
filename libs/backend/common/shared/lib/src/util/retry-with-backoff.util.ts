@@ -17,8 +17,9 @@ export async function retryWithBackoff<T>(
   let delayMs = options.initialDelayMs ?? 100;
   let attempt = 0;
 
-  while (true) {
+  for (;;) {
     try {
+      // eslint-disable-next-line no-await-in-loop -- retry loop must await each attempt sequentially before deciding to retry
       return await operation();
     } catch (caught) {
       const error = unknownToError(caught);
@@ -29,6 +30,7 @@ export async function retryWithBackoff<T>(
         throw error;
       }
 
+      // eslint-disable-next-line no-await-in-loop -- backoff delay is intentionally sequential between attempts
       await sleep(delayMs);
       delayMs = Math.min(delayMs * factor, maxDelayMs);
       attempt += 1;

@@ -1,3 +1,4 @@
+import { BadRequestException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { InteractionType } from "discord-api-types/v10";
 import { describe, expect, it, vi } from "vitest";
@@ -81,7 +82,7 @@ describe("DiscordInteractionsController", () => {
     await setup.moduleRef.close();
   });
 
-  it("falls back to parsed JSON only when rawBody is absent", async () => {
+  it("rejects the interaction instead of re-serializing when rawBody is absent", async () => {
     const setup = await controller();
 
     await expect(
@@ -91,10 +92,9 @@ describe("DiscordInteractionsController", () => {
         "ts",
         pingBody,
       ),
-    ).resolves.toEqual({ type: 1 });
-    expect(setup.verify).toHaveBeenCalledWith(
-      expect.objectContaining({ rawBody: JSON.stringify(pingBody) }),
-    );
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(setup.verify).not.toHaveBeenCalled();
+    expect(setup.route).not.toHaveBeenCalled();
     await setup.moduleRef.close();
   });
 

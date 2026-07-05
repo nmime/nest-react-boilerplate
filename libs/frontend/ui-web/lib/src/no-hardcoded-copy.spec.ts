@@ -13,7 +13,6 @@ const sourceRoots = [
   "apps/frontend/admin/src",
   "apps/frontend/landing/src",
   "apps/frontend/site/pages",
-  "apps/frontend/site/renderer",
   "apps/frontend/site/server",
   "libs/frontend/ui-web/lib/src",
 ];

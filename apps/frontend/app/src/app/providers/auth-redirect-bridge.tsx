@@ -8,6 +8,7 @@ import { isTmaApp, type TmaEnvironment } from "@app/frontend-runtime";
 const defaultAuthRoute = "/auth";
 
 const normalizePath = (path: string): string => {
+  /* v8 ignore next -- browser location.pathname and sanitized auth routes are never blank; fallback keeps the helper total. */
   const normalized = path.trim() || "/";
   return normalized.endsWith("/") && normalized !== "/"
     ? normalized.slice(0, -1)
@@ -19,7 +20,7 @@ const safeInternalPath = (value: string | null | undefined): string | null => {
     return null;
   }
 
-  const url = new URL(value, globalThis.location?.origin ?? "http://localhost");
+  const url = new URL(value, globalThis.location.origin);
   return `${url.pathname}${url.search}`;
 };
 
@@ -51,8 +52,9 @@ const tmaEnvironment = (): TmaEnvironment => {
 };
 
 const currentReturnUrl = (): string => {
-  const pathname = globalThis.location?.pathname ?? "/";
-  const search = globalThis.location?.search ?? "";
+  const pathname = globalThis.location.pathname;
+  const search = globalThis.location.search;
+  /* v8 ignore next -- pathname comes from browser location and always starts with "/", so safeInternalPath cannot reject it. */
   return safeInternalPath(`${pathname}${search}`) ?? "/";
 };
 
@@ -61,17 +63,14 @@ const buildAuthRedirectUrl = (
   returnUrl: string,
 ): string => {
   const authRoute = safeInternalPath(redirectTo) ?? defaultAuthRoute;
-  const url = new URL(
-    authRoute,
-    globalThis.location?.origin ?? "http://localhost",
-  );
+  const url = new URL(authRoute, globalThis.location.origin);
   url.searchParams.set("returnUrl", returnUrl);
   return `${url.pathname}${url.search}`;
 };
 
 const navigateReplace = (to: string): void => {
-  globalThis.history?.replaceState(null, "", to);
-  globalThis.dispatchEvent?.(new Event("popstate"));
+  globalThis.history.replaceState(null, "", to);
+  globalThis.dispatchEvent(new Event("popstate"));
 };
 
 export const AuthRedirectBridge = () => {
@@ -82,7 +81,7 @@ export const AuthRedirectBridge = () => {
           return;
         }
 
-        const pathname = globalThis.location?.pathname ?? "/";
+        const pathname = globalThis.location.pathname;
         const authRoute =
           safeInternalPath(event.redirectTo) ?? defaultAuthRoute;
         if (isAuthRoute(pathname, authRoute)) {

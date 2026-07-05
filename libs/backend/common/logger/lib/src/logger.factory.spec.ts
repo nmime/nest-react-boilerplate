@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { LoggerService } from "@nestjs/common";
+import { ConsoleLogger, type LoggerService } from "@nestjs/common";
 import {
   afterEach,
   beforeEach,
@@ -159,6 +159,19 @@ describe("StructuredConsoleLogger", () => {
     });
   });
 
+  it('treats a common LOG_LEVEL value like "info" as enabled instead of silencing every log', () => {
+    const { stderr, stdout } = withJsonLogger();
+    process.env.LOG_LEVEL = "info";
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.error("boom");
+    logger.log("hello");
+    logger.debug("noisy");
+
+    expect(stderr).toHaveBeenCalledTimes(1);
+    expect(stdout).toHaveBeenCalledTimes(1);
+  });
+
   it("honors configured log levels for compatibility with Nest ConsoleLogger", () => {
     const { stderr, stdout } = withJsonLogger();
     const logger = new StructuredConsoleLogger("api");
@@ -260,5 +273,276 @@ describe("createLogger", () => {
 
     expect(next).toHaveBeenCalledTimes(1);
     expect(response.headers.get("x-request-id")).toEqual(expect.any(String));
+  });
+});
+
+describe("redactProtectedVariables value kinds", () => {
+  it("stringifies bigint values", () => {
+    expect(redactProtectedVariables<unknown>(9007199254740993n)).toBe(
+      "9007199254740993",
+    );
+  });
+
+  it("serializes Date values to ISO strings", () => {
+    expect(redactProtectedVariables(new Date("2024-01-02T03:04:05.006Z"))).toBe(
+      "2024-01-02T03:04:05.006Z",
+    );
+  });
+
+  it("redacts array elements while preserving safe entries", () => {
+    expect(
+      redactProtectedVariables(["token=abc", "safe", { password: "p" }]),
+    ).toEqual([`token=${RedactedValue}`, "safe", { password: RedactedValue }]);
+  });
+
+  it("truncates structures nested beyond the maximum redaction depth", () => {
+    let deep: unknown = { leaf: "value" };
+    for (let index = 0; index < 10; index += 1) {
+      deep = { nested: deep };
+    }
+
+    expect(JSON.stringify(redactProtectedVariables(deep))).toContain(
+      "[max-depth]",
+    );
+  });
+});
+
+describe("redactSensitiveString truncation", () => {
+  it("truncates strings longer than the maximum length", () => {
+    const long = "a".repeat(9_000);
+    const result = redactSensitiveString(long);
+
+    expect(result).toContain("…[truncated]");
+    expect(result.length).toBeLessThan(long.length);
+  });
+});
+
+describe("StructuredConsoleLogger message normalization", () => {
+  it("wraps primitive messages under a value field", () => {
+    const { stdout } = withJsonLogger();
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.log(42);
+
+    expect(firstStdoutJson(stdout)).toMatchObject({
+      level: "log",
+      message: "42",
+      value: 42,
+    });
+  });
+
+  it("stringifies the whole payload when the message field is not a string", () => {
+    const { stdout } = withJsonLogger();
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.log({ code: 7, message: 500 });
+
+    const entry = firstStdoutJson(stdout);
+
+    expect(entry.code).toBe(7);
+    expect(entry.message).toBe(JSON.stringify({ code: 7, message: 500 }));
+  });
+
+  it("routes verbose to stdout and fatal to stderr in JSON mode", () => {
+    const { stderr, stdout } = withJsonLogger();
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.verbose("chatty");
+    logger.fatal("boom");
+
+    expect(JSON.parse(String(stdout.mock.calls[0]?.[0]))).toMatchObject({
+      level: "verbose",
+      message: "chatty",
+    });
+    expect(JSON.parse(String(stderr.mock.calls[0]?.[0]))).toMatchObject({
+      level: "fatal",
+      message: "boom",
+    });
+  });
+
+  it("includes a distinct stack and omits it when it equals the context", () => {
+    const { stderr } = withJsonLogger();
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.error("failed", "stack-trace", "ctx");
+    logger.error("again", "same");
+
+    expect(JSON.parse(String(stderr.mock.calls[0]?.[0]))).toMatchObject({
+      context: "ctx",
+      level: "error",
+      message: "failed",
+      stack: "stack-trace",
+    });
+
+    const second = JSON.parse(String(stderr.mock.calls[1]?.[0])) as Record<
+      string,
+      unknown
+    >;
+
+    expect(second).not.toHaveProperty("stack");
+    expect(second).toMatchObject({ context: "same", message: "again" });
+  });
+});
+
+describe("StructuredConsoleLogger pretty output", () => {
+  it("delegates each level to the matching Nest ConsoleLogger method", () => {
+    process.env.LOG_FORMAT = "pretty";
+    const fatal = vi
+      .spyOn(ConsoleLogger.prototype, "fatal")
+      .mockImplementation(() => undefined);
+    const error = vi
+      .spyOn(ConsoleLogger.prototype, "error")
+      .mockImplementation(() => undefined);
+    const warn = vi
+      .spyOn(ConsoleLogger.prototype, "warn")
+      .mockImplementation(() => undefined);
+    const debug = vi
+      .spyOn(ConsoleLogger.prototype, "debug")
+      .mockImplementation(() => undefined);
+    const verbose = vi
+      .spyOn(ConsoleLogger.prototype, "verbose")
+      .mockImplementation(() => undefined);
+    const log = vi
+      .spyOn(ConsoleLogger.prototype, "log")
+      .mockImplementation(() => undefined);
+
+    const logger = new StructuredConsoleLogger("api");
+    logger.fatal("boom");
+    logger.error("bad");
+    logger.warn("careful");
+    logger.debug("trace");
+    logger.verbose("chatty");
+    logger.log("hello");
+
+    expect(fatal).toHaveBeenCalledTimes(1);
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(debug).toHaveBeenCalledTimes(1);
+    expect(verbose).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(String(log.mock.calls[0]?.[0])).toContain('"message":"hello"');
+  });
+});
+
+describe("LOG_LEVEL configuration", () => {
+  it("honors a real Nest level name and filters lower-priority levels", () => {
+    const { stdout } = withJsonLogger();
+    process.env.LOG_LEVEL = "debug";
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.debug("shown");
+    logger.verbose("hidden");
+
+    expect(stdout).toHaveBeenCalledTimes(1);
+    expect(firstStdoutJson(stdout)).toMatchObject({
+      level: "debug",
+      message: "shown",
+    });
+  });
+
+  it("warns once and falls back to the default level for an unknown LOG_LEVEL", () => {
+    const { stderr, stdout } = withJsonLogger();
+    process.env.LOG_LEVEL = "totally-bogus";
+    const logger = new StructuredConsoleLogger("api");
+
+    logger.log("first");
+    logger.log("second");
+
+    // "log" is the default fallback level, so both messages reach stdout.
+    expect(stdout).toHaveBeenCalledTimes(2);
+
+    const warnings = stderr.mock.calls
+      .map((call) => String(call[0]))
+      .filter((line) => line.includes("Unknown LOG_LEVEL"));
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("totally-bogus");
+  });
+});
+
+describe("createRequestLoggerMiddleware IP and path resolution", () => {
+  it("uses request.ip and request.url when no forwarded header is present", () => {
+    const log = vi.fn();
+    const middleware = createRequestLoggerMiddleware(
+      createTestLogger(log),
+      "api",
+    );
+    const response = new TestResponse();
+
+    middleware(
+      { headers: {}, ip: "198.51.100.5", method: "GET", url: "/via-url?x=1" },
+      response,
+      vi.fn(),
+    );
+    response.emit("finish");
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ ip: "198.51.100.5", path: "/via-url?x=1" }),
+    );
+  });
+
+  it("falls back to the socket remote address when neither header nor ip is set", () => {
+    const log = vi.fn();
+    const middleware = createRequestLoggerMiddleware(
+      createTestLogger(log),
+      "api",
+    );
+    const response = new TestResponse();
+
+    middleware(
+      {
+        method: "POST",
+        path: "/socket-only",
+        socket: { remoteAddress: "127.0.0.1" },
+      },
+      response,
+      vi.fn(),
+    );
+    response.emit("finish");
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ ip: "127.0.0.1", path: "/socket-only" }),
+    );
+  });
+
+  it("logs an empty path and undefined ip when the request carries no location info", () => {
+    const log = vi.fn();
+    const middleware = createRequestLoggerMiddleware(
+      createTestLogger(log),
+      "api",
+    );
+    const response = new TestResponse();
+
+    middleware({ method: "GET" }, response, vi.fn());
+    response.emit("finish");
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ ip: undefined, path: "" }),
+    );
+  });
+
+  it("reads the request id from an array-valued header", () => {
+    const log = vi.fn();
+    const middleware = createRequestLoggerMiddleware(
+      createTestLogger(log),
+      "api",
+    );
+    const response = new TestResponse();
+
+    middleware(
+      {
+        headers: { "x-request-id": ["first-id", "second-id"] },
+        method: "GET",
+        originalUrl: "/arr",
+      },
+      response,
+      vi.fn(),
+    );
+    response.emit("finish");
+
+    expect(response.headers.get("x-request-id")).toBe("first-id");
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ requestId: "first-id" }),
+    );
   });
 });

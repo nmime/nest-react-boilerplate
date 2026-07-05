@@ -26,14 +26,17 @@ export class InMemoryWebsocketAdapter<TMessage = unknown> {
         (!include || include.has(client.id)) && !exclude.has(client.id),
     );
 
-    await Promise.all(
+    // One failing client must not abort delivery to the rest; report how many
+    // sends actually succeeded rather than how many were targeted.
+    const outcomes = await Promise.allSettled(
       targets.map((client) => Promise.resolve(client.send(operation.message))),
     );
-    return targets.length;
+    return outcomes.filter((outcome) => outcome.status === "fulfilled").length;
   }
 
   async closeAll(code?: number, reason?: string): Promise<void> {
-    await Promise.all(
+    // Always clear the registry, even if some clients throw while closing.
+    await Promise.allSettled(
       [...this.clients.values()].map((client) =>
         Promise.resolve(client.close?.(code, reason)),
       ),
@@ -41,7 +44,3 @@ export class InMemoryWebsocketAdapter<TMessage = unknown> {
     this.clients.clear();
   }
 }
-
-export class BaseWebSocketAdapter<
-  TMessage = unknown,
-> extends InMemoryWebsocketAdapter<TMessage> {}

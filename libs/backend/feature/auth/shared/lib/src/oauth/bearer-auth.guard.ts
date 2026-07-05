@@ -59,7 +59,9 @@ const hmacAlgorithms: Record<string, string> = {
 };
 const MinimumProductionJwtSecretLength = 32;
 
+/* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
 @Injectable()
+/* v8 ignore stop */
 export class BearerAuthGuard implements CanActivate {
   constructor(private readonly reflector: Reflector = new Reflector()) {}
 
@@ -82,10 +84,10 @@ export class BearerAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(
+        PublicAuthMetadataKey,
+        [context.getHandler(), context.getClass()],
+      ) ?? false
     );
   }
 }
@@ -110,8 +112,8 @@ export function validateBearerAuthorization(
 
   const token = extractBearerToken(authorizationHeader);
   const { header, payload, signingInput, signature } = parseJwt(token);
-  verifyHeader(header);
-  verifySignature(header, signingInput, signature, secret);
+  const hmacAlgorithm = verifyHeader(header);
+  verifySignature(hmacAlgorithm, signingInput, signature, secret);
   verifyTimeClaims(payload, nowInSeconds);
   verifyIssuer(payload, env.AUTH_JWT_ISSUER);
   verifyAudience(payload, env.AUTH_JWT_AUDIENCE);
@@ -165,9 +167,9 @@ function parseJwt(token: string): {
     throw new UnauthorizedException("Malformed JWT.");
   }
 
-  const encodedHeader = parts[0] ?? "";
-  const encodedPayload = parts[1] ?? "";
-  const signature = parts[2] ?? "";
+  const encodedHeader = parts[0] as string;
+  const encodedPayload = parts[1] as string;
+  const signature = parts[2] as string;
 
   return {
     header: decodeJson<JwtHeader>(encodedHeader, "JWT header"),
@@ -185,26 +187,23 @@ function decodeJson<T>(encoded: string, label: string): T {
   }
 }
 
-function verifyHeader(header: JwtHeader): void {
+function verifyHeader(header: JwtHeader): string {
   if (header.alg === "none") {
     throw new UnauthorizedException("JWT alg none is not allowed.");
   }
-  if (!header.alg || !hmacAlgorithms[header.alg]) {
-    throw new UnauthorizedException("Unsupported JWT algorithm.");
-  }
-}
-
-function verifySignature(
-  header: JwtHeader,
-  signingInput: string,
-  signature: string,
-  secret: string,
-): void {
   const hmacAlgorithm = header.alg ? hmacAlgorithms[header.alg] : undefined;
   if (!hmacAlgorithm) {
     throw new UnauthorizedException("Unsupported JWT algorithm.");
   }
+  return hmacAlgorithm;
+}
 
+function verifySignature(
+  hmacAlgorithm: string,
+  signingInput: string,
+  signature: string,
+  secret: string,
+): void {
   const digest = createHmac(hmacAlgorithm, secret)
     .update(signingInput)
     .digest();

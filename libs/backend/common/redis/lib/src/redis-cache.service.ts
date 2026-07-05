@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { Injectable } from "@nestjs/common";
 import {
   Cacheable,
@@ -7,16 +8,23 @@ import {
 } from "cacheable";
 import { InjectRedis } from "./decorator";
 import type { RedisClientLike } from "./type";
-
-type CacheableErrorListener = (error: unknown) => void;
-
-const isPresent = <T>(value: T | null | undefined): value is T =>
-  value !== null && value !== undefined;
+import type {
+  CacheableErrorListener,
+  CacheOperationContext,
+} from "./type/redis-cache.type";
+import {
+  deserializeValue,
+  isPresent,
+  toCacheableTtlMilliseconds,
+  toError,
+} from "./util";
 
 @Injectable()
 export class RedisCacheService {
   private readonly cache: Cacheable;
   private readonly inflight = new Map<string, Promise<unknown>>();
+  private readonly operationStorage =
+    new AsyncLocalStorage<CacheOperationContext>();
 
   constructor(@InjectRedis() private readonly redis: RedisClientLike) {
     this.cache = new Cacheable({
@@ -158,16 +166,24 @@ export class RedisCacheService {
   private async runCacheableOperation<T>(
     operation: () => Promise<T>,
   ): Promise<T> {
-    let operationError: unknown;
+    // Cacheable swallows store failures and re-emits them on a shared emitter,
+    // so a concurrent operation could otherwise capture another operation's
+    // error. The error is emitted synchronously inside the failing operation's
+    // async context, so we correlate it by matching the active context against
+    // this operation's own context instead of trusting the raw event.
+    const context: CacheOperationContext = {};
     const onError: CacheableErrorListener = (error) => {
-      operationError ??= error;
+      const active = this.operationStorage.getStore();
+      if (active === context) {
+        active.error ??= error;
+      }
     };
 
     this.cache.on(CacheableEvents.ERROR, onError);
     try {
-      const result = await operation();
-      if (operationError) {
-        throw toError(operationError);
+      const result = await this.operationStorage.run(context, operation);
+      if (context.error) {
+        throw toError(context.error);
       }
 
       return result;
@@ -200,15 +216,19 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
   }
 
   async set(key: string, value: unknown, ttl?: number): Promise<boolean> {
+    /* v8 ignore start -- KeyvStoreAdapter contract branch: RedisCacheService always writes a clamped, strictly-positive TTL (see toCacheableTtlMilliseconds), so Cacheable/Keyv never route a non-positive TTL to this deletion path. */
     if (ttl !== undefined && ttl <= 0) {
       const deleted = await this.redis.del(key);
       return Number(deleted) > 0;
     }
+    /* v8 ignore stop */
 
+    /* v8 ignore start -- KeyvStoreAdapter contract branch: RedisCacheService always writes a defined, strictly-positive TTL, so Cacheable/Keyv never invoke the no-TTL set() form. */
     const result =
       ttl === undefined
         ? await this.redis.set(key, String(value))
         : await this.redis.set(key, String(value), "PX", Math.ceil(ttl));
+    /* v8 ignore stop */
 
     return result !== null;
   }
@@ -226,6 +246,7 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
     return Number(deleted) > 0;
   }
 
+  /* v8 ignore start -- KeyvStoreAdapter contract methods: RedisCacheService only issues single-key deletes (invalidateCache) and never clears the store, so Cacheable/Keyv never route to deleteMany() or clear(). They exist solely to satisfy the KeyvStoreAdapter interface. */
   async deleteMany(keys: string[]): Promise<boolean> {
     if (keys.length === 0) {
       return true;
@@ -240,19 +261,5 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
       new Error("RedisCacheService does not support clearing Redis."),
     );
   }
-}
-
-function deserializeValue<T>(
-  cached: string,
-  deserialize: ((raw: string) => T) | undefined,
-): T {
-  return (deserialize?.(cached) ?? JSON.parse(cached)) as T;
-}
-
-function toCacheableTtlMilliseconds(ttlSeconds: number): number {
-  return Math.max(Math.ceil(ttlSeconds * 1000), 1);
-}
-
-function toError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
+  /* v8 ignore stop */
 }

@@ -1,5 +1,6 @@
+import { translations } from "@app/common-i18n";
 import { InteractionType } from "discord-api-types/v10";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   localizationsFor,
   resolveDiscordLocale,
@@ -16,50 +17,22 @@ describe("Discord i18n helpers", () => {
     expect(resolveDiscordLocale(undefined, null, "unsupported")).toBe("en");
   });
 
-  it("prefers linked Discord profile locale before interaction and guild locales", async () => {
-    const listProviderIdentities = vi.fn().mockResolvedValue([
-      {
-        provider: "discord",
-        providerSubject: "123456789012345678",
-        profileMetadata: { locale: "ru" },
-      },
-    ]);
-
-    await expect(
-      resolveInteractionLocale(
-        interaction({ locale: "en-US", guild_locale: "en-US" }),
-        { listProviderIdentities },
-        "tenant",
-      ),
-    ).resolves.toBe("ru");
-    expect(listProviderIdentities).toHaveBeenCalledWith(
-      "123456789012345678",
-      "tenant",
-    );
-  });
-
-  it("falls back to Discord locale, guild locale, then default", async () => {
-    const unavailable = {
-      listProviderIdentities: vi.fn().mockRejectedValue(new Error("down")),
-    };
-
-    await expect(
+  it("resolves the interaction locale, then guild locale, then default", () => {
+    expect(
       resolveInteractionLocale(
         interaction({ locale: "ru", guild_locale: "en-US" }),
-        unavailable,
-        "tenant",
       ),
-    ).resolves.toBe("ru");
-    await expect(
+    ).toBe("ru");
+    expect(
       resolveInteractionLocale(
         interaction({ locale: "fr", guild_locale: "ru" }),
       ),
-    ).resolves.toBe("ru");
-    await expect(
+    ).toBe("ru");
+    expect(
       resolveInteractionLocale(
         interaction({ locale: "fr", guild_locale: "unsupported" }),
       ),
-    ).resolves.toBe("en");
+    ).toBe("en");
   });
 
   it("returns localized errors and command localization maps", () => {
@@ -69,6 +42,20 @@ describe("Discord i18n helpers", () => {
     expect(localizationsFor("discord.commands.help.label")).toEqual({
       ru: "help",
     });
+  });
+
+  it("omits supported locales that have no value for the key", () => {
+    const key = "discord.commands.help.label";
+    const ruCatalog = translations.ru;
+    const original = ruCatalog[key];
+    delete ruCatalog[key];
+    try {
+      expect(localizationsFor(key)).toEqual({});
+    } finally {
+      if (original !== undefined) {
+        ruCatalog[key] = original;
+      }
+    }
   });
 });
 

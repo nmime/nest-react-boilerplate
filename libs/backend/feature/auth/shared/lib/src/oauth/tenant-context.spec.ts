@@ -38,11 +38,47 @@ describe("tenant context helpers", () => {
     assertRequestTenantMatchesPrincipal(request, principal);
     expect(request.tenantId).toBe(tenantIdFixture);
 
-    expect(() =>
+    expect(() => {
       assertRequestTenantMatchesPrincipal(
         { headers: { "x-tenant-id": otherTenantIdFixture } },
         principal,
-      ),
-    ).toThrow(UnauthorizedException);
+      );
+    }).toThrow(UnauthorizedException);
+  });
+
+  it("reads the first value of an array tenant id header", () => {
+    expect(
+      readTenantIdHeader({
+        headers: { "x-tenant-id": [tenantIdFixture, "ignored"] },
+      }),
+    ).toBe(tenantIdFixture);
+  });
+
+  it("reads the tenant id from a request getter header when no direct header is set", () => {
+    const request: AuthenticatedRequest = {
+      get: (name) => (name === "x-tenant-id" ? tenantIdFixture : undefined),
+    };
+    expect(readTenantIdHeader(request)).toBe(tenantIdFixture);
+  });
+
+  it("rejects a malformed tenant id header before comparing to the principal", () => {
+    expect(() => {
+      assertRequestTenantMatchesPrincipal(
+        { headers: { "x-tenant-id": "not-a-uuid" } },
+        principal,
+      );
+    }).toThrow(UnauthorizedException);
+    expect(() => {
+      assertRequestTenantMatchesPrincipal(
+        { headers: { "x-tenant-id": "not-a-uuid" } },
+        principal,
+      );
+    }).toThrow("Invalid tenant id.");
+  });
+
+  it("assigns the principal tenant when no tenant header is provided", () => {
+    const request: AuthenticatedRequest = { headers: {} };
+    assertRequestTenantMatchesPrincipal(request, principal);
+    expect(request.tenantId).toBe(tenantIdFixture);
   });
 });

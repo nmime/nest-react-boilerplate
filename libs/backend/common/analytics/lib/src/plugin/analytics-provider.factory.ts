@@ -1,22 +1,13 @@
-import type {
-  AnalyticsGa4Config,
-  AnalyticsPlugin,
-  AnalyticsPostHogConfig,
-  AnalyticsProviderName,
-  AnalyticsUmamiConfig,
-} from "../type";
+import type { AnalyticsPlugin, AnalyticsProviderFactoryConfig } from "../type";
 import { createGa4MeasurementProtocolPlugin } from "./ga4-measurement-protocol.plugin";
 import { createNoopAnalyticsPlugin } from "./noop.plugin";
 import { createPostHogAnalyticsPlugin } from "./posthog.plugin";
 import { createUmamiAnalyticsPlugin } from "./umami.plugin";
-
-export interface AnalyticsProviderFactoryConfig {
-  provider?: AnalyticsProviderName | "auto";
-  providers?: Array<AnalyticsProviderName | "auto">;
-  ga4?: AnalyticsGa4Config;
-  posthog?: AnalyticsPostHogConfig;
-  umami?: AnalyticsUmamiConfig;
-}
+import {
+  isUmamiConfigured,
+  normalizeProviders,
+  shouldCreateProvider,
+} from "./util";
 
 export function createAnalyticsProviderPlugins(
   config: AnalyticsProviderFactoryConfig = {},
@@ -80,30 +71,4 @@ export function createAnalyticsProviderPlugins(
   }
 
   return plugins;
-}
-
-function normalizeProviders(
-  config: AnalyticsProviderFactoryConfig,
-): Array<AnalyticsProviderName | "auto"> {
-  const providers = config.providers?.length ? config.providers : undefined;
-
-  return [...new Set(providers ?? (config.provider ? [config.provider] : []))];
-}
-
-function shouldCreateProvider(
-  provider: AnalyticsProviderName,
-  requestedProviders: Array<AnalyticsProviderName | "auto">,
-  autoDetectProviders: boolean,
-): boolean {
-  return autoDetectProviders || requestedProviders.includes(provider);
-}
-
-function isUmamiConfigured(
-  config?: AnalyticsUmamiConfig,
-): config is AnalyticsUmamiConfig & { websiteId: string } {
-  return Boolean(
-    config?.enabled !== false &&
-    config?.websiteId &&
-    (config.endpoint?.trim() || config.host?.trim()),
-  );
 }

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 
 const generatedPortBase =

@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { RedisClientLike } from "@app/backend-common-redis";
 
 const mocks = vi.hoisted(() => {
   const fastifyInstance = {
-    register: vi.fn(() => Promise.resolve()),
+    addHook: vi.fn(),
+    // Fastify's `register(plugin, options)` is called with two args at runtime;
+    // type the mock accordingly so call-argument assertions see the options arg.
+    register: vi.fn<(plugin: unknown, options?: unknown) => Promise<void>>(() =>
+      Promise.resolve(),
+    ),
   };
   const app = {
     enableCors: vi.fn(),
@@ -19,11 +25,17 @@ const mocks = vi.hoisted(() => {
   const helmetMiddleware = vi.fn();
   const localeMiddleware = vi.fn();
   const poolQuery = vi.fn(() => Promise.resolve({ rows: [] }));
+  const redisClient = {
+    incrementWithWindow: vi.fn(),
+    ping: vi.fn(() => Promise.resolve("PONG")),
+  };
 
   return {
     app,
+    closeRedisClient: vi.fn(() => Promise.resolve()),
     createValidationPipe: vi.fn(() => "validation-pipe"),
     createRequestLocaleMiddleware: vi.fn(() => localeMiddleware),
+    createRedisClient: vi.fn(() => redisClient),
     fastifyAdapter: vi.fn(function FastifyAdapterMock(options: unknown) {
       return { options };
     }),
@@ -39,6 +51,7 @@ const mocks = vi.hoisted(() => {
     Pool: vi.fn(function PoolMock() {
       return { query: poolQuery };
     }),
+    redisClient,
     exceptionsFilter: vi.fn(function ExceptionsFilterMock() {
       return undefined;
     }),
@@ -81,6 +94,16 @@ vi.mock("pg", () => ({
   Pool: mocks.Pool,
 }));
 
+vi.mock("@app/backend-common-redis", () => ({
+  closeRedisClient: mocks.closeRedisClient,
+  createRedisClient: mocks.createRedisClient,
+  RedisMode: {
+    Cluster: "cluster",
+    Sentinel: "sentinel",
+    Single: "single",
+  },
+}));
+
 vi.mock("@app/common-i18n", () => ({
   createRequestLocaleMiddleware: mocks.createRequestLocaleMiddleware,
   resolveLocaleFromRequest: mocks.resolveLocaleFromRequest,
@@ -100,9 +123,37 @@ vi.mock("@app/backend-common-validation", () => ({
   createValidationPipe: mocks.createValidationPipe,
 }));
 
-import { bootstrapNestApi } from "./index";
+import {
+  bootstrapNestApi,
+  RedisRateLimitStore,
+  resolveBackendEnvironmentConfig,
+} from "./index";
 
 class TestModule {}
+
+class FakeRedisClient {
+  readonly store = new Map<string, { value: string; expireAt: number }>();
+
+  ping(): Promise<string> {
+    return Promise.resolve("PONG");
+  }
+
+  incrementWithWindow(
+    key: string,
+    windowMs: number,
+  ): Promise<{ count: number; resetAt: number }> {
+    // Mirrors the atomic INCR + PEXPIRE-if-no-TTL contract: a live window keeps
+    // its original expiry (INCR never refreshes a TTL) while a fresh counter
+    // gets one attached in the same step, so the key always carries an expiry.
+    const now = Date.now();
+    const existing = this.store.get(key);
+    const alive = existing !== undefined && existing.expireAt > now;
+    const count = alive ? Number(existing.value) + 1 : 1;
+    const resetAt = alive ? existing.expireAt : now + windowMs;
+    this.store.set(key, { value: String(count), expireAt: resetAt });
+    return Promise.resolve({ count, resetAt });
+  }
+}
 
 interface TestRequest {
   headers?: Record<string, string | string[] | undefined>;
@@ -134,6 +185,11 @@ const createResponse = (): TestResponse => ({
   setHeader: vi.fn(),
   statusCode: 200,
 });
+
+const flushAsyncMiddleware = () =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
 
 interface CapturedStore {
   get: (
@@ -170,17 +226,23 @@ const getSessionStore = (): CapturedStore => {
 
 const storeGet = (store: CapturedStore, sessionId: string) =>
   new Promise<{ error: unknown; session?: unknown }>((resolve) => {
-    store.get(sessionId, (error, session) => resolve({ error, session }));
+    store.get(sessionId, (error, session) => {
+      resolve({ error, session });
+    });
   });
 
 const storeSet = (store: CapturedStore, sessionId: string, session: unknown) =>
   new Promise<unknown>((resolve) => {
-    store.set(sessionId, session, (error) => resolve(error));
+    store.set(sessionId, session, (error) => {
+      resolve(error);
+    });
   });
 
 const storeDestroy = (store: CapturedStore, sessionId: string) =>
   new Promise<unknown>((resolve) => {
-    store.destroy(sessionId, (error) => resolve(error));
+    store.destroy(sessionId, (error) => {
+      resolve(error);
+    });
   });
 
 const lastMiddleware = (): TestMiddleware => {
@@ -202,7 +264,12 @@ describe("bootstrapNestApi", () => {
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
     rateLimitInMemoryAllowed: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED,
     rateLimitMax: process.env.RATE_LIMIT_MAX,
+    rateLimitStore: process.env.RATE_LIMIT_STORE,
     rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
+    redisHosts: process.env.REDIS_HOSTS,
+    redisMode: process.env.REDIS_MODE,
+    redisSentinelGroupIdentifier: process.env.REDIS_SENTINEL_GROUP_IDENTIFIER,
+    redisUrl: process.env.REDIS_URL,
     sessionCookieMaxAgeSeconds: process.env.SESSION_COOKIE_MAX_AGE_SECONDS,
     sessionCookieName: process.env.SESSION_COOKIE_NAME,
     sessionCookieSameSite: process.env.SESSION_COOKIE_SAME_SITE,
@@ -220,7 +287,12 @@ describe("bootstrapNestApi", () => {
     delete process.env.RATE_LIMIT_ENABLED;
     delete process.env.RATE_LIMIT_IN_MEMORY_ALLOWED;
     delete process.env.RATE_LIMIT_MAX;
+    delete process.env.RATE_LIMIT_STORE;
     delete process.env.RATE_LIMIT_WINDOW_MS;
+    delete process.env.REDIS_HOSTS;
+    delete process.env.REDIS_MODE;
+    delete process.env.REDIS_SENTINEL_GROUP_IDENTIFIER;
+    delete process.env.REDIS_URL;
     delete process.env.SESSION_COOKIE_MAX_AGE_SECONDS;
     delete process.env.SESSION_COOKIE_NAME;
     delete process.env.SESSION_COOKIE_SAME_SITE;
@@ -240,8 +312,14 @@ describe("bootstrapNestApi", () => {
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED =
       originalEnvironment.rateLimitInMemoryAllowed ?? "";
     process.env.RATE_LIMIT_MAX = originalEnvironment.rateLimitMax ?? "";
+    process.env.RATE_LIMIT_STORE = originalEnvironment.rateLimitStore ?? "";
     process.env.RATE_LIMIT_WINDOW_MS =
       originalEnvironment.rateLimitWindowMs ?? "";
+    process.env.REDIS_HOSTS = originalEnvironment.redisHosts ?? "";
+    process.env.REDIS_MODE = originalEnvironment.redisMode ?? "";
+    process.env.REDIS_SENTINEL_GROUP_IDENTIFIER =
+      originalEnvironment.redisSentinelGroupIdentifier ?? "";
+    process.env.REDIS_URL = originalEnvironment.redisUrl ?? "";
     process.env.SESSION_COOKIE_MAX_AGE_SECONDS =
       originalEnvironment.sessionCookieMaxAgeSeconds ?? "";
     process.env.SESSION_COOKIE_NAME =
@@ -475,6 +553,14 @@ describe("bootstrapNestApi", () => {
     await expect(storeDestroy(store, "broken-delete")).resolves.toBe(
       destroyError,
     );
+
+    const closeHook = mocks.fastifyInstance.addHook.mock.calls.find(
+      (call) => call[0] === "onClose",
+    )?.[1] as (() => Promise<void>) | undefined;
+    if (!closeHook) {
+      throw new Error("Expected the session store to register close.");
+    }
+    await closeHook();
   });
 
   it("validates session, port, and production configuration failures", async () => {
@@ -604,7 +690,9 @@ describe("bootstrapNestApi", () => {
       createResponse(),
       next,
     );
-    listeners.forEach((listener) => listener());
+    listeners.forEach((listener) => {
+      listener();
+    });
     expect(response.setHeader).toHaveBeenCalledWith(
       "x-request-id",
       "request-1",
@@ -656,5 +744,247 @@ describe("bootstrapNestApi", () => {
     rateLimitMiddleware(socketRequest, secondResponse, rateNext);
     rateLimitMiddleware({}, createResponse(), rateNext);
     expect(rateNext).toHaveBeenCalledTimes(3);
+  });
+
+  it("increments through the redis store with an atomic window and stable reset time", async () => {
+    const redis = new FakeRedisClient();
+    const store = new RedisRateLimitStore(redis as unknown as RedisClientLike);
+
+    const first = await store.increment("rate-key", 5_000);
+    const second = await store.increment("rate-key", 5_000);
+
+    expect(first.count).toBe(1);
+    expect(second.count).toBe(2);
+    // The window reset time is derived from the counter key's own TTL, so it
+    // stays fixed across requests instead of sliding forward on every hit.
+    expect(second.resetAt).toBe(first.resetAt);
+    expect(first.resetAt).toBe(redis.store.get("rate-key")?.expireAt);
+    // The counter key carries a TTL that was attached atomically at creation.
+    expect(redis.store.get("rate-key")?.expireAt).toBeLessThan(
+      Number.POSITIVE_INFINITY,
+    );
+    await store.close();
+    expect(mocks.closeRedisClient).toHaveBeenCalledWith(redis);
+  });
+
+  it("handles async Redis rate-limit hits and store failures", async () => {
+    process.env.RATE_LIMIT_STORE = "redis";
+    process.env.REDIS_URL = "redis://localhost:6379";
+
+    const resetAt = Date.now() + 60_000;
+    mocks.redisClient.incrementWithWindow
+      .mockResolvedValueOnce({ count: 1, resetAt })
+      .mockResolvedValueOnce({ count: 2, resetAt })
+      .mockRejectedValueOnce("redis unavailable")
+      .mockRejectedValueOnce(new Error("redis exploded"));
+    const stderrWrite = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    try {
+      await bootstrapNestApi(TestModule, {
+        appName: "test-api",
+        defaultPort: 3010,
+        rateLimit: { enabled: true, max: 1, windowMs: 1_000 },
+      });
+
+      expect(mocks.createRedisClient).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lazyConnect: true,
+          mode: "single",
+          url: "redis://localhost:6379",
+        }),
+      );
+      expect(mocks.fastifyInstance.addHook).toHaveBeenCalledWith(
+        "onClose",
+        expect.any(Function),
+      );
+      const closeHook = mocks.fastifyInstance.addHook.mock.calls.find(
+        (call) => call[0] === "onClose",
+      )?.[1] as (() => Promise<void>) | undefined;
+      if (!closeHook) {
+        throw new Error(
+          "Expected the Redis rate-limit store to register close.",
+        );
+      }
+      await closeHook();
+      expect(mocks.closeRedisClient).toHaveBeenCalledWith(mocks.redisClient);
+
+      const rateLimitMiddleware = lastMiddleware();
+      const next = vi.fn();
+      const allowedResponse = createResponse();
+      rateLimitMiddleware({ ip: "redis-client" }, allowedResponse, next);
+      await flushAsyncMiddleware();
+      expect(next).toHaveBeenCalledTimes(1);
+
+      const limitedResponse = createResponse();
+      rateLimitMiddleware({ ip: "redis-client" }, limitedResponse, next);
+      await flushAsyncMiddleware();
+      expect(limitedResponse.statusCode).toBe(429);
+      expect(limitedResponse.end).toHaveBeenCalledWith(
+        expect.stringContaining("rate-limited"),
+      );
+
+      const failureResponse = createResponse();
+      rateLimitMiddleware({ ip: "redis-client" }, failureResponse, next);
+      await flushAsyncMiddleware();
+      expect(failureResponse.statusCode).toBe(503);
+      expect(failureResponse.end).toHaveBeenCalledWith(
+        expect.stringContaining("rate-limit-unavailable"),
+      );
+      expect(stderrWrite).toHaveBeenCalledWith(
+        expect.stringContaining("redis unavailable"),
+      );
+
+      const errorFailureResponse = createResponse();
+      rateLimitMiddleware({ ip: "redis-client" }, errorFailureResponse, next);
+      await flushAsyncMiddleware();
+      expect(errorFailureResponse.statusCode).toBe(503);
+      expect(stderrWrite).toHaveBeenCalledWith(
+        expect.stringContaining("redis exploded"),
+      );
+    } finally {
+      stderrWrite.mockRestore();
+    }
+  });
+
+  it("validates Redis rate-limit configuration from the environment", () => {
+    const baseOptions = { appName: "test-api", defaultPort: 3010 };
+    const baseEnvironment = {
+      RATE_LIMIT_ENABLED: "true",
+      RATE_LIMIT_STORE: "redis",
+    };
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        RATE_LIMIT_STORE: "disk",
+        REDIS_URL: "redis://localhost:6379",
+      }),
+    ).toThrow("RATE_LIMIT_STORE must be one of");
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_DB: "-1",
+        REDIS_URL: "redis://localhost:6379",
+      }),
+    ).toThrow("REDIS_DB must be a non-negative integer.");
+
+    expect(
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_DB: "2",
+        REDIS_URL: "redis://localhost:6379",
+      }).rateLimit.redis,
+    ).toMatchObject({ db: 2 });
+
+    for (const value of ["1", "true", "yes", "on"]) {
+      expect(
+        resolveBackendEnvironmentConfig(baseOptions, {
+          RATE_LIMIT_ENABLED: value,
+        }).rateLimit.enabled,
+      ).toBe(true);
+    }
+
+    for (const value of ["0", "false", "no", "off"]) {
+      expect(
+        resolveBackendEnvironmentConfig(baseOptions, {
+          RATE_LIMIT_ENABLED: value,
+        }).rateLimit.enabled,
+      ).toBe(false);
+    }
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_HOSTS: "redis.local:not-a-port",
+      }),
+    ).toThrow("Invalid REDIS_HOSTS entry");
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_MODE: "standalone",
+        REDIS_URL: "redis://localhost:6379",
+      }),
+    ).toThrow("REDIS_MODE must be one of");
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_MODE: "cluster",
+        REDIS_URL: "redis://localhost:6379",
+      }),
+    ).toThrow("REDIS_HOSTS is required");
+
+    expect(() =>
+      resolveBackendEnvironmentConfig(baseOptions, {
+        ...baseEnvironment,
+        REDIS_HOSTS: "redis.local:26379",
+        REDIS_MODE: "sentinel",
+      }),
+    ).toThrow("REDIS_SENTINEL_GROUP_IDENTIFIER is required");
+  });
+
+  it("sweeps expired sessions on an interval and stops the sweep on shutdown", async () => {
+    process.env.DATABASE_URL =
+      "postgres://postgres:postgres@localhost:5432/app";
+    process.env.SESSION_SECRET = "x".repeat(32);
+    process.env.SESSION_SWEEP_INTERVAL_MS = "1000";
+    vi.useFakeTimers();
+
+    try {
+      await bootstrapNestApi(TestModule, {
+        appName: "test-api",
+        defaultPort: 3010,
+      });
+      const store = getSessionStore() as unknown as {
+        close: () => Promise<void>;
+        init: () => Promise<void>;
+      };
+
+      await store.init();
+      mocks.poolQuery.mockClear();
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(mocks.poolQuery).toHaveBeenCalledWith(
+        "DELETE FROM fastify_sessions WHERE expire <= $1",
+        [expect.any(Date)],
+      );
+
+      await store.close();
+      await store.close();
+      mocks.poolQuery.mockClear();
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(mocks.poolQuery).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+      delete process.env.SESSION_SWEEP_INTERVAL_MS;
+    }
+  });
+
+  it("removes expired in-memory rate-limit buckets during periodic cleanup", async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: "cleanup-api",
+      defaultPort: 3010,
+      rateLimit: { enabled: true, max: 1_000, windowMs: 1 },
+    });
+
+    const rateLimitMiddleware = lastMiddleware();
+    rateLimitMiddleware({ ip: "expired-client" }, createResponse(), vi.fn());
+    await new Promise((resolve) => {
+      setTimeout(resolve, 2);
+    });
+
+    const next = vi.fn();
+    for (let index = 0; index < 100; index += 1) {
+      rateLimitMiddleware(
+        { ip: `fresh-client-${index}` },
+        createResponse(),
+        next,
+      );
+    }
+
+    expect(next).toHaveBeenCalledTimes(100);
   });
 });

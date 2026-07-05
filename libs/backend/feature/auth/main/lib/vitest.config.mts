@@ -15,7 +15,12 @@ export default defineConfig({
     coverage: fullCoverage(
       "../../../../../../coverage/libs/backend/feature/auth/main",
       ["src/**/*.ts"],
-      ["src/index.ts"],
+      [
+        "src/index.ts",
+        "src/**/*.module.ts",
+        "src/**/*.dto.ts",
+        "src/**/*.swagger.ts",
+      ],
     ),
   },
 });

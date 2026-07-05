@@ -1,11 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  HttpException,
-  HttpStatus,
-} from "@nestjs/common";
-import type { ExceptionFilter } from "@nestjs/common";
-import type { Request, Response } from "express";
+import { HttpException, HttpStatus } from "@nestjs/common";
 import type { Result } from "neverthrow";
 import {
   BaseException,
@@ -15,7 +8,6 @@ import {
   toProblemDetails,
   type ProblemDetails,
 } from "@app/backend-common-exception";
-import { resolveLocaleFromRequest } from "@app/common-i18n";
 
 export interface OkResponse<T> {
   data: T;
@@ -40,14 +32,6 @@ export function createProblemResponse(
     status,
     title: mapHttpStatusToProblemTitle(status),
   });
-}
-
-interface ProblemHttpResponse {
-  status: (code: number) => ProblemHttpResponse;
-  type: (contentType: string) => ProblemHttpResponse;
-  header?: (name: string, value: string) => ProblemHttpResponse;
-  json?: (body: ProblemDetails) => unknown;
-  send?: (body: ProblemDetails) => unknown;
 }
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -110,24 +94,3 @@ export const mapValueToApiResponse = <T>(
 
   return response;
 };
-
-@Catch()
-export class ExceptionsFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): void {
-    const http = host.switchToHttp();
-    const request = http.getRequest<Request>();
-    const response = http.getResponse<Response>();
-    const locale = resolveLocaleFromRequest(request);
-    const problem = toProblemDetails(exception, undefined, locale);
-
-    const problemResponse = response
-      .status(problem.status)
-      .type("application/problem+json") as ProblemHttpResponse;
-    problemResponse.header?.("content-language", locale);
-    if (typeof problemResponse.json === "function") {
-      problemResponse.json(problem);
-    } else {
-      problemResponse.send?.(problem);
-    }
-  }
-}

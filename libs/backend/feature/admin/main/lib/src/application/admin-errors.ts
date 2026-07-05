@@ -1,4 +1,5 @@
 export type AdminApplicationErrorCode =
+  | "conflict"
   | "invalid_access_policy"
   | "not_found"
   | "repository_error"

@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { createConfig } from "@app/common-config";
-import Joi from "joi";
 import {
   createAnalyticsProviderPlugins,
   createNoopAnalyticsPlugin,
@@ -10,68 +9,16 @@ import type {
   AnalyticsPlugin,
   AnalyticsProviderName,
 } from "../type";
-
-interface AnalyticsEnvironment {
-  ANALYTICS_APP_NAME?: string;
-  APP_NAME?: string;
-  ANALYTICS_ENVIRONMENT?: string;
-  NODE_ENV?: string;
-  ANALYTICS_ENABLED: boolean;
-  ANALYTICS_PROVIDER?: AnalyticsProviderName | "auto";
-  ANALYTICS_PROVIDERS?: Array<AnalyticsProviderName | "auto">;
-  ANALYTICS_GA4_MEASUREMENT_ID: string;
-  ANALYTICS_GA4_API_SECRET: string;
-  ANALYTICS_GA4_COLLECT_URL: string;
-  ANALYTICS_POSTHOG_API_KEY: string;
-  ANALYTICS_POSTHOG_HOST: string;
-  ANALYTICS_UMAMI_WEBSITE_ID: string;
-  ANALYTICS_UMAMI_ENDPOINT?: string;
-  ANALYTICS_UMAMI_HOST?: string;
-  ANALYTICS_UMAMI_HOSTNAME?: string;
-}
-
-const providerSchema = Joi.string().valid(
-  "noop",
-  "ga4",
-  "posthog",
-  "umami",
-  "auto",
-);
-
-const schema = Joi.object<AnalyticsEnvironment>({
-  ANALYTICS_APP_NAME: Joi.string().empty("").optional(),
-  APP_NAME: Joi.string().empty("").optional(),
-  ANALYTICS_ENVIRONMENT: Joi.string().empty("").optional(),
-  NODE_ENV: Joi.string().empty("").optional(),
-  ANALYTICS_ENABLED: Joi.boolean()
-    .truthy("1", "true", "yes", "on")
-    .falsy("0", "false", "no", "off")
-    .default(true),
-  ANALYTICS_PROVIDER: providerSchema.empty("").optional(),
-  ANALYTICS_PROVIDERS: Joi.alternatives()
-    .try(
-      Joi.array().items(providerSchema),
-      Joi.string().custom(parseProvidersConfig, "analytics providers list"),
-    )
-    .optional(),
-  ANALYTICS_GA4_MEASUREMENT_ID: Joi.string().empty("").default(""),
-  ANALYTICS_GA4_API_SECRET: Joi.string().empty("").default(""),
-  ANALYTICS_GA4_COLLECT_URL: Joi.string()
-    .empty("")
-    .default("https://www.google-analytics.com/mp/collect"),
-  ANALYTICS_POSTHOG_API_KEY: Joi.string().empty("").default(""),
-  ANALYTICS_POSTHOG_HOST: Joi.string()
-    .empty("")
-    .default("https://app.posthog.com"),
-  ANALYTICS_UMAMI_WEBSITE_ID: Joi.string().empty("").default(""),
-  ANALYTICS_UMAMI_ENDPOINT: Joi.string().empty("").optional(),
-  ANALYTICS_UMAMI_HOST: Joi.string().empty("").optional(),
-  ANALYTICS_UMAMI_HOSTNAME: Joi.string().empty("").optional(),
-});
+import {
+  analyticsEnvSchema,
+  type AnalyticsEnvironment,
+} from "./analytics.env.schema";
+import { stripTrailingSlash } from "./util";
 
 @Injectable()
 export class AnalyticsConfigService {
-  protected readonly configService = createConfig<AnalyticsEnvironment>(schema);
+  protected readonly configService =
+    createConfig<AnalyticsEnvironment>(analyticsEnvSchema);
   private cachedPlugins?: AnalyticsPlugin[];
 
   constructor(private readonly config: AnalyticsConfig = {}) {}
@@ -217,36 +164,4 @@ export class AnalyticsConfigService {
 
     return plugins;
   }
-}
-
-function parseProvidersConfig(
-  value: string,
-  helpers: Joi.CustomHelpers,
-): Array<AnalyticsProviderName | "auto"> {
-  const providers: Array<AnalyticsProviderName | "auto"> = [];
-  for (const provider of value
-    .split(",")
-    .map((entry) => entry.trim())
-    .filter(Boolean)) {
-    if (isProviderName(provider) || provider === "auto") {
-      providers.push(provider);
-    } else {
-      return helpers.error("any.only") as never;
-    }
-  }
-
-  return providers;
-}
-
-function isProviderName(value: string): value is AnalyticsProviderName {
-  return ["noop", "ga4", "posthog", "umami"].includes(value);
-}
-
-function stripTrailingSlash(value: string): string {
-  let end = value.length;
-  while (end > 0 && value[end - 1] === "/") {
-    end -= 1;
-  }
-
-  return value.slice(0, end);
 }

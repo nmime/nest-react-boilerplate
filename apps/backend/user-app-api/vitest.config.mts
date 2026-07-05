@@ -10,7 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common-feature-flags": new URL(
-        "../../../libs/backend/common/feature-flags/lib/src/index.ts",
+        "../../../libs/common/feature-flags/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common-config": new URL(
@@ -75,10 +75,6 @@ export default defineConfig({
       ).pathname,
       "@app/backend-feature-user-shared": new URL(
         "../../../libs/backend/feature/user/shared/lib/src/index.ts",
-        import.meta.url,
-      ).pathname,
-      "@app/backend-postgres-main-feature-flags-migrations": new URL(
-        "../../../libs/backend/postgres/main/feature-flags/lib/src/migrations/index.ts",
         import.meta.url,
       ).pathname,
       "@app/backend-postgres-main-feature-flags": new URL(

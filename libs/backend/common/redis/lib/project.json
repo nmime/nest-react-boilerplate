@@ -17,8 +17,7 @@
         "outputPath": "dist/libs/backend/common/redis",
         "main": "libs/backend/common/redis/lib/src/index.ts",
         "tsConfig": "libs/backend/common/redis/lib/tsconfig.lib.json",
-        "assets": [],
-        "rootDir": "."
+        "assets": []
       }
     },
     "test": {

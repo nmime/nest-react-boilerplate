@@ -14,13 +14,7 @@ export type ApiClientRequestOptions = Omit<
 
 const trimTrailingSlash = (value: string): string => value.replace(/\/$/u, "");
 
-const getDefaultOpenApiBaseUrl = (): string => {
-  if (typeof globalThis.location?.origin === "string") {
-    return globalThis.location.origin;
-  }
-
-  return "http://localhost";
-};
+const getDefaultOpenApiBaseUrl = (): string => globalThis.location.origin;
 
 const normalizeOpenApiBaseUrl = (baseUrl?: string): string => {
   const normalizedBaseUrl = trimTrailingSlash(baseUrl?.trim() ?? "");

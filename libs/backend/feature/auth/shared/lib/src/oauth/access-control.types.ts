@@ -1,6 +1,6 @@
 import { Language } from "./language.enum";
 import type { AuthProvider, AuthProviderChannel } from "./social-auth.types";
-import { createIsEnum } from "../util/enum.util";
+import { createIsEnum } from "../util";
 
 export type AuthenticatedLocale = Language;
 
@@ -46,6 +46,8 @@ export interface AuthenticatedSession {
 
 export interface AuthenticatedResponse {
   clearCookie?: (name: string, options?: { path?: string }) => void;
+  redirect?: (url: string, statusCode?: number) => void;
+  send?: (payload?: unknown) => void;
 }
 
 export interface AuthenticatedRawRequest {

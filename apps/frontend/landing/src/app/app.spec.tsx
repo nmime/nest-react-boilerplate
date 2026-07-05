@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from ".";
+import { LandingReactIsland } from "./landing-react-island";
 
 describe("Landing app", () => {
   afterEach(() => {
@@ -57,5 +58,11 @@ describe("Landing app", () => {
     expect(html).toContain(
       "API docs configuration is using the same-origin fallback.",
     );
+  });
+
+  it("renders the React island shell around the landing app", () => {
+    const html = renderToStaticMarkup(<LandingReactIsland />);
+
+    expect(html).toContain("Nest React Boilerplate");
   });
 });

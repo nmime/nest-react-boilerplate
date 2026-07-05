@@ -22,6 +22,14 @@ export interface HealthIndicatorResult {
 export interface HealthIndicator {
   name: string;
   required?: boolean;
+  /**
+   * Marks the indicator as safe to run during Kubernetes liveness probes.
+   * Liveness must only assert that the process itself is alive, so only
+   * indicators that touch no external dependency (e.g. the runtime indicator)
+   * should opt in. Dependency indicators (Postgres, Redis, NATS, ...) must
+   * leave this unset so a transient dependency blip never fails liveness.
+   */
+  livenessSafe?: boolean;
   check(
     context?: HealthIndicatorContext,
   ): Promise<HealthIndicatorResult> | HealthIndicatorResult;

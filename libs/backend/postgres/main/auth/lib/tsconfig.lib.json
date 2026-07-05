@@ -5,6 +5,10 @@
     "types": ["node"],
     "declaration": true
   },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.component-spec.ts"
+  ],
   "include": ["src/**/*.ts"]
 }

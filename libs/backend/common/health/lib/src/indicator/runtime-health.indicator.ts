@@ -7,6 +7,7 @@ import type {
 export class RuntimeHealthIndicator implements HealthIndicator {
   readonly name = "runtime";
   readonly required = true;
+  readonly livenessSafe = true;
 
   check(context?: HealthIndicatorContext): HealthIndicatorResult {
     return {

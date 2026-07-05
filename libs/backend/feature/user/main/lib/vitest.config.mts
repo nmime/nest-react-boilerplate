@@ -15,7 +15,7 @@ export default defineConfig({
     coverage: fullCoverage(
       "../../../../../../coverage/libs/backend/feature/user/main",
       ["src/**/*.ts"],
-      ["src/index.ts", "src/lib/user-main.module.ts"],
+      ["src/index.ts", "src/**/*.module.ts", "src/**/*.dto.ts"],
     ),
   },
 });

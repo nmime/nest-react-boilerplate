@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const repoRoot = process.cwd();
-const errors = [];
+const errors: string[] = [];
 const skippedDirectories = new Set([
   ".git",
   ".nx",
@@ -15,9 +14,9 @@ const skippedDirectories = new Set([
   "test-results",
 ]);
 
-function listFiles(root) {
-  const files = [];
-  const visit = (dir) => {
+function listFiles(root: string) {
+  const files: string[] = [];
+  const visit = (dir: string) => {
     for (const name of readdirSync(dir)) {
       if (skippedDirectories.has(name)) continue;
       const path = join(dir, name);
@@ -31,17 +30,17 @@ function listFiles(root) {
   return files.sort();
 }
 
-function normalizeSql(sql) {
+function normalizeSql(sql: string) {
   return sql
     .replace(/--.*$/gm, "")
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
-function unquote(identifier) {
+function unquote(identifier: string) {
   return identifier.replace(/^"|"$/g, "");
 }
-function columnsFromName(name) {
+function columnsFromName(name: string) {
   return name
     .split(",")
     .map((part) =>
@@ -52,10 +51,10 @@ function columnsFromName(name) {
     .filter(Boolean)
     .join("_");
 }
-function fail(file, message) {
+function fail(file: string, message: string) {
   errors.push(`${relative(repoRoot, file)}: ${message}`);
 }
-function validate(file, sql) {
+function validate(file: string, sql: string) {
   const normalized = normalizeSql(sql).toLowerCase();
   if (
     /\bcreate\s+type\b[\s\S]*\bas\s+enum\b/.test(normalized) ||

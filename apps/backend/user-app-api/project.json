@@ -12,7 +12,11 @@
         "outputPath": "dist/apps/backend/user-app-api",
         "main": "apps/backend/user-app-api/src/main.ts",
         "tsConfig": "apps/backend/user-app-api/tsconfig.app.json",
-        "assets": []
+        "assets": [],
+        "generatePackageJson": true,
+        "updateBuildableProjectDepsInPackageJson": true,
+        "excludeLibsInPackageJson": true,
+        "generateLockfile": true
       }
     },
     "serve": {

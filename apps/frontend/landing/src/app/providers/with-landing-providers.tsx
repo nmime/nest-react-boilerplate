@@ -70,8 +70,12 @@ export const withLandingProviders = <TProps extends Record<string, unknown>>(
     </FrontendStateProvider>
   );
 
+  // `name` is typed as `string` on functions but is undefined for some
+  // component shapes (e.g. objects whose `name` has been cleared), so treat it
+  // as an optional boundary before falling back to a stable label.
+  const named = Component as { displayName?: string; name?: string };
   ComponentWithLandingProviders.displayName = `withLandingProviders(${
-    Component.displayName ?? Component.name ?? "Component"
+    named.displayName ?? named.name ?? "Component"
   })`;
 
   return ComponentWithLandingProviders;

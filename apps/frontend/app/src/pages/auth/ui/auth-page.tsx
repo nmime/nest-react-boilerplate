@@ -1,4 +1,9 @@
-import { useI18n, type Locale, type UiTheme } from "@app/frontend-runtime";
+import {
+  observer,
+  useI18n,
+  type Locale,
+  type UiTheme,
+} from "@app/frontend-runtime";
 import { useAuthSessionFlow } from "../../../features/auth";
 import {
   SocialAuthButtons,
@@ -20,15 +25,14 @@ interface AuthPageProps {
   navigate: (to: string, options?: { replace?: boolean }) => void;
 }
 
-export function AuthPage({
+export const AuthPage = observer(function AuthPage({
   applyUserLocale,
   applyUserTheme,
   navigate,
 }: Readonly<AuthPageProps>) {
   const { locale, t } = useI18n();
   const returnUrl =
-    new URLSearchParams(globalThis.location?.search ?? "").get("returnUrl") ??
-    null;
+    new URLSearchParams(globalThis.location.search).get("returnUrl") ?? null;
   const authSession = useAuthSessionFlow({
     applyUserLocale,
     applyUserTheme,
@@ -104,8 +108,12 @@ export function AuthPage({
           <SocialAuthButtons
             isDiscordPending={socialAuth.isDiscordPending}
             isTelegramPending={socialAuth.isTelegramTmaPending}
-            onDiscord={(intent) => socialAuth.continueWithDiscord({ intent })}
-            onTelegramTma={() => navigate("/tma/auth", { replace: false })}
+            onDiscord={(intent) => {
+              socialAuth.continueWithDiscord({ intent });
+            }}
+            onTelegramTma={() => {
+              navigate("/tma/auth", { replace: false });
+            }}
             t={t}
           />
         }
@@ -115,4 +123,4 @@ export function AuthPage({
       </AuthPanel>
     </div>
   );
-}
+});

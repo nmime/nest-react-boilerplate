@@ -45,7 +45,7 @@ describe("UiErrorBoundary", () => {
     expect(error).toEqual(
       expect.objectContaining({ message: "Child render failed" }),
     );
-    expect(errorInfo?.componentStack).toEqual(expect.any(String));
+    expect(errorInfo.componentStack).toEqual(expect.any(String));
   });
 
   it("supports custom fallbacks and reset-key recovery", async () => {
@@ -74,9 +74,9 @@ describe("UiErrorBoundary", () => {
       </UiErrorBoundary>,
     );
 
-    await waitFor(() =>
-      expect(screen.getByText("Recovered child")).toBeTruthy(),
-    );
+    await waitFor(() => {
+      expect(screen.getByText("Recovered child")).toBeTruthy();
+    });
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 });

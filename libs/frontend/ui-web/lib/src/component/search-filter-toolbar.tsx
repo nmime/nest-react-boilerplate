@@ -2,7 +2,7 @@
 import { useId, type ReactNode } from "react";
 import { UiInput } from "./input";
 import { UiLabel } from "./label";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiSearchFilterToolbarProps {
   actions?: ReactNode;

@@ -129,7 +129,6 @@ export function createFactory(definition: FactoryDefinition): Factory {
   };
 
   factory.buildWith = (traits) => buildRecord(applyTraits(traits));
-  (factory as unknown as Record<string, unknown>).__traitRegistry = traitRegistry;
 
   return factory;
 }
@@ -139,10 +138,6 @@ export function createFactoryWithTraits(
   traits: Record<string, Trait>,
 ): Factory & WithTraits {
   const factory = createFactory(definition);
-  const registry = (factory as unknown as Record<string, unknown>).__traitRegistry as Record<string, Trait>;
-  for (const [name, trait] of Object.entries(traits)) {
-    registry[name] = trait;
-  }
 
   const buildWith = (traitList: (string | Record<string, unknown>)[]) => {
     const merged: Record<string, unknown> = {};

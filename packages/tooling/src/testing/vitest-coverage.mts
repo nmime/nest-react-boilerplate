@@ -1,9 +1,17 @@
 import type { InlineConfig } from "vitest";
 
+type CoverageThresholds = {
+  branches: number;
+  functions: number;
+  lines: number;
+  statements: number;
+};
+
 export const fullCoverage = (
   reportsDirectory: string,
   include: string[],
   exclude: string[] = [],
+  thresholds: Partial<CoverageThresholds> = {},
 ): NonNullable<InlineConfig["coverage"]> => ({
   all: true,
   enabled: false,
@@ -15,9 +23,17 @@ export const fullCoverage = (
     "**/*.stories.ts",
     "**/*.stories.tsx",
     "**/*.d.ts",
-    "**/*.config.*",
+    // Tool configuration files only. A broad "**/*.config.*" pattern would
+    // also swallow source modules like *.config.service.ts / *.config.ts.
     "**/vite.config.*",
+    "**/*.vite.config.*",
     "**/vitest.config.*",
+    "**/playwright.config.*",
+    "**/playwright.*.config.*",
+    "**/eslint.config.*",
+    "**/astro.config.*",
+    "**/tailwind.config.*",
+    "**/postcss.config.*",
     "**/main.ts",
     "**/main.tsx",
     "**/generated/**",
@@ -29,5 +45,11 @@ export const fullCoverage = (
   provider: "v8",
   reportsDirectory,
   reporter: ["text", "lcov"],
-  thresholds: { branches: 100, functions: 100, lines: 100, statements: 100 },
+  thresholds: {
+    branches: 100,
+    functions: 100,
+    lines: 100,
+    statements: 100,
+    ...thresholds,
+  },
 });

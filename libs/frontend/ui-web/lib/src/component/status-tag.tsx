@@ -1,6 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import type { HTMLAttributes } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiStatusTagProps extends HTMLAttributes<HTMLSpanElement> {
   label: string;

@@ -1,6 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend-api-client";
 import {
+  observer,
   useAuthShellStore,
   type TranslationKey,
   type TranslationParams,
@@ -15,15 +14,11 @@ import {
   UiToast,
 } from "../../../shared/ui";
 import {
-  fetchProviderIdentities,
-  providerIdentitiesQueryKey,
-  unlinkProviderIdentity,
-} from "../api";
-import {
   getProviderTranslationKey,
   normalizeProviderIdentities,
   SocialAuthProvider,
   socialAuthProviders,
+  useProviderIdentitiesModel,
   type ProviderIdentity,
 } from "../model";
 
@@ -78,26 +73,13 @@ const getUnlinkErrorKey = (error: unknown): TranslationKey => {
   return "auth.social.unlink.error";
 };
 
-export function ProviderIdentitiesPanel({
+function ProviderIdentitiesPanelBase({
   onLink,
   t,
 }: Readonly<ProviderIdentitiesPanelProps>) {
-  const authClient = useAuthApiClient();
   const authStore = useAuthShellStore();
-  const queryClient = useQueryClient();
-  const identitiesQuery = useQuery({
-    enabled: authStore.isAuthenticated,
-    queryFn: () => fetchProviderIdentities(authClient),
-    queryKey: providerIdentitiesQueryKey(),
-    retry: false,
-  });
-  const unlinkMutation = useMutation({
-    mutationFn: (identityId: string) =>
-      unlinkProviderIdentity(authClient, identityId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: providerIdentitiesQueryKey() }),
-    retry: false,
-  });
+  const model = useProviderIdentitiesModel();
+  const { identitiesQuery, unlinkMutation } = model;
   const state = normalizeProviderIdentities(identitiesQuery.data);
   const unlinkProviderName = t(
     getUnlinkProviderName(unlinkMutation.variables, state.identities),
@@ -186,7 +168,9 @@ export function ProviderIdentitiesPanel({
                   loadingLabel={t("auth.social.status.pending", {
                     provider: providerName,
                   })}
-                  onClick={() => unlinkMutation.mutate(identity.id)}
+                  onClick={() => {
+                    model.unlink(identity.id);
+                  }}
                   type="button"
                   variant="secondary"
                 >
@@ -194,7 +178,9 @@ export function ProviderIdentitiesPanel({
                 </UiButton>
               ) : (
                 <UiButton
-                  onClick={() => onLink(provider)}
+                  onClick={() => {
+                    onLink(provider);
+                  }}
                   type="button"
                   variant="secondary"
                 >
@@ -224,3 +210,5 @@ export function ProviderIdentitiesPanel({
     </UiCard>
   );
 }
+
+export const ProviderIdentitiesPanel = observer(ProviderIdentitiesPanelBase);

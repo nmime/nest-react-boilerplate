@@ -76,7 +76,9 @@ export class AppStore {
 
   constructor(initialWidth = getViewportWidth()) {
     this.currentBreakpoint = getBreakpointForWidth(initialWidth);
-    this.resizeListener = () => this.syncBreakpointFromViewport();
+    this.resizeListener = () => {
+      this.syncBreakpointFromViewport();
+    };
     makeAutoObservable(this, {}, { autoBind: true });
     this.subscribeToViewport();
   }

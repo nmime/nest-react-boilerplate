@@ -37,7 +37,7 @@ function readStoredTheme(): UiTheme | undefined {
   }
 
   try {
-    return normalizeTheme(window.localStorage?.getItem(ThemeStorageKey));
+    return normalizeTheme(window.localStorage.getItem(ThemeStorageKey));
   } catch {
     return undefined;
   }
@@ -49,7 +49,7 @@ function persistTheme(theme: UiTheme): void {
   }
 
   try {
-    window.localStorage?.setItem(ThemeStorageKey, theme);
+    window.localStorage.setItem(ThemeStorageKey, theme);
   } catch {
     // Ignore storage failures in private browsing or SSR shims.
   }
@@ -141,6 +141,10 @@ export class UiStore {
     }
 
     this.setTheme(theme);
+  }
+
+  dispose(): void {
+    this.removeSystemThemeSubscription();
   }
 
   private applyTheme(): void {

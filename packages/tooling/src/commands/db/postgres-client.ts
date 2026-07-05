@@ -1,14 +1,44 @@
-// @ts-nocheck
 import { spawnSync } from "node:child_process";
 import { relative, resolve } from "node:path";
 
 export const DefaultPostgresClientImage = "postgres:17-alpine";
 
-export function isTruthy(value) {
+type SpawnSync = typeof spawnSync;
+type PostgresOperation = "backup" | "restore";
+
+interface PostgresClientSelectionInput {
+  dockerAvailable: boolean;
+  forceDocker: boolean;
+  localClientExists: boolean;
+  localMajor: number | undefined;
+  serverMajor: number | undefined;
+}
+
+interface PostgresClientSelection {
+  mode: "docker" | "local" | "missing";
+  reason?: string;
+  warning?: string;
+}
+
+interface PostgresInvocation {
+  command: string;
+  args: string[];
+  env: NodeJS.ProcessEnv;
+  redactedCommand: string[];
+}
+
+interface InvocationResult {
+  error?: Error;
+  status: number;
+  stderr: string;
+  stdout: string;
+}
+
+export function isTruthy(value: unknown): boolean {
   return /^(1|true|yes|on)$/iu.test(String(value ?? "").trim());
 }
 
-export function parsePostgresMajorVersion(output) {
+export function parsePostgresMajorVersion(output: string | undefined): number | undefined {
   const serverVersionNumber = /^\s*(\d{5,6})\s*$/u.exec(String(output ?? ""));
   if (serverVersionNumber) return Math.trunc(Number(serverVersionNumber[1]) / 10_000);
 
@@ -17,18 +47,18 @@ export function parsePostgresMajorVersion(output) {
   return Number(semanticVersion[1]);
 }
 
-export function isPostgresClientVersionMismatch(output) {
+export function isPostgresClientVersionMismatch(output: string | undefined): boolean {
   return /server version:.*(?:pg_dump|pg_restore) version:|unsupported version .* in file header|aborting because of server version mismatch/isu.test(
     String(output ?? ""),
   );
 }
 
-export function redactCommand(command, connectionString) {
+export function redactCommand(command: string[], connectionString: string): string[] {
   const redacted = redactConnectionString(connectionString);
   return command.map((part) => (part === connectionString ? redacted : part));
 }
 
-export function redactConnectionString(connectionString) {
+export function redactConnectionString(connectionString: string): string {
   try {
     const url = new URL(connectionString);
     if (url.password) url.password = "***";
@@ -38,7 +68,7 @@ export function redactConnectionString(connectionString) {
   }
 }
 
-export function commandExists(command, spawn = spawnSync) {
+export function commandExists(command: string, spawn: SpawnSync = spawnSync): boolean {
   const result = spawn("sh", ["-c", `command -v ${quoteForShell(command)}`], {
     encoding: "utf8",
     stdio: "pipe",
@@ -46,7 +76,7 @@ export function commandExists(command, spawn = spawnSync) {
   return result.status === 0;
 }
 
-export function dockerAvailable(spawn = spawnSync) {
+export function dockerAvailable(spawn: SpawnSync = spawnSync): boolean {
   const result = spawn("docker", ["version", "--format", "{{.Server.Version}}"], {
     encoding: "utf8",
     stdio: "pipe",
@@ -55,7 +85,7 @@ export function dockerAvailable(spawn = spawnSync) {
   return result.status === 0;
 }
 
-export function detectLocalClientMajor(tool, spawn = spawnSync) {
+export function detectLocalClientMajor(tool: string, spawn: SpawnSync = spawnSync): number | undefined {
   const result = spawn(tool, ["--version"], {
     encoding: "utf8",
     stdio: "pipe",
@@ -64,7 +94,7 @@ export function detectLocalClientMajor(tool, spawn = spawnSync) {
   return parsePostgresMajorVersion(`${result.stdout ?? ""}\n${result.stderr ?? ""}`);
 }
 
-export function detectServerMajor(connectionString, spawn = spawnSync) {
+export function detectServerMajor(connectionString: string, spawn: SpawnSync = spawnSync): number | undefined {
   if (!commandExists("psql", spawn)) return undefined;
 
   const result = spawn(
@@ -90,7 +120,7 @@ export function selectPostgresClientMode({
   localClientExists,
   localMajor,
   serverMajor,
-}) {
+}: PostgresClientSelectionInput): PostgresClientSelection {
   if (forceDocker) {
     if (hasDocker) return { mode: "docker", reason: "DB_BACKUP_USE_DOCKER requested" };
     if (localClientExists) {
@@ -131,9 +161,16 @@ export function createPostgresClientInvocation({
   operation,
   outputPath,
   spawn = spawnSync,
+}: {
+  connectionString: string;
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  operation: PostgresOperation;
+  outputPath: string;
+  spawn?: SpawnSync;
 }) {
   const tool = operation === "backup" ? "pg_dump" : "pg_restore";
-  const image = env.DB_BACKUP_DOCKER_IMAGE || env.POSTGRES_CLIENT_DOCKER_IMAGE || DEFAULT_POSTGRES_CLIENT_IMAGE;
+  const image = env.DB_BACKUP_DOCKER_IMAGE || env.POSTGRES_CLIENT_DOCKER_IMAGE || DefaultPostgresClientImage;
   const localClientExists = commandExists(tool, spawn);
   const hasDocker = dockerAvailable(spawn);
   const localMajor = localClientExists ? detectLocalClientMajor(tool, spawn) : undefined;
@@ -160,7 +197,7 @@ export function createPostgresClientInvocation({
   };
 }
 
-export function createLocalInvocation({ connectionString, operation, outputPath }) {
+export function createLocalInvocation({ connectionString, operation, outputPath }: { connectionString: string; operation: PostgresOperation; outputPath: string }): PostgresInvocation {
   if (operation === "backup") {
     const command = [
       "pg_dump",
@@ -197,7 +234,7 @@ export function createLocalInvocation({ connectionString, operation, outputPath 
   };
 }
 
-export function createDockerInvocation({ connectionString, cwd, image, operation, outputPath }) {
+export function createDockerInvocation({ connectionString, cwd, image, operation, outputPath }: { connectionString: string; cwd: string; image: string; operation: PostgresOperation; outputPath: string }): PostgresInvocation {
   const containerPath = toContainerWorkspacePath(cwd, outputPath);
   const script =
     operation === "backup"
@@ -231,7 +268,7 @@ export function createDockerInvocation({ connectionString, cwd, image, operation
   };
 }
 
-export function runPostgresClient({ connectionString, operation, outputPath }) {
+export function runPostgresClient({ connectionString, operation, outputPath }: { connectionString: string; operation: PostgresOperation; outputPath: string }): number {
   const plan = createPostgresClientInvocation({ connectionString, operation, outputPath });
 
   if (plan.warning) console.warn(plan.warning);
@@ -258,7 +295,7 @@ export function runPostgresClient({ connectionString, operation, outputPath }) {
   return firstResult.status ?? 1;
 }
 
-function runInvocation(invocation) {
+function runInvocation(invocation: PostgresInvocation): InvocationResult {
   const result = spawnSync(invocation.command, invocation.args, {
     encoding: "utf8",
     env: invocation.env,
@@ -273,17 +310,17 @@ function runInvocation(invocation) {
   };
 }
 
-function forwardOutput(result) {
+function forwardOutput(result: InvocationResult): void {
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
   if (result.error && !result.stderr) process.stderr.write(`${result.error.message}\n`);
 }
 
-function quoteForShell(value) {
+function quoteForShell(value: string): string {
   return `'${String(value).replace(/'/gu, "'\\''")}'`;
 }
 
-function toContainerWorkspacePath(cwd, path) {
+function toContainerWorkspacePath(cwd: string, path: string): string {
   const absoluteCwd = resolve(cwd);
   const absolutePath = resolve(absoluteCwd, path);
   const relativePath = relative(absoluteCwd, absolutePath);

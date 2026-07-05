@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   AdminDashboardReadPermission,
   AdminAuditReadPermission,
+  AdminManageAllPermission,
   AdminProfileReadPermission,
   AdminRolesReadPermission,
+  AdminRolesWritePermission,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
   AdminUsersAccessPolicyUpdatePermission,
@@ -42,16 +44,18 @@ describe("auth shared", () => {
       roles: [UserRole, AdminRole],
       permissions: [
         UserProfileReadPermission,
-        AdminProfileReadPermission,
         AdminDashboardReadPermission,
+        AdminProfileReadPermission,
         AdminUsersReadPermission,
         AdminUsersWritePermission,
         AdminUsersStatusUpdatePermission,
         AdminUsersAccessPolicyUpdatePermission,
         AdminRolesReadPermission,
+        AdminRolesWritePermission,
         AdminAuditReadPermission,
         AdminSettingsReadPermission,
         AdminSettingsUpdatePermission,
+        AdminManageAllPermission,
       ],
     });
   });

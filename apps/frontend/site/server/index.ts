@@ -24,7 +24,11 @@ app.get("/*", async (request, reply) => {
     headersOriginal: request.headers,
     urlOriginal: request.raw.url ?? "/",
   });
-  const { httpResponse } = pageContext;
+  // Vike types `httpResponse` as always present, but it is `null` for requests
+  // Vike does not render (e.g. asset paths without a matching route), so keep
+  // the fallback guard and reflect the real nullability here.
+  const httpResponse = pageContext.httpResponse as
+    typeof pageContext.httpResponse | null;
 
   if (!httpResponse) {
     return reply.code(404).send("Not found");

@@ -234,7 +234,12 @@ describe("auth refresh middleware", () => {
     const refreshAccessToken = vi
       .fn<() => Promise<string>>()
       .mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve("fresh"), 1)),
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => {
+              resolve("fresh");
+            }, 1),
+          ),
       );
     const clearAuth = vi.fn<() => void>();
     const fetchMock = vi
@@ -330,7 +335,12 @@ describe("auth refresh middleware", () => {
     const refreshAccessToken = vi
       .fn<() => Promise<string>>()
       .mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve("fresh"), 1)),
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => {
+              resolve("fresh");
+            }, 1),
+          ),
       );
     const clearAuth = vi.fn<() => void>();
     const baseFetch = vi.fn<typeof fetch>().mockImplementation((input) => {

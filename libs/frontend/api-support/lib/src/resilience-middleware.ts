@@ -89,5 +89,3 @@ export const createApiResilienceMiddleware = ({
     throw error;
   },
 });
-
-export const createErrorNormalizationMiddleware = createApiResilienceMiddleware;

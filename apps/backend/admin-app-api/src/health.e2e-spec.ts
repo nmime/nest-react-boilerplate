@@ -61,6 +61,9 @@ describe("admin-app-api health e2e", () => {
   });
 
   afterAll(async () => {
+    // `app` stays unset if `beforeAll` throws before assignment; guard so
+    // teardown does not mask the original setup failure with a TypeError.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive teardown when setup failed before assignment
     await app?.close();
   });
 

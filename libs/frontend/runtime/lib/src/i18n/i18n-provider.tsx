@@ -27,9 +27,6 @@ import {
   type RootStore,
 } from "../state";
 
-export * from "./domain-namespace";
-export * from "../state";
-
 export interface FrontendI18nContextValue {
   locale: Locale;
   supportedLocales: readonly Locale[];
@@ -100,6 +97,18 @@ export const FrontendI18nProvider = observer(function FrontendI18nProvider({
   const rootStore = providedRootStore ?? ownedRootStore;
   const localeStore = rootStore?.locale;
   const uiStore = rootStore?.ui;
+
+  useEffect(() => {
+    // Dispose only the store this provider created; a provided root store is
+    // owned by FrontendStateProvider and disposed there.
+    if (!ownedRootStore) {
+      return undefined;
+    }
+
+    return () => {
+      ownedRootStore.dispose();
+    };
+  }, [ownedRootStore]);
 
   if (!localeStore || !uiStore) {
     throw new Error(

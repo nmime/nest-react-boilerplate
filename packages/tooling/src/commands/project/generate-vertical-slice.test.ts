@@ -1,4 +1,3 @@
-// @ts-nocheck
 import assert from "node:assert/strict";
 import {
   existsSync,
@@ -13,9 +12,15 @@ import { join } from "node:path";
 import { describe as nodeDescribe, it as nodeIt } from "node:test";
 import { runGenerateVerticalSlice } from "./generate-vertical-slice.ts";
 
-const { describe, it } = process.env.VITEST
+// node:test and vitest expose compatible describe/it (name, fn) call shapes, but
+// their declared overloads differ, so unify them to a common callable type.
+type TestRunner = (name: string, fn: () => void | Promise<void>) => void;
+const { describe, it } = (process.env.VITEST
   ? await import("vitest")
-  : { describe: nodeDescribe, it: nodeIt };
+  : { describe: nodeDescribe, it: nodeIt }) as unknown as {
+  describe: TestRunner;
+  it: TestRunner;
+};
 
 function createWorkspace(): string {
   const workspaceRoot = mkdtempSync(join(tmpdir(), "vertical-slice-"));
@@ -157,6 +162,108 @@ describe("project generate vertical slice", () => {
           "@app/backend-postgres-main-billing-events"
         ],
         ["libs/backend/postgres/main/billing-events/lib/src/index.ts"],
+      );
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("emits the deep postgres infrastructure/data-access shape", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const result = captureRun(workspaceRoot, [
+        "Billing Events",
+        "--api-app=auth-app-api",
+      ]);
+      assert.equal(result.status, 0);
+
+      const dataAccess =
+        "libs/backend/postgres/main/billing-events/lib/src/infrastructure/data-access";
+      const read = (relativePath: string): string =>
+        readFileSync(join(workspaceRoot, relativePath), "utf8");
+      const exists = (relativePath: string): boolean =>
+        existsSync(join(workspaceRoot, relativePath));
+
+      // Root barrel re-exports the data-access aggregate only.
+      assert.equal(
+        read("libs/backend/postgres/main/billing-events/lib/src/index.ts"),
+        'export * from "./infrastructure/data-access";\n',
+      );
+
+      // The retired flat entity/migrations layout must be gone.
+      assert.equal(
+        exists(
+          "libs/backend/postgres/main/billing-events/lib/src/entity/billing-events.entity.ts",
+        ),
+        false,
+      );
+
+      // data-access aggregate barrel exports the three per-folder barrels via export *.
+      assert.equal(
+        read(`${dataAccess}/index.ts`),
+        'export * from "./entities";\nexport * from "./repositories";\nexport * from "./migrations";\n',
+      );
+
+      // entities/ folder with export* barrel.
+      assert.match(
+        read(`${dataAccess}/entities/billing-events.entity.ts`),
+        /export class BillingEventsEntity/,
+      );
+      assert.equal(
+        read(`${dataAccess}/entities/index.ts`),
+        'export * from "./billing-events.entity";\n',
+      );
+
+      // repositories/ folder with a stub repository following auth's pattern.
+      const repository = read(
+        `${dataAccess}/repositories/billing-events.repository.ts`,
+      );
+      assert.match(repository, /@Injectable\(\)/);
+      assert.match(repository, /export class BillingEventsRepository/);
+      assert.match(repository, /from "@nestjs\/common"/);
+      assert.match(repository, /from "\.\.\/entities"/);
+      assert.equal(
+        read(`${dataAccess}/repositories/index.ts`),
+        'export * from "./billing-events.repository";\n',
+      );
+
+      // migrations/ folder with export* barrel.
+      assert.match(
+        read(
+          `${dataAccess}/migrations/Migration00000000000000CreateBillingEvents.ts`,
+        ),
+        /extends Migration/,
+      );
+      assert.equal(
+        read(`${dataAccess}/migrations/index.ts`),
+        'export * from "./Migration00000000000000CreateBillingEvents";\n',
+      );
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("emits correct relative config depth for the deep postgres library", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const result = captureRun(workspaceRoot, ["Billing Events", "--api-app=auth-app-api"]);
+      assert.equal(result.status, 0);
+
+      const postgresLib = "libs/backend/postgres/main/billing-events/lib";
+      const tsconfig = JSON.parse(
+        readFileSync(join(workspaceRoot, postgresLib, "tsconfig.json"), "utf8"),
+      );
+      const projectJson = JSON.parse(
+        readFileSync(join(workspaceRoot, postgresLib, "project.json"), "utf8"),
+      );
+
+      // The lib is six directories deep, so both references must climb six levels.
+      assert.equal(tsconfig.extends, "../../../../../../tsconfig.base.json");
+      assert.equal(
+        projectJson.$schema,
+        "../../../../../../node_modules/nx/schemas/project-schema.json",
       );
     } finally {
       removeWorkspace(workspaceRoot);

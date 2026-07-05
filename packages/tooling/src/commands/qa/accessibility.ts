@@ -1,10 +1,18 @@
 #!/usr/bin/env node
-// @ts-nocheck
+/// <reference lib="dom" />
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createReadStream } from "node:fs";
 import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 import { envList, parseArgs, writeJson } from "./runtime-utils.ts";
+
+interface AxeViolation { id: string; impact: string | null; help: string; nodes: unknown[]; }
+interface AxeResults { violations: AxeViolation[]; }
+declare global {
+  // axe-core is injected into the page via page.addScriptTag before it is read.
+  // eslint-disable-next-line no-var
+  var axe: { run: (context: Document, options: { resultTypes: string[] }) => Promise<AxeResults> };
+}
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -19,7 +27,7 @@ if (dryRun) {
   process.exit(0);
 }
 
-function contentType(file) {
+function contentType(file: string): string {
   if (file.endsWith(".html")) return "text/html; charset=utf-8";
   if (file.endsWith(".js") || file.endsWith(".mjs")) {
     return "text/javascript; charset=utf-8";
@@ -31,7 +39,9 @@ function contentType(file) {
   return "application/octet-stream";
 }
 
-async function serveDir(dir) {
+interface StaticServer { url: string; close: () => Promise<void>; }
+
+async function serveDir(dir: string): Promise<StaticServer> {
   const root = resolve(dir);
   const server = createServer((req, res) => {
     const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
@@ -44,12 +54,16 @@ async function serveDir(dir) {
     res.setHeader("content-type", contentType(file));
     createReadStream(file).pipe(res);
   });
-  await new Promise((resolveListen) => server.listen(0, "127.0.0.1", resolveListen));
-  return { url: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((resolveClose) => server.close(resolveClose)) };
+  await new Promise<void>((resolveListen) => {
+    server.listen(0, "127.0.0.1", () => resolveListen());
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Unable to allocate accessibility server port.");
+  return { url: `http://127.0.0.1:${address.port}`, close: () => new Promise<void>((resolveClose) => { server.close(() => resolveClose()); }) };
 }
 
-async function loadAxeSource() {
-  const candidates = [process.env.AXE_CORE_PATH, "node_modules/axe-core/axe.min.js", ".cache/qa/axe.min.js"].filter(Boolean);
+async function loadAxeSource(): Promise<string | null> {
+  const candidates = [process.env.AXE_CORE_PATH, "node_modules/axe-core/axe.min.js", ".cache/qa/axe.min.js"].filter((candidate): candidate is string => Boolean(candidate));
   for (const candidate of candidates) if (existsSync(candidate)) return readFileSync(candidate, "utf8");
   try {
     const response = await fetch("https://unpkg.com/axe-core@4.10.2/axe.min.js", { signal: AbortSignal.timeout(15000) });
@@ -73,7 +87,7 @@ if (process.env.A11Y_INCLUDE_STORYBOOK === "1") {
   defaultTargetDirs.push("dist/storybook/frontend-ui");
 }
 
-const servers = [];
+const servers: StaticServer[] = [];
 for (const dir of defaultTargetDirs) if (existsSync(join(dir, "index.html"))) {
   const server = await serveDir(dir);
   servers.push(server);
@@ -99,16 +113,16 @@ if (!urls.length) {
 const { chromium, devices } = await import("@playwright/test");
 const axeSource = await loadAxeSource();
 const browser = await chromium.launch();
-const profileConfig = { desktop: { viewport: { width: 1440, height: 1000 } }, mobile: { ...devices["Pixel 7"] } };
-const results = [];
+const profileConfig: Record<string, Parameters<typeof browser.newContext>[0]> = { desktop: { viewport: { width: 1440, height: 1000 } }, mobile: devices["Pixel 7"] };
+const results: Record<string, unknown>[] = [];
 try {
   for (const url of urls) for (const profile of profiles) {
     const context = await browser.newContext(profileConfig[profile] ?? profileConfig.desktop);
     const page = await context.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     const semantic = await page.evaluate(() => {
-      const visibleText = (element) => element.textContent?.trim() || element.getAttribute("aria-label") || element.getAttribute("title") || "";
-      return { title: document.title, lang: document.documentElement.lang, landmarks: document.querySelectorAll("main,nav,header,footer,aside,[role='main'],[role='navigation']").length, headings: document.querySelectorAll("h1,h2,h3,h4,h5,h6").length, imagesWithoutAlt: [...document.images].filter((img) => !img.hasAttribute("alt")).length, unlabeledInputs: [...document.querySelectorAll("input,select,textarea")].filter((el) => !el.labels?.length && !el.getAttribute("aria-label") && !el.getAttribute("aria-labelledby")).length, unnamedButtons: [...document.querySelectorAll("button,[role='button'],a[href]")].filter((el) => !visibleText(el)).length };
+      const visibleText = (element: Element): string => element.textContent?.trim() || element.getAttribute("aria-label") || element.getAttribute("title") || "";
+      return { title: document.title, lang: document.documentElement.lang, landmarks: document.querySelectorAll("main,nav,header,footer,aside,[role='main'],[role='navigation']").length, headings: document.querySelectorAll("h1,h2,h3,h4,h5,h6").length, imagesWithoutAlt: [...document.images].filter((img) => !img.hasAttribute("alt")).length, unlabeledInputs: [...document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input,select,textarea")].filter((el) => !el.labels?.length && !el.getAttribute("aria-label") && !el.getAttribute("aria-labelledby")).length, unnamedButtons: [...document.querySelectorAll("button,[role='button'],a[href]")].filter((el) => !visibleText(el)).length };
     });
     let axeViolations = null;
     if (axeSource) {

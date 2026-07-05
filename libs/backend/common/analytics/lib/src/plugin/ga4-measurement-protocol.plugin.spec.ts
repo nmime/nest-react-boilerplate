@@ -75,6 +75,56 @@ describe("createGa4MeasurementProtocolPlugin", () => {
     expect(body.events[0].params).not.toHaveProperty("context");
     expect(body.events[0].params).not.toHaveProperty("omitted");
   });
+
+  it("normalizes Date, bigint, and unserializable param values", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createGa4MeasurementProtocolPlugin({
+      measurementId: "G-TEST",
+      apiSecret: "test-secret",
+      fetch: fetcher,
+    });
+    const occurredAt = new Date("2024-01-02T03:04:05.006Z");
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+
+    // No timestamp: exercises the toMicros() nullish path.
+    await plugin.track?.({
+      event: "order_created",
+      properties: {
+        occurredAt,
+        big: 10n,
+        circular,
+        infinite: Number.POSITIVE_INFINITY,
+        token: Symbol("unserializable"),
+      },
+    });
+
+    const [, requestInit] = fetcher.mock.calls[0] ?? [];
+    const body = readJsonBody<Ga4RequestBody>(requestInit);
+    const params = body.events[0]?.params;
+
+    expect(body).not.toHaveProperty("timestamp_micros");
+    expect(params?.occurredAt).toBe(occurredAt.toISOString());
+    expect(params?.big).toBe("10");
+    expect(params?.circular).toBe("[object Object]");
+    expect(params).not.toHaveProperty("infinite");
+    expect(params).not.toHaveProperty("token");
+  });
+
+  it("throws when GA4 responds with a non-2xx status", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 400 }));
+    const plugin = createGa4MeasurementProtocolPlugin({
+      measurementId: "G-TEST",
+      apiSecret: "test-secret",
+      fetch: fetcher,
+    });
+
+    await expect(
+      plugin.track?.({ event: "order_created", timestamp: new Date() }),
+    ).rejects.toThrow("GA4 analytics request failed: 400");
+  });
 });
 
 function readJsonBody<T>(requestInit: RequestInit | undefined): T {

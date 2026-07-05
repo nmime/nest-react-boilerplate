@@ -55,7 +55,9 @@ export function GlobalOverlayProvider({
   children,
 }: Readonly<GlobalOverlayProviderProps>) {
   const [overlay, setOverlay] = useState<ReactNode | null>(null);
-  const hideOverlay = useCallback(() => setOverlay(null), []);
+  const hideOverlay = useCallback(() => {
+    setOverlay(null);
+  }, []);
   const showOverlay = useCallback((nextOverlay: ReactNode) => {
     setOverlay(nextOverlay);
   }, []);
@@ -88,7 +90,9 @@ export function useTheme(): ThemeHookValue {
   return useMemo(
     () => ({
       resolvedTheme: uiStore.resolvedTheme,
-      setTheme: (theme: UiTheme) => uiStore.setTheme(theme),
+      setTheme: (theme: UiTheme) => {
+        uiStore.setTheme(theme);
+      },
       theme: uiStore.theme,
     }),
     [uiStore, uiStore.resolvedTheme, uiStore.theme],

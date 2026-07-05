@@ -187,7 +187,7 @@ function UserReadinessOverview() {
   );
 }
 
-function UserHomeContent({
+const UserHomeContent = observer(function UserHomeContent({
   applyUserLocale,
   applyUserTheme,
 }: Readonly<UserHomeContentProps>) {
@@ -266,7 +266,7 @@ function UserHomeContent({
       </AuthPanel>
     </>
   );
-}
+});
 
 export const UserHomePage = observer(function UserHomePage({
   activeRoute = "/",

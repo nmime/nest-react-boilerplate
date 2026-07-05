@@ -1,24 +1,25 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { findOperation, loadConsumerContracts, loadOpenApiContracts, parseArgs, validateSchema, writeJson } from "./runtime-utils.ts";
+import type { LoadedOpenApiContract, OpenApiDocument, OpenApiSecurityRequirement } from "./runtime-utils.ts";
 const args = parseArgs();
 const root = args.options.get("contracts") ?? process.env.CONSUMER_CONTRACTS_ROOT;
 const reportPath = args.options.get("report") ?? "test-results/consumer-contracts/report.json";
-const errors = [];
-const warnings = [];
-const results = [];
-function hasHeader(headers, name) { const wanted = name.toLowerCase(); return Object.keys(headers).some((header) => header.toLowerCase() === wanted); }
-function securityRequirementSatisfied(requirement, doc, headers) { return Object.keys(requirement).every((schemeName) => { const scheme = doc.components?.securitySchemes?.[schemeName]; if (scheme?.type === "apiKey" && scheme.in === "cookie") return hasHeader(headers, "Cookie"); if (scheme?.type === "http" && scheme.scheme === "bearer") return hasHeader(headers, "Authorization"); return false; }); }
-function isSecuritySatisfied(security, doc, headers) { if (!security.length) return true; return security.some((requirement) => securityRequirementSatisfied(requirement, doc, headers)); }
+const errors: string[] = [];
+const warnings: string[] = [];
+interface InteractionResult { file: string; provider: string; description?: string; method: string; path: string; status: string; ok: boolean; }
+const results: InteractionResult[] = [];
+function hasHeader(headers: Record<string, unknown>, name: string): boolean { const wanted = name.toLowerCase(); return Object.keys(headers).some((header) => header.toLowerCase() === wanted); }
+function securityRequirementSatisfied(requirement: OpenApiSecurityRequirement, doc: OpenApiDocument, headers: Record<string, unknown>): boolean { return Object.keys(requirement).every((schemeName) => { const scheme = doc.components?.securitySchemes?.[schemeName]; if (scheme?.type === "apiKey" && scheme.in === "cookie") return hasHeader(headers, "Cookie"); if (scheme?.type === "http" && scheme.scheme === "bearer") return hasHeader(headers, "Authorization"); return false; }); }
+function isSecuritySatisfied(security: OpenApiSecurityRequirement[], doc: OpenApiDocument, headers: Record<string, unknown>): boolean { if (!security.length) return true; return security.some((requirement) => securityRequirementSatisfied(requirement, doc, headers)); }
 try {
   const providers = loadOpenApiContracts();
-  const byName = new Map();
+  const byName = new Map<string, LoadedOpenApiContract>();
   for (const contract of providers) { byName.set(contract.file.replace(/\.json$/, ""), contract); if (contract.doc.info?.title) byName.set(contract.doc.info.title, contract); }
   for (const consumer of loadConsumerContracts(root)) {
     const file = consumer.file;
     const pact = consumer.doc;
     const providerName = pact.provider?.name ?? pact.providerName;
-    const provider = byName.get(providerName);
+    const provider = providerName ? byName.get(providerName) : undefined;
     if (!provider) { errors.push(`${file}: provider ${providerName} does not match any OpenAPI contract`); continue; }
     for (const [index, interaction] of (pact.interactions ?? []).entries()) {
       const label = `${file} interaction ${index + 1} (${interaction.description ?? "unnamed"})`;

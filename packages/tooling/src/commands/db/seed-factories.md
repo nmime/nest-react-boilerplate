@@ -157,7 +157,7 @@ const testUserFactory = createFactory({
 | No `Math.random()` or `crypto` | Determinism is the core guarantee |
 | No `Date.now()` timestamps | Non-deterministic across runs |
 | Sequence starts at 1 (not 0) | Convention match with database auto-increment |
-| `@ts-nocheck` tests | Matches existing tooling test conventions |
+| Fully type-checked tests | Matches existing tooling test conventions (strict `tsc`, no suppressions) |
 | Exposed through `@repo/tooling/commands/*` | Follows existing tooling exports pattern |
 
 ## Testing

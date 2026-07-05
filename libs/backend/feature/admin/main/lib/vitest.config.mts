@@ -14,8 +14,8 @@ export default defineConfig({
     globals: false,
     coverage: fullCoverage(
       "../../../../../../coverage/libs/backend/feature/admin/main",
-      ["src/lib/**/*.ts"],
-      ["src/**/*.module.ts"],
+      ["src/**/*.ts"],
+      ["src/**/*.module.ts", "src/**/*.dto.ts"],
     ),
   },
 });

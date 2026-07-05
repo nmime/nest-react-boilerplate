@@ -4,24 +4,26 @@ import {
   type PostgresMikroOrmOverrides,
 } from "@app/backend-postgres-main";
 import { AuthPostgresModule } from "@app/backend-postgres-main-auth";
-import { AuthController } from "./auth.controller";
-import { AuthService } from "./auth.service";
-import { ExternalAuthService } from "./external-auth.service";
+import { AuthController } from "./interfaces/http";
 import {
+  AuthService,
+  EffectivePermissionService,
+  ExternalAuthService,
+} from "./application";
+import {
+  AuthRoleStoreInjectToken,
   AuthUserStoreInjectToken,
+  InMemoryAuthRoleStore,
   InMemoryAuthUserStore,
+  PostgresAuthRoleStore,
   PostgresAuthUserStore,
-} from "./auth-user-store";
-import {
   AuthTokenStoreInjectToken,
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
-} from "./auth-token-store";
-import {
   InMemorySocialAuthStore,
   PostgresSocialAuthStore,
   SocialAuthStoreInjectToken,
-} from "./social-auth-store";
+} from "./infrastructure";
 
 export enum AuthPersistenceMode {
   Postgres = "postgres",
@@ -86,6 +88,16 @@ export class AuthMainModule {
       providers: [
         AuthService,
         ExternalAuthService,
+        EffectivePermissionService,
+        useMemory
+          ? {
+              provide: AuthRoleStoreInjectToken,
+              useClass: InMemoryAuthRoleStore,
+            }
+          : {
+              provide: AuthRoleStoreInjectToken,
+              useClass: PostgresAuthRoleStore,
+            },
         useMemory
           ? {
               provide: AuthUserStoreInjectToken,
@@ -114,7 +126,7 @@ export class AuthMainModule {
               useClass: PostgresSocialAuthStore,
             },
       ],
-      exports: [AuthService, ExternalAuthService],
+      exports: [AuthService, ExternalAuthService, EffectivePermissionService],
     };
   }
 }

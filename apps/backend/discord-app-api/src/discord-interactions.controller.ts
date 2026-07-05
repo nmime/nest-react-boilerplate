@@ -1,4 +1,11 @@
-import { Body, Controller, Headers, Post, Req } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  Post,
+  Req,
+} from "@nestjs/common";
 import type { FastifyRequest } from "fastify";
 import type {
   APIInteraction,
@@ -30,8 +37,14 @@ export class DiscordInteractionsController {
     @Body() body: APIInteraction,
   ): Promise<APIInteractionResponse> {
     const snapshot = this.config.snapshot();
+    // Ed25519 verification must run over the exact received bytes. Re-serializing
+    // the parsed body would produce different bytes and fail verification, so
+    // reject when the raw body is unavailable instead of silently re-encoding.
+    if (request.rawBody === undefined) {
+      throw new BadRequestException("discord_raw_body_required");
+    }
     await this.security.verify({
-      rawBody: request.rawBody ?? JSON.stringify(body),
+      rawBody: request.rawBody,
       headers: { signature, timestamp },
       publicKey: snapshot.publicKey,
     });

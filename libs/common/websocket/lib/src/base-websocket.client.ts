@@ -11,7 +11,3 @@ export abstract class BaseWebsocketClient<
     return undefined;
   }
 }
-
-export abstract class BaseWebSocketClient<
-  TMessage = unknown,
-> extends BaseWebsocketClient<TMessage> {}

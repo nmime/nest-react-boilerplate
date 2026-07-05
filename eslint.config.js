@@ -2,7 +2,7 @@ const nx = require("@nx/eslint-plugin");
 const typescriptEslintParser = require("@typescript-eslint/parser");
 const typescriptEslintPlugin = require("@typescript-eslint/eslint-plugin");
 const sonarjsEslintPlugin = require("eslint-plugin-sonarjs");
-const eslintPluginPrettierRecommended = require("eslint-plugin-prettier/recommended");
+const eslintConfigPrettier = require("eslint-config-prettier");
 
 module.exports = [
   ...nx.configs["flat/base"],
@@ -29,7 +29,7 @@ module.exports = [
         "error",
         {
           ignoredFiles: ["{projectRoot}/eslint.config.{js,cjs,mjs}"],
-          ignoredDependencies: ["@app/frontend-ui", "@app/frontend-ui"],
+          ignoredDependencies: ["@app/frontend-ui"],
           checkMissingDependencies: false,
         },
       ],
@@ -218,23 +218,72 @@ module.exports = [
                 "scope:shared",
               ],
             },
+
+            {
+              sourceTag: "fsd:layer:shared",
+              notDependOnLibsWithTags: ["fsd:layer:app"],
+            },
+            {
+              sourceTag: "boundary:backend-kernel",
+              onlyDependOnLibsWithTags: [
+                "boundary:backend-kernel",
+                "platform:shared",
+              ],
+            },
+            {
+              sourceTag: "boundary:infrastructure-adapter",
+              onlyDependOnLibsWithTags: [
+                "boundary:backend-kernel",
+                "boundary:infrastructure-adapter",
+                "boundary:interface-helper",
+                "boundary:test-util",
+                "platform:shared",
+              ],
+            },
+            {
+              sourceTag: "boundary:interface-helper",
+              onlyDependOnLibsWithTags: [
+                "boundary:backend-kernel",
+                "boundary:infrastructure-adapter",
+                "boundary:interface-helper",
+                "boundary:test-util",
+                "platform:shared",
+              ],
+            },
+            {
+              sourceTag: "boundary:test-util",
+              onlyDependOnLibsWithTags: [
+                "boundary:backend-kernel",
+                "boundary:infrastructure-adapter",
+                "boundary:interface-helper",
+                "boundary:test-util",
+                "platform:shared",
+              ],
+            },
           ],
         },
       ],
     },
   },
   sonarjsEslintPlugin.configs.recommended,
-  eslintPluginPrettierRecommended,
+  eslintConfigPrettier,
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: typescriptEslintParser,
       parserOptions: {
-        project: "tsconfig.*?.json",
+        project: "tsconfig.lint.json",
       },
     },
     rules: {
       ...typescriptEslintPlugin.configs["recommended-type-checked"].rules,
+      "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/no-confusing-void-expression": "error",
+      "@typescript-eslint/no-meaningless-void-operator": "error",
+      "@typescript-eslint/prefer-reduce-type-parameter": "error",
+      "@typescript-eslint/no-unnecessary-type-arguments": "error",
+      "no-await-in-loop": "warn",
+      "no-param-reassign": "error",
       "@typescript-eslint/naming-convention": [
         "error",
         {

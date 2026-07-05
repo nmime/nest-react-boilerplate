@@ -45,6 +45,14 @@ export function createPostgresMikroOrmOptions(
     extensions: [Migrator],
     autoLoadEntities: true,
     debug: config.POSTGRES_LOGGING,
+    pool: {
+      min: config.POSTGRES_POOL_MIN,
+      max: config.POSTGRES_POOL_MAX,
+      idleTimeoutMillis: config.POSTGRES_POOL_IDLE_TIMEOUT_MS,
+    },
+    ...(config.POSTGRES_SLOW_QUERY_MS === undefined
+      ? {}
+      : { slowQueryThreshold: config.POSTGRES_SLOW_QUERY_MS }),
     driverOptions: config.POSTGRES_SSL
       ? {
           connection: {

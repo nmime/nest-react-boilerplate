@@ -177,6 +177,77 @@ describe("BearerAuthGuard", () => {
     expect(request.auth).toBe(request.user);
   });
 
+  it("maps auth-method, tenant, and locale claims when present", () => {
+    const tenantClaim = "33333333-3333-4333-8333-333333333333";
+    const token = signToken({
+      amr: ["pwd", "otp"],
+      auth_channel: "telegram_web_login",
+      auth_provider: "telegram",
+      auth_time: 1_699_000_000,
+      external_identity_id: "ext-123",
+      locale: "en-US",
+      sub: "rich-user",
+      tid: tenantClaim,
+    });
+
+    const principal = validateBearerAuthorization(
+      `Bearer ${token}`,
+      { AUTH_JWT_SECRET: jwtFixtureMaterial },
+      now,
+    );
+
+    expect(principal).toMatchObject({
+      amr: ["pwd", "otp"],
+      authChannel: "telegram_web_login",
+      authProvider: "telegram",
+      authTime: 1_699_000_000,
+      externalIdentityId: "ext-123",
+      locale: "en",
+      subject: "rich-user",
+      tenantId: tenantClaim,
+    });
+  });
+
+  it("falls back to the tenantId claim when the tid claim is absent", () => {
+    const tenantClaim = "44444444-4444-4444-8444-444444444444";
+    const token = signToken({
+      sub: "tenant-claim-user",
+      tenantId: tenantClaim,
+    });
+
+    const principal = validateBearerAuthorization(
+      `Bearer ${token}`,
+      { AUTH_JWT_SECRET: jwtFixtureMaterial },
+      now,
+    );
+
+    expect(principal.tenantId).toBe(tenantClaim);
+  });
+
+  it("ignores unsupported locale claim values", () => {
+    const token = signToken({ locale: "fr-FR", sub: "locale-user" });
+
+    const principal = validateBearerAuthorization(
+      `Bearer ${token}`,
+      { AUTH_JWT_SECRET: jwtFixtureMaterial },
+      now,
+    );
+
+    expect(principal.locale).toBeUndefined();
+  });
+
+  it("ignores unsupported theme claim values", () => {
+    const token = signToken({ sub: "theme-user", theme: "neon" });
+
+    const principal = validateBearerAuthorization(
+      `Bearer ${token}`,
+      { AUTH_JWT_SECRET: jwtFixtureMaterial },
+      now,
+    );
+
+    expect(principal.theme).toBeUndefined();
+  });
+
   it("skips validation for public routes", () => {
     const handler = () => undefined;
     Reflect.defineMetadata(PublicAuthMetadataKey, true, handler);
@@ -317,6 +388,12 @@ describe("BearerAuthGuard", () => {
       `Bearer ${signToken({ sub: "user-id" }, { alg: "none" })}`,
       { AUTH_JWT_SECRET: jwtFixtureMaterial },
       "alg none",
+    ],
+    [
+      "missing alg",
+      `Bearer ${signToken({ sub: "user-id" }, { alg: undefined })}`,
+      { AUTH_JWT_SECRET: jwtFixtureMaterial },
+      "Unsupported JWT algorithm",
     ],
     [
       "unsupported alg",

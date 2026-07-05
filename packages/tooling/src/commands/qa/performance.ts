@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { commandExists, ensureDir, envList, parseArgs, run, writeJson } from "./runtime-utils.ts";
 
 const args = parseArgs();
@@ -10,8 +9,8 @@ const apiUrls = envList("PERF_API_URLS");
 const reportPath = args.options.get("report") ?? "test-results/performance/report.json";
 const lighthouseVersion = args.options.get("lighthouse-version") ?? process.env.LIGHTHOUSE_VERSION ?? "13.3.0";
 const budget = { ttfbMs: Number(process.env.PERF_TTFB_BUDGET_MS ?? 1500), htmlBytes: Number(process.env.PERF_HTML_BUDGET_BYTES ?? 500000), lighthousePerformance: Number(process.env.PERF_LIGHTHOUSE_PERFORMANCE_MIN ?? 0.7), apiP95Ms: Number(process.env.PERF_API_P95_BUDGET_MS ?? 750) };
-const results = [];
-const findings = [];
+const results: Record<string, unknown>[] = [];
+const findings: Record<string, unknown>[] = [];
 ensureDir("test-results/performance");
 
 if (dryRun) {
@@ -68,7 +67,7 @@ for (const url of urls) {
 }
 
 for (const url of apiUrls) {
-  const samples = [];
+  const samples: { ms: number; status?: number; ok: boolean; error?: string }[] = [];
   const count = Number(process.env.PERF_API_REQUESTS ?? 20);
   for (let index = 0; index < count; index += 1) {
     const started = performance.now();

@@ -256,7 +256,7 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Bad request."
+        "title": "Admin Roles list Roles failed: Bad request."
       }
     },
     {
@@ -270,7 +270,7 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Unauthorized."
+        "title": "Admin Roles list Roles failed: Unauthorized."
       }
     },
     {
@@ -284,7 +284,7 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Forbidden."
+        "title": "Admin Roles list Roles failed: Forbidden."
       }
     },
     {
@@ -298,7 +298,21 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Not found."
+        "title": "Admin Roles list Roles failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles list Roles failed: Conflict."
       }
     },
     {
@@ -312,7 +326,7 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Rate limited."
+        "title": "Admin Roles list Roles failed: Rate limited."
       }
     },
     {
@@ -326,7 +340,301 @@
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users roles failed: Internal server error."
+        "title": "Admin Roles list Roles failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles create Role failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles update Role failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles set Role Permissions failed: Internal server error."
       }
     },
     {
@@ -579,6 +887,104 @@
       "toast": {
         "category": "error",
         "title": "Admin Users update User Access Policy failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:404:not-found",
+      "match": {
+        "code": "not-found",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Not found."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Admin Roles assign User Roles failed: Internal server error."
       }
     },
     {

@@ -1,5 +1,11 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   createRootStore,
   type RootStore,
@@ -23,6 +29,19 @@ export function FrontendStateProvider({
   ...options
 }: Readonly<FrontendStateProviderProps>) {
   const [rootStore] = useState(() => store ?? createRootStore(options));
+  // Only dispose stores this provider created; externally supplied stores are
+  // owned by the caller and must outlive this provider instance.
+  const ownsStore = !store;
+
+  useEffect(() => {
+    if (!ownsStore) {
+      return undefined;
+    }
+
+    return () => {
+      rootStore.dispose();
+    };
+  }, [ownsStore, rootStore]);
 
   return (
     <FrontendStateContext.Provider value={rootStore}>

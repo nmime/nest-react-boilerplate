@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { commandExists, envList, parseArgs, run, writeJson } from "./runtime-utils.ts";
 
 const args = parseArgs();
@@ -8,8 +7,8 @@ const engine = args.options.get("engine") ?? process.env.SECURITY_DAST_ENGINE ??
 const urls = envList("SECURITY_DAST_URLS");
 const reportPath = args.options.get("report") ?? "test-results/security-dast/report.json";
 const requiredHeaders = (process.env.SECURITY_DAST_REQUIRED_HEADERS ?? "x-content-type-options,referrer-policy").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
-const findings = [];
-const results = [];
+const findings: Record<string, unknown>[] = [];
+const results: Record<string, unknown>[] = [];
 
 if (dryRun || !urls.length) {
   writeJson(reportPath, { status: "dry-run", engine, urls, requiredHeaders });

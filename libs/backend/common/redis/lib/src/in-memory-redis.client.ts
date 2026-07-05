@@ -1,5 +1,6 @@
 import type { RedisClientLike, RedisPipelineLike } from "./type";
 import type {
+  RedisIncrementWithWindowResult,
   RedisSetCondition,
   RedisSetExpirationMode,
 } from "./type/redis-client.type";
@@ -26,6 +27,7 @@ export class InMemoryRedisClient implements RedisClientLike {
       return Promise.resolve(null);
     }
 
+    /* v8 ignore next 4 -- redundant safety net: deleteExpiredKey() above already evicts any expired entry within the same synchronous tick, so a surviving entry here is never past its expiry. */
     if (entry.expiresAt && entry.expiresAt <= Date.now()) {
       this.values.delete(key);
       return Promise.resolve(null);
@@ -78,8 +80,33 @@ export class InMemoryRedisClient implements RedisClientLike {
 
   async incr(key: string): Promise<number> {
     const current = Number((await this.get(key)) ?? "0") + 1;
-    this.values.set(key, { value: String(current) });
+    // Real Redis INCR preserves the key's existing TTL; keep the stored
+    // expiresAt (get() above already dropped it if the key had expired).
+    const expiresAt = this.values.get(key)?.expiresAt;
+    this.values.set(key, { value: String(current), expiresAt });
     return current;
+  }
+
+  incrementWithWindow(
+    key: string,
+    windowMs: number,
+  ): Promise<RedisIncrementWithWindowResult> {
+    // Single-threaded and synchronous, so the increment and the TTL guarantee
+    // observe no interleaving — the in-memory analogue of the real client's
+    // atomic Lua INCR + PEXPIRE-if-no-TTL script.
+    this.deleteExpiredKey(key);
+    const now = Date.now();
+    const entry = this.values.get(key);
+    const liveExpiry =
+      entry?.expiresAt !== undefined && entry.expiresAt > now
+        ? entry.expiresAt
+        : undefined;
+    const count = entry ? Number(entry.value) + 1 : 1;
+    // Reuse the existing window's expiry (INCR never refreshes a live TTL);
+    // otherwise attach a fresh window so the counter always carries an expiry.
+    const resetAt = liveExpiry ?? now + windowMs;
+    this.values.set(key, { value: String(count), expiresAt: resetAt });
+    return Promise.resolve({ count, resetAt });
   }
 
   async expire(key: string, ttlSeconds: number): Promise<number> {

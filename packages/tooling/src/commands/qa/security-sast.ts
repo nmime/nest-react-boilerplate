@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { readFileSync } from "node:fs";
 import { extname, relative } from "node:path";
 import { collectFiles, commandExists, parseArgs, run, workspaceRoot, writeJson } from "./runtime-utils.ts";
@@ -10,7 +9,8 @@ const engine = args.options.get("engine") ?? process.env.SECURITY_SAST_ENGINE ??
 const failOnUnavailableExternal = (process.env.SECURITY_SAST_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-sast/report.json";
 const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.145.0";
-const findings = [];
+interface SastFinding { rule: string; severity: string; message?: string; file?: string; line?: number; stdout?: string; stderr?: string; }
+const findings: SastFinding[] = [];
 const rules = [
   { id: "eval", severity: "high", regex: /\beval\s*\(/g, message: "Avoid eval; use explicit parsers or dispatch tables." },
   { id: "new-function", severity: "high", regex: /\bnew\s+Function\s*\(/g, message: "Avoid dynamic code generation." },
@@ -31,7 +31,7 @@ if (engine === "semgrep" && !dryRun) {
   } else if (failOnUnavailableExternal) findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
 }
 
-function isProductionSource(path, rel) {
+function isProductionSource(path: string, rel: string): boolean {
   if (![".js", ".jsx", ".mjs", ".cjs", ".ts", ".tsx", ".mts"].includes(extname(path).toLowerCase())) {
     return false;
   }

@@ -6,54 +6,38 @@ import {
   AuthUserEntity,
   DefaultAuthTenantId,
   TransactionalOutboxEventEntity,
-  type AdminAuditLogEntityInput,
-  type AuthUserAccessPolicyInput,
 } from "../entities";
 import type { AuthUserRepositoryError } from "./auth-user.repository";
+import { adminUserMutationOutboxAggregateType } from "./const/admin-user-mutation-internal.const";
+import {
+  AdminRoleName,
+  AdminUsersAccessPolicyUpdatePermissionName,
+  AdminUsersWritePermissionName,
+} from "./const/admin-user-mutation.const";
+import { AdminUserMutationSafetyError } from "./exception/admin-user-mutation-safety.exception";
+import { cloneAuthUser } from "./factory/clone-auth-user.factory";
+import { mapAdminUserMutationRepositoryError } from "./mapper/admin-user-mutation-error.mapper";
+import { auditSnapshotFor } from "./mapper/audit-snapshot.mapper";
+import type {
+  AdminSensitiveMutationSafety,
+  AdminUserMutationAction,
+  AdminUserMutationInput,
+  AdminUserMutationResult,
+  AdminUserMutationSafetyViolation,
+  AdminUserRoleMutationInput,
+} from "./type/admin-user-mutation.type";
+import { applyAccessPolicy } from "./util/access-policy.util";
+import { hasActivePowerfulAdminAccess } from "./util/powerful-admin-access.util";
+import {
+  reconcileUserRoles,
+  resolveEffectiveAccess,
+} from "./util/reconcile-user-roles.util";
 
-export type AdminUserMutationAction =
-  "admin.user.status.update" | "admin.user.access_policy.update";
-
-export interface AdminUserMutationAuditInput {
-  actorUserId?: string | null;
-  metadata?: Record<string, unknown> | null;
-}
-
-export interface AdminUserMutationInput {
-  tenantId?: string;
-  targetUserId: string;
-  actorUserId: string;
-  policy: AuthUserAccessPolicyInput;
-  audit: AdminUserMutationAuditInput;
-  action: AdminUserMutationAction;
-}
-
-export interface AdminUserMutationResult {
-  before: AuthUserEntity;
-  after: AuthUserEntity;
-  auditLog: AdminAuditLogEntity;
-  outboxEvent: TransactionalOutboxEventEntity;
-}
-
-export interface AdminSensitiveMutationSafety {
-  actorUserId: string;
-  tenantId: string;
-  targetBefore: AuthUserEntity;
-  targetAfter: AuthUserEntity;
-}
-
-export interface AdminUserMutationSafetyViolation {
-  code: "self_lockout" | "last_powerful_admin";
-  message: string;
-}
-
-export const AdminUserMutationRepositoryError = "repository_error";
-export const AdminRoleName = "admin";
-export const AdminUsersWritePermissionName = "admin:users:write";
-export const AdminUsersAccessPolicyUpdatePermissionName =
-  "admin:users:access-policy:update";
-const adminUserMutationOutboxAggregateType = "admin.user";
-const maxPageSize = 100;
+export * from "./const/admin-user-mutation.const";
+export * from "./exception/admin-user-mutation-safety.exception";
+export * from "./type/admin-user-mutation.type";
+export * from "./util/pagination.util";
+export * from "./util/powerful-admin-access.util";
 
 @Injectable()
 export class AdminUserMutationRepository {
@@ -67,7 +51,24 @@ export class AdminUserMutationRepository {
   ): ResultAsync<AdminUserMutationResult | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.executeSensitiveMutation(input),
-      mapRepositoryError,
+      mapAdminUserMutationRepositoryError,
+    );
+  }
+
+  // Assign a user's normalized role set (auth_user_roles), re-resolve the
+  // effective access from the normalized RBAC join, and refresh the denormalized
+  // auth_users.roles/permissions jsonb cache — all inside the single locked
+  // transaction that also runs the self-lockout / last-powerful-admin safety
+  // checks and writes the audit log + outbox row. Folding the jsonb refresh into
+  // this transaction (instead of calling the non-transactional
+  // EffectivePermissionService afterwards) keeps the normalized assignment and
+  // the cache atomic: a safety violation rolls both back together.
+  mutateUserRolesWithAudit(
+    input: AdminUserRoleMutationInput,
+  ): ResultAsync<AdminUserMutationResult | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.executeRoleMutation(input),
+      mapAdminUserMutationRepositoryError,
     );
   }
 
@@ -207,105 +208,102 @@ export class AdminUserMutationRepository {
       },
     );
   }
-}
 
-export class AdminUserMutationSafetyError extends Error {
-  constructor(readonly violation: AdminUserMutationSafetyViolation) {
-    super(violation.message);
-    this.name = "AdminUserMutationSafetyError";
+  private async executeRoleMutation(
+    input: AdminUserRoleMutationInput,
+  ): Promise<AdminUserMutationResult | null> {
+    const tenantId = input.tenantId ?? DefaultAuthTenantId;
+
+    return this.entityManager.transactional(
+      async (transactionalEntityManager) => {
+        await this.acquireTenantMutationLock(
+          tenantId,
+          transactionalEntityManager,
+        );
+
+        const beforeEntity = await transactionalEntityManager.findOne(
+          AuthUserEntity,
+          { id: input.targetUserId, tenantId },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!beforeEntity) {
+          return null;
+        }
+
+        const activePowerfulAdminCount = await this.countActivePowerfulAdmins(
+          tenantId,
+          transactionalEntityManager,
+        );
+        const before = cloneAuthUser(beforeEntity);
+
+        // Reconcile the normalized auth_user_roles rows to exactly the desired
+        // role keys that resolve to a seeded role, then re-derive the effective
+        // access from the normalized join so the jsonb cache mirrors the DB.
+        await reconcileUserRoles(
+          transactionalEntityManager,
+          tenantId,
+          input.targetUserId,
+          input.actorUserId,
+          input.desiredRoleKeys,
+        );
+        const access = await resolveEffectiveAccess(
+          transactionalEntityManager,
+          tenantId,
+          input.targetUserId,
+        );
+        applyAccessPolicy(beforeEntity, {
+          roles: access.roleKeys,
+          permissions: access.permissionKeys,
+        });
+        const after = cloneAuthUser(beforeEntity);
+
+        const violation = this.assertSensitiveMutationIsSafe({
+          actorUserId: input.actorUserId,
+          tenantId,
+          targetBefore: before,
+          targetAfter: after,
+          activePowerfulAdminCount,
+        });
+        if (violation) {
+          throw new AdminUserMutationSafetyError(violation);
+        }
+
+        const action: AdminUserMutationAction = "admin.user.roles.update";
+        const auditLog = new AdminAuditLogEntity({
+          tenantId,
+          actorUserId: input.audit.actorUserId ?? input.actorUserId,
+          action,
+          resource: "admin.users",
+          targetUserId: input.targetUserId,
+          before: auditSnapshotFor(action, before),
+          after: auditSnapshotFor(action, after),
+          metadata: input.audit.metadata ?? {},
+        });
+        const outboxEvent = new TransactionalOutboxEventEntity({
+          tenantId,
+          aggregateType: adminUserMutationOutboxAggregateType,
+          aggregateId: input.targetUserId,
+          eventType: action,
+          payload: {
+            auditLogId: auditLog.id,
+            targetUserId: input.targetUserId,
+            actorUserId: input.actorUserId,
+            before: auditLog.before,
+            after: auditLog.after,
+          },
+          metadata: input.audit.metadata ?? {},
+        });
+
+        transactionalEntityManager.persist([auditLog, outboxEvent]);
+        await transactionalEntityManager.flush();
+
+        return {
+          before,
+          after,
+          auditLog,
+          outboxEvent,
+        };
+      },
+    );
   }
-}
-
-export function normalizePageLimit(value: number | undefined): number {
-  if (!Number.isFinite(value)) {
-    return 50;
-  }
-
-  return Math.min(Math.max(Math.trunc(value ?? 50), 1), maxPageSize);
-}
-
-export function normalizePageOffset(value: number | undefined): number {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.max(Math.trunc(value ?? 0), 0);
-}
-
-export function hasActivePowerfulAdminAccess(
-  entity: Pick<AuthUserEntity, "status" | "roles" | "permissions">,
-): boolean {
-  return (
-    entity.status === "active" &&
-    entity.roles.includes(AdminRoleName) &&
-    entity.permissions.includes(AdminUsersWritePermissionName) &&
-    entity.permissions.includes(AdminUsersAccessPolicyUpdatePermissionName)
-  );
-}
-
-function applyAccessPolicy(
-  entity: AuthUserEntity,
-  policy: AuthUserAccessPolicyInput,
-): void {
-  if (policy.status) {
-    entity.status = policy.status;
-  }
-  if (policy.roles) {
-    entity.roles = [...policy.roles];
-  }
-  if (policy.permissions) {
-    entity.permissions = [...policy.permissions];
-  }
-}
-
-function auditSnapshotFor(
-  action: AdminUserMutationAction,
-  entity: AuthUserEntity,
-): AdminAuditLogEntityInput["before"] {
-  if (action === "admin.user.status.update") {
-    return { status: entity.status };
-  }
-
-  return {
-    roles: [...entity.roles],
-    permissions: [...entity.permissions],
-    status: entity.status,
-  };
-}
-
-function cloneAuthUser(entity: AuthUserEntity): AuthUserEntity {
-  const clone = new AuthUserEntity({
-    tenantId: entity.tenantId,
-    email: entity.email,
-    displayName: entity.displayName,
-    passwordHash: entity.passwordHash,
-    status: entity.status,
-    roles: [...entity.roles],
-    permissions: [...entity.permissions],
-    locale: entity.locale,
-    theme: entity.theme,
-    lastLoginAt: entity.lastLoginAt,
-  });
-  clone.id = entity.id;
-  clone.createdAt = entity.createdAt;
-  clone.updatedAt = entity.updatedAt;
-
-  return clone;
-}
-
-function mapRepositoryError(cause: unknown): AuthUserRepositoryError {
-  if (cause instanceof AdminUserMutationSafetyError) {
-    return {
-      code: AdminUserMutationRepositoryError,
-      message: cause.message,
-    };
-  }
-
-  return {
-    code: AdminUserMutationRepositoryError,
-    message:
-      cause instanceof Error
-        ? cause.message
-        : "Admin user mutation repository failed.",
-  };
 }

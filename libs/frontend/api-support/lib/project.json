@@ -10,6 +10,15 @@
     "fsd:layer:shared"
   ],
   "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/api-support/lib",
+        "command": "node ../../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json"
+      },
+      "outputs": []
+    },
     "test": {
       "executor": "nx:run-commands",
       "cache": true,

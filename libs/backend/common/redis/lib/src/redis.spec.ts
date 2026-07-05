@@ -2,11 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { RedisConfigService } from "./config";
 import { RedisMode } from "./const";
 import { RedisClientAdapter } from "./redis-client.factory";
+import { RedisLockUnavailableError } from "./exception";
 import { InMemoryRedisClient } from "./in-memory-redis.client";
-import {
-  RedisLockUnavailableError,
-  RedisRedlockService,
-} from "./redis-redlock.service";
+import { RedisRedlockService } from "./redis-redlock.service";
 import { RedisHealthIndicator } from "./redis.health";
 import {
   buildRateLimitKey,
@@ -67,6 +65,35 @@ describe("RedisClientAdapter", () => {
       "1000",
     ]);
   });
+
+  it("increments a fixed window atomically via a single Lua script and derives reset from PTTL", async () => {
+    const commands: string[][] = [];
+    const client = {
+      ...nativeRedisClient(commands),
+      // The script returns {count, pttl}; PTTL (4200ms) is below the requested
+      // window (5000ms), proving resetAt is taken from the key's real TTL.
+      sendCommand: vi.fn((command: string[]) => {
+        commands.push(command);
+        return Promise.resolve([5, 4200]);
+      }),
+    };
+    const redis = new RedisClientAdapter(client, { keyPrefix: "app:" });
+
+    const before = Date.now();
+    const result = await redis.incrementWithWindow("rate", 5000);
+
+    expect(result.count).toBe(5);
+    expect(result.resetAt).toBeGreaterThanOrEqual(before + 4200);
+    expect(result.resetAt).toBeLessThanOrEqual(Date.now() + 4200);
+    expect(commands).toHaveLength(1);
+    expect(commands[0]?.[0]).toBe("EVAL");
+    expect(commands[0]?.[1]).toContain('redis.call("incr", KEYS[1])');
+    expect(commands[0]?.[1]).toContain('redis.call("pttl", KEYS[1])');
+    expect(commands[0]?.[1]).toContain(
+      'redis.call("pexpire", KEYS[1], ARGV[1])',
+    );
+    expect(commands[0]?.slice(2)).toEqual(["1", "app:rate", "5000"]);
+  });
 });
 
 describe("InMemoryRedisClient", () => {
@@ -82,6 +109,53 @@ describe("InMemoryRedisClient", () => {
     await expect(redis.hgetall("hash")).resolves.toEqual({
       field: JSON.stringify({ ok: true }),
     });
+  });
+
+  it("preserves the existing TTL when incrementing", async () => {
+    vi.useFakeTimers();
+    try {
+      const redis = new InMemoryRedisClient();
+      await redis.set("counter", "1", "PX", 1000);
+      await expect(redis.incr("counter")).resolves.toBe(2);
+      await expect(redis.get("counter")).resolves.toBe("2");
+
+      vi.advanceTimersByTime(1500);
+      await expect(redis.get("counter")).resolves.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("increments a fixed window atomically with a stable reset time", async () => {
+    vi.useFakeTimers();
+    try {
+      const redis = new InMemoryRedisClient();
+      const start = Date.now();
+
+      await expect(redis.incrementWithWindow("rate", 1000)).resolves.toEqual({
+        count: 1,
+        resetAt: start + 1000,
+      });
+
+      vi.advanceTimersByTime(400);
+      // A second hit within the window increments without sliding the reset
+      // time forward (INCR must not refresh a live TTL).
+      await expect(redis.incrementWithWindow("rate", 1000)).resolves.toEqual({
+        count: 2,
+        resetAt: start + 1000,
+      });
+      await expect(redis.get("rate")).resolves.toBe("2");
+
+      // Once the window elapses the counter expires and a fresh window starts.
+      vi.advanceTimersByTime(700);
+      await expect(redis.get("rate")).resolves.toBeNull();
+      await expect(redis.incrementWithWindow("rate", 1000)).resolves.toEqual({
+        count: 1,
+        resetAt: start + 2100,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("supports Redis lock primitives", async () => {
@@ -175,6 +249,21 @@ describe("RedisHealthIndicator", () => {
         ].join(" "),
         type: "Error",
       },
+    });
+  });
+
+  it("reports non-Error rejections without a type field", async () => {
+    const redis = {
+      ...new InMemoryRedisClient(),
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- deliberately rejecting with a non-Error to exercise the non-Error handling path
+      ping: vi.fn(() => Promise.reject("redis://user:pw@redis:6379 down")),
+    };
+    const health = new RedisHealthIndicator(redis);
+
+    await expect(health.check()).resolves.toEqual({
+      name: "redis",
+      status: "error",
+      details: { message: "redis://[redacted]@redis:6379 down" },
     });
   });
 });
@@ -329,5 +418,16 @@ describe("RedisRateLimitService", () => {
       count: 2,
       remaining: 0,
     });
+  });
+
+  it("falls back to global/anonymous key parts when tenant and subject are absent", () => {
+    expect(
+      buildRateLimitKey({
+        scope: "auth",
+        tenantId: null,
+        subject: undefined,
+        action: "login",
+      }),
+    ).toBe("rate-limit:auth:global:anonymous:login");
   });
 });

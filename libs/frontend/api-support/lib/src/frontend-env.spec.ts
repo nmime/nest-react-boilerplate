@@ -53,9 +53,9 @@ describe("frontend build API URL mode defaults", () => {
       applyDefaultFrontendBuildApiBaseUrlMode(env, "build", "production"),
     ).toBe(true);
     expect(env["VITE_API_BASE_URL_MODE"]).toBe("same-origin");
-    expect(() =>
-      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production"),
-    ).not.toThrow();
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production");
+    }).not.toThrow();
   });
 
   it("preserves explicit split-origin mode instead of defaulting", () => {
@@ -80,9 +80,18 @@ describe("frontend build API URL mode defaults", () => {
       applyDefaultFrontendBuildApiBaseUrlMode(env, "build", "production"),
     ).toBe(false);
     expect(env["VITE_API_BASE_URL_MODE"]).toBeUndefined();
-    expect(() =>
-      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production"),
-    ).not.toThrow();
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production");
+    }).not.toThrow();
+  });
+
+  it("skips production API URL assertions for non-production build targets", () => {
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls({}, "serve", "production");
+    }).not.toThrow();
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls({}, "build", "development");
+    }).not.toThrow();
   });
 
   it("still fails closed for partial explicit API origin configuration", () => {
@@ -93,8 +102,8 @@ describe("frontend build API URL mode defaults", () => {
     expect(
       applyDefaultFrontendBuildApiBaseUrlMode(env, "build", "production"),
     ).toBe(false);
-    expect(() =>
-      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production"),
-    ).toThrow(/VITE_USER_API_BASE_URL, VITE_ADMIN_API_BASE_URL/u);
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls(env, "build", "production");
+    }).toThrow(/VITE_USER_API_BASE_URL, VITE_ADMIN_API_BASE_URL/u);
   });
 });

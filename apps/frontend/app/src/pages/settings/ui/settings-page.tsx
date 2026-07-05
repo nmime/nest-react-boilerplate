@@ -1,4 +1,5 @@
 import { useI18n } from "@app/frontend-runtime";
+import { LogoutButton } from "../../../features/logout";
 import {
   ProviderIdentitiesPanel,
   SocialAuthProvider,
@@ -48,6 +49,9 @@ export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
             <div className="xr-status-row">
               <span className="xr-status-heading">Linking routes</span>
               <UiStatusPill label="Telegram + Discord" tone="success" />
+            </div>
+            <div className="xr-command-actions">
+              <LogoutButton navigate={navigate} t={t} />
             </div>
           </div>
         </UiCard>

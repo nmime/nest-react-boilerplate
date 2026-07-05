@@ -1,2 +1,2 @@
 export * from "./user-main.module";
-export * from "./profile.controller";
+export * from "./interfaces/http";

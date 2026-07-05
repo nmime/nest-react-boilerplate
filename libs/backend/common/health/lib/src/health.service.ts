@@ -1,16 +1,15 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import type {
   HealthCheckKind,
-  HealthDependencyDto,
   HealthIndicator,
   HealthIndicatorResult,
   HealthIndicatorStatus,
-  HealthPayloadDto,
   HealthResponse,
   HealthResponseDto,
-  HealthSafeDetails,
-  HealthStatus,
 } from "./dto";
+import { toHealthResponseDto } from "./mapper";
+import { resolveHealthStatus } from "./util/health-status.util";
+import { sanitizeHealthDetails } from "./util/health-sanitize.util";
 
 export interface HealthServiceOptions {
   appName?: string;
@@ -18,9 +17,6 @@ export interface HealthServiceOptions {
 }
 
 const defaultAppName = "app";
-const unsafeDetailKeyPattern =
-  /(authorization|cookie|credential|passwd|password|private[_-]?key|secret|token)/iu;
-const redactedDetailValue = "[redacted]";
 
 @Injectable()
 export class HealthService {
@@ -70,8 +66,17 @@ export class HealthService {
   private async runIndicators(
     kind: HealthCheckKind,
   ): Promise<HealthIndicatorResult[]> {
+    // Liveness must only prove the process is alive: run no dependency
+    // indicators, only those explicitly marked liveness-safe. Otherwise a
+    // transient dependency blip would fail liveness and Kubernetes would
+    // restart an otherwise healthy pod. Readiness/health run every indicator.
+    const indicators =
+      kind === "live"
+        ? this.indicators.filter((indicator) => indicator.livenessSafe === true)
+        : this.indicators;
+
     return Promise.all(
-      this.indicators.map(async (indicator) => {
+      indicators.map(async (indicator) => {
         const startedAt = performance.now();
         try {
           return normalizeIndicatorResult(
@@ -94,64 +99,6 @@ export class HealthService {
       }),
     );
   }
-}
-
-export function toHealthResponseDto(
-  appName: string,
-  response: HealthResponse,
-): HealthResponseDto {
-  const payload: HealthPayloadDto = {
-    app: appName,
-    status: response.status,
-    uptime: response.uptime,
-    timestamp: response.timestamp,
-    dependencies: response.checks.map(toHealthDependencyDto),
-    checks: response.checks,
-  };
-
-  return { data: payload };
-}
-
-export function hasRequiredReadinessFailure(
-  response: HealthResponse | HealthResponseDto,
-): boolean {
-  const checks = "data" in response ? response.data.checks : response.checks;
-
-  return (checks ?? []).some(
-    (check) => check.status === "error" && check.required !== false,
-  );
-}
-
-export function resolveHealthStatus(
-  checks: readonly HealthIndicatorResult[],
-): HealthStatus {
-  if (
-    checks.some((check) => check.status === "error" && check.required !== false)
-  ) {
-    return "error";
-  }
-
-  if (
-    checks.some(
-      (check) =>
-        check.status === "degraded" ||
-        (check.status === "error" && check.required === false),
-    )
-  ) {
-    return "degraded";
-  }
-
-  return "ok";
-}
-
-export function sanitizeHealthDetails(
-  details: HealthSafeDetails | undefined,
-): HealthSafeDetails | undefined {
-  if (!details) {
-    return undefined;
-  }
-
-  return sanitizeRecord(details);
 }
 
 function isHealthIndicatorList(
@@ -178,49 +125,3 @@ function normalizeIndicatorResult(
 function normalizeStatus(status: HealthIndicatorStatus): HealthIndicatorStatus {
   return status;
 }
-
-function toHealthDependencyDto(
-  check: HealthIndicatorResult,
-): HealthDependencyDto {
-  const details = sanitizeHealthDetails(check.details);
-  return {
-    name: check.name,
-    status: check.status,
-    ...(details ? { details } : {}),
-    ...(typeof details?.message === "string"
-      ? { detail: details.message }
-      : {}),
-    required: check.required,
-  };
-}
-
-function sanitizeRecord(record: HealthSafeDetails): HealthSafeDetails {
-  return Object.fromEntries(
-    Object.entries(record).map(([key, value]) => [
-      key,
-      sanitizeValue(key, value),
-    ]),
-  );
-}
-
-function sanitizeValue(key: string, value: unknown): unknown {
-  if (unsafeDetailKeyPattern.test(key)) {
-    return redactedDetailValue;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeValue(key, item));
-  }
-
-  if (value && typeof value === "object") {
-    return sanitizeRecord(value as HealthSafeDetails);
-  }
-
-  return value;
-}
-
-export const HealthHttpStatus: Record<HealthStatus, number> = {
-  ok: HttpStatus.OK,
-  degraded: HttpStatus.OK,
-  error: HttpStatus.SERVICE_UNAVAILABLE,
-};

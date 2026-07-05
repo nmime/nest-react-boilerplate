@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { UiButton } from "./button";
 
 const defaultActionsLabel = ["Actions"].join("");
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiDropdownMenuItem {
   disabled?: boolean;

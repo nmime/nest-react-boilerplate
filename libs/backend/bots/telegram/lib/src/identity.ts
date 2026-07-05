@@ -1,5 +1,5 @@
 import { normalizeLocale } from "@app/common-i18n";
-import type { TelegramBotContext, TelegramBotIdentity } from "./types";
+import type { TelegramBotContext, TelegramBotIdentity } from "./type";
 
 export function resolveTelegramIdentity(
   ctx: Pick<TelegramBotContext, "from">,

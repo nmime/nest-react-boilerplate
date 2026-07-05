@@ -40,7 +40,9 @@ describe("deterministic-clock helpers", () => {
   });
 
   it("uninstall is idempotent", () => {
-    expect(() => uninstallFixedSystemTime()).not.toThrow();
+    expect(() => {
+      uninstallFixedSystemTime();
+    }).not.toThrow();
   });
 
   it("throws when installing twice without uninstall", () => {
@@ -52,9 +54,9 @@ describe("deterministic-clock helpers", () => {
   });
 
   it("throws when advancing without install", () => {
-    expect(() => advanceFixedSystemTime(1000)).toThrow(
-      "No fixed system time is installed",
-    );
+    expect(() => {
+      advanceFixedSystemTime(1000);
+    }).toThrow("No fixed system time is installed");
   });
 
   it("withFixedSystemTime provides isolated fixed clock", async () => {

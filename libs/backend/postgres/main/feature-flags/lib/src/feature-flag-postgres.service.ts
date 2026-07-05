@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import {
   type FeatureFlagContext,
   type FeatureFlagProvider,
@@ -11,8 +11,12 @@ import { FeatureFlagRepository } from "./infrastructure/data-access/repositories
 @Injectable()
 export class PostgresFeatureFlagProvider implements FeatureFlagProvider {
   readonly name = "postgres";
+  private readonly logger = new Logger(PostgresFeatureFlagProvider.name);
 
-  constructor(private readonly featureFlags: FeatureFlagRepository) {}
+  constructor(
+    @Inject(FeatureFlagRepository)
+    private readonly featureFlags: FeatureFlagRepository,
+  ) {}
 
   async isEnabled(
     key: string,
@@ -33,10 +37,22 @@ export class PostgresFeatureFlagProvider implements FeatureFlagProvider {
     context: FeatureFlagContext = {},
   ): Promise<T> {
     const result = await this.featureFlags.findByKey(key, context.tenantId);
+    if (!result.isOk() || result.value?.enabled !== true) {
+      return fallback;
+    }
 
-    return result.isOk() && result.value?.enabled === true
-      ? (result.value.value as T)
-      : fallback;
+    const persisted = result.value.value;
+    // FeatureFlagValue is boolean | string | number; guard the persisted value
+    // against the fallback's type instead of blindly casting so a mistyped flag
+    // (e.g. a string stored where a number is expected) cannot leak out.
+    if (typeof persisted !== typeof fallback) {
+      this.logger.warn(
+        `Feature flag "${key}" is a ${typeof persisted} but the fallback is a ${typeof fallback}; using fallback.`,
+      );
+      return fallback;
+    }
+
+    return persisted as T;
   }
 
   async getSnapshot(

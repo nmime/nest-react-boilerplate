@@ -14,20 +14,20 @@ export class LoggerAnalyticsProvider extends AbstractAnalyticsProvider {
     super();
   }
 
-  track(payload: AnalyticsPayload): void {
-    this.logger.debug?.(
+  override track(payload: AnalyticsPayload): void {
+    this.logger.debug(
       JSON.stringify({ type: AnalyticsEventType.Track, payload }),
     );
   }
 
-  identify(payload: AnalyticsIdentifyPayload): void {
-    this.logger.debug?.(
+  override identify(payload: AnalyticsIdentifyPayload): void {
+    this.logger.debug(
       JSON.stringify({ type: AnalyticsEventType.Identify, payload }),
     );
   }
 
-  page(payload: AnalyticsPagePayload): void {
-    this.logger.debug?.(
+  override page(payload: AnalyticsPagePayload): void {
+    this.logger.debug(
       JSON.stringify({ type: AnalyticsEventType.Page, payload }),
     );
   }

@@ -1,32 +1,14 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
-  InternalServerErrorException,
-  NotFoundException,
   Param,
   Patch,
   Query,
   Req,
   UseGuards,
 } from "@nestjs/common";
-import {
-  ApiBearerAuth,
-  ApiProperty,
-  ApiPropertyOptional,
-} from "@nestjs/swagger";
-import {
-  IsArray,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from "class-validator";
-import { Type } from "class-transformer";
+import { ApiBearerAuth } from "@nestjs/swagger";
 import {
   createOkResponse,
   type OkResponse,
@@ -48,328 +30,30 @@ import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
   AdminRole,
-  AdminRolesReadPermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersReadPermission,
   AdminUsersStatusUpdatePermission,
   AdminUsersWritePermission,
-  adminAssignablePermissions,
-  adminAssignableRoles,
 } from "@app/backend-feature-admin-shared";
-import { AdminApplicationError } from "../../application/admin-errors";
-import { AdminUsersUseCase } from "../../application/admin-users.use-case";
-import {
-  createAdminRequestContext,
-  type AdminRequestContext,
-} from "../../domain/admin-request-context";
-import {
-  AdminMaxPageSize,
-  adminAuditActions,
-  adminUserStatuses,
-  type AdminAuditAction,
-  type AdminAuditLogListPayload,
-  type AdminDashboardSummary,
-  type AdminUserListPayload,
-  type AdminUserStatus,
-  type AdminUserView,
-} from "../../domain/admin-user";
+import { AdminUsersUseCase } from "../../application";
+import type {
+  AdminAuditLogListPayload,
+  AdminDashboardSummary,
+  AdminUserListPayload,
+  AdminUserView,
+} from "../../domain";
 import { AdminRbacGuard } from "./admin-rbac.guard";
-
-class AdminUserQueryDto {
-  @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(AdminMaxPageSize)
-  limit?: number;
-
-  @ApiPropertyOptional({ minimum: 0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  offset?: number;
-
-  @ApiPropertyOptional({
-    description: "Case-insensitive email/display name search.",
-  })
-  @IsOptional()
-  @IsString()
-  search?: string;
-
-  @ApiPropertyOptional({ enum: adminUserStatuses })
-  @IsOptional()
-  @IsIn(adminUserStatuses)
-  status?: AdminUserStatus;
-
-  @ApiPropertyOptional({ enum: adminAssignableRoles })
-  @IsOptional()
-  @IsString()
-  role?: string;
-
-  @ApiPropertyOptional({ enum: adminAssignablePermissions })
-  @IsOptional()
-  @IsString()
-  permission?: string;
-}
-
-class AdminAuditQueryDto {
-  @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(AdminMaxPageSize)
-  limit?: number;
-
-  @ApiPropertyOptional({ minimum: 0 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  offset?: number;
-
-  @ApiPropertyOptional({ enum: adminAuditActions })
-  @IsOptional()
-  @IsIn(adminAuditActions)
-  action?: AdminAuditAction;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID()
-  actorUserId?: string;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  @IsOptional()
-  @IsUUID()
-  targetUserId?: string;
-}
-
-class UpdateAdminUserStatusDto {
-  @ApiProperty({ enum: adminUserStatuses })
-  @IsIn(adminUserStatuses)
-  status!: AdminUserStatus;
-}
-
-class UpdateAdminUserAccessPolicyDto {
-  @ApiProperty({ enum: adminAssignableRoles, isArray: true })
-  @IsArray()
-  @IsString({ each: true })
-  roles!: string[];
-
-  @ApiProperty({ enum: adminAssignablePermissions, isArray: true })
-  @IsArray()
-  @IsString({ each: true })
-  permissions!: string[];
-}
-
-class AdminUserViewDto {
-  @ApiProperty({ format: "uuid" })
-  id!: string;
-
-  @ApiProperty({ format: "uuid" })
-  tenantId!: string;
-
-  @ApiProperty({ format: "email" })
-  email!: string;
-
-  @ApiPropertyOptional()
-  displayName?: string;
-
-  @ApiProperty({ enum: adminUserStatuses })
-  status!: AdminUserStatus;
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  roles!: string[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  permissions!: string[];
-
-  @ApiPropertyOptional()
-  locale?: string;
-
-  @ApiPropertyOptional({ enum: ["system", "light", "dark"] })
-  theme?: string;
-
-  @ApiPropertyOptional({ format: "date-time" })
-  lastLoginAt?: string;
-
-  @ApiProperty({ format: "date-time" })
-  createdAt!: string;
-
-  @ApiProperty({ format: "date-time" })
-  updatedAt!: string;
-}
-
-class AdminUserListPayloadDto {
-  @ApiProperty({ type: () => AdminUserViewDto, isArray: true })
-  items!: AdminUserViewDto[];
-
-  @ApiProperty()
-  total!: number;
-
-  @ApiProperty()
-  limit!: number;
-
-  @ApiProperty()
-  offset!: number;
-}
-
-class AdminRbacPermissionDto {
-  @ApiProperty()
-  permission!: string;
-
-  @ApiProperty()
-  resource!: string;
-
-  @ApiProperty()
-  action!: string;
-
-  @ApiProperty()
-  description!: string;
-}
-
-class AdminRbacRoleDto {
-  @ApiProperty()
-  role!: string;
-
-  @ApiProperty()
-  label!: string;
-
-  @ApiProperty()
-  description!: string;
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  permissions!: string[];
-}
-
-class AdminRbacCatalogPayloadDto {
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  resources!: string[];
-
-  @ApiProperty({ type: () => AdminRbacRoleDto, isArray: true })
-  roles!: AdminRbacRoleDto[];
-
-  @ApiProperty({ type: () => AdminRbacPermissionDto, isArray: true })
-  permissions!: AdminRbacPermissionDto[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  assignableRoles!: string[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  assignablePermissions!: string[];
-}
-
-class AdminAuditLogViewDto {
-  @ApiProperty({ format: "uuid" })
-  id!: string;
-
-  @ApiProperty({ format: "uuid" })
-  tenantId!: string;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  actorUserId?: string;
-
-  @ApiProperty()
-  action!: string;
-
-  @ApiProperty()
-  resource!: string;
-
-  @ApiPropertyOptional({ format: "uuid" })
-  targetUserId?: string;
-
-  @ApiProperty({ additionalProperties: true, type: "object" })
-  before!: Record<string, unknown>;
-
-  @ApiProperty({ additionalProperties: true, type: "object" })
-  after!: Record<string, unknown>;
-
-  @ApiProperty({ additionalProperties: true, type: "object" })
-  metadata!: Record<string, unknown>;
-
-  @ApiProperty({ format: "date-time" })
-  createdAt!: string;
-}
-
-class AdminAuditLogListPayloadDto {
-  @ApiProperty({ type: () => AdminAuditLogViewDto, isArray: true })
-  items!: AdminAuditLogViewDto[];
-
-  @ApiProperty()
-  total!: number;
-
-  @ApiProperty()
-  limit!: number;
-
-  @ApiProperty()
-  offset!: number;
-}
-
-class AdminDashboardSummaryDto {
-  @ApiProperty()
-  totalUsers!: number;
-
-  @ApiProperty()
-  activeUsers!: number;
-
-  @ApiProperty()
-  disabledUsers!: number;
-
-  @ApiProperty()
-  invitedUsers!: number;
-
-  @ApiProperty()
-  recentAuditEvents!: number;
-
-  @ApiProperty({ type: () => AdminAuditLogViewDto, isArray: true })
-  recentAudit!: AdminAuditLogViewDto[];
-}
-
-const toHttpException = (error: unknown): never => {
-  if (error instanceof AdminApplicationError) {
-    if (error.code === "not_found") {
-      throw new NotFoundException(error.message);
-    }
-    if (
-      error.code === "invalid_access_policy" ||
-      error.code === "sensitive_policy_violation"
-    ) {
-      throw new BadRequestException(error.message);
-    }
-
-    throw new InternalServerErrorException(error.message);
-  }
-
-  throw error;
-};
-
-const executeAdminUseCase = async <T>(
-  handler: () => Promise<T>,
-): Promise<T> => {
-  try {
-    return await handler();
-  } catch (error) {
-    return toHttpException(error);
-  }
-};
-
-const requestContextFromRequest = (
-  request: AuthenticatedRequest,
-): AdminRequestContext =>
-  createAdminRequestContext({
-    requestId: normalizeHeaderScalar(request.headers?.["x-request-id"]),
-  });
-
-const normalizeHeaderScalar = (
-  value: string | string[] | undefined,
-): string | undefined => {
-  const scalar = Array.isArray(value) ? value[0] : value;
-  const trimmed = scalar?.trim();
-
-  return trimmed ? trimmed.slice(0, 256) : undefined;
-};
+import { executeAdminUseCase, requestContextFromRequest } from "./admin-http";
+import {
+  AdminAuditLogListPayloadDto,
+  AdminAuditQueryDto,
+  AdminDashboardSummaryDto,
+  AdminUserListPayloadDto,
+  AdminUserQueryDto,
+  AdminUserViewDto,
+  UpdateAdminUserAccessPolicyDto,
+  UpdateAdminUserStatusDto,
+} from "./dto";
 
 @ApiExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
@@ -455,25 +139,6 @@ export class AdminUsersController {
         ),
       ),
     );
-  }
-
-  @Get("roles")
-  @ApiOkDataResponse(AdminRbacCatalogPayloadDto)
-  @RequireRoles(AdminRole)
-  @RequirePermissions(AdminRolesReadPermission)
-  roles(): OkResponse<AdminRbacCatalogPayloadDto> {
-    const catalog = this.adminUsers.roles();
-
-    return createOkResponse({
-      resources: [...catalog.resources],
-      roles: catalog.roles.map((role) => ({
-        ...role,
-        permissions: [...role.permissions],
-      })),
-      permissions: catalog.permissions.map((permission) => ({ ...permission })),
-      assignableRoles: [...catalog.assignableRoles],
-      assignablePermissions: [...catalog.assignablePermissions],
-    });
   }
 
   @Get("audit")

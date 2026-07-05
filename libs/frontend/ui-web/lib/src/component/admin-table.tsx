@@ -12,7 +12,7 @@ import { UiButton } from "./button";
 const defaultErrorTitle = ["Unable", "to", "load", "records"].join(" ");
 import { UiEmptyState, UiLoading } from "./feedback";
 import { UiResourceError } from "./resource-error";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export type UiDataTableRow = Record<string, unknown>;
 
@@ -203,7 +203,13 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
                   isInteractive ? "xr-table__row--interactive" : undefined
                 }
                 key={rowKey(row)}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onClick={
+                  onRowClick
+                    ? () => {
+                        onRowClick(row);
+                      }
+                    : undefined
+                }
                 onKeyDown={handleKeyDown}
                 tabIndex={isInteractive ? 0 : undefined}
               >

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createI18nMiddleware, resolveTelegramLocale } from "./i18n";
-import type { TelegramBotContext } from "./types";
+import type { TelegramBotContext } from "./type";
 
 const testValue = <T>(value: unknown): T => value as T;
 
@@ -50,5 +50,18 @@ describe("Telegram bot i18n", () => {
     expect(translated).toBe(
       "Добро пожаловать! Выберите действие.|Welcome! Choose an action.",
     );
+  });
+
+  it("falls back to the default locale when session locale is missing", async () => {
+    const middleware = createI18nMiddleware();
+    const ctx = testValue<TelegramBotContext>({ session: {} });
+    let translated = "";
+
+    await middleware(ctx, () => {
+      translated = ctx.t("bot.message.welcome");
+      return Promise.resolve();
+    });
+
+    expect(translated).toBe("Welcome! Choose an action.");
   });
 });

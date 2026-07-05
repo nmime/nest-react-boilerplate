@@ -8,7 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@app/common-feature-flags": new URL(
-        "../../../libs/backend/common/feature-flags/lib/src/index.ts",
+        "../../../libs/common/feature-flags/lib/src/index.ts",
         import.meta.url,
       ).pathname,
       "@app/common-config": new URL(

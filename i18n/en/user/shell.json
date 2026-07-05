@@ -6,6 +6,8 @@
   "user.status": "Auth ready",
   "user.routeReadiness.label": "User app route readiness",
   "user.action.profile": "Profile",
+  "user.action.signOut": "Sign out",
+  "user.action.signingOut": "Signing out…",
   "user.auth.eyebrow": "Authentication",
   "user.auth.title": "Development login/register flow",
   "user.login.title": "Login",

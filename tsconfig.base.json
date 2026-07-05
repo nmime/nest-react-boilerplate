@@ -4,13 +4,18 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "strict": true,
+    "isolatedModules": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "moduleResolution": "node10",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "es2022",
     "module": "commonjs",
-    "lib": ["es2022", "dom"],
+    "lib": ["es2022"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -24,7 +29,6 @@
       "@app/backend-common-analytics": [
         "libs/backend/common/analytics/lib/src/index.ts"
       ],
-      "@app/backend-common-api": ["libs/backend/common/api/lib/src/index.ts"],
       "@app/backend-common-bootstrap": [
         "libs/backend/common/bootstrap/lib/src/index.ts"
       ],
@@ -33,12 +37,6 @@
       ],
       "@app/backend-common-exception": [
         "libs/backend/common/exception/lib/src/index.ts"
-      ],
-      "@app/backend-common-feature-flags": [
-        "libs/backend/common/feature-flags/lib/src/index.ts"
-      ],
-      "@app/backend-common-format": [
-        "libs/backend/common/format/lib/src/index.ts"
       ],
       "@app/backend-common-health": [
         "libs/backend/common/health/lib/src/index.ts"
@@ -84,6 +82,9 @@
       "@app/backend-feature-auth-shared": [
         "libs/backend/feature/auth/shared/lib/src/index.ts"
       ],
+      "@app/backend-feature-auth-test": [
+        "libs/backend/feature/auth/test/lib/src/index.ts"
+      ],
       "@app/backend-feature-user-main": [
         "libs/backend/feature/user/main/lib/src/index.ts"
       ],
@@ -99,12 +100,10 @@
       "@app/backend-postgres-main-feature-flags": [
         "libs/backend/postgres/main/feature-flags/lib/src/index.ts"
       ],
-      "@app/backend-postgres-main-feature-flags-migrations": [
-        "libs/backend/postgres/main/feature-flags/lib/src/migrations/index.ts"
-      ],
       "@app/common-api-contracts": [
         "libs/common/api-contracts/lib/src/index.ts"
       ],
+      "@app/common-authz": ["libs/common/authz/lib/src/index.ts"],
       "@app/common-config": ["libs/common/config/lib/src/index.ts"],
       "@app/common-design-tokens": [
         "libs/common/design-tokens/lib/src/index.ts"

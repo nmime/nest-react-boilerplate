@@ -1,16 +1,18 @@
 import { HttpStatus } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import {
+  getProblemDetailsSchema,
+  problemDetailsOpenApiSchema,
+} from "@app/backend-common-exception";
+import {
   ApiOkDataResponse,
   ApiExceptions,
   ApiReadinessResponses,
   ApiSessionCookieAuth,
   okResponseOpenApiSchema,
-  problemDetailsOpenApiSchema,
   readBoolean,
   resolveSwaggerOptions,
   setupSwagger,
-  getProblemDetailsSchema,
 } from "./index";
 
 const mocks = vi.hoisted(() => {

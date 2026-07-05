@@ -37,8 +37,7 @@ function bootstrapAdminEnabledFor(email: string): boolean {
   }
 
   const normalizedEmail = email.toLowerCase();
-  return (composeEnv.ADMIN_BOOTSTRAP_EMAILS ?? "")
-    .split(",")
+  return composeEnv.ADMIN_BOOTSTRAP_EMAILS.split(",")
     .map((item) => item.trim().toLowerCase())
     .includes(normalizedEmail);
 }
@@ -109,10 +108,12 @@ async function gotoWithRetry(page: Page, url: string): Promise<void> {
 
   while (Date.now() - started < 30_000) {
     try {
+      // eslint-disable-next-line no-await-in-loop -- navigation retries are sequential by design
       await page.goto(url);
       return;
     } catch (error) {
       lastError = error;
+      // eslint-disable-next-line no-await-in-loop -- navigation retries are sequential by design
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }

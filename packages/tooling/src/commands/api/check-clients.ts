@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { spawnSync } from "node:child_process";
 import {
   mkdirSync,
@@ -14,9 +13,9 @@ import { join, relative } from "node:path";
 
 const generatedRoot = "libs/frontend/api-client/lib/src/generated";
 
-function listFiles(root) {
-  const files = [];
-  const visit = (dir) => {
+function listFiles(root: string) {
+  const files: string[] = [];
+  const visit = (dir: string) => {
     for (const name of readdirSync(dir)) {
       if (name === ".prettier-cache") continue;
       // Frontend toast rules are generated and verified by `api toast-config`.
@@ -30,7 +29,7 @@ function listFiles(root) {
   return files.sort();
 }
 
-function compareTrees(expectedRoot, actualRoot) {
+function compareTrees(expectedRoot: string, actualRoot: string) {
   const expected = listFiles(expectedRoot).map((file) =>
     relative(expectedRoot, file),
   );
@@ -53,6 +52,9 @@ function compareTrees(expectedRoot, actualRoot) {
 }
 
 const temp = mkdtempSync(join(tmpdir(), "api-clients-"));
+// Capture the exit code and exit after the finally block so the temp dir is
+// always cleaned up; process.exit() inside try would skip finally.
+let exitCode = 0;
 try {
   const expectedRoot = join(temp, "expected-generated");
   const result = spawnSync(
@@ -64,14 +66,19 @@ try {
     ],
     { stdio: "inherit" },
   );
-  if (result.status !== 0) process.exit(result.status ?? 1);
-  const diffs = compareTrees(expectedRoot, generatedRoot);
-  if (diffs.length) {
-    console.error("API clients are stale. Run `pnpm api:clients`.");
-    for (const diff of diffs) console.error(`- ${diff}`);
-    process.exit(1);
+  if (result.status !== 0) {
+    exitCode = result.status ?? 1;
+  } else {
+    const diffs = compareTrees(expectedRoot, generatedRoot);
+    if (diffs.length) {
+      console.error("API clients are stale. Run `pnpm api:clients`.");
+      for (const diff of diffs) console.error(`- ${diff}`);
+      exitCode = 1;
+    } else {
+      console.log(JSON.stringify({ status: "fresh", generatedRoot }));
+    }
   }
-  console.log(JSON.stringify({ status: "fresh", generatedRoot }));
 } finally {
   rmSync(temp, { recursive: true, force: true });
 }
+if (exitCode !== 0) process.exit(exitCode);

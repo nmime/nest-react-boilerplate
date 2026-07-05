@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { commandExists, httpMethods, loadOpenApiContracts, parseArgs, resolveJsonPointer, run, walkRefs, writeJson } from "./runtime-utils.ts";
@@ -8,8 +7,8 @@ const args = parseArgs();
 const engine = args.options.get("engine") ?? process.env.OPENAPI_LINT_ENGINE ?? "native";
 const reportPath = args.options.get("report") ?? "test-results/openapi-lint/report.json";
 const spectralVersion = args.options.get("spectral-version") ?? process.env.SPECTRAL_CLI_VERSION ?? "6.16.0";
-const errors = [];
-const warnings = [];
+const errors: string[] = [];
+const warnings: string[] = [];
 const contracts = loadOpenApiContracts();
 
 for (const contract of contracts) {
@@ -19,7 +18,7 @@ for (const contract of contracts) {
   if (!doc.info?.version) errors.push(`${path}: info.version is required`);
   if (!doc.paths || Object.keys(doc.paths).length === 0) errors.push(`${path}: paths must not be empty`);
   if (!Array.isArray(doc.servers) || doc.servers.length === 0) warnings.push(`${path}: servers is empty; generated contracts are environment-neutral`);
-  const operationIds = new Set();
+  const operationIds = new Set<string>();
   for (const [route, item] of Object.entries(doc.paths ?? {})) {
     if (!route.startsWith("/")) errors.push(`${path}: route ${route} must start with /`);
     for (const [method, operation] of Object.entries(item ?? {})) {
@@ -45,7 +44,7 @@ for (const contract of contracts) {
   });
 }
 
-let spectral = null;
+let spectral: { status: number; stdout: string; stderr: string } | null = null;
 if (engine === "spectral" || args.flags.has("spectral")) {
   const spectralArgs = ["dlx", `@stoplight/spectral-cli@${spectralVersion}`, "lint", ...contracts.map((contract) => contract.path), "--format", "json"];
   if (existsSync(".spectral.yaml")) spectralArgs.push("--ruleset", ".spectral.yaml");

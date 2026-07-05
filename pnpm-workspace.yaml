@@ -33,17 +33,15 @@ overrides:
   "@opentelemetry/core@<2.8.0": "2.8.0"
   "multer@>=2.0.0-alpha.1 <2.2.0": "2.2.0"
 
-onlyBuiltDependencies:
-  - "@nestjs/core"
-  - "@parcel/watcher"
-  - "@swc/core"
-  - esbuild
-  - nx
+# Escape hatch for the hard audit:ci gate: when an advisory has no upstream
+# fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.
+auditConfig:
+  ignoreCves: []
 
-ignoredBuiltDependencies:
-  - "@scarf/scarf"
-  - less
-  - unrs-resolver
+# Supply-chain quarantine: reject versions published less than a day ago.
+# Raise toward 10080 (7 days) once the dependency set stops churning weekly;
+# 10080 currently rejects ~208 recently-published entries in this lockfile.
+minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - "@storybook/builder-vite@10.4.4"

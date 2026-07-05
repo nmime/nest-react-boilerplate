@@ -1,4 +1,9 @@
-import { useI18n, type Locale, type UiTheme } from "@app/frontend-runtime";
+import {
+  observer,
+  useI18n,
+  type Locale,
+  type UiTheme,
+} from "@app/frontend-runtime";
 import { useAuthSessionFlow } from "../../../features/auth";
 import {
   UiAlert,
@@ -14,7 +19,7 @@ interface ProfilePageProps {
   applyUserTheme: (theme: UiTheme) => void;
 }
 
-export function ProfilePage({
+export const ProfilePage = observer(function ProfilePage({
   applyUserLocale,
   applyUserTheme,
 }: Readonly<ProfilePageProps>) {
@@ -79,4 +84,4 @@ export function ProfilePage({
       </div>
     </UiSection>
   );
-}
+});

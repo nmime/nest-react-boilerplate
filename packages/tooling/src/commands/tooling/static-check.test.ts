@@ -1,10 +1,11 @@
-// @ts-nocheck
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import {
+  checkCommandImportSmoke,
+  checkTranslationKeyDrift,
   checkExportedAllCapsConstantConventions,
   checkExportedSymbolTokenConventions,
   checkFrontendUiCompatibilityFacade,
@@ -36,6 +37,118 @@ function writeText(workspaceRoot: string, path: string, text: string): void {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, text);
 }
+
+function writeImportSmokeFixture(workspaceRoot: string): void {
+  writeText(
+    workspaceRoot,
+    "tsconfig.base.json",
+    JSON.stringify({ compilerOptions: { paths: {} } }),
+  );
+  writeText(workspaceRoot, "packages/tooling/src/cli.ts", "export const main = () => 0;\n");
+}
+
+function writeTranslationKeyUnion(workspaceRoot: string, keys: string[]): void {
+  const union = keys.map((key) => `  | ${JSON.stringify(key)}`).join("\n");
+  writeText(
+    workspaceRoot,
+    "libs/common/i18n/keys/lib/src/index.ts",
+    `export type TranslationKey =\n${union};\n`,
+  );
+}
+
+describe("static-check translation key drift guard", () => {
+  it("accepts an exact match between en catalogs and the TranslationKey union", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify({ "common.a": "A", "common.b": "B" }),
+      );
+      writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.b"]);
+
+      assert.deepEqual(checkTranslationKeyDrift(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("flags drift in either direction and ignores Nx project.json files", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify({ "common.a": "A", "common.catalogOnly": "C" }),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/project.json",
+        JSON.stringify({ name: "en-i18n", sourceRoot: "i18n/en" }),
+      );
+      writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.unionOnly"]);
+
+      const failures = checkTranslationKeyDrift(workspaceRoot);
+      const messages = failures.map((failure) => failure.stderr).join("\n");
+
+      assert.equal(failures.length, 2);
+      assert.match(messages, /missing 1 key\(s\).*common\.catalogOnly/s);
+      assert.match(messages, /absent from i18n\/en catalogs.*common\.unionOnly/s);
+      // The Nx project.json keys (name, sourceRoot) must not be treated as catalog keys.
+      assert.equal(messages.includes("sourceRoot"), false);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check command import smoke guard", () => {
+  it("flags command modules with unresolved import paths", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeImportSmokeFixture(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "packages/tooling/src/commands/demo/broken.ts",
+        'import { missing } from "./does-not-exist.ts";\nexport const value = missing;\n',
+      );
+
+      const failures = checkCommandImportSmoke(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0].command, "command module import smoke");
+      assert.equal(failures[0].file, "packages/tooling/src/commands/demo/broken.ts");
+      assert.match(failures[0].stderr, /Unresolved import "\.\/does-not-exist\.ts"/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts command modules whose relative imports resolve", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeImportSmokeFixture(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "packages/tooling/src/commands/demo/helper.ts",
+        "export const helper = 1;\n",
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/src/commands/demo/entry.ts",
+        'import { helper } from "./helper.ts";\nimport { readFileSync } from "node:fs";\nexport const value = helper + Number(Boolean(readFileSync));\n',
+      );
+
+      assert.deepEqual(checkCommandImportSmoke(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
 
 describe("static-check generated contract import guard", () => {
   it("rejects deep generated contract imports from app feature source", () => {

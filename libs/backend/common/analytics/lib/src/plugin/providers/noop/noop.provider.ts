@@ -5,15 +5,15 @@ export class NoopAnalyticsProvider extends AbstractAnalyticsProvider {
     super();
   }
 
-  track(): undefined {
+  override track(): undefined {
     return undefined;
   }
 
-  identify(): undefined {
+  override identify(): undefined {
     return undefined;
   }
 
-  page(): undefined {
+  override page(): undefined {
     return undefined;
   }
 }

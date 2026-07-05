@@ -7,6 +7,8 @@
     "platform:frontend",
     "type:feature-shared",
     "scope:user",
-    "fsd:layer:shared"
+    "boundary:i18n",
+    "fsd:layer:shared",
+    "framework:neutral"
   ]
 }

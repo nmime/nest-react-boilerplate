@@ -1,4 +1,3 @@
-// @ts-nocheck
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -51,7 +50,7 @@ describe("postgres backup/restore client selection", () => {
     });
 
     assert.equal(selected.mode, "local");
-    assert.match(selected.warning, /Docker is unavailable/);
+    assert.match(String(selected.warning), /Docker is unavailable/);
   });
 
   it("builds Docker commands without embedding database credentials in argv", () => {

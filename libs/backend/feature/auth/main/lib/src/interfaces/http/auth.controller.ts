@@ -1,0 +1,344 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
+import { ApiBearerAuth } from "@nestjs/swagger";
+import { supportedLocales } from "@app/common-i18n";
+import {
+  ApiOkDataResponse,
+  ApiExceptions,
+  ApiSessionCookieAuth,
+} from "@app/backend-common-swagger";
+import {
+  createOkResponse,
+  type OkResponse,
+} from "@app/backend-common-response";
+import {
+  CurrentUser,
+  setSessionPrincipal,
+  SessionAuthGuard,
+  type AuthenticatedPrincipal,
+  type AuthenticatedRequest,
+  type AuthenticatedResponse,
+  type AuthSessionView,
+} from "@app/backend-feature-auth-shared";
+import {
+  AuthService,
+  ExternalAuthService,
+  type ExternalAuthLoginResult,
+} from "../../application";
+import {
+  DiscordAuthorizationRequestDto,
+  DiscordCallbackQueryDto,
+  LinkTokenDto,
+  LoginDto,
+  RefreshTokenDto,
+  RegisterDto,
+  TelegramBotLinkDto,
+  TelegramTmaDto,
+  TelegramWebLoginDto,
+  UpdateLocaleDto,
+  UpdatePreferencesDto,
+  UserActionTokenRequestDto,
+} from "./dto";
+import {
+  AuthenticatedUserViewDto,
+  AuthSessionViewDto,
+  ExternalAuthResultDto,
+  LinkTokenResultDto,
+  LogoutPayloadDto,
+  MePayloadDto,
+  SupportedLocalesPayloadDto,
+  UserActionTokenPayloadDto,
+} from "./dto/auth-response.swagger";
+import type {
+  LogoutPayload,
+  MePayload,
+  SupportedLocalesPayload,
+  UserActionTokenPayload,
+} from "./type/auth-http.type";
+import {
+  callSessionMethod,
+  clearRequestSession,
+  establishExternalSessionIfPresent,
+  establishRequestSession,
+  SessionCookieName,
+} from "./util/session-lifecycle.util";
+import { principalFromUserView } from "./util/principal.mapper";
+
+// The request DTOs, public payload interfaces, and the session-cookie name were
+// decomposed into role-based sibling files; they are re-exported here so the
+// HTTP barrel stays stable. The module-private Swagger response DTOs are
+// imported directly and intentionally not re-exported.
+export * from "./dto";
+export * from "./type/auth-http.type";
+export { SessionCookieName };
+
+function hasRefreshTokenInput(
+  input: Partial<RefreshTokenDto> | undefined,
+): input is RefreshTokenDto {
+  return typeof input?.refreshToken === "string";
+}
+
+@ApiExceptions(400, 401, 403, 409, 429, 500)
+@Controller("auth")
+export class AuthController {
+  constructor(
+    private readonly auth: AuthService,
+    private readonly externalAuth: ExternalAuthService,
+  ) {}
+
+  @Post("register")
+  @ApiOkDataResponse(AuthSessionViewDto)
+  async register(
+    @Body() input: RegisterDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView>> {
+    const session = await this.auth.register(input);
+    await establishRequestSession(request, session);
+    return createOkResponse(session);
+  }
+
+  @Post("login")
+  @ApiOkDataResponse(AuthSessionViewDto)
+  async login(
+    @Body() input: LoginDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView>> {
+    const session = await this.auth.login(input);
+    await establishRequestSession(request, session);
+    return createOkResponse(session);
+  }
+
+  @Post("refresh")
+  @ApiOkDataResponse(AuthSessionViewDto)
+  async refresh(
+    @Body() input: RefreshTokenDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView>> {
+    const session = await this.auth.refreshSession(input);
+    await establishRequestSession(request, session);
+    return createOkResponse(session);
+  }
+
+  @Post("telegram/web-login")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramWebLogin(
+    @Body() input: TelegramWebLoginDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const result = await this.externalAuth.telegramWebLogin({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return createOkResponse(result);
+  }
+
+  @Post("telegram/tma")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramTma(
+    @Body() input: TelegramTmaDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const result = await this.externalAuth.telegramTma({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return createOkResponse(result);
+  }
+
+  @Post("telegram/bot-link")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramBotLink(
+    @Body() input: TelegramBotLinkDto,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    return createOkResponse(await this.externalAuth.telegramBotLink(input));
+  }
+
+  @Post("discord/authorization-request")
+  @ApiOkDataResponse(Object)
+  discordAuthorizationRequest(
+    @Body() input: DiscordAuthorizationRequestDto,
+    @Req() request: AuthenticatedRequest,
+  ): OkResponse<{ authorizationUrl: string; stateExpiresAt: string }> {
+    return createOkResponse(
+      this.externalAuth.createDiscordAuthorizationRequest({
+        ...input,
+        principal: request.user ?? request.auth ?? null,
+      }),
+    );
+  }
+
+  @Get("discord/callback")
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async discordCallback(
+    @Query() input: DiscordCallbackQueryDto,
+    @Req() request: AuthenticatedRequest,
+    @Res() response: AuthenticatedResponse,
+  ): Promise<void> {
+    const result = await this.externalAuth.discordCallback({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    if (result.returnUrl) {
+      response.redirect?.(result.returnUrl, 302);
+      return;
+    }
+    response.send?.(createOkResponse(result));
+  }
+
+  @Get("provider-identities")
+  @ApiOkDataResponse(Object)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async providerIdentities(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<OkResponse<unknown>> {
+    return createOkResponse(
+      await this.externalAuth.listProviderIdentities(
+        principal.subject,
+        principal.tenantId,
+      ),
+    );
+  }
+
+  @Delete("provider-identities/:identityId")
+  @ApiOkDataResponse(Object)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async unlinkProviderIdentity(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param("identityId") identityId: string,
+  ): Promise<OkResponse<{ unlinked: boolean }>> {
+    return createOkResponse(
+      await this.externalAuth.unlinkProviderIdentity(identityId, principal),
+    );
+  }
+
+  @Post("link-tokens")
+  @ApiOkDataResponse(LinkTokenResultDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async createLinkToken(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: LinkTokenDto,
+  ): Promise<OkResponse<unknown>> {
+    return createOkResponse(
+      await this.externalAuth.createLinkToken({
+        ...input,
+        userId: principal.subject,
+        tenantId: input.tenantId ?? principal.tenantId,
+      }),
+    );
+  }
+
+  @Post("email-verification-token")
+  @ApiOkDataResponse(UserActionTokenPayloadDto)
+  async requestEmailVerification(
+    @Body() input: UserActionTokenRequestDto,
+  ): Promise<OkResponse<UserActionTokenPayload>> {
+    await this.auth.issueEmailVerificationToken(input);
+    return createOkResponse({ issued: true });
+  }
+
+  @Post("password-reset-token")
+  @ApiOkDataResponse(UserActionTokenPayloadDto)
+  async requestPasswordReset(
+    @Body() input: UserActionTokenRequestDto,
+  ): Promise<OkResponse<UserActionTokenPayload>> {
+    await this.auth.issuePasswordResetToken(input);
+    return createOkResponse({ issued: true });
+  }
+
+  @Get("me")
+  @ApiOkDataResponse(MePayloadDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async me(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<OkResponse<MePayload>> {
+    return createOkResponse({
+      principal,
+      user: await this.auth.getUserById(principal.subject, principal.tenantId),
+    });
+  }
+
+  @Patch("me/locale")
+  @ApiOkDataResponse(AuthenticatedUserViewDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async updateLocale(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: UpdateLocaleDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView["user"]>> {
+    const user = await this.auth.updateUserPreferences(
+      principal.subject,
+      principal.tenantId,
+      { locale: input.locale },
+    );
+    setSessionPrincipal(request, principalFromUserView(principal, user));
+    await callSessionMethod(request, "save");
+    return createOkResponse(user);
+  }
+
+  @Patch("me/preferences")
+  @ApiOkDataResponse(AuthenticatedUserViewDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async updatePreferences(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: UpdatePreferencesDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<AuthSessionView["user"]>> {
+    const user = await this.auth.updateUserPreferences(
+      principal.subject,
+      principal.tenantId,
+      input,
+    );
+    setSessionPrincipal(request, principalFromUserView(principal, user));
+    await callSessionMethod(request, "save");
+    return createOkResponse(user);
+  }
+
+  @Get("locales")
+  @ApiOkDataResponse(SupportedLocalesPayloadDto)
+  locales(): OkResponse<SupportedLocalesPayload> {
+    return createOkResponse({ supportedLocales });
+  }
+
+  @Post("logout")
+  @ApiOkDataResponse(LogoutPayloadDto)
+  @ApiBearerAuth()
+  @ApiSessionCookieAuth()
+  @UseGuards(new SessionAuthGuard())
+  async logout(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: AuthenticatedResponse,
+    @Body() input?: Partial<RefreshTokenDto>,
+  ): Promise<OkResponse<LogoutPayload>> {
+    if (hasRefreshTokenInput(input)) {
+      await this.auth.revokeRefreshToken(input);
+    }
+    await clearRequestSession(request, response);
+    return createOkResponse({ loggedOut: true });
+  }
+}

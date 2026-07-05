@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// @ts-nocheck
+// Marks this file as a module so its top-level await is permitted (it only uses
+// dynamic import(), which TypeScript does not treat as a module-level import).
+export {};
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log("Usage: repo-tooling db:migrations:rollback-check");
@@ -57,7 +59,7 @@ try {
   console.log(
     JSON.stringify({
       status: "ok",
-      checked: pendingBefore.map((migration) => migration.name),
+      checked: pendingBefore.map((migration: { name: string }) => migration.name),
       durationMs: Date.now() - started,
     }),
   );

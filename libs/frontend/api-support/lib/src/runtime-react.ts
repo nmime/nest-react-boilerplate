@@ -21,26 +21,37 @@ export const clearApiAuthRequired = (
   eventHub.clearAuthRequired();
 };
 
+export const hasBrowserWindow = (): boolean => typeof window !== "undefined";
+
 export function useApiRuntimeOverlayModel({
   eventHub = apiRuntimeEvents,
   toastRuntime = apiToastRuntime,
 }: ApiRuntimeOverlayModelOptions = {}) {
   const rerender = useReducer((version: number) => version + 1, 0)[1];
 
-  useEffect(() => eventHub.subscribe(() => rerender()), [eventHub, rerender]);
+  useEffect(
+    () =>
+      eventHub.subscribe(() => {
+        rerender();
+      }),
+    [eventHub, rerender],
+  );
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    /* v8 ignore next 3 -- jsdom hook tests always provide window; hasBrowserWindow() covers the SSR guard predicate. */
+    if (!hasBrowserWindow()) {
       return undefined;
     }
 
-    const handleOffline = () => emitBrowserOfflineEvent(eventHub);
+    const handleOffline = () => {
+      emitBrowserOfflineEvent(eventHub);
+    };
     const handleOnline = () => {
       eventHub.reset();
       rerender();
     };
 
-    if (globalThis.navigator && navigator.onLine === false) {
+    if (navigator.onLine === false) {
       handleOffline();
     }
 

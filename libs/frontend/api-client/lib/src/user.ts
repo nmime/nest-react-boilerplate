@@ -45,16 +45,14 @@ export const getProfileControllerMeQueryOptions = (
   >;
 
 type OpenApiQueryOptions<TData, TError> = Omit<
-  UseQueryOptions<TData, TError, TData, readonly unknown[]>,
+  UseQueryOptions<TData, TError, TData>,
   "queryFn"
 > & {
-  queryFn: NonNullable<
-    UseQueryOptions<TData, TError, TData, readonly unknown[]>["queryFn"]
-  >;
+  queryFn: NonNullable<UseQueryOptions<TData, TError, TData>["queryFn"]>;
 };
 
 type QueryConfig<TData, TError> = Omit<
-  UseQueryOptions<TData, ApiClientError<TError>, TData, readonly unknown[]>,
+  UseQueryOptions<TData, ApiClientError<TError>, TData>,
   "queryFn" | "queryKey"
 > & {
   request?: ApiClientRequestOptions;

@@ -46,9 +46,9 @@ describe("admin preferences accessibility", () => {
 
     render(<App />);
 
-    await waitFor(() =>
-      expect(screen.getByText("Admin dashboard")).toBeTruthy(),
-    );
+    await waitFor(() => {
+      expect(screen.getByText("Admin dashboard")).toBeTruthy();
+    });
     expect(screen.getByLabelText("Language")).toBeTruthy();
     expect(screen.getByLabelText("Theme")).toBeTruthy();
   });

@@ -4,6 +4,7 @@ import {
   AdminManageAllPermission,
   AdminProfileReadPermission,
   AdminRole,
+  AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersStatusUpdatePermission,
   createAdminAccessPolicy,
@@ -40,10 +41,23 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
       canUpdateUserStatus: true,
       canUpdateUserAccessPolicy: true,
       canReadRoles: false,
+      canWriteRoles: false,
       canReadAudit: false,
       canReadSettings: false,
       canUpdateSettings: false,
     });
+  });
+
+  it("derives canWriteRoles from the admin:roles:write claim", () => {
+    const policy = createAdminAccessPolicy({
+      subject: "admin-id",
+      roles: [AdminRole],
+      permissions: [AdminRolesWritePermission],
+    });
+
+    expect(policy.canWriteRoles).toBe(true);
+    expect(policy.canReadRoles).toBe(false);
+    expect(policy.canAccessAdmin).toBe(true);
   });
 
   it("fails closed when subject or admin role is missing", () => {
@@ -77,6 +91,7 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
       canUpdateUserStatus: true,
       canUpdateUserAccessPolicy: true,
       canReadRoles: true,
+      canWriteRoles: true,
       canReadAudit: true,
       canReadSettings: true,
       canUpdateSettings: true,
@@ -90,15 +105,15 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
   });
 
   it("throws when the principal cannot read the admin profile", () => {
-    expect(() => assertCanReadAdminProfile()).toThrow(
-      "Admin profile permission is required.",
-    );
-    expect(() =>
+    expect(() => {
+      assertCanReadAdminProfile();
+    }).toThrow("Admin profile permission is required.");
+    expect(() => {
       assertCanReadAdminProfile({
         subject: "admin-id",
         roles: [AdminRole],
         permissions: [AdminProfileReadPermission],
-      }),
-    ).not.toThrow();
+      });
+    }).not.toThrow();
   });
 });

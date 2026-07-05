@@ -37,7 +37,7 @@ export const AuditPage = ({
       ),
     retry: false,
   });
-  const rows = (audit.data?.items ?? []) as AuditRow[];
+  const rows = audit.data?.items ?? [];
   return (
     <UiSection
       className="admin-page admin-audit-page"

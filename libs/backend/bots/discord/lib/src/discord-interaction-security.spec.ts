@@ -58,6 +58,7 @@ describe("DiscordInteractionSecurity", () => {
         publicKey: signed.publicKey,
       },
     ]) {
+      // eslint-disable-next-line no-await-in-loop -- each tamper case is asserted sequentially
       await expect(
         security.verify({
           rawBody: input.rawBody,
@@ -66,6 +67,21 @@ describe("DiscordInteractionSecurity", () => {
         }),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     }
+  });
+
+  it("reads the first value when signature headers arrive as arrays", async () => {
+    const signed = signedDiscordRequest(Buffer.from('{"type":1}'));
+
+    await expect(
+      new DiscordInteractionSecurity().verify({
+        rawBody: signed.rawBody,
+        headers: {
+          signature: [signed.signature, "ignored"],
+          timestamp: [signed.timestamp, "ignored"],
+        },
+        publicKey: signed.publicKey,
+      }),
+    ).resolves.toBeUndefined();
   });
 });
 

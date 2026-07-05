@@ -2,7 +2,7 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { useId, type ReactNode } from "react";
 import { UiLabel } from "./label";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiSelectOption {
   label: ReactNode;

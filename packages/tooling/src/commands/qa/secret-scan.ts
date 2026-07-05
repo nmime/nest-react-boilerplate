@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { collectFiles, commandExists, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
@@ -8,7 +7,6 @@ const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECRET_SCAN_ENGINE ?? "native";
 const failOnUnavailableExternal = (process.env.SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
-const requestedExternalEngine = engine === "gitleaks";
 const reportPath = args.options.get("report") ?? "test-results/security-secrets/report.json";
 const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.0";
 const findings = [];
@@ -22,7 +20,7 @@ const patterns = [
   { id: "database-url-credential", severity: "high", regex: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^\s:@]+:([^\s@]{12,})@/gi },
 ];
 
-function entropy(value) {
+function entropy(value: string) {
   const counts = new Map();
   for (const char of value) counts.set(char, (counts.get(char) ?? 0) + 1);
   return [...counts.values()].reduce((sum, count) => {
@@ -30,7 +28,7 @@ function entropy(value) {
     return sum - p * Math.log2(p);
   }, 0);
 }
-function allowed(value, rel = "") {
+function allowed(value: string, rel = "") {
   if (/example|sample|fixture|test|dummy|changeme|placeholder|process\.env/i.test(value)) return true;
   if (rel.endsWith("env-loader.ts") && /postgres/i.test(value)) return true;
   return false;
@@ -46,7 +44,10 @@ if (engine === "gitleaks" && !dryRun) {
   } else if (failOnUnavailableExternal) findings.push({ rule: "gitleaks", severity: "high", message: "SECRET_SCAN_ENGINE=gitleaks requested but gitleaks/Docker is unavailable" });
 }
 
-if (engine !== "gitleaks" || findings.length === 0 || requestedExternalEngine) {
+// Run the native scan for the native engine, or as a fallback when the gitleaks
+// path produced no findings (e.g. gitleaks/Docker unavailable and not failing).
+// Do not double-run it when gitleaks already reported findings.
+if (engine !== "gitleaks" || findings.length === 0) {
   for (const file of collectFiles(workspaceRoot, { include: textFileFilter })) {
     const rel = relative(workspaceRoot, file).replaceAll("\\", "/");
     const text = readFileSync(file, "utf8");

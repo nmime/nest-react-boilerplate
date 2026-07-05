@@ -108,7 +108,7 @@ export function useAuthSessionFlow({
         locale,
       ),
     onSuccess: (body) => {
-      authStore.setSession(body?.accessToken, body?.refreshToken);
+      authStore.setSession(body.accessToken, body.refreshToken);
       clearApiAuthRequired();
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);
@@ -180,10 +180,10 @@ export function useAuthSessionFlow({
 
   return {
     isLoginPending:
-      authMutation.isPending && authMutation.variables?.mode === AuthMode.Login,
+      authMutation.isPending && authMutation.variables.mode === AuthMode.Login,
     isRegisterPending:
       authMutation.isPending &&
-      authMutation.variables?.mode === AuthMode.Register,
+      authMutation.variables.mode === AuthMode.Register,
     profileState,
     submitAuth,
   };

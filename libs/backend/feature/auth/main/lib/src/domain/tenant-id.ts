@@ -10,7 +10,7 @@ export class InvalidAuthTenantIdError extends Error {
   }
 }
 
-export function parseTenantId(value: string | null | undefined): string {
+export function parseDomainTenantId(value: string | null | undefined): string {
   if (value && !normalizeTenantId(value)) {
     throw new InvalidAuthTenantIdError();
   }

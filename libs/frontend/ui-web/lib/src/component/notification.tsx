@@ -1,7 +1,7 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import type { HTMLAttributes, ReactNode } from "react";
 import { UiButton } from "./button";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiNotificationProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
@@ -51,7 +51,12 @@ export const UiCopyableText = ({
   value,
 }: Readonly<UiCopyableTextProps>) => {
   const handleCopy = () => {
-    void globalThis.navigator?.clipboard?.writeText(value);
+    // `navigator.clipboard` is typed as always present, but it is undefined in
+    // insecure contexts and in jsdom, so treat it as an optional boundary.
+    const { clipboard } = globalThis.navigator as {
+      clipboard?: Clipboard;
+    };
+    void clipboard?.writeText(value);
   };
 
   return (

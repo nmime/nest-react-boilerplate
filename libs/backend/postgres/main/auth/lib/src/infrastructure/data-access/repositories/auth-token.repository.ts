@@ -7,46 +7,16 @@ import {
   DefaultAuthTenantId,
   type AuthUserTokenPurpose,
 } from "../entities";
+import { mapAuthTokenRepositoryError } from "./mapper/auth-token-error.mapper";
+import type {
+  AuthTokenCleanupResult,
+  AuthTokenRepositoryError,
+  PersistAuthRefreshTokenInput,
+  PersistAuthUserTokenInput,
+  RotateAuthRefreshTokenInput,
+} from "./type/auth-token.type";
 
-export interface AuthTokenRepositoryError {
-  code: "repository_error";
-  message: string;
-}
-
-export interface PersistAuthRefreshTokenInput {
-  id: string;
-  tenantId?: string;
-  userId: string;
-  tokenHash: string;
-  familyId: string;
-  parentTokenId?: string | null;
-  expiresAt: Date;
-}
-
-export interface RotateAuthRefreshTokenInput {
-  tokenHash: string;
-  tenantId?: string;
-  replacement: {
-    id: string;
-    tokenHash: string;
-    expiresAt: Date;
-  };
-  now?: Date;
-}
-
-export interface PersistAuthUserTokenInput {
-  id: string;
-  tenantId?: string;
-  userId: string;
-  purpose: AuthUserTokenPurpose;
-  tokenHash: string;
-  expiresAt: Date;
-}
-
-export interface AuthTokenCleanupResult {
-  refreshTokensDeleted: number;
-  userTokensDeleted: number;
-}
+export * from "./type/auth-token.type";
 
 @Injectable()
 export class AuthTokenRepository {
@@ -60,7 +30,7 @@ export class AuthTokenRepository {
   ): ResultAsync<AuthRefreshTokenEntity, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.persistRefreshToken(input),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -76,7 +46,7 @@ export class AuthTokenRepository {
         revokedAt: null,
         expiresAt: { $gt: now },
       }),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -85,7 +55,7 @@ export class AuthTokenRepository {
   ): ResultAsync<AuthRefreshTokenEntity | null, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.rotateRefreshTokenTransaction(input),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -96,7 +66,7 @@ export class AuthTokenRepository {
   ): ResultAsync<boolean, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.revokeRefreshTokenTransaction(tokenHash, tenantId, now),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -105,7 +75,7 @@ export class AuthTokenRepository {
   ): ResultAsync<AuthUserTokenEntity, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.persistUserToken(input),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -117,7 +87,7 @@ export class AuthTokenRepository {
   ): ResultAsync<AuthUserTokenEntity | null, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.consumeUserTokenTransaction(tokenHash, purpose, tenantId, now),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -126,7 +96,7 @@ export class AuthTokenRepository {
   ): ResultAsync<AuthTokenCleanupResult, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.deleteExpiredTokens(before),
-      mapRepositoryError,
+      mapAuthTokenRepositoryError,
     );
   }
 
@@ -165,6 +135,7 @@ export class AuthTokenRepository {
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
       if (!current) {
+        await this.revokeReusedTokenFamily(em, input.tokenHash, tenantId, now);
         return null;
       }
 
@@ -183,6 +154,29 @@ export class AuthTokenRepository {
       await em.flush();
       return replacement;
     });
+  }
+
+  private async revokeReusedTokenFamily(
+    em: EntityManager,
+    tokenHash: string,
+    tenantId: string,
+    now: Date,
+  ): Promise<void> {
+    const replayed = await em.findOne(AuthRefreshTokenEntity, {
+      tokenHash,
+      tenantId,
+    });
+    // Reuse detection: a token that still exists but was already revoked/rotated
+    // signals replay of a stolen refresh token. Revoke the entire family so the
+    // active (rotated) descendant token can no longer be used.
+    if (!replayed?.revokedAt) {
+      return;
+    }
+    await em.nativeUpdate(
+      AuthRefreshTokenEntity,
+      { familyId: replayed.familyId, tenantId, revokedAt: null },
+      { revokedAt: now },
+    );
   }
 
   private async revokeRefreshTokenTransaction(
@@ -269,12 +263,4 @@ export class AuthTokenRepository {
 
     return { refreshTokensDeleted, userTokensDeleted };
   }
-}
-
-function mapRepositoryError(cause: unknown): AuthTokenRepositoryError {
-  return {
-    code: "repository_error",
-    message:
-      cause instanceof Error ? cause.message : "Auth token repository failed.",
-  };
 }

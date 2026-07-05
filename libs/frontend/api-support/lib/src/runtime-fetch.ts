@@ -25,6 +25,7 @@ const requestEndpoint = (request: Request): string => {
   try {
     return new URL(request.url).pathname;
   } catch {
+    /* v8 ignore next -- unreachable: the request is always constructed via new Request(), whose url is guaranteed parseable by URL */
     return request.url;
   }
 };

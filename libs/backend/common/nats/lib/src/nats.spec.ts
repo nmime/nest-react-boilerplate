@@ -282,9 +282,9 @@ describe("NATS foundation", () => {
   it("does not allow publishing when NATS is not configured", () => {
     const service = new NatsService(null);
 
-    expect(() => service.publishJson("events", {})).toThrow(
-      NatsConnectionUnavailableError,
-    );
+    expect(() => {
+      service.publishJson("events", {});
+    }).toThrow(NatsConnectionUnavailableError);
   });
 
   it("does not allow using a closed or draining connection", () => {
@@ -375,6 +375,186 @@ describe("NATS foundation", () => {
     expect(() => new NatsServicesService(core).getManager()).toThrow(
       NatsConnectionUnavailableError,
     );
+  });
+
+  it("reports extended providers as enabled while a connection is active", () => {
+    const core = new NatsService(natsConnection());
+
+    expect(new NatsJetStreamService(core).isEnabled).toBe(true);
+    expect(new NatsKvService(core).isEnabled).toBe(true);
+    expect(new NatsObjectStoreService(core).isEnabled).toBe(true);
+    expect(new NatsServicesService(core).isEnabled).toBe(true);
+  });
+
+  it("delegates bucket, store, and service manager operations", async () => {
+    const core = new NatsService(natsConnection());
+    const kv = new NatsKvService(core);
+    const objectStore = new NatsObjectStoreService(core);
+    const services = new NatsServicesService(core);
+
+    await kv.createBucket("bucket");
+    await kv.createBucket("bucket", { history: 1 });
+    await kv.openBucket("bucket");
+    await kv.openBucket("bucket", { history: 1 });
+    await objectStore.createStore("store");
+    await objectStore.createStore("store", { description: "store" });
+    await objectStore.openStore("store");
+    await objectStore.openStore("store", { check: true });
+    objectStore.listStores();
+    await services.add({ name: "svc", version: "1.0.0", queue: "" });
+    services.client();
+    services.client({ strategy: "count", maxMessages: 1, maxWait: 10 }, "acme");
+
+    expect(mocks.kvmConstructor).toHaveBeenCalled();
+    expect(mocks.objmConstructor).toHaveBeenCalled();
+    expect(mocks.svcmConstructor).toHaveBeenCalled();
+  });
+
+  it("requests JSON without a payload", async () => {
+    const response = msg({ jsonValue: { ok: true } });
+    const request = vi.fn(() => Promise.resolve(response));
+    const service = new NatsService(natsConnection({ request }));
+
+    await expect(service.requestJson("rpc.no.payload")).resolves.toEqual({
+      ok: true,
+    });
+    expect(request).toHaveBeenCalledWith(
+      "rpc.no.payload",
+      undefined,
+      undefined,
+    );
+  });
+
+  it("prefers explicit NATS options over environment values", () => {
+    const config = new NatsConfigService({
+      servers: ["nats://explicit:4222"],
+      name: "explicit",
+      token: "explicit-token",
+      timeoutMs: 1234,
+      reconnect: true,
+      maxReconnectAttempts: 7,
+      reconnectTimeWaitMs: 321,
+      waitOnFirstConnect: true,
+      pingIntervalMs: 4321,
+      drainTimeoutMs: 9999,
+    });
+
+    expect(config.connectionConfig).toEqual({
+      servers: ["nats://explicit:4222"],
+      name: "explicit",
+      user: undefined,
+      pass: undefined,
+      token: "explicit-token",
+      timeoutMs: 1234,
+      reconnect: true,
+      maxReconnectAttempts: 7,
+      reconnectTimeWaitMs: 321,
+      waitOnFirstConnect: true,
+      pingIntervalMs: 4321,
+    });
+    expect(config.drainTimeoutMs).toBe(9999);
+  });
+
+  it("prefers explicit NATS user and password credentials", () => {
+    const config = new NatsConfigService({
+      servers: ["nats://explicit:4222"],
+      user: "app",
+      pass: "secret",
+    });
+
+    expect(config.connectionConfig).toMatchObject({
+      user: "app",
+      pass: "secret",
+    });
+  });
+
+  it("rejects a NATS token combined with only a password", () => {
+    const config = new NatsConfigService({
+      servers: ["nats://nats:4222"],
+      token: "token",
+      pass: "secret",
+    });
+
+    expect(() => config.connectionConfig).toThrow(
+      "NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.",
+    );
+  });
+
+  it("rejects a NATS user configured without a password", () => {
+    const config = new NatsConfigService({
+      servers: ["nats://nats:4222"],
+      user: "app",
+    });
+
+    expect(() => config.connectionConfig).toThrow(
+      "NATS_USER and NATS_PASS must be configured together.",
+    );
+  });
+
+  it("rejects a NATS password configured without a user", () => {
+    const config = new NatsConfigService({
+      servers: ["nats://nats:4222"],
+      pass: "secret",
+    });
+
+    expect(() => config.connectionConfig).toThrow(
+      "NATS_USER and NATS_PASS must be configured together.",
+    );
+  });
+
+  it("reports NATS health errors for closed and draining connections", async () => {
+    await expect(
+      new NatsHealthIndicator(
+        natsConnection({ isClosed: vi.fn(() => true) }),
+      ).check(),
+    ).resolves.toEqual({
+      name: "nats",
+      status: "error",
+      details: { message: "connection is closed" },
+    });
+
+    await expect(
+      new NatsHealthIndicator(
+        natsConnection({ isDraining: vi.fn(() => true) }),
+      ).check(),
+    ).resolves.toEqual({
+      name: "nats",
+      status: "error",
+      details: { message: "connection is draining" },
+    });
+  });
+
+  it("skips draining a connection that is already closed", async () => {
+    const drain = vi.fn(() => Promise.resolve(undefined));
+    const connection = natsConnection({ isClosed: vi.fn(() => true), drain });
+
+    await closeNatsConnection(connection);
+
+    expect(drain).not.toHaveBeenCalled();
+  });
+
+  it("waits for an already draining connection to finish closing", async () => {
+    const closed = vi.fn(() => Promise.resolve(undefined));
+    const drain = vi.fn(() => Promise.resolve(undefined));
+    const connection = natsConnection({
+      isDraining: vi.fn(() => true),
+      closed,
+      drain,
+    });
+
+    await closeNatsConnection(connection, { drainTimeoutMs: 50 });
+
+    expect(closed).toHaveBeenCalledTimes(1);
+    expect(drain).not.toHaveBeenCalled();
+  });
+
+  it("drains without a timeout guard when none is configured", async () => {
+    const drain = vi.fn(() => Promise.resolve(undefined));
+    const connection = natsConnection({ drain });
+
+    await closeNatsConnection(connection);
+
+    expect(drain).toHaveBeenCalledTimes(1);
   });
 
   it("checks NATS health with flush and without publishing fake data", async () => {

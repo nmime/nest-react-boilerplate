@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from "react";
 import {
   backButton,
+  deepSnakeToCamelObjKeys,
   init,
   miniApp,
-  useLaunchParams,
+  retrieveLaunchParams,
   useRawInitData,
   viewport,
 } from "@tma.js/sdk-react";
@@ -32,7 +33,7 @@ const safely = (effect: () => void) => {
 
 const readBrowserStartParam = (): string | undefined => {
   try {
-    const searchParams = new URLSearchParams(globalThis.location?.search ?? "");
+    const searchParams = new URLSearchParams(globalThis.location.search);
     return (
       searchParams.get("startapp") ??
       searchParams.get("start_param") ??
@@ -52,22 +53,24 @@ export function useTmaAuth({
   onBack,
   status,
 }: UseTmaAuthInput) {
-  const launchState = (() => {
+  // The Telegram SDK hooks must run unconditionally in the same order on every
+  // render. `useLaunchParams` throws (via retrieveLaunchParams) outside the
+  // Telegram runtime, so we mirror its useMemo internals and guard the resolved
+  // value instead of guarding the hook call. `useRawInitData` already returns
+  // undefined when there is no init data, so it is safe to call directly.
+  const launchParams = useMemo(() => {
     try {
-      return {
-        launchParams: useLaunchParams(true),
-        rawInitData: useRawInitData(),
-      };
+      return deepSnakeToCamelObjKeys(retrieveLaunchParams());
     } catch {
-      return { launchParams: null, rawInitData: undefined };
+      return null;
     }
-  })();
+  }, []);
+  const rawInitData = useRawInitData();
 
   const telegramStartParam =
-    launchState.launchParams && "tgWebAppStartParam" in launchState.launchParams
-      ? launchState.launchParams.tgWebAppStartParam
+    launchParams && "tgWebAppStartParam" in launchParams
+      ? launchParams.tgWebAppStartParam
       : undefined;
-  const rawInitData = launchState.rawInitData;
   const isTelegram = Boolean(rawInitData);
   const browserStartParam = readBrowserStartParam();
   const parsedLaunchState = useMemo(
@@ -93,14 +96,24 @@ export function useTmaAuth({
     }
 
     safely(() => init());
-    safely(() => miniApp.mount());
-    safely(() => miniApp.ready());
+    safely(() => {
+      miniApp.mount();
+    });
+    safely(() => {
+      miniApp.ready();
+    });
     safely(() => miniApp.bindCssVars());
     safely(() => void viewport.mount());
-    safely(() => viewport.expand());
+    safely(() => {
+      viewport.expand();
+    });
     safely(() => viewport.bindCssVars());
-    safely(() => backButton.mount());
-    safely(() => backButton.show());
+    safely(() => {
+      backButton.mount();
+    });
+    safely(() => {
+      backButton.show();
+    });
     const cleanup = (() => {
       try {
         return backButton.onClick(onBack);
@@ -111,7 +124,9 @@ export function useTmaAuth({
 
     return () => {
       cleanup?.();
-      safely(() => backButton.hide());
+      safely(() => {
+        backButton.hide();
+      });
     };
   }, [isTelegram, onBack]);
 

@@ -1,6 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import type { HTMLAttributes, ReactNode } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiResourceErrorProps extends HTMLAttributes<HTMLElement> {
   action?: ReactNode;

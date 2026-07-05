@@ -25,7 +25,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
     )}/capture/`;
   }
 
-  async track(payload: AnalyticsPayload): Promise<void> {
+  override async track(payload: AnalyticsPayload): Promise<void> {
     await sendPostHogEvent(this.fetcher, this.captureUrl, this.options.apiKey, {
       event: payload.event,
       distinct_id: distinctId(payload),
@@ -40,7 +40,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
     });
   }
 
-  async identify(payload: AnalyticsIdentifyPayload): Promise<void> {
+  override async identify(payload: AnalyticsIdentifyPayload): Promise<void> {
     await sendPostHogEvent(this.fetcher, this.captureUrl, this.options.apiKey, {
       event: "$identify",
       distinct_id: payload.userId,
@@ -52,7 +52,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
     });
   }
 
-  async page(payload: AnalyticsPagePayload): Promise<void> {
+  override async page(payload: AnalyticsPagePayload): Promise<void> {
     await sendPostHogEvent(this.fetcher, this.captureUrl, this.options.apiKey, {
       event: "$pageview",
       distinct_id: pageDistinctId(payload),

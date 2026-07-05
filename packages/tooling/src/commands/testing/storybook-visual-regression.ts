@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize, relative, resolve, sep } from "node:path";
@@ -14,16 +13,20 @@ const projects = (process.env.VISUAL_PROJECTS ?? "chromium").split(",").map((ite
 const maxStories = Number(process.env.VISUAL_MAX_STORIES ?? 0);
 const contentTypes = new Map([[".css", "text/css; charset=utf-8"], [".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".map", "application/json; charset=utf-8"], [".png", "image/png"], [".svg", "image/svg+xml"], [".txt", "text/plain; charset=utf-8"], [".woff", "font/woff"], [".woff2", "font/woff2"]]);
 
-function trim(value) {
+interface Story { id: string; title: string; name: string; }
+interface StaticServer { url: string; close: () => Promise<void>; }
+interface StorybookIndexEntry { id: string; title: string; name: string; type?: string; tags?: string[]; }
+
+function trim(value: string): string {
   let out = value;
   while (out.startsWith("/") || out.startsWith(String.fromCharCode(92))) out = out.slice(1);
   return out;
 }
-function isInsideRoot(root, candidate) {
+function isInsideRoot(root: string, candidate: string): boolean {
   const rel = relative(root, candidate);
   return rel === "" || (!rel.startsWith("..") && !rel.includes(`..${sep}`));
 }
-async function createStaticServer(root) {
+async function createStaticServer(root: string): Promise<StaticServer> {
   if (!existsSync(root)) throw new Error(`Storybook build directory not found: ${root}. Run pnpm run storybook:build or set STORYBOOK_URL.`);
   const server = createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://127.0.0.1").pathname);
@@ -40,24 +43,24 @@ async function createStaticServer(root) {
     response.writeHead(200, { "content-type": contentTypes.get(extname(filePath)) ?? "application/octet-stream" });
     createReadStream(filePath).pipe(response);
   });
-  await new Promise((resolveListen, rejectListen) => {
+  await new Promise<void>((resolveListen, rejectListen) => {
     server.once("error", rejectListen);
-    server.listen(0, "127.0.0.1", resolveListen);
+    server.listen(0, "127.0.0.1", () => resolveListen());
   });
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Unable to determine visual regression server address");
-  return { url: `http://127.0.0.1:${address.port}`, close: async () => new Promise((resolveClose) => server.close(() => resolveClose())) };
+  return { url: `http://127.0.0.1:${address.port}`, close: async () => new Promise<void>((resolveClose) => { server.close(() => resolveClose()); }) };
 }
-async function discoverStories(baseUrl) {
+async function discoverStories(baseUrl: string): Promise<Story[]> {
   if (process.env.VISUAL_STORY_IDS) return process.env.VISUAL_STORY_IDS.split(",").map((id) => ({ id: id.trim(), title: id.trim(), name: id.trim() })).filter((item) => item.id);
   const response = await fetch(`${baseUrl}/index.json`);
   if (!response.ok) throw new Error(`Unable to read Storybook index: HTTP ${response.status}`);
-  const index = await response.json();
+  const index: { entries?: Record<string, StorybookIndexEntry> } = await response.json();
   const entries = Object.values(index.entries ?? {}).filter((entry) => entry.type === "story" && !entry.tags?.includes("skip-visual"));
   const sorted = entries.sort((a, b) => a.id.localeCompare(b.id)).map((entry) => ({ id: entry.id, title: entry.title, name: entry.name }));
   return maxStories > 0 ? sorted.slice(0, maxStories) : sorted;
 }
-function writeGeneratedFiles(stories) {
+function writeGeneratedFiles(stories: Story[]): { specPath: string; configPath: string } {
   mkdirSync(outputDir, { recursive: true });
   const specPath = join(outputDir, "visual.generated.spec.mjs");
   const configPath = join(outputDir, "playwright.visual.config.mjs");

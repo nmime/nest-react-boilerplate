@@ -13,8 +13,10 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.spec.ts", "src/**/*.spec.tsx"],
     passWithNoTests: false,
-    coverage: fullCoverage("../../../../coverage/libs/frontend/ui-web", [
-      "src/**/*.{ts,tsx}",
-    ]),
+    coverage: fullCoverage(
+      "../../../../coverage/libs/frontend/ui-web",
+      ["src/**/*.{ts,tsx}"],
+      [],
+    ),
   },
 });

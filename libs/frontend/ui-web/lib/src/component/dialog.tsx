@@ -3,7 +3,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import type { ReactNode } from "react";
 import { UiButton } from "./button";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiDialogProps {
   children: ReactNode;

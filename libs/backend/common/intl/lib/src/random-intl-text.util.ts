@@ -29,7 +29,12 @@ export function randomLocalizedText(
   }
 
   const index = randomInt(values.length);
-  return resolveLocalizedText(values[index], locale, fallbackLocale);
+  const value = values[index];
+  if (value === undefined) {
+    return "";
+  }
+
+  return resolveLocalizedText(value, locale, fallbackLocale);
 }
 
 export const randomIntlText = randomLocalizedText;

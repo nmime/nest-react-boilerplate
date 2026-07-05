@@ -5,11 +5,8 @@ import {
   sharedFrontendTranslations,
   type FrontendTranslations,
 } from "./locale";
-import {
-  FrontendI18nProvider,
-  detectBrowserLocale,
-  useI18n,
-} from "./i18n-provider";
+import { detectBrowserLocale } from "../state";
+import { FrontendI18nProvider, useI18n } from "./i18n-provider";
 
 const testTranslations = {
   en: {
@@ -30,7 +27,12 @@ function Example() {
 function LocaleAction() {
   const { setLocale, t } = useI18n();
   return (
-    <button onClick={() => setLocale("ru")} type="button">
+    <button
+      onClick={() => {
+        setLocale("ru");
+      }}
+      type="button"
+    >
       {t("common.language")}
     </button>
   );
@@ -39,7 +41,12 @@ function LocaleAction() {
 function ThemeAction() {
   const { setTheme, t } = useI18n();
   return (
-    <button onClick={() => setTheme("dark")} type="button">
+    <button
+      onClick={() => {
+        setTheme("dark");
+      }}
+      type="button"
+    >
       {t("common.theme")}
     </button>
   );

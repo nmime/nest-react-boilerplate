@@ -1,10 +1,5 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import {
-  ApiBearerAuth,
-  ApiProperty,
-  ApiPropertyOptional,
-} from "@nestjs/swagger";
-import { supportedLocales } from "@app/common-i18n";
+import { ApiBearerAuth } from "@nestjs/swagger";
 import {
   ApiOkDataResponse,
   ApiExceptions,
@@ -28,70 +23,16 @@ import {
 import {
   GetAdminProfileUseCase,
   type AdminProfilePayload,
-} from "../../application/admin-profile.use-case";
+} from "../../application";
 import { AdminRbacGuard } from "./admin-rbac.guard";
-
-export class AuthenticatedPrincipalDto {
-  @ApiProperty()
-  subject!: string;
-
-  @ApiPropertyOptional({ format: "email" })
-  email?: string;
-
-  @ApiPropertyOptional()
-  displayName?: string;
-
-  @ApiPropertyOptional({ enum: supportedLocales })
-  locale?: string;
-
-  @ApiPropertyOptional()
-  issuer?: string;
-
-  @ApiPropertyOptional({
-    oneOf: [{ type: "string" }, { items: { type: "string" }, type: "array" }],
-  })
-  audience?: string | string[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  roles!: string[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  permissions!: string[];
-
-  @ApiPropertyOptional()
-  tokenId?: string;
-}
-
-export class AdminProfileViewDto {
-  @ApiProperty()
-  id!: string;
-
-  @ApiPropertyOptional({ format: "email" })
-  email?: string;
-
-  @ApiPropertyOptional()
-  displayName?: string;
-
-  @ApiPropertyOptional({ enum: supportedLocales })
-  locale?: string;
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  roles!: string[];
-
-  @ApiProperty({ items: { type: "string" }, type: "array" })
-  permissions!: string[];
-}
+import {
+  AdminProfilePayloadDto,
+  AdminProfileViewDto,
+  AuthenticatedPrincipalDto,
+} from "./dto";
 
 export const getAuthenticatedPrincipalDtoType = () => AuthenticatedPrincipalDto;
 export const getAdminProfileViewDtoType = () => AdminProfileViewDto;
-
-export class AdminProfilePayloadDto {
-  @ApiProperty({ type: () => AuthenticatedPrincipalDto })
-  principal!: AuthenticatedPrincipalDto;
-
-  @ApiProperty({ type: () => AdminProfileViewDto })
-  profile!: AdminProfileViewDto;
-}
 
 @ApiExceptions(400, 401, 403, 429, 500)
 @Controller("admin/profile")

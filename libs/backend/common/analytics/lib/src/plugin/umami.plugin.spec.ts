@@ -75,6 +75,75 @@ describe("createUmamiAnalyticsPlugin", () => {
     );
   });
 
+  it("maps identify payloads to a named Umami event", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createUmamiAnalyticsPlugin({
+      websiteId: "website-id",
+      endpoint: "https://umami.example.com/api/send",
+      hostname: "api.example.com",
+      fetch: fetcher,
+    });
+    const timestamp = new Date("2024-01-02T03:04:05.000Z");
+
+    await plugin.identify?.({
+      userId: "user-1",
+      traits: { plan: "pro" },
+      context: { requestId: "req-1" },
+      timestamp,
+    });
+
+    const body = readJsonBody<Record<string, unknown>>(
+      fetcher.mock.calls[0]?.[1],
+    );
+    expect(body).toMatchObject({
+      type: "event",
+      payload: {
+        website: "website-id",
+        hostname: "api.example.com",
+        name: "identify",
+        data: {
+          userId: "user-1",
+          traits: { plan: "pro" },
+          context: { requestId: "req-1" },
+          timestamp: timestamp.toISOString(),
+        },
+      },
+    });
+  });
+
+  it("defaults the page event name when none is provided", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createUmamiAnalyticsPlugin({
+      websiteId: "website-id",
+      endpoint: "https://umami.example.com/api/send",
+      fetch: fetcher,
+    });
+
+    await plugin.page?.({ path: "/pricing" });
+
+    expect(
+      readJsonBody<Record<string, unknown>>(fetcher.mock.calls[0]?.[1]),
+    ).toMatchObject({
+      type: "event",
+      payload: { name: "pageview", url: "/pricing" },
+    });
+  });
+
+  it("throws when Umami rejects the event", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(null, { status: 502 }));
+    const plugin = createUmamiAnalyticsPlugin({
+      websiteId: "website-id",
+      endpoint: "https://umami.example.com/api/send",
+      fetch: fetcher,
+    });
+
+    await expect(plugin.track?.({ event: "failed" })).rejects.toThrow(
+      "Umami analytics request failed: 502",
+    );
+  });
+
   it("rejects missing endpoint and host instead of constructing a relative URL", () => {
     expect(() =>
       createUmamiAnalyticsPlugin({ websiteId: "website-id" }),

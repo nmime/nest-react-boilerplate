@@ -17,8 +17,7 @@
         "outputPath": "dist/libs/backend/common/nats",
         "main": "libs/backend/common/nats/lib/src/index.ts",
         "tsConfig": "libs/backend/common/nats/lib/tsconfig.lib.json",
-        "assets": [],
-        "rootDir": "."
+        "assets": []
       }
     },
     "test": {

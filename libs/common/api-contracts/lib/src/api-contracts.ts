@@ -13,10 +13,11 @@ import type {
   operations as UserOperations,
   paths as UserPaths,
 } from "./generated/user-app-api";
+import * as AdminApiContract from "./generated/admin-app-api";
+import * as AuthApiContract from "./generated/auth-app-api";
+import * as UserApiContract from "./generated/user-app-api";
 
-export * as AdminApiContract from "./generated/admin-app-api";
-export * as AuthApiContract from "./generated/auth-app-api";
-export * as UserApiContract from "./generated/user-app-api";
+export { AdminApiContract, AuthApiContract, UserApiContract };
 
 export type AdminApiComponents = AdminComponents;
 export type AdminApiOperations = AdminOperations;

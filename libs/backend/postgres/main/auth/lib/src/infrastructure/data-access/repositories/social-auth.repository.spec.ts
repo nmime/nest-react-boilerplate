@@ -5,6 +5,7 @@ import {
   AuthLinkTokenEntity,
   AuthMethodEntity,
   AuthProviderTokenEntity,
+  DefaultAuthTenantId,
   ExternalIdentityEntity,
   toRedactedAuthProviderTokenView,
 } from "../entities";
@@ -310,5 +311,167 @@ describe("social auth repositories", () => {
       tenantId,
     });
     expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates an existing identity in place with normalized optional fields and defaults", async () => {
+    const existing = new ExternalIdentityEntity();
+    const previousLinkedAt = existing.linkedAt;
+    const { findOne, persist, flush, entityManager } =
+      createEntityManagerMock();
+    findOne.mockResolvedValue(existing);
+    const repository = new ExternalIdentityRepository(entityManager);
+
+    const result = await repository.upsertIdentity({
+      userId,
+      provider: "discord",
+      providerSubject: "discord-1",
+      channel: "discord_oauth",
+      emailVerified: true,
+      displayName: "   ",
+      username: "ada",
+    });
+
+    const entity = result._unsafeUnwrap();
+    expect(entity).toBe(existing);
+    expect(entity.tenantId).toBe(DefaultAuthTenantId);
+    expect(entity.emailVerified).toBe(true);
+    expect(entity.displayName).toBeNull();
+    expect(entity.username).toBe("ada");
+    expect(entity.email).toBeNull();
+    expect(entity.profileMetadata).toEqual({});
+    expect(entity.linkedAt).toBe(previousLinkedAt);
+    expect(persist).not.toHaveBeenCalled();
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists external identities for a user ordered by link time", async () => {
+    const identity = new ExternalIdentityEntity();
+    const { find, entityManager } = createEntityManagerMock();
+    find.mockResolvedValue([identity]);
+    const repository = new ExternalIdentityRepository(entityManager);
+
+    const result = await repository.findByUser(userId);
+
+    expect(result._unsafeUnwrap()).toEqual([identity]);
+    expect(find).toHaveBeenCalledWith(
+      ExternalIdentityEntity,
+      { tenantId: DefaultAuthTenantId, userId },
+      { orderBy: { linkedAt: "ASC" } },
+    );
+  });
+
+  it("deletes an identity when found and reports false when missing", async () => {
+    const identity = new ExternalIdentityEntity();
+    const remove = vi.fn();
+    const flush = vi.fn(() => Promise.resolve());
+    const findOne = vi
+      .fn()
+      .mockResolvedValueOnce(identity)
+      .mockResolvedValueOnce(null);
+    const entityManager = {
+      findOne,
+      remove,
+      flush,
+    } as unknown as EntityManager;
+    const repository = new ExternalIdentityRepository(entityManager);
+
+    const deleted = await repository.deleteById("id-1", userId, tenantId);
+    const missing = await repository.deleteById("id-2", userId);
+
+    expect(deleted._unsafeUnwrap()).toBe(true);
+    expect(remove).toHaveBeenCalledWith(identity);
+    expect(missing._unsafeUnwrap()).toBe(false);
+  });
+
+  it("maps non-error social failures to a stable message", async () => {
+    const { find, entityManager } = createEntityManagerMock();
+    find.mockRejectedValue("db down");
+    const repository = new ExternalIdentityRepository(entityManager);
+
+    const result = await repository.findByUser(userId);
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "Social auth repository failed.",
+    });
+  });
+
+  it("persists link tokens with explicit id, tenant, user, and trimmed nonce", async () => {
+    const { persist, entityManager } = createEntityManagerMock();
+    const repository = new AuthLinkTokenRepository(entityManager);
+
+    const created = await repository.createToken({
+      id: "44444444-4444-4444-8444-444444444444",
+      tenantId,
+      userId,
+      provider: "telegram",
+      purpose: "link",
+      tokenHash: "hash",
+      nonce: "  n-once  ",
+      expiresAt,
+    });
+
+    const entity = created._unsafeUnwrap();
+    expect(entity).toMatchObject({
+      id: "44444444-4444-4444-8444-444444444444",
+      tenantId,
+      userId,
+      nonce: "n-once",
+      deepLinkMetadata: {},
+    });
+    expect(persist).toHaveBeenCalledWith(entity);
+  });
+
+  it("stores a blank nonce as null", async () => {
+    const { entityManager } = createEntityManagerMock();
+    const repository = new AuthLinkTokenRepository(entityManager);
+
+    const created = await repository.createToken({
+      provider: "discord",
+      purpose: "login",
+      tokenHash: "hash",
+      nonce: "   ",
+      expiresAt,
+    });
+
+    expect(created._unsafeUnwrap().nonce).toBeNull();
+  });
+
+  it("does not revoke a link token that is missing or already consumed", async () => {
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(null);
+    const repository = new AuthLinkTokenRepository(entityManager);
+
+    const revoked = await repository.revokeToken(
+      "hashed-link-token",
+      tenantId,
+      now,
+    );
+
+    expect(revoked._unsafeUnwrap()).toBe(false);
+    expect(flush).not.toHaveBeenCalled();
+  });
+
+  it("persists provider tokens with default tenant, provider, scopes, and null expiry", async () => {
+    const { entityManager } = createEntityManagerMock();
+    const repository = new AuthProviderTokenRepository(entityManager);
+
+    const created = await repository.persistEncryptedToken({
+      userId,
+      externalIdentityId: "33333333-3333-4333-8333-333333333333",
+      tokenKind: "refresh",
+      ciphertext: "c",
+      iv: "i",
+      authTag: "t",
+      keyId: "k",
+    });
+
+    const entity = created._unsafeUnwrap();
+    expect(entity).toMatchObject({
+      tenantId: DefaultAuthTenantId,
+      provider: "discord",
+      scopes: [],
+      expiresAt: null,
+    });
   });
 });

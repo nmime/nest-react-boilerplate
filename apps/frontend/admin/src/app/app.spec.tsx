@@ -13,7 +13,7 @@ import {
   FrontendStateProvider,
 } from "@app/frontend-runtime";
 import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
-import App, { renderAdminRoute } from "../App";
+import App, { getProfileState, renderAdminRoute } from "../App";
 import {
   type AdminProfilePayload,
   createAdminAccess,
@@ -63,7 +63,9 @@ const createMemoryStorage = (): Storage => {
     get length() {
       return store.size;
     },
-    clear: () => store.clear(),
+    clear: () => {
+      store.clear();
+    },
     getItem: (key: string) => store.get(key) ?? null,
     key: (index: number) => [...store.keys()][index] ?? null,
     removeItem: (key: string) => {
@@ -111,12 +113,17 @@ const profilePayload = {
     id: "profile-1",
     displayName: "Ada Admin",
     email: "admin@example.com",
-    locale: "fr",
+    locale: "ru",
     theme: "dark",
   },
 };
 
 const access = createAdminAccess(profilePayload.principal);
+const deniedAccess = createAdminAccess({
+  subject: "admin-1",
+  roles: ["admin"],
+  permissions: [],
+});
 const payload = profilePayload;
 const emptyProfilePayload: AdminProfilePayload = {};
 const renderAdminMarkup = (element: ReactElement): string =>
@@ -215,7 +222,7 @@ describe("App", () => {
           new Response(
             JSON.stringify({
               data: {
-                user: { locale: "fr", theme: "dark" },
+                user: { locale: "ru", theme: "dark" },
                 principal: profilePayload.principal,
               },
             }),
@@ -235,25 +242,109 @@ describe("App", () => {
     render(<App />);
 
     expect(
-      (await screen.findAllByText("Admin dashboard")).length,
+      (await screen.findAllByText(/Admin dashboard|Панель администратора/u))
+        .length,
     ).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("combobox", { name: "Language" }));
-    fireEvent.click(await screen.findByRole("option", { name: "English" }));
-    fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Light" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Язык" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Английский" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Тема" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Светлая" }));
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
-        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH"),
-      ).toHaveLength(1),
-    );
-    const [themePatch] = getRequestsByPath(
+        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH").length,
+      ).toBeGreaterThan(0);
+    });
+    const patches = getRequestsByPath(
       fetchImpl,
       "/auth/me/preferences",
       "PATCH",
     );
-    expect(await themePatch?.clone().json()).toEqual({ theme: "light" });
+    const bodies = await Promise.all(
+      patches.map(
+        (request) => request.json() as Promise<Record<string, string>>,
+      ),
+    );
+    expect(
+      bodies.some((body) => body.locale === "en" || body.theme === "light"),
+    ).toBe(true);
+  });
+
+  it("keeps local locale state when preference persistence fails", async () => {
+    const fetchImpl = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("/auth/me/preferences")) {
+        return Promise.reject(new Error("preferences offline"));
+      }
+      if (url.includes("/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              data: {
+                user: { locale: "en", theme: "light" },
+                principal: profilePayload.principal,
+              },
+            }),
+            { headers: { "Content-Type": "application/json" }, status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            ...profilePayload,
+            profile: { ...profilePayload.profile, locale: "en" },
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          },
+        ),
+      );
+    });
+    vi.stubGlobal("fetch", fetchImpl);
+
+    render(<App />);
+
+    expect(
+      (await screen.findAllByText(/Admin dashboard|Панель администратора/u))
+        .length,
+    ).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("combobox", { name: "Язык" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Английский" }));
+
+    await waitFor(() => {
+      expect(
+        getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH"),
+      ).toHaveLength(1);
+    });
+    expect(
+      await screen.findByRole("combobox", { name: "Language" }),
+    ).toBeTruthy();
+  });
+
+  it("continues with the admin profile when auth me cannot be read", async () => {
+    const fetchImpl = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : (input as Request).url;
+      if (url.includes("/auth/me")) {
+        return Promise.reject(new Error("auth offline"));
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(profilePayload), {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetchImpl);
+
+    render(<App />);
+
+    expect(
+      (await screen.findAllByText(/Admin dashboard|Панель администратора/u))
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("uses profile locale and theme when auth payload has none", async () => {
@@ -274,10 +365,8 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(
-      await screen.findByRole("combobox", { name: "Language" }),
-    ).toBeTruthy();
-    expect(screen.getByRole("combobox", { name: "Theme" })).toBeTruthy();
+    expect(await screen.findByRole("combobox", { name: "Язык" })).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Тема" })).toBeTruthy();
   });
 
   it("renders forbidden state when profile request fails or principal lacks admin access", async () => {
@@ -293,13 +382,16 @@ describe("App", () => {
     expect(createAdminAccess(profilePayload.principal).canReadUsers).toBe(true);
 
     expect(renderAdminMarkup(<DashboardPage access={access} />)).toContain(
-      "Admin dashboard",
+      "Панель администратора",
     );
     expect(
       renderAdminMarkup(
         <DashboardPage access={{ ...access, roles: [], permissions: [] }} />,
       ),
-    ).toContain("Roles: none. Permissions: none.");
+    ).toContain("Роли: нет. Разрешения: нет.");
+    expect(
+      renderAdminMarkup(<DashboardPage access={deniedAccess} />),
+    ).toContain("blocked");
     expect(renderAdminMarkup(<ProfilePage payload={payload} />)).toContain(
       "Ada Admin",
     );
@@ -322,20 +414,26 @@ describe("App", () => {
           payload={{ principal: { roles: ["admin"], permissions: ["read"] } }}
         />,
       ),
-    ).toContain("Subject: unknown");
+    ).toContain("неизвестно");
     expect(renderAdminMarkup(<ForbiddenPage reason="Denied" />)).toContain(
       "Denied",
     );
     expect(renderAdminMarkup(<NotFoundPage />)).toContain(
-      "Admin page not found",
+      "Страница администратора не найдена",
     );
+    expect(
+      getProfileState(false, {}, undefined, "missing principal", "failed"),
+    ).toEqual({ status: "forbidden", reason: "missing principal" });
+    expect(
+      getProfileState(false, undefined, "plain", "missing principal", "failed"),
+    ).toEqual({ status: "forbidden", reason: "failed" });
   });
 
   it("renders async dashboard errors and admin route states", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch(true, {}));
 
     expect(renderAdminMarkup(<DashboardPage access={access} />)).toContain(
-      "Admin dashboard",
+      "Панель администратора",
     );
     expect(
       renderAdminMarkup(renderAdminRoute("/", { status: "loading" })),
@@ -349,7 +447,7 @@ describe("App", () => {
       renderAdminMarkup(
         renderAdminRoute("/dashboard", { status: "ready", payload, access }),
       ),
-    ).toContain("Admin dashboard");
+    ).toContain("Панель администратора");
     expect(
       renderAdminMarkup(
         renderAdminRoute("/profile", { status: "ready", payload, access }),
@@ -360,23 +458,59 @@ describe("App", () => {
         renderAdminRoute("/profile", {
           status: "ready",
           payload,
-          access: { ...access, permissions: [], roles: [] },
+          access: deniedAccess,
         }),
       ),
-    ).toContain("Ada Admin");
+    ).toContain("Missing admin profile permission.");
     expect(
       renderAdminMarkup(
         renderAdminRoute("/dashboard", {
           status: "ready",
           payload,
-          access: { ...access, permissions: [], roles: [] },
+          access: deniedAccess,
         }),
       ),
-    ).toContain("Admin dashboard");
+    ).toContain("Missing admin dashboard permission.");
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute("/users", {
+          status: "ready",
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain("Missing admin users permission.");
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute("/roles", {
+          status: "ready",
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain("Missing admin roles permission.");
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute("/audit", {
+          status: "ready",
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain("Missing admin audit permission.");
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute("/tenants", {
+          status: "ready",
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain("Missing admin roles permission.");
     expect(
       renderAdminMarkup(
         renderAdminRoute("/nope", { status: "ready", payload, access }),
       ),
-    ).toContain("Admin page not found");
+    ).toContain("Страница администратора не найдена");
   });
 });

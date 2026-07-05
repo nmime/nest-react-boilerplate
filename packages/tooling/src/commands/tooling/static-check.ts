@@ -1,6 +1,9 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { isBuiltin } from "node:module";
 import { extname } from "node:path";
 import { dirname, join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+import { createJiti } from "jiti";
 import { run } from "../../runtime/process.ts";
 
 export interface StaticCheckOptions {
@@ -356,6 +359,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
     ...checkToolingTypecheck(workspaceRoot),
     ...checkGeneratorRegressionTests(workspaceRoot),
+    ...checkCommandImportSmoke(workspaceRoot),
     ...checkSmokeCommands(workspaceRoot, smokeCommands),
     ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
@@ -371,6 +375,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkForbiddenSocialAuthDependencies(workspaceRoot),
     ...checkTrackedSocialAuthSecrets(workspaceRoot),
     ...checkThinLocaleCatalogs(workspaceRoot),
+    ...checkTranslationKeyDrift(workspaceRoot),
     ...checkEnvExampleConsistency(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
@@ -387,6 +392,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       checkedSyntax: syntaxTargets.length,
       toolingTypecheck: "ok",
       generatorRegressionTests: "ok",
+      commandImportSmoke: collectCommandModules(workspaceRoot).length,
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
@@ -438,18 +444,115 @@ function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
 }
 
 function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
-  const testFiles = [
-    "packages/tooling/src/commands/project/generate-vertical-slice.test.ts",
-    "packages/tooling/src/commands/api/contracts-manifest.test.ts",
-    "packages/tooling/src/commands/api/toast-config.test.ts",
-    "packages/tooling/src/commands/images/webp.test.ts",
-    "packages/tooling/src/commands/tooling/static-check.test.ts",
-  ];
+  const testFiles = collectToolingTestFiles(workspaceRoot);
+  if (testFiles.length === 0) return [];
+
   const result = run(process.execPath, ["--test", ...testFiles], {
     cwd: workspaceRoot,
   });
 
   return result.status === 0 ? [] : [result];
+}
+
+function collectToolingTestFiles(workspaceRoot: string): string[] {
+  const testRoot = resolve(workspaceRoot, "packages/tooling/src");
+  if (!existsSync(testRoot)) return [];
+
+  return walk(testRoot)
+    .filter((path) => path.endsWith(".test.ts"))
+    .map((path) => relativeToWorkspace(workspaceRoot, path))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+export function collectCommandModules(workspaceRoot: string): string[] {
+  const commandsRoot = resolve(workspaceRoot, "packages/tooling/src/commands");
+  if (!existsSync(commandsRoot)) return [];
+
+  return walk(commandsRoot)
+    .filter((path) => path.endsWith(".ts") && !path.endsWith(".test.ts"))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+// The CLI loads every registered command module lazily via jiti, so `--help` and
+// unrelated commands never import most modules. A broken import path therefore only
+// surfaces when that specific command is invoked. This step statically loads the
+// import graph of every command module with the same jiti loader (transform + resolve,
+// no evaluation) so unresolved imports fail fast during static-check instead.
+export function checkCommandImportSmoke(workspaceRoot: string): CheckFailure[] {
+  const modules = collectCommandModules(workspaceRoot);
+  if (modules.length === 0) return [];
+
+  const cliEntry = resolve(workspaceRoot, "packages/tooling/src/cli.ts");
+  const jiti = createJiti(pathToFileURL(cliEntry).href, {
+    alias: readTsPathAliasMap(workspaceRoot),
+  });
+  const requirePattern = /require\(\s*["']([^"']+)["']\s*\)/gu;
+  const failures: CheckFailure[] = [];
+
+  for (const modulePath of modules) {
+    const relativeFile = relativeToWorkspace(workspaceRoot, modulePath);
+
+    let transformed: string;
+    try {
+      transformed = jiti.transform({
+        source: readFileSync(modulePath, "utf8"),
+        filename: modulePath,
+        ts: true,
+      });
+    } catch (error) {
+      failures.push({
+        command: "command module import smoke",
+        file: relativeFile,
+        status: 1,
+        stdout: "",
+        stderr: `Failed to load module via jiti: ${error instanceof Error ? error.message : String(error)}`,
+      });
+      continue;
+    }
+
+    const parentURL = pathToFileURL(modulePath).href;
+    const specifiers = new Set<string>();
+    requirePattern.lastIndex = 0;
+    for (const match of transformed.matchAll(requirePattern)) {
+      const specifier = match[1];
+      if (specifier) specifiers.add(specifier);
+    }
+
+    for (const specifier of specifiers) {
+      // Computed/template specifiers cannot be resolved statically.
+      if (specifier.includes("${")) continue;
+      if (specifier.startsWith("node:") || isBuiltin(specifier)) continue;
+
+      let resolved: string | undefined;
+      try {
+        resolved = jiti.esmResolve(specifier, { parentURL, try: true });
+      } catch {
+        resolved = undefined;
+      }
+
+      if (!resolved) {
+        failures.push({
+          command: "command module import smoke",
+          file: relativeFile,
+          status: 1,
+          stdout: "",
+          stderr: `Unresolved import "${specifier}". The CLI imports every command module via jiti, so a broken import path throws at command invocation time.`,
+        });
+      }
+    }
+  }
+
+  return failures;
+}
+
+function readTsPathAliasMap(workspaceRoot: string): Record<string, string> {
+  const alias: Record<string, string> = {};
+  for (const [key, targets] of Object.entries(readTsPathAliases(workspaceRoot))) {
+    if (key.endsWith("/*")) continue;
+    const target = targets[0];
+    if (target) alias[key] = resolve(workspaceRoot, target);
+  }
+  return alias;
 }
 
 function getSmokeCommands(): string[][] {
@@ -1276,6 +1379,72 @@ function thinLocaleFailure(file: string, stderr: string): CheckFailure {
     stdout: "",
     stderr,
   };
+}
+
+const translationKeyUnionSource = "libs/common/i18n/keys/lib/src/index.ts";
+
+// The hand-written TranslationKey union and the runtime en catalogs are separate
+// sources of truth, so a typo or removal in either drifts silently (catalogs are
+// Record<string, string>). Fail on drift in either direction.
+export function checkTranslationKeyDrift(workspaceRoot: string): CheckFailure[] {
+  const localeDirectory = join(workspaceRoot, "i18n", "en");
+  const keysSource = resolve(workspaceRoot, translationKeyUnionSource);
+  if (!existsSync(localeDirectory) || !existsSync(keysSource)) return [];
+
+  const catalogKeys = new Set<string>();
+  for (const relativeFile of collectLocaleJsonFiles(localeDirectory)) {
+    let catalog: unknown;
+    try {
+      catalog = JSON.parse(
+        readFileSync(join(localeDirectory, relativeFile), "utf8"),
+      ) as unknown;
+    } catch {
+      // JSON validity is enforced by checkThinLocaleCatalogs.
+      continue;
+    }
+    if (catalog && typeof catalog === "object" && !Array.isArray(catalog)) {
+      for (const key of Object.keys(catalog)) catalogKeys.add(key);
+    }
+  }
+
+  const unionKeys = readTranslationKeyUnion(keysSource);
+  const catalogOnly = [...catalogKeys]
+    .filter((key) => !unionKeys.has(key))
+    .sort((left, right) => left.localeCompare(right));
+  const unionOnly = [...unionKeys]
+    .filter((key) => !catalogKeys.has(key))
+    .sort((left, right) => left.localeCompare(right));
+
+  const failures: CheckFailure[] = [];
+  if (catalogOnly.length > 0) {
+    failures.push({
+      command: "i18n translation key drift",
+      file: translationKeyUnionSource,
+      status: 1,
+      stdout: "",
+      stderr: `TranslationKey union is missing ${catalogOnly.length} key(s) present in i18n/en catalogs: ${catalogOnly.join(", ")}. Add them to the union.`,
+    });
+  }
+  if (unionOnly.length > 0) {
+    failures.push({
+      command: "i18n translation key drift",
+      file: translationKeyUnionSource,
+      status: 1,
+      stdout: "",
+      stderr: `TranslationKey union has ${unionOnly.length} key(s) absent from i18n/en catalogs: ${unionOnly.join(", ")}. Remove them from the union or add the catalog entries.`,
+    });
+  }
+
+  return failures;
+}
+
+function readTranslationKeyUnion(keysSource: string): Set<string> {
+  const text = readFileSync(keysSource, "utf8");
+  const declarationStart = text.indexOf("=");
+  const body = declarationStart >= 0 ? text.slice(declarationStart) : text;
+  return new Set(
+    [...body.matchAll(/"([^"]+)"/gu)].map((match) => match[1] ?? ""),
+  );
 }
 
 export function checkPackageProjectReferences(

@@ -32,4 +32,50 @@ describe("EnvHealthIndicator", () => {
       },
     });
   });
+
+  it("degrades when only optional variables are missing", () => {
+    expect(
+      new EnvHealthIndicator({
+        name: "config",
+        env: { REQUIRED: "value" },
+        requiredVariables: ["REQUIRED"],
+        optionalVariables: ["OPTIONAL"],
+      }).check(),
+    ).toEqual({
+      name: "config",
+      status: "degraded",
+      required: true,
+      details: {
+        requiredConfigured: 1,
+        requiredTotal: 1,
+        optionalConfigured: 0,
+        optionalTotal: 1,
+        missingRequired: [],
+        missingOptional: ["OPTIONAL"],
+      },
+    });
+  });
+
+  it("reports ok when every configured variable is present", () => {
+    expect(
+      new EnvHealthIndicator({
+        required: false,
+        env: { REQUIRED: "value", OPTIONAL: "  present  " },
+        requiredVariables: ["REQUIRED"],
+        optionalVariables: ["OPTIONAL"],
+      }).check(),
+    ).toEqual({
+      name: "env",
+      status: "ok",
+      required: false,
+      details: {
+        requiredConfigured: 1,
+        requiredTotal: 1,
+        optionalConfigured: 1,
+        optionalTotal: 1,
+        missingRequired: [],
+        missingOptional: [],
+      },
+    });
+  });
 });

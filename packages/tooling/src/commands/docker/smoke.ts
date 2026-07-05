@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 
 const compose = ["compose", "-f", "docker/docker-compose.yml"];
@@ -14,7 +13,7 @@ const host = process.env.DOCKER_SMOKE_HOST ?? "127.0.0.1";
 const generatedPortBase =
   Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? "", 10) ||
   30_000 + (process.pid % 10_000);
-const pickPort = (envName, offset) =>
+const pickPort = (envName: string, offset: number): string =>
   process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
   postgres: pickPort("POSTGRES_PORT", 0),
@@ -25,7 +24,7 @@ const ports = {
   userApp: pickPort("USER_APP_PORT", 82),
   landingApp: pickPort("LANDING_APP_PORT", 83),
 };
-const url = (port, path = "") => `http://${host}:${port}${path}`;
+const url = (port: string, path = ""): string => `http://${host}:${port}${path}`;
 const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
   .map((port) => url(port))
   .join(",");
@@ -53,7 +52,7 @@ const env = {
   AUTH_JWT_AUDIENCE:
     process.env.AUTH_JWT_AUDIENCE ?? "nest-react-boilerplate-api",
 };
-const probes = [
+const probes: [string, string, string][] = [
   ["auth health", url(ports.authApi, "/health"), "auth-app-api"],
   ["user health", url(ports.userApi, "/health"), "user-app-api"],
   ["admin health", url(ports.adminApi, "/health"), "admin-app-api"],
@@ -68,7 +67,7 @@ const probes = [
   ],
 ];
 
-async function logComposeDiagnostics(label) {
+async function logComposeDiagnostics(label: string): Promise<void> {
   console.warn(`${label}: docker compose diagnostics`);
   await run("docker", [...compose, "ps", "--all"], {
     stdio: "inherit",
@@ -90,7 +89,7 @@ async function logComposeDiagnostics(label) {
   ).catch(() => undefined);
 }
 
-async function composeUpServices(label, services) {
+async function composeUpServices(label: string, services: string[]): Promise<void> {
   const args = [...compose, "up", "--no-build", "--no-deps", "-d", ...services];
   try {
     await run("docker", args, { stdio: "inherit", env });
@@ -118,7 +117,7 @@ async function composeUp() {
   await composeUpServices("backend", backendServices);
 }
 
-async function waitForProbe([name, probeUrl, contains]) {
+async function waitForProbe([name, probeUrl, contains]: [string, string, string]): Promise<void> {
   const started = Date.now();
   let lastError = "not attempted";
   while (Date.now() - started < 180_000) {

@@ -14,7 +14,9 @@ export async function findFreePort(from = 3000): Promise<number> {
     server.listen(from, () => {
       const address = server.address();
       const port = typeof address === "object" && address ? address.port : from;
-      server.close(() => resolve(port));
+      server.close(() => {
+        resolve(port);
+      });
     });
   });
 }

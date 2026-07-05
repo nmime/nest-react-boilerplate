@@ -109,7 +109,10 @@ function renderReadyAdminRoute(
   }
   if (routePath === "/roles") {
     return state.access.canReadRoles ? (
-      <RolesPage requestOptions={runtime.requestOptions} />
+      <RolesPage
+        access={state.access}
+        requestOptions={runtime.requestOptions}
+      />
     ) : (
       <ForbiddenPage reason={t("admin.permission.rolesMissing")} />
     );
@@ -174,7 +177,7 @@ async function fetchAuthMe(
   }
 }
 
-const getProfileState = (
+export const getProfileState = (
   loading: boolean,
   payload: Awaited<ReturnType<typeof fetchAdminProfile>> | undefined,
   error: unknown,
@@ -231,7 +234,7 @@ const AdminWorkspace = ({
     staleTime: 15_000,
   });
   const authLocale = normalizeLocale(
-    authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal?.locale,
+    authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal.locale,
   );
   const authTheme = getPayloadTheme(authMeQuery.data);
 
@@ -319,7 +322,7 @@ const AdminRoot = ({
         }),
       ),
     onSuccess: (body, nextPreferences) => {
-      const persistedLocale = normalizeLocale(body?.locale);
+      const persistedLocale = normalizeLocale(body.locale);
       const persistedTheme = getPayloadTheme(body);
       /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
       setUserLocale(
@@ -467,6 +470,8 @@ const ApiRuntimeOverlayProvider = observer(
 
 const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
   <FrontendStateProvider>
+    {/* Admin auth is httpOnly cookie sessions (credentials) with no client-side
+        bearer token or refresh; keep bearerToken null (unlike the user app). */}
     <AdminApiClientProvider bearerToken={null}>
       <FrontendQueryProvider>
         <UiErrorBoundary>

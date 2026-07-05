@@ -46,6 +46,3 @@ export const useLandingActionsState = (): LandingActionsState => {
     fallbackNotice: docs.fallbackNotice,
   };
 };
-
-export const useLandingActions = (): ProductShellAction[] =>
-  useLandingActionsState().actions;

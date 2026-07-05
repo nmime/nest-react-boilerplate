@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { pbkdf2Sync, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import {
@@ -15,7 +14,7 @@ import {
   redactedConnectionString,
 } from "./env-loader.ts";
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]) {
   const args = {
     dryRun: false,
     force: false,
@@ -23,6 +22,7 @@ function parseArgs(argv) {
     password: DefaultAdminPassword,
     passwordEnv: "",
     displayName: "Local Admin",
+    help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
@@ -44,7 +44,7 @@ function parseArgs(argv) {
   return args;
 }
 
-function hashPassword(password) {
+function hashPassword(password: string) {
   const salt = randomBytes(16).toString("base64url");
   const digest = pbkdf2Sync(password, salt, 120_000, 32, "sha256").toString(
     "base64url",
@@ -61,7 +61,7 @@ if (args.help) {
 }
 
 loadDotEnv();
-args.password = resolvePassword(args);
+args.password = resolvePassword(args) ?? args.password;
 const connectionString = postgresConnectionString();
 assertSeedSafety(args, connectionString, { assertLocalDevelopmentDatabase });
 

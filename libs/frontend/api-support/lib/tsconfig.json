@@ -1,8 +1,11 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "vitest/globals"],
-    "jsx": "react-jsx"
+    "types": ["node", "vite/client"],
+    "jsx": "react-jsx",
+    "lib": ["es2022", "dom"],
+    "moduleResolution": "bundler",
+    "module": "esnext"
   },
   "include": [],
   "references": [

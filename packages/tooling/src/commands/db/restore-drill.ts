@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { loadDotEnv, postgresConnectionString, redactedConnectionString } from "./env-loader.ts";
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]) {
   const args = {
     ci: false,
     dryRun: false,
@@ -14,6 +13,7 @@ function parseArgs(argv) {
     output: "",
     input: "",
     report: "test-results/dr/restore-drill.json",
+    help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
@@ -36,7 +36,7 @@ function parseArgs(argv) {
   return args;
 }
 
-function runStep(label, command, args) {
+function runStep(label: string, command: string, args: string[]) {
   const result = spawnSync(command, args, { stdio: "pipe", encoding: "utf8" });
   return {
     label,
@@ -47,7 +47,7 @@ function runStep(label, command, args) {
   };
 }
 
-function writeReport(path, report) {
+function writeReport(path: string, report: unknown) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
 }

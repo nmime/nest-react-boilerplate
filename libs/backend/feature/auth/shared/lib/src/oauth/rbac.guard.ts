@@ -24,7 +24,9 @@ export interface PermissionEvaluationContext {
 
 export type PermissionEvaluationResult = boolean | undefined;
 
+/* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
 @Injectable()
+/* v8 ignore stop */
 export class RbacGuard implements CanActivate {
   constructor(private readonly reflector: Reflector = new Reflector()) {}
 
@@ -61,16 +63,16 @@ export class RbacGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(
+        PublicAuthMetadataKey,
+        [context.getHandler(), context.getClass()],
+      ) ?? false
     );
   }
 
   private getMetadata(key: string, context: ExecutionContext): string[] {
     return (
-      this.reflector.getAllAndOverride<string[]>(key, [
+      this.reflector.getAllAndOverride<string[] | undefined>(key, [
         context.getHandler(),
         context.getClass(),
       ]) ?? []

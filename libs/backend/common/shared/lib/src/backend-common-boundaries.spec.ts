@@ -9,12 +9,9 @@ interface ProjectConfig {
 
 const expectedProjects = {
   analytics: "boundary:infrastructure-adapter",
-  api: "boundary:interface-helper",
   bootstrap: "boundary:interface-helper",
   "component-test": "boundary:test-util",
   exception: "boundary:backend-kernel",
-  "feature-flags": "boundary:interface-helper",
-  format: "boundary:interface-helper",
   health: "boundary:interface-helper",
   intl: "boundary:interface-helper",
   logger: "boundary:infrastructure-adapter",

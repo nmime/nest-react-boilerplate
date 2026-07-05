@@ -7,8 +7,10 @@ import {
   AuthUserTokenEntity,
 } from "./infrastructure/data-access/entities";
 import {
+  AuthRoleRepository,
   AuthTokenRepository,
   AuthUserRepository,
+  AuthUserRoleRepository,
 } from "./infrastructure/data-access/repositories";
 
 describe("AuthPostgresModule", () => {
@@ -19,6 +21,8 @@ describe("AuthPostgresModule", () => {
     expect(AuthUserTokenEntity).toBeDefined();
     expect(AuthUserRepository).toBeDefined();
     expect(AuthTokenRepository).toBeDefined();
+    expect(AuthRoleRepository).toBeDefined();
+    expect(AuthUserRoleRepository).toBeDefined();
     expect(AuthTokenCleanupService).toBeDefined();
   });
 });

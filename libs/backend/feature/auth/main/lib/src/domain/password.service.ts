@@ -1,6 +1,6 @@
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypto";
 
-const PasswordIterations = 120_000;
+const PasswordIterations = 600_000;
 const PasswordKeyLength = 32;
 const MaximumPasswordHashIterations = 1_000_000;
 const MaximumPasswordDigestLength = 128;

@@ -1,4 +1,4 @@
-import type { TelegramBotContext, TelegramBotRoute } from "./types";
+import type { TelegramBotContext, TelegramBotRoute } from "./type";
 
 const maxStackDepth = 8;
 

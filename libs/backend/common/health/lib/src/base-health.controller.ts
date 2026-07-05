@@ -6,10 +6,13 @@ import {
 } from "@nestjs/common";
 import { Health } from "./decorator";
 import { HealthPrivateNetworkIpGuard } from "./guard";
-import { hasRequiredReadinessFailure, HealthService } from "./health.service";
+import { HealthService } from "./health.service";
+import { hasRequiredReadinessFailure } from "./util/health-status.util";
 import type { HealthResponse, HealthResponseDto } from "./dto";
 
+/* v8 ignore start -- the method decorators (@Get/@Health/@UseGuards) make esbuild emit the full __decorateClass helper whose `kind > 1` accessor/parameter slot is unreachable: this controller only uses class- and method-kind decorators. */
 @Controller()
+/* v8 ignore stop */
 export class BaseHealthController {
   constructor(private readonly healthService: HealthService) {}
 

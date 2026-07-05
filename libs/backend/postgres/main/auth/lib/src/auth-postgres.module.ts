@@ -5,12 +5,16 @@ import {
   AdminAuditLogEntitySchema,
   AuthLinkTokenEntitySchema,
   AuthMethodEntitySchema,
+  AuthPermissionEntitySchema,
   AuthProviderTokenEntitySchema,
   AuthRefreshTokenEntitySchema,
+  AuthRoleEntitySchema,
+  AuthRolePermissionEntitySchema,
   AuthTenantEntitySchema,
   AuthTenantInvitationEntitySchema,
   AuthTenantMembershipEntitySchema,
   AuthUserEntitySchema,
+  AuthUserRoleEntitySchema,
   AuthUserTokenEntitySchema,
   ExternalIdentityEntitySchema,
   TransactionalOutboxEventEntitySchema,
@@ -21,8 +25,10 @@ import {
   AuthLinkTokenRepository,
   AuthMethodRepository,
   AuthProviderTokenRepository,
+  AuthRoleRepository,
   AuthTokenRepository,
   AuthUserRepository,
+  AuthUserRoleRepository,
   ExternalIdentityRepository,
 } from "./infrastructure/data-access/repositories";
 
@@ -41,6 +47,10 @@ import {
       AuthProviderTokenEntitySchema,
       AdminAuditLogEntitySchema,
       TransactionalOutboxEventEntitySchema,
+      AuthRoleEntitySchema,
+      AuthPermissionEntitySchema,
+      AuthRolePermissionEntitySchema,
+      AuthUserRoleEntitySchema,
     ]),
   ],
   providers: [
@@ -53,6 +63,8 @@ import {
     AuthProviderTokenRepository,
     AdminAuditLogRepository,
     AdminUserMutationRepository,
+    AuthRoleRepository,
+    AuthUserRoleRepository,
   ],
   exports: [
     MikroOrmModule,
@@ -65,6 +77,8 @@ import {
     AuthProviderTokenRepository,
     AdminAuditLogRepository,
     AdminUserMutationRepository,
+    AuthRoleRepository,
+    AuthUserRoleRepository,
   ],
 })
 export class AuthPostgresModule {}

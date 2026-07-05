@@ -14,7 +14,6 @@ export default defineConfig({
     coverage: fullCoverage(
       "../../../../../coverage/libs/backend/common/exception",
       ["src/**/*.ts"],
-      [],
     ),
   },
 });

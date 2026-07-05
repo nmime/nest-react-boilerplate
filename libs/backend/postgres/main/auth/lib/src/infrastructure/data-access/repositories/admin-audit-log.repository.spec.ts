@@ -124,4 +124,37 @@ describe("AdminAuditLogRepository", () => {
       message: "audit insert failed",
     });
   });
+
+  it("falls back to a stable message for non-error failures", async () => {
+    const { flush, entityManager } = createEntityManagerMock();
+    flush.mockRejectedValue("connection reset");
+    const auditLogs = new AdminAuditLogRepository(entityManager);
+
+    const result = await auditLogs.record({
+      action: "admin.user.status.update",
+      resource: "admin.users",
+    });
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "repository_error",
+      message: "Admin audit repository failed.",
+    });
+  });
+
+  it("defaults to the default tenant when listing and counting without input", async () => {
+    const { find, count, entityManager } = createEntityManagerMock();
+    const auditLogs = new AdminAuditLogRepository(entityManager);
+
+    await auditLogs.list();
+    await auditLogs.count();
+
+    expect(find).toHaveBeenCalledWith(
+      AdminAuditLogEntity,
+      { tenantId: DefaultAuthTenantId },
+      { limit: 50, offset: 0, orderBy: { createdAt: "DESC", id: "DESC" } },
+    );
+    expect(count).toHaveBeenCalledWith(AdminAuditLogEntity, {
+      tenantId: DefaultAuthTenantId,
+    });
+  });
 });

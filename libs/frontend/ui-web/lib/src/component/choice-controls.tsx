@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { UiLabel } from "./label";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiCheckboxProps extends Omit<
   ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,

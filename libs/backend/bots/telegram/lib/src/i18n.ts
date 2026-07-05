@@ -5,7 +5,7 @@ import {
   type Locale,
   type TranslationKey,
 } from "@app/common-i18n";
-import type { TelegramBotContext, TelegramLinkedUserProfile } from "./types";
+import type { TelegramBotContext, TelegramLinkedUserProfile } from "./type";
 
 export function resolveTelegramLocale(input: {
   linkedUser?: Pick<TelegramLinkedUserProfile, "locale"> | null;
@@ -25,7 +25,7 @@ export function resolveTelegramLocale(input: {
 export function createI18nMiddleware() {
   return async (ctx: TelegramBotContext, next: () => Promise<void>) => {
     ctx.t = (key: TranslationKey) =>
-      translate(key, { locale: ctx.session?.locale ?? fallbackLocale });
+      translate(key, { locale: ctx.session.locale ?? fallbackLocale });
     await next();
   };
 }

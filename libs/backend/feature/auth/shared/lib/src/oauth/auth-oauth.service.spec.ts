@@ -236,6 +236,19 @@ describe("AuthOAuthService", () => {
     });
   });
 
+  it("rejects return URLs when no allowlist is configured", async () => {
+    const result = await configured().buildAuthorizationRequest({
+      sessionId: SessionId,
+      returnUrl: "/dashboard",
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "invalid_request",
+      message: "OAuth return URL is not allowlisted.",
+    });
+  });
+
   it("validates callback state before reporting unconfigured provider exchange", async () => {
     const service = configured();
     const authorization = await service.buildAuthorizationRequest({
@@ -266,6 +279,114 @@ describe("AuthOAuthService", () => {
       code: "disabled",
       message: "OAuth is disabled.",
     });
+  });
+
+  it("retains prior non-expired states for a session when issuing a new authorization", async () => {
+    const service = configured();
+    const first = (
+      await service.buildAuthorizationRequest({ sessionId: SessionId })
+    )._unsafeUnwrap();
+    const second = (
+      await service.buildAuthorizationRequest({ sessionId: SessionId })
+    )._unsafeUnwrap();
+
+    const consumedFirst = await service.consumeAuthorizationState({
+      sessionId: SessionId,
+      state: first.state,
+    });
+    const consumedSecond = await service.consumeAuthorizationState({
+      sessionId: SessionId,
+      state: second.state,
+    });
+
+    expect(consumedFirst.isOk()).toBe(true);
+    expect(consumedSecond.isOk()).toBe(true);
+  });
+
+  it("prunes fully expired sessions when issuing a new authorization", async () => {
+    let clock = 1_000;
+    const service = configured({ clock: () => clock, stateTtlMs: 50 });
+    const expiring = (
+      await service.buildAuthorizationRequest({ sessionId: "expiring-session" })
+    )._unsafeUnwrap();
+
+    clock = 2_000;
+    const fresh = (
+      await service.buildAuthorizationRequest({ sessionId: SessionId })
+    )._unsafeUnwrap();
+
+    const expired = await service.consumeAuthorizationState({
+      sessionId: "expiring-session",
+      state: expiring.state,
+    });
+    expect(expired.isErr()).toBe(true);
+    expect(expired._unsafeUnwrapErr().code).toBe("invalid_state");
+    expect(fresh.state.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it("reports disabled state consumption", async () => {
+    const result = await new AuthOAuthService().consumeAuthorizationState({
+      sessionId: SessionId,
+      state: "any-state",
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "disabled",
+      message: "OAuth is disabled.",
+    });
+  });
+
+  it("maps state store failures to provider errors", async () => {
+    const service = configured({
+      stateStore: {
+        saveState: () => undefined,
+        consumeState: () => {
+          throw new Error("store exploded");
+        },
+      },
+    });
+
+    const result = await service.consumeAuthorizationState({
+      sessionId: SessionId,
+      state: "some-state",
+    });
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: "provider_error",
+      message: "store exploded",
+    });
+  });
+
+  it("rejects protocol-relative, non-http, and malformed return URLs", async () => {
+    const service = configured({ allowedReturnUrls: ["/ok"] });
+
+    for (const returnUrl of [
+      "//evil.example",
+      "ftp://evil.example/x",
+      "://nohost",
+    ]) {
+      // eslint-disable-next-line no-await-in-loop -- each invalid returnUrl case is asserted sequentially
+      const result = await service.buildAuthorizationRequest({
+        sessionId: SessionId,
+        returnUrl,
+      });
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr().code).toBe("invalid_request");
+    }
+  });
+
+  it("ignores blank allowlisted return URLs while accepting valid ones", async () => {
+    const service = configured({ allowedReturnUrls: ["   ", "/dashboard"] });
+
+    const result = await service.buildAuthorizationRequest({
+      sessionId: SessionId,
+      returnUrl: "/dashboard",
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().returnUrl).toBe("/dashboard");
   });
 
   it("exports a stable injection token for optional configuration", () => {

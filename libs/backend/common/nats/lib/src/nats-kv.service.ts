@@ -1,11 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import type { KV, KvOptions } from "@nats-io/kv";
 import { createKvm, type NatsKvSource } from "./nats-kv.factory";
 import { NatsService } from "./nats.service";
 
 @Injectable()
 export class NatsKvService {
-  constructor(private readonly natsService: NatsService) {}
+  constructor(@Inject(NatsService) private readonly natsService: NatsService) {}
 
   get isEnabled(): boolean {
     return this.natsService.isEnabled;

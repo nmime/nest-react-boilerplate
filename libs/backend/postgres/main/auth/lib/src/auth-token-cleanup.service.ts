@@ -1,23 +1,17 @@
 import {
+  Inject,
   Injectable,
   Logger,
   type OnModuleDestroy,
   type OnModuleInit,
 } from "@nestjs/common";
+import { resolveAuthTokenCleanupConfig } from "./factory/auth-token-cleanup-config.factory";
 import { AuthTokenRepository } from "./infrastructure/data-access/repositories";
+import type { CleanupInterval } from "./type/auth-token-cleanup-internal.type";
+import { unrefTimer } from "./util/timer.util";
 
-export interface AuthTokenCleanupConfig {
-  enabled: boolean;
-  intervalMs: number;
-  runOnStart: boolean;
-}
-
-const DefaultCleanupIntervalMs = 60 * 60 * 1000;
-const MinimumCleanupIntervalMs = 60 * 1000;
-type CleanupInterval = ReturnType<typeof setInterval>;
-interface UnrefableTimer {
-  unref(): void;
-}
+export * from "./factory/auth-token-cleanup-config.factory";
+export * from "./type/auth-token-cleanup.type";
 
 @Injectable()
 export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
@@ -26,7 +20,10 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
   private interval: CleanupInterval | undefined;
   private cleanupInProgress = false;
 
-  constructor(private readonly repository: AuthTokenRepository) {}
+  constructor(
+    @Inject(AuthTokenRepository)
+    private readonly repository: AuthTokenRepository,
+  ) {}
 
   onModuleInit(): void {
     if (!this.config.enabled) {
@@ -81,66 +78,4 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
       this.cleanupInProgress = false;
     }
   }
-}
-
-function unrefTimer(timer: CleanupInterval): void {
-  if (isUnrefableTimer(timer)) {
-    timer.unref();
-  }
-}
-
-function isUnrefableTimer(
-  timer: CleanupInterval,
-): timer is CleanupInterval & UnrefableTimer {
-  return (
-    typeof timer === "object" &&
-    timer !== null &&
-    "unref" in timer &&
-    typeof timer.unref === "function"
-  );
-}
-
-export function resolveAuthTokenCleanupConfig(
-  env: NodeJS.ProcessEnv = process.env,
-): AuthTokenCleanupConfig {
-  return {
-    enabled: parseBoolean(env.AUTH_TOKEN_CLEANUP_ENABLED, true),
-    intervalMs: parsePositiveInteger(
-      env.AUTH_TOKEN_CLEANUP_INTERVAL_MS,
-      DefaultCleanupIntervalMs,
-      MinimumCleanupIntervalMs,
-    ),
-    runOnStart: parseBoolean(env.AUTH_TOKEN_CLEANUP_RUN_ON_START, true),
-  };
-}
-
-function parseBoolean(value: string | undefined, fallback: boolean): boolean {
-  if (value === undefined || value.trim() === "") {
-    return fallback;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  if (["1", "true", "yes", "on"].includes(normalized)) {
-    return true;
-  }
-  if (["0", "false", "no", "off"].includes(normalized)) {
-    return false;
-  }
-
-  return fallback;
-}
-
-function parsePositiveInteger(
-  value: string | undefined,
-  fallback: number,
-  minimum: number,
-): number {
-  if (value === undefined || value.trim() === "") {
-    return fallback;
-  }
-
-  const parsed = Number(value.trim());
-  return Number.isSafeInteger(parsed) && parsed > 0
-    ? Math.max(parsed, minimum)
-    : fallback;
 }

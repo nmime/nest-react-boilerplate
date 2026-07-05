@@ -1,4 +1,3 @@
-// @ts-nocheck
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -7,6 +6,7 @@ import {
   createFactoryWithTraits,
   createGlobalFactory,
   defineSequence,
+  type FactoryBuildContext,
   globalSequence,
   resetFactory,
 } from "./seed-factories.ts";
@@ -61,7 +61,7 @@ describe("seed-factories: createFactory", () => {
 
   it("builds with functions that use the factory context sequence", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       name: "Static Name",
     });
     resetFactory(factory);
@@ -72,7 +72,7 @@ describe("seed-factories: createFactory", () => {
 
   it("builds with overrides that replace attribute functions", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       name: "Static Name",
     });
     const record = factory.build({ id: "override-id", name: "Override Name" });
@@ -82,7 +82,7 @@ describe("seed-factories: createFactory", () => {
 
   it("buildList produces multiple records with incrementing sequences", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       name: "Static Name",
     });
     resetFactory(factory);
@@ -95,7 +95,7 @@ describe("seed-factories: createFactory", () => {
 
   it("buildList with perIndexOverrides", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       tag: "default",
     });
     const items = factory.buildList(3, (i) => ({ tag: `tag_${i}` }));
@@ -106,7 +106,7 @@ describe("seed-factories: createFactory", () => {
 
   it("buildWith merges inline trait objects", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       role: "user",
       status: "active",
     });
@@ -119,7 +119,7 @@ describe("seed-factories: createFactory", () => {
 
   it("buildWith ignores unknown named trait strings safely", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
       name: "Default",
     });
     resetFactory(factory);
@@ -130,7 +130,7 @@ describe("seed-factories: createFactory", () => {
 
   it("getSequence returns the internal sequence", () => {
     const factory = createFactory({
-      id: (ctx) => `x_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `x_${ctx.sequence.next()}`,
     });
     const sequence = factory.getSequence();
     assert.ok(sequence);
@@ -144,7 +144,7 @@ describe("seed-factories: createFactoryWithTraits", () => {
   it("builds with named traits", () => {
     const factory = createFactoryWithTraits(
       {
-        id: (ctx) => `item_${ctx.sequence.next()}`,
+        id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
         role: "user",
         status: "active",
       },
@@ -163,7 +163,7 @@ describe("seed-factories: createFactoryWithTraits", () => {
   it("combines multiple named traits", () => {
     const factory = createFactoryWithTraits(
       {
-        id: (ctx) => `item_${ctx.sequence.next()}`,
+        id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
         role: "user",
         status: "active",
       },
@@ -182,7 +182,7 @@ describe("seed-factories: createFactoryWithTraits", () => {
   it("inline objects override named traits", () => {
     const factory = createFactoryWithTraits(
       {
-        id: (ctx) => `item_${ctx.sequence.next()}`,
+        id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
         role: "user",
       },
       {
@@ -198,7 +198,7 @@ describe("seed-factories: createFactoryWithTraits", () => {
   it("buildListWith applies traits to all items", () => {
     const factory = createFactoryWithTraits(
       {
-        id: (ctx) => `item_${ctx.sequence.next()}`,
+        id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
         role: "user",
       },
       {
@@ -218,8 +218,8 @@ describe("seed-factories: createFactoryWithTraits", () => {
 describe("seed-factories: determinism", () => {
   it("produces identical output across consecutive builds after reset", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
-      email: (ctx) => `item${ctx.sequence.next()}@example.com`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
+      email: (ctx: FactoryBuildContext) => `item${ctx.sequence.next()}@example.com`,
     });
 
     resetFactory(factory);
@@ -234,7 +234,7 @@ describe("seed-factories: determinism", () => {
 
   it("buildList is deterministic after reset", () => {
     const factory = createFactory({
-      id: (ctx) => `item_${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `item_${ctx.sequence.next()}`,
     });
 
     resetFactory(factory);
@@ -271,7 +271,7 @@ describe("seed-factories: determinism", () => {
 describe("seed-factories: createGlobalFactory", () => {
   it("uses the global sequence for attribute generation", () => {
     const factory = createGlobalFactory({
-      id: (ctx) => `global_${globalSequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `global_${globalSequence.next()}`,
       value: 42,
     });
 
@@ -285,12 +285,12 @@ describe("seed-factories: createGlobalFactory", () => {
 describe("seed-factories: createCompositeFactory", () => {
   it("combines inner and outer factory output", () => {
     const innerFactory = createFactory({
-      city: (ctx) => `City_${ctx.sequence.next()}`,
+      city: (ctx: FactoryBuildContext) => `City_${ctx.sequence.next()}`,
     });
 
     const outerFactory = createCompositeFactory(
       {
-        name: (ctx) => `User_${ctx.sequence.next()}`,
+        name: (ctx: FactoryBuildContext) => `User_${ctx.sequence.next()}`,
       },
       "address",
       innerFactory,
@@ -299,18 +299,18 @@ describe("seed-factories: createCompositeFactory", () => {
     resetFactory(outerFactory);
     resetFactory(innerFactory);
     const record = outerFactory.build();
-    assert.ok(record.name.startsWith("User_"));
+    assert.ok(String(record.name).startsWith("User_"));
     assert.ok(record.address);
-    assert.ok(record.address.city.startsWith("City_"));
+    assert.ok((record.address as { city: string }).city.startsWith("City_"));
   });
 });
 
 describe("seed-factories: integration with existing seed-safety patterns", () => {
   it("can build auth_users-compatible records deterministically", () => {
     const factory = createFactory({
-      id: (ctx) => `u_${ctx.sequence.next()}`,
-      email: (ctx) => `user${ctx.sequence.next()}@example.com`,
-      displayName: (ctx) => `Test User ${ctx.sequence.next()}`,
+      id: (ctx: FactoryBuildContext) => `u_${ctx.sequence.next()}`,
+      email: (ctx: FactoryBuildContext) => `user${ctx.sequence.next()}@example.com`,
+      displayName: (ctx: FactoryBuildContext) => `Test User ${ctx.sequence.next()}`,
       passwordHash: "pbkdf2_sha256$120000$salt$hash",
       status: "active",
       roles: () => ["user"],
@@ -333,8 +333,8 @@ describe("seed-factories: integration with existing seed-safety patterns", () =>
   it("trait can override roles for admin users", () => {
     const factory = createFactoryWithTraits(
       {
-        id: (ctx) => `u_${ctx.sequence.next()}`,
-        email: (ctx) => `user${ctx.sequence.next()}@example.com`,
+        id: (ctx: FactoryBuildContext) => `u_${ctx.sequence.next()}`,
+        email: (ctx: FactoryBuildContext) => `user${ctx.sequence.next()}@example.com`,
         displayName: "Test User",
         passwordHash: "pbkdf2_sha256$120000$salt$hash",
         status: "active",
@@ -357,8 +357,8 @@ describe("seed-factories: integration with existing seed-safety patterns", () =>
 
   it("deterministic auth_users output is reproducible", () => {
     const factory = createFactory({
-      id: (ctx) => `u_${ctx.sequence.next()}`,
-      email: (ctx) => `user${ctx.sequence.next()}@example.com`,
+      id: (ctx: FactoryBuildContext) => `u_${ctx.sequence.next()}`,
+      email: (ctx: FactoryBuildContext) => `user${ctx.sequence.next()}@example.com`,
       roles: () => ["user"],
     });
 

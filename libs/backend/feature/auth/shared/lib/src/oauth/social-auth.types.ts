@@ -1,4 +1,4 @@
-import { createIsEnum } from "../util/enum.util";
+import { createIsEnum } from "../util";
 
 export enum AuthProvider {
   Password = "password",

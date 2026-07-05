@@ -57,7 +57,10 @@ export function createConfig<TConfig>(
 }
 
 function defaultConfigEnvironment(): ConfigEnvironment {
-  const runtime = globalThis as typeof globalThis & {
+  // `process` is not guaranteed on `globalThis` across runtimes (browser, edge
+  // workers), so read it through a shape where it is genuinely optional rather
+  // than trusting the Node ambient types that force it to be always present.
+  const runtime = globalThis as {
     readonly process?: { readonly env?: ConfigEnvironment };
   };
 

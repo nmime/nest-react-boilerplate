@@ -1,10 +1,30 @@
 # Frontend state architecture
 
-The frontend stack intentionally separates request state from client/UI shell state:
+The frontend stack intentionally separates request state from client/UI shell state. The declared stack is **MobX + mobx-tanstack-query (MobXQuery) + openapi-fetch**:
 
-- **TanStack Query** owns server/request state: backend reads, mutations, loading and error lifecycles, retries, and query invalidation. User profiles, admin principals, lists, authenticated preference saves, and other server-fetched domain data should stay here.
-- **MobX** owns observable client/UI shell state through `@app/frontend-runtime` stores under `libs/frontend/runtime/lib/src/state/`: `LocaleStore`, `AuthShellStore`, `UiStore`, and the composed `RootStore` exposed by `FrontendStateProvider`. User/admin bearer-token shell state belongs in `AuthShellStore`; server-fetched session/profile data remains in TanStack Query.
+- **TanStack Query** is the underlying server/request-state engine: it owns the query cache, backend reads, mutations, loading and error lifecycles, retries, and query invalidation.
+- **MobXQuery** (`createMobxQuery` / `createMobxMutation` from `@app/frontend-runtime`, wrapping `mobx-tanstack-query`) is how server state reaches the UI when it is naturally owned by a feature **model** and shared across `observer` components — it wraps a TanStack `Query`/`Mutation` and exposes `data`/`isLoading`/`error`/`isPending` as MobX observables. React-hook TanStack Query (`useQuery`/`useMutation`) remains the second, equally-supported access mode for request state that is tightly coupled to a component or route. See [Server state: MobXQuery vs React-hook TanStack Query](#server-state-mobxquery-vs-react-hook-tanstack-query) for which to pick.
+- **MobX** owns observable client/UI shell state through `@app/frontend-runtime` stores under `libs/frontend/runtime/lib/src/state/`: `LocaleStore`, `AuthShellStore`, `UiStore`, and the composed `RootStore` exposed by `FrontendStateProvider`. User/admin bearer-token shell state belongs in `AuthShellStore`; server-fetched session/profile data stays in the TanStack Query cache (read through either access mode above).
 - **React local state** remains fine for component-private transient details such as current form input, route snapshots, authenticated preference overrides, hover/disclosure flags, or one-off dialog fields.
+- **openapi-fetch** generated clients in `@app/frontend-api-client` (plus their `get*QueryKey` / `use*` wrappers) stay the single source of endpoint truth for every mode. Query functions call the generated wrappers; models never hardcode paths.
+
+## Server state: MobXQuery vs React-hook TanStack Query
+
+Both modes read and write the **same** TanStack Query cache, so invalidations cross between them freely. The choice is about _ownership_, not about which cache holds the data:
+
+- **Use MobXQuery** (`createMobxQuery` / `createMobxMutation` inside a MobX model) when the server state is account/session-scoped, benefits from living outside a single component's render tree, and is consumed by `observer` components. The model is created with the **active** `useQueryClient()` (not the module-level `frontendQueryClient` default) so its cache and invalidations stay unified with the rest of the tree, and it is disposed via `model.destroy()` on unmount. Adopted flows:
+  - `apps/frontend/app/src/features/social-auth` — `ProviderIdentitiesModel` owns the linked-identities list query and the unlink mutation (which invalidates the same query key it reads). The panel is a pure `observer`.
+  - `apps/frontend/app/src/features/logout` — `LogoutModel` owns the sign-out mutation; see [User-facing sign-out](#user-facing-sign-out).
+- **Use React-hook TanStack Query** (`useQuery` / `useMutation`) when request state is intrinsically coupled to React lifecycle or route context — effects that apply results to shell stores, navigation, `returnUrl` handling, or dense per-page local UI state. Deliberately kept on hooks (converting them would add model/lifecycle complexity with no architectural gain, since the state is component/route-scoped, not app-wide observable state):
+  - The auth session + login/register flow (`features/auth/model/use-auth-session-flow.ts`): locale/theme `useEffect`s, navigation, `returnUrl`, and token-keyed `authMe`/`profile` queries, all covered by strict fetch-ordering integration specs.
+  - Authenticated preference synchronization (`features/preferences`).
+  - All admin pages (`apps/frontend/admin/src/pages/{users,roles,audit}`): filters, pagination, dialogs, and row selection are React local state interleaved with page-scoped queries and mutations.
+
+Both `createMobxQuery` and `createMobxMutation` have live call sites; there are no dead server-state exports.
+
+## User-facing sign-out
+
+`features/logout` exposes `LogoutModel` / `useLogout` / `LogoutButton`. Sign-out is placed in the settings "Account control room" (adjacent to session/identity state) and only renders for an authenticated session. The flow: (1) call `POST /auth/logout` through the generated `authControllerLogout` wrapper while the bearer token is still attached; (2) clear `AuthShellStore` session state and the API-support auth-required flag **even if the request fails**; (3) invalidate the `/auth/me`, `/profile/me`, and `/auth/provider-identities` query keys; (4) navigate to `/auth`.
 
 `LocaleStore` is the bridge between i18n and API requests. It persists the selected locale, drives `FrontendI18nProvider`, updates `document.documentElement.lang`, and app providers pass the active locale into `@app/frontend-api-support` so every request receives the latest `Accept-Language` value at call time. The request implementation lives in API support so generated SDK code does not depend on React UI.
 
@@ -58,4 +78,4 @@ flowchart TD
   App --> ApiSupport
 ```
 
-TanStack Query remains the request-state owner; MobX stores own client/UI shell state; generated API-client mutations synchronize authenticated preferences back to the backend.
+The TanStack Query cache remains the request-state engine — accessed either through MobXQuery models (`createMobxQuery`/`createMobxMutation`) or React-hook `useQuery`/`useMutation`, both sharing one client; MobX stores own client/UI shell state; generated API-client wrappers stay the single source of endpoint truth and synchronize authenticated preferences back to the backend.

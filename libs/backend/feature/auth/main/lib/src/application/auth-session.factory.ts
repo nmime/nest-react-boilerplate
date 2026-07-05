@@ -12,9 +12,9 @@ import {
 } from "@app/backend-feature-auth-shared";
 import {
   readExpiresInSeconds,
-  signJwt,
+  signDomainJwt,
   type JwtSigningEnvironment,
-} from "../domain/jwt-signer";
+} from "../domain";
 
 export interface AuthSessionUserRecord {
   id: string;
@@ -45,7 +45,7 @@ export function createAuthSession(
   const view = toAuthenticatedUserView(user);
   return {
     user: view,
-    accessToken: signJwt(
+    accessToken: signDomainJwt(
       {
         sub: view.id,
         tid: view.tenantId,

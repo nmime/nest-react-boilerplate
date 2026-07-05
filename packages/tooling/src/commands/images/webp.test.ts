@@ -1,4 +1,3 @@
-// @ts-nocheck
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
@@ -23,14 +22,15 @@ describe("images webp tooling", () => {
       await writeFixture(workspaceRoot, "apps/frontend/assets/skip/ignored.jpeg");
       await writeFixture(workspaceRoot, "apps/frontend/assets/readme.txt");
 
-      const options = parseWebpOptions([
+      const parsed = parseWebpOptions([
         "--input",
         "apps/frontend/assets",
         "--ignore",
         "**/skip/**",
-      ]).options;
+      ]);
+      assert.ok("options" in parsed, "expected parseWebpOptions to return parsed options");
 
-      const files = await discoverImageFiles({ workspaceRoot, options });
+      const files = await discoverImageFiles({ workspaceRoot, options: parsed.options });
 
       assert.deepEqual(
         files.map((file) => file.replace(`${workspaceRoot}/`, "")),

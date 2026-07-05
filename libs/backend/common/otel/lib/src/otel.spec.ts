@@ -1,3 +1,4 @@
+import { SpanStatusCode } from "@opentelemetry/api";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createOpenTelemetrySdkConfig,
@@ -13,7 +14,8 @@ import {
   type TelemetrySdk,
   type TraceSpan,
   type TracerLike,
-} from "./otel";
+} from "./index";
+import { OpenTelemetryTracer } from "./tracer/open-telemetry.tracer";
 
 class RecordingTracer implements TracerLike {
   readonly ended: { span: TraceSpan; error?: Error }[] = [];
@@ -77,9 +79,19 @@ describe("OpenTelemetry bootstrap", () => {
       }),
     ).rejects.toThrow("boom");
 
-    expect(tracer.ended).toHaveLength(2);
+    // A non-Error throw is normalized into an Error before the span is ended.
+    await expect(
+      withSpan("failing-string", () => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- exercising the non-Error normalization branch of withSpan.
+        throw "plain failure";
+      }),
+    ).rejects.toThrow("plain failure");
+
+    expect(tracer.ended).toHaveLength(3);
     expect(tracer.ended[0]?.span.events[0]?.name).toBe("event");
     expect(tracer.ended[1]?.error?.message).toBe("boom");
+    expect(tracer.ended[2]?.error).toBeInstanceOf(Error);
+    expect(tracer.ended[2]?.error?.message).toBe("plain failure");
   });
 
   it("starts a NodeSDK-backed tracer when OTLP env config enables telemetry", async () => {
@@ -117,6 +129,8 @@ describe("OpenTelemetry bootstrap", () => {
       numbers: [1, 2],
       booleans: [true, false],
       mixed: ["a", 1],
+      big: 42n,
+      when: new Date("2024-01-02T03:04:05.006Z"),
     });
     tracer.addEvent(span, "db", { system: "postgresql" });
     tracer.endSpan(span, new Error("failed"));
@@ -133,6 +147,28 @@ describe("OpenTelemetry bootstrap", () => {
     await shutdownOpenTelemetry();
     expect(shutdown).toHaveBeenCalledOnce();
     expect(getTracer()).toBeInstanceOf(NoopTracer);
+  });
+
+  it("falls back to the noop tracer when the SDK fails to start", async () => {
+    const stderr = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+    const shutdown = vi.fn();
+
+    initOpenTelemetry({
+      serviceName: "api",
+      enabled: true,
+      sdkFactory: () => ({
+        start: () => Promise.reject(new Error("collector unreachable")),
+        shutdown,
+      }),
+    });
+
+    await vi.waitFor(() => {
+      expect(getTracer()).toBeInstanceOf(NoopTracer);
+    });
+    expect(stderr).toHaveBeenCalled();
+    stderr.mockRestore();
   });
 
   it("resolves enablement, endpoints, and headers from standard OTEL env vars", () => {
@@ -171,13 +207,19 @@ describe("OpenTelemetry bootstrap", () => {
     expect(
       readOtlpHeaders(
         {
-          OTEL_EXPORTER_OTLP_HEADERS: "authorization=Bearer%20abc,bad,%=bad",
+          OTEL_EXPORTER_OTLP_HEADERS:
+            "authorization=Bearer%20abc,bad,%=bad,x-raw=%",
           OTEL_EXPORTER_OTLP_METRICS_HEADERS:
             "authorization=override,x-metric=one",
         },
         "metrics",
       ),
-    ).toEqual({ authorization: "override", "%": "bad", "x-metric": "one" });
+    ).toEqual({
+      authorization: "override",
+      "%": "bad",
+      "x-metric": "one",
+      "x-raw": "%",
+    });
     expect(readOtlpHeaders({}, "traces")).toEqual({});
   });
 
@@ -200,5 +242,92 @@ describe("OpenTelemetry bootstrap", () => {
     expect(config.instrumentations).toEqual([]);
     expect(config.traceExporter).toBeDefined();
     expect(config).toHaveProperty("metricReader");
+  });
+
+  it("omits optional resource attributes when no version or environment is resolvable", () => {
+    const config = createOpenTelemetrySdkConfig(
+      { serviceName: "worker", instrumentations: [] },
+      {},
+    );
+
+    expect(config.resource).toBeDefined();
+    expect(config.traceExporter).toBeDefined();
+  });
+
+  it("resolves every recognized boolean token for OTEL_ENABLED", () => {
+    for (const truthy of ["1", "true", "yes", "on"]) {
+      expect(isOpenTelemetryEnabled({}, { OTEL_ENABLED: truthy })).toBe(true);
+    }
+    for (const falsy of ["0", "false", "no", "off"]) {
+      expect(isOpenTelemetryEnabled({}, { OTEL_ENABLED: falsy })).toBe(false);
+    }
+    // A disabled SDK flag short-circuits regardless of other configuration.
+    expect(
+      isOpenTelemetryEnabled(
+        { enabled: true },
+        { OTEL_SDK_DISABLED: "on", OTEL_ENABLED: "true" },
+      ),
+    ).toBe(false);
+    // An unparseable OTEL_SDK_DISABLED value is treated as absent.
+    expect(
+      isOpenTelemetryEnabled({ enabled: true }, { OTEL_SDK_DISABLED: "maybe" }),
+    ).toBe(true);
+  });
+});
+
+describe("OpenTelemetryTracer", () => {
+  const createFakeSpan = () => ({
+    addEvent: vi.fn(),
+    end: vi.fn(),
+    recordException: vi.fn(),
+    setStatus: vi.fn(),
+  });
+
+  it("bridges span lifecycle onto the underlying OpenTelemetry span", () => {
+    const fakeSpan = createFakeSpan();
+    const startSpan = vi.fn(() => fakeSpan);
+    const tracer = new OpenTelemetryTracer({
+      startSpan,
+    } as unknown as Parameters<typeof OpenTelemetryTracer>[0]);
+
+    const span = tracer.startSpan("op");
+    expect(startSpan).toHaveBeenCalledWith("op", { attributes: {} });
+
+    tracer.addEvent(span, "with-attributes", { key: "value" });
+    tracer.addEvent(span, "without-attributes");
+    expect(fakeSpan.addEvent).toHaveBeenCalledWith("with-attributes", {
+      key: "value",
+    });
+    expect(fakeSpan.addEvent).toHaveBeenCalledWith("without-attributes", {});
+
+    tracer.endSpan(span);
+    expect(fakeSpan.recordException).not.toHaveBeenCalled();
+    expect(fakeSpan.end).toHaveBeenCalledTimes(1);
+
+    const failing = tracer.startSpan("failing", { route: "/x" });
+    const error = new Error("boom");
+    tracer.endSpan(failing, error);
+    expect(fakeSpan.recordException).toHaveBeenCalledWith(error);
+    expect(fakeSpan.setStatus).toHaveBeenCalledWith({
+      code: SpanStatusCode.ERROR,
+      message: "boom",
+    });
+  });
+
+  it("ignores spans created by an alternate tracer implementation", () => {
+    const tracer = new OpenTelemetryTracer({
+      startSpan: vi.fn(),
+    } as unknown as Parameters<typeof OpenTelemetryTracer>[0]);
+    const foreignSpan: TraceSpan = {
+      name: "foreign",
+      attributes: {},
+      startedAt: new Date(),
+      events: [],
+    };
+
+    expect(() => {
+      tracer.endSpan(foreignSpan);
+    }).not.toThrow();
+    expect(foreignSpan.endedAt).toBeInstanceOf(Date);
   });
 });

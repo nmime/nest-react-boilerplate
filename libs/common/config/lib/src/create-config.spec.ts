@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import Joi from "joi";
 
 import { createConfig } from "./create-config";
 
 describe("createConfig", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
   it("validates and exposes typed values", () => {
     const config = createConfig(
       Joi.object({
@@ -38,5 +41,21 @@ describe("createConfig", () => {
     );
 
     expect(config.values).toMatchObject({ APP_NAME: "api", EXTRA: "kept" });
+  });
+
+  it("falls back to process.env when no explicit environment is supplied", () => {
+    vi.stubGlobal("process", { env: { FROM_PROCESS: "yes" } });
+
+    const config = createConfig(Joi.object({ FROM_PROCESS: Joi.string() }));
+
+    expect(config.get("FROM_PROCESS")).toBe("yes");
+  });
+
+  it("defaults to an empty environment when the runtime has no process", () => {
+    vi.stubGlobal("process", undefined);
+
+    const config = createConfig(Joi.object({ MISSING: Joi.string() }));
+
+    expect(config.values).toEqual({});
   });
 });

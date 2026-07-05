@@ -1,2 +1,5 @@
+export * from "./factory";
 export * from "./otel";
-export * from "./processor";
+export * from "./tracer";
+export * from "./type";
+export * from "./util";

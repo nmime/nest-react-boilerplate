@@ -2481,11 +2481,16 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
+      /** @description OK */
       200: {
         headers: {
           [name: string]: unknown;
         };
-        content?: never;
+        content: {
+          "application/json": {
+            data: components["schemas"]["ExternalAuthResultDto"];
+          };
+        };
       };
       /** @description Bad Request */
       400: {

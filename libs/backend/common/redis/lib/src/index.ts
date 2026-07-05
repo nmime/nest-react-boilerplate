@@ -1,6 +1,7 @@
 export * from "./config";
 export * from "./const";
 export * from "./decorator";
+export * from "./exception";
 export * from "./in-memory-redis.client";
 export * from "./redis-client.factory";
 export * from "./redis-cache.service";

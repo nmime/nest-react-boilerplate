@@ -3,6 +3,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { updateUserAccessPolicy } from "../../features/user-access-management";
 import { toUserListParams } from "../../features/user-filtering";
 import { updateUserStatus } from "../../features/user-status-management";
+import { assignUserRoles } from "../../features/user-role-assignment";
+import {
+  AdminAuditReadPermission,
+  AdminDashboardReadPermission,
+  AdminManageAllPermission,
+  AdminProfileReadPermission,
+  AdminRole,
+  AdminRolesReadPermission,
+  AdminSettingsReadPermission,
+  AdminSettingsUpdatePermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersWritePermission,
+  UserProfileReadPermission,
+  UserRole,
+} from "@app/common-authz";
 import {
   adminApi,
   throwOnOpenApiErrorData,
@@ -41,6 +58,39 @@ import {
   totalPages,
 } from "../../shared";
 
+type PolicyRole = adminApi.UpdateAdminUserAccessPolicyDto["roles"][number];
+type PolicyPermission =
+  adminApi.UpdateAdminUserAccessPolicyDto["permissions"][number];
+
+// Roles/permissions come from the shared @app/common-authz catalog. The
+// `satisfies` checks keep them aligned with the generated DTO union so selected
+// values stay typed without an unchecked `as` cast.
+const policyRoleValues = [
+  UserRole,
+  AdminRole,
+] as const satisfies readonly PolicyRole[];
+
+const policyPermissionValues = [
+  UserProfileReadPermission,
+  AdminDashboardReadPermission,
+  AdminProfileReadPermission,
+  AdminUsersReadPermission,
+  AdminUsersWritePermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminRolesReadPermission,
+  AdminAuditReadPermission,
+  AdminSettingsReadPermission,
+  AdminSettingsUpdatePermission,
+  AdminManageAllPermission,
+] as const satisfies readonly PolicyPermission[];
+
+const isPolicyRole = (value: string): value is PolicyRole =>
+  policyRoleValues.some((role) => role === value);
+
+const isPolicyPermission = (value: string): value is PolicyPermission =>
+  policyPermissionValues.some((permission) => permission === value);
+
 export const UsersPage = ({
   access,
   currentPath,
@@ -71,7 +121,9 @@ export const UsersPage = ({
     nextStatus: UserStatus;
   }>();
   const [policyTarget, setPolicyTarget] = useState<UserRow>();
-  const [policyStatus, setPolicyStatus] = useState<UserStatus>();
+  const [policyStatus, setPolicyStatus] = useState<UserStatus>("active");
+  const [rolesTarget, setRolesTarget] = useState<UserRow>();
+  const [assignedRoles, setAssignedRoles] = useState<Set<string>>(new Set());
   const [reason, setReason] = useState("");
   const [policyRoles, setPolicyRoles] = useState<Set<string>>(new Set());
   const [policyPermissions, setPolicyPermissions] = useState<Set<string>>(
@@ -111,6 +163,7 @@ export const UsersPage = ({
     ] as const,
     queryFn: () =>
       throwOnOpenApiErrorData(
+        /* v8 ignore next -- the detail query is enabled only after a user id is selected. */
         adminApi.adminUsersControllerGetUser(selected ?? "", requestOptions),
       ),
     retry: false,
@@ -120,11 +173,11 @@ export const UsersPage = ({
       qc.invalidateQueries({
         queryKey: adminApi.getAdminUsersControllerListUsersQueryKey(listParams),
       }),
-      selected
-        ? qc.invalidateQueries({
-            queryKey: adminApi.getAdminUsersControllerGetUserQueryKey(selected),
-          })
-        : Promise.resolve(),
+      qc.invalidateQueries({
+        queryKey: adminApi.getAdminUsersControllerGetUserQueryKey(
+          String(selected),
+        ),
+      }),
       qc.invalidateQueries({
         queryKey: adminApi.getAdminUsersControllerDashboardSummaryQueryKey(),
       }),
@@ -140,11 +193,12 @@ export const UsersPage = ({
       });
       await refetchCurrent();
     },
-    onError: (error) =>
+    onError: (error) => {
       setNotice({
         tone: "warning",
         message: errorText(error, "admin.users.error.statusUpdateFailed", t),
-      }),
+      });
+    },
   });
   const policyMutation = useMutation({
     mutationFn: ({
@@ -175,7 +229,7 @@ export const UsersPage = ({
       });
       await refetchCurrent();
     },
-    onError: (error) =>
+    onError: (error) => {
       setNotice({
         tone: "warning",
         message: errorText(
@@ -183,9 +237,32 @@ export const UsersPage = ({
           "admin.users.error.accessPolicyUpdateFailed",
           t,
         ),
-      }),
+      });
+    },
   });
-  const rows = (users.data?.items ?? []) as UserRow[];
+  const rolesMutation = useMutation({
+    mutationFn: ({
+      id,
+      roles: nextRoles,
+    }: {
+      id: string;
+      roles: adminApi.AssignAdminUserRolesDto["roles"];
+    }) => assignUserRoles(id, nextRoles, requestOptions),
+    onSuccess: async () => {
+      setNotice({
+        tone: "success",
+        message: t("admin.users.notice.rolesAssignmentRequested"),
+      });
+      await refetchCurrent();
+    },
+    onError: (error) => {
+      setNotice({
+        tone: "warning",
+        message: errorText(error, "admin.users.error.rolesAssignmentFailed", t),
+      });
+    },
+  });
+  const rows = users.data?.items ?? [];
   const roleOptions = [
     { label: t("admin.users.filter.allRoles"), value: "all" },
     ...(roles.data?.assignableRoles ?? access.roles).map((value) => ({
@@ -198,6 +275,11 @@ export const UsersPage = ({
     ...(roles.data?.assignablePermissions ?? access.permissions).map(
       (value) => ({ label: value, value }),
     ),
+  ];
+  const statusOptions = [
+    { label: t("admin.status.active"), value: "active" },
+    { label: t("admin.status.disabled"), value: "disabled" },
+    { label: t("admin.status.invited"), value: "invited" },
   ];
   const selectedRow = rows.find((row) => row.id === selected);
   const activeRowCount = rows.filter((row) => row.status === "active").length;
@@ -254,7 +336,9 @@ export const UsersPage = ({
             setSearch(v);
             setPage(1);
           }}
-          onSubmit={() => setPage(1)}
+          onSubmit={() => {
+            setPage(1);
+          }}
         >
           <UiSelect
             label={t("admin.users.filter.status")}
@@ -265,9 +349,7 @@ export const UsersPage = ({
             }}
             options={[
               { label: t("admin.users.filter.allStatuses"), value: "all" },
-              { label: t("admin.status.active"), value: "active" },
-              { label: t("admin.status.disabled"), value: "disabled" },
-              { label: t("admin.status.invited"), value: "invited" },
+              ...statusOptions,
             ]}
           />
           <UiSelect
@@ -332,7 +414,9 @@ export const UsersPage = ({
               }
               emptyTitle={t("admin.users.emptyEyebrow")}
               emptyDescription={t("admin.users.emptyTitle")}
-              onRowClick={(row) => setSelected(row.id)}
+              onRowClick={(row) => {
+                setSelected(row.id);
+              }}
               getRowAriaLabel={(row) =>
                 t("admin.users.row.open", { email: row.email })
               }
@@ -406,6 +490,14 @@ export const UsersPage = ({
                               setPolicyPermissions(new Set(row.permissions));
                             },
                           },
+                          {
+                            label: t("admin.users.action.assignRoles"),
+                            disabled: !access.canWriteRoles,
+                            onSelect: () => {
+                              setRolesTarget(row);
+                              setAssignedRoles(new Set(row.roles));
+                            },
+                          },
                         ]}
                       />
                     );
@@ -429,126 +521,97 @@ export const UsersPage = ({
           <UserDetailCard detail={detail} t={t} />
         </UiCard>
       </div>
-      <UiConfirmDialog
-        open={Boolean(statusTarget)}
-        onOpenChange={(open) => !open && setStatusTarget(undefined)}
-        title={t("admin.users.statusDialog.eyebrow")}
-        description={t("admin.users.statusDialog.description", {
-          email: statusTarget?.email ?? "",
-          status: statusTarget?.nextStatus
-            ? t(statusLabelKey[statusTarget.nextStatus])
-            : "",
-        })}
-        confirmLabel={t("admin.users.statusDialog.title")}
-        onConfirm={() => {
-          if (!reason.trim()) {
-            setNotice({
-              tone: "warning",
-              message: t("admin.users.error.statusReasonRequired"),
-            });
-            return;
-          }
-          if (statusTarget) {
+      {statusTarget ? (
+        <UiConfirmDialog
+          open
+          onOpenChange={() => {
+            setStatusTarget(undefined);
+          }}
+          title={t("admin.users.statusDialog.eyebrow")}
+          description={t("admin.users.statusDialog.description", {
+            email: statusTarget.email,
+            status: t(statusLabelKey[statusTarget.nextStatus]),
+          })}
+          confirmLabel={t("admin.users.statusDialog.title")}
+          onConfirm={() => {
+            if (!reason.trim()) {
+              setNotice({
+                tone: "warning",
+                message: t("admin.users.error.statusReasonRequired"),
+              });
+              return;
+            }
             statusMutation.mutate({
               id: statusTarget.id,
               nextStatus: statusTarget.nextStatus,
             });
-          }
-          setStatusTarget(undefined);
-        }}
-      >
-        <UiTextarea
-          aria-label={t("admin.users.statusDialog.reasonLabel")}
-          placeholder={t("admin.users.reasonPlaceholder")}
-          value={reason}
-          onChange={(event) => setReason(event.currentTarget.value)}
-        />
-      </UiConfirmDialog>
-      <UiConfirmDialog
-        open={Boolean(policyTarget)}
-        onOpenChange={(open) => {
-          if (!open) {
+            setStatusTarget(undefined);
+          }}
+        >
+          <UiTextarea
+            aria-label={t("admin.users.statusDialog.reasonLabel")}
+            placeholder={t("admin.users.reasonPlaceholder")}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.currentTarget.value);
+            }}
+          />
+        </UiConfirmDialog>
+      ) : null}
+      {policyTarget ? (
+        <UiConfirmDialog
+          open
+          onOpenChange={() => {
             setPolicyTarget(undefined);
-            setPolicyStatus(undefined);
-          }
-        }}
-        title={t("admin.users.policyDialog.eyebrow")}
-        description={t("admin.users.policyDialog.description", {
-          email: policyTarget?.email ?? "",
-        })}
-        confirmLabel={t("admin.users.policyDialog.title")}
-        onConfirm={() => {
-          if (!reason.trim()) {
-            setNotice({
-              tone: "warning",
-              message: t("admin.users.error.policyReasonRequired"),
-            });
-            return;
-          }
-          if (policyRoles.size === 0) {
-            setNotice({
-              tone: "warning",
-              message: t("admin.users.error.roleRequired"),
-            });
-            return;
-          }
-          if (policyTarget) {
+            setPolicyStatus("active");
+          }}
+          title={t("admin.users.policyDialog.eyebrow")}
+          description={t("admin.users.policyDialog.description", {
+            email: policyTarget.email,
+          })}
+          confirmLabel={t("admin.users.policyDialog.title")}
+          onConfirm={() => {
+            if (!reason.trim()) {
+              setNotice({
+                tone: "warning",
+                message: t("admin.users.error.policyReasonRequired"),
+              });
+              return;
+            }
+            if (policyRoles.size === 0) {
+              setNotice({
+                tone: "warning",
+                message: t("admin.users.error.roleRequired"),
+              });
+              return;
+            }
             policyMutation.mutate({
               id: policyTarget.id,
               currentStatus: policyTarget.status,
               status: policyStatus,
-              roles: [...policyRoles] as ("user" | "admin")[],
-              permissions: [
-                ...policyPermissions,
-              ] as adminApi.UpdateAdminUserAccessPolicyDto["permissions"],
+              roles: [...policyRoles].filter(isPolicyRole),
+              permissions: [...policyPermissions].filter(isPolicyPermission),
             });
-          }
-          setPolicyTarget(undefined);
-          setPolicyStatus(undefined);
-        }}
-      >
-        <UiSelect
-          label={t("admin.users.filter.status")}
-          value={policyStatus ?? policyTarget?.status ?? "none"}
-          onValueChange={(value) => setPolicyStatus(value as UserStatus)}
-          options={[
-            {
-              label: policyTarget?.status
-                ? t(statusLabelKey[policyTarget.status])
-                : t("admin.users.status.unchanged"),
-              value: policyTarget?.status ?? "none",
-            },
-          ]}
-        />
-        <div className="xr-card-grid">
-          {(roles.data?.assignableRoles ?? ["user", "admin"]).map((value) => (
-            <UiCheckbox
-              key={value}
-              label={value}
-              checked={policyRoles.has(value)}
-              onCheckedChange={(checked: boolean | "indeterminate") =>
-                setPolicyRoles((current) => {
-                  const next = new Set(current);
-                  if (checked) {
-                    next.add(value);
-                  } else {
-                    next.delete(value);
-                  }
-                  return next;
-                })
-              }
-            />
-          ))}
-        </div>
-        <div className="xr-card-grid">
-          {(roles.data?.assignablePermissions ?? access.permissions).map(
-            (value) => (
+            setPolicyTarget(undefined);
+            setPolicyStatus("active");
+          }}
+        >
+          <UiSelect
+            label={t("admin.users.filter.status")}
+            value={policyStatus}
+            onValueChange={(value) => {
+              setPolicyStatus(value as UserStatus);
+            }}
+            options={statusOptions}
+          />
+          <div className="xr-card-grid">
+            {(roles.data?.assignableRoles ?? ["user", "admin"]).map((value) => (
               <UiCheckbox
                 key={value}
                 label={value}
-                checked={policyPermissions.has(value)}
-                onCheckedChange={(checked: boolean | "indeterminate") =>
-                  setPolicyPermissions((current) => {
+                checked={policyRoles.has(value)}
+                onCheckedChange={(checked: boolean | "indeterminate") => {
+                  setPolicyRoles((current) => {
                     const next = new Set(current);
                     if (checked) {
                       next.add(value);
@@ -556,19 +619,91 @@ export const UsersPage = ({
                       next.delete(value);
                     }
                     return next;
-                  })
-                }
+                  });
+                }}
               />
-            ),
-          )}
-        </div>
-        <UiTextarea
-          aria-label={t("admin.users.policyDialog.reasonLabel")}
-          placeholder={t("admin.users.reasonPlaceholder")}
-          value={reason}
-          onChange={(event) => setReason(event.currentTarget.value)}
-        />
-      </UiConfirmDialog>
+            ))}
+          </div>
+          <div className="xr-card-grid">
+            {(roles.data?.assignablePermissions ?? access.permissions).map(
+              (value) => (
+                <UiCheckbox
+                  key={value}
+                  label={value}
+                  checked={policyPermissions.has(value)}
+                  onCheckedChange={(checked: boolean | "indeterminate") => {
+                    setPolicyPermissions((current) => {
+                      const next = new Set(current);
+                      if (checked) {
+                        next.add(value);
+                      } else {
+                        next.delete(value);
+                      }
+                      return next;
+                    });
+                  }}
+                />
+              ),
+            )}
+          </div>
+          <UiTextarea
+            aria-label={t("admin.users.policyDialog.reasonLabel")}
+            placeholder={t("admin.users.reasonPlaceholder")}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.currentTarget.value);
+            }}
+          />
+        </UiConfirmDialog>
+      ) : null}
+      {rolesTarget ? (
+        <UiConfirmDialog
+          open
+          onOpenChange={() => {
+            setRolesTarget(undefined);
+          }}
+          title={t("admin.users.rolesDialog.eyebrow")}
+          description={t("admin.users.rolesDialog.description", {
+            email: rolesTarget.email,
+          })}
+          confirmLabel={t("admin.users.rolesDialog.title")}
+          onConfirm={() => {
+            if (assignedRoles.size === 0) {
+              setNotice({
+                tone: "warning",
+                message: t("admin.users.error.roleRequired"),
+              });
+              return;
+            }
+            rolesMutation.mutate({
+              id: rolesTarget.id,
+              roles: [...assignedRoles].filter(isPolicyRole),
+            });
+            setRolesTarget(undefined);
+          }}
+        >
+          <div className="xr-card-grid">
+            {(roles.data?.assignableRoles ?? ["user", "admin"]).map((value) => (
+              <UiCheckbox
+                key={value}
+                label={value}
+                checked={assignedRoles.has(value)}
+                onCheckedChange={(checked: boolean | "indeterminate") => {
+                  setAssignedRoles((current) => {
+                    const next = new Set(current);
+                    if (checked) {
+                      next.add(value);
+                    } else {
+                      next.delete(value);
+                    }
+                    return next;
+                  });
+                }}
+              />
+            ))}
+          </div>
+        </UiConfirmDialog>
+      ) : null}
     </UiSection>
   );
 };

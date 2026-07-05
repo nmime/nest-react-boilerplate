@@ -83,7 +83,9 @@ export const createApiRuntimeEventHub = (): ApiRuntimeEventHub => {
       };
     }
 
-    listeners.forEach((listener) => listener(event));
+    listeners.forEach((listener) => {
+      listener(event);
+    });
   };
 
   return {

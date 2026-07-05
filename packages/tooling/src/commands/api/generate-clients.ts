@@ -1,14 +1,20 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { openApiContracts } from "./contracts-manifest.ts";
+import { openApiContracts, type OpenApiContract } from "./contracts-manifest.ts";
 
 const generatedRoot = "libs/frontend/api-client/lib/src/generated";
 
-function parseArgs(argv) {
-  const args = { dryRun: false, generatedRoot };
+interface GenerateClientsArgs {
+  dryRun: boolean;
+  generatedRoot: string;
+  contractsRoot?: string;
+  help?: boolean;
+}
+
+function parseArgs(argv: string[]): GenerateClientsArgs {
+  const args: GenerateClientsArgs = { dryRun: false, generatedRoot };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;
@@ -27,21 +33,24 @@ function parseArgs(argv) {
   return args;
 }
 
-function run(command, args) {
+function run(command: string, args: string[]) {
   const result = spawnSync(command, args, { stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-function serviceInput(contract, args) {
+function serviceInput(contract: OpenApiContract, args: GenerateClientsArgs) {
   return args.contractsRoot
     ? join(args.contractsRoot, `${contract.name}.json`)
     : contract.artifactPath;
 }
 
-function serviceOutput(contract, args) {
+function serviceOutput(contract: OpenApiContract, args: GenerateClientsArgs) {
   return args.generatedRoot === generatedRoot
     ? contract.clientOutputPath
-    : join(args.generatedRoot, contract.clientOutputPath.split("/").at(-1));
+    : join(
+        args.generatedRoot,
+        contract.clientOutputPath.split("/").at(-1) ?? contract.clientOutputPath,
+      );
 }
 
 const args = parseArgs(process.argv.slice(2));
@@ -68,8 +77,12 @@ if (args.dryRun) {
   process.exit(0);
 }
 
-rmSync(args.generatedRoot, { recursive: true, force: true });
+// Only remove the client-owned outputs so co-located generated artifacts such as
+// generated/toast/*.json (written by `api toast-config generate`) are preserved.
 mkdirSync(args.generatedRoot, { recursive: true });
+for (const service of planned) {
+  rmSync(service.output, { recursive: true, force: true });
+}
 for (const service of planned) {
   mkdirSync(dirname(service.output), { recursive: true });
   run("pnpm", [

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { okAsync } from "neverthrow";
+import { errAsync, okAsync } from "neverthrow";
 import {
   AuthTokenCleanupService,
   resolveAuthTokenCleanupConfig,
@@ -29,6 +29,65 @@ describe("AuthTokenCleanupService", () => {
     await expect(cleanup.runCleanup(now)).resolves.toBe(true);
 
     expect(cleanupExpiredTokens).toHaveBeenCalledWith(now);
+  });
+
+  it("reports failure and logs when the repository cleanup errors", async () => {
+    const cleanupExpiredTokens = vi.fn(() =>
+      errAsync({ code: "repository_error", message: "cleanup failed" }),
+    );
+    const repository = {
+      cleanupExpiredTokens,
+    } as unknown as AuthTokenRepository;
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    await expect(cleanup.runCleanup()).resolves.toBe(false);
+  });
+
+  it("logs deletion counts when tokens are removed", async () => {
+    const cleanupExpiredTokens = vi.fn(() =>
+      okAsync({ refreshTokensDeleted: 2, userTokensDeleted: 3 }),
+    );
+    const repository = {
+      cleanupExpiredTokens,
+    } as unknown as AuthTokenRepository;
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    await expect(cleanup.runCleanup()).resolves.toBe(true);
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs and skips scheduling when cleanup is disabled", () => {
+    const previousEnabled = process.env.AUTH_TOKEN_CLEANUP_ENABLED;
+    process.env.AUTH_TOKEN_CLEANUP_ENABLED = "false";
+    const { cleanupExpiredTokens, repository } = createRepositoryMock();
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    cleanup.onModuleInit();
+    cleanup.onModuleDestroy();
+
+    expect(cleanupExpiredTokens).not.toHaveBeenCalled();
+    restoreEnv("AUTH_TOKEN_CLEANUP_ENABLED", previousEnabled);
+  });
+
+  it("runs an immediate cleanup on startup when configured", () => {
+    vi.useFakeTimers();
+    const previousEnabled = process.env.AUTH_TOKEN_CLEANUP_ENABLED;
+    const previousInterval = process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS;
+    const previousRunOnStart = process.env.AUTH_TOKEN_CLEANUP_RUN_ON_START;
+    process.env.AUTH_TOKEN_CLEANUP_ENABLED = "true";
+    process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS = "60000";
+    process.env.AUTH_TOKEN_CLEANUP_RUN_ON_START = "true";
+    const { cleanupExpiredTokens, repository } = createRepositoryMock();
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    cleanup.onModuleInit();
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
+    cleanup.onModuleDestroy();
+
+    vi.useRealTimers();
+    restoreEnv("AUTH_TOKEN_CLEANUP_ENABLED", previousEnabled);
+    restoreEnv("AUTH_TOKEN_CLEANUP_INTERVAL_MS", previousInterval);
+    restoreEnv("AUTH_TOKEN_CLEANUP_RUN_ON_START", previousRunOnStart);
   });
 
   it("does not overlap cleanup runs", async () => {

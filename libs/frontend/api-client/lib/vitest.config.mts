@@ -9,7 +9,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    passWithNoTests: true,
+    passWithNoTests: false,
     coverage: fullCoverage(
       "../../../../coverage/libs/frontend/api-client",
       ["src/**/*.ts"],

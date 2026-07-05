@@ -95,11 +95,3 @@ export const normalizeProviderIdentities = (payload: unknown) => {
     },
   };
 };
-
-export const getExternalAuthStatus = (
-  result: ExternalAuthResultLike,
-): string => (typeof result.status === "string" ? result.status : "conflict");
-
-interface ExternalAuthResultLike {
-  status?: unknown;
-}

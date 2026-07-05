@@ -86,11 +86,15 @@ function createMatchMediaMock(
         mediaQueryList["addEventListener"] = (
           _type: string,
           listener: MatchMediaChangeListener,
-        ) => addListener(listener);
+        ) => {
+          addListener(listener);
+        };
         mediaQueryList["removeEventListener"] = (
           _type: string,
           listener: MatchMediaChangeListener,
-        ) => removeListener(listener);
+        ) => {
+          removeListener(listener);
+        };
       }
 
       return mediaQueryList as unknown as MediaQueryList;
@@ -199,7 +203,7 @@ describe("UiStore", () => {
     expect(nextSubscription).toBeDefined();
     expect(nextSubscription).not.toBe(firstSubscription);
 
-    nextSubscription?.setMatches(false);
+    nextSubscription.setMatches(false);
 
     expect(store.resolvedTheme).toBe("light");
     expect(document.documentElement.dataset["theme"]).toBe("light");

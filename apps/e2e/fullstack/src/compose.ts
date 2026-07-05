@@ -119,6 +119,7 @@ export async function buildStackImages(): Promise<void> {
     `fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
   );
   for (const service of stackServices) {
+    // eslint-disable-next-line no-await-in-loop -- sequential builds share the Docker layer cache
     await run("docker", [...composeArgs, "build", service]);
   }
 }
@@ -132,7 +133,9 @@ export async function waitForText(
   let lastError = "not attempted";
   while (Date.now() - started < 180_000) {
     try {
+      // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
       const response = await fetch(url);
+      // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
       const text = await response.text();
       if (text.includes(contains)) {
         writeStdoutLine(`${label}: ok (${response.status})`);
@@ -142,6 +145,7 @@ export async function waitForText(
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
+    // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
     await new Promise((resolve) => setTimeout(resolve, 3000));
   }
 

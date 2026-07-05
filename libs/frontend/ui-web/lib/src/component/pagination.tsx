@@ -4,7 +4,7 @@ import { UiButton } from "./button";
 
 const previousPageLabel = ["Go", "to", "previous", "page"].join(" ");
 const nextPageLabel = ["Go", "to", "next", "page"].join(" ");
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export interface UiPaginationProps {
   className?: string;
@@ -78,7 +78,9 @@ export const UiPagination = ({
         <UiButton
           aria-label={previousPageLabel}
           disabled={safeCurrentPage <= 1}
-          onClick={() => onPageChange(safeCurrentPage - 1)}
+          onClick={() => {
+            onPageChange(safeCurrentPage - 1);
+          }}
           variant="secondary"
         >
           Previous
@@ -89,7 +91,9 @@ export const UiPagination = ({
             aria-label={`Go to page ${page}`}
             className="xr-pagination__page"
             key={page}
-            onClick={() => onPageChange(page)}
+            onClick={() => {
+              onPageChange(page);
+            }}
             variant={page === safeCurrentPage ? "primary" : "secondary"}
           >
             {page}
@@ -98,7 +102,9 @@ export const UiPagination = ({
         <UiButton
           aria-label={nextPageLabel}
           disabled={safeCurrentPage >= safeTotalPages}
-          onClick={() => onPageChange(safeCurrentPage + 1)}
+          onClick={() => {
+            onPageChange(safeCurrentPage + 1);
+          }}
           variant="secondary"
         >
           Next

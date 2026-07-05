@@ -6,6 +6,8 @@
   "user.status": "Auth готово",
   "user.routeReadiness.label": "Готовность маршрутов приложения пользователя",
   "user.action.profile": "Профиль",
+  "user.action.signOut": "Выйти",
+  "user.action.signingOut": "Выход…",
   "user.auth.eyebrow": "Аутентификация",
   "user.auth.title": "Вход / Регистрация для разработки",
   "user.login.title": "Вход",

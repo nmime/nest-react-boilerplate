@@ -2,7 +2,7 @@ import {
   createUserProfile,
   type UserProfile,
   type UserProfilePrincipal,
-} from "../domain/user-profile";
+} from "../domain";
 
 export interface CurrentUserProfile {
   principal: UserProfilePrincipal;

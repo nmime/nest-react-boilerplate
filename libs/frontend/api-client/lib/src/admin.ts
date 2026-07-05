@@ -26,6 +26,9 @@ const adminUserPath = "/admin/users/{id}";
 const adminUserStatusPath = "/admin/users/{id}/status";
 const adminUserAccessPolicyPath = "/admin/users/{id}/access-policy";
 const adminRolesPath = "/admin/roles";
+const adminRolePath = "/admin/roles/{id}";
+const adminRolePermissionsPath = "/admin/roles/{id}/permissions";
+const adminUserRolesPath = "/admin/users/{id}/roles";
 const adminAuditPath = "/admin/audit";
 const adminDashboardSummaryPath = "/admin/dashboard/summary";
 
@@ -46,6 +49,13 @@ export type UpdateAdminUserAccessPolicyDto =
   components["schemas"]["UpdateAdminUserAccessPolicyDto"];
 export type AdminRbacCatalogPayloadDto =
   components["schemas"]["AdminRbacCatalogPayloadDto"];
+export type AdminRoleViewDto = components["schemas"]["AdminRoleViewDto"];
+export type CreateAdminRoleDto = components["schemas"]["CreateAdminRoleDto"];
+export type UpdateAdminRoleDto = components["schemas"]["UpdateAdminRoleDto"];
+export type SetAdminRolePermissionsDto =
+  components["schemas"]["SetAdminRolePermissionsDto"];
+export type AssignAdminUserRolesDto =
+  components["schemas"]["AssignAdminUserRolesDto"];
 export type AdminAuditLogViewDto =
   components["schemas"]["AdminAuditLogViewDto"];
 export type AdminAuditLogListPayloadDto =
@@ -161,6 +171,80 @@ export type AdminUsersControllerRolesError = OpenApiError<
   typeof adminUsersControllerRoles
 >;
 
+export const adminRolesControllerCreateRole = (
+  body: CreateAdminRoleDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminRolesPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminRolesControllerCreateRoleResponse = OpenApiData<
+  typeof adminRolesControllerCreateRole
+>;
+export type AdminRolesControllerCreateRoleData =
+  EnvelopeData<AdminRolesControllerCreateRoleResponse>;
+export type AdminRolesControllerCreateRoleError = OpenApiError<
+  typeof adminRolesControllerCreateRole
+>;
+
+export const adminRolesControllerUpdateRole = (
+  id: string,
+  body: UpdateAdminRoleDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminRolePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { path: { id } },
+  });
+export type AdminRolesControllerUpdateRoleResponse = OpenApiData<
+  typeof adminRolesControllerUpdateRole
+>;
+export type AdminRolesControllerUpdateRoleData =
+  EnvelopeData<AdminRolesControllerUpdateRoleResponse>;
+export type AdminRolesControllerUpdateRoleError = OpenApiError<
+  typeof adminRolesControllerUpdateRole
+>;
+
+export const adminRolesControllerSetRolePermissions = (
+  id: string,
+  body: SetAdminRolePermissionsDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminRolePermissionsPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { path: { id } },
+  });
+export type AdminRolesControllerSetRolePermissionsResponse = OpenApiData<
+  typeof adminRolesControllerSetRolePermissions
+>;
+export type AdminRolesControllerSetRolePermissionsData =
+  EnvelopeData<AdminRolesControllerSetRolePermissionsResponse>;
+export type AdminRolesControllerSetRolePermissionsError = OpenApiError<
+  typeof adminRolesControllerSetRolePermissions
+>;
+
+export const adminRolesControllerAssignUserRoles = (
+  id: string,
+  body: AssignAdminUserRolesDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminUserRolesPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { path: { id } },
+  });
+export type AdminRolesControllerAssignUserRolesResponse = OpenApiData<
+  typeof adminRolesControllerAssignUserRoles
+>;
+export type AdminRolesControllerAssignUserRolesData =
+  EnvelopeData<AdminRolesControllerAssignUserRolesResponse>;
+export type AdminRolesControllerAssignUserRolesError = OpenApiError<
+  typeof adminRolesControllerAssignUserRoles
+>;
+
 export const adminUsersControllerListAudit = (
   params: AdminAuditListQuery = {},
   options?: ApiClientRequestOptions,
@@ -208,6 +292,14 @@ export const getAdminUsersControllerUpdateUserStatusMutationKey = () =>
   ["patch", adminUserStatusPath] as const;
 export const getAdminUsersControllerUpdateUserAccessPolicyMutationKey = () =>
   ["patch", adminUserAccessPolicyPath] as const;
+export const getAdminRolesControllerCreateRoleMutationKey = () =>
+  ["post", adminRolesPath] as const;
+export const getAdminRolesControllerUpdateRoleMutationKey = () =>
+  ["patch", adminRolePath] as const;
+export const getAdminRolesControllerSetRolePermissionsMutationKey = () =>
+  ["put", adminRolePermissionsPath] as const;
+export const getAdminRolesControllerAssignUserRolesMutationKey = () =>
+  ["put", adminUserRolesPath] as const;
 
 export const getAdminProfileControllerMeQueryOptions = (
   options?: ApiClientRequestOptions,
@@ -255,16 +347,14 @@ export const getAdminUsersControllerGetUserQueryOptions = (
   >;
 
 type OpenApiQueryOptions<TData, TError> = Omit<
-  UseQueryOptions<TData, TError, TData, readonly unknown[]>,
+  UseQueryOptions<TData, TError, TData>,
   "queryFn"
 > & {
-  queryFn: NonNullable<
-    UseQueryOptions<TData, TError, TData, readonly unknown[]>["queryFn"]
-  >;
+  queryFn: NonNullable<UseQueryOptions<TData, TError, TData>["queryFn"]>;
 };
 
 type QueryConfig<TData, TError> = Omit<
-  UseQueryOptions<TData, ApiClientError<TError>, TData, readonly unknown[]>,
+  UseQueryOptions<TData, ApiClientError<TError>, TData>,
   "queryFn" | "queryKey"
 > & {
   request?: ApiClientRequestOptions;
@@ -407,6 +497,80 @@ export const useAdminUsersControllerUpdateUserAccessPolicyMutation = <
     mutationFn: ({ id, body }) =>
       throwOnOpenApiErrorData(
         adminUsersControllerUpdateUserAccessPolicy(id, body, request),
+      ),
+    ...options,
+  });
+
+export const useAdminRolesControllerCreateRoleMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AdminRolesControllerCreateRoleData,
+  AdminRolesControllerCreateRoleError,
+  { body: CreateAdminRoleDto },
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAdminRolesControllerCreateRoleMutationKey(),
+    mutationFn: ({ body }) =>
+      throwOnOpenApiErrorData(adminRolesControllerCreateRole(body, request)),
+    ...options,
+  });
+
+export const useAdminRolesControllerUpdateRoleMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AdminRolesControllerUpdateRoleData,
+  AdminRolesControllerUpdateRoleError,
+  { id: string; body: UpdateAdminRoleDto },
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAdminRolesControllerUpdateRoleMutationKey(),
+    mutationFn: ({ id, body }) =>
+      throwOnOpenApiErrorData(
+        adminRolesControllerUpdateRole(id, body, request),
+      ),
+    ...options,
+  });
+
+export const useAdminRolesControllerSetRolePermissionsMutation = <
+  TContext = unknown,
+>({
+  request,
+  ...options
+}: MutationConfig<
+  AdminRolesControllerSetRolePermissionsData,
+  AdminRolesControllerSetRolePermissionsError,
+  { id: string; body: SetAdminRolePermissionsDto },
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAdminRolesControllerSetRolePermissionsMutationKey(),
+    mutationFn: ({ id, body }) =>
+      throwOnOpenApiErrorData(
+        adminRolesControllerSetRolePermissions(id, body, request),
+      ),
+    ...options,
+  });
+
+export const useAdminRolesControllerAssignUserRolesMutation = <
+  TContext = unknown,
+>({
+  request,
+  ...options
+}: MutationConfig<
+  AdminRolesControllerAssignUserRolesData,
+  AdminRolesControllerAssignUserRolesError,
+  { id: string; body: AssignAdminUserRolesDto },
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAdminRolesControllerAssignUserRolesMutationKey(),
+    mutationFn: ({ id, body }) =>
+      throwOnOpenApiErrorData(
+        adminRolesControllerAssignUserRoles(id, body, request),
       ),
     ...options,
   });

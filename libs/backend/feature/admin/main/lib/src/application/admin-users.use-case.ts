@@ -1,31 +1,15 @@
-import type { Result } from "neverthrow";
-import {
-  DefaultAuthTenantId,
-  type AuthenticatedPrincipal,
-} from "@app/backend-feature-auth-shared";
-import {
-  isAdminAssignablePermission,
-  isAdminAssignableRole,
-  toAdminRbacCatalogView,
-  type AdminRbacCatalogView,
-} from "@app/backend-feature-admin-shared";
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
 import type {
-  AdminAuditLogEntity,
   AdminAuditLogRepository,
   AdminUserMutationRepository,
   AdminUserMutationResult,
-  AuthUserEntity,
   AuthUserRepository,
 } from "@app/backend-postgres-main-auth";
-import {
-  AdminApplicationError,
-  isSensitiveAdminPolicyMessage,
-} from "./admin-errors";
-import type { AdminRequestContext } from "../domain/admin-request-context";
+import { AdminApplicationError } from "./admin-errors";
 import {
   normalizeAdminPage,
+  type AdminRequestContext,
   type AdminAuditLogListPayload,
-  type AdminAuditLogView,
   type AdminAuditQuery,
   type AdminDashboardSummary,
   type AdminUserListPayload,
@@ -33,7 +17,14 @@ import {
   type AdminUserView,
   type UpdateAdminUserAccessPolicyCommand,
   type UpdateAdminUserStatusCommand,
-} from "../domain/admin-user";
+} from "../domain";
+import { toAdminAuditLogView, toAdminUserView } from "./mapper";
+import {
+  requireAllowedPolicy,
+  resolveTenantId,
+  unwrapRepositoryResult,
+  unwrapSensitiveMutationResult,
+} from "./util";
 
 export class AdminUsersUseCase {
   constructor(
@@ -141,10 +132,6 @@ export class AdminUsersUseCase {
     return toAdminUserView(result.after);
   }
 
-  roles(): AdminRbacCatalogView {
-    return toAdminRbacCatalogView();
-  }
-
   async listAudit(
     principal: AuthenticatedPrincipal,
     query: AdminAuditQuery,
@@ -201,86 +188,3 @@ export class AdminUsersUseCase {
     };
   }
 }
-
-const resolveTenantId = (principal: AuthenticatedPrincipal): string =>
-  principal.tenantId ?? DefaultAuthTenantId;
-
-const requireAllowedPolicy = (
-  input: UpdateAdminUserAccessPolicyCommand,
-): void => {
-  const unknownRoles = input.roles.filter(
-    (role) => !isAdminAssignableRole(role),
-  );
-  const unknownPermissions = input.permissions.filter(
-    (permission) => !isAdminAssignablePermission(permission),
-  );
-  if (unknownRoles.length > 0 || unknownPermissions.length > 0) {
-    throw new AdminApplicationError(
-      "invalid_access_policy",
-      "Access policy contains roles or permissions outside the admin catalog.",
-    );
-  }
-};
-
-const unwrapRepositoryResult = <T>(
-  result: Result<T, { message?: string }>,
-): T => {
-  if (result.isOk()) {
-    return result.value;
-  }
-
-  throw new AdminApplicationError(
-    "repository_error",
-    result.error.message ?? "Admin repository operation failed.",
-  );
-};
-
-const unwrapSensitiveMutationResult = <T>(
-  result: Result<T, { message?: string }>,
-): T => {
-  if (result.isOk()) {
-    return result.value;
-  }
-
-  const message = result.error.message ?? "Admin repository operation failed.";
-  if (isSensitiveAdminPolicyMessage(message)) {
-    throw new AdminApplicationError("sensitive_policy_violation", message);
-  }
-
-  throw new AdminApplicationError("repository_error", message);
-};
-
-const toIso = (value: Date | undefined | null): string | undefined =>
-  value && value.getTime() > 0 ? value.toISOString() : undefined;
-
-const toAdminUserView = (entity: AuthUserEntity): AdminUserView => ({
-  id: entity.id,
-  tenantId: entity.tenantId,
-  email: entity.email,
-  ...(entity.displayName ? { displayName: entity.displayName } : {}),
-  status: entity.status,
-  roles: entity.roles,
-  permissions: entity.permissions,
-  ...(entity.locale ? { locale: entity.locale } : {}),
-  ...(entity.theme ? { theme: entity.theme } : {}),
-  ...(toIso(entity.lastLoginAt)
-    ? { lastLoginAt: toIso(entity.lastLoginAt) }
-    : {}),
-  createdAt: entity.createdAt.toISOString(),
-  updatedAt: entity.updatedAt.toISOString(),
-});
-
-const toAdminAuditLogView = (
-  entity: AdminAuditLogEntity,
-): AdminAuditLogView => ({
-  id: entity.id,
-  tenantId: entity.tenantId,
-  ...(entity.actorUserId ? { actorUserId: entity.actorUserId } : {}),
-  action: entity.action,
-  resource: entity.resource,
-  ...(entity.targetUserId ? { targetUserId: entity.targetUserId } : {}),
-  before: entity.before,
-  after: entity.after,
-  metadata: entity.metadata,
-  createdAt: entity.createdAt.toISOString(),
-});

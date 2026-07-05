@@ -16,11 +16,13 @@ import {
 
 @Injectable()
 export class AdminRbacGuard extends RbacGuard {
-  protected requiresPermissionMetadata(context: ExecutionContext): boolean {
+  protected override requiresPermissionMetadata(
+    context: ExecutionContext,
+  ): boolean {
     return this.isAdminRoute(context);
   }
 
-  protected evaluateDomainPermission({
+  protected override evaluateDomainPermission({
     permission,
     principal,
     requiredRoles,

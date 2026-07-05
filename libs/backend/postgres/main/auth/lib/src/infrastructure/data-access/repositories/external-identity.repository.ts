@@ -115,7 +115,7 @@ export class ExternalIdentityRepository {
       entity.displayName = normalizeOptionalText(input.displayName);
       entity.username = normalizeOptionalText(input.username);
       entity.lastAuthenticatedAt = input.lastAuthenticatedAt ?? new Date();
-      entity.linkedAt = input.linkedAt ?? entity.linkedAt ?? new Date();
+      entity.linkedAt = input.linkedAt ?? entity.linkedAt;
 
       if (!existing) {
         em.persist(entity);

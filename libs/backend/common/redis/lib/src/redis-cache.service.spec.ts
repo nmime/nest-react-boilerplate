@@ -50,7 +50,9 @@ describe("RedisCacheService", () => {
     const action = vi.fn(
       async () =>
         await new Promise((resolve) => {
-          setTimeout(() => resolve("value"), 5);
+          setTimeout(() => {
+            resolve("value");
+          }, 5);
         }),
     );
 
@@ -151,6 +153,21 @@ describe("RedisCacheService", () => {
     expect(fetchMissing).toHaveBeenNthCalledWith(2, ["three"]);
   });
 
+  it("does not fetch when every batch key is already cached", async () => {
+    const cache = new RedisCacheService(new InMemoryRedisClient());
+    const fetchMissing = vi.fn((keys: string[]) =>
+      Promise.resolve(new Map(keys.map((key) => [key, key.toUpperCase()]))),
+    );
+
+    await cache.withCacheBatch({ keys: ["one"], ttl: 60, fetchMissing });
+    fetchMissing.mockClear();
+
+    await expect(
+      cache.withCacheBatch({ keys: ["one"], ttl: 60, fetchMissing }),
+    ).resolves.toEqual(new Map([["one", "ONE"]]));
+    expect(fetchMissing).not.toHaveBeenCalled();
+  });
+
   it("propagates Redis read and write errors", async () => {
     const readError = new Error("redis read failed");
     const writeError = new Error("redis write failed");
@@ -174,6 +191,31 @@ describe("RedisCacheService", () => {
         action: () => Promise.resolve("value"),
       }),
     ).rejects.toThrow(writeError);
+  });
+
+  it("isolates concurrent operation errors to the failing operation", async () => {
+    const redis = new InMemoryRedisClient();
+    const failure = new Error("redis get failed for bad key");
+    vi.spyOn(redis, "get").mockImplementation((key: string) =>
+      key === "cache:bad" ? Promise.reject(failure) : Promise.resolve(null),
+    );
+    const cache = new RedisCacheService(redis);
+
+    const [bad, good] = await Promise.allSettled([
+      cache.withCache({
+        key: "cache:bad",
+        ttl: 60,
+        action: () => Promise.resolve("bad"),
+      }),
+      cache.withCache({
+        key: "cache:good",
+        ttl: 60,
+        action: () => Promise.resolve("good"),
+      }),
+    ]);
+
+    expect(bad.status).toBe("rejected");
+    expect(good).toEqual({ status: "fulfilled", value: "good" });
   });
 
   it("keeps hash helpers compatible for existing consumers", async () => {

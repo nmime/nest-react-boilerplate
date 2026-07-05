@@ -1,35 +1,23 @@
-import { randomInt, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { InjectRedis, InjectTransientRedis } from "./decorator";
-import type { RedisClientLike } from "./type";
-
-export interface RedisLock {
-  resource: string;
-  key: string;
-  token: string;
-  ttlMs: number;
-  expiresAt: number;
-}
-
-export interface RedisLockAcquireOptions {
-  resource: string;
-  ttlMs: number;
-  retryCount?: number;
-  retryDelayMs?: number;
-  retryJitterMs?: number;
-  driftFactor?: number;
-}
-
-export interface RedisLockUsingOptions<T> extends RedisLockAcquireOptions {
-  action: (lock: RedisLock) => T | Promise<T>;
-}
-
-export class RedisLockUnavailableError extends Error {
-  constructor(resource: string) {
-    super(`Unable to acquire Redis lock for resource: ${resource}`);
-    this.name = "RedisLockUnavailableError";
-  }
-}
+import { RedisLockUnavailableError } from "./exception";
+import type {
+  RedisClientLike,
+  RedisLock,
+  RedisLockAcquireOptions,
+  RedisLockUsingOptions,
+} from "./type";
+import {
+  assertValidTtl,
+  countSuccesses,
+  getLockKey,
+  getQuorum,
+  getRetryDelay,
+  getValidityMs,
+  isLockAcquired,
+  sleep,
+} from "./util";
 
 @Injectable()
 export class RedisRedlockService {
@@ -43,12 +31,14 @@ export class RedisRedlockService {
 
     const retryCount = options.retryCount ?? 0;
     for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+      // eslint-disable-next-line no-await-in-loop -- retries are sequential by design: attempt, then back off, then retry.
       const lock = await this.tryAcquire(options);
       if (lock) {
         return lock;
       }
 
       if (attempt < retryCount) {
+        // eslint-disable-next-line no-await-in-loop -- the retry backoff must elapse before the next attempt.
         await sleep(getRetryDelay(options));
       }
     }
@@ -116,6 +106,7 @@ export class RedisRedlockService {
 
     for (const client of clients) {
       try {
+        // eslint-disable-next-line no-await-in-loop -- Redlock acquires nodes sequentially so total elapsed time bounds the lock validity window.
         const result = await client.set(key, token, "PX", options.ttlMs, "NX");
         if (isLockAcquired(result)) {
           acquiredClients.push(client);
@@ -149,52 +140,21 @@ export class RedisRedlockService {
   }
 
   private getClients(): RedisClientLike[] {
-    return [...new Set([this.redis, this.transientRedis])];
+    // Collapse clients that point at the same server (identical connectionId)
+    // so quorum is computed over unique Redis nodes. Default wiring injects two
+    // distinct adapters for the same server; without this a quorum of 2 could
+    // never be reached (SET NX succeeds on only one of them) and acquire() would
+    // always fail. Clients without a connectionId fall back to object identity.
+    const seen = new Set<unknown>();
+    const clients: RedisClientLike[] = [];
+    for (const client of [this.redis, this.transientRedis]) {
+      const identity = client.connectionId ?? client;
+      if (seen.has(identity)) {
+        continue;
+      }
+      seen.add(identity);
+      clients.push(client);
+    }
+    return clients;
   }
-}
-
-function getLockKey(resource: string): string {
-  return `redlock:${resource}`;
-}
-
-function getQuorum(clientCount: number): number {
-  return Math.floor(clientCount / 2) + 1;
-}
-
-function getValidityMs(
-  startedAt: number,
-  ttlMs: number,
-  driftFactor: number,
-): number {
-  const elapsedMs = Date.now() - startedAt;
-  const driftMs = Math.ceil(ttlMs * driftFactor) + 2;
-  return ttlMs - elapsedMs - driftMs;
-}
-
-function getRetryDelay(options: RedisLockAcquireOptions): number {
-  const delayMs = options.retryDelayMs ?? 100;
-  const jitterMs = options.retryJitterMs ?? 50;
-  return delayMs + randomInt(Math.max(Math.trunc(jitterMs), 0) + 1);
-}
-
-function countSuccesses(results: Array<PromiseSettledResult<boolean>>): number {
-  return results.filter(
-    (result) => result.status === "fulfilled" && result.value,
-  ).length;
-}
-
-function isLockAcquired(result: unknown): boolean {
-  return result === "OK" || result === true;
-}
-
-function assertValidTtl(ttlMs: number): void {
-  if (!Number.isInteger(ttlMs) || ttlMs <= 0) {
-    throw new Error(`Redis lock ttlMs must be a positive integer: ${ttlMs}`);
-  }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { existsSync } from "node:fs";
 import { commandExists, parseArgs, run, writeJson } from "./runtime-utils.ts";
 
@@ -7,7 +6,8 @@ const args = parseArgs();
 const all = ["chromium", "firefox", "webkit", "mobile-chrome", "mobile-safari"];
 const dryRun = args.flags.has("dry-run");
 const config = args.options.get("config") ?? process.env.PLAYWRIGHT_EXTENDED_CONFIG ?? "playwright.extended.config.ts";
-const selected = args.options.get("project") ? [args.options.get("project")] : process.argv.filter((value) => value.startsWith("--project=")).map((value) => value.slice("--project=".length));
+const projectOption = args.options.get("project");
+const selected = projectOption ? [projectOption] : process.argv.filter((value) => value.startsWith("--project=")).map((value) => value.slice("--project=".length));
 const projects = selected.length ? selected : (process.env.PLAYWRIGHT_MATRIX_PROJECTS?.split(",").map((value) => value.trim()).filter(Boolean) ?? all);
 const passthrough = args.positional;
 const reportPath = args.options.get("report") ?? "test-results/e2e-matrix/report.json";

@@ -48,7 +48,9 @@ describe("TelegramBotWorkerService", () => {
   it("guards against polling when webhook mode is configured", () => {
     const service = new TelegramBotWorkerService(instance("webhook"));
 
-    expect(() => service.onApplicationBootstrap()).toThrow(
+    expect(() => {
+      service.onApplicationBootstrap();
+    }).toThrow(
       "Telegram polling runtime cannot start when TELEGRAM_BOT_MODE=webhook.",
     );
   });
@@ -58,9 +60,9 @@ describe("TelegramBotWorkerService", () => {
       instance("polling", "production"),
     );
 
-    expect(() => service.onApplicationBootstrap()).toThrow(
-      "Telegram polling runtime is disabled in production.",
-    );
+    expect(() => {
+      service.onApplicationBootstrap();
+    }).toThrow("Telegram polling runtime is disabled in production.");
   });
 
   it("starts runner for local polling mode", () => {

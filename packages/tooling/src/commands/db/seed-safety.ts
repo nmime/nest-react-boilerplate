@@ -1,14 +1,24 @@
-// @ts-nocheck
 export const DefaultAdminEmail = "admin@example.com";
 export const DefaultAdminPassword = "ChangeMe123!";
 
-function isTruthy(value) {
+export interface SeedSafetyArgs {
+  email: string;
+  password: string;
+  force?: boolean;
+}
+
+export interface SeedSafetyOptions {
+  env?: NodeJS.ProcessEnv;
+  assertLocalDevelopmentDatabase?: (connectionString: string) => void;
+}
+
+function isTruthy(value: unknown): boolean {
   return ["1", "true", "yes", "on"].includes(
     String(value ?? "").trim().toLowerCase(),
   );
 }
 
-export function isLocalDevelopmentDatabase(connectionString) {
+export function isLocalDevelopmentDatabase(connectionString: string): boolean {
   const url = new URL(connectionString);
   const host = url.hostname.toLowerCase();
   const database = url.pathname.replace(/^\//u, "");
@@ -17,7 +27,10 @@ export function isLocalDevelopmentDatabase(connectionString) {
   return localHosts.has(host) && looksLikeDevDb;
 }
 
-export function resolvePassword(args, env = process.env) {
+export function resolvePassword(
+  args: { passwordEnv?: string; password?: string },
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
   if (!args.passwordEnv) return args.password;
   const password = env[args.passwordEnv];
   if (!password) {
@@ -27,18 +40,15 @@ export function resolvePassword(args, env = process.env) {
 }
 
 export function assertSeedSafety(
-  args,
-  connectionString,
-  {
-    env = process.env,
-    assertLocalDevelopmentDatabase,
-  } = {},
-) {
+  args: SeedSafetyArgs,
+  connectionString: string,
+  { env = process.env, assertLocalDevelopmentDatabase }: SeedSafetyOptions = {},
+): void {
   const localDevelopmentDatabase = isLocalDevelopmentDatabase(connectionString);
   const productionRuntime = env.NODE_ENV === "production";
   const defaultSeedCredentials =
-    args.email.toLowerCase() === DEFAULT_ADMIN_EMAIL &&
-    args.password === DEFAULT_ADMIN_PASSWORD;
+    args.email.toLowerCase() === DefaultAdminEmail &&
+    args.password === DefaultAdminPassword;
 
   if (!args.force) {
     assertLocalDevelopmentDatabase?.(connectionString);

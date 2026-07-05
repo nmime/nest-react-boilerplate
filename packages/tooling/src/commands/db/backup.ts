@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -12,8 +11,8 @@ import {
   redactedConnectionString,
 } from "./env-loader.ts";
 
-function parseArgs(argv) {
-  const args = { dryRun: false, output: "" };
+function parseArgs(argv: string[]) {
+  const args = { dryRun: false, output: "", help: false };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--") continue;

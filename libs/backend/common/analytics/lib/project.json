@@ -17,8 +17,7 @@
         "outputPath": "dist/libs/backend/common/analytics",
         "main": "libs/backend/common/analytics/lib/src/index.ts",
         "tsConfig": "libs/backend/common/analytics/lib/tsconfig.lib.json",
-        "assets": [],
-        "rootDir": "."
+        "assets": []
       }
     },
     "test": {

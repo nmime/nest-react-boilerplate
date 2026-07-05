@@ -7,36 +7,53 @@ export interface IpAllowListEntry {
   mask: number;
 }
 
+function parseOctet(part: string): number | undefined {
+  const octet = Number.parseInt(part, 10);
+  return Number.isInteger(octet) &&
+    octet >= 0 &&
+    octet <= 255 &&
+    String(octet) === part
+    ? octet
+    : undefined;
+}
+
 function parseIpv4(ip: string): number | undefined {
   const normalized = ip.startsWith("::ffff:") ? ip.slice(7) : ip;
   const parts = normalized.split(".");
-  if (parts.length !== 4) {
+  const [first, second, third, fourth] = parts;
+  if (
+    parts.length !== 4 ||
+    first === undefined ||
+    second === undefined ||
+    third === undefined ||
+    fourth === undefined
+  ) {
     return undefined;
   }
 
-  const octets = parts.map((part) => Number.parseInt(part, 10));
+  const octet1 = parseOctet(first);
+  const octet2 = parseOctet(second);
+  const octet3 = parseOctet(third);
+  const octet4 = parseOctet(fourth);
   if (
-    octets.some(
-      (octet, index) =>
-        !Number.isInteger(octet) ||
-        octet < 0 ||
-        octet > 255 ||
-        String(octet) !== parts[index],
-    )
+    octet1 === undefined ||
+    octet2 === undefined ||
+    octet3 === undefined ||
+    octet4 === undefined
   ) {
     return undefined;
   }
 
   return (
-    ((octets[0] << 24) >>> 0) +
-    ((octets[1] << 16) >>> 0) +
-    ((octets[2] << 8) >>> 0) +
-    octets[3]
+    ((octet1 << 24) >>> 0) +
+    ((octet2 << 16) >>> 0) +
+    ((octet3 << 8) >>> 0) +
+    octet4
   );
 }
 
 export function parseCidr(cidr: string): IpAllowListEntry {
-  const [ip, bitsRaw = "32"] = cidr.split("/");
+  const [ip = "", bitsRaw = "32"] = cidr.split("/");
   const bits = Number.parseInt(bitsRaw, 10);
   const base = parseIpv4(ip);
   if (base === undefined || !Number.isInteger(bits) || bits < 0 || bits > 32) {

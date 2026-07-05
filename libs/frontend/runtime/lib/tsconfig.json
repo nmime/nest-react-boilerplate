@@ -2,12 +2,19 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client"],
+    "lib": ["es2022", "dom"],
+    "moduleResolution": "bundler",
+    "module": "esnext"
   },
   "include": [],
   "files": [],
   "references": [
-    { "path": "./tsconfig.lib.json" },
-    { "path": "./tsconfig.spec.json" }
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
   ]
 }

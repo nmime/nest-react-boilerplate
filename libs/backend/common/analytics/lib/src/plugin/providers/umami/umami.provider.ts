@@ -27,7 +27,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
     this.hostname = options.hostname ?? "server";
   }
 
-  async track(payload: AnalyticsPayload): Promise<void> {
+  override async track(payload: AnalyticsPayload): Promise<void> {
     await sendUmamiEvent(this.fetcher, this.endpoint, {
       website: this.options.websiteId,
       hostname: this.hostname,
@@ -43,7 +43,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
     });
   }
 
-  async identify(payload: AnalyticsIdentifyPayload): Promise<void> {
+  override async identify(payload: AnalyticsIdentifyPayload): Promise<void> {
     await sendUmamiEvent(this.fetcher, this.endpoint, {
       website: this.options.websiteId,
       hostname: this.hostname,
@@ -57,7 +57,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
     });
   }
 
-  async page(payload: AnalyticsPagePayload): Promise<void> {
+  override async page(payload: AnalyticsPagePayload): Promise<void> {
     await sendUmamiEvent(this.fetcher, this.endpoint, {
       website: this.options.websiteId,
       hostname: this.hostname,

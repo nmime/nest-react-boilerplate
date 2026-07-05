@@ -111,7 +111,9 @@ function resolveRequestUrl(input: RequestInfo | URL): string {
   return input.url;
 }
 
-async function parsePayload(body: BodyInit | null | undefined) {
+async function parsePayload(
+  body: NonNullable<RequestInit["body"]> | null | undefined,
+) {
   if (!body) {
     return {};
   }
@@ -227,5 +229,18 @@ describe("TelegramWebhookController", () => {
 
     expect(calls[0]?.method).toBe("getMe");
     expect(calls.some((call) => call.method === "sendMessage")).toBe(true);
+  });
+
+  it("initializes the bot once on application bootstrap so webhook traffic is not delayed", async () => {
+    const { telegram, init, handleUpdate } = instance();
+    const controller = new TelegramWebhookController(telegram);
+
+    await controller.onApplicationBootstrap();
+    await expect(
+      controller.handleWebhook("secret", { update_id: 1 }),
+    ).resolves.toEqual({ ok: true });
+
+    expect(init).toHaveBeenCalledTimes(1);
+    expect(handleUpdate).toHaveBeenCalledWith({ update_id: 1 });
   });
 });

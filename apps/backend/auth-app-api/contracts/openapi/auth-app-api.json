@@ -2454,7 +2454,20 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/ExternalAuthResultDto"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad Request",

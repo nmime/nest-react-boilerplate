@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { AuthMainModule, AuthPersistenceMode } from "./auth-main.module";
-import { AuthController } from "./auth.controller";
-import { AuthService } from "./auth.service";
+import { AuthController } from "./interfaces/http/auth.controller";
+import { AuthService } from "./application/auth.service";
 import {
   AuthTokenStoreInjectToken,
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
-} from "./auth-token-store";
+} from "./infrastructure/auth-token-store";
 import {
   AuthUserStoreInjectToken,
   InMemoryAuthUserStore,
   PostgresAuthUserStore,
-} from "./auth-user-store";
+} from "./infrastructure/auth-user-store";
 
 describe("AuthMainModule", () => {
   it("creates memory and Postgres dynamic modules", () => {

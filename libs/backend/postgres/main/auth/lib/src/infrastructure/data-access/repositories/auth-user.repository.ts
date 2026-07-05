@@ -9,25 +9,17 @@ import {
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
 } from "../entities";
+import { mapAuthUserRepositoryError } from "./mapper/auth-user-error.mapper";
+import type {
+  AuthUserListInput,
+  AuthUserRepositoryError,
+} from "./type/auth-user.type";
 import {
   normalizePageLimit,
   normalizePageOffset,
-} from "./admin-user-mutation.repository";
+} from "./util/pagination.util";
 
-export interface AuthUserRepositoryError {
-  code: "repository_error";
-  message: string;
-}
-
-export interface AuthUserListInput {
-  tenantId?: string;
-  search?: string;
-  status?: AuthUserEntity["status"];
-  role?: string;
-  permission?: string;
-  limit?: number;
-  offset?: number;
-}
+export * from "./type/auth-user.type";
 
 @Injectable()
 export class AuthUserRepository {
@@ -39,7 +31,10 @@ export class AuthUserRepository {
   createUser(
     input: AuthUserEntityInput,
   ): ResultAsync<AuthUserEntity, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(this.persistUser(input), mapRepositoryError);
+    return ResultAsync.fromPromise(
+      this.persistUser(input),
+      mapAuthUserRepositoryError,
+    );
   }
 
   findByEmail(
@@ -56,7 +51,7 @@ export class AuthUserRepository {
         tenantId,
         email: { $ne: null, $eq: normalizedEmail },
       }),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -66,7 +61,7 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.findOne(AuthUserEntity, { id, tenantId }),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -79,7 +74,7 @@ export class AuthUserRepository {
         offset: normalizePageOffset(input.offset),
         orderBy: { createdAt: "DESC" },
       }),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -88,7 +83,7 @@ export class AuthUserRepository {
   ): ResultAsync<number, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.count(AuthUserEntity, this.toUserFilter(input)),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -99,7 +94,7 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.updateAccessPolicy(id, policy, tenantId),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -118,7 +113,7 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.updatePreferences(id, preferences, tenantId),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -129,7 +124,7 @@ export class AuthUserRepository {
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.updateLastLoginAt(id, loggedInAt, tenantId),
-      mapRepositoryError,
+      mapAuthUserRepositoryError,
     );
   }
 
@@ -239,12 +234,4 @@ function escapeLike(value: string): string {
     .replaceAll("\\", "\\\\")
     .replaceAll("%", "\\%")
     .replaceAll("_", "\\_");
-}
-
-function mapRepositoryError(cause: unknown): AuthUserRepositoryError {
-  return {
-    code: "repository_error",
-    message:
-      cause instanceof Error ? cause.message : "Auth user repository failed.",
-  };
 }

@@ -8,7 +8,8 @@
       "@nx/react/typings/image.d.ts",
       "vite/client"
     ],
-    "module": "esnext"
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
   "exclude": [
     "src/**/*.spec.ts",

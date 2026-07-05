@@ -148,7 +148,7 @@ const parseBody = async (response: Response): Promise<unknown> => {
     return undefined;
   }
 
-  const contentType = response.headers?.get?.("content-type") ?? "";
+  const contentType = response.headers.get("content-type") ?? "";
   if (contentType.toLowerCase().includes("json")) {
     try {
       return JSON.parse(text);

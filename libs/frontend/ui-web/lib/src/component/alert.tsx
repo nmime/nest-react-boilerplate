@@ -1,7 +1,7 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { cva, type VariantProps } from "class-variance-authority";
 import { type HTMLAttributes, type PropsWithChildren } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 const alertVariants = cva(
   "xr-alert rounded-[var(--xr-radius-md)] border border-border bg-card p-4 text-sm text-card-foreground shadow-sm",

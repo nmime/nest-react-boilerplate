@@ -15,7 +15,14 @@ export default defineConfig({
     passWithNoTests: false,
     coverage: fullCoverage(
       "../../../coverage/apps/frontend/admin",
-      ["src/app/**/*.{ts,tsx}"],
+      [
+        "src/App.tsx",
+        "src/entities/**/*.{ts,tsx}",
+        "src/features/**/*.{ts,tsx}",
+        "src/pages/**/*.{ts,tsx}",
+        "src/widgets/**/*.{ts,tsx}",
+        "src/shared/**/*.{ts,tsx}",
+      ],
       [],
     ),
   },

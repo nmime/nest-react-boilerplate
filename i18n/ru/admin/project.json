@@ -8,5 +8,17 @@
     "type:asset",
     "scope:admin",
     "boundary:i18n-assets"
-  ]
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "i18n/ru/admin",
+        "command": "node -e \"void 0\""
+      },
+      "inputs": ["default"],
+      "outputs": []
+    }
+  }
 }

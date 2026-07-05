@@ -19,10 +19,20 @@ const LocalePreview = observer(function LocalePreview() {
     <div>
       <span>{locale}</span>
       <span>{appStore.currentBreakpoint}</span>
-      <button onClick={() => setLocale("ru")} type="button">
+      <button
+        onClick={() => {
+          setLocale("ru");
+        }}
+        type="button"
+      >
         switch locale
       </button>
-      <button onClick={() => ui.toggleSidebar()} type="button">
+      <button
+        onClick={() => {
+          ui.toggleSidebar();
+        }}
+        type="button"
+      >
         {ui.sidebarOpen ? "open" : "closed"}
       </button>
     </div>

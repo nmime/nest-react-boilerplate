@@ -42,10 +42,13 @@ export class ContainerManager {
   async stopAll(): Promise<void> {
     const containers = this.containers.splice(0).reverse();
     const stopResults = await Promise.allSettled(
-      containers.map(async (container) => await container.stop()),
+      containers.map(async (container) => {
+        await container.stop();
+      }),
     );
-    const stopErrors = stopResults.flatMap((result, stopIndex) => {
-      if (result.status === "fulfilled") {
+    const stopErrors = containers.flatMap((container, stopIndex) => {
+      const result = stopResults[stopIndex];
+      if (result === undefined || result.status === "fulfilled") {
         return [];
       }
 
@@ -55,7 +58,7 @@ export class ContainerManager {
             stopIndex + 1
           }/${containers.length}.`,
           {
-            container: containers[stopIndex],
+            container,
             stopIndex,
             totalContainers: containers.length,
           },

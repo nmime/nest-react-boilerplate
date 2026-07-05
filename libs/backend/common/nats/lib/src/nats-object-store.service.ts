@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import type { Lister } from "@nats-io/jetstream";
 import type {
   ObjectStore,
@@ -10,12 +10,11 @@ import {
   type NatsObjectStoreSource,
 } from "./nats-object-store.factory";
 import { NatsService } from "./nats.service";
-
-export type NatsObjectStoreOpenOptions = boolean | { check?: boolean };
+import type { NatsObjectStoreOpenOptions } from "./type";
 
 @Injectable()
 export class NatsObjectStoreService {
-  constructor(private readonly natsService: NatsService) {}
+  constructor(@Inject(NatsService) private readonly natsService: NatsService) {}
 
   get isEnabled(): boolean {
     return this.natsService.isEnabled;

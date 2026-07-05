@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/backend/telegram-bot-worker/src",
   "projectType": "application",
-  "tags": ["platform:backend", "type:backend-app", "scope:auth"],
+  "tags": ["platform:backend", "type:backend-app", "scope:telegram"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -12,7 +12,11 @@
         "outputPath": "dist/apps/backend/telegram-bot-worker",
         "main": "apps/backend/telegram-bot-worker/src/main.ts",
         "tsConfig": "apps/backend/telegram-bot-worker/tsconfig.app.json",
-        "assets": []
+        "assets": [],
+        "generatePackageJson": true,
+        "updateBuildableProjectDepsInPackageJson": true,
+        "excludeLibsInPackageJson": true,
+        "generateLockfile": true
       }
     },
     "serve": {

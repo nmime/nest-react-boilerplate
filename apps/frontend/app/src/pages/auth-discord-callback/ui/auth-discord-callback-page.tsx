@@ -31,7 +31,7 @@ const isValidDiscordCallbackQueryState = (
   "code" in query && "state" in query;
 
 const readDiscordCallbackQuery = (): DiscordCallbackQueryState => {
-  const searchParams = new URLSearchParams(globalThis.location?.search ?? "");
+  const searchParams = new URLSearchParams(globalThis.location.search);
   const code = searchParams.get("code") ?? undefined;
   const state = searchParams.get("state") ?? undefined;
   const tenantId = searchParams.get("tenantId") ?? undefined;

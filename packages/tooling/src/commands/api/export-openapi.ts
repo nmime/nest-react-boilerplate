@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { openApiContractByName } from "./contracts-manifest.ts";
 
-function parseArgs(argv) {
+function parseArgs(argv: string[]) {
   const authContract = openApiContractByName("auth-app-api");
   const args = {
     app: authContract.app,
     output: authContract.artifactPath,
     port: "3999",
     dryRun: false,
+    help: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
@@ -30,7 +30,7 @@ function parseArgs(argv) {
   }
   return args;
 }
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {

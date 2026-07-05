@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { commandExists, envList, loadOpenApiContracts, parseArgs, run, schemaExample, slug, validateSchema, writeJson } from "./runtime-utils.ts";
+import type { LoadedOpenApiContract, OpenApiOperation } from "./runtime-utils.ts";
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -12,15 +12,26 @@ const safeMethods = new Set(["get", "head", "options"]);
 const allowUnsafe = process.env.OPENAPI_FUZZ_UNSAFE === "1";
 const globalBaseUrls = envList("OPENAPI_FUZZ_BASE_URL");
 const contracts = loadOpenApiContracts();
-const cases = [];
-const live = [];
+interface FuzzCase {
+  contract: string;
+  provider?: string;
+  method: string;
+  path: string;
+  operationId?: string;
+  safe: boolean;
+  validBody: unknown;
+  invalidBodies: unknown[];
+  probes: { seed: number; query: string }[];
+}
+const cases: FuzzCase[] = [];
+const live: Record<string, unknown>[] = [];
 
-function baseUrlsFor(contract) {
+function baseUrlsFor(contract: LoadedOpenApiContract): string[] {
   const contractSlug = slug(contract.doc.info?.title ?? contract.file).toUpperCase().replaceAll("-", "_");
   return envList(`OPENAPI_FUZZ_BASE_URL_${contractSlug}`, globalBaseUrls);
 }
 
-function operationCase(contract, route, method, operation) {
+function operationCase(contract: LoadedOpenApiContract, route: string, method: string, operation: OpenApiOperation): FuzzCase {
   const requestSchema = Object.values(operation.requestBody?.content ?? {}).find((media) => media?.schema)?.schema;
   const validBody = requestSchema ? schemaExample(requestSchema, contract.doc) : undefined;
   const invalidBodies = requestSchema ? [null, {}, "__qa_invalid_type__"] : [];

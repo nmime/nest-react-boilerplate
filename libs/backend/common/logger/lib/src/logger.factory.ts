@@ -254,8 +254,45 @@ const LogLevelRanks: Record<LogLevel, number> = {
   warn: 2,
 };
 
+const DefaultLogLevel: LogLevel = "log";
+
+// Common level names that other ecosystems use, mapped onto Nest's levels so a
+// near-universal value like "info" behaves as expected instead of silencing all
+// output (including errors).
+const LogLevelAliases: Partial<Record<string, LogLevel>> = {
+  info: "log",
+  trace: "verbose",
+  warning: "warn",
+  err: "error",
+  crit: "fatal",
+  critical: "fatal",
+};
+
+let hasWarnedAboutLogLevel = false;
+
 function levelRank(level: LogLevel): number {
   return LogLevelRanks[level];
+}
+
+function resolveConfiguredLogLevel(raw: string): LogLevel {
+  const normalized = raw.trim().toLowerCase();
+  if (Object.hasOwn(LogLevelRanks, normalized)) {
+    return normalized as LogLevel;
+  }
+
+  const alias = LogLevelAliases[normalized];
+  if (alias) {
+    return alias;
+  }
+
+  if (!hasWarnedAboutLogLevel) {
+    hasWarnedAboutLogLevel = true;
+    process.stderr.write(
+      `Unknown LOG_LEVEL "${raw}"; falling back to "${DefaultLogLevel}".\n`,
+    );
+  }
+
+  return DefaultLogLevel;
 }
 
 function isLevelEnabled(
@@ -266,10 +303,11 @@ function isLevelEnabled(
     return levels.includes(level);
   }
 
-  const configuredLevel = process.env.LOG_LEVEL?.toLowerCase() as
-    LogLevel | undefined;
-  if (configuredLevel) {
-    return levelRank(level) <= levelRank(configuredLevel);
+  const configuredLevel = process.env.LOG_LEVEL;
+  if (configuredLevel?.trim()) {
+    return (
+      levelRank(level) <= levelRank(resolveConfiguredLogLevel(configuredLevel))
+    );
   }
 
   return true;
@@ -282,12 +320,14 @@ function normalizeMessage(message: unknown): LogPayload {
     return { fields: {}, message: redacted };
   }
 
+  /* v8 ignore start -- redactProtectedVariables() above always converts Error instances into plain objects, so `redacted` can never be an Error at this point; block kept as a defensive fallback */
   if (redacted instanceof Error) {
     return {
       fields: { error: serializeError(redacted) },
       message: redacted.message,
     };
   }
+  /* v8 ignore stop */
 
   if (isJsonRecord(redacted)) {
     const { message: messageValue, ...fields } = redacted;
@@ -309,6 +349,7 @@ function getRequestPath(request: RequestLogLike): string {
 }
 
 function isSuppressedPath(path: string): boolean {
+  /* v8 ignore next -- noUncheckedIndexedAccess forces the `?? path` guard, but String.prototype.split() always yields a non-empty array so [0] is never undefined */
   const pathname = path.split("?")[0] ?? path;
 
   return HealthCheckPaths.has(pathname);

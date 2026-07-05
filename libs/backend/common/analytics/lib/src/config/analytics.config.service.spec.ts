@@ -79,6 +79,43 @@ describe("AnalyticsConfigService", () => {
     expect(service.plugins.map((plugin) => plugin.name)).toEqual(["posthog"]);
   });
 
+  it("prefers an explicit providers list over the environment", () => {
+    vi.stubEnv("ANALYTICS_PROVIDERS", "ga4");
+
+    const service = new AnalyticsConfigService({
+      providers: ["posthog"],
+      posthog: { apiKey: "ph-key" },
+    });
+
+    expect(service.providers).toEqual(["posthog"]);
+    expect(service.plugins.map((plugin) => plugin.name)).toEqual(["posthog"]);
+  });
+
+  it("falls back to NODE_ENV, then a development default, for the environment", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect(new AnalyticsConfigService().environment).toBe("production");
+
+    vi.stubEnv("NODE_ENV", "");
+    expect(new AnalyticsConfigService().environment).toBe("development");
+  });
+
+  it("reports the production flag from the resolved environment", () => {
+    expect(
+      new AnalyticsConfigService({ environment: "production" }).isProduction,
+    ).toBe(true);
+    expect(
+      new AnalyticsConfigService({ environment: "staging" }).isProduction,
+    ).toBe(false);
+  });
+
+  it("derives the Umami endpoint from a host, stripping trailing slashes", () => {
+    vi.stubEnv("ANALYTICS_UMAMI_HOST", "https://umami.example.com/");
+
+    const service = new AnalyticsConfigService();
+
+    expect(service.umamiEndpoint).toBe("https://umami.example.com/api/send");
+  });
+
   it("throws on malformed boolean and provider environment values", () => {
     vi.stubEnv("ANALYTICS_ENABLED", "maybe");
 

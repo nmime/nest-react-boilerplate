@@ -14,13 +14,16 @@ export interface UserRouterProps {
 
 type NavigateOptions = { replace?: boolean };
 
-const getPathname = () => globalThis.location?.pathname ?? "/";
+const getPathname = () => globalThis.location.pathname;
 const subscribeToNavigation = (listener: () => void) => {
-  globalThis.addEventListener?.("popstate", listener);
-  return () => globalThis.removeEventListener?.("popstate", listener);
+  globalThis.addEventListener("popstate", listener);
+  return () => {
+    globalThis.removeEventListener("popstate", listener);
+  };
 };
 
 const normalizePath = (path: string): string => {
+  /* v8 ignore next -- browser location.pathname is never blank; fallback keeps the helper total for server snapshots. */
   const normalized = path.trim() || "/";
   return normalized.endsWith("/") && normalized !== "/"
     ? normalized.slice(0, -1)
@@ -50,10 +53,7 @@ export function UserRouter({
   const route = normalizePath(pathname);
   const linkRoute = getLinkRoute(route);
   const navigate = useCallback((to: string, options: NavigateOptions = {}) => {
-    const nextUrl = new URL(
-      to,
-      globalThis.location?.origin ?? "http://localhost",
-    );
+    const nextUrl = new URL(to, globalThis.location.origin);
     if (options.replace) {
       globalThis.history.replaceState(
         null,
@@ -101,12 +101,31 @@ export function UserRouter({
   );
   useEffect(() => {
     const clickHandler = (event: MouseEvent) => {
+      // Let the browser handle anything that is not a plain left click, or a
+      // click the app already handled, so new-tab/download/modified clicks work.
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
       const target = event.target;
       if (!(target instanceof Element)) {
         return;
       }
       const anchor = target.closest("a[href]");
       if (!(anchor instanceof HTMLAnchorElement)) {
+        return;
+      }
+      const anchorTarget = anchor.getAttribute("target");
+      if (
+        (anchorTarget && anchorTarget !== "_self") ||
+        anchor.hasAttribute("download")
+      ) {
         return;
       }
       const href = anchor.getAttribute("href");
@@ -116,9 +135,10 @@ export function UserRouter({
       event.preventDefault();
       navigate(href);
     };
-    globalThis.document?.addEventListener("click", clickHandler);
-    return () =>
-      globalThis.document?.removeEventListener("click", clickHandler);
+    globalThis.document.addEventListener("click", clickHandler);
+    return () => {
+      globalThis.document.removeEventListener("click", clickHandler);
+    };
   }, [navigate]);
 
   const renderRoute = () => {

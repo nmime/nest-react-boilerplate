@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -18,11 +17,45 @@ const selectedGates = new Set(
     .map((value) => value.trim())
     .filter(Boolean),
 );
-const scripts = readJson("package.json").scripts ?? {};
-const results = [];
+const scripts = readJson<{ scripts?: Record<string, string> }>("package.json").scripts ?? {};
+
+/** Free-form evidence object each gate returns; fields vary by gate. */
+type GateEvidence = Record<string, unknown>;
+
+interface GateResult {
+  name: string;
+  status: "ok" | "failed" | "skipped";
+  durationMs?: number;
+  evidence?: GateEvidence;
+  message?: string;
+  details?: Record<string, unknown>;
+}
+
+interface ProbeOptions {
+  expectedStatuses?: Set<number>;
+  allowNonServerError?: boolean;
+}
+
+interface ProbeResult {
+  url: string;
+  status: number;
+  durationMs: number;
+  bytes: number;
+}
+
+/** Reads the `.details` bag attached to gate assertion errors, if present. */
+function gateDetails(error: unknown): Record<string, unknown> {
+  if (error !== null && typeof error === "object" && "details" in error) {
+    const details = (error as { details?: unknown }).details;
+    if (details !== null && typeof details === "object") return details as Record<string, unknown>;
+  }
+  return {};
+}
+
+const results: GateResult[] = [];
 const ciMode = process.env.CI === "true";
 const allowCiSkips = process.env.WORLD_CLASS_ALLOW_CI_SKIPS === "1";
-let backupRestoreEvidence;
+let backupRestoreEvidence: GateEvidence | undefined;
 
 const requiredGates = [
   "real-user-journey-e2e",
@@ -39,7 +72,7 @@ const requiredGates = [
   "reliability-smoke",
 ];
 
-function readText(path) {
+function readText(path: string): string {
   try {
     return readFileSync(path, "utf8");
   } catch {
@@ -47,20 +80,18 @@ function readText(path) {
   }
 }
 
-function assertGate(condition, message, details = {}) {
+function assertGate(condition: unknown, message: string, details: Record<string, unknown> = {}): asserts condition {
   if (condition) return;
-  const error = new Error(message);
-  error.details = details;
-  throw error;
+  throw Object.assign(new Error(message), { details });
 }
 
-function requireScripts(names) {
+function requireScripts(names: string[]): void {
   for (const name of names) {
     assertGate(Boolean(scripts[name]), `Missing package script: ${name}`);
   }
 }
 
-function missingRuntimeGate(reason, details = {}) {
+function missingRuntimeGate(reason: string, details: Record<string, unknown> = {}): GateEvidence {
   return {
     status: ciMode && !allowCiSkips ? "failed" : "skipped",
     reason,
@@ -68,32 +99,28 @@ function missingRuntimeGate(reason, details = {}) {
   };
 }
 
-function skipGate(reason, details = {}) {
-  return { status: "skipped", reason, details };
-}
-
-function percentile(values, percentileValue) {
+function percentile(values: number[], percentileValue: number): number {
   const sorted = [...values].sort((left, right) => left - right);
   return sorted[Math.max(0, Math.ceil(sorted.length * percentileValue) - 1)] ?? 0;
 }
 
-function sha256(value) {
+function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function tail(value, max = 2000) {
+function tail(value: unknown, max = 2000): string {
   const text = String(value ?? "");
   return text.length > max ? text.slice(-max) : text;
 }
 
-function redact(value) {
+function redact(value: unknown): string {
   return String(value ?? "")
     .replaceAll(/(postgres(?:ql)?:\/\/[^:\s]+:)[^@\s]+(@)/giu, "$1***$2")
     .replaceAll(/([?&](?:token|key|secret|password)=)[^&\s]+/giu, "$1***")
     .replaceAll(/(authorization:\s*bearer\s+)[^\s]+/giu, "$1***");
 }
 
-function firstEnv(names) {
+function firstEnv(names: string[]): { name: string; value: string } | null {
   for (const name of names) {
     const value = process.env[name]?.trim();
     if (value) return { name, value };
@@ -101,18 +128,20 @@ function firstEnv(names) {
   return null;
 }
 
-function assertNonDryRunCommand(command, label) {
+function assertNonDryRunCommand(command: string, label: string): void {
   assertGate(!/(^|\s)--dry-run(\s|$)|dry-run/i.test(command), `${label} must not use dry-run`, { command: redact(command) });
 }
 
-function configuredCommand(names, fallback) {
+function configuredCommand(names: string[], fallback: string): { command: string; source: string };
+function configuredCommand(names: string[], fallback?: string): { command: string; source: string } | null;
+function configuredCommand(names: string[], fallback?: string): { command: string; source: string } | null {
   const fromEnv = firstEnv(names);
   if (fromEnv) return { command: fromEnv.value, source: fromEnv.name };
   if (fallback) return { command: fallback, source: "ci-safe-local-default" };
   return null;
 }
 
-function runShell(label, command, extraEnv = {}) {
+function runShell(label: string, command: string, extraEnv: NodeJS.ProcessEnv = {}): { commandHash: string; status: number; stdoutHash: string; stderrHash: string } {
   assertNonDryRunCommand(command, label);
   const result = run("sh", ["-c", command], { env: extraEnv });
   assertGate(result.status === 0, `${label} command failed`, {
@@ -130,30 +159,30 @@ function runShell(label, command, extraEnv = {}) {
   };
 }
 
-function urlsFrom(...names) {
-  const urls = [];
+function urlsFrom(...names: string[]): string[] {
+  const urls: string[] = [];
   for (const name of names) urls.push(...envList(name));
   return [...new Set(urls.map((url) => url.trim()).filter(Boolean))];
 }
 
-function positiveInt(value, fallback) {
+function positiveInt(value: string | number | undefined, fallback: number): number {
   const parsed = Number.parseInt(String(value ?? ""), 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function errorContext(error) {
+function errorContext(error: unknown): { message: string; details: Record<string, unknown> } {
   return {
     message: error instanceof Error ? error.message : String(error),
-    details: error?.details ?? {},
+    details: gateDetails(error),
   };
 }
 
-async function probeUrl(url, options = {}) {
-  let parsed;
+async function probeUrl(url: string, options: ProbeOptions = {}): Promise<ProbeResult> {
+  let parsed: URL | undefined;
   try {
     parsed = new URL(url);
   } catch {
@@ -161,7 +190,7 @@ async function probeUrl(url, options = {}) {
   }
   assertGate(["http:", "https:"].includes(parsed.protocol), "Runtime probe URL must be HTTP(S)", { url });
   const started = performance.now();
-  let response;
+  let response: Response | undefined;
   try {
     response = await fetch(url, {
       signal: AbortSignal.timeout(Number(process.env.QA_URL_TIMEOUT_MS ?? 15000)),
@@ -179,10 +208,10 @@ async function probeUrl(url, options = {}) {
   return { url, status: response.status, durationMs, bytes: body.byteLength };
 }
 
-async function probeUrlWithRetry(target, attempts, delay, options = {}) {
+async function probeUrlWithRetry(target: string, attempts: string | number | undefined, delay: string | number | undefined, options: ProbeOptions = {}): Promise<(ProbeResult & { attempts: number; failures: unknown[] }) | undefined> {
   const cappedAttempts = Math.min(positiveInt(attempts, 1), 30);
   const cappedDelay = Math.min(positiveInt(delay, 0), 30000);
-  const failures = [];
+  const failures: { attempt: number; message: string; details: Record<string, unknown> }[] = [];
   for (let attempt = 1; attempt <= cappedAttempts; attempt += 1) {
     try {
       const result = await probeUrl(target, options);
@@ -204,21 +233,22 @@ async function probeUrlWithRetry(target, attempts, delay, options = {}) {
   }
 }
 
-async function runGate(name, check) {
+async function runGate(name: string, check: () => GateEvidence | Promise<GateEvidence>): Promise<void> {
   if (selectedGates.size && !selectedGates.has(name)) return;
   const started = performance.now();
   try {
     const evidence = await check();
-    const status = evidence?.status === "failed" ? "failed" : evidence?.status === "skipped" ? "skipped" : "ok";
+    const status = evidence.status === "failed" ? "failed" : evidence.status === "skipped" ? "skipped" : "ok";
+    const message = typeof evidence.reason === "string" ? evidence.reason : "World-class gate required in CI was not configured";
     results.push({
       name,
       status,
       durationMs: Math.round(performance.now() - started),
       evidence,
-      ...(status === "failed" ? { message: evidence?.reason ?? "World-class gate required in CI was not configured" } : {}),
+      ...(status === "failed" ? { message } : {}),
     });
   } catch (error) {
-    results.push({ name, status: "failed", durationMs: Math.round(performance.now() - started), message: error instanceof Error ? error.message : String(error), details: error?.details ?? {} });
+    results.push({ name, status: "failed", durationMs: Math.round(performance.now() - started), message: error instanceof Error ? error.message : String(error), details: gateDetails(error) });
   }
 }
 
@@ -244,7 +274,7 @@ async function loadStressSoak() {
   }
   const requestsPerUrl = Number(process.env.QA_LOAD_REQUESTS ?? 20);
   const budgetMs = Number(process.env.QA_LOAD_P95_BUDGET_MS ?? 1000);
-  const samples = [];
+  const samples: ProbeResult[] = [];
   for (const url of urls) {
     for (let index = 0; index < requestsPerUrl; index += 1) {
       samples.push(await probeUrl(url, { allowNonServerError: true }));
@@ -266,7 +296,7 @@ async function chaosResilience() {
   const before = await probeUrl(target, { allowNonServerError: true });
   const defaultCommand = existsSync("docker/docker-compose.yml") ? `docker compose -f docker/docker-compose.yml restart ${process.env.QA_CHAOS_SERVICE ?? "user-app-api"}` : undefined;
   const command = configuredCommand(["QA_CHAOS_COMMAND", "CHAOS_TEST_COMMAND"], defaultCommand);
-  assertGate(Boolean(command), "Chaos gate requires QA_CHAOS_COMMAND or docker/docker-compose.yml local default", { env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"] });
+  assertGate(command, "Chaos gate requires QA_CHAOS_COMMAND or docker/docker-compose.yml local default", { env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"] });
   const commandEvidence = runShell("chaos injection", command.command);
   const after = await probeUrlWithRetry(
     target,
@@ -277,7 +307,7 @@ async function chaosResilience() {
   return { mode: "command-and-probe", commandSource: command.source, before, after, ...commandEvidence };
 }
 
-function backupRestoreCommand(outputName) {
+function backupRestoreCommand(outputName: string): string {
   const output = join("test-results", "world-class", outputName);
   return `pnpm run db:backup -- --output ${output} && pnpm run db:restore -- --input ${output} --yes`;
 }
@@ -322,8 +352,8 @@ function backupRestoreCiGate() {
 }
 
 function multiTenantSecurity() {
-  const permissions = { owner: new Set(["tenant:read", "tenant:write", "admin:profile:read"]), member: new Set(["tenant:read"]), auditor: new Set(["tenant:read", "audit:read"]) };
-  const cases = [["acme", "acme", "owner", "tenant:write", true], ["acme", "globex", "owner", "tenant:write", false], ["acme", "acme", "member", "tenant:write", false], ["globex", "globex", "auditor", "audit:read", true], ["globex", "acme", "auditor", "audit:read", false]];
+  const permissions: Record<"owner" | "member" | "auditor", Set<string>> = { owner: new Set(["tenant:read", "tenant:write", "admin:profile:read"]), member: new Set(["tenant:read"]), auditor: new Set(["tenant:read", "audit:read"]) };
+  const cases: [string, string, "owner" | "member" | "auditor", string, boolean][] = [["acme", "acme", "owner", "tenant:write", true], ["acme", "globex", "owner", "tenant:write", false], ["acme", "acme", "member", "tenant:write", false], ["globex", "globex", "auditor", "audit:read", true], ["globex", "acme", "auditor", "audit:read", false]];
   const evaluated = cases.map(([actorTenant, resourceTenant, role, permission, expected]) => ({ actorTenant, resourceTenant, role, permission, expected, actual: actorTenant === resourceTenant && permissions[role]?.has(permission) === true }));
   assertGate(evaluated.every((testCase) => testCase.actual === testCase.expected), "Permission matrix must fail closed across tenants", { evaluated });
   return { cases: evaluated.length };
@@ -347,7 +377,7 @@ async function canarySyntheticMonitoring() {
     });
   }
   const expectedStatuses = new Set(envList("QA_CANARY_EXPECTED_STATUSES", ["200", "204", "301", "302", "401", "403"]).map(Number));
-  const checks = [];
+  const checks: ProbeResult[] = [];
   for (const url of urls) checks.push(await probeUrl(url, { expectedStatuses }));
   const p95 = percentile(checks.map((check) => check.durationMs), 0.95);
   const budgetMs = Number(process.env.QA_CANARY_P95_BUDGET_MS ?? 1500);
@@ -364,7 +394,14 @@ function observability() {
   assertGate(logs.every((log) => log.requestId && log.tenantId), "Logs lack correlation", { logs });
   assertGate(traces.every((trace) => trace.spans.includes("db.query")), "Trace lacks datastore span", { traces });
   assertGate(percentile(metrics.durations, 0.95) < 100 && metrics.errors === 0, "Metrics SLO failed", metrics);
-  return { logs: logs.length, traces: traces.length, metrics: 3 };
+  return {
+    placeholder: true,
+    placeholderReason:
+      "Observability gate ran against in-repo fixtures; set QA_OBSERVABILITY_COMMAND for an authoritative runtime check.",
+    logs: logs.length,
+    traces: traces.length,
+    metrics: 3,
+  };
 }
 
 function migrationRollback() {
@@ -372,7 +409,7 @@ function migrationRollback() {
   const defaultCommand = commandExists("docker") ? "pnpm run db:migrations:rollback-check" : undefined;
   const command = configuredCommand(["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"], defaultCommand);
   if (!command) {
-    return skipGate("Migration rollback gate skipped because Docker/Testcontainers is unavailable and no real rollback command is configured.", {
+    return missingRuntimeGate("Migration rollback gate requires Docker/Testcontainers or an explicit rollback command in CI; set QA_MIGRATION_ROLLBACK_COMMAND or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
       env: ["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"],
       requiredScript: "db:migrations:rollback-check",
     });
@@ -397,16 +434,29 @@ async function concurrencyRace() {
 }
 
 function reliabilitySmoke() {
+  const cycles = 500;
+  const modulus = 1009;
   let state = 0;
   let maxHeapDelta = 0;
   const initialHeap = process.memoryUsage().heapUsed;
-  for (let cycle = 0; cycle < 500; cycle += 1) {
-    state = (state + cycle * 17) % 1009;
+  for (let cycle = 0; cycle < cycles; cycle += 1) {
+    state = (state + cycle * 17) % modulus;
     if (cycle % 25 === 0) maxHeapDelta = Math.max(maxHeapDelta, process.memoryUsage().heapUsed - initialHeap);
   }
-  assertGate(state >= 0, "Reliability state machine failed", { state });
+  // Independently recompute the deterministic terminal state so this asserts that
+  // every cycle ran, not the trivially-true state >= 0.
+  let expectedState = 0;
+  for (let cycle = 0; cycle < cycles; cycle += 1) expectedState = (expectedState + cycle * 17) % modulus;
+  assertGate(state === expectedState, "Reliability state machine drifted from deterministic expectation", { state, expectedState });
   assertGate(maxHeapDelta < 32 * 1024 * 1024, "Heap growth budget exceeded", { maxHeapDelta });
-  return { cycles: 500, state, maxHeapDelta };
+  return {
+    placeholder: true,
+    placeholderReason:
+      "Reliability smoke is an in-process simulation; wire a runtime soak/chaos command for an authoritative signal.",
+    cycles,
+    state,
+    maxHeapDelta,
+  };
 }
 
 await runGate("real-user-journey-e2e", realUserJourneyE2e);
@@ -422,11 +472,35 @@ await runGate("migration-rollback", migrationRollback);
 await runGate("concurrency-race", concurrencyRace);
 await runGate("reliability-smoke", reliabilitySmoke);
 
-const failed = results.filter((result) => result.status === "failed");
 const skipped = [
   ...requiredGates.filter((gate) => selectedGates.size && !selectedGates.has(gate)).map((name) => ({ name, reason: "not selected" })),
   ...results.filter((result) => result.status === "skipped").map((result) => ({ name: result.name, reason: result.evidence?.reason })),
 ];
+
+// Structural safeguard: a gate listed in requiredGates must never silently skip in CI.
+// Any required-gate skip (runtime-missing, not-selected, or otherwise) fails the run
+// unless WORLD_CLASS_ALLOW_CI_SKIPS=1 explicitly acknowledges the partial run.
+const requiredGateSet = new Set(requiredGates);
+const disallowedRequiredSkips =
+  ciMode && !allowCiSkips
+    ? skipped.filter((entry) => requiredGateSet.has(entry.name))
+    : [];
+
+const failed = [
+  ...results.filter((result) => result.status === "failed"),
+  ...disallowedRequiredSkips.map((entry) => ({
+    name: entry.name,
+    status: "failed",
+    message: `Required gate must not skip in CI without WORLD_CLASS_ALLOW_CI_SKIPS=1: ${entry.reason ?? "skipped"}`,
+  })),
+];
+
+// Placeholder gates ran against in-repo fixtures/simulations; surface them so they are
+// not mistaken for authoritative runtime passes.
+const placeholders = results
+  .filter((result) => result.evidence?.placeholder === true)
+  .map((result) => ({ name: result.name, reason: result.evidence?.placeholderReason }));
+
 const report = {
   status: failed.length ? "failed" : skipped.length ? "partial" : "ok",
   dryRun: false,
@@ -434,6 +508,7 @@ const report = {
   allowCiSkips,
   gates: results,
   skipped,
+  placeholders,
   generatedAt: new Date().toISOString(),
 };
 ensureDir("test-results/world-class");
@@ -448,4 +523,7 @@ if (failed.length) {
 if (skipped.length) {
   console.warn(`World-class QA gates completed with ${skipped.length} skipped gate(s); report status is partial.`);
 }
-console.log(JSON.stringify({ status: report.status, gates: results.length, skipped: skipped.length, report: reportPath }));
+if (placeholders.length) {
+  console.warn(`World-class QA gates include ${placeholders.length} placeholder gate(s) that ran against fixtures, not authoritative runtime.`);
+}
+console.log(JSON.stringify({ status: report.status, gates: results.length, skipped: skipped.length, placeholders: placeholders.length, report: reportPath }));

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
@@ -17,4 +16,4 @@ const { createPostgresMikroOrmOptions } = require("@app/backend-postgres-main");
 export const authMigrationTableName = AuthMigrationsTableName;
 export function createAuthMigrationOrmOptions(env = process.env) { return createPostgresMikroOrmOptions({ entities: [AuthUserEntitySchema, FeatureFlagEntitySchema], autoLoadEntities: false, allowGlobalContext: true, migrations: authMigrationOptions }, env); }
 export async function initAuthMigrationOrm(env = process.env) { return MikroORM.init(createAuthMigrationOrmOptions(env)); }
-export function migrationNames(migrations) { return migrations.map((migration) => migration.name); }
+export function migrationNames(migrations: readonly { name: string }[]) { return migrations.map((migration) => migration.name); }

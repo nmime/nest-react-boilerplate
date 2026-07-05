@@ -12,7 +12,11 @@
         "outputPath": "dist/apps/backend/discord-app-api",
         "main": "apps/backend/discord-app-api/src/main.ts",
         "tsConfig": "apps/backend/discord-app-api/tsconfig.app.json",
-        "assets": []
+        "assets": [],
+        "generatePackageJson": true,
+        "updateBuildableProjectDepsInPackageJson": true,
+        "excludeLibsInPackageJson": true,
+        "generateLockfile": true
       }
     },
     "serve": {

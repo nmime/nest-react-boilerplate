@@ -42,7 +42,9 @@ export function AuthCards({
         <UiForm
           aria-busy={isLoginPending}
           className="xr-auth-form"
-          onSubmit={(event) => onSubmit(AuthMode.Login, event)}
+          onSubmit={(event) => {
+            onSubmit(AuthMode.Login, event);
+          }}
         >
           <UiTextField
             aria-label={t("user.form.loginEmailLabel")}
@@ -91,7 +93,9 @@ export function AuthCards({
         <UiForm
           aria-busy={isRegisterPending}
           className="xr-auth-form"
-          onSubmit={(event) => onSubmit(AuthMode.Register, event)}
+          onSubmit={(event) => {
+            onSubmit(AuthMode.Register, event);
+          }}
         >
           <UiTextField
             aria-label={t("user.form.registerDisplayNameLabel")}

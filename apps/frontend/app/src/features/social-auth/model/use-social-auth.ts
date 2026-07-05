@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend-api-client";
+import { authApi, useAuthApiClient } from "@app/frontend-api-client";
 import { clearApiAuthRequired } from "@app/frontend-api-support";
 import { useAuthShellStore } from "@app/frontend-runtime";
+import { profileQueryKey } from "../../../entities/profile";
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,
@@ -57,7 +58,10 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
     if (session?.accessToken) {
       authStore.setSession(session.accessToken, session.refreshToken);
       clearApiAuthRequired();
-      void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+      void queryClient.invalidateQueries({
+        queryKey: authApi.getAuthControllerMeQueryKey(),
+      });
+      void queryClient.invalidateQueries({ queryKey: profileQueryKey() });
       void queryClient.invalidateQueries({
         queryKey: providerIdentitiesQueryKey(),
       });

@@ -15,7 +15,9 @@ export const LanguageSwitcher = observer(function LanguageSwitcher() {
       aria-label={t("common.language")}
       className="xr-language-switcher"
       label={t("common.language")}
-      onValueChange={(value) => setLocale(value as Locale)}
+      onValueChange={(value) => {
+        setLocale(value as Locale);
+      }}
       options={supportedLocales.map((nextLocale) => ({
         label: t(`common.language.${nextLocale}`),
         value: nextLocale,
@@ -35,7 +37,9 @@ export const ThemeSwitcher = observer(function ThemeSwitcher() {
       aria-label={t("common.theme")}
       className="xr-theme-switcher"
       label={t("common.theme")}
-      onValueChange={(value) => setTheme(value as UiTheme)}
+      onValueChange={(value) => {
+        setTheme(value as UiTheme);
+      }}
       options={supportedThemes.map((nextTheme) => ({
         label: t(`common.theme.${nextTheme}`),
         value: nextTheme,

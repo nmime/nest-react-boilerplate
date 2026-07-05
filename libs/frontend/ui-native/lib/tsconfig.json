@@ -2,9 +2,16 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "types": ["node"]
+    "types": ["node"],
+    "lib": ["es2022", "dom"],
+    "moduleResolution": "bundler",
+    "module": "esnext"
   },
   "include": [],
   "files": [],
-  "references": [{ "path": "./tsconfig.lib.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
 }

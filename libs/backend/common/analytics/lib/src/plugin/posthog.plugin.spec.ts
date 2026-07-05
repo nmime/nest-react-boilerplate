@@ -42,6 +42,98 @@ describe("createPostHogAnalyticsPlugin", () => {
     });
   });
 
+  it("maps identify payloads to a PostHog $identify event", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createPostHogAnalyticsPlugin({
+      apiKey: "ph-key",
+      fetch: fetcher,
+    });
+    const timestamp = new Date("2024-01-02T03:04:05.000Z");
+
+    await plugin.identify?.({
+      userId: "user-1",
+      traits: { plan: "pro" },
+      context: { requestId: "req-1" },
+      timestamp,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://app.posthog.com/capture/",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const body = readJsonBody<Record<string, unknown>>(
+      fetcher.mock.calls[0]?.[1],
+    );
+    expect(body).toMatchObject({
+      event: "$identify",
+      distinct_id: "user-1",
+      timestamp: timestamp.toISOString(),
+      properties: { $set: { plan: "pro" }, context: { requestId: "req-1" } },
+    });
+  });
+
+  it("defaults identify traits to an empty set when none are supplied", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createPostHogAnalyticsPlugin({
+      apiKey: "ph-key",
+      fetch: fetcher,
+    });
+
+    await plugin.identify?.({ userId: "user-1" });
+
+    const body = readJsonBody<Record<string, unknown>>(
+      fetcher.mock.calls[0]?.[1],
+    );
+    expect(body).toMatchObject({
+      event: "$identify",
+      distinct_id: "user-1",
+      properties: { $set: {} },
+    });
+    expect(body).not.toHaveProperty("timestamp");
+  });
+
+  it("maps page views using the context distinct id", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createPostHogAnalyticsPlugin({
+      apiKey: "ph-key",
+      fetch: fetcher,
+    });
+
+    await plugin.page?.({
+      name: "Home",
+      path: "/home",
+      properties: { referrer: "search" },
+      context: { distinctId: "visitor-1" },
+    });
+
+    const body = readJsonBody<Record<string, unknown>>(
+      fetcher.mock.calls[0]?.[1],
+    );
+    expect(body).toMatchObject({
+      event: "$pageview",
+      distinct_id: "visitor-1",
+      properties: {
+        referrer: "search",
+        $current_url: "/home",
+        name: "Home",
+      },
+    });
+  });
+
+  it("falls back to a server distinct id for page views without context", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(null));
+    const plugin = createPostHogAnalyticsPlugin({
+      apiKey: "ph-key",
+      fetch: fetcher,
+    });
+
+    await plugin.page?.({ path: "/" });
+
+    expect(
+      readJsonBody<Record<string, unknown>>(fetcher.mock.calls[0]?.[1]),
+    ).toMatchObject({ event: "$pageview", distinct_id: "server" });
+  });
+
   it("throws when PostHog rejects the event", async () => {
     const fetcher = vi
       .fn<typeof fetch>()

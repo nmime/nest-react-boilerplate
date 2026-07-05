@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Injectable, Module } from "@nestjs/common";
 import type {
   DynamicModule,
   OnApplicationShutdown,
@@ -22,6 +22,7 @@ import type { NatsConfig } from "./type";
 
 export type NatsModuleOptions = NatsConfig;
 
+@Injectable()
 class NatsShutdownService implements OnApplicationShutdown {
   constructor(
     @InjectNatsConnection()

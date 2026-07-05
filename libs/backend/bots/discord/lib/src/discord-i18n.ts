@@ -29,49 +29,11 @@ export function resolveDiscordLocale(
   return fallbackLocale;
 }
 
-export async function resolveInteractionLocale(
-  interaction: APIInteraction,
-  externalAuth?: {
-    listProviderIdentities: (
-      userId: string,
-      tenantId: string,
-    ) => Promise<Array<{ provider: string; providerSubject: string }>>;
-  },
-  tenantId?: string,
-): Promise<Locale> {
+export function resolveInteractionLocale(interaction: APIInteraction): Locale {
   const maybeInteraction = interaction as {
-    user?: { id: string };
-    member?: { user?: { id: string } };
     locale?: string;
     guild_locale?: string;
   };
-  const userId = maybeInteraction.user?.id ?? maybeInteraction.member?.user?.id;
-  if (userId && externalAuth && tenantId) {
-    try {
-      const identities = await externalAuth.listProviderIdentities(
-        userId,
-        tenantId,
-      );
-      const linkedIdentity = identities.find(
-        (identity) =>
-          identity.provider === "discord" &&
-          identity.providerSubject === userId,
-      );
-      const metadata = linkedIdentity
-        ? ((
-            linkedIdentity as unknown as {
-              profileMetadata?: { locale?: string };
-            }
-          ).profileMetadata ?? {})
-        : {};
-      const resolved = normalizeLocale(metadata.locale);
-      if (resolved) {
-        return resolved;
-      }
-    } catch {
-      // Locale resolution must not fail Discord's 3 second interaction response.
-    }
-  }
   return resolveDiscordLocale(
     maybeInteraction.locale,
     maybeInteraction.guild_locale,
@@ -81,7 +43,9 @@ export async function resolveInteractionLocale(
 export function localizationsFor(key: TranslationKey): Record<string, string> {
   const entries = supportedLocales
     .filter((locale) => locale !== fallbackLocale)
-    .map((locale) => [locale, translations[locale][key]] as const)
-    .filter(([, value]) => Boolean(value));
+    .flatMap((locale) => {
+      const value = translations[locale][key];
+      return value ? [[locale, value] as const] : [];
+    });
   return Object.fromEntries(entries);
 }

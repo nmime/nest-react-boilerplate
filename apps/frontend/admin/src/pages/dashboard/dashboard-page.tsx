@@ -262,7 +262,7 @@ const DashboardDataPage = ({
     queryKey: ["admin-health", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerHealth(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) {
+        if (!r.response.ok) {
           throw new Error("health");
         }
         return true;
@@ -273,7 +273,7 @@ const DashboardDataPage = ({
     queryKey: ["admin-live", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerLive(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) {
+        if (!r.response.ok) {
           throw new Error("live");
         }
         return true;
@@ -284,7 +284,7 @@ const DashboardDataPage = ({
     queryKey: ["admin-ready", requestOptions] as const,
     queryFn: () =>
       adminApi.adminHealthControllerReady(requestOptions).then((r) => {
-        if (r.error || !r.response.ok) {
+        if (!r.response.ok) {
           throw new Error("ready");
         }
         return true;

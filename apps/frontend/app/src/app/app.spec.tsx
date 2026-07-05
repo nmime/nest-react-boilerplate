@@ -21,7 +21,9 @@ const installStorage = () => {
   Object.defineProperty(window, "localStorage", {
     configurable: true,
     value: {
-      clear: () => values.clear(),
+      clear: () => {
+        values.clear();
+      },
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => values.set(key, value),
     },
@@ -318,7 +320,9 @@ describe("User app shell", () => {
     render(<App />);
     submitLogin("return@example.com");
 
-    await waitFor(() => expect(window.location.pathname).toBe("/profile"));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/profile");
+    });
     expect(await screen.findByText("Ready: return@example.com")).toBeTruthy();
   });
 
@@ -375,11 +379,11 @@ describe("User app shell", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         screen.getByText("Provide a token or use login/register."),
-      ).toBeTruthy(),
-    );
+      ).toBeTruthy();
+    });
   });
 
   it("uses saved user locale before profile calls and ignores stale local storage", async () => {
@@ -426,7 +430,7 @@ describe("User app shell", () => {
 
     chooseSelectOption("Language", "ru");
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         findFetchInit(
           fetchMock,
@@ -438,8 +442,8 @@ describe("User app shell", () => {
           },
           "PATCH",
         ),
-      ).toBeTruthy(),
-    );
+      ).toBeTruthy();
+    });
     expectFetchRequest(
       fetchMock,
       "/auth/me/preferences",
@@ -462,14 +466,14 @@ describe("User app shell", () => {
         "PATCH",
       ),
     ).resolves.toBe(JSON.stringify({ locale: "ru" }));
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         findFetchInit(fetchMock, "/profile/me", {
           "Accept-Language": "ru",
           Authorization: "Bearer switch-token",
         }),
-      ).toBeTruthy(),
-    );
+      ).toBeTruthy();
+    });
   });
 
   it("persists theme switches for authenticated users", async () => {
@@ -488,7 +492,7 @@ describe("User app shell", () => {
 
     chooseSelectOption("Theme", "dark");
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         findFetchInit(
           fetchMock,
@@ -500,8 +504,8 @@ describe("User app shell", () => {
           },
           "PATCH",
         ),
-      ).toBeTruthy(),
-    );
+      ).toBeTruthy();
+    });
     await expect(
       readFetchBody(
         fetchMock,
@@ -566,11 +570,11 @@ describe("User app shell", () => {
     setFetch(jsonResponse({ data: {} }));
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Login" }));
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         screen.getByText("Provide a token or use login/register."),
-      ).toBeTruthy(),
-    );
+      ).toBeTruthy();
+    });
   });
 
   it("continues after auth/me failures and uses object error details", async () => {
@@ -649,5 +653,58 @@ describe("User app shell", () => {
     expect(
       await screen.findByText("Готово: registered@example.com"),
     ).toBeTruthy();
+  });
+
+  it("renders link-discord and unknown routes through the shell", async () => {
+    window.history.pushState({}, "", "/link/discord");
+    const { unmount } = render(<App />);
+
+    expect(await screen.findByText("Account control room")).toBeTruthy();
+    unmount();
+
+    window.history.pushState({}, "", "/settings/");
+    const trailingSlash = render(<App />);
+    expect(await screen.findByText("Account control room")).toBeTruthy();
+    trailingSlash.unmount();
+
+    window.history.pushState({}, "", "/unknown");
+    render(<App />);
+
+    expect(screen.getAllByText("User design v3").length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/unknown");
+  });
+
+  it("lets the browser handle non-SPA link clicks", () => {
+    render(<App />);
+    const startPath = window.location.pathname;
+    const appendAnchor = (
+      href: string,
+      configure?: (anchor: HTMLAnchorElement) => void,
+    ) => {
+      const anchor = document.createElement("a");
+      anchor.setAttribute("href", href);
+      anchor.textContent = href;
+      configure?.(anchor);
+      document.body.append(anchor);
+      return anchor;
+    };
+
+    document.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, button: 0 }),
+    );
+    fireEvent.click(appendAnchor("/settings"), { metaKey: true });
+    fireEvent.click(
+      appendAnchor("/profile", (anchor) => {
+        anchor.target = "_blank";
+      }),
+    );
+    fireEvent.click(
+      appendAnchor("/download", (anchor) => {
+        anchor.setAttribute("download", "report.txt");
+      }),
+    );
+    fireEvent.click(appendAnchor("mailto:support@example.test"));
+
+    expect(window.location.pathname).toBe(startPath);
   });
 });

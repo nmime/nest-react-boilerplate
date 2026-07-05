@@ -241,6 +241,42 @@ describe("shared UI components", () => {
     expect(html).toContain("Use a work email");
   });
 
+  it("renders as a slotted child element when asChild is set", () => {
+    render(
+      <UiButton asChild variant="ghost">
+        <a href="/child">Child link</a>
+      </UiButton>,
+    );
+
+    const link = screen.getByRole("link", { name: "Child link" });
+    expect(link.getAttribute("href")).toBe("/child");
+    expect(link.getAttribute("type")).toBeNull();
+    expect(link.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("adds hardening rel tokens for blank links without an explicit rel", () => {
+    const html = renderToStaticMarkup(
+      <UiButton href="https://example.com" target="_blank">
+        Open external
+      </UiButton>,
+    );
+
+    expect(html).toContain('rel="noopener noreferrer"');
+    expect(html).toContain('target="_blank"');
+  });
+
+  it("marks loading links as busy and unavailable", () => {
+    const html = renderToStaticMarkup(
+      <UiButton href="/reports" isLoading loadingLabel="Loading reports">
+        Reports
+      </UiButton>,
+    );
+
+    expect(html).toContain('aria-busy="true"');
+    expect(html).toContain('aria-disabled="true"');
+    expect(html).toContain("Loading reports");
+  });
+
   it("renders shadcn-style form and Radix select primitives", () => {
     const onValueChange = vi.fn();
 

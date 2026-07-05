@@ -1,15 +1,22 @@
 #!/usr/bin/env node
-// @ts-nocheck
 import { existsSync, readFileSync } from "node:fs";
 import { findOperation, loadOpenApiContracts, matchPathTemplate, parseArgs, readJson, schemaExample, validateSchema, writeJson } from "./runtime-utils.ts";
 
 const args = parseArgs();
 const iterations = Number(args.options.get("iterations") ?? process.env.PROPERTY_ITERATIONS ?? 100);
 const reportPath = args.options.get("report") ?? "test-results/property/report.json";
-const errors = [];
-const checks = [];
+const errors: string[] = [];
 
-function assert(name, predicate, details = {}) {
+interface PropertyCheck {
+  name: string;
+  ok: boolean;
+  details?: Record<string, unknown>;
+  engine?: string;
+  note?: string;
+}
+const checks: PropertyCheck[] = [];
+
+function assert(name: string, predicate: () => boolean, details: Record<string, unknown> = {}): void {
   try {
     const ok = predicate();
     if (!ok) errors.push(`${name}: failed ${JSON.stringify(details)}`);
@@ -20,7 +27,7 @@ function assert(name, predicate, details = {}) {
   }
 }
 
-function random(seed) {
+function random(seed: number): () => number {
   let state = seed + 0x6d2b79f5;
   return () => {
     state |= 0;
@@ -47,7 +54,7 @@ for (const contract of contracts) {
   }
 }
 
-const pkg = readJson("package.json");
+const pkg = readJson<{ scripts?: Record<string, string> }>("package.json");
 for (const [name, script] of Object.entries(pkg.scripts ?? {})) {
   for (const match of String(script).matchAll(/(?:node|tsx|ts-node)\s+([^\s&|;]+\.(?:mjs|mts|js|ts))/g)) {
     if (match[1].startsWith("packages/") || match[1].startsWith("tools/")) assert(`script ${name} points to existing file`, () => existsSync(match[1]), { file: match[1] });
@@ -61,6 +68,7 @@ assert("tooling package exists", () => existsSync("packages/tooling/package.json
 for (let seed = 0; seed < iterations; seed += 1) {
   const rnd = random(seed);
   const contract = contracts[Math.floor(rnd() * contracts.length)];
+  if (!contract) continue;
   const paths = Object.keys(contract.doc.paths ?? {});
   const route = paths[Math.floor(rnd() * paths.length)];
   assert(`random path template remains matchable seed=${seed}`, () => {

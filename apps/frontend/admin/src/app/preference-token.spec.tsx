@@ -100,11 +100,11 @@ describe("admin preference session handling", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Theme" }));
     fireEvent.click(await screen.findByRole("option", { name: "Light" }));
 
-    await waitFor(() =>
+    await waitFor(() => {
       expect(
         requests.some((request) => request.url.includes("preferences")),
-      ).toBe(true),
-    );
+      ).toBe(true);
+    });
     const preferenceRequest = requests.find((request) =>
       request.url.includes("preferences"),
     );

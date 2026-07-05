@@ -371,14 +371,9 @@ describe("AdminUsersController", () => {
     );
   });
 
-  it("returns roles catalog, audit log, dashboard metrics, and 404 for missing users", async () => {
+  it("returns audit log, dashboard metrics, and 404 for missing users", async () => {
     const { controller, users } = createController();
 
-    const roles = controller.roles();
-    expect(roles.data.assignableRoles).toEqual(["user", AdminRole]);
-    expect(roles.data.permissions).toContainEqual(
-      expect.objectContaining({ permission: AdminUsersReadPermission }),
-    );
     await expect(controller.listAudit(principal, {})).resolves.toMatchObject({
       data: { total: 1, items: [expect.objectContaining({ id: "audit-id" })] },
     });

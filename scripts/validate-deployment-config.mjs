@@ -57,6 +57,14 @@ const yamlMapEntry = (text, key, indent = 2) => {
 };
 
 const dockerfile = read("Dockerfile");
+const rootPackageJson = JSON.parse(read("package.json"));
+const pinnedPnpm = rootPackageJson.packageManager?.split("@")[1];
+assert.ok(pinnedPnpm, "package.json packageManager must pin a pnpm version");
+has(
+  dockerfile,
+  `ARG PNPM_VERSION=${pinnedPnpm}`,
+  `Dockerfile pnpm version must match packageManager (${pinnedPnpm})`,
+);
 has(
   dockerfile,
   "FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend",
@@ -94,7 +102,7 @@ has(dockerfile, "EXPOSE 8080", "frontend exposes unprivileged port 8080");
 const migratorStage = section(
   dockerfile,
   "FROM workspace AS migrator",
-  "FROM workspace AS prod-deps",
+  "FROM workspace AS builder",
 );
 has(migratorStage, "USER node", "migrator runs as the non-root node user");
 before(
@@ -103,6 +111,49 @@ before(
   'CMD ["pnpm", "db:migrate"]',
   "migrator USER node before db:migrate command",
 );
+
+// Backend images ship per-app production dependencies computed from each app's
+// generated dist package.json + pruned lockfile, not the whole-workspace tree.
+const backendDepsStage = section(
+  dockerfile,
+  "FROM builder AS backend-deps",
+  "FROM node:${NODE_VERSION} AS backend",
+);
+has(
+  backendDepsStage,
+  "pnpm install --prod --offline --ignore-workspace --no-frozen-lockfile --ignore-scripts",
+  "backend-deps installs per-app prod dependencies offline from the fetched store",
+);
+has(
+  backendDepsStage,
+  "WORKDIR /workspace/${BUILD_OUTPUT}",
+  "backend-deps installs against the app's generated dist package.json",
+);
+const backendStage = section(
+  dockerfile,
+  "FROM node:${NODE_VERSION} AS backend",
+  "FROM nginxinc/nginx-unprivileged",
+);
+has(
+  backendStage,
+  "COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules",
+  "backend copies the per-app pruned node_modules to a shared /app ancestor",
+);
+has(
+  backendStage,
+  "COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json",
+  "backend copies the app's generated package.json alongside its node_modules",
+);
+assert.ok(
+  !dockerfile.includes("pnpm prune --prod"),
+  "Backend images must install per-app dependencies instead of pruning the whole workspace tree.",
+);
+assert.ok(
+  !backendStage.includes("COPY --from=prod-deps /workspace/node_modules"),
+  "Backend image must not copy the whole-workspace node_modules.",
+);
+has(backendStage, "USER node", "backend runs as the non-root node user");
+has(backendStage, "EXPOSE 3000", "backend exposes the API port");
 
 const devCompose = read("docker/docker-compose.yml");
 has(

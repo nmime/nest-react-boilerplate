@@ -151,7 +151,7 @@ function createSessionConfigHealthIndicator(): HealthIndicator {
         status: hasSessionSecret || hasAuthSecret ? "ok" : "degraded",
         required: false,
         details: {
-          cookieNameConfigured: hasValue(process.env.SessionCookieName),
+          cookieNameConfigured: hasValue(process.env.SESSION_COOKIE_NAME),
           secretConfigured: hasSessionSecret || hasAuthSecret,
         },
       };

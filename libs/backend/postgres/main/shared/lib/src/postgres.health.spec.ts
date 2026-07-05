@@ -242,6 +242,141 @@ describe("MikroOrmPostgresHealthAdapter", () => {
   });
 });
 
+describe("Postgres health branch coverage", () => {
+  it("times out slow readiness checks through the shared timeout guard", async () => {
+    const adapter = adapterStub({
+      checkReadiness: vi.fn(
+        () => new Promise<void>((resolve) => setTimeout(resolve, 50)),
+      ),
+    });
+
+    await expect(
+      new PostgresReadinessHealthIndicator(adapter, { timeoutMs: 1 }).check(),
+    ).resolves.toEqual({
+      name: "postgres",
+      status: "error",
+      details: {
+        message: "Postgres readiness check timed out.",
+        type: "Error",
+      },
+    });
+  });
+
+  it("treats not-configured errors surfaced during readiness as skipped", async () => {
+    const adapter = adapterStub({
+      checkReadiness: vi.fn(() =>
+        Promise.reject(new PostgresDependencyNotConfiguredError()),
+      ),
+    });
+
+    await expect(
+      new PostgresReadinessHealthIndicator(adapter).check(),
+    ).resolves.toEqual({
+      name: "postgres",
+      status: "ok",
+      details: {
+        skipped: true,
+        reason: "not_configured",
+        message: "Postgres dependency is not configured.",
+      },
+    });
+  });
+
+  it("redacts non-Error readiness failures without leaking their type", async () => {
+    const adapter = adapterStub({
+      checkReadiness: vi.fn(() =>
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- exercising the non-Error redaction branch of safeErrorDetails
+        Promise.reject("boom"),
+      ),
+    });
+
+    await expect(
+      new PostgresReadinessHealthIndicator(adapter).check(),
+    ).resolves.toEqual({
+      name: "postgres",
+      status: "error",
+      details: { message: "boom" },
+    });
+  });
+
+  it("skips optional apps when the migrations adapter is not configured", async () => {
+    await expect(
+      new PostgresMigrationsHealthIndicator(null).check(),
+    ).resolves.toEqual({
+      name: "postgres-migrations",
+      status: "ok",
+      details: {
+        skipped: true,
+        reason: "not_configured",
+        message: "Postgres migrations adapter is not configured.",
+      },
+    });
+  });
+
+  it("treats not-configured errors surfaced while reading migrations as skipped", async () => {
+    const adapter = adapterStub({
+      getPendingMigrations: vi.fn(() =>
+        Promise.reject(new PostgresDependencyNotConfiguredError()),
+      ),
+    });
+
+    await expect(
+      new PostgresMigrationsHealthIndicator(adapter).check(),
+    ).resolves.toEqual({
+      name: "postgres-migrations",
+      status: "ok",
+      details: {
+        skipped: true,
+        reason: "not_configured",
+        message: "Postgres dependency is not configured.",
+      },
+    });
+  });
+
+  it("treats unsupported errors surfaced while reading migrations as unsupported", async () => {
+    const adapter = adapterStub({
+      getPendingMigrations: vi.fn(() =>
+        Promise.reject(new PostgresMigrationStatusUnsupportedError()),
+      ),
+    });
+
+    await expect(
+      new PostgresMigrationsHealthIndicator(adapter).check(),
+    ).resolves.toEqual({
+      name: "postgres-migrations",
+      status: "ok",
+      details: {
+        skipped: true,
+        reason: "unsupported",
+        message:
+          "Postgres migration status check is not supported by the configured adapter.",
+      },
+    });
+  });
+
+  it("rejects a migrator that cannot report pending migrations", async () => {
+    const adapter = new MikroOrmPostgresHealthAdapter(
+      mikroOrmStub({ getMigrator: () => ({}) }) as never,
+    );
+
+    await expect(adapter.getPendingMigrations()).rejects.toBeInstanceOf(
+      PostgresMigrationStatusUnsupportedError,
+    );
+  });
+
+  it("normalizes pending migrations that lack a recognizable name", async () => {
+    const adapter = new MikroOrmPostgresHealthAdapter(
+      mikroOrmStub({
+        getPendingMigrations: vi.fn(() =>
+          Promise.resolve([null, 42, { unrelated: "value" }]),
+        ),
+      }) as never,
+    );
+
+    await expect(adapter.getPendingMigrations()).resolves.toEqual([{}, {}, {}]);
+  });
+});
+
 function adapterStub(
   overrides: Partial<PostgresDependencyHealthAdapter> = {},
 ): PostgresDependencyHealthAdapter {

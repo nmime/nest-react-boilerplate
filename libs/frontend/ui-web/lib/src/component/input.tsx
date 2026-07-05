@@ -1,6 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { forwardRef, type InputHTMLAttributes } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../util/cn";
 
 export type UiInputProps = InputHTMLAttributes<HTMLInputElement>;
 

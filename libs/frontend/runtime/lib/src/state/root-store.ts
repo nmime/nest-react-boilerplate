@@ -25,6 +25,7 @@ export class RootStore {
 
   dispose(): void {
     this.app.dispose();
+    this.ui.dispose();
   }
 }
 

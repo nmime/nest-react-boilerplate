@@ -11,6 +11,8 @@ import { Migration20260606120000CreateTransactionalOutboxEvents } from "./Migrat
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from "./Migration20260607080000AlignAuthUserLocaleConstraint";
 import { Migration20260609100000CreateFeatureFlags } from "@app/backend-postgres-main-feature-flags";
 import { Migration20260614120000CreateSocialAuthDataModel } from "./Migration20260614120000CreateSocialAuthDataModel";
+import { Migration20260704120000CreateRbacModel } from "./Migration20260704120000CreateRbacModel";
+import { Migration20260704130000GrantAdminRolesWrite } from "./Migration20260704130000GrantAdminRolesWrite";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";
 
@@ -27,6 +29,8 @@ export const authMigrations = [
   Migration20260607080000AlignAuthUserLocaleConstraint,
   Migration20260609100000CreateFeatureFlags,
   Migration20260614120000CreateSocialAuthDataModel,
+  Migration20260704120000CreateRbacModel,
+  Migration20260704130000GrantAdminRolesWrite,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -50,3 +54,5 @@ export * from "./Migration20260606120000CreateTransactionalOutboxEvents";
 export * from "./Migration20260607080000AlignAuthUserLocaleConstraint";
 export { Migration20260609100000CreateFeatureFlags } from "@app/backend-postgres-main-feature-flags";
 export * from "./Migration20260614120000CreateSocialAuthDataModel";
+export * from "./Migration20260704120000CreateRbacModel";
+export * from "./Migration20260704130000GrantAdminRolesWrite";

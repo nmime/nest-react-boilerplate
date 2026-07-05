@@ -141,6 +141,7 @@ const extractCode = (
   }
 
   if (status === null) {
+    /* v8 ignore next -- statusKind() always yields "network" for a null status, so fallbackKind is never non-network here; the "network.error" arm is unreachable */
     return fallbackKind === "network" ? "network.offline" : "network.error";
   }
 

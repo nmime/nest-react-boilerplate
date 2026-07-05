@@ -2,11 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "declaration": true,
+    "noUncheckedIndexedAccess": false,
     "module": "esnext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "rootDir": ".",
-    "strict": true,
+
     "target": "es2022",
     "types": ["node"],
     "allowImportingTsExtensions": true

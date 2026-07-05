@@ -11,7 +11,9 @@ import {
   normalizeTenantId,
 } from "./tenant-context";
 
+/* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
 @Injectable()
+/* v8 ignore stop */
 export class SessionAuthGuard implements CanActivate {
   constructor(private readonly reflector: Reflector = new Reflector()) {}
 
@@ -36,10 +38,10 @@ export class SessionAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean>(PublicAuthMetadataKey, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(
+        PublicAuthMetadataKey,
+        [context.getHandler(), context.getClass()],
+      ) ?? false
     );
   }
 }

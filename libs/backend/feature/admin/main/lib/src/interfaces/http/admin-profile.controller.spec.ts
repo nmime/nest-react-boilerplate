@@ -4,11 +4,10 @@ import { AdminProfileReadPermission } from "@app/backend-feature-admin-shared";
 import { GetAdminProfileUseCase } from "../../application/admin-profile.use-case";
 import {
   AdminProfileController,
-  AdminProfilePayloadDto,
-  AdminProfileViewDto,
   getAdminProfileViewDtoType,
   getAuthenticatedPrincipalDtoType,
 } from "./admin-profile.controller";
+import { AdminProfilePayloadDto, AdminProfileViewDto } from "./dto";
 
 describe("AdminProfileController", () => {
   it("returns principal and normalized admin profile", () => {

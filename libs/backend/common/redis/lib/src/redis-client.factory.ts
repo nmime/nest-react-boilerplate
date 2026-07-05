@@ -1,56 +1,42 @@
+import { Logger } from "@nestjs/common";
 import { createClient, createCluster, createSentinel } from "redis";
 import { RedisMode } from "./const";
+import { redisLuaScripts } from "./const/redis-lua-script.const";
+import type { RedisLuaScriptName } from "./const/redis-lua-script.const";
 import type {
   RedisClientLike,
   RedisConnectionConfig,
-  RedisHost,
+  RedisIncrementWithWindowResult,
   RedisPipelineLike,
   RedisSetCondition,
   RedisSetExpirationMode,
 } from "./type";
-
-interface NativeRedisSetOptions {
-  expiration?: {
-    type: RedisSetExpirationMode;
-    value: number;
-  };
-  condition?: RedisSetCondition;
-}
-
-interface NativeRedisClient {
-  readonly isOpen: boolean;
-  connect(): Promise<unknown>;
-  close(): Promise<unknown>;
-  destroy(): void | Promise<unknown>;
-  ping(): Promise<string>;
-  get(key: string): Promise<string | null>;
-  set(
-    key: string,
-    value: string,
-    options?: NativeRedisSetOptions,
-  ): Promise<string | null>;
-  setEx(key: string, ttlSeconds: number, value: string): Promise<string>;
-  mGet(keys: string[]): Promise<Array<string | null>>;
-  del(keys: string | string[]): Promise<number>;
-  incr(key: string): Promise<number>;
-  expire(key: string, ttlSeconds: number): Promise<number | boolean>;
-  hSet(key: string, field: string, value: string): Promise<number>;
-  hGetAll(key: string): Promise<Record<string, string>>;
-  hDel(key: string, field: string): Promise<number>;
-  sendCommand(command: string[]): Promise<unknown>;
-  on?(event: "error", listener: (error: Error) => void): NativeRedisClient;
-}
+import type {
+  NativeRedisClient,
+  NativeRedisSetOptions,
+} from "./type/native-redis-client.type";
+import { connectionIdentity, firstHost } from "./util";
 
 export class RedisClientAdapter implements RedisClientLike {
+  private static readonly logger = new Logger(RedisClientAdapter.name);
   private connectPromise: Promise<unknown> | undefined;
+
+  readonly connectionId?: string;
 
   constructor(
     private readonly client: NativeRedisClient,
     private readonly options: {
       keyPrefix?: string;
+      connectionId?: string;
     },
   ) {
-    this.client.on?.("error", () => undefined);
+    this.connectionId = options.connectionId;
+    this.client.on?.("error", (error) => {
+      RedisClientAdapter.logger.error(
+        "Redis client connection error",
+        error instanceof Error ? error.stack : String(error),
+      );
+    });
   }
 
   async ping(): Promise<string> {
@@ -108,6 +94,33 @@ export class RedisClientAdapter implements RedisClientLike {
   async incr(key: string): Promise<number> {
     await this.ensureConnected();
     return await this.client.incr(this.key(key));
+  }
+
+  async incrementWithWindow(
+    key: string,
+    windowMs: number,
+  ): Promise<RedisIncrementWithWindowResult> {
+    const ttlMs = Math.max(Math.trunc(windowMs), 1);
+    // A fixed Lua script performs INCR, reads PTTL, and attaches PEXPIRE only
+    // when the key has no TTL yet — all in a single atomic server-side step,
+    // so the counter can never be observed (or expire) between operations.
+    const result = await this.runKnownLuaScript(
+      "increment-window",
+      key,
+      String(ttlMs),
+    );
+    const reply = (Array.isArray(result) ? result : []) as unknown[];
+    const remainingMs = Number(reply[1]);
+    return {
+      count: Number(reply[0]),
+      // PTTL reflects the authoritative remaining window; fall back to the
+      // requested window only if the reply is malformed so resetAt stays sane.
+      resetAt:
+        Date.now() +
+        (Number.isFinite(remainingMs) && remainingMs >= 0
+          ? remainingMs
+          : ttlMs),
+    };
   }
 
   async expire(key: string, ttlSeconds: number): Promise<unknown> {
@@ -258,7 +271,8 @@ export async function closeRedisClient(
   }
 
   if (typeof closable.destroy === "function") {
-    return await closable.destroy();
+    await closable.destroy();
+    return;
   }
 
   return undefined;
@@ -331,37 +345,6 @@ function toAdapter(
 ): RedisClientLike {
   return new RedisClientAdapter(client as NativeRedisClient, {
     keyPrefix: config.keyPrefix,
+    connectionId: connectionIdentity(config),
   });
 }
-
-function firstHost(hosts: RedisHost[]): RedisHost {
-  const host = hosts[0];
-  if (!host) {
-    throw new Error("At least one Redis host is required.");
-  }
-
-  return host;
-}
-
-const deleteIfValueScript = `
-if redis.call("get", KEYS[1]) == ARGV[1] then
-  return redis.call("del", KEYS[1])
-end
-
-return 0
-`;
-
-const extendIfValueScript = `
-if redis.call("get", KEYS[1]) == ARGV[1] then
-  return redis.call("pexpire", KEYS[1], ARGV[2])
-end
-
-return 0
-`;
-
-const redisLuaScripts = Object.freeze({
-  "delete-if-value": deleteIfValueScript,
-  "extend-if-value": extendIfValueScript,
-} as const);
-
-type RedisLuaScriptName = keyof typeof redisLuaScripts;

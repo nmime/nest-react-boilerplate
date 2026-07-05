@@ -3,7 +3,9 @@ import { EntitySchema } from "@mikro-orm/core";
 import { DefaultAuthTenantId } from "./auth-user.entity";
 
 export type AdminAuditAction =
-  "admin.user.status.update" | "admin.user.access_policy.update";
+  | "admin.user.status.update"
+  | "admin.user.access_policy.update"
+  | "admin.user.roles.update";
 
 export interface AdminAuditLogEntityInput {
   tenantId?: string;

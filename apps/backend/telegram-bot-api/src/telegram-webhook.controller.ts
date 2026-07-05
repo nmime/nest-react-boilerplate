@@ -7,7 +7,6 @@ import {
   Post,
 } from "@nestjs/common";
 import type { OnApplicationBootstrap } from "@nestjs/common";
-import { webhookCallback } from "grammy";
 import {
   TelegramBotInstanceInjectToken,
   assertWebhookRuntimeAllowed,
@@ -17,7 +16,6 @@ import {
 
 @Controller("telegram/webhook")
 export class TelegramWebhookController implements OnApplicationBootstrap {
-  private readonly callback: (request: unknown, response: unknown) => unknown;
   private botInitPromise: Promise<void> | null = null;
 
   constructor(
@@ -25,9 +23,6 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
     private readonly telegram: TelegramBotInstance,
   ) {
     assertWebhookRuntimeAllowed(telegram.config);
-    this.callback = webhookCallback(telegram.bot, "fastify", {
-      secretToken: telegram.config.webhookSecret,
-    }) as (request: unknown, response: unknown) => unknown;
   }
 
   async onApplicationBootstrap(): Promise<void> {

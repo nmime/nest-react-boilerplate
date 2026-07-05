@@ -3,7 +3,7 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/bots/telegram/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:common", "scope:auth"],
+  "tags": ["platform:backend", "type:common", "scope:telegram"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

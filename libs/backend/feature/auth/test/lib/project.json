@@ -1,0 +1,32 @@
+{
+  "name": "@app/backend-feature-auth-test",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/auth/test/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:test-util", "scope:auth"],
+  "targets": {
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/feature/auth/test/lib",
+        "command": "vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": [
+            "vitest",
+            "supertest",
+            "testcontainers",
+            "@testcontainers/postgresql"
+          ]
+        }
+      ],
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/backend/feature/auth/test-component"
+      ]
+    }
+  }
+}

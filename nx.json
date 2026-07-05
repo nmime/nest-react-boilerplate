@@ -8,14 +8,20 @@
       "default",
       "!{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/**/*.component-spec.[jt]s",
+      "!{projectRoot}/**/*.stories.@(ts|tsx|mdx)",
       "!{projectRoot}/tsconfig.spec.json",
-      "!{projectRoot}/jest.config.[jt]s",
-      "!{projectRoot}/jest.config.[cm]ts",
+      "!{projectRoot}/vitest.config.mts",
+      "!{projectRoot}/vitest.config.[jt]s",
+      "!{projectRoot}/playwright.config.[jt]s",
+      "!{projectRoot}/playwright.config.[cm]ts",
       "!{projectRoot}/src/test-setup.[jt]s",
       "!{projectRoot}/test-setup.[jt]s"
     ],
     "sharedGlobals": [
       "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tsconfig.lint.json",
+      "{workspaceRoot}/eslint.config.js",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/pnpm-lock.yaml"
     ]
@@ -25,12 +31,6 @@
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"
-      }
-    },
-    {
-      "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
       }
     },
     {
@@ -45,14 +45,6 @@
         "typecheckTargetName": "typecheck",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
-      }
-    },
-    {
-      "plugin": "@nx/webpack/plugin",
-      "options": {
-        "buildTargetName": "build",
-        "serveTargetName": "serve",
-        "previewTargetName": "preview"
       }
     }
   ],
@@ -74,11 +66,6 @@
             }
           }
         ]
-      }
-    },
-    "test": {
-      "options": {
-        "passWithNoTests": true
       }
     }
   },

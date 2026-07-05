@@ -19,7 +19,7 @@ export class AuthJwtSigningError extends Error {
   }
 }
 
-export function signJwt(
+export function signDomainJwt(
   payload: Record<string, unknown>,
   env: JwtSigningEnvironment,
   expiresIn = DefaultExpiresInSeconds,

@@ -4,16 +4,27 @@ import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
   AuthPostgresModule,
+  AuthRoleRepository,
   AuthUserRepository,
 } from "@app/backend-postgres-main-auth";
-import { GetAdminProfileUseCase } from "./application/admin-profile.use-case";
-import { AdminUsersUseCase } from "./application/admin-users.use-case";
-import { AdminProfileController } from "./interfaces/http/admin-profile.controller";
-import { AdminUsersController } from "./interfaces/http/admin-users.controller";
+import {
+  GetAdminProfileUseCase,
+  AdminRolesUseCase,
+  AdminUsersUseCase,
+} from "./application";
+import {
+  AdminProfileController,
+  AdminRolesController,
+  AdminUsersController,
+} from "./interfaces/http";
 
 @Module({
   imports: [PostgresMainModule.forRoot(), AuthPostgresModule],
-  controllers: [AdminProfileController, AdminUsersController],
+  controllers: [
+    AdminProfileController,
+    AdminRolesController,
+    AdminUsersController,
+  ],
   providers: [
     GetAdminProfileUseCase,
     {
@@ -28,6 +39,14 @@ import { AdminUsersController } from "./interfaces/http/admin-users.controller";
         auditLogs: AdminAuditLogRepository,
         adminUserMutations: AdminUserMutationRepository,
       ) => new AdminUsersUseCase(users, auditLogs, adminUserMutations),
+    },
+    {
+      provide: AdminRolesUseCase,
+      inject: [AuthRoleRepository, AdminUserMutationRepository],
+      useFactory: (
+        roles: AuthRoleRepository,
+        adminUserMutations: AdminUserMutationRepository,
+      ) => new AdminRolesUseCase(roles, adminUserMutations),
     },
   ],
 })

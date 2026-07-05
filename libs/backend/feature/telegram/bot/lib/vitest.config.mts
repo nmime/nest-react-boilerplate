@@ -13,7 +13,7 @@ export default defineConfig({
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../coverage/libs/backend/feature/telegram/bot/lib",
+      "../../../../../../coverage/libs/backend/feature/telegram/bot/lib",
       ["src/**/*.ts"],
       ["src/index.ts"],
     ),

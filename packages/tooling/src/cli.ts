@@ -146,11 +146,6 @@ registerScript(
   "api/export-openapi.ts",
 );
 registerScript(
-  "api:client",
-  "Generate one API client.",
-  "api/generate-client.ts",
-);
-registerScript(
   "api:clients",
   "Generate API clients.",
   "api/generate-clients.ts",

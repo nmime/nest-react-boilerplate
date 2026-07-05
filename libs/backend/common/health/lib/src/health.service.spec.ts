@@ -246,7 +246,7 @@ describe("HealthService", () => {
     };
 
     expect(
-      toHealthResponseDto("backend-user-app-api", {
+      toHealthResponseDto("user-app-api", {
         status: "error",
         uptime: 1,
         timestamp: "2026-01-01T00:00:00.000Z",
@@ -254,7 +254,7 @@ describe("HealthService", () => {
       }),
     ).toEqual({
       data: {
-        app: "backend-user-app-api",
+        app: "user-app-api",
         status: "error",
         uptime: 1,
         timestamp: "2026-01-01T00:00:00.000Z",

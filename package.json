@@ -48,7 +48,6 @@
     "db:backup": "pnpm --filter @repo/tooling tooling db backup",
     "db:restore": "pnpm --filter @repo/tooling tooling db restore",
     "api:openapi": "pnpm --filter @repo/tooling tooling api openapi",
-    "api:client": "pnpm --filter @repo/tooling tooling api client",
     "api:contracts": "pnpm --filter @repo/tooling tooling api contracts",
     "api:contracts:check": "pnpm --filter @repo/tooling tooling api contracts check",
     "api:contracts:consumer": "pnpm --filter @repo/tooling tooling qa consumer-contracts",

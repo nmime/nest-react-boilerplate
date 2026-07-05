@@ -13,7 +13,7 @@ export default defineConfig({
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "../../../../coverage/libs/backend/feature/discord/bot/lib",
+      "../../../../../../coverage/libs/backend/feature/discord/bot/lib",
       ["src/**/*.ts"],
       [],
     ),

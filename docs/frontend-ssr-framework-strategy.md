@@ -52,12 +52,12 @@ page a React application.
 
 Use the current package baseline:
 
-- `astro@7.0.5`
-- `@astrojs/react@6.0.0`
-- `@astrojs/mdx@7.0.1` when docs, changelog pages, pricing copy, or long-form
+- `astro@7.0.6`
+- `@astrojs/react@6.0.1`
+- `@astrojs/mdx@7.0.2` when docs, changelog pages, pricing copy, or long-form
   content become part of the landing surface.
 - `@astrojs/sitemap@3.7.3` for sitemap generation.
-- `@astrojs/node@11.0.1` only when landing needs on-demand rendering, sessions,
+- `@astrojs/node@11.0.2` only when landing needs on-demand rendering, sessions,
   server islands, or Node deployment. Static output remains preferred when the
   page can be pre-rendered.
 

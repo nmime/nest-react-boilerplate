@@ -65,7 +65,6 @@ minimumReleaseAgeExclude:
   - "prettier@3.8.4"
   - "storybook@10.4.4"
   - "@storybook/addon-vitest@10.4.4"
-  - "@opentelemetry/auto-instrumentations-node@0.77.0"
   - "@opentelemetry/instrumentation-amqplib@0.66.0"
   - "@opentelemetry/instrumentation-aws-lambda@0.71.0"
   - "@opentelemetry/instrumentation-aws-sdk@0.74.0"
@@ -113,9 +112,6 @@ minimumReleaseAgeExclude:
   - "@opentelemetry/sql-common@0.42.0"
   - "@grammyjs/types@3.28.0"
   - grammy@1.44.0
-  - "@astrojs/mdx@7.0.1"
-  - "@astrojs/node@11.0.1"
-  - astro@7.0.5
 
 allowBuilds:
   "@nestjs/core": true

@@ -1,0 +1,23 @@
+{
+  "site.title": "Production web experience",
+  "site.description": "SSR-сайт готов для защищенного продуктового трафика, same-origin API и проб Kubernetes или Compose.",
+  "site.actionGroup.label": "Основные маршруты",
+  "site.action.app": "Открыть приложение",
+  "site.action.docs": "Документация API",
+  "site.status.label": "Статус рантайма сайта",
+  "site.status.online": "SSR онлайн",
+  "site.metricGroup.label": "Сводка платформы",
+  "site.metric.apis.label": "API",
+  "site.metric.apis.detail": "auth, user, admin",
+  "site.metric.frontends.label": "Фронтенды",
+  "site.metric.frontends.detail": "web, site, landing, admin, mobile",
+  "site.metric.runtime.label": "Рантайм",
+  "site.metric.runtime.detail": "Vike на Node",
+  "site.routeGroup.label": "Доступные продуктовые маршруты",
+  "site.route.user.label": "Приложение пользователя",
+  "site.route.user.detail": "Аккаунт, профиль и сессионные сценарии.",
+  "site.route.admin.label": "Администрирование",
+  "site.route.admin.detail": "Защищенные операционные и аудиторские разделы.",
+  "site.route.docs.label": "Документация API",
+  "site.route.docs.detail": "OpenAPI-контракты для backend-команд."
+}

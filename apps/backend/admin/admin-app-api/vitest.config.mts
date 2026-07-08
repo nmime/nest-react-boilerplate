@@ -1,14 +1,15 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { workspaceTsconfigAliases } from "../../../../config/vite/workspace-tsconfig-aliases.mjs";
 // nx-ignore-next-line
 import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir: "../../../../node_modules/.vitest/apps/backend/admin/admin-app-api",
-  plugins: [nxViteTsPaths()],
   resolve: {
+    tsconfigPaths: true,
     alias: {
+      ...workspaceTsconfigAliases(),
       "@app/common-feature-flags": new URL(
         "../../../../libs/common/feature-flags/lib/src/index.ts",
         import.meta.url,

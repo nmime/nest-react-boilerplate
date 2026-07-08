@@ -4,6 +4,9 @@ import type {
   AuthRoleRepository,
   AdminUserMutationRepository,
   AdminUserMutationResult,
+  AuthPermissionEntity,
+  AuthRoleEntity,
+  AuthRoleWithPermissions,
 } from "@app/backend-postgres-main-auth";
 import { AdminApplicationError } from "./admin-errors";
 import { adminRoleInvariantPermissions } from "./const";
@@ -36,10 +39,10 @@ export class AdminRolesUseCase {
     principal: AuthenticatedPrincipal,
   ): Promise<AdminRbacCatalog> {
     const tenantId = resolveTenantId(principal);
-    const rolesWithPermissions = unwrapRepositoryResult(
-      await this.roles.listRolesWithPermissions(tenantId),
-    );
-    const permissions = unwrapRepositoryResult(
+    const rolesWithPermissions = unwrapRepositoryResult<
+      AuthRoleWithPermissions[]
+    >(await this.roles.listRolesWithPermissions(tenantId));
+    const permissions = unwrapRepositoryResult<AuthPermissionEntity[]>(
       await this.roles.listPermissions(),
     );
 
@@ -78,7 +81,7 @@ export class AdminRolesUseCase {
       input.permissions ?? [],
     );
 
-    const existing = unwrapRepositoryResult(
+    const existing = unwrapRepositoryResult<AuthRoleEntity | null>(
       await this.roles.findByKey(key, tenantId),
     );
     if (existing) {
@@ -88,7 +91,7 @@ export class AdminRolesUseCase {
       );
     }
 
-    const created = unwrapRepositoryResult(
+    const created = unwrapRepositoryResult<AuthRoleEntity>(
       await this.roles.createRole({
         tenantId,
         key,
@@ -102,7 +105,7 @@ export class AdminRolesUseCase {
       return toAdminRoleView({ role: created, permissionKeys: [] });
     }
 
-    const updated = unwrapRepositoryResult(
+    const updated = unwrapRepositoryResult<AuthRoleWithPermissions | null>(
       await this.roles.setRolePermissions(
         created.id,
         requestedPermissions,
@@ -122,7 +125,7 @@ export class AdminRolesUseCase {
     input: UpdateAdminRoleCommand,
   ): Promise<AdminRoleView> {
     const tenantId = resolveTenantId(principal);
-    const updated = unwrapRepositoryResult(
+    const updated = unwrapRepositoryResult<AuthRoleEntity | null>(
       await this.roles.updateRole(
         id,
         {
@@ -149,7 +152,7 @@ export class AdminRolesUseCase {
     const tenantId = resolveTenantId(principal);
     const requestedPermissions = requireKnownPermissions(input.permissions);
 
-    const role = unwrapRepositoryResult(
+    const role = unwrapRepositoryResult<AuthRoleEntity | null>(
       await this.roles.findById(id, tenantId),
     );
     if (!role) {
@@ -168,7 +171,7 @@ export class AdminRolesUseCase {
       }
     }
 
-    const updated = unwrapRepositoryResult(
+    const updated = unwrapRepositoryResult<AuthRoleWithPermissions | null>(
       await this.roles.setRolePermissions(id, requestedPermissions, tenantId),
     );
     if (!updated) {
@@ -211,9 +214,9 @@ export class AdminRolesUseCase {
     id: string,
     tenantId: string,
   ): Promise<AdminRoleView> {
-    const rolesWithPermissions = unwrapRepositoryResult(
-      await this.roles.listRolesWithPermissions(tenantId),
-    );
+    const rolesWithPermissions = unwrapRepositoryResult<
+      AuthRoleWithPermissions[]
+    >(await this.roles.listRolesWithPermissions(tenantId));
     const match = rolesWithPermissions.find((entry) => entry.role.id === id);
     if (!match) {
       throw new AdminApplicationError("not_found", "Role was not found.");
@@ -229,7 +232,7 @@ export class AdminRolesUseCase {
     if (roleKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult(
+    const found = unwrapRepositoryResult<AuthRoleEntity[]>(
       await this.roles.findByKeys(roleKeys, tenantId),
     );
     const foundKeys = new Set(found.map((role) => role.key));

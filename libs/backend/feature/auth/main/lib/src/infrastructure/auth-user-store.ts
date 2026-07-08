@@ -8,7 +8,10 @@ import {
   normalizeUserThemePreference,
   type UserThemePreference,
 } from "@app/backend-feature-auth-shared";
-import { AuthUserRepository } from "@app/backend-postgres-main-auth";
+import {
+  AuthUserRepository,
+  type AuthUserEntity,
+} from "@app/backend-postgres-main-auth";
 
 export interface AuthUserRecord {
   id: string;
@@ -130,7 +133,9 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setAccessPolicy(id, policy, tenantId)
-      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: AuthUserEntity | null) =>
+        entity ? toAuthUserRecord(entity) : null,
+      );
   }
 
   findByEmail(
@@ -139,7 +144,9 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findByEmail(email, tenantId)
-      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: AuthUserEntity | null) =>
+        entity ? toAuthUserRecord(entity) : null,
+      );
   }
 
   findById(
@@ -148,7 +155,9 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findById(id, tenantId)
-      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: AuthUserEntity | null) =>
+        entity ? toAuthUserRecord(entity) : null,
+      );
   }
 
   setLocale(
@@ -166,7 +175,9 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setPreferences(id, preferences, tenantId)
-      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: AuthUserEntity | null) =>
+        entity ? toAuthUserRecord(entity) : null,
+      );
   }
 
   recordLogin(
@@ -176,7 +187,9 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .recordLogin(id, loggedInAt, tenantId)
-      .map((entity) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: AuthUserEntity | null) =>
+        entity ? toAuthUserRecord(entity) : null,
+      );
   }
 }
 

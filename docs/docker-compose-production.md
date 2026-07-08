@@ -70,17 +70,20 @@ images default to `VITE_API_BASE_URL_MODE=same-origin` with
 `FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf`, so browser API calls route
 through the colocated nginx container to Compose service DNS names
 (`auth-app-api`, `user-app-api`, and `admin-app-api`) instead of exposing Docker
-DNS or container ports to the browser. Nginx treats `GET`/`HEAD` requests with
-`Accept: text/html` as SPA navigations, so reloads of user/admin deep links serve
-`index.html`; generated-client API calls keep proxying because they request JSON.
+DNS or container ports to the browser. The same stack also runs the Vike
+`site-app` Node server and the Expo `mobile-app` web export. Nginx treats
+`GET`/`HEAD` requests with `Accept: text/html` as SPA navigations, so reloads of
+user/admin/mobile deep links serve `index.html`; generated-client API calls keep
+proxying because they request JSON.
 
 ## 4. Health checks and logs
 
 ```bash
 docker compose --env-file .env.production -f docker/docker-compose.prod.yml ps
-curl -fsS http://127.0.0.1:${AUTH_APP_API_PORT:-3003}/ready
-curl -fsS http://127.0.0.1:${USER_APP_API_PORT:-3002}/ready
-curl -fsS http://127.0.0.1:${ADMIN_APP_API_PORT:-3001}/ready
+curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port auth-app-api 80)/ready"
+curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port user-app-api 80)/ready"
+curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port admin-app-api 80)/ready"
+curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port site-app 80)/ready"
 docker compose --env-file .env.production -f docker/docker-compose.prod.yml logs -f --tail=100
 ```
 
@@ -89,19 +92,23 @@ use `/ready`, which is implemented by each API and performs a PostgreSQL
 readiness check when MikroORM is registered. `/health` and `/live` remain
 liveness-only checks and should not replace production dependency readiness.
 
-Frontends are bound to loopback (`127.0.0.1`) by default. Put Caddy, nginx,
-Traefik, or your cloud load balancer in front for public TLS and routing.
+App services publish loopback-only dynamic host ports by default. Put Caddy,
+nginx, Traefik, or your cloud load balancer in front for public TLS and routing,
+and resolve the assigned ports with `docker compose port <service> <port>`.
 
 ## 5. TLS and reverse proxy
 
-Terminate TLS at the host reverse proxy and proxy to loopback ports:
+Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
+from Compose:
 
-- `https://example.com` -> `127.0.0.1:${LANDING_APP_PORT:-8080}`
-- `https://admin.example.com` -> `127.0.0.1:${ADMIN_APP_PORT:-8081}`
-- `https://app.example.com` -> `127.0.0.1:${USER_APP_PORT:-8082}`
-- `https://auth.example.com` -> `127.0.0.1:${AUTH_APP_API_PORT:-3003}`
-- `https://api.example.com` -> `127.0.0.1:${USER_APP_API_PORT:-3002}`
-- `https://admin-api.example.com` -> `127.0.0.1:${ADMIN_APP_API_PORT:-3001}`
+- `https://example.com` -> `docker compose ... port landing-app 8080`
+- `https://site.example.com` -> `docker compose ... port site-app 80`
+- `https://admin.example.com` -> `docker compose ... port admin-app 8080`
+- `https://app.example.com` -> `docker compose ... port user-app 8080`
+- `https://mobile.example.com` -> `docker compose ... port mobile-app 8080`
+- `https://auth.example.com` -> `docker compose ... port auth-app-api 80`
+- `https://api.example.com` -> `docker compose ... port user-app-api 80`
+- `https://admin-api.example.com` -> `docker compose ... port admin-app-api 80`
 
 Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
 build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to

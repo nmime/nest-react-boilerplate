@@ -17,7 +17,7 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 1. Verify `DATABASE_URL` is set and points to a reachable host:
    ```bash
-   curl -s http://localhost:3000/health | jq '.checks[] | select(.name=="postgres")'
+   curl -s "http://localhost:${PORT:-80}/health" | jq '.checks[] | select(.name=="postgres")'
    ```
 2. Check Postgres is running:
    - **Local dev:** verify Docker Compose or local `pg_ctl` is running.
@@ -51,12 +51,12 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 1. **Inspect `/ready` response** to identify the failing indicator:
    ```bash
-   curl -s -w '\n%{http_code}' http://localhost:3000/ready
+   curl -s -w '\n%{http_code}' "http://localhost:${PORT:-80}/ready"
    ```
 2. **Check app startup logs** — indicators fail at bootstrap if dependencies are unreachable.
 3. **Use `/health/private`** (from a private-network IP) for unsanitized details:
    ```bash
-   curl -s http://localhost:3000/health/private | jq '.data.checks'
+   curl -s "http://localhost:${PORT:-80}/health/private" | jq '.data.checks'
    ```
 4. **Review environment** — verify all required env vars match the `.env.production.example` template.
 5. **Network/DNS issues** — verify the dependency hostname resolves from inside the API container.

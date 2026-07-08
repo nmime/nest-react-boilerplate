@@ -72,6 +72,11 @@ has(
 );
 has(
   dockerfile,
+  "ARG NX_TARGET=build",
+  "Dockerfile builder supports non-build frontend targets such as mobile export",
+);
+has(
+  dockerfile,
   "ARG NGINX_CONFIG=docker/nginx-fullstack.conf",
   "frontend nginx config build arg defaults to same-origin fullstack proxy",
 );
@@ -121,8 +126,8 @@ const backendDepsStage = section(
 );
 has(
   backendDepsStage,
-  "pnpm install --prod --offline --ignore-workspace --no-frozen-lockfile --ignore-scripts",
-  "backend-deps installs per-app prod dependencies offline from the fetched store",
+  "pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts",
+  "backend-deps installs per-app prod dependencies from the fetched store with registry metadata fallback",
 );
 has(
   backendDepsStage,
@@ -153,7 +158,29 @@ assert.ok(
   "Backend image must not copy the whole-workspace node_modules.",
 );
 has(backendStage, "USER node", "backend runs as the non-root node user");
-has(backendStage, "EXPOSE 3000", "backend exposes the API port");
+has(
+  backendStage,
+  "setcap 'cap_net_bind_service=+ep'",
+  "backend grants node permission to bind the unprivileged runtime to port 80",
+);
+has(backendStage, "EXPOSE 80", "backend exposes the API port");
+const siteStage = section(
+  dockerfile,
+  "FROM builder AS site",
+  "FROM nginxinc/nginx-unprivileged",
+);
+has(
+  siteStage,
+  "SITE_DIST_ROOT=/workspace/dist/apps/frontend/site",
+  "site runtime points at built Vike dist output",
+);
+has(
+  siteStage,
+  "WORKDIR /workspace/apps/frontend/site",
+  "site runtime uses the Vike app root",
+);
+has(siteStage, "USER node", "site runtime runs as the non-root node user");
+has(siteStage, "EXPOSE 80", "site runtime exposes the Vike server port");
 
 const devCompose = read("docker/docker-compose.yml");
 has(
@@ -163,8 +190,8 @@ has(
 );
 has(
   devCompose,
-  `${"${"}ADMIN_APP_API_PORT:-3001}:3000`,
-  "admin API port variable",
+  'published: "${ADMIN_APP_API_PORT:-0}"',
+  "admin API dynamic published port variable",
 );
 const devBackendEnv = section(
   devCompose,
@@ -239,25 +266,44 @@ has(
   "production env example selects same-origin nginx config",
 );
 for (const [service, variable] of [
-  ["admin-app", "ADMIN_APP_PORT:-8081"],
-  ["user-app", "USER_APP_PORT:-8082"],
-  ["landing-app", "LANDING_APP_PORT:-8083"],
+  ["admin-app", "ADMIN_APP_PORT:-0"],
+  ["user-app", "USER_APP_PORT:-0"],
+  ["landing-app", "LANDING_APP_PORT:-0"],
+  ["mobile-app", "MOBILE_APP_PORT:-0"],
 ]) {
+  const serviceBlock = section(devCompose, `  ${service}:`, "\n\n  ");
   has(
-    devCompose,
-    `${"${"}${variable}}:8080`,
-    `${service} maps to frontend container port 8080`,
+    serviceBlock,
+    "target: 8080",
+    `${service} publishes frontend container port 8080`,
+  );
+  has(
+    serviceBlock,
+    `published: "${"${"}${variable}}"`,
+    `${service} defaults to a dynamic published host port`,
   );
 }
+const devSiteService = section(devCompose, "  site-app:", "\n\n  mobile-app:");
+has(
+  devSiteService,
+  "target: 80",
+  "site-app publishes the Vike container port 80",
+);
+has(
+  devSiteService,
+  'published: "${SITE_APP_PORT:-0}"',
+  "site-app defaults to a dynamic published host port",
+);
+has(devSiteService, "target: site", "site-app uses the Vike Docker target");
 
 const prodCompose = read("docker/docker-compose.prod.yml");
 has(
   prodCompose,
-  "http://127.0.0.1:3000/ready",
+  "http://127.0.0.1:80/ready",
   "prod backend healthcheck targets readiness-aware /ready endpoint",
 );
 assert.ok(
-  !prodCompose.includes("http://127.0.0.1:3000/health"),
+  !prodCompose.includes("http://127.0.0.1:80/health"),
   "Production Compose backend healthcheck must use readiness-aware /ready rather than liveness-only /health.",
 );
 has(
@@ -480,21 +526,40 @@ for (const {
 }
 
 for (const [service, variable] of [
-  ["admin-app", "ADMIN_APP_PORT:-8081"],
-  ["user-app", "USER_APP_PORT:-8082"],
-  ["landing-app", "LANDING_APP_PORT:-8080"],
+  ["admin-app", "ADMIN_APP_PORT:-0"],
+  ["user-app", "USER_APP_PORT:-0"],
+  ["landing-app", "LANDING_APP_PORT:-0"],
+  ["mobile-app", "MOBILE_APP_PORT:-0"],
 ]) {
   const serviceBlock = section(prodCompose, `  ${service}:`, "\n\n  ");
+  has(serviceBlock, "target: 8080", `${service} production target port 8080`);
   has(
     serviceBlock,
-    `127.0.0.1:${"${"}${variable}}:8080`,
-    `${service} production host mapping targets container port 8080`,
+    `published: "${"${"}${variable}}"`,
+    `${service} production defaults to a dynamic published host port`,
   );
-  assert.ok(
-    !serviceBlock.includes(`127.0.0.1:${"${"}${variable}}:80"`),
-    `${service} must not target privileged container port 80`,
+  has(
+    serviceBlock,
+    "host_ip: 127.0.0.1",
+    `${service} production binds published ports to loopback`,
   );
 }
+const prodSiteService = section(
+  prodCompose,
+  "  site-app:",
+  "\n\n  mobile-app:",
+);
+has(prodSiteService, "target: 80", "site-app production target port 80");
+has(
+  prodSiteService,
+  'published: "${SITE_APP_PORT:-0}"',
+  "site-app production defaults to a dynamic published host port",
+);
+has(
+  prodSiteService,
+  "target: site",
+  "site-app production build uses the Vike Docker target",
+);
 
 const dockerSmoke = read("packages/tooling/src/commands/docker/smoke.ts");
 const smokeJwtSecretDefault = dockerSmoke.match(
@@ -572,7 +637,7 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
     "location ^~ /admin/",
     "admin API prefix route cannot be shadowed by regex static assets",
   );
-  has(text, helm ? "-admin-api:" : "admin-app-api:3000", "admin API upstream");
+  has(text, helm ? "-admin-api:" : "admin-app-api:80", "admin API upstream");
 };
 assertNginxRoutes(read("docker/nginx-fullstack.conf"));
 
@@ -581,11 +646,23 @@ if (validateHelmStatic) {
 
   const helmValues = read(".helm/values.yaml");
   has(helmValues, "listenPort: 8080", "Helm frontend listenPort default");
-  for (const app of ["landing", "userFrontend", "adminFrontend"]) {
+  for (const app of ["authApi", "userApi", "adminApi", "site"]) {
+    const appBlock = yamlMapEntry(helmValues, app);
+    has(appBlock, "port: 80", `${app} container port`);
+    has(appBlock, "servicePort: 80", `${app} service port`);
+  }
+  for (const app of [
+    "landing",
+    "userFrontend",
+    "adminFrontend",
+    "mobileFrontend",
+  ]) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, "port: 8080", `${app} container port`);
     has(appBlock, "servicePort: 80", `${app} service port`);
   }
+  const siteHelmBlock = yamlMapEntry(helmValues, "site");
+  has(siteHelmBlock, "readinessPath: /ready", "site readiness path");
   const deploymentTemplate = read(".helm/templates/deployment.yaml");
   has(
     deploymentTemplate,
@@ -630,6 +707,8 @@ if (validateHelmStatic) {
     "userApi",
     "adminApi",
     "landing",
+    "site",
+    "mobileFrontend",
     "userFrontend",
     "adminFrontend",
   ]) {

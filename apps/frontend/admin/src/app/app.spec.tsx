@@ -96,6 +96,24 @@ function installRadixPointerMocks() {
   });
 }
 
+function chooseSelectOption(label: RegExp | string, option: string) {
+  const trigger = screen.getByRole("combobox", { name: label });
+
+  installRadixPointerMocks();
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: "mouse",
+  });
+
+  const optionElement = document.querySelector<HTMLElement>(
+    `[role="option"][data-value="${option}"]`,
+  );
+
+  expect(optionElement).toBeTruthy();
+  fireEvent.click(optionElement as HTMLElement);
+}
+
 const profilePayload = {
   principal: {
     subject: "admin-1",
@@ -246,10 +264,8 @@ describe("App", () => {
         .length,
     ).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("combobox", { name: "Язык" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Английский" }));
-    fireEvent.click(screen.getByRole("combobox", { name: "Тема" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Светлая" }));
+    chooseSelectOption("Язык", "en");
+    chooseSelectOption(/Тема|Theme/u, "light");
 
     await waitFor(() => {
       expect(
@@ -271,7 +287,7 @@ describe("App", () => {
     ).toBe(true);
   });
 
-  it("keeps local locale state when preference persistence fails", async () => {
+  it("keeps previous local locale state when preference persistence fails", async () => {
     const fetchImpl = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : (input as Request).url;
       if (url.includes("/auth/me/preferences")) {
@@ -282,7 +298,7 @@ describe("App", () => {
           new Response(
             JSON.stringify({
               data: {
-                user: { locale: "en", theme: "light" },
+                user: { locale: "ru", theme: "light" },
                 principal: profilePayload.principal,
               },
             }),
@@ -294,7 +310,7 @@ describe("App", () => {
         new Response(
           JSON.stringify({
             ...profilePayload,
-            profile: { ...profilePayload.profile, locale: "en" },
+            profile: { ...profilePayload.profile, locale: "ru" },
           }),
           {
             headers: { "Content-Type": "application/json" },
@@ -311,17 +327,14 @@ describe("App", () => {
       (await screen.findAllByText(/Admin dashboard|Панель администратора/u))
         .length,
     ).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("combobox", { name: "Язык" }));
-    fireEvent.click(await screen.findByRole("option", { name: "Английский" }));
+    chooseSelectOption("Язык", "en");
 
     await waitFor(() => {
       expect(
         getRequestsByPath(fetchImpl, "/auth/me/preferences", "PATCH"),
       ).toHaveLength(1);
     });
-    expect(
-      await screen.findByRole("combobox", { name: "Language" }),
-    ).toBeTruthy();
+    expect(await screen.findByRole("combobox", { name: "Язык" })).toBeTruthy();
   });
 
   it("continues with the admin profile when auth me cannot be read", async () => {

@@ -28,15 +28,26 @@ These aliases intentionally avoid extra ownership slashes such as `@app/backend/
 
 ## Package manifests
 
-Libraries must not define `package.json` manifests in this repository. Keep dependencies in the root manifest or in deployable app/tooling manifests.
+Package manifests are split by dependency ownership. Keep shared repository
+tooling and true cross-runtime/common dependencies in the root manifest. Keep
+backend-only library dependencies in `libs/backend/package.json`, and
+frontend-only library dependencies in `libs/frontend/package.json`. Deployable
+apps keep their direct app/runtime/test dependencies in their own manifests.
 
 Allowed manifests:
 
 - root `package.json`
+- platform dependency manifests:
+  - `libs/backend/package.json`
+  - `libs/frontend/package.json`
 - deployable app manifests under `apps/**` and `apps/backend/<scope>/**`
 - `packages/tooling/package.json`
 
-Do not add `libs/**/package.json`. Internal libraries are linked by Nx project metadata and `tsconfig.base.json` paths, not package-manager workspaces.
+Do not add nested library manifests such as
+`libs/backend/feature/<scope>/<layer>/lib/package.json` or
+`libs/frontend/<name>/lib/package.json`. Internal libraries are linked by Nx
+project metadata and `tsconfig.base.json` paths; only the platform manifests are
+package-manager workspaces.
 
 ## Layer naming target
 
@@ -53,4 +64,4 @@ When a deployable app wires a feature, keep the wiring in the composition root r
 
 ## Generator policy
 
-Generators must emit canonical flattened aliases and Nx project names. Generators must not create library `package.json` manifests.
+Generators must emit canonical flattened aliases and Nx project names. Generators must not create nested library `package.json` manifests.

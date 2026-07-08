@@ -11,6 +11,31 @@ import {
 import { UiLabel } from "./label";
 import { cn } from "../util/cn";
 
+export type CheckboxProps = ComponentPropsWithoutRef<
+  typeof CheckboxPrimitive.Root
+>;
+
+export const Checkbox = forwardRef<
+  ComponentRef<typeof CheckboxPrimitive.Root>,
+  CheckboxProps
+>(({ className, children, ...props }, ref) => (
+  <CheckboxPrimitive.Root
+    className={cn("xr-checkbox", className)}
+    data-slot="checkbox"
+    ref={ref}
+    {...props}
+  >
+    <CheckboxPrimitive.Indicator
+      className="xr-checkbox__indicator"
+      data-slot="checkbox-indicator"
+    >
+      {children ?? "✓"}
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+));
+
+Checkbox.displayName = "Checkbox";
+
 export interface UiCheckboxProps extends Omit<
   ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
   "children"
@@ -29,17 +54,13 @@ export const UiCheckbox = forwardRef<
 
   return (
     <div className="xr-choice">
-      <CheckboxPrimitive.Root
+      <Checkbox
         {...props}
         aria-describedby={descriptionId}
-        className={cn("xr-checkbox", className)}
+        className={className}
         id={controlId}
         ref={ref}
-      >
-        <CheckboxPrimitive.Indicator className="xr-checkbox__indicator">
-          ✓
-        </CheckboxPrimitive.Indicator>
-      </CheckboxPrimitive.Root>
+      />
       <div className="xr-choice__copy">
         <UiLabel htmlFor={controlId}>{label}</UiLabel>
         {description ? (
@@ -53,6 +74,27 @@ export const UiCheckbox = forwardRef<
 });
 
 UiCheckbox.displayName = "UiCheckbox";
+
+export type SwitchProps = ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>;
+
+export const Switch = forwardRef<
+  ComponentRef<typeof SwitchPrimitive.Root>,
+  SwitchProps
+>(({ className, ...props }, ref) => (
+  <SwitchPrimitive.Root
+    className={cn("xr-switch", className)}
+    data-slot="switch"
+    ref={ref}
+    {...props}
+  >
+    <SwitchPrimitive.Thumb
+      className="xr-switch__thumb"
+      data-slot="switch-thumb"
+    />
+  </SwitchPrimitive.Root>
+));
+
+Switch.displayName = "Switch";
 
 export interface UiSwitchProps extends Omit<
   ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>,
@@ -72,15 +114,13 @@ export const UiSwitch = forwardRef<
 
   return (
     <div className="xr-choice">
-      <SwitchPrimitive.Root
+      <Switch
         {...props}
         aria-describedby={descriptionId}
-        className={cn("xr-switch", className)}
+        className={className}
         id={controlId}
         ref={ref}
-      >
-        <SwitchPrimitive.Thumb className="xr-switch__thumb" />
-      </SwitchPrimitive.Root>
+      />
       <div className="xr-choice__copy">
         <UiLabel htmlFor={controlId}>{label}</UiLabel>
         {description ? (

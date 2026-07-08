@@ -36,6 +36,7 @@ const mocks = vi.hoisted(() => {
     createValidationPipe: vi.fn(() => "validation-pipe"),
     createRequestLocaleMiddleware: vi.fn(() => localeMiddleware),
     createRedisClient: vi.fn(() => redisClient),
+    defaultPortFactory: vi.fn(() => Promise.resolve(3030)),
     fastifyAdapter: vi.fn(function FastifyAdapterMock(options: unknown) {
       return { options };
     }),
@@ -122,6 +123,14 @@ vi.mock("@app/backend-common-swagger", () => ({
 vi.mock("@app/backend-common-validation", () => ({
   createValidationPipe: mocks.createValidationPipe,
 }));
+
+vi.mock("./util/port.util", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./util/port.util")>();
+  return {
+    ...actual,
+    defaultPortFactory: mocks.defaultPortFactory,
+  };
+});
 
 import {
   bootstrapNestApi,
@@ -259,7 +268,7 @@ describe("bootstrapNestApi", () => {
     authJwtSecret: process.env.AUTH_JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
     host: process.env.HOST,
-    nodeEnv: process.env.NODE_ENV,
+    nodeEnv: process.env.NODE_ENV as string | undefined,
     port: process.env.PORT,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
     rateLimitInMemoryAllowed: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED,
@@ -275,6 +284,7 @@ describe("bootstrapNestApi", () => {
     sessionCookieSameSite: process.env.SESSION_COOKIE_SAME_SITE,
     sessionCookieSecure: process.env.SESSION_COOKIE_SECURE,
     sessionSecret: process.env.SESSION_SECRET,
+    testApiPort: process.env.TEST_API_PORT,
     trustProxy: process.env.TRUST_PROXY,
   };
 
@@ -298,8 +308,10 @@ describe("bootstrapNestApi", () => {
     delete process.env.SESSION_COOKIE_SAME_SITE;
     delete process.env.SESSION_COOKIE_SECURE;
     delete process.env.SESSION_SECRET;
+    delete process.env.TEST_API_PORT;
     delete process.env.TRUST_PROXY;
     vi.clearAllMocks();
+    mocks.defaultPortFactory.mockResolvedValue(3030);
   });
 
   afterEach(() => {
@@ -329,6 +341,7 @@ describe("bootstrapNestApi", () => {
     process.env.SESSION_COOKIE_SECURE =
       originalEnvironment.sessionCookieSecure ?? "";
     process.env.SESSION_SECRET = originalEnvironment.sessionSecret ?? "";
+    process.env.TEST_API_PORT = originalEnvironment.testApiPort ?? "";
     process.env.TRUST_PROXY = originalEnvironment.trustProxy ?? "";
   });
 
@@ -348,7 +361,8 @@ describe("bootstrapNestApi", () => {
       { bufferLogs: true, rawBody: true },
     );
     expect(mocks.fastifyRegister).toHaveBeenCalledTimes(2);
-    expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+    expect(mocks.defaultPortFactory).toHaveBeenCalledTimes(1);
+    expect(mocks.app.listen).toHaveBeenCalledWith(3030);
   });
 
   it("honors HOST when binding the API listener", async () => {
@@ -359,7 +373,19 @@ describe("bootstrapNestApi", () => {
       defaultPort: 3010,
     });
 
-    expect(mocks.app.listen).toHaveBeenCalledWith(3010, "0.0.0.0");
+    expect(mocks.app.listen).toHaveBeenCalledWith(3030, "0.0.0.0");
+  });
+
+  it("prefers app-specific port environment over generic PORT", async () => {
+    process.env.PORT = "4999";
+    process.env.TEST_API_PORT = "4123";
+
+    await bootstrapNestApi(TestModule, {
+      appName: "test-api",
+      defaultPort: 3010,
+    });
+
+    expect(mocks.app.listen).toHaveBeenCalledWith(4123);
   });
 
   it("passes explicit TRUST_PROXY configuration to Fastify", async () => {
@@ -384,27 +410,37 @@ describe("bootstrapNestApi", () => {
     process.env.RATE_LIMIT_MAX = "1";
     process.env.RATE_LIMIT_WINDOW_MS = "1000";
     process.env.SESSION_SECRET = "x".repeat(32);
+    const stderrSpy = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
 
-    await bootstrapNestApi(TestModule, {
-      appName: "test-api",
-      defaultPort: 3010,
-    });
-    const middleware = lastMiddleware();
-    const response = createResponse();
-    const next = vi.fn();
-    const request = { ip: "production-client" };
+    try {
+      await bootstrapNestApi(TestModule, {
+        appName: "test-api",
+        defaultPort: 3010,
+      });
+      const middleware = lastMiddleware();
+      const response = createResponse();
+      const next = vi.fn();
+      const request = { ip: "production-client" };
 
-    middleware(request, response, next);
-    middleware(request, response, next);
+      middleware(request, response, next);
+      middleware(request, response, next);
 
-    expect(next).toHaveBeenCalledTimes(1);
-    expect(response.statusCode).toBe(429);
-    expect(response.end).toHaveBeenCalledWith(
-      expect.stringContaining("Too Many Requests"),
-    );
-    expect(response.end).toHaveBeenCalledWith(
-      expect.stringContaining("rate-limited"),
-    );
+      expect(next).toHaveBeenCalledTimes(1);
+      expect(response.statusCode).toBe(429);
+      expect(response.end).toHaveBeenCalledWith(
+        expect.stringContaining("Too Many Requests"),
+      );
+      expect(response.end).toHaveBeenCalledWith(
+        expect.stringContaining("rate-limited"),
+      );
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Production rate limiting"),
+      );
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it("ignores spoofed x-forwarded-for when deriving rate-limit keys", async () => {

@@ -10,6 +10,7 @@ import {
 import type { Session } from "fastify";
 import helmet from "helmet";
 import { Pool, type PoolClient } from "pg";
+import { defaultPortFactory, getPortEnvVarName } from "./util/port.util";
 import {
   closeRedisClient,
   createRedisClient,
@@ -57,6 +58,7 @@ export interface BootstrapRateLimitOptions {
 
 export type BackendRateLimitStore = "memory" | "redis";
 export type BackendRateLimitStorePreference = BackendRateLimitStore | "auto";
+type BackendPortSource = "configured" | "container-default" | "local-default";
 
 export interface BackendEnvironmentConfig {
   corsOrigins: string[];
@@ -64,6 +66,7 @@ export interface BackendEnvironmentConfig {
   isProduction: boolean;
   nodeEnv?: string;
   port: number;
+  portSource: BackendPortSource;
   rateLimit: Required<BootstrapRateLimitOptions> & {
     store: BackendRateLimitStore;
     storePreference: BackendRateLimitStorePreference;
@@ -618,13 +621,60 @@ function resolveHost(env: NodeJS.ProcessEnv): string | undefined {
   return readOptionalString(env.HOST);
 }
 
-function resolvePort(env: NodeJS.ProcessEnv, defaultPort: number): number {
-  const port = readPositiveInteger("PORT", env.PORT, defaultPort);
-  if (port > 65_535) {
-    throw new Error("PORT must be between 1 and 65535.");
+function isContainerEnvironment(env: NodeJS.ProcessEnv): boolean {
+  const container = env.CONTAINER?.trim().toLowerCase();
+  const hasContainerMarker =
+    container !== undefined &&
+    container !== "" &&
+    !["0", "false", "no", "off"].includes(container);
+
+  return Boolean(env.KUBERNETES_SERVICE_HOST) || hasContainerMarker;
+}
+
+function readConfiguredPort(
+  name: string,
+  value: string | undefined,
+): { name: string; port: number } | undefined {
+  const port = readOptionalPositiveInteger(name, value);
+  return port === undefined ? undefined : { name, port };
+}
+
+interface ResolvedBackendPort {
+  name: string;
+  port: number;
+  source: BackendPortSource;
+}
+
+function resolvePort(
+  options: BootstrapNestApiOptions,
+  env: NodeJS.ProcessEnv,
+): ResolvedBackendPort {
+  const appPortEnvName = getPortEnvVarName(options.appName);
+  const configured =
+    readConfiguredPort(appPortEnvName, env[appPortEnvName]) ??
+    readConfiguredPort("PORT", env.PORT);
+  let resolved: ResolvedBackendPort;
+  if (configured) {
+    resolved = {
+      name: configured.name,
+      port: configured.port,
+      source: "configured",
+    };
+  } else if (isContainerEnvironment(env)) {
+    resolved = { name: "CONTAINER", port: 80, source: "container-default" };
+  } else {
+    resolved = {
+      name: "defaultPort",
+      port: options.defaultPort,
+      source: "local-default",
+    };
   }
 
-  return port;
+  if (resolved.port > 65_535) {
+    throw new Error(`${resolved.name} must be between 1 and 65535.`);
+  }
+
+  return resolved;
 }
 
 function parseRateLimitStorePreference(
@@ -805,14 +855,15 @@ export function resolveBackendEnvironmentConfig(
     );
   }
 
-  const port = resolvePort(env, options.defaultPort);
+  const port = resolvePort(options, env);
 
   return {
     corsOrigins: resolveConfiguredCorsOrigins(options, env),
     host: resolveHost(env),
     isProduction,
     nodeEnv: readOptionalString(env.NODE_ENV),
-    port,
+    port: port.port,
+    portSource: port.source,
     rateLimit: resolveRateLimitOptions(options, env, isProduction),
     session: {
       cookieName: resolveSessionCookieName(isProduction, env),
@@ -836,6 +887,16 @@ export function resolveBackendEnvironmentConfig(
       readBoolean("TRUST_PROXY", env.TRUST_PROXY) ??
       false,
   };
+}
+
+async function resolveListenPort(
+  config: BackendEnvironmentConfig,
+): Promise<number> {
+  if (config.portSource === "local-default") {
+    return await defaultPortFactory();
+  }
+
+  return config.port;
 }
 
 function getHeader(request: RequestLike, name: string): string | undefined {
@@ -1121,9 +1182,10 @@ export async function bootstrapNestApi(
     version: options.openApi?.version,
   });
 
+  const listenPort = await resolveListenPort(config);
   if (config.host) {
-    await app.listen(config.port, config.host);
+    await app.listen(listenPort, config.host);
   } else {
-    await app.listen(config.port);
+    await app.listen(listenPort);
   }
 }

@@ -28,9 +28,9 @@ and verifies nginx frontends point at Kubernetes Service DNS names.
 ## Runtime port and nginx behavior
 
 API containers use their per-app Helm `apps.<name>.port` value as both
-`containerPort` and the `PORT` environment variable, overriding the Dockerfile's
-compose-friendly `PORT=3000`. Services continue to expose `servicePort: 3000` and
-route by named target port.
+`containerPort` and the `PORT` environment variable. Node app images can bind
+port 80 as a non-root user, so Services expose `servicePort: 80` and route by
+named target port.
 
 Frontend images still include the docker-compose nginx config for local use. In
 Kubernetes, Helm mounts a rendered ConfigMap at

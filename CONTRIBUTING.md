@@ -1,17 +1,17 @@
 # Contributing
 
-Use this guide with the root [README](README.md), [Command matrix](docs/command-matrix.md), and the documents in `docs/`.
+Use this guide with the root [README](README.md), [Command matrix](docs/command-matrix.md), and the documents in `docs/`. AI coding agents must also follow [AGENTS.md](AGENTS.md) and the context guidance under [docs/ai](docs/ai/repo-map.md).
 
 ## Prerequisites
 
 - Node.js `>=26 <27`; use `.nvmrc` for the current local patch version.
-- pnpm `11.6.0` through Corepack.
+- pnpm `11.10.0` through Corepack.
 - Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.6.0 --activate
+corepack prepare pnpm@11.10.0 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 ```
@@ -84,7 +84,8 @@ Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage
 
 ## Frontend changes
 
-- Reuse `@app/frontend-ui` primitives for shared layout and components; keep Storybook stories/config in `libs/frontend/ui/lib/.storybook` in sync for design-system changes.
+- Reuse `@app/frontend-ui-web` primitives for shared React DOM layout and components. `@app/frontend-ui` is a compatibility facade; keep Storybook stories/config in `libs/frontend/ui/lib/.storybook` in sync for design-system changes until a dedicated `ui-web` Storybook target replaces it.
+- Use `@app/frontend-ui-native` for Expo/React Native UI. Keep `mobile-app` app wiring under `apps/frontend/mobile`, and use `EXPO_PUBLIC_*` variables for mobile-safe public runtime configuration.
 - Follow [frontend state architecture](docs/frontend-state.md) for TanStack Query, MobX shell state, theme/i18n ownership, raw-fetch limits, and copy rules.
 - Keep static smoke checks, Storybook stories, and user-visible copy assertions in sync when frontend shells change.
 - Keep browser-facing API base URLs documented with the matching `VITE_*` variable.

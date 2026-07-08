@@ -1,6 +1,8 @@
 packages:
   - "apps/frontend/*"
   - "apps/backend/*/*"
+  - "libs/backend"
+  - "libs/frontend"
   - "packages/tooling"
 
 overrides:

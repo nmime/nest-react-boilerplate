@@ -4,14 +4,17 @@ import { cn } from "../util/cn";
 
 export type UiFormProps = FormHTMLAttributes<HTMLFormElement>;
 
-export const UiForm = forwardRef<HTMLFormElement, UiFormProps>(
+export const Form = forwardRef<HTMLFormElement, UiFormProps>(
   ({ className, ...props }, ref) => (
     <form
       className={cn("xr-form grid gap-4", className)}
+      data-slot="form"
       ref={ref}
       {...props}
     />
   ),
 );
 
-UiForm.displayName = "UiForm";
+Form.displayName = "Form";
+
+export const UiForm = Form;

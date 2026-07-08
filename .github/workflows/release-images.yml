@@ -94,6 +94,20 @@ jobs:
               FRONTEND_OUTPUT=dist/apps/frontend/landing
               VITE_API_BASE_URL_MODE=same-origin
               PNPM_VERSION=11.10.0
+          - name: site-app
+            target: site
+            build-args: |
+              NX_PROJECT=site-app
+              VITE_API_BASE_URL_MODE=same-origin
+              PNPM_VERSION=11.10.0
+          - name: mobile-app
+            target: frontend
+            build-args: |
+              NX_PROJECT=mobile-app
+              NX_TARGET=export
+              FRONTEND_OUTPUT=dist/apps/frontend/mobile
+              VITE_API_BASE_URL_MODE=same-origin
+              PNPM_VERSION=11.10.0
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 

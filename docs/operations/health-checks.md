@@ -1,7 +1,7 @@
 # Health, readiness, and liveness runbook
 
 Endpoints are provided by the shared `BaseHealthController` (`libs/backend/common/health/lib`).
-See [architecture docs](architecture.md) for module boundaries and [API conventions](api-conventions.md) for response envelope shapes.
+See [architecture docs](../architecture.md) for module boundaries and [API conventions](../api-conventions.md) for response envelope shapes.
 
 ## Endpoints
 
@@ -65,6 +65,6 @@ When any required indicator fails, `/ready` returns **HTTP 503** with the failur
    - `nats` — NATS connection refused. Check `NATS_URL` or `NATS_HOST`/`NATS_PORT`. See [dependency readiness triage](dependency-triage.md).
 3. **Verify from inside the container** (if accessible):
    ```bash
-   curl -s http://localhost:3000/ready | jq .
+   curl -s "http://localhost:${PORT:-80}/ready" | jq .
    ```
 4. **Check logs** for connection errors at startup. Logs include `requestId` for correlation; see [structured logging](logging.md).

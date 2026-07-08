@@ -22,6 +22,19 @@ const mocks = vi.hoisted(() => {
     middleware,
     nestCreate: vi.fn(() => Promise.resolve(app)),
     setupSwagger: vi.fn(),
+    defaultPortFactory: vi.fn(() => Promise.resolve(3030)),
+    getPortEnvVarName: vi.fn((appName: string) => {
+      const segments = appName
+        .trim()
+        .toUpperCase()
+        .split("")
+        .map((char) => (/[A-Z0-9]/u.test(char) ? char : "_"))
+        .join("")
+        .split("_")
+        .filter(Boolean);
+
+      return `${segments.join("_")}_PORT`;
+    }),
   };
 });
 
@@ -45,6 +58,11 @@ vi.mock("@app/backend-common-swagger", () => ({
   setupSwagger: mocks.setupSwagger,
 }));
 
+vi.mock("./util/port.util", () => ({
+  defaultPortFactory: mocks.defaultPortFactory,
+  getPortEnvVarName: mocks.getPortEnvVarName,
+}));
+
 import { bootstrap } from "./bootstrap";
 
 class TestModule {}
@@ -52,7 +70,7 @@ class TestModule {}
 describe("bootstrap", () => {
   const originalEnvironment = {
     gracefulShutdown: process.env.GRACEFUL_SHUTDOWN,
-    nodeEnv: process.env.NODE_ENV,
+    nodeEnv: process.env.NODE_ENV as string | undefined,
     npmPackageVersion: process.env.npm_package_version,
     otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
     testApiPort: process.env.TEST_API_PORT,
@@ -162,6 +180,7 @@ describe("bootstrap", () => {
   it("falls back to the default port factory when no port is configured", async () => {
     await bootstrap({ name: "default-api", module: TestModule });
 
-    expect(mocks.app.listen).toHaveBeenCalledWith(expect.any(Number));
+    expect(mocks.defaultPortFactory).toHaveBeenCalledWith(mocks.app);
+    expect(mocks.app.listen).toHaveBeenCalledWith(3030);
   });
 });

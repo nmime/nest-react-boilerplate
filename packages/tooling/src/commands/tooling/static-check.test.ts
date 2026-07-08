@@ -749,7 +749,38 @@ describe("static-check workspace metadata guard", () => {
     }
   });
 
-  it("rejects package manifests inside libraries", () => {
+  it("accepts backend and frontend platform package manifests", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "tsconfig.base.json",
+        JSON.stringify({ compilerOptions: { paths: {} } }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/package.json",
+        JSON.stringify({ name: "@repo/tooling" }),
+      );
+      writeText(
+        workspaceRoot,
+        "libs/backend/package.json",
+        JSON.stringify({ name: "@app/backend" }),
+      );
+      writeText(
+        workspaceRoot,
+        "libs/frontend/package.json",
+        JSON.stringify({ name: "@app/frontend" }),
+      );
+
+      assert.deepEqual(checkWorkspaceMetadata(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects package manifests inside nested libraries", () => {
     const workspaceRoot = createWorkspace();
 
     try {
@@ -776,7 +807,10 @@ describe("static-check workspace metadata guard", () => {
         failures[0].command,
         "workspace metadata package manifests",
       );
-      assert.match(failures[0].stderr, /Libraries must not define package\.json/);
+      assert.match(
+        failures[0].stderr,
+        /Nested libraries must not define package\.json/,
+      );
     } finally {
       removeWorkspace(workspaceRoot);
     }

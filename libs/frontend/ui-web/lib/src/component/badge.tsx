@@ -9,7 +9,7 @@ export interface UiBadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: "soft" | "outline" | "solid";
 }
 
-export const UiBadge = ({
+export const Badge = ({
   children,
   className,
   label,
@@ -25,9 +25,13 @@ export const UiBadge = ({
       `xr-badge--${variant}`,
       className,
     )}
+    data-slot="badge"
     data-tone={tone}
     data-variant={variant}
   >
     {label ?? children}
   </span>
 );
+
+export type BadgeProps = UiBadgeProps;
+export const UiBadge = Badge;

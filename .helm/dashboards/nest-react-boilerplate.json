@@ -18,7 +18,7 @@
       "id": 1,
       "targets": [
         {
-          "expr": "sum by (deployment) (kube_deployment_status_replicas_available{deployment=~\".*(auth-api|user-api|admin-api|landing|user-frontend|admin-frontend)\"})",
+          "expr": "sum by (deployment) (kube_deployment_status_replicas_available{deployment=~\".*(auth-api|user-api|admin-api|landing|site|user-frontend|mobile-frontend|admin-frontend)\"})",
           "legendFormat": "{{deployment}}",
           "refId": "A"
         }

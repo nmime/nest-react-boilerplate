@@ -1,5 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { errAsync, okAsync } from "neverthrow";
+import { Logger } from "@nestjs/common";
 import {
   AuthTokenCleanupService,
   resolveAuthTokenCleanupConfig,
@@ -21,6 +22,16 @@ function createRepositoryMock(): {
 }
 
 describe("AuthTokenCleanupService", () => {
+  beforeEach(() => {
+    vi.spyOn(Logger.prototype, "debug").mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("cleans up expired tokens through the repository", async () => {
     const { cleanupExpiredTokens, repository } = createRepositoryMock();
     const cleanup = new AuthTokenCleanupService(repository);
@@ -41,6 +52,9 @@ describe("AuthTokenCleanupService", () => {
     const cleanup = new AuthTokenCleanupService(repository);
 
     await expect(cleanup.runCleanup()).resolves.toBe(false);
+    expect(Logger.prototype.warn).toHaveBeenCalledWith(
+      "Auth token cleanup failed: cleanup failed",
+    );
   });
 
   it("logs deletion counts when tokens are removed", async () => {

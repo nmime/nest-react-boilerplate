@@ -1,6 +1,19 @@
+import type { Transaction } from "@mikro-orm/core";
 import { Migration } from "@mikro-orm/migrations";
 
 export class Migration20260609100000CreateFeatureFlags extends Migration {
+  override isTransactional(): boolean {
+    return super.isTransactional();
+  }
+
+  override reset(): void {
+    super.reset();
+  }
+
+  override setTransactionContext(ctx: Transaction): void {
+    super.setTransactionContext(ctx);
+  }
+
   override up(): void {
     this.addSql(`
       create table "feature_flags" (

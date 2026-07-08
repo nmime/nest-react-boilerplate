@@ -45,9 +45,8 @@ spec:
             - name: http
               containerPort: {{ $app.port }}
           env:
-            # Override the Dockerfile default PORT=3000 so each Nest API listens
-            # on the same port exposed by its Kubernetes containerPort. Nginx
-            # frontends ignore this variable.
+            # Keep the application listener aligned with the chart container
+            # port. Nginx frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
           {{- if contains "Api" $name }}

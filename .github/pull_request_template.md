@@ -22,10 +22,12 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `apps/frontend/admin`
 - [ ] `apps/frontend/app`
 - [ ] `apps/frontend/landing`
+- [ ] `apps/frontend/site`
 - [ ] `apps/backend/admin/admin-app-api`
 - [ ] `apps/backend/user/user-app-api`
 - [ ] `apps/backend/auth/auth-app-api`
-- [ ] `libs/frontend/ui` / design-system Storybook
+- [ ] `libs/frontend/ui-web` / `libs/frontend/ui` compatibility Storybook
+- [ ] `libs/frontend/runtime` / `libs/frontend/api-support`
 - [ ] `libs/backend/common/*`
 - [ ] `libs/common/*` shared cross-platform libraries
 - [ ] `libs/backend/postgres/main/shared/lib`

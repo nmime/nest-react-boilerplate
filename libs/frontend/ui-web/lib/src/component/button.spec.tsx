@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { MouseEvent } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { UiButton } from "./button";
@@ -70,7 +71,9 @@ describe("shared UI components", () => {
 
   it("prevents unavailable link actions while forwarding available clicks", () => {
     const unavailableClick = vi.fn();
-    const availableClick = vi.fn();
+    const availableClick = vi.fn((event: MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+    });
 
     const { rerender } = render(
       <UiButton disabled href="/reports" onClick={unavailableClick}>

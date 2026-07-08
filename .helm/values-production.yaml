@@ -3,7 +3,7 @@ secrets:
 
 config:
   nodeEnv: production
-  corsOrigins: https://admin.example.com,https://app.example.com
+  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: "3600"
@@ -110,6 +110,39 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ["ALL"] }
+  site:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/site-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  mobileFrontend:
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/mobile-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ""
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 101
+      runAsGroup: 101
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ["ALL"] }
   userFrontend:
     replicas: 3
     image:
@@ -151,7 +184,9 @@ ingress:
     - secretName: nest-react-boilerplate-tls
       hosts:
         - example.com
+        - site.example.com
         - app.example.com
+        - mobile.example.com
         - admin.example.com
         - auth.example.com
 

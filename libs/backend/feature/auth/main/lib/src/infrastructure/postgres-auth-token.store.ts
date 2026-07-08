@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { ResultAsync } from "neverthrow";
 import { DefaultAuthTenantId } from "@app/backend-feature-auth-shared";
-import { AuthTokenRepository } from "@app/backend-postgres-main-auth";
+import {
+  AuthTokenRepository,
+  type AuthRefreshTokenEntity,
+  type AuthUserTokenEntity,
+} from "@app/backend-postgres-main-auth";
 import type {
   AuthTokenStore,
   AuthTokenStoreError,
@@ -73,7 +77,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
           expiresAt: nextExpiresAt,
         },
       })
-      .map((entity) =>
+      .map((entity: AuthRefreshTokenEntity | null) =>
         entity
           ? {
               id: entity.id,
@@ -104,7 +108,9 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
   ): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .findUsableRefreshToken(hashOpaqueToken(token), tenantId)
-      .map((entity) => (entity ? toRefreshTokenRecord(entity) : null))
+      .map((entity: AuthRefreshTokenEntity | null) =>
+        entity ? toRefreshTokenRecord(entity) : null,
+      )
       .mapErr(mapTokenStoreError);
   }
 
@@ -132,7 +138,9 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .consumeUserToken(hashOpaqueToken(token), purpose, tenantId)
-      .map((entity) => (entity ? toUserActionTokenRecord(entity) : null))
+      .map((entity: AuthUserTokenEntity | null) =>
+        entity ? toUserActionTokenRecord(entity) : null,
+      )
       .mapErr(mapTokenStoreError);
   }
 }

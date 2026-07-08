@@ -26,6 +26,7 @@ out/
 .cache/
 .parcel-cache/
 apps/frontend/landing/.astro/
+apps/frontend/mobile/.expo/
 .npm/
 .yarn/cache/
 .pnpm-store/

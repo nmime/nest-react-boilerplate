@@ -6,7 +6,7 @@ const distRoot = resolve(
   import.meta.dirname,
   "../../../../dist/apps/frontend/site",
 );
-const expectedCopy = "Site app scaffold";
+const expectedCopy = "Production web experience";
 
 const readBuiltTextFiles = (directory) => {
   if (!existsSync(directory)) {

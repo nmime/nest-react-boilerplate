@@ -16,6 +16,20 @@ import {
 
 const testValue = <T>(value: unknown): T => value as T;
 
+const muteExceptionLogger = (): (() => void) => {
+  const errorSpy = vi
+    .spyOn(Logger.prototype, "error")
+    .mockImplementation(() => undefined);
+  const debugSpy = vi
+    .spyOn(Logger.prototype, "debug")
+    .mockImplementation(() => undefined);
+
+  return () => {
+    errorSpy.mockRestore();
+    debugSpy.mockRestore();
+  };
+};
+
 describe("exceptions response mapper", () => {
   it("wraps successful data", () => {
     expect(createOkResponse({ status: "ok" })).toEqual({
@@ -100,6 +114,7 @@ describe("exceptions response mapper", () => {
   });
 
   it("filters exceptions into problem+json responses", () => {
+    const restoreLogger = muteExceptionLogger();
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
     const status = vi.fn(() => ({ type }));
@@ -110,23 +125,28 @@ describe("exceptions response mapper", () => {
       }),
     };
 
-    new ExceptionsFilter().catch(
-      new BadRequestException("Invalid input"),
-      host as never,
-    );
+    try {
+      new ExceptionsFilter().catch(
+        new BadRequestException("Invalid input"),
+        host as never,
+      );
 
-    expect(status).toHaveBeenCalledWith(400);
-    expect(type).toHaveBeenCalledWith("application/problem+json");
-    const badRequestBody: unknown = json.mock.calls[0]?.[0];
-    expect(badRequestBody).not.toHaveProperty("instance");
-    expect(badRequestBody).toMatchObject({
-      code: "bad-request",
-      status: 400,
-      title: "Bad Request",
-    });
+      expect(status).toHaveBeenCalledWith(400);
+      expect(type).toHaveBeenCalledWith("application/problem+json");
+      const badRequestBody: unknown = json.mock.calls[0]?.[0];
+      expect(badRequestBody).not.toHaveProperty("instance");
+      expect(badRequestBody).toMatchObject({
+        code: "bad-request",
+        status: 400,
+        title: "Bad Request",
+      });
+    } finally {
+      restoreLogger();
+    }
   });
 
   it("supports Fastify replies that send instead of json", () => {
+    const restoreLogger = muteExceptionLogger();
     const send = vi.fn();
     const header = vi.fn(() => ({ send }));
     const type = vi.fn(() => ({ header, send }));
@@ -138,17 +158,21 @@ describe("exceptions response mapper", () => {
       }),
     };
 
-    new ExceptionsFilter().catch(new Error("boom"), host as never);
+    try {
+      new ExceptionsFilter().catch(new Error("boom"), host as never);
 
-    expect(status).toHaveBeenCalledWith(500);
-    expect(type).toHaveBeenCalledWith("application/problem+json");
-    expect(header).toHaveBeenCalledWith("content-language", "en");
-    const fastifyBody: unknown = send.mock.calls[0]?.[0];
-    expect(fastifyBody).not.toHaveProperty("instance");
-    expect(fastifyBody).toMatchObject({
-      status: 500,
-      title: "Internal Server Error",
-    });
+      expect(status).toHaveBeenCalledWith(500);
+      expect(type).toHaveBeenCalledWith("application/problem+json");
+      expect(header).toHaveBeenCalledWith("content-language", "en");
+      const fastifyBody: unknown = send.mock.calls[0]?.[0];
+      expect(fastifyBody).not.toHaveProperty("instance");
+      expect(fastifyBody).toMatchObject({
+        status: 500,
+        title: "Internal Server Error",
+      });
+    } finally {
+      restoreLogger();
+    }
   });
 
   it("logs 500 responses with the exception stack for production traceability", () => {
@@ -214,6 +238,7 @@ describe("exceptions response mapper", () => {
   });
 
   it("does not use request.url as a problem instance", () => {
+    const restoreLogger = muteExceptionLogger();
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
     const status = vi.fn(() => ({ type }));
@@ -224,14 +249,18 @@ describe("exceptions response mapper", () => {
       }),
     };
 
-    new ExceptionsFilter().catch(new Error("boom"), host as never);
+    try {
+      new ExceptionsFilter().catch(new Error("boom"), host as never);
 
-    const fallbackBody: unknown = json.mock.calls[0]?.[0];
-    expect(fallbackBody).not.toHaveProperty("instance");
-    expect(fallbackBody).toMatchObject({
-      status: 500,
-      title: "Internal Server Error",
-    });
+      const fallbackBody: unknown = json.mock.calls[0]?.[0];
+      expect(fallbackBody).not.toHaveProperty("instance");
+      expect(fallbackBody).toMatchObject({
+        status: 500,
+        title: "Internal Server Error",
+      });
+    } finally {
+      restoreLogger();
+    }
   });
 
   it("includes code and instance in the 500 error log descriptor", () => {

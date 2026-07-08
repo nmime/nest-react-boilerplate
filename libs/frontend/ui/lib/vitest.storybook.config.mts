@@ -1,14 +1,17 @@
 /// <reference types="vitest" />
 import path from "node:path";
+import { workspaceTsconfigAliases } from "../../../../config/vite/workspace-tsconfig-aliases.mjs";
 
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   root: import.meta.dirname,
-  plugins: [nxViteTsPaths()],
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
   test: {
     projects: [
       {

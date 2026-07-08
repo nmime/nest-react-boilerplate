@@ -1,13 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { workspaceTsconfigAliases } from "../../../../config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
   cacheDir:
     "../../../../node_modules/.vitest/apps/backend/user/user-app-api-e2e",
-  plugins: [nxViteTsPaths()],
   resolve: {
+    tsconfigPaths: true,
     alias: {
+      ...workspaceTsconfigAliases(),
       "@app/common-feature-flags": new URL(
         "../../../../libs/common/feature-flags/lib/src/index.ts",
         import.meta.url,

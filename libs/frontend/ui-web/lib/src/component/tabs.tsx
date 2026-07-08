@@ -1,7 +1,66 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import type { ReactNode } from "react";
+import {
+  forwardRef,
+  type ComponentPropsWithoutRef,
+  type ComponentRef,
+  type ReactNode,
+} from "react";
 import { cn } from "../util/cn";
+
+export const Tabs = TabsPrimitive.Root;
+
+export type TabsListProps = ComponentPropsWithoutRef<typeof TabsPrimitive.List>;
+
+export const TabsList = forwardRef<
+  ComponentRef<typeof TabsPrimitive.List>,
+  TabsListProps
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    className={cn("xr-tabs__list", className)}
+    data-slot="tabs-list"
+    ref={ref}
+    {...props}
+  />
+));
+
+TabsList.displayName = "TabsList";
+
+export type TabsTriggerProps = ComponentPropsWithoutRef<
+  typeof TabsPrimitive.Trigger
+>;
+
+export const TabsTrigger = forwardRef<
+  ComponentRef<typeof TabsPrimitive.Trigger>,
+  TabsTriggerProps
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    className={cn("xr-tabs__trigger", className)}
+    data-slot="tabs-trigger"
+    ref={ref}
+    {...props}
+  />
+));
+
+TabsTrigger.displayName = "TabsTrigger";
+
+export type TabsContentProps = ComponentPropsWithoutRef<
+  typeof TabsPrimitive.Content
+>;
+
+export const TabsContent = forwardRef<
+  ComponentRef<typeof TabsPrimitive.Content>,
+  TabsContentProps
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    className={cn("xr-tabs__content", className)}
+    data-slot="tabs-content"
+    ref={ref}
+    {...props}
+  />
+));
+
+TabsContent.displayName = "TabsContent";
 
 export interface UiTabItem {
   content: ReactNode;
@@ -30,34 +89,30 @@ export const UiTabs = ({
   const resolvedDefaultValue = defaultValue ?? items[0]?.value;
 
   return (
-    <TabsPrimitive.Root
+    <Tabs
       className={cn("xr-tabs", className)}
       data-admin-primitive="tabs"
+      data-slot="tabs"
       defaultValue={resolvedDefaultValue}
       onValueChange={onValueChange}
       value={value}
     >
-      <TabsPrimitive.List aria-label={label} className="xr-tabs__list">
+      <TabsList aria-label={label}>
         {items.map((item) => (
-          <TabsPrimitive.Trigger
-            className="xr-tabs__trigger"
+          <TabsTrigger
             disabled={item.disabled}
             key={item.value}
             value={item.value}
           >
             {item.label}
-          </TabsPrimitive.Trigger>
+          </TabsTrigger>
         ))}
-      </TabsPrimitive.List>
+      </TabsList>
       {items.map((item) => (
-        <TabsPrimitive.Content
-          className="xr-tabs__content"
-          key={item.value}
-          value={item.value}
-        >
+        <TabsContent key={item.value} value={item.value}>
           {item.content}
-        </TabsPrimitive.Content>
+        </TabsContent>
       ))}
-    </TabsPrimitive.Root>
+    </Tabs>
   );
 };

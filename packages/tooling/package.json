@@ -22,8 +22,16 @@
     "tsconfig.json"
   ],
   "dependencies": {
+    "@mikro-orm/core": "7.1.5",
+    "@playwright/test": "1.61.1",
+    "@swc-node/register": "1.11.1",
+    "istanbul-lib-coverage": "3.2.2",
+    "istanbul-lib-report": "3.0.1",
+    "istanbul-reports": "3.2.0",
     "jiti": "2.7.0",
-    "sharp": "0.35.3"
+    "pg": "8.22.0",
+    "sharp": "0.35.3",
+    "tsconfig-paths": "4.2.0"
   },
   "exports": {
     ".": "./src/cli.ts",

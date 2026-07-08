@@ -166,6 +166,7 @@ export const UiButton = ({
         aria-busy={isLoading || undefined}
         aria-disabled={isUnavailable || undefined}
         className={buttonClassName}
+        data-slot="button"
         href={href}
         onClick={handleClick}
         rel={getAccessibleRel(rel, target)}
@@ -190,6 +191,7 @@ export const UiButton = ({
       {...buttonProps}
       aria-busy={isLoading || undefined}
       className={buttonClassName}
+      data-slot="button"
       disabled={asChild ? undefined : isUnavailable}
       onClick={onClick}
       type={asChild ? undefined : type}
@@ -198,3 +200,5 @@ export const UiButton = ({
     </Comp>
   );
 };
+
+export const Button = UiButton;

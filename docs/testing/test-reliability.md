@@ -1,7 +1,7 @@
 # Test reliability runbook
 
 This guide covers practices for writing deterministic, reliable tests.
-See the [modern QA matrix](testing/modern-qa.md) for the full test category inventory and gate definitions.
+See the [modern QA matrix](modern-qa.md) for the full test category inventory and gate definitions.
 
 ## Deterministic time
 

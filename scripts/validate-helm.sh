@@ -48,9 +48,9 @@ if grep -nE 'proxy_pass http://(auth-app-api|user-app-api|admin-app-api)(:|/)' "
 fi
 
 for expected in \
-  'proxy_pass http://nest-react-boilerplate-auth-api:3000;' \
-  'proxy_pass http://nest-react-boilerplate-user-api:3000;' \
-  'proxy_pass http://nest-react-boilerplate-admin-api:3000;'
+  'proxy_pass http://nest-react-boilerplate-auth-api:80;' \
+  'proxy_pass http://nest-react-boilerplate-user-api:80;' \
+  'proxy_pass http://nest-react-boilerplate-admin-api:80;'
 do
   if ! grep -Fq "${expected}" "${TMP_DIR}/production.yaml"; then
     echo "missing expected Kubernetes nginx upstream: ${expected}" >&2

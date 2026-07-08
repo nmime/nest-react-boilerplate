@@ -1,9 +1,17 @@
 import { spawn } from "node:child_process";
+import { join, resolve } from "node:path";
+
+const workspaceRoot = resolve(import.meta.dirname, "../../../../..");
+const storybookRoot = join(workspaceRoot, "libs/frontend/ui/lib");
+const vitestBin =
+  process.platform === "win32"
+    ? join(workspaceRoot, "node_modules/.bin/vitest.cmd")
+    : join(workspaceRoot, "node_modules/.bin/vitest");
 
 const child = spawn(
-  process.platform === "win32" ? "pnpm.cmd" : "pnpm",
-  ["exec", "vitest", "run", "--config", "vitest.storybook.config.mts"],
-  { cwd: "libs/frontend/ui/lib", stdio: "inherit" },
+  vitestBin,
+  ["run", "--config", "vitest.storybook.config.mts"],
+  { cwd: storybookRoot, stdio: "inherit" },
 );
 
 const exitCode = await new Promise<number>((resolveExit, rejectExit) => {

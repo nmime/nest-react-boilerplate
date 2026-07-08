@@ -677,6 +677,9 @@ describe("User app shell", () => {
   it("lets the browser handle non-SPA link clicks", () => {
     render(<App />);
     const startPath = window.location.pathname;
+    const preventBrowserNavigation = (event: MouseEvent) => {
+      event.preventDefault();
+    };
     const appendAnchor = (
       href: string,
       configure?: (anchor: HTMLAnchorElement) => void,
@@ -689,21 +692,26 @@ describe("User app shell", () => {
       return anchor;
     };
 
-    document.dispatchEvent(
-      new MouseEvent("click", { bubbles: true, button: 0 }),
-    );
-    fireEvent.click(appendAnchor("/settings"), { metaKey: true });
-    fireEvent.click(
-      appendAnchor("/profile", (anchor) => {
-        anchor.target = "_blank";
-      }),
-    );
-    fireEvent.click(
-      appendAnchor("/download", (anchor) => {
-        anchor.setAttribute("download", "report.txt");
-      }),
-    );
-    fireEvent.click(appendAnchor("mailto:support@example.test"));
+    document.addEventListener("click", preventBrowserNavigation);
+    try {
+      document.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, button: 0 }),
+      );
+      fireEvent.click(appendAnchor("/settings"), { metaKey: true });
+      fireEvent.click(
+        appendAnchor("/profile", (anchor) => {
+          anchor.target = "_blank";
+        }),
+      );
+      fireEvent.click(
+        appendAnchor("/download", (anchor) => {
+          anchor.setAttribute("download", "report.txt");
+        }),
+      );
+      fireEvent.click(appendAnchor("mailto:support@example.test"));
+    } finally {
+      document.removeEventListener("click", preventBrowserNavigation);
+    }
 
     expect(window.location.pathname).toBe(startPath);
   });

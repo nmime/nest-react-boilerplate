@@ -1,6 +1,6 @@
 :root {
-  color: #161718;
-  background: #f7f8f9;
+  color: #101828;
+  background: #f6f7f9;
   font-family:
     Inter,
     ui-sans-serif,
@@ -15,6 +15,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: linear-gradient(180deg, #ffffff 0, #f6f7f9 46%, #eef2f7 100%);
 }
 
 a {
@@ -29,23 +30,39 @@ a {
 .site-nav {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 56px;
   padding: 0 32px;
-  border-bottom: 1px solid #d8dde3;
-  background: #ffffff;
+  border-bottom: 1px solid #dde3ea;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
   font-size: 0.9375rem;
   font-weight: 700;
 }
 
 .site-home {
-  width: min(720px, calc(100% - 48px));
-  padding: 96px 0;
+  width: min(1120px, calc(100% - 48px));
+  padding: 56px 0 72px;
   margin: 0 auto;
+}
+
+.site-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 32px;
+  align-items: stretch;
+}
+
+.site-hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 420px;
 }
 
 .site-kicker {
   margin: 0 0 12px;
-  color: #4b5f76;
+  color: #14532d;
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -54,17 +71,136 @@ a {
 
 .site-home h1 {
   margin: 0;
-  color: #101214;
-  font-size: 3rem;
+  max-width: 760px;
+  color: #0f172a;
+  font-size: 3.75rem;
   line-height: 1.05;
 }
 
-.site-home p:last-child {
-  max-width: 560px;
+.site-hero-copy > p {
+  max-width: 640px;
   margin: 20px 0 0;
-  color: #44505c;
+  color: #475467;
   font-size: 1.125rem;
-  line-height: 1.7;
+  line-height: 1.65;
+}
+
+.site-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.site-primary-action,
+.site-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.site-primary-action {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.site-secondary-action {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.site-status {
+  display: grid;
+  align-content: end;
+  min-height: 420px;
+  padding: 28px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background:
+    linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(22, 78, 99, 0.92)),
+    #0f172a;
+  color: #ffffff;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+}
+
+.site-status span:last-of-type {
+  margin-top: 12px;
+  color: #bae6fd;
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.site-status strong {
+  max-width: 280px;
+  margin-top: 8px;
+  font-size: 2.25rem;
+  line-height: 1.08;
+}
+
+.site-status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.18);
+}
+
+.site-metrics,
+.site-routes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.site-metric,
+.site-route {
+  min-height: 132px;
+  padding: 20px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.site-metric span,
+.site-route span {
+  color: #667085;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.site-metric strong {
+  display: block;
+  margin-top: 10px;
+  color: #0f172a;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.site-metric p,
+.site-route p {
+  margin: 10px 0 0;
+  color: #475467;
+  line-height: 1.45;
+}
+
+.site-route {
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.site-route:hover {
+  border-color: #2563eb;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 640px) {
@@ -73,11 +209,30 @@ a {
   }
 
   .site-home {
-    width: min(100% - 32px, 720px);
-    padding: 64px 0;
+    width: min(100% - 32px, 1120px);
+    padding: 36px 0 48px;
+  }
+
+  .site-hero,
+  .site-metrics,
+  .site-routes {
+    grid-template-columns: 1fr;
+  }
+
+  .site-hero-copy,
+  .site-status {
+    min-height: auto;
   }
 
   .site-home h1 {
-    font-size: 2.25rem;
+    font-size: 2.45rem;
+  }
+
+  .site-status {
+    padding: 24px;
+  }
+
+  .site-status strong {
+    font-size: 1.85rem;
   }
 }

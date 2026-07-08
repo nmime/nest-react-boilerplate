@@ -355,7 +355,7 @@ describe("social auth and TMA UI", () => {
 
     const fetchMock = setFetch(
       jsonResponse({
-        data: { authorizationUrl: "https://discord.example/oauth" },
+        data: {},
       }),
     );
 

@@ -57,8 +57,10 @@ pnpm run dev:fullstack
 ```
 
 `dev:fullstack` starts the root Postgres compose service, runs
-`pnpm run db:migrate` through the MikroORM Migrator, and runs the three backend
-APIs plus the three Vite frontends with local API base URL defaults.
+`pnpm run db:migrate` through the MikroORM Migrator, and runs the three core
+backend APIs plus the admin/user Vite SPAs and Astro landing app with local API
+base URL defaults. Run `pnpm exec nx serve site-app` separately when validating
+the Vike SSR site.
 
 ## Database migrations and reset
 
@@ -92,13 +94,16 @@ pnpm run docker:down
 
 `docker/docker-compose.yml` includes Postgres health checks, a Node-based
 migration service that runs `pnpm db:migrate`, backend `/health` checks for the
-local development stack, frontend `/nginx-health` checks, restart policies, and
-healthy dependency ordering. Production Compose uses API `/ready`; Helm uses API
-`/live` and `/ready`. Frontend containers use nginx same-origin API proxying:
+local development stack, the Vike `site-app` `/ready` check, frontend
+`/nginx-health` checks, restart policies, and healthy dependency ordering. It
+builds the admin/user Vite apps, Astro landing app, Vike SSR site, and Expo
+mobile web export. Production Compose uses API and site `/ready`; Helm uses API
+and site `/live` plus `/ready`. Static frontend containers use nginx same-origin
+API proxying:
 
-- `/auth/*` -> `auth-app-api:3000`
-- `/profile/*` -> `user-app-api:3000`
-- `/admin/*` -> `admin-app-api:3000`
+- `/auth/*` -> `auth-app-api:80`
+- `/profile/*` -> `user-app-api:80`
+- `/admin/*` -> `admin-app-api:80`
 
 HTML navigations under those prefixes fall back to the SPA while non-HTML API
 requests continue to proxy to the backend, so admin/user deep-link reloads do

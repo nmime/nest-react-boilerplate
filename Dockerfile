@@ -1,13 +1,14 @@
 # syntax=docker/dockerfile:1
 
 ARG NODE_VERSION=26.1.0-alpine
-ARG PNPM_VERSION=11.6.0
+ARG PNPM_VERSION=11.10.0
 
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
 WORKDIR /workspace
 ENV CI=true NX_DAEMON=false
-RUN apk add --no-cache libc6-compat python3 make g++ \
+RUN apk add --no-cache libc6-compat libcap python3 make g++ \
+  && setcap 'cap_net_bind_service=+ep' "$(which node)" \
   && npm install -g pnpm@${PNPM_VERSION}
 
 # Dependency layer keyed only on the lockfile: pnpm fetch needs no package.json
@@ -15,6 +16,7 @@ RUN apk add --no-cache libc6-compat python3 make g++ \
 COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm fetch
 COPY package.json nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
+COPY config ./config
 COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
@@ -28,6 +30,7 @@ CMD ["pnpm", "db:migrate"]
 
 FROM workspace AS builder
 ARG NX_PROJECT
+ARG NX_TARGET=build
 ARG VITE_API_BASE_URL_MODE=same-origin
 ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
@@ -40,14 +43,15 @@ ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
 # a pruned package.json and pnpm-lock.yaml under its dist output describing only
 # the npm packages that app (and the workspace libs it inlines) actually imports.
 RUN test -n "${NX_PROJECT}" \
-  && pnpm exec nx build "${NX_PROJECT}"
+  && pnpm exec nx run "${NX_PROJECT}:${NX_TARGET}"
 
 # Per-app production dependencies. Installing from the app's generated
 # dist package.json + pruned lockfile against the store already populated by
 # `pnpm fetch` yields a node_modules that excludes the rest of the workspace
 # (React, Tamagui, bot libs, ...). Flags:
 #   --prod            production dependencies only
-#   --offline         resolve solely from the pnpm-fetch store (no network)
+#   --prefer-offline  reuse the pnpm-fetch store first, with registry metadata
+#                     fallback for generated per-app lockfiles
 #   --ignore-workspace treat the dist output as a standalone project so pnpm
 #                     uses the app's generated lockfile, not the root workspace one
 #   --no-frozen-lockfile the workspace stage sets CI=true (frozen by default) and
@@ -60,24 +64,35 @@ RUN test -n "${NX_PROJECT}" \
 FROM builder AS backend-deps
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 WORKDIR /workspace/${BUILD_OUTPUT}
-RUN pnpm install --prod --offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
 
 FROM node:${NODE_VERSION} AS backend
-ENV NODE_ENV=production \
-  PORT=3000
+ENV CONTAINER=true \
+  NODE_ENV=production
 WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
+RUN apk add --no-cache libcap \
+  && setcap 'cap_net_bind_service=+ep' "$(which node)"
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
 COPY --from=builder /workspace/i18n ./i18n
-RUN node -e "require('./dist/libs/common/i18n/src/locales.js')"
+RUN node -e "require('./dist/libs/common/i18n')"
 USER node
-EXPOSE 3000
+EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
+
+FROM builder AS site
+ENV CONTAINER=true \
+  NODE_ENV=production \
+  SITE_DIST_ROOT=/workspace/dist/apps/frontend/site
+WORKDIR /workspace/apps/frontend/site
+USER node
+EXPOSE 80
+CMD ["node", "--experimental-strip-types", "server/index.ts"]
 
 FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

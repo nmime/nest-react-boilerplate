@@ -60,6 +60,47 @@ describe("resolveBackendEnvironmentConfig", () => {
     });
   });
 
+  it("resolves app-specific, generic, and container fallback ports", () => {
+    expect(
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          PORT: "4999",
+          TEST_API_PORT: "4123",
+        },
+      ).port,
+    ).toBe(4123);
+
+    expect(
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          PORT: "4999",
+        },
+      ).port,
+    ).toBe(4999);
+
+    expect(
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          CONTAINER: "true",
+        },
+      ).port,
+    ).toBe(80);
+  });
+
+  it("validates app-specific port values", () => {
+    expect(() =>
+      resolveBackendEnvironmentConfig(
+        { appName: "test-api", defaultPort: 3010 },
+        {
+          TEST_API_PORT: "abc",
+        },
+      ),
+    ).toThrow("TEST_API_PORT must be a positive integer.");
+  });
+
   it("fails closed for production rate limiting without Redis or an explicit safe override", () => {
     expect(() =>
       resolveBackendEnvironmentConfig(

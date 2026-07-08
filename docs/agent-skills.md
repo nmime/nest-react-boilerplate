@@ -1,6 +1,18 @@
-# Template agent skills
+# Agent skills
 
-Canonical repo-wide AI agent rules live in [AGENTS.md](../AGENTS.md). Follow those first, then use this file for frontend design-skill workflow details.
+Canonical repo-wide AI agent rules live in [AGENTS.md](../AGENTS.md). Follow those first, then use the focused workflow docs and skills below when they match the task.
+
+## Repo-local skills
+
+Repo-local skills live under `.agents/skills/**`:
+
+- [PR review](../.agents/skills/pr-review/SKILL.md) for branch, PR, or merge-request review.
+- [CI triage](../.agents/skills/ci-triage/SKILL.md) for failed workflow or pipeline investigation.
+- [Service audit](../.agents/skills/service-audit/SKILL.md) for app, service, worker, frontend app, or package audits.
+
+See [AI agent workflows](ai/agent-workflows.md), [retrieval policy](ai/retrieval-policy.md), and [context packing](ai/context-packing.md) for when to use always-loaded instructions, docs, skills, or nested `AGENTS.md` files.
+
+## Frontend design workflow
 
 This template expects frontend agents to use UI/UX Pro Max first and LazyWeb for reference gathering before visual rewrites.
 

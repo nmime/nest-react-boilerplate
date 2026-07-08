@@ -16,5 +16,6 @@
     "utils": "@app/frontend-ui-web",
     "lib": "@app/frontend-ui-web",
     "hooks": "@app/frontend-ui-web"
-  }
+  },
+  "iconLibrary": "lucide"
 }

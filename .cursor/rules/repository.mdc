@@ -1,0 +1,13 @@
+---
+description: Repository instruction adapter
+alwaysApply: true
+---
+
+# Repository Instructions
+
+Canonical repository instructions live in [AGENTS.md](../../AGENTS.md). Detailed
+AI coding policy lives in [docs/ai/agent-policy.md](../../docs/ai/agent-policy.md).
+
+This file is redirect-only. External AI coding assistants are not approved for
+repository work unless a maintainer explicitly changes that policy for the
+current task.

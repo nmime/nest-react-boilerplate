@@ -8,12 +8,15 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 - `user-app` in `apps/frontend/app`
 - `landing-app` in `apps/frontend/landing`
 - `site-app` in `apps/frontend/site`
+- `mobile-app` in `apps/frontend/mobile`
 
 The frontend runtime is now split by deployment shape. `landing-app` is the
 Astro + React islands marketing surface, `site-app` is the Vike + React SSR
 product/user site scaffold, `admin-app` remains a Vite React SPA, and
 `user-app` remains the current Vite user SPA until `site-app` reaches route and
-deployment parity. Web apps consume shadcn-style React DOM primitives from
+deployment parity. `mobile-app` is the Expo/React Native app and consumes the
+Tamagui native facade from `@app/frontend-ui-native`. Web apps consume
+shadcn-style React DOM primitives from
 `@app/frontend-ui-web`, non-visual i18n/query/state helpers from
 `@app/frontend-runtime`, typed backend wrappers from `libs/frontend/api-client`,
 and browser-safe request primitives from `libs/frontend/api-support`
@@ -64,7 +67,7 @@ Current `libs/common` placement decisions:
 - `libs/common/design-tokens` is the renderer-neutral design-token package for web CSS variables and native Tamagui theme values.
 - `libs/frontend/runtime` contains non-visual frontend runtime helpers such as i18n, query providers, shell state, locale, theme, and guarded platform utilities.
 - `libs/frontend/ui-web` contains the shadcn-style React DOM UI facade for Astro islands, Vike SSR pages, and the admin SPA.
-- `libs/frontend/ui-native` contains the Tamagui native UI facade for future Expo/React Native surfaces.
+- `libs/frontend/ui-native` contains the Tamagui native UI facade for `mobile-app` and future Expo/React Native surfaces.
 - `libs/frontend/ui` remains a compatibility facade that re-exports `@app/frontend-ui-web` and `@app/frontend-runtime`.
 
 ## Nx architecture tags

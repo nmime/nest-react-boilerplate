@@ -42,6 +42,7 @@ describe("shadcn/ui frontend foundation", () => {
       readFileSync(join(packageRoot, "../../../../components.json"), "utf8"),
     ) as {
       aliases: Record<string, string>;
+      iconLibrary: string;
       tailwind: { css: string; cssVariables: boolean };
     };
 
@@ -51,5 +52,6 @@ describe("shadcn/ui frontend foundation", () => {
     });
     expect(componentsJson.aliases.ui).toBe("@app/frontend-ui-web");
     expect(componentsJson.aliases.utils).toBe("@app/frontend-ui-web");
+    expect(componentsJson.iconLibrary).toBe("lucide");
   });
 });

@@ -7,7 +7,13 @@ const backendServices = [
   "user-app-api",
   "auth-app-api",
 ];
-const frontendServices = ["admin-app", "user-app", "landing-app"];
+const frontendServices = [
+  "admin-app",
+  "user-app",
+  "landing-app",
+  "site-app",
+  "mobile-app",
+];
 const stackServices = ["migrate", ...backendServices, ...frontendServices];
 const host = process.env.DOCKER_SMOKE_HOST ?? "127.0.0.1";
 const generatedPortBase =
@@ -23,9 +29,17 @@ const ports = {
   adminApp: pickPort("ADMIN_APP_PORT", 81),
   userApp: pickPort("USER_APP_PORT", 82),
   landingApp: pickPort("LANDING_APP_PORT", 83),
+  siteApp: pickPort("SITE_APP_PORT", 84),
+  mobileApp: pickPort("MOBILE_APP_PORT", 85),
 };
 const url = (port: string, path = ""): string => `http://${host}:${port}${path}`;
-const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp]
+const frontendOrigins = [
+  ports.adminApp,
+  ports.userApp,
+  ports.landingApp,
+  ports.siteApp,
+  ports.mobileApp,
+]
   .map((port) => url(port))
   .join(",");
 const env = {
@@ -40,6 +54,8 @@ const env = {
   ADMIN_APP_PORT: ports.adminApp,
   USER_APP_PORT: ports.userApp,
   LANDING_APP_PORT: ports.landingApp,
+  SITE_APP_PORT: ports.siteApp,
+  MOBILE_APP_PORT: ports.mobileApp,
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
@@ -59,6 +75,8 @@ const probes: [string, string, string][] = [
   ["admin frontend", url(ports.adminApp, "/"), "Admin App"],
   ["user frontend", url(ports.userApp, "/"), "User App"],
   ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate"],
+  ["site frontend", url(ports.siteApp, "/"), "Production web experience"],
+  ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Mobile"],
   ["user proxy auth", url(ports.userApp, "/auth/me"), "Missing bearer token"],
   [
     "admin proxy",

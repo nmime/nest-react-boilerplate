@@ -1,12 +1,7 @@
-import { createServer } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveDefaultDevelopmentCorsOrigins } from "./default-development-cors-origins";
 import { isRunningInContainer } from "./util/container.util";
-import {
-  defaultPortFactory,
-  findFreePort,
-  getPortEnvVarName,
-} from "./util/port.util";
+import { getPortEnvVarName } from "./util/port.util";
 import { RobotsMiddleware, robotsMiddleware } from "./util/robots.util";
 
 describe("bootstrap utilities", () => {
@@ -15,7 +10,7 @@ describe("bootstrap utilities", () => {
     corsOrigin: process.env.CORS_ORIGIN,
     corsOrigins: process.env.CORS_ORIGINS,
     kubernetesServiceHost: process.env.KUBERNETES_SERVICE_HOST,
-    nodeEnv: process.env.NODE_ENV,
+    nodeEnv: process.env.NODE_ENV as string | undefined,
   };
 
   afterEach(() => {
@@ -65,29 +60,67 @@ describe("bootstrap utilities", () => {
   });
 
   it("finds a free port and prefers container port 80 when configured", async () => {
-    const server = createServer();
-    const occupied = await new Promise<number>((resolve) => {
-      server.listen(0, () => {
-        const address = server.address();
-        if (!address || typeof address === "string") {
-          throw new Error("Expected a TCP server address.");
-        }
-        resolve(address.port);
-      });
+    let occupiedErrorHandler:
+      ((error: NodeJS.ErrnoException) => void) | undefined;
+    let freeListenHandler: (() => void) | undefined;
+    const occupiedServer = {
+      listen: vi.fn(() => {
+        occupiedErrorHandler?.(
+          Object.assign(new Error("in use"), { code: "EADDRINUSE" }),
+        );
+        return occupiedServer;
+      }),
+      once: vi.fn(
+        (_event: "error", handler: (error: NodeJS.ErrnoException) => void) => {
+          occupiedErrorHandler = handler;
+          return occupiedServer;
+        },
+      ),
+    };
+    const freeServer = {
+      address: vi.fn(() => ({ port: 3001 })),
+      close: vi.fn((handler: () => void) => {
+        handler();
+      }),
+      listen: vi.fn((_port: number, handler: () => void) => {
+        freeListenHandler = handler;
+        freeListenHandler();
+        return freeServer;
+      }),
+      once: vi.fn(() => freeServer),
+    };
+    let createServerCalls = 0;
+    const createServer = vi.fn(() => {
+      const server = createServerCalls === 0 ? occupiedServer : freeServer;
+      createServerCalls += 1;
+      return server;
     });
 
-    try {
-      await expect(findFreePort(occupied)).resolves.toBeGreaterThan(occupied);
-    } finally {
-      await new Promise<void>((resolve) =>
-        server.close(() => {
-          resolve();
-        }),
-      );
-    }
+    vi.resetModules();
+    vi.doMock("node:net", () => ({ createServer }));
 
-    process.env.CONTAINER = "true";
-    await expect(defaultPortFactory()).resolves.toBe(80);
+    try {
+      const {
+        defaultPortFactory: defaultPortFactoryWithMock,
+        findFreePort: findFreePortWithMock,
+      } = await import("./util/port.util");
+
+      await expect(findFreePortWithMock(3000)).resolves.toBe(3001);
+      expect(occupiedServer.listen).toHaveBeenCalledWith(
+        3000,
+        expect.any(Function),
+      );
+      expect(freeServer.listen).toHaveBeenCalledWith(
+        3001,
+        expect.any(Function),
+      );
+
+      process.env.CONTAINER = "true";
+      await expect(defaultPortFactoryWithMock()).resolves.toBe(80);
+    } finally {
+      vi.doUnmock("node:net");
+      vi.resetModules();
+    }
   });
 
   it("rejects unexpected port probing errors", async () => {

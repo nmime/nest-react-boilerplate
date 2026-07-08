@@ -100,6 +100,10 @@ assert.ok(
   !/^POSTGRES_PASSWORD=/m.test(productionEnvExample),
   "production env example must not include inline POSTGRES_PASSWORD",
 );
+assert.ok(
+  !/^DATABASE_URL=postgres:\/\/.*@localhost:/m.test(productionEnvExample),
+  "production env example must not set DATABASE_URL to localhost; leave it blank so Compose builds the in-network URL from secrets.",
+);
 
 for (const service of [
   "migrator",
@@ -109,6 +113,8 @@ for (const service of [
   "admin-app",
   "user-app",
   "landing-app",
+  "site-app",
+  "mobile-app",
 ]) {
   has(
     prodCompose,
@@ -121,11 +127,29 @@ for (const expected of [
   "AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt",
   "POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt",
   "IMAGE_TAG=sha-000000000000",
+  "SITE_APP_PORT=",
+  "MOBILE_APP_PORT=",
   "VITE_API_BASE_URL_MODE=same-origin",
   "FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf",
   "Never use latest/main/dev/prod-style mutable tags",
 ]) {
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
+}
+
+for (const fixedDefault of [
+  "ADMIN_APP_API_PORT:-3001",
+  "USER_APP_API_PORT:-3002",
+  "AUTH_APP_API_PORT:-3003",
+  "ADMIN_APP_PORT:-8081",
+  "USER_APP_PORT:-8082",
+  "LANDING_APP_PORT:-8080",
+  "SITE_APP_PORT:-8084",
+  "MOBILE_APP_PORT:-8085",
+]) {
+  assert.ok(
+    !prodCompose.includes(fixedDefault),
+    `production Compose must not bake fixed app port default ${fixedDefault}`,
+  );
 }
 
 for (const expected of [

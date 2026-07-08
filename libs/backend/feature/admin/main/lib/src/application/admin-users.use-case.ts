@@ -4,6 +4,8 @@ import type {
   AdminUserMutationRepository,
   AdminUserMutationResult,
   AuthUserRepository,
+  AdminAuditLogEntity,
+  AuthUserEntity,
 } from "@app/backend-postgres-main-auth";
 import { AdminApplicationError } from "./admin-errors";
 import {
@@ -54,8 +56,9 @@ export class AdminUsersUseCase {
     ]);
 
     return {
-      items: unwrapRepositoryResult(items).map(toAdminUserView),
-      total: unwrapRepositoryResult(total),
+      items:
+        unwrapRepositoryResult<AuthUserEntity[]>(items).map(toAdminUserView),
+      total: unwrapRepositoryResult<number>(total),
       limit,
       offset,
     };
@@ -66,7 +69,7 @@ export class AdminUsersUseCase {
     id: string,
   ): Promise<AdminUserView> {
     const user = await this.users.findById(id, resolveTenantId(principal));
-    const entity = unwrapRepositoryResult(user);
+    const entity = unwrapRepositoryResult<AuthUserEntity | null>(user);
     if (!entity) {
       throw new AdminApplicationError("not_found", "Admin user was not found.");
     }
@@ -151,8 +154,11 @@ export class AdminUsersUseCase {
     ]);
 
     return {
-      items: unwrapRepositoryResult(items).map(toAdminAuditLogView),
-      total: unwrapRepositoryResult(total),
+      items:
+        unwrapRepositoryResult<AdminAuditLogEntity[]>(items).map(
+          toAdminAuditLogView,
+        ),
+      total: unwrapRepositoryResult<number>(total),
       limit,
       offset,
     };
@@ -179,12 +185,15 @@ export class AdminUsersUseCase {
     ]);
 
     return {
-      totalUsers: unwrapRepositoryResult(totalUsers),
-      activeUsers: unwrapRepositoryResult(activeUsers),
-      disabledUsers: unwrapRepositoryResult(disabledUsers),
-      invitedUsers: unwrapRepositoryResult(invitedUsers),
-      recentAuditEvents: unwrapRepositoryResult(auditCount),
-      recentAudit: unwrapRepositoryResult(audit).map(toAdminAuditLogView),
+      totalUsers: unwrapRepositoryResult<number>(totalUsers),
+      activeUsers: unwrapRepositoryResult<number>(activeUsers),
+      disabledUsers: unwrapRepositoryResult<number>(disabledUsers),
+      invitedUsers: unwrapRepositoryResult<number>(invitedUsers),
+      recentAuditEvents: unwrapRepositoryResult<number>(auditCount),
+      recentAudit:
+        unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(
+          toAdminAuditLogView,
+        ),
     };
   }
 }

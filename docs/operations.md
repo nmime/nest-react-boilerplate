@@ -30,6 +30,8 @@ to the platform collector.
 
 ### Operations runbooks
 
+- [Runbook index and templates](runbooks/README.md) — service incident template
+  and runbook placement rules.
 - [Health, readiness, and liveness](operations/health-checks.md) — endpoints,
   response shapes, status resolution, and /ready 503 triage.
 - [Dependency readiness failure triage](operations/dependency-triage.md) —

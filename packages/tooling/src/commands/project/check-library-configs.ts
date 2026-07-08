@@ -87,7 +87,7 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   if (
     fileName !== undefined &&
     rootConfigFileNames.has(fileName) &&
-    !isAllowedLibraryConfigPath(segments)
+      !isAllowedLibraryConfigPath(segments, fileName)
   ) {
     errors.push(
       `${path}: library config file must be inside a library root such as libs/backend/feature/<scope>/<layer>/lib or libs/<scope>/<name>/lib`,
@@ -115,7 +115,17 @@ function checkFile(absolutePath: string, root: string, errors: string[]): void {
   }
 }
 
-function isAllowedLibraryConfigPath(segments: string[]): boolean {
+function isAllowedLibraryConfigPath(
+  segments: string[],
+  fileName: string,
+): boolean {
+  if (
+    fileName === "package.json" &&
+    isAllowedPlatformPackageManifest(segments)
+  ) {
+    return true;
+  }
+
   return segments[0] === "libs" && segments.at(-2) === "lib";
 }
 
@@ -124,4 +134,13 @@ function isAllowedStorybookPath(
   storybookIndex: number,
 ): boolean {
   return segments[0] === "libs" && segments.at(storybookIndex - 1) === "lib";
+}
+
+function isAllowedPlatformPackageManifest(segments: string[]): boolean {
+  return (
+    segments.length === 3 &&
+    segments[0] === "libs" &&
+    (segments[1] === "backend" || segments[1] === "frontend") &&
+    segments[2] === "package.json"
+  );
 }

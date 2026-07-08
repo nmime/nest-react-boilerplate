@@ -1,7 +1,7 @@
 # Structured logging and request-id runbook
 
 The shared logger (`libs/backend/common/logger/lib`) produces structured JSON logs in production and pretty-printed logs in development.
-See [production hardening](production-hardening.md) for security-related logging rules.
+See [production hardening](../production-hardening.md) for security-related logging rules.
 
 ## Log format
 
@@ -64,7 +64,7 @@ Protected keys are redacted to `[redacted]` in health endpoint details and log o
 
 1. **Capture the request ID** from the HTTP response header or the client's request:
    ```bash
-   curl -s -D- http://localhost:3000/api/users | grep -i x-request-id
+   curl -s -D- "http://localhost:${PORT:-80}/api/users" | grep -i x-request-id
    ```
 2. **Search centralized logs** by `requestId`:
    - In Grafana/Loki: `{app="api"} | json | requestId="<id>"`

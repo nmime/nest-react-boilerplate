@@ -9,6 +9,16 @@ Use this checklist when changing the frontend/admin product shell, routing, auth
   token-driven components, `cn` utility, Tailwind classes, and Radix primitives
   where behavior or semantics benefit from them. The legacy package under
   `libs/frontend/ui/lib` is a compatibility facade only.
+- `@app/frontend-ui-web` exposes canonical shadcn-style component names such as
+  `Button`, `Card`, `Dialog`, `Select`, `Tabs`, `Checkbox`, `Switch`, `Table`,
+  and `Input`, while preserving `Ui*` compatibility wrappers for existing apps.
+  New web UI code should prefer the canonical names unless it is intentionally
+  matching existing app code.
+- Use shadcn/ui as a source-owned component system, not as duplicated app-local
+  scaffolding. Do not create `components/ui` folders under apps, do not import
+  Radix/CVA/`clsx`/`tailwind-merge` directly from app code, and do not copy every
+  registry component preemptively. Add only product-needed primitives to
+  `@app/frontend-ui-web`.
 - Native UI primitives live behind `@app/frontend-ui-native` and use Tamagui
   with shared design tokens from `@app/common-design-tokens`.
 - Current web apps use different renderers: `landing-app` is Astro with React

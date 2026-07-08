@@ -6,9 +6,13 @@ import {
   AuthProviderTokenRepository,
   ExternalIdentityRepository,
   type AuthLinkTokenPurpose,
+  type AuthLinkTokenEntity,
+  type AuthMethodEntity,
   type AuthMethodType,
   type ExternalAuthProvider,
+  type ExternalIdentityEntity,
   type ProviderTokenCrypto,
+  type RedactedAuthProviderTokenView,
 } from "@app/backend-postgres-main-auth";
 import type {
   AuthMethodRecord,
@@ -48,7 +52,9 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<ExternalIdentityRecord | null, SocialAuthStoreError> {
     return this.identities
       .findByProviderSubject(provider, providerSubject, tenantId)
-      .map((value) => (value ? toIdentityRecord(value) : null));
+      .map((value: ExternalIdentityEntity | null) =>
+        value ? toIdentityRecord(value) : null,
+      );
   }
 
   listIdentities(
@@ -57,7 +63,7 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError> {
     return this.identities
       .findByUser(userId, tenantId)
-      .map((items) => items.map(toIdentityRecord));
+      .map((items: ExternalIdentityEntity[]) => items.map(toIdentityRecord));
   }
 
   upsertIdentity(
@@ -91,7 +97,7 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<AuthMethodRecord[], SocialAuthStoreError> {
     return this.methods
       .findByUser(userId, tenantId)
-      .map((items) => items.map(toMethodRecord));
+      .map((items: AuthMethodEntity[]) => items.map(toMethodRecord));
   }
 
   countMethods(
@@ -115,7 +121,9 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError> {
     return this.linkTokens
       .consumeToken(tokenHash, purpose, tenantId, now)
-      .map((value) => (value ? toLinkTokenRecord(value) : null));
+      .map((value: AuthLinkTokenEntity | null) =>
+        value ? toLinkTokenRecord(value) : null,
+      );
   }
 
   revokeLinkToken(
@@ -156,18 +164,22 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<number, SocialAuthStoreError> {
     return this.providerTokens
       .listRedactedByExternalIdentity(externalIdentityId, tenantId)
-      .andThen((tokens) =>
+      .andThen((tokens: RedactedAuthProviderTokenView[]) =>
         ResultAsync.fromPromise(
           Promise.all(
             tokens
-              .filter((token) => !token.revokedAt)
-              .map((token) =>
+              .filter(
+                (token: RedactedAuthProviderTokenView) => !token.revokedAt,
+              )
+              .map((token: RedactedAuthProviderTokenView) =>
                 this.providerTokens.revokeToken(token.id, tenantId).match(
                   () => 1,
                   () => 0,
                 ),
               ),
-          ).then((counts) => counts.reduce((sum, count) => sum + count, 0)),
+          ).then((counts: number[]) =>
+            counts.reduce((sum: number, count: number) => sum + count, 0),
+          ),
           (cause) => ({
             code: "repository_error" as const,
             message:

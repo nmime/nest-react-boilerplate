@@ -65,6 +65,11 @@ const canonicalTsAliasTargets = new Map([
   ["libs/frontend/api-support/lib/src/index.ts", "@app/frontend-api-support"],
 ]);
 
+const allowedPlatformPackageManifestFiles = new Set([
+  "libs/backend/package.json",
+  "libs/frontend/package.json",
+]);
+
 interface ReferencedScript {
   owner: string;
   script: string;
@@ -168,6 +173,7 @@ export const thinLocaleCatalogFileNames = [
   "admin/audit.json",
   "admin/roles.json",
   "user/shell.json",
+  "user/site.json",
   "user/auth.json",
   "user/social-auth.json",
   "user/tma.json",
@@ -770,7 +776,11 @@ function checkWorkspacePackageManifests(
   metadata: WorkspaceMetadata,
 ): CheckFailure[] {
   const libraryPackageFiles = metadata.packageManifests
-    .filter((manifest) => manifest.file.startsWith("libs/"))
+    .filter(
+      (manifest) =>
+        manifest.file.startsWith("libs/") &&
+        !allowedPlatformPackageManifestFiles.has(manifest.file),
+    )
     .map((manifest) => manifest.file);
   const packageWorkspaceFiles = metadata.packageManifests
     .filter((manifest) => manifest.file.startsWith("packages/"))
@@ -783,7 +793,7 @@ function checkWorkspacePackageManifests(
         file: "pnpm-workspace.yaml",
         status: 1,
         stdout: "",
-        stderr: `Libraries must not define package.json manifests; keep dependencies in the root or deployable app manifests. Found ${libraryPackageFiles.join(", ")}.`,
+        stderr: `Nested libraries must not define package.json manifests; keep dependencies in root, deployable app manifests, or platform manifests under libs/backend/package.json and libs/frontend/package.json. Found ${libraryPackageFiles.join(", ")}.`,
       },
     ];
   }

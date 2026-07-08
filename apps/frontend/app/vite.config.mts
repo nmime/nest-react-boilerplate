@@ -2,13 +2,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
-import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 import istanbul from "vite-plugin-istanbul";
 import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
 } from "../../../libs/frontend/api-support/lib/src/frontend-env";
+import { workspaceTsconfigAliases } from "../../../config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig(({ command, mode }) => {
   const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";
@@ -18,6 +17,10 @@ export default defineConfig(({ command, mode }) => {
   return {
     root: import.meta.dirname,
     cacheDir: "../../../node_modules/.vite/apps/frontend/app",
+    resolve: {
+      tsconfigPaths: true,
+      alias: workspaceTsconfigAliases(),
+    },
     server: {
       port: 4201,
       host: "localhost",
@@ -29,8 +32,6 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       tailwindcss(),
       react(),
-      nxViteTsPaths(),
-      nxCopyAssetsPlugin(["*.md"]),
       ...(isE2eCoverage
         ? [
             istanbul({

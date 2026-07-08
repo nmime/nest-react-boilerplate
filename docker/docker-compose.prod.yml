@@ -2,7 +2,6 @@ name: nest-react-boilerplate
 
 x-backend-env: &backend-env
   NODE_ENV: production
-  PORT: 3000
   CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
   AUTH_PERSISTENCE: postgres
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.example.com}
@@ -64,7 +63,7 @@ x-backend-healthcheck: &backend-healthcheck
   test:
     [
       "CMD-SHELL",
-      'node -e "fetch(''http://127.0.0.1:3000/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+      'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
     ]
   interval: 10s
   timeout: 5s
@@ -98,6 +97,17 @@ x-frontend-service: &frontend-service
   restart: unless-stopped
   networks: [app]
   healthcheck: *frontend-healthcheck
+
+x-site-healthcheck: &site-healthcheck
+  test:
+    [
+      "CMD-SHELL",
+      'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+    ]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 30s
 
 services:
   postgres:
@@ -162,7 +172,10 @@ services:
         NX_PROJECT: admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     ports:
-      - "127.0.0.1:${ADMIN_APP_API_PORT:-3001}:3000"
+      - target: 80
+        published: "${ADMIN_APP_API_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
   user-app-api:
     <<: *backend-service
@@ -175,7 +188,10 @@ services:
         NX_PROJECT: user-app-api
         BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     ports:
-      - "127.0.0.1:${USER_APP_API_PORT:-3002}:3000"
+      - target: 80
+        published: "${USER_APP_API_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
   auth-app-api:
     <<: *backend-service
@@ -188,7 +204,10 @@ services:
         NX_PROJECT: auth-app-api
         BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     ports:
-      - "127.0.0.1:${AUTH_APP_API_PORT:-3003}:3000"
+      - target: 80
+        published: "${AUTH_APP_API_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
   admin-app:
     <<: *frontend-service
@@ -209,7 +228,10 @@ services:
       admin-app-api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${ADMIN_APP_PORT:-8081}:8080"
+      - target: 8080
+        published: "${ADMIN_APP_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
   user-app:
     <<: *frontend-service
@@ -232,7 +254,10 @@ services:
       user-app-api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${USER_APP_PORT:-8082}:8080"
+      - target: 8080
+        published: "${USER_APP_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
   landing-app:
     <<: *frontend-service
@@ -257,7 +282,61 @@ services:
       admin-app-api:
         condition: service_healthy
     ports:
-      - "127.0.0.1:${LANDING_APP_PORT:-8080}:8080"
+      - target: 8080
+        published: "${LANDING_APP_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+
+  site-app:
+    restart: unless-stopped
+    networks: [app]
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: site
+      args:
+        NX_PROJECT: site-app
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+      admin-app-api:
+        condition: service_healthy
+    ports:
+      - target: 80
+        published: "${SITE_APP_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck: *site-healthcheck
+
+  mobile-app:
+    <<: *frontend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/mobile-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: mobile-app
+        NX_TARGET: export
+        FRONTEND_OUTPUT: dist/apps/frontend/mobile
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: "${MOBILE_APP_PORT:-0}"
+        host_ip: 127.0.0.1
+        protocol: tcp
 
 networks:
   app:

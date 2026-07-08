@@ -4,13 +4,14 @@ import { cn } from "../util/cn";
 
 export type UiTextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export const UiTextarea = forwardRef<HTMLTextAreaElement, UiTextareaProps>(
+export const Textarea = forwardRef<HTMLTextAreaElement, UiTextareaProps>(
   ({ className, rows = 4, ...props }, ref) => (
     <textarea
       className={cn(
         "xr-textarea flex min-h-28 w-full min-w-0 rounded-[var(--xr-radius-md)] border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-[background-color,border-color,box-shadow] placeholder:text-muted-foreground focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
         className,
       )}
+      data-slot="textarea"
       ref={ref}
       rows={rows}
       {...props}
@@ -18,4 +19,6 @@ export const UiTextarea = forwardRef<HTMLTextAreaElement, UiTextareaProps>(
   ),
 );
 
-UiTextarea.displayName = "UiTextarea";
+Textarea.displayName = "Textarea";
+
+export const UiTextarea = Textarea;

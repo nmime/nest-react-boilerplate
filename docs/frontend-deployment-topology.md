@@ -1,10 +1,10 @@
 # Frontend deployment topology
 
 This repository supports two safe frontend/API wiring modes across the current
-frontend shapes: Astro static landing, Vite SPA admin/user, and the Vike SSR
-site scaffold. Choose one mode per environment and keep build-time variables,
-nginx config, Vike server routing, ingress paths, and public DNS/CORS values
-aligned.
+frontend shapes: Astro static landing, Vite SPA admin/user, the Vike SSR site,
+and the Expo mobile web export. Choose one mode per environment and keep
+build-time variables, nginx config, Vike server routing, ingress paths, and
+public DNS/CORS values aligned.
 
 ## Mode 1: same-origin API proxy
 
@@ -18,6 +18,7 @@ pnpm exec nx build landing-app
 pnpm exec nx build site-app
 pnpm exec nx build user-app
 pnpm exec nx build admin-app
+pnpm exec nx run mobile-app:export
 ```
 
 You may also set the mode explicitly, which is recommended for CI/deployment
@@ -28,6 +29,7 @@ VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
+EXPO_PUBLIC_API_BASE_URL=/ pnpm exec nx run mobile-app:export
 ```
 
 Docker/Compose uses `docker/nginx-fullstack.conf`. Helm uses the chart-rendered
@@ -45,11 +47,12 @@ for landing `/`, current user SPA routes such as `/auth`,
 `/telegram-mini-app`, `/link/telegram`, and `/app`, plus admin routes such as
 `/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:id`,
 `/admin/roles`, `/admin/audit`, `/admin/profile`, `/admin/tenants`, and unknown
-admin SPA routes. `site-app` is not an nginx SPA fallback; it is a Node/Vike SSR
-service that serves `dist/apps/frontend/site/client` assets and renders document
-HTML through `apps/frontend/site/server`. Non-HTML API requests continue to
-proxy to the backend, which prevents frontend fallbacks from stealing
-generated-client API calls.
+admin SPA routes. The Expo mobile web export is served by the same nginx
+frontend target. `site-app` is not an nginx SPA fallback; it is a Node/Vike SSR
+service that serves `dist/apps/frontend/site/client` assets, exposes `/live` and
+`/ready`, and renders document HTML through `apps/frontend/site/server`.
+Non-HTML API requests continue to proxy to the backend, which prevents frontend
+fallbacks from stealing generated-client API calls.
 
 For Helm path-based frontend routing, keep the frontend service paths explicit
 and longest-prefix first in the ingress controller behavior. Split-host remains
@@ -114,6 +117,7 @@ CI=true pnpm exec nx build landing-app --skip-nx-cache
 CI=true pnpm exec nx build site-app --skip-nx-cache
 CI=true pnpm exec nx build user-app --skip-nx-cache
 CI=true pnpm exec nx build admin-app --skip-nx-cache
+CI=true pnpm exec nx run mobile-app:export --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app --skip-nx-cache

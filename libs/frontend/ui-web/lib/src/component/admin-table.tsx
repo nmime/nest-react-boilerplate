@@ -71,6 +71,7 @@ export const UiTable = ({
 }: Readonly<TableHTMLAttributes<HTMLTableElement>>) => (
   <table
     className={cn("xr-table w-full caption-bottom text-sm", className)}
+    data-slot="table"
     {...props}
   />
 );
@@ -79,35 +80,56 @@ export const UiTableHeader = ({
   className,
   ...props
 }: Readonly<HTMLAttributes<HTMLTableSectionElement>>) => (
-  <thead className={cn("xr-table__header", className)} {...props} />
+  <thead
+    className={cn("xr-table__header", className)}
+    data-slot="table-header"
+    {...props}
+  />
 );
 
 export const UiTableBody = ({
   className,
   ...props
 }: Readonly<HTMLAttributes<HTMLTableSectionElement>>) => (
-  <tbody className={cn("xr-table__body", className)} {...props} />
+  <tbody
+    className={cn("xr-table__body", className)}
+    data-slot="table-body"
+    {...props}
+  />
 );
 
 export const UiTableRow = ({
   className,
   ...props
 }: Readonly<HTMLAttributes<HTMLTableRowElement>>) => (
-  <tr className={cn("xr-table__row", className)} {...props} />
+  <tr
+    className={cn("xr-table__row", className)}
+    data-slot="table-row"
+    {...props}
+  />
 );
 
 export const UiTableHead = ({
   className,
   ...props
 }: Readonly<ThHTMLAttributes<HTMLTableCellElement>>) => (
-  <th className={cn("xr-table__head", className)} scope="col" {...props} />
+  <th
+    className={cn("xr-table__head", className)}
+    data-slot="table-head"
+    scope="col"
+    {...props}
+  />
 );
 
 export const UiTableCell = ({
   className,
   ...props
 }: Readonly<TdHTMLAttributes<HTMLTableCellElement>>) => (
-  <td className={cn("xr-table__cell", className)} {...props} />
+  <td
+    className={cn("xr-table__cell", className)}
+    data-slot="table-cell"
+    {...props}
+  />
 );
 
 const renderErrorAction = (action?: UiDataTableStateAction): ReactNode => {
@@ -234,3 +256,11 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
 };
 
 export const AdminDataTable = UiDataTable;
+
+export const Table = UiTable;
+export const TableHeader = UiTableHeader;
+export const TableBody = UiTableBody;
+export const TableRow = UiTableRow;
+export const TableHead = UiTableHead;
+export const TableCell = UiTableCell;
+export const DataTable = UiDataTable;

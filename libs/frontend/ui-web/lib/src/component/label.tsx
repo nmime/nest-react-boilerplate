@@ -5,12 +5,15 @@ import { cn } from "../util/cn";
 
 export type UiLabelProps = ComponentPropsWithoutRef<typeof LabelPrimitive.Root>;
 
-export const UiLabel = ({ className, ...props }: Readonly<UiLabelProps>) => (
+export const Label = ({ className, ...props }: Readonly<UiLabelProps>) => (
   <LabelPrimitive.Root
     className={cn(
       "xr-field__label text-sm font-medium leading-none text-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className,
     )}
+    data-slot="label"
     {...props}
   />
 );
+
+export const UiLabel = Label;

@@ -1,12 +1,11 @@
 # Execution Policy
 
-This document defines execution and agent-handling conventions for this repository.
+This document defines execution and agent-handling conventions for this repository. It complements the root [AGENTS.md](../../AGENTS.md), which remains the canonical AI coding policy for repository changes.
 
 ## Agent Usage
 
-- Use **fresh, minimal agents** for each discrete task. Avoid long-lived context where possible.
-- Every agent task must conclude with `---EXEC_DONE---` to signal completion.
-- Agents must report final status in the defined output format.
+- For delegated or remote sub-agent work, use **fresh, minimal agents** for each discrete task. Avoid long-lived context where possible.
+- Delegated agents must follow [AGENTS.md](../../AGENTS.md), report what they changed, and include the verification they actually ran.
 
 ## Remote Execution
 

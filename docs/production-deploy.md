@@ -212,14 +212,16 @@ docker build --target backend --build-arg NX_PROJECT=admin-app-api --build-arg B
 docker build --target backend --build-arg NX_PROJECT=user-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/user/user-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/user-app-api:$IMAGE_TAG .
 docker build --target backend --build-arg NX_PROJECT=auth-app-api --build-arg BUILD_OUTPUT=dist/apps/backend/auth/auth-app-api -t ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api:$IMAGE_TAG .
 docker build --target frontend --build-arg NX_PROJECT=landing-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/landing -t ghcr.io/your-github-org/nest-react-boilerplate/landing-app:$IMAGE_TAG .
+docker build --target site --build-arg NX_PROJECT=site-app -t ghcr.io/your-github-org/nest-react-boilerplate/site-app:$IMAGE_TAG .
 docker build --target frontend --build-arg NX_PROJECT=user-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/app -t ghcr.io/your-github-org/nest-react-boilerplate/user-app:$IMAGE_TAG .
+docker build --target frontend --build-arg NX_PROJECT=mobile-app --build-arg NX_TARGET=export --build-arg FRONTEND_OUTPUT=dist/apps/frontend/mobile -t ghcr.io/your-github-org/nest-react-boilerplate/mobile-app:$IMAGE_TAG .
 docker build --target frontend --build-arg NX_PROJECT=admin-app --build-arg FRONTEND_OUTPUT=dist/apps/frontend/admin -t ghcr.io/your-github-org/nest-react-boilerplate/admin-app:$IMAGE_TAG .
 docker build --target migrator -t ghcr.io/your-github-org/nest-react-boilerplate/migrator:$IMAGE_TAG .
 ```
 
 Push, scan, sign, and promote images according to the selected release process.
-The commands match the current multi-target Dockerfile (`backend`, `frontend`,
-`migrator`) and pass the Nx project/output arguments explicitly.
+The commands match the current multi-target Dockerfile (`backend`, `site`,
+`frontend`, `migrator`) and pass the Nx project/output arguments explicitly.
 
 ## Backup and restore
 

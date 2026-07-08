@@ -1,11 +1,12 @@
 /// <reference types="vitest" />
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { defineConfig } from "vitest/config";
+import { workspaceTsconfigAliases } from "../../../../../../config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
-  plugins: [nxViteTsPaths()],
   resolve: {
+    tsconfigPaths: true,
     alias: {
+      ...workspaceTsconfigAliases(),
       "@app/backend-common-component-test": new URL(
         "../../../../libs/backend/common/component-test/lib/src/index.ts",
         import.meta.url,

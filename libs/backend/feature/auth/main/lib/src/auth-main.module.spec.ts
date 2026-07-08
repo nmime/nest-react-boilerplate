@@ -63,7 +63,7 @@ describe("AuthMainModule", () => {
   });
 
   it("rejects memory auth persistence in production", () => {
-    const previousNodeEnvironment = process.env.NODE_ENV;
+    const previousNodeEnvironment = process.env.NODE_ENV as string | undefined;
     const previousPersistence = process.env.AUTH_PERSISTENCE;
     process.env.NODE_ENV = "production";
     process.env.AUTH_PERSISTENCE = "memory";

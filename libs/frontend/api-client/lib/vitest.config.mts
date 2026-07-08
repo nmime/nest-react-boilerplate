@@ -1,13 +1,21 @@
 import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { workspaceTsconfigAliases } from "../../../../config/vite/workspace-tsconfig-aliases.mjs";
 // nx-ignore-next-line
 import { fullCoverage } from "../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   root: import.meta.dirname,
-  plugins: [nxViteTsPaths()],
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
   test: {
     environment: "jsdom",
+    environmentOptions: {
+      jsdom: {
+        url: "https://app.local.test/",
+      },
+    },
     globals: true,
     passWithNoTests: false,
     coverage: fullCoverage(

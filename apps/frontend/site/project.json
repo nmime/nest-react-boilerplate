@@ -24,7 +24,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike build"
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike build && node scripts/link-server-node-modules.mjs"
       },
       "inputs": [
         "production",

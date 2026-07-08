@@ -1,0 +1,23 @@
+{
+  "site.title": "Production web experience",
+  "site.description": "The SSR site is ready for authenticated product traffic, same-origin APIs, and Kubernetes or Compose probes.",
+  "site.actionGroup.label": "Primary routes",
+  "site.action.app": "Open app",
+  "site.action.docs": "API docs",
+  "site.status.label": "Site runtime status",
+  "site.status.online": "SSR online",
+  "site.metricGroup.label": "Platform summary",
+  "site.metric.apis.label": "APIs",
+  "site.metric.apis.detail": "auth, user, admin",
+  "site.metric.frontends.label": "Frontends",
+  "site.metric.frontends.detail": "web, site, landing, admin, mobile",
+  "site.metric.runtime.label": "Runtime",
+  "site.metric.runtime.detail": "Vike on Node",
+  "site.routeGroup.label": "Available product routes",
+  "site.route.user.label": "User app",
+  "site.route.user.detail": "Account, profile, and session flows.",
+  "site.route.admin.label": "Admin",
+  "site.route.admin.detail": "Protected operations and audit surfaces.",
+  "site.route.docs.label": "API docs",
+  "site.route.docs.detail": "OpenAPI contracts for backend teams."
+}

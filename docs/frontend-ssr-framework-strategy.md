@@ -196,8 +196,8 @@ Rules:
   for SSR.
 - `@app/frontend-ui-web` owns DOM/React components for Astro islands and Vike
   pages.
-- `@app/frontend-ui-native` is the future Expo renderer and imports the same
-  feature core, not the web UI.
+- `@app/frontend-ui-native` is the Expo renderer consumed by `mobile-app` and
+  imports the same feature core, not the web UI.
 - `@app/frontend-ui` can remain as a compatibility alias
   during migration, but new shared runtime code should not be added there.
 
@@ -214,9 +214,10 @@ Radix primitives, `class-variance-authority`, `tailwind-merge`, and React DOM.
 - Vike React SSR pages in `apps/frontend/site`.
 - The existing Vite admin SPA in `apps/frontend/admin`.
 
-Native UI uses Tamagui in `@app/frontend-ui-native`. Tamagui is the native
-renderer choice because it gives Expo/React Native components, theming, and a
-compiler path without forcing the web apps to abandon their
+Native UI uses Tamagui in `@app/frontend-ui-native` and the Expo app at
+`apps/frontend/mobile`. Tamagui is the native renderer choice because it gives
+Expo/React Native components, theming, and a compiler path without forcing the
+web apps to abandon their
 shadcn/Radix/Tailwind component model.
 
 Do not mix the renderers:

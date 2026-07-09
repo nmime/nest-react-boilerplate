@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc/apps/frontend/site-spec",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": [
+      "vitest",
+      "node",
+      "vite/client"
+    ]
+  },
+  "include": [
+    "vitest.config.mts",
+    "pages/**/*.spec.ts",
+    "pages/**/*.spec.tsx",
+    "pages/**/*.ts",
+    "pages/**/*.tsx",
+    "src/**/*.d.ts"
+  ]
+}

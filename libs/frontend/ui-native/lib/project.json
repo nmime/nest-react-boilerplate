@@ -13,6 +13,22 @@
         "command": "node ../../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json"
       },
       "outputs": []
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/ui-native/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/ui-native"]
     }
   }
 }

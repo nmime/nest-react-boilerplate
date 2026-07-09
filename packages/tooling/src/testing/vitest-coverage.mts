@@ -1,4 +1,4 @@
-import type { InlineConfig } from "vitest";
+import type { UserConfig } from "vitest/node";
 
 type CoverageThresholds = {
   branches: number;
@@ -12,7 +12,7 @@ export const fullCoverage = (
   include: string[],
   exclude: string[] = [],
   thresholds: Partial<CoverageThresholds> = {},
-): NonNullable<InlineConfig["coverage"]> => ({
+): NonNullable<UserConfig["coverage"]> => ({
   all: true,
   enabled: false,
   exclude: [

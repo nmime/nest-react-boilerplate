@@ -15,7 +15,6 @@
     "@grammyjs/ratelimiter": "1.2.1",
     "@grammyjs/router": "2.0.0",
     "@grammyjs/runner": "2.0.3",
-    "@grammyjs/storage-redis": "2.5.1",
     "@grammyjs/transformer-throttler": "1.2.1",
     "@mikro-orm/core": "7.1.5",
     "@mikro-orm/migrations": "7.1.5",

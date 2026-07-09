@@ -1,7 +1,7 @@
 import { MemorySessionStorage, session, type StorageAdapter } from "grammy";
-import { RedisAdapter } from "@grammyjs/storage-redis";
 import type { RedisClientLike } from "@app/backend-common-redis";
 import type { TelegramBotContext, TelegramBotSession } from "../type";
+import { RedisSessionStorage } from "../storage/redis-session-adapter";
 
 export function initialTelegramBotSession(): TelegramBotSession {
   return {
@@ -34,13 +34,11 @@ export function createTelegramSessionStorage(input: {
     return input.fallback ?? new MemorySessionStorage<TelegramBotSession>();
   }
 
-  // @grammyjs/i18n expects Fluent files and would duplicate the repo root JSON
-  // catalogs. The bot instead exposes ctx.t through @app/common-i18n and uses
-  // @grammyjs/storage-redis only for shared production sessions when Redis is
-  // configured, with memory storage as local/test fallback.
-  return new RedisAdapter<TelegramBotSession>({
-    instance: input.redis,
-    ttl: input.ttlSeconds,
+  // Uses native node-redis v6 through the shared RedisClientLike abstraction
+  // instead of @grammyjs/storage-redis (which requires ioredis).
+  return new RedisSessionStorage<TelegramBotSession>({
+    redisClient: input.redis,
+    ttlSeconds: input.ttlSeconds,
   });
 }
 

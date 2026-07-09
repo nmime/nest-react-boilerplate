@@ -72,6 +72,28 @@ Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cuttin
 
 Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
 
+## Changelog
+
+Every PR that changes user-facing behavior MUST include a changelog entry:
+
+1. Edit `CHANGELOG.md`
+2. Add your change under `[Unreleased]` with the appropriate heading:
+   - `### Added` for new features
+   - `### Changed` for changes in existing functionality
+   - `### Fixed` for bug fixes
+   - `### Removed` for deprecated/removed features
+3. Follow the format: `- Brief description of the change (#PR_NUMBER)`
+
+Example:
+
+```markdown
+## [Unreleased]
+
+### Fixed
+- Deploy workflow now gated on CI success (#42)
+- Docker Node.js version corrected to 22.14.0 (#43)
+```
+
 ## Backend changes
 
 - Use `@app/backend-common-bootstrap` (`libs/backend/common/bootstrap/lib`) for Nest app startup.

@@ -6,9 +6,7 @@ Security fixes target the current `main` branch. Projects launched from this boi
 
 ## Reporting a vulnerability
 
-**Contact:** [Report a security vulnerability](https://github.com/nmime/nest-react-boilerplate/security/advisories/new)
-
-Do not open public issues for exploitable findings.
+Please report suspected vulnerabilities privately to the repository owner or security contact configured for your launched project. Until your project replaces it, report via [GitHub Security Advisories](https://github.com/nmime/nest-react-boilerplate/security/advisories/new). Do not open public issues for exploitable findings.
 
 Acknowledgement target: within 3 business days. Initial triage target: within 5 business days. Remediation target: critical/high findings within 30 days when a supported fix is feasible; lower severities are prioritized with regular maintenance.
 

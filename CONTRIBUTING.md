@@ -6,7 +6,7 @@ Use this guide with the root [README](README.md), [Command matrix](docs/command-
 
 - Node.js `>=26 <27`; use `.nvmrc` for the current local patch version.
 - pnpm `11.10.0` through Corepack.
-- Docker Compose for PostgreSQL, Redis, NATS, MinIO, container builds, smoke tests, and full-stack e2e.
+- Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
@@ -15,6 +15,15 @@ corepack prepare pnpm@11.10.0 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 ```
+
+## Changelog discipline
+
+- Every user-facing change (features, fixes, breaking changes, deprecations) must have a corresponding entry in the changelog.
+- Use semantic versioning: `major` for breaking changes, `minor` for features, `patch` for fixes.
+- Changelog entries go in `CHANGELOG.md` at the repository root under the appropriate `[Unreleased]` section.
+- Format: `- Brief description of the change (#PR_NUMBER)` or `- Brief description of the change (@author)`.
+- Docs-only, refactor-only, and test-only changes do not need changelog entries.
+- If `CHANGELOG.md` does not exist yet, create it with a `[Unreleased]` section before adding entries.
 
 ## Branch, commit, and PR workflow
 
@@ -72,29 +81,6 @@ Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cuttin
 
 Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
 
-## Changelog
-
-Every PR that changes user-facing behavior MUST include a changelog entry:
-
-1. Edit `CHANGELOG.md`
-2. Add your change under `[Unreleased]` with the appropriate heading:
-   - `### Added` for new features
-   - `### Changed` for changes in existing functionality
-   - `### Fixed` for bug fixes
-   - `### Removed` for deprecated/removed features
-3. Follow the format: `- Brief description of the change (#PR_NUMBER)`
-
-Example:
-
-```markdown
-## [Unreleased]
-
-### Fixed
-- Deploy workflow now gated on CI success (#42)
-- Docker Node.js base image set to 22.14.0-alpine (#43)
-- Migrated from `ioredis` to `@redis/client` v6 (#44)
-```
-
 ## Backend changes
 
 - Use `@app/backend-common-bootstrap` (`libs/backend/common/bootstrap/lib`) for Nest app startup.
@@ -116,6 +102,6 @@ Example:
 ## Deployment and documentation changes
 
 - Keep the root `Dockerfile` aligned with current Nx project names and output paths.
-- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack (PostgreSQL, Redis 7, NATS 2, MinIO).
+- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack.
 - Update Docker, CI, runbook, or troubleshooting docs whenever operational behavior changes.
 - Document only behavior that is verified in source or by running the relevant command.

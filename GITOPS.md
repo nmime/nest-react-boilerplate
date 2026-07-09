@@ -96,6 +96,8 @@ ArgoCD watches `main` branch of the repo. When `deploy/k8s/values.yaml` changes:
 ### Prerequisites
 
 - A Kubernetes cluster with ArgoCD installed
+- Application images require Node.js `>=26 <27` runtime; all Docker images are built from the repository's configured Node version
+- Redis v6 (`@redis/client`) is used for caching and rate limiting (previously `ioredis`; migrated to the official `@redis/client` package)
 - The `argocd` namespace exists with ArgoCD running
 - An `imagePullSecret` named `ghcr-credentials` in the target namespace for pulling from GHCR
 
@@ -232,3 +234,19 @@ config:
 
 After making changes, commit and push to `main`. The deploy workflow will run
 after CI passes, updating the image tags and triggering ArgoCD to sync.
+
+## Infrastructure services
+
+The application depends on the following infrastructure services, which should be
+available in the Kubernetes cluster (managed by the platform repository):
+
+| Service     | Purpose                            | Helm values key                    |
+| ----------- | ---------------------------------- | ---------------------------------- |
+| PostgreSQL  | Primary datastore                  | `config.databaseUrl` or `POSTGRES_*` env vars |
+| Redis v6    | Caching, rate limiting, sessions   | `config.redisUrl` or `REDIS_*` env vars |
+| NATS        | Event streaming, inter-service messaging | `config.natsServers` or `NATS_SERVERS` env var |
+| Object Store| Backups, file storage              | Configured per-environment in secrets |
+
+The Redis migration from `ioredis` to `@redis/client` (v6) is transparent at the
+configuration level — `REDIS_URL` and `REDIS_MODE` environment variables remain
+the same. The application supports standalone, cluster, and Sentinel modes.

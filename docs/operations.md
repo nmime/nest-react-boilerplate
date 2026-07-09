@@ -35,7 +35,7 @@ to the platform collector.
 - [Health, readiness, and liveness](operations/health-checks.md) — endpoints,
   response shapes, status resolution, and /ready 503 triage.
 - [Dependency readiness failure triage](operations/dependency-triage.md) —
-  Postgres/Redis/NATS connection failure procedures.
+  Postgres/Redis (`@redis/client`)/NATS connection failure procedures.
 - [Structured logging and request-id](operations/logging.md) — log format,
   levels, request-id correlation, sensitive-data redaction.
 - [OpenTelemetry configuration](operations/otel.md) — env var reference,

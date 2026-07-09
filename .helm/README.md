@@ -19,7 +19,7 @@ routes.
   `POSTGRES_*` values consumed by the app.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
-- APIs probe `/live` and `/ready`; nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap.
+- APIs probe `/live` and `/ready`; nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
 - Frontend nginx supports same-origin API proxying for `/auth/*`, `/profile/*`,
   and `/admin/*` while serving `index.html` for HTML SPA navigations such as
   `/admin/users/:id`. Keep split-host and path-based routing choices aligned
@@ -28,7 +28,7 @@ routes.
   The service defaults to enabled hourly cleanup on startup and clamps intervals
   below 60000ms to avoid tight cleanup loops.
 - Enable ingress/TLS only after DNS and cert-manager/ingress are ready.
-- Tune resources, HPA, PDBs, imagePullSecrets, and optional pod/container
+- Tune resources, HPA (with 300s scale-down stabilization), PDBs (`maxUnavailable: 1`), imagePullSecrets, and optional pod/container
   security contexts per environment.
 
 ## Render locally

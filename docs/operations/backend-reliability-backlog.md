@@ -126,14 +126,14 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 - `libs/backend/common/` — create `idempotency` package:
   - Middleware that extracts `Idempotency-Key` header.
-  - Redis-backed store (using existing `libs/backend/common/redis/lib`):
+  - Redis-backed store (using existing `libs/backend/common/redis/lib` with `@redis/client`):
     - Check-and-set with TTL (e.g., 24 hours).
     - Store the response status and body hash for replay.
   - Skip for GET requests and non-mutating operations.
 
 **Dependencies:**
 
-- Redis (already available via `libs/backend/common/redis/lib`).
+- Redis (available via `libs/backend/common/redis/lib` using `@redis/client`).
 - Phase 1 metrics for idempotency hit/miss counters.
 
 **Validation:**

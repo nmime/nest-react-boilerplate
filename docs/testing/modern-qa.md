@@ -85,4 +85,4 @@ Consumer expectations live under `apps/frontend/app/contracts/consumers` as Pact
 
 Optional validators that are executed through `pnpm dlx` or Docker default to fixed versions so CI and local reproductions are deterministic. Upgrade them intentionally by changing the defaults in the relevant tooling script, or temporarily override with `SPECTRAL_CLI_VERSION`, `LIGHTHOUSE_VERSION`, `GITLEAKS_DOCKER_IMAGE`, `SEMGREP_DOCKER_IMAGE`, or the Stryker package version in the mutation command.
 
-Docker builds default to the Node 26 image configured in the Dockerfile, matching the repository Node `>=26 <27` engine range and CI's `node-version-file`; update these together when upgrading Node.
+Docker builds use the Node base image configured in the Dockerfile. The `package.json` engines target `>=26 <27` for local development. Keep the Dockerfile `NODE_VERSION`, `.nvmrc`, and CI `node-version-file` in sync.

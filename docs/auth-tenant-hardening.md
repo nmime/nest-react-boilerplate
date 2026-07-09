@@ -67,7 +67,7 @@ Postgres tables are migrated for durable storage (`auth_refresh_tokens`, `auth_u
 
 ## Rate limiting
 
-`@app/backend-common-redis` exports `SharedRateLimiter`, `SHARED_RATE_LIMITER`, and `buildRateLimitKey()` for tenant-aware limits. `RedisRateLimitService` implements the interface with Redis/in-memory clients.
+`@app/backend-common-redis` exports `SharedRateLimiter`, `SHARED_RATE_LIMITER`, and `buildRateLimitKey()` for tenant-aware limits. `RedisRateLimitService` implements the interface with `@redis/client`/in-memory clients.
 
 ## Verification
 

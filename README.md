@@ -72,9 +72,10 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | Frontend      | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook         |
 | Backend       | NestJS on Fastify, Helmet, validation pipes, health/readiness endpoints                     |
 | Persistence   | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                  |
+| Caching         | Redis v6 (`@redis/client`) — standalone, cluster, and Sentinel modes                       |
 | API contracts | Nest Swagger/OpenAPI JSON, `openapi-typescript`, `openapi-fetch`, typed React Query helpers |
-| Quality       | ESLint, Prettier, Vitest, Playwright, Storybook tests, repo tooling checks, GitHub Actions  |
-| Delivery      | Docker Compose, Dockerfiles, Kubernetes/Helm guidance, production runbooks                  |
+| Quality       | ESLint, Prettier, Vitest 4, Playwright, Storybook tests, repo tooling checks, GitHub Actions  |
+| Delivery      | Docker Compose (PostgreSQL/Redis/NATS/MinIO), Dockerfiles, Kubernetes/Helm, ArgoCD GitOps, production runbooks |
 
 ## Repository map
 
@@ -124,11 +125,14 @@ pnpm run db:migrate
 pnpm run dev
 ```
 
+`dev:db` starts the root `docker-compose.yml` (PostgreSQL only) for local development. For the full local stack with Redis, NATS, and MinIO, use `docker/docker-compose.yml` via `pnpm run docker:fullstack` or `pnpm run test:fullstack`.
+
 Default local services:
 
 - Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. `pnpm run dev:fullstack` starts the three core APIs plus the admin/user/landing dev frontends; run `pnpm exec nx serve site-app` for Vike and `pnpm run dev:mobile` for Expo.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
+- Infrastructure: `docker/docker-compose.yml` includes PostgreSQL, Redis 7, NATS 2, and MinIO for local full-stack development and e2e testing.
 
 If you need a narrower command, use the [Command matrix](docs/command-matrix.md) and [Local verification](docs/local-verification.md) guides instead of guessing target names.
 
@@ -182,3 +186,14 @@ CI is extra evidence; local validation remains required for code changes.
 Security defaults are intentionally conservative: production CORS has no wildcard, admin bootstrap is disabled unless explicitly enabled, OpenAPI is disabled in production examples, production frontend builds require explicit API origins or `VITE_API_BASE_URL_MODE=same-origin`, URL bearer-token bootstrap is ignored outside development/test modes, and OAuth is disabled until provider-specific product code is configured.
 
 See [SECURITY.md](SECURITY.md) for reporting expectations and baseline controls.
+
+## GitOps deployment
+
+The repository uses a GitOps pipeline with ArgoCD for Kubernetes deployments:
+
+1. **CI gate** (`.github/workflows/ci.yml`) — runs on every PR and push to `main`. Linting, type-checking, tests, Helm validation, and security scanning. Deployment is gated on CI success.
+2. **Deploy workflow** (`.github/workflows/deploy.yml`) — triggered by successful CI via `workflow_run`. Updates image tags in `deploy/k8s/values.yaml` to the current commit SHA and pushes back to `main`.
+3. **ArgoCD auto-sync** — ArgoCD watches `main` and automatically reconciles the cluster state. Self-heal and prune are enabled.
+4. **Image releases** (`.github/workflows/release-images.yml`) — on tags and releases: builds all images, runs Trivy scans, signs with cosign, pushes to GHCR.
+
+See [GITOPS.md](GITOPS.md) for the complete GitOps guide, ArgoCD setup, secrets, and manual operations.

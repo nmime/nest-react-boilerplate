@@ -19,7 +19,7 @@ node scripts/validate-deployment-config.mjs
 node scripts/validate-helm-rate-limit-config.mjs
 ```
 
-Those assertions keep Docker Compose, Helm, environment examples, nginx routing, runtime hardening, production secret handling, and Helm Redis-backed rate-limit drift visible in the same early CI surface as the Helm render gate.
+Those assertions keep Docker Compose, Helm, environment examples, nginx routing, runtime hardening, production secret handling, and Helm Redis (`@redis/client`) rate-limit drift visible in the same early CI surface as the Helm render gate.
 
 ## CI pipeline map
 

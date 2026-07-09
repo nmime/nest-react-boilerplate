@@ -92,7 +92,7 @@ pnpm run test:docker-smoke
 pnpm run docker:down
 ```
 
-`docker/docker-compose.yml` includes Postgres health checks, a Node-based
+`docker/docker-compose.yml` includes Redis, NATS, and MinIO health checks alongside Postgres, a Node-based
 migration service that runs `pnpm db:migrate`, backend `/health` checks for the
 local development stack, the Vike `site-app` `/ready` check, frontend
 `/nginx-health` checks, restart policies, and healthy dependency ordering. It

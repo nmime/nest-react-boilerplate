@@ -6,7 +6,7 @@ Use this guide with the root [README](README.md), [Command matrix](docs/command-
 
 - Node.js `>=26 <27`; use `.nvmrc` for the current local patch version.
 - pnpm `11.10.0` through Corepack.
-- Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
+- Docker Compose for PostgreSQL, Redis, NATS, MinIO, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
@@ -91,7 +91,8 @@ Example:
 
 ### Fixed
 - Deploy workflow now gated on CI success (#42)
-- Docker Node.js version corrected to 22.14.0 (#43)
+- Docker Node.js base image set to 22.14.0-alpine (#43)
+- Migrated from `ioredis` to `@redis/client` v6 (#44)
 ```
 
 ## Backend changes
@@ -115,6 +116,6 @@ Example:
 ## Deployment and documentation changes
 
 - Keep the root `Dockerfile` aligned with current Nx project names and output paths.
-- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack.
+- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack (PostgreSQL, Redis 7, NATS 2, MinIO).
 - Update Docker, CI, runbook, or troubleshooting docs whenever operational behavior changes.
 - Document only behavior that is verified in source or by running the relevant command.

@@ -38,7 +38,7 @@ Production startup requires:
 - `DATABASE_URL` for durable server-side sessions.
 - `SESSION_SECRET` or `AUTH_JWT_SECRET` with at least 32 characters.
 - Valid positive integer `PORT`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, and `SESSION_COOKIE_MAX_AGE_SECONDS` values when set.
-- Valid `RATE_LIMIT_STORE` (`auto`, `memory`, or `redis`) and Redis connection settings when `RATE_LIMIT_STORE=redis`.
+- Valid `RATE_LIMIT_STORE` (`auto`, `memory`, or `redis`) and Redis connection settings when `RATE_LIMIT_STORE=redis` (uses `@redis/client` v6, supports standalone/cluster/Sentinel).
 - Redis/distributed rate limiting in production, unless `RATE_LIMIT_IN_MEMORY_ALLOWED=true` is set after equivalent ingress/API-gateway limits are configured.
 
 ## Rate limiting and proxy trust

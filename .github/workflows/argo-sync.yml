@@ -1,0 +1,38 @@
+name: Sync ArgoCD
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force sync (ignore differences)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync ArgoCD Application
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Install argocd CLI
+        run: |
+          curl -sSL -o /usr/local/bin/argocd \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+      - name: Sync application
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          SYNC_FLAGS=""
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            SYNC_FLAGS="--force"
+          fi
+          argocd app sync nest-react-boilerplate $SYNC_FLAGS --grpc-web
+          argocd app wait nest-react-boilerplate --health --grpc-web --timeout 600

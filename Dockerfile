@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG NODE_VERSION=26.1.0-alpine
+ARG NODE_VERSION=22.14.0-alpine
 ARG PNPM_VERSION=11.10.0
 
 FROM node:${NODE_VERSION} AS workspace
@@ -85,14 +85,25 @@ USER node
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 
-FROM builder AS site
+FROM builder AS site-deps
+ARG BUILD_OUTPUT=dist/apps/frontend/site
+WORKDIR /workspace/${BUILD_OUTPUT}
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+
+FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \
-  NODE_ENV=production \
-  SITE_DIST_ROOT=/workspace/dist/apps/frontend/site
-WORKDIR /workspace/apps/frontend/site
+  NODE_ENV=production
+WORKDIR /app
+ARG BUILD_OUTPUT=dist/apps/frontend/site
+ENV BUILD_OUTPUT=${BUILD_OUTPUT}
+RUN apk add --no-cache libcap \
+  && setcap 'cap_net_bind_service=+ep' "$(which node)"
+COPY --from=site-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
+COPY --from=site-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
+COPY --from=builder /workspace/dist ./dist
 USER node
 EXPOSE 80
-CMD ["node", "--experimental-strip-types", "server/index.ts"]
+CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
 FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

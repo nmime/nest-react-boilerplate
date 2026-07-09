@@ -2,6 +2,10 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
     schedule:
       interval: weekly
       day: monday
@@ -26,6 +30,10 @@ updates:
           - "@opentelemetry/*"
   - package-ecosystem: github-actions
     directory: /
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
     schedule:
       interval: weekly
       day: monday
@@ -41,6 +49,10 @@ updates:
         update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
     schedule:
       interval: weekly
       day: monday
@@ -52,6 +64,10 @@ updates:
       include: scope
   - package-ecosystem: docker
     directory: /docker
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
     schedule:
       interval: weekly
       day: monday

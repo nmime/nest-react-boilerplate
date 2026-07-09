@@ -13,3 +13,7 @@ node_modules
 .gitignore
 .serena
 .agents
+docs/
+.github/
+.cursor/
+**/*.md

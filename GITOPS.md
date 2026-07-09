@@ -32,7 +32,10 @@ On PR and push to `main`, the CI workflow runs:
 - Security scanning (CodeQL, scorecards)
 - Dependency review on PRs
 
-**The pipeline will not deploy if CI fails.**
+**The pipeline will not deploy if CI fails.** The deploy workflow is triggered via
+`workflow_run` listening for CI completion with success status. If CI fails, the deploy
+workflow is never triggered — it only runs when the CI workflow completes successfully
+on the `main` branch.
 
 ### 3. Image Build (`.github/workflows/release-images.yml`)
 
@@ -45,10 +48,10 @@ On tags (`v*`) and GitHub releases, the release workflow:
 
 ### 4. Deploy Workflow (`.github/workflows/deploy.yml`)
 
-On push to `main` (triggered by app code or chart changes):
+On successful CI completion on `main` (or manual trigger via `workflow_dispatch`):
 
 1. **Check out the repo** with a deploy token (`GH_DEPLOY_TOKEN`)
-2. **Determine the git SHA** (HEAD by default, or a manual override via `workflow_dispatch`)
+2. **Determine the git SHA** (from the CI workflow's head SHA by default, or a manual override via `workflow_dispatch`)
 3. **Update image tags** in `deploy/k8s/values.yaml` via `scripts/update-deploy-tags.py`
    - Every `tag: "sha-xxxxxxx"` line is updated to the current commit short SHA
 4. **Validate** the Helm chart renders correctly with the updated values
@@ -82,7 +85,7 @@ ArgoCD watches `main` branch of the repo. When `deploy/k8s/values.yaml` changes:
 │   └── update-deploy-tags.py       # Updates image tags in deploy/k8s/values.yaml
 ├── .github/workflows/
 │   ├── ci.yml                      # CI gate
-│   ├── deploy.yml                  # GitOps deploy (updates values.yaml)
+│   ├── deploy.yml                  # GitOps deploy (updates values.yaml, gated on CI)
 │   ├── release-images.yml          # Build & push images on tags/releases
 │   └── argo-sync.yml              # Manual ArgoCD sync trigger
 └── GITOPS.md                       # This file
@@ -227,52 +230,5 @@ config:
   authJwtIssuer: https://auth.mydomain.com
 ```
 
-After making changes, commit and push to `main`. The deploy workflow will update
-image tags, and ArgoCD will sync the new ingress configuration.
-
-## Troubleshooting
-
-### ArgoCD shows "OutOfSync" but not deploying
-
-```bash
-# Check what's different
-argocd app diff nest-react-boilerplate --grpc-web
-
-# Check if the imagePullSecret exists
-kubectl get secret ghcr-credentials -n nest-react-boilerplate
-
-# Check pod events for image pull errors
-kubectl get pods -n nest-react-boilerplate -o wide
-kubectl describe pod <pod-name> -n nest-react-boilerplate
-```
-
-### Deploy workflow fails to push
-
-Ensure `GH_DEPLOY_TOKEN` is a Personal Access Token (classic or fine-grained) with:
-- `Contents: Read and write` permissions
-- `Workflows: Read and write` permissions (to avoid blocking the workflow from its own push)
-
-### Helm template validation fails
-
-```bash
-# Run locally to debug
-helm template nest-react-boilerplate .helm \
-  -f .helm/values.yaml \
-  -f deploy/k8s/values.yaml
-```
-
-## Images
-
-The multi-target Dockerfile builds these 9 images:
-
-| Service | Image Path |
-|---------|-----------|
-| Database Migrator | `ghcr.io/nmime/nest-react-boilerplate/migrator` |
-| Auth API | `ghcr.io/nmime/nest-react-boilerplate/auth-app-api` |
-| User API | `ghcr.io/nmime/nest-react-boilerplate/user-app-api` |
-| Admin API | `ghcr.io/nmime/nest-react-boilerplate/admin-app-api` |
-| Admin Frontend | `ghcr.io/nmime/nest-react-boilerplate/admin-app` |
-| User Frontend | `ghcr.io/nmime/nest-react-boilerplate/user-app` |
-| Landing Page | `ghcr.io/nmime/nest-react-boilerplate/landing-app` |
-| Site (Marketing) | `ghcr.io/nmime/nest-react-boilerplate/site-app` |
-| Mobile Frontend | `ghcr.io/nmime/nest-react-boilerplate/mobile-app` |
+After making changes, commit and push to `main`. The deploy workflow will run
+after CI passes, updating the image tags and triggering ArgoCD to sync.

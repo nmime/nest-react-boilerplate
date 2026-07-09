@@ -1,3 +1,5 @@
+* text=auto eol=lf
+
 # Generated API clients are checked in for reproducible consumers.
 libs/**/generated/** linguist-generated=true
 

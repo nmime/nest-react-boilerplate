@@ -116,6 +116,9 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
   site:
     replicas: 3
     image:
@@ -149,6 +152,9 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
   userFrontend:
     replicas: 3
     image:
@@ -164,6 +170,9 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
   adminFrontend:
     replicas: 3
     image:
@@ -179,6 +188,9 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ["ALL"] }
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
 
 ingress:
   enabled: true
@@ -186,6 +198,7 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
@@ -204,7 +217,7 @@ autoscaling:
 
 podDisruptionBudget:
   enabled: true
-  minAvailable: 1
+  maxUnavailable: 1
 
 monitoring:
   enabled: true
@@ -226,7 +239,7 @@ monitoring:
 # Enable after provisioning durable storage/object-store credentials. See
 # docs/operations/observability-dr.md for the encryption/upload hook contract.
 backups:
-  enabled: false
+  enabled: true
   schedule: "17 * * * *"
   destination:
     objectStore:

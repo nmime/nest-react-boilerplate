@@ -175,7 +175,6 @@ jobs:
 
       - name: Cosign keyless sign image digest (GitHub OIDC)
         env:
-          COSIGN_EXPERIMENTAL: "1"
           IMAGE_REF: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
         run: |
           cosign sign --yes "${IMAGE_REF}"

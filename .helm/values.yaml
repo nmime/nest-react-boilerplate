@@ -56,6 +56,7 @@ migrations:
   command: ["pnpm", "db:migrate"]
   backoffLimit: 2
   activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 3600
   resources:
     requests:
       cpu: 100m
@@ -263,10 +264,12 @@ autoscaling:
   minReplicas: 2
   maxReplicas: 6
   targetCPUUtilization: 70
+  scaleDownStabilizationWindow: 300
+  scaleUpStabilizationWindow: 0
 
 podDisruptionBudget:
   enabled: false
-  minAvailable: 1
+  maxUnavailable: 1
 
 monitoring:
   enabled: false
@@ -312,6 +315,10 @@ monitoring:
           endpoint: 0.0.0.0:9464
           resource_to_telemetry_conversion:
             enabled: true
+        otlp:
+          endpoint: tempo.observability.svc.cluster.local:4317
+          tls:
+            insecure: true
         debug:
           verbosity: basic
       extensions:
@@ -327,7 +334,7 @@ monitoring:
           traces:
             receivers: [otlp]
             processors: [memory_limiter, batch]
-            exporters: [debug]
+            exporters: [otlp, debug]
   serviceMonitor:
     enabled: false
     interval: 30s
@@ -393,3 +400,5 @@ backups:
 
 networkPolicy:
   enabled: false
+
+terminationGracePeriodSeconds: 60

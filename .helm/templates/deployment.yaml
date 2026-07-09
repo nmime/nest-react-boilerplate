@@ -33,6 +33,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      terminationGracePeriodSeconds: {{ default 60 $.Values.terminationGracePeriodSeconds }}
       containers:
         - name: {{ kebabcase $name }}
           image: {{ include "boilerplate.image" (dict "name" $name "image" $app.image) | quote }}
@@ -79,6 +80,14 @@ spec:
             periodSeconds: {{ default 20 $app.livenessPeriodSeconds }}
             timeoutSeconds: {{ default 3 $app.livenessTimeoutSeconds }}
             failureThreshold: {{ default 3 $app.livenessFailureThreshold }}
+          startupProbe:
+            httpGet:
+              path: {{ default (ternary "/live" "/" (contains "Api" $name)) $app.startupProbePath | quote }}
+              port: http
+            initialDelaySeconds: {{ default 0 $app.startupInitialDelaySeconds }}
+            periodSeconds: {{ default 10 $app.startupPeriodSeconds }}
+            timeoutSeconds: {{ default 5 $app.startupTimeoutSeconds }}
+            failureThreshold: {{ default 30 $app.startupFailureThreshold }}
           resources:
             {{- toYaml $app.resources | nindent 12 }}
       {{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}

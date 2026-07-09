@@ -1,0 +1,102 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-default-deny
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector: {}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - port: http
+          protocol: TCP
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 5432
+          protocol: TCP
+        - port: 6379
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - podSelector: {}
+      ports:
+        - port: http
+          protocol: TCP
+---
+{{- range $name, $app := .Values.apps }}
+{{- if $app.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "boilerplate.fullname" $ }}-{{ kebabcase $name }}
+  labels:
+    {{- include "boilerplate.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ kebabcase $name }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "boilerplate.name" $ }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+      app.kubernetes.io/component: {{ kebabcase $name }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+          namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/instance: ingress-nginx
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: {{ include "boilerplate.name" $ }}
+            app.kubernetes.io/instance: {{ $.Release.Name }}
+      ports:
+        - port: http
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector: {}
+      ports:
+        - port: http
+          protocol: TCP
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+        - port: 6379
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+{{- end }}
+{{- end }}
+{{- end }}

@@ -11,7 +11,7 @@ metadata:
     {{- include "boilerplate.labels" $root | nindent 4 }}
     app.kubernetes.io/component: {{ kebabcase $name }}
 spec:
-  minAvailable: {{ $root.Values.podDisruptionBudget.minAvailable }}
+  maxUnavailable: {{ default 1 $root.Values.podDisruptionBudget.maxUnavailable }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "boilerplate.name" $root }}

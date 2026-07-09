@@ -24,6 +24,19 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ $root.Values.autoscaling.targetCPUUtilization }}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: {{ default 300 $.Values.autoscaling.scaleDownStabilizationWindow }}
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: {{ default 0 $.Values.autoscaling.scaleUpStabilizationWindow }}
 {{- end }}
 {{- end }}
 {{- end }}

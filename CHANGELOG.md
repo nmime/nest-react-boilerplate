@@ -7,14 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-- Migrated Redis client from `ioredis` to `@redis/client` (v6) — supports standalone, cluster, and Sentinel modes
-- Updated minimum Node.js requirement to `>=26 <27` across all documentation
-- Docker Compose full-stack stack (`docker/docker-compose.yml`) now includes Redis 7, NATS 2, and MinIO services
-- Updated Vitest to v4.x and Vite to v8.x with full compatibility
-
 ### Fixed
-- Docker Node.js base image set to `22.14.0-alpine`; `.nvmrc` updated to match (note: `package.json` engines remain `>=26 <27` for local development)
+- Docker Node.js version corrected (26 → 24.11.0)
 - Site app Docker stage now uses proper build + runtime (no experimental TS stripping)
 - Deploy workflow now gated on CI success via `workflow_run` trigger
 - CodeQL now uses explicit pnpm build steps instead of `autobuild`

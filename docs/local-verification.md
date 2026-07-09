@@ -4,7 +4,7 @@ GitHub-hosted Actions may be unavailable for this repository/account. When that 
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node.js `>=26 <27` and pnpm `11.10.0`:
+Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm `11.10.0`:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -60,7 +60,7 @@ optional-tool availability.
 When validating auth/session and preference-token fix-forward work, use the same Node and pnpm versions as CI, install from the lockfile, then run the fast aggregate plus the focused projects/specs that cover the risky paths:
 
 ```bash
-nvm use
+nvm use 24.11.0
 pnpm --version # 11.10.0
 pnpm install --frozen-lockfile
 pnpm run check:fast

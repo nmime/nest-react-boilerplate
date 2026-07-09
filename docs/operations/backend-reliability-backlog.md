@@ -24,7 +24,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 | No circuit breaker                   | `search_code: circuit breaker` returns 0 results                                                   | No `opossum`, `@nestjs/circuit-breaker`, or equivalent pattern                                                     |
 | No idempotency middleware/store      | `search_code: idempotency` returns only doc references (notifications.md, test checklist template) | No middleware, interceptor, or Redis-backed idempotency store implementation                                       |
 | Outbox entity exists but no consumer | `search_code: outbox` finds entity, migration, spec under auth lib                                 | `TransactionalOutboxEventEntity` with schema and tests exist, but no polling consumer or publisher service found   |
-| No tini/seccomp/read-only hardening  | `search_code: tini seccomp read-only` returns 0 results; `Dockerfile` exists at root               | `Dockerfile` uses `node:26.1.0-alpine` base; no `tini`, `USER nonroot`, `--read-only`, or seccomp profile          |
+| No tini/seccomp/read-only hardening  | `search_code: tini seccomp read-only` returns 0 results; `Dockerfile` exists at root               | `Dockerfile` uses `node:24.11.0-alpine` base; no `tini`, `USER nonroot`, `--read-only`, or seccomp profile          |
 | Limited e2e for edge cases           | `search_code: e2e integration test` shows existing test:e2e targets                                | `health.e2e-spec.ts` covers basic health and problem-details; no e2e for rate-limit, exception filter, or shutdown |
 
 ---
@@ -126,14 +126,14 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 - `libs/backend/common/` — create `idempotency` package:
   - Middleware that extracts `Idempotency-Key` header.
-  - Redis-backed store (using existing `libs/backend/common/redis/lib` with `@redis/client`):
+  - Redis-backed store (using existing `libs/backend/common/redis/lib`):
     - Check-and-set with TTL (e.g., 24 hours).
     - Store the response status and body hash for replay.
   - Skip for GET requests and non-mutating operations.
 
 **Dependencies:**
 
-- Redis (available via `libs/backend/common/redis/lib` using `@redis/client`).
+- Redis (already available via `libs/backend/common/redis/lib`).
 - Phase 1 metrics for idempotency hit/miss counters.
 
 **Validation:**
@@ -252,7 +252,7 @@ The gaps identified below are **operational resilience** concerns that become cr
 
 ### 5.1 Docker Hardening
 
-**Problem:** The root `Dockerfile` uses `node:26.1.0-alpine` but lacks:
+**Problem:** The root `Dockerfile` uses `node:24.11.0-alpine` but lacks:
 
 - **tini** init system (zombie process reaping, proper signal forwarding).
 - **Non-root user** (runs as root by default).

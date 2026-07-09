@@ -11,7 +11,7 @@ file as the next policy layer.
   assigns another repository.
 - Verify the target repo, branch, and current `main` SHA before edits, commits,
   pushes, or deployment work.
-- Use Node.js `>=26 <27` and pnpm `11.10.0`
+- Use Node.js `>=24 <25` and pnpm `11.10.0`
   (`packageManager: pnpm@11.10.0`). Prefer Corepack and
   `pnpm install --frozen-lockfile`.
 - Do not expose secrets, tokens, real `.env*` values, Docker secret files,

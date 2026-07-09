@@ -11,7 +11,7 @@ This is the short always-loaded policy for AI coding agents in
   repository.
 - Before edits, commits, pushes, or deployment work, verify the target repo,
   current branch, `HEAD`, and current `main` SHA.
-- Use Node.js `>=26 <27` and pnpm `11.10.0`; prefer Corepack and
+- Use Node.js `>=24 <25` and pnpm `11.10.0`; prefer Corepack and
   `pnpm install --frozen-lockfile`.
 - Do not expose secrets, tokens, real `.env*` values, Docker secret files,
   credentials, or full environment dumps.

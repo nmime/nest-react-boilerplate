@@ -96,7 +96,7 @@ ArgoCD watches `main` branch of the repo. When `deploy/k8s/values.yaml` changes:
 ### Prerequisites
 
 - A Kubernetes cluster with ArgoCD installed
-- Application images require Node.js `>=26 <27` runtime; all Docker images are built from the repository's configured Node version
+- Application images require Node.js `>=24 <25` runtime; all Docker images are built from the repository's configured Node version
 - Redis v6 (`@redis/client`) is used for caching and rate limiting (previously `ioredis`; migrated to the official `@redis/client` package)
 - The `argocd` namespace exists with ArgoCD running
 - An `imagePullSecret` named `ghcr-credentials` in the target namespace for pulling from GHCR

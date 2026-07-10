@@ -10,6 +10,7 @@ import { runCheckLibraryConfigs } from "./commands/project/check-library-configs
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
 import { runSetupFromContext } from "./commands/project/setup";
 import { runDoctorFromContext } from "./commands/project/doctor";
+import { runAddFromContext } from "./commands/project/add";
 import { runMutation } from "./commands/qa/mutation";
 import { runBranchCleanup } from "./commands/git/branch-cleanup";
 import { runWebpCommand } from "./commands/images/webp";
@@ -34,6 +35,7 @@ interface CommandDefinition {
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workspaceRoot = resolve(packageRoot, "../..");
+const TOOLING_VERSION = "0.0.0"; // sync with packages/tooling/package.json
 const writeStdoutLine = (message = ""): void => {
   process.stdout.write(`${message}\n`);
 };
@@ -93,7 +95,7 @@ register(
 register(
   "add",
   "Add an app, library, or feature to the workspace.",
-  runSetupFromContext,
+  runAddFromContext,
 );
 register(
   "qa:mutation",
@@ -254,6 +256,11 @@ registerScript(
 export async function main(
   argv: string[] = process.argv.slice(2),
 ): Promise<number> {
+  if (argv[0] === "--version" || argv[0] === "-v") {
+    writeStdoutLine(TOOLING_VERSION);
+    return 0;
+  }
+
   if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
     printHelp();
     return 0;

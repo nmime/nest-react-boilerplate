@@ -1,12 +1,13 @@
 import {
   existsSync,
-  mkdirSync,
   readFileSync,
   readdirSync,
-  writeFileSync,
 } from "node:fs";
 import { join, relative } from "node:path";
-import type { CommandContext } from "../../cli";
+import type { CommandContext } from "../../cli.js";
+import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
+import { apply, type ApplyOptions } from "../../setup/apply.js";
+import { createFile, updateFile, type SetupOperation } from "../../setup/operations.js";
 
 interface GenerateVerticalSliceOptions {
   workspaceRoot: string;
@@ -26,9 +27,9 @@ interface Names {
   title: string;
 }
 
-export function runGenerateVerticalSlice(
+export async function runGenerateVerticalSlice(
   options: GenerateVerticalSliceOptions,
-): number {
+): Promise<number> {
   const parsed = parseOptions(options.argv);
 
   if (parsed.help) {
@@ -85,42 +86,57 @@ export function runGenerateVerticalSlice(
     return 1;
   }
 
+  // Build setup operations — all writes go through the shared engine
+  const operations: SetupOperation[] = [];
+
   for (const file of files) {
-    const absolutePath = join(options.workspaceRoot, file.path);
-
-    if (parsed.dryRun) {
-      console.log(`CREATE ${file.path}`);
-      continue;
-    }
-
-    mkdirSync(join(absolutePath, ".."), { recursive: true });
-    writeFileSync(absolutePath, file.contents);
-    console.log(
-      `${existsSync(absolutePath) ? "WROTE" : "CREATE"} ${file.path}`,
-    );
+    operations.push(createFile(file.path, file.contents, `Create ${file.path}`));
   }
+
+  // tsconfig merge: use json_merge
+  const aliases = createTsconfigAliases(names);
+  operations.push(updateFile("tsconfig.base.json", buildTsconfigContent(options.workspaceRoot, aliases), "Update tsconfig.base.json path aliases"));
 
   if (parsed.dryRun) {
-    console.log("UPDATE tsconfig.base.json path aliases");
+    for (const op of operations) {
+      console.log(`${op.kind === "update_file" ? "UPDATE" : "CREATE"} ${op.path}`);
+    }
+    printNextSteps(names, parsed.apiApp);
   } else {
-    updateTsconfigPaths(options.workspaceRoot, names);
-    console.log("UPDATED tsconfig.base.json path aliases");
+    const fs = createNodeFilesystem(options.workspaceRoot);
+    const applyOpts: ApplyOptions = { force: parsed.force, dryRun: false };
+
+    const result = await apply(operations, fs, applyOpts);
+    if (result.failed > 0) {
+      console.error(`Apply failed: ${result.applied} applied, ${result.failed} failed`);
+      if (result.rollbackError) console.error(`Rollback: ${result.rollbackError}`);
+      process.exit(1);
+    }
+    for (const op of operations) {
+      console.log(`${op.kind === "update_file" ? "UPDATED" : "CREATE"} ${op.path}`);
+    }
+    printNextSteps(names, parsed.apiApp);
   }
 
+  return 0;
+}
+
+/** Build the new tsconfig.base.json content with added aliases. */
+function buildTsconfigContent(workspaceRoot: string, aliases: Record<string, string[]>): string {
+  const tsconfigPath = join(workspaceRoot, "tsconfig.base.json");
+  const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as { compilerOptions: { paths?: Record<string, string[]> } };
+  tsconfig.compilerOptions.paths = { ...(tsconfig.compilerOptions.paths ?? {}), ...aliases };
+  return `${JSON.stringify(tsconfig, null, 2)}\n`;
+}
+
+/** Print the standard next-steps block. */
+function printNextSteps(names: Names, apiApp: string): void {
   console.log("");
   console.log("Next steps:");
-  console.log(
-    `1. Add ${backendFeatureMainAlias(names)} to the ${parsed.apiApp} API module imports.`,
-  );
-  console.log(
-    "2. Wire the generated client from the React route/page that owns this feature.",
-  );
-  console.log(
-    "3. Replace placeholder persistence with a repository and commit a real migration.",
-  );
+  console.log(`1. Add ${backendFeatureMainAlias(names)} to the ${apiApp} API module imports.`);
+  console.log("2. Wire the generated client from the React route/page that owns this feature.");
+  console.log("3. Replace placeholder persistence with a repository and commit a real migration.");
   console.log("4. Run pnpm run lint && pnpm run typecheck && pnpm run test.");
-
-  return 0;
 }
 
 function parseOptions(argv: string[]): {
@@ -219,19 +235,7 @@ function findExistingTsconfigAliases(
   );
 }
 
-function updateTsconfigPaths(workspaceRoot: string, names: Names): void {
-  const tsconfigPath = join(workspaceRoot, "tsconfig.base.json");
-  const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
-    compilerOptions: { paths?: Record<string, string[]> };
-  };
-
-  tsconfig.compilerOptions.paths = {
-    ...(tsconfig.compilerOptions.paths ?? {}),
-    ...createTsconfigAliases(names),
-  };
-
-  writeFileSync(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
-}
+/** Deprecated: replaced by buildTsconfigContent + shared apply engine. Kept for backward compat. */
 
 function createTsconfigAliases(names: Names): Record<string, string[]> {
   return {
@@ -548,9 +552,9 @@ function printUsage(): void {
   );
 }
 
-export function runGenerateVerticalSliceFromContext(
+export async function runGenerateVerticalSliceFromContext(
   context: CommandContext,
-): number {
+): Promise<number> {
   return runGenerateVerticalSlice({
     argv: context.argv,
     workspaceRoot: context.workspaceRoot,

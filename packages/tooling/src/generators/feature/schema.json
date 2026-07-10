@@ -18,6 +18,12 @@
       "default": "user-app-api",
       "x-priority": "important"
     },
+    "frontendApp": {
+      "type": "string",
+      "description": "Frontend application that hosts the feature page",
+      "default": "user-app",
+      "x-priority": "important"
+    },
     "force": {
       "type": "boolean",
       "description": "Overwrite existing files without prompting",

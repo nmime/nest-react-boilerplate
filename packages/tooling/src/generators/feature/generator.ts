@@ -2,16 +2,20 @@
  * Feature generator — generates vertical-slice features across backend
  * and frontend layers, preserving the current vertical-slice semantics.
  *
- * Uses the shared operation generation from the existing vertical-slice
- * templates, applied through the Nx Tree adapter.
+ * Uses the shared template generation from the existing vertical-slice
+ * implementation, applied through the Nx Tree.
+ *
+ * Generated files match exact repo conventions for:
+ *   - tsconfig.lib.json extends ./tsconfig.json (NOT base)
+ *   - tsconfig.json references lib + spec
+ *   - project.json $schema computed from depth
+ *   - vitest.config.mts uses workspaceTsconfigAliases
  */
 import type { Tree } from "nx/src/generators/tree";
 import { formatFiles, getProjects } from "@nx/devkit";
-import { generateNames, validateName } from "../names.js";
-import { createNxTreeAdapter, readJsonFile, mergeJsonFile, writeJsonFile } from "../../setup/adapters/nx-tree.js";
+import { generateNames, validateName } from "../names.ts";
+import { readJsonFile, writeJsonFile } from "../../setup/adapters/nx-tree.ts";
 
-// ---------------------------------------------------------------------------
-// Types matching the existing vertical-slice implementation
 // ---------------------------------------------------------------------------
 
 interface TemplateFile {
@@ -19,8 +23,6 @@ interface TemplateFile {
   contents: string;
 }
 
-// ---------------------------------------------------------------------------
-// Name aliases (matching existing implementation)
 // ---------------------------------------------------------------------------
 
 function backendFeatureMainAlias(names: ReturnType<typeof generateNames>): string {
@@ -39,26 +41,34 @@ function constantName(names: ReturnType<typeof generateNames>): string {
   return names.constant + "_";
 }
 
-// ---------------------------------------------------------------------------
-// project.json generator (matching existing implementation)
+function frontendFeatureAlias(names: ReturnType<typeof generateNames>): string {
+  return `@app/frontend-feature-${names.kebab}`;
+}
+
+function libDepth(dir: string): number {
+  return dir.split("/").length;
+}
+
+function dots(dir: string): string {
+  return "../".repeat(libDepth(dir));
+}
+
 // ---------------------------------------------------------------------------
 
 function projectJson(
-  path: string,
+  libDir: string,
   name: string,
   sourceRoot: string,
   outputPath: string,
-  tsConfig: string,
   tags: string[],
 ): TemplateFile {
-  const schema = `${"\\"}schema": "${path.startsWith("libs/backend/postgres") ? "../../../../../../../" : "../../../../../../"}node_modules/nx/schemas/project-schema.json"`;
-  
+  const d = dots(libDir);
   return {
-    path: `${path}/project.json`,
+    path: `${libDir}/project.json`,
     contents: JSON.stringify({
       name,
-      $schema: "../../../../node_modules/nx/schemas/project-schema.json",
-      sourceRoot: `${sourceRoot}`,
+      $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
+      sourceRoot,
       projectType: "library",
       tags,
       targets: {
@@ -68,7 +78,7 @@ function projectJson(
           options: {
             outputPath,
             main: `${sourceRoot}/index.ts`,
-            tsConfig,
+            tsConfig: `${libDir}/tsconfig.lib.json`,
             assets: [],
             rootDir: ".",
           },
@@ -77,59 +87,95 @@ function projectJson(
           executor: "nx:run-commands",
           cache: true,
           options: {
-            cwd: path,
+            cwd: libDir,
             command: "vitest run --config vitest.config.mts",
           },
           inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
-          outputs: [`{workspaceRoot}/coverage/${path}`],
+          outputs: [`{workspaceRoot}/coverage/${libDir}`],
         },
       },
     }, null, 2) + "\n",
   };
 }
 
-// ---------------------------------------------------------------------------
-// tsconfig generator (matching existing implementation)
-// ---------------------------------------------------------------------------
+function tsconfig(libDir: string): TemplateFile[] {
+  const d = dots(libDir);
 
-function tsConfig(path: string): TemplateFile {
-  const depth = (path.match(/\/lib\//) ? path : `${path}/`).split("/").length;
-  const offset = "··".repeat(Math.max(0, depth - 2));
-  
-  return {
-    path: `${path}/tsconfig.lib.json`,
+  // tsconfig.json — extends base, references lib + spec
+  const tsconfigJson: TemplateFile = {
+    path: `${libDir}/tsconfig.json`,
     contents: JSON.stringify({
-      extends: `${offset}../../tsconfig.base.json`,
-      compilerOptions: {
-        module: "commonjs",
-        forceConsistentCasingInFileNames: true,
-        strict: true,
-        noImplicitOverride: true,
-        noImplicitReturns: true,
-        noFallthroughCasesInSwitch: true,
-        noPropertyAccessFromIndexSignature: true,
-        noEmit: true,
-        declaration: false,
-        inlineSources: false,
-        isolatedModules: true,
-        moduleResolution: "bundler",
-        emitDecoratorMetadata: true,
-        experimentalDecorators: true,
-        target: "es2022",
-        lib: ["es2022"],
-        skipLibCheck: true,
-        skipDefaultLibCheck: true,
-        baseUrl: ".",
-        paths: {},
-      },
-      include: ["src/**/*.ts"],
-      exclude: ["**/*.spec.ts", "**/*.test.ts"],
+      extends: `${d}../../../../tsconfig.base.json`,
+      compilerOptions: { types: ["node"] },
+      include: [],
+      references: [
+        { path: "./tsconfig.lib.json" },
+        { path: "./tsconfig.spec.json" },
+      ],
     }, null, 2) + "\n",
   };
+
+  // tsconfig.lib.json — extends ./tsconfig.json, declaration: true
+  const tsconfigLib: TemplateFile = {
+    path: `${libDir}/tsconfig.lib.json`,
+    contents: JSON.stringify({
+      extends: "./tsconfig.json",
+      compilerOptions: {
+        outDir: `${d}../../../../dist/out-tsc/${libDir}`,
+        types: ["node"],
+        declaration: true,
+      },
+      exclude: ["src/**/*.spec.ts", "src/**/*.test.ts"],
+      include: ["src/**/*.ts"],
+    }, null, 2) + "\n",
+  };
+
+  // tsconfig.spec.json
+  const tsconfigSpec: TemplateFile = {
+    path: `${libDir}/tsconfig.spec.json`,
+    contents: JSON.stringify({
+      extends: "./tsconfig.json",
+      compilerOptions: {
+        outDir: `${d}../../../../dist/out-tsc/${libDir}-spec`,
+        types: ["node", "vitest"],
+      },
+      include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"],
+    }, null, 2) + "\n",
+  };
+
+  // vitest.config.mts
+  const vitestConfig: TemplateFile = {
+    path: `${libDir}/vitest.config.mts`,
+    contents: `/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
+import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}../../../../packages/tooling/src/testing/vitest-coverage.mts";
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
+  cacheDir:
+    "${d}../../../../node_modules/.vitest/${libDir}",
+  test: {
+    environment: "node",
+    include: ["src/**/*.spec.ts"],
+    globals: false,
+    coverage: fullCoverage(
+      "${d}../../../coverage/${libDir}",
+      ["src/**/*.ts"],
+      [],
+    ),
+  },
+});
+`,
+  };
+
+  return [tsconfigJson, tsconfigLib, tsconfigSpec, vitestConfig];
 }
 
-// ---------------------------------------------------------------------------
-// Template file generators (preserving existing vertical-slice semantics)
 // ---------------------------------------------------------------------------
 
 function createBackendTemplateFiles(
@@ -151,10 +197,9 @@ function createBackendTemplateFiles(
       sharedAlias,
       `${base}/shared/lib/src`,
       `dist/${base}/shared`,
-      `${base}/shared/lib/tsconfig.lib.json`,
       ["platform:backend", "type:feature-shared", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/shared/lib`),
+    ...tsconfig(`${base}/shared/lib`),
 
     // Main library
     {
@@ -182,10 +227,9 @@ function createBackendTemplateFiles(
       mainAlias,
       `${base}/main/lib/src`,
       `dist/${base}/main`,
-      `${base}/main/lib/tsconfig.lib.json`,
       ["platform:backend", "type:feature-main", `scope:${names.kebab}`],
     ),
-    tsConfig(`${base}/main/lib`),
+    ...tsconfig(`${base}/main/lib`),
 
     // Postgres data access
     {
@@ -225,10 +269,9 @@ function createBackendTemplateFiles(
       backendPostgresMainAlias(names),
       `libs/backend/postgres/main/${names.kebab}/lib/src`,
       `dist/libs/backend/postgres/main/${names.kebab}`,
-      `libs/backend/postgres/main/${names.kebab}/lib/tsconfig.lib.json`,
       ["platform:backend", "type:data-access", `scope:${names.kebab}`],
     ),
-    tsConfig(`libs/backend/postgres/main/${names.kebab}/lib`),
+    ...tsconfig(`libs/backend/postgres/main/${names.kebab}/lib`),
 
     // Frontend API client
     {
@@ -245,8 +288,6 @@ function createBackendTemplateFiles(
 }
 
 // ---------------------------------------------------------------------------
-// tsconfig path aliases
-// ---------------------------------------------------------------------------
 
 function createTsconfigAliases(names: ReturnType<typeof generateNames>): Record<string, string[]> {
   return {
@@ -259,33 +300,26 @@ function createTsconfigAliases(names: ReturnType<typeof generateNames>): Record<
     [backendPostgresMainAlias(names)]: [
       `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
     ],
+    [frontendFeatureAlias(names)]: [
+      `libs/frontend/feature/${names.kebab}/lib/src/index.ts`,
+    ],
   };
 }
-
-// ---------------------------------------------------------------------------
-// Conflict detection
-// ---------------------------------------------------------------------------
 
 function findExistingTsconfigAliases(
   tree: Tree,
   names: ReturnType<typeof generateNames>,
 ): string[] {
-  const tsconfig = readJsonFile(tree, "tsconfig.base.json");
-  const paths = tsconfig?.compilerOptions?.paths ?? {};
+  const tsconfig = readJsonFile<Record<string, unknown>>(tree, "tsconfig.base.json");
+  const compilerOptions = tsconfig?.compilerOptions as { paths?: Record<string, string[]> } | undefined;
+  const paths = compilerOptions?.paths ?? {};
   const newAliases = createTsconfigAliases(names);
   return Object.keys(newAliases).filter((alias) => Object.prototype.hasOwnProperty.call(paths, alias));
 }
 
-function findExistingFiles(
-  tree: Tree,
-  files: TemplateFile[],
-): string[] {
+function findExistingFiles(tree: Tree, files: TemplateFile[]): string[] {
   return files.filter((f) => tree.exists(f.path)).map((f) => f.path);
 }
-
-// ---------------------------------------------------------------------------
-// API app validation
-// ---------------------------------------------------------------------------
 
 function listApiApps(tree: Tree): string[] {
   const projects = getProjects(tree);
@@ -299,8 +333,6 @@ function listApiApps(tree: Tree): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Main generator
-// ---------------------------------------------------------------------------
 
 export interface FeatureGeneratorOptions {
   name: string;
@@ -310,56 +342,36 @@ export interface FeatureGeneratorOptions {
   skipFormat?: boolean;
 }
 
-/**
- * Main generator entry point.
- * Preserves existing vertical-slice semantics by generating the same
- * file structure and content through the Nx Tree.
- */
 export async function featureGenerator(
   tree: Tree,
   options: FeatureGeneratorOptions,
 ): Promise<void> {
-  // Validate name
   const nameError = validateName(options.name);
-  if (nameError) {
-    throw new Error(nameError);
-  }
+  if (nameError) throw new Error(nameError);
 
   const names = generateNames(options.name);
   const apiApp = options.apiApp ?? "user-app-api";
 
-  // Validate apiApp
   const validApiApps = listApiApps(tree);
-  // If no projects found (e.g., in-memory tree without existing apps), allow it
   if (validApiApps.length > 0 && !validApiApps.includes(apiApp)) {
     throw new Error(
       `Invalid --api-app "${apiApp}". Expected one of: ${validApiApps.join(", ") || "(none found under apps/backend)"}.`,
     );
   }
 
-  // Generate template files
   const files = createBackendTemplateFiles(names, apiApp);
 
-  // Check for conflicts
   if (!options.force) {
     const existingFiles = findExistingFiles(tree, files);
     const existingAliases = findExistingTsconfigAliases(tree, names);
-
     if (existingFiles.length > 0 || existingAliases.length > 0) {
       const conflicts: string[] = [];
-      for (const path of existingFiles) {
-        conflicts.push(`File exists: ${path}`);
-      }
-      for (const alias of existingAliases) {
-        conflicts.push(`Tsconfig alias exists: ${alias}`);
-      }
-      throw new Error(
-        `Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join("\n")}`,
-      );
+      for (const p of existingFiles) conflicts.push(`File exists: ${p}`);
+      for (const a of existingAliases) conflicts.push(`Tsconfig alias exists: ${a}`);
+      throw new Error(`Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join("\n")}`);
     }
   }
 
-  // Write files to tree
   for (const file of files) {
     if (options.dryRun) {
       console.log(`CREATE ${file.path}`);
@@ -368,7 +380,6 @@ export async function featureGenerator(
     }
   }
 
-  // Update tsconfig.base.json path aliases
   if (!options.dryRun) {
     const tsconfig = readJsonFile<Record<string, unknown>>(tree, "tsconfig.base.json");
     if (tsconfig) {
@@ -382,7 +393,6 @@ export async function featureGenerator(
     console.log("UPDATE tsconfig.base.json path aliases");
   }
 
-  // Print next steps
   if (options.dryRun) {
     console.log("");
     console.log("Next steps:");
@@ -392,12 +402,9 @@ export async function featureGenerator(
     console.log("4. Run pnpm run lint && pnpm run typecheck && pnpm run test.");
   }
 
-  // Format unless skipped
   if (!options.skipFormat && !options.dryRun) {
     await formatFiles(tree);
   }
 }
-
-// ---------------------------------------------------------------------------
 
 export default featureGenerator;

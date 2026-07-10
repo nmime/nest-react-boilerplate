@@ -43,20 +43,35 @@ export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
     async list(dir = ""): Promise<string[]> {
       const results: string[] = [];
 
-      function recurse(currentDir: string): void {
-        const children = currentDir ? tree.children(currentDir) : tree.children("");
-        if (!children) return;
+      // Safety: if dir is empty or doesn't exist, return sorted array of root files
+      let topLevel: string[];
+      try {
+        topLevel = tree.children(dir || "");
+      } catch {
+        return [];
+      }
+      if (!topLevel || topLevel.length === 0) return [];
+
+      function recurse(currentDir: string, children: string[]): void {
         for (const child of children) {
           const fullPath = currentDir ? `${currentDir}/${child}` : child;
           if (tree.isFile(fullPath)) {
             results.push(fullPath);
           } else {
-            recurse(fullPath);
+            let subChildren: string[];
+            try {
+              subChildren = tree.children(fullPath);
+            } catch {
+              continue;
+            }
+            if (subChildren && subChildren.length > 0) {
+              recurse(fullPath, subChildren);
+            }
           }
         }
       }
 
-      recurse(dir);
+      recurse(dir, topLevel);
       return results.sort();
     },
   };

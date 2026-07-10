@@ -146,13 +146,13 @@ describe("feature generator", () => {
 
       // API client
       assert.ok(tree.exists("libs/frontend/api-client/lib/src/features/invoices.ts"));
-      const client = tree.read("libs/frontend/api-client/lib/src/features/invoices.ts", "utf8");
+      const client = tree.read("libs/frontend/api-client/lib/src/features/invoices.ts", "utf8")!;
       assert.ok(client.includes("InvoicesApiClient"));
       assert.ok(client.includes("createInvoicesApiClient"));
 
       // Frontend page
       assert.ok(tree.exists("apps/frontend/app/src/app/features/invoices/InvoicesPage.tsx"));
-      const page = tree.read("apps/frontend/app/src/app/features/invoices/InvoicesPage.tsx", "utf8");
+      const page = tree.read("apps/frontend/app/src/app/features/invoices/InvoicesPage.tsx", "utf8")!;
       assert.ok(page.includes("InvoicesPage"));
     });
 
@@ -165,7 +165,7 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "invoices", skipFormat: true });
 
-      const tsconfig = JSON.parse(tree.read("tsconfig.base.json", "utf8"));
+      const tsconfig = JSON.parse(tree.read("tsconfig.base.json", "utf8")!);
       const paths = tsconfig.compilerOptions.paths;
 
       // Existing alias preserved
@@ -183,7 +183,7 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "Billing Events", skipFormat: true });
 
-      const shared = tree.read("libs/backend/feature/billing-events/shared/lib/src/index.ts", "utf8");
+      const shared = tree.read("libs/backend/feature/billing-events/shared/lib/src/index.ts", "utf8")!;
       assert.ok(shared.includes("export interface BillingEventsDto"));
       assert.ok(shared.includes("export interface CreateBillingEventsDto"));
       assert.ok(shared.includes("BILLING_EVENTS_READ_PERMISSION"));
@@ -196,7 +196,7 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "invoices", skipFormat: true });
 
-      const controller = tree.read("libs/backend/feature/invoices/main/lib/src/invoices.controller.ts", "utf8");
+      const controller = tree.read("libs/backend/feature/invoices/main/lib/src/invoices.controller.ts", "utf8")!;
       assert.ok(controller.includes("InvoicesController"));
       assert.ok(controller.includes("@Controller(\"invoices\")"));
       assert.ok(controller.includes("@app/backend-common-swagger"));
@@ -210,7 +210,7 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "invoices", skipFormat: true });
 
-      const service = tree.read("libs/backend/feature/invoices/main/lib/src/invoices.service.ts", "utf8");
+      const service = tree.read("libs/backend/feature/invoices/main/lib/src/invoices.service.ts", "utf8")!;
       assert.ok(service.includes("InvoicesService"));
       assert.ok(service.includes("@Injectable()"));
     });
@@ -222,7 +222,7 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "support-cases", skipFormat: true });
 
-      const entity = tree.read("libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/entities/support-cases.entity.ts", "utf8");
+      const entity = tree.read("libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/entities/support-cases.entity.ts", "utf8")!;
       assert.ok(entity.includes("SupportCasesEntity"));
       assert.ok(entity.includes("tableName: \"support_cases\""));
     });
@@ -234,11 +234,11 @@ describe("feature generator", () => {
       const { featureGenerator } = await import("./generator.js");
       await featureGenerator(tree, { name: "invoices", skipFormat: true });
 
-      const mainPj = JSON.parse(tree.read("libs/backend/feature/invoices/main/lib/project.json", "utf8"));
+      const mainPj = JSON.parse(tree.read("libs/backend/feature/invoices/main/lib/project.json", "utf8")!);
       assert.equal(mainPj.name, "@app/backend-feature-invoices-main");
       assert.ok(mainPj.tags.includes("type:feature-main"));
 
-      const sharedPj = JSON.parse(tree.read("libs/backend/feature/invoices/shared/lib/project.json", "utf8"));
+      const sharedPj = JSON.parse(tree.read("libs/backend/feature/invoices/shared/lib/project.json", "utf8")!);
       assert.equal(sharedPj.name, "@app/backend-feature-invoices-shared");
       assert.ok(sharedPj.tags.includes("type:feature-shared"));
     });

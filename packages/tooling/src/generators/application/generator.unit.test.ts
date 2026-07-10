@@ -79,7 +79,7 @@ describe("application generator", () => {
 
       await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read("apps/backend/my/my-api/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("apps/backend/my/my-api/project.json", "utf8")!);
       assert.equal(projectJson.name, "my-api");
       assert.equal(projectJson.projectType, "application");
       assert.ok(projectJson.tags.includes("platform:backend"));
@@ -94,7 +94,7 @@ describe("application generator", () => {
 
       await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
 
-      const pkg = JSON.parse(tree.read("apps/backend/my/my-api/package.json", "utf8"));
+      const pkg = JSON.parse(tree.read("apps/backend/my/my-api/package.json", "utf8")!);
       assert.equal(pkg.name, "@app/my-api");
       assert.ok(pkg.dependencies["@nestjs/common"]);
     });
@@ -120,7 +120,7 @@ describe("application generator", () => {
       assert.ok(tree.exists("apps/backend/my/my-api/src/app.module.ts"));
       assert.ok(tree.exists("apps/backend/my/my-api/src/app.module.spec.ts"));
 
-      const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8");
+      const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8")!;
       assert.ok(mainContent.includes("MyApiModule"));
     });
 
@@ -158,7 +158,7 @@ describe("application generator", () => {
         skipFormat: true,
       });
 
-      const projectJson = JSON.parse(tree.read("apps/backend/my/my-api/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("apps/backend/my/my-api/project.json", "utf8")!);
       assert.ok(projectJson.tags.includes("custom:tag"));
       assert.ok(projectJson.tags.includes("another:tag"));
     });
@@ -170,7 +170,7 @@ describe("application generator", () => {
       await applicationGenerator(tree, { name: "Support Ticket API", kind: "backend", skipFormat: true });
 
       assert.ok(tree.exists("apps/backend/support/support-ticket-api/project.json"));
-      const projectJson = JSON.parse(tree.read("apps/backend/support/support-ticket-api/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("apps/backend/support/support-ticket-api/project.json", "utf8")!);
       assert.equal(projectJson.name, "support-ticket-api");
     });
   });
@@ -186,7 +186,7 @@ describe("application generator", () => {
 
       await applicationGenerator(tree, { name: "my-dashboard", kind: "frontend", skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read("apps/frontend/my-dashboard/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("apps/frontend/my-dashboard/project.json", "utf8")!);
       assert.equal(projectJson.name, "my-dashboard");
       assert.equal(projectJson.projectType, "application");
       assert.ok(projectJson.tags.includes("platform:frontend"));
@@ -200,7 +200,7 @@ describe("application generator", () => {
 
       await applicationGenerator(tree, { name: "my-dashboard", kind: "frontend", skipFormat: true });
 
-      const pkg = JSON.parse(tree.read("apps/frontend/my-dashboard/package.json", "utf8"));
+      const pkg = JSON.parse(tree.read("apps/frontend/my-dashboard/package.json", "utf8")!);
       assert.equal(pkg.name, "@app/my-dashboard");
       assert.ok(pkg.dependencies.react);
     });
@@ -212,7 +212,7 @@ describe("application generator", () => {
       await applicationGenerator(tree, { name: "my-dashboard", kind: "frontend", skipFormat: true });
 
       assert.ok(tree.exists("apps/frontend/my-dashboard/index.html"));
-      const html = tree.read("apps/frontend/my-dashboard/index.html", "utf8");
+      const html = tree.read("apps/frontend/my-dashboard/index.html", "utf8")!;
       assert.ok(html.includes("My Dashboard"));
     });
 
@@ -247,7 +247,7 @@ describe("application generator", () => {
       assert.ok(tree.exists("apps/frontend/my-dashboard/tsconfig.app.json"));
       assert.ok(tree.exists("apps/frontend/my-dashboard/tsconfig.spec.json"));
 
-      const tsconfig = JSON.parse(tree.read("apps/frontend/my-dashboard/tsconfig.json", "utf8"));
+      const tsconfig = JSON.parse(tree.read("apps/frontend/my-dashboard/tsconfig.json", "utf8")!);
       assert.equal(tsconfig.compilerOptions.jsx, "react-jsx");
     });
   });

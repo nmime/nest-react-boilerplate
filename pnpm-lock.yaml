@@ -1284,6 +1284,9 @@ importers:
       '@mikro-orm/core':
         specifier: 7.1.5
         version: 7.1.5(dataloader@2.2.3)
+      '@nx/devkit':
+        specifier: 23.0.1
+        version: 23.0.1(nx@23.0.1(@swc-node/register@1.11.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(@swc/types@0.1.27)(typescript@6.0.3))(@swc/core@1.15.43(@swc/helpers@0.5.23)))
       '@playwright/test':
         specifier: 1.61.1
         version: 1.61.1

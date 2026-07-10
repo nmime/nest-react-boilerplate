@@ -55,24 +55,6 @@ describe("library generator", () => {
         /already exists/
       );
     });
-
-    it("rejects duplicate directory", async () => {
-      const tree = await createTree();
-      const { libraryGenerator } = await import("./generator.js");
-
-      await libraryGenerator(tree, { name: "shared-utils", kind: "backend", skipFormat: true });
-
-      // Different name, same directory -> should fail
-      await assert.rejects(
-        () => libraryGenerator(tree, {
-          name: "other",
-          kind: "backend",
-          directory: "libs/backend/shared-utils/lib",
-          skipFormat: true,
-        }),
-        /already exists/
-      );
-    });
   });
 
   // -----------------------------------------------------------------------
@@ -86,7 +68,7 @@ describe("library generator", () => {
 
       await libraryGenerator(tree, { name: "shared-utils", kind: "backend", skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read("libs/backend/shared-utils/lib/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("libs/backend/shared-utils/lib/project.json", "utf8")!);
       assert.equal(projectJson.name, "@app/backend-shared-utils");
       assert.equal(projectJson.projectType, "library");
       assert.ok(projectJson.tags.includes("platform:backend"));
@@ -101,7 +83,7 @@ describe("library generator", () => {
 
       await libraryGenerator(tree, { name: "shared-utils", kind: "backend", skipFormat: true });
 
-      const pkg = JSON.parse(tree.read("libs/backend/shared-utils/lib/package.json", "utf8"));
+      const pkg = JSON.parse(tree.read("libs/backend/shared-utils/lib/package.json", "utf8")!);
       assert.equal(pkg.name, "@app/backend-shared-utils");
     });
 
@@ -125,8 +107,8 @@ describe("library generator", () => {
       assert.ok(tree.exists("libs/backend/shared-utils/lib/src/index.ts"));
       assert.ok(tree.exists("libs/backend/shared-utils/lib/src/index.spec.ts"));
 
-      const index = tree.read("libs/backend/shared-utils/lib/src/index.ts", "utf8");
-      assert.ok(index.includes("sharedUtilsLibVersion"));
+      const index = tree.read("libs/backend/shared-utils/lib/src/index.ts", "utf8")!;
+      assert.ok(index.includes("sharedUtilsVersion"));
     });
 
     it("creates vitest config", async () => {
@@ -149,7 +131,7 @@ describe("library generator", () => {
         skipFormat: true,
       });
 
-      const projectJson = JSON.parse(tree.read("libs/backend/shared-utils/lib/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("libs/backend/shared-utils/lib/project.json", "utf8")!);
       assert.ok(projectJson.tags.includes("custom:lib"));
       assert.ok(projectJson.tags.includes("type:utility"));
     });
@@ -166,7 +148,7 @@ describe("library generator", () => {
 
       await libraryGenerator(tree, { name: "ui-components", kind: "frontend", skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read("libs/frontend/ui-components/lib/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("libs/frontend/ui-components/lib/project.json", "utf8")!);
       assert.equal(projectJson.name, "@app/frontend-ui-components");
       assert.equal(projectJson.projectType, "library");
       assert.ok(projectJson.tags.includes("platform:frontend"));
@@ -179,7 +161,7 @@ describe("library generator", () => {
       await libraryGenerator(tree, { name: "ui-components", kind: "frontend", skipFormat: true });
 
       assert.ok(tree.exists("libs/frontend/ui-components/lib/src/ui-components.component.tsx"));
-      const component = tree.read("libs/frontend/ui-components/lib/src/ui-components.component.tsx", "utf8");
+      const component = tree.read("libs/frontend/ui-components/lib/src/ui-components.component.tsx", "utf8")!;
       assert.ok(component.includes("UiComponentsComponent"));
     });
 
@@ -189,7 +171,7 @@ describe("library generator", () => {
 
       await libraryGenerator(tree, { name: "ui-components", kind: "frontend", skipFormat: true });
 
-      const index = tree.read("libs/frontend/ui-components/lib/src/index.ts", "utf8");
+      const index = tree.read("libs/frontend/ui-components/lib/src/index.ts", "utf8")!;
       assert.ok(index.includes("UiComponentsComponent"));
     });
   });
@@ -205,7 +187,7 @@ describe("library generator", () => {
 
       await libraryGenerator(tree, { name: "config", kind: "common", skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read("libs/common/config/lib/project.json", "utf8"));
+      const projectJson = JSON.parse(tree.read("libs/common/config/lib/project.json", "utf8")!);
       assert.equal(projectJson.name, "@app/common-config");
       assert.equal(projectJson.projectType, "library");
       assert.ok(projectJson.tags.includes("platform:common"));

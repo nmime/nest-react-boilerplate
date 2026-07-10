@@ -120,7 +120,7 @@ describe("setup generator", () => {
       assert.ok(tree.exists("nrb.config.json"));
       assert.ok(tree.exists(".nrb/summary.md"));
 
-      const config = JSON.parse(tree.read("nrb.config.json", "utf8"));
+      const config = JSON.parse(tree.read("nrb.config.json", "utf8")!);
       assert.equal(config.schemaVersion, "1.0.0");
       // With preset, the original config.apps is [] but the resolved apps include expanded ones
       assert.equal(config.preset, "minimal");
@@ -158,7 +158,7 @@ describe("setup generator", () => {
         capabilities: ["postgres"],
       });
 
-      const config = JSON.parse(tree.read("nrb.config.json", "utf8"));
+      const config = JSON.parse(tree.read("nrb.config.json", "utf8")!);
       assert.ok(config.apps.includes("user-app-api"));
       assert.ok(config.capabilities.includes("postgres"));
     });

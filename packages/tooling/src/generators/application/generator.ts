@@ -1,22 +1,15 @@
 /**
- * Application generator — creates new applications following repository
+ * Application generator — creates new applications following exact repository
  * conventions for frontend and backend kinds.
  *
- * Creates valid repository-convention skeletons:
- *   - project.json with proper targets
- *   - package.json with workspace dependencies
- *   - tsconfig files (app, spec, root)
- *   - source directory structure
- *   - test infrastructure
- *
- * Backend apps use @nx/js:tsc executor; frontend apps use Vite.
+ * Patterns derived from:
+ *   - apps/backend/user/user-app-api/project.json
+ *   - apps/frontend/app/project.json
+ *   - tsconfig layouts across backend apps
  */
 import type { Tree } from "nx/src/generators/tree";
-import {
-  formatFiles,
-  getProjects,
-} from "@nx/devkit";
-import { validateName, generateNames } from "../names.js";
+import { formatFiles, getProjects } from "@nx/devkit";
+import { validateName, generateNames } from "../names.ts";
 
 // ---------------------------------------------------------------------------
 
@@ -30,65 +23,48 @@ export interface ApplicationGeneratorOptions {
 
 // ---------------------------------------------------------------------------
 
-/**
- * Check if an application with the given name already exists.
- */
 function findExistingProject(tree: Tree, name: string): string | null {
   const projects = getProjects(tree);
-  if (projects.has(name)) {
-    return name;
-  }
-  // Also check by directory path
+  if (projects.has(name)) return name;
   for (const [projName, config] of projects.entries()) {
-    if (config.root.endsWith(name)) {
-      return projName;
-    }
+    if (config.root?.endsWith(name)) return projName;
   }
   return null;
 }
 
-// ---------------------------------------------------------------------------
-
-/**
- * Compute the default directory for an application.
- */
 function computeAppDirectory(kind: string, name: string): string {
   const scope = name.split("-")[0];
-  if (kind === "backend") {
-    return `apps/backend/${scope}/${name}`;
-  }
+  if (kind === "backend") return `apps/backend/${scope}/${name}`;
   return `apps/frontend/${name}`;
 }
 
-/**
- * Compute default tags for an application.
- */
 function computeAppTags(kind: string, name: string): string[] {
   const scope = name.split("-")[0];
-  if (kind === "backend") {
-    return ["platform:backend", "type:backend-app", `scope:${scope}`];
-  }
+  if (kind === "backend") return ["platform:backend", "type:backend-app", `scope:${scope}`];
   return ["platform:frontend", "type:frontend-app", `scope:${scope}`, "fsd:layer:app"];
 }
 
-// ---------------------------------------------------------------------------
-
-/** Generate backend application skeleton files */
-function generateBackendAppFiles(name: string, dir: string, tags: string[]): void {
-  // This function will be called within the generator with tree available
+function depth(dir: string): number {
+  return dir.split("/").length;
 }
 
-/**
- * Generate a backend application skeleton on the tree.
- */
+function dots(dir: string): string {
+  return "../".repeat(depth(dir));
+}
+
+// ---------------------------------------------------------------------------
+// Backend app skeleton
+// ---------------------------------------------------------------------------
+
 function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
   const projectName = names.kebab;
   const srcRoot = `${dir}/src`;
+  const d = dots(dir);
 
-  // project.json
-  const projectJson = {
+  // project.json — matches apps/backend/user/user-app-api/project.json
+  tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: "../../node_modules/nx/schemas/project-schema.json",
+    $schema: `${d}../../node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "application",
     tags,
@@ -97,7 +73,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
         executor: "@nx/js:tsc",
         outputs: ["{options.outputPath}"],
         options: {
-          outputPath: `dist/${dir}`,
+          outputPath: `dist/apps/backend/${projectName}`,
           main: `${srcRoot}/main.ts`,
           tsConfig: `${dir}/tsconfig.app.json`,
           assets: [],
@@ -126,32 +102,19 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
           command: "vitest run --config vitest.config.mts",
         },
         inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
-        outputs: [`{workspaceRoot}/coverage/${dir}`],
-      },
-      typecheck: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "tsc --noEmit -p tsconfig.app.json",
-        },
-        inputs: ["default", { externalDependencies: ["typescript"] }],
+        outputs: [`{workspaceRoot}/coverage/apps/backend/${projectName}`],
       },
     },
-  };
-  tree.write(`${dir}/project.json`, JSON.stringify(projectJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // package.json
-  const packageJson = {
+  tree.write(`${dir}/package.json`, JSON.stringify({
     name: `@app/${projectName}`,
     version: "0.0.0",
     private: true,
     main: "./src/main.ts",
     types: "./src/main.ts",
-    scripts: {
-      test: "vitest run",
-      typecheck: "tsc --noEmit",
-    },
+    scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
     dependencies: {
       "@nestjs/common": "^11.0.0",
       "@nestjs/core": "^11.0.0",
@@ -166,65 +129,39 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
       "typescript": "^5.7.0",
       "vitest": "^3.0.0",
     },
-  };
-  tree.write(`${dir}/package.json`, JSON.stringify(packageJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
-  // tsconfig.json (root for app)
-  const tsconfig = {
-    extends: "../../tsconfig.base.json",
-    compilerOptions: {
-      target: "ES2022",
-      module: "commonjs",
-      moduleResolution: "bundler",
-      forceConsistentCasingInFileNames: true,
-      strict: true,
-      noImplicitOverride: true,
-      noImplicitReturns: true,
-      noFallthroughCasesInSwitch: true,
-      noPropertyAccessFromIndexSignature: true,
-      noEmit: true,
-      declaration: false,
-      inlineSources: false,
-      isolatedModules: true,
-      emitDecoratorMetadata: true,
-      experimentalDecorators: true,
-      lib: ["es2022"],
-      skipLibCheck: true,
-      skipDefaultLibCheck: true,
-      baseUrl: ".",
-      paths: {},
-    },
-    files: [],
+  // tsconfig.json — matches repo pattern: extends base, references app+spec
+  tree.write(`${dir}/tsconfig.json`, JSON.stringify({
+    extends: `${d}../../tsconfig.base.json`,
+    compilerOptions: { types: ["node"] },
     include: [],
     references: [
       { path: "./tsconfig.app.json" },
       { path: "./tsconfig.spec.json" },
     ],
-  };
-  tree.write(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
+  }, null, 2) + "\n");
 
-  // tsconfig.app.json
-  const tsconfigApp = {
+  // tsconfig.app.json — extends tsconfig.json, not base
+  tree.write(`${dir}/tsconfig.app.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../dist/out-tsc",
+      outDir: `${d}../../dist/out-tsc/${dir}`,
       types: ["node"],
     },
+    exclude: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts"],
     include: ["src/**/*.ts"],
-    exclude: ["**/*.spec.ts", "**/*.test.ts", "vite.config.mts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.app.json`, JSON.stringify(tsconfigApp, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.spec.json
-  const tsconfigSpec = {
+  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../dist/out-tsc",
-      types: ["vitest/globals", "node"],
+      outDir: `${d}../../dist/out-tsc/${dir}-spec`,
+      types: ["node", "vitest"],
     },
-    include: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify(tsconfigSpec, null, 2) + "\n");
+    include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts", "src/**/*.ts"],
+  }, null, 2) + "\n");
 
   // src/main.ts
   tree.write(`${srcRoot}/main.ts`,
@@ -236,8 +173,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
-`
-  );
+`);
 
   // src/app.module.ts
   tree.write(`${srcRoot}/app.module.ts`,
@@ -249,8 +185,7 @@ bootstrap();
   providers: [],
 })
 export class ${names.pascal}Module {}
-`
-  );
+`);
 
   // src/app.module.spec.ts
   tree.write(`${srcRoot}/app.module.spec.ts`,
@@ -269,57 +204,48 @@ describe("${names.pascal}Module", () => {
     expect(moduleRef).toBeDefined();
   });
 });
-`
-  );
+`);
 
   // vitest.config.mts
   tree.write(`${dir}/vitest.config.mts`,
-`import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+`/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
+import { workspaceTsconfigAliases } from "${d}../../config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
-  cacheDir: "../../node_modules/.cache/vitest",
-  plugins: [nxViteTsPaths()],
+  cacheDir: "${d}../../node_modules/.vitest/${dir}",
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
   test: {
-    globals: true,
     environment: "node",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
+    include: ["src/**/*.spec.ts"],
+    globals: false,
   },
 });
-`
-  );
+`);
 
   // eslint.config.cjs
   tree.write(`${dir}/eslint.config.cjs`,
-`const { FlatCompat } = require("@eslint/eslintrc");
-const nx = require("@nx/eslint-plugin");
-const baseConfig = require("../../eslint.config.js");
-
-const compat = new FlatCompat({ baseDirectory: __dirname });
-
-module.exports = [
-  ...baseConfig,
-  ...nx.configs.flat["typescript-recommended"],
-  {
-    ignores: ["**/*.spec.ts", "**/*.test.ts"],
-  },
-];
-`
-  );
+`const baseConfig = require("${d}../../eslint.config.js");
+module.exports = [...baseConfig];
+`);
 }
 
-/**
- * Generate a frontend application skeleton on the tree.
- */
+// ---------------------------------------------------------------------------
+// Frontend app skeleton
+// ---------------------------------------------------------------------------
+
 function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
   const projectName = names.kebab;
   const srcRoot = `${dir}/src`;
+  const d = dots(dir);
 
-  // project.json
-  const projectJson = {
+  // project.json — matches apps/frontend/app/project.json
+  tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: "../../node_modules/nx/schemas/project-schema.json",
+    $schema: `${d}../../node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "application",
     tags,
@@ -328,9 +254,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
         executor: "@nx/vite:build",
         outputs: ["{options.outputPath}"],
         defaultConfiguration: "production",
-        options: {
-          outputPath: `dist/${dir}`,
-        },
+        options: { outputPath: `dist/${dir}` },
         configurations: {
           development: { mode: "development" },
           production: { mode: "production" },
@@ -339,9 +263,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
       serve: {
         executor: "@nx/vite:dev-server",
         defaultConfiguration: "development",
-        options: {
-          buildTarget: `${projectName}:build`,
-        },
+        options: { buildTarget: `${projectName}:build` },
         configurations: {
           development: { buildTarget: `${projectName}:build:development`, hmr: true },
           production: { buildTarget: `${projectName}:build:production` },
@@ -357,33 +279,17 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
         inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
         outputs: [`{workspaceRoot}/coverage/${dir}`],
       },
-      typecheck: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "tsc --noEmit -p tsconfig.app.json",
-        },
-        inputs: ["default", { externalDependencies: ["typescript"] }],
-      },
     },
-  };
-  tree.write(`${dir}/project.json`, JSON.stringify(projectJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // package.json
-  const packageJson = {
+  tree.write(`${dir}/package.json`, JSON.stringify({
     name: `@app/${projectName}`,
     version: "0.0.0",
     private: true,
     type: "module",
-    scripts: {
-      test: "vitest run",
-      typecheck: "tsc --noEmit",
-    },
-    dependencies: {
-      "react": "^19.0.0",
-      "react-dom": "^19.0.0",
-    },
+    scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
+    dependencies: { react: "^19.0.0", "react-dom": "^19.0.0" },
     devDependencies: {
       "@types/react": "^19.0.0",
       "@types/react-dom": "^19.0.0",
@@ -391,10 +297,8 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
       "typescript": "^5.7.0",
       "vite": "^6.0.0",
       "vitest": "^3.0.0",
-      "@nx/vite": "^23.0.0",
     },
-  };
-  tree.write(`${dir}/package.json`, JSON.stringify(packageJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // index.html
   tree.write(`${dir}/index.html`,
@@ -410,64 +314,41 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-`
-  );
+`);
 
-  // tsconfig.json
-  const tsconfig = {
-    extends: "../../tsconfig.base.json",
+  // tsconfig.json — references app+spec
+  tree.write(`${dir}/tsconfig.json`, JSON.stringify({
+    extends: `${d}../../tsconfig.base.json`,
     compilerOptions: {
-      target: "ES2022",
-      module: "ESNext",
-      moduleResolution: "bundler",
-      forceConsistentCasingInFileNames: true,
-      strict: true,
-      noImplicitOverride: true,
-      noImplicitReturns: true,
-      noFallthroughCasesInSwitch: true,
-      noPropertyAccessFromIndexSignature: true,
-      noEmit: true,
-      declaration: false,
-      inlineSources: false,
-      isolatedModules: true,
+      types: ["vite/client"],
       jsx: "react-jsx",
-      lib: ["es2022", "dom", "dom.iterable"],
-      skipLibCheck: true,
-      skipDefaultLibCheck: true,
-      baseUrl: ".",
-      paths: {},
     },
-    files: [],
     include: [],
     references: [
       { path: "./tsconfig.app.json" },
       { path: "./tsconfig.spec.json" },
     ],
-  };
-  tree.write(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.app.json
-  const tsconfigApp = {
+  tree.write(`${dir}/tsconfig.app.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../dist/out-tsc",
-      types: ["vite/client"],
+      outDir: `${d}../../dist/out-tsc/${dir}`,
     },
     include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
     exclude: ["**/*.spec.ts", "**/*.test.ts", "vite.config.mts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.app.json`, JSON.stringify(tsconfigApp, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.spec.json
-  const tsconfigSpec = {
+  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../dist/out-tsc",
+      outDir: `${d}../../dist/out-tsc/${dir}-spec`,
       types: ["vitest/globals", "vite/client"],
     },
     include: ["**/*.spec.ts", "**/*.test.ts", "src/**/*.d.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify(tsconfigSpec, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // vite.config.mts
   tree.write(`${dir}/vite.config.mts`,
@@ -477,23 +358,16 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 
 export default defineConfig({
-  cacheDir: "../../node_modules/.cache/vite",
+  cacheDir: "${d}../../node_modules/.cache/vite",
   root: ".",
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"])],
   build: {
-    outDir: "../../dist/${dir}",
+    outDir: "${d}../../dist/${dir}",
     emptyOutDir: true,
     reportCompressedSize: false,
   },
-  test: {
-    globals: true,
-    environment: "happy-dom",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
-  },
 });
-`
-  );
+`);
 
   // vitest.config.mts
   tree.write(`${dir}/vitest.config.mts`,
@@ -502,7 +376,7 @@ import react from "@vitejs/plugin-react";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
 export default defineConfig({
-  cacheDir: "../../node_modules/.cache/vitest",
+  cacheDir: "${d}../../node_modules/.cache/vitest",
   plugins: [react(), nxViteTsPaths()],
   test: {
     globals: true,
@@ -511,8 +385,7 @@ export default defineConfig({
     passWithNoTests: true,
   },
 });
-`
-  );
+`);
 
   // src/main.tsx
   tree.write(`${srcRoot}/main.tsx`,
@@ -525,8 +398,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
-`
-  );
+`);
 
   // src/app.tsx
   tree.write(`${srcRoot}/app.tsx`,
@@ -538,8 +410,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </div>
   );
 }
-`
-  );
+`);
 
   // src/app.spec.tsx
   tree.write(`${srcRoot}/app.spec.tsx`,
@@ -551,83 +422,51 @@ describe("App", () => {
     expect(App).toBeDefined();
   });
 });
-`
-  );
+`);
 
   // public/.gitkeep
   tree.write(`${dir}/public/.gitkeep`, "");
 
   // eslint.config.cjs
   tree.write(`${dir}/eslint.config.cjs`,
-`const baseConfig = require("../../eslint.config.js");
-
-module.exports = [
-  ...baseConfig,
-];
-`
-  );
+`const baseConfig = require("${d}../../eslint.config.js");
+module.exports = [...baseConfig];
+`);
 }
 
 // ---------------------------------------------------------------------------
 
-/**
- * Main generator entry point.
- */
 export async function applicationGenerator(
   tree: Tree,
   options: ApplicationGeneratorOptions,
 ): Promise<void> {
-  // Validate name
   const nameError = validateName(options.name);
-  if (nameError) {
-    throw new Error(nameError);
+  if (nameError) throw new Error(nameError);
+
+  if (options.kind !== "frontend" && options.kind !== "backend") {
+    throw new Error(`Unsupported application kind "${options.kind}". Must be "frontend" or "backend".`);
   }
 
   const names = generateNames(options.name);
   const projectName = names.kebab;
 
-  // Validate kind
-  if (options.kind !== "frontend" && options.kind !== "backend") {
-    throw new Error(
-      `Unsupported application kind "${options.kind}". Must be "frontend" or "backend".`,
-    );
-  }
-
-  // Check for duplicate projects
   const existing = findExistingProject(tree, projectName);
   if (existing) {
-    throw new Error(
-      `Application "${existing}" already exists. Choose a different name.`,
-    );
+    throw new Error(`Application "${existing}" already exists. Choose a different name.`);
   }
 
-  // Compute directory and tags
   const dir = options.directory ?? computeAppDirectory(options.kind, names.kebab);
   const tags = options.tags
     ? options.tags.split(",").map((t) => t.trim()).filter(Boolean)
     : computeAppTags(options.kind, names.kebab);
 
-  // Check that the directory doesn't already exist
-  if (tree.children(dir.split("/")[0])) {
-    const topParts = dir.split("/").slice(0, -1).reduce((path, part) => `${path}/${part}`, "");
-    if (tree.exists(dir)) {
-      throw new Error(`Directory "${dir}" already exists. Choose a different name or directory.`);
-    }
-  }
-
-  // Generate files
   if (options.kind === "backend") {
     createBackendApp(tree, names, dir, tags);
   } else {
     createFrontendApp(tree, names, dir, tags);
   }
 
-  // Format unless skipped
-  if (!options.skipFormat) {
-    await formatFiles(tree);
-  }
+  if (!options.skipFormat) await formatFiles(tree);
 }
-
-// ---------------------------------------------------------------------------
 
 export default applicationGenerator;

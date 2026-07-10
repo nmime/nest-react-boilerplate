@@ -1,23 +1,17 @@
 /**
- * Library generator — creates new libraries following repository conventions.
+ * Library generator — creates new libraries following exact repository conventions.
  *
  * Backend libs: libs/backend/<name>/lib/
  * Frontend libs: libs/frontend/<name>/lib/
  * Common libs: libs/common/<name>/lib/
  *
- * Creates valid repository-convention skeletons:
- *   - project.json with proper targets
- *   - package.json with workspace dependencies
- *   - tsconfig files (lib, spec, root)
- *   - source directory with index.ts
- *   - test infrastructure
+ * Patterns derived from:
+ *   - libs/backend/common/response/lib/{project.json,tsconfig*.json,vitest.config.mts}
+ *   - libs/frontend/ui/lib/project.json
  */
 import type { Tree } from "nx/src/generators/tree";
-import {
-  formatFiles,
-  getProjects,
-} from "@nx/devkit";
-import { validateName, generateNames } from "../names.js";
+import { formatFiles, getProjects } from "@nx/devkit";
+import { validateName, generateNames } from "../names.ts";
 
 // ---------------------------------------------------------------------------
 
@@ -31,43 +25,27 @@ export interface LibraryGeneratorOptions {
 
 // ---------------------------------------------------------------------------
 
-/**
- * Check if a library with the given name already exists.
- */
 function findExistingProject(tree: Tree, name: string): string | null {
   const projects = getProjects(tree);
-  if (projects.has(name)) {
-    return name;
-  }
+  if (projects.has(name)) return name;
   for (const [projName, config] of projects.entries()) {
-    if (config.root.endsWith(name)) {
-      return projName;
-    }
+    if (config.root?.endsWith(name)) return projName;
   }
   return null;
 }
 
-/**
- * Compute the project name from a library name and kind.
- */
 function computeProjectName(kind: string, name: string): string {
   if (kind === "backend") return `@app/backend-${name}`;
   if (kind === "frontend") return `@app/frontend-${name}`;
   return `@app/common-${name}`;
 }
 
-/**
- * Compute the default directory for a library.
- */
 function computeDirectory(kind: string, name: string): string {
   if (kind === "backend") return `libs/backend/${name}/lib`;
   if (kind === "frontend") return `libs/frontend/${name}/lib`;
   return `libs/common/${name}/lib`;
 }
 
-/**
- * Compute default tags for a library.
- */
 function computeTags(kind: string, name: string): string[] {
   const scope = name.split("-")[0];
   if (kind === "backend") return ["platform:backend", "type:common", `scope:${scope}`];
@@ -75,18 +53,35 @@ function computeTags(kind: string, name: string): string[] {
   return ["platform:common", "type:common", `scope:${scope}`];
 }
 
+function libDepth(dir: string): number {
+  return dir.split("/").length;
+}
+
+function dots(dir: string): string {
+  return "../".repeat(libDepth(dir));
+}
+
 // ---------------------------------------------------------------------------
 
 /**
- * Generate a backend library skeleton on the tree.
+ * Generate a backend or common library skeleton on the tree.
+ * Uses CommonJS module system and @nx/js:tsc executor.
  */
-function createBackendLib(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, projectName: string, tags: string[]): void {
+function createNodeLib(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  projectName: string,
+  tags: string[],
+  includeReact = false,
+): void {
   const srcRoot = `${dir}/src`;
+  const d = dots(dir);
 
-  // project.json
-  const projectJson = {
+  // project.json — matches libs/backend/common/response/lib/project.json
+  tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: "../../../../node_modules/nx/schemas/project-schema.json",
+    $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "library",
     tags,
@@ -112,142 +107,122 @@ function createBackendLib(tree: Tree, names: ReturnType<typeof generateNames>, d
         inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
         outputs: [`{workspaceRoot}/coverage/${dir}`],
       },
-      typecheck: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "tsc --noEmit -p tsconfig.lib.json",
-        },
-        inputs: ["default", { externalDependencies: ["typescript"] }],
-      },
     },
-  };
-  tree.write(`${dir}/project.json`, JSON.stringify(projectJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // package.json
-  const packageJson = {
+  tree.write(`${dir}/package.json`, JSON.stringify({
     name: projectName,
     version: "0.0.0",
     private: true,
     main: "./src/index.ts",
     types: "./src/index.ts",
-    type: "commonjs",
-    scripts: {
-      test: "vitest run",
-      typecheck: "tsc --noEmit",
-    },
-    dependencies: {},
+    type: includeReact ? "module" : "commonjs",
+    scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
+    dependencies: includeReact ? { react: "^19.0.0" } : {},
     devDependencies: {},
-  };
-  tree.write(`${dir}/package.json`, JSON.stringify(packageJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
-  // tsconfig.json
-  const tsconfig = {
-    extends: "../../../tsconfig.base.json",
-    compilerOptions: {
-      module: "commonjs",
-      forceConsistentCasingInFileNames: true,
-      strict: true,
-      noImplicitOverride: true,
-      noImplicitReturns: true,
-      noFallthroughCasesInSwitch: true,
-      noPropertyAccessFromIndexSignature: true,
-      noEmit: true,
-      declaration: false,
-      inlineSources: false,
-      isolatedModules: true,
-      moduleResolution: "bundler",
-      emitDecoratorMetadata: true,
-      experimentalDecorators: true,
-      target: "es2022",
-      lib: ["es2022"],
-      skipLibCheck: true,
-      skipDefaultLibCheck: true,
-      baseUrl: ".",
-      paths: {},
-    },
-    files: [],
+  // tsconfig.json — extends base, references lib+spec
+  tree.write(`${dir}/tsconfig.json`, JSON.stringify({
+    extends: `${d}../../../../tsconfig.base.json`,
+    compilerOptions: { types: ["node"] },
     include: [],
     references: [
       { path: "./tsconfig.lib.json" },
       { path: "./tsconfig.spec.json" },
     ],
-  };
-  tree.write(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
+  }, null, 2) + "\n");
 
-  // tsconfig.lib.json
-  const tsconfigLib = {
+  // tsconfig.lib.json — extends ./tsconfig.json (NOT base), with declaration
+  tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
+      outDir: `${d}../../../../dist/out-tsc/${dir}`,
       types: ["node"],
+      declaration: true,
     },
+    exclude: ["src/**/*.spec.ts", "src/**/*.test.ts"],
     include: ["src/**/*.ts"],
-    exclude: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify(tsconfigLib, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.spec.json
-  const tsconfigSpec = {
+  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
-      types: ["vitest/globals", "node"],
+      outDir: `${d}../../../../dist/out-tsc/${dir}-spec`,
+      types: ["node", "vitest"],
     },
-    include: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify(tsconfigSpec, null, 2) + "\n");
+    include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"],
+  }, null, 2) + "\n");
 
   // src/index.ts
   tree.write(`${srcRoot}/index.ts`,
-`export const ${names.camel}LibVersion = "0.0.0";
-`
-  );
+`export const ${names.camel}Version = "0.0.0";
+`);
 
   // src/index.spec.ts
   tree.write(`${srcRoot}/index.spec.ts`,
 `import { describe, it, expect } from "vitest";
-import { ${names.camel}LibVersion } from "./index";
+import { ${names.camel}Version } from "./index";
 
 describe("${names.pascal}Library", () => {
   it("should export a version", () => {
-    expect(${names.camel}LibVersion).toBeDefined();
-    expect(typeof ${names.camel}LibVersion).toBe("string");
+    expect(${names.camel}Version).toBeDefined();
+    expect(typeof ${names.camel}Version).toBe("string");
   });
 });
-`
-  );
+`);
 
   // vitest.config.mts
   tree.write(`${dir}/vitest.config.mts`,
-`import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+`/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
+import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
-  cacheDir: "../../../../node_modules/.cache/vitest",
-  plugins: [nxViteTsPaths()],
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
+  cacheDir:
+    "${d}../../../../node_modules/.vitest/${dir}",
   test: {
-    globals: true,
     environment: "node",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
+    include: ["src/**/*.spec.ts"],
+    globals: false,
+    coverage: fullCoverage(
+      "${d}../../../coverage/${dir}",
+      ["src/**/*.ts"],
+      [],
+    ),
   },
 });
-`
-  );
+`);
 }
+
+// ---------------------------------------------------------------------------
 
 /**
  * Generate a frontend library skeleton on the tree.
+ * Uses ES modules, React, and Vite-based build.
  */
-function createFrontendLib(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, projectName: string, tags: string[]): void {
+function createFrontendLib(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  projectName: string,
+  tags: string[],
+): void {
   const srcRoot = `${dir}/src`;
+  const d = dots(dir);
 
   // project.json
-  const projectJson = {
+  tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: "../../../../node_modules/nx/schemas/project-schema.json",
+    $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "library",
     tags,
@@ -277,111 +252,69 @@ function createFrontendLib(tree: Tree, names: ReturnType<typeof generateNames>, 
         inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
         outputs: [`{workspaceRoot}/coverage/${dir}`],
       },
-      typecheck: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "tsc --noEmit -p tsconfig.lib.json",
-        },
-        inputs: ["default", { externalDependencies: ["typescript"] }],
-      },
     },
-  };
-  tree.write(`${dir}/project.json`, JSON.stringify(projectJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // package.json
-  const packageJson = {
+  tree.write(`${dir}/package.json`, JSON.stringify({
     name: projectName,
     version: "0.0.0",
     private: true,
     main: "./src/index.ts",
     types: "./src/index.ts",
     type: "module",
-    scripts: {
-      test: "vitest run",
-      typecheck: "tsc --noEmit",
-    },
-    dependencies: {
-      "react": "^19.0.0",
-    },
+    scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
+    dependencies: { react: "^19.0.0" },
     devDependencies: {},
-  };
-  tree.write(`${dir}/package.json`, JSON.stringify(packageJson, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.json
-  const tsconfig = {
-    extends: "../../../tsconfig.base.json",
+  tree.write(`${dir}/tsconfig.json`, JSON.stringify({
+    extends: `${d}../../../../tsconfig.base.json`,
     compilerOptions: {
-      module: "ESNext",
-      moduleResolution: "bundler",
-      forceConsistentCasingInFileNames: true,
-      strict: true,
-      noImplicitOverride: true,
-      noImplicitReturns: true,
-      noFallthroughCasesInSwitch: true,
-      noPropertyAccessFromIndexSignature: true,
-      noEmit: true,
-      declaration: false,
-      inlineSources: false,
-      isolatedModules: true,
+      types: ["vite/client"],
       jsx: "react-jsx",
-      target: "es2022",
-      lib: ["es2022", "dom", "dom.iterable"],
-      skipLibCheck: true,
-      skipDefaultLibCheck: true,
-      baseUrl: ".",
-      paths: {},
     },
-    files: [],
     include: [],
     references: [
       { path: "./tsconfig.lib.json" },
       { path: "./tsconfig.spec.json" },
     ],
-  };
-  tree.write(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // tsconfig.lib.json
-  const tsconfigLib = {
+  tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
+      outDir: `${d}../../../../dist/out-tsc/${dir}`,
       types: ["vite/client"],
+      declaration: true,
     },
-    include: ["src/**/*.ts", "src/**/*.tsx"],
     exclude: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify(tsconfigLib, null, 2) + "\n");
+    include: ["src/**/*.ts", "src/**/*.tsx"],
+  }, null, 2) + "\n");
 
   // tsconfig.spec.json
-  const tsconfigSpec = {
+  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
+      outDir: `${d}../../../../dist/out-tsc/${dir}-spec`,
       types: ["vitest/globals", "vite/client"],
     },
     include: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify(tsconfigSpec, null, 2) + "\n");
+  }, null, 2) + "\n");
 
   // src/index.ts
   tree.write(`${srcRoot}/index.ts`,
 `export { ${names.pascal}Component } from "./${names.kebab}.component";
-`
-  );
+`);
 
   // src/<name>.component.tsx
   tree.write(`${srcRoot}/${names.kebab}.component.tsx`,
 `export function ${names.pascal}Component() {
-  return (
-    <div>
-      <p>${names.title} component</p>
-    </div>
-  );
+  return <p>${names.title}</p>;
 }
-`
-  );
+`);
 
   // src/index.spec.tsx
   tree.write(`${srcRoot}/index.spec.tsx`,
@@ -393,211 +326,44 @@ describe("${names.pascal}Component", () => {
     expect(${names.pascal}Component).toBeDefined();
   });
 });
-`
-  );
+`);
 
   // vitest.config.mts
   tree.write(`${dir}/vitest.config.mts`,
-`import { defineConfig } from "vitest/config";
+`/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
-  cacheDir: "../../../../node_modules/.cache/vitest",
-  plugins: [react(), nxViteTsPaths()],
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
+  plugins: [react()],
+  cacheDir:
+    "${d}../../../../node_modules/.vitest/${dir}",
   test: {
-    globals: true,
     environment: "happy-dom",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
+    include: ["src/**/*.spec.tsx", "src/**/*.test.tsx"],
+    globals: false,
   },
 });
-`
-  );
-}
-
-/**
- * Generate a common library skeleton on the tree.
- */
-function createCommonLib(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, projectName: string, tags: string[]): void {
-  const srcRoot = `${dir}/src`;
-
-  // project.json
-  const projectJson = {
-    name: projectName,
-    $schema: "../../../../node_modules/nx/schemas/project-schema.json",
-    sourceRoot: srcRoot,
-    projectType: "library",
-    tags,
-    targets: {
-      build: {
-        executor: "@nx/js:tsc",
-        outputs: ["{options.outputPath}"],
-        options: {
-          outputPath: `dist/${dir}`,
-          main: `${srcRoot}/index.ts`,
-          tsConfig: `${dir}/tsconfig.lib.json`,
-          assets: [],
-          rootDir: ".",
-        },
-      },
-      test: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "vitest run --config vitest.config.mts",
-        },
-        inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
-        outputs: [`{workspaceRoot}/coverage/${dir}`],
-      },
-      typecheck: {
-        executor: "nx:run-commands",
-        cache: true,
-        options: {
-          cwd: dir,
-          command: "tsc --noEmit -p tsconfig.lib.json",
-        },
-        inputs: ["default", { externalDependencies: ["typescript"] }],
-      },
-    },
-  };
-  tree.write(`${dir}/project.json`, JSON.stringify(projectJson, null, 2) + "\n");
-
-  // package.json
-  const packageJson = {
-    name: projectName,
-    version: "0.0.0",
-    private: true,
-    main: "./src/index.ts",
-    types: "./src/index.ts",
-    type: "commonjs",
-    scripts: {
-      test: "vitest run",
-      typecheck: "tsc --noEmit",
-    },
-    dependencies: {},
-    devDependencies: {},
-  };
-  tree.write(`${dir}/package.json`, JSON.stringify(packageJson, null, 2) + "\n");
-
-  // tsconfig.json
-  const tsconfig = {
-    extends: "../../../tsconfig.base.json",
-    compilerOptions: {
-      module: "commonjs",
-      forceConsistentCasingInFileNames: true,
-      strict: true,
-      noImplicitOverride: true,
-      noImplicitReturns: true,
-      noFallthroughCasesInSwitch: true,
-      noPropertyAccessFromIndexSignature: true,
-      noEmit: true,
-      declaration: false,
-      inlineSources: false,
-      isolatedModules: true,
-      moduleResolution: "bundler",
-      emitDecoratorMetadata: true,
-      experimentalDecorators: true,
-      target: "es2022",
-      lib: ["es2022"],
-      skipLibCheck: true,
-      skipDefaultLibCheck: true,
-      baseUrl: ".",
-      paths: {},
-    },
-    files: [],
-    include: [],
-    references: [
-      { path: "./tsconfig.lib.json" },
-      { path: "./tsconfig.spec.json" },
-    ],
-  };
-  tree.write(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
-
-  // tsconfig.lib.json
-  const tsconfigLib = {
-    extends: "./tsconfig.json",
-    compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
-      types: ["node"],
-    },
-    include: ["src/**/*.ts"],
-    exclude: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify(tsconfigLib, null, 2) + "\n");
-
-  // tsconfig.spec.json
-  const tsconfigSpec = {
-    extends: "./tsconfig.json",
-    compilerOptions: {
-      outDir: "../../../../dist/out-tsc",
-      types: ["vitest/globals", "node"],
-    },
-    include: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
-  };
-  tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify(tsconfigSpec, null, 2) + "\n");
-
-  // src/index.ts
-  tree.write(`${srcRoot}/index.ts`,
-`export const ${names.camel}LibVersion = "0.0.0";
-`
-  );
-
-  // src/index.spec.ts
-  tree.write(`${srcRoot}/index.spec.ts`,
-`import { describe, it, expect } from "vitest";
-import { ${names.camel}LibVersion } from "./index";
-
-describe("${names.pascal}Library", () => {
-  it("should export a version", () => {
-    expect(${names.camel}LibVersion).toBeDefined();
-    expect(typeof ${names.camel}LibVersion).toBe("string");
-  });
-});
-`
-  );
-
-  // vitest.config.mts
-  tree.write(`${dir}/vitest.config.mts`,
-`import { defineConfig } from "vitest/config";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
-
-export default defineConfig({
-  cacheDir: "../../../../node_modules/.cache/vitest",
-  plugins: [nxViteTsPaths()],
-  test: {
-    globals: true,
-    environment: "node",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
-  },
-});
-`
-  );
+`);
 }
 
 // ---------------------------------------------------------------------------
 
-/**
- * Main generator entry point.
- */
 export async function libraryGenerator(
   tree: Tree,
   options: LibraryGeneratorOptions,
 ): Promise<void> {
-  // Validate name
   const nameError = validateName(options.name);
-  if (nameError) {
-    throw new Error(nameError);
-  }
+  if (nameError) throw new Error(nameError);
 
-  // Validate kind
   const validKinds = ["backend", "frontend", "common"];
   if (!validKinds.includes(options.kind)) {
-    throw new Error(
-      `Unsupported library kind "${options.kind}". Must be one of: ${validKinds.join(", ")}`,
-    );
+    throw new Error(`Unsupported library kind "${options.kind}". Must be one of: ${validKinds.join(", ")}`);
   }
 
   const names = generateNames(options.name);
@@ -607,38 +373,24 @@ export async function libraryGenerator(
     ? options.tags.split(",").map((t) => t.trim()).filter(Boolean)
     : computeTags(options.kind, names.kebab);
 
-  // Check for duplicates
   const existing = findExistingProject(tree, projectName);
   if (existing) {
-    throw new Error(
-      `Library "${existing}" already exists. Choose a different name.`,
-    );
+    throw new Error(`Library "${existing}" already exists. Choose a different name.`);
   }
 
-  // Check if directory already exists
-  if (tree.exists(dir)) {
-    throw new Error(`Directory "${dir}" already exists. Choose a different name or directory.`);
-  }
-
-  // Generate files
   switch (options.kind) {
     case "backend":
-      createBackendLib(tree, names, dir, projectName, tags);
+      createNodeLib(tree, names, dir, projectName, tags);
+      break;
+    case "common":
+      createNodeLib(tree, names, dir, projectName, tags);
       break;
     case "frontend":
       createFrontendLib(tree, names, dir, projectName, tags);
       break;
-    case "common":
-      createCommonLib(tree, names, dir, projectName, tags);
-      break;
   }
 
-  // Format unless skipped
-  if (!options.skipFormat) {
-    await formatFiles(tree);
-  }
+  if (!options.skipFormat) await formatFiles(tree);
 }
-
-// ---------------------------------------------------------------------------
 
 export default libraryGenerator;

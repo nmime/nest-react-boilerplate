@@ -11,7 +11,7 @@ import { plan, resolveConfig } from '../../setup/planner.js';
 import { apply, checkConflicts, backupFiles, rollback } from '../../setup/apply.js';
 import { parseNrbConfig, NrbConfigSchema } from '../../setup/schema.js';
 import { createNxTreeAdapter } from '../../setup/adapters/nx-tree.js';
-import { SCHEMA_VERSION } from '../../setup/schema.js';
+import { schemaVersion } from '../../setup/schema.js';
 
 // ---------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ export interface SetupGeneratorOptions {
 export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions): Promise<void> {
   // Build the NrbConfig from generator options
   const config = NrbConfigSchema.parse({
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: schemaVersion,
     preset: options.preset,
     apps: options.apps ?? [],
     capabilities: options.capabilities ?? [],

@@ -9,7 +9,7 @@
  * include additional transitive dependencies.
  */
 import type { AppId, CapabilityId, PresetId } from './schema.js';
-import { PRESET_IDS } from './schema.js';
+import { presetIds } from './schema.js';
 import { expandDependencies } from './catalog.js';
 
 // ---------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export interface PresetDefinition {
  * Arrays are source-sorted for readability; `expandPreset` returns
  * canonical (sorted + expanded) arrays.
  */
-export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
+export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   /**
    * Minimal: a single API + auth.  Good for prototyping or library-style
    * backends.
@@ -122,7 +122,7 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
 // Lookup helpers
 // ---------------------------------------------------------------------------
 
-const PRESET_MAP = new Map<PresetId, PresetDefinition>(PRESETS.map((p) => [p.id, p]));
+const PRESET_MAP = new Map<PresetId, PresetDefinition>(presets.map((p) => [p.id, p]));
 
 /**
  * Find a preset by ID.  Returns `undefined` for unknown IDs.
@@ -135,14 +135,14 @@ export function findPreset(id: string): PresetDefinition | undefined {
  * List all preset IDs in canonical order.
  */
 export function listPresetIds(): readonly PresetId[] {
-  return PRESET_IDS;
+  return presetIds;
 }
 
 /**
  * List all preset definitions.
  */
 export function listPresets(): readonly PresetDefinition[] {
-  return PRESETS;
+  return presets;
 }
 
 // ---------------------------------------------------------------------------

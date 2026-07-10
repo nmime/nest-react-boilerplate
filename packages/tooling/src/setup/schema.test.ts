@@ -12,22 +12,22 @@ import {
   NrbConfigSchema,
   parseNrbConfig,
   safeParseNrbConfig,
-  SCHEMA_VERSION,
-  APP_IDS,
-  CAPABILITY_IDS,
-  PRESET_IDS,
-  FRONTEND_APP_IDS,
-  BACKEND_APP_IDS,
+  schemaVersion,
+  appIds,
+  capabilityIds,
+  presetIds,
+  frontendAppIds,
+  backendAppIds,
 } from './schema.js';
-import { APP_CATALOG, CAPABILITY_CATALOG, validateSelection, expandDependencies } from './catalog.js';
-import { PRESETS, findPreset, listPresetIds, listPresets, expandPreset } from './presets.js';
+import { appCatalog, capabilityCatalog, validateSelection, expandDependencies } from './catalog.js';
+import { presets, findPreset, listPresetIds, listPresets, expandPreset } from './presets.js';
 
 /* ==================================================================
  * UNIT: Schema validation
  * ================================================================== */
 describe('schema — parseNrbConfig', () => {
   it('accepts minimal valid config with just schemaVersion', () => {
-    const c = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+    const c = parseNrbConfig({ schemaVersion: schemaVersion });
     assert.equal(c.schemaVersion, '1.0.0');
     assert.deepEqual(c.apps, []);
     assert.deepEqual(c.capabilities, []);
@@ -36,7 +36,7 @@ describe('schema — parseNrbConfig', () => {
 
   it('accepts config with preset and explicit overrides', () => {
     const c = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: 'starter',
       apps: ['user-app'],
       capabilities: ['i18n'],
@@ -50,7 +50,7 @@ describe('schema — parseNrbConfig', () => {
 
   it('accepts fully-specified config', () => {
     const c = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: 'enterprise',
       apps: ['admin-app', 'user-app-api'],
       capabilities: ['postgres', 'redis'],
@@ -64,7 +64,7 @@ describe('schema — parseNrbConfig', () => {
   });
 
   it('rejects unknown top-level keys', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, unknownKey: 'nope' }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, unknownKey: 'nope' }).success, false);
   });
 
   it('rejects wrong schema version', () => {
@@ -76,33 +76,30 @@ describe('schema — parseNrbConfig', () => {
   });
 
   it('rejects unknown preset', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'nonexistent' }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, preset: 'nonexistent' }).success, false);
   });
 
   it('rejects unknown app ID in apps array', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: ['fake-app'] }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, apps: ['fake-app'] }).success, false);
   });
 
   it('rejects unknown capability ID in capabilities array', () => {
     assert.equal(
-      safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, capabilities: ['fake-capability'] }).success,
+      safeParseNrbConfig({ schemaVersion: schemaVersion, capabilities: ['fake-capability'] }).success,
       false,
     );
   });
 
   it('rejects non-string values in apps array', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: [123] }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, apps: [123] }).success, false);
   });
 
   it('rejects non-boolean option values', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, options: { dryRun: 'yes' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, options: { dryRun: 'yes' } }).success, false);
   });
 
   it('rejects unknown option keys', () => {
-    assert.equal(
-      safeParseNrbConfig({ schemaVersion: SCHEMA_VERSION, options: { unknownOption: true } }).success,
-      false,
-    );
+    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, options: { unknownOption: true } }).success, false);
   });
 
   it('rejects non-object input', () => {
@@ -133,7 +130,7 @@ describe('schema — constants', () => {
       'telegram-bot-worker',
       'fullstack-e2e',
     ] as const;
-    assert.deepEqual([...APP_IDS].sort(), [...expected].sort());
+    assert.deepEqual([...appIds].sort(), [...expected].sort());
   });
 
   it('exports all known capability IDs', () => {
@@ -154,16 +151,16 @@ describe('schema — constants', () => {
       'telegram-bot',
       'discord-bot',
     ] as const;
-    assert.deepEqual([...CAPABILITY_IDS].sort(), [...expected].sort());
+    assert.deepEqual([...capabilityIds].sort(), [...expected].sort());
   });
 
   it('exports exactly five preset IDs', () => {
-    assert.deepEqual(PRESET_IDS, ['minimal', 'starter', 'fullstack', 'enterprise', 'bots']);
+    assert.deepEqual(presetIds, ['minimal', 'starter', 'fullstack', 'enterprise', 'bots']);
   });
 
   it('frontend and backend app IDs are disjoint', () => {
     assert.deepEqual(
-      FRONTEND_APP_IDS.filter((id) => (BACKEND_APP_IDS as readonly string[]).includes(id)),
+      frontendAppIds.filter((id) => (backendAppIds as readonly string[]).includes(id)),
       [],
     );
   });
@@ -172,61 +169,61 @@ describe('schema — constants', () => {
 /* ==================================================================
  * UNIT: Catalog
  * ================================================================== */
-describe('catalog — APP_CATALOG', () => {
+describe('catalog — appCatalog', () => {
   it('has an entry for every app ID', () => {
-    for (const id of APP_IDS) {
-      assert.ok(APP_CATALOG[id], `Missing: ${id}`);
-      assert.equal(APP_CATALOG[id].id, id);
+    for (const id of appIds) {
+      assert.ok(appCatalog[id], `Missing: ${id}`);
+      assert.equal(appCatalog[id].id, id);
     }
   });
 
   it('admin-app requires admin-app-api', () => {
-    assert.ok(APP_CATALOG['admin-app'].requiresApps.includes('admin-app-api'));
+    assert.ok(appCatalog['admin-app'].requiresApps.includes('admin-app-api'));
   });
 
   it('user-app requires user-app-api', () => {
-    assert.ok(APP_CATALOG['user-app'].requiresApps.includes('user-app-api'));
+    assert.ok(appCatalog['user-app'].requiresApps.includes('user-app-api'));
   });
 
   it('telegram-bot-worker requires telegram-bot-api and redis', () => {
-    const e = APP_CATALOG['telegram-bot-worker'];
+    const e = appCatalog['telegram-bot-worker'];
     assert.ok(e.requiresApps.includes('telegram-bot-api'));
     assert.ok(e.requiresCapabilities.includes('redis'));
   });
 
   it('every app references valid capability IDs', () => {
-    for (const entry of Object.values(APP_CATALOG)) {
+    for (const entry of Object.values(appCatalog)) {
       for (const cap of [...entry.requiresCapabilities, ...entry.conflictsWithCapabilities]) {
-        assert.ok(CAPABILITY_IDS.includes(cap), `${entry.id} -> ${cap}`);
+        assert.ok(capabilityIds.includes(cap), `${entry.id} -> ${cap}`);
       }
     }
   });
 
   it('every app references valid app IDs in requiresApps', () => {
-    for (const entry of Object.values(APP_CATALOG)) {
+    for (const entry of Object.values(appCatalog)) {
       for (const app of entry.requiresApps) {
-        assert.ok(APP_IDS.includes(app), `${entry.id} -> ${app}`);
+        assert.ok(appIds.includes(app), `${entry.id} -> ${app}`);
       }
     }
   });
 });
 
-describe('catalog — CAPABILITY_CATALOG', () => {
+describe('catalog — capabilityCatalog', () => {
   it('has an entry for every capability ID', () => {
-    for (const id of CAPABILITY_IDS) {
-      assert.ok(CAPABILITY_CATALOG[id], `Missing: ${id}`);
-      assert.equal(CAPABILITY_CATALOG[id].id, id);
+    for (const id of capabilityIds) {
+      assert.ok(capabilityCatalog[id], `Missing: ${id}`);
+      assert.equal(capabilityCatalog[id].id, id);
     }
   });
 
   it('notifications requires redis', () => {
-    assert.ok(CAPABILITY_CATALOG['notifications'].requiresCapabilities.includes('redis'));
+    assert.ok(capabilityCatalog['notifications'].requiresCapabilities.includes('redis'));
   });
 
   it('every capability references valid IDs', () => {
-    for (const entry of Object.values(CAPABILITY_CATALOG)) {
+    for (const entry of Object.values(capabilityCatalog)) {
       for (const cap of [...entry.requiresCapabilities, ...entry.conflictsWith]) {
-        assert.ok(CAPABILITY_IDS.includes(cap), `${entry.id} -> ${cap}`);
+        assert.ok(capabilityIds.includes(cap), `${entry.id} -> ${cap}`);
       }
     }
   });
@@ -319,35 +316,35 @@ describe('catalog — expandDependencies', () => {
 /* ==================================================================
  * UNIT: Presets
  * ================================================================== */
-describe('presets — PRESETS', () => {
+describe('presets — presets', () => {
   it('has exactly five presets', () => {
-    assert.equal(PRESETS.length, 5);
+    assert.equal(presets.length, 5);
   });
 
-  it('each preset has unique ID matching PRESET_IDS', () => {
+  it('each preset has unique ID matching presetIds', () => {
     assert.deepEqual(
-      PRESETS.map((p) => p.id),
-      PRESET_IDS,
+      presets.map((p) => p.id),
+      presetIds,
     );
   });
 
   it('each preset has a non-empty description', () => {
-    for (const p of PRESETS) assert.ok(p.description.length > 0, `${p.id}`);
+    for (const p of presets) assert.ok(p.description.length > 0, `${p.id}`);
   });
 
   it('each preset lists only valid app IDs', () => {
-    for (const p of PRESETS) for (const a of p.apps) assert.ok(APP_IDS.includes(a as any), `${p.id} -> ${a}`);
+    for (const p of presets) for (const a of p.apps) assert.ok(appIds.includes(a as any), `${p.id} -> ${a}`);
   });
 
   it('each preset lists only valid capability IDs', () => {
-    for (const p of PRESETS)
-      for (const c of p.capabilities) assert.ok(CAPABILITY_IDS.includes(c as any), `${p.id} -> ${c}`);
+    for (const p of presets)
+      for (const c of p.capabilities) assert.ok(capabilityIds.includes(c as any), `${p.id} -> ${c}`);
   });
 });
 
 describe('presets — lookup helpers', () => {
   it('findPreset returns correct preset', () => {
-    for (const id of PRESET_IDS) {
+    for (const id of presetIds) {
       const f = findPreset(id);
       assert.ok(f, id);
       assert.equal(f.id, id);
@@ -359,11 +356,11 @@ describe('presets — lookup helpers', () => {
   });
 
   it('listPresetIds returns all IDs', () => {
-    assert.deepEqual(listPresetIds(), PRESET_IDS);
+    assert.deepEqual(listPresetIds(), presetIds);
   });
 
   it('listPresets returns all definitions', () => {
-    assert.equal(listPresets().length, PRESET_IDS.length);
+    assert.equal(listPresets().length, presetIds.length);
   });
 });
 
@@ -397,16 +394,16 @@ describe('presets — expandPreset', () => {
       'landing-app',
       'fullstack-e2e',
     ] as const)
-      assert.ok(e.apps.includes(a as (typeof APP_IDS)[number]), `fullstack missing ${a}`);
+      assert.ok(e.apps.includes(a as (typeof appIds)[number]), `fullstack missing ${a}`);
     for (const c of ['postgres', 'redis', 'authz', 'otel'] as const)
-      assert.ok(e.capabilities.includes(c as (typeof CAPABILITY_IDS)[number]), `fullstack missing ${c}`);
+      assert.ok(e.capabilities.includes(c as (typeof capabilityIds)[number]), `fullstack missing ${c}`);
   });
 
   it('enterprise: every supported app and capability', () => {
     const e = expandPreset('enterprise');
-    for (const a of APP_IDS) assert.ok(e.apps.includes(a as (typeof APP_IDS)[number]), `enterprise missing app: ${a}`);
-    for (const c of CAPABILITY_IDS)
-      assert.ok(e.capabilities.includes(c as (typeof CAPABILITY_IDS)[number]), `enterprise missing cap: ${c}`);
+    for (const a of appIds) assert.ok(e.apps.includes(a as (typeof appIds)[number]), `enterprise missing app: ${a}`);
+    for (const c of capabilityIds)
+      assert.ok(e.capabilities.includes(c as (typeof capabilityIds)[number]), `enterprise missing cap: ${c}`);
   });
 
   it('bots: telegram + discord apps and capabilities', () => {
@@ -420,7 +417,7 @@ describe('presets — expandPreset', () => {
   });
 
   it('every preset expansion is deterministic (sorted)', () => {
-    for (const id of PRESET_IDS) {
+    for (const id of presetIds) {
       const e = expandPreset(id);
       assert.deepEqual(e.apps, [...e.apps].sort());
       assert.deepEqual(e.capabilities, [...e.capabilities].sort());
@@ -428,7 +425,7 @@ describe('presets — expandPreset', () => {
   });
 
   it('every preset expansion passes validateSelection', () => {
-    for (const id of PRESET_IDS) {
+    for (const id of presetIds) {
       const e = expandPreset(id);
       const issues = validateSelection(e.apps, e.capabilities);
       assert.deepEqual(issues, [], `${id}: ${issues.map((i) => i.message).join('; ')}`);
@@ -445,7 +442,7 @@ describe('presets — expandPreset', () => {
  * ================================================================== */
 describe('component — schema → preset → catalog', () => {
   it('parse config with preset → expand → validate', () => {
-    const c = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'fullstack' });
+    const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'fullstack' });
     assert.ok(c.preset);
     const e = expandPreset(c.preset);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
@@ -453,7 +450,7 @@ describe('component — schema → preset → catalog', () => {
 
   it('parse config with explicit apps overriding preset → expand → validate', () => {
     const c = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: 'minimal',
       apps: ['admin-app'],
       capabilities: ['postgres', 'authz', 'design-tokens'],
@@ -466,7 +463,7 @@ describe('component — schema → preset → catalog', () => {
 
   it('config with telegram-bot-worker deps added by expansion', () => {
     const c = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       apps: ['telegram-bot-worker'],
       capabilities: ['telegram-bot'],
     });
@@ -477,9 +474,9 @@ describe('component — schema → preset → catalog', () => {
   });
 
   it('round-trip: parse → preset expand → re-parse expanded config', () => {
-    const c = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'bots' });
+    const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'bots' });
     const e = expandPreset(c.preset!);
-    const c2 = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: e.apps, capabilities: e.capabilities });
+    const c2 = parseNrbConfig({ schemaVersion: schemaVersion, apps: e.apps, capabilities: e.capabilities });
     assert.deepEqual(c2.apps, e.apps);
     assert.deepEqual(c2.capabilities, e.capabilities);
   });
@@ -494,7 +491,7 @@ describe('component — preset monotonicity', () => {
 
   it('enterprise has the most capabilities', () => {
     const ent = expandPreset('enterprise');
-    for (const id of PRESET_IDS) {
+    for (const id of presetIds) {
       if (id === 'enterprise') continue;
       const o = expandPreset(id);
       assert.ok(o.capabilities.length <= ent.capabilities.length, `${id} >= enterprise`);
@@ -515,7 +512,7 @@ describe('e2e — example config flow', () => {
       options: { prune: false, force: false, dryRun: false, nonInteractive: false },
     };
     const c = parseNrbConfig(raw);
-    assert.equal(c.schemaVersion, SCHEMA_VERSION);
+    assert.equal(c.schemaVersion, schemaVersion);
     assert.equal(c.preset, 'fullstack');
     const e = expandPreset(c.preset!);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
@@ -562,11 +559,11 @@ describe('e2e — example config flow', () => {
   });
 
   it('all five presets independently valid end-to-end', () => {
-    for (const pid of PRESET_IDS) {
-      const c = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: pid });
+    for (const pid of presetIds) {
+      const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: pid });
       const e = expandPreset(c.preset!);
       assert.deepEqual(validateSelection(e.apps, e.capabilities), [], `${pid}`);
-      const c2 = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: e.apps, capabilities: e.capabilities });
+      const c2 = parseNrbConfig({ schemaVersion: schemaVersion, apps: e.apps, capabilities: e.capabilities });
       assert.deepEqual(c2.apps, e.apps);
       assert.deepEqual(c2.capabilities, e.capabilities);
     }
@@ -578,7 +575,7 @@ describe('e2e — example config flow', () => {
  * ================================================================== */
 describe('e2e — edge cases', () => {
   it('empty apps array is valid', () => {
-    const c = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: [], capabilities: [] });
+    const c = parseNrbConfig({ schemaVersion: schemaVersion, apps: [], capabilities: [] });
     assert.deepEqual(c.apps, []);
     assert.deepEqual(c.capabilities, []);
   });
@@ -591,6 +588,6 @@ describe('e2e — edge cases', () => {
   });
 
   it('schema version constant matches expected', () => {
-    assert.equal(SCHEMA_VERSION, '1.0.0');
+    assert.equal(schemaVersion, '1.0.0');
   });
 });

@@ -10,9 +10,9 @@
  */
 import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
-import { PRESET_IDS, SCHEMA_VERSION } from './schema.js';
-import { PRESETS, findPreset } from './presets.js';
-import { APP_CATALOG, CAPABILITY_CATALOG } from './catalog.js';
+import { presetIds, schemaVersion } from './schema.js';
+import { presets, findPreset } from './presets.js';
+import { appCatalog, capabilityCatalog } from './catalog.js';
 import type { AppId, CapabilityId } from './schema.js';
 
 // ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ async function interactiveFlow(): Promise<PromptResult> {
   process.stdout.write('\n=== NRB Setup Wizard ===\n\n');
 
   // 1. Preset selection
-  const presetChoices = PRESETS.map((p) => ({
+  const presetChoices = presets.map((p) => ({
     label: `${p.id} — ${p.description}`,
     value: p.id,
   }));
@@ -129,9 +129,9 @@ async function interactiveFlow(): Promise<PromptResult> {
     for (const a of presetDef.apps) selectedApps.add(a);
   }
 
-  const frontendApps = Object.values(APP_CATALOG).filter((a) => a.platform === 'frontend');
-  const backendApps = Object.values(APP_CATALOG).filter((a) => a.platform === 'backend');
-  const e2eApps = Object.values(APP_CATALOG).filter((a) => a.platform === 'e2e');
+  const frontendApps = Object.values(appCatalog).filter((a) => a.platform === 'frontend');
+  const backendApps = Object.values(appCatalog).filter((a) => a.platform === 'backend');
+  const e2eApps = Object.values(appCatalog).filter((a) => a.platform === 'e2e');
 
   await promptAppGroup('Frontend Apps', frontendApps, selectedApps);
   await promptAppGroup('Backend Apps', backendApps, selectedApps);
@@ -140,7 +140,7 @@ async function interactiveFlow(): Promise<PromptResult> {
   // Auto-add required app dependencies
   const autoAddedApps = new Set<AppId>();
   for (const appId of [...selectedApps]) {
-    const entry = APP_CATALOG[appId];
+    const entry = appCatalog[appId];
     if (entry) {
       for (const req of entry.requiresApps) {
         if (!selectedApps.has(req)) {
@@ -162,7 +162,7 @@ async function interactiveFlow(): Promise<PromptResult> {
 
   // Auto-add capabilities required by selected apps
   for (const appId of [...selectedApps]) {
-    const entry = APP_CATALOG[appId];
+    const entry = appCatalog[appId];
     if (entry) {
       for (const req of entry.requiresCapabilities) {
         selectedCaps.add(req);
@@ -177,7 +177,7 @@ async function interactiveFlow(): Promise<PromptResult> {
   while (changed) {
     changed = false;
     for (const capId of [...selectedCaps]) {
-      const entry = CAPABILITY_CATALOG[capId];
+      const entry = capabilityCatalog[capId];
       if (entry) {
         for (const req of entry.requiresCapabilities) {
           if (!selectedCaps.has(req)) {
@@ -229,7 +229,7 @@ async function promptAppGroup(
 /** Prompt the user to toggle capabilities. */
 async function promptCapabilityGroup(selected: Set<CapabilityId>): Promise<void> {
   process.stdout.write('\nCapabilities:\n');
-  for (const [capId, entry] of Object.entries(CAPABILITY_CATALOG)) {
+  for (const [capId, entry] of Object.entries(capabilityCatalog)) {
     const checked = selected.has(capId as CapabilityId) ? '[x]' : '[ ]';
     const answer = await ask(
       `  ${checked} ${entry.label} (${capId}) [keep]`,
@@ -260,7 +260,7 @@ export function buildConfig(
   } = {},
 ): NrbConfig {
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: schemaVersion,
     preset: overrides.preset ?? prompts.preset,
     apps: overrides.apps ?? prompts.apps,
     capabilities: overrides.capabilities ?? prompts.capabilities,

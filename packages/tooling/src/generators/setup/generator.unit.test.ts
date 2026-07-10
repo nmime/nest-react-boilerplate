@@ -20,50 +20,50 @@ describe('setup generator', () => {
 
   describe('schema validation', () => {
     it('parses minimal config', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
-      const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
+      const config = parseNrbConfig({ schemaVersion: schemaVersion });
       assert.deepEqual(config.apps, []);
       assert.deepEqual(config.capabilities, []);
     });
 
     it('rejects unknown top-level keys', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
       assert.throws(() => {
-        parseNrbConfig({ schemaVersion: SCHEMA_VERSION, unknownKey: true });
+        parseNrbConfig({ schemaVersion: schemaVersion, unknownKey: true });
       });
     });
 
     it('rejects invalid preset', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
       assert.throws(() => {
-        parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'invalid' });
+        parseNrbConfig({ schemaVersion: schemaVersion, preset: 'invalid' });
       });
     });
 
     it('rejects unknown app IDs', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
       assert.throws(() => {
-        parseNrbConfig({ schemaVersion: SCHEMA_VERSION, apps: ['nonexistent'] });
+        parseNrbConfig({ schemaVersion: schemaVersion, apps: ['nonexistent'] });
       });
     });
 
     it('rejects unknown capability IDs', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
       assert.throws(() => {
-        parseNrbConfig({ schemaVersion: SCHEMA_VERSION, capabilities: ['nonexistent'] });
+        parseNrbConfig({ schemaVersion: schemaVersion, capabilities: ['nonexistent'] });
       });
     });
 
     it('accepts valid preset', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
-      const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
+      const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
       assert.equal(config.preset, 'minimal');
     });
 
     it('accepts valid apps and capabilities', () => {
-      const { parseNrbConfig, SCHEMA_VERSION } = require('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = require('../../setup/schema.js');
       const config = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         apps: ['user-app-api'],
         capabilities: ['postgres'],
       });
@@ -79,9 +79,9 @@ describe('setup generator', () => {
   describe('planner integration', () => {
     it('plans nrb.config.json and summary.md for minimal preset', async () => {
       const { plan, resolveConfig } = await import('../../setup/planner.js');
-      const { parseNrbConfig, SCHEMA_VERSION } = await import('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = await import('../../setup/schema.js');
 
-      const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
+      const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
       const result = plan(config);
 
       assert.ok(result.operations.length > 0);
@@ -92,9 +92,9 @@ describe('setup generator', () => {
 
     it('empty config produces expected files', async () => {
       const { plan } = await import('../../setup/planner.js');
-      const { parseNrbConfig, SCHEMA_VERSION } = await import('../../setup/schema.js');
+      const { parseNrbConfig, schemaVersion } = await import('../../setup/schema.js');
 
-      const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+      const config = parseNrbConfig({ schemaVersion: schemaVersion });
       const result = plan(config);
 
       const opPaths = result.operations.map((op) => op.path);

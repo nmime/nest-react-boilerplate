@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { parseNrbConfig, SCHEMA_VERSION } from './schema.js';
+import { parseNrbConfig, schemaVersion } from './schema.js';
 import {
   createFile,
   deleteFile,
@@ -28,7 +28,7 @@ import {
   addFileToState,
   removeFileFromState,
   migrateState,
-  EMPTY_STATE,
+  emptyState,
   computeConfigDigest,
 } from './state.js';
 import { plan, resolveConfig, generateConfigFile, generateSummaryMd } from './planner.js';
@@ -336,20 +336,20 @@ describe('state — diffState', () => {
 
 describe('state — migrateState', () => {
   it('returns empty state for null', () => {
-    assert.deepEqual(migrateState(null), EMPTY_STATE);
+    assert.deepEqual(migrateState(null), emptyState);
   });
 
   it('returns empty state for non-object', () => {
-    assert.deepEqual(migrateState('string'), EMPTY_STATE);
-    assert.deepEqual(migrateState(42), EMPTY_STATE);
+    assert.deepEqual(migrateState('string'), emptyState);
+    assert.deepEqual(migrateState(42), emptyState);
   });
 
   it('returns empty state for missing version', () => {
-    assert.deepEqual(migrateState({ files: {} }), EMPTY_STATE);
+    assert.deepEqual(migrateState({ files: {} }), emptyState);
   });
 
   it('returns empty state for version < 1', () => {
-    assert.deepEqual(migrateState({ version: 0, files: {} }), EMPTY_STATE);
+    assert.deepEqual(migrateState({ version: 0, files: {} }), emptyState);
   });
 
   it('passes through v1 state', () => {
@@ -361,7 +361,7 @@ describe('state — migrateState', () => {
   it('returns empty for future version (safety)', () => {
     const future = { version: 99, configHash: 'x', files: {}, digest: 'd' };
     const result = migrateState(future);
-    assert.deepEqual(result, EMPTY_STATE);
+    assert.deepEqual(result, emptyState);
   });
 });
 
@@ -371,7 +371,7 @@ describe('state — migrateState', () => {
 
 describe('planner — resolveConfig', () => {
   it('resolves minimal preset with expanded deps', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
     const resolved = resolveConfig(config);
     assert.ok(resolved.apps.includes('auth-app-api'));
     assert.ok(resolved.apps.includes('user-app-api'));
@@ -380,7 +380,7 @@ describe('planner — resolveConfig', () => {
 
   it('explicit apps override but preserve preset deps', () => {
     const config = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: 'minimal',
       apps: ['admin-app'],
     });
@@ -390,14 +390,14 @@ describe('planner — resolveConfig', () => {
   });
 
   it('empty config resolves to empty lists', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
     const resolved = resolveConfig(config);
     assert.deepEqual(resolved.apps, []);
     assert.deepEqual(resolved.capabilities, []);
   });
 
   it('returns typed AppId[] and CapabilityId[] (no any)', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
     const resolved = resolveConfig(config);
     // Verify all returned IDs are known valid IDs
     for (const a of resolved.apps) {
@@ -421,7 +421,7 @@ describe('planner — M1 validateSelection rejection', () => {
     // list fullstack-e2e, expandDependencies should add those.
     // Let's test that validation PASSES for valid deps.
     const config = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       apps: ['fullstack-e2e'],
     });
     const resolved = resolveConfig(config);
@@ -433,7 +433,7 @@ describe('planner — M1 validateSelection rejection', () => {
     // notifications requires redis.  If we enable notifications without redis,
     // expandDependencies should add redis.  Let's verify that works.
     const config = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       capabilities: ['notifications'],
     });
     const resolved = resolveConfig(config);
@@ -447,7 +447,7 @@ describe('planner — M1 validateSelection rejection', () => {
 
 describe('planner — generateConfigFile', () => {
   it('generates nrb.config.json path', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
     const result = generateConfigFile(config);
     assert.equal(result.path, 'nrb.config.json');
     assert.ok(result.content.endsWith('\n'));
@@ -456,7 +456,7 @@ describe('planner — generateConfigFile', () => {
   });
 
   it('content is deterministic', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'starter' });
     const c1 = generateConfigFile(config);
     const c2 = generateConfigFile(config);
     assert.equal(c1.content, c2.content);
@@ -524,23 +524,23 @@ describe('planner — generateSummaryMd', () => {
 
 describe('planner — plan() basic', () => {
   it('produces operations for fresh state', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
+    const result = plan(config, emptyState);
     assert.ok(result.operations.length > 0);
     assert.equal(result.configHash.length, 64); // SHA-256 hex
     assert.equal(result.expectedState.configHash, result.configHash);
   });
 
   it('generated plan includes nrb.config.json', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
+    const result = plan(config, emptyState);
     const configOp = result.operations.find((o) => o.path === 'nrb.config.json');
     assert.ok(configOp, 'Expected nrb.config.json in operations');
   });
 
   it('generated plan includes .nrb/summary.md', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
+    const result = plan(config, emptyState);
     const summaryOp = result.operations.find((o) => o.path === '.nrb/summary.md');
     assert.ok(summaryOp, 'Expected .nrb/summary.md in operations');
   });
@@ -548,8 +548,8 @@ describe('planner — plan() basic', () => {
 
 describe('planner — stable ordering', () => {
   it('plan operations are sorted by compareOperations', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
+    const result = plan(config, emptyState);
     for (let i = 1; i < result.operations.length; i++) {
       assert.ok(
         compareOperations(result.operations[i - 1], result.operations[i]) <= 0,
@@ -561,16 +561,16 @@ describe('planner — stable ordering', () => {
 
 describe('planner — idempotency (empty replay)', () => {
   it('second plan with matching state returns empty operations', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
-    const first = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
+    const first = plan(config, emptyState);
     // Simulate applying: use expected state from first plan
     const second = plan(config, first.expectedState);
     assert.equal(second.operations.length, 0, 'Second plan should be empty (idempotent)');
   });
 
   it('third plan is also empty', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
-    const first = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
+    const first = plan(config, emptyState);
     const second = plan(config, first.expectedState);
     const third = plan(config, second.expectedState);
     assert.equal(third.operations.length, 0);
@@ -579,15 +579,15 @@ describe('planner — idempotency (empty replay)', () => {
 
 describe('planner — generated hash matches', () => {
   it('configHash in summary matches plan configHash', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'bots' });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'bots' });
+    const result = plan(config, emptyState);
     assert.equal(result.summary.configHash, result.configHash);
   });
 });
 
 describe('planner — prune protection', () => {
   it('without prune option, prunableFiles is empty', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION });
+    const config = parseNrbConfig({ schemaVersion: schemaVersion });
     const state = buildState('old', { 'nrb.config.json': 'h1', '.nrb/summary.md': 'h2', 'old-file.txt': 'h3' });
     const result = plan(config, state);
     assert.deepEqual(result.prunableFiles, []);
@@ -596,7 +596,7 @@ describe('planner — prune protection', () => {
 
   it('with prune option, stale files are listed as prunable', () => {
     const config = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       options: { prune: true, force: false, dryRun: false, nonInteractive: false },
     });
     const state = buildState('old', {
@@ -611,8 +611,8 @@ describe('planner — prune protection', () => {
 
 describe('planner — conflict detection via diff', () => {
   it('content change detected as update not create', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'minimal' });
-    const first = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'minimal' });
+    const first = plan(config, emptyState);
     // Simulate the config file was changed on disk (hash mismatch)
     const tamperedState = buildState(first.configHash, {
       ...first.expectedState.files,
@@ -631,8 +631,8 @@ describe('planner — conflict detection via diff', () => {
 
 describe('planner — E2E full flow', () => {
   it('enterprise preset: plan → state → empty replay', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'enterprise' });
-    const first = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'enterprise' });
+    const first = plan(config, emptyState);
     assert.ok(first.operations.length > 0, 'First plan should have operations');
     assert.ok(first.summary.apps.length > 0, 'Should have apps');
     assert.ok(first.summary.capabilities.length > 0, 'Should have capabilities');
@@ -643,18 +643,18 @@ describe('planner — E2E full flow', () => {
 
   it('config hash is stable across plans', () => {
     const config = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       apps: ['user-app-api'],
       capabilities: ['postgres'],
     });
-    const h1 = plan(config, EMPTY_STATE).configHash;
-    const h2 = plan(config, EMPTY_STATE).configHash;
+    const h1 = plan(config, emptyState).configHash;
+    const h2 = plan(config, emptyState).configHash;
     assert.equal(h1, h2);
   });
 
   it('snapshots contain no timestamps or machine paths', () => {
-    const config = parseNrbConfig({ schemaVersion: SCHEMA_VERSION, preset: 'starter' });
-    const result = plan(config, EMPTY_STATE);
+    const config = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'starter' });
+    const result = plan(config, emptyState);
     for (const op of result.operations) {
       assert.ok(!op.path.startsWith('/'), `Path should be relative: ${op.path}`);
       if ('content' in op) {

@@ -1,8 +1,8 @@
-import { DynamicModule, Global, Inject, Injectable, Module } from "@nestjs/common";
-import { getBetterAuthConfig, type BetterAuthConfigOptions } from "./better-auth";
-import type { Auth } from "better-auth";
+import { DynamicModule, Global, Inject, Injectable, Module } from '@nestjs/common';
+import { getBetterAuthConfig, type BetterAuthConfigOptions } from './better-auth';
+import type { Auth } from 'better-auth';
 
-export const BETTER_AUTH_INSTANCE = "BETTER_AUTH_INSTANCE";
+export const BetterAuthInstanceToken = 'BetterAuthInstanceToken';
 
 export interface BetterAuthModuleOptions extends BetterAuthConfigOptions {
   isGlobal?: boolean;
@@ -16,18 +16,18 @@ export class BetterAuthModule {
       module: BetterAuthModule,
       providers: [
         {
-          provide: "BETTER_AUTH_MODULE_OPTIONS",
+          provide: 'BETTER_AUTH_MODULE_OPTIONS',
           useValue: options ?? {},
         },
         {
-          provide: BETTER_AUTH_INSTANCE,
+          provide: BetterAuthInstanceToken,
           useFactory: (opts: BetterAuthConfigOptions): Auth => {
             return getBetterAuthConfig(null, opts);
           },
-          inject: ["BETTER_AUTH_MODULE_OPTIONS"],
+          inject: ['BETTER_AUTH_MODULE_OPTIONS'],
         },
       ],
-      exports: [BETTER_AUTH_INSTANCE],
+      exports: [BetterAuthInstanceToken],
       global: options?.isGlobal ?? true,
     };
   }
@@ -35,7 +35,7 @@ export class BetterAuthModule {
 
 @Injectable()
 export class BetterAuthService {
-  constructor(@Inject(BETTER_AUTH_INSTANCE) private readonly auth: Auth) {}
+  constructor(@Inject(BetterAuthInstanceToken) private readonly auth: Auth) {}
 
   getInstance(): Auth {
     return this.auth;

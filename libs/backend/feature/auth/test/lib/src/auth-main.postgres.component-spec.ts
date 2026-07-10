@@ -1,18 +1,15 @@
-import { MikroORM } from "@mikro-orm/core";
-import { Migrator } from "@mikro-orm/migrations";
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { Test, type TestingModule } from "@nestjs/testing";
-import supertest from "supertest";
-import { createValidationPipe } from "@app/backend-common-validation";
+import { MikroORM } from '@mikro-orm/core';
+import { Migrator } from '@mikro-orm/migrations';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Test, type TestingModule } from '@nestjs/testing';
+import supertest from 'supertest';
+import { createValidationPipe } from '@app/backend-common-validation';
 import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
-} from "@app/backend-common-component-test";
+} from '@app/backend-common-component-test';
 import {
   AuthRefreshTokenEntitySchema,
   AuthTenantEntitySchema,
@@ -21,15 +18,15 @@ import {
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
   authMigrationOptions,
-} from "@app/backend-postgres-main-auth";
-import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+} from '@app/backend-postgres-main-auth';
+import { type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   AuthMainModule,
   AuthPersistenceMode,
-  BETTER_AUTH_INSTANCE,
+  BetterAuthInstanceToken,
   BetterAuthModule,
-} from "@app/backend-feature-auth-main";
+} from '@app/backend-feature-auth-main';
 
 interface AuthSessionResponse {
   data: {
@@ -39,26 +36,19 @@ interface AuthSessionResponse {
   };
 }
 
-const passwordField = `${"pass"}${"word"}`;
-const componentCredential = ["component", "credential"].join("-");
-const jwtSecret = [
-  "component",
-  "integration",
-  "test",
-  "jwt",
-  `${"sec"}${"ret"}`,
-  "at-least-32-characters",
-].join("-");
+const passwordField = `${'pass'}${'word'}`;
+const componentCredential = ['component', 'credential'].join('-');
+const jwtSecret = ['component', 'integration', 'test', 'jwt', `${'sec'}${'ret'}`, 'at-least-32-characters'].join('-');
 
 const dockerAvailable = hasDockerRuntime();
 if (!dockerAvailable) {
   process.stderr.write(
-    "AuthMainModule postgres component tests: skipped because Docker is not available on this host.\n",
+    'AuthMainModule postgres component tests: skipped because Docker is not available on this host.\n',
   );
 }
 const describeIfDocker = dockerAvailable ? describe : describe.skip;
 
-describeIfDocker("AuthMainModule postgres component", () => {
+describeIfDocker('AuthMainModule postgres component', () => {
   let container: StartedPostgreSqlContainer | undefined;
   let moduleRef: TestingModule | undefined;
   let app: NestFastifyApplication | undefined;
@@ -66,7 +56,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
 
   beforeAll(async () => {
     process.env.AUTH_JWT_SECRET = jwtSecret;
-    process.env.AUTH_PERSISTENCE = "postgres";
+    process.env.AUTH_PERSISTENCE = 'postgres';
     container = await startPostgresContainer();
 
     moduleRef = await Test.createTestingModule({
@@ -92,13 +82,11 @@ describeIfDocker("AuthMainModule postgres component", () => {
         }),
       ],
     })
-      .overrideProvider(BETTER_AUTH_INSTANCE)
-      .useValue({ api: {}, handler: async () => new Response("ok") })
+      .overrideProvider(BetterAuthInstanceToken)
+      .useValue({ api: {}, handler: async () => new Response('ok') })
       .compile();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(createValidationPipe());
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
@@ -108,9 +96,9 @@ describeIfDocker("AuthMainModule postgres component", () => {
   });
 
   afterEach(async () => {
-    await orm.em.getConnection().execute("delete from auth_user_tokens");
-    await orm.em.getConnection().execute("delete from auth_refresh_tokens");
-    await orm.em.getConnection().execute("delete from auth_users");
+    await orm.em.getConnection().execute('delete from auth_user_tokens');
+    await orm.em.getConnection().execute('delete from auth_refresh_tokens');
+    await orm.em.getConnection().execute('delete from auth_users');
     orm.em.clear();
   });
 
@@ -122,7 +110,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
     delete process.env.AUTH_PERSISTENCE;
   });
 
-  it("applies MikroORM migrations against a clean Testcontainers database", async () => {
+  it('applies MikroORM migrations against a clean Testcontainers database', async () => {
     const userColumns = (await orm.em
       .getConnection()
       .execute(
@@ -130,19 +118,19 @@ describeIfDocker("AuthMainModule postgres component", () => {
       )) as Array<{ column_name: string }>;
 
     expect(userColumns.map((row) => row.column_name)).toEqual([
-      "id",
-      "email",
-      "display_name",
-      `${"pass"}${"word"}_hash`,
-      "status",
-      "roles",
-      "permissions",
-      "locale",
-      "last_login_at",
-      "created_at",
-      "updated_at",
-      "theme",
-      "tenant_id",
+      'id',
+      'email',
+      'display_name',
+      `${'pass'}${'word'}_hash`,
+      'status',
+      'roles',
+      'permissions',
+      'locale',
+      'last_login_at',
+      'created_at',
+      'updated_at',
+      'theme',
+      'tenant_id',
     ]);
 
     const tokenTables = (await orm.em.getConnection().execute(`
@@ -152,51 +140,46 @@ describeIfDocker("AuthMainModule postgres component", () => {
         and table_name in ('auth_refresh_tokens', 'auth_user_tokens')
       order by table_name
     `)) as Array<{ table_name: string }>;
-    expect(tokenTables.map((row) => row.table_name)).toEqual([
-      "auth_refresh_tokens",
-      "auth_user_tokens",
-    ]);
+    expect(tokenTables.map((row) => row.table_name)).toEqual(['auth_refresh_tokens', 'auth_user_tokens']);
   });
 
-  it("registers and persists a user through controller/service/repository wiring", async () => {
+  it('registers and persists a user through controller/service/repository wiring', async () => {
     const httpServer = getHttpServer(app);
 
     const response = await supertest(httpServer)
-      .post("/auth/register")
+      .post('/auth/register')
       .send({
-        email: "component@example.com",
+        email: 'component@example.com',
         [passwordField]: componentCredential,
-        displayName: "Component User",
+        displayName: 'Component User',
       })
       .expect(201);
 
     const body = response.body as AuthSessionResponse;
     expect(body.data.user).toMatchObject({
-      email: "component@example.com",
-      displayName: "Component User",
+      email: 'component@example.com',
+      displayName: 'Component User',
     });
-    expect(body.data.accessToken.split(".")).toHaveLength(3);
+    expect(body.data.accessToken.split('.')).toHaveLength(3);
     expect(body.data.refreshToken).toEqual(expect.any(String));
 
     const persisted = (await orm.em
       .getConnection()
-      .execute(
-        "select email, display_name from auth_users where email = 'component@example.com'",
-      )) as Array<{ email: string; display_name: string }>;
-    expect(persisted).toEqual([
-      { email: "component@example.com", display_name: "Component User" },
-    ]);
+      .execute("select email, display_name from auth_users where email = 'component@example.com'")) as Array<{
+      email: string;
+      display_name: string;
+    }>;
+    expect(persisted).toEqual([{ email: 'component@example.com', display_name: 'Component User' }]);
   });
 
-  it("persists and rotates refresh tokens through Postgres", async () => {
+  it('persists and rotates refresh tokens through Postgres', async () => {
     const httpServer = getHttpServer(app);
-    const email = "refresh-component@example.com";
+    const email = 'refresh-component@example.com';
     const register = await supertest(httpServer)
-      .post("/auth/register")
+      .post('/auth/register')
       .send({ email, [passwordField]: componentCredential })
       .expect(201);
-    const originalRefreshToken = (register.body as AuthSessionResponse).data
-      .refreshToken;
+    const originalRefreshToken = (register.body as AuthSessionResponse).data.refreshToken;
     expect(originalRefreshToken).toEqual(expect.any(String));
 
     const issuedRows = (await orm.em.getConnection().execute(`
@@ -212,18 +195,14 @@ describeIfDocker("AuthMainModule postgres component", () => {
     expect(issuedRows[0]?.revoked_at).toBeNull();
 
     const refresh = await supertest(httpServer)
-      .post("/auth/refresh")
+      .post('/auth/refresh')
       .send({ refreshToken: originalRefreshToken })
       .expect(201);
-    const rotatedRefreshToken = (refresh.body as AuthSessionResponse).data
-      .refreshToken;
+    const rotatedRefreshToken = (refresh.body as AuthSessionResponse).data.refreshToken;
     expect(rotatedRefreshToken).toEqual(expect.any(String));
     expect(rotatedRefreshToken).not.toBe(originalRefreshToken);
 
-    await supertest(httpServer)
-      .post("/auth/refresh")
-      .send({ refreshToken: originalRefreshToken })
-      .expect(401);
+    await supertest(httpServer).post('/auth/refresh').send({ refreshToken: originalRefreshToken }).expect(401);
 
     const rows = (await orm.em.getConnection().execute(`
       select parent_token_id, revoked_at, replaced_by_token_id
@@ -240,50 +219,40 @@ describeIfDocker("AuthMainModule postgres component", () => {
     expect(rows[1]?.parent_token_id).not.toBeNull();
   });
 
-  it("rejects duplicate registration and logs in persisted users", async () => {
+  it('rejects duplicate registration and logs in persisted users', async () => {
     const httpServer = getHttpServer(app);
-    const email = "duplicate-component@example.com";
+    const email = 'duplicate-component@example.com';
     const password = componentCredential;
 
-    await supertest(httpServer)
-      .post("/auth/register")
-      .send({ email, password })
-      .expect(201);
-    await supertest(httpServer)
-      .post("/auth/register")
-      .send({ email, password })
-      .expect(409);
+    await supertest(httpServer).post('/auth/register').send({ email, password }).expect(201);
+    await supertest(httpServer).post('/auth/register').send({ email, password }).expect(409);
 
-    const login = await supertest(httpServer)
-      .post("/auth/login")
-      .send({ email, password })
-      .expect(201);
+    const login = await supertest(httpServer).post('/auth/login').send({ email, password }).expect(201);
 
     const body = login.body as AuthSessionResponse;
     expect(body.data.user.email).toBe(email);
   });
 
-  it("returns the token-protected me payload for a postgres-backed session", async () => {
+  it('returns the token-protected me payload for a postgres-backed session', async () => {
     const httpServer = getHttpServer(app);
     const register = await supertest(httpServer)
-      .post("/auth/register")
+      .post('/auth/register')
       .send({
-        email: "me-component@example.com",
+        email: 'me-component@example.com',
         [passwordField]: componentCredential,
       })
       .expect(201);
     const token = (register.body as AuthSessionResponse).data.accessToken;
 
     const me = await supertest(httpServer)
-      .get("/auth/me")
-      .set("Authorization", `Bearer ${token}`)
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .expect(200);
 
-    expect(
-      (me.body as { data?: { principal?: { email?: string } } }).data?.principal
-        ?.email,
-    ).toBe("me-component@example.com");
+    expect((me.body as { data?: { principal?: { email?: string } } }).data?.principal?.email).toBe(
+      'me-component@example.com',
+    );
   });
 });
 
@@ -291,11 +260,9 @@ async function runAuthMigrations(orm: MikroORM): Promise<void> {
   await orm.migrator.up();
 }
 
-function getHttpServer(
-  app: NestFastifyApplication | undefined,
-): Parameters<typeof supertest>[0] {
+function getHttpServer(app: NestFastifyApplication | undefined): Parameters<typeof supertest>[0] {
   if (!app) {
-    throw new Error("Nest application was not initialized.");
+    throw new Error('Nest application was not initialized.');
   }
 
   return app.getHttpServer();

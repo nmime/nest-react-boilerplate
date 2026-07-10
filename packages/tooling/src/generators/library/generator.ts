@@ -369,11 +369,7 @@ function createFrontendLib(
   );
 
   // src/index.ts
-  tree.write(
-    `${srcRoot}/index.ts`,
-    `export { ${names.pascal}Component } from "./${names.kebab}.component";
-`,
-  );
+  tree.write(`${srcRoot}/index.ts`, `export * from "./${names.kebab}.component";\n`);
 
   // src/<name>.component.tsx
   tree.write(

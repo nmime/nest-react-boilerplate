@@ -20,8 +20,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { CommandContext } from "../../cli.js";
-import { safeParseNrbConfig, SCHEMA_VERSION } from "../../setup/schema.js";
-import { migrateState, EMPTY_STATE } from "../../setup/state.js";
+import { safeParseNrbConfig, schemaVersion } from "../../setup/schema.js";
+import { migrateState, emptyState } from "../../setup/state.js";
 
 // ---------------------------------------------------------------------------
 // Check types
@@ -111,8 +111,8 @@ function checkNrbConfig(workspaceRoot: string): DoctorCheck {
       const errors = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
       return { name: "nrb-config", status: "fail", message: `Invalid config: ${errors}` };
     }
-    if (result.data.schemaVersion !== SCHEMA_VERSION) {
-      return { name: "nrb-config", status: "warn", message: `Config schema version ${result.data.schemaVersion} — expected ${SCHEMA_VERSION}` };
+    if (result.data.schemaVersion !== schemaVersion) {
+      return { name: "nrb-config", status: "warn", message: `Config schema version ${result.data.schemaVersion} — expected ${schemaVersion}` };
     }
     return { name: "nrb-config", status: "pass", message: `nrb.config.json valid (v${result.data.schemaVersion})` };
   } catch (err: unknown) {
@@ -128,7 +128,7 @@ function checkNrbState(workspaceRoot: string): DoctorCheck {
   try {
     const raw = JSON.parse(readFileSync(statePath, "utf8"));
     const state = migrateState(raw);
-    if (state === EMPTY_STATE) {
+    if (state === emptyState) {
       return { name: "nrb-state", status: "warn", message: "State file is empty or invalid — may need re-setup" };
     }
     const fileCount = Object.keys(state.files).length;

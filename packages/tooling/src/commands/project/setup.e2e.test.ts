@@ -11,11 +11,11 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { parseNrbConfig, SCHEMA_VERSION, type NrbConfig } from "../../setup/schema.js";
+import { parseNrbConfig, schemaVersion, type NrbConfig } from "../../setup/schema.js";
 import { plan, type PlanResult } from "../../setup/planner.js";
 import { apply } from "../../setup/apply.js";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
-import { EMPTY_STATE, migrateState, type SetupState } from "../../setup/state.js";
+import { emptyState, migrateState, type SetupState } from "../../setup/state.js";
 import type { FilesystemAdapter, ApplyResult } from "../../setup/adapters/filesystem.js";
 
 // ---------------------------------------------------------------------------
@@ -40,7 +40,7 @@ describe("setup E2E — idempotency", () => {
     try {
       // Build config
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "starter",
         apps: [],
         capabilities: [],
@@ -50,7 +50,7 @@ describe("setup E2E — idempotency", () => {
       const fs = createNodeFilesystem(workspaceRoot);
 
       // First run: plan → apply
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       assert.ok(plan1.operations.length > 0, "First plan should have operations");
 
       const result1: ApplyResult = await apply(plan1.operations, fs, { force: false, dryRun: false });
@@ -83,14 +83,14 @@ describe("setup E2E — idempotency", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "minimal",
         apps: [],
         capabilities: [],
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       await apply(plan1.operations, fs);
 
       // Re-read state from planner's expected state
@@ -105,14 +105,14 @@ describe("setup E2E — idempotency", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "enterprise",
         apps: [],
         capabilities: [],
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       await apply(plan1.operations, fs);
 
       const plan2 = plan(config, plan1.expectedState);
@@ -132,14 +132,14 @@ describe("setup E2E — conflict refusal", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "minimal",
         apps: [],
         capabilities: [],
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
 
       // Apply first plan
       const result1 = await apply(plan1.operations, fs);
@@ -175,14 +175,14 @@ describe("setup E2E — conflict refusal", () => {
       await fs.write("nrb.config.json", '{"schemaVersion":"1.0.0"}');
 
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "minimal",
         apps: [],
         capabilities: [],
       });
 
       // Without force: the plan will produce an update (content differs), which is always allowed
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       const result = await apply(plan1.operations, fs, { force: true });
       assert.equal(result.failed, 0, "Force should allow overwrite");
 
@@ -190,7 +190,7 @@ describe("setup E2E — conflict refusal", () => {
       const content = await fs.read("nrb.config.json");
       assert.ok(content !== null);
       const parsed = JSON.parse(content);
-      assert.equal(parsed.schemaVersion, SCHEMA_VERSION);
+      assert.equal(parsed.schemaVersion, schemaVersion);
     } finally {
       removeWorkspace(workspaceRoot);
     }
@@ -206,7 +206,7 @@ describe("setup E2E — dry run", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "fullstack",
         apps: [],
         capabilities: [],
@@ -214,7 +214,7 @@ describe("setup E2E — dry run", () => {
       });
 
       // Plan should produce operations
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       assert.ok(plan1.operations.length > 0, "Fullstack preset should produce operations");
 
       // Dry run — don't apply, verify workspace is still empty
@@ -235,14 +235,14 @@ describe("setup E2E — state persistence", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "minimal",
         apps: [],
         capabilities: [],
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       await apply(plan1.operations, fs);
 
       // Write state.json ourselves (simulating the setup command)
@@ -276,7 +276,7 @@ describe("setup E2E — config file", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "bots",
         apps: ["telegram-bot-api"],
         capabilities: ["redis"],
@@ -284,7 +284,7 @@ describe("setup E2E — config file", () => {
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       await apply(plan1.operations, fs);
 
       // Read back the generated config
@@ -303,14 +303,14 @@ describe("setup E2E — config file", () => {
     const workspaceRoot = createDisposableWorkspace();
     try {
       const config: NrbConfig = parseNrbConfig({
-        schemaVersion: SCHEMA_VERSION,
+        schemaVersion: schemaVersion,
         preset: "starter",
         apps: [],
         capabilities: [],
       });
 
       const fs = createNodeFilesystem(workspaceRoot);
-      const plan1 = plan(config, EMPTY_STATE);
+      const plan1 = plan(config, emptyState);
       await apply(plan1.operations, fs);
 
       const summary = await fs.read(".nrb/summary.md");

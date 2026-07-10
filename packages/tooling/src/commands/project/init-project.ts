@@ -19,7 +19,7 @@ import { join, relative } from "node:path";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { apply, type ApplyOptions } from "../../setup/apply.js";
 import { createFile, updateFile, type SetupOperation } from "../../setup/operations.js";
-import { EMPTY_STATE } from "../../setup/state.js";
+import { emptyState } from "../../setup/state.js";
 
 // ---------------------------------------------------------------------------
 // Constants — unchanged from original

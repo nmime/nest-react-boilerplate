@@ -1,7 +1,7 @@
 /**
  * Creates Better-Auth core tables in PostgreSQL.
  *
- * Run with: DATABASE_URL=... npx tsx libs/backend/feature/auth/main/lib/src/lib/scripts/create-better-auth-tables.ts
+ * Run with: DATABASE_URL=... npx tsx libs/backend/feature/auth/main/lib/src/scripts/create-better-auth-tables.ts
  *
  * This is the authoritative schema for Better-Auth's core tables.
  * Better-Auth expects tables named: user, session, account, verification (singular, no prefix).
@@ -10,11 +10,11 @@
  *
  * Idempotent: uses IF NOT EXISTS / conditional ALTER for safety.
  */
-import { Pool } from "pg";
+import { Pool } from 'pg';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
-  console.error("DATABASE_URL is required");
+  console.error('DATABASE_URL is required');
   process.exit(1);
 }
 
@@ -23,7 +23,7 @@ const pool = new Pool({ connectionString: dbUrl });
 async function run(): Promise<void> {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
 
     // ─── user ──────────────────────────────────────────────────────
     await client.query(`
@@ -97,11 +97,11 @@ async function run(): Promise<void> {
       )
     `);
 
-    await client.query("COMMIT");
-    console.log("[create-better-auth-tables] All Better-Auth tables created/verified successfully.");
+    await client.query('COMMIT');
+    console.log('[create-better-auth-tables] All Better-Auth tables created/verified successfully.');
   } catch (err: any) {
-    await client.query("ROLLBACK");
-    console.error("[create-better-auth-tables] Migration failed:", err.message);
+    await client.query('ROLLBACK');
+    console.error('[create-better-auth-tables] Migration failed:', err.message);
     process.exit(1);
   } finally {
     client.release();

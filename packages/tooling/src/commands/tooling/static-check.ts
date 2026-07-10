@@ -280,15 +280,15 @@ const staleReferencePatterns: StaleReferencePattern[] = [
   { label: "retired pnpm major", pattern: /\bpnpm\s+10(?:\.\d+)?\b/u },
   {
     label: "unsupported current Node version reference",
-    pattern: /\bNode(?:\.js)?\s+(?:20|22|24)\b/u,
+    pattern: /\bNode(?:\.js)?\s+(?:20|22)\b/u,
   },
   {
     label: "unsupported workflow Node version reference",
-    pattern: /\bnode-version:\s*['"]?(?:20|22|24)(?:\.x)?['"]?\b/u,
+    pattern: /\bnode-version:\s*['"]?(?:20|22)(?:\.x)?['"]?\b/u,
   },
   {
     label: "unsupported workflow Node version reference",
-    pattern: /\bNODE_VERSION\b[^\n]*(?:20|22|24)\b/u,
+    pattern: /\bNODE_VERSION\b[^\n]*(?:20|22)\b/u,
   },
   { label: "retired Problem Details RFC", pattern: /\bRFC\s?7807\b/iu },
   {
@@ -473,8 +473,11 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   const testFiles = collectToolingTestFiles(workspaceRoot);
   if (testFiles.length === 0) return [];
 
-  const result = run(process.execPath, ["--test", ...testFiles], {
+  const result = run(process.execPath, ["--test", "--import", "jiti/register", ...testFiles], {
     cwd: workspaceRoot,
+    // Static validation must stay hermetic; Docker/PostgreSQL integration is
+    // exercised by the dedicated integration and acceptance gates.
+    env: { SKIP_INTEGRATION: "1" },
   });
 
   return result.status === 0 ? [] : [result];

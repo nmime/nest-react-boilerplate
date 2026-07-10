@@ -65,7 +65,7 @@ export interface SetupState {
 }
 
 /** Empty state — represents a fresh workspace with nothing generated yet. */
-export const EMPTY_STATE: SetupState = {
+export const emptyState: SetupState = {
   version: 1,
   configHash: '',
   files: {},
@@ -181,19 +181,19 @@ export function diffState(
  */
 export function migrateState(raw: unknown): SetupState {
   if (typeof raw !== 'object' || raw === null) {
-    return EMPTY_STATE;
+    return emptyState;
   }
   const obj = raw as Record<string, unknown>;
   const version = obj.version as number | undefined;
   if (version === undefined || version < 1) {
     // Pre-version state: treat as empty
-    return EMPTY_STATE;
+    return emptyState;
   }
   if (version === 1) {
     return obj as unknown as SetupState;
   }
   // Future versions: for now, treat as empty to force re-plan
-  return EMPTY_STATE;
+  return emptyState;
 }
 
 // ---------------------------------------------------------------------------

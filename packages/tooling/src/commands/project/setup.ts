@@ -17,11 +17,11 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CommandContext } from "../../cli.js";
-import { parseNrbConfig, SCHEMA_VERSION, type NrbConfig, type PresetId } from "../../setup/schema.js";
+import { parseNrbConfig, schemaVersion, type NrbConfig, type PresetId } from "../../setup/schema.js";
 import { plan, type PlanResult } from "../../setup/planner.js";
 import { apply, type ApplyOptions } from "../../setup/apply.js";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
-import { EMPTY_STATE, migrateState, hashString, type SetupState, buildState } from "../../setup/state.js";
+import { emptyState, migrateState, hashString, type SetupState, buildState } from "../../setup/state.js";
 import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from "../../setup/prompts.js";
 import { expandPreset } from "../../setup/presets.js";
 import { expandDependencies } from "../../setup/catalog.js";
@@ -129,12 +129,12 @@ function loadExistingConfig(workspaceRoot: string): NrbConfig | null {
 
 function loadState(workspaceRoot: string): SetupState {
   const statePath = join(workspaceRoot, ".nrb", "state.json");
-  if (!existsSync(statePath)) return EMPTY_STATE;
+  if (!existsSync(statePath)) return emptyState;
   try {
     const raw = JSON.parse(readFileSync(statePath, "utf8"));
     return migrateState(raw);
   } catch {
-    return EMPTY_STATE;
+    return emptyState;
   }
 }
 
@@ -279,14 +279,14 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
     // Validate CLI-provided IDs before dependency expansion so the catalog
     // receives the same typed IDs as file-based configuration.
     const validated = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       apps: expandedApps,
       capabilities: expandedCaps,
     });
     const expanded = expandDependencies(validated.apps, validated.capabilities);
 
     return {
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: args.preset,
       apps: expanded.apps,
       capabilities: expanded.capabilities,
@@ -317,7 +317,7 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
   // Fall back to non-interactive defaults
   if (args.nonInteractive) {
     return {
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "minimal",
       apps: [],
       capabilities: [],
@@ -333,7 +333,7 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
   // Interactive mode: build config from prompts (deferred)
   // For non-interactive path, return defaults
   return {
-    schemaVersion: SCHEMA_VERSION,
+    schemaVersion: schemaVersion,
     preset: "minimal",
     apps: [],
     capabilities: [],

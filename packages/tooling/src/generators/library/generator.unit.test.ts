@@ -173,7 +173,8 @@ describe('library generator', () => {
       await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', skipFormat: true });
 
       const index = tree.read('libs/frontend/ui-components/lib/src/index.ts', 'utf8')!;
-      assert.ok(index.includes('UiComponentsComponent'));
+      // Template uses `export * from "./..."` barrel — verify it re-exports the component file.
+      assert.ok(index.includes('ui-components.component'), `Expected barrel re-export; got: ${index}`);
     });
   });
 

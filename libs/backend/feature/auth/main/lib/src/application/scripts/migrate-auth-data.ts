@@ -5,17 +5,17 @@
  * better_auth_accounts, better_auth_verification).
  *
  * Run manually against your database using:
- *   pnpm ts-node libs/backend/feature/auth/main/lib/src/lib/scripts/migrate-auth-data.ts
+ *   pnpm ts-node libs/backend/feature/auth/main/lib/src/scripts/migrate-auth-data.ts
  */
-import { randomUUID } from "node:crypto";
-import { Client } from "pg";
+import { randomUUID } from 'node:crypto';
+import { Client } from 'pg';
 
 async function main(): Promise<void> {
-  console.log("[migrate] connecting to database...");
+  console.log('[migrate] connecting to database...');
 
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
-    console.error("[migrate] DATABASE_URL is required");
+    console.error('[migrate] DATABASE_URL is required');
     process.exit(1);
   }
 
@@ -24,10 +24,8 @@ async function main(): Promise<void> {
 
   try {
     // 1. Migrate users
-    console.log("[migrate] migrating users...");
-    const { rows: legacyUsers } = await client.query(
-      "SELECT * FROM auth_users WHERE email IS NOT NULL",
-    );
+    console.log('[migrate] migrating users...');
+    const { rows: legacyUsers } = await client.query('SELECT * FROM auth_users WHERE email IS NOT NULL');
     let migratedCount = 0;
 
     for (const user of legacyUsers) {
@@ -39,14 +37,14 @@ async function main(): Promise<void> {
         [
           user.id,
           user.email?.toLowerCase(),
-          user.display_name || "",
+          user.display_name || '',
           user.tenant_id,
           JSON.stringify(user.roles || []),
           JSON.stringify(user.permissions || []),
-          user.status || "active",
-          user.locale || "en",
-          user.theme || "system",
-          user.password_hash || "",
+          user.status || 'active',
+          user.locale || 'en',
+          user.theme || 'system',
+          user.password_hash || '',
           user.last_login_at || new Date(0),
           user.created_at,
           user.updated_at,
@@ -60,21 +58,13 @@ async function main(): Promise<void> {
            (id, user_id, provider_id, provider_account_id, password, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            ON CONFLICT (id) DO NOTHING`,
-          [
-            randomUUID(),
-            user.id,
-            "credential",
-            user.id,
-            user.password_hash,
-            user.created_at,
-            user.updated_at,
-          ],
+          [randomUUID(), user.id, 'credential', user.id, user.password_hash, user.created_at, user.updated_at],
         );
       }
 
       // 3. Migrate external identities
       const { rows: identities } = await client.query(
-        "SELECT * FROM auth_external_identities WHERE auth_user_id = $1",
+        'SELECT * FROM auth_external_identities WHERE auth_user_id = $1',
         [user.id],
       );
 
@@ -84,14 +74,7 @@ async function main(): Promise<void> {
            (id, user_id, provider_id, provider_account_id, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6)
            ON CONFLICT (id) DO NOTHING`,
-          [
-            randomUUID(),
-            user.id,
-            ident.provider,
-            ident.provider_subject,
-            ident.linked_at,
-            ident.updated_at,
-          ],
+          [randomUUID(), user.id, ident.provider, ident.provider_subject, ident.linked_at, ident.updated_at],
         );
       }
 
@@ -99,9 +82,9 @@ async function main(): Promise<void> {
     }
 
     console.log(`[migrate] migrated ${migratedCount} users`);
-    console.log("[migrate] done");
+    console.log('[migrate] done');
   } catch (err) {
-    console.error("[migrate] failed", err);
+    console.error('[migrate] failed', err);
     process.exit(1);
   } finally {
     await client.end();

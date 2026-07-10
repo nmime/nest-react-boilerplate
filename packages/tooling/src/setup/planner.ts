@@ -17,7 +17,7 @@ import type { AppId, CapabilityId } from './schema.js';
 import type { SetupOperation } from './operations.js';
 import { createFile, sortOperations, deleteFile, updateFile } from './operations.js';
 import type { SetupState } from './state.js';
-import { configHash, hashString, buildState, diffState, EMPTY_STATE } from './state.js';
+import { configHash, hashString, buildState, diffState, emptyState } from './state.js';
 import { expandDependencies, validateSelection } from './catalog.js';
 import { expandPreset } from './presets.js';
 
@@ -175,7 +175,7 @@ export function resolveConfig(config: NrbConfig): {
  *
  * @throws {Error} when the resolved config has catalog validation issues.
  */
-export function plan(config: NrbConfig, currentState: SetupState = EMPTY_STATE): PlanResult {
+export function plan(config: NrbConfig, currentState: SetupState = emptyState): PlanResult {
   const { apps, capabilities, preset } = resolveConfig(config);
   const cfgHash = configHash(config);
 

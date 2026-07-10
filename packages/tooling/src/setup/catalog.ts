@@ -28,7 +28,7 @@ export interface AppEntry {
  *
  * Indexed by app ID for O(1) lookup.
  */
-export const APP_CATALOG: Readonly<Record<AppId, Readonly<AppEntry>>> = {
+export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
   /* --- Frontend apps --- */
   'admin-app': {
     id: 'admin-app',
@@ -152,7 +152,7 @@ export interface CapabilityEntry {
  *
  * Indexed by capability ID for O(1) lookup.
  */
-export const CAPABILITY_CATALOG: Readonly<Record<CapabilityId, Readonly<CapabilityEntry>>> = {
+export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<CapabilityEntry>>> = {
   i18n: {
     id: 'i18n',
     label: 'Internationalization',
@@ -277,7 +277,7 @@ export function validateSelection(
   const issues: ValidationIssue[] = [];
 
   for (const appId of apps) {
-    const app = APP_CATALOG[appId];
+    const app = appCatalog[appId];
     if (!app) {
       issues.push({
         type: 'unknown_app',
@@ -323,7 +323,7 @@ export function validateSelection(
 
   // Capability-level checks
   for (const capId of capabilities) {
-    const cap = CAPABILITY_CATALOG[capId];
+    const cap = capabilityCatalog[capId];
     if (!cap) {
       issues.push({
         type: 'unknown_capability',
@@ -377,7 +377,7 @@ export function expandDependencies(
   while (changed) {
     changed = false;
     for (const appId of [...appSet]) {
-      const app = APP_CATALOG[appId];
+      const app = appCatalog[appId];
       if (!app) continue;
       for (const reqCap of app.requiresCapabilities) {
         if (!capSet.has(reqCap)) {
@@ -393,7 +393,7 @@ export function expandDependencies(
       }
     }
     for (const capId of [...capSet]) {
-      const cap = CAPABILITY_CATALOG[capId];
+      const cap = capabilityCatalog[capId];
       if (!cap) continue;
       for (const reqCap of cap.requiresCapabilities) {
         if (!capSet.has(reqCap)) {

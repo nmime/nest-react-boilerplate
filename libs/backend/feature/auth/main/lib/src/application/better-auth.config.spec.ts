@@ -1,13 +1,13 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { getBetterAuthConfig } from "./better-auth";
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { getBetterAuthConfig } from './better-auth';
 
-describe("getBetterAuthConfig", () => {
+describe('getBetterAuthConfig', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     process.env = { ...originalEnv };
-    process.env.DATABASE_URL = "postgres://test:test@localhost:5432/test";
-    process.env.BETTER_AUTH_SECRET = "test-secret-for-testing-min-32-chars";
+    process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
+    process.env.BETTER_AUTH_SECRET = 'test-secret-for-testing-min-32-chars';
     delete process.env.BETTER_AUTH_URL;
     delete process.env.API_BASE_URL;
     delete process.env.BETTER_AUTH_TRUSTED_ORIGINS;
@@ -24,68 +24,64 @@ describe("getBetterAuthConfig", () => {
     process.env = originalEnv;
   });
 
-  it("requires DATABASE_URL", () => {
+  it('requires DATABASE_URL', () => {
     delete process.env.DATABASE_URL;
-    expect(() => getBetterAuthConfig(null, {})).toThrow(
-      "DATABASE_URL is required",
-    );
+    expect(() => getBetterAuthConfig(null, {})).toThrow('DATABASE_URL is required');
   });
 
-  it("creates a valid Better-Auth instance with defaults", () => {
+  it('creates a valid Better-Auth instance with defaults', () => {
     const auth = getBetterAuthConfig(null, {});
     expect(auth).toBeDefined();
     expect((auth as any).api).toBeDefined();
   });
 
-  it("uses BETTER_AUTH_SECRET when provided", () => {
+  it('uses BETTER_AUTH_SECRET when provided', () => {
     const auth = getBetterAuthConfig(null, {
-      secret: "custom-secret-min-32-chars-long",
+      secret: 'custom-secret-min-32-chars-long',
     });
     expect(auth).toBeDefined();
   });
 
-  it("uses custom session options", () => {
+  it('uses custom session options', () => {
     const auth = getBetterAuthConfig(null, {
       sessionMaxAge: 7200,
     });
     expect(auth).toBeDefined();
   });
 
-  it("uses custom trusted origins", () => {
+  it('uses custom trusted origins', () => {
     const auth = getBetterAuthConfig(null, {
-      trustedOrigins: ["http://custom.origin.com"],
+      trustedOrigins: ['http://custom.origin.com'],
     });
     expect(auth).toBeDefined();
   });
 
-  it("uses telegram bot token", () => {
+  it('uses telegram bot token', () => {
     const auth = getBetterAuthConfig(null, {
-      telegramBotToken: "123456:ABC-DEF",
+      telegramBotToken: '123456:ABC-DEF',
     });
     expect(auth).toBeDefined();
   });
 
-  it("uses discord provider options", () => {
+  it('uses discord provider options', () => {
     const auth = getBetterAuthConfig(null, {
-      discordClientId: "discord-id",
-      discordClientSecret: "discord-secret",
-      discordRedirectUri: "http://localhost:3003/callback/discord",
+      discordClientId: 'discord-id',
+      discordClientSecret: 'discord-secret',
+      discordRedirectUri: 'http://localhost:3003/callback/discord',
     });
     expect(auth).toBeDefined();
   });
 });
 
-describe("better-auth-api.controller", () => {
-  it("exports BetterAuthApiController class", async () => {
-    const { BetterAuthApiController } = await import(
-      "./better-auth-api.controller"
-    );
+describe('better-auth-api.controller', () => {
+  it('exports BetterAuthApiController class', async () => {
+    const { BetterAuthApiController } = await import('./better-auth-api.controller');
     expect(BetterAuthApiController).toBeDefined();
-    expect(typeof BetterAuthApiController).toBe("function");
+    expect(typeof BetterAuthApiController).toBe('function');
   });
 
-  it("exports BETTER_AUTH_INSTANCE token from module", async () => {
-    const { BETTER_AUTH_INSTANCE } = await import("./better-auth.module");
-    expect(BETTER_AUTH_INSTANCE).toBe("BETTER_AUTH_INSTANCE");
+  it('exports BetterAuthInstanceToken token from module', async () => {
+    const { BetterAuthInstanceToken } = await import('./better-auth.module');
+    expect(BetterAuthInstanceToken).toBe('BetterAuthInstanceToken');
   });
 });

@@ -17,11 +17,11 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /** Frontend application shells that can be enabled / disabled. */
-export const FRONTEND_APP_IDS = ['admin-app', 'user-app', 'landing-app', 'site-app', 'mobile-app'] as const;
-export type FrontendAppId = (typeof FRONTEND_APP_IDS)[number];
+export const frontendAppIds = ['admin-app', 'user-app', 'landing-app', 'site-app', 'mobile-app'] as const;
+export type FrontendAppId = (typeof frontendAppIds)[number];
 
 /** Backend services that can be enabled / disabled. */
-export const BACKEND_APP_IDS = [
+export const backendAppIds = [
   'admin-app-api',
   'user-app-api',
   'auth-app-api',
@@ -29,14 +29,14 @@ export const BACKEND_APP_IDS = [
   'telegram-bot-api',
   'telegram-bot-worker',
 ] as const;
-export type BackendAppId = (typeof BACKEND_APP_IDS)[number];
+export type BackendAppId = (typeof backendAppIds)[number];
 
 /** All application IDs (union of frontend + backend + e2e). */
-export const APP_IDS = [...FRONTEND_APP_IDS, ...BACKEND_APP_IDS, 'fullstack-e2e'] as const;
-export type AppId = (typeof APP_IDS)[number];
+export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e'] as const;
+export type AppId = (typeof appIds)[number];
 
 /** Cross-cutting capabilities that can be toggled. */
-export const CAPABILITY_IDS = [
+export const capabilityIds = [
   'i18n',
   'analytics',
   'websockets',
@@ -53,17 +53,17 @@ export const CAPABILITY_IDS = [
   'telegram-bot',
   'discord-bot',
 ] as const;
-export type CapabilityId = (typeof CAPABILITY_IDS)[number];
+export type CapabilityId = (typeof capabilityIds)[number];
 
 /** Supported preset names — deterministic, expandable to apps + capabilities. */
-export const PRESET_IDS = ['minimal', 'starter', 'fullstack', 'enterprise', 'bots'] as const;
-export type PresetId = (typeof PRESET_IDS)[number];
+export const presetIds = ['minimal', 'starter', 'fullstack', 'enterprise', 'bots'] as const;
+export type PresetId = (typeof presetIds)[number];
 
 // ---------------------------------------------------------------------------
 // Schema versioning
 // ---------------------------------------------------------------------------
 
-export const SCHEMA_VERSION = '1.0.0' as const;
+export const schemaVersion = '1.0.0' as const;
 
 /**
  * The root configuration schema.
@@ -78,10 +78,10 @@ export const SCHEMA_VERSION = '1.0.0' as const;
  */
 export const NrbConfigSchema = z
   .object({
-    schemaVersion: z.literal(SCHEMA_VERSION),
-    preset: z.enum(PRESET_IDS).optional(),
-    apps: z.array(z.enum(APP_IDS)).default([]),
-    capabilities: z.array(z.enum(CAPABILITY_IDS)).default([]),
+    schemaVersion: z.literal(schemaVersion),
+    preset: z.enum(presetIds).optional(),
+    apps: z.array(z.enum(appIds)).default([]),
+    capabilities: z.array(z.enum(capabilityIds)).default([]),
     options: z
       .object({
         /** When true, prune files that are no longer needed after config change. */

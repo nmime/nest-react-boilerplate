@@ -12,9 +12,9 @@ import { describe, it, beforeEach, afterEach } from "node:test";
 // ---------------------------------------------------------------------------
 // Re-exports from existing modules we test against
 // ---------------------------------------------------------------------------
-import { parseNrbConfig, SCHEMA_VERSION, type NrbConfig, type AppId, type CapabilityId, PRESET_IDS } from "../../setup/schema.js";
+import { parseNrbConfig, schemaVersion, type NrbConfig, type AppId, type CapabilityId, presetIds } from "../../setup/schema.js";
 import { plan, resolveConfig } from "../../setup/planner.js";
-import { EMPTY_STATE } from "../../setup/state.js";
+import { emptyState } from "../../setup/state.js";
 import { expandPreset } from "../../setup/presets.js";
 import type { PromptResult } from "../../setup/prompts.js";
 
@@ -221,13 +221,13 @@ describe("setup — parseArgs", () => {
 describe("setup — plan integration", () => {
   it("plans create operations for fresh state", () => {
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "minimal",
       apps: [],
       capabilities: [],
       options: { prune: false, force: false, dryRun: false, nonInteractive: false },
     });
-    const result = plan(config, EMPTY_STATE);
+    const result = plan(config, emptyState);
 
     assert.ok(result.configHash.length > 0);
     assert.ok(result.operations.length > 0);
@@ -237,19 +237,19 @@ describe("setup — plan integration", () => {
 
   it("second plan with same config produces zero operations (idempotency)", () => {
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "minimal",
       apps: [],
       capabilities: [],
     });
-    const firstPlan = plan(config, EMPTY_STATE);
+    const firstPlan = plan(config, emptyState);
     const secondPlan = plan(config, firstPlan.expectedState);
     assert.equal(secondPlan.operations.length, 0);
   });
 
   it("resolves preset with dependency expansion", () => {
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "fullstack",
       apps: [],
       capabilities: [],
@@ -263,14 +263,14 @@ describe("setup — plan integration", () => {
 
   it("plans prune operations when enabled", () => {
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "minimal",
       apps: [],
       capabilities: [],
       options: { prune: true, force: false, dryRun: false, nonInteractive: false },
     });
     // First plan creates files
-    const firstPlan = plan(config, EMPTY_STATE);
+    const firstPlan = plan(config, emptyState);
     // Simulate a state with extra files
     const stateWithExtra = {
       ...firstPlan.expectedState,
@@ -403,7 +403,7 @@ describe("prompts — buildConfig", () => {
       dryRun: false,
     };
     const config = buildConfig(prompts, { options: { nonInteractive: true } });
-    assert.equal(config.schemaVersion, SCHEMA_VERSION);
+    assert.equal(config.schemaVersion, schemaVersion);
     assert.equal(config.preset, "starter");
     assert.equal(config.options.force, true);
     assert.equal(config.options.nonInteractive, true);
@@ -428,7 +428,7 @@ describe("prompts — formatConfigSummary", () => {
   it("formats a config summary string", async () => {
     const { formatConfigSummary } = await import("../../setup/prompts.js");
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       preset: "starter",
       apps: ["user-app"] as unknown as string[],
       capabilities: ["postgres"] as unknown as string[],
@@ -446,7 +446,7 @@ describe("prompts — formatConfigSummary", () => {
   it("handles empty apps and capabilities", async () => {
     const { formatConfigSummary } = await import("../../setup/prompts.js");
     const config: NrbConfig = parseNrbConfig({
-      schemaVersion: SCHEMA_VERSION,
+      schemaVersion: schemaVersion,
       apps: [],
       capabilities: [],
     });

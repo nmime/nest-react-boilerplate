@@ -194,7 +194,53 @@ function createBackendTemplateFiles(
     // Shared library
     {
       path: `${base}/shared/lib/src/index.ts`,
-      contents: `export interface ${names.pascal}Dto {\n  id: string;\n  name: string;\n  createdAt: string;\n}\n\nexport interface Create${names.pascal}Dto {\n  name: string;\n}\n\nexport const ${permissionReadName(names)} = "${names.kebab}:read";\nexport const ${permissionWriteName(names)} = "${names.kebab}:write";\n`,
+      contents: `export interface ${names.pascal}Dto {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface Create${names.pascal}Dto {
+  name: string;
+}
+
+export const ${permissionReadName(names)} = "${names.kebab}:read";
+export const ${permissionWriteName(names)} = "${names.kebab}:write";
+`,
+    },
+    {
+      path: `${base}/shared/lib/src/index.spec.ts`,
+      contents: `import { describe, expect, it } from "vitest";
+import {
+  type Create${names.pascal}Dto,
+  type ${names.pascal}Dto,
+  ${permissionReadName(names)},
+  ${permissionWriteName(names)},
+} from "./index";
+
+describe("${names.pascal}Dto", () => {
+  it("exports valid read and write permission strings", () => {
+    expect(${permissionReadName(names)}).toBe("${names.kebab}:read");
+    expect(${permissionWriteName(names)}).toBe("${names.kebab}:write");
+  });
+
+  it("Create${names.pascal}Dto has a name property", () => {
+    const dto: Create${names.pascal}Dto = { name: "test" };
+    expect(dto.name).toBe("test");
+  });
+
+  it("${names.pascal}Dto has all required fields", () => {
+    const dto: ${names.pascal}Dto = {
+      id: "123e4567-e89b-12d3-a456-426614174000",
+      name: "Example",
+      createdAt: "2024-01-01T00:00:00.000Z",
+    };
+    expect(dto.id).toBe("123e4567-e89b-12d3-a456-426614174000");
+    expect(dto.name).toBe("Example");
+    expect(dto.createdAt).toBe("2024-01-01T00:00:00.000Z");
+  });
+});
+`,
     },
     projectJson(
       `${base}/shared/lib`,
@@ -263,6 +309,36 @@ function createBackendTemplateFiles(
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.ts`,
       contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override up(): void {\n    this.addSql('create table "${names.kebab.replaceAll("-", "_")}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll("-", "_")}_pkey" primary key ("id"));');\n  }\n\n  override down(): void {\n    this.addSql('drop table if exists "${names.kebab.replaceAll("-", "_")}" cascade;');\n  }\n}\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.spec.ts`,
+      contents: `import { describe, expect, it } from "vitest";
+import { Migration00000000000000Create${names.pascal} } from "./Migration00000000000000Create${names.pascal}";
+
+describe("Migration00000000000000Create${names.pascal}", () => {
+  it("up() generates CREATE TABLE SQL with required columns", () => {
+    const migration = new Migration00000000000000Create${names.pascal}();
+    migration.up();
+    const sql = migration.getSql();
+    expect(sql).toContain("create table");
+    expect(sql).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(sql).toContain("id");
+    expect(sql).toContain("name");
+    expect(sql).toContain("created_at");
+    expect(sql).toContain("primary key");
+  });
+
+  it("down() generates DROP TABLE SQL", () => {
+    const migration = new Migration00000000000000Create${names.pascal}();
+    migration.up();
+    migration.down();
+    const sql = migration.getSql();
+    expect(sql).toContain("drop table");
+    expect(sql).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(sql).toContain("cascade");
+  });
+});
+`,
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/index.ts`,

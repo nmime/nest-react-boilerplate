@@ -209,7 +209,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.spec.ts"],
+    include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts"],
     globals: false,
     coverage: fullCoverage(
       "${d}coverage/apps/backend/${projectName}",
@@ -412,8 +412,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "happy-dom",
-    include: ["**/*.spec.ts", "**/*.test.ts"],
-    passWithNoTests: true,
+    include: ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
+    passWithNoTests: false,
   },
 });
 `);

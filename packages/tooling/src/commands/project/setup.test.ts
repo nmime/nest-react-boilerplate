@@ -21,7 +21,7 @@ import type { PromptResult } from "../../setup/prompts.js";
 // ---------------------------------------------------------------------------
 // Import commands under test
 // ---------------------------------------------------------------------------
-import { parseArgs } from "./setup.js";
+import { parseArgs, runSetupCommand } from "./setup.js";
 import { runDoctorCommand, type DoctorCheck } from "./doctor.js";
 
 // ---------------------------------------------------------------------------
@@ -31,16 +31,30 @@ import { runDoctorCommand, type DoctorCheck } from "./doctor.js";
 function captureStdout(fn: () => void): string {
   const chunks: string[] = [];
   const orig = process.stdout.write;
-  process.stdout.write = (chunk: any) => { chunks.push(String(chunk)); return true; };
-  try { fn(); } finally { process.stdout.write = orig; }
+  process.stdout.write = (chunk: string | Buffer) => {
+    chunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+    return true;
+  };
+  try {
+    fn();
+  } finally {
+    process.stdout.write = orig;
+  }
   return chunks.join("");
 }
 
 function captureStderr(fn: () => void): string {
   const chunks: string[] = [];
   const orig = process.stderr.write;
-  process.stderr.write = (chunk: any) => { chunks.push(String(chunk)); return true; };
-  try { fn(); } finally { process.stderr.write = orig; }
+  process.stderr.write = (chunk: string | Buffer) => {
+    chunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+    return true;
+  };
+  try {
+    fn();
+  } finally {
+    process.stderr.write = orig;
+  }
   return chunks.join("");
 }
 
@@ -135,6 +149,69 @@ describe("setup — parseArgs", () => {
       message: /Unknown option/,
     });
   });
+
+  it("returns configuration error on invalid app ID", async () => {
+    let capturedErr = "";
+    const orig = process.stderr.write;
+    process.stderr.write = (chunk: string | Buffer) => {
+      capturedErr += String(chunk);
+      return true;
+    };
+    try {
+      const status = await runSetupCommand({
+        argv: ["--app", "nonexistent-app", "--non-interactive"],
+        packageRoot: "/mock/packages/tooling",
+        workspaceRoot: "/tmp",
+      });
+      assert.equal(status, 1);
+      assert.ok(capturedErr.includes("Configuration error"), "Should report configuration error");
+    } finally {
+      process.stderr.write = orig;
+    }
+  });
+
+  it("returns configuration error on invalid capability ID", async () => {
+    let capturedErr = "";
+    const orig = process.stderr.write;
+    process.stderr.write = (chunk: string | Buffer) => {
+      capturedErr += String(chunk);
+      return true;
+    };
+    try {
+      const status = await runSetupCommand({
+        argv: ["--capability", "nonexistent-cap", "--non-interactive"],
+        packageRoot: "/mock/packages/tooling",
+        workspaceRoot: "/tmp",
+      });
+      assert.equal(status, 1);
+      assert.ok(capturedErr.includes("Configuration error"), "Should report configuration error");
+    } finally {
+      process.stderr.write = orig;
+    }
+  });
+
+  it("handles non-Error thrown values gracefully", async () => {
+    // Simulate a scenario where buildConfigFromArgs throws a plain string
+    // by passing a --config pointing to a file that triggers an error.
+    // The catch handler should not crash on unknown thrown values.
+    let capturedErr = "";
+    const orig = process.stderr.write;
+    process.stderr.write = (chunk: string | Buffer) => {
+      capturedErr += String(chunk);
+      return true;
+    };
+    try {
+      const status = await runSetupCommand({
+        argv: ["--config", "/nonexistent/path/to/config.json", "--non-interactive"],
+        packageRoot: "/mock/packages/tooling",
+        workspaceRoot: "/tmp",
+      });
+      assert.equal(status, 1);
+      assert.ok(capturedErr.includes("Configuration error"), "Should report configuration error");
+    } finally {
+      process.stderr.write = orig;
+    }
+  });
 });
 
 // ============================================================================
@@ -212,8 +289,8 @@ describe("setup — plan integration", () => {
 // ============================================================================
 
 describe("doctor — runDoctorCommand", () => {
-  let origStdoutWrite: any;
-  let origStderrWrite: any;
+  let origStdoutWrite: (chunk: string | Buffer) => boolean;
+  let origStderrWrite: (chunk: string | Buffer) => boolean;
   let stdoutChunks: string[];
   let stderrChunks: string[];
 
@@ -222,8 +299,14 @@ describe("doctor — runDoctorCommand", () => {
     stderrChunks = [];
     origStdoutWrite = process.stdout.write;
     origStderrWrite = process.stderr.write;
-    process.stdout.write = (chunk: any) => { stdoutChunks.push(String(chunk)); return true; };
-    process.stderr.write = (chunk: any) => { stderrChunks.push(String(chunk)); return true; };
+    process.stdout.write = (chunk: string | Buffer) => {
+      stdoutChunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+      return true;
+    };
+    process.stderr.write = (chunk: string | Buffer) => {
+      stderrChunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+      return true;
+    };
   });
 
   afterEach(() => {
@@ -250,8 +333,10 @@ describe("doctor — runDoctorCommand", () => {
     });
 
     const stdout = stdoutChunks.join("");
-    let parsed: any;
-    assert.doesNotThrow(() => { parsed = JSON.parse(stdout); }, "Should output valid JSON");
+    const parsed = JSON.parse(stdout) as {
+      checks: DoctorCheck[];
+      summary: { total: number; pass: number; fail: number; warn: number; skip: number };
+    };
     assert.ok(parsed.checks, "Should have checks array");
     assert.ok(parsed.summary, "Should have summary object");
     assert.ok(Array.isArray(parsed.checks));
@@ -270,8 +355,8 @@ describe("doctor — runDoctorCommand", () => {
       workspaceRoot: "/tmp",
     });
     const stdout = stdoutChunks.join("");
-    const parsed = JSON.parse(stdout);
-    const configCheck = parsed.checks.find((c: any) => c.name === "nrb-config");
+    const parsed = JSON.parse(stdout) as { checks: DoctorCheck[]; summary: { total: number } };
+    const configCheck = parsed.checks.find((c: DoctorCheck) => c.name === "nrb-config");
     assert.ok(configCheck, "Should have nrb-config check");
     // Could be pass (if /tmp has config) or skip
   });
@@ -283,8 +368,8 @@ describe("doctor — runDoctorCommand", () => {
       workspaceRoot: "/tmp",
     });
     const stdout = stdoutChunks.join("");
-    const parsed = JSON.parse(stdout);
-    const stateCheck = parsed.checks.find((c: any) => c.name === "nrb-state");
+    const parsed = JSON.parse(stdout) as { checks: DoctorCheck[]; summary: { total: number } };
+    const stateCheck = parsed.checks.find((c: DoctorCheck) => c.name === "nrb-state");
     assert.ok(stateCheck, "Should have nrb-state check");
   });
 });

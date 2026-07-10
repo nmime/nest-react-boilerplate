@@ -172,11 +172,12 @@ export async function runSetupCommand(
   let config: NrbConfig;
   try {
     config = buildConfigFromArgs(args, workspaceRoot);
-  } catch (err: any) {
-    process.stderr.write(`Configuration error: ${err.message}\n`);
+  } catch (err: unknown) {
+    const msg = errorMessage(err);
+    process.stderr.write(`Configuration error: ${msg}\n`);
     if (args.json) {
       process.stdout.write(
-        JSON.stringify({ error: err.message, code: 1 }, null, 2) + "\n",
+        JSON.stringify({ error: msg, code: 1 }, null, 2) + "\n",
       );
     }
     return 1;
@@ -275,8 +276,14 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
       }
     }
 
-    // Expand dependencies
-    const expanded = expandDependencies(expandedApps as any, expandedCaps as any);
+    // Validate CLI-provided IDs before dependency expansion so the catalog
+    // receives the same typed IDs as file-based configuration.
+    const validated = parseNrbConfig({
+      schemaVersion: SCHEMA_VERSION,
+      apps: expandedApps,
+      capabilities: expandedCaps,
+    });
+    const expanded = expandDependencies(validated.apps, validated.capabilities);
 
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -410,4 +417,11 @@ Examples:
   nrb setup --config nrb.config.json         # apply from config file
   nrb setup --non-interactive --preset minimal  # CI mode`,
   );
+}
+
+/** Extract a safe error message from any thrown value. */
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return String(err);
 }

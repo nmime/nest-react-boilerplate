@@ -11,6 +11,12 @@ import { execFileSync } from "node:child_process";
 // Types
 // ---------------------------------------------------------------------------
 
+interface ChildProcessExecError {
+  status?: number | null;
+  stdout?: string | null;
+  stderr?: string | null;
+}
+
 export interface NxGeneratorResult {
   /** Whether the generator process exited successfully. */
   success: boolean;
@@ -65,12 +71,15 @@ function realNxGeneratorRunner(args: NxGeneratorArgs): NxGeneratorResult {
       stderr: "",
       exitCode: 0,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const status = err instanceof Error && "status" in err ? (err as ChildProcessExecError).status : 1;
+    const stdout = err instanceof Error && "stdout" in err ? String((err as ChildProcessExecError).stdout ?? "") : "";
+    const stderr = err instanceof Error && "stderr" in err ? String((err as ChildProcessExecError).stderr ?? "") : String(err);
     return {
       success: false,
-      stdout: truncate(err.stdout ?? "", 2048),
-      stderr: truncate(err.stderr ?? String(err), 2048),
-      exitCode: err.status ?? 1,
+      stdout: truncate(stdout, 2048),
+      stderr: truncate(stderr, 2048),
+      exitCode: typeof status === "number" ? status : 1,
     };
   }
 }

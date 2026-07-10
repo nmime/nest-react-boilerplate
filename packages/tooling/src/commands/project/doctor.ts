@@ -115,8 +115,8 @@ function checkNrbConfig(workspaceRoot: string): DoctorCheck {
       return { name: "nrb-config", status: "warn", message: `Config schema version ${result.data.schemaVersion} — expected ${SCHEMA_VERSION}` };
     }
     return { name: "nrb-config", status: "pass", message: `nrb.config.json valid (v${result.data.schemaVersion})` };
-  } catch (err: any) {
-    return { name: "nrb-config", status: "fail", message: `Failed to parse nrb.config.json: ${err.message}` };
+  } catch (err: unknown) {
+    return { name: "nrb-config", status: "fail", message: `Failed to parse nrb.config.json: ${errorMessage(err)}` };
   }
 }
 
@@ -133,8 +133,8 @@ function checkNrbState(workspaceRoot: string): DoctorCheck {
     }
     const fileCount = Object.keys(state.files).length;
     return { name: "nrb-state", status: "pass", message: `.nrb/state.json valid (${fileCount} tracked files)` };
-  } catch (err: any) {
-    return { name: "nrb-state", status: "fail", message: `Failed to parse .nrb/state.json: ${err.message}` };
+  } catch (err: unknown) {
+    return { name: "nrb-state", status: "fail", message: `Failed to parse .nrb/state.json: ${errorMessage(err)}` };
   }
 }
 
@@ -154,8 +154,8 @@ function checkToolingPackage(workspaceRoot: string): DoctorCheck {
       return { name: "tooling-package", status: "warn", message: "@repo/tooling missing nrb bin entry" };
     }
     return { name: "tooling-package", status: "pass", message: `@repo/tooling v${pkg.version} — repo-tooling + nrb bins present` };
-  } catch (err: any) {
-    return { name: "tooling-package", status: "fail", message: `Failed to parse tooling package.json: ${err.message}` };
+  } catch (err: unknown) {
+    return { name: "tooling-package", status: "fail", message: `Failed to parse tooling package.json: ${errorMessage(err)}` };
   }
 }
 
@@ -228,4 +228,11 @@ export async function runDoctorFromContext(
   context: CommandContext,
 ): Promise<number> {
   return runDoctorCommand(context);
+}
+
+/** Extract a safe error message from any thrown value. */
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return String(err);
 }

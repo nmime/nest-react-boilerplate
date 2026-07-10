@@ -264,7 +264,7 @@ function createFrontendLib(
     types: "./src/index.ts",
     type: "module",
     scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
-    dependencies: { react: "^19.0.0" },
+    dependencies: {},
     devDependencies: {},
   }, null, 2) + "\n");
 

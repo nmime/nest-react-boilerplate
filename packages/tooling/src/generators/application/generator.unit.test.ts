@@ -122,7 +122,8 @@ describe("application generator", () => {
 
       const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8")!;
       assert.ok(mainContent.includes("MyApiModule"));
-      assert.ok(mainContent.includes("void bootstrap()"), "main.ts must use void bootstrap() to avoid floating promise");
+      assert.ok(mainContent.includes("void bootstrapNestApi"), "main.ts must use void bootstrapNestApi() like existing backend apps");
+      assert.ok(mainContent.includes("@app/backend-common-bootstrap"), "main.ts must import from @app/backend-common-bootstrap");
     });
 
     it("main.ts has no unhandled-floating-promise lint errors", async () => {
@@ -132,8 +133,8 @@ describe("application generator", () => {
       await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
 
       const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8")!;
-      // Must use void keyword for async call
-      assert.ok(/\bvoid\s+bootstrap/.test(mainContent), "bootstrap call must be void'd");
+      // Must use void keyword for bootstrapNestApi call
+      assert.ok(/\bvoid\s+bootstrapNestApi/.test(mainContent), "bootstrapNestApi call must be void'd");
     });
 
     it("spec file imports vitest explicitly", async () => {

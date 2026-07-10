@@ -154,16 +154,19 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts", "src/**/*.ts"],
   }, null, 2) + "\n");
 
-  // src/main.ts — void bootstrap() to handle floating promise
+  // src/main.ts — uses bootstrapNestApi like existing backend apps
   tree.write(`${srcRoot}/main.ts`,
-`import { ${names.pascal}Module } from "./${names.kebab}.module";
+`import {
+  bootstrapNestApi,
+  resolveDefaultDevelopmentCorsOrigins,
+} from "@app/backend-common-bootstrap";
+import { ${names.pascal}Module } from "./${names.kebab}.module";
 
-async function bootstrap() {
-  // Wire up the module — replace with real bootstrap logic
-  console.log("Starting ${names.title}...");
-}
-
-void bootstrap();
+void bootstrapNestApi(${names.pascal}Module, {
+  appName: "${projectName}",
+  corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
+  defaultPort: 3000,
+});
 `);
 
   // src/app.module.ts
@@ -417,14 +420,22 @@ export default defineConfig({
 
   // src/main.tsx
   tree.write(`${srcRoot}/main.tsx`,
-`import React from "react";
-import ReactDOM from "react-dom/client";
+`import { StrictMode } from "react";
+import * as ReactDOM from "react-dom/client";
 import { App } from "./app";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+const container = document.getElementById("root");
+
+if (!container) {
+  throw new Error('Missing required root element with id "root".');
+}
+
+const root = ReactDOM.createRoot(container);
+
+root.render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 );
 `);
 

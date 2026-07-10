@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "@repo/tooling/setup",
+  "title": "Setup",
+  "description": "Configure boilerplate setup with presets and capabilities",
+  "type": "object",
+  "properties": {
+    "preset": {
+      "type": "string",
+      "description": "Preset configuration to apply",
+      "enum": ["minimal", "starter", "fullstack", "enterprise", "bots"],
+      "x-priority": "important"
+    },
+    "apps": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit list of app IDs to enable (overrides preset defaults)",
+      "default": [],
+      "x-priority": "important"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicit list of capability IDs to enable",
+      "default": [],
+      "x-priority": "important"
+    },
+    "prune": {
+      "type": "boolean",
+      "description": "Remove files no longer needed after config change",
+      "default": false
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Force overwrite generated files without conflict check",
+      "default": false
+    },
+    "dryRun": {
+      "type": "boolean",
+      "description": "Output the plan as JSON instead of executing",
+      "default": false
+    }
+  },
+  "required": []
+}

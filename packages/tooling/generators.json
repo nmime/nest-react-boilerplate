@@ -1,0 +1,26 @@
+{
+  "name": "@repo/tooling",
+  "version": "0.0.0",
+  "generators": {
+    "setup": {
+      "factory": "./src/generators/setup/generator.ts",
+      "schema": "./src/generators/setup/schema.json",
+      "description": "Configure boilerplate setup (nrb.config.json, presets, capabilities)"
+    },
+    "application": {
+      "factory": "./src/generators/application/generator.ts",
+      "schema": "./src/generators/application/schema.json",
+      "description": "Generate a new application (frontend or backend) following repository conventions"
+    },
+    "library": {
+      "factory": "./src/generators/library/generator.ts",
+      "schema": "./src/generators/library/schema.json",
+      "description": "Generate a new library (backend, frontend, or common) following repository conventions"
+    },
+    "feature": {
+      "factory": "./src/generators/feature/generator.ts",
+      "schema": "./src/generators/feature/schema.json",
+      "description": "Generate a vertical-slice feature across backend and frontend layers"
+    }
+  }
+}

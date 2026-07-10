@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "@repo/tooling/feature",
+  "title": "Feature",
+  "description": "Generate a vertical-slice feature across backend and frontend layers",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Feature name (kebab-case or multi-word; auto-converted to kebab-case)",
+      "x-prompt": "What name would you like to give your feature?",
+      "x-priority": "important"
+    },
+    "apiApp": {
+      "type": "string",
+      "description": "Backend API application that owns this feature",
+      "default": "user-app-api",
+      "x-priority": "important"
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Overwrite existing files without prompting",
+      "default": false,
+      "x-priority": "optional"
+    },
+    "dryRun": {
+      "type": "boolean",
+      "description": "Show what would be generated without writing files",
+      "default": false,
+      "x-priority": "optional"
+    },
+    "skipFormat": {
+      "type": "boolean",
+      "description": "Skip formatting the changed files",
+      "default": false,
+      "x-priority": "optional"
+    }
+  },
+  "required": ["name"]
+}

@@ -81,7 +81,7 @@
     "helm:validate": "bash scripts/validate-helm.sh",
     "generate:feature": "pnpm --filter @repo/tooling tooling project generate-vertical-slice",
     "setup": "pnpm --filter @repo/tooling tooling project setup",
-    "nrb": "pnpm --filter @repo/tooling exec nrb",
+    "nrb": "pnpm --filter @repo/tooling tooling",
     "tooling:static-check": "pnpm --filter @repo/tooling tooling tooling static-check",
     "ci:workflows:check": "node scripts/validate-github-workflows.mjs",
     "branch:cleanup:check": "pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD",

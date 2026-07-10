@@ -4,13 +4,13 @@ This page documents the five canonical presets, all supported apps and capabilit
 
 ## Presets
 
-| Preset       | Description                                      | Apps (before expansion)                         | Capabilities (before expansion)         |
-| ------------ | ------------------------------------------------ | ----------------------------------------------- | --------------------------------------- |
-| `minimal`    | Single API with auth — minimal backend footprint | `auth-app-api`, `user-app-api`                  | `postgres`                              |
-| `starter`    | One frontend + backend + auth — MVP-ready        | `user-app`, `user-app-api`, `auth-app-api`      | `postgres`, `design-tokens`, `i18n`     |
+| Preset       | Description                                      | Apps (before expansion)                                                                                  | Capabilities (before expansion)                                          |
+| ------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `minimal`    | Single API with auth — minimal backend footprint | `auth-app-api`, `user-app-api`                                                                           | `postgres`                                                               |
+| `starter`    | One frontend + backend + auth — MVP-ready        | `user-app`, `user-app-api`, `auth-app-api`                                                               | `postgres`, `design-tokens`, `i18n`                                      |
 | `fullstack`  | All core apps with standard capabilities         | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `fullstack-e2e` | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
-| `enterprise` | Every supported app and capability               | All apps                                        | All capabilities                        |
-| `bots`       | Telegram + Discord bots with workers             | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `telegram-bot-worker`, `discord-app-api` | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel` |
+| `enterprise` | Every supported app and capability               | All apps                                                                                                 | All capabilities                                                         |
+| `bots`       | Telegram + Discord bots with workers             | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `telegram-bot-worker`, `discord-app-api`             | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
 
 Presets act as starting points. Explicit `apps` and `capabilities` in the config override or extend the preset. Transitive dependencies are auto-expanded.
 
@@ -18,50 +18,50 @@ Presets act as starting points. Explicit `apps` and `capabilities` in the config
 
 ### Frontend apps
 
-| ID             | Label           | Platform  | Requires capabilities       | Requires apps    |
-| -------------- | --------------- | --------- | --------------------------- | ---------------- |
-| `admin-app`    | Admin Dashboard | frontend  | `authz`, `design-tokens`    | `admin-app-api`  |
-| `user-app`     | User Application| frontend  | `design-tokens`             | `user-app-api`   |
-| `landing-app`  | Landing Page    | frontend  | *(none)*                    | *(none)*         |
-| `site-app`     | Marketing Site  | frontend  | *(none)*                    | *(none)*         |
-| `mobile-app`   | Mobile App      | frontend  | `design-tokens`             | `user-app-api`   |
+| ID            | Label            | Platform | Requires capabilities    | Requires apps   |
+| ------------- | ---------------- | -------- | ------------------------ | --------------- |
+| `admin-app`   | Admin Dashboard  | frontend | `authz`, `design-tokens` | `admin-app-api` |
+| `user-app`    | User Application | frontend | `design-tokens`          | `user-app-api`  |
+| `landing-app` | Landing Page     | frontend | _(none)_                 | _(none)_        |
+| `site-app`    | Marketing Site   | frontend | _(none)_                 | _(none)_        |
+| `mobile-app`  | Mobile App       | frontend | `design-tokens`          | `user-app-api`  |
 
 ### Backend apps
 
-| ID                  | Label               | Platform | Requires capabilities       | Requires apps        |
-| ------------------- | ------------------- | -------- | --------------------------- | -------------------- |
-| `admin-app-api`     | Admin API           | backend  | `postgres`, `authz`         | *(none)*             |
-| `user-app-api`      | User API            | backend  | `postgres`                  | *(none)*             |
-| `auth-app-api`      | Auth API            | backend  | `postgres`                  | *(none)*             |
-| `discord-app-api`   | Discord Bot API     | backend  | `discord-bot`, `postgres`   | *(none)*             |
-| `telegram-bot-api`  | Telegram Bot API    | backend  | `telegram-bot`, `postgres`  | *(none)*             |
-| `telegram-bot-worker` | Telegram Bot Worker | backend | `telegram-bot`, `redis`     | `telegram-bot-api`   |
+| ID                    | Label               | Platform | Requires capabilities      | Requires apps      |
+| --------------------- | ------------------- | -------- | -------------------------- | ------------------ |
+| `admin-app-api`       | Admin API           | backend  | `postgres`, `authz`        | _(none)_           |
+| `user-app-api`        | User API            | backend  | `postgres`                 | _(none)_           |
+| `auth-app-api`        | Auth API            | backend  | `postgres`                 | _(none)_           |
+| `discord-app-api`     | Discord Bot API     | backend  | `discord-bot`, `postgres`  | _(none)_           |
+| `telegram-bot-api`    | Telegram Bot API    | backend  | `telegram-bot`, `postgres` | _(none)_           |
+| `telegram-bot-worker` | Telegram Bot Worker | backend  | `telegram-bot`, `redis`    | `telegram-bot-api` |
 
 ### E2E apps
 
-| ID              | Label               | Platform | Requires capabilities | Requires apps              |
-| --------------- | ------------------- | -------- | --------------------- | -------------------------- |
-| `fullstack-e2e` | Fullstack E2E Tests | e2e      | *(none)*              | `auth-app-api`, `user-app-api` |
+| ID              | Label               | Platform | Requires capabilities | Requires apps                  |
+| --------------- | ------------------- | -------- | --------------------- | ------------------------------ |
+| `fullstack-e2e` | Fullstack E2E Tests | e2e      | _(none)_              | `auth-app-api`, `user-app-api` |
 
 ## Supported capabilities
 
-| ID                  | Label                          | Requires capabilities | Conflicts with |
-| ------------------- | ------------------------------ | --------------------- | -------------- |
-| `i18n`              | Internationalization           | *(none)*              | *(none)*       |
-| `analytics`         | Analytics Tracking             | *(none)*              | *(none)*       |
-| `websockets`        | WebSockets                     | *(none)*              | *(none)*       |
-| `feature-flags`     | Feature Flags                  | *(none)*              | *(none)*       |
-| `notifications`     | Notifications                  | `redis`               | *(none)*       |
-| `design-tokens`     | Design Tokens                  | *(none)*              | *(none)*       |
-| `authz`             | Authorization                  | *(none)*              | *(none)*       |
-| `postgres`          | PostgreSQL Database            | *(none)*              | *(none)*       |
-| `redis`             | Redis Cache                    | *(none)*              | *(none)*       |
-| `s3`                | S3 Object Storage              | *(none)*              | *(none)*       |
-| `nats`              | NATS Messaging                 | *(none)*              | *(none)*       |
-| `otel`              | OpenTelemetry Observability    | *(none)*              | *(none)*       |
-| `swagger`           | Swagger API Docs               | *(none)*              | *(none)*       |
-| `telegram-bot`      | Telegram Bot Integration       | *(none)*              | *(none)*       |
-| `discord-bot`       | Discord Bot Integration        | *(none)*              | *(none)*       |
+| ID              | Label                       | Requires capabilities | Conflicts with |
+| --------------- | --------------------------- | --------------------- | -------------- |
+| `i18n`          | Internationalization        | _(none)_              | _(none)_       |
+| `analytics`     | Analytics Tracking          | _(none)_              | _(none)_       |
+| `websockets`    | WebSockets                  | _(none)_              | _(none)_       |
+| `feature-flags` | Feature Flags               | _(none)_              | _(none)_       |
+| `notifications` | Notifications               | `redis`               | _(none)_       |
+| `design-tokens` | Design Tokens               | _(none)_              | _(none)_       |
+| `authz`         | Authorization               | _(none)_              | _(none)_       |
+| `postgres`      | PostgreSQL Database         | _(none)_              | _(none)_       |
+| `redis`         | Redis Cache                 | _(none)_              | _(none)_       |
+| `s3`            | S3 Object Storage           | _(none)_              | _(none)_       |
+| `nats`          | NATS Messaging              | _(none)_              | _(none)_       |
+| `otel`          | OpenTelemetry Observability | _(none)_              | _(none)_       |
+| `swagger`       | Swagger API Docs            | _(none)_              | _(none)_       |
+| `telegram-bot`  | Telegram Bot Integration    | _(none)_              | _(none)_       |
+| `discord-bot`   | Discord Bot Integration     | _(none)_              | _(none)_       |
 
 ## Dependency expansion rules
 

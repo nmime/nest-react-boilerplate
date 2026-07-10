@@ -75,14 +75,14 @@ tooling project:generate-vertical-slice invoices --api-app user-app-api --dry-ru
 
 Generated files:
 
-| Path                                           | Description                            |
-| ---------------------------------------------- | -------------------------------------- |
-| `libs/backend/feature/<name>/shared/lib/`      | Shared DTOs and permissions            |
-| `libs/backend/feature/<name>/main/lib/`        | NestJS module, controller, service     |
-| `libs/backend/postgres/main/<name>/lib/`       | PostgreSQL entity and migration        |
-| `libs/frontend/api-client/lib/src/features/`   | Frontend API client stub               |
-| `apps/frontend/app/src/app/features/<name>/`   | React page stub                        |
-| `docs/features/<name>/test-checklist.md`       | Test checklist                         |
+| Path                                         | Description                        |
+| -------------------------------------------- | ---------------------------------- |
+| `libs/backend/feature/<name>/shared/lib/`    | Shared DTOs and permissions        |
+| `libs/backend/feature/<name>/main/lib/`      | NestJS module, controller, service |
+| `libs/backend/postgres/main/<name>/lib/`     | PostgreSQL entity and migration    |
+| `libs/frontend/api-client/lib/src/features/` | Frontend API client stub           |
+| `apps/frontend/app/src/app/features/<name>/` | React page stub                    |
+| `docs/features/<name>/test-checklist.md`     | Test checklist                     |
 
 Also updates `tsconfig.base.json` with three path aliases:
 
@@ -94,26 +94,26 @@ Also updates `tsconfig.base.json` with three path aliases:
 
 The workspace configures these plugins and targets in `nx.json`:
 
-| Plugin                | Target             | Description                          |
-| --------------------- | ------------------ | ------------------------------------ |
-| `@nx/eslint/plugin`   | `lint`             | ESLint for all projects              |
-| `@nx/vite/plugin`     | `build`            | Vite build                           |
-|                       | `test`             | Vitest unit tests                    |
-|                       | `serve`            | Dev server                           |
-|                       | `dev`              | Dev server alias                     |
-|                       | `preview`          | Preview built output                 |
-|                       | `serve-static`     | Serve static files                   |
-|                       | `typecheck`        | TypeScript type checking             |
-|                       | `build-deps`       | Build dependencies                   |
-|                       | `watch-deps`       | Watch dependencies                   |
+| Plugin              | Target         | Description              |
+| ------------------- | -------------- | ------------------------ |
+| `@nx/eslint/plugin` | `lint`         | ESLint for all projects  |
+| `@nx/vite/plugin`   | `build`        | Vite build               |
+|                     | `test`         | Vitest unit tests        |
+|                     | `serve`        | Dev server               |
+|                     | `dev`          | Dev server alias         |
+|                     | `preview`      | Preview built output     |
+|                     | `serve-static` | Serve static files       |
+|                     | `typecheck`    | TypeScript type checking |
+|                     | `build-deps`   | Build dependencies       |
+|                     | `watch-deps`   | Watch dependencies       |
 
 ## Named inputs
 
-| Input            | Contents                                                   |
-| ---------------- | ---------------------------------------------------------- |
-| `default`        | All files in the project root, plus `sharedGlobals`        |
-| `production`     | `default` minus test files, stories, and spec configs      |
-| `sharedGlobals`  | `tsconfig.base.json`, `eslint.config.js`, `package.json`, `pnpm-lock.yaml` |
+| Input           | Contents                                                                   |
+| --------------- | -------------------------------------------------------------------------- |
+| `default`       | All files in the project root, plus `sharedGlobals`                        |
+| `production`    | `default` minus test files, stories, and spec configs                      |
+| `sharedGlobals` | `tsconfig.base.json`, `eslint.config.js`, `package.json`, `pnpm-lock.yaml` |
 
 ## Common Nx commands
 
@@ -134,24 +134,24 @@ nx show project <name>          # Show project details
 
 ## Installed Nx packages
 
-| Package                | Version |
-| ---------------------- | ------- |
-| `nx`                   | 23.0.1  |
-| `@nx/js`               | 23.0.1  |
-| `@nx/eslint`           | 23.0.1  |
-| `@nx/jest`             | 23.0.1  |
-| `@nx/devkit`           | 23.0.1  |
-| `@nx/eslint-plugin`    | 23.0.1  |
-| `@nx/module-federation`| 23.0.1  |
-| `@nx/nest`             | 23.0.1  |
-| `@nx/node`             | 23.0.1  |
-| `@nx/react`            | 23.0.1  |
-| `@nx/rollup`           | 23.0.1  |
-| `@nx/vite`             | 23.0.1  |
-| `@nx/vitest`           | 23.0.1  |
-| `@nx/web`              | 23.0.1  |
-| `@nx/webpack`          | 23.0.1  |
-| `@nx/docker`           | 23.0.1  |
+| Package                 | Version |
+| ----------------------- | ------- |
+| `nx`                    | 23.0.1  |
+| `@nx/js`                | 23.0.1  |
+| `@nx/eslint`            | 23.0.1  |
+| `@nx/jest`              | 23.0.1  |
+| `@nx/devkit`            | 23.0.1  |
+| `@nx/eslint-plugin`     | 23.0.1  |
+| `@nx/module-federation` | 23.0.1  |
+| `@nx/nest`              | 23.0.1  |
+| `@nx/node`              | 23.0.1  |
+| `@nx/react`             | 23.0.1  |
+| `@nx/rollup`            | 23.0.1  |
+| `@nx/vite`              | 23.0.1  |
+| `@nx/vitest`            | 23.0.1  |
+| `@nx/web`               | 23.0.1  |
+| `@nx/webpack`           | 23.0.1  |
+| `@nx/docker`            | 23.0.1  |
 
 ## Next steps
 

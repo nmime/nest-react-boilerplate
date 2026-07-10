@@ -45,7 +45,7 @@ Then add the ID to the enum in `schema.ts`:
 ```typescript
 export const BACKEND_APP_IDS = [
   // ... existing ...
-  "my-new-app",
+  'my-new-app',
 ] as const;
 ```
 
@@ -68,7 +68,7 @@ Then add the ID to the enum in `schema.ts`:
 ```typescript
 export const CAPABILITY_IDS = [
   // ... existing ...
-  "my-capability",
+  'my-capability',
 ] as const;
 ```
 
@@ -90,7 +90,7 @@ Then add the ID to `PRESET_IDS` in `schema.ts`:
 ```typescript
 export const PRESET_IDS = [
   // ... existing ...
-  "my-preset",
+  'my-preset',
 ] as const;
 ```
 
@@ -98,11 +98,11 @@ export const PRESET_IDS = [
 
 The planner produces three types of operations:
 
-| Operation | Description |
-| --------- | ----------- |
-| `createFile(path, content)` | Create a new file with the given content. |
+| Operation                   | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `createFile(path, content)` | Create a new file with the given content.    |
 | `updateFile(path, content)` | Overwrite an existing file with new content. |
-| `deleteFile(path)`          | Remove a file (only when `prune: true`). |
+| `deleteFile(path)`          | Remove a file (only when `prune: true`).     |
 
 To add new operations, edit `packages/tooling/src/setup/planner.ts`. The `plan()` function:
 
@@ -116,8 +116,8 @@ To add custom file generation, follow the pattern of `generateConfigFile()` and 
 ```typescript
 export function generateCustomFile(config: NrbConfig): { path: string; content: string } {
   return {
-    path: ".nrb/custom.json",
-    content: JSON.stringify(config, null, 2) + "\n",
+    path: '.nrb/custom.json',
+    content: JSON.stringify(config, null, 2) + '\n',
   };
 }
 ```
@@ -131,15 +131,27 @@ The apply engine uses an adapter interface defined in `packages/tooling/src/setu
 To add a custom adapter (e.g., for testing or virtual filesystems):
 
 ```typescript
-import type { FilesystemAdapter } from "./filesystem.js";
+import type { FilesystemAdapter } from './filesystem.js';
 
 export const mockAdapter: FilesystemAdapter = {
-  readFile(path) { /* ... */ },
-  writeFile(path, content) { /* ... */ },
-  deleteFile(path) { /* ... */ },
-  exists(path) { /* ... */ },
-  mkdir(dir) { /* ... */ },
-  readDir(dir) { /* ... */ },
+  readFile(path) {
+    /* ... */
+  },
+  writeFile(path, content) {
+    /* ... */
+  },
+  deleteFile(path) {
+    /* ... */
+  },
+  exists(path) {
+    /* ... */
+  },
+  mkdir(dir) {
+    /* ... */
+  },
+  readDir(dir) {
+    /* ... */
+  },
 };
 ```
 
@@ -175,24 +187,16 @@ To add support configs, edit `createSupportConfigFiles()`.
 Edit `packages/tooling/src/cli.ts`:
 
 ```typescript
-register(
-  "my:command",
-  "Description of my command.",
-  ({ argv, workspaceRoot }) => {
-    // Your implementation
-    return 0;
-  },
-);
+register('my:command', 'Description of my command.', ({ argv, workspaceRoot }) => {
+  // Your implementation
+  return 0;
+});
 ```
 
 For script-based commands (lives in `commands/`):
 
 ```typescript
-registerScript(
-  "my:command",
-  "Description of my command.",
-  "my/command.ts",
-);
+registerScript('my:command', 'Description of my command.', 'my/command.ts');
 ```
 
 Then create `packages/tooling/src/commands/my/command.ts`.

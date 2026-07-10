@@ -4,12 +4,12 @@ Migrate from legacy `init:project` and `generate:feature` scripts to the NRB set
 
 ## What changed
 
-| Legacy command                    | Replacement                                    | Notes                                           |
-| --------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
-| `pnpm init:project`               | `nrb setup`                                    | Interactive wizard replaces placeholder init.   |
-| `pnpm generate:feature <name>`    | `nrb add feature <name>`                       | Same vertical-slice engine, unified CLI.        |
-| Manual `project.json` edits       | `nrb add app <name>` / `nrb add lib <name>`    | Nx generators for new apps and libraries.       |
-| Hand-authored config files        | `nrb setup --config nrb.config.json`           | Schema-validated, idempotent configuration.     |
+| Legacy command                 | Replacement                                 | Notes                                         |
+| ------------------------------ | ------------------------------------------- | --------------------------------------------- |
+| `pnpm init:project`            | `nrb setup`                                 | Interactive wizard replaces placeholder init. |
+| `pnpm generate:feature <name>` | `nrb add feature <name>`                    | Same vertical-slice engine, unified CLI.      |
+| Manual `project.json` edits    | `nrb add app <name>` / `nrb add lib <name>` | Nx generators for new apps and libraries.     |
+| Hand-authored config files     | `nrb setup --config nrb.config.json`        | Schema-validated, idempotent configuration.   |
 
 ## Compatibility guarantees
 

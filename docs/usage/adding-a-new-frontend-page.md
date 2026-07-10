@@ -4,13 +4,13 @@ Step-by-step guide to adding a route and page to one of the frontend apps.
 
 ## 1. Pick the target app
 
-| App           | Path                          | Framework          | Use case                        |
-| ------------- | ----------------------------- | ------------------ | ------------------------------- |
-| `admin-app`   | `apps/frontend/admin`         | React + Vite       | Admin dashboard pages           |
-| `user-app`    | `apps/frontend/app`           | React + Vite       | User-facing pages               |
-| `landing-app` | `apps/frontend/landing`       | Astro              | Public marketing pages          |
-| `site-app`    | `apps/frontend/site`          | Vike + React SSR   | SSR product/user pages          |
-| `mobile-app`  | `apps/frontend/mobile`        | Expo/React Native  | Mobile app screens              |
+| App           | Path                    | Framework         | Use case               |
+| ------------- | ----------------------- | ----------------- | ---------------------- |
+| `admin-app`   | `apps/frontend/admin`   | React + Vite      | Admin dashboard pages  |
+| `user-app`    | `apps/frontend/app`     | React + Vite      | User-facing pages      |
+| `landing-app` | `apps/frontend/landing` | Astro             | Public marketing pages |
+| `site-app`    | `apps/frontend/site`    | Vike + React SSR  | SSR product/user pages |
+| `mobile-app`  | `apps/frontend/mobile`  | Expo/React Native | Mobile app screens     |
 
 ## 2. Scaffold with the feature generator (recommended)
 
@@ -149,7 +149,7 @@ export function MyFeaturePage() {
 
   return (
     <div>
-      {data.map(item => (
+      {data.map((item) => (
         <Card key={item.id}>{item.name}</Card>
       ))}
     </div>

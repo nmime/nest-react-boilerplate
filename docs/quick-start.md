@@ -4,12 +4,12 @@ Get the Nest React Boilerplate running locally in under five minutes.
 
 ## Prerequisites
 
-| Requirement       | Version                  | How to check                          |
-| ----------------- | ------------------------ | ------------------------------------- |
-| Node.js           | `>=24 <25`               | `node --version`                      |
-| pnpm              | `11.11.0` (via Corepack) | `pnpm --version`                      |
-| Docker & Compose  | any recent version       | `docker --version`                    |
-| Git               | any recent version       | `git --version`                       |
+| Requirement      | Version                  | How to check       |
+| ---------------- | ------------------------ | ------------------ |
+| Node.js          | `>=24 <25`               | `node --version`   |
+| pnpm             | `11.11.0` (via Corepack) | `pnpm --version`   |
+| Docker & Compose | any recent version       | `docker --version` |
+| Git              | any recent version       | `git --version`    |
 
 ### Install Node.js and pnpm
 
@@ -118,13 +118,13 @@ pnpm exec nx serve admin-app-api
 
 ### Default local ports
 
-| App              | Port | Framework       |
-| ---------------- | ---- | --------------- |
-| admin-app        | 4200 | React + Vite    |
-| user-app         | 4201 | React + Vite    |
-| landing-app      | 4202 | Astro           |
-| site-app         | 4203 | Vike + React    |
-| mobile-app       | 4300 | Expo/React Native |
+| App         | Port | Framework         |
+| ----------- | ---- | ----------------- |
+| admin-app   | 4200 | React + Vite      |
+| user-app    | 4201 | React + Vite      |
+| landing-app | 4202 | Astro             |
+| site-app    | 4203 | Vike + React      |
+| mobile-app  | 4300 | Expo/React Native |
 
 Start Vike: `pnpm exec nx serve site-app`. Start Expo: `pnpm exec nx serve mobile-app`.
 

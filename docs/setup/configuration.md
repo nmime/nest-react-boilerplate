@@ -74,16 +74,16 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 
 ## Configuration schema
 
-| Field               | Type     | Description                                       |
-| ------------------- | -------- | ------------------------------------------------- |
-| `schemaVersion`     | `string` | Must be `"1.0.0"`.                                |
-| `preset`            | `string` | Optional. One of: `minimal`, `starter`, `fullstack`, `enterprise`, `bots`. |
-| `apps`              | `string[]` | List of app IDs to enable.                        |
-| `capabilities`      | `string[]` | List of capability IDs to enable.                 |
-| `options.prune`     | `boolean` | Remove files no longer needed (default `false`).  |
-| `options.force`     | `boolean` | Overwrite conflicts without asking (default `false`). |
-| `options.dryRun`    | `boolean` | Show plan only (default `false`).                 |
-| `options.nonInteractive` | `boolean` | CI mode with defaults (default `false`).          |
+| Field                    | Type       | Description                                                                |
+| ------------------------ | ---------- | -------------------------------------------------------------------------- |
+| `schemaVersion`          | `string`   | Must be `"1.0.0"`.                                                         |
+| `preset`                 | `string`   | Optional. One of: `minimal`, `starter`, `fullstack`, `enterprise`, `bots`. |
+| `apps`                   | `string[]` | List of app IDs to enable.                                                 |
+| `capabilities`           | `string[]` | List of capability IDs to enable.                                          |
+| `options.prune`          | `boolean`  | Remove files no longer needed (default `false`).                           |
+| `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                      |
+| `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                          |
+| `options.nonInteractive` | `boolean`  | CI mode with defaults (default `false`).                                   |
 
 Unknown top-level keys are rejected with a clear error. Every field is validated against an explicit enum.
 
@@ -114,17 +114,17 @@ pnpm --filter @repo/tooling tooling doctor
 
 ### Checks performed
 
-| Check              | Status   | Description                                      |
-| ------------------ | -------- | ------------------------------------------------ |
-| `node-version`     | pass/fail/warn | Node.js version (>=18 required, >=20 recommended). |
-| `pnpm`             | pass/fail | pnpm availability and version.                   |
-| `docker`           | pass/skip | Docker availability (optional for E2E).          |
-| `manifests`        | pass/fail | `package.json`, `tsconfig.base.json` present.    |
-| `lock-file`        | pass/warn | `pnpm-lock.yaml` present.                        |
-| `nx-graph`         | pass/warn | Nx project graph resolves.                       |
-| `nrb-config`       | pass/fail/warn/skip | `nrb.config.json` validity.             |
-| `nrb-state`        | pass/fail/warn/skip | `.nrb/state.json` consistency.          |
-| `tooling-package`  | pass/fail/warn | `@repo/tooling` bin entries.                |
+| Check             | Status              | Description                                        |
+| ----------------- | ------------------- | -------------------------------------------------- |
+| `node-version`    | pass/fail/warn      | Node.js version (>=18 required, >=20 recommended). |
+| `pnpm`            | pass/fail           | pnpm availability and version.                     |
+| `docker`          | pass/skip           | Docker availability (optional for E2E).            |
+| `manifests`       | pass/fail           | `package.json`, `tsconfig.base.json` present.      |
+| `lock-file`       | pass/warn           | `pnpm-lock.yaml` present.                          |
+| `nx-graph`        | pass/warn           | Nx project graph resolves.                         |
+| `nrb-config`      | pass/fail/warn/skip | `nrb.config.json` validity.                        |
+| `nrb-state`       | pass/fail/warn/skip | `.nrb/state.json` consistency.                     |
+| `tooling-package` | pass/fail/warn      | `@repo/tooling` bin entries.                       |
 
 ### JSON output
 

@@ -87,7 +87,7 @@ services:
     environment:
       - PORT=3010
     ports:
-      - "3010:3010"
+      - '3010:3010'
     depends_on:
       - postgres
 ```

@@ -56,16 +56,16 @@ nrb setup              # apply
 
 ### `nrb doctor` shows failed checks
 
-| Check          | Symptom                              | Fix                                                    |
-| -------------- | ------------------------------------ | ------------------------------------------------------ |
-| `node-version` | `Node.js v16.x.x — minimum 18.x required` | `nvm use` or install Node.js >=24. |
-| `pnpm`         | `pnpm not found`                     | `corepack enable && corepack prepare pnpm@11.11.0 --activate`. |
-| `docker`       | `Docker not available`               | Install Docker Desktop or Docker Engine. Marked as optional for E2E. |
-| `manifests`    | `Missing: package.json`              | Check that you're in the workspace root.               |
-| `lock-file`    | `pnpm-lock.yaml not found`           | Run `pnpm install`.                                    |
-| `nx-graph`     | `Unable to resolve Nx project graph` | Run `pnpm install` and check for TypeScript errors in `project.json` files. |
-| `nrb-config`   | `Invalid config: schemaVersion: Invalid literal value` | Update `schemaVersion` to `"1.0.0"` in `nrb.config.json`. |
-| `tooling-package` | `@repo/tooling missing nrb bin entry` | Run `pnpm install` to ensure bins are linked.          |
+| Check             | Symptom                                                | Fix                                                                         |
+| ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `node-version`    | `Node.js v16.x.x — minimum 18.x required`              | `nvm use` or install Node.js >=24.                                          |
+| `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
+| `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
+| `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |
+| `lock-file`       | `pnpm-lock.yaml not found`                             | Run `pnpm install`.                                                         |
+| `nx-graph`        | `Unable to resolve Nx project graph`                   | Run `pnpm install` and check for TypeScript errors in `project.json` files. |
+| `nrb-config`      | `Invalid config: schemaVersion: Invalid literal value` | Update `schemaVersion` to `"1.0.0"` in `nrb.config.json`.                   |
+| `tooling-package` | `@repo/tooling missing nrb bin entry`                  | Run `pnpm install` to ensure bins are linked.                               |
 
 ## Docker issues
 

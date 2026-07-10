@@ -8,7 +8,7 @@
 
 **Tech Stack:** Nx 23 DevKit Tree/generator APIs, TypeScript, JSON Schema, Vitest.
 
-**Ownership:** Worker H owns generator metadata/schemas; Worker I owns Nx Tree adapter and setup generator; Worker J owns app/lib/feature generators. Integration owner validates generated projects.
+**Ownership:** Worker H owns generator metadata/schemas; Worker I owns the Nx Tree adapter and setup generator after the setup engine is complete; Worker J owns app/lib/feature generator files but not the existing CLI compatibility wrapper. The integration owner exclusively applies cumulative `packages/tooling/package.json` changes and validates generated projects.
 
 **Autonomous Execution:** Reuse the setup engine; do not duplicate templates or validation. Run Nx generator unit tests after each generator. Continue with documented default tags and paths when optional values are absent.
 
@@ -26,14 +26,16 @@
 - Create: `packages/tooling/src/generators/application/schema.json`
 - Create: `packages/tooling/src/generators/library/schema.json`
 - Create: `packages/tooling/src/generators/feature/schema.json`
-- Modify: `packages/tooling/package.json`
+- Integration-owner manifest changes: add `generators` field and aligned `@nx/devkit` dependency to `packages/tooling/package.json`
 
 - [ ] Add schema validation tests for required names, enum values, defaults, and unknown options.
 - [ ] Declare the four generators with descriptions, implementations, and schemas.
-- [ ] Add `@nx/devkit` as a direct tooling dependency aligned to Nx 23.0.1.
+- [ ] Configure `@repo/tooling` as a loadable local Nx plugin by adding the `generators` field pointing to `generators.json`, ensuring Nx resolves its ESM TypeScript implementations, and adding `@nx/devkit` aligned to Nx 23.0.1.
 - [ ] Run `nx g @repo/tooling:setup --help`; commit `feat(nx): declare boilerplate generators`.
 
 ### Task 2: Nx Tree adapter and setup generator
+
+**Dependency:** Run only after Setup CLI Tasks 1–3 complete so the shared engine and filesystem adapter contract are stable.
 
 **Files:**
 - Create: `packages/tooling/src/setup/adapters/nx-tree.ts`
@@ -61,13 +63,14 @@
 
 ### Task 4: Feature generator migration and composition E2E
 
+**Dependency:** Run after Setup CLI Task 5 has refactored the existing compatibility wrapper.
+
 **Files:**
 - Create: `packages/tooling/src/generators/feature/generator.ts`
-- Modify: `packages/tooling/src/commands/project/generate-vertical-slice.ts`
 - Test: generator and composition E2E tests
 
 - [ ] Port existing vertical-slice expectations to shared feature-plan tests.
-- [ ] Implement the Nx feature front end and keep the CLI wrapper behavior identical.
+- [ ] Implement only the Nx feature front end over the shared engine; verify the already-refactored CLI wrapper remains byte-for-byte unchanged in this slice.
 - [ ] Compose setup, application, library, and feature generators in a disposable worktree.
 - [ ] Run format, lint, typecheck, test, and build targets for generated projects.
 - [ ] Commit `feat(nx): add composable feature generator`.

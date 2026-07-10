@@ -16,7 +16,7 @@ All 15 workspace manifests use one version for shared direct dependencies unless
 
 ## Baseline Findings
 
-- 79 Nx projects and 15 pnpm workspaces.
+- 79 Nx projects and 15 pnpm workspace packages (`pnpm list -r --depth -1 --json`); generated and dependency manifests are excluded from this count.
 - Frozen installation and the production audit pass.
 - 45 outdated entries were reported; Docker uses pnpm 11.10.0 while the workspace declares 11.11.0.
 - Better Auth client plugin exports have drifted, blocking frontend typechecks and builds.
@@ -75,7 +75,7 @@ Interactive mode uses `node:readline/promises`, so setup does not add a prompt f
 
 ### Documentation
 
-`docs/README.md` becomes the central index. New guides cover quick start, configuration, presets/technology support, CLI, Nx generators, extension authoring, migration, and troubleshooting. Generated projects receive a configuration summary and exact next commands.
+`docs/README.md` becomes the central index. New guides cover quick start, configuration, presets/technology support, CLI, Nx generators, extension authoring, migration, and troubleshooting. After setup, generated projects receive `nrb.config.json` plus `.nrb/summary.md` containing the selected preset, apps, capabilities, applied operation count, and exact next commands; component tests assert both files.
 
 ## Safety and Compatibility
 
@@ -96,4 +96,4 @@ Interactive mode uses `node:readline/promises`, so setup does not add a prompt f
 
 ## Acceptance
 
-The campaign is complete only when compatible dependencies are current, all supported source targets pass their applicable checks, the setup CLI and Nx generators pass unit/component/e2e tests, documentation is navigable and accurate, the remote GitHub tree matches the verified local tree, and every incompatible deferred major has an explicit documented reason and revisit trigger.
+The campaign is complete only when compatible dependencies are current; all 79 source projects are classified as deployable, library, generated/static, or infrastructure-test and pass every target applicable to that class; the setup CLI and Nx generators pass unit/component/e2e tests; Markdown passes markdownlint, internal links resolve, and quick-start commands execute in a clean checkout; the remote GitHub tree matches the verified local tree; and every incompatible deferred major has an explicit documented reason and revisit trigger. Infrastructure-dependent E2E targets must run when Docker is available; otherwise their static generator validation runs and the environment limitation is recorded rather than represented as a pass.

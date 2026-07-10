@@ -52,13 +52,17 @@
 - Create: `docs/setup/extending-generators.md`
 - Create: `docs/setup/migration.md`
 - Create: `docs/setup/troubleshooting.md`
+- Create: `docs/usage/adding-a-new-service.md`
+- Create: `docs/usage/adding-a-new-frontend-page.md`
+- Create: `docs/usage/adding-an-auth-provider.md`
 - Modify: `docs/first-feature-walkthrough.md`
 - Modify: `CONTRIBUTING.md`
 
 - [ ] Document catalog entries, schema changes, planner operations, adapters, templates, tests, and generator registration.
 - [ ] Explain migration from `init:project` and `generate:feature`, including compatibility guarantees.
 - [ ] Add exact recovery for dirty trees, conflicts, unsupported combinations, stale state, Docker absence, and failed rollback.
-- [ ] Update the feature walkthrough to show both CLI and Nx paths.
+- [ ] Add day-to-day guides for creating and wiring a backend service, frontend route/page, and Better Auth provider, including boundaries, tests, build targets, and registration points.
+- [ ] Update the feature walkthrough to show both `nrb add feature` and `nx g @repo/tooling:feature` paths.
 - [ ] Commit `docs: explain generator extension and migration`.
 
 ### Task 4: Final acceptance and remote verification

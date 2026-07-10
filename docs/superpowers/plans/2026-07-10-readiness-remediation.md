@@ -27,10 +27,11 @@
 - Modify: `Dockerfile`
 - Modify: Docker Compose files containing floating images
 - Modify: `docs/dependency-management.md`
+- Modify: `CONTRIBUTING.md` (pnpm runtime instruction)
 
 - [ ] Capture `pnpm outdated -r --long`, `pnpm audit --prod`, `pnpm audit --dev`, `pnpm ls -r --depth 0`, and registry latest values.
 - [ ] Write a compatibility matrix that keeps Node 24, TypeScript 6, and Expo-supported Babel/React Native versions.
-- [ ] Update all compatible direct versions, remove stale duplicate pins, align Docker pnpm to 11.11.0, and pin MinIO/NATS to explicit tested tags.
+- [ ] Review every existing security override, remove those made obsolete by direct upgrades, retain only overrides proven by `pnpm why`, update `CONTRIBUTING.md`, align Docker pnpm to 11.11.0, and pin `minio/minio:latest` and `nats:2-alpine` in `docker/docker-compose.yml` to real tested immutable/versioned tags.
 - [ ] Run `pnpm install --lockfile-only`, then `pnpm install --frozen-lockfile` and require exit 0.
 - [ ] Trace every dev advisory with `pnpm why <package>` and update/remove/override the actual vulnerable importer; require both prod and dev audit gates to report no actionable installed vulnerable version.
 - [ ] Commit with `fix(deps): align compatible workspace dependencies`.
@@ -45,7 +46,7 @@
 - Test: API client unit tests and admin/user/landing/site app tests
 
 - [ ] Add failing compile-time tests for the supported Better Auth client plugin imports and options.
-- [ ] Replace removed exports with the current Better Auth plugin API while preserving public client behavior.
+- [ ] Replace removed exports with the current Better Auth plugin API while preserving public client behavior, and replace the `telegramClient` `as any` escape hatch with a typed return shape verified by compile-time tests.
 - [ ] Add a failing React render/cleanup test that reproduces `React.act is not a function`.
 - [ ] Correct Vitest conditions/environment so React's development test runtime is used; do not monkey-patch `act`.
 - [ ] Run all frontend API-client and app tests without cache, then typecheck and build each frontend app.
@@ -68,13 +69,13 @@
 ### Task 4: Repair lint and formatting scope
 
 **Files:**
-- Modify: the MikroORM repository file reported by `@app/backend-postgres-main-auth:lint`
+- Modify: the exact source/test file reported by a fresh full lint run (the audit observed `auth-token-cleanup.service.spec.ts:55`, but project target discovery is authoritative)
 - Modify: `.prettierignore` only for generated/vendor artifacts
 - Modify: source files reported after exclusions
 
-- [ ] Re-run the failing lint target and add a focused test for the repository method binding behavior.
+- [ ] Discover the authoritative target with `nx show projects --with-target lint`, rerun lint with bounded parallelism, and add a focused regression test for the reported method binding behavior.
 - [ ] Replace the unbound method reference with a bound wrapper or direct invocation preserving `this`.
-- [ ] Classify all Prettier failures; exclude only generated artifacts with documented generators, never source code.
+- [ ] Classify all Prettier failures; preserve the intentional `packages/tooling/src/commands/**` exclusion, exclude only other generated artifacts with documented generators, and never add an exclusion solely to hide source drift.
 - [ ] Format source-controlled files, then run `pnpm format:check` and full Nx lint with bounded parallelism.
 - [ ] Commit with `style: normalize source formatting and lint`.
 

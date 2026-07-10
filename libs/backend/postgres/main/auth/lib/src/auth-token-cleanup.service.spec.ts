@@ -22,10 +22,12 @@ function createRepositoryMock(): {
 }
 
 describe("AuthTokenCleanupService", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.spyOn(Logger.prototype, "debug").mockImplementation(() => undefined);
     vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
-    vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    warnSpy = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -52,7 +54,7 @@ describe("AuthTokenCleanupService", () => {
     const cleanup = new AuthTokenCleanupService(repository);
 
     await expect(cleanup.runCleanup()).resolves.toBe(false);
-    expect(Logger.prototype.warn).toHaveBeenCalledWith(
+    expect(warnSpy).toHaveBeenCalledWith(
       "Auth token cleanup failed: cleanup failed",
     );
   });

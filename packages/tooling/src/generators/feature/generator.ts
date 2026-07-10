@@ -318,24 +318,36 @@ import { Migration00000000000000Create${names.pascal} } from "./Migration0000000
 describe("Migration00000000000000Create${names.pascal}", () => {
   it("up() generates CREATE TABLE SQL with required columns", () => {
     const migration = new Migration00000000000000Create${names.pascal}();
+    const sql: string[] = [];
+    migration.addSql = (query: string) => {
+      sql.push(query);
+    };
+
     migration.up();
-    const sql = migration.getSql();
-    expect(sql).toContain("create table");
-    expect(sql).toContain("${names.kebab.replaceAll("-", "_")}");
-    expect(sql).toContain("id");
-    expect(sql).toContain("name");
-    expect(sql).toContain("created_at");
-    expect(sql).toContain("primary key");
+
+    const joined = sql.join("\\n");
+    expect(joined).toContain("create table");
+    expect(joined).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(joined).toContain('"id"');
+    expect(joined).toContain('"name"');
+    expect(joined).toContain('"created_at"');
+    expect(joined).toContain("primary key");
   });
 
   it("down() generates DROP TABLE SQL", () => {
     const migration = new Migration00000000000000Create${names.pascal}();
+    const sql: string[] = [];
+    migration.addSql = (query: string) => {
+      sql.push(query);
+    };
+
     migration.up();
     migration.down();
-    const sql = migration.getSql();
-    expect(sql).toContain("drop table");
-    expect(sql).toContain("${names.kebab.replaceAll("-", "_")}");
-    expect(sql).toContain("cascade");
+
+    const joined = sql.join("\\n");
+    expect(joined).toContain("drop table");
+    expect(joined).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(joined).toContain("cascade");
   });
 });
 `,

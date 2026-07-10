@@ -8,6 +8,8 @@ import {
 import { fileURLToPath } from "node:url";
 import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
 import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
+import { runSetupFromContext } from "./commands/project/setup";
+import { runDoctorFromContext } from "./commands/project/doctor";
 import { runMutation } from "./commands/qa/mutation";
 import { runBranchCleanup } from "./commands/git/branch-cleanup";
 import { runWebpCommand } from "./commands/images/webp";
@@ -67,6 +69,31 @@ register(
   "project:generate-vertical-slice",
   "Scaffold a checklist-driven product vertical slice.",
   runGenerateVerticalSliceFromContext,
+);
+register(
+  "project:setup",
+  "Interactive and non-interactive boilerplate configuration.",
+  runSetupFromContext,
+);
+register(
+  "project:doctor",
+  "Run workspace health checks (Node, pnpm, Docker, manifests, config).",
+  runDoctorFromContext,
+);
+register(
+  "setup",
+  "Shorthand for project:setup — boilerplate configuration.",
+  runSetupFromContext,
+);
+register(
+  "doctor",
+  "Shorthand for project:doctor — workspace health checks.",
+  runDoctorFromContext,
+);
+register(
+  "add",
+  "Add an app, library, or feature to the workspace.",
+  runSetupFromContext,
 );
 register(
   "qa:mutation",

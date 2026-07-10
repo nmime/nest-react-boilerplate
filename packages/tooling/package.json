@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Reusable TS-first repo tooling commands for API contracts, database operations, Docker, testing, QA presets, and repository checks.",
   "bin": {
-    "repo-tooling": "./bin/repo-tooling.mjs"
+    "repo-tooling": "./bin/repo-tooling.mjs",
+    "nrb": "./bin/repo-tooling.mjs"
   },
   "scripts": {
     "tooling": "node ./bin/repo-tooling.mjs",

@@ -96,7 +96,7 @@ describe("application generator", () => {
 
       const pkg = JSON.parse(tree.read("apps/backend/my/my-api/package.json", "utf8")!);
       assert.equal(pkg.name, "@app/my-api");
-      assert.ok(pkg.dependencies["@nestjs/common"]);
+      assert.ok(pkg.dependencies.tslib);
     });
 
     it("creates tsconfig files", async () => {
@@ -117,11 +117,60 @@ describe("application generator", () => {
       await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
 
       assert.ok(tree.exists("apps/backend/my/my-api/src/main.ts"));
-      assert.ok(tree.exists("apps/backend/my/my-api/src/app.module.ts"));
-      assert.ok(tree.exists("apps/backend/my/my-api/src/app.module.spec.ts"));
+      assert.ok(tree.exists("apps/backend/my/my-api/src/my-api.module.ts"));
+      assert.ok(tree.exists("apps/backend/my/my-api/src/my-api.module.spec.ts"));
 
       const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8")!;
       assert.ok(mainContent.includes("MyApiModule"));
+      assert.ok(mainContent.includes("void bootstrap()"), "main.ts must use void bootstrap() to avoid floating promise");
+    });
+
+    it("main.ts has no unhandled-floating-promise lint errors", async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import("./generator.js");
+
+      await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
+
+      const mainContent = tree.read("apps/backend/my/my-api/src/main.ts", "utf8")!;
+      // Must use void keyword for async call
+      assert.ok(/\bvoid\s+bootstrap/.test(mainContent), "bootstrap call must be void'd");
+    });
+
+    it("spec file imports vitest explicitly", async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import("./generator.js");
+
+      await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
+
+      const specContent = tree.read("apps/backend/my/my-api/src/my-api.module.spec.ts", "utf8")!;
+      assert.ok(specContent.includes('from "vitest"'), "spec must import from vitest, not use globals");
+      assert.ok(specContent.includes("describe"), "must import describe");
+      assert.ok(specContent.includes("it"), "must import it");
+      assert.ok(specContent.includes("expect"), "must import expect");
+    });
+
+    it("eslint config has proper ignores and parserOptions", async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import("./generator.js");
+
+      await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
+
+      const eslintContent = tree.read("apps/backend/my/my-api/eslint.config.cjs", "utf8")!;
+      assert.ok(eslintContent.includes("ignores:"), "eslint must have ignores array");
+      assert.ok(eslintContent.includes("tsconfig.*?.json"), "eslint must have tsconfig.*?.json project");
+    });
+
+    it("package.json has no unused Nest dependencies", async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import("./generator.js");
+
+      await applicationGenerator(tree, { name: "my-api", kind: "backend", skipFormat: true });
+
+      const pkg = JSON.parse(tree.read("apps/backend/my/my-api/package.json", "utf8")!);
+      assert.ok(!pkg.dependencies["@nestjs/common"], "should not list @nestjs/common in deps (comes via workspace)");
+      assert.ok(!pkg.dependencies["@nestjs/platform-express"], "should not list @nestjs/platform-express");
+      assert.ok(!pkg.dependencies["reflect-metadata"], "should not list reflect-metadata");
+      assert.ok(!pkg.dependencies["rxjs"], "should not list rxjs");
     });
 
     it("creates vitest config", async () => {

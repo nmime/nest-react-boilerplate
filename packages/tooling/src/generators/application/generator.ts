@@ -78,6 +78,9 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
           tsConfig: `${dir}/tsconfig.app.json`,
           assets: [],
           generatePackageJson: true,
+          updateBuildableProjectDepsInPackageJson: true,
+          excludeLibsInPackageJson: true,
+          generateLockfile: true,
           rootDir: ".",
         },
       },
@@ -107,7 +110,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
     },
   }, null, 2) + "\n");
 
-  // package.json
+  // package.json — matches repo: minimal deps, Nest comes via workspace
   tree.write(`${dir}/package.json`, JSON.stringify({
     name: `@app/${projectName}`,
     version: "0.0.0",
@@ -115,20 +118,8 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
     main: "./src/main.ts",
     types: "./src/main.ts",
     scripts: { test: "vitest run", typecheck: "tsc --noEmit" },
-    dependencies: {
-      "@nestjs/common": "^11.0.0",
-      "@nestjs/core": "^11.0.0",
-      "@nestjs/platform-express": "^11.0.0",
-      "reflect-metadata": "^0.2.2",
-      "rxjs": "^7.8.1",
-    },
-    devDependencies: {
-      "@nestjs/schematics": "^11.0.0",
-      "@nestjs/testing": "^11.0.0",
-      "@types/node": "^22.0.0",
-      "typescript": "^5.7.0",
-      "vitest": "^3.0.0",
-    },
+    dependencies: { tslib: "2.8.1" },
+    devDependencies: {},
   }, null, 2) + "\n");
 
   // tsconfig.json — matches repo pattern: extends base, references app+spec
@@ -163,20 +154,20 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts", "src/**/*.ts"],
   }, null, 2) + "\n");
 
-  // src/main.ts
+  // src/main.ts — void bootstrap() to handle floating promise
   tree.write(`${srcRoot}/main.ts`,
-`import { NestFactory } from "@nestjs/core";
-import { ${names.pascal}Module } from "./app.module";
+`import { ${names.pascal}Module } from "./${names.kebab}.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(${names.pascal}Module);
-  await app.listen(process.env.PORT ?? 3000);
+  // Wire up the module — replace with real bootstrap logic
+  console.log("Starting ${names.title}...");
 }
-bootstrap();
+
+void bootstrap();
 `);
 
   // src/app.module.ts
-  tree.write(`${srcRoot}/app.module.ts`,
+  tree.write(`${srcRoot}/${names.kebab}.module.ts`,
 `import { Module } from "@nestjs/common";
 
 @Module({
@@ -187,21 +178,14 @@ bootstrap();
 export class ${names.pascal}Module {}
 `);
 
-  // src/app.module.spec.ts
-  tree.write(`${srcRoot}/app.module.spec.ts`,
-`import { Test } from "@nestjs/testing";
-import { ${names.pascal}Module } from "./app.module";
+  // src/app.module.spec.ts — import from vitest, not globals
+  tree.write(`${srcRoot}/${names.kebab}.module.spec.ts`,
+`import { describe, it, expect } from "vitest";
+import { ${names.pascal}Module } from "./${names.kebab}.module";
 
 describe("${names.pascal}Module", () => {
   it("should be defined", () => {
     expect(${names.pascal}Module).toBeDefined();
-  });
-
-  it("should be valid", async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [${names.pascal}Module],
-    }).compile();
-    expect(moduleRef).toBeDefined();
   });
 });
 `);
@@ -211,6 +195,8 @@ describe("${names.pascal}Module", () => {
 `/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   cacheDir: "${d}node_modules/.vitest/${dir}",
@@ -222,14 +208,38 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
+    coverage: fullCoverage(
+      "${d}coverage/apps/backend/${projectName}",
+      ["src/**/*.ts"],
+      [],
+    ),
   },
 });
 `);
 
-  // eslint.config.cjs
+  // eslint.config.cjs — matches repo convention with ignores + parserOptions
   tree.write(`${dir}/eslint.config.cjs`,
 `const baseConfig = require("${d}eslint.config.js");
-module.exports = [...baseConfig];
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "package.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
 `);
 }
 

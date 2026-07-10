@@ -1,6 +1,6 @@
 # Contributing
 
-Use this guide with the root [README](README.md), [Command matrix](docs/command-matrix.md), and the documents in `docs/`. AI coding agents must also follow [AGENTS.md](AGENTS.md) and the context guidance under [docs/ai](docs/ai/repo-map.md).
+Use this guide with the root [README](README.md), [Command matrix](docs/command-matrix.md), and the [Documentation Index](docs/README.md). AI coding agents must also follow [AGENTS.md](AGENTS.md) and the context guidance under [docs/ai](docs/ai/repo-map.md).
 
 ## Prerequisites
 

@@ -1,8 +1,16 @@
 # First feature walkthrough
 
-This walkthrough is the preferred path for shipping a small vertical slice without rediscovering repository conventions.
+This walkthrough is the preferred path for shipping a small vertical slice without rediscovering repository conventions. It shows both the `nrb add feature` path and the legacy `pnpm generate:feature` path — they use the same engine.
 
 ## 1. Pick a slice and dry-run the scaffold
+
+### Unified CLI (recommended)
+
+```bash
+nrb add feature invoices --dry-run
+```
+
+### Legacy alias (equivalent)
 
 ```bash
 pnpm generate:feature invoices -- --dry-run
@@ -20,7 +28,23 @@ The scaffold lists the files it would create for:
 Remove `--dry-run` when the file plan is correct:
 
 ```bash
+# Unified CLI:
+nrb add feature invoices
+
+# Legacy alias:
 pnpm generate:feature invoices
+```
+
+### Target a different API app
+
+```bash
+nrb add feature invoices --api-app admin-app-api
+```
+
+### Force overwrite existing files
+
+```bash
+nrb add feature invoices --force
 ```
 
 ## 2. Wire backend ownership
@@ -56,3 +80,9 @@ pnpm test
 ```
 
 For cross-app behavior, add `pnpm test:e2e`. For release-risk work, run `pnpm check`.
+
+## Next steps
+
+- [Adding a New Service](usage/adding-a-new-service.md) — create and wire a NestJS backend service.
+- [Adding a New Frontend Page](usage/adding-a-new-frontend-page.md) — add a route, page, and tests to a frontend app.
+- [CLI Reference](setup/cli-reference.md) — full reference for `nrb add` and related commands.

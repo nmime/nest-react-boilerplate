@@ -113,6 +113,8 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 ## Quickstart
 
+For a complete setup guide, see [Quick Start](docs/quick-start.md).
+
 ```bash
 nvm use
 corepack enable
@@ -130,7 +132,7 @@ Default local services:
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 
-If you need a narrower command, use the [Command matrix](docs/command-matrix.md) and [Local verification](docs/local-verification.md) guides instead of guessing target names.
+For configuration (interactive/noninteractive), setup health checks, and adding apps/libraries/features, see the [Documentation Index](docs/README.md).
 
 ## Quality gates
 

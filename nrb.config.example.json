@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "preset": "fullstack",
+  "apps": [],
+  "capabilities": [],
+  "options": {
+    "prune": false,
+    "force": false,
+    "dryRun": false,
+    "nonInteractive": false
+  }
+}

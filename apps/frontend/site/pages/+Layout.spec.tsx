@@ -30,14 +30,14 @@ describe("site layout", () => {
     expect(nav).toBeTruthy();
 
     const link = screen.getByRole("link", { name: "Nest React Boilerplate" });
-    expect(link).toHaveAttribute("href", "/");
+    expect(link.getAttribute("href")).toBe("/");
   });
 
   it("renders children inside the layout shell", async () => {
     const { Layout } = await import("./+Layout");
     render(<Layout><div data-testid="child">Child content</div></Layout>);
 
-    expect(screen.getByTestId("child")).toHaveTextContent("Child content");
+    expect(screen.getByTestId("child").textContent).toBe("Child content");
   });
 
   it("wraps children in a main element with class site-shell", async () => {

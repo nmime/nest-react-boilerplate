@@ -19,6 +19,6 @@ export * from "./service-options";
 export * from "./toast-rules";
 
 // Better-Auth client integrations (our additions)
-export { authClient, signIn, signOut, signUp, useSession, useSignIn, useSignUp, useSignOut, useListAccounts, useRemoveAccount, useSendVerificationEmail } from "./auth-client";
+export { authClient, signIn, signOut, signUp, useSession } from "./auth-client";
 export { telegramClient } from "./telegram-client";
 export { useAuthSessionFlow, useSocialAuth, useSignOut as useSignOutFlow } from "./use-auth-session-flow";

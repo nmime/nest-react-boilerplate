@@ -43,10 +43,10 @@ describe("site home page", () => {
     expect(heading).toBeTruthy();
 
     const appLink = screen.getByRole("link", { name: "Open App" });
-    expect(appLink).toHaveAttribute("href", "/app");
+    expect(appLink.getAttribute("href")).toBe("/app");
 
     const docsLink = screen.getByRole("link", { name: "Auth Docs" });
-    expect(docsLink).toHaveAttribute("href", "/auth/docs");
+    expect(docsLink.getAttribute("href")).toBe("/auth/docs");
   });
 
   it("renders three metric articles", async () => {

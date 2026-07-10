@@ -1,24 +1,22 @@
 import { createAuthClient } from "better-auth/react";
-import { multiTenantClient } from "better-auth/client/plugins";
-import { telegramClient as telegramAuthClient } from "./telegram-client";
+import type { BetterAuthClientOptions } from "better-auth";
+import { multiSessionClient } from "better-auth/client/plugins";
+import { telegramClient } from "./telegram-client";
 
-export const authClient = createAuthClient({
+const options: BetterAuthClientOptions = {
   baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_BASE_URL || "http://localhost:3003",
   plugins: [
-    multiTenantClient(),
-    telegramAuthClient(),
+    multiSessionClient(),
+    telegramClient,
   ],
-});
+};
 
+export const authClient = createAuthClient(options);
+
+// Destructured imperative API calls (proxied through InferClientAPI)
 export const {
   signIn,
   signOut,
   signUp,
   useSession,
-  useSignIn,
-  useSignUp,
-  useSignOut,
-  useListAccounts,
-  useRemoveAccount,
-  useSendVerificationEmail,
 } = authClient;

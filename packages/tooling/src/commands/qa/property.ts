@@ -79,7 +79,7 @@ for (let seed = 0; seed < iterations; seed += 1) {
 
 try {
   const fastCheck = await import("fast-check");
-  await fastCheck.assert(fastCheck.property(fastCheck.string(), (value) => typeof value.replaceAll("~", "~0").replaceAll("/", "~1") === "string"), { numRuns: Math.min(iterations, 1000) });
+  await fastCheck.assert(fastCheck.property(fastCheck.string(), (value: string) => typeof value.replaceAll("~", "~0").replaceAll("/", "~1") === "string"), { numRuns: Math.min(iterations, 1000) });
   checks.push({ name: "fast-check json-pointer smoke", ok: true, engine: "fast-check" });
 } catch {
   checks.push({ name: "fast-check optional engine", ok: true, engine: "native", note: "Install fast-check or provide it in the runtime to enable the external engine." });

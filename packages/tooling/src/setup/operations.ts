@@ -5,6 +5,7 @@
  * information to be replayed deterministically.  No timestamps or
  * machine-specific values are encoded — snapshots are portable.
  */
+import { isAbsolute, normalize, posix } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Operation kind discriminant
@@ -80,23 +81,77 @@ export type SetupOperation =
   | JsonMergeOperation;
 
 // ---------------------------------------------------------------------------
+// Path validation — reject unsafe paths at factory time.
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate that an operation path is a safe, relative POSIX path.
+ *
+ * Rejects:
+ *   - NUL bytes (would truncate filenames on POSIX)
+ *   - Empty strings (root target — destructive)
+ *   - Absolute paths
+ *   - Paths that escape the workspace via `..` traversal
+ *   - Backslashes (Windows separators — we require POSIX)
+ *
+ * Uses posix.normalize + resolve to catch subtle traversal attacks
+ * (e.g. "foo/bar/../../baz", "foo//../../../etc/passwd").
+ */
+export function validateOpPath(raw: string): string {
+  if (typeof raw !== "string") {
+    throw new TypeError("Operation path must be a string");
+  }
+
+  // NUL bytes
+  if (raw.indexOf("\0") !== -1) {
+    throw new Error(`Operation path contains NUL byte: ${JSON.stringify(raw)}`);
+  }
+
+  // Empty
+  if (raw.length === 0) {
+    throw new Error("Operation path must not be empty");
+  }
+
+  // Backslashes (Windows separators)
+  if (raw.indexOf("\\") !== -1) {
+    throw new Error(`Operation path must not contain backslashes: ${JSON.stringify(raw)}`);
+  }
+
+  // Normalize with POSIX path rules
+  const normalized = posix.normalize(raw);
+
+  // Reject absolute paths (both posix and platform-native)
+  if (posix.isAbsolute(normalized) || isAbsolute(normalized)) {
+    throw new Error(`Operation path must not be absolute: ${JSON.stringify(raw)}`);
+  }
+
+  // Reject `..` escape: after normalization, a relative path must not start with `..`
+  if (normalized.startsWith("..")) {
+    throw new Error(`Operation path must not escape workspace via '..': ${JSON.stringify(raw)}`);
+  }
+
+  return normalized;
+}
+
+// ---------------------------------------------------------------------------
 // Factory helpers — keep construction explicit and type-safe.
+// All factories validate the path via validateOpPath.
 // ---------------------------------------------------------------------------
 
 export function createFile(path: string, content: string, description = `Create ${path}`): CreateFileOperation {
-  return { kind: "create_file", path, content, description };
+  return { kind: "create_file", path: validateOpPath(path), content, description };
 }
 
 export function updateFile(path: string, content: string, description = `Update ${path}`): UpdateFileOperation {
-  return { kind: "update_file", path, content, description };
+  return { kind: "update_file", path: validateOpPath(path), content, description };
 }
 
 export function deleteFile(path: string, description = `Delete ${path}`): DeleteFileOperation {
-  return { kind: "delete_file", path, description };
+  return { kind: "delete_file", path: validateOpPath(path), description };
 }
 
 export function jsonMerge(path: string, patch: Record<string, unknown>, description = `Merge ${path}`): JsonMergeOperation {
-  return { kind: "json_merge", path, patch, description };
+  return { kind: "json_merge", path: validateOpPath(path), patch, description };
 }
 
 // ---------------------------------------------------------------------------

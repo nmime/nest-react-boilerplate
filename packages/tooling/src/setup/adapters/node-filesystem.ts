@@ -2,28 +2,63 @@
  * Node.js filesystem adapter — atomic writes via temp file + rename.
  *
  * All paths are POSIX-style relative to a configured base directory
- * (typically the workspace root).
+ * (typically the workspace root).  The adapter validates that resolved
+ * absolute paths stay within the base directory to prevent traversal
+ * attacks.
  */
+import { readFileSync } from "node:fs";
 import {
-  access,
-  mkdir,
-  readFileSync,
-  readdir,
-  rename,
-  rm,
-  writeFileSync,
-} from "node:fs";
-import { readdir as readdirAsync, writeFile as writeFileAsync, readFile as readFileAsync, unlink, mkdir as mkdirAsync, rename as renameAsync, rm as rmAsync, access as accessAsync } from "node:fs/promises";
-import { join, dirname } from "node:path";
+  readdir as readdirAsync,
+  writeFile as writeFileAsync,
+  mkdir as mkdirAsync,
+  rename as renameAsync,
+  rm as rmAsync,
+  access as accessAsync,
+} from "node:fs/promises";
+import { join, dirname, resolve, relative, posix, isAbsolute } from "node:path";
 import type { FilesystemAdapter } from "./filesystem.js";
 
 // ---------------------------------------------------------------------------
 
 /**
  * Resolve a POSIX relative path to an absolute path on the local filesystem.
+ *
+ * Validates that:
+ *   - The input is a non-empty, non-absolute POSIX path
+ *   - No NUL bytes
+ *   - After resolution the absolute path stays inside baseDir
  */
-function resolvePath(base: string, relative: string): string {
-  return join(base, ...relative.split("/").filter(Boolean));
+function resolvePath(baseDir: string, raw: string): string {
+  // NUL
+  if (raw.indexOf("\0") !== -1) {
+    throw new Error(`Path contains NUL byte: ${JSON.stringify(raw)}`);
+  }
+  // Empty
+  if (raw.length === 0) {
+    throw new Error("Path must not be empty");
+  }
+  // Absolute
+  if (posix.isAbsolute(raw) || isAbsolute(raw)) {
+    throw new Error(`Path must not be absolute: ${JSON.stringify(raw)}`);
+  }
+  // Backslash
+  if (raw.indexOf("\\") !== -1) {
+    throw new Error(`Path must not contain backslashes: ${JSON.stringify(raw)}`);
+  }
+
+  // Normalize with POSIX rules
+  const normalized = posix.normalize(raw);
+
+  // Resolve to absolute
+  const abs = resolve(baseDir, normalized);
+
+  // Ensure we didn't escape the base directory
+  const rel = relative(baseDir, abs);
+  if (rel === "" || rel.startsWith("..")) {
+    throw new Error(`Resolved path escapes base directory: ${JSON.stringify(raw)} → ${abs}`);
+  }
+
+  return abs;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,9 +69,11 @@ function resolvePath(base: string, relative: string): string {
  * directory, then renamed into place.
  */
 export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
+  const resolvedBase = resolve(baseDir);
+
   return {
     async read(path: string): Promise<string | null> {
-      const abs = resolvePath(baseDir, path);
+      const abs = resolvePath(resolvedBase, path);
       try {
         await accessAsync(abs);
         return readFileSync(abs, "utf8");
@@ -46,7 +83,7 @@ export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
     },
 
     async write(path: string, content: string): Promise<void> {
-      const abs = resolvePath(baseDir, path);
+      const abs = resolvePath(resolvedBase, path);
       const dir = dirname(abs);
       const tmpPath = abs + ".tmp";
 
@@ -61,7 +98,7 @@ export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
     },
 
     async delete(path: string): Promise<void> {
-      const abs = resolvePath(baseDir, path);
+      const abs = resolvePath(resolvedBase, path);
       try {
         await rmAsync(abs, { force: true });
       } catch {
@@ -70,7 +107,7 @@ export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
     },
 
     async exists(path: string): Promise<boolean> {
-      const abs = resolvePath(baseDir, path);
+      const abs = resolvePath(resolvedBase, path);
       try {
         await accessAsync(abs);
         return true;
@@ -80,7 +117,7 @@ export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
     },
 
     async list(dir = ""): Promise<string[]> {
-      const base = dir ? resolvePath(baseDir, dir) : baseDir;
+      const base = dir ? resolvePath(resolvedBase, dir) : resolvedBase;
       const results: string[] = [];
       await recurse(base, dir ? dir : "", results);
       return results.sort();

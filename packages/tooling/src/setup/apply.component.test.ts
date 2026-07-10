@@ -394,6 +394,30 @@ describe("apply — atomic writes (simulated)", () => {
 // E2E: full flow — plan state → apply → verify
 // ---------------------------------------------------------------------------
 
+describe("apply — rollback: restores deleted X and removes failed new Y", () => {
+  it("rollback restores deleted file X and removes newly created file Y when Z fails", async () => {
+    const fs = new InMemoryFS();
+    await fs.write("x.txt", "original-x");
+
+    const ops: SetupOperation[] = [
+      deleteFile("x.txt"),       // deletes X
+      createFile("y.txt", "new"), // creates Y
+      updateFile("z.txt", "new"), // will fail via injected failure
+    ];
+
+    const result = await apply(ops, fs, { failOnPaths: ["z.txt"] });
+
+    assert.equal(result.failed, 1);
+    assert.equal(result.applied, 0);
+    assert.ok(result.rollbackError);
+
+    // X should be restored
+    assert.equal(await fs.read("x.txt"), "original-x", "x.txt should be restored after rollback");
+    // Y should be removed (it was newly created)
+    assert.equal(await fs.read("y.txt"), null, "y.txt should not exist after rollback");
+  });
+});
+
 describe("apply — E2E full flow", () => {
   it("apply all operations and verify filesystem state", async () => {
     const fs = new InMemoryFS();

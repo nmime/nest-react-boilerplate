@@ -13,11 +13,12 @@
  *   - `.nrb/summary.md` — a human-readable summary of the plan
  */
 import type { NrbConfig } from "./schema.js";
+import type { AppId, CapabilityId } from "./schema.js";
 import type { SetupOperation } from "./operations.js";
 import { createFile, sortOperations, deleteFile, updateFile } from "./operations.js";
 import type { SetupState } from "./state.js";
 import { configHash, hashString, buildState, diffState, EMPTY_STATE } from "./state.js";
-import { expandDependencies } from "./catalog.js";
+import { expandDependencies, validateSelection } from "./catalog.js";
 import { expandPreset } from "./presets.js";
 
 // ---------------------------------------------------------------------------
@@ -62,6 +63,8 @@ export function generateConfigFile(config: NrbConfig): { path: string; content: 
  * Generate .nrb/summary.md from a plan summary.
  * Content depends only on config-derived data (apps, caps, preset, hash),
  * never on operation counts — this guarantees idempotent second-run.
+ *
+ * The file always ends with a trailing newline.
  */
 export function generateSummaryMd(summary: PlanSummary): { path: string; content: string } {
   const lines: string[] = [];
@@ -99,9 +102,12 @@ export function generateSummaryMd(summary: PlanSummary): { path: string; content
   }
   lines.push("");
 
+  // Always end with trailing newline
+  const content = lines.join("\n") + "\n";
+
   return {
     path: ".nrb/summary.md",
-    content: lines.join("\n"),
+    content,
   };
 }
 
@@ -111,15 +117,18 @@ export function generateSummaryMd(summary: PlanSummary): { path: string; content
 
 /**
  * Build the planner input from a config.
- * Resolves presets, expands dependencies, and returns the final app/capability lists.
+ * Resolves presets, expands dependencies, validates against the catalog,
+ * and returns the final app/capability lists.
+ *
+ * @throws {Error} when expandDependencies + validateSelection finds issues.
  */
 export function resolveConfig(config: NrbConfig): {
-  apps: string[];
-  capabilities: string[];
+  apps: AppId[];
+  capabilities: CapabilityId[];
   preset?: string;
 } {
-  let apps = [...config.apps];
-  let capabilities = [...config.capabilities];
+  let apps: AppId[] = [...config.apps];
+  let capabilities: CapabilityId[] = [...config.capabilities];
 
   if (config.preset) {
     const expanded = expandPreset(config.preset);
@@ -132,10 +141,22 @@ export function resolveConfig(config: NrbConfig): {
   }
 
   // Expand transitive dependencies
-  const expanded = expandDependencies(apps as any, capabilities as any);
+  const expanded = expandDependencies(apps, capabilities);
+  const resolvedApps: AppId[] = expanded.apps;
+  const resolvedCaps: CapabilityId[] = expanded.capabilities;
+
+  // M1: Validate the final resolved selection against the catalog
+  const issues = validateSelection(resolvedApps, resolvedCaps);
+  if (issues.length > 0) {
+    // Sort issues by entity name for deterministic error message
+    const sorted = [...issues].sort((a, b) => a.entity.localeCompare(b.entity));
+    const messages = sorted.map(i => `  - ${i.entity}: ${i.message}`).join("\n");
+    throw new Error(`Configuration validation failed:\n${messages}`);
+  }
+
   return {
-    apps: expanded.apps,
-    capabilities: expanded.capabilities,
+    apps: resolvedApps,
+    capabilities: resolvedCaps,
     preset: config.preset,
   };
 }
@@ -143,7 +164,7 @@ export function resolveConfig(config: NrbConfig): {
 /**
  * Core planner: produces a sorted plan of operations.
  *
- * 1. Resolve the config (preset expansion + dependency resolution).
+ * 1. Resolve the config (preset expansion + dependency resolution + validation).
  * 2. Generate metadata files (nrb.config.json, .nrb/summary.md).
  * 3. Diff against current state to determine create/update/delete.
  * 4. Return sorted operations with expected post-apply state.
@@ -151,6 +172,8 @@ export function resolveConfig(config: NrbConfig): {
  * Both metadata file contents depend ONLY on config-derived data,
  * never on the plan's own operation counts.  This guarantees that
  * the second plan with the same config produces an empty operation list.
+ *
+ * @throws {Error} when the resolved config has catalog validation issues.
  */
 export function plan(config: NrbConfig, currentState: SetupState = EMPTY_STATE): PlanResult {
   const { apps, capabilities, preset } = resolveConfig(config);

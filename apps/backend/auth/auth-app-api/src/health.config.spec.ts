@@ -65,7 +65,8 @@ describe("AuthAppHealthServiceProvider", () => {
     expect(nats?.required).toBe(false);
   });
 
-  it("reports memory persistence mode under vitest defaults", async () => {
+  it("reports memory persistence mode when explicitly configured", async () => {
+    vi.stubEnv("AUTH_PERSISTENCE", "memory");
     const service = createService();
 
     const persistence = await findCheck(service, "auth-persistence");

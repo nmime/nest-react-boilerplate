@@ -8,7 +8,7 @@ export default defineConfig({
     alias: {
       ...workspaceTsconfigAliases(),
       "@app/backend-common-component-test": new URL(
-        "../../../../libs/backend/common/component-test/lib/src/index.ts",
+        "../../../../common/component-test/lib/src/index.ts",
         import.meta.url,
       ).pathname,
     },

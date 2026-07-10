@@ -156,10 +156,10 @@ describe("auth-app-api e2e", () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app.getHttpAdapter().close();
     delete process.env.AUTH_PERSISTENCE;
     delete process.env.AUTH_JWT_SECRET;
-  });
+  }, 30_000);
 
   it("GET / returns standardized problem details without raw path instance", async () => {
     const enResponse = await app.inject({

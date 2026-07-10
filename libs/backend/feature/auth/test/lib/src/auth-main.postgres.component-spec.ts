@@ -27,6 +27,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   AuthMainModule,
   AuthPersistenceMode,
+  BETTER_AUTH_INSTANCE,
+  BetterAuthModule,
 } from "@app/backend-feature-auth-main";
 
 interface AuthSessionResponse {
@@ -39,7 +41,14 @@ interface AuthSessionResponse {
 
 const passwordField = `${"pass"}${"word"}`;
 const componentCredential = ["component", "credential"].join("-");
-const jwtSecret = ["component", "test", "jwt", `${"sec"}${"ret"}`].join("-");
+const jwtSecret = [
+  "component",
+  "integration",
+  "test",
+  "jwt",
+  `${"sec"}${"ret"}`,
+  "at-least-32-characters",
+].join("-");
 
 const dockerAvailable = hasDockerRuntime();
 if (!dockerAvailable) {
@@ -62,6 +71,7 @@ describeIfDocker("AuthMainModule postgres component", () => {
 
     moduleRef = await Test.createTestingModule({
       imports: [
+        BetterAuthModule.forRoot(),
         AuthMainModule.forRoot({
           mode: AuthPersistenceMode.Postgres,
           postgres: createPostgresContainerMikroOrmOptions(
@@ -81,7 +91,10 @@ describeIfDocker("AuthMainModule postgres component", () => {
           ),
         }),
       ],
-    }).compile();
+    })
+      .overrideProvider(BETTER_AUTH_INSTANCE)
+      .useValue({ api: {}, handler: async () => new Response("ok") })
+      .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),

@@ -7,7 +7,7 @@ import {
   FastifyAdapter,
   type NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import type { Session } from "fastify";
+import type { FastifySessionObject as Session } from "@fastify/session";
 import helmet from "helmet";
 import { Pool, type PoolClient } from "pg";
 import { defaultPortFactory, getPortEnvVarName } from "./util/port.util";

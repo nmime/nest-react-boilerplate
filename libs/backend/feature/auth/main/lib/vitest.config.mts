@@ -15,6 +15,7 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
+    env: { NODE_ENV: "test" },
     coverage: fullCoverage(
       "../../../../coverage/libs/backend/feature/auth/main/lib",
       ["src/**/*.ts"],

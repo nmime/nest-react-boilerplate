@@ -4,10 +4,14 @@ import {
   HealthPrivateNetworkIpGuard,
 } from "@app/backend-common-health";
 import { AuthMainModule } from "@app/backend-feature-auth-main";
+import { BetterAuthModule } from "@app/backend-feature-auth-main";
 import { AuthAppHealthServiceProvider } from "./health.config";
 
 @Module({
-  imports: [AuthMainModule.forRoot()],
+  imports: [
+    AuthMainModule.forRoot(),
+    BetterAuthModule.forRoot(),
+  ],
   controllers: [BaseHealthController],
   providers: [AuthAppHealthServiceProvider, HealthPrivateNetworkIpGuard],
 })

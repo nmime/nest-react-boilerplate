@@ -5,6 +5,7 @@ import {
 } from "@app/backend-postgres-main";
 import { AuthPostgresModule } from "@app/backend-postgres-main-auth";
 import { AuthController } from "./interfaces/http";
+import { BetterAuthApiController } from "./application/better-auth-api.controller";
 import {
   AuthService,
   EffectivePermissionService,
@@ -84,7 +85,7 @@ export class AuthMainModule {
       imports: useMemory
         ? []
         : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule],
-      controllers: [AuthController],
+      controllers: [AuthController, BetterAuthApiController],
       providers: [
         AuthService,
         ExternalAuthService,

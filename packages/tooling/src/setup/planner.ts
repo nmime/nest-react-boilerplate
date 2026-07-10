@@ -12,14 +12,14 @@
  *   - `nrb.config.json` — the resolved configuration
  *   - `.nrb/summary.md` — a human-readable summary of the plan
  */
-import type { NrbConfig } from "./schema.js";
-import type { AppId, CapabilityId } from "./schema.js";
-import type { SetupOperation } from "./operations.js";
-import { createFile, sortOperations, deleteFile, updateFile } from "./operations.js";
-import type { SetupState } from "./state.js";
-import { configHash, hashString, buildState, diffState, EMPTY_STATE } from "./state.js";
-import { expandDependencies, validateSelection } from "./catalog.js";
-import { expandPreset } from "./presets.js";
+import type { NrbConfig } from './schema.js';
+import type { AppId, CapabilityId } from './schema.js';
+import type { SetupOperation } from './operations.js';
+import { createFile, sortOperations, deleteFile, updateFile } from './operations.js';
+import type { SetupState } from './state.js';
+import { configHash, hashString, buildState, diffState, EMPTY_STATE } from './state.js';
+import { expandDependencies, validateSelection } from './catalog.js';
+import { expandPreset } from './presets.js';
 
 // ---------------------------------------------------------------------------
 // Plan result
@@ -54,8 +54,8 @@ export interface PlanSummary {
  */
 export function generateConfigFile(config: NrbConfig): { path: string; content: string } {
   return {
-    path: "nrb.config.json",
-    content: JSON.stringify(config, null, 2) + "\n",
+    path: 'nrb.config.json',
+    content: JSON.stringify(config, null, 2) + '\n',
   };
 }
 
@@ -69,44 +69,44 @@ export function generateConfigFile(config: NrbConfig): { path: string; content: 
 export function generateSummaryMd(summary: PlanSummary): { path: string; content: string } {
   const lines: string[] = [];
 
-  lines.push("# Setup Plan Summary");
-  lines.push("");
+  lines.push('# Setup Plan Summary');
+  lines.push('');
 
   if (summary.preset) {
-    lines.push("**Preset:** `" + summary.preset + "`");
-    lines.push("");
+    lines.push('**Preset:** `' + summary.preset + '`');
+    lines.push('');
   }
 
-  lines.push("**Configuration hash:** `" + summary.configHash + "`");
-  lines.push("");
+  lines.push('**Configuration hash:** `' + summary.configHash + '`');
+  lines.push('');
 
-  lines.push("## Applications");
-  lines.push("");
+  lines.push('## Applications');
+  lines.push('');
   if (summary.apps.length === 0) {
-    lines.push("*No applications selected.*");
+    lines.push('*No applications selected.*');
   } else {
     for (const app of summary.apps) {
-      lines.push("- " + app);
+      lines.push('- ' + app);
     }
   }
-  lines.push("");
+  lines.push('');
 
-  lines.push("## Capabilities");
-  lines.push("");
+  lines.push('## Capabilities');
+  lines.push('');
   if (summary.capabilities.length === 0) {
-    lines.push("*No capabilities selected.*");
+    lines.push('*No capabilities selected.*');
   } else {
     for (const cap of summary.capabilities) {
-      lines.push("- " + cap);
+      lines.push('- ' + cap);
     }
   }
-  lines.push("");
+  lines.push('');
 
   // Always end with trailing newline
-  const content = lines.join("\n") + "\n";
+  const content = lines.join('\n') + '\n';
 
   return {
-    path: ".nrb/summary.md",
+    path: '.nrb/summary.md',
     content,
   };
 }
@@ -150,7 +150,7 @@ export function resolveConfig(config: NrbConfig): {
   if (issues.length > 0) {
     // Sort issues by entity name for deterministic error message
     const sorted = [...issues].sort((a, b) => a.entity.localeCompare(b.entity));
-    const messages = sorted.map(i => `  - ${i.entity}: ${i.message}`).join("\n");
+    const messages = sorted.map((i) => `  - ${i.entity}: ${i.message}`).join('\n');
     throw new Error(`Configuration validation failed:\n${messages}`);
   }
 
@@ -200,19 +200,19 @@ export function plan(config: NrbConfig, currentState: SetupState = EMPTY_STATE):
 
   // Deletes first (if pruning enabled)
   for (const p of prunableFiles) {
-    operations.push(deleteFile(p, "Prune " + p));
+    operations.push(deleteFile(p, 'Prune ' + p));
   }
 
   // Creates (files not in current state)
   for (const p of diff.toCreate) {
     const content = p === configFile.path ? configFile.content : summaryFile.content;
-    operations.push(createFile(p, content, "Create " + p));
+    operations.push(createFile(p, content, 'Create ' + p));
   }
 
   // Updates (files whose content hash changed)
   for (const p of diff.toUpdate) {
     const content = p === configFile.path ? configFile.content : summaryFile.content;
-    operations.push(updateFile(p, content, "Update " + p));
+    operations.push(updateFile(p, content, 'Update ' + p));
   }
 
   const sortedOps = sortOperations(operations);

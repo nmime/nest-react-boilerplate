@@ -52,7 +52,7 @@ export interface FileConflict {
   /** Path of the conflicting file. */
   path: string;
   /** Reason for the conflict. */
-  reason: "content_changed" | "missing" | "unexpected";
+  reason: 'content_changed' | 'missing' | 'unexpected';
   /** Expected content hash (empty if file should not exist). */
   expectedHash?: string;
   /** Actual content hash (empty if file does not exist). */

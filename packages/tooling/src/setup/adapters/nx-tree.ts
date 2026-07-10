@@ -7,8 +7,8 @@
  * applier writes to disk through the Node filesystem adapter; here we write
  * to the Tree so that `formatFiles` and change tracking work correctly.
  */
-import type { FilesystemAdapter } from "../adapters/filesystem.js";
-import type { Tree } from "nx/src/generators/tree";
+import type { FilesystemAdapter } from '../adapters/filesystem.js';
+import type { Tree } from 'nx/src/generators/tree';
 
 // ---------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ import type { Tree } from "nx/src/generators/tree";
 export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
   return {
     async read(path: string): Promise<string | null> {
-      const content = tree.read(path, "utf8");
+      const content = tree.read(path, 'utf8');
       return content === null ? null : content;
     },
 
@@ -40,13 +40,13 @@ export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
       return tree.exists(path);
     },
 
-    async list(dir = ""): Promise<string[]> {
+    async list(dir = ''): Promise<string[]> {
       const results: string[] = [];
 
       // Safety: if dir is empty or doesn't exist, return sorted array of root files
       let topLevel: string[];
       try {
-        topLevel = tree.children(dir || "");
+        topLevel = tree.children(dir || '');
       } catch {
         return [];
       }
@@ -83,11 +83,8 @@ export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
  * Helper: read a JSON file from the Tree and parse it.
  * Returns `null` if the file doesn't exist.
  */
-export function readJsonFile<T = Record<string, unknown>>(
-  tree: Tree,
-  path: string,
-): T | null {
-  const content = tree.read(path, "utf8");
+export function readJsonFile<T = Record<string, unknown>>(tree: Tree, path: string): T | null {
+  const content = tree.read(path, 'utf8');
   if (content === null) return null;
   return JSON.parse(content) as T;
 }
@@ -95,23 +92,15 @@ export function readJsonFile<T = Record<string, unknown>>(
 /**
  * Helper: write a JSON file to the Tree with 2-space indent + trailing newline.
  */
-export function writeJsonFile(
-  tree: Tree,
-  path: string,
-  data: unknown,
-): void {
-  tree.write(path, JSON.stringify(data, null, 2) + "\n");
+export function writeJsonFile(tree: Tree, path: string, data: unknown): void {
+  tree.write(path, JSON.stringify(data, null, 2) + '\n');
 }
 
 /**
  * Helper: deep-merge a patch into an existing JSON file on the Tree.
  * Creates the file if it doesn't exist.
  */
-export function mergeJsonFile(
-  tree: Tree,
-  path: string,
-  patch: Record<string, unknown>,
-): void {
+export function mergeJsonFile(tree: Tree, path: string, patch: Record<string, unknown>): void {
   const existing = readJsonFile<Record<string, unknown>>(tree, path);
   const merged = { ...(existing ?? {}), ...patch };
   writeJsonFile(tree, path, merged);

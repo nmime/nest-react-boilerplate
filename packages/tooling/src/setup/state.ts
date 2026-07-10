@@ -9,7 +9,7 @@
  * All hashes are stable SHA-256 hex strings — no timestamps or machine
  * paths are encoded.
  */
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Hashing helpers
@@ -17,7 +17,7 @@ import { createHash } from "node:crypto";
 
 /** Produce a SHA-256 hex digest of a UTF-8 string. */
 export function hashString(input: string): string {
-  return createHash("sha256").update(input, "utf8").digest("hex");
+  return createHash('sha256').update(input, 'utf8').digest('hex');
 }
 
 /**
@@ -26,7 +26,7 @@ export function hashString(input: string): string {
  */
 export function configHash(config: Record<string, unknown>): string {
   const canonical = JSON.stringify(config, (_key, value) => {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
       const sorted: Record<string, unknown> = {};
       for (const k of Object.keys(value).sort()) {
         sorted[k] = value[k];
@@ -67,9 +67,9 @@ export interface SetupState {
 /** Empty state — represents a fresh workspace with nothing generated yet. */
 export const EMPTY_STATE: SetupState = {
   version: 1,
-  configHash: "",
+  configHash: '',
   files: {},
-  digest: "",
+  digest: '',
 };
 
 // ---------------------------------------------------------------------------
@@ -82,25 +82,18 @@ export const EMPTY_STATE: SetupState = {
  * independent of insertion order.
  */
 export function computeStateDigest(files: Record<string, string>): string {
-  const entries = Object.entries(files).sort((a, b) =>
-    a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0,
-  );
+  const entries = Object.entries(files).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
   if (entries.length === 0) {
-    return hashString("{}");
+    return hashString('{}');
   }
-  const serialized = JSON.stringify(
-    Object.fromEntries(entries),
-  );
+  const serialized = JSON.stringify(Object.fromEntries(entries));
   return hashString(serialized);
 }
 
 /**
  * Build a SetupState from a config hash and a map of file paths → content hashes.
  */
-export function buildState(
-  configHash: string,
-  files: Record<string, string>,
-): SetupState {
+export function buildState(configHash: string, files: Record<string, string>): SetupState {
   return {
     version: 1,
     configHash,
@@ -113,11 +106,7 @@ export function buildState(
  * Update state with a new file hash.  Returns a new state object
  * (immutable — the original is not mutated).
  */
-export function addFileToState(
-  state: SetupState,
-  path: string,
-  contentHash: string,
-): SetupState {
+export function addFileToState(state: SetupState, path: string, contentHash: string): SetupState {
   const newFiles = { ...state.files, [path]: contentHash };
   return buildState(state.configHash, newFiles);
 }
@@ -191,7 +180,7 @@ export function diffState(
  * Currently only v1 exists; this is a placeholder for future migrations.
  */
 export function migrateState(raw: unknown): SetupState {
-  if (typeof raw !== "object" || raw === null) {
+  if (typeof raw !== 'object' || raw === null) {
     return EMPTY_STATE;
   }
   const obj = raw as Record<string, unknown>;

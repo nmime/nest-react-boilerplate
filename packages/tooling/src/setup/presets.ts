@@ -8,9 +8,9 @@
  * After expansion through `catalog.expandDependencies`, the final set may
  * include additional transitive dependencies.
  */
-import type { AppId, CapabilityId, PresetId } from "./schema.js";
-import { PRESET_IDS } from "./schema.js";
-import { expandDependencies } from "./catalog.js";
+import type { AppId, CapabilityId, PresetId } from './schema.js';
+import { PRESET_IDS } from './schema.js';
+import { expandDependencies } from './catalog.js';
 
 // ---------------------------------------------------------------------------
 // Preset definitions
@@ -39,10 +39,10 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
    * backends.
    */
   {
-    id: "minimal",
-    description: "Single API with auth — minimal backend footprint",
-    apps: ["auth-app-api", "user-app-api"],
-    capabilities: ["postgres"],
+    id: 'minimal',
+    description: 'Single API with auth — minimal backend footprint',
+    apps: ['auth-app-api', 'user-app-api'],
+    capabilities: ['postgres'],
   },
 
   /**
@@ -50,10 +50,10 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
    * applications.
    */
   {
-    id: "starter",
-    description: "One frontend + backend + auth — MVP-ready starter",
-    apps: ["user-app", "user-app-api", "auth-app-api"],
-    capabilities: ["postgres", "design-tokens", "i18n"],
+    id: 'starter',
+    description: 'One frontend + backend + auth — MVP-ready starter',
+    apps: ['user-app', 'user-app-api', 'auth-app-api'],
+    capabilities: ['postgres', 'design-tokens', 'i18n'],
   },
 
   /**
@@ -61,26 +61,10 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
    * The default for production-ready setups.
    */
   {
-    id: "fullstack",
-    description: "All core apps with standard capabilities — production-ready",
-    apps: [
-      "admin-app",
-      "admin-app-api",
-      "user-app",
-      "user-app-api",
-      "auth-app-api",
-      "landing-app",
-      "fullstack-e2e",
-    ],
-    capabilities: [
-      "postgres",
-      "redis",
-      "design-tokens",
-      "authz",
-      "i18n",
-      "otel",
-      "swagger",
-    ],
+    id: 'fullstack',
+    description: 'All core apps with standard capabilities — production-ready',
+    apps: ['admin-app', 'admin-app-api', 'user-app', 'user-app-api', 'auth-app-api', 'landing-app', 'fullstack-e2e'],
+    capabilities: ['postgres', 'redis', 'design-tokens', 'authz', 'i18n', 'otel', 'swagger'],
   },
 
   /**
@@ -88,38 +72,38 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
    * want the complete stack out of the box.
    */
   {
-    id: "enterprise",
-    description: "Every supported app and capability — complete stack",
+    id: 'enterprise',
+    description: 'Every supported app and capability — complete stack',
     apps: [
-      "admin-app",
-      "admin-app-api",
-      "user-app",
-      "user-app-api",
-      "auth-app-api",
-      "landing-app",
-      "site-app",
-      "mobile-app",
-      "discord-app-api",
-      "telegram-bot-api",
-      "telegram-bot-worker",
-      "fullstack-e2e",
+      'admin-app',
+      'admin-app-api',
+      'user-app',
+      'user-app-api',
+      'auth-app-api',
+      'landing-app',
+      'site-app',
+      'mobile-app',
+      'discord-app-api',
+      'telegram-bot-api',
+      'telegram-bot-worker',
+      'fullstack-e2e',
     ],
     capabilities: [
-      "postgres",
-      "redis",
-      "s3",
-      "nats",
-      "otel",
-      "swagger",
-      "i18n",
-      "analytics",
-      "websockets",
-      "feature-flags",
-      "notifications",
-      "design-tokens",
-      "authz",
-      "telegram-bot",
-      "discord-bot",
+      'postgres',
+      'redis',
+      's3',
+      'nats',
+      'otel',
+      'swagger',
+      'i18n',
+      'analytics',
+      'websockets',
+      'feature-flags',
+      'notifications',
+      'design-tokens',
+      'authz',
+      'telegram-bot',
+      'discord-bot',
     ],
   },
 
@@ -127,22 +111,10 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
    * Bots: bot-focused setup with Telegram + Discord integrations.
    */
   {
-    id: "bots",
-    description: "Telegram + Discord bots with workers — bot-first setup",
-    apps: [
-      "auth-app-api",
-      "user-app-api",
-      "telegram-bot-api",
-      "telegram-bot-worker",
-      "discord-app-api",
-    ],
-    capabilities: [
-      "postgres",
-      "redis",
-      "telegram-bot",
-      "discord-bot",
-      "otel",
-    ],
+    id: 'bots',
+    description: 'Telegram + Discord bots with workers — bot-first setup',
+    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'discord-app-api'],
+    capabilities: ['postgres', 'redis', 'telegram-bot', 'discord-bot', 'otel'],
   },
 ] as const;
 
@@ -150,9 +122,7 @@ export const PRESETS: ReadonlyArray<Readonly<PresetDefinition>> = [
 // Lookup helpers
 // ---------------------------------------------------------------------------
 
-const PRESET_MAP = new Map<PresetId, PresetDefinition>(
-  PRESETS.map((p) => [p.id, p]),
-);
+const PRESET_MAP = new Map<PresetId, PresetDefinition>(PRESETS.map((p) => [p.id, p]));
 
 /**
  * Find a preset by ID.  Returns `undefined` for unknown IDs.

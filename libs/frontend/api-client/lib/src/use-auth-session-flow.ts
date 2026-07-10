@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authClient } from "./auth-client";
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { authClient } from './auth-client';
 import type {
   RegisterDto,
   LoginDto,
@@ -15,7 +15,7 @@ import type {
   AuthenticatedPrincipalDto,
   MePayloadDto,
   UpdatePreferencesDto as UpdatePreferencesDtoType,
-} from "./auth";
+} from './auth';
 
 const { useSession, signIn, signOut, signUp } = authClient;
 
@@ -23,7 +23,7 @@ const { useSession, signIn, signOut, signUp } = authClient;
 
 export interface UseAuthSessionFlowReturn {
   session: AuthSessionViewDto | null;
-  user: MePayloadDto["user"] | null;
+  user: MePayloadDto['user'] | null;
   principal: AuthenticatedPrincipalDto | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -62,25 +62,13 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
     } as AuthenticatedPrincipalDto;
   }, [session]);
 
-  const user = useMemo(
-    () => (session ? session.user : null),
-    [session],
-  );
+  const user = useMemo(() => (session ? session.user : null), [session]);
 
-  const roles = useMemo(
-    () => session?.user?.roles || [],
-    [session],
-  );
+  const roles = useMemo(() => session?.user?.roles || [], [session]);
 
-  const permissions = useMemo(
-    () => session?.user?.permissions || [],
-    [session],
-  );
+  const permissions = useMemo(() => session?.user?.permissions || [], [session]);
 
-  const isAdmin = useMemo(
-    () => roles.includes("admin"),
-    [roles],
-  );
+  const isAdmin = useMemo(() => roles.includes('admin'), [roles]);
 
   const isAuthenticated = !!session;
 
@@ -101,14 +89,14 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["/api/auth/get-session"] });
+      void queryClient.invalidateQueries({ queryKey: ['/api/auth/get-session'] });
     },
   });
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterDto) => {
       const result = await signUp.email({
-        name: data.displayName || "",
+        name: data.displayName || '',
         email: data.email,
         password: data.password,
         fetchOptions: {
@@ -122,7 +110,7 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      void queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
     },
   });
 
@@ -133,7 +121,7 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
       return result.data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      void queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
     },
   });
 
@@ -141,15 +129,15 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
 
   const updateLocale = useCallback(
     async (data: UpdateLocaleDto) => {
-      const res = await fetch("/auth/me/locale", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const res = await fetch('/auth/me/locale', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update locale");
+      if (!res.ok) throw new Error('Failed to update locale');
       const result = await res.json();
-      await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
       return result.data;
     },
     [queryClient],
@@ -157,22 +145,22 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
 
   const updatePreferences = useCallback(
     async (data: UpdatePreferencesDtoType) => {
-      const res = await fetch("/auth/me/preferences", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const res = await fetch('/auth/me/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to update preferences");
+      if (!res.ok) throw new Error('Failed to update preferences');
       const result = await res.json();
-      await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
       return result.data;
     },
     [queryClient],
   );
 
   const refreshSession = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+    await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
   }, [queryClient]);
 
   return {
@@ -184,9 +172,15 @@ export function useAuthSessionFlow(): UseAuthSessionFlowReturn {
     isAdmin,
     roles,
     permissions,
-    login: async (data: LoginDto) => { await loginMutation.mutateAsync(data); },
-    register: async (data: RegisterDto) => { await registerMutation.mutateAsync(data); },
-    logout: async () => { await logoutMutation.mutateAsync(); },
+    login: async (data: LoginDto) => {
+      await loginMutation.mutateAsync(data);
+    },
+    register: async (data: RegisterDto) => {
+      await registerMutation.mutateAsync(data);
+    },
+    logout: async () => {
+      await logoutMutation.mutateAsync();
+    },
     updateLocale,
     updatePreferences,
     refreshSession,
@@ -207,84 +201,75 @@ export interface UseSocialAuthReturn {
 export function useSocialAuth(): UseSocialAuthReturn {
   const queryClient = useQueryClient();
 
-  const discordAuthorize = useCallback(
-    async (data?: DiscordAuthorizationRequestDto) => {
-      const res = await fetch("/auth/discord/authorization-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data || {}),
-      });
-      if (!res.ok) throw new Error("Discord authorization failed");
-      const result = await res.json();
-      window.location.href = result.data.authorizationUrl;
-    },
-    [],
-  );
+  const discordAuthorize = useCallback(async (data?: DiscordAuthorizationRequestDto) => {
+    const res = await fetch('/auth/discord/authorization-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data || {}),
+    });
+    if (!res.ok) throw new Error('Discord authorization failed');
+    const result = await res.json();
+    window.location.href = result.data.authorizationUrl;
+  }, []);
 
   const telegramWebLogin = useCallback(
     async (data: TelegramWebLoginDto) => {
-      const res = await fetch("/auth/telegram/web-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const res = await fetch('/auth/telegram/web-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Telegram web login failed");
-      await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      if (!res.ok) throw new Error('Telegram web login failed');
+      await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
     },
     [queryClient],
   );
 
   const telegramTmaLogin = useCallback(
     async (data: TelegramTmaDto) => {
-      const res = await fetch("/auth/telegram/tma", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const res = await fetch('/auth/telegram/tma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Telegram TMA login failed");
-      await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      if (!res.ok) throw new Error('Telegram TMA login failed');
+      await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
     },
     [queryClient],
   );
 
-  const telegramBotLink = useCallback(
-    async (data: TelegramBotLinkDto) => {
-      const res = await fetch("/auth/telegram/bot-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Telegram bot link failed");
-    },
-    [],
-  );
+  const telegramBotLink = useCallback(async (data: TelegramBotLinkDto) => {
+    const res = await fetch('/auth/telegram/bot-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Telegram bot link failed');
+  }, []);
 
-  const createLinkToken = useCallback(
-    async (data: LinkTokenDto) => {
-      const res = await fetch("/auth/link-tokens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Link token creation failed");
-      return res.json();
-    },
-    [],
-  );
+  const createLinkToken = useCallback(async (data: LinkTokenDto) => {
+    const res = await fetch('/auth/link-tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Link token creation failed');
+    return res.json();
+  }, []);
 
   const unlinkIdentity = useCallback(
     async (identityId: string) => {
       const res = await fetch(`/auth/provider-identities/${identityId}`, {
-        method: "DELETE",
-        credentials: "include",
+        method: 'DELETE',
+        credentials: 'include',
       });
-      if (!res.ok) throw new Error("Unlink failed");
-      await queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
+      if (!res.ok) throw new Error('Unlink failed');
+      await queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
     },
     [queryClient],
   );
@@ -306,14 +291,14 @@ export function useSignOut() {
 
   const signOutMutation = useMutation({
     mutationFn: async () => {
-      await fetch("/auth/logout", {
-        method: "POST",
-        credentials: "include",
+      await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
       });
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["api/auth/get-session"] });
-      window.location.href = "/";
+      void queryClient.invalidateQueries({ queryKey: ['api/auth/get-session'] });
+      window.location.href = '/';
     },
   });
 

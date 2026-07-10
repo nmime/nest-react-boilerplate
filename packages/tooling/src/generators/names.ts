@@ -7,9 +7,9 @@
 export function toKebab(raw: string): string {
   return raw
     .trim()
-    .replace(/[^a-zA-Z0-9\s-_]/g, "")
-    .replace(/[-_\s]+/g, "-")
-    .replace(/^-|-$/g, "")
+    .replace(/[^a-zA-Z0-9\s-_]/g, '')
+    .replace(/[-_\s]+/g, '-')
+    .replace(/^-|-$/g, '')
     .toLowerCase();
 }
 
@@ -17,9 +17,9 @@ export function toKebab(raw: string): string {
 export function toCamel(raw: string): string {
   const kebab = toKebab(raw);
   return kebab
-    .split("-")
+    .split('-')
     .map((part, i) => (i === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
-    .join("");
+    .join('');
 }
 
 /** Convert a string to PascalCase. */
@@ -31,16 +31,14 @@ export function toPascal(raw: string): string {
 /** Convert a string to Title Case. */
 export function toTitle(raw: string): string {
   return toKebab(raw)
-    .split("-")
+    .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+    .join(' ');
 }
 
 /** Convert a string to UPPER_SNAKE_CASE constant name. */
 export function toConstant(raw: string): string {
-  return toKebab(raw)
-    .toUpperCase()
-    .replace(/-/g, "_");
+  return toKebab(raw).toUpperCase().replace(/-/g, '_');
 }
 
 /**
@@ -72,11 +70,11 @@ export function generateNames(raw: string): GeneratedNames {
  */
 export function validateName(raw: string): string | null {
   if (!raw || !raw.trim()) {
-    return "Name must not be empty";
+    return 'Name must not be empty';
   }
   const kebab = toKebab(raw);
   if (!kebab) {
-    return "Name must contain at least one alphanumeric character";
+    return 'Name must contain at least one alphanumeric character';
   }
   if (/[A-Z]/.test(raw) && !/[\s-]/.test(raw)) {
     // Allow but don't require kebab-case input

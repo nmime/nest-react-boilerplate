@@ -11,10 +11,10 @@
  *   - project.json $schema computed from depth
  *   - vitest.config.mts uses workspaceTsconfigAliases
  */
-import type { Tree } from "nx/src/generators/tree";
-import { formatFiles, getProjects } from "@nx/devkit";
-import { generateNames, validateName } from "../names.ts";
-import { readJsonFile, writeJsonFile } from "../../setup/adapters/nx-tree.ts";
+import type { Tree } from 'nx/src/generators/tree';
+import { formatFiles, getProjects } from '@nx/devkit';
+import { generateNames, validateName } from '../names.ts';
+import { readJsonFile, writeJsonFile } from '../../setup/adapters/nx-tree.ts';
 
 // ---------------------------------------------------------------------------
 
@@ -38,11 +38,11 @@ function backendPostgresMainAlias(names: ReturnType<typeof generateNames>): stri
 }
 
 function permissionReadName(names: ReturnType<typeof generateNames>): string {
-  return names.pascal + "ReadPermission";
+  return names.pascal + 'ReadPermission';
 }
 
 function permissionWriteName(names: ReturnType<typeof generateNames>): string {
-  return names.pascal + "WritePermission";
+  return names.pascal + 'WritePermission';
 }
 
 function frontendFeatureAlias(names: ReturnType<typeof generateNames>): string {
@@ -50,11 +50,11 @@ function frontendFeatureAlias(names: ReturnType<typeof generateNames>): string {
 }
 
 function libDepth(dir: string): number {
-  return dir.split("/").length;
+  return dir.split('/').length;
 }
 
 function dots(dir: string): string {
-  return "../".repeat(libDepth(dir));
+  return '../'.repeat(libDepth(dir));
 }
 
 // ---------------------------------------------------------------------------
@@ -69,36 +69,41 @@ function projectJson(
   const d = dots(libDir);
   return {
     path: `${libDir}/project.json`,
-    contents: JSON.stringify({
-      name,
-      $schema: `${d}node_modules/nx/schemas/project-schema.json`,
-      sourceRoot,
-      projectType: "library",
-      tags,
-      targets: {
-        build: {
-          executor: "@nx/js:tsc",
-          outputs: ["{options.outputPath}"],
-          options: {
-            outputPath,
-            main: `${sourceRoot}/index.ts`,
-            tsConfig: `${libDir}/tsconfig.lib.json`,
-            assets: [],
-            rootDir: ".",
+    contents:
+      JSON.stringify(
+        {
+          name,
+          $schema: `${d}node_modules/nx/schemas/project-schema.json`,
+          sourceRoot,
+          projectType: 'library',
+          tags,
+          targets: {
+            build: {
+              executor: '@nx/js:tsc',
+              outputs: ['{options.outputPath}'],
+              options: {
+                outputPath,
+                main: `${sourceRoot}/index.ts`,
+                tsConfig: `${libDir}/tsconfig.lib.json`,
+                assets: [],
+                rootDir: '.',
+              },
+            },
+            test: {
+              executor: 'nx:run-commands',
+              cache: true,
+              options: {
+                cwd: libDir,
+                command: 'vitest run --config vitest.config.mts',
+              },
+              inputs: ['default', '^production', { externalDependencies: ['vitest'] }],
+              outputs: [`{workspaceRoot}/coverage/${libDir}`],
+            },
           },
         },
-        test: {
-          executor: "nx:run-commands",
-          cache: true,
-          options: {
-            cwd: libDir,
-            command: "vitest run --config vitest.config.mts",
-          },
-          inputs: ["default", "^production", { externalDependencies: ["vitest"] }],
-          outputs: [`{workspaceRoot}/coverage/${libDir}`],
-        },
-      },
-    }, null, 2) + "\n",
+        null,
+        2,
+      ) + '\n',
   };
 }
 
@@ -108,43 +113,55 @@ function tsconfig(libDir: string): TemplateFile[] {
   // tsconfig.json — extends base, references lib + spec
   const tsconfigJson: TemplateFile = {
     path: `${libDir}/tsconfig.json`,
-    contents: JSON.stringify({
-      extends: `${d}tsconfig.base.json`,
-      compilerOptions: { types: ["node"] },
-      include: [],
-      references: [
-        { path: "./tsconfig.lib.json" },
-        { path: "./tsconfig.spec.json" },
-      ],
-    }, null, 2) + "\n",
+    contents:
+      JSON.stringify(
+        {
+          extends: `${d}tsconfig.base.json`,
+          compilerOptions: { types: ['node'] },
+          include: [],
+          references: [{ path: './tsconfig.lib.json' }, { path: './tsconfig.spec.json' }],
+        },
+        null,
+        2,
+      ) + '\n',
   };
 
   // tsconfig.lib.json — extends ./tsconfig.json, declaration: true
   const tsconfigLib: TemplateFile = {
     path: `${libDir}/tsconfig.lib.json`,
-    contents: JSON.stringify({
-      extends: "./tsconfig.json",
-      compilerOptions: {
-        outDir: `${d}dist/out-tsc/${libDir}`,
-        types: ["node"],
-        declaration: true,
-      },
-      exclude: ["src/**/*.spec.ts", "src/**/*.test.ts"],
-      include: ["src/**/*.ts"],
-    }, null, 2) + "\n",
+    contents:
+      JSON.stringify(
+        {
+          extends: './tsconfig.json',
+          compilerOptions: {
+            outDir: `${d}dist/out-tsc/${libDir}`,
+            types: ['node'],
+            declaration: true,
+          },
+          exclude: ['src/**/*.spec.ts', 'src/**/*.test.ts'],
+          include: ['src/**/*.ts'],
+        },
+        null,
+        2,
+      ) + '\n',
   };
 
   // tsconfig.spec.json
   const tsconfigSpec: TemplateFile = {
     path: `${libDir}/tsconfig.spec.json`,
-    contents: JSON.stringify({
-      extends: "./tsconfig.json",
-      compilerOptions: {
-        outDir: `${d}dist/out-tsc/${libDir}-spec`,
-        types: ["node", "vitest"],
-      },
-      include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"],
-    }, null, 2) + "\n",
+    contents:
+      JSON.stringify(
+        {
+          extends: './tsconfig.json',
+          compilerOptions: {
+            outDir: `${d}dist/out-tsc/${libDir}-spec`,
+            types: ['node', 'vitest'],
+          },
+          include: ['src/**/*.spec.ts', 'src/**/*.test.ts', 'src/**/*.ts'],
+        },
+        null,
+        2,
+      ) + '\n',
   };
 
   // vitest.config.mts
@@ -182,10 +199,7 @@ export default defineConfig({
 
 // ---------------------------------------------------------------------------
 
-function createBackendTemplateFiles(
-  names: ReturnType<typeof generateNames>,
-  apiApp: string,
-): TemplateFile[] {
+function createBackendTemplateFiles(names: ReturnType<typeof generateNames>, apiApp: string): TemplateFile[] {
   const base = `libs/backend/feature/${names.kebab}`;
   const mainAlias = backendFeatureMainAlias(names);
   const sharedAlias = backendFeatureSharedAlias(names);
@@ -242,13 +256,11 @@ describe("${names.pascal}Dto", () => {
 });
 `,
     },
-    projectJson(
-      `${base}/shared/lib`,
-      sharedAlias,
-      `${base}/shared/lib/src`,
-      `dist/${base}/shared`,
-      ["platform:backend", "type:feature-shared", `scope:${names.kebab}`],
-    ),
+    projectJson(`${base}/shared/lib`, sharedAlias, `${base}/shared/lib/src`, `dist/${base}/shared`, [
+      'platform:backend',
+      'type:feature-shared',
+      `scope:${names.kebab}`,
+    ]),
     ...tsconfig(`${base}/shared/lib`),
 
     // Main library
@@ -272,13 +284,11 @@ describe("${names.pascal}Dto", () => {
       path: `${base}/main/lib/src/${names.kebab}.service.spec.ts`,
       contents: `import { describe, expect, it } from "vitest";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("creates a ${names.title.toLowerCase()} placeholder", () => {\n    expect(new ${names.pascal}Service().create({ name: "Example" })).toMatchObject({\n      name: "Example",\n    });\n  });\n});\n`,
     },
-    projectJson(
-      `${base}/main/lib`,
-      mainAlias,
-      `${base}/main/lib/src`,
-      `dist/${base}/main`,
-      ["platform:backend", "type:feature-main", `scope:${names.kebab}`],
-    ),
+    projectJson(`${base}/main/lib`, mainAlias, `${base}/main/lib/src`, `dist/${base}/main`, [
+      'platform:backend',
+      'type:feature-main',
+      `scope:${names.kebab}`,
+    ]),
     ...tsconfig(`${base}/main/lib`),
 
     // Postgres data access
@@ -292,7 +302,7 @@ describe("${names.pascal}Dto", () => {
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/entities/${names.kebab}.entity.ts`,
-      contents: `import { randomUUID } from "node:crypto";\nimport { EntitySchema } from "@mikro-orm/core";\n\nexport interface ${names.pascal}EntityInput {\n  name: string;\n}\n\nexport class ${names.pascal}Entity {\n  id: string = randomUUID();\n  name!: string;\n  createdAt: Date = new Date();\n\n  constructor(input?: ${names.pascal}EntityInput) {\n    if (input) {\n      this.name = input.name;\n    }\n  }\n}\n\nexport const ${names.pascal}EntitySchema = new EntitySchema<${names.pascal}Entity>({\n  class: ${names.pascal}Entity,\n  tableName: "${names.kebab.replaceAll("-", "_")}",\n  properties: {\n    id: { type: "uuid", primary: true },\n    name: { type: "varchar", length: 255 },\n    createdAt: {\n      type: "timestamptz",\n      fieldName: "created_at",\n      onCreate: () => new Date(),\n    },\n  },\n});\n`,
+      contents: `import { randomUUID } from "node:crypto";\nimport { EntitySchema } from "@mikro-orm/core";\n\nexport interface ${names.pascal}EntityInput {\n  name: string;\n}\n\nexport class ${names.pascal}Entity {\n  id: string = randomUUID();\n  name!: string;\n  createdAt: Date = new Date();\n\n  constructor(input?: ${names.pascal}EntityInput) {\n    if (input) {\n      this.name = input.name;\n    }\n  }\n}\n\nexport const ${names.pascal}EntitySchema = new EntitySchema<${names.pascal}Entity>({\n  class: ${names.pascal}Entity,\n  tableName: "${names.kebab.replaceAll('-', '_')}",\n  properties: {\n    id: { type: "uuid", primary: true },\n    name: { type: "varchar", length: 255 },\n    createdAt: {\n      type: "timestamptz",\n      fieldName: "created_at",\n      onCreate: () => new Date(),\n    },\n  },\n});\n`,
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/entities/index.ts`,
@@ -308,7 +318,7 @@ describe("${names.pascal}Dto", () => {
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.ts`,
-      contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override up(): void {\n    this.addSql('create table "${names.kebab.replaceAll("-", "_")}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll("-", "_")}_pkey" primary key ("id"));');\n  }\n\n  override down(): void {\n    this.addSql('drop table if exists "${names.kebab.replaceAll("-", "_")}" cascade;');\n  }\n}\n`,
+      contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override up(): void {\n    this.addSql('create table "${names.kebab.replaceAll('-', '_')}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll('-', '_')}_pkey" primary key ("id"));');\n  }\n\n  override down(): void {\n    this.addSql('drop table if exists "${names.kebab.replaceAll('-', '_')}" cascade;');\n  }\n}\n`,
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.spec.ts`,
@@ -327,7 +337,7 @@ describe("Migration00000000000000Create${names.pascal}", () => {
 
     const joined = sql.join("\\n");
     expect(joined).toContain("create table");
-    expect(joined).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(joined).toContain("${names.kebab.replaceAll('-', '_')}");
     expect(joined).toContain('"id"');
     expect(joined).toContain('"name"');
     expect(joined).toContain('"created_at"');
@@ -346,7 +356,7 @@ describe("Migration00000000000000Create${names.pascal}", () => {
 
     const joined = sql.join("\\n");
     expect(joined).toContain("drop table");
-    expect(joined).toContain("${names.kebab.replaceAll("-", "_")}");
+    expect(joined).toContain("${names.kebab.replaceAll('-', '_')}");
     expect(joined).toContain("cascade");
   });
 });
@@ -361,7 +371,7 @@ describe("Migration00000000000000Create${names.pascal}", () => {
       backendPostgresMainAlias(names),
       `libs/backend/postgres/main/${names.kebab}/lib/src`,
       `dist/libs/backend/postgres/main/${names.kebab}`,
-      ["platform:backend", "type:data-access", `scope:${names.kebab}`],
+      ['platform:backend', 'type:data-access', `scope:${names.kebab}`],
     ),
     ...tsconfig(`libs/backend/postgres/main/${names.kebab}/lib`),
 
@@ -383,26 +393,15 @@ describe("Migration00000000000000Create${names.pascal}", () => {
 
 function createTsconfigAliases(names: ReturnType<typeof generateNames>): Record<string, string[]> {
   return {
-    [backendFeatureMainAlias(names)]: [
-      `libs/backend/feature/${names.kebab}/main/lib/src/index.ts`,
-    ],
-    [backendFeatureSharedAlias(names)]: [
-      `libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`,
-    ],
-    [backendPostgresMainAlias(names)]: [
-      `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
-    ],
-    [frontendFeatureAlias(names)]: [
-      `libs/frontend/feature/${names.kebab}/lib/src/index.ts`,
-    ],
+    [backendFeatureMainAlias(names)]: [`libs/backend/feature/${names.kebab}/main/lib/src/index.ts`],
+    [backendFeatureSharedAlias(names)]: [`libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`],
+    [backendPostgresMainAlias(names)]: [`libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`],
+    [frontendFeatureAlias(names)]: [`libs/frontend/feature/${names.kebab}/lib/src/index.ts`],
   };
 }
 
-function findExistingTsconfigAliases(
-  tree: Tree,
-  names: ReturnType<typeof generateNames>,
-): string[] {
-  const tsconfig = readJsonFile<Record<string, unknown>>(tree, "tsconfig.base.json");
+function findExistingTsconfigAliases(tree: Tree, names: ReturnType<typeof generateNames>): string[] {
+  const tsconfig = readJsonFile<Record<string, unknown>>(tree, 'tsconfig.base.json');
   const compilerOptions = tsconfig?.compilerOptions as { paths?: Record<string, string[]> } | undefined;
   const paths = compilerOptions?.paths ?? {};
   const newAliases = createTsconfigAliases(names);
@@ -417,7 +416,7 @@ function listApiApps(tree: Tree): string[] {
   const projects = getProjects(tree);
   const apiApps: string[] = [];
   for (const [name, config] of projects.entries()) {
-    if (config.root?.startsWith("apps/backend/") && config.tags?.includes("type:backend-app")) {
+    if (config.root?.startsWith('apps/backend/') && config.tags?.includes('type:backend-app')) {
       apiApps.push(name);
     }
   }
@@ -434,20 +433,17 @@ export interface FeatureGeneratorOptions {
   skipFormat?: boolean;
 }
 
-export async function featureGenerator(
-  tree: Tree,
-  options: FeatureGeneratorOptions,
-): Promise<void> {
+export async function featureGenerator(tree: Tree, options: FeatureGeneratorOptions): Promise<void> {
   const nameError = validateName(options.name);
   if (nameError) throw new Error(nameError);
 
   const names = generateNames(options.name);
-  const apiApp = options.apiApp ?? "user-app-api";
+  const apiApp = options.apiApp ?? 'user-app-api';
 
   const validApiApps = listApiApps(tree);
   if (validApiApps.length > 0 && !validApiApps.includes(apiApp)) {
     throw new Error(
-      `Invalid --api-app "${apiApp}". Expected one of: ${validApiApps.join(", ") || "(none found under apps/backend)"}.`,
+      `Invalid --api-app "${apiApp}". Expected one of: ${validApiApps.join(', ') || '(none found under apps/backend)'}.`,
     );
   }
 
@@ -460,7 +456,7 @@ export async function featureGenerator(
       const conflicts: string[] = [];
       for (const p of existingFiles) conflicts.push(`File exists: ${p}`);
       for (const a of existingAliases) conflicts.push(`Tsconfig alias exists: ${a}`);
-      throw new Error(`Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join("\n")}`);
+      throw new Error(`Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join('\n')}`);
     }
   }
 
@@ -473,25 +469,25 @@ export async function featureGenerator(
   }
 
   if (!options.dryRun) {
-    const tsconfig = readJsonFile<Record<string, unknown>>(tree, "tsconfig.base.json");
+    const tsconfig = readJsonFile<Record<string, unknown>>(tree, 'tsconfig.base.json');
     if (tsconfig) {
       const compilerOptions = (tsconfig.compilerOptions ?? {}) as Record<string, unknown>;
       const paths = (compilerOptions.paths ?? {}) as Record<string, string[]>;
       const newAliases = createTsconfigAliases(names);
       compilerOptions.paths = { ...paths, ...newAliases };
-      writeJsonFile(tree, "tsconfig.base.json", tsconfig);
+      writeJsonFile(tree, 'tsconfig.base.json', tsconfig);
     }
   } else {
-    console.log("UPDATE tsconfig.base.json path aliases");
+    console.log('UPDATE tsconfig.base.json path aliases');
   }
 
   if (options.dryRun) {
-    console.log("");
-    console.log("Next steps:");
+    console.log('');
+    console.log('Next steps:');
     console.log(`1. Add ${backendFeatureMainAlias(names)} to the ${apiApp} API module imports.`);
-    console.log("2. Wire the generated client from the React route/page that owns this feature.");
-    console.log("3. Replace placeholder persistence with a repository and commit a real migration.");
-    console.log("4. Run pnpm run lint && pnpm run typecheck && pnpm run test.");
+    console.log('2. Wire the generated client from the React route/page that owns this feature.');
+    console.log('3. Replace placeholder persistence with a repository and commit a real migration.');
+    console.log('4. Run pnpm run lint && pnpm run typecheck && pnpm run test.');
   }
 
   if (!options.skipFormat && !options.dryRun) {

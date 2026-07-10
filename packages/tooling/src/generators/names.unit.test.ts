@@ -5,94 +5,86 @@
  * COMPONENT: multi-unit integration (generateNames + validateName).
  * E2E: full name pipeline from raw input to all derived forms.
  */
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import {
-  toKebab,
-  toCamel,
-  toPascal,
-  toTitle,
-  toConstant,
-  generateNames,
-  validateName,
-} from "./names.js";
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import { toKebab, toCamel, toPascal, toTitle, toConstant, generateNames, validateName } from './names.js';
 
-describe("names utilities", () => {
+describe('names utilities', () => {
   // -----------------------------------------------------------------------
   // UNIT: individual converters
   // -----------------------------------------------------------------------
 
-  describe("toKebab", () => {
-    it("converts a simple string", () => {
-      assert.equal(toKebab("myFeature"), "myfeature");
+  describe('toKebab', () => {
+    it('converts a simple string', () => {
+      assert.equal(toKebab('myFeature'), 'myfeature');
     });
 
-    it("handles multi-word with spaces", () => {
-      assert.equal(toKebab("My Feature Name"), "my-feature-name");
+    it('handles multi-word with spaces', () => {
+      assert.equal(toKebab('My Feature Name'), 'my-feature-name');
     });
 
-    it("handles underscores", () => {
-      assert.equal(toKebab("my_feature_name"), "my-feature-name");
+    it('handles underscores', () => {
+      assert.equal(toKebab('my_feature_name'), 'my-feature-name');
     });
 
-    it("handles mixed separators", () => {
-      assert.equal(toKebab("my_feature-name Test"), "my-feature-name-test");
+    it('handles mixed separators', () => {
+      assert.equal(toKebab('my_feature-name Test'), 'my-feature-name-test');
     });
 
-    it("removes leading/trailing dashes", () => {
-      assert.equal(toKebab("-my-feature-"), "my-feature");
+    it('removes leading/trailing dashes', () => {
+      assert.equal(toKebab('-my-feature-'), 'my-feature');
     });
 
-    it("strips non-alphanumeric characters except dashes/spaces/underscores", () => {
-      assert.equal(toKebab("my@feature!name#"), "myfeaturename");
+    it('strips non-alphanumeric characters except dashes/spaces/underscores', () => {
+      assert.equal(toKebab('my@feature!name#'), 'myfeaturename');
     });
 
-    it("trims whitespace", () => {
-      assert.equal(toKebab("  my feature  "), "my-feature");
-    });
-  });
-
-  describe("toCamel", () => {
-    it("converts kebab input", () => {
-      assert.equal(toCamel("my-feature"), "myFeature");
-    });
-
-    it("converts single word", () => {
-      assert.equal(toCamel("feature"), "feature");
-    });
-
-    it("handles already camelCase", () => {
-      assert.equal(toCamel("myFeature"), "myfeature");
+    it('trims whitespace', () => {
+      assert.equal(toKebab('  my feature  '), 'my-feature');
     });
   });
 
-  describe("toPascal", () => {
-    it("capitalizes the first letter of camelCase", () => {
-      assert.equal(toPascal("my-feature"), "MyFeature");
+  describe('toCamel', () => {
+    it('converts kebab input', () => {
+      assert.equal(toCamel('my-feature'), 'myFeature');
     });
 
-    it("handles single word", () => {
-      assert.equal(toPascal("feature"), "Feature");
-    });
-  });
-
-  describe("toTitle", () => {
-    it("capitalizes each word", () => {
-      assert.equal(toTitle("my-feature-name"), "My Feature Name");
+    it('converts single word', () => {
+      assert.equal(toCamel('feature'), 'feature');
     });
 
-    it("handles single word", () => {
-      assert.equal(toTitle("feature"), "Feature");
+    it('handles already camelCase', () => {
+      assert.equal(toCamel('myFeature'), 'myfeature');
     });
   });
 
-  describe("toConstant", () => {
-    it("converts to UPPER_SNAKE_CASE", () => {
-      assert.equal(toConstant("my-feature"), "MY_FEATURE");
+  describe('toPascal', () => {
+    it('capitalizes the first letter of camelCase', () => {
+      assert.equal(toPascal('my-feature'), 'MyFeature');
     });
 
-    it("handles single word", () => {
-      assert.equal(toConstant("feature"), "FEATURE");
+    it('handles single word', () => {
+      assert.equal(toPascal('feature'), 'Feature');
+    });
+  });
+
+  describe('toTitle', () => {
+    it('capitalizes each word', () => {
+      assert.equal(toTitle('my-feature-name'), 'My Feature Name');
+    });
+
+    it('handles single word', () => {
+      assert.equal(toTitle('feature'), 'Feature');
+    });
+  });
+
+  describe('toConstant', () => {
+    it('converts to UPPER_SNAKE_CASE', () => {
+      assert.equal(toConstant('my-feature'), 'MY_FEATURE');
+    });
+
+    it('handles single word', () => {
+      assert.equal(toConstant('feature'), 'FEATURE');
     });
   });
 
@@ -100,22 +92,22 @@ describe("names utilities", () => {
   // COMPONENT: generateNames
   // -----------------------------------------------------------------------
 
-  describe("generateNames", () => {
-    it("produces all derived names from a raw input", () => {
-      const names = generateNames("Support Cases");
-      assert.equal(names.raw, "Support Cases");
-      assert.equal(names.kebab, "support-cases");
-      assert.equal(names.camel, "supportCases");
-      assert.equal(names.pascal, "SupportCases");
-      assert.equal(names.title, "Support Cases");
-      assert.equal(names.constant, "SUPPORT_CASES");
+  describe('generateNames', () => {
+    it('produces all derived names from a raw input', () => {
+      const names = generateNames('Support Cases');
+      assert.equal(names.raw, 'Support Cases');
+      assert.equal(names.kebab, 'support-cases');
+      assert.equal(names.camel, 'supportCases');
+      assert.equal(names.pascal, 'SupportCases');
+      assert.equal(names.title, 'Support Cases');
+      assert.equal(names.constant, 'SUPPORT_CASES');
     });
 
-    it("handles complex multi-word input", () => {
-      const names = generateNames("User Profile Settings v2");
-      assert.equal(names.kebab, "user-profile-settings-v2");
-      assert.equal(names.pascal, "UserProfileSettingsV2");
-      assert.equal(names.camel, "userProfileSettingsV2");
+    it('handles complex multi-word input', () => {
+      const names = generateNames('User Profile Settings v2');
+      assert.equal(names.kebab, 'user-profile-settings-v2');
+      assert.equal(names.pascal, 'UserProfileSettingsV2');
+      assert.equal(names.camel, 'userProfileSettingsV2');
     });
   });
 
@@ -123,33 +115,33 @@ describe("names utilities", () => {
   // E2E: validateName
   // -----------------------------------------------------------------------
 
-  describe("validateName", () => {
-    it("rejects empty strings", () => {
-      assert.ok(validateName("") !== null);
+  describe('validateName', () => {
+    it('rejects empty strings', () => {
+      assert.ok(validateName('') !== null);
     });
 
-    it("rejects whitespace-only strings", () => {
-      assert.ok(validateName("   ") !== null);
+    it('rejects whitespace-only strings', () => {
+      assert.ok(validateName('   ') !== null);
     });
 
-    it("rejects strings with only special characters", () => {
-      assert.ok(validateName("@#$") !== null);
+    it('rejects strings with only special characters', () => {
+      assert.ok(validateName('@#$') !== null);
     });
 
-    it("accepts valid kebab-case names", () => {
-      assert.equal(validateName("my-feature"), null);
+    it('accepts valid kebab-case names', () => {
+      assert.equal(validateName('my-feature'), null);
     });
 
-    it("accepts PascalCase names", () => {
-      assert.equal(validateName("MyFeature"), null);
+    it('accepts PascalCase names', () => {
+      assert.equal(validateName('MyFeature'), null);
     });
 
-    it("accepts names with numbers", () => {
-      assert.equal(validateName("feature-v2"), null);
+    it('accepts names with numbers', () => {
+      assert.equal(validateName('feature-v2'), null);
     });
 
-    it("accepts single-word names", () => {
-      assert.equal(validateName("admin"), null);
+    it('accepts single-word names', () => {
+      assert.equal(validateName('admin'), null);
     });
   });
 });

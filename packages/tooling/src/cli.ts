@@ -1,24 +1,18 @@
-import { dirname, resolve } from "node:path";
-import { existsSync } from "node:fs";
-import { runCheckFrontendFsd } from "./commands/frontend/check-fsd";
-import {
-  runToastConfigCheck,
-  runToastConfigGenerate,
-} from "./commands/api/toast-config";
-import { fileURLToPath } from "node:url";
-import { runCheckLibraryConfigs } from "./commands/project/check-library-configs";
-import { runGenerateVerticalSliceFromContext } from "./commands/project/generate-vertical-slice";
-import { runSetupFromContext } from "./commands/project/setup";
-import { runDoctorFromContext } from "./commands/project/doctor";
-import { runAddFromContext } from "./commands/project/add";
-import { runMutation } from "./commands/qa/mutation";
-import { runBranchCleanup } from "./commands/git/branch-cleanup";
-import { runWebpCommand } from "./commands/images/webp";
-import {
-  runChangedFormatCheck,
-  runStaticCheck,
-} from "./commands/tooling/static-check";
-import { run } from "./runtime/process";
+import { dirname, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { runCheckFrontendFsd } from './commands/frontend/check-fsd';
+import { runToastConfigCheck, runToastConfigGenerate } from './commands/api/toast-config';
+import { fileURLToPath } from 'node:url';
+import { runCheckLibraryConfigs } from './commands/project/check-library-configs';
+import { runGenerateVerticalSliceFromContext } from './commands/project/generate-vertical-slice';
+import { runSetupFromContext } from './commands/project/setup';
+import { runDoctorFromContext } from './commands/project/doctor';
+import { runAddFromContext } from './commands/project/add';
+import { runMutation } from './commands/qa/mutation';
+import { runBranchCleanup } from './commands/git/branch-cleanup';
+import { runWebpCommand } from './commands/images/webp';
+import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
+import { run } from './runtime/process';
 
 export interface CommandContext {
   argv: string[];
@@ -33,10 +27,10 @@ interface CommandDefinition {
   handler: CommandHandler;
 }
 
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const workspaceRoot = resolve(packageRoot, "../..");
-const TOOLING_VERSION = "0.0.0"; // sync with packages/tooling/package.json
-const writeStdoutLine = (message = ""): void => {
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const workspaceRoot = resolve(packageRoot, '../..');
+const TOOLING_VERSION = '0.0.0'; // sync with packages/tooling/package.json
+const writeStdoutLine = (message = ''): void => {
   process.stdout.write(`${message}\n`);
 };
 const writeStderrLine = (message: string): void => {
@@ -46,222 +40,116 @@ const writeStderrLine = (message: string): void => {
 const commands = new Map<string, CommandDefinition>();
 
 register(
-  "git:branch-cleanup",
-  "Safely preview or delete local/remote branches already merged into the target branch.",
+  'git:branch-cleanup',
+  'Safely preview or delete local/remote branches already merged into the target branch.',
   runBranchCleanup,
 );
-register(
-  "images:webp",
-  "Find PNG/JPG/JPEG assets and convert them to WebP.",
-  ({ argv, workspaceRoot }) => runWebpCommand({ argv, workspaceRoot }),
+register('images:webp', 'Find PNG/JPG/JPEG assets and convert them to WebP.', ({ argv, workspaceRoot }) =>
+  runWebpCommand({ argv, workspaceRoot }),
 );
 
-register(
-  "frontend:fsd:check",
-  "Enforce strict frontend Feature-Sliced Design boundaries.",
-  ({ argv, workspaceRoot }) => runCheckFrontendFsd({ argv, workspaceRoot }),
+register('frontend:fsd:check', 'Enforce strict frontend Feature-Sliced Design boundaries.', ({ argv, workspaceRoot }) =>
+  runCheckFrontendFsd({ argv, workspaceRoot }),
 );
 
-register(
-  "project:check-library-configs",
-  "Validate Nx library config placement.",
-  ({ workspaceRoot }) => runCheckLibraryConfigs({ workspaceRoot }),
+register('project:check-library-configs', 'Validate Nx library config placement.', ({ workspaceRoot }) =>
+  runCheckLibraryConfigs({ workspaceRoot }),
 );
 register(
-  "project:generate-vertical-slice",
-  "Scaffold a checklist-driven product vertical slice.",
+  'project:generate-vertical-slice',
+  'Scaffold a checklist-driven product vertical slice.',
   runGenerateVerticalSliceFromContext,
 );
+register('project:setup', 'Interactive and non-interactive boilerplate configuration.', runSetupFromContext);
 register(
-  "project:setup",
-  "Interactive and non-interactive boilerplate configuration.",
-  runSetupFromContext,
-);
-register(
-  "project:doctor",
-  "Run workspace health checks (Node, pnpm, Docker, manifests, config).",
+  'project:doctor',
+  'Run workspace health checks (Node, pnpm, Docker, manifests, config).',
   runDoctorFromContext,
 );
-register(
-  "setup",
-  "Shorthand for project:setup — boilerplate configuration.",
-  runSetupFromContext,
+register('setup', 'Shorthand for project:setup — boilerplate configuration.', runSetupFromContext);
+register('doctor', 'Shorthand for project:doctor — workspace health checks.', runDoctorFromContext);
+register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext);
+register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
+  runMutation({ argv, workspaceRoot }),
 );
 register(
-  "doctor",
-  "Shorthand for project:doctor — workspace health checks.",
-  runDoctorFromContext,
-);
-register(
-  "add",
-  "Add an app, library, or feature to the workspace.",
-  runAddFromContext,
-);
-register(
-  "qa:mutation",
-  "Run Stryker mutation testing or write its dry-run report.",
-  ({ argv, workspaceRoot }) => runMutation({ argv, workspaceRoot }),
-);
-register(
-  "tooling:static-check",
-  "Run TS-first static validation and safe import smoke checks for repo tooling commands.",
+  'tooling:static-check',
+  'Run TS-first static validation and safe import smoke checks for repo tooling commands.',
   ({ workspaceRoot }) => runStaticCheck({ workspaceRoot }),
 );
 register(
-  "tooling:changed-format-check",
-  "Run Prettier only on changed files for PR memory-safe formatting validation.",
+  'tooling:changed-format-check',
+  'Run Prettier only on changed files for PR memory-safe formatting validation.',
   ({ argv, workspaceRoot }) => runChangedFormatCheck({ argv, workspaceRoot }),
 );
 
+registerScript('testing:storybook', 'Run Storybook interaction tests.', 'testing/storybook-test.ts');
 registerScript(
-  "testing:storybook",
-  "Run Storybook interaction tests.",
-  "testing/storybook-test.ts",
+  'testing:storybook-visual',
+  'Run Storybook visual regression tests.',
+  'testing/storybook-visual-regression.ts',
 );
 registerScript(
-  "testing:storybook-visual",
-  "Run Storybook visual regression tests.",
-  "testing/storybook-visual-regression.ts",
+  'testing:frontend-static-smoke',
+  'Smoke-test a built frontend app from static assets.',
+  'testing/frontend-static-smoke.ts',
 );
 registerScript(
-  "testing:frontend-static-smoke",
-  "Smoke-test a built frontend app from static assets.",
-  "testing/frontend-static-smoke.ts",
+  'testing:frontend-browser-e2e-coverage',
+  'Run browser e2e smoke coverage against a built frontend app.',
+  'testing/frontend-browser-e2e-coverage.ts',
 );
+registerScript('db:migrate', 'Run database migrations.', 'db/migrate.ts');
+registerScript('db:migrations:check', 'Check database migration naming and drift.', 'db/migrations-check.ts');
 registerScript(
-  "testing:frontend-browser-e2e-coverage",
-  "Run browser e2e smoke coverage against a built frontend app.",
-  "testing/frontend-browser-e2e-coverage.ts",
+  'db:migrations:rollback-check',
+  'Run auth migrations up/down/up against disposable PostgreSQL.',
+  'db/migrations-rollback-check.ts',
 );
-registerScript("db:migrate", "Run database migrations.", "db/migrate.ts");
-registerScript(
-  "db:migrations:check",
-  "Check database migration naming and drift.",
-  "db/migrations-check.ts",
-);
-registerScript(
-  "db:migrations:rollback-check",
-  "Run auth migrations up/down/up against disposable PostgreSQL.",
-  "db/migrations-rollback-check.ts",
-);
-registerScript("db:reset", "Reset the local database.", "db/reset.ts");
-registerScript("db:seed", "Seed the local database.", "db/seed.ts");
-registerScript("db:backup", "Create a PostgreSQL backup.", "db/backup.ts");
-registerScript("db:restore", "Restore a PostgreSQL backup.", "db/restore.ts");
-registerScript(
-  "db:restore-drill",
-  "Run a PostgreSQL backup/restore drill or CI-safe dry-run.",
-  "db/restore-drill.ts",
-);
-registerScript(
-  "dev:fullstack",
-  "Run the local fullstack dev helper.",
-  "dev/fullstack.ts",
-);
-registerScript("docker:smoke", "Run Docker smoke checks.", "docker/smoke.ts");
-registerScript(
-  "docker:fullstack-e2e",
-  "Run Docker fullstack e2e checks.",
-  "docker/fullstack-e2e.ts",
-);
-registerScript(
-  "project:init",
-  "Initialize project placeholders.",
-  "project/init-project.ts",
-);
-registerScript(
-  "api:openapi",
-  "Export OpenAPI contracts.",
-  "api/export-openapi.ts",
-);
-registerScript(
-  "api:clients",
-  "Generate API clients.",
-  "api/generate-clients.ts",
-);
-registerScript(
-  "api:clients:check",
-  "Check generated API clients.",
-  "api/check-clients.ts",
-);
-registerScript(
-  "api:contracts",
-  "Generate API contracts.",
-  "api/generate-contracts.ts",
-);
-registerScript(
-  "api:contracts:check",
-  "Check generated API contracts.",
-  "api/check-contracts.ts",
-);
+registerScript('db:reset', 'Reset the local database.', 'db/reset.ts');
+registerScript('db:seed', 'Seed the local database.', 'db/seed.ts');
+registerScript('db:backup', 'Create a PostgreSQL backup.', 'db/backup.ts');
+registerScript('db:restore', 'Restore a PostgreSQL backup.', 'db/restore.ts');
+registerScript('db:restore-drill', 'Run a PostgreSQL backup/restore drill or CI-safe dry-run.', 'db/restore-drill.ts');
+registerScript('dev:fullstack', 'Run the local fullstack dev helper.', 'dev/fullstack.ts');
+registerScript('docker:smoke', 'Run Docker smoke checks.', 'docker/smoke.ts');
+registerScript('docker:fullstack-e2e', 'Run Docker fullstack e2e checks.', 'docker/fullstack-e2e.ts');
+registerScript('project:init', 'Initialize project placeholders.', 'project/init-project.ts');
+registerScript('api:openapi', 'Export OpenAPI contracts.', 'api/export-openapi.ts');
+registerScript('api:clients', 'Generate API clients.', 'api/generate-clients.ts');
+registerScript('api:clients:check', 'Check generated API clients.', 'api/check-clients.ts');
+registerScript('api:contracts', 'Generate API contracts.', 'api/generate-contracts.ts');
+registerScript('api:contracts:check', 'Check generated API contracts.', 'api/check-contracts.ts');
 register(
-  "api:toast-config:generate",
-  "Generate app-local API toast rule JSON from OpenAPI contracts.",
+  'api:toast-config:generate',
+  'Generate app-local API toast rule JSON from OpenAPI contracts.',
   ({ argv, workspaceRoot }) => runToastConfigGenerate({ argv, workspaceRoot }),
 );
 register(
-  "api:toast-config:check",
-  "Validate app-local API toast rule JSON against OpenAPI contracts.",
+  'api:toast-config:check',
+  'Validate app-local API toast rule JSON against OpenAPI contracts.',
   ({ argv, workspaceRoot }) => runToastConfigCheck({ argv, workspaceRoot }),
 );
-registerScript(
-  "qa:consumer-contracts",
-  "Validate consumer contracts.",
-  "qa/consumer-contracts.ts",
-);
-registerScript(
-  "qa:openapi-lint",
-  "Lint OpenAPI contracts.",
-  "qa/openapi-lint.ts",
-);
-registerScript(
-  "qa:openapi-fuzz",
-  "Generate OpenAPI fuzz cases.",
-  "qa/openapi-fuzz.ts",
-);
-registerScript(
-  "qa:accessibility",
-  "Run accessibility checks.",
-  "qa/accessibility.ts",
-);
-registerScript(
-  "qa:cross-browser-e2e",
-  "Run cross-browser e2e matrix.",
-  "qa/cross-browser-e2e.ts",
-);
-registerScript(
-  "qa:performance",
-  "Run performance checks.",
-  "qa/performance.ts",
-);
-registerScript("qa:security-sast", "Run SAST checks.", "qa/security-sast.ts");
-registerScript(
-  "qa:secret-scan",
-  "Run secret scanning checks.",
-  "qa/secret-scan.ts",
-);
-registerScript("qa:security-dast", "Run DAST checks.", "qa/security-dast.ts");
-registerScript(
-  "qa:security-suite",
-  "Run the security suite.",
-  "qa/security-suite.ts",
-);
-registerScript("qa:property", "Run property-based checks.", "qa/property.ts");
-registerScript(
-  "qa:world-class-gates",
-  "Run world-class quality gates.",
-  "qa/world-class-gates.ts",
-);
+registerScript('qa:consumer-contracts', 'Validate consumer contracts.', 'qa/consumer-contracts.ts');
+registerScript('qa:openapi-lint', 'Lint OpenAPI contracts.', 'qa/openapi-lint.ts');
+registerScript('qa:openapi-fuzz', 'Generate OpenAPI fuzz cases.', 'qa/openapi-fuzz.ts');
+registerScript('qa:accessibility', 'Run accessibility checks.', 'qa/accessibility.ts');
+registerScript('qa:cross-browser-e2e', 'Run cross-browser e2e matrix.', 'qa/cross-browser-e2e.ts');
+registerScript('qa:performance', 'Run performance checks.', 'qa/performance.ts');
+registerScript('qa:security-sast', 'Run SAST checks.', 'qa/security-sast.ts');
+registerScript('qa:secret-scan', 'Run secret scanning checks.', 'qa/secret-scan.ts');
+registerScript('qa:security-dast', 'Run DAST checks.', 'qa/security-dast.ts');
+registerScript('qa:security-suite', 'Run the security suite.', 'qa/security-suite.ts');
+registerScript('qa:property', 'Run property-based checks.', 'qa/property.ts');
+registerScript('qa:world-class-gates', 'Run world-class quality gates.', 'qa/world-class-gates.ts');
 
-export async function main(
-  argv: string[] = process.argv.slice(2),
-): Promise<number> {
-  if (argv[0] === "--version" || argv[0] === "-v") {
+export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
+  if (argv[0] === '--version' || argv[0] === '-v') {
     writeStdoutLine(TOOLING_VERSION);
     return 0;
   }
 
-  if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
+  if (argv.length === 0 || argv[0] === '--help' || argv[0] === '-h') {
     printHelp();
     return 0;
   }
@@ -269,18 +157,17 @@ export async function main(
   const resolved = resolveCommand(argv);
 
   if (resolved === undefined) {
-    writeStderrLine(`Unknown tooling command: ${argv[0] ?? ""}`);
+    writeStderrLine(`Unknown tooling command: ${argv[0] ?? ''}`);
     printHelp();
     return 1;
   }
 
-  if (resolved.argv[0] === "--help" || resolved.argv[0] === "-h") {
+  if (resolved.argv[0] === '--help' || resolved.argv[0] === '-h') {
     printCommandHelp(resolved.name, resolved.command);
     return 0;
   }
 
-  const commandArgv =
-    resolved.argv[0] === "--" ? resolved.argv.slice(1) : resolved.argv;
+  const commandArgv = resolved.argv[0] === '--' ? resolved.argv.slice(1) : resolved.argv;
 
   return await resolved.command.handler({
     argv: commandArgv,
@@ -289,49 +176,31 @@ export async function main(
   });
 }
 
-function register(
-  name: string,
-  description: string,
-  handler: CommandHandler,
-): void {
+function register(name: string, description: string, handler: CommandHandler): void {
   commands.set(name, { description, handler });
 }
 
-function registerScript(
-  name: string,
-  description: string,
-  commandPath: string,
-): void {
+function registerScript(name: string, description: string, commandPath: string): void {
   register(name, description, ({ argv, packageRoot, workspaceRoot }) => {
-    const commandModule = resolve(packageRoot, "src/commands", commandPath);
+    const commandModule = resolve(packageRoot, 'src/commands', commandPath);
 
     if (!existsSync(commandModule)) {
       writeStderrLine(`Tooling command module not found: ${commandModule}`);
       return 1;
     }
 
-    const result = run(
-      process.execPath,
-      [resolve(packageRoot, "bin/run-ts-command.mjs"), commandModule, ...argv],
-      {
-        cwd: workspaceRoot,
-        stdio: "inherit",
-      },
-    );
+    const result = run(process.execPath, [resolve(packageRoot, 'bin/run-ts-command.mjs'), commandModule, ...argv], {
+      cwd: workspaceRoot,
+      stdio: 'inherit',
+    });
 
     return result.status;
   });
 }
 
-function resolveCommand(
-  argv: string[],
-): { name: string; command: CommandDefinition; argv: string[] } | undefined {
-  for (
-    let tokenCount = Math.min(argv.length, 3);
-    tokenCount > 0;
-    tokenCount -= 1
-  ) {
-    const commandName = argv.slice(0, tokenCount).join(":");
+function resolveCommand(argv: string[]): { name: string; command: CommandDefinition; argv: string[] } | undefined {
+  for (let tokenCount = Math.min(argv.length, 3); tokenCount > 0; tokenCount -= 1) {
+    const commandName = argv.slice(0, tokenCount).join(':');
     const command = commands.get(commandName);
 
     if (command !== undefined) {
@@ -347,13 +216,11 @@ function resolveCommand(
 }
 
 function printHelp(): void {
-  writeStdoutLine("Usage: repo-tooling <command> [args]");
+  writeStdoutLine('Usage: repo-tooling <command> [args]');
   writeStdoutLine();
-  writeStdoutLine("Commands:");
+  writeStdoutLine('Commands:');
 
-  for (const [name, command] of [...commands.entries()].sort(
-    ([left], [right]) => left.localeCompare(right),
-  )) {
+  for (const [name, command] of [...commands.entries()].sort(([left], [right]) => left.localeCompare(right))) {
     writeStdoutLine(`  ${name.padEnd(30)} ${command.description}`);
   }
 }

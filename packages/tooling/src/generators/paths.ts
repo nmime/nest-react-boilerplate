@@ -5,7 +5,7 @@
  *   depth("libs/backend/common/response/lib") => 5  (five segments, five ../ to root)
  */
 function depth(dir: string): number {
-  return dir.split("/").length;
+  return dir.split('/').length;
 }
 
 /**
@@ -14,7 +14,7 @@ function depth(dir: string): number {
  *   dots("libs/backend/common/response/lib") => "../../../../../"
  */
 function dots(dir: string): string {
-  return "../".repeat(depth(dir));
+  return '../'.repeat(depth(dir));
 }
 
 /**

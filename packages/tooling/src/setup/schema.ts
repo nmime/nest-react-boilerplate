@@ -10,76 +10,60 @@
  * owner adds a direct dependency in `packages/tooling/package.json` after
  * this slice ships.
  */
-import { z } from "zod";
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Public enums — derive IDs from the actual repo.
 // ---------------------------------------------------------------------------
 
 /** Frontend application shells that can be enabled / disabled. */
-export const FRONTEND_APP_IDS = [
-  "admin-app",
-  "user-app",
-  "landing-app",
-  "site-app",
-  "mobile-app",
-] as const;
+export const FRONTEND_APP_IDS = ['admin-app', 'user-app', 'landing-app', 'site-app', 'mobile-app'] as const;
 export type FrontendAppId = (typeof FRONTEND_APP_IDS)[number];
 
 /** Backend services that can be enabled / disabled. */
 export const BACKEND_APP_IDS = [
-  "admin-app-api",
-  "user-app-api",
-  "auth-app-api",
-  "discord-app-api",
-  "telegram-bot-api",
-  "telegram-bot-worker",
+  'admin-app-api',
+  'user-app-api',
+  'auth-app-api',
+  'discord-app-api',
+  'telegram-bot-api',
+  'telegram-bot-worker',
 ] as const;
 export type BackendAppId = (typeof BACKEND_APP_IDS)[number];
 
 /** All application IDs (union of frontend + backend + e2e). */
-export const APP_IDS = [
-  ...FRONTEND_APP_IDS,
-  ...BACKEND_APP_IDS,
-  "fullstack-e2e",
-] as const;
+export const APP_IDS = [...FRONTEND_APP_IDS, ...BACKEND_APP_IDS, 'fullstack-e2e'] as const;
 export type AppId = (typeof APP_IDS)[number];
 
 /** Cross-cutting capabilities that can be toggled. */
 export const CAPABILITY_IDS = [
-  "i18n",
-  "analytics",
-  "websockets",
-  "feature-flags",
-  "notifications",
-  "design-tokens",
-  "authz",
-  "postgres",
-  "redis",
-  "s3",
-  "nats",
-  "otel",
-  "swagger",
-  "telegram-bot",
-  "discord-bot",
+  'i18n',
+  'analytics',
+  'websockets',
+  'feature-flags',
+  'notifications',
+  'design-tokens',
+  'authz',
+  'postgres',
+  'redis',
+  's3',
+  'nats',
+  'otel',
+  'swagger',
+  'telegram-bot',
+  'discord-bot',
 ] as const;
 export type CapabilityId = (typeof CAPABILITY_IDS)[number];
 
 /** Supported preset names — deterministic, expandable to apps + capabilities. */
-export const PRESET_IDS = [
-  "minimal",
-  "starter",
-  "fullstack",
-  "enterprise",
-  "bots",
-] as const;
+export const PRESET_IDS = ['minimal', 'starter', 'fullstack', 'enterprise', 'bots'] as const;
 export type PresetId = (typeof PRESET_IDS)[number];
 
 // ---------------------------------------------------------------------------
 // Schema versioning
 // ---------------------------------------------------------------------------
 
-export const SCHEMA_VERSION = "1.0.0" as const;
+export const SCHEMA_VERSION = '1.0.0' as const;
 
 /**
  * The root configuration schema.
@@ -132,9 +116,9 @@ export function parseNrbConfig(raw: unknown): NrbConfig {
 /**
  * Safely parse; returns `{ success, data }` or `{ success, error }`.
  */
-export function safeParseNrbConfig(raw: unknown):
-  | { success: true; data: NrbConfig }
-  | { success: false; error: z.ZodError } {
+export function safeParseNrbConfig(
+  raw: unknown,
+): { success: true; data: NrbConfig } | { success: false; error: z.ZodError } {
   const result = NrbConfigSchema.safeParse(raw);
   if (result.success) {
     return { success: true, data: result.data };

@@ -17,9 +17,17 @@
       "items": {
         "type": "string",
         "enum": [
-          "admin-app", "user-app", "landing-app", "site-app", "mobile-app",
-          "admin-app-api", "user-app-api", "auth-app-api",
-          "discord-app-api", "telegram-bot-api", "telegram-bot-worker",
+          "admin-app",
+          "user-app",
+          "landing-app",
+          "site-app",
+          "mobile-app",
+          "admin-app-api",
+          "user-app-api",
+          "auth-app-api",
+          "discord-app-api",
+          "telegram-bot-api",
+          "telegram-bot-worker",
           "fullstack-e2e"
         ]
       },
@@ -32,9 +40,21 @@
       "items": {
         "type": "string",
         "enum": [
-          "i18n", "analytics", "websockets", "feature-flags", "notifications",
-          "design-tokens", "authz", "postgres", "redis", "s3", "nats",
-          "otel", "swagger", "telegram-bot", "discord-bot"
+          "i18n",
+          "analytics",
+          "websockets",
+          "feature-flags",
+          "notifications",
+          "design-tokens",
+          "authz",
+          "postgres",
+          "redis",
+          "s3",
+          "nats",
+          "otel",
+          "swagger",
+          "telegram-bot",
+          "discord-bot"
         ]
       },
       "description": "Explicit list of capability IDs to enable",

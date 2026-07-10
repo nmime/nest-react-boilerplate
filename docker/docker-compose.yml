@@ -16,7 +16,7 @@ x-backend-env: &backend-env
 x-backend-healthcheck: &backend-healthcheck
   test:
     [
-      "CMD-SHELL",
+      'CMD-SHELL',
       'node -e "fetch(''http://127.0.0.1:80/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
     ]
   interval: 10s
@@ -25,8 +25,7 @@ x-backend-healthcheck: &backend-healthcheck
   start_period: 20s
 
 x-frontend-healthcheck: &frontend-healthcheck
-  test:
-    ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok"]
+  test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok']
   interval: 10s
   timeout: 5s
   retries: 12
@@ -37,11 +36,11 @@ services:
     image: redis:7.4.3-alpine
     restart: unless-stopped
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,10 +49,10 @@ services:
     image: nats:2.10.25-alpine
     restart: unless-stopped
     ports:
-      - "${NATS_PORT:-4222}:4222"
-      - "${NATS_MONITOR_PORT:-8222}:8222"
+      - '${NATS_PORT:-4222}:4222'
+      - '${NATS_MONITOR_PORT:-8222}:8222'
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "4222"]
+      test: ['CMD', 'nc', '-z', 'localhost', '4222']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,15 +62,15 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -84,15 +83,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate}",
-        ]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate}']
       interval: 5s
       timeout: 5s
       retries: 20
@@ -103,12 +98,12 @@ services:
       network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
       target: migrator
-    restart: "no"
+    restart: 'no'
     depends_on:
       postgres:
         condition: service_healthy
     environment: *backend-env
-    command: ["pnpm", "db:migrate"]
+    command: ['pnpm', 'db:migrate']
 
   admin-app-api:
     build:
@@ -128,7 +123,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: "${ADMIN_APP_API_PORT:-0}"
+        published: '${ADMIN_APP_API_PORT:-0}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -150,7 +145,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: "${USER_APP_API_PORT:-0}"
+        published: '${USER_APP_API_PORT:-0}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -172,7 +167,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: "${AUTH_APP_API_PORT:-0}"
+        published: '${AUTH_APP_API_PORT:-0}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -192,7 +187,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: "${ADMIN_APP_PORT:-0}"
+        published: '${ADMIN_APP_PORT:-0}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -214,7 +209,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: "${USER_APP_PORT:-0}"
+        published: '${USER_APP_PORT:-0}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -238,7 +233,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: "${LANDING_APP_PORT:-0}"
+        published: '${LANDING_APP_PORT:-0}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -260,12 +255,12 @@ services:
         condition: service_healthy
     ports:
       - target: 80
-        published: "${SITE_APP_PORT:-0}"
+        published: '${SITE_APP_PORT:-0}'
         protocol: tcp
     healthcheck:
       test:
         [
-          "CMD-SHELL",
+          'CMD-SHELL',
           'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
         ]
       interval: 10s
@@ -292,7 +287,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: "${MOBILE_APP_PORT:-0}"
+        published: '${MOBILE_APP_PORT:-0}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 

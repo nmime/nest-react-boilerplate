@@ -13,9 +13,9 @@
  * was configured with `prune: true`.  The applier trusts the planner's
  * output and does not independently decide what to delete.
  */
-import type { SetupOperation } from "./operations.js";
-import type { FilesystemAdapter, FileConflict, ApplyResult } from "./adapters/filesystem.js";
-import { hashString } from "./state.js";
+import type { SetupOperation } from './operations.js';
+import type { FilesystemAdapter, FileConflict, ApplyResult } from './adapters/filesystem.js';
+import { hashString } from './state.js';
 
 // ---------------------------------------------------------------------------
 // Apply options
@@ -83,23 +83,23 @@ export async function checkConflicts(
     if (stateFiles !== undefined && stateFiles[op.path]) {
       // State-aware: compare current hash against recorded hash
       const currentContent = await fs.read(op.path);
-      const currentHash = currentContent !== null ? hashString(currentContent) : "";
+      const currentHash = currentContent !== null ? hashString(currentContent) : '';
       const recordedHash = stateFiles[op.path];
 
       if (currentHash !== recordedHash) {
-        if (op.kind === "create_file" && currentContent !== null) {
+        if (op.kind === 'create_file' && currentContent !== null) {
           conflicts.push({
             path: op.path,
-            reason: "unexpected",
-            expectedHash: "",
+            reason: 'unexpected',
+            expectedHash: '',
             actualHash: currentHash,
           });
-        } else if (op.kind === "delete_file" && currentContent !== null) {
+        } else if (op.kind === 'delete_file' && currentContent !== null) {
           // File was supposed to be gone but exists — not a conflict for deletes
         } else {
           conflicts.push({
             path: op.path,
-            reason: "content_changed",
+            reason: 'content_changed',
             expectedHash: recordedHash,
             actualHash: currentHash,
           });
@@ -107,20 +107,20 @@ export async function checkConflicts(
       }
     } else {
       // Heuristic mode (no state available)
-      if (op.kind === "create_file") {
+      if (op.kind === 'create_file') {
         const exists = await fs.exists(op.path);
         if (exists) {
           conflicts.push({
             path: op.path,
-            reason: "unexpected",
+            reason: 'unexpected',
           });
         }
-      } else if (op.kind === "json_merge") {
+      } else if (op.kind === 'json_merge') {
         const content = await fs.read(op.path);
         if (content === null) {
           conflicts.push({
             path: op.path,
-            reason: "missing",
+            reason: 'missing',
           });
         }
       }
@@ -152,7 +152,7 @@ export async function backupFiles(
     const content = await fs.read(op.path);
     backups.push({
       path: op.path,
-      content: content ?? "",
+      content: content ?? '',
       existed: content !== null,
     });
   }
@@ -168,10 +168,7 @@ export async function backupFiles(
  * Restore all backed-up files to their original state.
  * Files that existed before are restored; files that didn't exist are deleted.
  */
-export async function rollback(
-  backups: readonly BackupEntry[],
-  fs: FilesystemAdapter,
-): Promise<void> {
+export async function rollback(backups: readonly BackupEntry[], fs: FilesystemAdapter): Promise<void> {
   for (const entry of backups) {
     if (entry.existed) {
       await fs.write(entry.path, entry.content);
@@ -185,17 +182,13 @@ export async function rollback(
 // Execute a single operation
 // ---------------------------------------------------------------------------
 
-async function executeOperation(
-  op: SetupOperation,
-  fs: FilesystemAdapter,
-  options: ApplyOptions,
-): Promise<void> {
+async function executeOperation(op: SetupOperation, fs: FilesystemAdapter, options: ApplyOptions): Promise<void> {
   if (options.failOnPaths?.includes(op.path)) {
     throw new Error(`Injected failure: refusing to write to ${op.path}`);
   }
 
   switch (op.kind) {
-    case "create_file": {
+    case 'create_file': {
       if (!options.force) {
         const exists = await fs.exists(op.path);
         if (exists) {
@@ -206,17 +199,17 @@ async function executeOperation(
       break;
     }
 
-    case "update_file": {
+    case 'update_file': {
       await fs.write(op.path, op.content);
       break;
     }
 
-    case "delete_file": {
+    case 'delete_file': {
       await fs.delete(op.path);
       break;
     }
 
-    case "json_merge": {
+    case 'json_merge': {
       const current = await fs.read(op.path);
       let parsed: Record<string, unknown>;
       if (current === null) {
@@ -229,7 +222,7 @@ async function executeOperation(
         parsed = JSON.parse(current);
       }
       const merged = { ...parsed, ...op.patch };
-      await fs.write(op.path, JSON.stringify(merged, null, 2) + "\n");
+      await fs.write(op.path, JSON.stringify(merged, null, 2) + '\n');
       break;
     }
   }
@@ -320,25 +313,22 @@ export async function apply(
  * Check if an operation is a no-op against the current filesystem state.
  * An operation is a no-op if the file already has the desired content.
  */
-export async function isNoOp(
-  op: SetupOperation,
-  fs: FilesystemAdapter,
-): Promise<boolean> {
+export async function isNoOp(op: SetupOperation, fs: FilesystemAdapter): Promise<boolean> {
   switch (op.kind) {
-    case "create_file": {
+    case 'create_file': {
       const exists = await fs.exists(op.path);
       if (!exists) return false;
       const content = await fs.read(op.path);
       return content === op.content;
     }
-    case "update_file": {
+    case 'update_file': {
       const content = await fs.read(op.path);
       return content === op.content;
     }
-    case "delete_file": {
+    case 'delete_file': {
       return !(await fs.exists(op.path));
     }
-    case "json_merge": {
+    case 'json_merge': {
       const content = await fs.read(op.path);
       if (content === null) return false;
       const parsed = JSON.parse(content);

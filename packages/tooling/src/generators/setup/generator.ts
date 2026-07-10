@@ -5,13 +5,13 @@
  * Produces `nrb.config.json` and `.nrb/summary.md` according to the resolved
  * config (preset expansion + dependency resolution + validation).
  */
-import type { Tree } from "nx/src/generators/tree";
-import { formatFiles, names as nxNames } from "@nx/devkit";
-import { plan, resolveConfig } from "../../setup/planner.js";
-import { apply, checkConflicts, backupFiles, rollback } from "../../setup/apply.js";
-import { parseNrbConfig, NrbConfigSchema } from "../../setup/schema.js";
-import { createNxTreeAdapter } from "../../setup/adapters/nx-tree.js";
-import { SCHEMA_VERSION } from "../../setup/schema.js";
+import type { Tree } from 'nx/src/generators/tree';
+import { formatFiles, names as nxNames } from '@nx/devkit';
+import { plan, resolveConfig } from '../../setup/planner.js';
+import { apply, checkConflicts, backupFiles, rollback } from '../../setup/apply.js';
+import { parseNrbConfig, NrbConfigSchema } from '../../setup/schema.js';
+import { createNxTreeAdapter } from '../../setup/adapters/nx-tree.js';
+import { SCHEMA_VERSION } from '../../setup/schema.js';
 
 // ---------------------------------------------------------------------------
 
@@ -26,10 +26,7 @@ export interface SetupGeneratorOptions {
 
 // ---------------------------------------------------------------------------
 
-export async function setupGenerator(
-  tree: Tree,
-  options: SetupGeneratorOptions,
-): Promise<void> {
+export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions): Promise<void> {
   // Build the NrbConfig from generator options
   const config = NrbConfigSchema.parse({
     schemaVersion: SCHEMA_VERSION,
@@ -56,11 +53,11 @@ export async function setupGenerator(
 
   if (options.dryRun) {
     // Dry run: output plan as JSON
-    console.log("DRY-RUN: plan would produce:");
+    console.log('DRY-RUN: plan would produce:');
     for (const op of result.operations) {
-      if (op.kind === "create_file" || op.kind === "update_file") {
-        console.log(`  ${op.kind === "create_file" ? "CREATE" : "UPDATE"} ${op.path}`);
-      } else if (op.kind === "delete_file") {
+      if (op.kind === 'create_file' || op.kind === 'update_file') {
+        console.log(`  ${op.kind === 'create_file' ? 'CREATE' : 'UPDATE'} ${op.path}`);
+      } else if (op.kind === 'delete_file') {
         console.log(`  DELETE ${op.path}`);
       }
     }
@@ -73,9 +70,9 @@ export async function setupGenerator(
 
   // Execute each operation
   for (const op of result.operations) {
-    if (op.kind === "create_file" || op.kind === "update_file") {
+    if (op.kind === 'create_file' || op.kind === 'update_file') {
       await fs.write(op.path, op.content);
-    } else if (op.kind === "delete_file") {
+    } else if (op.kind === 'delete_file') {
       await fs.delete(op.path);
     }
   }

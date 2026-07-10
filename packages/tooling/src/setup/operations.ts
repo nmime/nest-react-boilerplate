@@ -5,17 +5,13 @@
  * information to be replayed deterministically.  No timestamps or
  * machine-specific values are encoded — snapshots are portable.
  */
-import { isAbsolute, normalize, posix } from "node:path";
+import { isAbsolute, normalize, posix } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Operation kind discriminant
 // ---------------------------------------------------------------------------
 
-export type OperationKind =
-  | "create_file"
-  | "update_file"
-  | "delete_file"
-  | "json_merge";
+export type OperationKind = 'create_file' | 'update_file' | 'delete_file' | 'json_merge';
 
 // ---------------------------------------------------------------------------
 // Base — every operation has a kind, a relative POSIX path, and a human
@@ -36,7 +32,7 @@ interface BaseOperation {
 // ---------------------------------------------------------------------------
 
 export interface CreateFileOperation extends BaseOperation {
-  kind: "create_file";
+  kind: 'create_file';
   content: string;
 }
 
@@ -46,7 +42,7 @@ export interface CreateFileOperation extends BaseOperation {
 // ---------------------------------------------------------------------------
 
 export interface UpdateFileOperation extends BaseOperation {
-  kind: "update_file";
+  kind: 'update_file';
   content: string;
 }
 
@@ -55,7 +51,7 @@ export interface UpdateFileOperation extends BaseOperation {
 // ---------------------------------------------------------------------------
 
 export interface DeleteFileOperation extends BaseOperation {
-  kind: "delete_file";
+  kind: 'delete_file';
 }
 
 // ---------------------------------------------------------------------------
@@ -65,7 +61,7 @@ export interface DeleteFileOperation extends BaseOperation {
 // ---------------------------------------------------------------------------
 
 export interface JsonMergeOperation extends BaseOperation {
-  kind: "json_merge";
+  kind: 'json_merge';
   /** Keys to merge into the existing JSON object. */
   patch: Record<string, unknown>;
 }
@@ -74,11 +70,7 @@ export interface JsonMergeOperation extends BaseOperation {
 // Union type
 // ---------------------------------------------------------------------------
 
-export type SetupOperation =
-  | CreateFileOperation
-  | UpdateFileOperation
-  | DeleteFileOperation
-  | JsonMergeOperation;
+export type SetupOperation = CreateFileOperation | UpdateFileOperation | DeleteFileOperation | JsonMergeOperation;
 
 // ---------------------------------------------------------------------------
 // Path validation — reject unsafe paths at factory time.
@@ -98,22 +90,22 @@ export type SetupOperation =
  * (e.g. "foo/bar/../../baz", "foo//../../../etc/passwd").
  */
 export function validateOpPath(raw: string): string {
-  if (typeof raw !== "string") {
-    throw new TypeError("Operation path must be a string");
+  if (typeof raw !== 'string') {
+    throw new TypeError('Operation path must be a string');
   }
 
   // NUL bytes
-  if (raw.indexOf("\0") !== -1) {
+  if (raw.indexOf('\0') !== -1) {
     throw new Error(`Operation path contains NUL byte: ${JSON.stringify(raw)}`);
   }
 
   // Empty
   if (raw.length === 0) {
-    throw new Error("Operation path must not be empty");
+    throw new Error('Operation path must not be empty');
   }
 
   // Backslashes (Windows separators)
-  if (raw.indexOf("\\") !== -1) {
+  if (raw.indexOf('\\') !== -1) {
     throw new Error(`Operation path must not contain backslashes: ${JSON.stringify(raw)}`);
   }
 
@@ -126,7 +118,7 @@ export function validateOpPath(raw: string): string {
   }
 
   // Reject `..` escape: after normalization, a relative path must not start with `..`
-  if (normalized.startsWith("..")) {
+  if (normalized.startsWith('..')) {
     throw new Error(`Operation path must not escape workspace via '..': ${JSON.stringify(raw)}`);
   }
 
@@ -139,19 +131,23 @@ export function validateOpPath(raw: string): string {
 // ---------------------------------------------------------------------------
 
 export function createFile(path: string, content: string, description = `Create ${path}`): CreateFileOperation {
-  return { kind: "create_file", path: validateOpPath(path), content, description };
+  return { kind: 'create_file', path: validateOpPath(path), content, description };
 }
 
 export function updateFile(path: string, content: string, description = `Update ${path}`): UpdateFileOperation {
-  return { kind: "update_file", path: validateOpPath(path), content, description };
+  return { kind: 'update_file', path: validateOpPath(path), content, description };
 }
 
 export function deleteFile(path: string, description = `Delete ${path}`): DeleteFileOperation {
-  return { kind: "delete_file", path: validateOpPath(path), description };
+  return { kind: 'delete_file', path: validateOpPath(path), description };
 }
 
-export function jsonMerge(path: string, patch: Record<string, unknown>, description = `Merge ${path}`): JsonMergeOperation {
-  return { kind: "json_merge", path: validateOpPath(path), patch, description };
+export function jsonMerge(
+  path: string,
+  patch: Record<string, unknown>,
+  description = `Merge ${path}`,
+): JsonMergeOperation {
+  return { kind: 'json_merge', path: validateOpPath(path), patch, description };
 }
 
 // ---------------------------------------------------------------------------
@@ -188,10 +184,10 @@ export function sortOperations(ops: readonly SetupOperation[]): SetupOperation[]
 export function operationsEqual(a: SetupOperation, b: SetupOperation): boolean {
   if (a.kind !== b.kind) return false;
   if (a.path !== b.path) return false;
-  if (a.kind === "create_file" || a.kind === "update_file") {
+  if (a.kind === 'create_file' || a.kind === 'update_file') {
     if (a.content !== (b as CreateFileOperation | UpdateFileOperation).content) return false;
   }
-  if (a.kind === "json_merge") {
+  if (a.kind === 'json_merge') {
     const pa = (a as JsonMergeOperation).patch;
     const pb = (b as JsonMergeOperation).patch;
     const ka = Object.keys(pa).sort();

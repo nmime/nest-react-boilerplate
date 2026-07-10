@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG NODE_VERSION=24.11.0-alpine
-ARG PNPM_VERSION=11.10.0
+ARG PNPM_VERSION=11.11.0
 
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION

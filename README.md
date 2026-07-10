@@ -68,7 +68,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 | Area          | Choices                                                                                     |
 | ------------- | ------------------------------------------------------------------------------------------- |
-| Workspace     | Nx, pnpm `11.10.0`, Node.js `>=24 <25`, TypeScript                                          |
+| Workspace     | Nx, pnpm `11.11.0`, Node.js `>=24 <25`, TypeScript                                          |
 | Frontend      | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook         |
 | Backend       | NestJS on Fastify, Helmet, validation pipes, health/readiness endpoints                     |
 | Persistence   | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                  |
@@ -116,7 +116,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.10.0 --activate
+corepack prepare pnpm@11.11.0 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 pnpm run dev:db

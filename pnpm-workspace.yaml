@@ -45,6 +45,8 @@ overrides:
   'http-proxy-middleware@>=3.0.0 <3.0.7': '3.0.7'
   '@opentelemetry/core@<2.8.0': '2.8.0'
   'multer@>=2.0.0-alpha.1 <2.2.0': '2.2.0'
+  'webpack-dev-server@<5.2.5': '5.2.5'
+  'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
 
 # Escape hatch for the hard audit:ci gate: when an advisory has no upstream
 # fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.

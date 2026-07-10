@@ -152,6 +152,10 @@ describe("library generator", () => {
       assert.equal(projectJson.name, "@app/frontend-ui-components");
       assert.equal(projectJson.projectType, "library");
       assert.ok(projectJson.tags.includes("platform:frontend"));
+
+      // Frontend lib build must use nx:run-commands (tsc --noEmit), not @nx/vite:build
+      assert.equal(projectJson.targets.build.executor, "nx:run-commands");
+      assert.ok(projectJson.targets.build.options.command.includes("tsc --noEmit"));
     });
 
     it("creates React component", async () => {

@@ -228,19 +228,13 @@ function createFrontendLib(
     tags,
     targets: {
       build: {
-        executor: "@nx/vite:build",
-        outputs: ["{options.outputPath}"],
-        defaultConfiguration: "production",
+        executor: "nx:run-commands",
+        cache: true,
         options: {
-          outputPath: `dist/${dir}`,
-          main: `${dir}/package.json`,
-          tsConfig: `${dir}/tsconfig.lib.json`,
-          assets: [],
+          cwd: dir,
+          command: `node ${d}node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json`,
         },
-        configurations: {
-          development: { mode: "development" },
-          production: { mode: "production" },
-        },
+        outputs: [],
       },
       test: {
         executor: "nx:run-commands",

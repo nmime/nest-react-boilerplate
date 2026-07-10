@@ -285,6 +285,9 @@ describe("application generator", () => {
 
       assert.ok(tree.exists("apps/frontend/my-dashboard/vite.config.mts"));
       assert.ok(tree.exists("apps/frontend/my-dashboard/vitest.config.mts"));
+
+      const viteConfig = tree.read("apps/frontend/my-dashboard/vite.config.mts", "utf8")!;
+      assert.ok(viteConfig.includes("root: import.meta.dirname"), "vite root must be import.meta.dirname, not '.'");
     });
 
     it("creates tsconfig files", async () => {

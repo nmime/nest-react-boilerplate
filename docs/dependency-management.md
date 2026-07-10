@@ -4,16 +4,16 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 ## Compatibility matrix
 
-| Constraint | Version | Rationale |
-|---|---|---|
-| Node.js | 24.x (LTS) | Runtime for all apps and libs |
-| pnpm | 11.11.0 | Workspace packageManager field; Docker aligned |
-| TypeScript | 6.0.3 | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
-| React | 19.2.7 | All frontend apps and libs |
-| Nx | 23.0.1 | All @nx/* packages aligned |
-| Vitest | 4.1.10 | All workspace consumers |
-| Vite | 8.1.4 | All workspace consumers |
-| Expo SDK | 57.0.x | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility) |
+| Constraint | Version    | Rationale                                                                       |
+| ---------- | ---------- | ------------------------------------------------------------------------------- |
+| Node.js    | 24.x (LTS) | Runtime for all apps and libs                                                   |
+| pnpm       | 11.11.0    | Workspace packageManager field; Docker aligned                                  |
+| TypeScript | 6.0.3      | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
+| React      | 19.2.7     | All frontend apps and libs                                                      |
+| Nx         | 23.0.1     | All @nx/* packages aligned                                                      |
+| Vitest     | 4.1.10     | All workspace consumers                                                         |
+| Vite       | 8.1.4      | All workspace consumers                                                         |
+| Expo SDK   | 57.0.x     | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
 
 ## Package updates
 
@@ -37,11 +37,11 @@ All 15 workspace manifests must use the same version for shared direct dependenc
 
 ## Deferred major updates
 
-| Package | Current | Latest | Blocker | Revisit trigger |
-|---|---|---|---|---|
-| TypeScript | 6.0.3 | 7.x | NestJS 11.x and Nx 23 target ts 6.x compiler APIs | First NestJS/Nx release with TS 7 peer ranges |
-| Babel | 7.29.x | 8.x | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer) | Expo SDK release declaring Babel 8 compatibility |
-| @types/node | 24.13.3 | 26.x | Node 24 runtime — type defs must match runtime major | Runtime upgrade to Node 26 LTS |
+| Package     | Current | Latest | Blocker                                                 | Revisit trigger                                  |
+| ----------- | ------- | ------ | ------------------------------------------------------- | ------------------------------------------------ |
+| TypeScript  | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs       | First NestJS/Nx release with TS 7 peer ranges    |
+| Babel       | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer) | Expo SDK release declaring Babel 8 compatibility |
+| @types/node | 24.13.3 | 26.x   | Node 24 runtime — type defs must match runtime major    | Runtime upgrade to Node 26 LTS                   |
 
 ## Build scripts
 
@@ -71,12 +71,12 @@ Unexpected new package build scripts should be treated as a supply-chain review 
 
 All service images use explicit, immutable tags — never `latest` or floating major-only tags:
 
-| Service | Pinned tag | Source |
-|---|---|---|
-| PostgreSQL | `17.6-alpine` | Docker Hub `postgres` |
-| Redis | `7.4.3-alpine` | Docker Hub `redis` |
-| NATS | `2.10.25-alpine` | Docker Hub `nats` |
-| MinIO | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
+| Service    | Pinned tag                     | Source                   |
+| ---------- | ------------------------------ | ------------------------ |
+| PostgreSQL | `17.6-alpine`                  | Docker Hub `postgres`    |
+| Redis      | `7.4.3-alpine`                 | Docker Hub `redis`       |
+| NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
+| MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
 ## Audit results (2026-07-10)
 

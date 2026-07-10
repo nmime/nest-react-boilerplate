@@ -81,7 +81,7 @@ function createNodeLib(
   // project.json — matches libs/backend/common/response/lib/project.json
   tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
+    $schema: `${d}node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "library",
     tags,
@@ -125,7 +125,7 @@ function createNodeLib(
 
   // tsconfig.json — extends base, references lib+spec
   tree.write(`${dir}/tsconfig.json`, JSON.stringify({
-    extends: `${d}../../../../tsconfig.base.json`,
+    extends: `${d}tsconfig.base.json`,
     compilerOptions: { types: ["node"] },
     include: [],
     references: [
@@ -138,7 +138,7 @@ function createNodeLib(
   tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../../../dist/out-tsc/${dir}`,
+      outDir: `${d}dist/out-tsc/${dir}`,
       types: ["node"],
       declaration: true,
     },
@@ -150,7 +150,7 @@ function createNodeLib(
   tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../../../dist/out-tsc/${dir}-spec`,
+      outDir: `${d}dist/out-tsc/${dir}-spec`,
       types: ["node", "vitest"],
     },
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"],
@@ -178,9 +178,9 @@ describe("${names.pascal}Library", () => {
   tree.write(`${dir}/vitest.config.mts`,
 `/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
 // nx-ignore-next-line
-import { fullCoverage } from "${d}../../../../packages/tooling/src/testing/vitest-coverage.mts";
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   resolve: {
@@ -188,13 +188,13 @@ export default defineConfig({
     alias: workspaceTsconfigAliases(),
   },
   cacheDir:
-    "${d}../../../../node_modules/.vitest/${dir}",
+    "${d}node_modules/.vitest/${dir}",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "${d}../../../coverage/${dir}",
+      "${d}coverage/${dir}",
       ["src/**/*.ts"],
       [],
     ),
@@ -222,7 +222,7 @@ function createFrontendLib(
   // project.json
   tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
+    $schema: `${d}node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "library",
     tags,
@@ -270,7 +270,7 @@ function createFrontendLib(
 
   // tsconfig.json
   tree.write(`${dir}/tsconfig.json`, JSON.stringify({
-    extends: `${d}../../../../tsconfig.base.json`,
+    extends: `${d}tsconfig.base.json`,
     compilerOptions: {
       types: ["vite/client"],
       jsx: "react-jsx",
@@ -286,7 +286,7 @@ function createFrontendLib(
   tree.write(`${dir}/tsconfig.lib.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../../../dist/out-tsc/${dir}`,
+      outDir: `${d}dist/out-tsc/${dir}`,
       types: ["vite/client"],
       declaration: true,
     },
@@ -298,7 +298,7 @@ function createFrontendLib(
   tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../../../dist/out-tsc/${dir}-spec`,
+      outDir: `${d}dist/out-tsc/${dir}-spec`,
       types: ["vitest/globals", "vite/client"],
     },
     include: ["**/*.spec.ts", "**/*.test.ts", "vitest.config.mts"],
@@ -333,7 +333,7 @@ describe("${names.pascal}Component", () => {
 `/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
   resolve: {
@@ -342,7 +342,7 @@ export default defineConfig({
   },
   plugins: [react()],
   cacheDir:
-    "${d}../../../../node_modules/.vitest/${dir}",
+    "${d}node_modules/.vitest/${dir}",
   test: {
     environment: "happy-dom",
     include: ["src/**/*.spec.tsx", "src/**/*.test.tsx"],

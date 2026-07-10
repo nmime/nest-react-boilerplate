@@ -1,76 +1,28 @@
 /**
- * Path utility: compute the relative number of `../` segments needed to reach
+ * Path utility: compute the number of `../` segments needed to reach
  * workspace root from a given directory path.
  *
- *   relativeDepth("libs/backend/common/response/lib") => 5  (five ../ to reach root)
+ *   depth("libs/backend/common/response/lib") => 5  (five segments, five ../ to root)
  */
-export function relativeDepth(dir: string): number {
+function depth(dir: string): number {
   return dir.split("/").length;
 }
 
 /**
- * Build the `extends` value for a tsconfig.json that lives at `libDir` and needs
- * to reach `tsconfig.base.json` at the workspace root.
+ * Build a relative prefix of `../` repeated `depth(dir)` times.
  *
- * Returns e.g. `"../../../../../tsconfig.base.json"` for a 5-level-deep dir.
+ *   dots("libs/backend/common/response/lib") => "../../../../../"
  */
-export function tsconfigBaseExtends(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}tsconfig.base.json`;
+function dots(dir: string): string {
+  return "../".repeat(depth(dir));
 }
 
 /**
- * Build the `$schema` path from a `libDir` to `node_modules/nx/schemas/project-schema.json`.
+ * Build a relative prefix for going UP from `dir` to the given base
+ * (e.g., "coverage", "node_modules", "config") at the workspace root.
+ *
+ *   toBase("libs/backend/common/response/lib", "config") => "../../../../../config"
  */
-export function projectSchemaPath(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}node_modules/nx/schemas/project-schema.json`;
-}
-
-/**
- * Build the outDir for tsconfig.lib.json: dist/out-tsc/<libDir>
- */
-export function outDir(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}dist/out-tsc/${libDir}`;
-}
-
-/**
- * Build the outDir for tsconfig.spec.json: dist/out-tsc/<libDir>-spec
- */
-export function specOutDir(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}dist/out-tsc/${libDir}-spec`;
-}
-
-/**
- * Build the vitest cacheDir: node_modules/.vitest/<libDir>
- */
-export function vitestCacheDir(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}node_modules/.vitest/${libDir}`;
-}
-
-/**
- * Build the coverage dir: coverage/<libDir>
- */
-export function coverageDir(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}coverage/${libDir}`;
-}
-
-/**
- * Build the workspace config import path from libDir.
- */
-export function workspaceConfigImport(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}config/vite/workspace-tsconfig-aliases.mjs`;
-}
-
-/**
- * Build the fullCoverage import path from libDir.
- */
-export function fullCoverageImport(libDir: string): string {
-  const dots = "../".repeat(relativeDepth(libDir));
-  return `${dots}packages/tooling/src/testing/vitest-coverage.mts`;
+function toBase(dir: string, base: string): string {
+  return `${dots(dir)}${base}`;
 }

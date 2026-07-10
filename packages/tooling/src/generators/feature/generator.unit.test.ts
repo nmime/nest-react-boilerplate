@@ -186,7 +186,7 @@ describe("feature generator", () => {
       const shared = tree.read("libs/backend/feature/billing-events/shared/lib/src/index.ts", "utf8")!;
       assert.ok(shared.includes("export interface BillingEventsDto"));
       assert.ok(shared.includes("export interface CreateBillingEventsDto"));
-      assert.ok(shared.includes("BILLING_EVENTS_READ_PERMISSION"));
+      assert.ok(shared.includes("BillingEventsReadPermission"));
     });
 
     it("generates correct content in controller file", async () => {

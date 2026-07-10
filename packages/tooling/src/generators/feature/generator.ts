@@ -37,8 +37,12 @@ function backendPostgresMainAlias(names: ReturnType<typeof generateNames>): stri
   return `@app/backend-postgres-main-${names.kebab}`;
 }
 
-function constantName(names: ReturnType<typeof generateNames>): string {
-  return names.constant + "_";
+function permissionReadName(names: ReturnType<typeof generateNames>): string {
+  return names.pascal + "ReadPermission";
+}
+
+function permissionWriteName(names: ReturnType<typeof generateNames>): string {
+  return names.pascal + "WritePermission";
 }
 
 function frontendFeatureAlias(names: ReturnType<typeof generateNames>): string {
@@ -67,7 +71,7 @@ function projectJson(
     path: `${libDir}/project.json`,
     contents: JSON.stringify({
       name,
-      $schema: `${d}../../../../node_modules/nx/schemas/project-schema.json`,
+      $schema: `${d}node_modules/nx/schemas/project-schema.json`,
       sourceRoot,
       projectType: "library",
       tags,
@@ -105,7 +109,7 @@ function tsconfig(libDir: string): TemplateFile[] {
   const tsconfigJson: TemplateFile = {
     path: `${libDir}/tsconfig.json`,
     contents: JSON.stringify({
-      extends: `${d}../../../../tsconfig.base.json`,
+      extends: `${d}tsconfig.base.json`,
       compilerOptions: { types: ["node"] },
       include: [],
       references: [
@@ -121,7 +125,7 @@ function tsconfig(libDir: string): TemplateFile[] {
     contents: JSON.stringify({
       extends: "./tsconfig.json",
       compilerOptions: {
-        outDir: `${d}../../../../dist/out-tsc/${libDir}`,
+        outDir: `${d}dist/out-tsc/${libDir}`,
         types: ["node"],
         declaration: true,
       },
@@ -136,7 +140,7 @@ function tsconfig(libDir: string): TemplateFile[] {
     contents: JSON.stringify({
       extends: "./tsconfig.json",
       compilerOptions: {
-        outDir: `${d}../../../../dist/out-tsc/${libDir}-spec`,
+        outDir: `${d}dist/out-tsc/${libDir}-spec`,
         types: ["node", "vitest"],
       },
       include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"],
@@ -148,9 +152,9 @@ function tsconfig(libDir: string): TemplateFile[] {
     path: `${libDir}/vitest.config.mts`,
     contents: `/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { workspaceTsconfigAliases } from "${d}../../../../config/vite/workspace-tsconfig-aliases.mjs";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
 // nx-ignore-next-line
-import { fullCoverage } from "${d}../../../../packages/tooling/src/testing/vitest-coverage.mts";
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   resolve: {
@@ -158,13 +162,13 @@ export default defineConfig({
     alias: workspaceTsconfigAliases(),
   },
   cacheDir:
-    "${d}../../../../node_modules/.vitest/${libDir}",
+    "${d}node_modules/.vitest/${libDir}",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "${d}../../../coverage/${libDir}",
+      "${d}coverage/${libDir}",
       ["src/**/*.ts"],
       [],
     ),
@@ -190,7 +194,7 @@ function createBackendTemplateFiles(
     // Shared library
     {
       path: `${base}/shared/lib/src/index.ts`,
-      contents: `export interface ${names.pascal}Dto {\n  id: string;\n  name: string;\n  createdAt: string;\n}\n\nexport interface Create${names.pascal}Dto {\n  name: string;\n}\n\nexport const ${constantName(names)}READ_PERMISSION = "${names.kebab}:read";\nexport const ${constantName(names)}WRITE_PERMISSION = "${names.kebab}:write";\n`,
+      contents: `export interface ${names.pascal}Dto {\n  id: string;\n  name: string;\n  createdAt: string;\n}\n\nexport interface Create${names.pascal}Dto {\n  name: string;\n}\n\nexport const ${permissionReadName(names)} = "${names.kebab}:read";\nexport const ${permissionWriteName(names)} = "${names.kebab}:write";\n`,
     },
     projectJson(
       `${base}/shared/lib`,

@@ -64,7 +64,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
   // project.json — matches apps/backend/user/user-app-api/project.json
   tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: `${d}../../node_modules/nx/schemas/project-schema.json`,
+    $schema: `${d}node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "application",
     tags,
@@ -133,7 +133,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
 
   // tsconfig.json — matches repo pattern: extends base, references app+spec
   tree.write(`${dir}/tsconfig.json`, JSON.stringify({
-    extends: `${d}../../tsconfig.base.json`,
+    extends: `${d}tsconfig.base.json`,
     compilerOptions: { types: ["node"] },
     include: [],
     references: [
@@ -146,7 +146,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
   tree.write(`${dir}/tsconfig.app.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../dist/out-tsc/${dir}`,
+      outDir: `${d}dist/out-tsc/${dir}`,
       types: ["node"],
     },
     exclude: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts"],
@@ -157,7 +157,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
   tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../dist/out-tsc/${dir}-spec`,
+      outDir: `${d}dist/out-tsc/${dir}-spec`,
       types: ["node", "vitest"],
     },
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts", "src/**/*.ts"],
@@ -210,10 +210,10 @@ describe("${names.pascal}Module", () => {
   tree.write(`${dir}/vitest.config.mts`,
 `/// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
-import { workspaceTsconfigAliases } from "${d}../../config/vite/workspace-tsconfig-aliases.mjs";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
 
 export default defineConfig({
-  cacheDir: "${d}../../node_modules/.vitest/${dir}",
+  cacheDir: "${d}node_modules/.vitest/${dir}",
   resolve: {
     tsconfigPaths: true,
     alias: workspaceTsconfigAliases(),
@@ -228,7 +228,7 @@ export default defineConfig({
 
   // eslint.config.cjs
   tree.write(`${dir}/eslint.config.cjs`,
-`const baseConfig = require("${d}../../eslint.config.js");
+`const baseConfig = require("${d}eslint.config.js");
 module.exports = [...baseConfig];
 `);
 }
@@ -245,7 +245,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
   // project.json — matches apps/frontend/app/project.json
   tree.write(`${dir}/project.json`, JSON.stringify({
     name: projectName,
-    $schema: `${d}../../node_modules/nx/schemas/project-schema.json`,
+    $schema: `${d}node_modules/nx/schemas/project-schema.json`,
     sourceRoot: srcRoot,
     projectType: "application",
     tags,
@@ -318,7 +318,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
 
   // tsconfig.json — references app+spec
   tree.write(`${dir}/tsconfig.json`, JSON.stringify({
-    extends: `${d}../../tsconfig.base.json`,
+    extends: `${d}tsconfig.base.json`,
     compilerOptions: {
       types: ["vite/client"],
       jsx: "react-jsx",
@@ -334,7 +334,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
   tree.write(`${dir}/tsconfig.app.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../dist/out-tsc/${dir}`,
+      outDir: `${d}dist/out-tsc/${dir}`,
     },
     include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
     exclude: ["**/*.spec.ts", "**/*.test.ts", "vite.config.mts", "vitest.config.mts"],
@@ -344,7 +344,7 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
   tree.write(`${dir}/tsconfig.spec.json`, JSON.stringify({
     extends: "./tsconfig.json",
     compilerOptions: {
-      outDir: `${d}../../dist/out-tsc/${dir}-spec`,
+      outDir: `${d}dist/out-tsc/${dir}-spec`,
       types: ["vitest/globals", "vite/client"],
     },
     include: ["**/*.spec.ts", "**/*.test.ts", "src/**/*.d.ts", "vitest.config.mts"],
@@ -429,7 +429,7 @@ describe("App", () => {
 
   // eslint.config.cjs
   tree.write(`${dir}/eslint.config.cjs`,
-`const baseConfig = require("${d}../../eslint.config.js");
+`const baseConfig = require("${d}eslint.config.js");
 module.exports = [...baseConfig];
 `);
 }

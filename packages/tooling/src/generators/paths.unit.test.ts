@@ -168,6 +168,21 @@ describe("generated path resolution", () => {
       }
     }
   });
+
+  // Verify frontend tsconfig convention
+  it("existing frontend tsconfig.json includes lib dom and es2022", () => {
+    const frontendDirs = ["apps/frontend/app", "apps/frontend/admin"];
+    for (const dir of frontendDirs) {
+      const tcPath = path.join(ROOT, dir, "tsconfig.json");
+      if (fs.existsSync(tcPath)) {
+        const data = JSON.parse(fs.readFileSync(tcPath, "utf-8"));
+        const opts = data.compilerOptions;
+        assert.ok(opts?.lib?.includes("dom"), `${dir}: tsconfig.json should include "dom" in lib`);
+        assert.ok(opts?.lib?.includes("es2022"), `${dir}: tsconfig.json should include "es2022" in lib`);
+        assert.strictEqual(opts?.jsx, "react-jsx", `${dir}: tsconfig.json should have jsx: react-jsx`);
+      }
+    }
+  });
 });
 
 describe("constant naming convention", () => {

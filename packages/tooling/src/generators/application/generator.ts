@@ -316,13 +316,18 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
 </html>
 `);
 
-  // tsconfig.json — references app+spec
+  // tsconfig.json — references app+spec; matches apps/frontend/{admin,app}/tsconfig.json
   tree.write(`${dir}/tsconfig.json`, JSON.stringify({
     extends: `${d}tsconfig.base.json`,
     compilerOptions: {
-      types: ["vite/client"],
       jsx: "react-jsx",
+      allowJs: false,
+      esModuleInterop: false,
+      allowSyntheticDefaultImports: true,
+      types: ["vite/client"],
+      lib: ["es2022", "dom"],
     },
+    files: [],
     include: [],
     references: [
       { path: "./tsconfig.app.json" },
@@ -335,9 +340,17 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
     extends: "./tsconfig.json",
     compilerOptions: {
       outDir: `${d}dist/out-tsc/${dir}`,
+      types: ["node", "vite/client"],
+      module: "esnext",
+      moduleResolution: "bundler",
     },
-    include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
-    exclude: ["**/*.spec.ts", "**/*.test.ts", "vite.config.mts", "vitest.config.mts"],
+    exclude: [
+      "src/**/*.spec.ts", "src/**/*.test.ts",
+      "src/**/*.spec.tsx", "src/**/*.test.tsx",
+      "src/**/*.spec.js", "src/**/*.test.js",
+      "src/**/*.spec.jsx", "src/**/*.test.jsx",
+    ],
+    include: ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   }, null, 2) + "\n");
 
   // tsconfig.spec.json
@@ -345,9 +358,14 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
     extends: "./tsconfig.json",
     compilerOptions: {
       outDir: `${d}dist/out-tsc/${dir}-spec`,
-      types: ["vitest/globals", "vite/client"],
+      module: "esnext",
+      moduleResolution: "bundler",
+      types: ["vitest", "node", "vite/client"],
     },
-    include: ["**/*.spec.ts", "**/*.test.ts", "src/**/*.d.ts", "vitest.config.mts"],
+    include: [
+      "vitest.config.mts",
+      "src/**/*.spec.ts", "src/**/*.spec.tsx", "src/**/*.d.ts",
+    ],
   }, null, 2) + "\n");
 
   // vite.config.mts
@@ -358,11 +376,11 @@ import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
 
 export default defineConfig({
-  cacheDir: "${d}../../node_modules/.cache/vite",
+  cacheDir: "${d}node_modules/.cache/vite",
   root: ".",
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"])],
   build: {
-    outDir: "${d}../../dist/${dir}",
+    outDir: "${d}dist/${dir}",
     emptyOutDir: true,
     reportCompressedSize: false,
   },
@@ -376,7 +394,7 @@ import react from "@vitejs/plugin-react";
 import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
 export default defineConfig({
-  cacheDir: "${d}../../node_modules/.cache/vitest",
+  cacheDir: "${d}node_modules/.cache/vitest",
   plugins: [react(), nxViteTsPaths()],
   test: {
     globals: true,

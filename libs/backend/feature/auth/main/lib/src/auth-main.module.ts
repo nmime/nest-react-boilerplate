@@ -1,16 +1,10 @@
-import { DynamicModule, Module } from "@nestjs/common";
-import {
-  PostgresMainModule,
-  type PostgresMikroOrmOverrides,
-} from "@app/backend-postgres-main";
-import { AuthPostgresModule } from "@app/backend-postgres-main-auth";
-import { AuthController } from "./interfaces/http";
-import { BetterAuthApiController } from "./application/better-auth-api.controller";
-import {
-  AuthService,
-  EffectivePermissionService,
-  ExternalAuthService,
-} from "./application";
+import { DynamicModule, Module } from '@nestjs/common';
+import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
+import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
+import { AuthController } from './interfaces/http';
+import { BetterAuthApiController } from './application/better-auth-api.controller';
+import { BetterAuthModule } from './application/better-auth.module';
+import { AuthService, EffectivePermissionService, ExternalAuthService } from './application';
 import {
   AuthRoleStoreInjectToken,
   AuthUserStoreInjectToken,
@@ -24,11 +18,11 @@ import {
   InMemorySocialAuthStore,
   PostgresSocialAuthStore,
   SocialAuthStoreInjectToken,
-} from "./infrastructure";
+} from './infrastructure';
 
 export enum AuthPersistenceMode {
-  Postgres = "postgres",
-  Memory = "memory",
+  Postgres = 'postgres',
+  Memory = 'memory',
 }
 
 export interface AuthMainModuleOptions {
@@ -37,12 +31,9 @@ export interface AuthMainModuleOptions {
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
-  if (
-    process.env.NODE_ENV === "production" &&
-    mode === AuthPersistenceMode.Memory
-  ) {
+  if (process.env.NODE_ENV === 'production' && mode === AuthPersistenceMode.Memory) {
     throw new Error(
-      "AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres with DATABASE_URL-backed storage.",
+      'AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres with DATABASE_URL-backed storage.',
     );
   }
 }
@@ -50,8 +41,7 @@ function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
 function resolvePersistenceMode(): AuthPersistenceMode {
   if (
     process.env.AUTH_PERSISTENCE === AuthPersistenceMode.Memory ||
-    (process.env.VITEST &&
-      process.env.AUTH_PERSISTENCE !== AuthPersistenceMode.Postgres)
+    (process.env.VITEST && process.env.AUTH_PERSISTENCE !== AuthPersistenceMode.Postgres)
   ) {
     return AuthPersistenceMode.Memory;
   }
@@ -62,7 +52,7 @@ function resolvePersistenceMode(): AuthPersistenceMode {
 function normalizeOptions(
   optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
 ): Required<AuthMainModuleOptions> {
-  if (typeof optionsOrMode === "string") {
+  if (typeof optionsOrMode === 'string') {
     return { mode: optionsOrMode, postgres: {} };
   }
 
@@ -74,17 +64,16 @@ function normalizeOptions(
 
 @Module({})
 export class AuthMainModule {
-  static forRoot(
-    optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
-  ): DynamicModule {
+  static forRoot(optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {}): DynamicModule {
     const options = normalizeOptions(optionsOrMode);
     assertSafePersistenceMode(options.mode);
     const useMemory = options.mode === AuthPersistenceMode.Memory;
     return {
       module: AuthMainModule,
-      imports: useMemory
-        ? []
-        : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule],
+      imports: [
+        BetterAuthModule.forRoot(),
+        ...(useMemory ? [] : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule]),
+      ],
       controllers: [AuthController, BetterAuthApiController],
       providers: [
         AuthService,

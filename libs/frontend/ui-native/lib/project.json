@@ -19,7 +19,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/frontend/ui-native/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

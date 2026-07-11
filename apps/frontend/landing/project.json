@@ -3,12 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/frontend/landing/src",
   "projectType": "application",
-  "tags": [
-    "platform:frontend",
-    "type:frontend-app",
-    "scope:landing",
-    "fsd:layer:app"
-  ],
+  "tags": ["platform:frontend", "type:frontend-app", "scope:landing", "fsd:layer:app"],
   "// targets": "to see all targets run: nx show project landing-app --web",
   "targets": {
     "serve": {
@@ -21,12 +16,7 @@
       "inputs": [
         "default",
         {
-          "externalDependencies": [
-            "astro",
-            "@astrojs/react",
-            "@astrojs/mdx",
-            "@astrojs/sitemap"
-          ]
+          "externalDependencies": ["astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
         }
       ]
     },
@@ -40,12 +30,7 @@
       "inputs": [
         "production",
         {
-          "externalDependencies": [
-            "astro",
-            "@astrojs/react",
-            "@astrojs/mdx",
-            "@astrojs/sitemap"
-          ]
+          "externalDependencies": ["astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/landing"]
@@ -61,12 +46,7 @@
       "inputs": [
         "production",
         {
-          "externalDependencies": [
-            "astro",
-            "@astrojs/react",
-            "@astrojs/mdx",
-            "@astrojs/sitemap"
-          ]
+          "externalDependencies": ["astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
         }
       ]
     },
@@ -75,7 +55,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",
@@ -97,12 +77,7 @@
       "inputs": [
         "production",
         {
-          "externalDependencies": [
-            "astro",
-            "@astrojs/react",
-            "@astrojs/mdx",
-            "@astrojs/sitemap"
-          ]
+          "externalDependencies": ["astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/landing"]

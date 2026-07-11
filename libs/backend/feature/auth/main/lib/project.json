@@ -21,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/backend/feature/auth/main/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

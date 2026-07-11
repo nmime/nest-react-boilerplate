@@ -42,7 +42,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/backend/auth/auth-app-api",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

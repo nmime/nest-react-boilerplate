@@ -3,12 +3,7 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/health/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:common",
-    "scope:shared",
-    "boundary:interface-helper"
-  ],
+  "tags": ["platform:backend", "type:common", "scope:shared", "boundary:interface-helper"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -26,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/backend/common/health/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

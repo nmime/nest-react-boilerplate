@@ -3,12 +3,7 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/redis/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:common",
-    "scope:shared",
-    "boundary:infrastructure-adapter"
-  ],
+  "tags": ["platform:backend", "type:common", "scope:shared", "boundary:infrastructure-adapter"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -26,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/backend/common/redis/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

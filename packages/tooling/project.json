@@ -25,7 +25,7 @@
       "cache": true,
       "options": {
         "cwd": ".",
-        "command": "node --test \"packages/tooling/src/**/*.test.ts\""
+        "command": "node --test --import jiti/register \"packages/tooling/src/**/*.test.ts\""
       },
       "inputs": ["default"]
     },

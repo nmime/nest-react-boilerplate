@@ -3,12 +3,7 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/component-test/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:test-util",
-    "scope:shared",
-    "boundary:test-util"
-  ],
+  "tags": ["platform:backend", "type:test-util", "scope:shared", "boundary:test-util"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -26,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/backend/common/component-test/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",
@@ -35,9 +30,7 @@
           "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/common/component-test/lib"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/component-test/lib"]
     }
   }
 }

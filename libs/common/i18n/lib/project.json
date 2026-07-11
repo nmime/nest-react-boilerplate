@@ -3,13 +3,7 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:shared",
-    "type:common",
-    "scope:shared",
-    "boundary:i18n",
-    "framework:neutral"
-  ],
+  "tags": ["platform:shared", "type:common", "scope:shared", "boundary:i18n", "framework:neutral"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -27,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/common/i18n/lib",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

@@ -42,7 +42,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/backend/admin/admin-app-api",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",
@@ -67,9 +67,7 @@
           "externalDependencies": ["vitest", "supertest"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/e2e/apps/backend/admin/admin-app-api"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/backend/admin/admin-app-api"]
     }
   }
 }

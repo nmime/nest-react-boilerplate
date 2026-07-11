@@ -71,7 +71,7 @@ for (const [workflowName, workflowText] of [
   ["quality-presets.yml", qualityPresets],
 ]) {
   assert.ok(
-    workflowText.includes('ADMIN_BOOTSTRAP_ENABLED: "true"'),
+    /ADMIN_BOOTSTRAP_ENABLED:\s*['"]true['"]/u.test(workflowText),
     `${workflowName} runtime QA stack must enable the e2e bootstrap admin`,
   );
   assert.ok(

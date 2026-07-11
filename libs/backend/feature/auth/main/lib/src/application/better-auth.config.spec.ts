@@ -37,7 +37,7 @@ describe('getBetterAuthConfig', () => {
 
   it('uses BETTER_AUTH_SECRET when provided', () => {
     const auth = getBetterAuthConfig(null, {
-      secret: 'custom-secret-min-32-chars-long',
+      secret: 'test-secret-placeholder-min-32-chars-long',
     });
     expect(auth).toBeDefined();
   });

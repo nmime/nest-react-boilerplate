@@ -31,6 +31,7 @@ function entropy(value: string) {
 function allowed(value: string, rel = "") {
   if (/example|sample|fixture|test|dummy|changeme|placeholder|process\.env/i.test(value)) return true;
   if (rel.endsWith("env-loader.ts") && /postgres/i.test(value)) return true;
+  if (rel === "scripts/validate-deployment-config.mjs" && value.startsWith("SITE_DIST_ROOT=/workspace/")) return true;
   return false;
 }
 

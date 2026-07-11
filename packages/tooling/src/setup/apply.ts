@@ -146,7 +146,9 @@ export async function backupFiles(
   const seen = new Set<string>();
 
   for (const op of operations) {
-    if (seen.has(op.path)) continue;
+    if (seen.has(op.path)) {
+      continue;
+    }
     seen.add(op.path);
 
     const content = await fs.read(op.path);
@@ -317,7 +319,9 @@ export async function isNoOp(op: SetupOperation, fs: FilesystemAdapter): Promise
   switch (op.kind) {
     case 'create_file': {
       const exists = await fs.exists(op.path);
-      if (!exists) return false;
+      if (!exists) {
+        return false;
+      }
       const content = await fs.read(op.path);
       return content === op.content;
     }
@@ -330,7 +334,9 @@ export async function isNoOp(op: SetupOperation, fs: FilesystemAdapter): Promise
     }
     case 'json_merge': {
       const content = await fs.read(op.path);
-      if (content === null) return false;
+      if (content === null) {
+        return false;
+      }
       const parsed = JSON.parse(content);
       for (const [key, value] of Object.entries(op.patch)) {
         if (JSON.stringify(parsed[key as keyof typeof parsed]) !== JSON.stringify(value)) {

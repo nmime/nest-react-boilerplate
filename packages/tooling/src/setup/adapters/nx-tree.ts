@@ -50,7 +50,9 @@ export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
       } catch {
         return [];
       }
-      if (!topLevel || topLevel.length === 0) return [];
+      if (!topLevel || topLevel.length === 0) {
+        return [];
+      }
 
       function recurse(currentDir: string, children: string[]): void {
         for (const child of children) {
@@ -85,7 +87,9 @@ export function createNxTreeAdapter(tree: Tree): FilesystemAdapter {
  */
 export function readJsonFile<T = Record<string, unknown>>(tree: Tree, path: string): T | null {
   const content = tree.read(path, 'utf8');
-  if (content === null) return null;
+  if (content === null) {
+    return null;
+  }
   return JSON.parse(content) as T;
 }
 
@@ -101,7 +105,7 @@ export function writeJsonFile(tree: Tree, path: string, data: unknown): void {
  * Creates the file if it doesn't exist.
  */
 export function mergeJsonFile(tree: Tree, path: string, patch: Record<string, unknown>): void {
-  const existing = readJsonFile<Record<string, unknown>>(tree, path);
+  const existing = readJsonFile(tree, path);
   const merged = { ...(existing ?? {}), ...patch };
   writeJsonFile(tree, path, merged);
 }

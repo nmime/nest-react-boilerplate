@@ -9,7 +9,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  NrbConfigSchema,
   parseNrbConfig,
   safeParseNrbConfig,
   schemaVersion,
@@ -27,7 +26,7 @@ import { presets, findPreset, listPresetIds, listPresets, expandPreset } from '.
  * ================================================================== */
 describe('schema — parseNrbConfig', () => {
   it('accepts minimal valid config with just schemaVersion', () => {
-    const c = parseNrbConfig({ schemaVersion: schemaVersion });
+    const c = parseNrbConfig({ schemaVersion });
     assert.equal(c.schemaVersion, '1.0.0');
     assert.deepEqual(c.apps, []);
     assert.deepEqual(c.capabilities, []);
@@ -36,7 +35,7 @@ describe('schema — parseNrbConfig', () => {
 
   it('accepts config with preset and explicit overrides', () => {
     const c = parseNrbConfig({
-      schemaVersion: schemaVersion,
+      schemaVersion,
       preset: 'starter',
       apps: ['user-app'],
       capabilities: ['i18n'],
@@ -50,7 +49,7 @@ describe('schema — parseNrbConfig', () => {
 
   it('accepts fully-specified config', () => {
     const c = parseNrbConfig({
-      schemaVersion: schemaVersion,
+      schemaVersion,
       preset: 'enterprise',
       apps: ['admin-app', 'user-app-api'],
       capabilities: ['postgres', 'redis'],
@@ -64,7 +63,7 @@ describe('schema — parseNrbConfig', () => {
   });
 
   it('rejects unknown top-level keys', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, unknownKey: 'nope' }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, unknownKey: 'nope' }).success, false);
   });
 
   it('rejects wrong schema version', () => {
@@ -76,30 +75,27 @@ describe('schema — parseNrbConfig', () => {
   });
 
   it('rejects unknown preset', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, preset: 'nonexistent' }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, preset: 'nonexistent' }).success, false);
   });
 
   it('rejects unknown app ID in apps array', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, apps: ['fake-app'] }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, apps: ['fake-app'] }).success, false);
   });
 
   it('rejects unknown capability ID in capabilities array', () => {
-    assert.equal(
-      safeParseNrbConfig({ schemaVersion: schemaVersion, capabilities: ['fake-capability'] }).success,
-      false,
-    );
+    assert.equal(safeParseNrbConfig({ schemaVersion, capabilities: ['fake-capability'] }).success, false);
   });
 
   it('rejects non-string values in apps array', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, apps: [123] }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, apps: [123] }).success, false);
   });
 
   it('rejects non-boolean option values', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, options: { dryRun: 'yes' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, options: { dryRun: 'yes' } }).success, false);
   });
 
   it('rejects unknown option keys', () => {
-    assert.equal(safeParseNrbConfig({ schemaVersion: schemaVersion, options: { unknownOption: true } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, options: { unknownOption: true } }).success, false);
   });
 
   it('rejects non-object input', () => {
@@ -329,16 +325,25 @@ describe('presets — presets', () => {
   });
 
   it('each preset has a non-empty description', () => {
-    for (const p of presets) assert.ok(p.description.length > 0, `${p.id}`);
+    for (const p of presets) {
+      assert.ok(p.description.length > 0, `${p.id}`);
+    }
   });
 
   it('each preset lists only valid app IDs', () => {
-    for (const p of presets) for (const a of p.apps) assert.ok(appIds.includes(a as any), `${p.id} -> ${a}`);
+    for (const p of presets) {
+      for (const a of p.apps) {
+        assert.ok(appIds.includes(a), `${p.id} -> ${a}`);
+      }
+    }
   });
 
   it('each preset lists only valid capability IDs', () => {
-    for (const p of presets)
-      for (const c of p.capabilities) assert.ok(capabilityIds.includes(c as any), `${p.id} -> ${c}`);
+    for (const p of presets) {
+      for (const c of p.capabilities) {
+        assert.ok(capabilityIds.includes(c), `${p.id} -> ${c}`);
+      }
+    }
   });
 });
 
@@ -393,17 +398,22 @@ describe('presets — expandPreset', () => {
       'auth-app-api',
       'landing-app',
       'fullstack-e2e',
-    ] as const)
-      assert.ok(e.apps.includes(a as (typeof appIds)[number]), `fullstack missing ${a}`);
-    for (const c of ['postgres', 'redis', 'authz', 'otel'] as const)
-      assert.ok(e.capabilities.includes(c as (typeof capabilityIds)[number]), `fullstack missing ${c}`);
+    ] as const) {
+      assert.ok(e.apps.includes(a), `fullstack missing ${a}`);
+    }
+    for (const c of ['postgres', 'redis', 'authz', 'otel'] as const) {
+      assert.ok(e.capabilities.includes(c), `fullstack missing ${c}`);
+    }
   });
 
   it('enterprise: every supported app and capability', () => {
     const e = expandPreset('enterprise');
-    for (const a of appIds) assert.ok(e.apps.includes(a as (typeof appIds)[number]), `enterprise missing app: ${a}`);
-    for (const c of capabilityIds)
-      assert.ok(e.capabilities.includes(c as (typeof capabilityIds)[number]), `enterprise missing cap: ${c}`);
+    for (const a of appIds) {
+      assert.ok(e.apps.includes(a), `enterprise missing app: ${a}`);
+    }
+    for (const c of capabilityIds) {
+      assert.ok(e.capabilities.includes(c), `enterprise missing cap: ${c}`);
+    }
   });
 
   it('bots: telegram + discord apps and capabilities', () => {
@@ -442,7 +452,7 @@ describe('presets — expandPreset', () => {
  * ================================================================== */
 describe('component — schema → preset → catalog', () => {
   it('parse config with preset → expand → validate', () => {
-    const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'fullstack' });
+    const c = parseNrbConfig({ schemaVersion, preset: 'fullstack' });
     assert.ok(c.preset);
     const e = expandPreset(c.preset);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
@@ -450,7 +460,7 @@ describe('component — schema → preset → catalog', () => {
 
   it('parse config with explicit apps overriding preset → expand → validate', () => {
     const c = parseNrbConfig({
-      schemaVersion: schemaVersion,
+      schemaVersion,
       preset: 'minimal',
       apps: ['admin-app'],
       capabilities: ['postgres', 'authz', 'design-tokens'],
@@ -463,7 +473,7 @@ describe('component — schema → preset → catalog', () => {
 
   it('config with telegram-bot-worker deps added by expansion', () => {
     const c = parseNrbConfig({
-      schemaVersion: schemaVersion,
+      schemaVersion,
       apps: ['telegram-bot-worker'],
       capabilities: ['telegram-bot'],
     });
@@ -474,9 +484,9 @@ describe('component — schema → preset → catalog', () => {
   });
 
   it('round-trip: parse → preset expand → re-parse expanded config', () => {
-    const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: 'bots' });
+    const c = parseNrbConfig({ schemaVersion, preset: 'bots' });
     const e = expandPreset(c.preset!);
-    const c2 = parseNrbConfig({ schemaVersion: schemaVersion, apps: e.apps, capabilities: e.capabilities });
+    const c2 = parseNrbConfig({ schemaVersion, apps: e.apps, capabilities: e.capabilities });
     assert.deepEqual(c2.apps, e.apps);
     assert.deepEqual(c2.capabilities, e.capabilities);
   });
@@ -492,7 +502,9 @@ describe('component — preset monotonicity', () => {
   it('enterprise has the most capabilities', () => {
     const ent = expandPreset('enterprise');
     for (const id of presetIds) {
-      if (id === 'enterprise') continue;
+      if (id === 'enterprise') {
+        continue;
+      }
       const o = expandPreset(id);
       assert.ok(o.capabilities.length <= ent.capabilities.length, `${id} >= enterprise`);
     }
@@ -514,7 +526,7 @@ describe('e2e — example config flow', () => {
     const c = parseNrbConfig(raw);
     assert.equal(c.schemaVersion, schemaVersion);
     assert.equal(c.preset, 'fullstack');
-    const e = expandPreset(c.preset!);
+    const e = expandPreset(c.preset);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
     const expectedApps = [
       'admin-app',
@@ -539,7 +551,7 @@ describe('e2e — example config flow', () => {
     const c = parseNrbConfig(JSON.parse(raw));
     assert.equal(c.preset, 'bots');
     assert.equal(c.options.nonInteractive, true);
-    const e = expandPreset(c.preset!);
+    const e = expandPreset(c.preset);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
     assert.ok(e.apps.includes('telegram-bot-api'));
     assert.ok(e.apps.includes('telegram-bot-worker'));
@@ -560,10 +572,10 @@ describe('e2e — example config flow', () => {
 
   it('all five presets independently valid end-to-end', () => {
     for (const pid of presetIds) {
-      const c = parseNrbConfig({ schemaVersion: schemaVersion, preset: pid });
+      const c = parseNrbConfig({ schemaVersion, preset: pid });
       const e = expandPreset(c.preset!);
       assert.deepEqual(validateSelection(e.apps, e.capabilities), [], `${pid}`);
-      const c2 = parseNrbConfig({ schemaVersion: schemaVersion, apps: e.apps, capabilities: e.capabilities });
+      const c2 = parseNrbConfig({ schemaVersion, apps: e.apps, capabilities: e.capabilities });
       assert.deepEqual(c2.apps, e.apps);
       assert.deepEqual(c2.capabilities, e.capabilities);
     }
@@ -575,7 +587,7 @@ describe('e2e — example config flow', () => {
  * ================================================================== */
 describe('e2e — edge cases', () => {
   it('empty apps array is valid', () => {
-    const c = parseNrbConfig({ schemaVersion: schemaVersion, apps: [], capabilities: [] });
+    const c = parseNrbConfig({ schemaVersion, apps: [], capabilities: [] });
     assert.deepEqual(c.apps, []);
     assert.deepEqual(c.capabilities, []);
   });

@@ -5,7 +5,7 @@
  * information to be replayed deterministically.  No timestamps or
  * machine-specific values are encoded — snapshots are portable.
  */
-import { isAbsolute, normalize, posix } from 'node:path';
+import { isAbsolute, posix } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Operation kind discriminant
@@ -168,7 +168,9 @@ const KIND_ORDER: Record<OperationKind, number> = {
 
 export function compareOperations(a: SetupOperation, b: SetupOperation): number {
   const kc = KIND_ORDER[a.kind] - KIND_ORDER[b.kind];
-  if (kc !== 0) return kc;
+  if (kc !== 0) {
+    return kc;
+  }
   return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
 }
 
@@ -182,20 +184,32 @@ export function sortOperations(ops: readonly SetupOperation[]): SetupOperation[]
 // ---------------------------------------------------------------------------
 
 export function operationsEqual(a: SetupOperation, b: SetupOperation): boolean {
-  if (a.kind !== b.kind) return false;
-  if (a.path !== b.path) return false;
+  if (a.kind !== b.kind) {
+    return false;
+  }
+  if (a.path !== b.path) {
+    return false;
+  }
   if (a.kind === 'create_file' || a.kind === 'update_file') {
-    if (a.content !== (b as CreateFileOperation | UpdateFileOperation).content) return false;
+    if (a.content !== (b as CreateFileOperation | UpdateFileOperation).content) {
+      return false;
+    }
   }
   if (a.kind === 'json_merge') {
-    const pa = (a as JsonMergeOperation).patch;
+    const pa = a.patch;
     const pb = (b as JsonMergeOperation).patch;
     const ka = Object.keys(pa).sort();
     const kb = Object.keys(pb).sort();
-    if (ka.length !== kb.length) return false;
+    if (ka.length !== kb.length) {
+      return false;
+    }
     for (let i = 0; i < ka.length; i++) {
-      if (ka[i] !== kb[i]) return false;
-      if (JSON.stringify(pa[ka[i]]) !== JSON.stringify(pb[kb[i]])) return false;
+      if (ka[i] !== kb[i]) {
+        return false;
+      }
+      if (JSON.stringify(pa[ka[i]]) !== JSON.stringify(pb[kb[i]])) {
+        return false;
+      }
     }
   }
   return true;
@@ -203,9 +217,13 @@ export function operationsEqual(a: SetupOperation, b: SetupOperation): boolean {
 
 /** Deep equality on sorted operation arrays. */
 export function operationArraysEqual(a: SetupOperation[], b: SetupOperation[]): boolean {
-  if (a.length !== b.length) return false;
+  if (a.length !== b.length) {
+    return false;
+  }
   for (let i = 0; i < a.length; i++) {
-    if (!operationsEqual(a[i], b[i])) return false;
+    if (!operationsEqual(a[i], b[i])) {
+      return false;
+    }
   }
   return true;
 }

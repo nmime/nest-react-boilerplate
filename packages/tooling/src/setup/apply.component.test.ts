@@ -9,8 +9,8 @@ import { describe, it } from 'node:test';
 
 import type { SetupOperation } from './operations.js';
 import { createFile, updateFile, deleteFile, jsonMerge } from './operations.js';
-import type { FilesystemAdapter, ApplyResult } from './adapters/filesystem.js';
-import { apply, checkConflicts, backupFiles, rollback, isNoOp, filterNoOps } from './apply.js';
+import type { FilesystemAdapter } from './adapters/filesystem.js';
+import { apply, checkConflicts, isNoOp, filterNoOps } from './apply.js';
 import { hashString } from './state.js';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ class InMemoryFS implements FilesystemAdapter {
     return this.store.has(p);
   }
 
-  async list(_dir?: string): Promise<string[]> {
+  async list(): Promise<string[]> {
     return [...this.store.keys()].sort();
   }
 

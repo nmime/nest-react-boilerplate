@@ -10,7 +10,7 @@
  */
 import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
-import { presetIds, schemaVersion } from './schema.js';
+import { schemaVersion } from './schema.js';
 import { presets, findPreset } from './presets.js';
 import { appCatalog, capabilityCatalog } from './catalog.js';
 import type { AppId, CapabilityId } from './schema.js';
@@ -50,7 +50,9 @@ async function askChoice(
   }
   const answer = await ask(`${question}\n  Select (1-${choices.length})`, String(defaultIndex + 1));
   const idx = parseInt(answer, 10) - 1;
-  if (idx >= 0 && idx < choices.length) return choices[idx].value;
+  if (idx >= 0 && idx < choices.length) {
+    return choices[idx].value;
+  }
   return choices[defaultIndex].value;
 }
 
@@ -126,7 +128,9 @@ async function interactiveFlow(): Promise<PromptResult> {
   // 2. App toggles
   const selectedApps = new Set<AppId>();
   if (presetDef) {
-    for (const a of presetDef.apps) selectedApps.add(a);
+    for (const a of presetDef.apps) {
+      selectedApps.add(a);
+    }
   }
 
   const frontendApps = Object.values(appCatalog).filter((a) => a.platform === 'frontend');
@@ -157,7 +161,9 @@ async function interactiveFlow(): Promise<PromptResult> {
   // 3. Capability toggles
   const selectedCaps = new Set<CapabilityId>();
   if (presetDef) {
-    for (const c of presetDef.capabilities) selectedCaps.add(c);
+    for (const c of presetDef.capabilities) {
+      selectedCaps.add(c);
+    }
   }
 
   // Auto-add capabilities required by selected apps
@@ -212,7 +218,9 @@ async function promptAppGroup(
   apps: Array<{ id: AppId; label: string }>,
   selected: Set<AppId>,
 ): Promise<void> {
-  if (apps.length === 0) return;
+  if (apps.length === 0) {
+    return;
+  }
 
   process.stdout.write(`\n${groupLabel}:\n`);
   for (const app of apps) {
@@ -260,7 +268,7 @@ export function buildConfig(
   } = {},
 ): NrbConfig {
   return {
-    schemaVersion: schemaVersion,
+    schemaVersion,
     preset: overrides.preset ?? prompts.preset,
     apps: overrides.apps ?? prompts.apps,
     capabilities: overrides.capabilities ?? prompts.capabilities,
@@ -281,7 +289,9 @@ export function buildConfig(
 export function formatConfigSummary(config: NrbConfig): string {
   const lines: string[] = [];
   lines.push('Configuration:');
-  if (config.preset) lines.push(`  Preset: ${config.preset}`);
+  if (config.preset) {
+    lines.push(`  Preset: ${config.preset}`);
+  }
   lines.push(`  Apps: ${config.apps.length ? config.apps.join(', ') : '(none)'}`);
   lines.push(`  Capabilities: ${config.capabilities.length ? config.capabilities.join(', ') : '(none)'}`);
   lines.push(`  Options:`);

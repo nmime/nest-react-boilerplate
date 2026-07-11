@@ -27,29 +27,45 @@ export interface LibraryGeneratorOptions {
 
 function findExistingProject(tree: Tree, name: string): string | null {
   const projects = getProjects(tree);
-  if (projects.has(name)) return name;
+  if (projects.has(name)) {
+    return name;
+  }
   for (const [projName, config] of projects.entries()) {
-    if (config.root?.endsWith(name)) return projName;
+    if (config.root?.endsWith(name)) {
+      return projName;
+    }
   }
   return null;
 }
 
 function computeProjectName(kind: string, name: string): string {
-  if (kind === 'backend') return `@app/backend-${name}`;
-  if (kind === 'frontend') return `@app/frontend-${name}`;
+  if (kind === 'backend') {
+    return `@app/backend-${name}`;
+  }
+  if (kind === 'frontend') {
+    return `@app/frontend-${name}`;
+  }
   return `@app/common-${name}`;
 }
 
 function computeDirectory(kind: string, name: string): string {
-  if (kind === 'backend') return `libs/backend/${name}/lib`;
-  if (kind === 'frontend') return `libs/frontend/${name}/lib`;
+  if (kind === 'backend') {
+    return `libs/backend/${name}/lib`;
+  }
+  if (kind === 'frontend') {
+    return `libs/frontend/${name}/lib`;
+  }
   return `libs/common/${name}/lib`;
 }
 
 function computeTags(kind: string, name: string): string[] {
   const scope = name.split('-')[0];
-  if (kind === 'backend') return ['platform:backend', 'type:common', `scope:${scope}`];
-  if (kind === 'frontend') return ['platform:frontend', 'type:common', `scope:${scope}`];
+  if (kind === 'backend') {
+    return ['platform:backend', 'type:common', `scope:${scope}`];
+  }
+  if (kind === 'frontend') {
+    return ['platform:frontend', 'type:common', `scope:${scope}`];
+  }
   return ['platform:common', 'type:common', `scope:${scope}`];
 }
 
@@ -424,7 +440,9 @@ export default defineConfig({
 
 export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOptions): Promise<void> {
   const nameError = validateName(options.name);
-  if (nameError) throw new Error(nameError);
+  if (nameError) {
+    throw new Error(nameError);
+  }
 
   const validKinds = ['backend', 'frontend', 'common'];
   if (!validKinds.includes(options.kind)) {
@@ -458,7 +476,9 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
       break;
   }
 
-  if (!options.skipFormat) await formatFiles(tree);
+  if (!options.skipFormat) {
+    await formatFiles(tree);
+  }
 }
 
 export default libraryGenerator;

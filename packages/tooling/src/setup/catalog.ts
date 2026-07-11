@@ -378,7 +378,9 @@ export function expandDependencies(
     changed = false;
     for (const appId of [...appSet]) {
       const app = appCatalog[appId];
-      if (!app) continue;
+      if (!app) {
+        continue;
+      }
       for (const reqCap of app.requiresCapabilities) {
         if (!capSet.has(reqCap)) {
           capSet.add(reqCap);
@@ -394,7 +396,9 @@ export function expandDependencies(
     }
     for (const capId of [...capSet]) {
       const cap = capabilityCatalog[capId];
-      if (!cap) continue;
+      if (!cap) {
+        continue;
+      }
       for (const reqCap of cap.requiresCapabilities) {
         if (!capSet.has(reqCap)) {
           capSet.add(reqCap);

@@ -130,7 +130,9 @@ async function recurse(absDir: string, relDir: string, out: string[]): Promise<v
   const entries = await readdirAsync(absDir, { withFileTypes: true });
   for (const entry of entries) {
     // Skip hidden files and common build artifacts
-    if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist') continue;
+    if (entry.name.startsWith('.') || entry.name === 'node_modules' || entry.name === 'dist') {
+      continue;
+    }
     const abs = join(absDir, entry.name);
     const rel = relDir ? `${relDir}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {

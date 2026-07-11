@@ -127,16 +127,20 @@ export function resolveConfig(config: NrbConfig): {
   capabilities: CapabilityId[];
   preset?: string;
 } {
-  let apps: AppId[] = [...config.apps];
-  let capabilities: CapabilityId[] = [...config.capabilities];
+  const apps: AppId[] = [...config.apps];
+  const capabilities: CapabilityId[] = [...config.capabilities];
 
   if (config.preset) {
     const expanded = expandPreset(config.preset);
     for (const a of expanded.apps) {
-      if (!apps.includes(a)) apps.push(a);
+      if (!apps.includes(a)) {
+        apps.push(a);
+      }
     }
     for (const c of expanded.capabilities) {
-      if (!capabilities.includes(c)) capabilities.push(c);
+      if (!capabilities.includes(c)) {
+        capabilities.push(c);
+      }
     }
   }
 

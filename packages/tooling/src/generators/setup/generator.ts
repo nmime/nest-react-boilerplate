@@ -6,10 +6,9 @@
  * config (preset expansion + dependency resolution + validation).
  */
 import type { Tree } from 'nx/src/generators/tree';
-import { formatFiles, names as nxNames } from '@nx/devkit';
+import { formatFiles } from '@nx/devkit';
 import { plan, resolveConfig } from '../../setup/planner.js';
-import { apply, checkConflicts, backupFiles, rollback } from '../../setup/apply.js';
-import { parseNrbConfig, NrbConfigSchema } from '../../setup/schema.js';
+import { NrbConfigSchema } from '../../setup/schema.js';
 import { createNxTreeAdapter } from '../../setup/adapters/nx-tree.js';
 import { schemaVersion } from '../../setup/schema.js';
 
@@ -29,7 +28,7 @@ export interface SetupGeneratorOptions {
 export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions): Promise<void> {
   // Build the NrbConfig from generator options
   const config = NrbConfigSchema.parse({
-    schemaVersion: schemaVersion,
+    schemaVersion,
     preset: options.preset,
     apps: options.apps ?? [],
     capabilities: options.capabilities ?? [],

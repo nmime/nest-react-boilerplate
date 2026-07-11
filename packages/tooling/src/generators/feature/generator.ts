@@ -401,7 +401,7 @@ function createTsconfigAliases(names: ReturnType<typeof generateNames>): Record<
 }
 
 function findExistingTsconfigAliases(tree: Tree, names: ReturnType<typeof generateNames>): string[] {
-  const tsconfig = readJsonFile<Record<string, unknown>>(tree, 'tsconfig.base.json');
+  const tsconfig = readJsonFile(tree, 'tsconfig.base.json');
   const compilerOptions = tsconfig?.compilerOptions as { paths?: Record<string, string[]> } | undefined;
   const paths = compilerOptions?.paths ?? {};
   const newAliases = createTsconfigAliases(names);
@@ -435,7 +435,9 @@ export interface FeatureGeneratorOptions {
 
 export async function featureGenerator(tree: Tree, options: FeatureGeneratorOptions): Promise<void> {
   const nameError = validateName(options.name);
-  if (nameError) throw new Error(nameError);
+  if (nameError) {
+    throw new Error(nameError);
+  }
 
   const names = generateNames(options.name);
   const apiApp = options.apiApp ?? 'user-app-api';
@@ -454,8 +456,12 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
     const existingAliases = findExistingTsconfigAliases(tree, names);
     if (existingFiles.length > 0 || existingAliases.length > 0) {
       const conflicts: string[] = [];
-      for (const p of existingFiles) conflicts.push(`File exists: ${p}`);
-      for (const a of existingAliases) conflicts.push(`Tsconfig alias exists: ${a}`);
+      for (const p of existingFiles) {
+        conflicts.push(`File exists: ${p}`);
+      }
+      for (const a of existingAliases) {
+        conflicts.push(`Tsconfig alias exists: ${a}`);
+      }
       throw new Error(`Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join('\n')}`);
     }
   }
@@ -469,7 +475,7 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   }
 
   if (!options.dryRun) {
-    const tsconfig = readJsonFile<Record<string, unknown>>(tree, 'tsconfig.base.json');
+    const tsconfig = readJsonFile(tree, 'tsconfig.base.json');
     if (tsconfig) {
       const compilerOptions = (tsconfig.compilerOptions ?? {}) as Record<string, unknown>;
       const paths = (compilerOptions.paths ?? {}) as Record<string, string[]>;

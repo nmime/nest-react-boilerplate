@@ -25,22 +25,30 @@ export interface ApplicationGeneratorOptions {
 
 function findExistingProject(tree: Tree, name: string): string | null {
   const projects = getProjects(tree);
-  if (projects.has(name)) return name;
+  if (projects.has(name)) {
+    return name;
+  }
   for (const [projName, config] of projects.entries()) {
-    if (config.root?.endsWith(name)) return projName;
+    if (config.root?.endsWith(name)) {
+      return projName;
+    }
   }
   return null;
 }
 
 function computeAppDirectory(kind: string, name: string): string {
   const scope = name.split('-')[0];
-  if (kind === 'backend') return `apps/backend/${scope}/${name}`;
+  if (kind === 'backend') {
+    return `apps/backend/${scope}/${name}`;
+  }
   return `apps/frontend/${name}`;
 }
 
 function computeAppTags(kind: string, name: string): string[] {
   const scope = name.split('-')[0];
-  if (kind === 'backend') return ['platform:backend', 'type:backend-app', `scope:${scope}`];
+  if (kind === 'backend') {
+    return ['platform:backend', 'type:backend-app', `scope:${scope}`];
+  }
   return ['platform:frontend', 'type:frontend-app', `scope:${scope}`, 'fsd:layer:app'];
 }
 
@@ -566,7 +574,9 @@ module.exports = [...baseConfig];
 
 export async function applicationGenerator(tree: Tree, options: ApplicationGeneratorOptions): Promise<void> {
   const nameError = validateName(options.name);
-  if (nameError) throw new Error(nameError);
+  if (nameError) {
+    throw new Error(nameError);
+  }
 
   if (options.kind !== 'frontend' && options.kind !== 'backend') {
     throw new Error(`Unsupported application kind "${options.kind}". Must be "frontend" or "backend".`);
@@ -594,7 +604,9 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
     createFrontendApp(tree, names, dir, tags);
   }
 
-  if (!options.skipFormat) await formatFiles(tree);
+  if (!options.skipFormat) {
+    await formatFiles(tree);
+  }
 }
 
 export default applicationGenerator;

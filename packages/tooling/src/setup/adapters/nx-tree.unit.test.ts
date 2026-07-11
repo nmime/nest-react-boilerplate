@@ -6,7 +6,7 @@
  * E2E: full read/write/delete/list cycle on virtual tree
  */
 import assert from 'node:assert/strict';
-import { describe, it, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import { createNxTreeAdapter, readJsonFile, writeJsonFile, mergeJsonFile } from '../adapters/nx-tree.js';
 
 // We need the Nx Tree from the nx package (testing utils).

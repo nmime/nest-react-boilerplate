@@ -206,7 +206,7 @@ import { ${names.pascal}Module } from "./${names.kebab}.module";
 void bootstrapNestApi(${names.pascal}Module, {
   appName: "${projectName}",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  defaultPort: 3000,
+  port: 3000,
 });
 `,
   );

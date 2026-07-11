@@ -44,7 +44,7 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "NODE_ENV=production node --experimental-strip-types server/index.ts"
+        "command": "NODE_ENV=production SITE_APP_PORT=4203 node --experimental-strip-types server/index.ts"
       }
     },
     "e2e": {

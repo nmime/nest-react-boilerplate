@@ -13,8 +13,6 @@ export type ResolvedEntryNestModule =
 export type EntryNestModule =
   ResolvedEntryNestModule | Promise<ResolvedEntryNestModule>;
 
-export type PortFactory = (app: INestApplication) => number | Promise<number>;
-
 export type CorsFactory = (
   app: INestApplication,
 ) => CorsOptions | Promise<CorsOptions>;
@@ -22,7 +20,7 @@ export type CorsFactory = (
 export interface BootstrapParams {
   name: string;
   module: EntryNestModule;
-  port?: number | PortFactory;
+  port: number;
   cors?: CorsOptions | CorsFactory;
   swagger?: BootstrapSwaggerConfig;
   gracefulShutdown?: boolean;

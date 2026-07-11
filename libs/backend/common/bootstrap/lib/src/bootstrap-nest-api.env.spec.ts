@@ -5,7 +5,7 @@ import { resolveBackendEnvironmentConfig } from "./bootstrap-nest-api";
 describe("resolveBackendEnvironmentConfig", () => {
   it("centralizes validated defaults for development APIs", () => {
     const config = resolveBackendEnvironmentConfig(
-      { appName: "test-api", defaultPort: 3010 },
+      { appName: "test-api", port: 3010 },
       {
         AUTH_JWT_SECRET: "development-secret",
         CORS_ORIGINS: "https://admin.example.com, https://app.example.com",
@@ -40,7 +40,7 @@ describe("resolveBackendEnvironmentConfig", () => {
 
   it("uses Redis rate-limit storage when explicitly configured", () => {
     const config = resolveBackendEnvironmentConfig(
-      { appName: "test-api", defaultPort: 3010 },
+      { appName: "test-api", port: 3010 },
       {
         AUTH_JWT_SECRET: "x".repeat(32),
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
@@ -60,10 +60,10 @@ describe("resolveBackendEnvironmentConfig", () => {
     });
   });
 
-  it("resolves app-specific, generic, and container fallback ports", () => {
+  it("resolves app-specific, generic, and explicit option ports", () => {
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           PORT: "4999",
           TEST_API_PORT: "4123",
@@ -73,7 +73,7 @@ describe("resolveBackendEnvironmentConfig", () => {
 
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           PORT: "4999",
         },
@@ -82,18 +82,25 @@ describe("resolveBackendEnvironmentConfig", () => {
 
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
-        {
-          CONTAINER: "true",
-        },
+        { appName: "test-api", port: 3010 },
+        {},
       ).port,
-    ).toBe(80);
+    ).toBe(3010);
+  });
+
+  it("falls back to explicit options.port when no env variable is set", () => {
+    const config = resolveBackendEnvironmentConfig(
+      { appName: "test-api", port: 3010 },
+      { AUTH_JWT_SECRET: "development-secret" },
+    );
+    expect(config.port).toBe(3010);
+    expect(config.portSource).toBe("configured");
   });
 
   it("validates app-specific port values", () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           TEST_API_PORT: "abc",
         },
@@ -104,7 +111,7 @@ describe("resolveBackendEnvironmentConfig", () => {
   it("fails closed for production rate limiting without Redis or an explicit safe override", () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
@@ -118,7 +125,7 @@ describe("resolveBackendEnvironmentConfig", () => {
 
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
@@ -136,7 +143,7 @@ describe("resolveBackendEnvironmentConfig", () => {
   it("fails fast for invalid production and rate-limit environment", () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
@@ -148,7 +155,7 @@ describe("resolveBackendEnvironmentConfig", () => {
 
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
@@ -162,7 +169,7 @@ describe("resolveBackendEnvironmentConfig", () => {
 
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", defaultPort: 3010 },
+        { appName: "test-api", port: 3010 },
         {
           AUTH_JWT_SECRET: "x".repeat(32),
           DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",

@@ -54,139 +54,16 @@ describe("bootstrap utilities", () => {
     expect(typeof isRunningInContainer()).toBe("boolean");
   });
 
-  it("normalizes port environment variable names", () => {
+  it("normalizes port environment variable names and verifies no auto-discovery exports", () => {
     expect(getPortEnvVarName("Admin App API")).toBe("ADMIN_APP_API_PORT");
     expect(getPortEnvVarName("  user-app.api  ")).toBe("USER_APP_API_PORT");
   });
 
-  it("finds a free port and prefers container port 80 when configured", async () => {
-    let occupiedErrorHandler:
-      ((error: NodeJS.ErrnoException) => void) | undefined;
-    let freeListenHandler: (() => void) | undefined;
-    const occupiedServer = {
-      listen: vi.fn(() => {
-        occupiedErrorHandler?.(
-          Object.assign(new Error("in use"), { code: "EADDRINUSE" }),
-        );
-        return occupiedServer;
-      }),
-      once: vi.fn(
-        (_event: "error", handler: (error: NodeJS.ErrnoException) => void) => {
-          occupiedErrorHandler = handler;
-          return occupiedServer;
-        },
-      ),
-    };
-    const freeServer = {
-      address: vi.fn(() => ({ port: 3001 })),
-      close: vi.fn((handler: () => void) => {
-        handler();
-      }),
-      listen: vi.fn((_port: number, handler: () => void) => {
-        freeListenHandler = handler;
-        freeListenHandler();
-        return freeServer;
-      }),
-      once: vi.fn(() => freeServer),
-    };
-    let createServerCalls = 0;
-    const createServer = vi.fn(() => {
-      const server = createServerCalls === 0 ? occupiedServer : freeServer;
-      createServerCalls += 1;
-      return server;
-    });
-
-    vi.resetModules();
-    vi.doMock("node:net", () => ({ createServer }));
-
-    try {
-      const {
-        defaultPortFactory: defaultPortFactoryWithMock,
-        findFreePort: findFreePortWithMock,
-      } = await import("./util/port.util");
-
-      await expect(findFreePortWithMock(3000)).resolves.toBe(3001);
-      expect(occupiedServer.listen).toHaveBeenCalledWith(
-        3000,
-        expect.any(Function),
-      );
-      expect(freeServer.listen).toHaveBeenCalledWith(
-        3001,
-        expect.any(Function),
-      );
-
-      process.env.CONTAINER = "true";
-      await expect(defaultPortFactoryWithMock()).resolves.toBe(80);
-    } finally {
-      vi.doUnmock("node:net");
-      vi.resetModules();
-    }
-  });
-
-  it("rejects unexpected port probing errors", async () => {
-    const error = Object.assign(new Error("permission denied"), {
-      code: "EACCES",
-    });
-    let errorHandler: ((error: NodeJS.ErrnoException) => void) | undefined;
-    const server = {
-      close: vi.fn(),
-      listen: vi.fn(() => {
-        errorHandler?.(error);
-        return server;
-      }),
-      once: vi.fn(
-        (_event: "error", handler: (error: NodeJS.ErrnoException) => void) => {
-          errorHandler = handler;
-          return server;
-        },
-      ),
-    };
-
-    vi.resetModules();
-    vi.doMock("node:net", () => ({
-      createServer: vi.fn(() => server),
-    }));
-
-    try {
-      const { findFreePort: findFreePortWithMock } =
-        await import("./util/port.util");
-
-      await expect(findFreePortWithMock(3000)).rejects.toBe(error);
-    } finally {
-      vi.doUnmock("node:net");
-      vi.resetModules();
-    }
-  });
-
-  it("uses the requested port when the server address is not a TCP address", async () => {
-    let listenHandler: (() => void) | undefined;
-    const server = {
-      address: vi.fn(() => "pipe-address"),
-      close: vi.fn((handler: () => void) => {
-        handler();
-      }),
-      listen: vi.fn((_port: number, handler: () => void) => {
-        listenHandler = handler;
-        listenHandler();
-        return server;
-      }),
-      once: vi.fn(() => server),
-    };
-
-    vi.resetModules();
-    vi.doMock("node:net", () => ({
-      createServer: vi.fn(() => server),
-    }));
-
-    try {
-      const { findFreePort: findFreePortWithMock } =
-        await import("./util/port.util");
-
-      await expect(findFreePortWithMock(4545)).resolves.toBe(4545);
-    } finally {
-      vi.doUnmock("node:net");
-      vi.resetModules();
-    }
+  it("does not export any free-port or default-port-factory functions", async () => {
+    const portUtil = await import("./util/port.util");
+    expect("findFreePort" in portUtil).toBe(false);
+    expect("defaultPortFactory" in portUtil).toBe(false);
+    expect(typeof portUtil.getPortEnvVarName).toBe("function");
   });
 
   it("serves robots.txt through send or end and passes other requests through", () => {

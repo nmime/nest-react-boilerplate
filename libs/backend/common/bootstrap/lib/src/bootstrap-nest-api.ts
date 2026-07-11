@@ -1,16 +1,13 @@
-import { randomUUID } from "node:crypto";
-import fastifyCookie from "@fastify/cookie";
-import fastifySession from "@fastify/session";
-import type { Type } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import type { FastifySessionObject as Session } from "@fastify/session";
-import helmet from "helmet";
-import { Pool, type PoolClient } from "pg";
-import { defaultPortFactory, getPortEnvVarName } from "./util/port.util";
+import { randomUUID } from 'node:crypto';
+import fastifyCookie from '@fastify/cookie';
+import fastifySession from '@fastify/session';
+import type { Type } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import type { FastifySessionObject as Session } from '@fastify/session';
+import helmet from 'helmet';
+import { Pool, type PoolClient } from 'pg';
+import { getPortEnvVarName } from './util/port.util';
 import {
   closeRedisClient,
   createRedisClient,
@@ -18,22 +15,16 @@ import {
   type RedisClientLike,
   type RedisConnectionConfig,
   type RedisHost,
-} from "@app/backend-common-redis";
-import {
-  ExceptionsFilter,
-  ExceptionsResponseTransformer,
-} from "@app/backend-common-response";
-import {
-  createRequestLocaleMiddleware,
-  resolveLocaleFromRequest,
-  translate,
-} from "@app/common-i18n";
-import { setupSwagger } from "@app/backend-common-swagger";
-import { createValidationPipe } from "@app/backend-common-validation";
+} from '@app/backend-common-redis';
+import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
+import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/common-i18n';
+import { setupSwagger } from '@app/backend-common-swagger';
+import { createValidationPipe } from '@app/backend-common-validation';
 
 export interface BootstrapNestApiOptions {
   appName: string;
-  defaultPort: number;
+  /** Explicit port this service listens on. */
+  port: number;
   enableCors?: boolean;
   corsOrigins?: string[];
   openApi?: BootstrapOpenApiOptions;
@@ -56,9 +47,9 @@ export interface BootstrapRateLimitOptions {
   max?: number;
 }
 
-export type BackendRateLimitStore = "memory" | "redis";
-export type BackendRateLimitStorePreference = BackendRateLimitStore | "auto";
-type BackendPortSource = "configured" | "container-default" | "local-default";
+export type BackendRateLimitStore = 'memory' | 'redis';
+export type BackendRateLimitStorePreference = BackendRateLimitStore | 'auto';
+type BackendPortSource = 'configured';
 
 export interface BackendEnvironmentConfig {
   corsOrigins: string[];
@@ -97,23 +88,17 @@ interface RequestLike {
 interface ResponseLike {
   statusCode?: number;
   end?: (body?: string) => void;
-  on: (event: "finish", listener: () => void) => void;
+  on: (event: 'finish', listener: () => void) => void;
   setHeader: (name: string, value: string) => void;
 }
 
 type NextFunctionLike = () => void;
 
 type FastifySessionOptions = Parameters<typeof fastifySession>[1];
-type FastifyPluginRegister = (
-  plugin: unknown,
-  options?: unknown,
-) => PromiseLike<unknown>;
-type SessionSameSite = "lax" | "strict" | "none";
+type FastifyPluginRegister = (plugin: unknown, options?: unknown) => PromiseLike<unknown>;
+type SessionSameSite = 'lax' | 'strict' | 'none';
 type SessionStoreCallback = (error?: unknown) => void;
-type SessionStoreGetCallback = (
-  error: unknown,
-  session?: Session | null,
-) => void;
+type SessionStoreGetCallback = (error: unknown, session?: Session | null) => void;
 
 interface RateLimitBucket {
   count: number;
@@ -129,10 +114,7 @@ interface RateLimitStore {
   readonly name: BackendRateLimitStore;
   close?: () => Promise<unknown>;
   init?: () => Promise<void>;
-  increment: (
-    key: string,
-    windowMs: number,
-  ) => RateLimitStoreHit | Promise<RateLimitStoreHit>;
+  increment: (key: string, windowMs: number) => RateLimitStoreHit | Promise<RateLimitStoreHit>;
 }
 
 const DefaultRateLimitWindowMs = 60_000;
@@ -140,7 +122,7 @@ const DefaultRateLimitMax = 100;
 const DefaultSessionCookieMaxAgeSeconds = 604_800;
 const DefaultSessionSweepIntervalMs = 600_000;
 const MinimumSessionSecretLength = 32;
-const DevelopmentSessionSecretPadding = ":development-session-padding";
+const DevelopmentSessionSecretPadding = ':development-session-padding';
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
 
 class FastifyPostgresSessionStore {
@@ -188,9 +170,7 @@ class FastifyPostgresSessionStore {
   }
 
   private async deleteExpiredSessions(): Promise<void> {
-    await this.pool.query("DELETE FROM fastify_sessions WHERE expire <= $1", [
-      new Date(),
-    ]);
+    await this.pool.query('DELETE FROM fastify_sessions WHERE expire <= $1', [new Date()]);
   }
 
   get(sessionId: string, callback: SessionStoreGetCallback): void {
@@ -203,11 +183,7 @@ class FastifyPostgresSessionStore {
       });
   }
 
-  set(
-    sessionId: string,
-    session: Session,
-    callback: SessionStoreCallback,
-  ): void {
+  set(sessionId: string, session: Session, callback: SessionStoreCallback): void {
     void this.setSession(sessionId, session)
       .then(() => {
         callback();
@@ -244,7 +220,7 @@ class FastifyPostgresSessionStore {
   private async getSession(sessionId: string): Promise<Session | null> {
     await this.ensureInitialized();
     const result = await this.pool.query<{ sess: Session; expire: Date }>(
-      "SELECT sess, expire FROM fastify_sessions WHERE sid = $1",
+      'SELECT sess, expire FROM fastify_sessions WHERE sid = $1',
       [sessionId],
     );
     const row = result.rows.at(0);
@@ -252,8 +228,7 @@ class FastifyPostgresSessionStore {
       return null;
     }
 
-    const expiresAt =
-      row.expire instanceof Date ? row.expire : new Date(row.expire);
+    const expiresAt = row.expire instanceof Date ? row.expire : new Date(row.expire);
     if (expiresAt.getTime() <= Date.now()) {
       await this.deleteSession(sessionId);
       return null;
@@ -281,9 +256,7 @@ class FastifyPostgresSessionStore {
   }
 
   private async deleteSession(sessionId: string): Promise<void> {
-    await this.pool.query("DELETE FROM fastify_sessions WHERE sid = $1", [
-      sessionId,
-    ]);
+    await this.pool.query('DELETE FROM fastify_sessions WHERE sid = $1', [sessionId]);
   }
 
   private serializeSession(session: Session): Session {
@@ -291,8 +264,7 @@ class FastifyPostgresSessionStore {
   }
 
   private reviveSession(session: Session): Session {
-    const cookie = session.cookie as
-      (Session["cookie"] & { expires?: Date | string | null }) | undefined;
+    const cookie = session.cookie as (Session['cookie'] & { expires?: Date | string | null }) | undefined;
     if (cookie?.expires && !(cookie.expires instanceof Date)) {
       const expires = new Date(cookie.expires);
       if (!Number.isNaN(expires.getTime())) {
@@ -304,25 +276,18 @@ class FastifyPostgresSessionStore {
   }
 
   private resolveExpiry(session: Session): Date {
-    const cookie = session.cookie as
-      (Session["cookie"] & { expires?: Date | string | null }) | undefined;
+    const cookie = session.cookie as (Session['cookie'] & { expires?: Date | string | null }) | undefined;
     if (cookie?.expires) {
-      const expires =
-        cookie.expires instanceof Date
-          ? cookie.expires
-          : new Date(cookie.expires);
+      const expires = cookie.expires instanceof Date ? cookie.expires : new Date(cookie.expires);
       if (!Number.isNaN(expires.getTime())) {
         return expires;
       }
     }
 
     let maxAge = this.defaultMaxAgeSeconds * 1000;
-    if (
-      typeof cookie?.originalMaxAge === "number" &&
-      cookie.originalMaxAge > 0
-    ) {
+    if (typeof cookie?.originalMaxAge === 'number' && cookie.originalMaxAge > 0) {
       maxAge = cookie.originalMaxAge;
-    } else if (typeof cookie?.maxAge === "number" && cookie.maxAge > 0) {
+    } else if (typeof cookie?.maxAge === 'number' && cookie.maxAge > 0) {
       maxAge = cookie.maxAge;
     }
 
@@ -331,7 +296,7 @@ class FastifyPostgresSessionStore {
 }
 
 class MemoryRateLimitStore implements RateLimitStore {
-  readonly name = "memory" as const;
+  readonly name = 'memory' as const;
   private cleanupCounter = 0;
 
   increment(key: string, windowMs: number): RateLimitStoreHit {
@@ -341,10 +306,7 @@ class MemoryRateLimitStore implements RateLimitStore {
     }
 
     const bucket = rateLimitBuckets.get(key);
-    const current =
-      bucket && bucket.resetAt > now
-        ? bucket
-        : { count: 0, resetAt: now + windowMs };
+    const current = bucket && bucket.resetAt > now ? bucket : { count: 0, resetAt: now + windowMs };
     current.count += 1;
     rateLimitBuckets.set(key, current);
 
@@ -361,7 +323,7 @@ class MemoryRateLimitStore implements RateLimitStore {
 }
 
 export class RedisRateLimitStore implements RateLimitStore {
-  readonly name = "redis" as const;
+  readonly name = 'redis' as const;
 
   constructor(private readonly redis: RedisClientLike) {}
 
@@ -384,64 +346,48 @@ export class RedisRateLimitStore implements RateLimitStore {
 }
 
 function parseCorsOrigins(value: string | undefined): string[] {
-  return (value ?? "")
-    .split(",")
+  return (value ?? '')
+    .split(',')
     .map((origin) => origin.trim())
     .filter((origin) => origin.length > 0);
 }
 
-function resolveConfiguredCorsOrigins(
-  options: BootstrapNestApiOptions,
-  env: NodeJS.ProcessEnv,
-): string[] {
+function resolveConfiguredCorsOrigins(options: BootstrapNestApiOptions, env: NodeJS.ProcessEnv): string[] {
   if (options.corsOrigins?.length) {
     return options.corsOrigins;
   }
 
-  return [
-    ...parseCorsOrigins(env.CORS_ORIGINS),
-    ...parseCorsOrigins(env.CORS_ORIGIN),
-  ];
+  return [...parseCorsOrigins(env.CORS_ORIGINS), ...parseCorsOrigins(env.CORS_ORIGIN)];
 }
 
-function readBoolean(
-  name: string,
-  value: string | undefined,
-): boolean | undefined {
+function readBoolean(name: string, value: string | undefined): boolean | undefined {
   const normalized = value?.trim().toLowerCase();
   if (!normalized) {
     return undefined;
   }
 
   switch (normalized) {
-    case "1":
-    case "true":
-    case "yes":
-    case "on":
+    case '1':
+    case 'true':
+    case 'yes':
+    case 'on':
       return true;
-    case "0":
-    case "false":
-    case "no":
-    case "off":
+    case '0':
+    case 'false':
+    case 'no':
+    case 'off':
       return false;
     default:
       throw new Error(`${name} must be a boolean value.`);
   }
 }
 
-function readPositiveInteger(
-  name: string,
-  value: string | undefined,
-  fallback: number,
-): number {
+function readPositiveInteger(name: string, value: string | undefined, fallback: number): number {
   const parsed = readOptionalPositiveInteger(name, value);
   return parsed ?? fallback;
 }
 
-function readOptionalPositiveInteger(
-  name: string,
-  value: string | undefined,
-): number | undefined {
+function readOptionalPositiveInteger(name: string, value: string | undefined): number | undefined {
   const trimmed = value?.trim();
   if (!trimmed) {
     return undefined;
@@ -455,10 +401,7 @@ function readOptionalPositiveInteger(
   return parsed;
 }
 
-function readOptionalNonNegativeInteger(
-  name: string,
-  value: string | undefined,
-): number | undefined {
+function readOptionalNonNegativeInteger(name: string, value: string | undefined): number | undefined {
   const trimmed = value?.trim();
   if (!trimmed) {
     return undefined;
@@ -481,88 +424,55 @@ function readOptionalString(value: string | undefined): string | undefined {
   return trimmed && trimmed.length > 0 ? trimmed : undefined;
 }
 
-function ensureMinimumSessionSecretLength(
-  secret: string,
-  isProduction: boolean,
-): string {
+function ensureMinimumSessionSecretLength(secret: string, isProduction: boolean): string {
   if (secret.length >= MinimumSessionSecretLength) {
     return secret;
   }
 
   if (isProduction) {
-    throw new Error(
-      "SESSION_SECRET or AUTH_JWT_SECRET must be at least 32 characters in production.",
-    );
+    throw new Error('SESSION_SECRET or AUTH_JWT_SECRET must be at least 32 characters in production.');
   }
 
   const padded = `${secret}${DevelopmentSessionSecretPadding}`;
   return padded.length >= MinimumSessionSecretLength
     ? padded
-    : padded.padEnd(
-        MinimumSessionSecretLength,
-        DevelopmentSessionSecretPadding,
-      );
+    : padded.padEnd(MinimumSessionSecretLength, DevelopmentSessionSecretPadding);
 }
 
-function resolveSessionSecret(
-  isProduction: boolean,
-  env: NodeJS.ProcessEnv,
-): string {
-  const secret =
-    readOptionalSecret(env.SESSION_SECRET) ??
-    readOptionalSecret(env.AUTH_JWT_SECRET);
+function resolveSessionSecret(isProduction: boolean, env: NodeJS.ProcessEnv): string {
+  const secret = readOptionalSecret(env.SESSION_SECRET) ?? readOptionalSecret(env.AUTH_JWT_SECRET);
   if (secret) {
     return ensureMinimumSessionSecretLength(secret, isProduction);
   }
   if (isProduction) {
-    throw new Error(
-      "SESSION_SECRET or AUTH_JWT_SECRET must be configured in production.",
-    );
+    throw new Error('SESSION_SECRET or AUTH_JWT_SECRET must be configured in production.');
   }
 
-  return ensureMinimumSessionSecretLength(
-    "nrb-development-session-secret",
-    false,
-  );
+  return ensureMinimumSessionSecretLength('nrb-development-session-secret', false);
 }
 
-function resolveSessionCookieName(
-  isProduction: boolean,
-  env: NodeJS.ProcessEnv,
-): string {
-  return (
-    readOptionalSecret(env.SESSION_COOKIE_NAME) ??
-    (isProduction ? "__Host-nrb.sid" : "nrb.sid")
-  );
+function resolveSessionCookieName(isProduction: boolean, env: NodeJS.ProcessEnv): string {
+  return readOptionalSecret(env.SESSION_COOKIE_NAME) ?? (isProduction ? '__Host-nrb.sid' : 'nrb.sid');
 }
 
 function resolveSessionCookieSameSite(env: NodeJS.ProcessEnv): SessionSameSite {
-  const value = (env.SESSION_COOKIE_SAME_SITE ?? "lax").trim().toLowerCase();
-  if (value === "lax" || value === "strict" || value === "none") {
+  const value = (env.SESSION_COOKIE_SAME_SITE ?? 'lax').trim().toLowerCase();
+  if (value === 'lax' || value === 'strict' || value === 'none') {
     return value;
   }
 
-  throw new Error(
-    'SESSION_COOKIE_SAME_SITE must be one of "lax", "strict", or "none".',
-  );
+  throw new Error('SESSION_COOKIE_SAME_SITE must be one of "lax", "strict", or "none".');
 }
 
-function resolveSessionCookieSecure(
-  isProduction: boolean,
-  env: NodeJS.ProcessEnv,
-): boolean {
+function resolveSessionCookieSecure(isProduction: boolean, env: NodeJS.ProcessEnv): boolean {
   if (isProduction) {
     return true;
   }
 
-  return (
-    readBoolean("SESSION_COOKIE_SECURE", env.SESSION_COOKIE_SECURE) ?? false
-  );
+  return readBoolean('SESSION_COOKIE_SECURE', env.SESSION_COOKIE_SECURE) ?? false;
 }
 
-function createSessionStore(
-  config: BackendEnvironmentConfig,
-): FastifyPostgresSessionStore | undefined {
+function createSessionStore(config: BackendEnvironmentConfig): FastifyPostgresSessionStore | undefined {
   return config.session.databaseUrl
     ? new FastifyPostgresSessionStore(
         config.session.databaseUrl,
@@ -572,22 +482,16 @@ function createSessionStore(
     : undefined;
 }
 
-function registerSessionStoreShutdown(
-  app: NestFastifyApplication,
-  store: FastifyPostgresSessionStore,
-): void {
+function registerSessionStoreShutdown(app: NestFastifyApplication, store: FastifyPostgresSessionStore): void {
   const fastify = app.getHttpAdapter().getInstance() as {
-    addHook?: (hook: "onClose", handler: () => Promise<void> | void) => void;
+    addHook?: (hook: 'onClose', handler: () => Promise<void> | void) => void;
   };
-  fastify.addHook?.("onClose", async () => {
+  fastify.addHook?.('onClose', async () => {
     await store.close();
   });
 }
 
-async function registerFastifySession(
-  app: NestFastifyApplication,
-  config: BackendEnvironmentConfig,
-): Promise<void> {
+async function registerFastifySession(app: NestFastifyApplication, config: BackendEnvironmentConfig): Promise<void> {
   const store = createSessionStore(config);
   await store?.init();
   if (store) {
@@ -599,7 +503,7 @@ async function registerFastifySession(
     cookie: {
       httpOnly: true,
       maxAge: config.session.maxAgeSeconds * 1000,
-      path: "/",
+      path: '/',
       sameSite: config.session.sameSite,
       secure: config.session.secure,
     },
@@ -610,9 +514,7 @@ async function registerFastifySession(
     ...(store ? { store } : {}),
   };
 
-  const registerFastifyPlugin = fastify.register.bind(
-    fastify,
-  ) as FastifyPluginRegister;
+  const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
   await registerFastifyPlugin(fastifyCookie);
   await registerFastifyPlugin(fastifySession, sessionOptions);
 }
@@ -621,20 +523,7 @@ function resolveHost(env: NodeJS.ProcessEnv): string | undefined {
   return readOptionalString(env.HOST);
 }
 
-function isContainerEnvironment(env: NodeJS.ProcessEnv): boolean {
-  const container = env.CONTAINER?.trim().toLowerCase();
-  const hasContainerMarker =
-    container !== undefined &&
-    container !== "" &&
-    !["0", "false", "no", "off"].includes(container);
-
-  return Boolean(env.KUBERNETES_SERVICE_HOST) || hasContainerMarker;
-}
-
-function readConfiguredPort(
-  name: string,
-  value: string | undefined,
-): { name: string; port: number } | undefined {
+function readConfiguredPort(name: string, value: string | undefined): { name: string; port: number } | undefined {
   const port = readOptionalPositiveInteger(name, value);
   return port === undefined ? undefined : { name, port };
 }
@@ -645,64 +534,49 @@ interface ResolvedBackendPort {
   source: BackendPortSource;
 }
 
-function resolvePort(
-  options: BootstrapNestApiOptions,
-  env: NodeJS.ProcessEnv,
-): ResolvedBackendPort {
+function resolvePort(options: BootstrapNestApiOptions, env: NodeJS.ProcessEnv): ResolvedBackendPort {
   const appPortEnvName = getPortEnvVarName(options.appName);
-  const configured =
-    readConfiguredPort(appPortEnvName, env[appPortEnvName]) ??
-    readConfiguredPort("PORT", env.PORT);
-  let resolved: ResolvedBackendPort;
+  const configured = readConfiguredPort(appPortEnvName, env[appPortEnvName]) ?? readConfiguredPort('PORT', env.PORT);
+
   if (configured) {
-    resolved = {
+    if (configured.port > 65_535) {
+      throw new Error(`${configured.name} must be between 1 and 65535.`);
+    }
+    return {
       name: configured.name,
       port: configured.port,
-      source: "configured",
-    };
-  } else if (isContainerEnvironment(env)) {
-    resolved = { name: "CONTAINER", port: 80, source: "container-default" };
-  } else {
-    resolved = {
-      name: "defaultPort",
-      port: options.defaultPort,
-      source: "local-default",
+      source: 'configured',
     };
   }
 
-  if (resolved.port > 65_535) {
-    throw new Error(`${resolved.name} must be between 1 and 65535.`);
-  }
-
-  return resolved;
-}
-
-function parseRateLimitStorePreference(
-  value: string | undefined,
-): BackendRateLimitStorePreference {
-  const normalized = value?.trim().toLowerCase();
-  if (!normalized) {
-    return "auto";
-  }
-
-  if (
-    normalized === "auto" ||
-    normalized === "memory" ||
-    normalized === "redis"
-  ) {
-    return normalized;
+  if (Number.isInteger(options.port) && options.port >= 1 && options.port <= 65_535) {
+    return { name: 'options.port', port: options.port, source: 'configured' };
   }
 
   throw new Error(
-    'RATE_LIMIT_STORE must be one of "auto", "memory", or "redis".',
+    `No explicit port configured for "${options.appName}". ` +
+      `Set ${appPortEnvName} or PORT environment variable, or pass port in options.`,
   );
+}
+
+function parseRateLimitStorePreference(value: string | undefined): BackendRateLimitStorePreference {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) {
+    return 'auto';
+  }
+
+  if (normalized === 'auto' || normalized === 'memory' || normalized === 'redis') {
+    return normalized;
+  }
+
+  throw new Error('RATE_LIMIT_STORE must be one of "auto", "memory", or "redis".');
 }
 
 function parseRedisMode(value: string | undefined): RedisMode {
   const normalized = value?.trim().toLowerCase();
   switch (normalized) {
     case undefined:
-    case "":
+    case '':
     case RedisMode.Single:
       return RedisMode.Single;
     case RedisMode.Sentinel:
@@ -710,9 +584,7 @@ function parseRedisMode(value: string | undefined): RedisMode {
     case RedisMode.Cluster:
       return RedisMode.Cluster;
     default:
-      throw new Error(
-        'REDIS_MODE must be one of "single", "sentinel", or "cluster".',
-      );
+      throw new Error('REDIS_MODE must be one of "single", "sentinel", or "cluster".');
   }
 }
 
@@ -722,9 +594,9 @@ function parseRedisHosts(value: string | undefined): RedisHost[] {
     return [];
   }
 
-  return trimmed.split(",").map((entry) => {
+  return trimmed.split(',').map((entry) => {
     const host = entry.trim();
-    const [hostName, port = "6379"] = host.split(":");
+    const [hostName, port = '6379'] = host.split(':');
     const parsedPort = Number.parseInt(port, 10);
 
     if (
@@ -741,9 +613,7 @@ function parseRedisHosts(value: string | undefined): RedisHost[] {
   });
 }
 
-function resolveRedisConnectionConfig(
-  env: NodeJS.ProcessEnv,
-): RedisConnectionConfig | undefined {
+function resolveRedisConnectionConfig(env: NodeJS.ProcessEnv): RedisConnectionConfig | undefined {
   const url = readOptionalString(env.REDIS_URL);
   const hosts = parseRedisHosts(env.REDIS_HOSTS);
   if (!url && hosts.length === 0) {
@@ -751,22 +621,13 @@ function resolveRedisConnectionConfig(
   }
 
   const mode = parseRedisMode(env.REDIS_MODE);
-  if (
-    (mode === RedisMode.Cluster || mode === RedisMode.Sentinel) &&
-    hosts.length === 0
-  ) {
-    throw new Error(
-      "REDIS_HOSTS is required for cluster or sentinel Redis mode.",
-    );
+  if ((mode === RedisMode.Cluster || mode === RedisMode.Sentinel) && hosts.length === 0) {
+    throw new Error('REDIS_HOSTS is required for cluster or sentinel Redis mode.');
   }
 
-  const sentinelGroupIdentifier = readOptionalString(
-    env.REDIS_SENTINEL_GROUP_IDENTIFIER,
-  );
+  const sentinelGroupIdentifier = readOptionalString(env.REDIS_SENTINEL_GROUP_IDENTIFIER);
   if (mode === RedisMode.Sentinel && !sentinelGroupIdentifier) {
-    throw new Error(
-      "REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.",
-    );
+    throw new Error('REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.');
   }
 
   return {
@@ -774,7 +635,7 @@ function resolveRedisConnectionConfig(
     url,
     hosts,
     password: readOptionalString(env.REDIS_PASSWORD),
-    db: readOptionalNonNegativeInteger("REDIS_DB", env.REDIS_DB),
+    db: readOptionalNonNegativeInteger('REDIS_DB', env.REDIS_DB),
     sentinelGroupIdentifier,
     keyPrefix: readOptionalString(env.REDIS_KEY_PREFIX),
     lazyConnect: true,
@@ -785,39 +646,23 @@ function resolveRateLimitOptions(
   options: BootstrapNestApiOptions,
   env: NodeJS.ProcessEnv,
   isProduction: boolean,
-): BackendEnvironmentConfig["rateLimit"] {
+): BackendEnvironmentConfig['rateLimit'] {
   const enabled =
-    options.rateLimit?.enabled ??
-    readBoolean("RATE_LIMIT_ENABLED", env.RATE_LIMIT_ENABLED) ??
-    isProduction;
+    options.rateLimit?.enabled ?? readBoolean('RATE_LIMIT_ENABLED', env.RATE_LIMIT_ENABLED) ?? isProduction;
   const storePreference = parseRateLimitStorePreference(env.RATE_LIMIT_STORE);
-  const redis =
-    enabled && storePreference !== "memory"
-      ? resolveRedisConnectionConfig(env)
-      : undefined;
+  const redis = enabled && storePreference !== 'memory' ? resolveRedisConnectionConfig(env) : undefined;
 
-  if (enabled && storePreference === "redis" && !redis) {
-    throw new Error(
-      "RATE_LIMIT_STORE=redis requires REDIS_URL or REDIS_HOSTS to be configured.",
-    );
+  if (enabled && storePreference === 'redis' && !redis) {
+    throw new Error('RATE_LIMIT_STORE=redis requires REDIS_URL or REDIS_HOSTS to be configured.');
   }
 
-  const store: BackendRateLimitStore =
-    enabled && storePreference !== "memory" && redis ? "redis" : "memory";
+  const store: BackendRateLimitStore = enabled && storePreference !== 'memory' && redis ? 'redis' : 'memory';
   const allowProductionMemoryStore =
-    readBoolean(
-      "RATE_LIMIT_IN_MEMORY_ALLOWED",
-      env.RATE_LIMIT_IN_MEMORY_ALLOWED,
-    ) ?? false;
+    readBoolean('RATE_LIMIT_IN_MEMORY_ALLOWED', env.RATE_LIMIT_IN_MEMORY_ALLOWED) ?? false;
 
-  if (
-    enabled &&
-    isProduction &&
-    store === "memory" &&
-    !allowProductionMemoryStore
-  ) {
+  if (enabled && isProduction && store === 'memory' && !allowProductionMemoryStore) {
     throw new Error(
-      "Production rate limiting requires RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS, or RATE_LIMIT_IN_MEMORY_ALLOWED=true after configuring equivalent ingress/API-gateway limits.",
+      'Production rate limiting requires RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS, or RATE_LIMIT_IN_MEMORY_ALLOWED=true after configuring equivalent ingress/API-gateway limits.',
     );
   }
 
@@ -825,21 +670,11 @@ function resolveRateLimitOptions(
     enabled,
     store,
     storePreference,
-    redis: store === "redis" ? redis : undefined,
-    max:
-      options.rateLimit?.max ??
-      readPositiveInteger(
-        "RATE_LIMIT_MAX",
-        env.RATE_LIMIT_MAX,
-        DefaultRateLimitMax,
-      ),
+    redis: store === 'redis' ? redis : undefined,
+    max: options.rateLimit?.max ?? readPositiveInteger('RATE_LIMIT_MAX', env.RATE_LIMIT_MAX, DefaultRateLimitMax),
     windowMs:
       options.rateLimit?.windowMs ??
-      readPositiveInteger(
-        "RATE_LIMIT_WINDOW_MS",
-        env.RATE_LIMIT_WINDOW_MS,
-        DefaultRateLimitWindowMs,
-      ),
+      readPositiveInteger('RATE_LIMIT_WINDOW_MS', env.RATE_LIMIT_WINDOW_MS, DefaultRateLimitWindowMs),
   };
 }
 
@@ -847,12 +682,10 @@ export function resolveBackendEnvironmentConfig(
   options: BootstrapNestApiOptions,
   env: NodeJS.ProcessEnv = process.env,
 ): BackendEnvironmentConfig {
-  const isProduction = env.NODE_ENV === "production";
+  const isProduction = env.NODE_ENV === 'production';
   const databaseUrl = readOptionalSecret(env.DATABASE_URL);
   if (isProduction && !databaseUrl) {
-    throw new Error(
-      "DATABASE_URL must be configured in production for server-side sessions.",
-    );
+    throw new Error('DATABASE_URL must be configured in production for server-side sessions.');
   }
 
   const port = resolvePort(options, env);
@@ -869,7 +702,7 @@ export function resolveBackendEnvironmentConfig(
       cookieName: resolveSessionCookieName(isProduction, env),
       databaseUrl,
       maxAgeSeconds: readPositiveInteger(
-        "SESSION_COOKIE_MAX_AGE_SECONDS",
+        'SESSION_COOKIE_MAX_AGE_SECONDS',
         env.SESSION_COOKIE_MAX_AGE_SECONDS,
         DefaultSessionCookieMaxAgeSeconds,
       ),
@@ -877,31 +710,21 @@ export function resolveBackendEnvironmentConfig(
       secure: resolveSessionCookieSecure(isProduction, env),
       secret: resolveSessionSecret(isProduction, env),
       sweepIntervalMs: readPositiveInteger(
-        "SESSION_SWEEP_INTERVAL_MS",
+        'SESSION_SWEEP_INTERVAL_MS',
         env.SESSION_SWEEP_INTERVAL_MS,
         DefaultSessionSweepIntervalMs,
       ),
     },
-    trustProxy:
-      options.trustProxy ??
-      readBoolean("TRUST_PROXY", env.TRUST_PROXY) ??
-      false,
+    trustProxy: options.trustProxy ?? readBoolean('TRUST_PROXY', env.TRUST_PROXY) ?? false,
   };
 }
 
-async function resolveListenPort(
-  config: BackendEnvironmentConfig,
-): Promise<number> {
-  if (config.portSource === "local-default") {
-    return await defaultPortFactory();
-  }
-
+export function resolveListenPort(config: BackendEnvironmentConfig): number {
   return config.port;
 }
 
 function getHeader(request: RequestLike, name: string): string | undefined {
-  const value =
-    request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
+  const value = request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
   if (Array.isArray(value)) {
     return value[0];
   }
@@ -910,16 +733,12 @@ function getHeader(request: RequestLike, name: string): string | undefined {
 }
 
 function createRequestLoggingMiddleware(appName: string) {
-  return (
-    request: RequestLike,
-    response: ResponseLike,
-    next: NextFunctionLike,
-  ) => {
+  return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
     const startedAt = Date.now();
-    const requestId = getHeader(request, "x-request-id") ?? randomUUID();
-    response.setHeader("x-request-id", requestId);
+    const requestId = getHeader(request, 'x-request-id') ?? randomUUID();
+    response.setHeader('x-request-id', requestId);
 
-    response.on("finish", () => {
+    response.on('finish', () => {
       const logEntry = {
         appName,
         durationMs: Date.now() - startedAt,
@@ -937,15 +756,11 @@ function createRequestLoggingMiddleware(appName: string) {
 }
 
 function createRobotsMiddleware() {
-  return (
-    request: RequestLike,
-    response: ResponseLike,
-    next: NextFunctionLike,
-  ) => {
+  return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
     const path = request.path ?? request.url ?? request.originalUrl;
-    if (path === "/robots.txt") {
-      response.setHeader("content-type", "text/plain; charset=utf-8");
-      response.end?.("User-agent: *\nDisallow: /\n");
+    if (path === '/robots.txt') {
+      response.setHeader('content-type', 'text/plain; charset=utf-8');
+      response.end?.('User-agent: *\nDisallow: /\n');
       return;
     }
 
@@ -953,42 +768,33 @@ function createRobotsMiddleware() {
   };
 }
 
-function createRateLimitStore(
-  rateLimit: BackendEnvironmentConfig["rateLimit"],
-): RateLimitStore {
-  if (rateLimit.store === "redis" && rateLimit.redis) {
+function createRateLimitStore(rateLimit: BackendEnvironmentConfig['rateLimit']): RateLimitStore {
+  if (rateLimit.store === 'redis' && rateLimit.redis) {
     return new RedisRateLimitStore(createRedisClient(rateLimit.redis));
   }
 
   return new MemoryRateLimitStore();
 }
 
-function registerRateLimitStoreShutdown(
-  app: NestFastifyApplication,
-  store: RateLimitStore,
-): void {
+function registerRateLimitStoreShutdown(app: NestFastifyApplication, store: RateLimitStore): void {
   if (!store.close) {
     return;
   }
 
   const fastify = app.getHttpAdapter().getInstance() as {
-    addHook?: (hook: "onClose", handler: () => Promise<void>) => void;
+    addHook?: (hook: 'onClose', handler: () => Promise<void>) => void;
   };
-  fastify.addHook?.("onClose", async () => {
+  fastify.addHook?.('onClose', async () => {
     await store.close?.();
   });
 }
 
 function warnAboutRateLimitStore(config: BackendEnvironmentConfig): void {
-  if (
-    config.isProduction &&
-    config.rateLimit.enabled &&
-    config.rateLimit.store === "memory"
-  ) {
+  if (config.isProduction && config.rateLimit.enabled && config.rateLimit.store === 'memory') {
     process.stderr.write(
-      "Production rate limiting is using in-memory per-process storage. " +
-        "Set RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS for shared multi-instance enforcement, " +
-        "or enforce equivalent limits at the ingress/API gateway before setting RATE_LIMIT_IN_MEMORY_ALLOWED=true.\n",
+      'Production rate limiting is using in-memory per-process storage. ' +
+        'Set RATE_LIMIT_STORE=redis with REDIS_URL or REDIS_HOSTS for shared multi-instance enforcement, ' +
+        'or enforce equivalent limits at the ingress/API gateway before setting RATE_LIMIT_IN_MEMORY_ALLOWED=true.\n',
     );
   }
 }
@@ -997,11 +803,11 @@ function sanitizeRateLimitKeyPart(value: string): string {
   return value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9._:-]/gu, "_");
+    .replace(/[^a-z0-9._:-]/gu, '_');
 }
 
 function buildRateLimitKey(appName: string, request: RequestLike): string {
-  const client = request.ip ?? request.socket?.remoteAddress ?? "unknown";
+  const client = request.ip ?? request.socket?.remoteAddress ?? 'unknown';
   return `rate-limit:${sanitizeRateLimitKeyPart(appName)}:ip:${sanitizeRateLimitKeyPart(client)}`;
 }
 
@@ -1017,9 +823,9 @@ function writeProblemResponse(
   locale?: string,
 ): void {
   response.statusCode = status;
-  response.setHeader("content-type", "application/problem+json; charset=utf-8");
+  response.setHeader('content-type', 'application/problem+json; charset=utf-8');
   if (locale) {
-    response.setHeader("content-language", locale);
+    response.setHeader('content-language', locale);
   }
   response.end?.(
     JSON.stringify({
@@ -1034,34 +840,28 @@ function writeProblemResponse(
 
 function handleRateLimitHit(
   hit: RateLimitStoreHit,
-  rateLimit: BackendEnvironmentConfig["rateLimit"],
+  rateLimit: BackendEnvironmentConfig['rateLimit'],
   request: RequestLike,
   response: ResponseLike,
   next: NextFunctionLike,
 ): void {
   const now = Date.now();
   const retryAfterSeconds = Math.max(Math.ceil((hit.resetAt - now) / 1000), 1);
-  response.setHeader("x-ratelimit-limit", String(rateLimit.max));
-  response.setHeader(
-    "x-ratelimit-remaining",
-    String(Math.max(rateLimit.max - hit.count, 0)),
-  );
-  response.setHeader(
-    "x-ratelimit-reset",
-    String(Math.ceil(hit.resetAt / 1000)),
-  );
+  response.setHeader('x-ratelimit-limit', String(rateLimit.max));
+  response.setHeader('x-ratelimit-remaining', String(Math.max(rateLimit.max - hit.count, 0)));
+  response.setHeader('x-ratelimit-reset', String(Math.ceil(hit.resetAt / 1000)));
 
   if (hit.count > rateLimit.max) {
-    response.setHeader("retry-after", String(retryAfterSeconds));
+    response.setHeader('retry-after', String(retryAfterSeconds));
     const locale = resolveLocaleFromRequest(request);
     writeProblemResponse(
       response,
       429,
       {
-        type: "urn:problem:nest-react-boilerplate:rate-limited",
-        title: translate("errors.rate-limited.title", { locale }),
-        detail: translate("errors.rate-limited.detail", { locale }),
-        code: "rate-limited",
+        type: 'urn:problem:nest-react-boilerplate:rate-limited',
+        title: translate('errors.rate-limited.title', { locale }),
+        detail: translate('errors.rate-limited.detail', { locale }),
+        code: 'rate-limited',
       },
       locale,
     );
@@ -1071,38 +871,28 @@ function handleRateLimitHit(
   next();
 }
 
-function handleRateLimitStoreError(
-  error: unknown,
-  response: ResponseLike,
-): void {
+function handleRateLimitStoreError(error: unknown, response: ResponseLike): void {
   process.stderr.write(
     `${JSON.stringify({
-      event: "rate_limit_store_error",
+      event: 'rate_limit_store_error',
       message: error instanceof Error ? error.message : String(error),
     })}\n`,
   );
   writeProblemResponse(response, 503, {
-    type: "urn:problem:nest-react-boilerplate:rate-limit-unavailable",
-    title: "Service Unavailable",
-    detail: "Rate limit storage is unavailable.",
-    code: "rate-limit-unavailable",
+    type: 'urn:problem:nest-react-boilerplate:rate-limit-unavailable',
+    title: 'Service Unavailable',
+    detail: 'Rate limit storage is unavailable.',
+    code: 'rate-limit-unavailable',
   });
 }
 
 function createRateLimitMiddleware(
   appName: string,
-  rateLimit: BackendEnvironmentConfig["rateLimit"],
+  rateLimit: BackendEnvironmentConfig['rateLimit'],
   store: RateLimitStore,
 ) {
-  return (
-    request: RequestLike,
-    response: ResponseLike,
-    next: NextFunctionLike,
-  ) => {
-    const hit = store.increment(
-      buildRateLimitKey(appName, request),
-      rateLimit.windowMs,
-    );
+  return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
+    const hit = store.increment(buildRateLimitKey(appName, request), rateLimit.windowMs);
 
     if (hit instanceof Promise) {
       void hit
@@ -1119,10 +909,7 @@ function createRateLimitMiddleware(
   };
 }
 
-export async function bootstrapNestApi(
-  module: Type<unknown>,
-  options: BootstrapNestApiOptions,
-): Promise<void> {
+export async function bootstrapNestApi(module: Type<unknown>, options: BootstrapNestApiOptions): Promise<void> {
   const config = resolveBackendEnvironmentConfig(options);
   const app = await NestFactory.create<NestFastifyApplication>(
     module,
@@ -1151,13 +938,7 @@ export async function bootstrapNestApi(
     await rateLimitStore.init?.();
     registerRateLimitStoreShutdown(app, rateLimitStore);
     warnAboutRateLimitStore(config);
-    app.use(
-      createRateLimitMiddleware(
-        options.appName,
-        config.rateLimit,
-        rateLimitStore,
-      ),
-    );
+    app.use(createRateLimitMiddleware(options.appName, config.rateLimit, rateLimitStore));
   }
 
   if (options.enableCors ?? true) {
@@ -1182,7 +963,7 @@ export async function bootstrapNestApi(
     version: options.openApi?.version,
   });
 
-  const listenPort = await resolveListenPort(config);
+  const listenPort = resolveListenPort(config);
   if (config.host) {
     await app.listen(listenPort, config.host);
   } else {

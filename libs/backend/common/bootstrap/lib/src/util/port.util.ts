@@ -1,30 +1,16 @@
-import { createServer } from "node:net";
-import { isRunningInContainer } from "./container.util";
+/**
+ * Port utilities for explicit service port configuration.
+ *
+ * Every runnable service MUST have an explicitly assigned port.
+ * There is no runtime auto-discovery, no implicit framework/default
+ * port fallback, and no random free-port allocation.
+ */
 
-export async function findFreePort(from = 3000): Promise<number> {
-  return await new Promise((resolve, reject) => {
-    const server = createServer();
-    server.once("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "EADDRINUSE") {
-        resolve(findFreePort(from + 1));
-      } else {
-        reject(error);
-      }
-    });
-    server.listen(from, () => {
-      const address = server.address();
-      const port = typeof address === "object" && address ? address.port : from;
-      server.close(() => {
-        resolve(port);
-      });
-    });
-  });
-}
-
-export async function defaultPortFactory(): Promise<number> {
-  return isRunningInContainer() ? 80 : await findFreePort(3000);
-}
-
+/**
+ * Derive the environment variable name for a given application name.
+ *
+ * Example: "admin-app-api" -> "ADMIN_APP_API_PORT"
+ */
 export function getPortEnvVarName(appName: string): string {
   const segments = appName
     .trim()

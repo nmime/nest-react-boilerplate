@@ -7,5 +7,5 @@ import { AuthAppApiModule } from "./auth-app-api.module";
 void bootstrapNestApi(AuthAppApiModule, {
   appName: "auth-app-api",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  defaultPort: 3003,
+  port: 3003,
 });

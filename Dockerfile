@@ -68,7 +68,8 @@ RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \
-  NODE_ENV=production
+  NODE_ENV=production \
+  PORT=80
 WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
@@ -92,7 +93,8 @@ RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \
-  NODE_ENV=production
+  NODE_ENV=production \
+  PORT=80
 WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/frontend/site
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}

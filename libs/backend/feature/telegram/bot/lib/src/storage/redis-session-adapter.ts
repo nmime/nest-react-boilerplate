@@ -1,5 +1,5 @@
-import type { StorageAdapter } from "grammy";
-import type { RedisClientLike } from "@app/backend-common-redis";
+import type { StorageAdapter } from 'grammy';
+import type { RedisClientLike } from '@app/backend-common-redis';
 
 export interface TelegramRedisSessionStorageOptions {
   redisClient: RedisClientLike;
@@ -21,14 +21,16 @@ export class RedisSessionStorage<T = unknown> implements StorageAdapter<T> {
 
   constructor(options: TelegramRedisSessionStorageOptions) {
     this.client = options.redisClient;
-    this.keyPrefix = options.keyPrefix ?? "tg:session:";
+    this.keyPrefix = options.keyPrefix ?? 'tg:session:';
     this.ttlSeconds = options.ttlSeconds;
   }
 
   async read(id: string): Promise<T | undefined> {
     const key = this.keyPrefix + id;
     const raw = await this.client.get(key);
-    if (raw === null) return undefined;
+    if (raw === null) {
+      return undefined;
+    }
     return JSON.parse(raw) as T;
   }
 

@@ -1,16 +1,9 @@
-import { Inject, Injectable } from "@nestjs/common";
-import type { Lister } from "@nats-io/jetstream";
-import type {
-  ObjectStore,
-  ObjectStoreOptions,
-  ObjectStoreStatus,
-} from "@nats-io/obj";
-import {
-  createObjm,
-  type NatsObjectStoreSource,
-} from "./nats-object-store.factory";
-import { NatsService } from "./nats.service";
-import type { NatsObjectStoreOpenOptions } from "./type";
+import { Inject, Injectable } from '@nestjs/common';
+import type { Lister } from '@nats-io/jetstream';
+import type { ObjectStore, ObjectStoreOptions, ObjectStoreStatus } from '@nats-io/obj';
+import { createObjm, type NatsObjectStoreSource } from './nats-object-store.factory';
+import { NatsService } from './nats.service';
+import type { NatsObjectStoreOpenOptions } from './type';
 
 @Injectable()
 export class NatsObjectStoreService {
@@ -24,21 +17,15 @@ export class NatsObjectStoreService {
     return createObjm(source ?? this.natsService.getConnection());
   }
 
-  async createStore(
-    name: string,
-    options: Partial<ObjectStoreOptions> = {},
-  ): Promise<ObjectStore> {
+  async createStore(name: string, options: Partial<ObjectStoreOptions> = {}): Promise<ObjectStore> {
     return await this.getManager().create(name, options);
   }
 
-  async openStore(
-    name: string,
-    options?: NatsObjectStoreOpenOptions,
-  ): Promise<ObjectStore> {
+  async openStore(name: string, options?: NatsObjectStoreOpenOptions): Promise<ObjectStore> {
     return await this.getManager().open(name, options);
   }
 
   listStores(): Lister<ObjectStoreStatus> {
-    return this.getManager().list() as Lister<ObjectStoreStatus>;
+    return this.getManager().list();
   }
 }

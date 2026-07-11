@@ -1,17 +1,13 @@
-import { connect, type NodeConnectionOptions } from "@nats-io/transport-node";
-import type { NatsConnection } from "@nats-io/nats-core";
-import type { NatsConnectionConfig } from "./type";
-import { stripUndefined, withTimeout } from "./util";
+import { connect, type NodeConnectionOptions } from '@nats-io/transport-node';
+import type { NatsConnection } from '@nats-io/nats-core';
+import type { NatsConnectionConfig } from './type';
+import { stripUndefined, withTimeout } from './util';
 
-export async function createNatsConnection(
-  config: NatsConnectionConfig,
-): Promise<NatsConnection> {
-  return (await connect(toNatsConnectionOptions(config))) as NatsConnection;
+export async function createNatsConnection(config: NatsConnectionConfig): Promise<NatsConnection> {
+  return await connect(toNatsConnectionOptions(config));
 }
 
-export function toNatsConnectionOptions(
-  config: NatsConnectionConfig,
-): NodeConnectionOptions {
+export function toNatsConnectionOptions(config: NatsConnectionConfig): NodeConnectionOptions {
   return stripUndefined({
     servers: config.servers,
     name: config.name,

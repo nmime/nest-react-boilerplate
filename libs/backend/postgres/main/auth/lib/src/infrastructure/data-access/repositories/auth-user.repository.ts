@@ -130,7 +130,7 @@ export class AuthUserRepository {
 
   /**
    * Sync provider avatar to the user profile.
-   * Rules (xrocket pattern):
+   * Rules:
    * - If avatarStatus is "manual" → do NOT override (user chose their own)
    * - If avatarStatus is "deleted" → do NOT override (user explicitly removed)
    * - If avatarHash matches → skip (no change)

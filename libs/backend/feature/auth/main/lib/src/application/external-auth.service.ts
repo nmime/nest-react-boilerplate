@@ -546,7 +546,7 @@ export class ExternalAuthService {
 
   /**
    * Sync provider avatar to the canonical user profile.
-   * Respects xrocket rules: never overrides manual or deleted status.
+   * Respects user-intent rules: never overrides manual or deleted status.
    */
   private async syncAvatarToUser(
     userId: string,

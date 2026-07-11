@@ -1,63 +1,34 @@
 #!/usr/bin/env node
-import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
 
-const read = (path) =>
-  readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const has = (text, needle, label = needle) =>
-  assert.ok(
-    text.includes(needle),
-    `Missing expected Docker Compose production config: ${label}`,
-  );
+  assert.ok(text.includes(needle), `Missing expected Docker Compose production config: ${label}`);
 
-const prodCompose = read("docker/docker-compose.prod.yml");
-const productionEnvExample = read(".env.production.example");
-const productionEnv = existsSync(new URL("../.env.production", import.meta.url))
-  ? read(".env.production")
-  : undefined;
-const composeDocs = read("docs/docker-compose-production.md");
-const deploymentDocs = read("docs/deployment.md");
-const securityPolicy = read("SECURITY.md");
+const prodCompose = read('docker/docker-compose.prod.yml');
+const productionEnvExample = read('.env.production.example');
+const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
+const composeDocs = read('docs/docker-compose-production.md');
+const deploymentDocs = read('docs/deployment.md');
+const securityPolicy = read('SECURITY.md');
 
-const unsafeTags = new Set([
-  "latest",
-  "main",
-  "master",
-  "dev",
-  "prod",
-  "production",
-]);
-const placeholderTag = "sha-000000000000";
+const unsafeTags = new Set(['latest', 'main', 'master', 'dev', 'prod', 'production']);
+const placeholderTag = 'sha-000000000000';
 
-const tagFromEnvExample = productionEnvExample
-  .match(/^IMAGE_TAG=(?<tag>.+)$/m)
-  ?.groups?.tag.trim();
-assert.ok(tagFromEnvExample, ".env.production.example must define IMAGE_TAG");
-assert.notEqual(
-  tagFromEnvExample,
-  "latest",
-  ".env.production.example must not default IMAGE_TAG to latest",
-);
+const tagFromEnvExample = productionEnvExample.match(/^IMAGE_TAG=(?<tag>.+)$/m)?.groups?.tag.trim();
+assert.ok(tagFromEnvExample, '.env.production.example must define IMAGE_TAG');
+assert.notEqual(tagFromEnvExample, 'latest', '.env.production.example must not default IMAGE_TAG to latest');
 assert.equal(
   tagFromEnvExample,
   placeholderTag,
-  ".env.production.example IMAGE_TAG must be the documented non-production sha placeholder",
+  '.env.production.example IMAGE_TAG must be the documented non-production sha placeholder',
 );
 
 const validateReleaseTag = (tag, label) => {
-  assert.ok(
-    tag,
-    `${label} must be set to an immutable sha-<git-sha> image tag`,
-  );
-  assert.ok(
-    !unsafeTags.has(tag),
-    `${label}=${tag} is mutable/unsafe for production Compose`,
-  );
-  assert.notEqual(
-    tag,
-    placeholderTag,
-    `${label} still uses the non-production placeholder`,
-  );
+  assert.ok(tag, `${label} must be set to an immutable sha-<git-sha> image tag`);
+  assert.ok(!unsafeTags.has(tag), `${label}=${tag} is mutable/unsafe for production Compose`);
+  assert.notEqual(tag, placeholderTag, `${label} still uses the non-production placeholder`);
   assert.match(
     tag,
     /^sha-[0-9a-f]{7,64}$/u,
@@ -66,85 +37,77 @@ const validateReleaseTag = (tag, label) => {
 };
 
 if (process.env.IMAGE_TAG !== undefined) {
-  validateReleaseTag(process.env.IMAGE_TAG.trim(), "IMAGE_TAG");
+  validateReleaseTag(process.env.IMAGE_TAG.trim(), 'IMAGE_TAG');
 }
 
 if (productionEnv !== undefined) {
-  const tagFromProductionEnv = productionEnv
-    .match(/^IMAGE_TAG=(?<tag>.+)$/m)
-    ?.groups?.tag.trim();
-  validateReleaseTag(tagFromProductionEnv, ".env.production IMAGE_TAG");
+  const tagFromProductionEnv = productionEnv.match(/^IMAGE_TAG=(?<tag>.+)$/m)?.groups?.tag.trim();
+  validateReleaseTag(tagFromProductionEnv, '.env.production IMAGE_TAG');
 }
 
+assert.ok(!prodCompose.includes('${IMAGE_TAG:-latest}'), 'production Compose must not default to IMAGE_TAG=latest');
+assert.ok(!/^IMAGE_TAG=latest$/m.test(productionEnvExample), 'production env example must not set IMAGE_TAG=latest');
 assert.ok(
-  !prodCompose.includes("${IMAGE_TAG:-latest}"),
-  "production Compose must not default to IMAGE_TAG=latest",
+  !prodCompose.includes('AUTH_JWT_SECRET: ${AUTH_JWT_SECRET'),
+  'production Compose must not inline JWT secrets',
 );
 assert.ok(
-  !/^IMAGE_TAG=latest$/m.test(productionEnvExample),
-  "production env example must not set IMAGE_TAG=latest",
-);
-assert.ok(
-  !prodCompose.includes("AUTH_JWT_SECRET: ${AUTH_JWT_SECRET"),
-  "production Compose must not inline JWT secrets",
-);
-assert.ok(
-  !prodCompose.includes("POSTGRES_PASSWORD: ${POSTGRES_PASSWORD"),
-  "production Compose must not inline database passwords",
+  !prodCompose.includes('POSTGRES_PASSWORD: ${POSTGRES_PASSWORD'),
+  'production Compose must not inline database passwords',
 );
 assert.ok(
   !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
-  "production env example must not include inline AUTH_JWT_SECRET",
+  'production env example must not include inline AUTH_JWT_SECRET',
 );
 assert.ok(
   !/^POSTGRES_PASSWORD=/m.test(productionEnvExample),
-  "production env example must not include inline POSTGRES_PASSWORD",
+  'production env example must not include inline POSTGRES_PASSWORD',
 );
 assert.ok(
   !/^DATABASE_URL=postgres:\/\/.*@localhost:/m.test(productionEnvExample),
-  "production env example must not set DATABASE_URL to localhost; leave it blank so Compose builds the in-network URL from secrets.",
+  'production env example must not set DATABASE_URL to localhost; leave it blank so Compose builds the in-network URL from secrets.',
 );
 
 for (const service of [
-  "migrator",
-  "admin-app-api",
-  "user-app-api",
-  "auth-app-api",
-  "admin-app",
-  "user-app",
-  "landing-app",
-  "site-app",
-  "mobile-app",
+  'migrator',
+  'admin-app-api',
+  'user-app-api',
+  'auth-app-api',
+  'admin-app',
+  'user-app',
+  'landing-app',
+  'site-app',
+  'mobile-app',
 ]) {
   has(
     prodCompose,
-    `/${service}:${"${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}"}`,
+    `/${service}:${'${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}'}`,
     `${service} requires IMAGE_TAG instead of defaulting to latest`,
   );
 }
 
 for (const expected of [
-  "AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt",
-  "POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt",
-  "IMAGE_TAG=sha-000000000000",
-  "SITE_APP_PORT=",
-  "MOBILE_APP_PORT=",
-  "VITE_API_BASE_URL_MODE=same-origin",
-  "FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf",
-  "Never use latest/main/dev/prod-style mutable tags",
+  'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
+  'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
+  'IMAGE_TAG=sha-000000000000',
+  'SITE_APP_PORT=',
+  'MOBILE_APP_PORT=',
+  'VITE_API_BASE_URL_MODE=same-origin',
+  'FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf',
+  'Never use latest/main/dev/prod-style mutable tags',
 ]) {
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
 }
 
 for (const fixedDefault of [
-  "ADMIN_APP_API_PORT:-3001",
-  "USER_APP_API_PORT:-3002",
-  "AUTH_APP_API_PORT:-3003",
-  "ADMIN_APP_PORT:-8081",
-  "USER_APP_PORT:-8082",
-  "LANDING_APP_PORT:-8080",
-  "SITE_APP_PORT:-8084",
-  "MOBILE_APP_PORT:-8085",
+  'ADMIN_APP_API_PORT:-3001',
+  'USER_APP_API_PORT:-3002',
+  'AUTH_APP_API_PORT:-3003',
+  'ADMIN_APP_PORT:-8081',
+  'USER_APP_PORT:-8082',
+  'LANDING_APP_PORT:-8080',
+  'SITE_APP_PORT:-8084',
+  'MOBILE_APP_PORT:-8085',
 ]) {
   assert.ok(
     !prodCompose.includes(fixedDefault),
@@ -153,39 +116,31 @@ for (const fixedDefault of [
 }
 
 for (const expected of [
-  "NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}",
-  "VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}",
+  'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
+  'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
 ]) {
-  has(
-    prodCompose,
-    expected,
-    `production Compose frontend build arg ${expected}`,
-  );
+  has(prodCompose, expected, `production Compose frontend build arg ${expected}`);
 }
 
 for (const expected of [
-  "docker compose --env-file .env.production -f docker/docker-compose.prod.yml config",
-  "node scripts/validate-docker-compose-prod.mjs",
-  "latest",
-  "sha-<git-sha>",
-  "chmod 600",
+  'docker compose --env-file .env.production -f docker/docker-compose.prod.yml config',
+  'node scripts/validate-docker-compose-prod.mjs',
+  'latest',
+  'sha-<git-sha>',
+  'chmod 600',
 ]) {
   has(composeDocs, expected, `Docker Compose production docs ${expected}`);
 }
 
-has(
-  deploymentDocs,
-  "Docker Compose production readiness",
-  "deployment docs production Compose readiness section",
-);
-has(securityPolicy, "security@example.com", "security contact placeholder");
-has(securityPolicy, "within 3 business days", "security acknowledgement SLA");
-has(securityPolicy, "within 5 business days", "security triage SLA");
+has(deploymentDocs, 'Docker Compose production readiness', 'deployment docs production Compose readiness section');
+has(securityPolicy, 'security@example.com', 'security contact placeholder');
+has(securityPolicy, 'within 3 business days', 'security acknowledgement SLA');
+has(securityPolicy, 'within 5 business days', 'security triage SLA');
 
 console.log(
   JSON.stringify({
-    status: "ok",
-    checked: "docker-compose-production",
+    status: 'ok',
+    checked: 'docker-compose-production',
     imageTag: tagFromEnvExample,
   }),
 );

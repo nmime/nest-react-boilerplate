@@ -3,12 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/frontend/site/pages",
   "projectType": "application",
-  "tags": [
-    "platform:frontend",
-    "type:frontend-app",
-    "scope:user",
-    "fsd:layer:app"
-  ],
+  "tags": ["platform:frontend", "type:frontend-app", "scope:user", "fsd:layer:app"],
   "// targets": "to see all targets run: nx show project site-app --web",
   "targets": {
     "serve": {
@@ -29,13 +24,7 @@
       "inputs": [
         "production",
         {
-          "externalDependencies": [
-            "@vitejs/plugin-react",
-            "react",
-            "react-dom",
-            "vike",
-            "vite"
-          ]
+          "externalDependencies": ["@vitejs/plugin-react", "react", "react-dom", "vike", "vite"]
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/site"]
@@ -88,7 +77,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "vitest run --config vitest.config.mts"
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
       },
       "inputs": [
         "default",

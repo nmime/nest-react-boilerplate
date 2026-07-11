@@ -131,6 +131,9 @@ describeIfDocker('AuthMainModule postgres component', () => {
       'updated_at',
       'theme',
       'tenant_id',
+      'avatar_url',
+      'avatar_hash',
+      'avatar_status',
     ]);
 
     const tokenTables = (await orm.em.getConnection().execute(`

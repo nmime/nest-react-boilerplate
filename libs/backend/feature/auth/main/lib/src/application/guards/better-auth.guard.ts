@@ -51,7 +51,7 @@ export class BetterAuthGuard implements CanActivate {
   }
 
   private async getSessionFromCookie(cookie: string): Promise<AuthenticatedPrincipal | null> {
-    if (!cookie) return null;
+    if (!cookie) {return null;}
     try {
       const baseURL = this.getBaseUrl();
       // Better-Auth is configured at startup; use direct API call
@@ -59,10 +59,10 @@ export class BetterAuthGuard implements CanActivate {
         method: "GET",
         headers: { Cookie: cookie },
       });
-      if (!res.ok) return null;
+      if (!res.ok) {return null;}
       const data = (await res.json()) as Record<string, unknown>;
       const user = data?.user as Record<string, unknown> | undefined;
-      if (!user?.id) return null;
+      if (!user?.id) {return null;}
       return {
         subject: String(user.id),
         tenantId: (user.tenantId as string) || resolveTenantId(DefaultAuthTenantId),
@@ -80,16 +80,16 @@ export class BetterAuthGuard implements CanActivate {
 
   private getPrincipalFromBearer(request: AuthenticatedRequest): AuthenticatedPrincipal | null {
     const authHeader = this.getAuthorizationHeader(request);
-    if (!authHeader) return null;
+    if (!authHeader) {return null;}
     const token = this.extractBearerToken(authHeader);
-    if (!token) return null;
+    if (!token) {return null;}
     try {
       const parts = token.split(".");
       const payloadPart = parts[1];
-      if (!payloadPart) return null;
+      if (!payloadPart) {return null;}
       const decoded = JSON.parse(Buffer.from(payloadPart, "base64url").toString());
-      if (!decoded.sub) return null;
-      if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) return null;
+      if (!decoded.sub) {return null;}
+      if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {return null;}
       return {
         subject: String(decoded.sub),
         tenantId: (decoded.tenantId as string) || (decoded.tid as string) || resolveTenantId(DefaultAuthTenantId),
@@ -116,20 +116,20 @@ export class BetterAuthGuard implements CanActivate {
   private getCookieHeader(request: AuthenticatedRequest): string {
     const h = request.headers as Record<string, string | string[] | undefined>;
     const cookie = h?.cookie ?? h?.Cookie;
-    if (Array.isArray(cookie)) return cookie[0] || "";
+    if (Array.isArray(cookie)) {return cookie[0] || "";}
     return (cookie as string) || "";
   }
 
   private getAuthorizationHeader(request: AuthenticatedRequest): string | undefined {
     const h = request.headers as Record<string, string | string[] | undefined>;
     const val = h?.authorization ?? h?.Authorization;
-    if (Array.isArray(val)) return val[0];
+    if (Array.isArray(val)) {return val[0];}
     return val as string | undefined;
   }
 
   private extractBearerToken(authHeader: string): string | null {
     const parts = authHeader.trim().split(" ");
-    if (parts.length !== 2 || !parts[0] || parts[0].toLowerCase() !== "bearer") return null;
+    if (parts.length !== 2 || !parts[0] || parts[0].toLowerCase() !== "bearer") {return null;}
     return parts[1] || null;
   }
 

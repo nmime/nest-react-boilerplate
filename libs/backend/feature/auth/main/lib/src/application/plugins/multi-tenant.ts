@@ -1,6 +1,5 @@
 import type { BetterAuthPlugin } from "better-auth";
 import { createAuthEndpoint, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { z } from "zod";
 import { DefaultAuthTenantId } from "@app/backend-feature-auth-shared";
 
 export const multiTenantPlugin: BetterAuthPlugin = {
@@ -23,7 +22,7 @@ export const multiTenantPlugin: BetterAuthPlugin = {
       { method: "GET" },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) return null;
+        if (!session) {return null;}
         const s = session;
         return {
           user: {

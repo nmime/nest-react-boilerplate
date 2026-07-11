@@ -93,6 +93,6 @@ function getBaseUrl(): string {
 
 function getTrustedOrigins(): string[] {
   const configured = process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",").filter(Boolean);
-  if (configured?.length) return configured;
+  if (configured?.length) {return configured;}
   return [getBaseUrl()];
 }

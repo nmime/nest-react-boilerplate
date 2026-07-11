@@ -25,7 +25,7 @@ export const rbacPlugin: BetterAuthPlugin = {
       },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         const permissions: string[] = (session.user as any).permissions || [];
         return {
           hasPermission: permissions.includes(req.body.permission),
@@ -41,12 +41,12 @@ export const rbacPlugin: BetterAuthPlugin = {
       },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         const updates: Record<string, any> = {};
-        if (req.body.locale !== undefined) updates.locale = req.body.locale;
-        if (req.body.theme !== undefined) updates.theme = req.body.theme;
-        if (Object.keys(updates).length === 0) return session.user;
-        const updated = await req.context.internalAdapter.updateUser(session.user.id, updates as any);
+        if (req.body.locale !== undefined) {updates.locale = req.body.locale;}
+        if (req.body.theme !== undefined) {updates.theme = req.body.theme;}
+        if (Object.keys(updates).length === 0) {return session.user;}
+        await req.context.internalAdapter.updateUser(session.user.id, updates as any);
         return { ...session.user, ...updates };
       },
     ),
@@ -55,7 +55,7 @@ export const rbacPlugin: BetterAuthPlugin = {
       { method: "POST" },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         // TODO: wire to existing MikroORM auth_role_permissions tables
         const userRecord = await req.context.internalAdapter.findUserById(session.user.id);
         return {

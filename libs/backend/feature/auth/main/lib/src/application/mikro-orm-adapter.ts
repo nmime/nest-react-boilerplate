@@ -14,7 +14,7 @@ function getTableName(model: string): string {
 }
 
 function whereClause(where: Where[] | undefined): { clause: string; values: any[] } {
-  if (!where || where.length === 0) return { clause: "", values: [] };
+  if (!where || where.length === 0) {return { clause: "", values: [] };}
   const conditions: string[] = [];
   const values: any[] = [];
   for (const w of where) {
@@ -74,8 +74,8 @@ export function createMikroOrmAdapter(
           orderClause = ` ORDER BY "${sortBy.field}" ${(sortBy.direction ?? "asc").toUpperCase()}`;
         }
         let limitClause = "";
-        if (limit !== undefined) limitClause = ` LIMIT ${limit}`;
-        if (offset !== undefined) limitClause += ` OFFSET ${offset}`;
+        if (limit !== undefined) {limitClause = ` LIMIT ${limit}`;}
+        if (offset !== undefined) {limitClause += ` OFFSET ${offset}`;}
         return (await conn.execute(
           `SELECT * FROM ${table} ${clause}${orderClause}${limitClause}`,
           values,
@@ -144,7 +144,7 @@ export function createMikroOrmAdapter(
           `SELECT * FROM ${table} ${clause} LIMIT 1 FOR UPDATE`,
           values,
         );
-        if (rows.length === 0) return null;
+        if (rows.length === 0) {return null;}
         const row = rows[0] as any;
         await conn.execute(`DELETE FROM ${table} WHERE "id" = $1`, [row.id]);
         return row;
@@ -157,14 +157,14 @@ export function createMikroOrmAdapter(
           `SELECT * FROM ${table} ${clause} LIMIT 1 FOR UPDATE`,
           values,
         );
-        if (rows.length === 0) return null;
+        if (rows.length === 0) {return null;}
         const row = rows[0] as any;
         const updates: Record<string, any> = {};
         for (const [field, delta] of Object.entries(increment)) {
           const val = typeof row[field] === "number" ? row[field] : 0;
           updates[field] = val + delta;
         }
-        if (set) Object.assign(updates, set);
+        if (set) {Object.assign(updates, set);}
         const uCols = Object.keys(updates);
         const setParts = uCols.map((c, i) => `"${c}" = $${i + 2}`).join(", ");
         await conn.execute(

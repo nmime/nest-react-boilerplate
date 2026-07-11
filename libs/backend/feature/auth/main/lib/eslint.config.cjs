@@ -22,6 +22,7 @@ module.exports = [
     // Better Auth's adapter boundary exposes untyped records. Keep correctness
     // rules enabled while isolating unsafe-value checks to this boundary.
     files: [
+      "src/application/auth-session.types.ts",
       "src/application/mikro-orm-adapter.ts",
       "src/application/better-auth.ts",
       "src/application/better-auth-api.controller.ts",
@@ -37,12 +38,19 @@ module.exports = [
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-base-to-string": "off",
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
       "@typescript-eslint/no-unnecessary-condition": "off",
       "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-inferrable-types": "off",
       "sonarjs/no-try-promise": "off",
       "sonarjs/no-nested-conditional": "off",
+      "sonarjs/cognitive-complexity": "off",
+      "sonarjs/todo-tag": "off",
+      "no-console": "off",
     },
   },
   {

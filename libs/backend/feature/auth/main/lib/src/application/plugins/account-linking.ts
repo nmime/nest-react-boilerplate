@@ -25,7 +25,7 @@ export const accountLinkingPlugin = (options: AccountLinkingPluginOptions = {}):
       },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         const { provider, intent = "link", returnUrl } = req.body;
         const allowedUrls = options.allowedReturnUrls || [];
         if (returnUrl && allowedUrls.length && !allowedUrls.some((u) => returnUrl.startsWith(u))) {
@@ -55,7 +55,7 @@ export const accountLinkingPlugin = (options: AccountLinkingPluginOptions = {}):
       { method: "GET" },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         // Use the built-in listUserAccounts via internalAdapter
         const accounts = await req.context.internalAdapter.findAccounts(session.user.id);
         return (accounts || []).map((acc: any) => ({
@@ -74,7 +74,7 @@ export const accountLinkingPlugin = (options: AccountLinkingPluginOptions = {}):
       },
       async (req) => {
         const session = await getSessionFromCtx(req);
-        if (!session) throw new Error("Unauthorized");
+        if (!session) {throw new Error("Unauthorized");}
         const identityId = req.params.identityId;
         const userId = session.user.id;
 

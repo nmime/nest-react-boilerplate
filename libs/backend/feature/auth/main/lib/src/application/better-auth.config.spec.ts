@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { getBetterAuthConfig } from './better-auth';
 
 describe('getBetterAuthConfig', () => {

@@ -1,6 +1,6 @@
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError } from "better-auth/api";
-import { createAuthEndpoint, getSessionFromCtx } from "better-auth/api";
+import { createAuthEndpoint } from "better-auth/api";
 import { z } from "zod";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
@@ -31,7 +31,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
       },
       async (req) => {
         const botToken = options.botToken || process.env.TELEGRAM_BOT_TOKEN;
-        if (!botToken) throw APIError.fromStatus("BAD_REQUEST", { message: "Provider not configured" });
+        if (!botToken) {throw APIError.fromStatus("BAD_REQUEST", { message: "Provider not configured" });}
         const payload = req.body.payload as Record<string, any>;
         const { auth_date, hash, ...data } = payload;
         const sortedKeys = Object.keys(payload).filter((k) => k !== "hash").sort();
@@ -73,7 +73,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
       },
       async (req) => {
         const botToken = options.botToken || process.env.TELEGRAM_BOT_TOKEN;
-        if (!botToken) throw APIError.fromStatus("BAD_REQUEST", { message: "Provider not configured" });
+        if (!botToken) {throw APIError.fromStatus("BAD_REQUEST", { message: "Provider not configured" });}
         try {
           validateTmaInitData(req.body.initData, botToken, {
             expiresIn: options.maxAgeSeconds || 86400,
@@ -82,7 +82,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
           throw APIError.fromStatus("BAD_REQUEST", { message: "invalid_signature" });
         }
         const initData = parseTmaInitData(req.body.initData);
-        if (!initData.user?.id) throw APIError.fromStatus("BAD_REQUEST", { message: "invalid_signature" });
+        if (!initData.user?.id) {throw APIError.fromStatus("BAD_REQUEST", { message: "invalid_signature" });}
         const u = initData.user;
         return {
           status: "authenticated",
@@ -113,7 +113,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
         }),
       },
       async (req) => {
-        const { linkToken, providerSubject, username, displayName, locale, avatarUrl } = req.body;
+        const { providerSubject, username, displayName, locale, avatarUrl } = req.body;
         return {
           status: "linked",
           identity: {

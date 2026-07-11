@@ -17,10 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI: "true"
-  NX_DAEMON: "false"
+  CI: 'true'
+  NX_DAEMON: 'false'
   NODE_VERSION_FILE: .nvmrc
-  PNPM_VERSION: 11.10.0
+  PNPM_VERSION: 11.11.0
 
 jobs:
   helm-validation:
@@ -53,7 +53,7 @@ jobs:
       - name: Validate deployment, Docker, and Helm config
         run: pnpm run deploy:validate
         env:
-          REQUIRE_HELM: "true"
+          REQUIRE_HELM: 'true'
 
   fast-check:
     name: Fast PR gate (ci:pr)
@@ -358,17 +358,17 @@ jobs:
     timeout-minutes: 90
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
-      ADMIN_BOOTSTRAP_ENABLED: "true"
+      ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
-      PLAYWRIGHT_AUTO_INSTALL: "1"
-      POSTGRES_PORT: "5432"
-      ADMIN_APP_API_PORT: "3001"
-      USER_APP_API_PORT: "3002"
-      AUTH_APP_API_PORT: "3003"
-      ADMIN_APP_PORT: "8081"
-      USER_APP_PORT: "8082"
-      LANDING_APP_PORT: "8083"
+      PLAYWRIGHT_AUTO_INSTALL: '1'
+      POSTGRES_PORT: '5432'
+      ADMIN_APP_API_PORT: '3001'
+      USER_APP_API_PORT: '3002'
+      AUTH_APP_API_PORT: '3003'
+      ADMIN_APP_PORT: '8081'
+      USER_APP_PORT: '8082'
+      LANDING_APP_PORT: '8083'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health

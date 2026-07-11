@@ -3,7 +3,7 @@ name: Quality presets
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: '17 3 * * *'
 
 permissions:
   contents: read
@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CI: "true"
-  NX_DAEMON: "false"
+  CI: 'true'
+  NX_DAEMON: 'false'
   NODE_VERSION_FILE: .nvmrc
-  PNPM_VERSION: 11.10.0
+  PNPM_VERSION: 11.11.0
 
 jobs:
   presets:
@@ -25,10 +25,10 @@ jobs:
     timeout-minutes: 120
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
-      ADMIN_BOOTSTRAP_ENABLED: "true"
+      ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
-      PLAYWRIGHT_AUTO_INSTALL: "1"
+      PLAYWRIGHT_AUTO_INSTALL: '1'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health

@@ -29,6 +29,14 @@ export class AdminUserViewDto {
   @ApiPropertyOptional({ enum: ["system", "light", "dark"] })
   theme?: string;
 
+  @ApiPropertyOptional({ format: "uri", maxLength: 2048 })
+  avatarUrl?: string;
+
+  @ApiPropertyOptional({
+    enum: ["none", "provider", "manual", "deleted"],
+  })
+  avatarStatus?: "none" | "provider" | "manual" | "deleted";
+
   @ApiPropertyOptional({ format: "date-time" })
   lastLoginAt?: string;
 

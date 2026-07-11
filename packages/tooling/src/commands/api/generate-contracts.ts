@@ -118,6 +118,8 @@ async function fetchOpenApi({
     AUTH_PERSISTENCE: "memory",
     AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET ?? "openapi-export-only",
     AUTH_OAUTH_ENABLED: "false",
+    // Contract export uses the in-memory auth adapter and must not require a live database.
+    DATABASE_URL: "",
     PORT: String(port),
   };
   const command = ["pnpm", "exec", "nx", "serve", app];

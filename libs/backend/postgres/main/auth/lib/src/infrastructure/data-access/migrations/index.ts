@@ -13,6 +13,7 @@ import { Migration20260609100000CreateFeatureFlags } from "@app/backend-postgres
 import { Migration20260614120000CreateSocialAuthDataModel } from "./Migration20260614120000CreateSocialAuthDataModel";
 import { Migration20260704120000CreateRbacModel } from "./Migration20260704120000CreateRbacModel";
 import { Migration20260704130000GrantAdminRolesWrite } from "./Migration20260704130000GrantAdminRolesWrite";
+import { Migration20260710120000AddAuthUserAvatar } from "./Migration20260710120000AddAuthUserAvatar";
 
 export const AuthMigrationsTableName = "mikro_orm_migrations";
 
@@ -31,6 +32,7 @@ export const authMigrations = [
   Migration20260614120000CreateSocialAuthDataModel,
   Migration20260704120000CreateRbacModel,
   Migration20260704130000GrantAdminRolesWrite,
+  Migration20260710120000AddAuthUserAvatar,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -56,3 +58,4 @@ export { Migration20260609100000CreateFeatureFlags } from "@app/backend-postgres
 export * from "./Migration20260614120000CreateSocialAuthDataModel";
 export * from "./Migration20260704120000CreateRbacModel";
 export * from "./Migration20260704130000GrantAdminRolesWrite";
+export * from "./Migration20260710120000AddAuthUserAvatar";

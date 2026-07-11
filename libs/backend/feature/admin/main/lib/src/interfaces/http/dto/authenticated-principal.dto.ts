@@ -1,15 +1,18 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { supportedLocales } from "@app/common-i18n";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { supportedLocales } from '@app/common-i18n';
 
 export class AuthenticatedPrincipalDto {
   @ApiProperty()
   subject!: string;
 
-  @ApiPropertyOptional({ format: "email" })
+  @ApiPropertyOptional({ format: 'email' })
   email?: string;
 
   @ApiPropertyOptional()
   displayName?: string;
+
+  @ApiPropertyOptional({ format: 'uri' })
+  avatarUrl?: string;
 
   @ApiPropertyOptional({ enum: supportedLocales })
   locale?: string;
@@ -18,14 +21,14 @@ export class AuthenticatedPrincipalDto {
   issuer?: string;
 
   @ApiPropertyOptional({
-    oneOf: [{ type: "string" }, { items: { type: "string" }, type: "array" }],
+    oneOf: [{ type: 'string' }, { items: { type: 'string' }, type: 'array' }],
   })
   audience?: string | string[];
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   roles!: string[];
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
 
   @ApiPropertyOptional()

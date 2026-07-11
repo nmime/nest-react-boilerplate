@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-  "/health": {
+  '/health': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getHealth"];
+    get: operations['BaseHealthController_getHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -20,14 +20,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/health/private": {
+  '/health/private': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getPrivateHealth"];
+    get: operations['BaseHealthController_getPrivateHealth'];
     put?: never;
     post?: never;
     delete?: never;
@@ -36,14 +36,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/live": {
+  '/live': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getLiveness"];
+    get: operations['BaseHealthController_getLiveness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -52,14 +52,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/ready": {
+  '/ready': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["BaseHealthController_getReadiness"];
+    get: operations['BaseHealthController_getReadiness'];
     put?: never;
     post?: never;
     delete?: never;
@@ -68,14 +68,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/profile/me": {
+  '/admin/profile/me': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminProfileController_me"];
+    get: operations['AdminProfileController_me'];
     put?: never;
     post?: never;
     delete?: never;
@@ -84,23 +84,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/roles": {
+  '/admin/roles': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminRolesController_listRoles"];
+    get: operations['AdminRolesController_listRoles'];
     put?: never;
-    post: operations["AdminRolesController_createRole"];
+    post: operations['AdminRolesController_createRole'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  "/admin/roles/{id}": {
+  '/admin/roles/{id}': {
     parameters: {
       query?: never;
       header?: never;
@@ -113,10 +113,10 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations["AdminRolesController_updateRole"];
+    patch: operations['AdminRolesController_updateRole'];
     trace?: never;
   };
-  "/admin/roles/{id}/permissions": {
+  '/admin/roles/{id}/permissions': {
     parameters: {
       query?: never;
       header?: never;
@@ -124,7 +124,7 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
-    put: operations["AdminRolesController_setRolePermissions"];
+    put: operations['AdminRolesController_setRolePermissions'];
     post?: never;
     delete?: never;
     options?: never;
@@ -132,7 +132,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/users/{id}/roles": {
+  '/admin/users/{id}/roles': {
     parameters: {
       query?: never;
       header?: never;
@@ -140,7 +140,7 @@ export interface paths {
       cookie?: never;
     };
     get?: never;
-    put: operations["AdminRolesController_assignUserRoles"];
+    put: operations['AdminRolesController_assignUserRoles'];
     post?: never;
     delete?: never;
     options?: never;
@@ -148,14 +148,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/users": {
+  '/admin/users': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminUsersController_listUsers"];
+    get: operations['AdminUsersController_listUsers'];
     put?: never;
     post?: never;
     delete?: never;
@@ -164,14 +164,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/users/{id}": {
+  '/admin/users/{id}': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminUsersController_getUser"];
+    get: operations['AdminUsersController_getUser'];
     put?: never;
     post?: never;
     delete?: never;
@@ -180,23 +180,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/users/{id}/status": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch: operations["AdminUsersController_updateUserStatus"];
-    trace?: never;
-  };
-  "/admin/users/{id}/access-policy": {
+  '/admin/users/{id}/status': {
     parameters: {
       query?: never;
       header?: never;
@@ -209,17 +193,33 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations["AdminUsersController_updateUserAccessPolicy"];
+    patch: operations['AdminUsersController_updateUserStatus'];
     trace?: never;
   };
-  "/admin/audit": {
+  '/admin/users/{id}/access-policy': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminUsersController_listAudit"];
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['AdminUsersController_updateUserAccessPolicy'];
+    trace?: never;
+  };
+  '/admin/audit': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AdminUsersController_listAudit'];
     put?: never;
     post?: never;
     delete?: never;
@@ -228,14 +228,14 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/admin/dashboard/summary": {
+  '/admin/dashboard/summary': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["AdminUsersController_dashboardSummary"];
+    get: operations['AdminUsersController_dashboardSummary'];
     put?: never;
     post?: never;
     delete?: never;
@@ -253,8 +253,10 @@ export interface components {
       /** Format: email */
       email?: string;
       displayName?: string;
+      /** Format: uri */
+      avatarUrl?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       issuer?: string;
       audience?: string | string[];
       roles: string[];
@@ -266,14 +268,16 @@ export interface components {
       /** Format: email */
       email?: string;
       displayName?: string;
+      /** Format: uri */
+      avatarUrl?: string;
       /** @enum {string} */
-      locale?: "en" | "ru";
+      locale?: 'en' | 'ru';
       roles: string[];
       permissions: string[];
     };
     AdminProfilePayloadDto: {
-      principal: components["schemas"]["AuthenticatedPrincipalDto"];
-      profile: components["schemas"]["AdminProfileViewDto"];
+      principal: components['schemas']['AuthenticatedPrincipalDto'];
+      profile: components['schemas']['AdminProfileViewDto'];
     };
     AdminRbacRoleDto: {
       /** Format: uuid */
@@ -292,8 +296,8 @@ export interface components {
     };
     AdminRbacCatalogPayloadDto: {
       resources: string[];
-      roles: components["schemas"]["AdminRbacRoleDto"][];
-      permissions: components["schemas"]["AdminRbacPermissionDto"][];
+      roles: components['schemas']['AdminRbacRoleDto'][];
+      permissions: components['schemas']['AdminRbacPermissionDto'][];
       assignableRoles: string[];
       assignablePermissions: string[];
     };
@@ -311,19 +315,19 @@ export interface components {
       label?: string;
       description?: string;
       permissions?: (
-        | "profile:read"
-        | "admin:dashboard:read"
-        | "admin:profile:read"
-        | "admin:users:read"
-        | "admin:users:write"
-        | "admin:users:status:update"
-        | "admin:users:access-policy:update"
-        | "admin:roles:read"
-        | "admin:roles:write"
-        | "admin:audit:read"
-        | "admin:settings:read"
-        | "admin:settings:update"
-        | "admin:manage:all"
+        | 'profile:read'
+        | 'admin:dashboard:read'
+        | 'admin:profile:read'
+        | 'admin:users:read'
+        | 'admin:users:write'
+        | 'admin:users:status:update'
+        | 'admin:users:access-policy:update'
+        | 'admin:roles:read'
+        | 'admin:roles:write'
+        | 'admin:audit:read'
+        | 'admin:settings:read'
+        | 'admin:settings:update'
+        | 'admin:manage:all'
       )[];
     };
     UpdateAdminRoleDto: {
@@ -332,19 +336,19 @@ export interface components {
     };
     SetAdminRolePermissionsDto: {
       permissions: (
-        | "profile:read"
-        | "admin:dashboard:read"
-        | "admin:profile:read"
-        | "admin:users:read"
-        | "admin:users:write"
-        | "admin:users:status:update"
-        | "admin:users:access-policy:update"
-        | "admin:roles:read"
-        | "admin:roles:write"
-        | "admin:audit:read"
-        | "admin:settings:read"
-        | "admin:settings:update"
-        | "admin:manage:all"
+        | 'profile:read'
+        | 'admin:dashboard:read'
+        | 'admin:profile:read'
+        | 'admin:users:read'
+        | 'admin:users:write'
+        | 'admin:users:status:update'
+        | 'admin:users:access-policy:update'
+        | 'admin:roles:read'
+        | 'admin:roles:write'
+        | 'admin:audit:read'
+        | 'admin:settings:read'
+        | 'admin:settings:update'
+        | 'admin:manage:all'
       )[];
     };
     AdminUserViewDto: {
@@ -356,12 +360,16 @@ export interface components {
       email: string;
       displayName?: string;
       /** @enum {string} */
-      status: "active" | "disabled" | "invited";
+      status: 'active' | 'disabled' | 'invited';
       roles: string[];
       permissions: string[];
       locale?: string;
       /** @enum {string} */
-      theme?: "system" | "light" | "dark";
+      theme?: 'system' | 'light' | 'dark';
+      /** Format: uri */
+      avatarUrl?: string;
+      /** @enum {string} */
+      avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
       /** Format: date-time */
       lastLoginAt?: string;
       /** Format: date-time */
@@ -370,34 +378,34 @@ export interface components {
       updatedAt: string;
     };
     AssignAdminUserRolesDto: {
-      roles: ("user" | "admin")[];
+      roles: ('user' | 'admin')[];
     };
     AdminUserListPayloadDto: {
-      items: components["schemas"]["AdminUserViewDto"][];
+      items: components['schemas']['AdminUserViewDto'][];
       total: number;
       limit: number;
       offset: number;
     };
     UpdateAdminUserStatusDto: {
       /** @enum {string} */
-      status: "active" | "disabled" | "invited";
+      status: 'active' | 'disabled' | 'invited';
     };
     UpdateAdminUserAccessPolicyDto: {
-      roles: ("user" | "admin")[];
+      roles: ('user' | 'admin')[];
       permissions: (
-        | "profile:read"
-        | "admin:dashboard:read"
-        | "admin:profile:read"
-        | "admin:users:read"
-        | "admin:users:write"
-        | "admin:users:status:update"
-        | "admin:users:access-policy:update"
-        | "admin:roles:read"
-        | "admin:roles:write"
-        | "admin:audit:read"
-        | "admin:settings:read"
-        | "admin:settings:update"
-        | "admin:manage:all"
+        | 'profile:read'
+        | 'admin:dashboard:read'
+        | 'admin:profile:read'
+        | 'admin:users:read'
+        | 'admin:users:write'
+        | 'admin:users:status:update'
+        | 'admin:users:access-policy:update'
+        | 'admin:roles:read'
+        | 'admin:roles:write'
+        | 'admin:audit:read'
+        | 'admin:settings:read'
+        | 'admin:settings:update'
+        | 'admin:manage:all'
       )[];
     };
     AdminAuditLogViewDto: {
@@ -424,7 +432,7 @@ export interface components {
       createdAt: string;
     };
     AdminAuditLogListPayloadDto: {
-      items: components["schemas"]["AdminAuditLogViewDto"][];
+      items: components['schemas']['AdminAuditLogViewDto'][];
       total: number;
       limit: number;
       offset: number;
@@ -435,7 +443,7 @@ export interface components {
       disabledUsers: number;
       invitedUsers: number;
       recentAuditEvents: number;
-      recentAudit: components["schemas"]["AdminAuditLogViewDto"][];
+      recentAudit: components['schemas']['AdminAuditLogViewDto'][];
     };
   };
   responses: never;
@@ -444,36 +452,25 @@ export interface components {
   headers: never;
   pathItems: never;
 }
-export type AuthenticatedPrincipalDto =
-  components["schemas"]["AuthenticatedPrincipalDto"];
-export type AdminProfileViewDto = components["schemas"]["AdminProfileViewDto"];
-export type AdminProfilePayloadDto =
-  components["schemas"]["AdminProfilePayloadDto"];
-export type AdminRbacRoleDto = components["schemas"]["AdminRbacRoleDto"];
-export type AdminRbacPermissionDto =
-  components["schemas"]["AdminRbacPermissionDto"];
-export type AdminRbacCatalogPayloadDto =
-  components["schemas"]["AdminRbacCatalogPayloadDto"];
-export type AdminRoleViewDto = components["schemas"]["AdminRoleViewDto"];
-export type CreateAdminRoleDto = components["schemas"]["CreateAdminRoleDto"];
-export type UpdateAdminRoleDto = components["schemas"]["UpdateAdminRoleDto"];
-export type SetAdminRolePermissionsDto =
-  components["schemas"]["SetAdminRolePermissionsDto"];
-export type AdminUserViewDto = components["schemas"]["AdminUserViewDto"];
-export type AssignAdminUserRolesDto =
-  components["schemas"]["AssignAdminUserRolesDto"];
-export type AdminUserListPayloadDto =
-  components["schemas"]["AdminUserListPayloadDto"];
-export type UpdateAdminUserStatusDto =
-  components["schemas"]["UpdateAdminUserStatusDto"];
+export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
+export type AdminProfileViewDto = components['schemas']['AdminProfileViewDto'];
+export type AdminProfilePayloadDto = components['schemas']['AdminProfilePayloadDto'];
+export type AdminRbacRoleDto = components['schemas']['AdminRbacRoleDto'];
+export type AdminRbacPermissionDto = components['schemas']['AdminRbacPermissionDto'];
+export type AdminRbacCatalogPayloadDto = components['schemas']['AdminRbacCatalogPayloadDto'];
+export type AdminRoleViewDto = components['schemas']['AdminRoleViewDto'];
+export type CreateAdminRoleDto = components['schemas']['CreateAdminRoleDto'];
+export type UpdateAdminRoleDto = components['schemas']['UpdateAdminRoleDto'];
+export type SetAdminRolePermissionsDto = components['schemas']['SetAdminRolePermissionsDto'];
+export type AdminUserViewDto = components['schemas']['AdminUserViewDto'];
+export type AssignAdminUserRolesDto = components['schemas']['AssignAdminUserRolesDto'];
+export type AdminUserListPayloadDto = components['schemas']['AdminUserListPayloadDto'];
+export type UpdateAdminUserStatusDto = components['schemas']['UpdateAdminUserStatusDto'];
 export type UpdateAdminUserAccessPolicyDto =
-  components["schemas"]["UpdateAdminUserAccessPolicyDto"];
-export type AdminAuditLogViewDto =
-  components["schemas"]["AdminAuditLogViewDto"];
-export type AdminAuditLogListPayloadDto =
-  components["schemas"]["AdminAuditLogListPayloadDto"];
-export type AdminDashboardSummaryDto =
-  components["schemas"]["AdminDashboardSummaryDto"];
+  components['schemas']['UpdateAdminUserAccessPolicyDto'];
+export type AdminAuditLogViewDto = components['schemas']['AdminAuditLogViewDto'];
+export type AdminAuditLogListPayloadDto = components['schemas']['AdminAuditLogListPayloadDto'];
+export type AdminDashboardSummaryDto = components['schemas']['AdminDashboardSummaryDto'];
 export type $defs = Record<string, never>;
 export interface operations {
   BaseHealthController_getHealth: {
@@ -559,8 +556,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminProfilePayloadDto"];
+          'application/json': {
+            data: components['schemas']['AdminProfilePayloadDto'];
           };
         };
       };
@@ -570,7 +567,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -624,7 +621,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -660,7 +657,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -696,7 +693,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -732,7 +729,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -779,8 +776,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminRbacCatalogPayloadDto"];
+          'application/json': {
+            data: components['schemas']['AdminRbacCatalogPayloadDto'];
           };
         };
       };
@@ -790,7 +787,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -844,7 +841,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -880,7 +877,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -916,7 +913,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -952,7 +949,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -988,7 +985,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1024,7 +1021,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1065,7 +1062,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateAdminRoleDto"];
+        'application/json': components['schemas']['CreateAdminRoleDto'];
       };
     };
     responses: {
@@ -1075,8 +1072,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminRoleViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminRoleViewDto'];
           };
         };
       };
@@ -1086,7 +1083,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1140,7 +1137,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1176,7 +1173,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1212,7 +1209,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -1248,7 +1245,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1284,7 +1281,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1320,7 +1317,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1363,7 +1360,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateAdminRoleDto"];
+        'application/json': components['schemas']['UpdateAdminRoleDto'];
       };
     };
     responses: {
@@ -1373,8 +1370,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminRoleViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminRoleViewDto'];
           };
         };
       };
@@ -1384,7 +1381,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1438,7 +1435,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1474,7 +1471,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1510,7 +1507,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -1546,7 +1543,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1582,7 +1579,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1618,7 +1615,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1661,7 +1658,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["SetAdminRolePermissionsDto"];
+        'application/json': components['schemas']['SetAdminRolePermissionsDto'];
       };
     };
     responses: {
@@ -1671,8 +1668,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminRoleViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminRoleViewDto'];
           };
         };
       };
@@ -1682,7 +1679,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -1736,7 +1733,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -1772,7 +1769,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -1808,7 +1805,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -1844,7 +1841,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -1880,7 +1877,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -1916,7 +1913,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -1959,7 +1956,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssignAdminUserRolesDto"];
+        'application/json': components['schemas']['AssignAdminUserRolesDto'];
       };
     };
     responses: {
@@ -1969,8 +1966,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminUserViewDto'];
           };
         };
       };
@@ -1980,7 +1977,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2034,7 +2031,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2070,7 +2067,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2106,7 +2103,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -2142,7 +2139,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:conflict
@@ -2178,7 +2175,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2214,7 +2211,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2253,22 +2250,22 @@ export interface operations {
         offset?: number;
         /** @description Case-insensitive email/display name search. */
         search?: string;
-        status?: "active" | "disabled" | "invited";
-        role?: "user" | "admin";
+        status?: 'active' | 'disabled' | 'invited';
+        role?: 'user' | 'admin';
         permission?:
-          | "profile:read"
-          | "admin:dashboard:read"
-          | "admin:profile:read"
-          | "admin:users:read"
-          | "admin:users:write"
-          | "admin:users:status:update"
-          | "admin:users:access-policy:update"
-          | "admin:roles:read"
-          | "admin:roles:write"
-          | "admin:audit:read"
-          | "admin:settings:read"
-          | "admin:settings:update"
-          | "admin:manage:all";
+          | 'profile:read'
+          | 'admin:dashboard:read'
+          | 'admin:profile:read'
+          | 'admin:users:read'
+          | 'admin:users:write'
+          | 'admin:users:status:update'
+          | 'admin:users:access-policy:update'
+          | 'admin:roles:read'
+          | 'admin:roles:write'
+          | 'admin:audit:read'
+          | 'admin:settings:read'
+          | 'admin:settings:update'
+          | 'admin:manage:all';
       };
       header?: never;
       path?: never;
@@ -2282,8 +2279,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminUserListPayloadDto"];
+          'application/json': {
+            data: components['schemas']['AdminUserListPayloadDto'];
           };
         };
       };
@@ -2293,7 +2290,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2347,7 +2344,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2383,7 +2380,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2419,7 +2416,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -2455,7 +2452,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2491,7 +2488,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2540,8 +2537,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminUserViewDto'];
           };
         };
       };
@@ -2551,7 +2548,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2605,7 +2602,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2641,7 +2638,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2677,7 +2674,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -2713,7 +2710,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -2749,7 +2746,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -2792,7 +2789,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateAdminUserStatusDto"];
+        'application/json': components['schemas']['UpdateAdminUserStatusDto'];
       };
     };
     responses: {
@@ -2802,8 +2799,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminUserViewDto'];
           };
         };
       };
@@ -2813,7 +2810,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -2867,7 +2864,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -2903,7 +2900,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -2939,7 +2936,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -2975,7 +2972,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3011,7 +3008,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3054,7 +3051,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateAdminUserAccessPolicyDto"];
+        'application/json': components['schemas']['UpdateAdminUserAccessPolicyDto'];
       };
     };
     responses: {
@@ -3064,8 +3061,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminUserViewDto"];
+          'application/json': {
+            data: components['schemas']['AdminUserViewDto'];
           };
         };
       };
@@ -3075,7 +3072,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3129,7 +3126,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3165,7 +3162,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3201,7 +3198,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -3237,7 +3234,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3273,7 +3270,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3311,9 +3308,9 @@ export interface operations {
         limit?: number;
         offset?: number;
         action?:
-          | "admin.user.status.update"
-          | "admin.user.access_policy.update"
-          | "admin.user.roles.update";
+          | 'admin.user.status.update'
+          | 'admin.user.access_policy.update'
+          | 'admin.user.roles.update';
         actorUserId?: string;
         targetUserId?: string;
       };
@@ -3329,8 +3326,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminAuditLogListPayloadDto"];
+          'application/json': {
+            data: components['schemas']['AdminAuditLogListPayloadDto'];
           };
         };
       };
@@ -3340,7 +3337,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3394,7 +3391,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3430,7 +3427,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3466,7 +3463,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -3502,7 +3499,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3538,7 +3535,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error
@@ -3585,8 +3582,8 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": {
-            data: components["schemas"]["AdminDashboardSummaryDto"];
+          'application/json': {
+            data: components['schemas']['AdminDashboardSummaryDto'];
           };
         };
       };
@@ -3596,7 +3593,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:bad-request
@@ -3650,7 +3647,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:unauthorized
@@ -3686,7 +3683,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:forbidden
@@ -3722,7 +3719,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:not-found
@@ -3758,7 +3755,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:rate-limited
@@ -3794,7 +3791,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/problem+json": {
+          'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
              * @example urn:problem:nest-react-boilerplate:internal-server-error

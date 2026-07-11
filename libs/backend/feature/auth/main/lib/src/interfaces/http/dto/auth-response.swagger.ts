@@ -72,6 +72,14 @@ export class AuthenticatedUserViewDto {
 
   @ApiProperty({ items: { type: "string" }, type: "array" })
   permissions!: string[];
+
+  @ApiPropertyOptional({ format: "uri", maxLength: 2048 })
+  avatarUrl?: string;
+
+  @ApiPropertyOptional({
+    enum: ["none", "provider", "manual", "deleted"],
+  })
+  avatarStatus?: "none" | "provider" | "manual" | "deleted";
 }
 
 export class AuthSessionViewDto {

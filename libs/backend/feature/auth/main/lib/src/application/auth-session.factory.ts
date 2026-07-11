@@ -1,4 +1,4 @@
-import type { Locale } from "@app/common-i18n";
+import type { Locale } from '@app/common-i18n';
 import {
   type AuthenticatedPrincipal,
   type AuthMethodClaims,
@@ -9,12 +9,8 @@ import {
   Language,
   isLanguage,
   toAuthenticatedUserView,
-} from "@app/backend-feature-auth-shared";
-import {
-  readExpiresInSeconds,
-  signDomainJwt,
-  type JwtSigningEnvironment,
-} from "../domain";
+} from '@app/backend-feature-auth-shared';
+import { readExpiresInSeconds, signDomainJwt, type JwtSigningEnvironment } from '../domain';
 
 export interface AuthSessionUserRecord {
   id: string;
@@ -26,8 +22,10 @@ export interface AuthSessionUserRecord {
   permissions: string[];
   locale: Locale | null;
   theme: UserThemePreference;
-  status: "active" | "disabled" | "invited";
+  status: 'active' | 'disabled' | 'invited';
   lastLoginAt: Date | null;
+  avatarUrl?: string | null;
+  avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }
 
 export function createAuthSession(
@@ -35,7 +33,7 @@ export function createAuthSession(
   env: JwtSigningEnvironment,
   refreshToken?: string,
   claims: AuthMethodClaims = {
-    amr: ["pwd"],
+    amr: ['pwd'],
     authProvider: AuthProvider.Password,
     authChannel: AuthProviderChannel.Password,
     authTime: Math.floor(Date.now() / 1000),
@@ -60,34 +58,30 @@ export function createAuthSession(
         ...(claims.authProvider ? { auth_provider: claims.authProvider } : {}),
         ...(claims.authChannel ? { auth_channel: claims.authChannel } : {}),
         ...(claims.authTime ? { auth_time: claims.authTime } : {}),
-        ...(claims.externalIdentityId
-          ? { external_identity_id: claims.externalIdentityId }
-          : {}),
+        ...(claims.externalIdentityId ? { external_identity_id: claims.externalIdentityId } : {}),
+        ...(view.avatarUrl ? { avatar_url: view.avatarUrl } : {}),
       },
       env,
       expiresIn,
     ),
-    tokenType: "Bearer",
+    tokenType: 'Bearer',
     expiresIn,
     ...(claims.amr ? { amr: claims.amr } : {}),
     ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
     ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
     ...(claims.authTime ? { authTime: claims.authTime } : {}),
-    ...(claims.externalIdentityId
-      ? { externalIdentityId: claims.externalIdentityId }
-      : {}),
+    ...(claims.externalIdentityId ? { externalIdentityId: claims.externalIdentityId } : {}),
     ...(refreshToken ? { refreshToken } : {}),
   };
 }
 
-export function toSessionPrincipal(
-  session: AuthSessionView,
-): AuthenticatedPrincipal {
+export function toSessionPrincipal(session: AuthSessionView): AuthenticatedPrincipal {
   return {
     subject: session.user.id,
     tenantId: session.user.tenantId,
     email: session.user.email ?? undefined,
     displayName: session.user.displayName,
+    avatarUrl: session.user.avatarUrl ?? undefined,
     locale: normalizeSessionLocale(session.user.locale),
     theme: session.user.theme,
     roles: session.user.roles,
@@ -100,8 +94,6 @@ export function toSessionPrincipal(
   };
 }
 
-function normalizeSessionLocale(
-  locale: Locale | undefined,
-): Language | undefined {
+function normalizeSessionLocale(locale: Locale | undefined): Language | undefined {
   return locale && isLanguage(locale) ? locale : undefined;
 }

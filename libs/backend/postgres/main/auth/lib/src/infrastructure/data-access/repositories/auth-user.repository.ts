@@ -5,6 +5,7 @@ import type { Locale } from "@app/common-i18n";
 import {
   AuthUserEntity,
   DefaultAuthTenantId,
+  type AuthUserAvatarStatus,
   type AuthUserThemePreference,
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
@@ -128,6 +129,54 @@ export class AuthUserRepository {
     );
   }
 
+  /**
+   * Set the user's canonical avatar.
+   * If status is "manual", always write (user intent overrides provider).
+   * If status is "provider", only write if current status is "none" or "deleted".
+   */
+  setAvatar(
+    id: string,
+    input: { url: string; hash: string; status: AuthUserAvatarStatus },
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.updateAvatar(id, input, tenantId),
+      mapAuthUserRepositoryError,
+    );
+  }
+
+  /**
+   * Delete the user's canonical avatar, setting status to "deleted".
+   */
+  deleteAvatar(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.doDeleteAvatar(id, tenantId),
+      mapAuthUserRepositoryError,
+    );
+  }
+
+  /**
+   * Sync provider avatar to the user profile.
+   * Rules (xrocket pattern):
+   * - If avatarStatus is "manual" → do NOT override (user chose their own)
+   * - If avatarStatus is "deleted" → do NOT override (user explicitly removed)
+   * - If avatarHash matches → skip (no change)
+   * - Otherwise → write url, hash, and set status to "provider"
+   */
+  syncProviderAvatar(
+    id: string,
+    input: { url: string | null; hash: string | null },
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.doSyncProviderAvatar(id, input, tenantId),
+      mapAuthUserRepositoryError,
+    );
+  }
+
   private async persistUser(
     input: AuthUserEntityInput,
   ): Promise<AuthUserEntity> {
@@ -205,6 +254,75 @@ export class AuthUserRepository {
     }
 
     entity.lastLoginAt = loggedInAt;
+    await this.entityManager.flush();
+    return entity;
+  }
+
+  private async updateAvatar(
+    id: string,
+    input: { url: string; hash: string; status: AuthUserAvatarStatus },
+    tenantId: string,
+  ): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
+    if (!entity) {
+      return null;
+    }
+
+    entity.avatarUrl = input.url;
+    entity.avatarHash = input.hash;
+    entity.avatarStatus = input.status;
+    await this.entityManager.flush();
+    return entity;
+  }
+
+  private async doDeleteAvatar(
+    id: string,
+    tenantId: string,
+  ): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
+    if (!entity) {
+      return null;
+    }
+
+    entity.avatarUrl = null;
+    entity.avatarHash = null;
+    entity.avatarStatus = "deleted";
+    await this.entityManager.flush();
+    return entity;
+  }
+
+  private async doSyncProviderAvatar(
+    id: string,
+    input: { url: string | null; hash: string | null },
+    tenantId: string,
+  ): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, {
+      id,
+      tenantId,
+    });
+    if (!entity) {
+      return null;
+    }
+
+    // Respect user intent: do not override manual or deleted avatars
+    if (entity.avatarStatus === "manual" || entity.avatarStatus === "deleted") {
+      return entity;
+    }
+
+    // Skip if hash is unchanged
+    if (entity.avatarHash === input.hash) {
+      return entity;
+    }
+
+    entity.avatarUrl = input.url;
+    entity.avatarHash = input.hash;
+    entity.avatarStatus = input.url ? "provider" : "none";
     await this.entityManager.flush();
     return entity;
   }

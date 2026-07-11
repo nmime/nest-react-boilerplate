@@ -6202,6 +6202,88 @@
         ],
         "tags": ["Auth"]
       }
+    },
+    "/api/auth/{path}": {
+      "get": {
+        "operationId": "BetterAuthApiController_handle_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "post": {
+        "operationId": "BetterAuthApiController_handle_post",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "put": {
+        "operationId": "BetterAuthApiController_handle_put",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "delete": {
+        "operationId": "BetterAuthApiController_handle_delete",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "patch": {
+        "operationId": "BetterAuthApiController_handle_patch",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "options": {
+        "operationId": "BetterAuthApiController_handle_options",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "head": {
+        "operationId": "BetterAuthApiController_handle_head",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      },
+      "search": {
+        "operationId": "BetterAuthApiController_handle_search",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["BetterAuthApi"]
+      }
     }
   },
   "info": {
@@ -6269,6 +6351,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "avatarStatus": {
+            "type": "string",
+            "enum": ["none", "provider", "manual", "deleted"]
           }
         },
         "required": ["id", "tenantId", "email", "theme", "roles", "permissions"]

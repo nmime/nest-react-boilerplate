@@ -18,6 +18,8 @@ export interface AuthenticatedUserView {
   theme: UserThemePreference;
   roles: string[];
   permissions: string[];
+  avatarUrl?: string | null;
+  avatarStatus?: "none" | "provider" | "manual" | "deleted";
 }
 
 export interface JwtTokenPair {
@@ -45,6 +47,8 @@ export function toAuthenticatedUserView(input: {
   theme?: string | null;
   roles?: string[];
   permissions?: string[];
+  avatarUrl?: string | null;
+  avatarStatus?: "none" | "provider" | "manual" | "deleted";
 }): AuthenticatedUserView {
   return {
     id: input.id,
@@ -56,6 +60,10 @@ export function toAuthenticatedUserView(input: {
       normalizeUserThemePreference(input.theme) ?? AuthenticatedTheme.System,
     roles: normalizeStringList(input.roles),
     permissions: normalizeStringList(input.permissions),
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+    ...(input.avatarStatus && input.avatarStatus !== "none"
+      ? { avatarStatus: input.avatarStatus }
+      : {}),
   };
 }
 

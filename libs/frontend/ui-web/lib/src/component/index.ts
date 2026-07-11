@@ -1,6 +1,7 @@
 export * from "./admin-table";
 export * from "./alert";
 export * from "./api-runtime-overlay";
+export * from "./avatar";
 export * from "./badge";
 export * from "./button";
 export * from "./card";

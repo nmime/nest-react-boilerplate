@@ -18,15 +18,22 @@ describe('getBetterAuthConfig', () => {
     delete process.env.DISCORD_REDIRECT_URI;
     delete process.env.ALLOWED_RETURN_URLS;
     delete process.env.NODE_ENV;
+    delete process.env.OPENAPI_ENABLED;
   });
 
   afterEach(() => {
     process.env = originalEnv;
   });
 
-  it('requires DATABASE_URL', () => {
+  it('requires DATABASE_URL for normal runtime startup', () => {
     delete process.env.DATABASE_URL;
     expect(() => getBetterAuthConfig(null, {})).toThrow('DATABASE_URL is required');
+  });
+
+  it('uses Better-Auth memory persistence only during OpenAPI export', () => {
+    delete process.env.DATABASE_URL;
+    process.env.OPENAPI_ENABLED = 'true';
+    expect(getBetterAuthConfig(null, {})).toBeDefined();
   });
 
   it('creates a valid Better-Auth instance with defaults', () => {

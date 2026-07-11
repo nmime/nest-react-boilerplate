@@ -163,3 +163,67 @@ docker compose --env-file .env.production -f docker/docker-compose.prod.yml down
 
 The command keeps the PostgreSQL volume. Add `-v` only when intentionally wiping
 data after a verified backup.
+
+## 9. Observability (OTel, Prometheus, Alertmanager, Grafana)
+
+The production Compose stack ships a full observability pipeline. All four
+observability services are started alongside application services:
+
+| Service          | Port                                        | Purpose                                                                                                   |
+| ---------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `otel-collector` | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus) | Receives OTLP traces/metrics/logs from all backend APIs; exposes Prometheus-compatible metrics on `:9464` |
+| `prometheus`     | 9090                                        | Scrapes the OTel collector, itself, Alertmanager, and Grafana; evaluates alert rules                      |
+| `alertmanager`   | 9093                                        | Routes alerts to webhooks/email; supports critical/warning receivers                                      |
+| `grafana`        | 3000                                        | Pre-provisioned with a Prometheus datasource and a production dashboard                                   |
+
+### How backend APIs send telemetry
+
+Each NestJS backend API (auth, user, admin) initializes the OpenTelemetry SDK
+at startup via `bootstrap()`. The production compose sets `OTEL_ENABLED=true`
+and `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318` on every backend
+service. Auto-instrumentation covers HTTP, Fastify, PostgreSQL, and Redis
+without any application code changes.
+
+### Enabling/disabling observability
+
+- To **disable** OTel export for all backends, override in `.env.production`:
+  ```bash
+  OTEL_ENABLED=false
+  ```
+- To **change** the collector endpoint (e.g. send to a remote APM):
+  ```bash
+  OTEL_EXPORTER_OTLP_ENDPOINT=https://your-apm.example.com/v1
+  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
+  ```
+
+### Alert rules
+
+Prometheus evaluates rules from `docker/prometheus/alert-rules.yml`. Default
+alerts cover:
+
+- Any service (collector, Prometheus, Grafana) going down for 2+ minutes (critical)
+- API 5xx error rate > 5% for 5 minutes (warning)
+- API p95 latency > 1s / p99 latency > 5s (warning / critical)
+- Backend process memory > 85% of 512 MB (warning)
+- Backend process CPU > 80% (warning)
+- OTel collector memory > 80% of 1 GB (warning)
+
+### Alertmanager routing
+
+Edit `docker/alertmanager/alertmanager.yml` or override via environment
+variables to route alerts to your Slack webhook, PagerDuty, email, or any HTTP
+endpoint. The default config defines `critical-alerts` (repeat every 1h) and
+`warning-alerts` (repeat every 4h) receivers with webhook hooks.
+
+### Grafana dashboard
+
+A production dashboard (`docker/grafana/dashboards/nest-react-boilerplate.json`)
+is auto-provisioned on first start. It covers:
+
+- Service uptime status panel
+- Request rate, p95/p99 latency, and error rate per service
+- Process memory and CPU per service
+- OTel collector throughput (batch send rate, accepted spans)
+
+Access Grafana at `http://localhost:3000` (login with `admin` and the password
+from `docker/secrets/grafana_admin_password.txt`).

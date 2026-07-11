@@ -99,10 +99,9 @@ for (const expected of [
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
 }
 
-for (const fixedDefault of [
-  'ADMIN_APP_API_PORT:-3001',
-  'USER_APP_API_PORT:-3002',
-  'AUTH_APP_API_PORT:-3003',
+// Frontend host ports are explicit collision-free defaults; backend API ports use 3001-3003.
+// The list below checks that *wrong* legacy defaults (8080-range host ports) are NOT present.
+for (const legacyDefault of [
   'ADMIN_APP_PORT:-8081',
   'USER_APP_PORT:-8082',
   'LANDING_APP_PORT:-8080',
@@ -110,9 +109,23 @@ for (const fixedDefault of [
   'MOBILE_APP_PORT:-8085',
 ]) {
   assert.ok(
-    !prodCompose.includes(fixedDefault),
-    `production Compose must not bake fixed app port default ${fixedDefault}`,
+    !prodCompose.includes(legacyDefault),
+    `production Compose must not use legacy 8080-range port default ${legacyDefault}`,
   );
+}
+
+// Assert that correct explicit defaults ARE present.
+for (const correctDefault of [
+  'ADMIN_APP_API_PORT:-3001',
+  'USER_APP_API_PORT:-3002',
+  'AUTH_APP_API_PORT:-3003',
+  'ADMIN_APP_PORT:-4200',
+  'USER_APP_PORT:-4201',
+  'LANDING_APP_PORT:-4202',
+  'SITE_APP_PORT:-4203',
+  'MOBILE_APP_PORT:-4300',
+]) {
+  has(prodCompose, correctDefault, `production Compose explicit port default ${correctDefault}`);
 }
 
 for (const expected of [

@@ -16,7 +16,7 @@ spec:
   ingress:
     - from:
         - namespaceSelector: {}
-        - podSelector:
+          podSelector:
             matchLabels:
               app.kubernetes.io/name: ingress-nginx
       ports:
@@ -65,16 +65,16 @@ spec:
     - Egress
   ingress:
     - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ingress-nginx
-          namespaceSelector:
+        - namespaceSelector:
             matchLabels:
               app.kubernetes.io/instance: ingress-nginx
-      - podSelector:
-          matchLabels:
-            app.kubernetes.io/name: {{ include "boilerplate.name" $ }}
-            app.kubernetes.io/instance: {{ $.Release.Name }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "boilerplate.name" $ }}
+              app.kubernetes.io/instance: {{ $.Release.Name }}
       ports:
         - port: http
           protocol: TCP

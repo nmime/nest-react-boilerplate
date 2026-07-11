@@ -1,0 +1,102 @@
+groups:
+  - name: nrb-api-health
+    rules:
+      - alert: APIEndpointDown
+        expr: up{job=~"otel-collector|prometheus|alertmanager|grafana"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Service {{ $labels.job }} is down'
+          description: '{{ $labels.job }} has been unreachable for more than 2 minutes.'
+          runbook_url: 'https://github.com/nmime/nest-react-boilerplate/blob/main/docs/operations/observability-dr.md'
+
+      - alert: APIHighErrorRate
+        expr: |
+          sum by (service_name) (rate(http_server_duration_seconds_count{http_response_status=~"5.."}[5m]))
+          /
+          sum by (service_name) (rate(http_server_duration_seconds_count[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API {{ $labels.service_name }} has a high error rate (>5%)'
+          description: 'More than 5% of requests to {{ $labels.service_name }} are returning 5xx errors over the last 5 minutes.'
+
+      - alert: APIHighLatency
+        expr: |
+          histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_duration_seconds_bucket[5m])))
+          > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API {{ $labels.service_name }} has high p95 latency (>1s)'
+          description: 'p95 latency for {{ $labels.service_name }} has exceeded 1 second for 5 minutes.'
+
+      - alert: APIHighLatencyCritical
+        expr: |
+          histogram_quantile(0.99, sum by (le, service_name) (rate(http_server_duration_seconds_bucket[5m])))
+          > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'API {{ $labels.service_name }} has critical p99 latency (>5s)'
+          description: 'p99 latency for {{ $labels.service_name }} has exceeded 5 seconds for 5 minutes.'
+
+  - name: nrb-infrastructure
+    rules:
+      - alert: HighMemoryUsage
+        expr: |
+          process_resident_memory_bytes{service_name=~"admin-app-api|user-app-api|auth-app-api"}
+          / 536870912
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API {{ $labels.service_name }} memory usage is high'
+          description: 'Process memory for {{ $labels.service_name }} exceeds 85% of 512MB.'
+
+      - alert: HighNodeCPU
+        expr: |
+          sum(rate(process_cpu_seconds_total{service_name=~"admin-app-api|user-app-api|auth-app-api"}[5m])) by (service_name)
+          > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'API {{ $labels.service_name }} CPU usage is high'
+          description: 'CPU usage for {{ $labels.service_name }} exceeds 80% for 5 minutes.'
+
+  - name: nrb-observability
+    rules:
+      - alert: OtelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'OpenTelemetry Collector is unreachable'
+          description: 'OTel collector has been unreachable for 5 minutes. No telemetry is being collected.'
+
+      - alert: OtelCollectorHighMemory
+        expr: |
+          process_resident_memory_bytes{job="otel-collector"} / 1073741824 > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'OTel collector memory usage is high'
+          description: 'OTel collector memory exceeds 80% of 1GB.'
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Grafana dashboard is unreachable'
+          description: 'Grafana has been unreachable for 5 minutes.'

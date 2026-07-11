@@ -1,5 +1,5 @@
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 imagePullSecrets: []
 
@@ -8,42 +8,42 @@ secrets:
   # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
   # secret flow. Set existingSecret to use one. Set create=true only when
   # supplying explicit non-placeholder values below.
-  existingSecret: ""
+  existingSecret: ''
   create: false
-  authJwtSecret: ""
-  databaseUrl: ""
+  authJwtSecret: ''
+  databaseUrl: ''
 
 config:
   nodeEnv: production
   corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
-  authJwtExpiresInSeconds: "3600"
+  authJwtExpiresInSeconds: '3600'
   # Expired persisted refresh/action token cleanup. Intervals below 60000ms are
   # clamped by the service to avoid tight cleanup loops from configuration typos.
-  authTokenCleanupEnabled: "true"
-  authTokenCleanupIntervalMs: "3600000"
-  authTokenCleanupRunOnStart: "true"
-  openApiEnabled: "false"
+  authTokenCleanupEnabled: 'true'
+  authTokenCleanupIntervalMs: '3600000'
+  authTokenCleanupRunOnStart: 'true'
+  openApiEnabled: 'false'
   logLevel: info
-  rateLimitEnabled: "true"
+  rateLimitEnabled: 'true'
   rateLimitStore: auto
-  rateLimitWindowMs: "60000"
-  rateLimitMax: "100"
+  rateLimitWindowMs: '60000'
+  rateLimitMax: '100'
   # Set redisUrl or redisHosts when using RATE_LIMIT_STORE=redis.
-  redisUrl: ""
-  redisHosts: ""
+  redisUrl: ''
+  redisHosts: ''
   redisMode: single
-  redisKeyPrefix: "nrb:"
-  redisDb: ""
+  redisKeyPrefix: 'nrb:'
+  redisDb: ''
 
 postgresql:
   host: postgresql
-  port: "5432"
+  port: '5432'
   database: nest_react_boilerplate
   user: postgres
-  ssl: "true"
-  sslRejectUnauthorized: "true"
+  ssl: 'true'
+  sslRejectUnauthorized: 'true'
 
 migrations:
   enabled: true
@@ -51,9 +51,9 @@ migrations:
     repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
     # Prefer immutable tags (sha-<git-sha>) or digest (sha256:...) for releases.
     tag: latest
-    digest: ""
+    digest: ''
     pullPolicy: IfNotPresent
-  command: ["pnpm", "db:migrate"]
+  command: ['pnpm', 'db:migrate']
   backoffLimit: 2
   activeDeadlineSeconds: 600
   ttlSecondsAfterFinished: 3600
@@ -90,7 +90,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
@@ -107,7 +107,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
@@ -124,7 +124,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 100m, memory: 256Mi }
@@ -142,7 +142,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
@@ -159,7 +159,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/site-app
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 50m, memory: 128Mi }
@@ -177,7 +177,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/mobile-app
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
@@ -195,7 +195,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
@@ -213,7 +213,7 @@ apps:
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
       tag: latest
-      digest: ""
+      digest: ''
       pullPolicy: IfNotPresent
     resources:
       requests: { cpu: 25m, memory: 64Mi }
@@ -225,7 +225,7 @@ ingress:
   enabled: false
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
   # Defaults model split-host frontend/API origins. For same-origin/path-based
   # routing, keep API prefixes (/auth, /profile, /admin) and SPA service paths
   # explicit in an environment values file and verify asset routing before
@@ -233,22 +233,22 @@ ingress:
   hosts:
     - host: example.com
       service: landing
-      paths: ["/"]
+      paths: ['/']
     - host: site.example.com
       service: site
-      paths: ["/"]
+      paths: ['/']
     - host: app.example.com
       service: user-frontend
-      paths: ["/"]
+      paths: ['/']
     - host: mobile.example.com
       service: mobile-frontend
-      paths: ["/"]
+      paths: ['/']
     - host: admin.example.com
       service: admin-frontend
-      paths: ["/"]
+      paths: ['/']
     - host: auth.example.com
       service: auth-api
-      paths: ["/"]
+      paths: ['/']
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
@@ -277,10 +277,10 @@ monitoring:
     # Enables the app's OpenTelemetry SDK. If endpoint is empty and the in-cluster
     # collector is enabled, pods export to that collector over OTLP/HTTP.
     enabled: false
-    endpoint: ""
-    headers: ""
-    metricExportInterval: "60000"
-    serviceVersion: ""
+    endpoint: ''
+    headers: ''
+    metricExportInterval: '60000'
+    serviceVersion: ''
   otelCollector:
     enabled: false
     image:
@@ -296,7 +296,7 @@ monitoring:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     config: |
       receivers:
         otlp:
@@ -344,18 +344,18 @@ monitoring:
     enabled: false
     labels: {}
     # SLOs used by the default alert rules. Tune per environment.
-    availabilityTarget: "99.9"
+    availabilityTarget: '99.9'
     p95LatencySeconds: 1
     errorRateRatio: 0.05
   grafanaDashboard:
     enabled: false
     labels:
-      grafana_dashboard: "1"
+      grafana_dashboard: '1'
 
 backups:
   enabled: false
-  schedule: "17 * * * *"
-  timeZone: "Etc/UTC"
+  schedule: '17 * * * *'
+  timeZone: 'Etc/UTC'
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -364,30 +364,30 @@ backups:
   ttlSecondsAfterFinished: 86400
   image:
     repository: postgres
-    tag: "16-alpine"
+    tag: '16-alpine'
     pullPolicy: IfNotPresent
   destination:
     path: /backups
     pvc:
       enabled: false
-      claimName: ""
+      claimName: ''
     objectStore:
       enabled: false
-      existingSecret: ""
-      bucket: ""
+      existingSecret: ''
+      bucket: ''
       prefix: nest-react-boilerplate/postgres
   encryption:
     enabled: false
     # Provide a command such as: age -r "$AGE_RECIPIENT" -o "$BACKUP_FILE.age" "$BACKUP_FILE" && shred -u "$BACKUP_FILE" && BACKUP_FILE="$BACKUP_FILE.age"
-    command: ""
-    existingSecret: ""
+    command: ''
+    existingSecret: ''
   retention:
     keepLast: 168
-    command: ""
+    command: ''
   hooks:
-    preBackup: ""
-    upload: ""
-    postBackup: ""
+    preBackup: ''
+    upload: ''
+    postBackup: ''
   resources:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { cpu: 1000m, memory: 1Gi }
@@ -396,9 +396,32 @@ backups:
     seccompProfile: { type: RuntimeDefault }
   securityContext:
     allowPrivilegeEscalation: false
-    capabilities: { drop: ["ALL"] }
+    capabilities: { drop: ['ALL'] }
 
 networkPolicy:
   enabled: false
 
 terminationGracePeriodSeconds: 60
+
+# Coroot — auto-discovering application observability.
+# Point at VictoriaMetrics or Prometheus; Coroot auto-detects K8s apps,
+# builds topological maps, and shows real-time errors/SLOs.
+coroot:
+  enabled: false
+  replicas: 1
+  image:
+    repository: coroot/coroot
+    tag: latest
+    pullPolicy: IfNotPresent
+  prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
+  service:
+    type: ClusterIP
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ['ALL'] }

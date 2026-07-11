@@ -1,0 +1,134 @@
+{{- if .Values.coroot.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: coroot
+  labels:
+    app.kubernetes.io/name: coroot
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coroot
+  namespace: coroot
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-coroot
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "services", "namespaces", "endpoints", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-coroot
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "boilerplate.fullname" . }}-coroot
+subjects:
+  - kind: ServiceAccount
+    name: coroot
+    namespace: coroot
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coroot
+  namespace: coroot
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: coroot
+spec:
+  replicas: {{ .Values.coroot.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: coroot
+  template:
+    metadata:
+      labels:
+        {{- include "boilerplate.labels" . | nindent 8 }}
+        app.kubernetes.io/name: coroot
+    spec:
+      serviceAccountName: coroot
+      {{- with .Values.coroot.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: coroot
+          image: "{{ .Values.coroot.image.repository }}:{{ .Values.coroot.image.tag }}"
+          imagePullPolicy: {{ .Values.coroot.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: COROOT_PROMETHEUS_URL
+              value: {{ .Values.coroot.prometheusUrl | quote }}
+            - name: COROOT_METRICS_SERVER
+              value: "true"
+            - name: COROOT_METRICS_SERVER_PORT
+              value: "9100"
+          {{- with .Values.coroot.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.coroot.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coroot
+  namespace: coroot
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: coroot
+spec:
+  type: {{ .Values.coroot.service.type | default "ClusterIP" }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9100
+      targetPort: 9100
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: coroot
+{{- end }}

@@ -1,24 +1,24 @@
 // Module-private Swagger response DTOs. These describe the response envelopes
 // for OpenAPI only; they are imported directly by the controller and are
 // intentionally NOT barrelled (not part of the public API).
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { supportedLocales } from "@app/common-i18n";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { supportedLocales } from '@app/common-i18n';
 import {
   authProviderChannels,
   authProviders,
   externalAuthIntents,
   externalAuthProviders,
   userThemePreferences,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 export class AuthenticatedPrincipalDto {
   @ApiProperty()
   subject!: string;
 
-  @ApiProperty({ format: "uuid" })
+  @ApiProperty({ format: 'uuid' })
   tenantId!: string;
 
-  @ApiPropertyOptional({ format: "email" })
+  @ApiPropertyOptional({ format: 'email' })
   email?: string;
 
   @ApiPropertyOptional()
@@ -34,14 +34,14 @@ export class AuthenticatedPrincipalDto {
   issuer?: string;
 
   @ApiPropertyOptional({
-    oneOf: [{ type: "string" }, { items: { type: "string" }, type: "array" }],
+    oneOf: [{ type: 'string' }, { items: { type: 'string' }, type: 'array' }],
   })
   audience?: string | string[];
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   roles!: string[];
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
 
   @ApiPropertyOptional()
@@ -52,10 +52,10 @@ export class AuthenticatedUserViewDto {
   @ApiProperty()
   id!: string;
 
-  @ApiProperty({ format: "uuid" })
+  @ApiProperty({ format: 'uuid' })
   tenantId!: string;
 
-  @ApiProperty({ format: "email" })
+  @ApiProperty({ format: 'email' })
   email!: string;
 
   @ApiPropertyOptional()
@@ -67,27 +67,27 @@ export class AuthenticatedUserViewDto {
   @ApiProperty({ enum: userThemePreferences })
   theme!: string;
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   roles!: string[];
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
 
-  @ApiPropertyOptional({ format: "uri", maxLength: 2048 })
+  @ApiPropertyOptional({ format: 'uri', maxLength: 2048 })
   avatarUrl?: string;
 
   @ApiPropertyOptional({
-    enum: ["none", "provider", "manual", "deleted"],
+    enum: ['none', 'provider', 'manual', 'deleted'],
   })
-  avatarStatus?: "none" | "provider" | "manual" | "deleted";
+  avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }
 
 export class AuthSessionViewDto {
   @ApiProperty()
   accessToken!: string;
 
-  @ApiProperty({ enum: ["Bearer"] })
-  tokenType!: "Bearer";
+  @ApiProperty({ enum: ['Bearer'] })
+  tokenType!: 'Bearer';
 
   @ApiProperty()
   expiresIn!: number;
@@ -98,7 +98,7 @@ export class AuthSessionViewDto {
   @ApiProperty({ type: () => AuthenticatedUserViewDto })
   user!: AuthenticatedUserViewDto;
 
-  @ApiPropertyOptional({ items: { type: "string" }, type: "array" })
+  @ApiPropertyOptional({ items: { type: 'string' }, type: 'array' })
   amr?: string[];
 
   @ApiPropertyOptional({ enum: authProviders })
@@ -110,12 +110,12 @@ export class AuthSessionViewDto {
   @ApiPropertyOptional()
   authTime?: number;
 
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   externalIdentityId?: string;
 }
 
 export class ExternalAuthResultDto {
-  @ApiProperty({ enum: ["authenticated", "linked", "needs_link", "conflict"] })
+  @ApiProperty({ enum: ['authenticated', 'linked', 'needs_link', 'conflict'] })
   status!: string;
 
   @ApiPropertyOptional()
@@ -127,7 +127,7 @@ export class ExternalAuthResultDto {
   @ApiPropertyOptional({ type: () => AuthSessionViewDto })
   session?: AuthSessionViewDto;
 
-  @ApiPropertyOptional({ type: "object", additionalProperties: true })
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
   identity?: unknown;
 
   @ApiPropertyOptional()

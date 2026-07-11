@@ -406,12 +406,7 @@ export interface components {
       authProvider?: 'password' | 'telegram' | 'discord';
       /** @enum {string} */
       authChannel?:
-        | 'password'
-        | 'telegram_web_login'
-        | 'telegram_tma'
-        | 'telegram_bot'
-        | 'discord_oauth'
-        | 'discord_bot';
+        'password' | 'telegram_web_login' | 'telegram_tma' | 'telegram_bot' | 'discord_oauth' | 'discord_bot';
       authTime?: number;
       /** Format: uuid */
       externalIdentityId?: string;

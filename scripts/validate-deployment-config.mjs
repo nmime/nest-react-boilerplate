@@ -353,7 +353,8 @@ for (const { app, healthProvider, modulePath, configPath, localControllerPath } 
   );
 
   const healthConfig = read(configPath);
-  has(healthConfig, `const appName = "${app}";`, `${app} health config sets the app name`);
+  has(healthConfig, 'const appName =', `${app} health config declares the app name`);
+  has(healthConfig, app, `${app} health config sets the expected app name`);
   has(
     healthConfig,
     `export const ${healthProvider}: Provider`,

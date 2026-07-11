@@ -466,8 +466,7 @@ export type AdminUserViewDto = components['schemas']['AdminUserViewDto'];
 export type AssignAdminUserRolesDto = components['schemas']['AssignAdminUserRolesDto'];
 export type AdminUserListPayloadDto = components['schemas']['AdminUserListPayloadDto'];
 export type UpdateAdminUserStatusDto = components['schemas']['UpdateAdminUserStatusDto'];
-export type UpdateAdminUserAccessPolicyDto =
-  components['schemas']['UpdateAdminUserAccessPolicyDto'];
+export type UpdateAdminUserAccessPolicyDto = components['schemas']['UpdateAdminUserAccessPolicyDto'];
 export type AdminAuditLogViewDto = components['schemas']['AdminAuditLogViewDto'];
 export type AdminAuditLogListPayloadDto = components['schemas']['AdminAuditLogListPayloadDto'];
 export type AdminDashboardSummaryDto = components['schemas']['AdminDashboardSummaryDto'];
@@ -3307,10 +3306,7 @@ export interface operations {
       query?: {
         limit?: number;
         offset?: number;
-        action?:
-          | 'admin.user.status.update'
-          | 'admin.user.access_policy.update'
-          | 'admin.user.roles.update';
+        action?: 'admin.user.status.update' | 'admin.user.access_policy.update' | 'admin.user.roles.update';
         actorUserId?: string;
         targetUserId?: string;
       };

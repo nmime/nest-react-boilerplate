@@ -71,6 +71,7 @@ describe('bootstrap', () => {
     nodeEnv: process.env.NODE_ENV as string | undefined,
     npmPackageVersion: process.env.npm_package_version,
     otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
+    port: process.env.PORT,
     testApiPort: process.env.TEST_API_PORT,
   };
 
@@ -79,6 +80,7 @@ describe('bootstrap', () => {
     delete process.env.NODE_ENV;
     delete process.env.npm_package_version;
     delete process.env.OTEL_SERVICE_VERSION;
+    delete process.env.PORT;
     delete process.env.TEST_API_PORT;
     vi.clearAllMocks();
   });
@@ -88,6 +90,7 @@ describe('bootstrap', () => {
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? '';
     process.env.npm_package_version = originalEnvironment.npmPackageVersion ?? '';
     process.env.OTEL_SERVICE_VERSION = originalEnvironment.otelServiceVersion ?? '';
+    process.env.PORT = originalEnvironment.port ?? '';
     process.env.TEST_API_PORT = originalEnvironment.testApiPort ?? '';
   });
 

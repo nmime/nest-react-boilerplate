@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 import { mkdirSync, rmSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { openApiContracts, type OpenApiContract } from "./contracts-manifest.ts";
 
 const generatedRoot = "libs/frontend/api-client/lib/src/generated";
@@ -99,6 +99,8 @@ run("pnpm", [
   "exec",
   "prettier",
   "--write",
+  "--config",
+  resolve(".prettierrc"),
   "--ignore-unknown",
   "--ignore-path",
   process.platform === "win32" ? "NUL" : "/dev/null",

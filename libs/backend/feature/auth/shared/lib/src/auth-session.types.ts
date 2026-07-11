@@ -1,5 +1,5 @@
-import type { Locale } from "@app/common-i18n";
-import { normalizeStringList } from "@app/backend-common-shared";
+import type { Locale } from '@app/common-i18n';
+import { normalizeStringList } from '@app/backend-common-shared';
 import {
   resolveTenantId,
   AuthenticatedTheme,
@@ -7,7 +7,7 @@ import {
   type UserThemePreference,
   type AuthProvider,
   type AuthProviderChannel,
-} from "./oauth";
+} from './oauth';
 
 export interface AuthenticatedUserView {
   id: string;
@@ -19,12 +19,12 @@ export interface AuthenticatedUserView {
   roles: string[];
   permissions: string[];
   avatarUrl?: string | null;
-  avatarStatus?: "none" | "provider" | "manual" | "deleted";
+  avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }
 
 export interface JwtTokenPair {
   accessToken: string;
-  tokenType: "Bearer";
+  tokenType: 'Bearer';
   expiresIn: number;
   refreshToken?: string;
 }
@@ -48,7 +48,7 @@ export function toAuthenticatedUserView(input: {
   roles?: string[];
   permissions?: string[];
   avatarUrl?: string | null;
-  avatarStatus?: "none" | "provider" | "manual" | "deleted";
+  avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }): AuthenticatedUserView {
   return {
     id: input.id,
@@ -56,20 +56,15 @@ export function toAuthenticatedUserView(input: {
     email: input.email,
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.locale ? { locale: input.locale } : {}),
-    theme:
-      normalizeUserThemePreference(input.theme) ?? AuthenticatedTheme.System,
+    theme: normalizeUserThemePreference(input.theme) ?? AuthenticatedTheme.System,
     roles: normalizeStringList(input.roles),
     permissions: normalizeStringList(input.permissions),
     ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-    ...(input.avatarStatus && input.avatarStatus !== "none"
-      ? { avatarStatus: input.avatarStatus }
-      : {}),
+    ...(input.avatarStatus && input.avatarStatus !== 'none' ? { avatarStatus: input.avatarStatus } : {}),
   };
 }
 
-export function normalizeUserThemePreference(
-  value: string | null | undefined,
-): UserThemePreference | undefined {
+export function normalizeUserThemePreference(value: string | null | undefined): UserThemePreference | undefined {
   if (!value) {
     return undefined;
   }

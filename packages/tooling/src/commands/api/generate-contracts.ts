@@ -188,6 +188,8 @@ function format(paths: string[]) {
       "exec",
       "prettier",
       "--write",
+      "--config",
+      resolve(".prettierrc"),
       "--ignore-path",
       "/dev/null",
       ...paths.map((path) => resolve(path)),

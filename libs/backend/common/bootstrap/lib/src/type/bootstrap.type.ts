@@ -1,21 +1,12 @@
-import type {
-  DynamicModule,
-  ForwardReference,
-  INestApplication,
-  Type,
-} from "@nestjs/common";
-import type { CorsOptions } from "@nestjs/common/interfaces/external/cors-options.interface";
-import type { BootstrapSwaggerConfig } from "./swagger-config.type";
+import type { DynamicModule, ForwardReference, INestApplication, Type } from '@nestjs/common';
+import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import type { BootstrapSwaggerConfig } from './swagger-config.type';
 
-export type ResolvedEntryNestModule =
-  Type<unknown> | DynamicModule | ForwardReference;
+export type ResolvedEntryNestModule = Type<unknown> | DynamicModule | ForwardReference;
 
-export type EntryNestModule =
-  ResolvedEntryNestModule | Promise<ResolvedEntryNestModule>;
+export type EntryNestModule = ResolvedEntryNestModule | Promise<ResolvedEntryNestModule>;
 
-export type CorsFactory = (
-  app: INestApplication,
-) => CorsOptions | Promise<CorsOptions>;
+export type CorsFactory = (app: INestApplication) => CorsOptions | Promise<CorsOptions>;
 
 export interface BootstrapParams {
   name: string;

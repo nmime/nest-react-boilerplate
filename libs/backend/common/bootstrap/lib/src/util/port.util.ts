@@ -15,11 +15,11 @@ export function getPortEnvVarName(appName: string): string {
   const segments = appName
     .trim()
     .toUpperCase()
-    .split("")
-    .map((char) => (/[A-Z0-9]/u.test(char) ? char : "_"))
-    .join("")
-    .split("_")
+    .split('')
+    .map((char) => (/[A-Z0-9]/u.test(char) ? char : '_'))
+    .join('')
+    .split('_')
     .filter(Boolean);
 
-  return `${segments.join("_")}_PORT`;
+  return `${segments.join('_')}_PORT`;
 }

@@ -3840,11 +3840,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "admin.user.status.update",
-                "admin.user.access_policy.update",
-                "admin.user.roles.update"
-              ]
+              "enum": ["admin.user.status.update", "admin.user.access_policy.update", "admin.user.roles.update"]
             }
           },
           {
@@ -4755,13 +4751,7 @@
             }
           }
         },
-        "required": [
-          "resources",
-          "roles",
-          "permissions",
-          "assignableRoles",
-          "assignablePermissions"
-        ]
+        "required": ["resources", "roles", "permissions", "assignableRoles", "assignablePermissions"]
       },
       "AdminRoleViewDto": {
         "type": "object",
@@ -4934,16 +4924,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "tenantId",
-          "email",
-          "status",
-          "roles",
-          "permissions",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "tenantId", "email", "status", "roles", "permissions", "createdAt", "updatedAt"]
       },
       "AssignAdminUserRolesDto": {
         "type": "object",
@@ -5065,16 +5046,7 @@
             "format": "date-time"
           }
         },
-        "required": [
-          "id",
-          "tenantId",
-          "action",
-          "resource",
-          "before",
-          "after",
-          "metadata",
-          "createdAt"
-        ]
+        "required": ["id", "tenantId", "action", "resource", "before", "after", "metadata", "createdAt"]
       },
       "AdminAuditLogListPayloadDto": {
         "type": "object",
@@ -5122,14 +5094,7 @@
             }
           }
         },
-        "required": [
-          "totalUsers",
-          "activeUsers",
-          "disabledUsers",
-          "invitedUsers",
-          "recentAuditEvents",
-          "recentAudit"
-        ]
+        "required": ["totalUsers", "activeUsers", "disabledUsers", "invitedUsers", "recentAuditEvents", "recentAudit"]
       }
     }
   }

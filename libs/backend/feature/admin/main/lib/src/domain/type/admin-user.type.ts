@@ -1,6 +1,6 @@
-import type { adminUserStatuses } from "../const";
-import type { AdminAuditLogView } from "./admin-audit.type";
-import type { AdminPageQuery } from "./admin-page.type";
+import type { adminUserStatuses } from '../const';
+import type { AdminAuditLogView } from './admin-audit.type';
+import type { AdminPageQuery } from './admin-page.type';
 
 export type AdminUserStatus = (typeof adminUserStatuses)[number];
 
@@ -22,7 +22,7 @@ export interface AdminUserView {
   readonly locale?: string;
   readonly theme?: string;
   readonly avatarUrl?: string;
-  readonly avatarStatus?: "none" | "provider" | "manual" | "deleted";
+  readonly avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
   readonly lastLoginAt?: string;
   readonly createdAt: string;
   readonly updatedAt: string;

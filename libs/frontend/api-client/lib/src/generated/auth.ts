@@ -406,12 +406,7 @@ export interface components {
       authProvider?: 'password' | 'telegram' | 'discord';
       /** @enum {string} */
       authChannel?:
-        | 'password'
-        | 'telegram_web_login'
-        | 'telegram_tma'
-        | 'telegram_bot'
-        | 'discord_oauth'
-        | 'discord_bot';
+        'password' | 'telegram_web_login' | 'telegram_tma' | 'telegram_bot' | 'discord_oauth' | 'discord_bot';
       authTime?: number;
       /** Format: uuid */
       externalIdentityId?: string;
@@ -579,8 +574,7 @@ export type TelegramWebLoginDto = components['schemas']['TelegramWebLoginDto'];
 export type TelegramTmaDto = components['schemas']['TelegramTmaDto'];
 export type TelegramBotLinkDto = components['schemas']['TelegramBotLinkDto'];
 export type Object = components['schemas']['Object'];
-export type DiscordAuthorizationRequestDto =
-  components['schemas']['DiscordAuthorizationRequestDto'];
+export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
 export type LinkTokenResultDto = components['schemas']['LinkTokenResultDto'];
 export type LinkTokenDto = components['schemas']['LinkTokenDto'];
 export type UserActionTokenPayloadDto = components['schemas']['UserActionTokenPayloadDto'];

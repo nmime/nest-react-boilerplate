@@ -1,7 +1,7 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
-import type { Locale } from "@app/common-i18n";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
+import type { Locale } from '@app/common-i18n';
 import {
   AuthUserEntity,
   DefaultAuthTenantId,
@@ -9,18 +9,12 @@ import {
   type AuthUserThemePreference,
   type AuthUserAccessPolicyInput,
   type AuthUserEntityInput,
-} from "../entities";
-import { mapAuthUserRepositoryError } from "./mapper/auth-user-error.mapper";
-import type {
-  AuthUserListInput,
-  AuthUserRepositoryError,
-} from "./type/auth-user.type";
-import {
-  normalizePageLimit,
-  normalizePageOffset,
-} from "./util/pagination.util";
+} from '../entities';
+import { mapAuthUserRepositoryError } from './mapper/auth-user-error.mapper';
+import type { AuthUserListInput, AuthUserRepositoryError } from './type/auth-user.type';
+import { normalizePageLimit, normalizePageOffset } from './util/pagination.util';
 
-export * from "./type/auth-user.type";
+export * from './type/auth-user.type';
 
 @Injectable()
 export class AuthUserRepository {
@@ -29,13 +23,8 @@ export class AuthUserRepository {
     private readonly entityManager: EntityManager,
   ) {}
 
-  createUser(
-    input: AuthUserEntityInput,
-  ): ResultAsync<AuthUserEntity, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistUser(input),
-      mapAuthUserRepositoryError,
-    );
+  createUser(input: AuthUserEntityInput): ResultAsync<AuthUserEntity, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(this.persistUser(input), mapAuthUserRepositoryError);
   }
 
   findByEmail(
@@ -66,22 +55,18 @@ export class AuthUserRepository {
     );
   }
 
-  listUsers(
-    input: AuthUserListInput = {},
-  ): ResultAsync<AuthUserEntity[], AuthUserRepositoryError> {
+  listUsers(input: AuthUserListInput = {}): ResultAsync<AuthUserEntity[], AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.find(AuthUserEntity, this.toUserFilter(input), {
         limit: normalizePageLimit(input.limit),
         offset: normalizePageOffset(input.offset),
-        orderBy: { createdAt: "DESC" },
+        orderBy: { createdAt: 'DESC' },
       }),
       mapAuthUserRepositoryError,
     );
   }
 
-  countUsers(
-    input: AuthUserListInput = {},
-  ): ResultAsync<number, AuthUserRepositoryError> {
+  countUsers(input: AuthUserListInput = {}): ResultAsync<number, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.count(AuthUserEntity, this.toUserFilter(input)),
       mapAuthUserRepositoryError,
@@ -93,10 +78,7 @@ export class AuthUserRepository {
     policy: AuthUserAccessPolicyInput,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.updateAccessPolicy(id, policy, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.updateAccessPolicy(id, policy, tenantId), mapAuthUserRepositoryError);
   }
 
   setLocale(
@@ -112,10 +94,7 @@ export class AuthUserRepository {
     preferences: { locale?: Locale; theme?: AuthUserThemePreference },
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.updatePreferences(id, preferences, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.updatePreferences(id, preferences, tenantId), mapAuthUserRepositoryError);
   }
 
   recordLogin(
@@ -123,10 +102,7 @@ export class AuthUserRepository {
     loggedInAt: Date = new Date(),
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.updateLastLoginAt(id, loggedInAt, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.updateLastLoginAt(id, loggedInAt, tenantId), mapAuthUserRepositoryError);
   }
 
   /**
@@ -139,10 +115,7 @@ export class AuthUserRepository {
     input: { url: string; hash: string; status: AuthUserAvatarStatus },
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.updateAvatar(id, input, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.updateAvatar(id, input, tenantId), mapAuthUserRepositoryError);
   }
 
   /**
@@ -152,10 +125,7 @@ export class AuthUserRepository {
     id: string,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.doDeleteAvatar(id, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.doDeleteAvatar(id, tenantId), mapAuthUserRepositoryError);
   }
 
   /**
@@ -171,15 +141,10 @@ export class AuthUserRepository {
     input: { url: string | null; hash: string | null },
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.doSyncProviderAvatar(id, input, tenantId),
-      mapAuthUserRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.doSyncProviderAvatar(id, input, tenantId), mapAuthUserRepositoryError);
   }
 
-  private async persistUser(
-    input: AuthUserEntityInput,
-  ): Promise<AuthUserEntity> {
+  private async persistUser(input: AuthUserEntityInput): Promise<AuthUserEntity> {
     const entity = new AuthUserEntity({
       ...input,
       tenantId: input.tenantId ?? DefaultAuthTenantId,
@@ -240,11 +205,7 @@ export class AuthUserRepository {
     return entity;
   }
 
-  private async updateLastLoginAt(
-    id: string,
-    loggedInAt: Date,
-    tenantId: string,
-  ): Promise<AuthUserEntity | null> {
+  private async updateLastLoginAt(id: string, loggedInAt: Date, tenantId: string): Promise<AuthUserEntity | null> {
     const entity = await this.entityManager.findOne(AuthUserEntity, {
       id,
       tenantId,
@@ -278,10 +239,7 @@ export class AuthUserRepository {
     return entity;
   }
 
-  private async doDeleteAvatar(
-    id: string,
-    tenantId: string,
-  ): Promise<AuthUserEntity | null> {
+  private async doDeleteAvatar(id: string, tenantId: string): Promise<AuthUserEntity | null> {
     const entity = await this.entityManager.findOne(AuthUserEntity, {
       id,
       tenantId,
@@ -290,9 +248,9 @@ export class AuthUserRepository {
       return null;
     }
 
-    entity.avatarUrl = null;
-    entity.avatarHash = null;
-    entity.avatarStatus = "deleted";
+    entity.avatarUrl = '';
+    entity.avatarHash = '';
+    entity.avatarStatus = 'deleted';
     await this.entityManager.flush();
     return entity;
   }
@@ -311,18 +269,21 @@ export class AuthUserRepository {
     }
 
     // Respect user intent: do not override manual or deleted avatars
-    if (entity.avatarStatus === "manual" || entity.avatarStatus === "deleted") {
+    if (entity.avatarStatus === 'manual' || entity.avatarStatus === 'deleted') {
       return entity;
     }
+
+    const avatarUrl = input.url ?? '';
+    const avatarHash = input.hash ?? '';
 
     // Skip if hash is unchanged
-    if (entity.avatarHash === input.hash) {
+    if (entity.avatarHash === avatarHash) {
       return entity;
     }
 
-    entity.avatarUrl = input.url;
-    entity.avatarHash = input.hash;
-    entity.avatarStatus = input.url ? "provider" : "none";
+    entity.avatarUrl = avatarUrl;
+    entity.avatarHash = avatarHash;
+    entity.avatarStatus = avatarUrl ? 'provider' : 'none';
     await this.entityManager.flush();
     return entity;
   }
@@ -340,16 +301,11 @@ export class AuthUserRepository {
         : {}),
       ...(input.status ? { status: input.status } : {}),
       ...(input.role ? { roles: { $contains: [input.role] } } : {}),
-      ...(input.permission
-        ? { permissions: { $contains: [input.permission] } }
-        : {}),
+      ...(input.permission ? { permissions: { $contains: [input.permission] } } : {}),
     };
   }
 }
 
 function escapeLike(value: string): string {
-  return value
-    .replaceAll("\\", "\\\\")
-    .replaceAll("%", "\\%")
-    .replaceAll("_", "\\_");
+  return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
 }

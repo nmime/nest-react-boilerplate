@@ -3288,10 +3288,7 @@ export interface operations {
       query?: {
         limit?: number;
         offset?: number;
-        action?:
-          | 'admin.user.status.update'
-          | 'admin.user.access_policy.update'
-          | 'admin.user.roles.update';
+        action?: 'admin.user.status.update' | 'admin.user.access_policy.update' | 'admin.user.roles.update';
         actorUserId?: string;
         targetUserId?: string;
       };

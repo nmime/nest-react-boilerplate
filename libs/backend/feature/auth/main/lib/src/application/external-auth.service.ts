@@ -6,13 +6,10 @@ import {
   Injectable,
   Optional,
   UnauthorizedException,
-} from "@nestjs/common";
-import { randomBytes } from "node:crypto";
-import { generateCodeVerifier, generateState, type OAuth2Tokens } from "arctic";
-import {
-  parse as parseTmaInitData,
-  validate as validateTmaInitData,
-} from "@tma.js/init-data-node";
+} from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import { generateCodeVerifier, generateState, type OAuth2Tokens } from 'arctic';
+import { parse as parseTmaInitData, validate as validateTmaInitData } from '@tma.js/init-data-node';
 import {
   AuthProvider,
   AuthProviderChannel,
@@ -24,10 +21,10 @@ import {
   type ExternalAuthProvider,
   type ExternalAuthProviderChannel,
   type LinkTokenResult,
-} from "@app/backend-feature-auth-shared";
-import { hashPassword, type JwtSigningEnvironment } from "../domain";
-import { AuthService } from "./auth.service";
-import { parseTenantId } from "./util/auth-error-adapter.util";
+} from '@app/backend-feature-auth-shared';
+import { hashPassword, type JwtSigningEnvironment } from '../domain';
+import { AuthService } from './auth.service';
+import { parseTenantId } from './util/auth-error-adapter.util';
 import {
   AuthUserStoreInjectToken,
   type AuthUserRecord,
@@ -35,14 +32,14 @@ import {
   SocialAuthStoreInjectToken,
   InMemorySocialAuthStore,
   type SocialAuthStore,
-} from "../infrastructure";
+} from '../infrastructure';
 import {
   DefaultDiscordStateTtlSeconds,
   DefaultLinkTokenTtlSeconds,
   DefaultMaxDiscordStateEntries,
   DefaultTelegramMaxAgeSeconds,
   ExternalAccountPasswordSeed,
-} from "./const/external-auth.const";
+} from './const/external-auth.const';
 import type {
   DiscordAuthorizationRequestInput,
   DiscordAuthorizationRequestResult,
@@ -52,11 +49,8 @@ import type {
   TelegramBotLinkInput,
   TelegramTmaInput,
   TelegramWebLoginInput,
-} from "./type/external-auth.type";
-import type {
-  StoredDiscordState,
-  VerifiedExternalProfile,
-} from "./type/external-auth-internal.type";
+} from './type/external-auth.type';
+import type { StoredDiscordState, VerifiedExternalProfile } from './type/external-auth-internal.type';
 import {
   assertProviderEnabled,
   hashOpaqueToken,
@@ -64,23 +58,17 @@ import {
   readList,
   readPositiveInt,
   requireEnv,
-} from "./util/external-auth.util";
-import { assertReturnUrlAllowed } from "./util/return-url.util";
-import { verifyTelegramWebLoginPayload } from "./util/telegram-signature.util";
-import {
-  createDiscordProvider,
-  fetchDiscordUser,
-} from "./factory/discord-provider.factory";
-import {
-  profileToIdentityInput,
-  toIdentityView,
-} from "./mapper/external-auth.mapper";
+} from './util/external-auth.util';
+import { assertReturnUrlAllowed } from './util/return-url.util';
+import { verifyTelegramWebLoginPayload } from './util/telegram-signature.util';
+import { createDiscordProvider, fetchDiscordUser } from './factory/discord-provider.factory';
+import { profileToIdentityInput, toIdentityView } from './mapper/external-auth.mapper';
 
 // verifyTelegramWebLoginPayload and the external-auth I/O interfaces were
 // decomposed into role-based sibling files; they are re-exported here so the
 // application barrel stays stable.
-export * from "./type/external-auth.type";
-export * from "./util/telegram-signature.util";
+export * from './type/external-auth.type';
+export * from './util/telegram-signature.util';
 
 @Injectable()
 export class ExternalAuthService {
@@ -97,14 +85,9 @@ export class ExternalAuthService {
     private readonly social: SocialAuthStore = new InMemorySocialAuthStore(),
   ) {}
 
-  async telegramWebLogin(
-    input: TelegramWebLoginInput,
-  ): Promise<ExternalAuthLoginResult> {
+  async telegramWebLogin(input: TelegramWebLoginInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
-    const botToken = requireEnv(
-      "TELEGRAM_BOT_TOKEN",
-      "provider_not_configured",
-    );
+    const botToken = requireEnv('TELEGRAM_BOT_TOKEN', 'provider_not_configured');
     const profile = verifyTelegramWebLoginPayload(input.payload, botToken);
     return this.resolveVerifiedProfile({
       tenantId: parseTenantId(input.tenantId),
@@ -118,27 +101,20 @@ export class ExternalAuthService {
 
   async telegramTma(input: TelegramTmaInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
-    const botToken = requireEnv(
-      "TELEGRAM_BOT_TOKEN",
-      "provider_not_configured",
-    );
+    const botToken = requireEnv('TELEGRAM_BOT_TOKEN', 'provider_not_configured');
     try {
       validateTmaInitData(input.initData, botToken, {
-        expiresIn: readPositiveInt(
-          process.env.TELEGRAM_TMA_MAX_AGE_SECONDS,
-          DefaultTelegramMaxAgeSeconds,
-        ),
+        expiresIn: readPositiveInt(process.env.TELEGRAM_TMA_MAX_AGE_SECONDS, DefaultTelegramMaxAgeSeconds),
       });
     } catch {
-      throw new UnauthorizedException("invalid_signature");
+      throw new UnauthorizedException('invalid_signature');
     }
     const initData = parseTmaInitData(input.initData);
     if (!initData.user?.id) {
-      throw new BadRequestException("invalid_signature");
+      throw new BadRequestException('invalid_signature');
     }
     const user = initData.user;
-    const displayName =
-      [user.first_name, user.last_name].filter(Boolean).join(" ") || null;
+    const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || null;
     return this.resolveVerifiedProfile({
       tenantId: parseTenantId(input.tenantId),
       intent: input.intent ?? ExternalAuthIntent.Login,
@@ -154,25 +130,19 @@ export class ExternalAuthService {
         avatarUrl: user.photo_url ?? null,
         locale: user.language_code ?? null,
         metadata: {
-          source: "telegram_tma",
+          source: 'telegram_tma',
           startParam: initData.start_param ?? null,
         },
       },
     });
   }
 
-  async telegramBotLink(
-    input: TelegramBotLinkInput,
-  ): Promise<ExternalAuthLoginResult> {
+  async telegramBotLink(input: TelegramBotLinkInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
     const tenantId = parseTenantId(input.tenantId);
-    const consumed = await this.consumeLinkTokenOrThrow(
-      input.linkToken,
-      ExternalAuthIntent.Link,
-      tenantId,
-    );
+    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link, tenantId);
     if (!consumed.userId) {
-      throw new UnauthorizedException("link_token_expired");
+      throw new UnauthorizedException('link_token_expired');
     }
     return this.linkProfileToUser({
       tenantId,
@@ -185,7 +155,7 @@ export class ExternalAuthService {
         displayName: input.displayName,
         locale: input.locale,
         avatarUrl: input.avatarUrl,
-        metadata: { source: "telegram_bot" },
+        metadata: { source: 'telegram_bot' },
       },
     });
   }
@@ -199,14 +169,9 @@ export class ExternalAuthService {
   }): Promise<LinkTokenResult> {
     const tenantId = parseTenantId(input.tenantId);
     assertReturnUrlAllowed(input.returnUrl);
-    const token = randomBytes(32).toString("base64url");
+    const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date(
-      Date.now() +
-        readPositiveInt(
-          process.env.AUTH_LINK_TOKEN_TTL_SECONDS,
-          DefaultLinkTokenTtlSeconds,
-        ) *
-          1000,
+      Date.now() + readPositiveInt(process.env.AUTH_LINK_TOKEN_TTL_SECONDS, DefaultLinkTokenTtlSeconds) * 1000,
     );
     const created = await this.social.createLinkToken({
       tenantId,
@@ -228,10 +193,7 @@ export class ExternalAuthService {
     };
   }
 
-  async listProviderIdentities(
-    userId: string,
-    tenantIdInput?: string | null,
-  ): Promise<ExternalAuthIdentityView[]> {
+  async listProviderIdentities(userId: string, tenantIdInput?: string | null): Promise<ExternalAuthIdentityView[]> {
     const tenantId = parseTenantId(tenantIdInput);
     const identities = await this.social.listIdentities(userId, tenantId);
     if (identities.isErr()) {
@@ -246,30 +208,24 @@ export class ExternalAuthService {
   ): Promise<{ unlinked: boolean }> {
     const tenantId = parseTenantId(principal.tenantId);
     if (!isRecentAuthTime(principal.authTime)) {
-      throw new ForbiddenException("step_up_required");
+      throw new ForbiddenException('step_up_required');
     }
     const count = await this.social.countMethods(principal.subject, tenantId);
     if (count.isErr()) {
       throw new ConflictException(count.error.message);
     }
     if (count.value <= 1) {
-      throw new ForbiddenException("last_method_unlink_forbidden");
+      throw new ForbiddenException('last_method_unlink_forbidden');
     }
     await this.social.revokeProviderTokens(identityId, tenantId);
-    const deleted = await this.social.deleteIdentity(
-      identityId,
-      principal.subject,
-      tenantId,
-    );
+    const deleted = await this.social.deleteIdentity(identityId, principal.subject, tenantId);
     if (deleted.isErr()) {
       throw new ConflictException(deleted.error.message);
     }
     return { unlinked: deleted.value };
   }
 
-  createDiscordAuthorizationRequest(
-    input: DiscordAuthorizationRequestInput,
-  ): DiscordAuthorizationRequestResult {
+  createDiscordAuthorizationRequest(input: DiscordAuthorizationRequestInput): DiscordAuthorizationRequestResult {
     assertProviderEnabled(AuthProvider.Discord);
     const tenantId = parseTenantId(input.tenantId);
     assertReturnUrlAllowed(input.returnUrl);
@@ -278,12 +234,7 @@ export class ExternalAuthService {
     const codeVerifier = generateCodeVerifier();
     const intent = input.intent ?? ExternalAuthIntent.Login;
     const expiresAt = new Date(
-      Date.now() +
-        readPositiveInt(
-          process.env.DISCORD_OAUTH_STATE_TTL_SECONDS,
-          DefaultDiscordStateTtlSeconds,
-        ) *
-          1000,
+      Date.now() + readPositiveInt(process.env.DISCORD_OAUTH_STATE_TTL_SECONDS, DefaultDiscordStateTtlSeconds) * 1000,
     );
     this.pruneDiscordStates();
     this.discordStates.set(hashOpaqueToken(state), {
@@ -296,15 +247,8 @@ export class ExternalAuthService {
       userId: input.principal?.subject,
       expiresAt,
     });
-    const scopes = readList(process.env.DISCORD_OAUTH_SCOPES) ?? [
-      "identify",
-      "email",
-    ];
-    const authorizationUrl = provider.createAuthorizationURL(
-      state,
-      codeVerifier,
-      scopes,
-    );
+    const scopes = readList(process.env.DISCORD_OAUTH_SCOPES) ?? ['identify', 'email'];
+    const authorizationUrl = provider.createAuthorizationURL(state, codeVerifier, scopes);
     return {
       authorizationUrl: authorizationUrl.toString(),
       stateExpiresAt: expiresAt.toISOString(),
@@ -317,10 +261,7 @@ export class ExternalAuthService {
         this.discordStates.delete(stateHash);
       }
     }
-    const maxEntries = readPositiveInt(
-      process.env.DISCORD_OAUTH_STATE_MAX_ENTRIES,
-      DefaultMaxDiscordStateEntries,
-    );
+    const maxEntries = readPositiveInt(process.env.DISCORD_OAUTH_STATE_MAX_ENTRIES, DefaultMaxDiscordStateEntries);
     while (this.discordStates.size >= maxEntries) {
       const oldest = this.discordStates.keys().next().value;
       /* v8 ignore next -- Map#keys() cannot be empty while size is positive; kept as a defensive guard. */
@@ -331,23 +272,18 @@ export class ExternalAuthService {
     }
   }
 
-  async discordCallback(
-    input: DiscordCallbackInput,
-  ): Promise<ExternalAuthLoginResult> {
+  async discordCallback(input: DiscordCallbackInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Discord);
     if (!input.code || !input.state) {
-      throw new UnauthorizedException("invalid_state");
+      throw new UnauthorizedException('invalid_state');
     }
     const stateHash = hashOpaqueToken(input.state);
     const stored = this.discordStates.get(stateHash);
     this.discordStates.delete(stateHash);
     if (!stored || stored.expiresAt <= new Date()) {
-      throw new UnauthorizedException("invalid_state");
+      throw new UnauthorizedException('invalid_state');
     }
-    const tokens = await createDiscordProvider().validateAuthorizationCode(
-      input.code,
-      stored.codeVerifier,
-    );
+    const tokens = await createDiscordProvider().validateAuthorizationCode(input.code, stored.codeVerifier);
     const discordUser = await fetchDiscordUser(tokens.accessToken());
     const profile: VerifiedExternalProfile = {
       provider: AuthProvider.Discord,
@@ -360,18 +296,14 @@ export class ExternalAuthService {
       avatarUrl: discordUser.avatar
         ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`
         : null,
-      metadata: { source: "discord_oauth" },
+      metadata: { source: 'discord_oauth' },
     };
     const result = await this.resolveVerifiedProfile({
       tenantId: stored.tenantId,
       intent: stored.intent,
       linkToken: stored.linkToken,
       returnUrl: stored.returnUrl,
-      principal:
-        input.principal ??
-        (stored.userId
-          ? { subject: stored.userId, tenantId: stored.tenantId }
-          : null),
+      principal: input.principal ?? (stored.userId ? { subject: stored.userId, tenantId: stored.tenantId } : null),
       profile,
       discordTokens: tokens,
     });
@@ -392,16 +324,10 @@ export class ExternalAuthService {
       const userId =
         input.principal?.subject ??
         (input.linkToken
-          ? (
-              await this.consumeLinkTokenOrThrow(
-                input.linkToken,
-                ExternalAuthIntent.Link,
-                input.tenantId,
-              )
-            ).userId
+          ? (await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link, input.tenantId)).userId
           : null);
       if (!userId) {
-        throw new UnauthorizedException("link_token_expired");
+        throw new UnauthorizedException('link_token_expired');
       }
       return this.linkProfileToUser({
         tenantId: input.tenantId,
@@ -421,10 +347,7 @@ export class ExternalAuthService {
       throw new ConflictException(existing.error.message);
     }
     if (existing.value) {
-      const user = await this.requireActiveUser(
-        existing.value.userId,
-        input.tenantId,
-      );
+      const user = await this.requireActiveUser(existing.value.userId, input.tenantId);
       const identity = await this.social.upsertIdentity({
         ...profileToIdentityInput(input.profile, input.tenantId, user.id),
         lastAuthenticatedAt: new Date(),
@@ -432,102 +355,60 @@ export class ExternalAuthService {
       if (identity.isErr()) {
         throw new ConflictException(identity.error.message);
       }
-      await this.recordMethod(
-        user.id,
-        input.tenantId,
-        input.profile.channel,
-        identity.value.id,
-      );
-      await this.persistDiscordTokensIfConfigured(
-        user.id,
-        input.tenantId,
-        identity.value.id,
-        input.discordTokens,
-      );
-      await this.syncAvatarToUser(
-        user.id,
-        input.tenantId,
-        input.profile.avatarUrl,
-      );
+      await this.recordMethod(user.id, input.tenantId, input.profile.channel, identity.value.id);
+      await this.persistDiscordTokensIfConfigured(user.id, input.tenantId, identity.value.id, input.discordTokens);
+      await this.syncAvatarToUser(user.id, input.tenantId, input.profile.avatarUrl);
       return {
-        status: "authenticated",
-        session: this.createExternalSession(
-          user,
-          input.profile,
-          identity.value.id,
-        ),
+        status: 'authenticated',
+        session: this.createExternalSession(user, input.profile, identity.value.id),
         identity: toIdentityView(identity.value),
         returnUrl: input.returnUrl ?? undefined,
       };
     }
 
-    if (process.env.EXTERNAL_AUTH_AUTO_PROVISION === "false") {
+    if (process.env.EXTERNAL_AUTH_AUTO_PROVISION === 'false') {
       return {
-        status: "needs_link",
-        code: "needs_link",
-        message: "Provider identity is not linked.",
+        status: 'needs_link',
+        code: 'needs_link',
+        message: 'Provider identity is not linked.',
         returnUrl: input.returnUrl ?? undefined,
       };
     }
 
-    const displayEmail = input.profile.emailVerified
-      ? (input.profile.email ?? null)
-      : null;
+    const displayEmail = input.profile.emailVerified ? (input.profile.email ?? null) : null;
     // Provision the account with bootstrap ROLES (matrix-derived arrays up
     // front), then let the resolver refresh the denormalized cache from the
     // normalized RBAC tables via the shared AuthService helper.
-    const roleKeys = resolveBootstrapRoleKeys(
-      displayEmail ?? "",
-      process.env,
-      input.tenantId,
-    );
+    const roleKeys = resolveBootstrapRoleKeys(displayEmail ?? '', process.env, input.tenantId);
     const created = await this.users.create({
       tenantId: input.tenantId,
       email: displayEmail,
       displayName: input.profile.displayName ?? input.profile.username ?? null,
-      passwordHash: hashPassword(
-        ExternalAccountPasswordSeed + randomBytes(16).toString("hex"),
-      ),
+      passwordHash: hashPassword(ExternalAccountPasswordSeed + randomBytes(16).toString('hex')),
       roles: roleKeys,
       permissions: permissionsForRoles(roleKeys),
     });
     if (created.isErr()) {
       throw new ConflictException(created.error.message);
     }
-    const bootstrapUser = await this.auth.bootstrapUserAccess(
-      created.value,
-      roleKeys,
-    );
+    const bootstrapUser = await this.auth.bootstrapUserAccess(created.value, roleKeys);
     const identity = await this.social.upsertIdentity(
       profileToIdentityInput(input.profile, input.tenantId, bootstrapUser.id),
     );
     if (identity.isErr()) {
       throw new ConflictException(identity.error.message);
     }
-    await this.recordMethod(
-      bootstrapUser.id,
-      input.tenantId,
-      input.profile.channel,
-      identity.value.id,
-    );
+    await this.recordMethod(bootstrapUser.id, input.tenantId, input.profile.channel, identity.value.id);
     await this.persistDiscordTokensIfConfigured(
       bootstrapUser.id,
       input.tenantId,
       identity.value.id,
       input.discordTokens,
     );
-    await this.syncAvatarToUser(
-      bootstrapUser.id,
-      input.tenantId,
-      input.profile.avatarUrl,
-    );
+    await this.syncAvatarToUser(bootstrapUser.id, input.tenantId, input.profile.avatarUrl);
     return {
-      status: "authenticated",
-      session: this.createExternalSession(
-        bootstrapUser,
-        input.profile,
-        identity.value.id,
-      ),
+      status: 'authenticated',
+      session: this.createExternalSession(bootstrapUser, input.profile, identity.value.id),
       identity: toIdentityView(identity.value),
       returnUrl: input.returnUrl ?? undefined,
     };
@@ -550,9 +431,9 @@ export class ExternalAuthService {
     }
     if (existing.value && existing.value.userId !== input.userId) {
       return {
-        status: "conflict",
-        code: "account_conflict",
-        message: "Provider identity cannot be linked.",
+        status: 'conflict',
+        code: 'account_conflict',
+        message: 'Provider identity cannot be linked.',
         returnUrl: input.returnUrl ?? undefined,
       };
     }
@@ -562,20 +443,10 @@ export class ExternalAuthService {
     if (identity.isErr()) {
       throw new ConflictException(identity.error.message);
     }
-    await this.recordMethod(
-      input.userId,
-      input.tenantId,
-      input.profile.channel,
-      identity.value.id,
-    );
-    await this.persistDiscordTokensIfConfigured(
-      input.userId,
-      input.tenantId,
-      identity.value.id,
-      input.discordTokens,
-    );
+    await this.recordMethod(input.userId, input.tenantId, input.profile.channel, identity.value.id);
+    await this.persistDiscordTokensIfConfigured(input.userId, input.tenantId, identity.value.id, input.discordTokens);
     return {
-      status: "linked",
+      status: 'linked',
       identity: toIdentityView(identity.value),
       returnUrl: input.returnUrl ?? undefined,
     };
@@ -587,9 +458,7 @@ export class ExternalAuthService {
     externalIdentityId: string,
   ): AuthSessionView {
     return this.createSessionWithClaims(user, {
-      amr: [
-        profile.provider === AuthProvider.Telegram ? "telegram" : "discord",
-      ],
+      amr: [profile.provider === AuthProvider.Telegram ? 'telegram' : 'discord'],
       authProvider: profile.provider,
       authChannel: profile.channel,
       authTime: Math.floor(Date.now() / 1000),
@@ -615,38 +484,27 @@ export class ExternalAuthService {
       tenantId,
       userId,
       method: channel,
-      amr: [channel.startsWith(AuthProvider.Telegram) ? "telegram" : "discord"],
+      amr: [channel.startsWith(AuthProvider.Telegram) ? 'telegram' : 'discord'],
       externalIdentityId,
       lastUsedAt: new Date(),
     });
   }
 
-  private async consumeLinkTokenOrThrow(
-    token: string,
-    purpose: ExternalAuthIntent,
-    tenantId: string,
-  ) {
-    const consumed = await this.social.consumeLinkToken(
-      hashOpaqueToken(token),
-      purpose,
-      tenantId,
-    );
+  private async consumeLinkTokenOrThrow(token: string, purpose: ExternalAuthIntent, tenantId: string) {
+    const consumed = await this.social.consumeLinkToken(hashOpaqueToken(token), purpose, tenantId);
     if (consumed.isErr()) {
       throw new UnauthorizedException(consumed.error.message);
     }
     if (!consumed.value) {
-      throw new UnauthorizedException("link_token_expired");
+      throw new UnauthorizedException('link_token_expired');
     }
     return consumed.value;
   }
 
-  private async requireActiveUser(
-    userId: string,
-    tenantId: string,
-  ): Promise<AuthUserRecord> {
+  private async requireActiveUser(userId: string, tenantId: string): Promise<AuthUserRecord> {
     const user = await this.users.findById(userId, tenantId);
-    if (user.isErr() || !user.value || user.value.status !== "active") {
-      throw new UnauthorizedException("Invalid external identity.");
+    if (user.isErr() || !user.value || user.value.status !== 'active') {
+      throw new UnauthorizedException('Invalid external identity.');
     }
     await this.users.recordLogin(user.value.id, new Date(), tenantId);
     return user.value;
@@ -658,18 +516,16 @@ export class ExternalAuthService {
     externalIdentityId: string,
     tokens?: OAuth2Tokens,
   ): Promise<void> {
-    if (!tokens || process.env.DISCORD_TOKEN_STORAGE_ENABLED !== "true") {
+    if (!tokens || process.env.DISCORD_TOKEN_STORAGE_ENABLED !== 'true') {
       return;
     }
-    const scopes = tokens.hasScopes()
-      ? tokens.scopes()
-      : (readList(process.env.DISCORD_OAUTH_SCOPES) ?? []);
+    const scopes = tokens.hasScopes() ? tokens.scopes() : (readList(process.env.DISCORD_OAUTH_SCOPES) ?? []);
     await this.social.persistProviderToken({
       tenantId,
       userId,
       externalIdentityId,
       provider: AuthProvider.Discord,
-      tokenKind: "access",
+      tokenKind: 'access',
       plaintext: tokens.accessToken(),
       scopes,
       expiresAt: tokens.accessTokenExpiresAt(),
@@ -680,7 +536,7 @@ export class ExternalAuthService {
         userId,
         externalIdentityId,
         provider: AuthProvider.Discord,
-        tokenKind: "refresh",
+        tokenKind: 'refresh',
         plaintext: tokens.refreshToken(),
         scopes,
         expiresAt: null,
@@ -703,15 +559,9 @@ export class ExternalAuthService {
     }
     try {
       // Use a simple content-addressable hash for change detection.
-      const { createHash } = await import("node:crypto");
-      const hash = createHash("sha256")
-        .update(providerAvatarUrl)
-        .digest("hex");
-      await this.users.syncProviderAvatar(
-        userId,
-        { url: providerAvatarUrl, hash },
-        tenantId,
-      );
+      const { createHash } = await import('node:crypto');
+      const hash = createHash('sha256').update(providerAvatarUrl).digest('hex');
+      await this.users.syncProviderAvatar(userId, { url: providerAvatarUrl, hash }, tenantId);
     } catch {
       // Non-fatal: avatar sync failure should not block auth flow.
     }

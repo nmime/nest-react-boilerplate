@@ -6396,14 +6396,7 @@
           },
           "authChannel": {
             "type": "string",
-            "enum": [
-              "password",
-              "telegram_web_login",
-              "telegram_tma",
-              "telegram_bot",
-              "discord_oauth",
-              "discord_bot"
-            ]
+            "enum": ["password", "telegram_web_login", "telegram_tma", "telegram_bot", "discord_oauth", "discord_bot"]
           },
           "authTime": {
             "type": "number"

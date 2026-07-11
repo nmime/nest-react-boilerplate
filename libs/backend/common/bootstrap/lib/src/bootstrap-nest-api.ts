@@ -683,7 +683,8 @@ export function resolveBackendEnvironmentConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): BackendEnvironmentConfig {
   const isProduction = env.NODE_ENV === 'production';
-  const databaseUrl = readOptionalSecret(env.DATABASE_URL);
+  const usesInMemoryAuthPersistence = env.AUTH_PERSISTENCE?.trim().toLowerCase() === 'memory';
+  const databaseUrl = usesInMemoryAuthPersistence ? undefined : readOptionalSecret(env.DATABASE_URL);
   if (isProduction && !databaseUrl) {
     throw new Error('DATABASE_URL must be configured in production for server-side sessions.');
   }

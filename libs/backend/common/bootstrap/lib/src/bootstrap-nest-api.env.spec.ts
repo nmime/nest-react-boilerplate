@@ -1,36 +1,36 @@
-import { describe, expect, it } from "vitest";
-import { RedisMode } from "@app/backend-common-redis";
-import { resolveBackendEnvironmentConfig } from "./bootstrap-nest-api";
+import { describe, expect, it } from 'vitest';
+import { RedisMode } from '@app/backend-common-redis';
+import { resolveBackendEnvironmentConfig } from './bootstrap-nest-api';
 
-describe("resolveBackendEnvironmentConfig", () => {
-  it("centralizes validated defaults for development APIs", () => {
+describe('resolveBackendEnvironmentConfig', () => {
+  it('centralizes validated defaults for development APIs', () => {
     const config = resolveBackendEnvironmentConfig(
-      { appName: "test-api", port: 3010 },
+      { appName: 'test-api', port: 3010 },
       {
-        AUTH_JWT_SECRET: "development-secret",
-        CORS_ORIGINS: "https://admin.example.com, https://app.example.com",
-        NODE_ENV: "development",
-        RATE_LIMIT_ENABLED: "true",
-        RATE_LIMIT_MAX: "25",
-        RATE_LIMIT_WINDOW_MS: "5000",
-        SESSION_COOKIE_SECURE: "false",
-        TRUST_PROXY: "true",
+        AUTH_JWT_SECRET: 'development-secret',
+        CORS_ORIGINS: 'https://admin.example.com, https://app.example.com',
+        NODE_ENV: 'development',
+        RATE_LIMIT_ENABLED: 'true',
+        RATE_LIMIT_MAX: '25',
+        RATE_LIMIT_WINDOW_MS: '5000',
+        SESSION_COOKIE_SECURE: 'false',
+        TRUST_PROXY: 'true',
       },
     );
 
     expect(config).toMatchObject({
-      corsOrigins: ["https://admin.example.com", "https://app.example.com"],
+      corsOrigins: ['https://admin.example.com', 'https://app.example.com'],
       isProduction: false,
       port: 3010,
       rateLimit: {
         enabled: true,
         max: 25,
-        store: "memory",
-        storePreference: "auto",
+        store: 'memory',
+        storePreference: 'auto',
         windowMs: 5000,
       },
       session: {
-        cookieName: "nrb.sid",
+        cookieName: 'nrb.sid',
         secure: false,
       },
       trustProxy: true,
@@ -38,149 +38,152 @@ describe("resolveBackendEnvironmentConfig", () => {
     expect(config.session.secret.length).toBeGreaterThanOrEqual(32);
   });
 
-  it("uses Redis rate-limit storage when explicitly configured", () => {
+  it('uses an in-memory session store for explicit memory auth persistence', () => {
     const config = resolveBackendEnvironmentConfig(
-      { appName: "test-api", port: 3010 },
+      { appName: 'auth-app-api', port: 3003 },
       {
-        AUTH_JWT_SECRET: "x".repeat(32),
-        DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-        NODE_ENV: "production",
-        RATE_LIMIT_STORE: "redis",
-        REDIS_KEY_PREFIX: "nrb:",
-        REDIS_URL: "redis://localhost:6379/0",
+        AUTH_PERSISTENCE: 'memory',
+        DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
       },
     );
 
-    expect(config.rateLimit.store).toBe("redis");
+    expect(config.session.databaseUrl).toBeUndefined();
+  });
+
+  it('uses Redis rate-limit storage when explicitly configured', () => {
+    const config = resolveBackendEnvironmentConfig(
+      { appName: 'test-api', port: 3010 },
+      {
+        AUTH_JWT_SECRET: 'x'.repeat(32),
+        DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+        NODE_ENV: 'production',
+        RATE_LIMIT_STORE: 'redis',
+        REDIS_KEY_PREFIX: 'nrb:',
+        REDIS_URL: 'redis://localhost:6379/0',
+      },
+    );
+
+    expect(config.rateLimit.store).toBe('redis');
     expect(config.rateLimit.redis).toMatchObject({
-      keyPrefix: "nrb:",
+      keyPrefix: 'nrb:',
       lazyConnect: true,
       mode: RedisMode.Single,
-      url: "redis://localhost:6379/0",
+      url: 'redis://localhost:6379/0',
     });
   });
 
-  it("resolves app-specific, generic, and explicit option ports", () => {
+  it('resolves app-specific, generic, and explicit option ports', () => {
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          PORT: "4999",
-          TEST_API_PORT: "4123",
+          PORT: '4999',
+          TEST_API_PORT: '4123',
         },
       ).port,
     ).toBe(4123);
 
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          PORT: "4999",
+          PORT: '4999',
         },
       ).port,
     ).toBe(4999);
 
-    expect(
-      resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
-        {},
-      ).port,
-    ).toBe(3010);
+    expect(resolveBackendEnvironmentConfig({ appName: 'test-api', port: 3010 }, {}).port).toBe(3010);
   });
 
-  it("falls back to explicit options.port when no env variable is set", () => {
+  it('falls back to explicit options.port when no env variable is set', () => {
     const config = resolveBackendEnvironmentConfig(
-      { appName: "test-api", port: 3010 },
-      { AUTH_JWT_SECRET: "development-secret" },
+      { appName: 'test-api', port: 3010 },
+      { AUTH_JWT_SECRET: 'development-secret' },
     );
     expect(config.port).toBe(3010);
-    expect(config.portSource).toBe("configured");
+    expect(config.portSource).toBe('configured');
   });
 
-  it("validates app-specific port values", () => {
+  it('validates app-specific port values', () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          TEST_API_PORT: "abc",
+          TEST_API_PORT: 'abc',
         },
       ),
-    ).toThrow("TEST_API_PORT must be a positive integer.");
+    ).toThrow('TEST_API_PORT must be a positive integer.');
   });
 
-  it("fails closed for production rate limiting without Redis or an explicit safe override", () => {
+  it('fails closed for production rate limiting without Redis or an explicit safe override', () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: "x".repeat(32),
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-          NODE_ENV: "production",
-          RATE_LIMIT_STORE: "auto",
-          REDIS_HOSTS: "",
-          REDIS_URL: "",
+          AUTH_JWT_SECRET: 'x'.repeat(32),
+          DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+          NODE_ENV: 'production',
+          RATE_LIMIT_STORE: 'auto',
+          REDIS_HOSTS: '',
+          REDIS_URL: '',
         },
       ),
-    ).toThrow("Production rate limiting requires RATE_LIMIT_STORE=redis");
+    ).toThrow('Production rate limiting requires RATE_LIMIT_STORE=redis');
 
     expect(
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: "x".repeat(32),
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-          NODE_ENV: "production",
-          RATE_LIMIT_IN_MEMORY_ALLOWED: "true",
+          AUTH_JWT_SECRET: 'x'.repeat(32),
+          DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+          NODE_ENV: 'production',
+          RATE_LIMIT_IN_MEMORY_ALLOWED: 'true',
         },
       ).rateLimit,
     ).toMatchObject({
       enabled: true,
-      store: "memory",
-      storePreference: "auto",
+      store: 'memory',
+      storePreference: 'auto',
     });
   });
 
-  it("fails fast for invalid production and rate-limit environment", () => {
+  it('fails fast for invalid production and rate-limit environment', () => {
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: "x".repeat(32),
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-          NODE_ENV: "production",
-          RATE_LIMIT_ENABLED: "maybe",
+          AUTH_JWT_SECRET: 'x'.repeat(32),
+          DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+          NODE_ENV: 'production',
+          RATE_LIMIT_ENABLED: 'maybe',
         },
       ),
-    ).toThrow("RATE_LIMIT_ENABLED must be a boolean value.");
+    ).toThrow('RATE_LIMIT_ENABLED must be a boolean value.');
 
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: "x".repeat(32),
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-          NODE_ENV: "production",
-          RATE_LIMIT_STORE: "redis",
+          AUTH_JWT_SECRET: 'x'.repeat(32),
+          DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+          NODE_ENV: 'production',
+          RATE_LIMIT_STORE: 'redis',
         },
       ),
-    ).toThrow(
-      "RATE_LIMIT_STORE=redis requires REDIS_URL or REDIS_HOSTS to be configured.",
-    );
+    ).toThrow('RATE_LIMIT_STORE=redis requires REDIS_URL or REDIS_HOSTS to be configured.');
 
     expect(() =>
       resolveBackendEnvironmentConfig(
-        { appName: "test-api", port: 3010 },
+        { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: "x".repeat(32),
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/app",
-          NODE_ENV: "production",
-          RATE_LIMIT_STORE: "redis",
-          REDIS_HOSTS: "redis.example.com:6379",
-          REDIS_MODE: "sentinel",
+          AUTH_JWT_SECRET: 'x'.repeat(32),
+          DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
+          NODE_ENV: 'production',
+          RATE_LIMIT_STORE: 'redis',
+          REDIS_HOSTS: 'redis.example.com:6379',
+          REDIS_MODE: 'sentinel',
         },
       ),
-    ).toThrow(
-      "REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.",
-    );
+    ).toThrow('REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.');
   });
 });

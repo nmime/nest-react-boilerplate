@@ -105,8 +105,8 @@ export function toAuthUserRecord(entity: {
     theme: normalizeUserThemePreference(entity.theme) ?? AuthenticatedTheme.System,
     status: entity.status,
     lastLoginAt: entity.lastLoginAt,
-    avatarUrl: entity.avatarUrl ?? null,
-    avatarHash: entity.avatarHash ?? null,
+    avatarUrl: entity.avatarUrl || null,
+    avatarHash: entity.avatarHash || null,
     avatarStatus: entity.avatarStatus ?? 'none',
   };
 }

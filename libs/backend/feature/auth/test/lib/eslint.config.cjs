@@ -18,4 +18,10 @@ module.exports = [
       },
     },
   },
+  {
+    files: ["src/**/*spec.ts"],
+    rules: {
+      "@typescript-eslint/require-await": "off",
+    },
+  },
 ];

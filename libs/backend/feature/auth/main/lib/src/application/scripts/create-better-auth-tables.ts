@@ -10,13 +10,11 @@
  *
  * Idempotent: uses IF NOT EXISTS / conditional ALTER for safety.
  */
-import { Pool } from "pg";
-
-/* eslint-disable no-console */
+import { Pool } from 'pg';
 
 const dbUrl = process.env.DATABASE_URL;
 if (!dbUrl) {
-  console.error("DATABASE_URL is required");
+  console.error('DATABASE_URL is required');
   process.exit(1);
 }
 
@@ -25,8 +23,9 @@ const pool = new Pool({ connectionString: dbUrl });
 async function run(): Promise<void> {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await client.query('BEGIN');
 
+    // ─── user ──────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS "user" (
         "id" varchar(128) PRIMARY KEY,
@@ -40,12 +39,14 @@ async function run(): Promise<void> {
       )
     `);
 
+    // Plugin-added columns (idempotent: skip if already exist)
     await client.query(`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "status" varchar(32) NOT NULL DEFAULT 'active'`);
     await client.query(`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roles" json NOT NULL DEFAULT '[]'`);
     await client.query(`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "permissions" json NOT NULL DEFAULT '[]'`);
     await client.query(`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "locale" varchar(16) NOT NULL DEFAULT 'en'`);
     await client.query(`ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "theme" varchar(16) NOT NULL DEFAULT 'system'`);
 
+    // ─── session ────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS "session" (
         "id" varchar(128) PRIMARY KEY,
@@ -63,6 +64,7 @@ async function run(): Promise<void> {
         ON "session" ("token")
     `);
 
+    // ─── account ────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS "account" (
         "id" varchar(128) PRIMARY KEY,
@@ -84,6 +86,7 @@ async function run(): Promise<void> {
         ON "account" ("providerId", "accountId")
     `);
 
+    // ─── verification ──────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS "verification" (
         "id" varchar(128) PRIMARY KEY,
@@ -94,12 +97,11 @@ async function run(): Promise<void> {
       )
     `);
 
-    await client.query("COMMIT");
-    console.log("[create-better-auth-tables] All Better-Auth tables created/verified successfully.");
-  } catch (err: unknown) {
-    await client.query("ROLLBACK");
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("[create-better-auth-tables] Migration failed:", message);
+    await client.query('COMMIT');
+    console.log('[create-better-auth-tables] All Better-Auth tables created/verified successfully.');
+  } catch (err: any) {
+    await client.query('ROLLBACK');
+    console.error('[create-better-auth-tables] Migration failed:', err.message);
     process.exit(1);
   } finally {
     client.release();

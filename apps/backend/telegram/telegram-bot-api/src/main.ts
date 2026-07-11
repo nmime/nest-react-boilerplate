@@ -7,5 +7,5 @@ import { TelegramBotApiModule } from "./telegram-bot-api.module";
 void bootstrapNestApi(TelegramBotApiModule, {
   appName: "telegram-bot-api",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  defaultPort: 3013,
+  port: 3013,
 });

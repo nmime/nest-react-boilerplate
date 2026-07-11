@@ -1,25 +1,15 @@
-import fastifyStatic from "@fastify/static";
-import fastify from "fastify";
-import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
-import { renderPage } from "vike/server";
+import fastifyStatic from '@fastify/static';
+import fastify from 'fastify';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { renderPage } from 'vike/server';
 
-const appRoot = resolve(import.meta.dirname, "..");
-const workspaceDistRoot = resolve(appRoot, "../../../dist/apps/frontend/site");
+const appRoot = resolve(import.meta.dirname, '..');
+const workspaceDistRoot = resolve(appRoot, '../../../dist/apps/frontend/site');
 const siteRoot = resolve(process.env.SITE_DIST_ROOT ?? workspaceDistRoot);
-const clientAssetsRoot = join(siteRoot, "client");
-const serverEntryPath = join(siteRoot, "server/entry.mjs");
-
-function isContainerEnvironment(): boolean {
-  const container = process.env.CONTAINER?.trim().toLowerCase();
-  const hasContainerMarker =
-    container !== undefined &&
-    container !== "" &&
-    !["0", "false", "no", "off"].includes(container);
-
-  return Boolean(process.env.KUBERNETES_SERVICE_HOST) || hasContainerMarker;
-}
+const clientAssetsRoot = join(siteRoot, 'client');
+const serverEntryPath = join(siteRoot, 'server/entry.mjs');
 
 function readPort(name: string, value: string | undefined): number | undefined {
   const trimmed = value?.trim();
@@ -38,12 +28,13 @@ function readPort(name: string, value: string | undefined): number | undefined {
   return parsed;
 }
 
-const port =
-  readPort("SITE_APP_PORT", process.env.SITE_APP_PORT) ??
-  readPort("PORT", process.env.PORT) ??
-  (isContainerEnvironment() ? 80 : 4203);
+const configuredPort = readPort('SITE_APP_PORT', process.env.SITE_APP_PORT) ?? readPort('PORT', process.env.PORT);
+if (configuredPort === undefined) {
+  throw new Error('No explicit site port configured. Set SITE_APP_PORT or PORT.');
+}
+const port = configuredPort;
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === 'production') {
   if (!existsSync(serverEntryPath)) {
     throw new Error(`Missing Vike production server entry: ${serverEntryPath}`);
   }
@@ -52,7 +43,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const app = fastify({
-  logger: process.env.NODE_ENV !== "test",
+  logger: process.env.NODE_ENV !== 'test',
 });
 
 if (existsSync(clientAssetsRoot)) {
@@ -62,25 +53,24 @@ if (existsSync(clientAssetsRoot)) {
   });
 }
 
-const healthPayload = { status: "ok", service: "site-app" } as const;
+const healthPayload = { status: 'ok', service: 'site-app' } as const;
 
-app.get("/health", () => healthPayload);
-app.get("/live", () => healthPayload);
-app.get("/ready", () => healthPayload);
+app.get('/health', () => healthPayload);
+app.get('/live', () => healthPayload);
+app.get('/ready', () => healthPayload);
 
-app.get("/*", async (request, reply) => {
+app.get('/*', async (request, reply) => {
   const pageContext = await renderPage({
     headersOriginal: request.headers,
-    urlOriginal: request.raw.url ?? "/",
+    urlOriginal: request.raw.url ?? '/',
   });
   // Vike types `httpResponse` as always present, but it is `null` for requests
   // Vike does not render (e.g. asset paths without a matching route), so keep
   // the fallback guard and reflect the real nullability here.
-  const httpResponse = pageContext.httpResponse as
-    typeof pageContext.httpResponse | null;
+  const httpResponse = pageContext.httpResponse as typeof pageContext.httpResponse | null;
 
   if (!httpResponse) {
-    return reply.code(404).send("Not found");
+    return reply.code(404).send('Not found');
   }
 
   httpResponse.headers.forEach(([name, value]) => {
@@ -90,4 +80,4 @@ app.get("/*", async (request, reply) => {
   return reply.code(httpResponse.statusCode).send(httpResponse.body);
 });
 
-await app.listen({ host: "0.0.0.0", port });
+await app.listen({ host: '0.0.0.0', port });

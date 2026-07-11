@@ -1,6 +1,7 @@
 x-backend-env: &backend-env
   NODE_ENV: ${NODE_ENV:-development}
   HOST: ${HOST:-0.0.0.0}
+  PORT: 80
   CORS_ORIGINS: ${CORS_ORIGINS:-}
   DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
   AUTH_PERSISTENCE: postgres
@@ -123,7 +124,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: '${ADMIN_APP_API_PORT:-0}'
+        published: '${ADMIN_APP_API_PORT:-3001}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -145,7 +146,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: '${USER_APP_API_PORT:-0}'
+        published: '${USER_APP_API_PORT:-3002}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -167,7 +168,7 @@ services:
         condition: service_completed_successfully
     ports:
       - target: 80
-        published: '${AUTH_APP_API_PORT:-0}'
+        published: '${AUTH_APP_API_PORT:-3003}'
         protocol: tcp
     healthcheck: *backend-healthcheck
 
@@ -187,7 +188,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: '${ADMIN_APP_PORT:-0}'
+        published: '${ADMIN_APP_PORT:-4200}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -209,7 +210,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: '${USER_APP_PORT:-0}'
+        published: '${USER_APP_PORT:-4201}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -233,7 +234,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: '${LANDING_APP_PORT:-0}'
+        published: '${LANDING_APP_PORT:-4202}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
@@ -242,7 +243,7 @@ services:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
       dockerfile: Dockerfile
-      target: site
+      target: site-runtime
       args:
         NX_PROJECT: site-app
     restart: unless-stopped
@@ -255,7 +256,7 @@ services:
         condition: service_healthy
     ports:
       - target: 80
-        published: '${SITE_APP_PORT:-0}'
+        published: '${SITE_APP_PORT:-4203}'
         protocol: tcp
     healthcheck:
       test:
@@ -287,7 +288,7 @@ services:
         condition: service_healthy
     ports:
       - target: 8080
-        published: '${MOBILE_APP_PORT:-0}'
+        published: '${MOBILE_APP_PORT:-4300}'
         protocol: tcp
     healthcheck: *frontend-healthcheck
 

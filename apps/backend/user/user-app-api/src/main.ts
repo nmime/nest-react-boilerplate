@@ -7,5 +7,5 @@ import { UserAppApiModule } from "./user-app-api.module";
 void bootstrapNestApi(UserAppApiModule, {
   appName: "user-app-api",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  defaultPort: 3002,
+  port: 3002,
 });

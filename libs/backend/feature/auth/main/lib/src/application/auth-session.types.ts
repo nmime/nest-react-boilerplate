@@ -1,28 +1,18 @@
 import type { AuthSessionView, AuthenticatedUserView } from "@app/backend-feature-auth-shared";
 import { AuthProvider, AuthProviderChannel } from "@app/backend-feature-auth-shared";
+import type { BetterAuthUser } from "./better-auth-types";
 
 export interface BetterAuthSessionView {
   user: BetterAuthUserView;
   expiresAt: Date;
 }
 
-export interface BetterAuthUserView {
-  id: string;
-  tenantId?: string;
-  name?: string;
-  email?: string;
+export interface BetterAuthUserView extends BetterAuthUser {
   emailVerified?: boolean;
-  image?: string;
   role?: string;
-  status?: string;
-  locale?: string;
-  theme?: string;
-  roles?: string[];
-  permissions?: string[];
   lastSignInAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
-  [key: string]: any;
 }
 
 export function toLegacySessionView(
@@ -50,8 +40,8 @@ export function toLegacyUserView(user: BetterAuthUserView): AuthenticatedUserVie
     id: user.id,
     tenantId: user.tenantId || "00000000-0000-0000-0000-000000000000",
     email: user.email || "",
-    displayName: user.name || user.displayName,
-    locale: user.locale as AuthenticatedUserView["locale"],
+    displayName: user.name || (user.displayName as string | undefined),
+    locale: (user.locale as AuthenticatedUserView["locale"]) || undefined,
     theme: (user.theme || "system") as AuthenticatedUserView["theme"],
     roles: user.roles || [],
     permissions: user.permissions || [],

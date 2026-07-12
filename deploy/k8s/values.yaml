@@ -12,26 +12,26 @@ config:
   corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
-  authJwtExpiresInSeconds: "3600"
-  authTokenCleanupEnabled: "true"
-  authTokenCleanupIntervalMs: "3600000"
-  authTokenCleanupRunOnStart: "true"
-  openApiEnabled: "false"
+  authJwtExpiresInSeconds: '3600'
+  authTokenCleanupEnabled: 'true'
+  authTokenCleanupIntervalMs: '3600000'
+  authTokenCleanupRunOnStart: 'true'
+  openApiEnabled: 'false'
   logLevel: info
-  rateLimitEnabled: "true"
+  rateLimitEnabled: 'true'
   rateLimitStore: redis
-  rateLimitWindowMs: "60000"
-  rateLimitMax: "100"
+  rateLimitWindowMs: '60000'
+  rateLimitMax: '100'
   redisUrl: redis://redis-master.databases.svc.cluster.local:6379/0
-  redisKeyPrefix: "nrb:"
+  redisKeyPrefix: 'nrb:'
 
 postgresql:
   host: postgresql-rw.databases.svc.cluster.local
-  port: "5432"
+  port: '5432'
   database: nest_react_boilerplate
   user: nest_react_boilerplate
-  ssl: "true"
-  sslRejectUnauthorized: "true"
+  ssl: 'true'
+  sslRejectUnauthorized: 'true'
 
 frontendNginx:
   listenPort: 8080
@@ -40,8 +40,8 @@ frontendNginx:
 migrations:
   image:
     repository: ghcr.io/nmime/nest-react-boilerplate/migrator
-    tag: "sha-0000000"
-    digest: ""
+    tag: 'sha-0000000'
+    digest: ''
     pullPolicy: IfNotPresent
   podSecurityContext:
     runAsNonRoot: true
@@ -50,22 +50,22 @@ migrations:
     seccompProfile: { type: RuntimeDefault }
   securityContext:
     allowPrivilegeEscalation: false
-    capabilities: { drop: ["ALL"] }
+    capabilities: { drop: ['ALL'] }
 
 apps:
   authApi:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/auth-app-api
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
@@ -73,15 +73,15 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/user-app-api
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
@@ -89,15 +89,15 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/admin-app-api
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
@@ -105,8 +105,8 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/landing-app
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
@@ -115,7 +115,7 @@ apps:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
@@ -123,8 +123,8 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/site-app
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
@@ -133,7 +133,7 @@ apps:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
@@ -141,8 +141,8 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/mobile-app
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
@@ -151,7 +151,7 @@ apps:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
@@ -159,8 +159,8 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/user-app
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
@@ -169,7 +169,7 @@ apps:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
@@ -177,8 +177,8 @@ apps:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/admin-app
-      tag: "sha-0000000"
-      digest: ""
+      tag: 'sha-0000000'
+      digest: ''
       pullPolicy: IfNotPresent
     podSecurityContext:
       runAsNonRoot: true
@@ -187,7 +187,7 @@ apps:
       seccompProfile: { type: RuntimeDefault }
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities: { drop: ["ALL"] }
+      capabilities: { drop: ['ALL'] }
     resources:
       requests: { cpu: 25m, memory: 64Mi }
       limits: { cpu: 200m, memory: 128Mi }
@@ -197,8 +197,8 @@ ingress:
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
@@ -223,8 +223,8 @@ monitoring:
   enabled: true
   otel:
     enabled: true
-    endpoint: ""
-    metricExportInterval: "30000"
+    endpoint: ''
+    metricExportInterval: '30000'
   otelCollector:
     enabled: true
     replicas: 2
@@ -240,7 +240,7 @@ monitoring:
 # docs/operations/observability-dr.md for the encryption/upload hook contract.
 backups:
   enabled: true
-  schedule: "17 * * * *"
+  schedule: '17 * * * *'
   destination:
     objectStore:
       enabled: true
@@ -258,3 +258,21 @@ backups:
 
 networkPolicy:
   enabled: true
+
+coroot:
+  enabled: true
+  replicas: 1
+  image:
+    repository: coroot/coroot
+    tag: latest
+    pullPolicy: IfNotPresent
+  prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ['ALL'] }

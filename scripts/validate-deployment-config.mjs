@@ -209,10 +209,11 @@ for (const [path, port] of [
   ['apps/backend/user/user-app-api/src/main.ts', 3002],
   ['apps/backend/auth/auth-app-api/src/main.ts', 3003],
   ['apps/backend/discord/discord-app-api/src/main.ts', 3007],
-  ['apps/backend/telegram/telegram-bot-api/src/main.ts', 3013],
 ]) {
   has(read(path), `port: ${port}`, `${path} explicit port ${port}`);
 }
+// telegram-bot-api uses register() + NestFactory.listen() instead of bootstrapNestApi
+has(read('apps/backend/telegram/telegram-bot-api/src/main.ts'), 'listen(3013)', 'telegram-bot-api explicit port 3013');
 has(read('apps/frontend/site/project.json'), 'SITE_APP_PORT=4203', 'site start target explicitly assigns port 4203');
 has(
   productionEnvExample,

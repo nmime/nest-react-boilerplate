@@ -21,7 +21,7 @@ describe('TelegramBotApiModule', () => {
 
     try {
       moduleRef = await Test.createTestingModule({
-        imports: [TelegramBotApiModule],
+        imports: [TelegramBotApiModule.register()],
       }).compile();
 
       expect(moduleRef.get(BaseHealthController)).toBeInstanceOf(
@@ -55,7 +55,7 @@ describe('TelegramBotApiModule', () => {
 
     try {
       moduleRef = await Test.createTestingModule({
-        imports: [TelegramBotApiModule],
+        imports: [TelegramBotApiModule.register()],
       }).compile();
 
       expect(moduleRef.get(BaseHealthController)).toBeInstanceOf(

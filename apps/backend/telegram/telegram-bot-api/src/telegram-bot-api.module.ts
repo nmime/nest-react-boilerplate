@@ -11,32 +11,25 @@ import { TelegramBotApiHealthServiceProvider } from './health.config';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { TelegramPollingService } from './telegram-polling.service';
 
-// Read the transport mode at import time (when env vars are available).
-// Falls back to webhook mode in test/CI where env may be partial.
-function detectMode(): 'webhook' | 'polling' {
-  try {
-    return resolveTelegramBotConfig().mode;
-  } catch {
-    // TELEGRAM_BOT_TOKEN not set — default to webhook so the module
-    // can be imported in tests/CI without requiring real credentials.
-    return 'webhook';
+@Module({})
+export class TelegramBotApiModule {
+  static register(): DynamicModule {
+    const config = resolveTelegramBotConfig();
+    const usePolling = config.mode === 'polling';
+    const useWebhook = config.mode === 'webhook';
+
+    return {
+      module: TelegramBotApiModule,
+      imports: [TelegramBotModule],
+      controllers: [
+        BaseHealthController,
+        ...(useWebhook ? [TelegramWebhookController] : []),
+      ],
+      providers: [
+        TelegramBotApiHealthServiceProvider,
+        HealthPrivateNetworkIpGuard,
+        ...(usePolling ? [TelegramPollingService] : []),
+      ],
+    };
   }
 }
-
-const mode = detectMode();
-const usePolling = mode === 'polling';
-const useWebhook = mode === 'webhook';
-
-@Module({
-  imports: [TelegramBotModule],
-  controllers: [
-    BaseHealthController,
-    ...(useWebhook ? [TelegramWebhookController] : []),
-  ],
-  providers: [
-    TelegramBotApiHealthServiceProvider,
-    HealthPrivateNetworkIpGuard,
-    ...(usePolling ? [TelegramPollingService] : []),
-  ],
-})
-export class TelegramBotApiModule {}

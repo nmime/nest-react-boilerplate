@@ -47,7 +47,7 @@ migrations:
     capabilities: { drop: ['ALL'] }
 
 apps:
-  authApi:
+  authAppApi:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/auth-app-api
@@ -63,7 +63,7 @@ apps:
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
-  userApi:
+  userAppApi:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/user-app-api
@@ -79,7 +79,7 @@ apps:
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
-  adminApi:
+  adminAppApi:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/admin-app-api
@@ -95,7 +95,55 @@ apps:
     resources:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
-  landing:
+  discordAppApi:
+    replicas: 1
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/discord-app-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  telegramBotApi:
+    replicas: 1
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/telegram-bot-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  telegramBotWorker:
+    replicas: 1
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/telegram-bot-worker
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  landingApp:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/landing-app
@@ -110,7 +158,7 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ['ALL'] }
-  site:
+  siteApp:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/site-app
@@ -128,7 +176,7 @@ apps:
     resources:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
-  mobileFrontend:
+  mobileApp:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/mobile-app
@@ -143,7 +191,7 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ['ALL'] }
-  userFrontend:
+  userApp:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/user-app
@@ -158,7 +206,7 @@ apps:
     securityContext:
       allowPrivilegeEscalation: false
       capabilities: { drop: ['ALL'] }
-  adminFrontend:
+  adminApp:
     replicas: 3
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/admin-app
@@ -180,6 +228,25 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+  hosts:
+    - host: example.com
+      service: landing-app
+      paths: ['/']
+    - host: site.example.com
+      service: site-app
+      paths: ['/']
+    - host: app.example.com
+      service: user-app
+      paths: ['/']
+    - host: mobile.example.com
+      service: mobile-app
+      paths: ['/']
+    - host: admin.example.com
+      service: admin-app
+      paths: ['/']
+    - host: auth.example.com
+      service: auth-app-api
+      paths: ['/']
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:

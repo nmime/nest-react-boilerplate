@@ -444,23 +444,23 @@ if (validateHelmStatic) {
 
   const helmValues = read('.helm/values.yaml');
   has(helmValues, 'listenPort: 8080', 'Helm frontend listenPort default');
-  for (const app of ['authApi', 'userApi', 'adminApi', 'site']) {
+  for (const app of ['authAppApi', 'userAppApi', 'adminAppApi', 'siteApp']) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, 'port: 80', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
   }
-  for (const app of ['landing', 'userFrontend', 'adminFrontend', 'mobileFrontend']) {
+  for (const app of ['landingApp', 'userApp', 'adminApp', 'mobileApp']) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, 'port: 8080', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
   }
-  const siteHelmBlock = yamlMapEntry(helmValues, 'site');
+  const siteHelmBlock = yamlMapEntry(helmValues, 'siteApp');
   has(siteHelmBlock, 'readinessPath: /ready', 'site readiness path');
   const deploymentTemplate = read('.helm/templates/deployment.yaml');
   has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
   const apiEnvFromBlock = section(
     deploymentTemplate,
-    '{{- if contains "Api" $name }}',
+    '{{- if contains "AppApi" $name }}',
     '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
   );
   has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
@@ -476,14 +476,14 @@ if (validateHelmStatic) {
 
   const productionValues = read('.helm/values-production.yaml');
   for (const app of [
-    'authApi',
-    'userApi',
-    'adminApi',
-    'landing',
-    'site',
-    'mobileFrontend',
-    'userFrontend',
-    'adminFrontend',
+    'authAppApi',
+    'userAppApi',
+    'adminAppApi',
+    'landingApp',
+    'siteApp',
+    'mobileApp',
+    'userApp',
+    'adminApp',
   ]) {
     const appBlock = yamlMapEntry(productionValues, app);
     has(appBlock, 'runAsNonRoot: true', `${app} runs as non-root in production values`);

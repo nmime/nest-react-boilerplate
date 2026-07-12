@@ -80,7 +80,7 @@ frontendNginx:
 # services. API probes should keep /live and /ready; nginx probes use
 # frontendNginx.healthPath when nginxConfig=true.
 apps:
-  authApi:
+  authAppApi:
     enabled: true
     replicas: 2
     port: 80
@@ -97,7 +97,7 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
     podSecurityContext: {}
     securityContext: {}
-  userApi:
+  userAppApi:
     enabled: true
     replicas: 2
     port: 80
@@ -114,7 +114,7 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
     podSecurityContext: {}
     securityContext: {}
-  adminApi:
+  adminAppApi:
     enabled: true
     replicas: 2
     port: 80
@@ -131,7 +131,56 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
     podSecurityContext: {}
     securityContext: {}
-  landing:
+  discordAppApi:
+    enabled: false
+    replicas: 1
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/discord-app-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  telegramBotApi:
+    enabled: false
+    replicas: 1
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  telegramBotWorker:
+    enabled: false
+    replicas: 1
+    port: 80
+    servicePort: 80
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-worker
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  landingApp:
     enabled: true
     replicas: 2
     port: 8080
@@ -149,7 +198,7 @@ apps:
       limits: { cpu: 200m, memory: 128Mi }
     podSecurityContext: {}
     securityContext: {}
-  site:
+  siteApp:
     enabled: true
     replicas: 2
     port: 80
@@ -166,7 +215,7 @@ apps:
       limits: { cpu: 300m, memory: 256Mi }
     podSecurityContext: {}
     securityContext: {}
-  mobileFrontend:
+  mobileApp:
     enabled: true
     replicas: 2
     port: 8080
@@ -184,7 +233,7 @@ apps:
       limits: { cpu: 200m, memory: 128Mi }
     podSecurityContext: {}
     securityContext: {}
-  userFrontend:
+  userApp:
     enabled: true
     replicas: 2
     port: 8080
@@ -202,7 +251,7 @@ apps:
       limits: { cpu: 200m, memory: 128Mi }
     podSecurityContext: {}
     securityContext: {}
-  adminFrontend:
+  adminApp:
     enabled: true
     replicas: 2
     port: 8080
@@ -232,22 +281,22 @@ ingress:
   # traffic cutover; see docs/frontend-deployment-topology.md.
   hosts:
     - host: example.com
-      service: landing
+      service: landing-app
       paths: ['/']
     - host: site.example.com
-      service: site
+      service: site-app
       paths: ['/']
     - host: app.example.com
-      service: user-frontend
+      service: user-app
       paths: ['/']
     - host: mobile.example.com
-      service: mobile-frontend
+      service: mobile-app
       paths: ['/']
     - host: admin.example.com
-      service: admin-frontend
+      service: admin-app
       paths: ['/']
     - host: auth.example.com
-      service: auth-api
+      service: auth-app-api
       paths: ['/']
   tls:
     - secretName: nest-react-boilerplate-tls

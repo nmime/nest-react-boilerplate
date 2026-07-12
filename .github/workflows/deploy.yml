@@ -43,7 +43,7 @@ jobs:
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "Deploying commit: $SHORT_SHA"
 
-      - name: Update deploy manifest image tags
+      - name: Update production values image tags
         run: python3 scripts/update-deploy-tags.py "${{ steps.sha.outputs.short_sha }}"
 
       - name: Validate Helm chart with updated values
@@ -55,14 +55,14 @@ jobs:
         run: |
           helm template nest-react-boilerplate .helm \
             -f .helm/values.yaml \
-            -f deploy/k8s/values.yaml \
+            -f .helm/values-production.yaml \
             --validate
 
       - name: Commit and push deployment update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add deploy/k8s/values.yaml
+          git add .helm/values-production.yaml
           if git diff --cached --quiet; then
             echo "No changes to deploy manifest — skipping commit"
             exit 0

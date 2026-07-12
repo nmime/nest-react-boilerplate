@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update image tags in deploy/k8s/values.yaml to the given git short SHA.
+"""Update image tags in .helm/values-production.yaml to the given git short SHA.
 
 Usage:
     python3 scripts/update-deploy-tags.py <short_sha> [--dry-run]
@@ -16,7 +16,7 @@ from pathlib import Path
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
         print(f"Usage: {sys.argv[0]} <git-short-sha> [--dry-run]")
-        print("  Updates all image tags in deploy/k8s/values.yaml")
+        print("  Updates all image tags in .helm/values-production.yaml")
         sys.exit(1)
 
     sha = sys.argv[1]
@@ -31,7 +31,7 @@ def main():
         sys.exit(1)
 
     tag = f"sha-{sha.lower()}"
-    values_file = Path("deploy/k8s/values.yaml")
+    values_file = Path(".helm/values-production.yaml")
 
     if not values_file.exists():
         print(
@@ -44,7 +44,7 @@ def main():
 
     # Pattern 1: full image context block
     new_content = re.sub(
-        r"(image:\s*\n\s+repository:.*\n\s+tag:\s*)['"]?(?:sha-[0-9a-fA-F]+|latest)['"]?",
+        r"(image:\s*\n\s+repository:.*\n\s+tag:\s*)['\"]?(?:sha-[0-9a-fA-F]+|latest|sha-REPLACE_WITH_RELEASE_GIT_SHA)['\"]?",
         rf'\g<1>"{tag}"',
         content,
         flags=re.DOTALL,
@@ -52,7 +52,7 @@ def main():
 
     # Pattern 2: fallback for remaining tag lines
     new_content = re.sub(
-        r"^(\s+tag:\s*)['"]?(?:sha-[0-9a-fA-F]+|latest)['"]?",
+        r"^(\s+tag:\s*)['\"]?(?:sha-[0-9a-fA-F]+|latest|sha-REPLACE_WITH_RELEASE_GIT_SHA)['\"]?",
         rf'\1"{tag}"',
         new_content,
         flags=re.MULTILINE,

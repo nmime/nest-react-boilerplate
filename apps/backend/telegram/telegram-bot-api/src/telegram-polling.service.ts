@@ -3,16 +3,16 @@ import {
   Injectable,
   OnApplicationBootstrap,
   OnApplicationShutdown,
-} from "@nestjs/common";
-import { run, type RunnerHandle } from "@grammyjs/runner";
+} from '@nestjs/common';
+import { run, type RunnerHandle } from '@grammyjs/runner';
 import {
   TelegramBotInstanceInjectToken,
   assertPollingRuntimeAllowed,
   type TelegramBotInstance,
-} from "@app/backend-feature-telegram-bot";
+} from '@app/backend-feature-telegram-bot';
 
 @Injectable()
-export class TelegramBotWorkerService
+export class TelegramPollingService
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
   private handle: RunnerHandle | null = null;
@@ -25,7 +25,7 @@ export class TelegramBotWorkerService
   onApplicationBootstrap(): void {
     assertPollingRuntimeAllowed(this.telegram.config);
     this.handle = run(this.telegram.bot, {
-      runner: { silent: this.telegram.config.environment === "test" },
+      runner: { silent: this.telegram.config.environment === 'test' },
       sink: { concurrency: 10 },
     });
   }

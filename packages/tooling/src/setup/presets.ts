@@ -85,7 +85,6 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'mobile-app',
       'discord-app-api',
       'telegram-bot-api',
-      'telegram-bot-worker',
       'fullstack-e2e',
     ],
     capabilities: [
@@ -112,8 +111,8 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
    */
   {
     id: 'bots',
-    description: 'Telegram + Discord bots with workers — bot-first setup',
-    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'discord-app-api'],
+    description: 'Telegram + Discord bots — bot-first setup',
+    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'discord-app-api'],
     capabilities: ['postgres', 'redis', 'telegram-bot', 'discord-bot', 'otel'],
   },
 ] as const;

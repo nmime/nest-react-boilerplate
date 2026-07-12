@@ -123,7 +123,6 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
-      'telegram-bot-worker',
       'fullstack-e2e',
     ] as const;
     assert.deepEqual([...appIds].sort(), [...expected].sort());
@@ -181,10 +180,10 @@ describe('catalog — appCatalog', () => {
     assert.ok(appCatalog['user-app'].requiresApps.includes('user-app-api'));
   });
 
-  it('telegram-bot-worker requires telegram-bot-api and redis', () => {
-    const e = appCatalog['telegram-bot-worker'];
-    assert.ok(e.requiresApps.includes('telegram-bot-api'));
-    assert.ok(e.requiresCapabilities.includes('redis'));
+  it('telegram-bot-api requires telegram-bot capability', () => {
+    const e = appCatalog['telegram-bot-api'];
+    assert.ok(e.requiresCapabilities.includes('telegram-bot'));
+    assert.ok(e.requiresCapabilities.includes('postgres'));
   });
 
   it('every app references valid capability IDs', () => {
@@ -262,9 +261,9 @@ describe('catalog — validateSelection', () => {
     assert.deepEqual(validateSelection(['admin-app', 'admin-app-api'], ['authz', 'design-tokens', 'postgres']), []);
   });
 
-  it('no issues for telegram-bot-worker with all deps', () => {
+  it('no issues for telegram-bot-api with telegram-bot capability', () => {
     assert.deepEqual(
-      validateSelection(['telegram-bot-api', 'telegram-bot-worker'], ['telegram-bot', 'postgres', 'redis']),
+      validateSelection(['telegram-bot-api'], ['telegram-bot', 'postgres']),
       [],
     );
   });
@@ -419,7 +418,6 @@ describe('presets — expandPreset', () => {
   it('bots: telegram + discord apps and capabilities', () => {
     const e = expandPreset('bots');
     assert.ok(e.apps.includes('telegram-bot-api'));
-    assert.ok(e.apps.includes('telegram-bot-worker'));
     assert.ok(e.apps.includes('discord-app-api'));
     assert.ok(e.capabilities.includes('telegram-bot'));
     assert.ok(e.capabilities.includes('discord-bot'));
@@ -471,14 +469,13 @@ describe('component — schema → preset → catalog', () => {
     assert.ok(e.apps.includes('admin-app-api'));
   });
 
-  it('config with telegram-bot-worker deps added by expansion', () => {
+  it('config with telegram-bot-api expansion', () => {
     const c = parseNrbConfig({
       schemaVersion,
-      apps: ['telegram-bot-worker'],
+      apps: ['telegram-bot-api'],
       capabilities: ['telegram-bot'],
     });
     const e = expandDependencies(c.apps, c.capabilities);
-    assert.ok(e.capabilities.includes('redis'));
     assert.ok(e.apps.includes('telegram-bot-api'));
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
   });
@@ -554,7 +551,6 @@ describe('e2e — example config flow', () => {
     const e = expandPreset(c.preset);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
     assert.ok(e.apps.includes('telegram-bot-api'));
-    assert.ok(e.apps.includes('telegram-bot-worker'));
     assert.ok(e.apps.includes('discord-app-api'));
   });
 

@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../../../dist/out-tsc/apps/backend/telegram/telegram-bot-worker",
-    "types": ["node"]
-  },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts"],
-  "include": ["src/**/*.ts"]
-}

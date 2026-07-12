@@ -210,7 +210,6 @@ for (const [path, port] of [
   ['apps/backend/auth/auth-app-api/src/main.ts', 3003],
   ['apps/backend/discord/discord-app-api/src/main.ts', 3007],
   ['apps/backend/telegram/telegram-bot-api/src/main.ts', 3013],
-  ['apps/backend/telegram/telegram-bot-worker/src/main.ts', 3023],
 ]) {
   has(read(path), `port: ${port}`, `${path} explicit port ${port}`);
 }

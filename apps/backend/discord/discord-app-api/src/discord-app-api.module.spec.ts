@@ -22,6 +22,8 @@ async function boot(externalAuth: Partial<ExternalAuthService>): Promise<{
   externalAuth: Partial<ExternalAuthService>;
   close: () => Promise<void>;
 }> {
+  process.env.AUTH_PERSISTENCE = 'memory';
+  process.env.OPENAPI_ENABLED = 'true';
   const moduleRef = await Test.createTestingModule({
     imports: [DiscordAppApiModule],
   })
@@ -163,6 +165,8 @@ describe("DiscordAppApiModule wiring", () => {
   });
 
   it("exposes the account application port from the module graph", async () => {
+    process.env.AUTH_PERSISTENCE = 'memory';
+    process.env.OPENAPI_ENABLED = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [DiscordAppApiModule],
     })

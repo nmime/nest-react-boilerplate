@@ -4,6 +4,12 @@ import { existsSync, readFileSync } from 'node:fs';
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected deployment config: ${label}`);
+// Quote-agnostic: try single-quote and double-quote variants.
+const hasQ = (text, pattern, label = pattern) => {
+  const dq = pattern.replace(/'/g, '"');
+  const sq = pattern.replace(/"/g, "'");
+  assert.ok(text.includes(dq) || text.includes(sq), `Missing expected deployment config: ${label}`);
+};
 const before = (text, first, second, label = `${first} before ${second}`) => {
   const firstIndex = text.indexOf(first);
   const secondIndex = text.indexOf(second);
@@ -482,7 +488,7 @@ if (validateHelmStatic) {
     const appBlock = yamlMapEntry(productionValues, app);
     has(appBlock, 'runAsNonRoot: true', `${app} runs as non-root in production values`);
     has(appBlock, 'allowPrivilegeEscalation: false', `${app} disables privilege escalation`);
-    has(appBlock, 'capabilities: { drop: ["ALL"] }', `${app} drops Linux capabilities`);
+    hasQ(appBlock, 'capabilities: { drop: ["ALL"] }', `${app} drops Linux capabilities`);
   }
   const migrationValuesBlock = section(productionValues, 'migrations:', '\n\napps:');
   has(migrationValuesBlock, 'runAsNonRoot: true', 'migration job runs as non-root in production values');
@@ -490,7 +496,7 @@ if (validateHelmStatic) {
   has(migrationValuesBlock, 'runAsGroup: 1000', 'migration job uses node group GID in production values');
   has(migrationValuesBlock, 'seccompProfile: { type: RuntimeDefault }', 'migration job uses RuntimeDefault seccomp');
   has(migrationValuesBlock, 'allowPrivilegeEscalation: false', 'migration job disables privilege escalation');
-  has(migrationValuesBlock, 'capabilities: { drop: ["ALL"] }', 'migration job drops Linux capabilities');
+  hasQ(migrationValuesBlock, 'capabilities: { drop: ["ALL"] }', 'migration job drops Linux capabilities');
 } else {
   console.log('Helm static deployment assertions skipped for docker mode.');
 }

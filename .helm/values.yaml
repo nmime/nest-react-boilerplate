@@ -410,7 +410,7 @@ coroot:
   enabled: false
   replicas: 1
   image:
-    repository: coroot/coroot
+    repository: ghcr.io/coroot/coroot
     tag: latest
     pullPolicy: IfNotPresent
   prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'

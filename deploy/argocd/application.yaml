@@ -1,3 +1,12 @@
+# nest-react-boilerplate ArgoCD Application
+#
+# Deploy to any cluster with ArgoCD installed:
+#
+#   kubectl apply -f deploy/argocd/application.yaml -n argocd
+#
+# ansible-k8s-full-setup provisions ArgoCD with open source repos enabled
+# (sourceRepos defaults to ["*"]). No ansible-k8s-specific config needed.
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -14,7 +23,7 @@ spec:
     helm:
       valueFiles:
         - values.yaml
-        - ../deploy/k8s/values.yaml
+        - values-production.yaml
       parameters:
         - name: "imagePullSecrets[0].name"
           value: "ghcr-credentials"

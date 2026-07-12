@@ -9,6 +9,7 @@ import {
   assertRequestTenantMatchesPrincipal,
   resolveTenantId,
 } from "@app/backend-feature-auth-shared";
+import { getBaseUrl } from "@app/backend-feature-auth-main";
 
 @Injectable()
 export class BetterAuthGuard implements CanActivate {

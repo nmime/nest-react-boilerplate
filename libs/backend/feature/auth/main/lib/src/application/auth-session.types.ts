@@ -22,7 +22,8 @@ export interface BetterAuthUserView {
   lastSignInAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
-  [key: string]: any;
+  displayName?: string;
+  [key: string]: unknown;
 }
 
 export function toLegacySessionView(

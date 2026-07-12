@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { Logger } from '@nestjs/common';
 import type { BetterAuthOptions, Auth } from 'better-auth';
 import { multiTenantPlugin } from './plugins/multi-tenant';
 import { rbacPlugin } from './plugins/rbac';
@@ -17,7 +18,7 @@ export interface BetterAuthConfigOptions {
   sessionMaxAge?: number;
 }
 
-export function getBetterAuthConfig(_orm: any, options: BetterAuthConfigOptions = {}): Auth {
+export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOptions = {}): Auth {
   const dbUrl = process.env.DATABASE_URL;
 
   if (!dbUrl && process.env.OPENAPI_ENABLED !== 'true') {
@@ -40,8 +41,9 @@ export function getBetterAuthConfig(_orm: any, options: BetterAuthConfigOptions 
       minPasswordLength: 8,
       maxPasswordLength: 128,
       requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      sendResetPassword: async ({ user, url }: { user: any; url: string }) => {
-        console.log('[better-auth] password reset for', user.email, url);
+      sendResetPassword: async ({ user, url }: { user: { email?: string }; url: string }) => {
+        // In production, wire to an email service (e.g., Resend, SendGrid).
+        new Logger('better-auth').log(`password reset for ${user?.email ?? 'unknown'}: ${url}`);
       },
     },
 
@@ -80,11 +82,11 @@ export function getBetterAuthConfig(_orm: any, options: BetterAuthConfigOptions 
   return betterAuth(opts);
 }
 
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   return process.env.BETTER_AUTH_URL ?? process.env.API_BASE_URL ?? 'http://localhost:3003';
 }
 
-function getTrustedOrigins(): string[] {
+export function getTrustedOrigins(): string[] {
   const configured = process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(',').filter(Boolean);
   if (configured?.length) {
     return configured;

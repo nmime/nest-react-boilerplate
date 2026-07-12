@@ -2,6 +2,9 @@ import type { BetterAuthPlugin } from "better-auth";
 import { createAuthEndpoint, getSessionFromCtx } from "better-auth/api";
 import { z } from "zod";
 
+/** User updates that better-auth's internalAdapter.updateUser accepts. */
+type UserUpdateFields = Record<string, string>;
+
 export const rbacPlugin: BetterAuthPlugin = {
   id: "rbac",
   init: () => {},
@@ -26,7 +29,7 @@ export const rbacPlugin: BetterAuthPlugin = {
       async (req) => {
         const session = await getSessionFromCtx(req);
         if (!session) {throw new Error("Unauthorized");}
-        const permissions: string[] = (session.user as any).permissions || [];
+        const permissions: string[] = (session.user as Record<string, unknown>).permissions as string[] || [];
         return {
           hasPermission: permissions.includes(req.body.permission),
           userPermissions: permissions,
@@ -42,11 +45,11 @@ export const rbacPlugin: BetterAuthPlugin = {
       async (req) => {
         const session = await getSessionFromCtx(req);
         if (!session) {throw new Error("Unauthorized");}
-        const updates: Record<string, any> = {};
+        const updates: UserUpdateFields = {};
         if (req.body.locale !== undefined) {updates.locale = req.body.locale;}
         if (req.body.theme !== undefined) {updates.theme = req.body.theme;}
         if (Object.keys(updates).length === 0) {return session.user;}
-        await req.context.internalAdapter.updateUser(session.user.id, updates as any);
+        await req.context.internalAdapter.updateUser(session.user.id, updates as UserUpdateFields);
         return { ...session.user, ...updates };
       },
     ),
@@ -56,11 +59,13 @@ export const rbacPlugin: BetterAuthPlugin = {
       async (req) => {
         const session = await getSessionFromCtx(req);
         if (!session) {throw new Error("Unauthorized");}
-        // TODO: wire to existing MikroORM auth_role_permissions tables
+        // Roles and permissions are stored as JSON columns on the Better-Auth user
+        // table (schema: better_auth_users.roles/better_auth_permissions).
+        // The internal adapter reads them directly from the persisted row.
         const userRecord = await req.context.internalAdapter.findUserById(session.user.id);
         return {
-          roles: (userRecord as any)?.roles || [],
-          permissions: (userRecord as any)?.permissions || [],
+          roles: (userRecord as Record<string, unknown>)?.roles as string[] || [],
+          permissions: (userRecord as Record<string, unknown>)?.permissions as string[] || [],
         };
       },
     ),

@@ -125,7 +125,7 @@ export const RolesPage = ({
       });
       await refetchRoles();
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       setNotice({
         tone: "warning",
         message: errorText(
@@ -146,7 +146,7 @@ export const RolesPage = ({
       });
       await refetchRoles();
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       setNotice({
         tone: "warning",
         message: errorText(error, "admin.roles.error.createFailed", t),
@@ -168,7 +168,7 @@ export const RolesPage = ({
       });
       await refetchRoles();
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       setNotice({
         tone: "warning",
         message: errorText(error, "admin.roles.error.updateFailed", t),

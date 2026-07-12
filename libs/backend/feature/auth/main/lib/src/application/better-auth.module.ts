@@ -1,7 +1,8 @@
 import { DynamicModule, Global, Inject, Injectable, Module } from '@nestjs/common';
-import { getBetterAuthConfig, type BetterAuthConfigOptions } from './better-auth';
+import { getBetterAuthConfig, getBaseUrl, type BetterAuthConfigOptions } from './better-auth';
 import type { Auth } from 'better-auth';
 
+export { getBaseUrl };
 export const BetterAuthInstanceToken = 'BetterAuthInstanceToken';
 
 export interface BetterAuthModuleOptions extends BetterAuthConfigOptions {

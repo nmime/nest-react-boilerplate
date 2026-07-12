@@ -55,7 +55,7 @@ export const isUsersRoute = (path: string): boolean => {
 export const routeUserId = (path: string): string | undefined =>
   /^\/users\/([^/?]+)/u.exec(normalizeAdminPath(path))?.[1];
 
-export const paramsFromPath = (path: string) =>
+export const paramsFromPath = (path: string): URLSearchParams =>
   new URLSearchParams(path.includes("?") ? path.slice(path.indexOf("?")) : "");
 
 export const errorText = (
@@ -64,13 +64,13 @@ export const errorText = (
   t: Translate,
 ) => (error instanceof Error ? error.message : t(fallbackKey));
 
-export const totalPages = (total = 0, limit = pageSize) =>
+export const totalPages = (total = 0, limit = pageSize): number =>
   Math.max(1, Math.ceil(total / limit));
 
-export const join = (values?: readonly string[]) =>
+export const join = (values?: readonly string[]): string =>
   values?.length ? values.join(", ") : "—";
 
-export const formatDate = (value?: string) =>
+export const formatDate = (value?: string): string =>
   value ? new Date(value).toISOString() : "—";
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;

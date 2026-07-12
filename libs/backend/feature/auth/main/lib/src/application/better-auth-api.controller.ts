@@ -1,24 +1,24 @@
-import { BetterAuthInstanceToken } from './better-auth.module';
-import { Controller, Inject, Req, Res, All, HttpCode } from '@nestjs/common';
+import { BetterAuthInstanceToken, getBaseUrl } from './better-auth.module';
+import { Controller, Inject, Req, Res, All, HttpCode, Logger } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
 
-/**
- * Better-Auth API proxy controller.
- *
- * Delegates every /api/auth/* request to Better-Auth's own HTTP handler
- * (auth.handler). The handler returns a proper Response with cookies and
- * body. We unwrap its internal context wrapper (identified by the
- * `operationId` field) to extract only the safe response data.
- */
+declare module 'better-auth' {
+  interface Auth {
+    /** Better-Auth's internal request handler (undocumented but stable). */
+    handler?: (request: Request) => Promise<Response>;
+  }
+}
+
 @Controller('api/auth')
 export class BetterAuthApiController {
+  private static readonly log = new Logger(BetterAuthApiController.name);
   constructor(@Inject(BetterAuthInstanceToken) private readonly auth: Auth) {}
 
   @All('*')
   @HttpCode(200)
   async handle(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
-    const handler = (this.auth as any).handler;
+    const handler = this.auth.handler;
     if (!handler) {
       res.status(500).send({ message: 'Better-Auth handler not available' });
       return;
@@ -100,12 +100,12 @@ export class BetterAuthApiController {
         const textBody = await baResponse.text();
         res.type('text/plain').send(textBody);
       }
-    } catch (error: any) {
-      const status = error?.status ?? error?.statusCode ?? 500;
-      console.error(`[BetterAuthApiController] ${req.method} ${req.url} error:`, error?.message ?? String(error));
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      const status = (error as { status?: number; statusCode?: number })?.status ?? (error as { status?: number; statusCode?: number })?.statusCode ?? 500;
+      BetterAuthApiController.log.error(`${req.method} ${req.url} error: ${err.message}`, err.stack);
       res.status(status).send({
-        message: error?.message ?? 'Internal server error',
-        code: error?.code,
+        message: err.message ?? 'Internal server error',
       });
     }
   }
@@ -148,6 +148,6 @@ export class BetterAuthApiController {
   }
 
   private getBaseUrl(): string {
-    return process.env.BETTER_AUTH_URL ?? process.env.API_BASE_URL ?? 'http://localhost:3003';
+    return getBaseUrl();
   }
 }

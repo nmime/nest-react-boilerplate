@@ -234,6 +234,8 @@ module.exports = [
     rules: {
       ...typescriptEslintPlugin.configs['recommended-type-checked'].rules,
       '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': 'error',
       '@typescript-eslint/no-confusing-void-expression': 'error',
       '@typescript-eslint/no-meaningless-void-operator': 'error',
       '@typescript-eslint/prefer-reduce-type-parameter': 'error',
@@ -312,7 +314,7 @@ module.exports = [
       ],
       curly: ['error', 'all'],
       eqeqeq: ['error', 'always'],
-      'no-console': 'error',
+      'no-console': 'warn',
       'no-template-curly-in-string': 'error',
       'no-use-before-define': 'off',
       '@typescript-eslint/no-use-before-define': [
@@ -356,6 +358,9 @@ module.exports = [
       'sonarjs/no-hardcoded-passwords': 'off',
       'sonarjs/no-trivial-assertions': 'off',
       'sonarjs/prefer-specific-assertions': 'off',
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   {

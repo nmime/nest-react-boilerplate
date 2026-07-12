@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
 ARG NODE_VERSION=24.11.0-alpine
 ARG PNPM_VERSION=11.11.0
 
@@ -111,7 +114,10 @@ FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
+RUN apk add --no-cache wget
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 USER 101
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1

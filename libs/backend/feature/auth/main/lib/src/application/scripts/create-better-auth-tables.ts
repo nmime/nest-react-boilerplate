@@ -99,9 +99,10 @@ async function run(): Promise<void> {
 
     await client.query('COMMIT');
     console.log('[create-better-auth-tables] All Better-Auth tables created/verified successfully.');
-  } catch (err: any) {
+  } catch (err: unknown) {
     await client.query('ROLLBACK');
-    console.error('[create-better-auth-tables] Migration failed:', err.message);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[create-better-auth-tables] Migration failed:', message);
     process.exit(1);
   } finally {
     client.release();

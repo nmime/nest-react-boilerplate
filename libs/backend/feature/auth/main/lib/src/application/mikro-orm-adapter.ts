@@ -2,6 +2,9 @@ import type { BetterAuthOptions } from "better-auth";
 import type { DBAdapter, Where } from "better-auth";
 import type { EntityManager, Connection } from "@mikro-orm/core";
 
+/** Raw database row returned by PostgreSQL — structure depends on queried table. */
+type DbRow = Record<string, unknown>;
+
 const MODEL_TABLE: Record<string, string> = {
   user: "better_auth_users",
   session: "better_auth_sessions",
@@ -13,10 +16,10 @@ function getTableName(model: string): string {
   return MODEL_TABLE[model] ?? model;
 }
 
-function whereClause(where: Where[] | undefined): { clause: string; values: any[] } {
+function whereClause(where: Where[] | undefined): { clause: string; values: unknown[] } {
   if (!where || where.length === 0) {return { clause: "", values: [] };}
   const conditions: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   for (const w of where) {
     const idx = values.length;
     values.push(w.value);
@@ -51,9 +54,9 @@ export function createMikroOrmAdapter(
           const lastRow = await conn.execute(
             `SELECT * FROM ${table} ORDER BY "id" DESC LIMIT 1`,
           );
-          return lastRow[0] as any;
+          return lastRow[0] as DbRow;
         }
-        return { ...(data as any) };
+        return { ...(data as DbRow) };
       },
 
       async findOne({ model, where }) {
@@ -63,7 +66,7 @@ export function createMikroOrmAdapter(
           `SELECT * FROM ${table} ${clause} LIMIT 1`,
           values,
         );
-        return (rows[0] as any) ?? null;
+        return (rows[0] as DbRow) ?? null;
       },
 
       async findMany({ model, where, limit, offset, sortBy }) {
@@ -79,7 +82,7 @@ export function createMikroOrmAdapter(
         return (await conn.execute(
           `SELECT * FROM ${table} ${clause}${orderClause}${limitClause}`,
           values,
-        )) as any[];
+        )) as DbRow[];
       },
 
       async count({ model, where }) {
@@ -89,7 +92,7 @@ export function createMikroOrmAdapter(
           `SELECT COUNT(*) AS cnt FROM ${table} ${clause}`,
           values,
         );
-        return Number((res[0] as any).cnt ?? 0);
+        return Number((res[0] as DbRow).cnt ?? 0);
       },
 
       async update({ model, where, update: data }) {
@@ -108,7 +111,7 @@ export function createMikroOrmAdapter(
           `SELECT * FROM ${table} ${rc} LIMIT 1`,
           rv,
         );
-        return updated[0] as any;
+        return updated[0] as DbRow;
       },
 
       async updateMany({ model, where, update: data }) {
@@ -121,7 +124,7 @@ export function createMikroOrmAdapter(
           `UPDATE ${table} SET ${setParts} ${whereStr}`,
           allValues,
         );
-        return (res as any).length ?? 0;
+        return (res as { length?: number }).length ?? 0;
       },
 
       async delete({ model, where }) {
@@ -134,7 +137,7 @@ export function createMikroOrmAdapter(
         const table = getTableName(model);
         const { clause, values } = whereClause(where);
         const res = await conn.execute(`DELETE FROM ${table} ${clause}`, values);
-        return (res as any).length ?? 0;
+        return (res as { length?: number }).length ?? 0;
       },
 
       async consumeOne({ model, where }) {
@@ -145,7 +148,7 @@ export function createMikroOrmAdapter(
           values,
         );
         if (rows.length === 0) {return null;}
-        const row = rows[0] as any;
+        const row = rows[0] as DbRow;
         await conn.execute(`DELETE FROM ${table} WHERE "id" = $1`, [row.id]);
         return row;
       },
@@ -158,8 +161,8 @@ export function createMikroOrmAdapter(
           values,
         );
         if (rows.length === 0) {return null;}
-        const row = rows[0] as any;
-        const updates: Record<string, any> = {};
+        const row = rows[0] as DbRow;
+        const updates: Record<string, number> = {};
         for (const [field, delta] of Object.entries(increment)) {
           const val = typeof row[field] === "number" ? row[field] : 0;
           updates[field] = val + delta;
@@ -187,7 +190,7 @@ export function createMikroOrmAdapter(
         // Better-Auth expects the callback to receive an adapter instance
         // Build one using the transaction's connection
         const txAdapter = buildAdapter(trx.getConnection());
-        return fn({ ...(txAdapter as any), transaction: async (innerFn: any) => innerFn(txAdapter) });
+        return fn({ ...(txAdapter as Omit<DBAdapter<BetterAuthOptions>, "transaction">), transaction: async (innerFn: (adapter: DBAdapter<BetterAuthOptions>) => Promise<unknown>) => innerFn(txAdapter) });
       });
     },
   } as DBAdapter<BetterAuthOptions>;

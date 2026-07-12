@@ -1,2 +1,32 @@
-# Replace with the owning team after project initialization.
+# Backend apps
+apps/backend/auth/ @nmime
+apps/backend/user/ @nmime
+apps/backend/admin/ @nmime
+apps/backend/discord/ @nmime
+apps/backend/telegram/ @nmime
+apps/backend/landing/ @nmime
+
+# Frontend apps
+apps/frontend/admin/ @nmime
+apps/frontend/user-app/ @nmime
+apps/frontend/app/ @nmime
+apps/frontend/landing/ @nmime
+apps/frontend/mobile/ @nmime
+apps/frontend/site/ @nmime
+
+# E2E
+apps/e2e/ @nmime
+
+# Libraries
+libs/backend/ @nmime
+libs/frontend/ @nmime
+libs/common/ @nmime
+
+# Infrastructure
+.helm/ @nmime
+deploy/ @nmime
+.github/ @nmime
+scripts/ @nmime
+
+# Default fallback
 * @nmime

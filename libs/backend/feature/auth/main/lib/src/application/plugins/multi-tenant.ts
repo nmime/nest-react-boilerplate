@@ -27,9 +27,9 @@ export const multiTenantPlugin: BetterAuthPlugin = {
         return {
           user: {
             ...s.user,
-            tenantId: (s.user as any).tenantId || DefaultAuthTenantId,
-            roles: (s.user as any).roles || [],
-            permissions: (s.user as any).permissions || [],
+            tenantId: (s.user as Record<string, unknown>).tenantId as string || DefaultAuthTenantId,
+            roles: (s.user as Record<string, unknown>).roles as string[] || [],
+            permissions: (s.user as Record<string, unknown>).permissions as string[] || [],
           },
           expiresAt: s.session?.expiresAt || new Date(Date.now() + 3600_000),
         };

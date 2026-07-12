@@ -134,15 +134,15 @@ describe('operations — compareOperations', () => {
   it('sorts deletes before creates', () => {
     const ops = [createFile('a.txt', 'x'), deleteFile('b.txt')];
     const sorted = sortOperations(ops);
-    assert.equal(sorted[0].kind, 'delete_file');
-    assert.equal(sorted[1].kind, 'create_file');
+    assert.equal(sorted[0]!.kind, 'delete_file');
+    assert.equal(sorted[1]!.kind, 'create_file');
   });
 
   it('sorts by path within same kind', () => {
     const ops = [createFile('z.txt', 'x'), createFile('a.txt', 'x')];
     const sorted = sortOperations(ops);
-    assert.equal(sorted[0].path, 'a.txt');
-    assert.equal(sorted[1].path, 'z.txt');
+    assert.equal(sorted[0]!.path, 'a.txt');
+    assert.equal(sorted[1]!.path, 'z.txt');
   });
 
   it('compareOperations is deterministic', () => {
@@ -552,7 +552,7 @@ describe('planner — stable ordering', () => {
     const result = plan(config, emptyState);
     for (let i = 1; i < result.operations.length; i++) {
       assert.ok(
-        compareOperations(result.operations[i - 1], result.operations[i]) <= 0,
+        compareOperations(result.operations[i - 1]!, result.operations[i]!) <= 0,
         `Operations not sorted at index ${i}`,
       );
     }
@@ -621,7 +621,7 @@ describe('planner — conflict detection via diff', () => {
     const result = plan(config, tamperedState);
     const configOp = result.operations.find((o) => o.path === 'nrb.config.json');
     assert.ok(configOp, 'Config file should need updating');
-    assert.equal(configOp.kind, 'update_file', 'Should be update, not create');
+    assert.equal(configOp!.kind, 'update_file', 'Should be update, not create');
   });
 });
 

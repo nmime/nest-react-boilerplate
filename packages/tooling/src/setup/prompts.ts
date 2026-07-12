@@ -46,14 +46,14 @@ async function askChoice(
 ): Promise<string> {
   for (let i = 0; i < choices.length; i++) {
     const marker = i === defaultIndex ? ' (*)' : '';
-    process.stdout.write(`  ${i + 1}. ${choices[i].label}${marker}\n`);
+    process.stdout.write(`  ${i + 1}. ${choices[i]!.label}${marker}\n`);
   }
   const answer = await ask(`${question}\n  Select (1-${choices.length})`, String(defaultIndex + 1));
   const idx = parseInt(answer, 10) - 1;
   if (idx >= 0 && idx < choices.length) {
-    return choices[idx].value;
+    return choices[idx]!.value;
   }
-  return choices[defaultIndex].value;
+  return choices[defaultIndex]!.value;
 }
 
 // ---------------------------------------------------------------------------

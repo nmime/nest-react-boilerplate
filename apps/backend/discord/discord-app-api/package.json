@@ -9,11 +9,11 @@
   },
   "devDependencies": {
     "@nestjs/testing": "11.1.28",
-    "@nx/js": "23.0.1",
-    "@nx/node": "23.0.1",
-    "@nx/vite": "23.0.1",
-    "@types/node": "24.13.3",
-    "typescript": "6.0.3",
+    "@nx/js": "23.0.2",
+    "@nx/node": "23.0.2",
+    "@nx/vite": "23.0.2",
+    "@types/node": "26.1.1",
+    "typescript": "7.0.2",
     "vitest": "4.1.10"
   },
   "description": "NestJS + Fastify Discord bot API (slash commands, OAuth login)"

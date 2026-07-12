@@ -68,8 +68,8 @@ describe('apply — checkConflicts (heuristic mode)', () => {
     const ops: SetupOperation[] = [createFile('a.txt', 'new')];
     const conflicts = await checkConflicts(ops, fs);
     assert.equal(conflicts.length, 1);
-    assert.equal(conflicts[0].path, 'a.txt');
-    assert.equal(conflicts[0].reason, 'unexpected');
+    assert.equal(conflicts[0]!.path, 'a.txt');
+    assert.equal(conflicts[0]!.reason, 'unexpected');
   });
 
   it('update_file has no heuristic conflict (content change is expected)', async () => {
@@ -85,7 +85,7 @@ describe('apply — checkConflicts (heuristic mode)', () => {
     const ops: SetupOperation[] = [jsonMerge('missing.json', { x: 1 })];
     const conflicts = await checkConflicts(ops, fs);
     assert.equal(conflicts.length, 1);
-    assert.equal(conflicts[0].reason, 'missing');
+    assert.equal(conflicts[0]!.reason, 'missing');
   });
 
   it('json_merge no conflict when file exists', async () => {
@@ -107,7 +107,7 @@ describe('apply — checkConflicts (state-aware mode)', () => {
     const ops: SetupOperation[] = [updateFile('a.txt', 'planned')];
     const conflicts = await checkConflicts(ops, fs, stateFiles);
     assert.equal(conflicts.length, 1);
-    assert.equal(conflicts[0].reason, 'content_changed');
+    assert.equal(conflicts[0]!.reason, 'content_changed');
   });
 
   it('no conflict when state matches current content', async () => {
@@ -160,7 +160,7 @@ describe('apply — filterNoOps', () => {
     ];
     const filtered = await filterNoOps(ops, fs);
     assert.equal(filtered.length, 1);
-    assert.equal(filtered[0].path, 'b.txt');
+    assert.equal(filtered[0]!.path, 'b.txt');
   });
 });
 

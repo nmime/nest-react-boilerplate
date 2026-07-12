@@ -207,7 +207,7 @@ export function operationsEqual(a: SetupOperation, b: SetupOperation): boolean {
       if (ka[i] !== kb[i]) {
         return false;
       }
-      if (JSON.stringify(pa[ka[i]]) !== JSON.stringify(pb[kb[i]])) {
+      if (JSON.stringify(pa[ka[i]!]) !== JSON.stringify(pb[kb[i]!])) {
         return false;
       }
     }
@@ -221,7 +221,7 @@ export function operationArraysEqual(a: SetupOperation[], b: SetupOperation[]): 
     return false;
   }
   for (let i = 0; i < a.length; i++) {
-    if (!operationsEqual(a[i], b[i])) {
+    if (!operationsEqual(a[i]!, b[i]!)) {
       return false;
     }
   }

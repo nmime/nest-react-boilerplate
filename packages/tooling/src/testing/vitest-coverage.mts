@@ -1,4 +1,4 @@
-import type { UserConfig } from "vitest/node";
+import type { UserConfig as VitestUserConfig } from "vitest/config";
 
 type CoverageThresholds = {
   branches: number;
@@ -12,7 +12,7 @@ export const fullCoverage = (
   include: string[],
   exclude: string[] = [],
   thresholds: Partial<CoverageThresholds> = {},
-): NonNullable<UserConfig["coverage"]> => ({
+): NonNullable<VitestUserConfig["coverage"]> => ({
   all: true,
   enabled: false,
   exclude: [
@@ -23,8 +23,6 @@ export const fullCoverage = (
     "**/*.stories.ts",
     "**/*.stories.tsx",
     "**/*.d.ts",
-    // Tool configuration files only. A broad "**/*.config.*" pattern would
-    // also swallow source modules like *.config.service.ts / *.config.ts.
     "**/vite.config.*",
     "**/*.vite.config.*",
     "**/vitest.config.*",

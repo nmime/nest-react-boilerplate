@@ -255,6 +255,84 @@ export default defineConfig({
 });
 `,
   );
+
+  // eslint.config.cjs
+  tree.write(
+    `${dir}/eslint.config.cjs`,
+    `const baseConfig = require("${d}eslint.config.js");
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "package.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
+`,
+  );
+
+  // AGENTS.md
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
+
+This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
+Project type: \`library\`.
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.
+
+## Local Rules
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Do not import frontend libraries from backend code. Shared backend dependencies belong in \`libs/backend/package.json\`.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Keep this file short; put setup details and command lists in the local README.
+
+See [README.md](./README.md) for project commands and ownership notes.
+`,
+  );
+
+  // README.md
+  tree.write(
+    `${dir}/README.md`,
+    `# ${projectName}
+
+Path: \`${dir}\`
+Nx project: \`${projectName}\`
+Project type: \`library\`
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
+
+## Purpose
+
+${names.title} library.
+
+## Ownership
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Do not import frontend libraries from backend code.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+
+## Commands
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:test
+pnpm exec nx run ${projectName}:build
+\`\`\`
+`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -432,6 +510,81 @@ export default defineConfig({
     globals: false,
   },
 });
+`,
+  );
+
+  // eslint.config.cjs
+  tree.write(
+    `${dir}/eslint.config.cjs`,
+    `const baseConfig = require("${d}eslint.config.js");
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "package.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
+`,
+  );
+
+  // AGENTS.md
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
+
+This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
+Project type: \`library\`.
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
+## Local Rules
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Keep this file short; put setup details and command lists in the local README.
+
+See [README.md](./README.md) for project commands and ownership notes.
+`,
+  );
+
+  // README.md
+  tree.write(
+    `${dir}/README.md`,
+    `# ${projectName}
+
+Path: \`${dir}\`
+Nx project: \`${projectName}\`
+Project type: \`library\`
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
+
+## Purpose
+
+${names.title} library.
+
+## Ownership
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+
+## Commands
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:test
+pnpm exec nx run ${projectName}:build
+\`\`\`
 `,
   );
 }

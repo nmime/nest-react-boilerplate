@@ -194,7 +194,54 @@ export default defineConfig({
 `,
   };
 
-  return [tsconfigJson, tsconfigLib, tsconfigSpec, vitestConfig];
+  // eslint.config.cjs
+  const eslintConfig: TemplateFile = {
+    path: `${libDir}/eslint.config.cjs`,
+    contents: `const baseConfig = require("${d}eslint.config.js");
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "package.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
+`,
+  };
+
+  // package.json
+  const packageJson: TemplateFile = {
+    path: `${libDir}/package.json`,
+    contents: JSON.stringify(
+      {
+        name: '',
+        version: '0.0.0',
+        private: true,
+        main: './src/index.ts',
+        types: './src/index.ts',
+        type: 'commonjs',
+        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
+        dependencies: {},
+        devDependencies: {},
+      },
+      null,
+      2,
+    ) + '\n',
+  };
+
+  return [tsconfigJson, tsconfigLib, tsconfigSpec, vitestConfig, eslintConfig, packageJson];
 }
 
 // ---------------------------------------------------------------------------

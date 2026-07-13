@@ -235,8 +235,6 @@ function findExistingTsconfigAliases(
   );
 }
 
-/** Deprecated: replaced by buildTsconfigContent + shared apply engine. Kept for backward compat. */
-
 function createTsconfigAliases(names: Names): Record<string, string[]> {
   return {
     [backendFeatureMainAlias(names)]: [

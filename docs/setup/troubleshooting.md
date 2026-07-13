@@ -58,7 +58,7 @@ nrb setup              # apply
 
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `node-version`    | `Node.js v16.x.x — minimum 18.x required`              | `nvm use` or install Node.js >=24.                                          |
+| `node-version`    | `Node.js v16.x.x — minimum 24.x required`              | `nvm use` or install Node.js >=24.                                          |
 | `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |

@@ -6,7 +6,7 @@
  *
  * Returns { created: string[], skipped: string[] } so callers can report progress.
  */
-import { Pool } from "pg";
+import { type Client, Pool } from "pg";
 
 export interface BetterAuthSchemaResult {
   created: string[];
@@ -145,17 +145,17 @@ export async function applyBetterAuthSchema(
   }
 }
 
-async function getExistingTables(client: any): Promise<Set<string>> {
+async function getExistingTables(client: Client): Promise<Set<string>> {
   const res = await client.query(
     `SELECT tablename FROM pg_tables WHERE schemaname = 'public'`,
   );
-  return new Set(res.rows.map((r: any) => r.tablename));
+  return new Set(res.rows.map((r) => r.tablename as string));
 }
 
-async function getColumns(client: any, tableName: string): Promise<Set<string>> {
+async function getColumns(client: Client, tableName: string): Promise<Set<string>> {
   const res = await client.query(
     `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1`,
     [tableName],
   );
-  return new Set(res.rows.map((r: any) => r.column_name));
+  return new Set(res.rows.map((r) => r.column_name as string));
 }

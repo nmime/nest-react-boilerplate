@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+out
+.next
+.nuxt
+*.tsbuildinfo
+generated
+coverage
+.nx
+.pnp

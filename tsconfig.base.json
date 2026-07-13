@@ -23,6 +23,15 @@
       "@app/backend-feature-admin-main": [
         "libs/backend/feature/admin/main/lib/src/index.ts"
       ],
+      "@app/backend-feature-notification": [
+        "libs/backend/feature/notification/lib/src/index.ts"
+      ],
+      "@app/common-notification": [
+        "libs/backend/common/notification/lib/src/index.ts"
+      ],
+      "@app/backend-postgres-main-notification": [
+        "libs/backend/postgres/main/notification/lib/src/index.ts"
+      ],
       "@app/backend-feature-admin-shared": [
         "libs/backend/feature/admin/shared/lib/src/index.ts"
       ],

@@ -1,6 +1,6 @@
 {
   "name": "@app/common-notification",
-  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/notification/lib/src",
   "projectType": "library",
   "tags": ["platform:backend", "type:shared", "scope:notification"],

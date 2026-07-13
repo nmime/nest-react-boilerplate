@@ -5,12 +5,19 @@ import { workspaceTsconfigAliases } from "../../../../../../config/vite/workspac
 import { fullCoverage } from "../../../../../../packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
-  resolve: { tsconfigPaths: true, alias: workspaceTsconfigAliases() },
-  cacheDir: "../../../../node_modules/.vitest/libs/backend/postgres/main/notification/lib",
+  resolve: {
+    tsconfigPaths: true,
+    alias: workspaceTsconfigAliases(),
+  },
+  cacheDir:
+    "../../../../../../node_modules/.vitest/libs/backend/postgres/main/notification/lib",
   test: {
     environment: "node",
     include: ["src/**/*.spec.ts"],
     globals: false,
-    coverage: fullCoverage("../../../../coverage/libs/backend/postgres/main/notification/lib", ["src/**/*.ts"], []),
+    coverage: fullCoverage(
+      "../../../../coverage/libs/backend/postgres/main/notification/lib",
+      ["src/**/*.ts"],
+    ),
   },
 });

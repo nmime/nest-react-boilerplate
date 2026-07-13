@@ -7,6 +7,7 @@ import {
   resolveTelegramBotConfig,
   TelegramBotModule,
 } from '@app/backend-feature-telegram-bot';
+import { NotificationMainModule } from '@app/backend-feature-notification';
 import { TelegramBotApiHealthServiceProvider } from './health.config';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { TelegramPollingService } from './telegram-polling.service';
@@ -20,7 +21,7 @@ export class TelegramBotApiModule {
 
     return {
       module: TelegramBotApiModule,
-      imports: [TelegramBotModule],
+      imports: [TelegramBotModule, NotificationMainModule],
       controllers: [
         BaseHealthController,
         ...(useWebhook ? [TelegramWebhookController] : []),

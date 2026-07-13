@@ -4,10 +4,11 @@ import {
   HealthPrivateNetworkIpGuard,
 } from "@app/backend-common-health";
 import { UserMainModule } from "@app/backend-feature-user-main";
+import { NotificationMainModule } from "@app/backend-feature-notification";
 import { UserAppHealthServiceProvider } from "./health.config";
 
 @Module({
-  imports: [UserMainModule],
+  imports: [UserMainModule, NotificationMainModule],
   controllers: [BaseHealthController],
   providers: [UserAppHealthServiceProvider, HealthPrivateNetworkIpGuard],
 })

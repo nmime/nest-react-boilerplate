@@ -1,0 +1,27 @@
+name: Release (GitLab)
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+concurrency: release-gitlab
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.repository == 'nmime/nest-react-boilerplate'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.11.0 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_URL: ${{ secrets.GITLAB_URL || 'https://gitlab.com' }}
+          BITBUCKET_TOKEN: ${{ secrets.BITBUCKET_TOKEN }}

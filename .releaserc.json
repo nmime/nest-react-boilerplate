@@ -25,6 +25,18 @@
         "successComment": false,
         "releasedLabels": false
       }
+    ],
+    [
+      "@semantic-release/gitlab",
+      {
+        "successComment": false
+      }
+    ],
+    [
+      "@semantic-release/bitbucket",
+      {
+        "successComment": false
+      }
     ]
   ]
 }

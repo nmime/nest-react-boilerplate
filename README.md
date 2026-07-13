@@ -76,7 +76,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | Supply chain & SLSA | [Supply Chain Security](docs/supply-chain.md) |
 | API contracts | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md) |
 | Database | [Migrations](docs/database-migrations.md) |
-| Deployment | [Production Deploy](docs/production-deploy.md) · [Helm](deploy/README.md) |
+| Deployment | [Production Deploy](docs/production-deploy.md) · [Helm](deploy/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
 | Testing | [Testing](docs/testing.md) |
 | Operations | [Runbooks](docs/runbooks/README.md) |
 | ADRs | [Architecture Decision Records](docs/adr/README.md) |

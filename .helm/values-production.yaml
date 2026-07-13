@@ -1,3 +1,25 @@
+# For staging deployments, copy this file to values-staging.yaml and adjust:
+# - replicas to 1-2
+# - resources to dev-level
+# - image tags to preview/edge
+#
+# Example staging deploy:
+#   helm upgrade --install nrb ./chart \
+#     -f .helm/values-production.yaml \
+#     -f .helm/values-staging.yaml \
+#     --namespace staging
+#
+# Key differences for staging:
+#   config.nodeEnv: staging
+#   secrets.existingSecret: nest-react-boilerplate-staging-secrets
+#   apps.*.replicas: 1 or 2
+#   apps.*.resources.requests.cpu: 100m
+#   apps.*.resources.requests.memory: 256Mi
+#   autoscaling.minReplicas: 1
+#   autoscaling.maxReplicas: 4
+#   ingress.hosts: *.staging.example.com
+#   monitoring.enabled: true (but with lower scrape intervals)
+
 secrets:
   existingSecret: nest-react-boilerplate-production-secrets
 

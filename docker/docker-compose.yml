@@ -1,3 +1,14 @@
+# Staging: docker compose --profile staging up
+# Or set COMPOSE_PROFILES=staging
+#
+# Staging uses a separate database, secrets, and port offsets (+100 from production defaults).
+# Copy .env.staging.example to .env.staging and set NODE_ENV=staging before running.
+# Example:
+#   NODE_ENV=staging docker compose --profile staging -f docker-compose.yml up -d
+#
+# For staging-specific overrides, create docker-compose.staging.yml alongside this file
+# and merge: docker compose -f docker-compose.yml -f docker-compose.staging.yml up
+
 x-backend-env: &backend-env
   NODE_ENV: ${NODE_ENV:-development}
   HOST: ${HOST:-0.0.0.0}

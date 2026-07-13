@@ -1,0 +1,28 @@
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    depends_on: [loki, tempo]
+
+  loki:
+    image: grafana/loki:3.0.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    command: -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./docker/tempo/config.yaml:/etc/tempo/config.yaml

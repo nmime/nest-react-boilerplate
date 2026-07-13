@@ -22,3 +22,10 @@ Use a four-digit prefix and short slug:
 ## Template
 
 Copy [0000-template.md](0000-template.md) for new ADRs.
+
+## ADR Index
+
+| # | Title | Status | Date |
+|---|-------|--------|------|
+| [0001](0001-use-nx-over-turborepo.md) | Use Nx over Turborepo | Accepted | 2025-01-15 |
+| [0002](0002-use-fastify-over-express.md) | Use Fastify over Express | Accepted | 2025-01-15 |

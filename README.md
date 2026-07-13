@@ -64,6 +64,41 @@ flowchart TB
 
 Start here when evaluating the repo, then use the linked deep dives for architecture, API lifecycle, local verification, and operations.
 
+## Quick links
+
+| Topic | Doc |
+|-------|-----|
+| Getting started | [Quick Start](docs/quick-start.md) |
+| Command reference | [Command Matrix](docs/command-matrix.md) |
+| System architecture | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md) |
+| Environment config | [Environment Variables](docs/environment-variables.md) |
+| Monitoring & alerting | [Monitoring](docs/monitoring.md) |
+| Supply chain & SLSA | [Supply Chain Security](docs/supply-chain.md) |
+| API contracts | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md) |
+| Database | [Migrations](docs/database-migrations.md) |
+| Deployment | [Production Deploy](docs/production-deploy.md) · [Helm](deploy/README.md) |
+| Testing | [Testing](docs/testing.md) |
+| Operations | [Runbooks](docs/runbooks/README.md) |
+| ADRs | [Architecture Decision Records](docs/adr/README.md) |
+
+## Integrations
+
+| Integration | Status | Notes |
+|-------------|--------|-------|
+| PostgreSQL | ✅ Wired | Primary database via MikroORM; migrations committed |
+| Redis | ✅ Wired | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`) |
+| NATS | ✅ Wired | Async messaging backbone for bot workers and event-driven features |
+| Telegram Bot | ✅ Wired | Webhook + polling modes, Mini App / Open App support, social auth |
+| Discord Bot | ✅ Wired | Slash commands, interactions endpoint, OAuth 2.0 social auth |
+| S3 / MinIO | ✅ Wired | Object storage; uses `@aws-sdk/client-s3`, MinIO in local Compose |
+| SendGrid | 📋 Contract-only | Email service SDK wired; requires `SENDGRID_API_KEY` to activate |
+| PostHog | 📋 Contract-only | Analytics client configured; requires `POSTHOG_API_KEY` to activate |
+| OpenTelemetry | ✅ Wired | OTLP exporter for traces, metrics, logs; disabled by default (`OTEL_ENABLED=false`) |
+| Prometheus | ✅ Wired | Each backend exposes `/metrics`; see [Monitoring](docs/monitoring.md) for scrape config |
+| OAuth (generic) | 📋 Contract-only | Better Auth social provider slot; disabled until provider code is added |
+
+**Wired** = runtime code exists and is exercised by tests. **Contract-only** = env vars and config slots exist; activate by providing credentials and flipping the feature flag.
+
 ## Tech stack
 
 | Area          | Choices                                                                                     |

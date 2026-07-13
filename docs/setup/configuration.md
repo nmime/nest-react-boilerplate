@@ -157,6 +157,62 @@ This guarantees idempotency: running setup twice with the same config produces z
 - **Dirty worktree**: the setup engine does not check Git status; use `nrb doctor` to see the overall workspace health.
 - **Failed rollback**: the apply engine rolls back on failure. If rollback itself fails, the `rollbackError` message explains what went wrong.
 
+## Staging Environment
+
+Staging is a production mirror used for pre-release validation. It runs the same
+application stack with staging-specific secrets, databases, and domain names.
+
+### Setup
+
+1. **Create the staging environment file:**
+
+   ```bash
+   cp .env.staging.example .env.staging
+   ```
+
+2. **Fill in staging-specific values** in `.env.staging`:
+   - `DATABASE_URL` — point to the staging database instance.
+   - `SESSION_SECRET` and `JWT_SECRET` — use unique secrets (never reuse production values).
+   - Domain names — change all `example.com` references to `staging.example.com`.
+   - Bot tokens — use staging/test bot credentials if available.
+
+3. **Set env vars before starting services:**
+
+   ```bash
+   # Load staging env into the compose environment
+   export $(grep -v '^#' .env.staging | xargs)
+
+   # Or pass explicitly to docker compose
+   docker compose --env-file .env.staging up -d
+   ```
+
+4. **Staging port offsets:** staging services use ports offset by +100 from
+   production defaults to avoid collisions. See [PORTS.md](../PORTS.md#staging).
+
+### CI/CD — Deploying to Staging
+
+The CI pipeline deploys to staging automatically on PR merge to the `staging`
+branch (or when tagged with a staging label):
+
+- **Trigger:** merge to `staging` branch or PR labeled `deploy-staging`.
+- **Image tag:** `preview/<short-sha>` or `edge-<date>`.
+- **Helm:** applies `values-staging.yaml` on top of `values-production.yaml`.
+- **Namespace:** `staging` (isolated from production).
+- **Rollback:** revert the merge or re-trigger CI on the previous commit.
+
+### Running Staging Locally
+
+```bash
+# Using docker compose
+NODE_ENV=staging docker compose --profile staging -f docker/docker-compose.yml up -d
+
+# Using Helm (against a staging cluster)
+helm upgrade --install nrb ./.helm \
+  -f .helm/values-production.yaml \
+  -f .helm/values-staging.yaml \
+  --namespace staging
+```
+
 ## Next steps
 
 - [Presets and Technologies](presets-and-technologies.md) — full preset matrix and support table.

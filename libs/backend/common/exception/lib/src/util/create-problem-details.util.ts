@@ -1,8 +1,7 @@
 import { ProblemTypeBaseUrl } from "../const/problem-type-base-url.const";
 import type { ProblemDetails } from "../type/problem-details.type";
-import type { ProblemDetailsInput } from "../type/problem-details-input.type";
 
-const problemDetailsReservedExtensionKeys = new Set([
+const problemDetailsReservedKeys = new Set([
   "type",
   "title",
   "status",
@@ -10,28 +9,26 @@ const problemDetailsReservedExtensionKeys = new Set([
   "instance",
   "code",
   "localizedDetail",
+  "info",
 ]);
 
-function sanitizeProblemDetailsExtensions(
+function sanitizeExtensions(
   extensions: Record<string, unknown>,
 ): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(extensions).filter(
-      ([key]) => !problemDetailsReservedExtensionKeys.has(key),
+      ([key]) => !problemDetailsReservedKeys.has(key),
     ),
   );
 }
 
-function normalizeProblemInstance(
-  instance: string | undefined,
-): string | undefined {
-  const normalized = instance?.trim();
-
-  if (!normalized || normalized.startsWith("/")) {
-    return undefined;
-  }
-
-  return normalized;
+interface ProblemDetailsOptions {
+  title: string;
+  status: number;
+  code?: string;
+  detail: string;
+  type?: string;
+  instance?: string;
 }
 
 export const createProblemDetails = ({
@@ -41,17 +38,17 @@ export const createProblemDetails = ({
   detail,
   type = code ? `${ProblemTypeBaseUrl}:${code}` : "about:blank",
   instance,
-  extensions = {},
-}: ProblemDetailsInput): ProblemDetails => {
-  const normalizedInstance = normalizeProblemInstance(instance);
+}: ProblemDetailsOptions): ProblemDetails => {
+  const normalizedInstance = instance?.trim();
 
   return {
     type,
     title,
     status,
-    ...(detail ? { detail } : {}),
-    ...(normalizedInstance ? { instance: normalizedInstance } : {}),
+    detail,
+    ...(normalizedInstance && !normalizedInstance.startsWith("/")
+      ? { instance: normalizedInstance }
+      : {}),
     ...(code ? { code } : {}),
-    ...sanitizeProblemDetailsExtensions(extensions),
-  };
+  } as ProblemDetails;
 };

@@ -242,7 +242,6 @@
     "semantic-release": "^24.2.0",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/changelog": "^6.0.0",
-    "@semantic-release/bitbucket": "^10.0.0",
     "@semantic-release/gitlab": "^13.0.0",
     "conventional-changelog-conventionalcommits": "^9.0.0"
   },

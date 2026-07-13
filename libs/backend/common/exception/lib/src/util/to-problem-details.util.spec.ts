@@ -1,169 +1,158 @@
-import { BadRequestException, HttpException, HttpStatus } from "@nestjs/common";
-import { describe, expect, it, vi } from "vitest";
-import { BaseException } from "../abstract/base.exception";
-import { AppHttpException } from "../app-http.exception";
-import { Exception } from "../factory/exception.factory";
-import { createProblemDetails } from "./create-problem-details.util";
-import { getProblemStatus, toProblemDetails } from "./to-problem-details.util";
+import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { describe, expect, it, vi } from 'vitest';
+import { Exception } from '../abstract/base.exception';
+import { ExceptionKind } from '../type/exception-kind.type';
+import { createProblemDetails } from './create-problem-details.util';
+import { getProblemStatus, toProblemDetails } from './to-problem-details.util';
 
-describe("getProblemStatus / toProblemDetails", () => {
-  it("derives statuses and details from problem, Nest, and unknown errors", () => {
-    const problem = new AppHttpException({
-      title: "Conflict",
-      status: 409,
-    });
-    const badRequest = new BadRequestException("Invalid input");
-    const rawHttp = new HttpException("Nope", 418);
+describe('getProblemStatus / toProblemDetails', () => {
+  it('derives statuses from typed exceptions, HttpException, and unknown errors', () => {
+    const rawHttp = new HttpException('Nope', 418);
+    const badRequest = new BadRequestException('Invalid input');
 
-    expect(getProblemStatus(problem)).toBe(409);
-    expect(getProblemStatus(new Error("boom"))).toBe(500);
-    expect(toProblemDetails(problem)).toEqual({
-      code: "conflict",
-      detail: "The request conflicts with current state.",
-      type: "urn:problem:nest-react-boilerplate:conflict",
-      title: "Conflict",
-      status: 409,
-    });
+    expect(getProblemStatus(rawHttp)).toBe(418);
+    expect(getProblemStatus(new Error('boom'))).toBe(500);
+
+    // HttpException — never exposes message
     expect(toProblemDetails(badRequest)).toEqual({
-      code: "bad-request",
-      detail: "The request could not be processed.",
-      type: "urn:problem:nest-react-boilerplate:bad-request",
-      title: "Bad Request",
+      code: 'bad-request',
+      detail: 'Bad Request',
+      type: 'urn:problem:nest-react-boilerplate:bad-request',
+      title: 'Bad Request',
       status: 400,
     });
+
     expect(toProblemDetails(rawHttp)).toEqual({
-      code: "i-am-a-teapot",
-      detail: "Nope",
-      type: "urn:problem:nest-react-boilerplate:i-am-a-teapot",
-      title: "I Am A Teapot",
+      code: 'i-am-a-teapot',
+      detail: 'I Am A Teapot',
+      type: 'urn:problem:nest-react-boilerplate:i-am-a-teapot',
+      title: 'I Am A Teapot',
       status: 418,
     });
-    expect(toProblemDetails("boom")).toEqual({
-      code: "internal-server-error",
-      detail: "An unexpected error occurred.",
-      type: "urn:problem:nest-react-boilerplate:internal-server-error",
-      title: "Internal Server Error",
+
+    // Unknown error → generic internal
+    expect(toProblemDetails('boom')).toEqual({
+      code: 'internal_server_error',
+      detail: 'An unexpected error occurred',
+      type: 'urn:problem:nest-react-boilerplate:internal_server_error',
+      title: 'Internal Server Error',
       status: 500,
     });
   });
 
-  it("normalizes base, problem, and generic HTTP exceptions", () => {
-    const base = new BaseException({
-      code: "forbidden",
+  it('uses typed exceptions with static fields', () => {
+    const TestForbidden = Exception({
+      name: 'TestForbiddenException',
+      kind: ExceptionKind.Client,
+      problemType: 'test_forbidden',
+      title: 'Forbidden',
+      detail: 'You do not have permission',
       status: HttpStatus.FORBIDDEN,
-      title: "Forbidden",
     });
-    const problem = new AppHttpException({
-      instance: "/existing",
-      status: HttpStatus.UNPROCESSABLE_ENTITY,
-      title: "Invalid",
-    });
-    const problemWithoutInstance = new AppHttpException({
-      status: HttpStatus.CONFLICT,
-      title: "Conflict",
-    });
-    const patchedProblem = new AppHttpException({
-      status: HttpStatus.BAD_REQUEST,
-      title: "Bad Request",
-    });
-    vi.spyOn(patchedProblem, "getResponse").mockReturnValue("bad request");
-    const genericProblem = new HttpException(
-      createProblemDetails({ status: 409, title: "Conflict" }),
-      409,
-    );
-    const genericProblemWithInstance = new HttpException(
-      createProblemDetails({
-        instance: "/existing-generic",
-        status: 409,
-        title: "Conflict",
-      }),
-      409,
-    );
 
-    expect(getProblemStatus(base)).toBe(HttpStatus.FORBIDDEN);
-    expect(getProblemStatus(new HttpException("Accepted", 202))).toBe(202);
-    expect(toProblemDetails(base, "/base")).toMatchObject({
-      code: "forbidden",
-      status: HttpStatus.FORBIDDEN,
-    });
-    expect(toProblemDetails(base, "/base")).not.toHaveProperty("instance");
-    expect(toProblemDetails(problem, "/fallback")).toMatchObject({
-      status: HttpStatus.UNPROCESSABLE_ENTITY,
-    });
-    expect(toProblemDetails(problem, "/fallback")).not.toHaveProperty(
-      "instance",
-    );
-    expect(toProblemDetails(problemWithoutInstance, "/problem")).toMatchObject({
-      status: HttpStatus.CONFLICT,
-    });
-    expect(
-      toProblemDetails(problemWithoutInstance, "/problem"),
-    ).not.toHaveProperty("instance");
-    expect(toProblemDetails(patchedProblem, "/patched")).toEqual({
-      code: "bad-request",
-      detail: "The request could not be processed.",
-      type: "urn:problem:nest-react-boilerplate:bad-request",
-      title: "Bad Request",
-      status: HttpStatus.BAD_REQUEST,
-    });
-    expect(toProblemDetails(genericProblem, "/generic")).toMatchObject({
-      status: 409,
-      title: "Conflict",
-    });
-    expect(toProblemDetails(genericProblem, "/generic")).not.toHaveProperty(
-      "instance",
-    );
-    expect(
-      toProblemDetails(genericProblemWithInstance, "/generic-fallback"),
-    ).toMatchObject({
-      status: 409,
-      title: "Conflict",
-    });
-    expect(
-      toProblemDetails(genericProblemWithInstance, "/generic-fallback"),
-    ).not.toHaveProperty("instance");
+    const ex = new TestForbidden();
+    expect(getProblemStatus(ex)).toBe(HttpStatus.FORBIDDEN);
+
+    const problem = toProblemDetails(ex, '/req-123');
+    expect(problem.type).toBe('urn:problem:nest-react-boilerplate:test_forbidden');
+    expect(problem.title).toBe('Forbidden');
+    expect(problem.detail).toBe('You do not have permission');
+    expect(problem.status).toBe(HttpStatus.FORBIDDEN);
   });
 
-  it("uses HTTP response messages and status fallbacks for titles", () => {
-    expect(
-      toProblemDetails(new BadRequestException(["name", "email"])),
-    ).toEqual({
-      code: "bad-request",
-      detail: "The request could not be processed.",
-      type: "urn:problem:nest-react-boilerplate:bad-request",
-      title: "Bad Request",
+  it('two instances with different data produce identical static fields', () => {
+    const TestException = Exception({
+      name: 'TestException',
+      kind: ExceptionKind.Client,
+      problemType: 'test_error',
+      title: 'Test Error',
+      detail: 'A test error occurred',
       status: 400,
     });
-    expect(
-      toProblemDetails(new HttpException({ message: "single message" }, 422)),
-    ).toEqual({
-      code: "unprocessable-entity",
-      detail: "single message",
-      type: "urn:problem:nest-react-boilerplate:unprocessable-entity",
-      title: "Unprocessable Entity",
-      status: 422,
+
+    const p1 = toProblemDetails(new TestException({ data: { id: 'a' } }));
+    const p2 = toProblemDetails(new TestException({ data: { id: 'b' } }));
+
+    expect(p1.type).toBe(p2.type);
+    expect(p1.title).toBe(p2.title);
+    expect(p1.detail).toBe(p2.detail);
+    expect(p1.status).toBe(p2.status);
+    expect((p1 as Record<string, unknown>).info).not.toEqual(
+      (p2 as Record<string, unknown>).info,
+    );
+  });
+
+  it('does not expose meta, cause, or stack in problem details', () => {
+    const TestException = Exception({
+      name: 'TestException',
+      kind: ExceptionKind.Server,
+      problemType: 'internal',
+      title: 'Internal Server Error',
+      detail: 'An unexpected error occurred',
+      status: 500,
     });
-    expect(
-      toProblemDetails(new HttpException("", HttpStatus.I_AM_A_TEAPOT)),
-    ).toEqual({
-      code: "i-am-a-teapot",
-      type: "urn:problem:nest-react-boilerplate:i-am-a-teapot",
-      title: "I Am A Teapot",
-      status: HttpStatus.I_AM_A_TEAPOT,
+
+    const ex = new TestException({
+      meta: { operation: 'do_thing', internalId: 'secret-123' },
+      cause: new Error('database connection failed'),
     });
-    expect(
-      toProblemDetails(
-        Exception.forbidden("Required role is missing."),
-        undefined,
-        "ru",
-      ),
-    ).toMatchObject({
-      code: "forbidden",
-      detail: "Required role is missing.",
-      localizedDetail: "Отсутствует необходимая роль.",
-      status: HttpStatus.FORBIDDEN,
-      title: "Forbidden",
-      type: "urn:problem:nest-react-boilerplate:forbidden",
+
+    const problem = toProblemDetails(ex);
+    expect(problem).not.toHaveProperty('meta');
+    expect(problem).not.toHaveProperty('cause');
+    expect(problem).not.toHaveProperty('stack');
+  });
+
+  it('HttpException with problem details response passes through', () => {
+    const problem = createProblemDetails({
+      code: 'custom',
+      detail: 'Custom detail',
+      status: 409,
+      title: 'Conflict',
     });
+    const httpEx = new HttpException(problem, 409);
+
+    expect(toProblemDetails(httpEx)).toMatchObject({
+      code: 'custom',
+      detail: 'Custom detail',
+      status: 409,
+      title: 'Conflict',
+    });
+  });
+
+  it('instance is set by HTTP boundary, not by exception', () => {
+    const TestException = Exception({
+      name: 'TestException',
+      kind: ExceptionKind.Client,
+      problemType: 'test',
+      title: 'Test',
+      detail: 'Test detail',
+      status: 400,
+    });
+
+    const problem = toProblemDetails(new TestException(), '/req-abc');
+    // instance is a relative URI — createProblemDetails normalizes
+    expect(problem).not.toHaveProperty('instance'); // "/" prefix stripped
+  });
+
+  it('unknown error type returns generic internal error', () => {
+    expect(toProblemDetails(null)).toMatchObject({
+      code: 'internal_server_error',
+      title: 'Internal Server Error',
+      status: 500,
+    });
+
+    expect(toProblemDetails(undefined)).toMatchObject({
+      code: 'internal_server_error',
+      title: 'Internal Server Error',
+      status: 500,
+    });
+  });
+
+  it('never leaks HttpException.message into detail', () => {
+    const sensitive = new HttpException('password=secret123', 500);
+    const problem = toProblemDetails(sensitive);
+    expect(problem.detail).not.toContain('password');
+    expect(problem.detail).not.toContain('secret');
   });
 });

@@ -246,7 +246,7 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/changelog": "^6.0.0",
     "@semantic-release/gitlab": "^13.0.0",
-    "conventional-changelog-conventionalcommits": "^9.0.0"
+    "conventional-changelog-conventionalcommits": "^10.2.1"
   },
   "engines": {
     "node": ">=24 <25",

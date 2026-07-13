@@ -26,7 +26,7 @@ export interface BetterAuthUserView {
   [key: string]: unknown;
 }
 
-export function toLegacySessionView(
+export function toSessionView(
   betterAuthSession: BetterAuthSessionView,
   accessToken: string,
   refreshToken?: string,
@@ -38,7 +38,7 @@ export function toLegacySessionView(
       (betterAuthSession.expiresAt.getTime() - Date.now()) / 1000,
     )),
     refreshToken,
-    user: toLegacyUserView(betterAuthSession.user),
+    user: toUserView(betterAuthSession.user),
     amr: ["pwd"],
     authProvider: AuthProvider.Password,
     authChannel: AuthProviderChannel.Password,
@@ -46,7 +46,7 @@ export function toLegacySessionView(
   };
 }
 
-export function toLegacyUserView(user: BetterAuthUserView): AuthenticatedUserView {
+export function toUserView(user: BetterAuthUserView): AuthenticatedUserView {
   return {
     id: user.id,
     tenantId: user.tenantId || "00000000-0000-0000-0000-000000000000",

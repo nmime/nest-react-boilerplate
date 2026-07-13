@@ -74,16 +74,6 @@ describe('library generator', () => {
       assert.equal(projectJson.targets.build.executor, '@nx/js:tsc');
     });
 
-    it('creates package.json', async () => {
-      const tree = await createTree();
-      const { libraryGenerator } = await import('./generator.js');
-
-      await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
-
-      const pkg = JSON.parse(tree.read('libs/backend/shared-utils/lib/package.json', 'utf8')!);
-      assert.equal(pkg.name, '@app/backend-shared-utils');
-    });
-
     it('creates tsconfig files', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');

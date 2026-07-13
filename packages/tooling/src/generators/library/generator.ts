@@ -133,26 +133,6 @@ function createNodeLib(
     ) + '\n',
   );
 
-  // package.json
-  tree.write(
-    `${dir}/package.json`,
-    JSON.stringify(
-      {
-        name: projectName,
-        version: '0.0.0',
-        private: true,
-        main: './src/index.ts',
-        types: './src/index.ts',
-        type: includeReact ? 'module' : 'commonjs',
-        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: includeReact ? { react: '^19.0.0' } : {},
-        devDependencies: {},
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-
   // tsconfig.json — extends base, references lib+spec
   tree.write(
     `${dir}/tsconfig.json`,
@@ -266,7 +246,6 @@ module.exports = [
     ignores: [
       "eslint.config.cjs",
       "project.json",
-      "package.json",
       "tsconfig*.json",
       "vitest.config.mts",
     ],
@@ -292,8 +271,7 @@ Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}do
 
 This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
 Project type: \`library\`.
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.
-
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
@@ -382,26 +360,6 @@ function createFrontendLib(
             outputs: [`{workspaceRoot}/coverage/${dir}`],
           },
         },
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-
-  // package.json
-  tree.write(
-    `${dir}/package.json`,
-    JSON.stringify(
-      {
-        name: projectName,
-        version: '0.0.0',
-        private: true,
-        main: './src/index.ts',
-        types: './src/index.ts',
-        type: 'module',
-        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: {},
-        devDependencies: {},
       },
       null,
       2,
@@ -523,7 +481,6 @@ module.exports = [
     ignores: [
       "eslint.config.cjs",
       "project.json",
-      "package.json",
       "tsconfig*.json",
       "vitest.config.mts",
     ],

@@ -204,7 +204,6 @@ module.exports = [
     ignores: [
       "eslint.config.cjs",
       "project.json",
-      "package.json",
       "tsconfig*.json",
       "vitest.config.mts",
     ],
@@ -221,27 +220,7 @@ module.exports = [
 `,
   };
 
-  // package.json
-  const packageJson: TemplateFile = {
-    path: `${libDir}/package.json`,
-    contents: JSON.stringify(
-      {
-        name: '',
-        version: '0.0.0',
-        private: true,
-        main: './src/index.ts',
-        types: './src/index.ts',
-        type: 'commonjs',
-        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: {},
-        devDependencies: {},
-      },
-      null,
-      2,
-    ) + '\n',
-  };
-
-  return [tsconfigJson, tsconfigLib, tsconfigSpec, vitestConfig, eslintConfig, packageJson];
+  return [tsconfigJson, tsconfigLib, tsconfigSpec, vitestConfig, eslintConfig];
 }
 
 // ---------------------------------------------------------------------------

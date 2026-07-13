@@ -155,6 +155,8 @@ This runs static checks, formatting, linting, typecheck, and unit tests.
 
 ## What's next?
 
+- **Request context** is automatic — `ClsInterceptor` runs first, `requestContext.getRequestId()` works everywhere. No setup needed.
+- **Error handling** is automatic — RFC 9457 Problem Details with `application/problem+json`. No setup needed.
 - [Setup and Configuration](setup/configuration.md) — deep dive into the setup engine and config schema.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — ship your first vertical slice.
 - [CLI Reference](setup/cli-reference.md) — every command with flags and examples.

@@ -25,6 +25,30 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 | Repository tooling             | `packages/tooling/**`                                          | [Command matrix](../command-matrix.md), [Local verification](../local-verification.md)                                                                              |
 | Operations and runbooks        | `docs/operations/**`, `docs/runbooks/**`, `docs/operations.md` | [Operations](../operations.md), [Runbooks](../runbooks/README.md), [Production deploy](../production-deploy.md), [Production readiness](../production-readiness.md) |
 
+## Backend cross-cutting concerns
+
+| Concern              | Package / Path                                              | Agent doc reference                              |
+| -------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
+| Request Context (CLS)| `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib` | [Agent policy: Request Context](agent-policy.md#request-context-cls) |
+| Exception System     | `@app/backend-common-exception` / `libs/backend/common/exception/lib` | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457) |
+| Health checks        | `@app/backend-common-health` / `libs/backend/common/health/lib` | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout) |
+
+### Request Context (CLS)
+
+- **No** `nestjs-cls` or third-party CLS dependency — uses Node.js built-in `AsyncLocalStorage`.
+- Access via `import { requestContext } from '@app/backend-common-bootstrap'`.
+- Key API: `requestContext.getRequestId()`, `requestContext.get(key)`, `requestContext.set(key, value)`.
+- See [agent-policy.md](agent-policy.md#request-context-cls) for usage patterns.
+
+### Exception System (RFC 9457)
+
+- All exceptions use `@app/backend-common-exception` — do not invent new exception bases.
+- Factory: `Exception({ name, kind, problemType, title, detail, status })`.
+- Domain classes: `ResourceNotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `BadRequestException`, `InternalException`.
+- Wire format: RFC 9457 `application/problem+json`.
+- **Do not reference** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these do not exist.
+- See [agent-policy.md](agent-policy.md#exception-system-rfc-9457) for full patterns.
+
 ## Current deployables
 
 Backend deployables:

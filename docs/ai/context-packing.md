@@ -25,6 +25,24 @@ Use this order when deciding where to place guidance:
 5. `.agents/skills/**` for repeatable task workflows that agents should opt into.
 6. Nested `AGENTS.md` only when a subtree needs different always-on rules.
 
+## Shared context for backend cross-cutting patterns
+
+The following backend patterns are documented in [agent-policy.md](agent-policy.md) and mapped in
+[repo-map.md](repo-map.md) so agents can find them without reading every library README:
+
+- **Request Context (CLS)**: `@app/backend-common-bootstrap` provides `requestContext` backed by
+  Node.js `AsyncLocalStorage`. No `nestjs-cls` dependency. Agents should reference
+  [agent-policy.md § Request Context](agent-policy.md#request-context-cls) for the canonical import
+  and usage pattern.
+- **Exception System (RFC 9457)**: `@app/backend-common-exception` provides the `Exception` factory
+  and domain exception classes. All HTTP errors serialize to RFC 9457 Problem Details. Agents should
+  reference [agent-policy.md § Exception System](agent-policy.md#exception-system-rfc-9457) for the
+  canonical import, constructor shape, and anti-patterns.
+- **Health checks**: `@app/backend-common-health` provides `BaseHealthController` and `HealthService`.
+
+These sections live in `agent-policy.md` (detailed), `repo-map.md` (quick reference table), and
+`agent-workflows.md` (procedural steps). Do not duplicate the full patterns into other context files.
+
 ## Nested AGENTS.md policy
 
 Do not add extra nested `AGENTS.md` files outside the existing project-root

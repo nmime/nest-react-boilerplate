@@ -17,6 +17,13 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
   `contracts/openapi/**` is generated review output and should not be hand
   edited.
 - Use `@app/backend-common-health` for shared `/health`, `/health/private`,
-  `/live`, and `/ready` behavior.
+  `/live`, and `/ready` endpoints.
 - App-level `package.json` files list app-local direct dependencies only;
   platform-wide backend dependencies belong in `libs/backend/package.json`.
+
+## Request Context (CLS)
+
+- Every backend app uses the `ClsInterceptor` globally (see root AGENTS.md).
+  Do not re-register it at the app level.
+- Read request-scoped data via:
+  `import { requestContext } from '@app/backend-common-bootstrap'`.

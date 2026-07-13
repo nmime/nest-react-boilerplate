@@ -42,6 +42,96 @@ file as the next policy layer.
 - Do not force-push `main`. Create focused topic branches from current `main`
   and leave integration to the assigned maintainer or consolidator.
 
+## Request Context (CLS)
+
+The repository uses Node.js built-in `AsyncLocalStorage` for request-scoped
+context. There is **no** `nestjs-cls` or third-party CLS dependency.
+
+- **Package**: `@app/backend-common-bootstrap`
+  (`libs/backend/common/bootstrap/lib`).
+- **Import and usage**:
+
+  ```ts
+  import { requestContext } from '@app/backend-common-bootstrap';
+
+  // Get the current request ID
+  const requestId = requestContext.getRequestId();
+
+  // Set a value on the current request context
+  requestContext.set('myKey', myValue);
+
+  // Get a value from the current request context
+  const value = requestContext.get('myKey');
+  ```
+
+- The `requestContext` helper is automatically bound to the current async scope
+  by the bootstrap middleware. Do not manually create or manage `AsyncLocalStorage`
+  instances; always use `requestContext` from `@app/backend-common-bootstrap`.
+- Use `requestContext.getRequestId()` for correlation IDs in logs, tracing, and
+  error reporting.
+- Do not add `nestjs-cls`, `cls-hooked`, or any third-party CLS package. The
+  project relies exclusively on Node's native `AsyncLocalStorage`.
+
+## Exception System (RFC 9457)
+
+The repository implements RFC 9457 Problem Details for HTTP API errors.
+All exceptions flow through the `@app/backend-common-exception` library.
+
+- **Package**: `@app/backend-common-exception`
+  (`libs/backend/common/exception/lib`, Nx project `@app/backend-common-exception`).
+
+- **Creating exceptions**:
+
+  ```ts
+  import { Exception, ExceptionKind } from '@app/backend-common-exception';
+
+  throw new Exception({
+    name: 'MyCustomError',
+    kind: ExceptionKind.BAD_REQUEST,
+    problemType: 'urn:problem:my-custom-error',
+    title: 'My Custom Error',
+    detail: 'What went wrong and why.',
+    status: 400,
+  });
+  ```
+
+- **Domain exception classes** (pre-configured for common HTTP error codes):
+
+  | Class                     | HTTP Status | ExceptionKind       | Typical use                       |
+  | ------------------------- | ----------- | ------------------- | --------------------------------- |
+  | `ResourceNotFoundException` | 404         | `NOT_FOUND`         | Entity or resource not found      |
+  | `UnauthorizedException`    | 401         | `UNAUTHORIZED`      | Missing or invalid authentication |
+  | `ForbiddenException`       | 403         | `FORBIDDEN`         | Authenticated but no permission   |
+  | `ConflictException`        | 409         | `CONFLICT`          | Resource conflict / duplicate     |
+  | `BadRequestException`      | 400         | `BAD_REQUEST`       | Invalid input / validation fail   |
+  | `InternalException`        | 500         | `INTERNAL`          | Unexpected server error           |
+
+  Usage:
+
+  ```ts
+  import { ResourceNotFoundException } from '@app/backend-common-exception';
+
+  throw new ResourceNotFoundException({
+    problemType: 'urn:problem:user-not-found',
+    title: 'User Not Found',
+    detail: `User with id "${userId}" does not exist.`,
+  });
+  ```
+
+- **Wire format**: All exceptions serialize to RFC 9457 Problem Details
+  (`application/problem+json`) with standard fields: `type`, `title`, `status`,
+  `detail`, `instance`, and optional validation `errors[]` (each with `detail`
+  and `pointer`).
+
+- **Anti-patterns — these do not exist in the codebase**:
+  - There is **no** `AppHttpException` class. Do not import or reference it.
+  - There is **no** `BaseExceptionInput` interface. Use the `Exception` constructor options directly.
+  - There is **no** `ProblemDetailsInput` interface. The `Exception` factory handles RFC 9457 serialization.
+  - There is **no** `nestjs-cls` dependency. CLS is provided by Node's built-in `AsyncLocalStorage` through `@app/backend-common-bootstrap`.
+
+- Do not add project-owned problem wrapper layers when the existing exception,
+  validation, and response libraries cover the need.
+
 ## Monorepo Layout
 
 - Backend deployables live under `apps/backend/<scope>/**`, so APIs, consumers,

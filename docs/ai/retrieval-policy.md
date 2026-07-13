@@ -12,6 +12,26 @@ This policy defines how agents should gather repository context before answering
 6. Use [AI repo map](repo-map.md) to find adjacent architecture, testing, operations, and API docs.
 7. Verify claims through source, tests, generated artifacts, or current external primary sources when the answer depends on changing facts.
 
+## Task-specific retrieval additions
+
+### Error handling and exceptions
+
+When the task involves throwing errors, handling exceptions, or reviewing error responses:
+
+1. Read [agent-policy.md § Exception System](agent-policy.md#exception-system-rfc-9457) for the
+   canonical import path (`@app/backend-common-exception`), the `Exception` factory signature,
+   available domain classes, and anti-patterns.
+2. Read `libs/backend/common/exception/lib` source to verify current exports.
+3. Check existing error-handling tests in the affected project for expected RFC 9457 response shapes.
+
+### Request context and correlation
+
+When the task involves request-scoped data, correlation IDs, or tracing:
+
+1. Read [agent-policy.md § Request Context](agent-policy.md#request-context-cls) for the
+   canonical import path (`@app/backend-common-bootstrap`) and `requestContext` API.
+2. Read `libs/backend/common/bootstrap/lib` source to verify current exports and the bootstrap middleware.
+
 ## What belongs where
 
 | Context type                           | Location                                                      |
@@ -47,3 +67,5 @@ Do not paste secrets, environment dumps, private tokens, or full CI logs into ex
 - Adding nested `AGENTS.md` files for generic reminders instead of path-specific app/library/package rules.
 - Treating README prose as proof when source or tests disagree.
 - Using stale generated OpenAPI/client output as the only source of truth.
+- Importing non-existent types (`AppHttpException`, `BaseExceptionInput`, `ProblemDetailsInput`) instead of reading the exception library source.
+- Adding `nestjs-cls` or other CLS packages when `@app/backend-common-bootstrap` already provides request context.

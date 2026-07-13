@@ -4,6 +4,12 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 [AI agent policy](../../docs/ai/agent-policy.md) first. This file adds rules for
 `packages/tooling`.
 
+## Runtime stack
+
+- Node.js `>=24 <25`, pnpm, TypeScript
+- CLS request context: `requestContext.getRequestId()` (no setup needed in tooling)
+- Exception system: RFC 9457 via `@app/backend-common-exception`
+
 ## Tooling Boundaries
 
 - Implement repository automation under `packages/tooling/src/commands/**` and

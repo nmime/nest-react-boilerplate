@@ -34,6 +34,55 @@ secondary TS path aliases that point at the same source root.
 
 Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend-common-health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
 
+### Request context (CLS)
+
+Every HTTP request runs inside a **Continuation Local Storage** context via Node's built-in `AsyncLocalStorage` — same pattern as xrocket, zero new dependencies.
+
+**Pipeline:**
+
+```
+Request → ClsInterceptor (enters CLS, generates requestId from x-request-id or UUID)
+         → ValidationPipe
+         → Controller (requestContext.getRequestId())
+         → Service (requestContext.getRequestId())
+         → Repository
+         ← ExceptionsFilter (requestContext.getRequestId(), sets x-request-id header)
+```
+
+**API:**
+
+```typescript
+import { requestContext } from '@app/backend-common-bootstrap';
+
+const requestId = requestContext.getRequestId(); // string | undefined
+requestContext.set('userId', 'abc-123');        // attach to context
+const userId = requestContext.get('userId');     // read from context
+```
+
+**Why CLS over middleware headers:** async/await, promises, and NestJS interceptors naturally cross async boundaries. `AsyncLocalStorage` follows the execution context automatically — no manual passing, guaranteed same ID across the entire pipeline.
+
+### Error handling (RFC 9457)
+
+All HTTP errors are **RFC 9457 Problem Details** with `Content-Type: application/problem+json`.
+
+**Exception factory** — static definitions at class creation time:
+
+```typescript
+const NotFoundException = Exception({
+  name: 'NotFoundException',
+  kind: ExceptionKind.Client,
+  problemType: 'not_found',
+  title: 'Not Found',
+  detail: 'The requested resource was not found',
+  status: 404,
+});
+```
+
+- **Static fields** (`type`, `title`, `detail`, `status`) are class-level constants — never mutable at runtime
+- **Runtime context** only accepts: `{ data? → info in response, meta? (private diagnostics), cause? }`
+- **Domain exceptions:** `ResourceNotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `BadRequestException`, `InternalException`, `ClientDataValidationException`
+- **Security:** `HttpException.message` is **never** serialized; unknown errors map to static generic messages
+
 ## Shared libraries
 
 The `libs/common` namespace is intentionally small after the frontend/backend split. It is reserved for code that is platform-neutral or contractual enough to be consumed by both sides, plus a few implementation-neutral contracts that must stay stable while backend or frontend adapters change.
@@ -49,8 +98,8 @@ Current `libs/common` placement decisions:
 | `libs/common/websocket` (`@app/common-websocket`)         | Keep common for now; backend-tagged | It is currently an adapter/client abstraction and broadcast operation contract with no browser or Nest dependency. It is tagged `platform:backend` because no frontend consumer exists today; split into backend/frontend packages only when a browser websocket client or backend gateway implementation needs platform-specific code. |
 | `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common                         | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.                                                                              |
 
-- `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request IDs/logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
-- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions, the `ProblemDetails` model, the `BaseException` model, the `Exception` factory, status mapping, and `ApiExceptions`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
+- `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: CLS request context (`ClsInterceptor`), raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory (static `type`/`title`/`detail`/`status`), domain exception classes, and `toProblemDetails` utility. Runtime context limited to `{ data?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
 - `libs/backend/common/health/lib` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
 - `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.

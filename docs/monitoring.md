@@ -2,6 +2,25 @@
 
 Runtime monitoring, alerting, and uptime strategy for the Nest React Boilerplate platform.
 
+## Request ID (CLS)
+
+All monitoring data is correlated by `requestId` — generated once per request by `ClsInterceptor` via Node `AsyncLocalStorage`. Every log line, error response, and trace carries the same `requestId`.
+
+**Find all events for one request:**
+
+```bash
+# Local
+grep '"requestId":"550e8400-e29b-41d4-a716-446655440000"' /var/log/app.log
+
+# Grafana/Loki
+{app="api"} | json | requestId="550e8400-e29b-41d4-a716-446655440000"
+
+# Datadog
+@requestId:"550e8400-e29b-41d4-a716-446655440000"
+```
+
+The client can set `x-request-id` in the request header; the server preserves it in CLS and echoes it back in the response header.
+
 ## Prometheus metrics endpoint
 
 Each NestJS backend service exposes an `/metrics` endpoint (HTTP GET, no auth by default — place behind your ingress/auth gateway). Metrics are emitted in OpenMetrics/Prometheus text format.

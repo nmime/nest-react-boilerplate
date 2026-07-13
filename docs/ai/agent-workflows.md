@@ -13,6 +13,48 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 | API contract change           | no separate skill yet                   | controller/DTO source, OpenAPI output, generated clients, API lifecycle docs   |
 | Database migration change     | no separate skill yet                   | migration source, entity/repository source, migration docs, rollback checks    |
 
+## Error handling and exception workflows
+
+When adding or changing error handling in backend code:
+
+1. **Read first**: [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457) and the source of `libs/backend/common/exception/lib`.
+2. **Prefer domain exceptions** over raw `Exception` construction when a matching class exists:
+   - `ResourceNotFoundException` (404), `UnauthorizedException` (401), `ForbiddenException` (403),
+     `ConflictException` (409), `BadRequestException` (400), `InternalException` (500).
+3. **Use the `Exception` factory** for domain-specific errors that don't have a pre-built class:
+   ```ts
+   import { Exception, ExceptionKind } from '@app/backend-common-exception';
+
+   throw new Exception({
+     name: 'PaymentFailedError',
+     kind: ExceptionKind.BAD_REQUEST,
+     problemType: 'urn:problem:payment-failed',
+     title: 'Payment Failed',
+     detail: 'The payment gateway returned an error.',
+     status: 400,
+   });
+   ```
+4. **Do not create** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these types
+   do not exist in the codebase.
+5. Verify error responses serialize to RFC 9457 `application/problem+json` by checking existing tests
+   in the affected project.
+
+## Request context (CLS) workflows
+
+When adding request-scoped data (correlation IDs, user context, tracing):
+
+1. **Read first**: [Agent policy: Request Context](agent-policy.md#request-context-cls) and the source of `libs/backend/common/bootstrap/lib`.
+2. **Always use** `requestContext` from `@app/backend-common-bootstrap`:
+   ```ts
+   import { requestContext } from '@app/backend-common-bootstrap';
+
+   const requestId = requestContext.getRequestId();
+   requestContext.set('userId', userId);
+   const userId = requestContext.get('userId');
+   ```
+3. **Do not add** `nestjs-cls`, `cls-hooked`, or any third-party CLS package — the project uses Node's built-in `AsyncLocalStorage`.
+4. **Do not manually instantiate** `AsyncLocalStorage` — the bootstrap middleware manages the storage lifecycle.
+
 ## Common workflow rules
 
 - Begin from the current branch, `origin/main`, and the exact files changed by the task.

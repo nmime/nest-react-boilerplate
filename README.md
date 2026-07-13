@@ -105,7 +105,8 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | ------------- | ------------------------------------------------------------------------------------------- |
 | Workspace     | Nx, pnpm `11.11.0`, Node.js `>=24 <25`, TypeScript                                          |
 | Frontend      | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook         |
-| Backend       | NestJS on Fastify, Helmet, validation pipes, health/readiness endpoints                     |
+| Backend       | NestJS on Fastify, CLS request context, Helmet, validation pipes, health/readiness endpoints |
+| Error handling| RFC 9457 (`application/problem+json`), static exception definitions, zero message leakage    |
 | Persistence   | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                  |
 | API contracts | Nest Swagger/OpenAPI JSON, `openapi-typescript`, `openapi-fetch`, typed React Query helpers |
 | Quality       | ESLint, Prettier, Vitest, Playwright, Storybook tests, repo tooling checks, GitHub Actions  |

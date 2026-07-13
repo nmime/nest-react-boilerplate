@@ -5,18 +5,16 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { requestContext } from './request-context';
 
 /**
- * CLS interceptor — wraps every request handler in AsyncLocalStorage context.
+ * CLS interceptor — wraps every request in AsyncLocalStorage context.
  *
- * Pattern (same as xrocket's nestjs-cls interceptor):
- *  - Reads x-request-id from client header if present, otherwise generates UUID
- *  - Wraps entire async handler execution in CLS context via Observable tap
- *  - Sets x-request-id on response header
+ * Pattern: same as xrocket's nestjs-cls middleware but as a NestJS interceptor
+ * so the entire async handler chain (controllers + services) inherits the context.
  *
- * Registered globally via app.useGlobalInterceptors().
+ * Reads client x-request-id if present, otherwise generates UUID. Sets it on
+ * response header. All downstream code reads from CLS via requestContext.
  */
 @Injectable()
 export class ClsInterceptor implements NestInterceptor {
@@ -24,21 +22,13 @@ export class ClsInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 
-    // Read client-provided requestId or let CLS generate one
     const headerName = 'x-request-id';
     const clientHeader = request.headers?.[headerName] ?? request.headers?.[headerName.toLowerCase()];
     const existingId = Array.isArray(clientHeader) ? clientHeader[0] : clientHeader;
 
-    // Enter CLS context — requestId is now available to all async downstream code
     return requestContext.run(() => {
       response.setHeader?.(headerName, requestContext.getRequestId() ?? '');
-      return next.handle().pipe(
-        tap({
-          finalize: () => {
-            // CLS context naturally unwinds here
-          },
-        }),
-      );
+      return next.handle();
     }, existingId);
   }
 }

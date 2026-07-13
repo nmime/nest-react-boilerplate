@@ -2,16 +2,16 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 
 /**
- * CLS (Continuation Local Storage) context for request-scoped data.
+ * CLS (Continuation Local Storage) context — same pattern as xrocket's nestjs-cls.
  *
- * Pattern (same as xrocket's nestjs-cls but zero deps):
- *  - One AsyncLocalStorage per process
- *  - Bootstrap interceptor enters context per request, generates requestId
- *  - All downstream code reads from CLS — same requestId, no header passing
+ * Single AsyncLocalStorage instance per process. Per request:
+ *  - Bootstrap middleware enters context, generates requestId
+ *  - All downstream code (controllers, services, filters, interceptors) reads from CLS
+ *  - One requestId per request, guaranteed same across all async operations
  *
  * Usage:
  *   const requestId = requestContext.getRequestId();
- *   requestContext.set('userId', 'abc');
+ *   requestContext.set('userId', '123');
  *   const userId = requestContext.get('userId');
  */
 
@@ -22,25 +22,23 @@ interface RequestContextData {
 
 const storage = new AsyncLocalStorage<RequestContextData>();
 
-const requestContext = {
+export const requestContext = {
   /**
-   * Enter CLS context for a request.
-   * If existingId is provided (client sent x-request-id), use it; otherwise generate.
+   * Enter CLS context. Use with optional existingId (from client x-request-id header).
+   * If no existingId, generates a new UUID.
    */
   run<T>(fn: () => T, existingId?: string): T {
     return storage.run({ requestId: existingId ?? randomUUID() }, fn);
   },
 
-  /** Get the current request ID. Returns undefined if outside request context. */
+  /** Get the current request ID. Returns undefined outside request context. */
   getRequestId(): string | undefined {
-    const store = storage.getStore();
-    return store?.requestId;
+    return storage.getStore()?.requestId;
   },
 
   /** Get any value from the request context. */
   get<T = unknown>(key: string): T | undefined {
-    const store = storage.getStore();
-    return store?.[key] as T | undefined;
+    return storage.getStore()?.[key] as T | undefined;
   },
 
   /** Set a value in the request context. */
@@ -55,9 +53,4 @@ const requestContext = {
   isAvailable(): boolean {
     return storage.getStore() !== undefined;
   },
-
-  /** Expose the raw AsyncLocalStorage for advanced use (e.g., Fastify hooks). */
-  storage,
 };
-
-export { requestContext };

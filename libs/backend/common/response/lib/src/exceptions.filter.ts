@@ -6,7 +6,7 @@ import {
   resolveLocaleFromRequest,
 } from '@app/common-i18n';
 import { formatProblemDescriptor } from './problem-descriptor.util';
-import { randomUUID } from 'crypto';
+import { resolveRequestId } from './resolve-request-id.util';
 
 interface ProblemHttpResponse {
   status: (code: number) => ProblemHttpResponse;
@@ -14,6 +14,7 @@ interface ProblemHttpResponse {
   header?: (name: string, value: string) => ProblemHttpResponse;
   json?: (body: ProblemDetails) => unknown;
   send?: (body: ProblemDetails) => unknown;
+  getHeader?: (name: string) => unknown;
 }
 
 interface RequestWithId {
@@ -28,14 +29,11 @@ export class ExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const request = http.getRequest<LocaleRequestSource & RequestWithId>();
-    const response = http.getResponse<ProblemHttpResponse>();
+    const response = http.getResponse<ProblemHttpResponse & { getHeader?: (name: string) => unknown }>();
     const locale = resolveLocaleFromRequest(request);
 
-    // Extract or generate request ID for instance URI
-    const requestId =
-      request.id ??
-      (request.headers?.['x-request-id'] as string) ??
-      randomUUID();
+    // Read requestId from response header (set by bootstrap middleware) — single source of truth
+    const requestId = resolveRequestId(response);
 
     // Build problem details — static fields from exception, instance from boundary
     const problem = toProblemDetails(

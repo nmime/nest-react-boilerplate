@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createRequestIdMiddleware } from './request-id.middleware';
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import type { Type } from '@nestjs/common';
@@ -90,6 +91,7 @@ interface ResponseLike {
   end?: (body?: string) => void;
   on: (event: 'finish', listener: () => void) => void;
   setHeader: (name: string, value: string) => void;
+  getHeader?: (name: string) => unknown;
 }
 
 type NextFunctionLike = () => void;
@@ -736,8 +738,8 @@ function getHeader(request: RequestLike, name: string): string | undefined {
 function createRequestLoggingMiddleware(appName: string) {
   return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
     const startedAt = Date.now();
-    const requestId = getHeader(request, 'x-request-id') ?? randomUUID();
-    response.setHeader('x-request-id', requestId);
+    // Read requestId from response header — set by createRequestIdMiddleware
+    const requestId = (response.getHeader?.('x-request-id') as string) ?? randomUUID();
 
     response.on('finish', () => {
       const logEntry = {
@@ -926,6 +928,8 @@ export async function bootstrapNestApi(module: Type<unknown>, options: Bootstrap
 
   app.enableShutdownHooks();
   await registerFastifySession(app, config);
+  // MUST be first: single source of truth for requestId across all modules
+  app.use(createRequestIdMiddleware());
   app.use(createRequestLoggingMiddleware(options.appName));
   app.use(createRobotsMiddleware());
   app.use(createRequestLocaleMiddleware());

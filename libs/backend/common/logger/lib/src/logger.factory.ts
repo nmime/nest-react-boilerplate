@@ -74,6 +74,7 @@ export interface ResponseLogLike {
   statusCode?: number;
   on(event: "finish", listener: () => void): unknown;
   setHeader(name: string, value: string): unknown;
+  getHeader?(name: string): unknown;
 }
 
 export type RequestLoggerMiddleware = (
@@ -488,8 +489,8 @@ export function createRequestLoggerMiddleware(
     }
 
     const startedAt = Date.now();
-    const requestId = getHeader(request, requestIdHeader) ?? randomUUID();
-    response.setHeader(requestIdHeader, requestId);
+    // Read requestId from response header — set by createRequestIdMiddleware (single source of truth)
+    const requestId = (response.getHeader?.(requestIdHeader) as string) ?? randomUUID();
 
     response.on("finish", () => {
       logger.log({

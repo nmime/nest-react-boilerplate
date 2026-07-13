@@ -1,0 +1,27 @@
+{
+  "name": "@app/backend-postgres-main-notification",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/postgres/main/notification/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:data-access", "scope:notification"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/postgres/main/notification/lib",
+        "main": "libs/backend/postgres/main/notification/lib/src/index.ts",
+        "tsConfig": "libs/backend/postgres/main/notification/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": { "cwd": "libs/backend/postgres/main/notification/lib", "command": "NODE_ENV=test vitest run --config vitest.config.mts" },
+      "inputs": ["default", "^production", {"externalDependencies": ["vitest"]}],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/postgres/main/notification/lib"]
+    }
+  }
+}

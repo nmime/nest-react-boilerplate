@@ -21,7 +21,7 @@
  */
 
 import { pbkdf2Sync, randomBytes } from "node:crypto";
-import pg from "pg";
+import pg, { type Row } from "pg";
 import {
   assertSeedSafety,
   DefaultAdminEmail,
@@ -361,7 +361,7 @@ try {
      WHERE table_schema = 'public' AND table_name IN ('auth_users', 'auth_roles', 'auth_permissions', 'auth_role_permissions', 'auth_user_roles')
      ORDER BY table_name`,
   );
-  const found = new Set(tableCheck.rows.map((r: any) => r.table_name));
+  const found = new Set(tableCheck.rows.map((r) => r.table_name as string));
   const required = ["auth_users", "auth_roles", "auth_permissions", "auth_role_permissions", "auth_user_roles"];
   const missing = required.filter((t) => !found.has(t));
   if (missing.length) {

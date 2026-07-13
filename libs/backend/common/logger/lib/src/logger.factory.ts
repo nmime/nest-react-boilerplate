@@ -1,9 +1,9 @@
-import { randomUUID } from "node:crypto";
 import {
   ConsoleLogger,
   type LoggerService,
   type LogLevel,
 } from "@nestjs/common";
+import { requestContext } from '@app/backend-common-bootstrap';
 
 export const ProtectedLoggerFields = [
   "authorization",
@@ -489,8 +489,8 @@ export function createRequestLoggerMiddleware(
     }
 
     const startedAt = Date.now();
-    // Read requestId from response header — set by createRequestIdMiddleware (single source of truth)
-    const requestId = (response.getHeader?.(requestIdHeader) as string) ?? randomUUID();
+    // Read requestId from CLS — same id as bootstrap logging, filter, services
+    const requestId = requestContext.getRequestId();
 
     response.on("finish", () => {
       logger.log({

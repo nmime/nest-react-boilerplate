@@ -6,7 +6,7 @@ import {
   resolveLocaleFromRequest,
 } from '@app/common-i18n';
 import { formatProblemDescriptor } from './problem-descriptor.util';
-import { resolveRequestId } from './resolve-request-id.util';
+import { requestContext } from '@app/backend-common-bootstrap';
 
 interface ProblemHttpResponse {
   status: (code: number) => ProblemHttpResponse;
@@ -14,7 +14,6 @@ interface ProblemHttpResponse {
   header?: (name: string, value: string) => ProblemHttpResponse;
   json?: (body: ProblemDetails) => unknown;
   send?: (body: ProblemDetails) => unknown;
-  getHeader?: (name: string) => unknown;
 }
 
 interface RequestWithId {
@@ -29,16 +28,16 @@ export class ExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
     const request = http.getRequest<LocaleRequestSource & RequestWithId>();
-    const response = http.getResponse<ProblemHttpResponse & { getHeader?: (name: string) => unknown }>();
+    const response = http.getResponse<ProblemHttpResponse>();
     const locale = resolveLocaleFromRequest(request);
 
-    // Read requestId from response header (set by bootstrap middleware) — single source of truth
-    const requestId = resolveRequestId(response);
+    // Read requestId from CLS — same id as logging, controllers, services
+    const requestId = requestContext.getRequestId();
 
     // Build problem details — static fields from exception, instance from boundary
     const problem = toProblemDetails(
       exception,
-      `/${requestId}`,
+      requestId ? `/${requestId}` : undefined,
       locale,
     );
 
@@ -49,7 +48,9 @@ export class ExceptionsFilter implements ExceptionFilter {
       .type('application/problem+json');
 
     problemResponse.header?.('content-language', locale);
-    problemResponse.header?.('x-request-id', requestId);
+    if (requestId) {
+      problemResponse.header?.('x-request-id', requestId);
+    }
 
     if (typeof problemResponse.json === 'function') {
       problemResponse.json(problem);

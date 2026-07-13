@@ -10,6 +10,7 @@ import {
   createAdminRequestContext,
   type AdminRequestContext,
 } from "../../domain";
+import { requestContext } from "@app/backend-common-bootstrap";
 
 // Translate an application-layer error into the matching HTTP exception. Shared
 // by every admin controller so the code -> status mapping stays in one place.
@@ -44,18 +45,11 @@ export const executeAdminUseCase = async <T>(
   }
 };
 
-const normalizeHeaderScalar = (
-  value: string | string[] | undefined,
-): string | undefined => {
-  const scalar = Array.isArray(value) ? value[0] : value;
-  const trimmed = scalar?.trim();
-
-  return trimmed ? trimmed.slice(0, 256) : undefined;
-};
-
 export const requestContextFromRequest = (
-  request: AuthenticatedRequest,
+  _request: AuthenticatedRequest,
 ): AdminRequestContext =>
   createAdminRequestContext({
-    requestId: normalizeHeaderScalar(request.headers?.["x-request-id"]),
+    // Read from CLS — same requestId as filter, logger, services.
+    // CLS interceptor runs before controllers, so requestId is always available.
+    requestId: requestContext.getRequestId(),
   });

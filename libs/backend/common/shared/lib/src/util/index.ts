@@ -3,7 +3,6 @@ export * from "./date-fns-locale.util";
 export * from "./enum-validation.pipe";
 export * from "./enum.util";
 export * from "./error.util";
-export * from "./exchange-v2.util";
 export * from "./geoip.util";
 export * from "./get-lang.util";
 export * from "./get.localization";

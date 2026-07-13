@@ -4,7 +4,6 @@ import { decodeCursor, encodeCursor } from "./cursor.util";
 import { normalizeDateLocale } from "./date-fns-locale.util";
 import { enumValues } from "./enum.util";
 import { unknownToError } from "./error.util";
-import { createPairSymbol } from "./exchange-v2.util";
 import { emptyGeoIpInfo } from "./geoip.util";
 import { getLang } from "./get-lang.util";
 import { getLocalization } from "./get.localization";
@@ -55,12 +54,6 @@ describe("unknownToError", () => {
 
   it("serializes non-string, non-Error values", () => {
     expect(unknownToError({ code: 7 }).message).toBe('{"code":7}');
-  });
-});
-
-describe("createPairSymbol", () => {
-  it("uppercases and joins base and quote", () => {
-    expect(createPairSymbol("btc", "usdt")).toBe("BTC_USDT");
   });
 });
 

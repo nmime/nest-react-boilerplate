@@ -120,4 +120,4 @@ COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD wget -qO- http://localhost:8080/health || exit 1

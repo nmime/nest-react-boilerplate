@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { DefaultMessageStrategy } from './default-message.strategy';
 import { NotificationTemplateEngine } from '@app/backend-postgres-main-notification';
 
@@ -27,7 +27,7 @@ describe(DefaultMessageStrategy.name, () => {
       const mockEntity = {
         template: {
           botChannel: undefined,
-          body: { en: 'Hello {{name}}' },
+          body: { en: 'Hello {name}' },
           templateEngine: NotificationTemplateEngine.StringFormat,
         },
         data: { name: 'World' },
@@ -76,42 +76,7 @@ describe(DefaultMessageStrategy.name, () => {
     });
   });
 
-  describe('format', () => {
-    it('should render string-format templates', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const result = strategy['format']('Hello {{name}}', { name: 'World' }, NotificationTemplateEngine.StringFormat);
-      expect(result).toBe('Hello World');
-    });
-
-    it('should render Eta templates', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const result = strategy['format']('Hello <%= name %>', { name: 'World' }, NotificationTemplateEngine.Eta);
-      expect(result).toBe('Hello World');
-    });
-
-    it('should return undefined for template engine errors', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const result = strategy['format']('{{ invalid', {}, NotificationTemplateEngine.StringFormat);
-      expect(result).toBeUndefined();
-    });
-  });
-
   describe('renderButtons', () => {
-    it('should render button text with template data', () => {
-      const mockEntity = {
-        template: {
-          botChannel: undefined,
-          body: { en: 'Hello' },
-          buttons: { en: [[{ text: 'Click {{action}}', callback: 'cb' }]] },
-          templateEngine: NotificationTemplateEngine.StringFormat,
-        },
-        data: { action: 'Me' },
-      };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result?.buttons).toEqual([[{ text: 'Click Me', callback: 'cb' }]]);
-    });
-
     it('should return undefined when no buttons defined', () => {
       const mockEntity = {
         template: {

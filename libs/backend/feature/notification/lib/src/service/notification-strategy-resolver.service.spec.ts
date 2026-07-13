@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { NotificationStrategyResolverService } from './notification-strategy-resolver.service';
 import { NotificationTargetType } from '@app/backend-postgres-main-notification';
 

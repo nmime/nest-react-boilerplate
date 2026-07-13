@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import { NotificationChannel, NotificationTemplateEngine } from '../../domain';
+import { NotificationChannel, NotificationTemplateEngine } from '../../../domain';
 
 export interface NotificationBotChannelContent {
   body: Record<string, string>;

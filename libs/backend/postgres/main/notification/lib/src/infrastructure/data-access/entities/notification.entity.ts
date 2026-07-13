@@ -8,7 +8,7 @@ import {
   NotificationStatus,
   NotificationTargetType,
   type NotificationExtra,
-} from '../../domain';
+} from '../../../domain';
 
 export interface NotificationEntityInput<T = NotificationData> {
   channel: NotificationChannel;

@@ -4,7 +4,7 @@ import {
   NotificationPriority,
   NotificationStatus,
   NotificationChannel,
-} from '../../domain';
+} from '../../../domain';
 
 export enum NotificationDeliveryProvider {
   Telegram = 'telegram',

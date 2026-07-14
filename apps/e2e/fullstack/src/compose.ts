@@ -75,6 +75,8 @@ export const urls = {
   landingApp: url(ports.landingApp),
 };
 
+const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
+
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', env: composeEnv });
@@ -90,7 +92,7 @@ export function run(command: string, args: string[]): Promise<void> {
 
 export async function upStack(): Promise<void> {
   try {
-    await run('docker', [...composeArgs, 'up', '--no-build', '-d']);
+    await run('docker', stackUpArgs);
   } catch (error) {
     writeStderrLine(
       `docker compose up reported a transient startup failure; retrying once: ${
@@ -98,7 +100,7 @@ export async function upStack(): Promise<void> {
       }`,
     );
     await new Promise((resolve) => setTimeout(resolve, 5_000));
-    await run('docker', [...composeArgs, 'up', '--no-build', '-d']);
+    await run('docker', stackUpArgs);
   }
 }
 

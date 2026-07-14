@@ -201,9 +201,8 @@ test('admin API accepts bearer tokens while production admin frontend ignores UR
   await page.context().clearCookies();
   await gotoWithRetry(page, `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`);
   await expect(page).not.toHaveURL(/admin_token=|token=/u);
-  await expect(
-    page
-      .getByLabel('Fail-closed route guard')
-      .getByText(/Authenticated principal is missing\.|Request failed with 401\.|Unauthorized|Missing bearer token\./u),
-  ).toBeVisible();
+  const failClosedGuard = page.getByLabel('Fail-closed route guard');
+  await expect(failClosedGuard).toBeVisible();
+  await expect(failClosedGuard.getByText('Access blocked before data load')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Access denied' })).toBeVisible();
 });

@@ -89,10 +89,12 @@ USER node
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 
+# Vike's build output does not contain an application package or lockfile.
+# Deploy the owning workspace project with pnpm so the runtime receives a
+# portable, production-only dependency graph derived from the reviewed root
+# lockfile and supply-chain policy.
 FROM builder AS site-deps
-ARG BUILD_OUTPUT=dist/apps/frontend/site
-WORKDIR /workspace/${BUILD_OUTPUT}
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+RUN pnpm --filter site-app deploy --prod /site-deploy
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \
@@ -103,8 +105,8 @@ ARG BUILD_OUTPUT=dist/apps/frontend/site
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
 RUN apk add --no-cache libcap \
   && setcap 'cap_net_bind_service=+ep' "$(which node)"
-COPY --from=site-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
-COPY --from=site-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
+COPY --from=site-deps /site-deploy/package.json ./package.json
+COPY --from=site-deps /site-deploy/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
 USER node
 EXPOSE 80

@@ -19,12 +19,25 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike build && node scripts/link-server-node-modules.mjs"
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike build && node_modules/.bin/tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
       },
       "inputs": [
         "production",
         {
-          "externalDependencies": ["@vitejs/plugin-react", "react", "react-dom", "vike", "vite"]
+          "externalDependencies": [
+            "@fastify/static",
+            "@tanstack/react-query",
+            "@vitejs/plugin-react",
+            "fastify",
+            "mobx",
+            "mobx-react-lite",
+            "react",
+            "react-dom",
+            "typescript",
+            "vike",
+            "vike-react",
+            "vite"
+          ]
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/site"]

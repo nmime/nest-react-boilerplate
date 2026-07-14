@@ -7,7 +7,8 @@ import { renderPage } from 'vike/server';
 
 const appRoot = resolve(import.meta.dirname, '..');
 const workspaceDistRoot = resolve(appRoot, '../../../dist/apps/frontend/site');
-const siteRoot = resolve(process.env.SITE_DIST_ROOT ?? workspaceDistRoot);
+const defaultSiteRoot = existsSync(join(appRoot, 'client')) ? appRoot : workspaceDistRoot;
+const siteRoot = resolve(process.env.SITE_DIST_ROOT ?? defaultSiteRoot);
 const clientAssetsRoot = join(siteRoot, 'client');
 const serverEntryPath = join(siteRoot, 'server/entry.mjs');
 

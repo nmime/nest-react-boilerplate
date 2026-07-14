@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "incremental": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noEmit": false,
+    "outDir": "../../../dist/apps/frontend/site/server",
+    "rootDir": "server",
+    "sourceMap": false,
+    "target": "es2024",
+    "types": ["node"]
+  },
+  "include": ["server/**/*.ts"]
+}

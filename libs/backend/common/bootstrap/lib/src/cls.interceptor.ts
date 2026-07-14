@@ -7,7 +7,25 @@ interface HttpRequestLike {
 }
 
 interface HttpResponseLike {
-  setHeader(name: string, value: string): void;
+  header?(name: string, value: string): unknown;
+  raw?: {
+    setHeader?(name: string, value: string): unknown;
+  };
+  setHeader?(name: string, value: string): unknown;
+}
+
+function setResponseHeader(response: HttpResponseLike, name: string, value: string): void {
+  if (response.header) {
+    response.header(name, value);
+    return;
+  }
+
+  if (response.setHeader) {
+    response.setHeader(name, value);
+    return;
+  }
+
+  response.raw?.setHeader?.(name, value);
 }
 
 /**
@@ -30,7 +48,7 @@ export class ClsInterceptor implements NestInterceptor {
     const existingId = normalizeRequestId(clientHeader) ?? requestContext.getRequestId();
 
     return requestContext.run(() => {
-      response.setHeader(headerName, requestContext.getRequestId() ?? '');
+      setResponseHeader(response, headerName, requestContext.getRequestId() ?? '');
       return next.handle();
     }, existingId);
   }

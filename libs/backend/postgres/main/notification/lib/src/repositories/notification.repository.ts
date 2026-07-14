@@ -25,8 +25,11 @@ export class NotificationRepository {
     const currentTime = format(new Date(), 'HH:mm:ss');
 
     const values: unknown[] = [targetType, NotificationStatus.Pending, currentTime];
-    const targetClause = targetId ? `and notification.target_id = $${values.push(targetId)}` : '';
-    const countPlaceholder = `$${values.push(count)}`;
+    const targetClause = targetId ? 'and notification.target_id = ?' : '';
+    if (targetId) {
+      values.push(targetId);
+    }
+    values.push(count);
 
     const idRows = await this.entityManager.getConnection().execute<Array<{ id: string }>>(
       `select notification.id
@@ -34,13 +37,13 @@ export class NotificationRepository {
          inner join notification_deliveries delivery
            on delivery.notification_id = notification.id
           and delivery.channel = notification.channel
-        where notification.target_type = $1
-          and delivery.status = $2
-          and (delivery.send_time_from is null or delivery.send_time_from <= $3)
-          and (delivery.send_time_to is null or delivery.send_time_to >= $3)
+        where notification.target_type = ?
+          and delivery.status = ?
+          and (delivery.send_time_from is null or delivery.send_time_from <= ?)
+          and (delivery.send_time_to is null or delivery.send_time_to >= ?)
           ${targetClause}
         order by delivery.priority desc, delivery.id asc
-        limit ${countPlaceholder}`,
+        limit ?`,
       values,
     );
 
@@ -86,10 +89,10 @@ export class NotificationRepository {
          inner join notification_deliveries delivery
            on delivery.notification_id = notification.id
           and delivery.channel = notification.channel
-        where notification.target_type = $1
-          and delivery.status = $2
-          and (delivery.send_time_from is null or delivery.send_time_from <= $3)
-          and (delivery.send_time_to is null or delivery.send_time_to >= $3)`,
+        where notification.target_type = ?
+          and delivery.status = ?
+          and (delivery.send_time_from is null or delivery.send_time_from <= ?)
+          and (delivery.send_time_to is null or delivery.send_time_to >= ?)`,
       [targetType, NotificationStatus.Pending, currentTime],
     );
 

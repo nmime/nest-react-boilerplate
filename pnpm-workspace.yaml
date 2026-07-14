@@ -56,6 +56,10 @@ overrides:
 auditConfig:
   ignoreCves: []
 
+# Use pnpm's current deploy implementation to produce pruned, portable runtime
+# directories for workspace applications instead of copying the shared store.
+injectWorkspacePackages: true
+
 # Supply-chain quarantine: reject versions published less than a day ago.
 # Raise toward 10080 (7 days) once the dependency set stops churning weekly;
 # 10080 currently rejects ~208 recently-published entries in this lockfile.

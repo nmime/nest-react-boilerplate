@@ -72,21 +72,27 @@ const env = {
   AUTH_JWT_AUDIENCE:
     process.env.AUTH_JWT_AUDIENCE ?? "nest-react-boilerplate-api",
 };
-const probes: [string, string, string][] = [
-  ["auth health", url(ports.authApi, "/health"), "auth-app-api"],
-  ["user health", url(ports.userApi, "/health"), "user-app-api"],
-  ["admin health", url(ports.adminApi, "/health"), "admin-app-api"],
-  ["admin frontend", url(ports.adminApp, "/"), "Admin App"],
-  ["user frontend", url(ports.userApp, "/"), "User App"],
-  ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate"],
-  ["site frontend", url(ports.siteApp, "/"), "Production web experience"],
-  ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Mobile"],
-  ["starter frontend", url(ports.starterApp, "/"), "Starter App"],
-  ["user proxy auth", url(ports.userApp, "/auth/me"), "Missing bearer token"],
+const probes: [string, string, string, number][] = [
+  ["auth health", url(ports.authApi, "/health"), "auth-app-api", 200],
+  ["user health", url(ports.userApi, "/health"), "user-app-api", 200],
+  ["admin health", url(ports.adminApi, "/health"), "admin-app-api", 200],
+  ["admin frontend", url(ports.adminApp, "/"), "Admin App", 200],
+  ["user frontend", url(ports.userApp, "/"), "User App", 200],
+  ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate", 200],
+  ["site frontend", url(ports.siteApp, "/"), "Production web experience", 200],
+  ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Mobile", 200],
+  ["starter frontend", url(ports.starterApp, "/"), "Starter App", 200],
+  [
+    "user proxy auth",
+    url(ports.userApp, "/auth/me"),
+    "urn:problem:nest-react-boilerplate:unauthorized",
+    401,
+  ],
   [
     "admin proxy",
     url(ports.adminApp, "/admin/profile/me"),
-    "Missing bearer token",
+    "urn:problem:nest-react-boilerplate:unauthorized",
+    401,
   ],
 ];
 
@@ -140,18 +146,23 @@ async function composeUp() {
   await composeUpServices("backend", backendServices);
 }
 
-async function waitForProbe([name, probeUrl, contains]: [string, string, string]): Promise<void> {
+async function waitForProbe([name, probeUrl, contains, expectedStatus]: [
+  string,
+  string,
+  string,
+  number,
+]): Promise<void> {
   const started = Date.now();
   let lastError = "not attempted";
   while (Date.now() - started < 180_000) {
     try {
       const response = await fetch(probeUrl);
       const text = await response.text();
-      if (text.includes(contains)) {
+      if (response.status === expectedStatus && text.includes(contains)) {
         console.log(`${name}: ok (${response.status})`);
         return;
       }
-      lastError = `${response.status} missing expected text`;
+      lastError = `${response.status} (expected ${expectedStatus}) missing expected text`;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }

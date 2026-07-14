@@ -62,8 +62,24 @@ if command -v kubeconform >/dev/null 2>&1; then
   echo "==> kubeconform"
   kubeconform -strict -ignore-missing-schemas "${TMP_DIR}/production.yaml"
 elif command -v kubectl >/dev/null 2>&1 && kubectl cluster-info >/dev/null 2>&1; then
-  echo "==> kubectl client-side dry-run"
-  kubectl apply --dry-run=client --validate=false -f "${TMP_DIR}/production.yaml" >/dev/null
+  echo "==> kubectl client-side dry-run (built-in production resources)"
+  helm template "${RELEASE_NAME}" "${CHART_DIR}" \
+    --namespace "${NAMESPACE}" \
+    -f "${PROD_VALUES}" \
+    --set monitoring.prometheusRule.enabled=false \
+    --set monitoring.serviceMonitor.enabled=false \
+    > "${TMP_DIR}/production-builtins.yaml"
+  kubectl apply --dry-run=client --validate=false -f "${TMP_DIR}/production-builtins.yaml" >/dev/null
+
+  if kubectl api-resources --api-group=monitoring.coreos.com -o name 2>/dev/null \
+    | grep -Fxq 'prometheusrules.monitoring.coreos.com' \
+    && kubectl api-resources --api-group=monitoring.coreos.com -o name 2>/dev/null \
+      | grep -Fxq 'servicemonitors.monitoring.coreos.com'; then
+    echo "==> kubectl client-side dry-run (Prometheus Operator resources)"
+    kubectl apply --dry-run=client --validate=false -f "${TMP_DIR}/production.yaml" >/dev/null
+  else
+    echo "==> Prometheus Operator CRDs unavailable; custom-resource mapping skipped (Helm render already passed)"
+  fi
 else
   echo "==> kubeconform/kubectl cluster unavailable; skipped Kubernetes schema dry-run"
 fi

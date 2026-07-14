@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import {
+  DefaultPostgresClientImage,
   createDockerInvocation,
   isPostgresClientVersionMismatch,
   parsePostgresMajorVersion,
@@ -18,6 +20,14 @@ function buildDatabaseUrl() {
 const databaseUrl = buildDatabaseUrl();
 
 describe("postgres backup/restore client selection", () => {
+  it("reuses the exact PostgreSQL image already pulled by Compose", () => {
+    const compose = readFileSync("docker/docker-compose.yml", "utf8");
+    const postgresService = /(?:^|\n)  postgres:\n([\s\S]*?)(?=\n  [a-z][\w-]*:|\nvolumes:)/u.exec(compose)?.[1];
+    const composeImage = /^    image:\s*([^\s#]+)/mu.exec(postgresService ?? "")?.[1];
+
+    assert.equal(composeImage, DefaultPostgresClientImage);
+  });
+
   it("parses PostgreSQL client and server major versions", () => {
     assert.equal(parsePostgresMajorVersion("pg_dump (PostgreSQL) 14.23"), 14);
     assert.equal(parsePostgresMajorVersion("17.10 (Debian 17.10-1.pgdg12+1)"), 17);
@@ -57,13 +67,13 @@ describe("postgres backup/restore client selection", () => {
     const invocation = createDockerInvocation({
       connectionString: databaseUrl,
       cwd: "/repo",
-      image: "postgres:17-alpine",
+      image: "postgres:17.6-alpine",
       operation: "backup",
       outputPath: "test-results/dr/postgres.dump",
     });
     const commandLine = [invocation.command, ...invocation.args].join(" ");
 
-    assert.match(commandLine, /postgres:17-alpine/);
+    assert.match(commandLine, /postgres:17\.6-alpine/);
     assert.match(commandLine, /--env DATABASE_URL/);
     assert.match(commandLine, /\/workspace\/test-results\/dr\/postgres.dump/);
     assert.equal(commandLine.includes(new URL(databaseUrl).password), false);

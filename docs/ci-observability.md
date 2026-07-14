@@ -4,13 +4,15 @@ This repository keeps CI results visible from multiple places so failures remain
 
 ## PR gate order
 
-The `CI` workflow starts with a dedicated `Fast PR gate (check:fast)` job. It runs:
+The `CI` workflow starts with a dedicated `Fast PR gate (ci:pr)` job. It runs:
 
 ```bash
-pnpm run check:fast
+pnpm run ci:pr
 ```
 
-That command covers Prettier, Nx lint, Nx typecheck, and unit tests. Longer quality, browser, Docker smoke, runtime QA, and fullstack e2e jobs wait behind that fast gate so common failures surface early.
+That command covers tooling/static checks, changed-file formatting, native secret
+and SAST scans, and the production dependency audit. The later Nx quality job
+owns full formatting, lint, typecheck, unit/component coverage, and builds.
 
 The `Helm render validation` job also runs the dependency-free deployment configuration assertions before Helm setup and rendering:
 
@@ -28,7 +30,7 @@ flowchart TD
   start([Pull request, push to main, or workflow dispatch])
   helm[Helm render validation<br/>pnpm run deploy:validate<br/>REQUIRE_HELM=true]
   fast[Fast PR gate<br/>pnpm run ci:pr]
-  nonruntime[Non-runtime validation gates<br/>migrations, configs, OpenAPI, clients<br/>contracts, property tests]
+  nonruntime[Non-runtime validation gates<br/>onboarding/scaffolds, migrations, configs<br/>OpenAPI, clients, contracts, property tests]
   quality[Nx quality gates<br/>format, lint, typecheck, unit coverage]
   browser[Static/browser e2e coverage<br/>Playwright Chromium]
   docker[Docker smoke stack<br/>pnpm run test:docker-smoke]
@@ -66,6 +68,7 @@ release branch or a consolidator PR:
 | Supported lockfile audit        | `dependency-review.yml` / `Supported lockfile audit`            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile` | Step summary and `supported-lockfile-audit-summary` artifact               |
 | Secret scan                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:secrets`                           | Security test artifacts under `test-results/security-secrets/**`           |
 | Native SAST                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:sast`                              | Same security job artifacts                                                |
+| Onboarding/scaffold contract    | `ci.yml` / `Non-runtime validation gates`                       | `pnpm run onboarding:verify`                               | Exact preset closures plus generated app/library builds and tests          |
 | Docker smoke                    | `ci.yml` / `Docker smoke stack`                                 | `pnpm run test:docker-smoke`                               | Docker smoke job result and logs                                           |
 | Fullstack Playwright            | `ci.yml` / `Fullstack Playwright e2e`                           | `pnpm run test:fullstack`                                  | Playwright/fullstack artifacts                                             |
 | Runtime QA/ops                  | `ci.yml` / `Runtime QA/ops gates`                               | `pnpm run test:world-class` with real runtime env          | `ops-gate-artifacts` and runtime stack logs                                |

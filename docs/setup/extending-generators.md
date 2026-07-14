@@ -22,14 +22,17 @@ Apply (apply.ts) — execute operations through filesystem adapter
 State (state.ts) — track file hashes for idempotency
 ```
 
-The feature generator (`generate-vertical-slice.ts`) is a separate path used by `pnpm nrb add feature`.
+Application, library, and feature templates live under
+`packages/tooling/src/generators/**`. The unified `pnpm nrb add` command invokes
+those Nx generators; the deprecated vertical-slice command delegates to the
+same feature generator rather than maintaining a second template path.
 
 ## Adding a new app to the catalog
 
 Edit `packages/tooling/src/setup/catalog.ts`:
 
 ```typescript
-// In APP_CATALOG:
+// In appCatalog:
 "my-new-app": {
   id: "my-new-app",
   label: "My New App",
@@ -40,10 +43,10 @@ Edit `packages/tooling/src/setup/catalog.ts`:
 },
 ```
 
-Then add the ID to the enum in `schema.ts`:
+Then add the ID to the appropriate ID tuple in `schema.ts`:
 
 ```typescript
-export const BACKEND_APP_IDS = [
+export const backendAppIds = [
   // ... existing ...
   'my-new-app',
 ] as const;
@@ -54,7 +57,7 @@ export const BACKEND_APP_IDS = [
 Edit `packages/tooling/src/setup/catalog.ts`:
 
 ```typescript
-// In CAPABILITY_CATALOG:
+// In capabilityCatalog:
 "my-capability": {
   id: "my-capability",
   label: "My Capability",
@@ -66,7 +69,7 @@ Edit `packages/tooling/src/setup/catalog.ts`:
 Then add the ID to the enum in `schema.ts`:
 
 ```typescript
-export const CAPABILITY_IDS = [
+export const capabilityIds = [
   // ... existing ...
   'my-capability',
 ] as const;
@@ -85,10 +88,10 @@ Edit `packages/tooling/src/setup/presets.ts`:
 },
 ```
 
-Then add the ID to `PRESET_IDS` in `schema.ts`:
+Then add the ID to `presetIds` in `schema.ts`:
 
 ```typescript
-export const PRESET_IDS = [
+export const presetIds = [
   // ... existing ...
   'my-preset',
 ] as const;
@@ -159,17 +162,19 @@ Pass the adapter to `apply(operations, adapter, options)`.
 
 ## Extending the feature generator
 
-The feature generator lives in `packages/tooling/src/commands/project/generate-vertical-slice.ts`. It:
+The feature generator lives in
+`packages/tooling/src/generators/feature/generator.ts`. It:
 
 1. Parses args (`--name`, `--dry-run`, `--force`, `--api-app`).
 2. Generates template files for backend DTOs, module, controller, service, PostgreSQL entity, and frontend client.
 3. Updates `tsconfig.base.json` path aliases.
 4. Outputs next steps.
 
-To add new template files, edit `createTemplateFiles()`:
+To add new template files, extend `createBackendTemplateFiles()` and keep its
+unit tests aligned:
 
 ```typescript
-function createTemplateFiles(names: Names, apiApp: string): TemplateFile[] {
+function createBackendTemplateFiles(names: Names, frontendRoot: string, migrationTimestamp: string): TemplateFile[] {
   return [
     // ... existing templates ...
     {
@@ -208,12 +213,16 @@ Then create `packages/tooling/src/commands/my/command.ts`.
 - Apply tests: `packages/tooling/src/setup/apply.component.test.ts`
 - Setup command tests: `packages/tooling/src/commands/project/setup.test.ts`
 - Setup e2e tests: `packages/tooling/src/commands/project/setup.e2e.test.ts`
-- Feature generator tests: `packages/tooling/src/commands/project/generate-vertical-slice.test.ts`
+- Application generator tests: `packages/tooling/src/generators/application/*.test.ts`
+- Library generator tests: `packages/tooling/src/generators/library/*.test.ts`
+- Feature generator tests: `packages/tooling/src/generators/feature/*.test.ts`
+- Compatibility adapter tests: `packages/tooling/src/commands/project/generate-vertical-slice.test.ts`
 
 Run with:
 
 ```bash
 pnpm --filter @repo/tooling test
+pnpm run scaffold:verify
 ```
 
 ## Next steps

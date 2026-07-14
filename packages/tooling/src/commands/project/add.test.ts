@@ -217,11 +217,41 @@ describe("runAddCommand", () => {
     assert.equal(status, 1);
   });
 
-  it("requires explicit app kind and frontend renderer", async () => {
+  it("requires explicit app kind and renderer for every application", async () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     assert.equal(await runAddCommand(makeContext(["app", "portal"]), runner), 1);
     assert.equal(
       await runAddCommand(makeContext(["app", "portal", "--kind", "frontend"]), runner),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(makeContext(["app", "billing-api", "--kind", "backend"]), runner),
+      1,
+    );
+  });
+
+  it("refuses force-overwriting app and library roots", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "app",
+          "portal",
+          "--kind",
+          "frontend",
+          "--renderer",
+          "vite",
+          "--force",
+        ]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(
+        makeContext(["lib", "money", "--kind", "common", "--type", "util", "--force"]),
+        runner,
+      ),
       1,
     );
   });

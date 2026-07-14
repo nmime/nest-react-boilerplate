@@ -380,6 +380,13 @@ pnpm exec nx run ${projectName}:test
 pnpm exec nx run ${projectName}:serve
 \`\`\`
 
+## Completion contract
+
+This source scaffold is not automatically added to setup presets, local Compose,
+Docker/Helm, ingress, DNS, TLS, or observability. Complete the applicable
+[deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
+before calling the service production-ready.
+
 Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
 `,
   );
@@ -772,6 +779,14 @@ pnpm exec nx run ${names.kebab}:build
 pnpm exec nx run ${names.kebab}:test
 pnpm run frontend:fsd:check
 \`\`\`
+
+## Completion contract
+
+This source scaffold is not automatically added to setup presets, local Compose,
+Docker/Helm, ingress, DNS, TLS, API routing, or observability. Complete the
+applicable
+[deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
+before calling the application production-ready.
 
 Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
 `,

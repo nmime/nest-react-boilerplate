@@ -55,6 +55,8 @@ Always-loaded policy for human and AI contributors to
 
 - For any new app, library, or vertical feature, read
   [`.agents/skills/scaffold-feature/SKILL.md`](.agents/skills/scaffold-feature/SKILL.md)
+  and the canonical
+  [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)
   before editing project structure.
 - Use `pnpm nrb add ... --dry-run` first. Do not copy an existing app directory
   or reproduce the reference `admin-app` / `user-app` product UI.

@@ -8,6 +8,7 @@ Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm 
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm run onboarding:verify
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
 pnpm run tooling:static-check
@@ -33,7 +34,12 @@ pnpm run test:fullstack
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
-The PR/push CI workflow exposes a focused `Non-runtime validation gates` job after `ci:pr` and dependency installation. It hard-gates migration and library configuration standards, generated OpenAPI contract and client freshness, OpenAPI lint, consumer contracts, bounded OpenAPI fuzz case generation, and property-based invariants without adding Docker runtime, Helm runtime, or deployed-service prerequisites to that job.
+The PR/push CI workflow exposes a focused `Non-runtime validation gates` job
+after `ci:pr` and dependency installation. It hard-gates onboarding and
+application scaffold generation, migration and library configuration standards,
+generated OpenAPI contract and client freshness, OpenAPI lint, consumer
+contracts, bounded OpenAPI fuzz case generation, and property-based invariants
+without adding deployed-service prerequisites to that job.
 
 ## Current CI/local parity gates
 
@@ -104,8 +110,9 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 ## Script map
 
+- `pnpm run onboarding:verify`: non-deploying fresh-install proof that runs the doctor, resolves all five preset closures, and generates/builds/tests all application renderers and library runtimes.
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
-- CI `Non-runtime validation gates`: focused PR/push job that runs `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
+- CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation; also reachable through `pnpm run test:migrations:rollback`.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.

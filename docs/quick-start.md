@@ -53,7 +53,30 @@ Summary: 7 passed, 0 failed, 0 warnings, 2 skipped
 
 The two `○ skipped` entries for `nrb-config` and `nrb-state` are expected on a fresh clone. They pass after you run setup (see below).
 
-## 3. Configure the boilerplate
+## 3. Initialize product identity
+
+From a clean branch, replace the boilerplate name and every public frontend/API
+domain before product work:
+
+```bash
+pnpm nrb init \
+  --name "Acme App" \
+  --domain acme.example \
+  --owner acme-org \
+  --dry-run
+pnpm nrb init \
+  --name "Acme App" \
+  --domain acme.example \
+  --owner acme-org
+```
+
+`--domain` is required and must be a DNS base without a protocol, port, path,
+or wildcard. The command rewrites every `example.com` app/API/staging hostname;
+it does not create DNS records, TLS certificates, or secrets.
+
+Skip this step only when evaluating the upstream template unchanged.
+
+## 4. Select applications and capabilities
 
 The boilerplate ships with neutral and reference applications. The recommended
 `starter` preset selects `starter-app`; it does not reuse the reference
@@ -88,7 +111,7 @@ Before setup, `pnpm run dev` uses the neutral starter selection:
 `starter-app`, `user-app-api`, and `auth-app-api`. Run the `fullstack` or
 `enterprise` preset only when you intentionally want the richer reference apps.
 
-## 4. Environment variables
+## 5. Environment variables
 
 ```bash
 cp .env.example .env
@@ -96,7 +119,7 @@ cp .env.example .env
 
 Review `.env` and replace placeholder secrets with real values from your secret manager. Never commit real `.env` files.
 
-## 5. Start the database
+## 6. Start the database
 
 ```bash
 pnpm run dev:db
@@ -108,7 +131,7 @@ This starts PostgreSQL via Docker Compose. Run migrations:
 pnpm run db:migrate
 ```
 
-## 6. Start development servers
+## 7. Start development servers
 
 ```bash
 # Neutral starter plus its APIs:
@@ -152,7 +175,7 @@ Example:
 curl http://localhost:3000/health
 ```
 
-## 7. Verify everything works
+## 8. Verify everything works
 
 Run the fast preflight:
 
@@ -162,11 +185,19 @@ pnpm run check:fast
 
 This runs static checks, formatting, linting, typecheck, and unit tests.
 
+To prove the complete onboarding and application-generator contract after a
+fresh install:
+
+```bash
+pnpm run onboarding:verify
+```
+
 ## What's next?
 
 - **Request context** is automatic — `ClsInterceptor` runs first, `requestContext.getRequestId()` works everywhere. No setup needed.
 - **Error handling** is automatic — RFC 9457 Problem Details with `application/problem+json`. No setup needed.
 - [Setup and Configuration](setup/configuration.md) — deep dive into the setup engine and config schema.
+- [Scaffolding and Extension Contract](scaffolding-and-extension.md) — required/optional surfaces and the complete add-app/library/feature lifecycle.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — ship your first vertical slice.
 - [CLI Reference](setup/cli-reference.md) — every command with flags and examples.
 - [Launching a New Project](new-project.md) — rename and harden the boilerplate for your product.

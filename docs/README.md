@@ -7,13 +7,14 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Quick Start](quick-start.md) — clone, set up, and run the stack in under five minutes.
 - [Launching a New Project](new-project.md) — rename, initialize, and harden the boilerplate for your product.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — end-to-end guide for shipping a vertical slice.
+- [Scaffolding and Extension Contract](scaffolding-and-extension.md) — canonical fresh-clone, app/library/feature, domain, and production-registration lifecycle.
 
 ## Setup and configuration
 
 - [Setup and Configuration](setup/configuration.md) — interactive and noninteractive setup, `pnpm nrb doctor`, config schema.
 - [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
-- [Nx Generators](setup/nx-generators.md) — built-in Nx generators, schema overrides, and `nx g` examples.
+- [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
 
 ## Day-to-day usage
 

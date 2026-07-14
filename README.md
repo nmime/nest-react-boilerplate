@@ -72,6 +72,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | Topic                 | Doc                                                                                                                          |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | Getting started       | [Quick Start](docs/quick-start.md)                                                                                           |
+| Scaffold and extend   | [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)                                                      |
 | Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                     |
 | System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                             |
 | Environment config    | [Environment Variables](docs/environment-variables.md)                                                                       |
@@ -200,6 +201,7 @@ CI is extra evidence; local validation remains required for code changes.
 ## Documentation index
 
 - [Architecture](docs/architecture.md) and [architecture deep dives](docs/architecture/README.md) — app/library split, runtime boundaries, data flow, naming, and DDD boundaries.
+- [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md) — fresh-clone initialization, required/optional surfaces, generators, domains, and deployable completion criteria.
 - [Architecture decision records](docs/adr/README.md) — durable architecture decisions and ADR template.
 - [Runbooks](docs/runbooks/README.md) — operational runbook index and service incident template.
 - [AI agent policy](docs/ai/agent-policy.md), [repo map](docs/ai/repo-map.md), [retrieval policy](docs/ai/retrieval-policy.md), [context packing](docs/ai/context-packing.md), and [agent workflows](docs/ai/agent-workflows.md) — how repository context is organized for coding agents.

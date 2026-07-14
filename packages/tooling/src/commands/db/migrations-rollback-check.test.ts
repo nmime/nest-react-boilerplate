@@ -16,7 +16,7 @@ describe("db migrations rollback check", () => {
   });
 
   it("keeps the rollback check scoped to a disposable Testcontainers database", () => {
-    assert.match(source, /new PostgreSqlContainer\("postgres:16-alpine"\)\.start\(\)/);
+    assert.match(source, /new PostgreSqlContainer\("postgres:17\.6-alpine"\)\.start\(\)/);
     assert.match(source, /DATABASE_URL: container\.getConnectionUri\(\)/);
     assert.match(source, /POSTGRES_SSL: "false"/);
     assert.match(source, /await migrator\.down\(\{ to: 0 \}\)/);

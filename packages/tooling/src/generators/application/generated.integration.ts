@@ -4,15 +4,24 @@ import { existsSync, mkdirSync, readFileSync, rmSync, rmdirSync, symlinkSync, wr
 import { dirname, join, resolve, sep } from 'node:path';
 import test from 'node:test';
 import type { Tree } from '@nx/devkit';
+import { libraryGenerator } from '../library/generator.js';
 import { applicationGenerator } from './generator.js';
 
 const workspaceRoot = process.cwd();
 const frontendNames = ['nrb-canary-vite', 'nrb-canary-astro', 'nrb-canary-vike', 'nrb-canary-expo'] as const;
 const backendNames = ['nrb-canary-api', 'nrb-canary-worker'] as const;
-const projectNames = [...frontendNames, ...backendNames];
+const libraryProjects = [
+  '@app/backend-nrb-canary-backend-lib',
+  '@app/frontend-nrb-canary-frontend-lib',
+  '@app/common-nrb-canary-common-lib',
+] as const;
+const projectNames = [...frontendNames, ...backendNames, ...libraryProjects];
 const generatedRoots = [
   ...frontendNames.map((name) => `apps/frontend/${name}`),
   ...backendNames.map((name) => `apps/backend/nrb/${name}`),
+  'libs/backend/common/nrb-canary-backend-lib',
+  'libs/frontend/nrb-canary-frontend-lib',
+  'libs/common/nrb-canary-common-lib',
 ];
 const dependencySources = new Map<string, string>([
   ['apps/frontend/nrb-canary-vite', 'apps/frontend/admin/node_modules'],
@@ -123,7 +132,7 @@ function runNxTargets(targets: string, projects: readonly string[]): void {
 }
 
 void test(
-  'every application renderer generates runnable build, test, and typecheck contracts',
+  'every application renderer and library runtime generates runnable contracts',
   { timeout: 600_000 },
   async () => {
     assert.ok(
@@ -179,6 +188,27 @@ void test(
       name: 'nrb-canary-worker',
       kind: 'backend',
       renderer: 'worker',
+      skipFormat: true,
+    });
+    await libraryGenerator(tree, {
+      name: 'nrb-canary-backend-lib',
+      kind: 'backend',
+      type: 'util',
+      scope: 'nrb',
+      skipFormat: true,
+    });
+    await libraryGenerator(tree, {
+      name: 'nrb-canary-frontend-lib',
+      kind: 'frontend',
+      type: 'ui',
+      scope: 'nrb',
+      skipFormat: true,
+    });
+    await libraryGenerator(tree, {
+      name: 'nrb-canary-common-lib',
+      kind: 'common',
+      type: 'util',
+      scope: 'nrb',
       skipFormat: true,
     });
 

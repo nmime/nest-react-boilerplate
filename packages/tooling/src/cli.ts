@@ -115,7 +115,8 @@ registerScript('db:restore-drill', 'Run a PostgreSQL backup/restore drill or CI-
 registerScript('dev:fullstack', 'Run the local fullstack dev helper.', 'dev/fullstack.ts');
 registerScript('docker:smoke', 'Run Docker smoke checks.', 'docker/smoke.ts');
 registerScript('docker:fullstack-e2e', 'Run Docker fullstack e2e checks.', 'docker/fullstack-e2e.ts');
-registerScript('project:init', 'Initialize project placeholders.', 'project/init-project.ts');
+registerScript('project:init', 'Initialize project placeholders.', 'project/init-project.ts', true);
+registerScript('init', 'Initialize product identity and all example domains.', 'project/init-project.ts', true);
 registerScript('api:openapi', 'Export OpenAPI contracts.', 'api/export-openapi.ts');
 registerScript('api:clients', 'Generate API clients.', 'api/generate-clients.ts');
 registerScript('api:clients:check', 'Check generated API clients.', 'api/check-clients.ts');
@@ -184,22 +185,27 @@ function register(name: string, description: string, handler: CommandHandler, fo
   commands.set(name, { description, handler, forwardHelp });
 }
 
-function registerScript(name: string, description: string, commandPath: string): void {
-  register(name, description, ({ argv, packageRoot, workspaceRoot }) => {
-    const commandModule = resolve(packageRoot, 'src/commands', commandPath);
+function registerScript(name: string, description: string, commandPath: string, forwardHelp = false): void {
+  register(
+    name,
+    description,
+    ({ argv, packageRoot, workspaceRoot }) => {
+      const commandModule = resolve(packageRoot, 'src/commands', commandPath);
 
-    if (!existsSync(commandModule)) {
-      writeStderrLine(`Tooling command module not found: ${commandModule}`);
-      return 1;
-    }
+      if (!existsSync(commandModule)) {
+        writeStderrLine(`Tooling command module not found: ${commandModule}`);
+        return 1;
+      }
 
-    const result = run(process.execPath, [resolve(packageRoot, 'bin/run-ts-command.mjs'), commandModule, ...argv], {
-      cwd: workspaceRoot,
-      stdio: 'inherit',
-    });
+      const result = run(process.execPath, [resolve(packageRoot, 'bin/run-ts-command.mjs'), commandModule, ...argv], {
+        cwd: workspaceRoot,
+        stdio: 'inherit',
+      });
 
-    return result.status;
-  });
+      return result.status;
+    },
+    forwardHelp,
+  );
 }
 
 function resolveCommand(argv: string[]): { name: string; command: CommandDefinition; argv: string[] } | undefined {

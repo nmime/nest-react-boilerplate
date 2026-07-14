@@ -29,6 +29,37 @@ pnpm nrb <command> --help
 
 ## Setup commands
 
+### `init` / `project:init`
+
+Initialize product identity and replace every checked-in example domain.
+
+```bash
+pnpm nrb init \
+  --name "Acme App" \
+  --domain acme.example \
+  --owner acme-org \
+  --dry-run
+pnpm nrb init \
+  --name "Acme App" \
+  --domain acme.example \
+  --owner acme-org
+```
+
+| Flag                  | Type    | Description                                                  |
+| --------------------- | ------- | ------------------------------------------------------------ |
+| `--name <title>`      | string  | Required product display name.                               |
+| `--domain <base>`     | string  | Required DNS base without protocol, port, path, or wildcard. |
+| `--package-name <id>` | string  | Root package name; defaults to the product slug.             |
+| `--app-slug <id>`     | string  | Product/application slug.                                    |
+| `--db-name <name>`    | string  | PostgreSQL database name.                                    |
+| `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.          |
+| `--dry-run`           | boolean | Print the file plan without writing.                         |
+| `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.     |
+| `--non-interactive`   | boolean | Compatibility flag; required values must still be explicit.  |
+
+The old `pnpm init:project -- ...` root script calls the same implementation.
+Run initialization before `pnpm nrb setup`.
+
 ### `setup` / `project:setup`
 
 Interactive and non-interactive boilerplate configuration.
@@ -103,10 +134,16 @@ pnpm nrb add lib billing --kind backend --type feature-main --scope billing
 pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
 ```
 
-An app or library generator writes a workspace package manifest. After the
-non-dry-run command, run `pnpm install` once to update `pnpm-lock.yaml` and
-create the new workspace links; then verify that
-`pnpm install --frozen-lockfile` is clean. Do not hand-edit the lockfile.
+An application generator writes a workspace package manifest. After generating
+an app, run `pnpm install` once to update `pnpm-lock.yaml` and create the new
+workspace links; then verify that `pnpm install --frozen-lockfile` is clean. A
+library generator uses the owning shared runtime manifest and does not add a
+package manifest by default. Never hand-edit the lockfile.
+
+An application generator creates source/Nx/test/README/AGENTS contracts only.
+Before calling a deployable complete, follow the selection, environment,
+Compose, Docker/Helm, DNS/TLS, observability, contract, and e2e registration
+checklist in [Scaffolding and Extension Contract](../scaffolding-and-extension.md).
 
 Exit codes: `0` success, `1` missing args or unknown kind.
 
@@ -152,7 +189,7 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 
 | Command                                  | Description                           |
 | ---------------------------------------- | ------------------------------------- |
-| `project:init`                           | Initialize project placeholders.      |
+| `project:init`                           | Compatibility alias for `nrb init`.   |
 | `project:generate-vertical-slice <name>` | Deprecated adapter to `add feature`.  |
 | `project:check-library-configs`          | Validate Nx library config placement. |
 

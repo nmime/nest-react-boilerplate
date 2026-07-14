@@ -1,26 +1,27 @@
 # Migration Guide
 
-Migrate from legacy `init:project` and `generate:feature` scripts to the NRB setup engine (`pnpm nrb setup` / `pnpm nrb add`).
+Migrate compatibility aliases `init:project` and `generate:feature` to the
+unified `pnpm nrb init`, `pnpm nrb setup`, and `pnpm nrb add` workflow.
 
 ## What changed
 
-| Legacy command                 | Replacement                                           | Notes                                         |
-| ------------------------------ | ----------------------------------------------------- | --------------------------------------------- |
-| `pnpm init:project`            | `pnpm nrb setup`                                      | Interactive wizard replaces placeholder init. |
-| `pnpm generate:feature <name>` | `pnpm nrb add feature <name>`                         | Same vertical-slice engine, unified CLI.      |
-| Manual `project.json` edits    | `pnpm nrb add app <name>` / `pnpm nrb add lib <name>` | Nx generators for new apps and libraries.     |
-| Hand-authored config files     | `pnpm nrb setup --config nrb.config.json`             | Schema-validated, idempotent configuration.   |
+| Legacy command                 | Replacement                                             | Notes                                         |
+| ------------------------------ | ------------------------------------------------------- | --------------------------------------------- |
+| `pnpm init:project`            | `pnpm nrb init`                                         | Same initializer under the unified CLI.       |
+| `pnpm generate:feature <name>` | `pnpm nrb add feature <name>`                           | Same vertical-slice engine, unified CLI.      |
+| Manual `project.json` edits    | `pnpm nrb add app/lib <name>` with required typed flags | Repository generators for apps and libraries. |
+| Hand-authored config files     | `pnpm nrb setup --config nrb.config.json`               | Schema-validated, idempotent configuration.   |
 
 ## Compatibility guarantees
 
-- **`init:project` still works**: the legacy command remains in `packages/tooling` and continues to replace boilerplate tokens. It does not conflict with `pnpm nrb setup`.
+- **`init:project` still works**: the root alias invokes the same implementation as `pnpm nrb init`. New docs and automation should use the unified command.
 - **`generate:feature` still works**: the root alias invokes `pnpm nrb add feature`, and the deprecated `project:generate-vertical-slice` command delegates to that same Nx generator.
 - **State is isolated**: `pnpm nrb setup` tracks state in `.nrb/state.json`. The legacy `init:project` uses Git to track changes. They do not interfere.
 - **Idempotency**: `pnpm nrb setup` is safe to re-run. The planner produces zero operations if the workspace is already up to date.
 
 ## Migrating from `init:project`
 
-### Before (legacy)
+### Before (compatibility alias)
 
 ```bash
 git checkout -b chore/initialize-project
@@ -30,31 +31,31 @@ pnpm init:project -- --name "Acme App" --domain acme.example --owner my-org
 
 This replaced known boilerplate tokens in files and did not rewrite Git history.
 
-### After (setup engine)
+### After (unified initialization and setup)
 
 ```bash
-# Interactive:
-pnpm nrb setup
+pnpm nrb init --name "Acme App" --domain acme.example --owner my-org --dry-run
+pnpm nrb init --name "Acme App" --domain acme.example --owner my-org
 
-# Non-interactive with preset:
-pnpm nrb setup --preset fullstack --non-interactive
-
-# Config file:
-cp nrb.config.example.json nrb.config.json
-# Edit nrb.config.json
-pnpm nrb setup --config nrb.config.json
+pnpm nrb setup --preset starter --non-interactive --dry-run
+pnpm nrb setup --preset starter --non-interactive
 ```
 
-### What to keep doing manually
+The commands have separate ownership: `init` replaces product identity and all
+example domains; `setup` selects apps and capabilities idempotently. A config
+file remains available through
+`pnpm nrb setup --config nrb.config.json`.
 
-The setup engine does NOT replace these `init:project` responsibilities:
+### What remains external
+
+Neither initialization nor setup performs these external operations:
 
 1. **Renaming the Git repository** — still a manual step.
-2. **Replacing placeholder tokens** in files not tracked by the setup engine (e.g., Dockerfile image names, Helm chart values). Use `git grep` to find remaining `nest-react-boilerplate` or `example.com` references.
+2. **DNS and TLS provisioning** — initialization replaces hostname values but does not create DNS records or certificates.
 3. **Setting up CODEOWNERS, issue templates, Dependabot, CodeQL** — still manual or scripted outside the engine.
 4. **Replacing placeholder secrets** — copy from `.env.local.example` / `.env.production.example` and fill in real values.
 
-Recommendation: run `init:project` first (token replacement), then `pnpm nrb setup` (app/capability selection).
+Run `pnpm nrb init` first, then `pnpm nrb setup`.
 
 ## Migrating from `generate:feature`
 
@@ -92,7 +93,7 @@ pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ## Migration checklist
 
 - [ ] Run `pnpm nrb doctor` to verify workspace health.
-- [ ] If you previously ran `init:project`, skip manual token replacement for files already processed.
+- [ ] If you previously ran `init:project`, do not run `nrb init` again without reviewing the dry run; they are the same initializer.
 - [ ] Run `pnpm nrb setup --dry-run` to see what the engine would do.
 - [ ] Run `pnpm nrb setup` (interactive) or with `--config` (non-interactive).
 - [ ] Verify with `pnpm nrb doctor --json` that `nrb-config` and `nrb-state` checks now pass.

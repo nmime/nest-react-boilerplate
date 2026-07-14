@@ -1,159 +1,108 @@
-# Nx Generators
+# Repository Generators
 
-This monorepo uses Nx 23.0.1 with a set of built-in and custom generators. This page documents the configured generators and how to use them.
+Use the custom `@repo/tooling` generators through `pnpm nrb add`. They encode
+this repository's nested app/library layout, Nx tags, TypeScript configuration,
+tests, public aliases, and nearest agent/ownership documentation. Generic Nx
+application generators are not the canonical scaffold path.
 
-## Configured generators
-
-### `@nx/node:app`
-
-Generate a new Node.js application (NestJS backend service).
-
-```bash
-nx g @nx/node:app --name=my-service
-```
-
-Creates the app under `apps/backend/` and registers it in the Nx project graph.
-
-### `@nx/node:lib`
-
-Generate a new Node.js library.
+## Canonical commands
 
 ```bash
-nx g @nx/node:lib --name=my-lib
+pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> --dry-run
+pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --scope <scope> --dry-run
+pnpm nrb add feature <name> --api-app <api> --frontend-app <frontend> --dry-run
 ```
 
-Creates the library under `libs/` with TypeScript configuration and build targets.
+Run without `--dry-run` only after inspecting every planned path. Application
+generation creates a package manifest, so run `pnpm install` afterward and prove
+`pnpm install --frozen-lockfile`. Generated libraries use their owning shared
+runtime manifest unless a maintainer explicitly introduces a package boundary.
 
-### `@nx/react:application`
+## Application generator
 
-Generate a new React application (Vite-based, CSS-styled).
+`@repo/tooling:application` supports:
+
+| Kind     | Renderer   | Generated contract                                       |
+| -------- | ---------- | -------------------------------------------------------- |
+| frontend | `vite`     | React/Vite app, Vitest, browser e2e coverage target      |
+| frontend | `astro`    | Astro standalone Node output and renderer smoke test     |
+| frontend | `vike`     | Vike React SSR app and production build contract         |
+| frontend | `expo`     | Expo Router/React Native app and web export contract     |
+| backend  | `nest-api` | NestJS/Fastify API with standard health endpoints        |
+| backend  | `worker`   | NestJS application-context worker without HTTP transport |
+
+Frontend roots are `apps/frontend/<name>`. Backend roots are
+`apps/backend/<first-name-segment>/<name>`. Every generated root includes a
+local `README.md` and `AGENTS.md`.
+
+Generation deliberately does not publish a hostname or add the app to every
+preset/deployment. Complete the explicit registration checklist in
+[Scaffolding and Extension Contract](../scaffolding-and-extension.md).
+
+## Library generator
+
+`@repo/tooling:library` supports backend, frontend, and common runtimes plus
+semantic roles `common`, `util`, `ui`, `sdk`, `feature-main`,
+`feature-shared`, `data-access`, `test-util`, and `asset`.
+
+It derives the required `libs/backend/**`, `libs/frontend/**`, or
+`libs/common/**` path, Nx boundary tags, public TypeScript alias, build/test
+configuration, and local ownership files. Use the feature generator when the
+main/shared/data-access libraries form one vertical product slice.
+
+## Feature generator
+
+`@repo/tooling:feature` creates:
+
+| Path                                         | Ownership                               |
+| -------------------------------------------- | --------------------------------------- |
+| `libs/backend/feature/<name>/shared/lib/**`  | DTOs and permissions                    |
+| `libs/backend/feature/<name>/main/lib/**`    | Nest module, controller, service, tests |
+| `libs/backend/postgres/main/<name>/lib/**`   | MikroORM entity, repository, migration  |
+| `apps/frontend/<target>/src/pages/<name>/**` | FSD page public boundary                |
+| `docs/features/<name>/scaffold.md`           | Product completion checklist            |
+
+It also creates the three stable backend aliases and wires the feature module
+into the selected API. It does not hand-edit generated OpenAPI/client output or
+invent product fields and routing.
+
+## Nx inference
+
+`nx.json` registers repository plugins that infer lint, Vite build/serve/test,
+and TypeScript targets where appropriate. Generated projects also declare
+explicit targets when a renderer or backend build needs a repository-specific
+contract. Inspect the resolved project instead of assuming a target:
 
 ```bash
-nx g @nx/react:application --name=my-frontend
+pnpm exec nx show project <project-name>
 ```
 
-Configured defaults in `nx.json`:
+The workspace currently pins Nx `23.1.0`; package manifests and the lockfile
+are the source of truth for exact versions.
 
-- `babel: true`
-- `style: "css"`
-- `linter: "none"`
-- `bundler: "vite"`
-
-### `@nx/react:component`
-
-Generate a React component.
+## Verification
 
 ```bash
-nx g @nx/react:component --name=MyComponent --project=my-frontend
+pnpm run tooling:static-check
+pnpm run scaffold:verify
+pnpm run lib:configs:check
+pnpm run frontend:fsd:check
+pnpm run check:fast
+git diff --check
 ```
 
-Configured defaults: `style: "css"`.
+`scaffold:verify` generates all six application renderer/process variants plus
+backend, frontend, and common libraries in the live workspace. It builds/tests
+all nine projects through Nx, typechecks the applicable frontends, then removes
+the canary roots. Generator unit and setup e2e tests cover name/path rules,
+schema validation, dependency expansion, conflicts, rollback, and idempotency.
 
-### `@nx/react:library`
+## Extending generators
 
-Generate a React library.
+Modify `packages/tooling/src/generators/**` and its tests. Keep
+`packages/tooling/generators.json`, `packages/tooling/src/commands/project/add.ts`,
+CLI docs, generated README/AGENTS contracts, and scaffold verification aligned.
+Do not create a parallel shell-script or copy-directory scaffold path.
 
-```bash
-nx g @nx/react:library --name=my-ui-lib
-```
-
-Configured defaults: `style: "css"`, `linter: "none"`.
-
-## Custom generators
-
-### `pnpm nrb add feature` (via `project:generate-vertical-slice`)
-
-The custom feature generator scaffolds a complete vertical slice:
-
-```bash
-# Via nrb:
-tooling add feature invoices --dry-run
-
-# Via the project command directly:
-tooling project:generate-vertical-slice invoices --api-app user-app-api --dry-run
-```
-
-Generated files:
-
-| Path                                         | Description                        |
-| -------------------------------------------- | ---------------------------------- |
-| `libs/backend/feature/<name>/shared/lib/`    | Shared DTOs and permissions        |
-| `libs/backend/feature/<name>/main/lib/`      | NestJS module, controller, service |
-| `libs/backend/postgres/main/<name>/lib/`     | PostgreSQL entity and migration    |
-| `libs/frontend/api-client/lib/src/features/` | Frontend API client stub           |
-| `apps/frontend/app/src/app/features/<name>/` | React page stub                    |
-| `docs/features/<name>/test-checklist.md`     | Test checklist                     |
-
-Also updates `tsconfig.base.json` with three path aliases:
-
-- `@app/backend-feature-<name>-main`
-- `@app/backend-feature-<name>-shared`
-- `@app/backend-postgres-main-<name>`
-
-## Nx target defaults
-
-The workspace configures these plugins and targets in `nx.json`:
-
-| Plugin              | Target         | Description              |
-| ------------------- | -------------- | ------------------------ |
-| `@nx/eslint/plugin` | `lint`         | ESLint for all projects  |
-| `@nx/vite/plugin`   | `build`        | Vite build               |
-|                     | `test`         | Vitest unit tests        |
-|                     | `serve`        | Dev server               |
-|                     | `dev`          | Dev server alias         |
-|                     | `preview`      | Preview built output     |
-|                     | `serve-static` | Serve static files       |
-|                     | `typecheck`    | TypeScript type checking |
-|                     | `build-deps`   | Build dependencies       |
-|                     | `watch-deps`   | Watch dependencies       |
-
-## Named inputs
-
-| Input           | Contents                                                                   |
-| --------------- | -------------------------------------------------------------------------- |
-| `default`       | All files in the project root, plus `sharedGlobals`                        |
-| `production`    | `default` minus test files, stories, and spec configs                      |
-| `sharedGlobals` | `tsconfig.base.json`, `eslint.config.js`, `package.json`, `pnpm-lock.yaml` |
-
-## Common Nx commands
-
-```bash
-nx serve <project>              # Start dev server for a project
-nx build <project>              # Build a project
-nx test <project>               # Run tests for a project
-nx lint <project>               # Lint a project
-nx typecheck <project>          # Typecheck a project
-
-nx run-many -t serve            # Serve all projects with a serve target
-nx run-many -t build            # Build all projects
-nx run-many -t test             # Test all projects
-
-nx graph                        # Open the project graph in the browser
-nx show project <name>          # Show project details
-```
-
-## Installed Nx packages
-
-| Package                 | Version |
-| ----------------------- | ------- |
-| `nx`                    | 23.0.1  |
-| `@nx/js`                | 23.0.1  |
-| `@nx/eslint`            | 23.0.1  |
-| `@nx/jest`              | 23.0.1  |
-| `@nx/devkit`            | 23.0.1  |
-| `@nx/eslint-plugin`     | 23.0.1  |
-| `@nx/module-federation` | 23.0.1  |
-| `@nx/nest`              | 23.0.1  |
-| `@nx/node`              | 23.0.1  |
-| `@nx/react`             | 23.0.1  |
-| `@nx/rollup`            | 23.0.1  |
-| `@nx/vite`              | 23.0.1  |
-| `@nx/vitest`            | 23.0.1  |
-| `@nx/web`               | 23.0.1  |
-| `@nx/webpack`           | 23.0.1  |
-| `@nx/docker`            | 23.0.1  |
-
-## Next steps
-
-- [CLI Reference](cli-reference.md) — full `nrb` CLI commands.
-- [Extending Generators](extending-generators.md) — add custom generators and modify existing ones.
+See [Extending Generators](extending-generators.md) for the internal setup
+planner and generator code map.

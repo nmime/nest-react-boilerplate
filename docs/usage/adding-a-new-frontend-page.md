@@ -1,217 +1,70 @@
 # Adding a New Frontend Page
 
-Step-by-step guide to adding a route and page to one of the frontend apps.
+Frontend structure follows Feature-Sliced Design (FSD). Put a route-level UI
+boundary under the owning app's `src/pages/<feature>` directory and keep shared
+API/state/UI logic in the appropriate frontend library or lower FSD layer.
 
-## 1. Pick the target app
+## 1. Choose the owning app
 
-| App           | Path                    | Framework         | Use case               |
-| ------------- | ----------------------- | ----------------- | ---------------------- |
-| `admin-app`   | `apps/frontend/admin`   | React + Vite      | Admin dashboard pages  |
-| `user-app`    | `apps/frontend/app`     | React + Vite      | User-facing pages      |
-| `landing-app` | `apps/frontend/landing` | Astro             | Public marketing pages |
-| `site-app`    | `apps/frontend/site`    | Vike + React SSR  | SSR product/user pages |
-| `mobile-app`  | `apps/frontend/mobile`  | Expo/React Native | Mobile app screens     |
+| App           | Path                        | Renderer          | Role                              |
+| ------------- | --------------------------- | ----------------- | --------------------------------- |
+| `starter-app` | `apps/frontend/starter-app` | React + Vite      | Neutral product starting point    |
+| `admin-app`   | `apps/frontend/admin`       | React + Vite      | Reference admin/RBAC flow         |
+| `user-app`    | `apps/frontend/app`         | React + Vite      | Reference authenticated user flow |
+| `landing-app` | `apps/frontend/landing`     | Astro             | Public marketing pages            |
+| `site-app`    | `apps/frontend/site`        | Vike + React SSR  | SSR product/site routes           |
+| `mobile-app`  | `apps/frontend/mobile`      | Expo/React Native | Mobile screens                    |
 
-## 2. Scaffold with the feature generator (recommended)
+Do not copy the reference admin/user page composition into `starter-app`.
 
-The feature generator creates a React page stub in `apps/frontend/app/src/app/features/<name>/`:
+## 2. Generate a vertical page boundary
 
-```bash
-pnpm nrb add feature my-feature --dry-run
-pnpm nrb add feature my-feature
-```
-
-This creates:
-
-- Backend shared DTOs and NestJS module.
-- PostgreSQL entity and migration.
-- Frontend API client stub.
-- **React page stub** at `apps/frontend/app/src/app/features/my-feature/`.
-
-## 3. Manual page creation
-
-If you don't need a full vertical slice, create the page manually:
-
-### For Vite SPAs (admin-app, user-app)
+When the page belongs to a backend feature, use the vertical generator:
 
 ```bash
-mkdir -p apps/frontend/app/src/app/features/my-feature/
+pnpm nrb add feature invoices \
+  --api-app user-app-api \
+  --frontend-app starter-app \
+  --dry-run
+pnpm nrb add feature invoices \
+  --api-app user-app-api \
+  --frontend-app starter-app
 ```
 
-Create `apps/frontend/app/src/app/features/my-feature/my-feature-page.tsx`:
+It creates
+`apps/frontend/starter-app/src/pages/invoices/ui/InvoicesPage.tsx` and a public
+`src/pages/invoices/index.ts`. It also creates and wires backend feature and
+PostgreSQL libraries. Generated OpenAPI and API-client output remain generated
+artifacts and must be refreshed after the API builds.
 
-```tsx
-import { useState } from 'react';
+For a frontend-only page, create the same `src/pages/<feature>/ui` plus
+`index.ts` public boundary manually. Do not create obsolete
+`src/app/features/<feature>` roots.
 
-export function MyFeaturePage() {
-  const [loading, setLoading] = useState(false);
+## 3. Register routing in the owning renderer
 
-  return (
-    <div>
-      <h1>My Feature</h1>
-      {loading ? <p>Loading...</p> : <p>Content here</p>}
-    </div>
-  );
-}
-```
+Routing is app-owned; there is no repository-wide React Router assumption.
 
-### For Astro (landing-app)
+- `starter-app` currently has a deliberately minimal `src/app.tsx`. Introduce
+  the smallest product router at this app boundary when multiple routes are
+  needed.
+- `user-app` owns routing in
+  `apps/frontend/app/src/app/router/user-router.tsx`.
+- `admin-app` owns its explicit route composition in
+  `apps/frontend/admin/src/App.tsx`.
+- Astro routes are filesystem pages under
+  `apps/frontend/landing/src/pages/**`.
+- Vike routes are filesystem pages under `apps/frontend/site/pages/**` and use
+  `+Page.tsx` / `+config.ts` conventions.
+- Expo Router routes live under `apps/frontend/mobile/src/app/**`; reusable
+  screen UI remains under `src/pages/**`.
 
-Create `apps/frontend/landing/src/pages/my-feature.astro`:
+Import the page only through its `index.ts` public boundary. Add a not-found
+path and preserve auth/RBAC guards where the owning app requires them.
 
-```astro
----
-// Astro page
----
+## 4. Add API ownership
 
-<html>
-  <head><title>My Feature</title></head>
-  <body>
-    <h1>My Feature</h1>
-  </body>
-</html>
-```
-
-### For Vike SSR (site-app)
-
-Create route files in `apps/frontend/site/pages/my-feature/`:
-
-```typescript
-// apps/frontend/site/pages/my-feature/page.tsx
-export default function MyFeaturePage() {
-  return <h1>My Feature</h1>;
-}
-
-// apps/frontend/site/pages/my-feature/config.ts
-export default {
-  title: 'My Feature',
-};
-```
-
-### For Expo/React Native (mobile-app)
-
-Add a screen to the navigation stack in `apps/frontend/mobile/src/navigation/` and create the screen component.
-
-## 4. Wire the route
-
-Add the page to the owning app's route tree:
-
-### Vite SPAs (React Router)
-
-Edit `apps/frontend/app/src/app/routes.tsx` (or the router configuration):
-
-```tsx
-import { lazy, Suspense } from 'react';
-
-const MyFeaturePage = lazy(() => import('./features/my-feature/my-feature-page'));
-
-// Add to routes array:
-{
-  path: '/my-feature',
-  element: (
-    <Suspense fallback={<div>Loading...</div>}>
-      <MyFeaturePage />
-    </Suspense>
-  ),
-}
-```
-
-### Astro
-
-Pages in `src/pages/` are automatically routed by Astro.
-
-### Vike
-
-Pages in `pages/` are automatically routed by Vike.
-
-## 5. Use shared UI primitives
-
-Import from `@app/frontend-ui-web` for shared components:
-
-```tsx
-import { Button, Card } from '@app/frontend-ui-web';
-```
-
-For mobile, use `@app/frontend-ui-native`.
-
-## 6. Add API integration
-
-If the page needs backend data, use the generated API client:
-
-```tsx
-import { useMyFeatureClient } from '@app/frontend-api-client';
-
-export function MyFeaturePage() {
-  const { data, isLoading, error } = useMyFeatureClient();
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-
-  return (
-    <div>
-      {data.map((item) => (
-        <Card key={item.id}>{item.name}</Card>
-      ))}
-    </div>
-  );
-}
-```
-
-## 7. Add tests
-
-### Unit test
-
-```typescript
-// apps/frontend/app/src/app/features/my-feature/my-feature-page.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { MyFeaturePage } from './my-feature-page';
-
-describe('MyFeaturePage', () => {
-  it('renders the page title', () => {
-    render(<MyFeaturePage />);
-    expect(screen.getByRole('heading', { name: 'My Feature' })).toBeDefined();
-  });
-});
-```
-
-### Storybook story
-
-```tsx
-// apps/frontend/app/src/app/features/my-feature/my-feature-page.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { MyFeaturePage } from './my-feature-page';
-
-const meta: Meta<typeof MyFeaturePage> = {
-  component: MyFeaturePage,
-};
-
-export default meta;
-type Story = StoryObj<typeof MyFeaturePage>;
-
-export const Default: Story = {};
-```
-
-## 8. Validate
-
-```bash
-# Typecheck:
-nx typecheck user-app
-
-# Lint:
-nx lint user-app
-
-# Test:
-nx test user-app
-
-# Build:
-nx build user-app
-
-# Serve:
-nx serve user-app
-```
-
-## 9. Refresh API contracts (if backend changed)
+After a backend route compiles:
 
 ```bash
 pnpm api:openapi
@@ -219,8 +72,43 @@ pnpm api:contracts
 pnpm api:clients
 ```
 
+Consume generated clients through `@app/frontend-api-client` and a
+frontend-owned wrapper. Do not import backend DTOs or hand-edit generated
+OpenAPI/client files.
+
+The page must explicitly handle loading, empty, recoverable error, forbidden,
+and success states as applicable. User-facing copy must use the owning i18n
+boundary.
+
+## 5. Test and verify
+
+Add unit/component tests next to the owning page or app convention, then add e2e
+coverage for navigation and public behavior.
+
+```bash
+pnpm run frontend:fsd:check
+pnpm exec nx run starter-app:lint
+pnpm exec nx run starter-app:typecheck
+pnpm exec nx run starter-app:test
+pnpm exec nx run starter-app:build
+pnpm exec nx run starter-app:e2e
+git diff --check
+```
+
+Replace `starter-app` with the selected project. Add Storybook coverage when a
+reusable shared UI state is introduced.
+
+## 6. Public hostname and API routing
+
+An additional page normally shares its app's hostname. A new frontend app does
+not: it needs an explicit product-owned hostname, same-origin or split-origin
+API routing decision, CORS/CSP updates, ingress, DNS, TLS, and deployment
+registration. See
+[Scaffolding and Extension Contract](../scaffolding-and-extension.md) and
+[Frontend Deployment Topology](../frontend-deployment-topology.md).
+
 ## Next steps
 
-- [First Feature Walkthrough](../first-feature-walkthrough.md) — full vertical slice walkthrough.
-- [Adding a New Service](adding-a-new-service.md) — create the backend counterpart.
-- [Frontend FSD](../frontend-fsd.md) — Feature-Sliced Design boundaries.
+- [First Feature Walkthrough](../first-feature-walkthrough.md)
+- [Frontend FSD](../frontend-fsd.md)
+- [API Client](../api-client.md)

@@ -454,7 +454,7 @@ backups:
   ttlSecondsAfterFinished: 86400
   image:
     repository: postgres
-    tag: '16-alpine'
+    tag: '17.6-alpine'
     pullPolicy: IfNotPresent
   destination:
     path: /backups

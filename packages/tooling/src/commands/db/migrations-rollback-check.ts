@@ -21,7 +21,7 @@ let container;
 let orm;
 
 try {
-  container = await new PostgreSqlContainer("postgres:16-alpine").start();
+  container = await new PostgreSqlContainer("postgres:17.6-alpine").start();
   const env = {
     ...process.env,
     DATABASE_URL: container.getConnectionUri(),

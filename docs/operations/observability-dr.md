@@ -95,7 +95,7 @@ backups:
     keepLast: 336 # two weeks of hourly local copies when a PVC is mounted
 ```
 
-The default image is `postgres:16-alpine`, which contains `pg_dump` but not
+The default image is `postgres:17.6-alpine`, which contains `pg_dump` but not
 cloud CLIs or encryption tools. For production, set `backups.image` to a hardened
 ops image that includes the selected upload/encryption tools (`aws`, `age`,
 `gpg`, `rclone`, etc.). The CronJob exports these hook variables:

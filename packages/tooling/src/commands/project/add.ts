@@ -2,8 +2,8 @@
  * `pnpm nrb add` command — add an app, library, or feature to the workspace.
  *
  * Usage:
- *   pnpm nrb add app <name>           # invoke Nx @repo/tooling:application generator
- *   pnpm nrb add lib <name>           # invoke Nx @repo/tooling:library generator
+ *   pnpm nrb add app <name> --kind <kind> --renderer <renderer>
+ *   pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope>
  *   pnpm nrb add feature <name>       # invoke Nx @repo/tooling:feature generator
  *
  * All branches call a mockable Nx generator runner (for testability).
@@ -196,13 +196,20 @@ export async function runAddCommand(
     return 1;
   }
 
-  if (args.kind === "app" && args.entityKind === "frontend" && !args.renderer) {
-    process.stderr.write("Error: frontend applications require --renderer (vite | astro | vike | expo)\n");
+  if (args.kind === "app" && !args.renderer) {
+    process.stderr.write(
+      `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : "nest-api | worker"})\n`,
+    );
     return 1;
   }
 
   if (args.kind === "app" && args.entityKind === "backend" && args.renderer && !["nest-api", "worker"].includes(args.renderer)) {
     process.stderr.write('Error: backend applications support --renderer "nest-api" or "worker"\n');
+    return 1;
+  }
+
+  if (args.force && args.kind !== "feature") {
+    process.stderr.write("Error: --force is supported only for feature regeneration; app and library roots are never overwritten.\n");
     return 1;
   }
 
@@ -276,7 +283,7 @@ Kind:
 
 Options:
   --dry-run             Show what would be done without making changes.
-  --force               Overwrite existing files without refusing.
+  --force               Regenerate an existing feature; never overwrites app/lib roots.
   --api-app <name>      Target API app (for feature; default: user-app-api).
   --frontend-app <name> Target frontend app (for feature; default: user-app).
   --kind <kind>         App/lib platform: frontend, backend, or common.

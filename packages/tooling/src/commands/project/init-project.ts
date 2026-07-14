@@ -105,17 +105,40 @@ interface InitConfig {
 
 function buildConfig(args: InitProjectArgs): InitConfig {
   if (!args.name) throw new Error("--name is required in non-interactive mode.");
+  if (!args.domain) throw new Error("--domain is required so every public app and API receives a product-owned hostname.");
   const appTitle = title(args.name);
   const appSlug = args.appSlug ?? args.packageName ?? slugify(appTitle);
+  const domain = normalizeDomain(args.domain);
   return {
     appTitle,
     appSlug,
     packageName: args.packageName ?? appSlug,
     dbName: args.dbName ?? snake(appTitle),
     className: pascal(appTitle),
-    domain: args.domain ?? "example.com",
+    domain,
     owner: args.owner ?? "your-github-org",
   };
+}
+
+function normalizeDomain(value: string): string {
+  const domain = value.trim().toLowerCase().replace(/\.$/u, "");
+  const labels = domain.split(".");
+  const isValidLabel = (label: string): boolean =>
+    label.length >= 1 &&
+    label.length <= 63 &&
+    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u.test(label);
+
+  if (
+    domain.length > 253 ||
+    labels.length < 2 ||
+    labels.some((label) => !isValidLabel(label))
+  ) {
+    throw new Error(
+      `--domain must be a DNS base name without a protocol, port, path, or wildcard (received "${value}").`,
+    );
+  }
+
+  return domain;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +176,10 @@ function buildReplacements(c: InitConfig): Map<string, string> {
     ["user@example.com", `user@${c.domain}`],
     ["admin@example.com", `admin@${c.domain}`],
     ["your-github-org", c.owner],
+    // Keep this last: it covers every remaining public surface, including
+    // site, mobile, user/admin APIs, bot APIs, staging hosts, TLS SANs, CSP,
+    // environment examples, and deployment documentation.
+    ["example.com", c.domain],
   ]);
 }
 
@@ -184,7 +211,22 @@ function runInitProject(argv: string[]): void {
   const args = parseArgs(argv);
 
   if (args.help) {
-    console.log('Usage: pnpm init:project -- --name "Acme App" [--dry-run] [--force]');
+    console.log(`Usage: pnpm nrb init --name "Acme App" --domain acme.example [options]
+
+Required:
+  --name <title>       Product display name.
+  --domain <base>      Product-owned DNS base without protocol/path/wildcard.
+
+Options:
+  --package-name <id>  Root package name (defaults to slugified title).
+  --app-slug <id>      Application slug (defaults to package name/title).
+  --db-name <name>     PostgreSQL database name (defaults to snake_case title).
+  --owner <org>        GitHub/GitLab owner replacing your-github-org.
+  --dry-run            Print the file plan without writing.
+  --force              Allow a dirty or non-Git workspace and overwrite conflicts.
+  --non-interactive    Compatibility flag; all required values must still be supplied.
+
+Compatibility alias: pnpm init:project -- --name ... --domain ...`);
     process.exit(0);
   }
 

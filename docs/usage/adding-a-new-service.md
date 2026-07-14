@@ -1,164 +1,137 @@
 # Adding a New Service
 
-Step-by-step guide to creating and wiring a new NestJS backend service in the monorepo.
+Use the repository generator. Do not run a generic Nx Node generator, copy an
+existing API, move directories manually, or create a top-level `services/`
+tree.
 
-## 1. Generate the service scaffold
+## 1. Choose the process type
 
-Use the Nx generator through the `pnpm nrb add` CLI:
+- `nest-api` creates an HTTP NestJS/Fastify deployable with the repository
+  bootstrap and standard health surface.
+- `worker` creates a Nest application-context process without HTTP transport.
 
-```bash
-pnpm nrb add app my-service --dry-run
-pnpm nrb add app my-service
-```
+The first name segment is the backend scope. For example,
+`billing-app-api` is generated at
+`apps/backend/billing/billing-app-api`.
 
-This runs `nx g @nx/node:app --name=my-service` and creates the project structure.
-
-For a NestJS-specific service, place it under `apps/backend/`:
-
-```bash
-# Move if the generator placed it elsewhere:
-mkdir -p apps/backend/my-service/
-mv apps/my-service apps/backend/my-service/my-service
-```
-
-Then create a `project.json`:
-
-```json
-{
-  "name": "my-service",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/backend/my-service/my-service/src",
-  "projectType": "application",
-  "targets": {
-    "build": {
-      "executor": "@nx/webpack:webpack",
-      "options": {
-        "outputPath": "dist/apps/backend/my-service/my-service",
-        "main": "apps/backend/my-service/my-service/src/main.ts",
-        "tsConfig": "apps/backend/my-service/my-service/tsconfig.app.json",
-        "compiler": "tsc"
-      }
-    },
-    "serve": {
-      "executor": "@nx/js:node",
-      "options": {
-        "buildTarget": "my-service:build"
-      }
-    }
-  },
-  "tags": ["platform:backend", "type:service"]
-}
-```
-
-## 2. Wire the service to the bootstrap module
-
-Import `@app/backend-common-bootstrap` for Nest app startup with health endpoints, Helmet, and validation pipes:
-
-```typescript
-// apps/backend/my-service/my-service/src/main.ts
-import { bootstrap } from '@app/backend-common-bootstrap';
-
-async function main() {
-  const app = await bootstrap({
-    appName: 'my-service',
-    port: parseInt(process.env.MY_SERVICE_PORT ?? '3010'),
-  });
-
-  await app.listen(app.get('port'));
-}
-
-main();
-```
-
-## 3. Register the service in pnpm workspace
-
-If the service has its own `package.json`, add it to `pnpm-workspace.yaml`. Most backend services use the monorepo's shared tooling and don't need separate packages.
-
-## 4. Add a Docker Compose service (optional)
-
-For local development, add the service to `docker/docker-compose.yml`:
-
-```yaml
-services:
-  my-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      - PORT=3010
-    ports:
-      - '3010:3010'
-    depends_on:
-      - postgres
-```
-
-## 5. Configure health endpoints
-
-The bootstrap module automatically provides:
-
-- `GET /health` — public health check
-- `GET /health/private` — authenticated health check
-- `GET /live` — liveness probe
-- `GET /ready` — readiness probe
-
-## 6. Add a feature module
-
-If the service needs domain logic, scaffold a feature:
+## 2. Inspect and generate
 
 ```bash
-pnpm nrb add feature my-feature --api-app my-service
+pnpm nrb add app billing-app-api \
+  --kind backend \
+  --renderer nest-api \
+  --dry-run \
+  -- --port=3200
+
+pnpm nrb add app billing-app-api \
+  --kind backend \
+  --renderer nest-api \
+  -- --port=3200
 ```
 
-Then import the generated module into the service's main NestJS module.
-
-## 7. Add database integration (optional)
-
-Create a PostgreSQL feature library:
+For a worker:
 
 ```bash
-# The feature generator already creates libs/backend/postgres/main/<feature>/lib/
-# Wire it to your service's module.
+pnpm nrb add app billing-worker \
+  --kind backend \
+  --renderer worker \
+  --dry-run
 ```
 
-Or create a standalone persistence library under `libs/backend/postgres/main/<name>/lib`.
+The generator creates `project.json`, package/TypeScript/test configuration,
+Nest entrypoint and module, tests, plus nearest `README.md` and `AGENTS.md`.
+A `nest-api` scaffold already uses `bootstrapNestApi` and exposes `/health`,
+`/health/private`, `/live`, and `/ready`.
 
-## 8. Tests and validation
+## 3. Install and prove the generated project
 
 ```bash
-# Run tests:
-nx test my-service
-
-# Lint and typecheck:
-nx lint my-service
-nx typecheck my-service
-
-# Build:
-nx build my-service
-
-# Serve:
-nx serve my-service
+pnpm install
+pnpm install --frozen-lockfile
+pnpm exec nx show project billing-app-api
+pnpm exec nx run billing-app-api:build
+pnpm exec nx run billing-app-api:test
+pnpm exec nx run billing-app-api:serve
 ```
 
-## 9. Register in the catalog (optional)
+Do not hand-edit `pnpm-lock.yaml`. Review the generated Nx tags and local port
+before adding product code.
 
-If you want the setup engine to manage this service, add it to the catalog:
+## 4. Add domain logic through libraries
 
-```typescript
-// packages/tooling/src/setup/catalog.ts
-"my-service": {
-  id: "my-service",
-  label: "My Service",
-  platform: "backend",
-  requiresCapabilities: ["postgres"],
-  requiresApps: [],
-  conflictsWithCapabilities: [],
-},
+Keep the deployable thin. Reusable business logic belongs under
+`libs/backend/feature/<scope>/**`; persistence belongs under
+`libs/backend/postgres/main/<scope>/**`; cross-runtime contracts belong under
+`libs/common/**`.
+
+For a complete feature slice:
+
+```bash
+pnpm nrb add feature invoices \
+  --api-app billing-app-api \
+  --frontend-app starter-app \
+  --dry-run
 ```
 
-And add `"my-service"` to `BACKEND_APP_IDS` in `packages/tooling/src/setup/schema.ts`.
+Then run without `--dry-run`, replace generic model fields with product
+invariants, and review RBAC, validation, indexes, rollback, repository errors,
+and concurrency.
+
+## 5. Register selection only when intended
+
+Generation does not silently add the service to every preset. If setup should
+select it:
+
+1. Add its stable ID to `packages/tooling/src/setup/schema.ts`.
+2. Add required apps/capabilities in `packages/tooling/src/setup/catalog.ts`.
+3. Add it only to the intended preset(s) in `presets.ts`.
+4. Update schema, catalog, planner, and preset tests.
+5. Run `pnpm nrb setup --preset <preset> --dry-run --json` and inspect the
+   resolved dependency closure.
+
+Leave experimental or independently started services out of presets until
+their ownership is deliberate.
+
+## 6. Complete runtime and public API ownership
+
+Before calling the service ready:
+
+- define environment validation and secret ownership;
+- wire PostgreSQL/Redis/NATS only when required;
+- preserve CLS request IDs and RFC 9457 errors;
+- add auth/RBAC, rate limits, OpenAPI, metrics, and migrations as applicable;
+- add local Compose/dev-orchestrator registration if it belongs in the selected
+  local stack;
+- add Docker image/build ownership and Helm Deployment/Service values;
+- define probes, resources, NetworkPolicy, ingress route, product-owned DNS,
+  TLS, and observability;
+- add the new origin to CORS/CSP and frontend API-base configuration;
+- regenerate OpenAPI/contracts/clients and add integration/e2e coverage.
+
+The generator intentionally cannot choose or publish a production hostname.
+Follow the full checklist in
+[Scaffolding and Extension Contract](../scaffolding-and-extension.md).
+
+## 7. Verify
+
+```bash
+pnpm run tooling:static-check
+pnpm run db:migrations:check
+pnpm run api:contracts:check
+pnpm run api:clients:check
+pnpm exec nx run billing-app-api:lint
+pnpm exec nx run billing-app-api:typecheck
+pnpm exec nx run billing-app-api:test
+pnpm exec nx run billing-app-api:build
+git diff --check
+```
+
+Add component, Docker smoke, and fullstack e2e checks when the service joins
+shared runtime or public traffic.
 
 ## Next steps
 
-- [Adding a New Frontend Page](adding-a-new-frontend-page.md) — add the frontend counterpart.
-- [Adding an Auth Provider](adding-an-auth-provider.md) — integrate authentication.
-- [API Contracts](../api-contracts.md) — export OpenAPI and generate clients.
+- [Scaffolding and Extension Contract](../scaffolding-and-extension.md)
+- [API Contracts](../api-contracts.md)
+- [Database Migrations](../database-migrations.md)
+- [Frontend Deployment Topology](../frontend-deployment-topology.md)

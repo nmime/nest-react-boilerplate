@@ -412,7 +412,20 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Start local runtime stack
-        run: docker compose -f docker/docker-compose.yml up -d --build
+        run: |
+          for attempt in 1 2 3; do
+            if docker compose -f docker/docker-compose.yml up -d --build; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Runtime stack failed to start after $attempt attempts" >&2
+              exit 1
+            fi
+
+            echo "::warning::Runtime stack build attempt $attempt failed; retrying after a transient backoff"
+            sleep "$((attempt * 15))"
+          done
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
 

@@ -11,6 +11,7 @@ This boilerplate supports deployment from GitHub, GitLab, or Bitbucket.
 | Issue templates    | .github/ISSUE_TEMPLATE/          | .gitlab/issue_templates/         | ❌                      |
 | Dependabot         | ✅                               | ❌ (use GitLab Dep Scanning)     | ❌                      |
 | ArgoCD             | ✅ deploy.yml triggers           | Manual pipeline trigger          | Manual pipeline trigger |
+| Releases           | Native GitHub Actions            | Native GitLab CI                 | Manual                  |
 | Container registry | GHCR                             | GitLab Container Registry        | Bitbucket (no native)   |
 
 ## Helm values
@@ -31,3 +32,12 @@ The deploy workflow (.github/workflows/deploy.yml) is GitHub-specific. For GitLa
 4. Use the same .helm/values-production.yaml
 
 See GITOPS.md for full ArgoCD setup.
+
+## Automated releases
+
+`release.config.mjs` selects exactly one semantic-release provider. GitHub
+Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
+GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
+branch only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a protected CI/CD
+variable. GitLab uses `CI_REPOSITORY_URL` so release commits and tags target the
+GitLab clone instead of this template's GitHub repository metadata.

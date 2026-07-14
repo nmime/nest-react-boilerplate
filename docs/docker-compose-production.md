@@ -102,7 +102,6 @@ Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
 from Compose:
 
 - `https://example.com` -> `docker compose ... port landing-app 8080`
-- `https://starter.example.com` -> `docker compose ... port starter-app 8080`
 - `https://site.example.com` -> `docker compose ... port site-app 80`
 - `https://admin.example.com` -> `docker compose ... port admin-app 8080`
 - `https://app.example.com` -> `docker compose ... port user-app 8080`
@@ -110,6 +109,17 @@ from Compose:
 - `https://auth.example.com` -> `docker compose ... port auth-app-api 80`
 - `https://api.example.com` -> `docker compose ... port user-app-api 80`
 - `https://admin-api.example.com` -> `docker compose ... port admin-app-api 80`
+
+`starter-app` is the neutral shell selected by the `starter` setup preset, not
+an additional production surface. Start its optional Compose profile only when
+it is the selected product frontend, then route the product-owned hostname to
+`docker compose ... port starter-app 8080`.
+
+The bot webhook APIs are also opt-in because they require provider credentials
+and callback registration:
+
+- `https://discord-api.example.com` -> `docker compose --profile discord ... port discord-app-api 80`
+- `https://telegram-api.example.com` -> `docker compose --profile telegram ... port telegram-bot-api 80`
 
 Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
 build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to

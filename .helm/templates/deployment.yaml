@@ -50,7 +50,7 @@ spec:
             # port. Nginx frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
-          {{- if contains "AppApi" $name }}
+          {{- if eq $app.kind "backend" }}
           envFrom:
             - configMapRef:
                 name: {{ include "boilerplate.fullname" $root }}-config
@@ -66,7 +66,7 @@ spec:
           {{- end }}
           readinessProbe:
             httpGet:
-              path: {{ default (ternary "/ready" "/" (contains "AppApi" $name)) $app.readinessPath | quote }}
+              path: {{ default (ternary "/ready" "/" (eq $app.kind "backend")) $app.readinessPath | quote }}
               port: http
             initialDelaySeconds: {{ default 10 $app.readinessInitialDelaySeconds }}
             periodSeconds: {{ default 10 $app.readinessPeriodSeconds }}
@@ -74,7 +74,7 @@ spec:
             failureThreshold: {{ default 6 $app.readinessFailureThreshold }}
           livenessProbe:
             httpGet:
-              path: {{ default (ternary "/live" "/" (contains "AppApi" $name)) $app.livenessPath | quote }}
+              path: {{ default (ternary "/live" "/" (eq $app.kind "backend")) $app.livenessPath | quote }}
               port: http
             initialDelaySeconds: {{ default 20 $app.livenessInitialDelaySeconds }}
             periodSeconds: {{ default 20 $app.livenessPeriodSeconds }}
@@ -82,7 +82,7 @@ spec:
             failureThreshold: {{ default 3 $app.livenessFailureThreshold }}
           startupProbe:
             httpGet:
-              path: {{ default (ternary "/live" "/" (contains "AppApi" $name)) $app.startupProbePath | quote }}
+              path: {{ default (ternary "/live" "/" (eq $app.kind "backend")) $app.startupProbePath | quote }}
               port: http
             initialDelaySeconds: {{ default 0 $app.startupInitialDelaySeconds }}
             periodSeconds: {{ default 10 $app.startupPeriodSeconds }}

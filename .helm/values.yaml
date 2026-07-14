@@ -15,7 +15,7 @@ secrets:
 
 config:
   nodeEnv: production
-  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com,https://starter.example.com
+  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
@@ -76,11 +76,14 @@ frontendNginx:
   listenPort: 8080
   cspConnectSrc: "'self'"
 
-# The same chart deploys Nest API services and all six frontend renderers.
+# The chart deploys Nest API services and the selected frontend renderers.
+# starterApp is the neutral starter-preset shell and is intentionally opt-in;
+# it is not an additional production product beside the reference frontends.
 # API probes should keep /live and /ready; nginx probes use
 # frontendNginx.healthPath when nginxConfig=true.
 apps:
   authAppApi:
+    kind: backend
     enabled: true
     replicas: 2
     port: 80
@@ -98,6 +101,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   userAppApi:
+    kind: backend
     enabled: true
     replicas: 2
     port: 80
@@ -115,6 +119,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   adminAppApi:
+    kind: backend
     enabled: true
     replicas: 2
     port: 80
@@ -132,6 +137,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   discordAppApi:
+    kind: backend
     enabled: false
     replicas: 1
     port: 80
@@ -149,6 +155,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   telegramBotApi:
+    kind: backend
     enabled: false
     replicas: 1
     port: 80
@@ -169,7 +176,8 @@ apps:
   # In production, use telegramBotApi (webhook mode). Run the worker locally with:
   #   pnpm exec nx run telegram-bot-worker:start
   starterApp:
-    enabled: true
+    kind: frontend
+    enabled: false
     replicas: 2
     port: 8080
     servicePort: 80
@@ -187,6 +195,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   landingApp:
+    kind: frontend
     enabled: true
     replicas: 2
     port: 8080
@@ -205,6 +214,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   siteApp:
+    kind: frontend
     enabled: true
     replicas: 2
     port: 80
@@ -222,6 +232,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   mobileApp:
+    kind: frontend
     enabled: true
     replicas: 2
     port: 8080
@@ -240,6 +251,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   userApp:
+    kind: frontend
     enabled: true
     replicas: 2
     port: 8080
@@ -258,6 +270,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   adminApp:
+    kind: frontend
     enabled: true
     replicas: 2
     port: 8080
@@ -281,7 +294,10 @@ ingress:
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: '10m'
-  # Defaults model split-host frontend/API origins. For same-origin/path-based
+  # Defaults model split-host frontend/API origins. starterApp has no permanent
+  # host: when the starter preset is selected, assign the product-owned host in
+  # environment values and disable the reference frontend it replaces.
+  # For same-origin/path-based
   # routing, keep API prefixes (/auth, /profile, /admin) and SPA service paths
   # explicit in an environment values file and verify asset routing before
   # traffic cutover; see docs/frontend-deployment-topology.md.
@@ -291,9 +307,6 @@ ingress:
       paths: ['/']
     - host: site.example.com
       service: site-app
-      paths: ['/']
-    - host: starter.example.com
-      service: starter-app
       paths: ['/']
     - host: app.example.com
       service: user-app
@@ -307,16 +320,34 @@ ingress:
     - host: auth.example.com
       service: auth-app-api
       paths: ['/']
+    - host: api.example.com
+      service: user-app-api
+      paths: ['/']
+    - host: admin-api.example.com
+      service: admin-app-api
+      paths: ['/']
+    # Bot webhook APIs are deployable but opt-in because they require provider
+    # credentials and callback registration. Enable the matching app and route
+    # together, then add the host to ingress.tls and provision DNS.
+    - host: discord-api.example.com
+      service: discord-app-api
+      paths: ['/']
+      enabled: false
+    - host: telegram-api.example.com
+      service: telegram-bot-api
+      paths: ['/']
+      enabled: false
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
         - example.com
         - site.example.com
-        - starter.example.com
         - app.example.com
         - mobile.example.com
         - admin.example.com
         - auth.example.com
+        - api.example.com
+        - admin-api.example.com
 
 autoscaling:
   enabled: false

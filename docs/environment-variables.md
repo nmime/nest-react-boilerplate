@@ -124,21 +124,22 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Discord
 
-| Variable                                 | Required                   | Default                       | Description                                 |
-| ---------------------------------------- | -------------------------- | ----------------------------- | ------------------------------------------- |
-| `DISCORD_BOT_TOKEN`                      | **Required** (bot enabled) | `<set-discord-bot-token>`     | Bot token from Discord Developer Portal     |
-| `DISCORD_BOT_TOKEN_FILE`                 | Optional                   | —                             | File path for bot token (Docker secret)     |
-| `DISCORD_CLIENT_ID`                      | **Required** (OAuth)       | `example-discord-client-id`   | Application client ID                       |
-| `DISCORD_CLIENT_SECRET`                  | **Required** (OAuth)       | `<set-discord-client-secret>` | Application client secret                   |
-| `DISCORD_CLIENT_SECRET_FILE`             | Optional                   | —                             | File path for client secret (Docker secret) |
-| `DISCORD_PUBLIC_KEY`                     | Optional                   | `<set-discord-public-key>`    | Interactions public key                     |
-| `DISCORD_PUBLIC_KEY_FILE`                | Optional                   | —                             | File path for public key (Docker secret)    |
-| `DISCORD_REDIRECT_URI`                   | Optional                   | —                             | OAuth callback URI                          |
-| `DISCORD_SCOPES`                         | Optional                   | `identify email guilds.join`  | OAuth scopes                                |
-| `DISCORD_AUTH_ENABLED`                   | Optional                   | `false`                       | Enable Discord social auth                  |
-| `DISCORD_INTERACTIONS_ENDPOINT`          | Optional                   | —                             | Public interactions endpoint URL            |
-| `DISCORD_INTERACTIONS_STATE_TTL_SECONDS` | Optional                   | `600`                         | Interactions state TTL                      |
-| `DISCORD_COMMAND_REGISTRATION_ENABLED`   | Optional                   | `false`                       | Enable slash command registration           |
+| Variable                                 | Required                   | Default                          | Description                                 |
+| ---------------------------------------- | -------------------------- | -------------------------------- | ------------------------------------------- |
+| `DISCORD_BOT_TOKEN`                      | **Required** (bot enabled) | `<set-discord-bot-token>`        | Bot token from Discord Developer Portal     |
+| `DISCORD_BOT_TOKEN_FILE`                 | Optional                   | —                                | File path for bot token (Docker secret)     |
+| `DISCORD_CLIENT_ID`                      | **Required** (OAuth)       | `example-discord-client-id`      | Application client ID                       |
+| `DISCORD_APPLICATION_ID`                 | **Required** (bot enabled) | `example-discord-application-id` | Interactions application ID                 |
+| `DISCORD_CLIENT_SECRET`                  | **Required** (OAuth)       | `<set-discord-client-secret>`    | Application client secret                   |
+| `DISCORD_CLIENT_SECRET_FILE`             | Optional                   | —                                | File path for client secret (Docker secret) |
+| `DISCORD_PUBLIC_KEY`                     | Optional                   | `<set-discord-public-key>`       | Interactions public key                     |
+| `DISCORD_PUBLIC_KEY_FILE`                | Optional                   | —                                | File path for public key (Docker secret)    |
+| `DISCORD_REDIRECT_URI`                   | Optional                   | —                                | OAuth callback URI                          |
+| `DISCORD_SCOPES`                         | Optional                   | `identify email guilds.join`     | OAuth scopes                                |
+| `DISCORD_AUTH_ENABLED`                   | Optional                   | `false`                          | Enable Discord social auth                  |
+| `DISCORD_INTERACTIONS_ENDPOINT`          | Optional                   | —                                | Public interactions endpoint URL            |
+| `DISCORD_INTERACTIONS_STATE_TTL_SECONDS` | Optional                   | `600`                            | Interactions state TTL                      |
+| `DISCORD_COMMAND_REGISTRATION_ENABLED`   | Optional                   | `false`                          | Enable slash command registration           |
 
 ### OAuth
 
@@ -285,7 +286,7 @@ CORS_ORIGINS=https://staging-admin.example.com,https://staging-app.example.com
 
 TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
 TELEGRAM_BOT_MODE=webhook
-TELEGRAM_BOT_WEBHOOK_URL=https://staging-api.example.com/bots/telegram/webhook
+TELEGRAM_BOT_WEBHOOK_URL=https://staging-telegram-api.example.com/telegram/webhook
 
 DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token
 
@@ -318,7 +319,7 @@ CORS_ORIGINS=https://admin.example.com,https://app.example.com,https://example.c
 TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
 TELEGRAM_BOT_MODE=webhook
 TELEGRAM_BOT_WEBHOOK_SECRET_FILE=/run/secrets/telegram_webhook_secret
-TELEGRAM_BOT_WEBHOOK_URL=https://api.example.com/bots/telegram/webhook
+TELEGRAM_BOT_WEBHOOK_URL=https://telegram-api.example.com/telegram/webhook
 TELEGRAM_MINI_APP_URL=https://app.example.com/telegram-mini-app
 
 DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token

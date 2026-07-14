@@ -210,11 +210,10 @@ for (const [path, port] of [
   ['apps/backend/user/user-app-api/src/main.ts', 3002],
   ['apps/backend/auth/auth-app-api/src/main.ts', 3003],
   ['apps/backend/discord/discord-app-api/src/main.ts', 3007],
+  ['apps/backend/telegram/telegram-bot-api/src/main.ts', 3013],
 ]) {
   has(read(path), `port: ${port}`, `${path} explicit port ${port}`);
 }
-// telegram-bot-api uses register() + NestFactory.listen() instead of bootstrapNestApi
-has(read('apps/backend/telegram/telegram-bot-api/src/main.ts'), 'listen(3013)', 'telegram-bot-api explicit port 3013');
 has(read('apps/frontend/site/project.json'), 'SITE_APP_PORT=4203', 'site start target explicitly assigns port 4203');
 has(
   productionEnvExample,
@@ -258,6 +257,21 @@ has(devSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app uses its ex
 has(devSiteService, 'target: site-runtime', 'site-app uses the Vike Docker runtime target');
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+for (const [service, variable, port, profile] of [
+  ['discord-app-api', 'DISCORD_APP_API_PORT', 3007, 'discord'],
+  ['telegram-bot-api', 'TELEGRAM_BOT_API_PORT', 3013, 'telegram'],
+]) {
+  const serviceBlock = section(prodCompose, `  ${service}:`, '\n\n  ');
+  has(serviceBlock, `profiles: [${profile}]`, `${service} is opt-in through its production profile`);
+  has(serviceBlock, 'target: 80', `${service} production target port 80`);
+  has(serviceBlock, `published: '${'${'}${variable}:-${port}}'`, `${service} production host port ${port}`);
+  has(serviceBlock, 'host_ip: 127.0.0.1', `${service} production binds published ports to loopback`);
+}
+has(
+  section(prodCompose, '  starter-app:', '\n\n  '),
+  'profiles: [starter]',
+  'starter-app production deployment is opt-in',
+);
 has(prodCompose, 'http://127.0.0.1:80/ready', 'prod backend healthcheck targets readiness-aware /ready endpoint');
 assert.ok(
   !prodCompose.includes('http://127.0.0.1:80/health'),
@@ -438,7 +452,9 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
-  has(text, helm ? '-admin-api:' : 'admin-app-api:80', 'admin API upstream');
+  for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
+    has(text, helm ? `-${service}:` : `${service}:80`, `${service} upstream`);
+  }
 };
 assertNginxRoutes(read('docker/nginx-fullstack.conf'));
 
@@ -463,7 +479,7 @@ if (validateHelmStatic) {
   has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
   const apiEnvFromBlock = section(
     deploymentTemplate,
-    '{{- if contains "AppApi" $name }}',
+    '{{- if eq $app.kind "backend" }}',
     '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
   );
   has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
@@ -480,19 +496,32 @@ if (validateHelmStatic) {
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const frontendDomainAssignments = [
-    ['starterApp', 'starter-app', 'starter.example.com'],
     ['landingApp', 'landing-app', 'example.com'],
     ['siteApp', 'site-app', 'site.example.com'],
     ['userApp', 'user-app', 'app.example.com'],
     ['adminApp', 'admin-app', 'admin.example.com'],
     ['mobileApp', 'mobile-app', 'mobile.example.com'],
   ];
+  const coreApiDomainAssignments = [
+    ['authAppApi', 'auth-app-api', 'auth.example.com'],
+    ['userAppApi', 'user-app-api', 'api.example.com'],
+    ['adminAppApi', 'admin-app-api', 'admin-api.example.com'],
+  ];
+  const optionalApiDomainAssignments = [
+    ['discordAppApi', 'discord-app-api', 'discord-api.example.com'],
+    ['telegramBotApi', 'telegram-bot-api', 'telegram-api.example.com'],
+  ];
+  const publicDomainAssignments = [...frontendDomainAssignments, ...coreApiDomainAssignments];
   assert.equal(
-    new Set(frontendDomainAssignments.map(([, , host]) => host)).size,
-    frontendDomainAssignments.length,
-    'Every frontend app must have a unique default domain.',
+    new Set([...publicDomainAssignments, ...optionalApiDomainAssignments].map(([, , host]) => host)).size,
+    publicDomainAssignments.length + optionalApiDomainAssignments.length,
+    'Every public app contract must have a unique default domain.',
   );
-  for (const [app, service] of frontendDomainAssignments) {
+  for (const [app, service] of [
+    ...publicDomainAssignments,
+    ...optionalApiDomainAssignments,
+    ['starterApp', 'starter-app'],
+  ]) {
     has(releaseWorkflow, `- name: ${service}`, `${app} immutable release image`);
     has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
   }
@@ -502,8 +531,8 @@ if (validateHelmStatic) {
   ]) {
     const ingressBlock = yamlMapEntry(values, 'ingress', 0);
     const configBlock = yamlMapEntry(values, 'config', 0);
-    for (const [app, service, host] of frontendDomainAssignments) {
-      yamlMapEntry(values, app);
+    for (const [app, service, host] of publicDomainAssignments) {
+      const appBlock = yamlMapEntry(values, app);
       has(ingressBlock, `host: ${host}`, `${label} ${app} ingress host`);
       has(ingressBlock, `service: ${service}`, `${label} ${app} ingress service`);
       assert.equal(
@@ -516,7 +545,29 @@ if (validateHelmStatic) {
         1,
         `${label} ${app} domain must appear exactly once in TLS hosts.`,
       );
-      has(configBlock, `https://${host}`, `${label} ${app} CORS origin`);
+      if (frontendDomainAssignments.some(([frontendApp]) => frontendApp === app)) {
+        has(configBlock, `https://${host}`, `${label} ${app} CORS origin`);
+      } else if (label === 'default') {
+        has(appBlock, 'kind: backend', `${app} is explicitly classified as a backend app`);
+      }
+    }
+
+    const starterBlock = yamlMapEntry(values, 'starterApp');
+    has(starterBlock, 'enabled: false', `${label} starterApp is opt-in`);
+    assert.ok(!ingressBlock.includes('starter.example.com'), `${label} must not publish a permanent starter host.`);
+    assert.ok(!configBlock.includes('starter.example.com'), `${label} must not allow an inactive starter origin.`);
+
+    for (const [app, service, host] of optionalApiDomainAssignments) {
+      const appBlock = yamlMapEntry(values, app);
+      has(appBlock, 'enabled: false', `${label} ${app} remains opt-in`);
+      const hostEntry = section(ingressBlock, `- host: ${host}`, '\n    - host:');
+      has(hostEntry, `service: ${service}`, `${label} ${app} optional ingress service`);
+      has(hostEntry, 'enabled: false', `${label} ${app} optional ingress is disabled with the app`);
+      assert.equal(
+        ingressBlock.split('\n').filter((line) => line.trim() === `- ${host}`).length,
+        0,
+        `${label} ${app} must not request TLS until its optional route is enabled.`,
+      );
     }
   }
   for (const app of [

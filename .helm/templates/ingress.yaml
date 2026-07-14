@@ -13,6 +13,7 @@ spec:
     {{- toYaml .Values.ingress.tls | nindent 4 }}
   rules:
     {{- range $host := .Values.ingress.hosts }}
+    {{- if or (not (hasKey $host "enabled")) $host.enabled }}
     - host: {{ $host.host | quote }}
       http:
         paths:
@@ -25,5 +26,6 @@ spec:
                 port:
                   name: http
           {{- end }}
+    {{- end }}
     {{- end }}
 {{- end }}

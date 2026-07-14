@@ -161,7 +161,7 @@ Verification:
 ```bash
 kubectl get pods,svc,ingress -n nest-react-boilerplate
 kubectl logs job/nest-react-boilerplate-migrate -n nest-react-boilerplate
-kubectl rollout status deploy/nest-react-boilerplate-auth-api -n nest-react-boilerplate
+kubectl rollout status deploy/nest-react-boilerplate-auth-app-api -n nest-react-boilerplate
 curl -fsS https://auth.example.com/ready
 ```
 
@@ -170,7 +170,7 @@ Rollback:
 ```bash
 helm history nest-react-boilerplate -n nest-react-boilerplate
 helm rollback nest-react-boilerplate <revision> -n nest-react-boilerplate
-kubectl rollout status deploy/nest-react-boilerplate-auth-api -n nest-react-boilerplate
+kubectl rollout status deploy/nest-react-boilerplate-auth-app-api -n nest-react-boilerplate
 ```
 
 If a migration is not backward compatible, restore the database backup first or

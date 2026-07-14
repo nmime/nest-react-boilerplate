@@ -35,4 +35,5 @@ named target port.
 Frontend images still include the docker-compose nginx config for local use. In
 Kubernetes, Helm mounts a rendered ConfigMap at
 `/etc/nginx/conf.d/default.conf`; upstreams resolve to
-`<release>-auth-api`, `<release>-user-api`, and `<release>-admin-api` Services.
+`<release>-auth-app-api`, `<release>-user-app-api`, and
+`<release>-admin-app-api` Services.

@@ -1,6 +1,6 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
-import type { Type } from '@nestjs/common';
+import type { DynamicModule, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { FastifySessionObject as Session } from '@fastify/session';
@@ -880,7 +880,10 @@ function createRateLimitMiddleware(
   };
 }
 
-export async function bootstrapNestApi(module: Type<unknown>, options: BootstrapNestApiOptions): Promise<void> {
+export async function bootstrapNestApi(
+  module: Type<unknown> | DynamicModule,
+  options: BootstrapNestApiOptions,
+): Promise<void> {
   const config = resolveBackendEnvironmentConfig(options);
   const app = await NestFactory.create<NestFastifyApplication>(
     module,

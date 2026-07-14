@@ -49,6 +49,18 @@ x-backend-command: &backend-command
   - |
     export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)"
     export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
+    if [ -f /run/secrets/telegram_bot_token ]; then
+      export TELEGRAM_BOT_TOKEN="$$(cat /run/secrets/telegram_bot_token)"
+    fi
+    if [ -f /run/secrets/telegram_bot_webhook_secret ]; then
+      export TELEGRAM_WEBHOOK_SECRET="$$(cat /run/secrets/telegram_bot_webhook_secret)"
+    fi
+    if [ -f /run/secrets/discord_bot_token ]; then
+      export DISCORD_BOT_TOKEN="$$(cat /run/secrets/discord_bot_token)"
+    fi
+    if [ -f /run/secrets/discord_public_key ]; then
+      export DISCORD_PUBLIC_KEY="$$(cat /run/secrets/discord_public_key)"
+    fi
     if [ -z "$${DATABASE_URL:-}" ]; then
       DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
       export DATABASE_URL
@@ -216,6 +228,58 @@ services:
         host_ip: 127.0.0.1
         protocol: tcp
 
+  discord-app-api:
+    <<: *backend-service
+    profiles: [discord]
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/discord-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: discord-app-api
+        BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
+    environment:
+      <<: *backend-env
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
+      DISCORD_COMMAND_REGISTRATION_ENABLED: ${DISCORD_COMMAND_REGISTRATION_ENABLED:-false}
+      DISCORD_COMMAND_REGISTRATION_SCOPE: ${DISCORD_COMMAND_REGISTRATION_SCOPE:-global}
+      DISCORD_REGISTRATION_GUILD_ID: ${DISCORD_REGISTRATION_GUILD_ID:-}
+      DISCORD_WEB_APP_BASE_URL: ${DISCORD_WEB_APP_BASE_URL:-https://app.example.com}
+      DISCORD_DEFAULT_TENANT_ID: ${DISCORD_DEFAULT_TENANT_ID:-}
+    secrets: [auth_jwt_secret, postgres_password, discord_bot_token, discord_public_key]
+    ports:
+      - target: 80
+        published: '${DISCORD_APP_API_PORT:-3007}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+
+  telegram-bot-api:
+    <<: *backend-service
+    profiles: [telegram]
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/telegram-bot-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: telegram-bot-api
+        BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
+    environment:
+      <<: *backend-env
+      TELEGRAM_BOT_MODE: ${TELEGRAM_BOT_MODE:-webhook}
+      TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-https://app.example.com/telegram-mini-app}
+      TELEGRAM_BOT_MENU_BUTTON_ENABLED: ${TELEGRAM_BOT_MENU_BUTTON_ENABLED:-false}
+      TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
+      TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
+      TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
+    secrets: [auth_jwt_secret, postgres_password, telegram_bot_token, telegram_bot_webhook_secret]
+    ports:
+      - target: 80
+        published: '${TELEGRAM_BOT_API_PORT:-3013}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+
   admin-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
@@ -347,6 +411,7 @@ services:
 
   starter-app:
     <<: *frontend-service
+    profiles: [starter]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/starter-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
       context: ..
@@ -497,3 +562,11 @@ secrets:
     file: ${POSTGRES_PASSWORD_FILE:-./secrets/postgres_password.txt}
   grafana_admin_password:
     file: ${GRAFANA_ADMIN_PASSWORD_FILE:-./secrets/grafana_admin_password.txt}
+  telegram_bot_token:
+    file: ${TELEGRAM_BOT_TOKEN_FILE:-./secrets/telegram_bot_token.txt}
+  telegram_bot_webhook_secret:
+    file: ${TELEGRAM_BOT_WEBHOOK_SECRET_FILE:-./secrets/telegram_bot_webhook_secret.txt}
+  discord_bot_token:
+    file: ${DISCORD_BOT_TOKEN_FILE:-./secrets/discord_bot_token.txt}
+  discord_public_key:
+    file: ${DISCORD_PUBLIC_KEY_FILE:-./secrets/discord_public_key.txt}

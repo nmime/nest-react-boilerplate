@@ -6,25 +6,41 @@ admin/user, the Vike SSR site, and the Expo mobile web export. Choose one mode
 per environment and keep build-time variables, nginx config, Vike server
 routing, ingress paths, and public DNS/CORS values aligned.
 
-## Frontend domain contract
+## Public domain contract
 
-The Helm defaults assign one unique split-host domain to every frontend app.
-Replace `example.com` in environment-owned values, but preserve the
-one-host-per-app mapping and include every browser origin in `config.corsOrigins`
-and TLS:
+The Helm defaults assign one unique split-host domain to every production
+frontend and enabled public API. Replace `example.com` in environment-owned
+values, preserve the one-host-per-app mapping, and include every browser origin
+in `config.corsOrigins` and TLS:
 
-| Frontend app  | Default host          | Kubernetes service |
-| ------------- | --------------------- | ------------------ |
-| `landing-app` | `example.com`         | `landing-app`      |
-| `starter-app` | `starter.example.com` | `starter-app`      |
-| `site-app`    | `site.example.com`    | `site-app`         |
-| `user-app`    | `app.example.com`     | `user-app`         |
-| `admin-app`   | `admin.example.com`   | `admin-app`        |
-| `mobile-app`  | `mobile.example.com`  | `mobile-app`       |
+| Frontend app  | Default host         | Kubernetes service |
+| ------------- | -------------------- | ------------------ |
+| `landing-app` | `example.com`        | `landing-app`      |
+| `site-app`    | `site.example.com`   | `site-app`         |
+| `user-app`    | `app.example.com`    | `user-app`         |
+| `admin-app`   | `admin.example.com`  | `admin-app`        |
+| `mobile-app`  | `mobile.example.com` | `mobile-app`       |
 
-The deployment validator fails when any of these host, service, CORS, or TLS
-assignments is missing. DNS records and certificates remain environment/platform
-responsibilities; the app chart owns the ingress contract they target.
+| Backend app        | Default host               | Exposure |
+| ------------------ | -------------------------- | -------- |
+| `auth-app-api`     | `auth.example.com`         | enabled  |
+| `user-app-api`     | `api.example.com`          | enabled  |
+| `admin-app-api`    | `admin-api.example.com`    | enabled  |
+| `discord-app-api`  | `discord-api.example.com`  | opt-in   |
+| `telegram-bot-api` | `telegram-api.example.com` | opt-in   |
+
+`starter-app` is the neutral frontend selected by the `starter` setup preset.
+It remains buildable and releasable, but it is disabled in the default Helm and
+production Compose topology and has no permanent `starter.*` hostname. When it
+is the selected product shell, enable it in environment values, assign the
+product-owned hostname, and disable the reference frontend it replaces.
+
+The Discord and Telegram APIs are disabled until their provider credentials,
+callback registration, ingress route, DNS, and TLS host are configured together.
+The deployment validator fails when any enabled frontend or core API host,
+service, or TLS assignment is missing. DNS records and certificates remain
+environment/platform responsibilities; the app chart owns the ingress contract
+they target.
 
 ## Mode 1: same-origin API proxy
 
@@ -100,9 +116,8 @@ pnpm exec nx build admin-app
 
 For Docker images, pair this mode with `FRONTEND_NGINX_CONFIG=docker/nginx-spa.conf`
 and keep the nginx CSP `connect-src` allow-list aligned with the explicit API
-origins. For Helm, keep the complete host-oriented mapping above plus the API
-origin (`auth.example.com` by default), or set equivalent environment hostnames
-in values files.
+origins. For Helm, keep the complete host-oriented frontend and API mapping
+above, or set equivalent environment hostnames in values files.
 
 `site-app` split-host deployments still need a Node SSR host. Static asset
 requests should go to the Vike client output, while document requests should be

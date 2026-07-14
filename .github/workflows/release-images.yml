@@ -73,6 +73,18 @@ jobs:
               NX_PROJECT=auth-app-api
               BUILD_OUTPUT=dist/apps/backend/auth/auth-app-api
               PNPM_VERSION=11.11.0
+          - name: discord-app-api
+            target: backend
+            build-args: |
+              NX_PROJECT=discord-app-api
+              BUILD_OUTPUT=dist/apps/backend/discord/discord-app-api
+              PNPM_VERSION=11.11.0
+          - name: telegram-bot-api
+            target: backend
+            build-args: |
+              NX_PROJECT=telegram-bot-api
+              BUILD_OUTPUT=dist/apps/backend/telegram/telegram-bot-api
+              PNPM_VERSION=11.11.0
           - name: admin-app
             target: frontend
             build-args: |

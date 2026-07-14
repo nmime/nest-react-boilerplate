@@ -8,12 +8,12 @@ Provide these non-secret target values:
 
 - Deployment environment name: `<staging|live>`
 - Frontend base URL: `<https://frontend.example.test>`
-- Auth API base URL: `<https://auth-api.example.test>`
-- User API base URL: `<https://user-api.example.test>`
+- Auth API base URL: `<https://auth.example.test>`
+- User API base URL: `<https://api.example.test>`
 - Admin API base URL: `<https://admin-api.example.test>`
-- Telegram bot API base URL: `<https://telegram-bot-api.example.test>`
+- Telegram bot API base URL: `<https://telegram-api.example.test>`
 - Telegram bot worker identifier or health endpoint: `<worker-name-or-health-url>`
-- Discord app API base URL: `<https://discord-app-api.example.test>`
+- Discord app API base URL: `<https://discord-api.example.test>`
 
 Validation steps:
 
@@ -48,7 +48,7 @@ Provide secrets through the secret manager and non-secrets through the test tick
 - Frontend API mode: `VITE_API_BASE_URL_MODE=same-origin` when the frontend proxy serves `/auth/telegram/tma`, or explicit `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` origins for split-origin deployments.
 - Allowed Mini App/Web App domain: `<frontend.example.test>`
 - Webhook secret secret key name: `<SECRET_KEY_TELEGRAM_WEBHOOK_SECRET>`
-- Webhook URL: `<https://telegram-bot-api.example.test/webhook/telegram>`
+- Webhook URL: `<https://telegram-api.example.test/telegram/webhook>`
 - Test Telegram user IDs: `<telegram-user-id-1>, <telegram-user-id-2>`
 - TMA launch method: `<bot menu button|inline keyboard|direct t.me link>`
 - Link payload scenarios:
@@ -72,8 +72,8 @@ Provide secrets through the secret manager and non-secrets through the test tick
 - Client secret secret key name: `<SECRET_KEY_DISCORD_CLIENT_SECRET>`
 - Public key: `<discord-public-key>`
 - Bot token secret key name, if command registration needs it: `<SECRET_KEY_DISCORD_BOT_TOKEN>`
-- OAuth callback URL: `<https://auth-api.example.test/auth/discord/callback>`
-- Interactions endpoint URL: `<https://discord-app-api.example.test/interactions>`
+- OAuth callback URL: `<https://auth.example.test/auth/discord/callback>`
+- Interactions endpoint URL: `<https://discord-api.example.test/discord/interactions>`
 - Test guild ID: `<discord-guild-id>`
 - Test Discord user IDs: `<discord-user-id-1>, <discord-user-id-2>`
 - Command registration scope: `<guild:test-guild-id|global>`

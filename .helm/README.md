@@ -16,10 +16,11 @@ routes.
 - Build and publish immutable images for each service and the migrator. The release workflow pushes `sha-<git-sha>` GHCR tags, emits SBOM/provenance attestations, scans with Trivy, and signs digests with cosign keyless GitHub OIDC.
 - Create a Kubernetes Secret outside the chart and set `secrets.existingSecret`.
   The Secret must provide `AUTH_JWT_SECRET` and either `DATABASE_URL` or the
-  `POSTGRES_*` values consumed by the app.
+  `POSTGRES_*` values consumed by the app. When enabling an optional bot API,
+  include its documented Telegram or Discord runtime values in the same Secret.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
-- APIs probe `/live` and `/ready`; all six frontends are deployable, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
+- APIs probe `/live` and `/ready`; product frontends are deployable by default, the neutral `starter-app` is opt-in, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
 - Frontend nginx supports same-origin API proxying for `/auth/*`, `/profile/*`,
   and `/admin/*` while serving `index.html` for HTML SPA navigations such as
   `/admin/users/:id`. Keep split-host and path-based routing choices aligned
@@ -28,7 +29,7 @@ routes.
   The service defaults to enabled hourly cleanup on startup and clamps intervals
   below 60000ms to avoid tight cleanup loops.
 - Enable ingress/TLS only after DNS and cert-manager/ingress are ready.
-- Keep the unique frontend host, TLS, and CORS mapping in
+- Keep the unique frontend/API host, TLS, and browser CORS mapping in
   `docs/frontend-deployment-topology.md`; the deployment validator enforces it.
 - Tune resources, HPA (with 300s scale-down stabilization), PDBs (`maxUnavailable: 1`), imagePullSecrets, and optional pod/container
   security contexts per environment.
@@ -42,7 +43,7 @@ REQUIRE_HELM=true pnpm run deploy:validate
 bash scripts/validate-helm.sh
 helm template nest-react-boilerplate .helm \
   -f .helm/values-production.yaml \
-  --set-string apps.authApi.image.tag=sha-$(git rev-parse HEAD)
+  --set-string apps.authAppApi.image.tag=sha-$(git rev-parse HEAD)
 ```
 
 The generic `pnpm run deploy:validate` command remains a no-deploy preflight and

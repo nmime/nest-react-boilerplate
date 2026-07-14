@@ -19,7 +19,7 @@ export default defineConfig({
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
     coverage: fullCoverage(
-      '../../../coverage/apps/frontend/mobile',
+      'coverage/apps/frontend/mobile',
       ['src/app/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
       ['src/app/_layout.tsx', 'src/app/index.tsx', 'src/pages/home/ui/**/*'],
     ),

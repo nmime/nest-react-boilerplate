@@ -22,6 +22,6 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
-    coverage: fullCoverage('../../../../coverage/libs/frontend/runtime', ['src/**/*.{ts,tsx}'], []),
+    coverage: fullCoverage('coverage/libs/frontend/runtime', ['src/**/*.{ts,tsx}'], []),
   },
 });

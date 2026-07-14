@@ -105,6 +105,9 @@ describe('library generator', () => {
       await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
 
       assert.ok(tree.exists('libs/backend/common/shared-utils/lib/vitest.config.mts'));
+      const config = tree.read('libs/backend/common/shared-utils/lib/vitest.config.mts', 'utf8')!;
+      assert.ok(config.includes('"coverage/libs/backend/common/shared-utils/lib"'));
+      assert.equal(config.includes('../coverage/'), false);
     });
 
     it('accepts custom tags', async () => {

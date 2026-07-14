@@ -23,7 +23,7 @@ export default defineConfig({
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
     coverage: fullCoverage(
-      '../../../coverage/apps/frontend/admin',
+      'coverage/apps/frontend/admin',
       [
         'src/App.tsx',
         'src/entities/**/*.{ts,tsx}',

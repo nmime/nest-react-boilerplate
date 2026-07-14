@@ -14,6 +14,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/apps/backend/discord/discord-app-api', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/apps/backend/discord/discord-app-api', ['src/**/*.ts'], []),
   },
 });

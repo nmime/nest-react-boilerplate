@@ -70,7 +70,7 @@ pnpm run audit                    # dependency changes
 
 Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cutting changes before requesting merge.
 
-Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes.
+Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes. New projects default to 100%. Existing negative thresholds are maximum uncovered-item budgets and must only move toward zero as coverage improves.
 
 ## Changelog
 

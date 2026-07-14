@@ -17,6 +17,6 @@ export default defineConfig({
     pool: 'threads',
     maxWorkers: 1,
     testTimeout: 30_000,
-    coverage: fullCoverage('../../../../coverage/libs/backend/common/nats/lib', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/backend/common/nats/lib', ['src/**/*.ts'], []),
   },
 });

@@ -15,7 +15,7 @@ export default defineConfig({
     include: ['src/**/*.spec.ts'],
     globals: false,
     coverage: fullCoverage(
-      '../../../../coverage/libs/backend/feature/user/main/lib',
+      'coverage/libs/backend/feature/user/main/lib',
       ['src/**/*.ts'],
       ['src/index.ts', 'src/**/*.module.ts', 'src/**/*.dto.ts'],
     ),

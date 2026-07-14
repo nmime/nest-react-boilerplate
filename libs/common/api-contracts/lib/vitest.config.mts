@@ -14,6 +14,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/libs/common/api-contracts', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/common/api-contracts', ['src/**/*.ts'], []),
   },
 });

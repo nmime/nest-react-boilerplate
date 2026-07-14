@@ -14,6 +14,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/libs/backend/postgres/main/shared/lib', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/backend/postgres/main/shared/lib', ['src/**/*.ts'], []),
   },
 });

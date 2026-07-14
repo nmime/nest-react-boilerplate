@@ -1,4 +1,6 @@
-import type { UserConfig as VitestUserConfig } from 'vitest/config';
+import { isAbsolute, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { TestUserConfig as VitestUserConfig } from 'vitest/config';
 
 type CoverageThresholds = {
   branches: number;
@@ -7,13 +9,38 @@ type CoverageThresholds = {
   statements: number;
 };
 
+const workspaceRoot = fileURLToPath(new URL('../../../../', import.meta.url));
+const workspaceCoverageRoot = resolve(workspaceRoot, 'coverage');
+
+export function workspaceCoverageDirectory(reportsDirectory: string): string {
+  const normalizedDirectory = reportsDirectory.replaceAll('\\', '/');
+
+  if (isAbsolute(reportsDirectory) || !normalizedDirectory.startsWith('coverage/')) {
+    throw new Error(
+      `Coverage reports directory must be workspace-relative and start with "coverage/": ${reportsDirectory}`,
+    );
+  }
+
+  const absoluteDirectory = resolve(workspaceRoot, normalizedDirectory);
+  if (!absoluteDirectory.startsWith(`${workspaceCoverageRoot}${sep}`)) {
+    throw new Error(`Coverage reports directory escapes the workspace coverage root: ${reportsDirectory}`);
+  }
+
+  return absoluteDirectory;
+}
+
+/**
+ * Creates the shared coverage contract. Positive thresholds are percentages;
+ * negative thresholds are maximum uncovered-item budgets, which lets an
+ * existing project ratchet coverage without pretending historical debt is
+ * already covered.
+ */
 export const fullCoverage = (
   reportsDirectory: string,
   include: string[],
   exclude: string[] = [],
   thresholds: Partial<CoverageThresholds> = {},
 ): NonNullable<VitestUserConfig['coverage']> => ({
-  all: true,
   enabled: false,
   exclude: [
     '**/*.spec.ts',
@@ -41,7 +68,7 @@ export const fullCoverage = (
   ],
   include,
   provider: 'v8',
-  reportsDirectory,
+  reportsDirectory: workspaceCoverageDirectory(reportsDirectory),
   reporter: ['text', 'lcov'],
   thresholds: {
     branches: 100,

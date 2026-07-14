@@ -125,7 +125,7 @@ function createBackendApp(
               command: 'vitest run --config vitest.config.mts',
             },
             inputs: ['default', '^production', { externalDependencies: ['vitest'] }],
-            outputs: [`{workspaceRoot}/coverage/apps/backend/${projectName}`],
+            outputs: [`{workspaceRoot}/coverage/${dir}`],
           },
         },
       },
@@ -317,7 +317,7 @@ export default defineConfig({
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "${d}coverage/apps/backend/${projectName}",
+      "coverage/${dir}",
       ["src/**/*.ts"],
       [],
     ),

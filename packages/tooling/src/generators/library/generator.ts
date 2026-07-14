@@ -267,7 +267,7 @@ export default defineConfig({
     include: ["src/**/*.spec.ts"],
     globals: false,
     coverage: fullCoverage(
-      "${d}coverage/${dir}",
+      "coverage/${dir}",
       ["src/**/*.ts"],
       [],
     ),

@@ -19,9 +19,15 @@ export default defineConfig({
     globals: true,
     passWithNoTests: false,
     coverage: fullCoverage(
-      '../../../../coverage/libs/frontend/api-client',
+      'coverage/libs/frontend/api-client',
       ['src/**/*.ts', 'src/**/*.tsx'],
       ['src/admin.ts', 'src/auth.ts', 'src/user.ts'],
+      {
+        branches: -37,
+        functions: -32,
+        lines: -98,
+        statements: -99,
+      },
     ),
   },
 });

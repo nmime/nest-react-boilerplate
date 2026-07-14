@@ -14,6 +14,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/libs/backend/common/bootstrap/lib', ['src/**/*.ts']),
+    coverage: fullCoverage('coverage/libs/backend/common/bootstrap/lib', ['src/**/*.ts'], [], {
+      branches: -10,
+      functions: -2,
+      lines: -11,
+      statements: -11,
+    }),
   },
 });

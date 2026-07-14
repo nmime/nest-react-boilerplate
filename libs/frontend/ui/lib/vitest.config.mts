@@ -22,6 +22,6 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
-    coverage: fullCoverage('../../../../coverage/libs/frontend/ui', ['src/index.ts'], []),
+    coverage: fullCoverage('coverage/libs/frontend/ui', ['src/index.ts'], []),
   },
 });

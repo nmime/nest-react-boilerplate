@@ -76,6 +76,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts', 'src/**/*.e2e-spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/apps/backend/auth/auth-app-api', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/apps/backend/auth/auth-app-api', ['src/**/*.ts'], []),
   },
 });

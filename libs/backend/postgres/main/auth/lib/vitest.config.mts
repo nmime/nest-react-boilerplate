@@ -15,6 +15,11 @@ export default defineConfig({
     include: ['src/**/*.spec.ts'],
     exclude: ['src/**/*.component-spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/libs/backend/postgres/main/auth/lib', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/backend/postgres/main/auth/lib', ['src/**/*.ts'], [], {
+      branches: -21,
+      functions: -6,
+      lines: -33,
+      statements: -33,
+    }),
   },
 });

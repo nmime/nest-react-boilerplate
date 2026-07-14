@@ -16,7 +16,7 @@ export default defineConfig({
     exclude: ['src/**/*.component-spec.ts'],
     globals: false,
     coverage: fullCoverage(
-      '../../../../coverage/libs/backend/common/component-test/lib',
+      'coverage/libs/backend/common/component-test/lib',
       ['src/**/*.ts'],
       ['src/index.ts', 'src/**/index.ts'],
     ),

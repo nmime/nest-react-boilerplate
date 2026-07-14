@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
 import { workspaceTsconfigAliases } from '../../../../config/vite/workspace-tsconfig-aliases.mjs';
+// nx-ignore-next-line
+import { workspaceCoverageDirectory } from '../../../../packages/tooling/src/testing/vitest-coverage.mts';
 
 export default defineConfig({
   cacheDir: '../../../../node_modules/.vitest/apps/backend/auth/auth-app-api-e2e',
@@ -77,7 +79,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
-      reportsDirectory: '../../../../coverage/e2e/apps/backend/auth/auth-app-api',
+      reportsDirectory: workspaceCoverageDirectory('coverage/e2e/apps/backend/auth/auth-app-api'),
       reporter: ['text', 'lcov', 'json'],
       include: [
         'src/**/*.ts',

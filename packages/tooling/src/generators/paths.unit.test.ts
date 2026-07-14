@@ -148,13 +148,6 @@ describe('generated path resolution', () => {
     assertResolvesTo(dir, `${d}node_modules/.vitest/${dir}`, `node_modules/.vitest/${dir}`, 'backend lib vitest cache');
   });
 
-  // coverage dir
-  it('coverage dir resolves to coverage for feature lib', () => {
-    const dir = 'libs/backend/feature/smoke/shared/lib';
-    const d = '../'.repeat(dir.split('/').length);
-    assertResolvesTo(dir, `${d}coverage/${dir}`, `coverage/${dir}`, 'feature lib coverage');
-  });
-
   // nx schemas
   it('$schema resolves to node_modules/nx for backend app', () => {
     const dir = 'apps/backend/smoke/smoke-api';

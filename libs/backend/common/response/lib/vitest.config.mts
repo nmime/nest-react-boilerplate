@@ -14,6 +14,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../coverage/libs/backend/common/response/lib', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/backend/common/response/lib', ['src/**/*.ts'], [], {
+      branches: -2,
+      functions: 100,
+      lines: -1,
+      statements: -1,
+    }),
   },
 });

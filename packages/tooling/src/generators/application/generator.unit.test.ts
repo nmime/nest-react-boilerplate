@@ -220,6 +220,9 @@ describe('application generator', () => {
       await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
 
       assert.ok(tree.exists('apps/backend/my/my-api/vitest.config.mts'));
+      const config = tree.read('apps/backend/my/my-api/vitest.config.mts', 'utf8')!;
+      assert.ok(config.includes('"coverage/apps/backend/my/my-api"'));
+      assert.equal(config.includes('../coverage/'), false);
     });
 
     it('accepts custom directory', async () => {

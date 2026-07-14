@@ -84,7 +84,9 @@ Use the connected GitHub API/MCP for targeted evidence instead:
 
 ## Coverage gates
 
-The Vitest coverage gate is configured in `packages/tooling/src/testing/vitest-coverage.mts`. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.
+The Vitest coverage gate is configured in `packages/tooling/src/testing/vitest-coverage.mts`. Every `fullCoverage(...)` call uses a workspace-relative report directory beginning with `coverage/`; the helper resolves it from the repository root so moving or nesting a project cannot silently write artifacts under `apps/**/coverage` or `libs/**/coverage`.
+
+New projects inherit 100% thresholds. A project with documented historical coverage debt may use a negative threshold as an explicit maximum uncovered-item budget (for example, `branches: -2` permits at most two uncovered branches). Negative budgets are regression ratchets: do not increase them to make CI pass, and reduce them whenever tests cover existing debt. Workflow labels should say "configured coverage gates" unless those thresholds are deliberately raised. Storybook stories and generated clients are excluded from coverage because they are QA fixtures or generated output, not production logic.
 
 ## Tracked generated and binary artifacts
 

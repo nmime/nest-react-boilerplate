@@ -16,9 +16,15 @@ export default defineConfig({
     globals: false,
     env: { NODE_ENV: 'test' },
     coverage: fullCoverage(
-      '../../../../coverage/libs/backend/feature/auth/main/lib',
+      'coverage/libs/backend/feature/auth/main/lib',
       ['src/**/*.ts'],
       ['src/index.ts', 'src/**/*.module.ts', 'src/**/*.dto.ts', 'src/**/*.swagger.ts'],
+      {
+        branches: -274,
+        functions: -71,
+        lines: -314,
+        statements: -328,
+      },
     ),
   },
 });

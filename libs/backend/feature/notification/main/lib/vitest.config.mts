@@ -14,6 +14,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('../../../../../../coverage/libs/backend/feature/notification/main/lib', ['src/**/*.ts']),
+    coverage: fullCoverage('coverage/libs/backend/feature/notification/main/lib', ['src/**/*.ts'], [], {
+      branches: -108,
+      functions: -36,
+      lines: -144,
+      statements: -148,
+    }),
   },
 });

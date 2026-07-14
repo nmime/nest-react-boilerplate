@@ -127,6 +127,9 @@ describe('feature generator', () => {
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/src/support-cases.service.spec.ts'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/project.json'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/tsconfig.lib.json'));
+      const coverageConfig = tree.read('libs/backend/feature/support-cases/main/lib/vitest.config.mts', 'utf8')!;
+      assert.ok(coverageConfig.includes('"coverage/libs/backend/feature/support-cases/main/lib"'));
+      assert.equal(coverageConfig.includes('../coverage/'), false);
 
       // Postgres data access
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/src/index.ts'));

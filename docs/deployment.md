@@ -96,8 +96,8 @@ pnpm run docker:down
 migration service that runs `pnpm db:migrate`, backend `/health` checks for the
 local development stack, the Vike `site-app` `/ready` check, frontend
 `/nginx-health` checks, restart policies, and healthy dependency ordering. It
-builds the admin/user Vite apps, Astro landing app, Vike SSR site, and Expo
-mobile web export. Production Compose uses API and site `/ready`; Helm uses API
+builds the neutral starter and admin/user Vite apps, Astro landing app, Vike SSR
+site, and Expo mobile web export. Production Compose uses API and site `/ready`; Helm uses API
 and site `/live` plus `/ready`. Static frontend containers use nginx same-origin
 API proxying:
 

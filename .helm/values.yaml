@@ -15,7 +15,7 @@ secrets:
 
 config:
   nodeEnv: production
-  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
+  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com,https://starter.example.com
   authJwtIssuer: https://auth.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
@@ -76,8 +76,8 @@ frontendNginx:
   listenPort: 8080
   cspConnectSrc: "'self'"
 
-# The same chart deploys three Nest API services and three nginx frontend
-# services. API probes should keep /live and /ready; nginx probes use
+# The same chart deploys Nest API services and all six frontend renderers.
+# API probes should keep /live and /ready; nginx probes use
 # frontendNginx.healthPath when nginxConfig=true.
 apps:
   authAppApi:
@@ -168,6 +168,24 @@ apps:
   # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).
   # In production, use telegramBotApi (webhook mode). Run the worker locally with:
   #   pnpm exec nx run telegram-bot-worker:start
+  starterApp:
+    enabled: true
+    replicas: 2
+    port: 8080
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/starter-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
   landingApp:
     enabled: true
     replicas: 2
@@ -274,6 +292,9 @@ ingress:
     - host: site.example.com
       service: site-app
       paths: ['/']
+    - host: starter.example.com
+      service: starter-app
+      paths: ['/']
     - host: app.example.com
       service: user-app
       paths: ['/']
@@ -291,6 +312,7 @@ ingress:
       hosts:
         - example.com
         - site.example.com
+        - starter.example.com
         - app.example.com
         - mobile.example.com
         - admin.example.com

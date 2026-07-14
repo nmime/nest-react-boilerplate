@@ -1,10 +1,30 @@
 # Frontend deployment topology
 
-This repository supports two safe frontend/API wiring modes across the current
-frontend shapes: Astro static landing, Vite SPA admin/user, the Vike SSR site,
-and the Expo mobile web export. Choose one mode per environment and keep
-build-time variables, nginx config, Vike server routing, ingress paths, and
-public DNS/CORS values aligned.
+This repository supports two safe frontend/API wiring modes across all six
+frontend shapes: the neutral Vite starter, Astro static landing, Vite SPA
+admin/user, the Vike SSR site, and the Expo mobile web export. Choose one mode
+per environment and keep build-time variables, nginx config, Vike server
+routing, ingress paths, and public DNS/CORS values aligned.
+
+## Frontend domain contract
+
+The Helm defaults assign one unique split-host domain to every frontend app.
+Replace `example.com` in environment-owned values, but preserve the
+one-host-per-app mapping and include every browser origin in `config.corsOrigins`
+and TLS:
+
+| Frontend app  | Default host          | Kubernetes service |
+| ------------- | --------------------- | ------------------ |
+| `landing-app` | `example.com`         | `landing-app`      |
+| `starter-app` | `starter.example.com` | `starter-app`      |
+| `site-app`    | `site.example.com`    | `site-app`         |
+| `user-app`    | `app.example.com`     | `user-app`         |
+| `admin-app`   | `admin.example.com`   | `admin-app`        |
+| `mobile-app`  | `mobile.example.com`  | `mobile-app`       |
+
+The deployment validator fails when any of these host, service, CORS, or TLS
+assignments is missing. DNS records and certificates remain environment/platform
+responsibilities; the app chart owns the ingress contract they target.
 
 ## Mode 1: same-origin API proxy
 
@@ -15,6 +35,7 @@ values are configured:
 
 ```bash
 pnpm exec nx build landing-app
+pnpm exec nx build starter-app
 pnpm exec nx build site-app
 pnpm exec nx build user-app
 pnpm exec nx build admin-app
@@ -26,6 +47,7 @@ pipelines so the intended reverse-proxy topology is visible in logs:
 
 ```bash
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app
+VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build starter-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
@@ -78,9 +100,9 @@ pnpm exec nx build admin-app
 
 For Docker images, pair this mode with `FRONTEND_NGINX_CONFIG=docker/nginx-spa.conf`
 and keep the nginx CSP `connect-src` allow-list aligned with the explicit API
-origins. For Helm, keep the default host-oriented values (`example.com`,
-`app.example.com`, `admin.example.com`, and `auth.example.com`) or set equivalent
-environment hostnames in values files.
+origins. For Helm, keep the complete host-oriented mapping above plus the API
+origin (`auth.example.com` by default), or set equivalent environment hostnames
+in values files.
 
 `site-app` split-host deployments still need a Node SSR host. Static asset
 requests should go to the Vike client output, while document requests should be
@@ -114,11 +136,13 @@ CI=true pnpm install --frozen-lockfile
 pnpm run tooling:static-check
 pnpm run typecheck
 CI=true pnpm exec nx build landing-app --skip-nx-cache
+CI=true pnpm exec nx build starter-app --skip-nx-cache
 CI=true pnpm exec nx build site-app --skip-nx-cache
 CI=true pnpm exec nx build user-app --skip-nx-cache
 CI=true pnpm exec nx build admin-app --skip-nx-cache
 CI=true pnpm exec nx run mobile-app:export --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app --skip-nx-cache
+CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build starter-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app --skip-nx-cache

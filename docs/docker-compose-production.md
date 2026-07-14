@@ -92,9 +92,9 @@ use `/ready`, which is implemented by each API and performs a PostgreSQL
 readiness check when MikroORM is registered. `/health` and `/live` remain
 liveness-only checks and should not replace production dependency readiness.
 
-App services publish loopback-only dynamic host ports by default. Put Caddy,
+App services publish explicit loopback-only host ports by default. Put Caddy,
 nginx, Traefik, or your cloud load balancer in front for public TLS and routing,
-and resolve the assigned ports with `docker compose port <service> <port>`.
+and confirm the assigned ports with `docker compose port <service> <port>`.
 
 ## 5. TLS and reverse proxy
 
@@ -102,6 +102,7 @@ Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
 from Compose:
 
 - `https://example.com` -> `docker compose ... port landing-app 8080`
+- `https://starter.example.com` -> `docker compose ... port starter-app 8080`
 - `https://site.example.com` -> `docker compose ... port site-app 80`
 - `https://admin.example.com` -> `docker compose ... port admin-app 8080`
 - `https://app.example.com` -> `docker compose ... port user-app 8080`

@@ -73,6 +73,7 @@ for (const service of [
   'admin-app-api',
   'user-app-api',
   'auth-app-api',
+  'starter-app',
   'admin-app',
   'user-app',
   'landing-app',
@@ -91,6 +92,7 @@ for (const expected of [
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
   'IMAGE_TAG=sha-000000000000',
   'SITE_APP_PORT=',
+  'STARTER_APP_PORT=',
   'MOBILE_APP_PORT=',
   'VITE_API_BASE_URL_MODE=same-origin',
   'FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf',
@@ -123,6 +125,7 @@ for (const correctDefault of [
   'USER_APP_PORT:-4201',
   'LANDING_APP_PORT:-4202',
   'SITE_APP_PORT:-4203',
+  'STARTER_APP_PORT:-4204',
   'MOBILE_APP_PORT:-4300',
 ]) {
   has(prodCompose, correctDefault, `production Compose explicit port default ${correctDefault}`);

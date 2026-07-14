@@ -303,6 +303,28 @@ services:
         protocol: tcp
     healthcheck: *frontend-healthcheck
 
+  starter-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: starter-app
+        FRONTEND_OUTPUT: dist/apps/frontend/starter-app
+        VITE_API_BASE_URL_MODE: same-origin
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${STARTER_APP_PORT:-4204}'
+        protocol: tcp
+    healthcheck: *frontend-healthcheck
+
 volumes:
   postgres-data:
   redis-data:

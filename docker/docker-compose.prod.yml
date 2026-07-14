@@ -345,6 +345,32 @@ services:
         host_ip: 127.0.0.1
         protocol: tcp
 
+  starter-app:
+    <<: *frontend-service
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/starter-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: starter-app
+        FRONTEND_OUTPUT: dist/apps/frontend/starter-app
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${STARTER_APP_PORT:-4204}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+
   # Observability: OpenTelemetry Collector
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.113.0

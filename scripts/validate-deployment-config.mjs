@@ -193,6 +193,7 @@ const servicePortAssignments = {
   USER_APP_PORT: 4201,
   LANDING_APP_PORT: 4202,
   SITE_APP_PORT: 4203,
+  STARTER_APP_PORT: 4204,
   MOBILE_APP_PORT: 4300,
 };
 assert.equal(
@@ -240,6 +241,7 @@ for (const [service, variable, port] of [
   ['admin-app', 'ADMIN_APP_PORT', 4200],
   ['user-app', 'USER_APP_PORT', 4201],
   ['landing-app', 'LANDING_APP_PORT', 4202],
+  ['starter-app', 'STARTER_APP_PORT', 4204],
   ['mobile-app', 'MOBILE_APP_PORT', 4300],
 ]) {
   const serviceBlock = section(devCompose, `  ${service}:`, '\n\n  ');
@@ -381,6 +383,7 @@ for (const [service, variable, port] of [
   ['admin-app', 'ADMIN_APP_PORT', 4200],
   ['user-app', 'USER_APP_PORT', 4201],
   ['landing-app', 'LANDING_APP_PORT', 4202],
+  ['starter-app', 'STARTER_APP_PORT', 4204],
   ['mobile-app', 'MOBILE_APP_PORT', 4300],
 ]) {
   const serviceBlock = section(prodCompose, `  ${service}:`, '\n\n  ');
@@ -449,7 +452,7 @@ if (validateHelmStatic) {
     has(appBlock, 'port: 80', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
   }
-  for (const app of ['landingApp', 'userApp', 'adminApp', 'mobileApp']) {
+  for (const app of ['starterApp', 'landingApp', 'userApp', 'adminApp', 'mobileApp']) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, 'port: 8080', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
@@ -475,10 +478,52 @@ if (validateHelmStatic) {
   );
 
   const productionValues = read('.helm/values-production.yaml');
+  const releaseWorkflow = read('.github/workflows/release-images.yml');
+  const frontendDomainAssignments = [
+    ['starterApp', 'starter-app', 'starter.example.com'],
+    ['landingApp', 'landing-app', 'example.com'],
+    ['siteApp', 'site-app', 'site.example.com'],
+    ['userApp', 'user-app', 'app.example.com'],
+    ['adminApp', 'admin-app', 'admin.example.com'],
+    ['mobileApp', 'mobile-app', 'mobile.example.com'],
+  ];
+  assert.equal(
+    new Set(frontendDomainAssignments.map(([, , host]) => host)).size,
+    frontendDomainAssignments.length,
+    'Every frontend app must have a unique default domain.',
+  );
+  for (const [app, service] of frontendDomainAssignments) {
+    has(releaseWorkflow, `- name: ${service}`, `${app} immutable release image`);
+    has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
+  }
+  for (const [label, values] of [
+    ['default', helmValues],
+    ['production', productionValues],
+  ]) {
+    const ingressBlock = yamlMapEntry(values, 'ingress', 0);
+    const configBlock = yamlMapEntry(values, 'config', 0);
+    for (const [app, service, host] of frontendDomainAssignments) {
+      yamlMapEntry(values, app);
+      has(ingressBlock, `host: ${host}`, `${label} ${app} ingress host`);
+      has(ingressBlock, `service: ${service}`, `${label} ${app} ingress service`);
+      assert.equal(
+        ingressBlock.split('\n').filter((line) => line.trim() === `- host: ${host}`).length,
+        1,
+        `${label} ${app} domain must appear exactly once in ingress rules.`,
+      );
+      assert.equal(
+        ingressBlock.split('\n').filter((line) => line.trim() === `- ${host}`).length,
+        1,
+        `${label} ${app} domain must appear exactly once in TLS hosts.`,
+      );
+      has(configBlock, `https://${host}`, `${label} ${app} CORS origin`);
+    }
+  }
   for (const app of [
     'authAppApi',
     'userAppApi',
     'adminAppApi',
+    'starterApp',
     'landingApp',
     'siteApp',
     'mobileApp',

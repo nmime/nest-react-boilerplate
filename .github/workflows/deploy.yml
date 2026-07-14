@@ -25,14 +25,37 @@ jobs:
     name: Deploy
     runs-on: ubuntu-22.04
     timeout-minutes: 15
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - name: Check deployment configuration
+        id: deployment
+        env:
+          DEPLOY_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ -n "$DEPLOY_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "::error::GH_DEPLOY_TOKEN is required for a manual deployment"
+            exit 1
+          fi
+
+          echo "::notice::Deployment is disabled because GH_DEPLOY_TOKEN is not configured"
+
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        if: steps.deployment.outputs.enabled == 'true'
         with:
           token: ${{ secrets.GH_DEPLOY_TOKEN }}
           fetch-depth: 0
 
       - name: Determine deployment SHA
+        if: steps.deployment.outputs.enabled == 'true'
         id: sha
         run: |
           SHA="${{ github.event.inputs.git_sha }}"
@@ -44,14 +67,17 @@ jobs:
           echo "Deploying commit: $SHORT_SHA"
 
       - name: Update production values image tags
+        if: steps.deployment.outputs.enabled == 'true'
         run: python3 scripts/update-deploy-tags.py "${{ steps.sha.outputs.short_sha }}"
 
       - name: Validate Helm chart with updated values
+        if: steps.deployment.outputs.enabled == 'true'
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v3.15.4
 
       - name: Dry-run Helm template
+        if: steps.deployment.outputs.enabled == 'true'
         run: |
           helm template nest-react-boilerplate .helm \
             -f .helm/values.yaml \
@@ -59,6 +85,7 @@ jobs:
             --validate
 
       - name: Commit and push deployment update
+        if: steps.deployment.outputs.enabled == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

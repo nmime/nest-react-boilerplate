@@ -1,5 +1,5 @@
-import { Migration } from "@mikro-orm/migrations";
-import { AdminRole, AdminRolesWritePermission } from "@app/common-authz";
+import { Migration } from '@mikro-orm/migrations';
+import { AdminRole, AdminRolesWritePermission } from '@app/common-authz';
 
 // Wrap a value as a single-quoted SQL string literal, doubling embedded quotes.
 const sqlText = (value: string): string => `'${value.replace(/'/g, "''")}'`;

@@ -6,8 +6,8 @@ import {
   translations,
   type Locale,
   type TranslationKey,
-} from "@app/common-i18n";
-import type { APIInteraction } from "discord-api-types/v10";
+} from '@app/common-i18n';
+import type { APIInteraction } from 'discord-api-types/v10';
 
 export function t(
   key: TranslationKey,
@@ -17,9 +17,7 @@ export function t(
   return translate(key, { locale: resolveDiscordLocale(locale), params });
 }
 
-export function resolveDiscordLocale(
-  ...values: Array<string | null | undefined>
-): Locale {
+export function resolveDiscordLocale(...values: Array<string | null | undefined>): Locale {
   for (const value of values) {
     const locale = normalizeLocale(value);
     if (locale) {
@@ -34,10 +32,7 @@ export function resolveInteractionLocale(interaction: APIInteraction): Locale {
     locale?: string;
     guild_locale?: string;
   };
-  return resolveDiscordLocale(
-    maybeInteraction.locale,
-    maybeInteraction.guild_locale,
-  );
+  return resolveDiscordLocale(maybeInteraction.locale, maybeInteraction.guild_locale);
 }
 
 export function localizationsFor(key: TranslationKey): Record<string, string> {

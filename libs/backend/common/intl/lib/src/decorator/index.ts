@@ -1,1 +1,1 @@
-export * from "./intl-locale";
+export * from './intl-locale';

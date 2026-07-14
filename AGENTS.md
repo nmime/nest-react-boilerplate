@@ -51,6 +51,20 @@ Always-loaded policy for human and AI contributors to
 - **Backend**: NestJS on Fastify, PostgreSQL + MikroORM, Redis, NATS.
 - **Frontend**: Vite (React SPAs), Astro (landing), Vike (SSR), Expo (React Native).
 
+## Scaffolding Workflow
+
+- For any new app, library, or vertical feature, read
+  [`.agents/skills/scaffold-feature/SKILL.md`](.agents/skills/scaffold-feature/SKILL.md)
+  before editing project structure.
+- Use `pnpm nrb add ... --dry-run` first. Do not copy an existing app directory
+  or reproduce the reference `admin-app` / `user-app` product UI.
+- `starter-app` is the neutral product starting point. The richer admin/user,
+  landing, site, and mobile apps are reference implementations for architecture
+  and tests, not visual templates.
+- Generated roots include their own `AGENTS.md` and `README.md`; read the nearest
+  versions before completing product-specific routing, contracts, persistence,
+  authorization, and tests.
+
 ## Request Context (CLS)
 
 The backend uses Node `AsyncLocalStorage` (zero external dependencies) to carry
@@ -77,7 +91,7 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - **Exception factory** creates typed exceptions at class definition time:
 
   ```ts
-  Exception({ name, kind, problemType, title, detail, status, dataType })
+  Exception({ name, kind, problemType, title, detail, status, dataType });
   ```
 
 - Static properties (`type`, `title`, `detail`, `status`) are fixed at class

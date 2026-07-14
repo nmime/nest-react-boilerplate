@@ -1,7 +1,7 @@
-import { Global, Module } from "@nestjs/common";
-import { TelegramBotInstanceInjectToken } from "../const";
-import { createTelegramBot } from "./bot";
-import { resolveTelegramBotConfig } from "./config";
+import { Global, Module } from '@nestjs/common';
+import { TelegramBotInstanceInjectToken } from '../const';
+import { createTelegramBot } from './bot';
+import { resolveTelegramBotConfig } from './config';
 
 @Global()
 @Module({

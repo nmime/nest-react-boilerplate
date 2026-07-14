@@ -1,15 +1,11 @@
-import type { QueryClient } from "@tanstack/react-query";
-import { authApi, userApi } from "@app/frontend-api-client";
-import { clearApiAuthRequired } from "@app/frontend-api-support";
-import {
-  createMobxMutation,
-  type AuthShellStore,
-  type MobxMutation,
-} from "@app/frontend-runtime";
+import type { QueryClient } from '@tanstack/react-query';
+import { authApi, userApi } from '@app/frontend-api-client';
+import { clearApiAuthRequired } from '@app/frontend-api-support';
+import { createMobxMutation, type AuthShellStore, type MobxMutation } from '@app/frontend-runtime';
 
 export interface LogoutModelOptions {
   /** Clears the bearer/refresh session shell state client-side. */
-  authStore: Pick<AuthShellStore, "clearSession">;
+  authStore: Pick<AuthShellStore, 'clearSession'>;
   /** Sends the logout request (kept injectable so specs can mock it). */
   logout: () => Promise<unknown>;
   /** Shared TanStack Query client that owns the observable server state. */
@@ -27,7 +23,7 @@ export interface SignOutOptions {
  */
 export class LogoutModel {
   readonly mutation: MobxMutation;
-  private readonly authStore: Pick<AuthShellStore, "clearSession">;
+  private readonly authStore: Pick<AuthShellStore, 'clearSession'>;
   private readonly queryClient: QueryClient;
 
   constructor({ authStore, logout, queryClient }: LogoutModelOptions) {

@@ -1,4 +1,4 @@
-import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
+import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import type {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
@@ -6,8 +6,8 @@ import type {
   AuthUserRepository,
   AdminAuditLogEntity,
   AuthUserEntity,
-} from "@app/backend-postgres-main-auth";
-import { AdminApplicationError } from "./admin-errors";
+} from '@app/backend-postgres-main-auth';
+import { AdminApplicationError } from './admin-errors';
 import {
   normalizeAdminPage,
   type AdminRequestContext,
@@ -19,14 +19,9 @@ import {
   type AdminUserView,
   type UpdateAdminUserAccessPolicyCommand,
   type UpdateAdminUserStatusCommand,
-} from "../domain";
-import { toAdminAuditLogView, toAdminUserView } from "./mapper";
-import {
-  requireAllowedPolicy,
-  resolveTenantId,
-  unwrapRepositoryResult,
-  unwrapSensitiveMutationResult,
-} from "./util";
+} from '../domain';
+import { toAdminAuditLogView, toAdminUserView } from './mapper';
+import { requireAllowedPolicy, resolveTenantId, unwrapRepositoryResult, unwrapSensitiveMutationResult } from './util';
 
 export class AdminUsersUseCase {
   constructor(
@@ -35,10 +30,7 @@ export class AdminUsersUseCase {
     private readonly adminUserMutations: AdminUserMutationRepository,
   ) {}
 
-  async listUsers(
-    principal: AuthenticatedPrincipal,
-    query: AdminUserQuery,
-  ): Promise<AdminUserListPayload> {
+  async listUsers(principal: AuthenticatedPrincipal, query: AdminUserQuery): Promise<AdminUserListPayload> {
     const { limit, offset } = normalizeAdminPage(query);
     const tenantId = resolveTenantId(principal);
     const filter = {
@@ -50,28 +42,21 @@ export class AdminUsersUseCase {
       limit,
       offset,
     };
-    const [items, total] = await Promise.all([
-      this.users.listUsers(filter),
-      this.users.countUsers(filter),
-    ]);
+    const [items, total] = await Promise.all([this.users.listUsers(filter), this.users.countUsers(filter)]);
 
     return {
-      items:
-        unwrapRepositoryResult<AuthUserEntity[]>(items).map(toAdminUserView),
+      items: unwrapRepositoryResult<AuthUserEntity[]>(items).map(toAdminUserView),
       total: unwrapRepositoryResult<number>(total),
       limit,
       offset,
     };
   }
 
-  async getUser(
-    principal: AuthenticatedPrincipal,
-    id: string,
-  ): Promise<AdminUserView> {
+  async getUser(principal: AuthenticatedPrincipal, id: string): Promise<AdminUserView> {
     const user = await this.users.findById(id, resolveTenantId(principal));
     const entity = unwrapRepositoryResult<AuthUserEntity | null>(user);
     if (!entity) {
-      throw new AdminApplicationError("not_found", "Admin user was not found.");
+      throw new AdminApplicationError('not_found', 'Admin user was not found.');
     }
 
     return toAdminUserView(entity);
@@ -88,17 +73,16 @@ export class AdminUsersUseCase {
       tenantId,
       targetUserId: id,
       actorUserId: principal.subject,
-      action: "admin.user.status.update",
+      action: 'admin.user.status.update',
       policy: { status: input.status },
       audit: {
         actorUserId: principal.subject,
         metadata: { ...context },
       },
     });
-    const result =
-      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    const result = unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
     if (!result) {
-      throw new AdminApplicationError("not_found", "Admin user was not found.");
+      throw new AdminApplicationError('not_found', 'Admin user was not found.');
     }
 
     return toAdminUserView(result.after);
@@ -116,7 +100,7 @@ export class AdminUsersUseCase {
       tenantId,
       targetUserId: id,
       actorUserId: principal.subject,
-      action: "admin.user.access_policy.update",
+      action: 'admin.user.access_policy.update',
       policy: {
         roles: input.roles,
         permissions: input.permissions,
@@ -126,19 +110,15 @@ export class AdminUsersUseCase {
         metadata: { ...context },
       },
     });
-    const result =
-      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    const result = unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
     if (!result) {
-      throw new AdminApplicationError("not_found", "Admin user was not found.");
+      throw new AdminApplicationError('not_found', 'Admin user was not found.');
     }
 
     return toAdminUserView(result.after);
   }
 
-  async listAudit(
-    principal: AuthenticatedPrincipal,
-    query: AdminAuditQuery,
-  ): Promise<AdminAuditLogListPayload> {
+  async listAudit(principal: AuthenticatedPrincipal, query: AdminAuditQuery): Promise<AdminAuditLogListPayload> {
     const { limit, offset } = normalizeAdminPage(query);
     const filter = {
       tenantId: resolveTenantId(principal),
@@ -148,38 +128,23 @@ export class AdminUsersUseCase {
       limit,
       offset,
     };
-    const [items, total] = await Promise.all([
-      this.auditLogs.list(filter),
-      this.auditLogs.count(filter),
-    ]);
+    const [items, total] = await Promise.all([this.auditLogs.list(filter), this.auditLogs.count(filter)]);
 
     return {
-      items:
-        unwrapRepositoryResult<AdminAuditLogEntity[]>(items).map(
-          toAdminAuditLogView,
-        ),
+      items: unwrapRepositoryResult<AdminAuditLogEntity[]>(items).map(toAdminAuditLogView),
       total: unwrapRepositoryResult<number>(total),
       limit,
       offset,
     };
   }
 
-  async dashboardSummary(
-    principal: AuthenticatedPrincipal,
-  ): Promise<AdminDashboardSummary> {
+  async dashboardSummary(principal: AuthenticatedPrincipal): Promise<AdminDashboardSummary> {
     const tenantId = resolveTenantId(principal);
-    const [
-      totalUsers,
-      activeUsers,
-      disabledUsers,
-      invitedUsers,
-      auditCount,
-      audit,
-    ] = await Promise.all([
+    const [totalUsers, activeUsers, disabledUsers, invitedUsers, auditCount, audit] = await Promise.all([
       this.users.countUsers({ tenantId }),
-      this.users.countUsers({ tenantId, status: "active" }),
-      this.users.countUsers({ tenantId, status: "disabled" }),
-      this.users.countUsers({ tenantId, status: "invited" }),
+      this.users.countUsers({ tenantId, status: 'active' }),
+      this.users.countUsers({ tenantId, status: 'disabled' }),
+      this.users.countUsers({ tenantId, status: 'invited' }),
       this.auditLogs.count({ tenantId }),
       this.auditLogs.list({ tenantId, limit: 5, offset: 0 }),
     ]);
@@ -190,10 +155,7 @@ export class AdminUsersUseCase {
       disabledUsers: unwrapRepositoryResult<number>(disabledUsers),
       invitedUsers: unwrapRepositoryResult<number>(invitedUsers),
       recentAuditEvents: unwrapRepositoryResult<number>(auditCount),
-      recentAudit:
-        unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(
-          toAdminAuditLogView,
-        ),
+      recentAudit: unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(toAdminAuditLogView),
     };
   }
 }

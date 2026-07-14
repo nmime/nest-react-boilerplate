@@ -1,35 +1,21 @@
-import { Inject, Injectable, Optional } from "@nestjs/common";
-import type {
-  HealthIndicatorResult,
-  HealthStatus,
-} from "@app/backend-common-health";
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import type { HealthIndicatorResult, HealthStatus } from '@app/backend-common-health';
 import {
   DefaultPostgresMigrationsName,
   DefaultTimeoutMs,
   PostgresHealthAdapter,
   PostgresMigrationsHealthOptions,
-} from "../const";
-import {
-  PostgresDependencyNotConfiguredError,
-  PostgresMigrationStatusUnsupportedError,
-} from "../exception";
-import type {
-  PostgresDependencyHealthAdapter,
-  PostgresMigrationsHealthIndicatorOptions,
-} from "../type";
-import {
-  dependencyError,
-  dependencyUnavailableResult,
-  isConfigured,
-  withTimeout,
-} from "../util";
+} from '../const';
+import { PostgresDependencyNotConfiguredError, PostgresMigrationStatusUnsupportedError } from '../exception';
+import type { PostgresDependencyHealthAdapter, PostgresMigrationsHealthIndicatorOptions } from '../type';
+import { dependencyError, dependencyUnavailableResult, isConfigured, withTimeout } from '../util';
 
 @Injectable()
 export class PostgresMigrationsHealthIndicator {
   readonly name: string;
   private readonly mandatory: boolean;
   private readonly timeoutMs: number;
-  private readonly pendingStatus: Extract<HealthStatus, "degraded" | "error">;
+  private readonly pendingStatus: Extract<HealthStatus, 'degraded' | 'error'>;
 
   constructor(
     @Optional()
@@ -42,7 +28,7 @@ export class PostgresMigrationsHealthIndicator {
     this.name = options.name ?? DefaultPostgresMigrationsName;
     this.mandatory = options.mandatory ?? false;
     this.timeoutMs = options.timeoutMs ?? DefaultTimeoutMs;
-    this.pendingStatus = options.pendingStatus ?? "error";
+    this.pendingStatus = options.pendingStatus ?? 'error';
   }
 
   async check(): Promise<HealthIndicatorResult> {
@@ -50,8 +36,8 @@ export class PostgresMigrationsHealthIndicator {
       return dependencyUnavailableResult({
         name: this.name,
         mandatory: this.mandatory,
-        reason: "not_configured",
-        message: "Postgres migrations adapter is not configured.",
+        reason: 'not_configured',
+        message: 'Postgres migrations adapter is not configured.',
       });
     }
 
@@ -63,7 +49,7 @@ export class PostgresMigrationsHealthIndicator {
       const pendingMigrations = await withTimeout(
         this.adapter.getPendingMigrations(),
         this.timeoutMs,
-        "Postgres migration status check timed out.",
+        'Postgres migration status check timed out.',
       );
       const pendingCount = pendingMigrations.length;
 
@@ -77,7 +63,7 @@ export class PostgresMigrationsHealthIndicator {
 
       return {
         name: this.name,
-        status: "ok",
+        status: 'ok',
         details: { pending: 0, skipped: false },
       };
     } catch (error) {
@@ -85,7 +71,7 @@ export class PostgresMigrationsHealthIndicator {
         return dependencyUnavailableResult({
           name: this.name,
           mandatory: this.mandatory,
-          reason: "not_configured",
+          reason: 'not_configured',
           message: error.message,
         });
       }
@@ -102,9 +88,8 @@ export class PostgresMigrationsHealthIndicator {
     return dependencyUnavailableResult({
       name: this.name,
       mandatory: this.mandatory,
-      reason: "unsupported",
-      message:
-        "Postgres migration status check is not supported by the configured adapter.",
+      reason: 'unsupported',
+      message: 'Postgres migration status check is not supported by the configured adapter.',
     });
   }
 }

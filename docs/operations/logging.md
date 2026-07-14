@@ -21,9 +21,10 @@ Set via `LOG_LEVEL`: `debug`, `info`, `warn`, `error`, `fatal`.
 
 ## Request ID correlation (CLS)
 
-Every HTTP request receives or preserves an `x-request-id` header. The ID is generated **once per request** by `ClsInterceptor` (the first global interceptor) and stored in Node `AsyncLocalStorage` — same pattern as xrocket's nestjs-cls, with zero new dependencies.
+Every HTTP request receives or preserves an `x-request-id` header. The ID is generated **once per request** by `ClsInterceptor` (the first global interceptor) and stored in Node `AsyncLocalStorage`, with zero new dependencies.
 
 **How it works:**
+
 - If the client sends `x-request-id`, CLS uses that value
 - If not, `requestContext.run()` generates a UUID v4
 - All consumers read from CLS: `requestContext.getRequestId()`
@@ -31,13 +32,13 @@ Every HTTP request receives or preserves an `x-request-id` header. The ID is gen
 
 **Components that use requestId:**
 
-| Component | Source |
-|-----------|--------|
-| ClsInterceptor | Generates + enters CLS context |
-| Bootstrap logging middleware | `requestContext.getRequestId()` |
+| Component                          | Source                          |
+| ---------------------------------- | ------------------------------- |
+| ClsInterceptor                     | Generates + enters CLS context  |
+| Bootstrap logging middleware       | `requestContext.getRequestId()` |
 | Logger middleware (logger.factory) | `requestContext.getRequestId()` |
-| ExceptionsFilter | `requestContext.getRequestId()` |
-| Admin/feature controllers | `requestContext.getRequestId()` |
+| ExceptionsFilter                   | `requestContext.getRequestId()` |
+| Admin/feature controllers          | `requestContext.getRequestId()` |
 
 - Request start/completion logs (method, path, status, duration)
 - Application logs tied to the request context

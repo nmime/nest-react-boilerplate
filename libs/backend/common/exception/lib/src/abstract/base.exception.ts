@@ -5,20 +5,22 @@ import type { ProblemDetails } from '../type/problem-details.type';
 import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
 import { createProblemDetails } from '../util/create-problem-details.util';
 
-export { ExceptionKind } from '../type/exception-kind.type';
+export * from '../type/exception-kind.type';
 
 /**
  * Static metadata symbol — stores definition on the constructor.
  */
-const EXCEPTION_DEFINITION_KEY = Symbol('exceptionDefinition');
+const exceptionDefinitionKey = Symbol('exceptionDefinition');
+
+interface ExceptionConstructor {
+  readonly prototype: unknown;
+}
 
 /**
  * Read the static ExceptionDefinition from a factory-created class.
  */
-export function getExceptionDefinition(
-  constructor: Function,
-): ExceptionDefinition | undefined {
-  return (constructor as unknown as Record<symbol, ExceptionDefinition>)[EXCEPTION_DEFINITION_KEY];
+export function getExceptionDefinition(constructor: ExceptionConstructor): ExceptionDefinition | undefined {
+  return (constructor as unknown as Record<symbol, ExceptionDefinition>)[exceptionDefinitionKey];
 }
 
 /**
@@ -123,7 +125,7 @@ export function Exception(def: ExceptionDefinition) {
   }
 
   // Store definition on the class for runtime introspection
-  (ExceptionClass as unknown as Record<symbol, ExceptionDefinition>)[EXCEPTION_DEFINITION_KEY] = {
+  (ExceptionClass as unknown as Record<symbol, ExceptionDefinition>)[exceptionDefinitionKey] = {
     name,
     kind,
     problemType,
@@ -141,7 +143,7 @@ export function Exception(def: ExceptionDefinition) {
  */
 export abstract class BaseException extends Error {
   /** Override name for TS compatibility */
-  override name: string = '';
+  override name = '';
 
   /** Static type URI */
   abstract readonly type: string;

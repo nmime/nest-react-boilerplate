@@ -1,30 +1,16 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-import { Injectable } from "@nestjs/common";
-import {
-  Cacheable,
-  CacheableEvents,
-  Keyv,
-  type KeyvStoreAdapter,
-} from "cacheable";
-import { InjectRedis } from "./decorator";
-import type { RedisClientLike } from "./type";
-import type {
-  CacheableErrorListener,
-  CacheOperationContext,
-} from "./type/redis-cache.type";
-import {
-  deserializeValue,
-  isPresent,
-  toCacheableTtlMilliseconds,
-  toError,
-} from "./util";
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { Injectable } from '@nestjs/common';
+import { Cacheable, CacheableEvents, Keyv, type KeyvStoreAdapter } from 'cacheable';
+import { InjectRedis } from './decorator';
+import type { RedisClientLike } from './type';
+import type { CacheableErrorListener, CacheOperationContext } from './type/redis-cache.type';
+import { deserializeValue, isPresent, toCacheableTtlMilliseconds, toError } from './util';
 
 @Injectable()
 export class RedisCacheService {
   private readonly cache: Cacheable;
   private readonly inflight = new Map<string, Promise<unknown>>();
-  private readonly operationStorage =
-    new AsyncLocalStorage<CacheOperationContext>();
+  private readonly operationStorage = new AsyncLocalStorage<CacheOperationContext>();
 
   constructor(@InjectRedis() private readonly redis: RedisClientLike) {
     this.cache = new Cacheable({
@@ -75,9 +61,7 @@ export class RedisCacheService {
     deserialize?: (raw: string) => T;
   }): Promise<Map<string, T>> {
     const uniqueKeys = [...new Set(params.keys)];
-    const cachedValues = await this.runCacheableOperation(() =>
-      this.cache.getMany<string>(uniqueKeys),
-    );
+    const cachedValues = await this.runCacheableOperation(() => this.cache.getMany<string>(uniqueKeys));
     const result = new Map<string, T>();
     const missingKeys: string[] = [];
 
@@ -110,11 +94,7 @@ export class RedisCacheService {
     return result;
   }
 
-  async setHash<T>(
-    hashKey: string,
-    values: Record<string, T>,
-    ttl: number,
-  ): Promise<void> {
+  async setHash<T>(hashKey: string, values: Record<string, T>, ttl: number): Promise<void> {
     const pipeline = this.redis.pipeline();
     for (const [field, value] of Object.entries(values)) {
       pipeline.hset(hashKey, field, JSON.stringify(value));
@@ -125,12 +105,7 @@ export class RedisCacheService {
 
   async getHash<T>(hashKey: string): Promise<Record<string, T>> {
     const result = await this.redis.hgetall(hashKey);
-    return Object.fromEntries(
-      Object.entries(result).map(([key, value]) => [
-        key,
-        JSON.parse(value) as T,
-      ]),
-    );
+    return Object.fromEntries(Object.entries(result).map(([key, value]) => [key, JSON.parse(value) as T]));
   }
 
   async deleteFromHash(hashKey: string, field: string): Promise<void> {
@@ -149,8 +124,7 @@ export class RedisCacheService {
       await this.runCacheableOperation(() =>
         this.cache.set(
           params.key,
-          params.serialize?.(value as Exclude<T, null | undefined>) ??
-            JSON.stringify(value),
+          params.serialize?.(value as Exclude<T, null | undefined>) ?? JSON.stringify(value),
           toCacheableTtlMilliseconds(params.ttl),
         ),
       );
@@ -163,9 +137,7 @@ export class RedisCacheService {
     return await this.runCacheableOperation(() => this.cache.get<string>(key));
   }
 
-  private async runCacheableOperation<T>(
-    operation: () => Promise<T>,
-  ): Promise<T> {
+  private async runCacheableOperation<T>(operation: () => Promise<T>): Promise<T> {
     // Cacheable swallows store failures and re-emits them on a shared emitter,
     // so a concurrent operation could otherwise capture another operation's
     // error. The error is emitted synchronously inside the failing operation's
@@ -210,9 +182,7 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
 
   async getMany<Value>(keys: string[]): Promise<Array<Value | undefined>> {
     const values = await this.redis.mget(...keys);
-    return values.map((value) =>
-      value === null ? undefined : (value as Value),
-    );
+    return values.map((value) => (value === null ? undefined : (value as Value)));
   }
 
   async set(key: string, value: unknown, ttl?: number): Promise<boolean> {
@@ -227,18 +197,14 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
     const result =
       ttl === undefined
         ? await this.redis.set(key, String(value))
-        : await this.redis.set(key, String(value), "PX", Math.ceil(ttl));
+        : await this.redis.set(key, String(value), 'PX', Math.ceil(ttl));
     /* v8 ignore stop */
 
     return result !== null;
   }
 
-  async setMany(
-    values: Array<{ key: string; value: unknown; ttl?: number }>,
-  ): Promise<void> {
-    await Promise.all(
-      values.map((value) => this.set(value.key, value.value, value.ttl)),
-    );
+  async setMany(values: Array<{ key: string; value: unknown; ttl?: number }>): Promise<void> {
+    await Promise.all(values.map((value) => this.set(value.key, value.value, value.ttl)));
   }
 
   async delete(key: string): Promise<boolean> {
@@ -257,9 +223,7 @@ class RedisKeyvStoreAdapter implements KeyvStoreAdapter {
   }
 
   clear(): Promise<void> {
-    return Promise.reject(
-      new Error("RedisCacheService does not support clearing Redis."),
-    );
+    return Promise.reject(new Error('RedisCacheService does not support clearing Redis.'));
   }
   /* v8 ignore stop */
 }

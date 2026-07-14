@@ -1,6 +1,7 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
-import { NotificationChannel, NotificationDeliveryProvider, NotificationPriority, NotificationStatus } from '../domain';
+import { NotificationChannel, NotificationStatus } from '../domain';
+import { NotificationDeliveryProvider } from '../infrastructure/data-access/entities';
 
 @Injectable()
 export class NotificationDeliveryRepository {

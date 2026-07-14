@@ -1,14 +1,8 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import {
-  QueryClient,
-  QueryClientProvider,
-  type QueryClientConfig,
-} from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { QueryClient, QueryClientProvider, type QueryClientConfig } from '@tanstack/react-query';
+import { useState, type ReactNode } from 'react';
 
-export const createFrontendQueryClient = (
-  config?: QueryClientConfig,
-): QueryClient =>
+export const createFrontendQueryClient = (config?: QueryClientConfig): QueryClient =>
   new QueryClient({
     ...config,
     defaultOptions: {
@@ -27,13 +21,8 @@ export const createFrontendQueryClient = (
 
 export const frontendQueryClient = createFrontendQueryClient();
 
-export function FrontendQueryProvider({
-  children,
-  client,
-}: Readonly<{ children: ReactNode; client?: QueryClient }>) {
+export function FrontendQueryProvider({ children, client }: Readonly<{ children: ReactNode; client?: QueryClient }>) {
   const [ownedClient] = useState(() => client ?? createFrontendQueryClient());
 
-  return (
-    <QueryClientProvider client={ownedClient}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={ownedClient}>{children}</QueryClientProvider>;
 }

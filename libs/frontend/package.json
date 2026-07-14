@@ -20,13 +20,13 @@
     "lucide-react": "^1.24.0",
     "mobx": "^6.16.1",
     "mobx-react-lite": "^4.1.1",
-    "mobx-tanstack-query": "7.2.1",
+    "mobx-tanstack-query": "7.2.2",
     "openapi-fetch": "^0.17.0",
     "openapi-react-query": "^0.5.4",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "tailwind-merge": "^3.6.0",
-    "tamagui": "2.4.4"
+    "tamagui": "2.4.5"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",

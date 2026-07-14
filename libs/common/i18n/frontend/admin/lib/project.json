@@ -3,14 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/common/i18n/frontend/admin/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:frontend",
-    "type:common",
-    "scope:admin",
-    "boundary:i18n",
-    "fsd:layer:shared",
-    "framework:neutral"
-  ],
+  "tags": ["platform:frontend", "type:common", "scope:admin", "boundary:i18n", "fsd:layer:shared", "framework:neutral"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",

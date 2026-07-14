@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
 import {
   ProductShell,
   UiAlert,
@@ -28,10 +28,10 @@ import {
   UiTextarea,
   UiTextField,
   UiToast,
-} from "../index";
+} from '../index';
 
-describe("public @app/frontend-ui-web shadcn design-system contract", () => {
-  it("keeps the exported Ui* API surface available from the public alias", () => {
+describe('public @app/frontend-ui-web shadcn design-system contract', () => {
+  it('keeps the exported Ui* API surface available from the public alias', () => {
     for (const component of [
       ProductShell,
       UiAlert,
@@ -64,7 +64,7 @@ describe("public @app/frontend-ui-web shadcn design-system contract", () => {
     }
   });
 
-  it("maps legacy UiButton props onto polished shadcn-style states", () => {
+  it('maps legacy UiButton props onto polished shadcn-style states', () => {
     const primary = renderToStaticMarkup(<UiButton>Save</UiButton>);
     const secondary = renderToStaticMarkup(
       <UiButton href="/settings" variant="secondary">
@@ -77,16 +77,16 @@ describe("public @app/frontend-ui-web shadcn design-system contract", () => {
       </UiButton>,
     );
 
-    expect(primary).toContain("xr-button--primary");
-    expect(primary).toContain("rounded-[var(--xr-radius-md)]");
-    expect(primary).toContain("focus-visible:ring-ring/25");
-    expect(secondary).toContain("xr-button--secondary");
-    expect(secondary).toContain("hover:bg-accent");
+    expect(primary).toContain('xr-button--primary');
+    expect(primary).toContain('rounded-[var(--xr-radius-md)]');
+    expect(primary).toContain('focus-visible:ring-ring/25');
+    expect(secondary).toContain('xr-button--secondary');
+    expect(secondary).toContain('hover:bg-accent');
     expect(busy).toContain('aria-busy="true"');
-    expect(busy).toContain("xr-button--loading");
+    expect(busy).toContain('xr-button--loading');
   });
 
-  it("adds v3 button, badge, and action-group variants without changing legacy defaults", () => {
+  it('adds v3 button, badge, and action-group variants without changing legacy defaults', () => {
     const html = renderToStaticMarkup(
       <>
         <UiButton size="sm" variant="outline">
@@ -105,48 +105,41 @@ describe("public @app/frontend-ui-web shadcn design-system contract", () => {
       </>,
     );
 
-    expect(html).toContain("xr-button--outline");
-    expect(html).toContain("h-9 px-3");
-    expect(html).toContain("xr-button--destructive");
-    expect(html).toContain("size-10 p-0");
-    expect(html).toContain("xr-badge--destructive");
-    expect(html).toContain("xr-badge--solid");
-    expect(html).toContain("xr-action-group--end");
-    expect(html).toContain("xr-action-group--compact");
-    expect(html).toContain("xr-shell-surface");
+    expect(html).toContain('xr-button--outline');
+    expect(html).toContain('h-9 px-3');
+    expect(html).toContain('xr-button--destructive');
+    expect(html).toContain('size-10 p-0');
+    expect(html).toContain('xr-badge--destructive');
+    expect(html).toContain('xr-badge--solid');
+    expect(html).toContain('xr-action-group--end');
+    expect(html).toContain('xr-action-group--compact');
+    expect(html).toContain('xr-shell-surface');
   });
 
-  it("renders form controls with semantic shadcn token classes and a11y wiring", () => {
+  it('renders form controls with semantic shadcn token classes and a11y wiring', () => {
     const html = renderToStaticMarkup(
       <UiForm aria-label="Account form">
-        <UiTextField
-          error="Required"
-          hint="Use your work address."
-          label="Email"
-          name="email"
-        />
+        <UiTextField error="Required" hint="Use your work address." label="Email" name="email" />
         <UiTextarea aria-label="Notes" />
       </UiForm>,
     );
 
-    expect(html).toContain("xr-form");
-    expect(html).toContain("xr-input");
-    expect(html).toContain("border-input");
-    expect(html).toContain("focus-visible:ring-ring/25");
-    expect(html).toContain("xr-textarea");
-    expect(html).toContain("aria-describedby");
+    expect(html).toContain('xr-form');
+    expect(html).toContain('xr-input');
+    expect(html).toContain('border-input');
+    expect(html).toContain('focus-visible:ring-ring/25');
+    expect(html).toContain('xr-textarea');
+    expect(html).toContain('aria-describedby');
     expect(html).toContain('aria-invalid="true"');
   });
 
-  it("keeps data, feedback, overlay, and navigation primitives on stable class hooks", () => {
+  it('keeps data, feedback, overlay, and navigation primitives on stable class hooks', () => {
     interface TableRow extends Record<string, unknown> {
       name: string;
     }
 
-    const tableRows: TableRow[] = [{ name: "Ada" }];
-    const tableColumns = [
-      { id: "name", header: "Name", render: (row: TableRow) => row.name },
-    ];
+    const tableRows: TableRow[] = [{ name: 'Ada' }];
+    const tableColumns = [{ id: 'name', header: 'Name', render: (row: TableRow) => row.name }];
 
     render(
       <>
@@ -164,34 +157,24 @@ describe("public @app/frontend-ui-web shadcn design-system contract", () => {
           rowKey={(row: TableRow) => String(row.name)}
           rows={tableRows}
         />
-        <UiPagination
-          currentPage={1}
-          onPageChange={() => undefined}
-          totalPages={1}
-        />
-        <UiTabs
-          items={[
-            { content: "Profile body", label: "Profile", value: "profile" },
-          ]}
-        />
+        <UiPagination currentPage={1} onPageChange={() => undefined} totalPages={1} />
+        <UiTabs items={[{ content: 'Profile body', label: 'Profile', value: 'profile' }]} />
         <UiStatusPill label="Ready" tone="success" />
         <UiStatusTag label="Queued" tone="info" />
       </>,
     );
 
-    expect(document.querySelector(".xr-card")).toBeTruthy();
-    expect(document.querySelector(".xr-stat-card")).toBeTruthy();
-    expect(document.querySelector(".xr-alert--success")).toBeTruthy();
-    expect(document.querySelector(".xr-badge--info")).toBeTruthy();
-    expect(document.querySelector(".xr-notification--success")).toBeTruthy();
-    expect(document.querySelector(".xr-feedback--empty")).toBeTruthy();
-    expect(document.querySelector(".xr-toast--success")).toBeTruthy();
-    expect(screen.getByRole("table", { name: "Rows" }).className).toContain(
-      "xr-table",
-    );
-    expect(document.querySelector(".xr-pagination")).toBeTruthy();
-    expect(document.querySelector(".xr-tabs__trigger")).toBeTruthy();
-    expect(document.querySelector(".xr-status--success")).toBeTruthy();
-    expect(document.querySelector(".xr-status-tag--info")).toBeTruthy();
+    expect(document.querySelector('.xr-card')).toBeTruthy();
+    expect(document.querySelector('.xr-stat-card')).toBeTruthy();
+    expect(document.querySelector('.xr-alert--success')).toBeTruthy();
+    expect(document.querySelector('.xr-badge--info')).toBeTruthy();
+    expect(document.querySelector('.xr-notification--success')).toBeTruthy();
+    expect(document.querySelector('.xr-feedback--empty')).toBeTruthy();
+    expect(document.querySelector('.xr-toast--success')).toBeTruthy();
+    expect(screen.getByRole('table', { name: 'Rows' }).className).toContain('xr-table');
+    expect(document.querySelector('.xr-pagination')).toBeTruthy();
+    expect(document.querySelector('.xr-tabs__trigger')).toBeTruthy();
+    expect(document.querySelector('.xr-status--success')).toBeTruthy();
+    expect(document.querySelector('.xr-status-tag--info')).toBeTruthy();
   });
 });

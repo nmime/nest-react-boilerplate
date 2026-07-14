@@ -1,11 +1,8 @@
-import type { AuthUserRepositoryError } from "../type/auth-user.type";
+import type { AuthUserRepositoryError } from '../type/auth-user.type';
 
-export function mapAuthUserRepositoryError(
-  cause: unknown,
-): AuthUserRepositoryError {
+export function mapAuthUserRepositoryError(cause: unknown): AuthUserRepositoryError {
   return {
-    code: "repository_error",
-    message:
-      cause instanceof Error ? cause.message : "Auth user repository failed.",
+    code: 'repository_error',
+    message: cause instanceof Error ? cause.message : 'Auth user repository failed.',
   };
 }

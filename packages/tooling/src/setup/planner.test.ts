@@ -31,7 +31,7 @@ import {
   emptyState,
   computeConfigDigest,
 } from './state.js';
-import { plan, resolveConfig, generateConfigFile, generateSummaryMd } from './planner.js';
+import { plan, resolveConfig, generateConfigFile, generateSummaryMd, generateWorkspaceManifest } from './planner.js';
 
 /* ==================================================================
  * UNIT: operations.ts — path validation (C1)
@@ -518,6 +518,22 @@ describe('planner — generateSummaryMd', () => {
   });
 });
 
+describe('planner — runtime workspace manifest', () => {
+  it('groups enabled projects by platform for runtime tooling', () => {
+    const result = generateWorkspaceManifest({
+      apps: ['user-app', 'user-app-api', 'fullstack-e2e'],
+      capabilities: ['postgres'],
+      preset: 'starter',
+      configHash: 'abc',
+    });
+    const manifest = JSON.parse(result.content);
+    assert.equal(result.path, '.nrb/workspace.json');
+    assert.deepEqual(manifest.byPlatform.frontend, ['user-app']);
+    assert.deepEqual(manifest.byPlatform.backend, ['user-app-api']);
+    assert.deepEqual(manifest.byPlatform.e2e, ['fullstack-e2e']);
+  });
+});
+
 /* ==================================================================
  * COMPONENT: planner + state — plan()
  * ================================================================== */
@@ -543,6 +559,12 @@ describe('planner — plan() basic', () => {
     const result = plan(config, emptyState);
     const summaryOp = result.operations.find((o) => o.path === '.nrb/summary.md');
     assert.ok(summaryOp, 'Expected .nrb/summary.md in operations');
+  });
+
+  it('generated plan includes the runtime-consumed workspace manifest', () => {
+    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const result = plan(config, emptyState);
+    assert.ok(result.operations.some((operation) => operation.path === '.nrb/workspace.json'));
   });
 });
 
@@ -621,7 +643,7 @@ describe('planner — conflict detection via diff', () => {
     const result = plan(config, tamperedState);
     const configOp = result.operations.find((o) => o.path === 'nrb.config.json');
     assert.ok(configOp, 'Config file should need updating');
-    assert.equal(configOp!.kind, 'update_file', 'Should be update, not create');
+    assert.equal(configOp.kind, 'update_file', 'Should be update, not create');
   });
 });
 

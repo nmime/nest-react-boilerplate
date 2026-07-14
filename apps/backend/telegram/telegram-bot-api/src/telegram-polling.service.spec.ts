@@ -48,9 +48,7 @@ describe('TelegramPollingService', () => {
 
     expect(() => {
       service.onApplicationBootstrap();
-    }).toThrow(
-      'Telegram polling runtime cannot start when TELEGRAM_BOT_MODE=webhook.',
-    );
+    }).toThrow('Telegram polling runtime cannot start when TELEGRAM_BOT_MODE=webhook.');
   });
 
   it('guards against polling in production', () => {
@@ -85,19 +83,14 @@ describe('TelegramPollingService', () => {
     service.onApplicationBootstrap();
     await service.onApplicationShutdown();
 
-    expect(run).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ runner: { silent: true } }),
-    );
+    expect(run).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ runner: { silent: true } }));
     expect(stop).toHaveBeenCalledTimes(1);
     expect(service.isRunning()).toBe(false);
   });
 
   it('allows shutdown before bootstrap', async () => {
     stop.mockClear();
-    const service = new TelegramPollingService(
-      instance('polling', 'development'),
-    );
+    const service = new TelegramPollingService(instance('polling', 'development'));
 
     await expect(service.onApplicationShutdown()).resolves.toBeUndefined();
 

@@ -1,17 +1,11 @@
-import { Migration } from "@mikro-orm/migrations";
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260614120000CreateSocialAuthDataModel extends Migration {
   override up(): void {
     this.addSql('alter table "auth_users" alter column "email" drop not null;');
-    this.addSql(
-      'alter table "auth_users" drop constraint if exists "auth_users_email_key";',
-    );
-    this.addSql(
-      'alter table "auth_users" drop constraint if exists "uq__auth_users__email";',
-    );
-    this.addSql(
-      'alter table "auth_users" drop constraint if exists "uq__auth_users__tenant_id_email";',
-    );
+    this.addSql('alter table "auth_users" drop constraint if exists "auth_users_email_key";');
+    this.addSql('alter table "auth_users" drop constraint if exists "uq__auth_users__email";');
+    this.addSql('alter table "auth_users" drop constraint if exists "uq__auth_users__tenant_id_email";');
     this.addSql(
       'create unique index if not exists "uq__auth_users__tenant_id_lower_email" on "auth_users" ("tenant_id", lower("email")) where "email" is not null;',
     );
@@ -48,9 +42,7 @@ export class Migration20260614120000CreateSocialAuthDataModel extends Migration 
     this.addSql(
       'create index if not exists "ix__auth_link_tokens__tenant_id_auth_user_id" on "auth_link_tokens" ("tenant_id", "auth_user_id");',
     );
-    this.addSql(
-      'create index if not exists "ix__auth_link_tokens__expires_at" on "auth_link_tokens" ("expires_at");',
-    );
+    this.addSql('create index if not exists "ix__auth_link_tokens__expires_at" on "auth_link_tokens" ("expires_at");');
     this.addSql(
       `create table if not exists "auth_provider_tokens" ("id" uuid primary key, "tenant_id" uuid not null default '00000000-0000-0000-0000-000000000000', "auth_user_id" uuid not null, "external_identity_id" uuid not null, "provider" varchar(32) not null default 'discord', "token_kind" varchar(16) not null, "ciphertext" text not null, "iv" varchar(64) not null, "auth_tag" varchar(64) not null, "key_id" varchar(128) not null, "scopes" jsonb not null default '[]'::jsonb, "expires_at" timestamptz null, "revoked_at" timestamptz null, "created_at" timestamptz not null default now(), "updated_at" timestamptz not null default now(), constraint "ck__auth_provider_tokens__provider" check ("provider" in ('discord')), constraint "ck__auth_provider_tokens__token_kind" check ("token_kind" in ('access', 'refresh')), constraint "fk__auth_provider_tokens__tenant_id" foreign key ("tenant_id") references "auth_tenants" ("id") on delete cascade, constraint "fk__auth_provider_tokens__auth_user_id" foreign key ("auth_user_id") references "auth_users" ("id") on delete cascade, constraint "fk__auth_provider_tokens__external_identity_id" foreign key ("external_identity_id") references "auth_external_identities" ("id") on delete cascade);`,
     );
@@ -70,9 +62,7 @@ export class Migration20260614120000CreateSocialAuthDataModel extends Migration 
     this.addSql('drop table if exists "auth_link_tokens";');
     this.addSql('drop table if exists "auth_methods";');
     this.addSql('drop table if exists "auth_external_identities";');
-    this.addSql(
-      'drop index if exists "uq__auth_users__tenant_id_lower_email";',
-    );
+    this.addSql('drop index if exists "uq__auth_users__tenant_id_lower_email";');
     this.addSql('alter table "auth_users" alter column "email" set not null;');
   }
 }

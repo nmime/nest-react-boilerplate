@@ -1,4 +1,4 @@
-import { Migration } from "@mikro-orm/migrations";
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260531123000AddAuthTenantLifecycle extends Migration {
   override up(): void {
@@ -130,9 +130,7 @@ export class Migration20260531123000AddAuthTenantLifecycle extends Migration {
     this.addSql(
       'create index if not exists "ix__auth_user_tokens__tenant_id_user_id" on "auth_user_tokens" ("tenant_id", "user_id");',
     );
-    this.addSql(
-      'create index if not exists "ix__auth_user_tokens__purpose" on "auth_user_tokens" ("purpose");',
-    );
+    this.addSql('create index if not exists "ix__auth_user_tokens__purpose" on "auth_user_tokens" ("purpose");');
   }
 
   override down(): void {
@@ -140,9 +138,7 @@ export class Migration20260531123000AddAuthTenantLifecycle extends Migration {
     this.addSql('drop table if exists "auth_refresh_tokens";');
     this.addSql('drop table if exists "auth_tenant_invitations";');
     this.addSql('drop table if exists "auth_tenant_memberships";');
-    this.addSql(
-      'alter table "auth_users" drop constraint if exists "fk__auth_users__tenant_id";',
-    );
+    this.addSql('alter table "auth_users" drop constraint if exists "fk__auth_users__tenant_id";');
     this.addSql('drop index if exists "uq__auth_tenants__primary_domain";');
     this.addSql('drop table if exists "auth_tenants";');
   }

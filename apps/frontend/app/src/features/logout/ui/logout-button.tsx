@@ -1,16 +1,11 @@
-import {
-  observer,
-  useAuthShellStore,
-  type TranslationKey,
-  type TranslationParams,
-} from "@app/frontend-runtime";
-import { UiButton } from "../../../shared/ui";
-import { useLogout } from "../model";
+import { observer, useAuthShellStore, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
+import { UiButton } from '../../../shared/ui';
+import { useLogout } from '../model';
 
 export interface LogoutButtonProps {
   navigate?: (to: string, options?: { replace?: boolean }) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
-  variant?: "primary" | "secondary";
+  variant?: 'primary' | 'secondary';
 }
 
 /**
@@ -21,7 +16,7 @@ export interface LogoutButtonProps {
 export const LogoutButton = observer(function LogoutButton({
   navigate,
   t,
-  variant = "secondary",
+  variant = 'secondary',
 }: Readonly<LogoutButtonProps>) {
   const authStore = useAuthShellStore();
   const { model, signOut } = useLogout({ navigate });
@@ -33,12 +28,12 @@ export const LogoutButton = observer(function LogoutButton({
   return (
     <UiButton
       isLoading={model.isPending}
-      loadingLabel={t("user.action.signingOut")}
+      loadingLabel={t('user.action.signingOut')}
       onClick={signOut}
       type="button"
       variant={variant}
     >
-      {t("user.action.signOut")}
+      {t('user.action.signOut')}
     </UiButton>
   );
 });

@@ -1,12 +1,9 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 
-const appName = "landing-app";
-const distRoot = resolve(
-  import.meta.dirname,
-  "../../../../dist/apps/frontend/landing",
-);
-const expectedCopy = "Launch a full-stack Nest and React product foundation.";
+const appName = 'landing-app';
+const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/landing');
+const expectedCopy = 'Launch a full-stack Nest and React product foundation.';
 
 const readBuiltTextFiles = (directory) => {
   const entries = readdirSync(directory, { withFileTypes: true });
@@ -22,22 +19,20 @@ const readBuiltTextFiles = (directory) => {
       return [];
     }
 
-    return [readFileSync(entryPath, "utf8")];
+    return [readFileSync(entryPath, 'utf8')];
   });
 };
 
-const indexPath = join(distRoot, "index.html");
+const indexPath = join(distRoot, 'index.html');
 
 if (!existsSync(indexPath) || !statSync(indexPath).isFile()) {
   throw new Error(`[${appName}] missing built index.html at ${indexPath}`);
 }
 
-const searchable = readBuiltTextFiles(distRoot).join("\n");
+const searchable = readBuiltTextFiles(distRoot).join('\n');
 
 if (!searchable.includes(expectedCopy)) {
-  throw new Error(
-    `[${appName}] expected landing copy not found in Astro build.`,
-  );
+  throw new Error(`[${appName}] expected landing copy not found in Astro build.`);
 }
 
 console.log(
@@ -45,6 +40,6 @@ console.log(
     appName,
     indexPath: relative(process.cwd(), indexPath),
     expectedCopy,
-    status: "ok",
+    status: 'ok',
   }),
 );

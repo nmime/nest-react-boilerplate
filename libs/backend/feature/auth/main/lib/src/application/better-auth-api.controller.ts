@@ -3,13 +3,6 @@ import { Controller, Inject, Req, Res, All, HttpCode, Logger } from '@nestjs/com
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
 
-declare module 'better-auth' {
-  interface Auth {
-    /** Better-Auth's internal request handler (undocumented but stable). */
-    handler?: (request: Request) => Promise<Response>;
-  }
-}
-
 @Controller('api/auth')
 export class BetterAuthApiController {
   private static readonly log = new Logger(BetterAuthApiController.name);
@@ -102,7 +95,10 @@ export class BetterAuthApiController {
       }
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
-      const status = (error as { status?: number; statusCode?: number })?.status ?? (error as { status?: number; statusCode?: number })?.statusCode ?? 500;
+      const status =
+        (error as { status?: number; statusCode?: number })?.status ??
+        (error as { status?: number; statusCode?: number })?.statusCode ??
+        500;
       BetterAuthApiController.log.error(`${req.method} ${req.url} error: ${err.message}`, err.stack);
       res.status(status).send({
         message: err.message ?? 'Internal server error',

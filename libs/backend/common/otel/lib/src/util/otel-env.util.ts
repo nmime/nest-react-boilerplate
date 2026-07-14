@@ -1,19 +1,19 @@
-import type { OpenTelemetryEnvironment } from "../type/otel-environment.type";
-import type { OpenTelemetryOptions } from "../type/otel-options.type";
+import type { OpenTelemetryEnvironment } from '../type/otel-environment.type';
+import type { OpenTelemetryOptions } from '../type/otel-options.type';
 
 export function isOpenTelemetryEnabled(
-  options: Pick<OpenTelemetryOptions, "enabled">,
+  options: Pick<OpenTelemetryOptions, 'enabled'>,
   env: OpenTelemetryEnvironment = process.env,
 ): boolean {
   if (parseBoolean(env.OTEL_SDK_DISABLED) === true) {
     return false;
   }
-  if (typeof options.enabled === "boolean") {
+  if (typeof options.enabled === 'boolean') {
     return options.enabled;
   }
 
   const envEnabled = parseBoolean(env.OTEL_ENABLED);
-  if (typeof envEnabled === "boolean") {
+  if (typeof envEnabled === 'boolean') {
     return envEnabled;
   }
 
@@ -24,33 +24,21 @@ export function isOpenTelemetryEnabled(
   );
 }
 
-export function resolveOtlpEndpoint(
-  env: OpenTelemetryEnvironment,
-  signal: "traces" | "metrics",
-): string | undefined {
+export function resolveOtlpEndpoint(env: OpenTelemetryEnvironment, signal: 'traces' | 'metrics'): string | undefined {
   const signalEndpoint =
-    signal === "traces"
-      ? env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-      : env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT;
+    signal === 'traces' ? env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT : env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT;
   if (signalEndpoint?.trim()) {
     return signalEndpoint.trim();
   }
 
-  const baseEndpoint = trimTrailingSlashes(
-    env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ?? "",
-  );
+  const baseEndpoint = trimTrailingSlashes(env.OTEL_EXPORTER_OTLP_ENDPOINT?.trim() ?? '');
   return baseEndpoint ? `${baseEndpoint}/v1/${signal}` : undefined;
 }
 
-export function readOtlpHeaders(
-  env: OpenTelemetryEnvironment,
-  signal: "traces" | "metrics",
-): Record<string, string> {
+export function readOtlpHeaders(env: OpenTelemetryEnvironment, signal: 'traces' | 'metrics'): Record<string, string> {
   const shared = parseOtlpHeaders(env.OTEL_EXPORTER_OTLP_HEADERS);
   const signalHeaders = parseOtlpHeaders(
-    signal === "traces"
-      ? env.OTEL_EXPORTER_OTLP_TRACES_HEADERS
-      : env.OTEL_EXPORTER_OTLP_METRICS_HEADERS,
+    signal === 'traces' ? env.OTEL_EXPORTER_OTLP_TRACES_HEADERS : env.OTEL_EXPORTER_OTLP_METRICS_HEADERS,
   );
   return { ...shared, ...signalHeaders };
 }
@@ -61,15 +49,15 @@ function parseBoolean(value: string | undefined): boolean | undefined {
   }
 
   switch (value.trim().toLowerCase()) {
-    case "1":
-    case "true":
-    case "yes":
-    case "on":
+    case '1':
+    case 'true':
+    case 'yes':
+    case 'on':
       return true;
-    case "0":
-    case "false":
-    case "no":
-    case "off":
+    case '0':
+    case 'false':
+    case 'no':
+    case 'off':
       return false;
     default:
       return undefined;
@@ -83,11 +71,11 @@ function parseOtlpHeaders(value: string | undefined): Record<string, string> {
 
   return Object.fromEntries(
     value
-      .split(",")
+      .split(',')
       .map((entry) => entry.trim())
       .filter(Boolean)
       .map((entry) => {
-        const separatorIndex = entry.indexOf("=");
+        const separatorIndex = entry.indexOf('=');
         if (separatorIndex < 1) {
           return undefined;
         }

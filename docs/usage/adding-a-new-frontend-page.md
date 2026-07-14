@@ -17,8 +17,8 @@ Step-by-step guide to adding a route and page to one of the frontend apps.
 The feature generator creates a React page stub in `apps/frontend/app/src/app/features/<name>/`:
 
 ```bash
-nrb add feature my-feature --dry-run
-nrb add feature my-feature
+pnpm nrb add feature my-feature --dry-run
+pnpm nrb add feature my-feature
 ```
 
 This creates:

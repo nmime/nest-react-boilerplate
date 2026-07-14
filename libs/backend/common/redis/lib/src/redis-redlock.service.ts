@@ -1,13 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { Injectable } from "@nestjs/common";
-import { InjectRedis, InjectTransientRedis } from "./decorator";
-import { RedisLockUnavailableError } from "./exception";
-import type {
-  RedisClientLike,
-  RedisLock,
-  RedisLockAcquireOptions,
-  RedisLockUsingOptions,
-} from "./type";
+import { randomUUID } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
+import { InjectRedis, InjectTransientRedis } from './decorator';
+import { RedisLockUnavailableError } from './exception';
+import type { RedisClientLike, RedisLock, RedisLockAcquireOptions, RedisLockUsingOptions } from './type';
 import {
   assertValidTtl,
   countSuccesses,
@@ -17,7 +12,7 @@ import {
   getValidityMs,
   isLockAcquired,
   sleep,
-} from "./util";
+} from './util';
 
 @Injectable()
 export class RedisRedlockService {
@@ -48,9 +43,7 @@ export class RedisRedlockService {
 
   async release(lock: RedisLock): Promise<boolean> {
     const clients = this.getClients();
-    const results = await Promise.allSettled(
-      clients.map((client) => client.deleteIfValue(lock.key, lock.token)),
-    );
+    const results = await Promise.allSettled(clients.map((client) => client.deleteIfValue(lock.key, lock.token)));
 
     return countSuccesses(results) >= getQuorum(clients.length);
   }
@@ -61,16 +54,11 @@ export class RedisRedlockService {
     const clients = this.getClients();
     const startedAt = Date.now();
     const results = await Promise.allSettled(
-      clients.map((client) =>
-        client.extendIfValue(lock.key, lock.token, ttlMs),
-      ),
+      clients.map((client) => client.extendIfValue(lock.key, lock.token, ttlMs)),
     );
     const validityMs = getValidityMs(startedAt, ttlMs, 0.01);
 
-    if (
-      countSuccesses(results) >= getQuorum(clients.length) &&
-      validityMs > 0
-    ) {
+    if (countSuccesses(results) >= getQuorum(clients.length) && validityMs > 0) {
       return {
         ...lock,
         ttlMs,
@@ -95,9 +83,7 @@ export class RedisRedlockService {
     }
   }
 
-  private async tryAcquire(
-    options: RedisLockAcquireOptions,
-  ): Promise<RedisLock | null> {
+  private async tryAcquire(options: RedisLockAcquireOptions): Promise<RedisLock | null> {
     const clients = this.getClients();
     const startedAt = Date.now();
     const token = randomUUID();
@@ -107,7 +93,7 @@ export class RedisRedlockService {
     for (const client of clients) {
       try {
         // eslint-disable-next-line no-await-in-loop -- Redlock acquires nodes sequentially so total elapsed time bounds the lock validity window.
-        const result = await client.set(key, token, "PX", options.ttlMs, "NX");
+        const result = await client.set(key, token, 'PX', options.ttlMs, 'NX');
         if (isLockAcquired(result)) {
           acquiredClients.push(client);
         }
@@ -116,11 +102,7 @@ export class RedisRedlockService {
       }
     }
 
-    const validityMs = getValidityMs(
-      startedAt,
-      options.ttlMs,
-      options.driftFactor ?? 0.01,
-    );
+    const validityMs = getValidityMs(startedAt, options.ttlMs, options.driftFactor ?? 0.01);
 
     if (acquiredClients.length >= getQuorum(clients.length) && validityMs > 0) {
       return {
@@ -132,9 +114,7 @@ export class RedisRedlockService {
       };
     }
 
-    await Promise.allSettled(
-      acquiredClients.map((client) => client.deleteIfValue(key, token)),
-    );
+    await Promise.allSettled(acquiredClients.map((client) => client.deleteIfValue(key, token)));
 
     return null;
   }

@@ -1,22 +1,18 @@
-import type {
-  HealthIndicator,
-  HealthIndicatorContext,
-  HealthIndicatorResult,
-} from "../dto";
+import type { HealthIndicator, HealthIndicatorContext, HealthIndicatorResult } from '../dto';
 
 export class RuntimeHealthIndicator implements HealthIndicator {
-  readonly name = "runtime";
+  readonly name = 'runtime';
   readonly required = true;
   readonly livenessSafe = true;
 
   check(context?: HealthIndicatorContext): HealthIndicatorResult {
     return {
       name: this.name,
-      status: "ok",
+      status: 'ok',
       required: this.required,
       details: {
         app: context?.appName,
-        runtime: "node",
+        runtime: 'node',
       },
     };
   }

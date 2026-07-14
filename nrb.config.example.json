@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "preset": "fullstack",
+  "preset": "starter",
   "apps": [],
   "capabilities": [],
   "options": {

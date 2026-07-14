@@ -10,9 +10,9 @@ stages:
   - reports
 
 variables:
-  CI: "true"
-  NX_DAEMON: "false"
-  PNPM_VERSION: "11.11.0"
+  CI: 'true'
+  NX_DAEMON: 'false'
+  PNPM_VERSION: '11.11.0'
   NODE_VERSION_FILE: .nvmrc
 
 # Include GitLab SAST/Dependency Scanning
@@ -50,7 +50,7 @@ helm-validation:
     - node scripts/validate-github-workflows.mjs || true
     - pnpm run deploy:validate
   variables:
-    REQUIRE_HELM: "true"
+    REQUIRE_HELM: 'true'
   timeout: 10m
 
 fast-check:
@@ -76,8 +76,8 @@ full-check:
     POSTGRES_DB: app_test
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
-    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/app_test"
-    TEST_DB_URL: "postgresql://postgres:postgres@postgres:5432/app_test"
+    DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
+    TEST_DB_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
   before_script:
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate

@@ -1,13 +1,13 @@
 # First feature walkthrough
 
-This walkthrough is the preferred path for shipping a small vertical slice without rediscovering repository conventions. It shows both the `nrb add feature` path and the legacy `pnpm generate:feature` path — they use the same engine.
+This walkthrough is the preferred path for shipping a small vertical slice without rediscovering repository conventions. It shows both the `pnpm nrb add feature` path and the legacy `pnpm generate:feature` path — they use the same engine.
 
 ## 1. Pick a slice and dry-run the scaffold
 
 ### Unified CLI (recommended)
 
 ```bash
-nrb add feature invoices --dry-run
+pnpm nrb add feature invoices --dry-run
 ```
 
 ### Legacy alias (equivalent)
@@ -18,18 +18,19 @@ pnpm generate:feature invoices -- --dry-run
 
 The scaffold lists the files it would create for:
 
-- backend shared DTOs/permissions under `libs/backend/feature/<name>/shared/lib`, with frontend-specific feature contracts under `libs/frontend/feature/<name>/shared/lib` when required;
-- Nest module, controller, service, and tests under `libs/backend/feature/<name>/main/lib`;
-- PostgreSQL entity and migration placeholder under `libs/backend/postgres/main/<name>/lib`;
-- frontend API client stub under `libs/frontend/api-client/lib/src/features`;
-- React page stub under `apps/frontend/app/src/app/features/<name>`;
-- a test checklist under `docs/features/<name>/test-checklist.md`.
+- backend shared DTOs/permissions under `libs/backend/feature/<name>/shared/lib`;
+- an authenticated, RBAC-protected Nest module/controller/service under `libs/backend/feature/<name>/main/lib`;
+- a MikroORM module, `ResultAsync` repository, entity, and timestamped migration under `libs/backend/postgres/main/<name>/lib`;
+- an FSD page boundary under the selected frontend app's `src/pages/<name>` root;
+- a completion guide under `docs/features/<name>/scaffold.md`.
+
+The generator wires the feature module into the selected API. It intentionally does not hand-write generated OpenAPI contracts or frontend clients.
 
 Remove `--dry-run` when the file plan is correct:
 
 ```bash
 # Unified CLI:
-nrb add feature invoices
+pnpm nrb add feature invoices
 
 # Legacy alias:
 pnpm generate:feature invoices
@@ -38,26 +39,26 @@ pnpm generate:feature invoices
 ### Target a different API app
 
 ```bash
-nrb add feature invoices --api-app admin-app-api
+pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ```
 
 ### Force overwrite existing files
 
 ```bash
-nrb add feature invoices --force
+pnpm nrb add feature invoices --force
 ```
 
-## 2. Wire backend ownership
+## 2. Verify backend ownership
 
-1. Import the generated `<Feature>Module` into the API that owns the route, usually `apps/backend/user/user-app-api/src/user-app-api.module.ts` or `apps/backend/admin/admin-app-api/src/admin-app-api.module.ts`.
-2. Replace placeholder service logic with a repository/provider boundary.
-3. Replace `Migration00000000000000...` with a timestamped MikroORM migration generated from the real model.
-4. Add RBAC guards and permissions before exposing non-public routes.
+1. Review the generated API-module import and the default read/write permission names.
+2. Replace the generic `name` model with the product fields and invariants for the feature.
+3. Review the timestamped migration SQL and add indexes/constraints required by the access pattern.
+4. Add controller/service/repository tests for validation, authorization, persistence failure, and concurrency behavior.
 
 ## 3. Wire frontend ownership
 
-1. Export or import the generated API client from `libs/frontend/api-client/lib/src`.
-2. Add the page to the owning app route tree (`apps/frontend/app`, `apps/frontend/admin`, or `apps/frontend/landing`).
+1. Generate the API client from OpenAPI and consume it through a frontend-owned wrapper.
+2. Add the page to the selected app route tree.
 3. Cover loading, empty, error, and success states with tests or Storybook stories.
 
 ## 4. Refresh contracts and clients
@@ -85,4 +86,4 @@ For cross-app behavior, add `pnpm test:e2e`. For release-risk work, run `pnpm ch
 
 - [Adding a New Service](usage/adding-a-new-service.md) — create and wire a NestJS backend service.
 - [Adding a New Frontend Page](usage/adding-a-new-frontend-page.md) — add a route, page, and tests to a frontend app.
-- [CLI Reference](setup/cli-reference.md) — full reference for `nrb add` and related commands.
+- [CLI Reference](setup/cli-reference.md) — full reference for `pnpm nrb add` and related commands.

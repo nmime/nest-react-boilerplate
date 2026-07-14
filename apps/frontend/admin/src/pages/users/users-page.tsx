@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { updateUserAccessPolicy } from "../../features/user-access-management";
-import { toUserListParams } from "../../features/user-filtering";
-import { updateUserStatus } from "../../features/user-status-management";
-import { assignUserRoles } from "../../features/user-role-assignment";
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { updateUserAccessPolicy } from '../../features/user-access-management';
+import { toUserListParams } from '../../features/user-filtering';
+import { updateUserStatus } from '../../features/user-status-management';
+import { assignUserRoles } from '../../features/user-role-assignment';
 import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
@@ -19,13 +19,9 @@ import {
   AdminUsersWritePermission,
   UserProfileReadPermission,
   UserRole,
-} from "@app/common-authz";
-import {
-  adminApi,
-  throwOnOpenApiErrorData,
-  type ApiClientRequestOptions,
-} from "@app/frontend-api-client";
-import { useI18n } from "@app/frontend-runtime";
+} from '@app/common-authz';
+import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
+import { useI18n } from '@app/frontend-runtime';
 import {
   AdminSearchFilterToolbar,
   UiActionsMenu,
@@ -40,13 +36,9 @@ import {
   UiStatCard,
   UiStatusTag,
   UiTextarea,
-} from "@app/frontend-ui-web";
-import type { AdminAccess } from "../../entities/admin-session";
-import {
-  UserDetailCard,
-  type UserRow,
-  type UserStatus,
-} from "../../entities/admin-user";
+} from '@app/frontend-ui-web';
+import type { AdminAccess } from '../../entities/admin-session';
+import { UserDetailCard, type UserRow, type UserStatus } from '../../entities/admin-user';
 import {
   errorText,
   pageSize,
@@ -56,19 +48,15 @@ import {
   statusLabelKey,
   statusTone,
   totalPages,
-} from "../../shared";
+} from '../../shared';
 
-type PolicyRole = adminApi.UpdateAdminUserAccessPolicyDto["roles"][number];
-type PolicyPermission =
-  adminApi.UpdateAdminUserAccessPolicyDto["permissions"][number];
+type PolicyRole = adminApi.UpdateAdminUserAccessPolicyDto['roles'][number];
+type PolicyPermission = adminApi.UpdateAdminUserAccessPolicyDto['permissions'][number];
 
 // Roles/permissions come from the shared @app/common-authz catalog. The
 // `satisfies` checks keep them aligned with the generated DTO union so selected
 // values stay typed without an unchecked `as` cast.
-const policyRoleValues = [
-  UserRole,
-  AdminRole,
-] as const satisfies readonly PolicyRole[];
+const policyRoleValues = [UserRole, AdminRole] as const satisfies readonly PolicyRole[];
 
 const policyPermissionValues = [
   UserProfileReadPermission,
@@ -85,8 +73,7 @@ const policyPermissionValues = [
   AdminManageAllPermission,
 ] as const satisfies readonly PolicyPermission[];
 
-const isPolicyRole = (value: string): value is PolicyRole =>
-  policyRoleValues.some((role) => role === value);
+const isPolicyRole = (value: string): value is PolicyRole => policyRoleValues.some((role) => role === value);
 
 const isPolicyPermission = (value: string): value is PolicyPermission =>
   policyPermissionValues.some((permission) => permission === value);
@@ -103,16 +90,14 @@ export const UsersPage = ({
   const { t } = useI18n();
   const qc = useQueryClient();
   const initial = paramsFromPath(currentPath);
-  const [search, setSearch] = useState(initial.get("search") ?? "");
-  const [status, setStatus] = useState(initial.get("status") ?? "all");
-  const [role, setRole] = useState(initial.get("role") ?? "all");
-  const [permission, setPermission] = useState(
-    initial.get("permission") ?? "all",
-  );
-  const [page, setPage] = useState(Number(initial.get("page") ?? "1"));
+  const [search, setSearch] = useState(initial.get('search') ?? '');
+  const [status, setStatus] = useState(initial.get('status') ?? 'all');
+  const [role, setRole] = useState(initial.get('role') ?? 'all');
+  const [permission, setPermission] = useState(initial.get('permission') ?? 'all');
+  const [page, setPage] = useState(Number(initial.get('page') ?? '1'));
   const [selected, setSelected] = useState(routeUserId(currentPath));
   const [notice, setNotice] = useState<{
-    tone: "success" | "warning";
+    tone: 'success' | 'warning';
     message: string;
   }>();
   const [statusTarget, setStatusTarget] = useState<{
@@ -121,50 +106,33 @@ export const UsersPage = ({
     nextStatus: UserStatus;
   }>();
   const [policyTarget, setPolicyTarget] = useState<UserRow>();
-  const [policyStatus, setPolicyStatus] = useState<UserStatus>("active");
+  const [policyStatus, setPolicyStatus] = useState<UserStatus>('active');
   const [rolesTarget, setRolesTarget] = useState<UserRow>();
   const [assignedRoles, setAssignedRoles] = useState<Set<string>>(new Set());
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState('');
   const [policyRoles, setPolicyRoles] = useState<Set<string>>(new Set());
-  const [policyPermissions, setPolicyPermissions] = useState<Set<string>>(
-    new Set(),
-  );
+  const [policyPermissions, setPolicyPermissions] = useState<Set<string>>(new Set());
   const listParams = useMemo<adminApi.AdminUsersListQuery>(
     () => toUserListParams({ page, permission, role, search, status }),
     [page, permission, role, search, status],
   );
   const users = useQuery({
-    queryKey: [
-      ...adminApi.getAdminUsersControllerListUsersQueryKey(listParams),
-      requestOptions,
-    ] as const,
-    queryFn: () =>
-      throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerListUsers(listParams, requestOptions),
-      ),
+    queryKey: [...adminApi.getAdminUsersControllerListUsersQueryKey(listParams), requestOptions] as const,
+    queryFn: () => throwOnOpenApiErrorData(adminApi.adminUsersControllerListUsers(listParams, requestOptions)),
     retry: false,
   });
   const roles = useQuery({
-    queryKey: [
-      ...adminApi.getAdminUsersControllerRolesQueryKey(),
-      requestOptions,
-    ] as const,
-    queryFn: () =>
-      throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerRoles(requestOptions),
-      ),
+    queryKey: [...adminApi.getAdminUsersControllerRolesQueryKey(), requestOptions] as const,
+    queryFn: () => throwOnOpenApiErrorData(adminApi.adminUsersControllerRoles(requestOptions)),
     retry: false,
   });
   const detail = useQuery({
     enabled: Boolean(selected),
-    queryKey: [
-      ...adminApi.getAdminUsersControllerGetUserQueryKey(selected ?? ""),
-      requestOptions,
-    ] as const,
+    queryKey: [...adminApi.getAdminUsersControllerGetUserQueryKey(selected ?? ''), requestOptions] as const,
     queryFn: () =>
       throwOnOpenApiErrorData(
         /* v8 ignore next -- the detail query is enabled only after a user id is selected. */
-        adminApi.adminUsersControllerGetUser(selected ?? "", requestOptions),
+        adminApi.adminUsersControllerGetUser(selected ?? '', requestOptions),
       ),
     retry: false,
   });
@@ -174,9 +142,7 @@ export const UsersPage = ({
         queryKey: adminApi.getAdminUsersControllerListUsersQueryKey(listParams),
       }),
       qc.invalidateQueries({
-        queryKey: adminApi.getAdminUsersControllerGetUserQueryKey(
-          String(selected),
-        ),
+        queryKey: adminApi.getAdminUsersControllerGetUserQueryKey(String(selected)),
       }),
       qc.invalidateQueries({
         queryKey: adminApi.getAdminUsersControllerDashboardSummaryQueryKey(),
@@ -188,15 +154,15 @@ export const UsersPage = ({
       updateUserStatus(id, nextStatus, requestOptions),
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.users.notice.statusUpdateRequested"),
+        tone: 'success',
+        message: t('admin.users.notice.statusUpdateRequested'),
       });
       await refetchCurrent();
     },
     onError: (error) => {
       setNotice({
-        tone: "warning",
-        message: errorText(error, "admin.users.error.statusUpdateFailed", t),
+        tone: 'warning',
+        message: errorText(error, 'admin.users.error.statusUpdateFailed', t),
       });
     },
   });
@@ -209,8 +175,8 @@ export const UsersPage = ({
       currentStatus,
     }: {
       id: string;
-      roles: ("user" | "admin")[];
-      permissions: adminApi.UpdateAdminUserAccessPolicyDto["permissions"];
+      roles: ('user' | 'admin')[];
+      permissions: adminApi.UpdateAdminUserAccessPolicyDto['permissions'];
       status?: UserStatus;
       currentStatus?: UserStatus;
     }) => {
@@ -224,85 +190,69 @@ export const UsersPage = ({
     },
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.users.notice.accessPolicyUpdateRequested"),
+        tone: 'success',
+        message: t('admin.users.notice.accessPolicyUpdateRequested'),
       });
       await refetchCurrent();
     },
     onError: (error) => {
       setNotice({
-        tone: "warning",
-        message: errorText(
-          error,
-          "admin.users.error.accessPolicyUpdateFailed",
-          t,
-        ),
+        tone: 'warning',
+        message: errorText(error, 'admin.users.error.accessPolicyUpdateFailed', t),
       });
     },
   });
   const rolesMutation = useMutation({
-    mutationFn: ({
-      id,
-      roles: nextRoles,
-    }: {
-      id: string;
-      roles: adminApi.AssignAdminUserRolesDto["roles"];
-    }) => assignUserRoles(id, nextRoles, requestOptions),
+    mutationFn: ({ id, roles: nextRoles }: { id: string; roles: adminApi.AssignAdminUserRolesDto['roles'] }) =>
+      assignUserRoles(id, nextRoles, requestOptions),
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.users.notice.rolesAssignmentRequested"),
+        tone: 'success',
+        message: t('admin.users.notice.rolesAssignmentRequested'),
       });
       await refetchCurrent();
     },
     onError: (error) => {
       setNotice({
-        tone: "warning",
-        message: errorText(error, "admin.users.error.rolesAssignmentFailed", t),
+        tone: 'warning',
+        message: errorText(error, 'admin.users.error.rolesAssignmentFailed', t),
       });
     },
   });
   const rows = users.data?.items ?? [];
   const roleOptions = [
-    { label: t("admin.users.filter.allRoles"), value: "all" },
+    { label: t('admin.users.filter.allRoles'), value: 'all' },
     ...(roles.data?.assignableRoles ?? access.roles).map((value) => ({
       label: value,
       value,
     })),
   ];
   const permissionOptions = [
-    { label: t("admin.users.filter.allPermissions"), value: "all" },
-    ...(roles.data?.assignablePermissions ?? access.permissions).map(
-      (value) => ({ label: value, value }),
-    ),
+    { label: t('admin.users.filter.allPermissions'), value: 'all' },
+    ...(roles.data?.assignablePermissions ?? access.permissions).map((value) => ({ label: value, value })),
   ];
   const statusOptions = [
-    { label: t("admin.status.active"), value: "active" },
-    { label: t("admin.status.disabled"), value: "disabled" },
-    { label: t("admin.status.invited"), value: "invited" },
+    { label: t('admin.status.active'), value: 'active' },
+    { label: t('admin.status.disabled'), value: 'disabled' },
+    { label: t('admin.status.invited'), value: 'invited' },
   ];
   const selectedRow = rows.find((row) => row.id === selected);
-  const activeRowCount = rows.filter((row) => row.status === "active").length;
-  const disabledRowCount = rows.filter(
-    (row) => row.status === "disabled",
+  const activeRowCount = rows.filter((row) => row.status === 'active').length;
+  const disabledRowCount = rows.filter((row) => row.status === 'disabled').length;
+  const activeFilterCount = [search.trim(), status !== 'all', role !== 'all', permission !== 'all'].filter(
+    Boolean,
   ).length;
-  const activeFilterCount = [
-    search.trim(),
-    status !== "all",
-    role !== "all",
-    permission !== "all",
-  ].filter(Boolean).length;
-  let directoryTone: "info" | "success" | "warning" = "success";
+  let directoryTone: 'info' | 'success' | 'warning' = 'success';
   if (users.isLoading) {
-    directoryTone = "info";
+    directoryTone = 'info';
   } else if (users.error) {
-    directoryTone = "warning";
+    directoryTone = 'warning';
   }
   return (
     <UiSection
       className="admin-page admin-users-page"
-      eyebrow={t("admin.users.eyebrow")}
-      title={t("admin.users.title")}
+      eyebrow={t('admin.users.eyebrow')}
+      title={t('admin.users.title')}
     >
       <div className="admin-users-command admin-stat-grid xr-stat-grid">
         <UiStatCard
@@ -314,7 +264,7 @@ export const UsersPage = ({
         <UiStatCard
           className="admin-stat-card"
           label="Selected identity"
-          value={selectedRow?.email ?? selected ?? "None"}
+          value={selectedRow?.email ?? selected ?? 'None'}
           detail="Detail panel stays docked for quick access review."
         />
         <UiStatCard
@@ -324,13 +274,10 @@ export const UsersPage = ({
           detail="Search, status, role, and permission filters update together."
         />
       </div>
-      <UiCard
-        className="admin-filter-card"
-        title={t("admin.users.searchLabel")}
-      >
+      <UiCard className="admin-filter-card" title={t('admin.users.searchLabel')}>
         <AdminSearchFilterToolbar
-          searchLabel={t("admin.users.searchLabel")}
-          searchPlaceholder={t("admin.users.searchPlaceholder")}
+          searchLabel={t('admin.users.searchLabel')}
+          searchPlaceholder={t('admin.users.searchPlaceholder')}
           searchValue={search}
           onSearchChange={(v) => {
             setSearch(v);
@@ -341,19 +288,16 @@ export const UsersPage = ({
           }}
         >
           <UiSelect
-            label={t("admin.users.filter.status")}
+            label={t('admin.users.filter.status')}
             value={status}
             onValueChange={(v) => {
               setStatus(v);
               setPage(1);
             }}
-            options={[
-              { label: t("admin.users.filter.allStatuses"), value: "all" },
-              ...statusOptions,
-            ]}
+            options={[{ label: t('admin.users.filter.allStatuses'), value: 'all' }, ...statusOptions]}
           />
           <UiSelect
-            label={t("admin.users.filter.role")}
+            label={t('admin.users.filter.role')}
             value={role}
             onValueChange={(v) => {
               setRole(v);
@@ -362,7 +306,7 @@ export const UsersPage = ({
             options={roleOptions}
           />
           <UiSelect
-            label={t("admin.users.filter.permission")}
+            label={t('admin.users.filter.permission')}
             value={permission}
             onValueChange={(v) => {
               setPermission(v);
@@ -372,33 +316,23 @@ export const UsersPage = ({
           />
         </AdminSearchFilterToolbar>
         <div className="admin-filter-summary" aria-live="polite">
-          <span>
-            {activeFilterCount
-              ? "Focused directory view"
-              : "Full directory view"}
-          </span>
+          <span>{activeFilterCount ? 'Focused directory view' : 'Full directory view'}</span>
           <small>
-            {search.trim() ? `Search “${search.trim()}” · ` : ""}
-            {status !== "all" ? `${status} status · ` : ""}
-            {role !== "all" ? `${role} role · ` : ""}
-            {permission !== "all"
-              ? `${permission} permission`
-              : "All access policies"}
+            {search.trim() ? `Search “${search.trim()}” · ` : ''}
+            {status !== 'all' ? `${status} status · ` : ''}
+            {role !== 'all' ? `${role} role · ` : ''}
+            {permission !== 'all' ? `${permission} permission` : 'All access policies'}
           </small>
         </div>
       </UiCard>
-      {notice ? (
-        <UiNotification message={notice.message} tone={notice.tone} />
-      ) : null}
+      {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
       <div className="admin-users-split">
         <div className="admin-users-table-panel">
           <UiCard className="admin-table-card" title="User directory">
             <div className="admin-table-toolbar">
               <span>Policy-aware records</span>
               <UiStatusTag
-                label={
-                  users.isLoading ? t("admin.state.loading") : "Directory ready"
-                }
+                label={users.isLoading ? t('admin.state.loading') : 'Directory ready'}
                 tone={directoryTone}
               />
             </div>
@@ -406,24 +340,18 @@ export const UsersPage = ({
               rows={rows}
               rowKey={(row) => row.id}
               isLoading={users.isLoading}
-              loadingLabel={t("admin.users.loading")}
-              error={
-                users.error
-                  ? errorText(users.error, "admin.users.error.requestFailed", t)
-                  : undefined
-              }
-              emptyTitle={t("admin.users.emptyEyebrow")}
-              emptyDescription={t("admin.users.emptyTitle")}
+              loadingLabel={t('admin.users.loading')}
+              error={users.error ? errorText(users.error, 'admin.users.error.requestFailed', t) : undefined}
+              emptyTitle={t('admin.users.emptyEyebrow')}
+              emptyDescription={t('admin.users.emptyTitle')}
               onRowClick={(row) => {
                 setSelected(row.id);
               }}
-              getRowAriaLabel={(row) =>
-                t("admin.users.row.open", { email: row.email })
-              }
+              getRowAriaLabel={(row) => t('admin.users.row.open', { email: row.email })}
               columns={[
                 {
-                  id: "email",
-                  header: t("admin.users.column.email"),
+                  id: 'email',
+                  header: t('admin.users.column.email'),
                   render: (row) => (
                     <span className="admin-user-cell">
                       <strong>{row.email}</strong>
@@ -432,18 +360,13 @@ export const UsersPage = ({
                   ),
                 },
                 {
-                  id: "status",
-                  header: t("admin.users.column.status"),
-                  render: (row) => (
-                    <UiStatusTag
-                      label={t(statusLabelKey[row.status])}
-                      tone={statusTone[row.status]}
-                    />
-                  ),
+                  id: 'status',
+                  header: t('admin.users.column.status'),
+                  render: (row) => <UiStatusTag label={t(statusLabelKey[row.status])} tone={statusTone[row.status]} />,
                 },
                 {
-                  id: "roles",
-                  header: t("admin.users.column.roles"),
+                  id: 'roles',
+                  header: t('admin.users.column.roles'),
                   render: (row) => (
                     <span className="admin-chip-row">
                       {row.roles.length
@@ -457,21 +380,19 @@ export const UsersPage = ({
                   ),
                 },
                 {
-                  id: "actions",
-                  header: t("admin.users.column.actions"),
+                  id: 'actions',
+                  header: t('admin.users.column.actions'),
                   render: (row) => {
-                    const nextStatus =
-                      row.status === "active" ? "disabled" : "active";
+                    const nextStatus = row.status === 'active' ? 'disabled' : 'active';
                     return (
                       <UiActionsMenu
                         items={[
                           {
-                            label: t("admin.users.action.changeStatus"),
+                            label: t('admin.users.action.changeStatus'),
                             disabled: !access.canUpdateUserStatus,
-                            tone:
-                              nextStatus === "disabled" ? "warning" : "default",
+                            tone: nextStatus === 'disabled' ? 'warning' : 'default',
                             onSelect: () => {
-                              setReason("");
+                              setReason('');
                               setStatusTarget({
                                 id: row.id,
                                 email: row.email,
@@ -480,10 +401,10 @@ export const UsersPage = ({
                             },
                           },
                           {
-                            label: t("admin.users.action.editAccessPolicy"),
+                            label: t('admin.users.action.editAccessPolicy'),
                             disabled: !access.canUpdateUserAccessPolicy,
                             onSelect: () => {
-                              setReason("");
+                              setReason('');
                               setPolicyTarget(row);
                               setPolicyStatus(row.status);
                               setPolicyRoles(new Set(row.roles));
@@ -491,7 +412,7 @@ export const UsersPage = ({
                             },
                           },
                           {
-                            label: t("admin.users.action.assignRoles"),
+                            label: t('admin.users.action.assignRoles'),
                             disabled: !access.canWriteRoles,
                             onSelect: () => {
                               setRolesTarget(row);
@@ -514,10 +435,7 @@ export const UsersPage = ({
             onPageChange={setPage}
           />
         </div>
-        <UiCard
-          className="admin-detail-panel"
-          title={t("admin.users.detail.title")}
-        >
+        <UiCard className="admin-detail-panel" title={t('admin.users.detail.title')}>
           <UserDetailCard detail={detail} t={t} />
         </UiCard>
       </div>
@@ -527,17 +445,17 @@ export const UsersPage = ({
           onOpenChange={() => {
             setStatusTarget(undefined);
           }}
-          title={t("admin.users.statusDialog.eyebrow")}
-          description={t("admin.users.statusDialog.description", {
+          title={t('admin.users.statusDialog.eyebrow')}
+          description={t('admin.users.statusDialog.description', {
             email: statusTarget.email,
             status: t(statusLabelKey[statusTarget.nextStatus]),
           })}
-          confirmLabel={t("admin.users.statusDialog.title")}
+          confirmLabel={t('admin.users.statusDialog.title')}
           onConfirm={() => {
             if (!reason.trim()) {
               setNotice({
-                tone: "warning",
-                message: t("admin.users.error.statusReasonRequired"),
+                tone: 'warning',
+                message: t('admin.users.error.statusReasonRequired'),
               });
               return;
             }
@@ -549,8 +467,8 @@ export const UsersPage = ({
           }}
         >
           <UiTextarea
-            aria-label={t("admin.users.statusDialog.reasonLabel")}
-            placeholder={t("admin.users.reasonPlaceholder")}
+            aria-label={t('admin.users.statusDialog.reasonLabel')}
+            placeholder={t('admin.users.reasonPlaceholder')}
             value={reason}
             onChange={(event) => {
               setReason(event.currentTarget.value);
@@ -563,25 +481,25 @@ export const UsersPage = ({
           open
           onOpenChange={() => {
             setPolicyTarget(undefined);
-            setPolicyStatus("active");
+            setPolicyStatus('active');
           }}
-          title={t("admin.users.policyDialog.eyebrow")}
-          description={t("admin.users.policyDialog.description", {
+          title={t('admin.users.policyDialog.eyebrow')}
+          description={t('admin.users.policyDialog.description', {
             email: policyTarget.email,
           })}
-          confirmLabel={t("admin.users.policyDialog.title")}
+          confirmLabel={t('admin.users.policyDialog.title')}
           onConfirm={() => {
             if (!reason.trim()) {
               setNotice({
-                tone: "warning",
-                message: t("admin.users.error.policyReasonRequired"),
+                tone: 'warning',
+                message: t('admin.users.error.policyReasonRequired'),
               });
               return;
             }
             if (policyRoles.size === 0) {
               setNotice({
-                tone: "warning",
-                message: t("admin.users.error.roleRequired"),
+                tone: 'warning',
+                message: t('admin.users.error.roleRequired'),
               });
               return;
             }
@@ -593,11 +511,11 @@ export const UsersPage = ({
               permissions: [...policyPermissions].filter(isPolicyPermission),
             });
             setPolicyTarget(undefined);
-            setPolicyStatus("active");
+            setPolicyStatus('active');
           }}
         >
           <UiSelect
-            label={t("admin.users.filter.status")}
+            label={t('admin.users.filter.status')}
             value={policyStatus}
             onValueChange={(value) => {
               setPolicyStatus(value as UserStatus);
@@ -605,12 +523,12 @@ export const UsersPage = ({
             options={statusOptions}
           />
           <div className="xr-card-grid">
-            {(roles.data?.assignableRoles ?? ["user", "admin"]).map((value) => (
+            {(roles.data?.assignableRoles ?? ['user', 'admin']).map((value) => (
               <UiCheckbox
                 key={value}
                 label={value}
                 checked={policyRoles.has(value)}
-                onCheckedChange={(checked: boolean | "indeterminate") => {
+                onCheckedChange={(checked: boolean | 'indeterminate') => {
                   setPolicyRoles((current) => {
                     const next = new Set(current);
                     if (checked) {
@@ -625,30 +543,28 @@ export const UsersPage = ({
             ))}
           </div>
           <div className="xr-card-grid">
-            {(roles.data?.assignablePermissions ?? access.permissions).map(
-              (value) => (
-                <UiCheckbox
-                  key={value}
-                  label={value}
-                  checked={policyPermissions.has(value)}
-                  onCheckedChange={(checked: boolean | "indeterminate") => {
-                    setPolicyPermissions((current) => {
-                      const next = new Set(current);
-                      if (checked) {
-                        next.add(value);
-                      } else {
-                        next.delete(value);
-                      }
-                      return next;
-                    });
-                  }}
-                />
-              ),
-            )}
+            {(roles.data?.assignablePermissions ?? access.permissions).map((value) => (
+              <UiCheckbox
+                key={value}
+                label={value}
+                checked={policyPermissions.has(value)}
+                onCheckedChange={(checked: boolean | 'indeterminate') => {
+                  setPolicyPermissions((current) => {
+                    const next = new Set(current);
+                    if (checked) {
+                      next.add(value);
+                    } else {
+                      next.delete(value);
+                    }
+                    return next;
+                  });
+                }}
+              />
+            ))}
           </div>
           <UiTextarea
-            aria-label={t("admin.users.policyDialog.reasonLabel")}
-            placeholder={t("admin.users.reasonPlaceholder")}
+            aria-label={t('admin.users.policyDialog.reasonLabel')}
+            placeholder={t('admin.users.reasonPlaceholder')}
             value={reason}
             onChange={(event) => {
               setReason(event.currentTarget.value);
@@ -662,16 +578,16 @@ export const UsersPage = ({
           onOpenChange={() => {
             setRolesTarget(undefined);
           }}
-          title={t("admin.users.rolesDialog.eyebrow")}
-          description={t("admin.users.rolesDialog.description", {
+          title={t('admin.users.rolesDialog.eyebrow')}
+          description={t('admin.users.rolesDialog.description', {
             email: rolesTarget.email,
           })}
-          confirmLabel={t("admin.users.rolesDialog.title")}
+          confirmLabel={t('admin.users.rolesDialog.title')}
           onConfirm={() => {
             if (assignedRoles.size === 0) {
               setNotice({
-                tone: "warning",
-                message: t("admin.users.error.roleRequired"),
+                tone: 'warning',
+                message: t('admin.users.error.roleRequired'),
               });
               return;
             }
@@ -683,12 +599,12 @@ export const UsersPage = ({
           }}
         >
           <div className="xr-card-grid">
-            {(roles.data?.assignableRoles ?? ["user", "admin"]).map((value) => (
+            {(roles.data?.assignableRoles ?? ['user', 'admin']).map((value) => (
               <UiCheckbox
                 key={value}
                 label={value}
                 checked={assignedRoles.has(value)}
-                onCheckedChange={(checked: boolean | "indeterminate") => {
+                onCheckedChange={(checked: boolean | 'indeterminate') => {
                   setAssignedRoles((current) => {
                     const next = new Set(current);
                     if (checked) {

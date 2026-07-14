@@ -1,17 +1,10 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import {
-  Component,
-  useId,
-  type ErrorInfo,
-  type HTMLAttributes,
-  type ReactNode,
-} from "react";
-import { translate } from "@app/frontend-runtime";
+import { Component, useId, type ErrorInfo, type HTMLAttributes, type ReactNode } from 'react';
+import { translate } from '@app/frontend-runtime';
 
-type UiLiveMode = "polite" | "assertive";
+type UiLiveMode = 'polite' | 'assertive';
 
-const classNames = (...values: Array<string | undefined>): string =>
-  values.filter(Boolean).join(" ");
+const classNames = (...values: Array<string | undefined>): string => values.filter(Boolean).join(' ');
 
 export interface UiLoadingProps extends HTMLAttributes<HTMLDivElement> {
   label?: string;
@@ -20,16 +13,16 @@ export interface UiLoadingProps extends HTMLAttributes<HTMLDivElement> {
 
 export const UiLoading = ({
   className,
-  label = translate("common.loading"),
-  live = "polite",
+  label = translate('common.loading'),
+  live = 'polite',
   role,
   ...props
 }: Readonly<UiLoadingProps>) => (
   <div
     {...props}
     aria-live={live}
-    className={classNames("xr-feedback", "xr-feedback--loading", className)}
-    role={role ?? "status"}
+    className={classNames('xr-feedback', 'xr-feedback--loading', className)}
+    role={role ?? 'status'}
   >
     {label}
   </div>
@@ -45,7 +38,7 @@ export interface UiEmptyStateProps extends HTMLAttributes<HTMLElement> {
 
 export const UiEmptyState = ({
   action,
-  "aria-live": ariaLive,
+  'aria-live': ariaLive,
   className,
   description,
   descriptionId,
@@ -58,20 +51,16 @@ export const UiEmptyState = ({
   const generatedTitleId = useId();
   const headingId = titleId ?? generatedTitleId;
   const copyId = descriptionId ?? generatedDescriptionId;
-  const {
-    "aria-describedby": ariaDescribedBy,
-    "aria-labelledby": ariaLabelledBy,
-    ...sectionProps
-  } = props;
+  const { 'aria-describedby': ariaDescribedBy, 'aria-labelledby': ariaLabelledBy, ...sectionProps } = props;
 
   return (
     <section
       {...sectionProps}
       aria-describedby={ariaDescribedBy ?? copyId}
       aria-labelledby={ariaLabelledBy ?? headingId}
-      aria-live={ariaLive ?? "polite"}
-      className={classNames("xr-feedback", "xr-feedback--empty", className)}
-      role={role ?? "status"}
+      aria-live={ariaLive ?? 'polite'}
+      className={classNames('xr-feedback', 'xr-feedback--empty', className)}
+      role={role ?? 'status'}
     >
       <h2 id={headingId}>{title}</h2>
       <p id={copyId}>{description}</p>
@@ -82,26 +71,19 @@ export const UiEmptyState = ({
 
 export interface UiToastProps extends HTMLAttributes<HTMLDivElement> {
   message: string;
-  tone?: "info" | "success" | "warning";
+  tone?: 'info' | 'success' | 'warning';
   live?: UiLiveMode;
 }
 
-export const UiToast = ({
-  className,
-  live,
-  message,
-  role,
-  tone = "info",
-  ...props
-}: Readonly<UiToastProps>) => {
-  const resolvedLive = live ?? (tone === "warning" ? "assertive" : "polite");
-  const resolvedRole = role ?? (tone === "warning" ? "alert" : "status");
+export const UiToast = ({ className, live, message, role, tone = 'info', ...props }: Readonly<UiToastProps>) => {
+  const resolvedLive = live ?? (tone === 'warning' ? 'assertive' : 'polite');
+  const resolvedRole = role ?? (tone === 'warning' ? 'alert' : 'status');
 
   return (
     <div
       {...props}
       aria-live={resolvedLive}
-      className={classNames("xr-toast", `xr-toast--${tone}`, className)}
+      className={classNames('xr-toast', `xr-toast--${tone}`, className)}
       role={resolvedRole}
     >
       {message}
@@ -121,10 +103,7 @@ interface UiErrorBoundaryState {
   hasError: boolean;
 }
 
-export class UiErrorBoundary extends Component<
-  UiErrorBoundaryProps,
-  UiErrorBoundaryState
-> {
+export class UiErrorBoundary extends Component<UiErrorBoundaryProps, UiErrorBoundaryState> {
   override state: UiErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): UiErrorBoundaryState {
@@ -149,9 +128,9 @@ export class UiErrorBoundary extends Component<
           {this.props.fallback ?? (
             <UiEmptyState
               aria-live="assertive"
-              description={translate("ui.errorBoundary.description")}
+              description={translate('ui.errorBoundary.description')}
               role="alert"
-              title={translate("ui.errorBoundary.title")}
+              title={translate('ui.errorBoundary.title')}
             />
           )}
         </>

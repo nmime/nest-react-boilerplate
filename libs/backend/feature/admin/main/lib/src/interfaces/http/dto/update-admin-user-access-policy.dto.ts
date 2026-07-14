@@ -1,9 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsArray, IsString } from "class-validator";
-import {
-  adminAssignablePermissions,
-  adminAssignableRoles,
-} from "@app/backend-feature-admin-shared";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsString } from 'class-validator';
+import { adminAssignablePermissions, adminAssignableRoles } from '@app/backend-feature-admin-shared';
 
 export class UpdateAdminUserAccessPolicyDto {
   @ApiProperty({ enum: adminAssignableRoles, isArray: true })

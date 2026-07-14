@@ -1,7 +1,7 @@
-import { spawnSync } from "node:child_process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Test, type TestingModule } from "@nestjs/testing";
-import type { NatsConnection, QueuedIterator } from "@nats-io/nats-core";
+import { spawnSync } from 'node:child_process';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { Test, type TestingModule } from '@nestjs/testing';
+import type { NatsConnection, QueuedIterator } from '@nats-io/nats-core';
 import {
   NatsHealthIndicator,
   NatsInjectToken,
@@ -12,13 +12,13 @@ import {
   NatsService,
   NatsServicesService,
   closeNatsConnection,
-} from "./index";
+} from './index';
 import {
   hasDockerRuntime,
   startNatsContainer,
   stopNatsContainer,
   type StartedServiceContainer,
-} from "@app/backend-common-component-test";
+} from '@app/backend-common-component-test';
 
 interface StartedNatsRuntimeContainer extends StartedServiceContainer {
   server: string;
@@ -29,13 +29,13 @@ const actualDockerRuntimeAvailable = hasActualDockerRuntime();
 const runRuntimeSmoke = dockerAvailable && actualDockerRuntimeAvailable;
 
 if (!runRuntimeSmoke) {
-  describe("NATS runtime smoke", () => {
-    it("does not start without an actual Docker runtime", () => {
+  describe('NATS runtime smoke', () => {
+    it('does not start without an actual Docker runtime', () => {
       expect(runRuntimeSmoke).toBe(false);
     });
   });
 } else {
-  describe("NATS runtime smoke", () => {
+  describe('NATS runtime smoke', () => {
     let container: StartedNatsRuntimeContainer | undefined;
     let moduleRef: TestingModule;
     let connection: NatsConnection;
@@ -47,7 +47,7 @@ if (!runRuntimeSmoke) {
         imports: [
           NatsModule.forRoot({
             servers: [startedContainer.server],
-            name: "nats-runtime-smoke",
+            name: 'nats-runtime-smoke',
             reconnect: false,
             timeoutMs: 5_000,
             drainTimeoutMs: 5_000,
@@ -66,40 +66,34 @@ if (!runRuntimeSmoke) {
       await stopNatsContainer(container);
     });
 
-    it("connects through the NATS module, flushes health, and drains shutdown", async () => {
+    it('connects through the NATS module, flushes health, and drains shutdown', async () => {
       expect(connection.isClosed()).toBe(false);
-      expect(connection.getServer()).toContain(":");
+      expect(connection.getServer()).toContain(':');
 
       await expect(connection.flush()).resolves.toBeUndefined();
-      await expect(
-        moduleRef.get(NatsHealthIndicator).check(),
-      ).resolves.toMatchObject({
-        name: "nats",
-        status: "ok",
+      await expect(moduleRef.get(NatsHealthIndicator).check()).resolves.toMatchObject({
+        name: 'nats',
+        status: 'ok',
         details: { enabled: true },
       });
 
-      const shutdownConnection = await startNatsContainer().then(
-        (plainContainer) =>
-          Test.createTestingModule({
-            imports: [
-              NatsModule.forRoot({
-                servers: [plainContainer.server],
-                reconnect: false,
-                timeoutMs: 5_000,
-                drainTimeoutMs: 5_000,
-              }),
-            ],
-          })
-            .compile()
-            .then((shutdownModule) => ({ plainContainer, shutdownModule })),
+      const shutdownConnection = await startNatsContainer().then((plainContainer) =>
+        Test.createTestingModule({
+          imports: [
+            NatsModule.forRoot({
+              servers: [plainContainer.server],
+              reconnect: false,
+              timeoutMs: 5_000,
+              drainTimeoutMs: 5_000,
+            }),
+          ],
+        })
+          .compile()
+          .then((shutdownModule) => ({ plainContainer, shutdownModule })),
       );
 
       try {
-        const nc =
-          shutdownConnection.shutdownModule.get<NatsConnection>(
-            NatsInjectToken,
-          );
+        const nc = shutdownConnection.shutdownModule.get<NatsConnection>(NatsInjectToken);
         await closeNatsConnection(nc, { drainTimeoutMs: 5_000 });
         expect(nc.isClosed()).toBe(true);
       } finally {
@@ -108,11 +102,11 @@ if (!runRuntimeSmoke) {
       }
     });
 
-    it("round-trips Core publish/request with NatsService", async () => {
+    it('round-trips Core publish/request with NatsService', async () => {
       const nats = moduleRef.get(NatsService);
       expect(nats.isEnabled).toBe(true);
 
-      const subscription = connection.subscribe("runtime.core.echo", {
+      const subscription = connection.subscribe('runtime.core.echo', {
         callback: (_error, msg) => {
           msg.respond(JSON.stringify({ echo: msg.string() }));
         },
@@ -121,13 +115,13 @@ if (!runRuntimeSmoke) {
       try {
         await expect(
           nats.requestJson<{ echo: string }, { hello: string }>(
-            "runtime.core.echo",
-            { hello: "world" },
+            'runtime.core.echo',
+            { hello: 'world' },
             { timeout: 5_000 },
           ),
-        ).resolves.toEqual({ echo: JSON.stringify({ hello: "world" }) });
+        ).resolves.toEqual({ echo: JSON.stringify({ hello: 'world' }) });
 
-        nats.publishString("runtime.core.fire", "ok");
+        nats.publishString('runtime.core.fire', 'ok');
         await connection.flush();
       } finally {
         subscription.unsubscribe();
@@ -135,7 +129,7 @@ if (!runRuntimeSmoke) {
       }
     });
 
-    it("creates JetStream manager/client and KV buckets against a JetStream server", async () => {
+    it('creates JetStream manager/client and KV buckets against a JetStream server', async () => {
       const jetStream = moduleRef.get(NatsJetStreamService);
       const manager = await jetStream.getManager({ checkAPI: true });
       const client = jetStream.getClient();
@@ -143,79 +137,69 @@ if (!runRuntimeSmoke) {
       expect(manager).toBeDefined();
       expect(client).toBeDefined();
       const accountInfo = await manager.getAccountInfo();
-      expect(typeof accountInfo.streams).toBe("number");
+      expect(typeof accountInfo.streams).toBe('number');
 
       const kvManager = moduleRef.get(NatsKvService).getManager();
       const bucketName = `runtime_kv_${Date.now()}`;
       const bucket = await kvManager.create(bucketName);
 
       try {
-        await expect(bucket.put("profile.user-1", "Ada")).resolves.toEqual(
-          expect.any(Number),
-        );
-        await expect(bucket.get("profile.user-1")).resolves.toMatchObject({
-          key: "profile.user-1",
+        await expect(bucket.put('profile.user-1', 'Ada')).resolves.toEqual(expect.any(Number));
+        await expect(bucket.get('profile.user-1')).resolves.toMatchObject({
+          key: 'profile.user-1',
         });
-        expect((await bucket.get("profile.user-1"))?.string()).toBe("Ada");
-        await bucket.delete("profile.user-1");
-        expect((await bucket.get("profile.user-1"))?.operation).toBe("DEL");
+        expect((await bucket.get('profile.user-1'))?.string()).toBe('Ada');
+        await bucket.delete('profile.user-1');
+        expect((await bucket.get('profile.user-1'))?.operation).toBe('DEL');
       } finally {
         await bucket.destroy();
       }
     });
 
-    it("creates Object Store buckets and puts/gets/deletes objects", async () => {
+    it('creates Object Store buckets and puts/gets/deletes objects', async () => {
       const objectManager = moduleRef.get(NatsObjectStoreService).getManager();
       const storeName = `runtime_obj_${Date.now()}`;
       const store = await objectManager.create(storeName);
 
       try {
-        const payload = new TextEncoder().encode("hello object store");
-        await expect(
-          store.putBlob({ name: "readme.txt" }, payload),
-        ).resolves.toMatchObject({ name: "readme.txt" });
-        expect(Buffer.from(await store.getBlob("readme.txt"))).toEqual(
-          Buffer.from(payload),
-        );
-        await expect(store.delete("readme.txt")).resolves.toMatchObject({
+        const payload = new TextEncoder().encode('hello object store');
+        await expect(store.putBlob({ name: 'readme.txt' }, payload)).resolves.toMatchObject({ name: 'readme.txt' });
+        expect(Buffer.from(await store.getBlob('readme.txt'))).toEqual(Buffer.from(payload));
+        await expect(store.delete('readme.txt')).resolves.toMatchObject({
           success: true,
         });
-        expect(await store.get("readme.txt")).toBeNull();
+        expect(await store.get('readme.txt')).toBeNull();
       } finally {
         await managerDeleteStream(moduleRef, `OBJ_${storeName}`);
       }
     });
 
-    it("adds a NATS service endpoint and pings/requests it", async () => {
+    it('adds a NATS service endpoint and pings/requests it', async () => {
       const services = moduleRef.get(NatsServicesService).getManager();
       const service = await services.add({
-        name: "runtime",
-        version: "1.0.0",
-        queue: "",
+        name: 'runtime',
+        version: '1.0.0',
+        queue: '',
       });
 
-      service.addEndpoint("echo", (_error, msg) => {
+      service.addEndpoint('echo', (_error, msg) => {
         msg.respond(JSON.stringify({ echo: msg.string() }));
       });
 
       try {
         const client = services.client({
-          strategy: "count",
+          strategy: 'count',
           maxMessages: 1,
           maxWait: 5_000,
         });
-        const pings = await collectQueuedIterator(await client.ping("runtime"));
+        const pings = await collectQueuedIterator(await client.ping('runtime'));
         expect(pings).toHaveLength(1);
-        expect(pings[0]).toMatchObject({ name: "runtime", version: "1.0.0" });
+        expect(pings[0]).toMatchObject({ name: 'runtime', version: '1.0.0' });
 
         await expect(
           moduleRef
             .get(NatsService)
-            .requestJson<{ echo: string }, { ping: boolean }>(
-              "echo",
-              { ping: true },
-              { timeout: 5_000 },
-            ),
+            .requestJson<{ echo: string }, { ping: boolean }>('echo', { ping: true }, { timeout: 5_000 }),
         ).resolves.toEqual({ echo: JSON.stringify({ ping: true }) });
       } finally {
         await service.stop();
@@ -224,9 +208,7 @@ if (!runRuntimeSmoke) {
   });
 }
 
-async function collectQueuedIterator<T>(
-  iterator: QueuedIterator<T> | undefined,
-): Promise<T[]> {
+async function collectQueuedIterator<T>(iterator: QueuedIterator<T> | undefined): Promise<T[]> {
   if (!iterator) {
     return [];
   }
@@ -239,10 +221,7 @@ async function collectQueuedIterator<T>(
   return values;
 }
 
-async function managerDeleteStream(
-  moduleRef: TestingModule | undefined,
-  stream: string,
-): Promise<void> {
+async function managerDeleteStream(moduleRef: TestingModule | undefined, stream: string): Promise<void> {
   if (!moduleRef) {
     return;
   }
@@ -256,21 +235,16 @@ async function managerDeleteStream(
  * Testcontainers startup in CI sandboxes where Docker is intentionally absent.
  */
 function hasActualDockerRuntime(): boolean {
-  if (process.env.SKIP_TESTCONTAINERS === "true") {
+  if (process.env.SKIP_TESTCONTAINERS === 'true') {
     return false;
   }
 
-  const dockerBinaryPaths = [
-    "docker",
-    "/usr/bin/docker",
-    "/usr/local/bin/docker",
-    "/opt/homebrew/bin/docker",
-  ] as const;
+  const dockerBinaryPaths = ['docker', '/usr/bin/docker', '/usr/local/bin/docker', '/opt/homebrew/bin/docker'] as const;
 
   return dockerBinaryPaths.some((dockerBinaryPath) => {
     try {
-      const result = spawnSync(dockerBinaryPath, ["info"], {
-        stdio: "ignore",
+      const result = spawnSync(dockerBinaryPath, ['info'], {
+        stdio: 'ignore',
         timeout: 5_000,
       });
       return result.status === 0;

@@ -1,7 +1,7 @@
-import type { AuthRoleEntity } from "../../entities";
+import type { AuthRoleEntity } from '../../entities';
 
 export interface AuthRoleRepositoryError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 

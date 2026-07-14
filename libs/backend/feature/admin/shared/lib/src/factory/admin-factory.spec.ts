@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
@@ -14,58 +14,51 @@ import {
   UserProfileReadPermission,
   UserRole,
   defaultRolePermissions,
-} from "@app/common-authz";
-import {
-  AdminAllResource,
-  AdminManageAction,
-  adminActions,
-  adminResources,
-} from "../const";
-import { createAdminAccessPolicy } from "./admin-access-policy.factory";
+} from '@app/common-authz';
+import { AdminAllResource, AdminManageAction, adminActions, adminResources } from '../const';
+import { createAdminAccessPolicy } from './admin-access-policy.factory';
 import {
   adminAssignablePermissions,
   adminAssignableRoles,
   adminPermissionCatalog,
   adminRoleCatalog,
   adminRolePermissionMatrix,
-} from "./admin-permission-catalog.factory";
+} from './admin-permission-catalog.factory';
 
-describe("admin CASL constants", () => {
-  it("exposes the action and resource vocabulary", () => {
-    expect(AdminManageAction).toBe("manage");
-    expect(AdminAllResource).toBe("all");
+describe('admin CASL constants', () => {
+  it('exposes the action and resource vocabulary', () => {
+    expect(AdminManageAction).toBe('manage');
+    expect(AdminAllResource).toBe('all');
     expect(adminActions).toContain(AdminManageAction);
-    expect(adminResources).toContain("admin.users");
+    expect(adminResources).toContain('admin.users');
   });
 });
 
-describe("admin permission catalog factory", () => {
-  it("projects assignable roles and permissions from the shared authz catalog", () => {
+describe('admin permission catalog factory', () => {
+  it('projects assignable roles and permissions from the shared authz catalog', () => {
     expect(adminRolePermissionMatrix).toBe(defaultRolePermissions);
     expect(adminRoleCatalog).toEqual([
       {
         role: UserRole,
-        label: "User",
-        description: "Baseline application user role.",
+        label: 'User',
+        description: 'Baseline application user role.',
         permissions: defaultRolePermissions[UserRole],
       },
       {
         role: AdminRole,
-        label: "Administrator",
-        description: "Back-office administrator with explicit granular grants.",
+        label: 'Administrator',
+        description: 'Back-office administrator with explicit granular grants.',
         permissions: defaultRolePermissions[AdminRole],
       },
     ]);
     expect(adminAssignableRoles).toEqual([UserRole, AdminRole]);
     expect(adminAssignablePermissions[0]).toBe(UserProfileReadPermission);
-    expect(adminPermissionCatalog.map((entry) => entry.permission)).toContain(
-      AdminUsersReadPermission,
-    );
+    expect(adminPermissionCatalog.map((entry) => entry.permission)).toContain(AdminUsersReadPermission);
   });
 });
 
-describe("createAdminAccessPolicy factory", () => {
-  it("fails closed without authenticated claims", () => {
+describe('createAdminAccessPolicy factory', () => {
+  it('fails closed without authenticated claims', () => {
     expect(createAdminAccessPolicy()).toEqual({
       isAuthenticated: false,
       roles: [],
@@ -83,10 +76,10 @@ describe("createAdminAccessPolicy factory", () => {
     });
   });
 
-  it("derives every granular access flag from explicit admin permissions", () => {
+  it('derives every granular access flag from explicit admin permissions', () => {
     expect(
       createAdminAccessPolicy({
-        subject: "admin-id",
+        subject: 'admin-id',
         roles: [AdminRole],
         permissions: [
           AdminProfileReadPermission,
@@ -127,10 +120,10 @@ describe("createAdminAccessPolicy factory", () => {
     });
   });
 
-  it("allows admin access through the explicit manage-all permission", () => {
+  it('allows admin access through the explicit manage-all permission', () => {
     expect(
       createAdminAccessPolicy({
-        subject: "admin-id",
+        subject: 'admin-id',
         roles: [AdminRole],
         permissions: [AdminManageAllPermission],
       }),

@@ -1,11 +1,7 @@
-import { Module } from "@nestjs/common";
-import type { DynamicModule, Provider } from "@nestjs/common";
-import { S3Service } from "./s3.service";
-import {
-  InMemoryObjectStorageClient,
-  ObjectStorageInjectToken,
-  type ObjectStorageClient,
-} from "./s3.storage";
+import { Module } from '@nestjs/common';
+import type { DynamicModule, Provider } from '@nestjs/common';
+import { S3Service } from './s3.service';
+import { InMemoryObjectStorageClient, ObjectStorageInjectToken, type ObjectStorageClient } from './s3.storage';
 
 export interface S3ModuleOptions {
   client?: ObjectStorageClient;

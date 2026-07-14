@@ -1,4 +1,4 @@
-import { ExecutionContext, Injectable } from "@nestjs/common";
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import {
   AdminAllResource,
   AdminManageAction,
@@ -6,19 +6,17 @@ import {
   adminPermissionToAbility,
   canAdmin,
   createAdminAbility,
-} from "@app/backend-feature-admin-shared";
+} from '@app/backend-feature-admin-shared';
 import {
   type AuthenticatedRequest,
   type PermissionEvaluationContext,
   type PermissionEvaluationResult,
   RbacGuard,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 @Injectable()
 export class AdminRbacGuard extends RbacGuard {
-  protected override requiresPermissionMetadata(
-    context: ExecutionContext,
-  ): boolean {
+  protected override requiresPermissionMetadata(context: ExecutionContext): boolean {
     return this.isAdminRoute(context);
   }
 
@@ -38,7 +36,7 @@ export class AdminRbacGuard extends RbacGuard {
       );
     }
 
-    if (permission.startsWith("admin:")) {
+    if (permission.startsWith('admin:')) {
       return false;
     }
 
@@ -47,12 +45,8 @@ export class AdminRbacGuard extends RbacGuard {
 
   private isAdminRoute(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const requestPath = request.url ?? request.path ?? "";
+    const requestPath = request.url ?? request.path ?? '';
 
-    return (
-      context.getClass().name.startsWith("Admin") ||
-      requestPath === "/admin" ||
-      requestPath.startsWith("/admin/")
-    );
+    return context.getClass().name.startsWith('Admin') || requestPath === '/admin' || requestPath.startsWith('/admin/');
   }
 }

@@ -1,1 +1,1 @@
-export const AuthTokenStoreInjectToken = Symbol("AuthTokenStoreInjectToken");
+export const AuthTokenStoreInjectToken = Symbol('AuthTokenStoreInjectToken');

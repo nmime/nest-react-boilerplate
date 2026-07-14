@@ -1,9 +1,9 @@
-import type { RedisClientLike, RedisPipelineLike } from "./type";
+import type { RedisClientLike, RedisPipelineLike } from './type';
 import type {
   RedisIncrementWithWindowResult,
   RedisSetCondition,
   RedisSetExpirationMode,
-} from "./type/redis-client.type";
+} from './type/redis-client.type';
 
 interface StoredValue {
   value: string;
@@ -16,7 +16,7 @@ export class InMemoryRedisClient implements RedisClientLike {
   private readonly hashExpirations = new Map<string, number>();
 
   ping(): Promise<string> {
-    return Promise.resolve("PONG");
+    return Promise.resolve('PONG');
   }
 
   get(key: string): Promise<string | null> {
@@ -44,11 +44,11 @@ export class InMemoryRedisClient implements RedisClientLike {
     condition?: RedisSetCondition,
   ): Promise<string | null> {
     const exists = this.hasKey(key);
-    if (condition === "NX" && exists) {
+    if (condition === 'NX' && exists) {
       return Promise.resolve(null);
     }
 
-    if (condition === "XX" && !exists) {
+    if (condition === 'XX' && !exists) {
       return Promise.resolve(null);
     }
 
@@ -56,11 +56,11 @@ export class InMemoryRedisClient implements RedisClientLike {
     this.values.set(key, { value, expiresAt });
     this.hashes.delete(key);
     this.hashExpirations.delete(key);
-    return Promise.resolve("OK");
+    return Promise.resolve('OK');
   }
 
   async setex(key: string, ttlSeconds: number, value: string): Promise<void> {
-    await this.set(key, value, "EX", ttlSeconds);
+    await this.set(key, value, 'EX', ttlSeconds);
   }
 
   async mget(...keys: string[]): Promise<(string | null)[]> {
@@ -79,7 +79,7 @@ export class InMemoryRedisClient implements RedisClientLike {
   }
 
   async incr(key: string): Promise<number> {
-    const current = Number((await this.get(key)) ?? "0") + 1;
+    const current = Number((await this.get(key)) ?? '0') + 1;
     // Real Redis INCR preserves the key's existing TTL; keep the stored
     // expiresAt (get() above already dropped it if the key had expired).
     const expiresAt = this.values.get(key)?.expiresAt;
@@ -87,20 +87,14 @@ export class InMemoryRedisClient implements RedisClientLike {
     return current;
   }
 
-  incrementWithWindow(
-    key: string,
-    windowMs: number,
-  ): Promise<RedisIncrementWithWindowResult> {
+  incrementWithWindow(key: string, windowMs: number): Promise<RedisIncrementWithWindowResult> {
     // Single-threaded and synchronous, so the increment and the TTL guarantee
     // observe no interleaving — the in-memory analogue of the real client's
     // atomic Lua INCR + PEXPIRE-if-no-TTL script.
     this.deleteExpiredKey(key);
     const now = Date.now();
     const entry = this.values.get(key);
-    const liveExpiry =
-      entry?.expiresAt !== undefined && entry.expiresAt > now
-        ? entry.expiresAt
-        : undefined;
+    const liveExpiry = entry?.expiresAt !== undefined && entry.expiresAt > now ? entry.expiresAt : undefined;
     const count = entry ? Number(entry.value) + 1 : 1;
     // Reuse the existing window's expiry (INCR never refreshes a live TTL);
     // otherwise attach a fresh window so the counter always carries an expiry.
@@ -143,9 +137,7 @@ export class InMemoryRedisClient implements RedisClientLike {
   hgetall(key: string): Promise<Record<string, string>> {
     this.deleteExpiredKey(key);
 
-    return Promise.resolve(
-      Object.fromEntries(this.hashes.get(key)?.entries() ?? []),
-    );
+    return Promise.resolve(Object.fromEntries(this.hashes.get(key)?.entries() ?? []));
   }
 
   hdel(key: string, field: string): Promise<number> {
@@ -163,11 +155,7 @@ export class InMemoryRedisClient implements RedisClientLike {
     return true;
   }
 
-  async extendIfValue(
-    key: string,
-    expectedValue: string,
-    ttlMs: number,
-  ): Promise<boolean> {
+  async extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean> {
     if ((await this.get(key)) !== expectedValue) {
       return false;
     }
@@ -183,9 +171,7 @@ export class InMemoryRedisClient implements RedisClientLike {
     return this.pipelineFromOperations([]);
   }
 
-  private pipelineFromOperations(
-    operations: (() => Promise<unknown>)[],
-  ): RedisPipelineLike {
+  private pipelineFromOperations(operations: (() => Promise<unknown>)[]): RedisPipelineLike {
     return {
       setex: (key, ttl, value) => {
         operations.push(() => this.setex(key, ttl, value));
@@ -207,8 +193,7 @@ export class InMemoryRedisClient implements RedisClientLike {
         operations.push(() => this.del(key));
         return this.pipelineFromOperations(operations);
       },
-      exec: async () =>
-        await Promise.all(operations.map((operation) => operation())),
+      exec: async () => await Promise.all(operations.map((operation) => operation())),
     };
   }
 
@@ -231,13 +216,10 @@ export class InMemoryRedisClient implements RedisClientLike {
   }
 }
 
-function getExpiration(
-  mode: RedisSetExpirationMode | undefined,
-  ttl: number | undefined,
-): number | undefined {
+function getExpiration(mode: RedisSetExpirationMode | undefined, ttl: number | undefined): number | undefined {
   if (!mode || ttl === undefined) {
     return undefined;
   }
 
-  return mode === "EX" ? Date.now() + ttl * 1000 : Date.now() + ttl;
+  return mode === 'EX' ? Date.now() + ttl * 1000 : Date.now() + ttl;
 }

@@ -1,1 +1,1 @@
-export const ProblemTypeBaseUrl = "urn:problem:nest-react-boilerplate";
+export const ProblemTypeBaseUrl = 'urn:problem:nest-react-boilerplate';

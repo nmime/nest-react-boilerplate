@@ -1,4 +1,4 @@
-import { Migration } from "@mikro-orm/migrations";
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260531120000AddAuthUserTenantIsolation extends Migration {
   override up(): void {
@@ -22,16 +22,12 @@ export class Migration20260531120000AddAuthUserTenantIsolation extends Migration
         end if;
       end $$;
     `);
-    this.addSql(
-      'create index if not exists "ix__auth_users__tenant_id" on "auth_users" ("tenant_id");',
-    );
+    this.addSql('create index if not exists "ix__auth_users__tenant_id" on "auth_users" ("tenant_id");');
   }
 
   override down(): void {
     this.addSql('drop index if exists "ix__auth_users__tenant_id";');
-    this.addSql(
-      'alter table "auth_users" drop constraint if exists "uq__auth_users__tenant_id_email";',
-    );
+    this.addSql('alter table "auth_users" drop constraint if exists "uq__auth_users__tenant_id_email";');
     this.addSql(`
       do $$
       begin

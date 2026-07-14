@@ -1,21 +1,17 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable } from 'mobx';
 
-export type UiTheme = "light" | "dark" | "system";
-export type ResolvedUiTheme = "light" | "dark";
-export const ThemeStorageKey = "boilerplate.theme";
+export type UiTheme = 'light' | 'dark' | 'system';
+export type ResolvedUiTheme = 'light' | 'dark';
+export const ThemeStorageKey = 'boilerplate.theme';
 
-const SystemThemeMediaQuery = "(prefers-color-scheme: dark)";
-const LegacyAddListener = "addListener";
-const LegacyRemoveListener = "removeListener";
+const SystemThemeMediaQuery = '(prefers-color-scheme: dark)';
+const LegacyAddListener = 'addListener';
+const LegacyRemoveListener = 'removeListener';
 
 type LegacyMediaQueryList = MediaQueryList & {
-  [LegacyAddListener]?: (
-    listener: (event: MediaQueryListEvent) => void,
-  ) => void;
-  [LegacyRemoveListener]?: (
-    listener: (event: MediaQueryListEvent) => void,
-  ) => void;
+  [LegacyAddListener]?: (listener: (event: MediaQueryListEvent) => void) => void;
+  [LegacyRemoveListener]?: (listener: (event: MediaQueryListEvent) => void) => void;
 };
 
 function normalizeTheme(value: string | null | undefined): UiTheme | undefined {
@@ -24,15 +20,11 @@ function normalizeTheme(value: string | null | undefined): UiTheme | undefined {
   }
 
   const normalized = value.trim().toLowerCase();
-  return normalized === "light" ||
-    normalized === "dark" ||
-    normalized === "system"
-    ? normalized
-    : undefined;
+  return normalized === 'light' || normalized === 'dark' || normalized === 'system' ? normalized : undefined;
 }
 
 function readStoredTheme(): UiTheme | undefined {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return undefined;
   }
 
@@ -44,7 +36,7 @@ function readStoredTheme(): UiTheme | undefined {
 }
 
 function persistTheme(theme: UiTheme): void {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return;
   }
 
@@ -56,42 +48,39 @@ function persistTheme(theme: UiTheme): void {
 }
 
 function resolveSystemTheme(): ResolvedUiTheme {
-  if (
-    typeof window === "undefined" ||
-    typeof window.matchMedia !== "function"
-  ) {
-    return "light";
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return 'light';
   }
 
-  return window.matchMedia(SystemThemeMediaQuery).matches ? "dark" : "light";
+  return window.matchMedia(SystemThemeMediaQuery).matches ? 'dark' : 'light';
 }
 
 export function resolveTheme(theme: UiTheme): ResolvedUiTheme {
-  return theme === "system" ? resolveSystemTheme() : theme;
+  return theme === 'system' ? resolveSystemTheme() : theme;
 }
 
 function applyThemeToDocument(theme: UiTheme): void {
-  if (typeof document === "undefined") {
+  if (typeof document === 'undefined') {
     return;
   }
 
   const root = document.documentElement;
-  root.dataset["themePreference"] = theme;
-  root.dataset["theme"] = resolveTheme(theme);
+  root.dataset['themePreference'] = theme;
+  root.dataset['theme'] = resolveTheme(theme);
 }
 
 function addMediaQueryChangeListener(
   mediaQueryList: MediaQueryList,
   listener: (event: MediaQueryListEvent) => void,
 ): void {
-  if (typeof mediaQueryList.addEventListener === "function") {
-    mediaQueryList.addEventListener("change", listener);
+  if (typeof mediaQueryList.addEventListener === 'function') {
+    mediaQueryList.addEventListener('change', listener);
     return;
   }
 
   const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
   const addListener = legacyMediaQueryList[LegacyAddListener];
-  if (typeof addListener === "function") {
+  if (typeof addListener === 'function') {
     addListener.call(mediaQueryList, listener);
   }
 }
@@ -100,14 +89,14 @@ function removeMediaQueryChangeListener(
   mediaQueryList: MediaQueryList,
   listener: (event: MediaQueryListEvent) => void,
 ): void {
-  if (typeof mediaQueryList.removeEventListener === "function") {
-    mediaQueryList.removeEventListener("change", listener);
+  if (typeof mediaQueryList.removeEventListener === 'function') {
+    mediaQueryList.removeEventListener('change', listener);
     return;
   }
 
   const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
   const removeListener = legacyMediaQueryList[LegacyRemoveListener];
-  if (typeof removeListener === "function") {
+  if (typeof removeListener === 'function') {
     removeListener.call(mediaQueryList, listener);
   }
 }
@@ -121,7 +110,7 @@ export class UiStore {
   private mediaQueryList?: MediaQueryList;
 
   constructor(initialTheme?: UiTheme | null) {
-    this.theme = initialTheme ?? readStoredTheme() ?? "system";
+    this.theme = initialTheme ?? readStoredTheme() ?? 'system';
     this.resolvedTheme = resolveTheme(this.theme);
     makeAutoObservable(this, {}, { autoBind: true });
     this.applyTheme();
@@ -155,21 +144,17 @@ export class UiStore {
   private syncSystemThemeSubscription(): void {
     this.removeSystemThemeSubscription();
 
-    if (
-      typeof window === "undefined" ||
-      typeof window.matchMedia !== "function" ||
-      this.theme !== "system"
-    ) {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function' || this.theme !== 'system') {
       return;
     }
 
     const mediaQueryList = window.matchMedia(SystemThemeMediaQuery);
     this.mediaQueryList = mediaQueryList;
     this.mediaQueryListener = (event: MediaQueryListEvent) => {
-      if (this.theme !== "system") {
+      if (this.theme !== 'system') {
         return;
       }
-      this.resolvedTheme = event.matches ? "dark" : "light";
+      this.resolvedTheme = event.matches ? 'dark' : 'light';
       applyThemeToDocument(this.theme);
     };
     addMediaQueryChangeListener(mediaQueryList, this.mediaQueryListener);
@@ -177,10 +162,7 @@ export class UiStore {
 
   private removeSystemThemeSubscription(): void {
     if (this.mediaQueryList && this.mediaQueryListener) {
-      removeMediaQueryChangeListener(
-        this.mediaQueryList,
-        this.mediaQueryListener,
-      );
+      removeMediaQueryChangeListener(this.mediaQueryList, this.mediaQueryListener);
     }
     this.mediaQueryList = undefined;
     this.mediaQueryListener = undefined;

@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnSync } from 'node:child_process';
 
 export interface DockerRuntimeAvailabilityOptions {
   /**
@@ -14,43 +14,37 @@ export interface DockerRuntimeAvailabilityOptions {
 }
 
 const DefaultDockerBinaryPaths = [
-  "docker",
-  "/usr/bin/docker",
-  "/usr/local/bin/docker",
-  "/opt/homebrew/bin/docker",
+  'docker',
+  '/usr/bin/docker',
+  '/usr/local/bin/docker',
+  '/opt/homebrew/bin/docker',
 ] as const;
 
-export function hasDockerRuntime(
-  options: DockerRuntimeAvailabilityOptions = {},
-): boolean {
-  const skipEnvVar = options.skipEnvVar ?? "SKIP_TESTCONTAINERS";
+export function hasDockerRuntime(options: DockerRuntimeAvailabilityOptions = {}): boolean {
+  const skipEnvVar = options.skipEnvVar ?? 'SKIP_TESTCONTAINERS';
 
-  if (process.env[skipEnvVar] === "true") {
+  if (process.env[skipEnvVar] === 'true') {
     return false;
   }
 
-  if (process.env.CI === "true") {
+  if (process.env.CI === 'true') {
     return true;
   }
 
-  return (options.dockerBinaryPaths ?? DefaultDockerBinaryPaths).some(
-    (dockerBinaryPath) => {
-      try {
-        const result = spawnSync(dockerBinaryPath, ["version"], {
-          stdio: "ignore",
-          timeout: 5_000,
-        });
-        return result.status === 0;
-      } catch {
-        return false;
-      }
-    },
-  );
+  return (options.dockerBinaryPaths ?? DefaultDockerBinaryPaths).some((dockerBinaryPath) => {
+    try {
+      const result = spawnSync(dockerBinaryPath, ['version'], {
+        stdio: 'ignore',
+        timeout: 5_000,
+      });
+      return result.status === 0;
+    } catch {
+      return false;
+    }
+  });
 }
 
-export function shouldSkipDockerTest(
-  options: DockerRuntimeAvailabilityOptions = {},
-): boolean {
+export function shouldSkipDockerTest(options: DockerRuntimeAvailabilityOptions = {}): boolean {
   return !hasDockerRuntime(options);
 }
 
@@ -65,5 +59,4 @@ export function shouldSkipDockerTest(
  * Container factory unit tests should continue to create container definitions
  * without starting Docker so they remain runnable on Docker-less developer hosts.
  */
-export const DockerUnavailableGuardPattern =
-  "const dockerIt = it.skipIf(shouldSkipDockerTest());";
+export const DockerUnavailableGuardPattern = 'const dockerIt = it.skipIf(shouldSkipDockerTest());';

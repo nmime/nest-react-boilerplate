@@ -1,21 +1,19 @@
-import { useEffect, type JSX } from "react";
-import type { Preview } from "@storybook/react-vite";
+import { useEffect, type JSX } from 'react';
+import type { Preview } from '@storybook/react-vite';
 
-import "../../../ui-web/lib/src/styles.css";
+import '../../../ui-web/lib/src/styles.css';
 
 const useStorybookLandmarkGuard = () => {
   useEffect(() => {
     const updateResizeHandles = () => {
-      for (const handle of document.querySelectorAll<HTMLElement>(
-        '[role="separator"][aria-label$="resize handle"]',
-      )) {
+      for (const handle of document.querySelectorAll<HTMLElement>('[role="separator"][aria-label$="resize handle"]')) {
         if (handle.closest("main,nav,header,footer,aside,[role='main']")) {
           continue;
         }
 
-        handle.setAttribute("role", "presentation");
-        handle.setAttribute("aria-hidden", "true");
-        handle.setAttribute("tabindex", "-1");
+        handle.setAttribute('role', 'presentation');
+        handle.setAttribute('aria-hidden', 'true');
+        handle.setAttribute('tabindex', '-1');
       }
     };
 
@@ -40,7 +38,7 @@ const LandmarkGuard = ({ Story }: { Story: () => JSX.Element }) => {
 const preview: Preview = {
   decorators: [(Story) => <LandmarkGuard Story={Story} />],
   parameters: {
-    layout: "centered",
+    layout: 'centered',
   },
 };
 

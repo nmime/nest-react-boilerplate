@@ -1,12 +1,12 @@
-import { normalizeStringList } from "@app/backend-common-shared";
+import { normalizeStringList } from '@app/backend-common-shared';
 import {
   AdminRole,
   UserRole,
   permissionCatalog,
   permissionsForRoles,
   roleKeys as systemRoleKeys,
-} from "@app/common-authz";
-import { DefaultAuthTenantId } from "./oauth";
+} from '@app/common-authz';
+import { DefaultAuthTenantId } from './oauth';
 
 // Re-export the shared permission and role identifiers so existing importers of
 // @app/backend-feature-auth-shared keep resolving them from this module.
@@ -27,7 +27,7 @@ export {
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
   AdminManageAllPermission,
-} from "@app/common-authz";
+} from '@app/common-authz';
 
 export interface AuthAccessPolicy {
   roles: string[];
@@ -63,9 +63,7 @@ export function createDefaultAccessPolicy(
   };
 }
 
-const roleKeyOrder = new Map<string, number>(
-  systemRoleKeys.map((key, index) => [key, index]),
-);
+const roleKeyOrder = new Map<string, number>(systemRoleKeys.map((key, index) => [key, index]));
 const permissionKeyOrder = new Map<string, number>(
   permissionCatalog.map((permission, index) => [permission.key, index]),
 );
@@ -83,17 +81,12 @@ export function orderPermissionKeys(keys: readonly string[]): string[] {
   return orderByCatalog(keys, permissionKeyOrder);
 }
 
-function orderByCatalog(
-  keys: readonly string[],
-  order: ReadonlyMap<string, number>,
-): string[] {
+function orderByCatalog(keys: readonly string[], order: ReadonlyMap<string, number>): string[] {
   return [...new Set(keys)].sort((left, right) => {
     const leftIndex = order.get(left) ?? Number.MAX_SAFE_INTEGER;
     const rightIndex = order.get(right) ?? Number.MAX_SAFE_INTEGER;
 
-    return leftIndex === rightIndex
-      ? left.localeCompare(right)
-      : leftIndex - rightIndex;
+    return leftIndex === rightIndex ? left.localeCompare(right) : leftIndex - rightIndex;
   });
 }
 
@@ -102,19 +95,15 @@ export function isAdminBootstrapAllowed(
   tenantId = DefaultAuthTenantId,
   env: Record<string, string | undefined> = process.env,
 ): boolean {
-  if (env.ADMIN_BOOTSTRAP_ENABLED !== "true") {
+  if (env.ADMIN_BOOTSTRAP_ENABLED !== 'true') {
     return false;
   }
 
-  const adminBootstrapEmails = normalizeStringList(
-    env.ADMIN_BOOTSTRAP_EMAILS,
-  ).map((item) => item.toLowerCase());
+  const adminBootstrapEmails = normalizeStringList(env.ADMIN_BOOTSTRAP_EMAILS).map((item) => item.toLowerCase());
   if (!adminBootstrapEmails.includes(normalizedEmail)) {
     return false;
   }
 
   const allowedTenantIds = normalizeStringList(env.ADMIN_BOOTSTRAP_TENANT_IDS);
-  return (
-    tenantId === DefaultAuthTenantId || allowedTenantIds.includes(tenantId)
-  );
+  return tenantId === DefaultAuthTenantId || allowedTenantIds.includes(tenantId);
 }

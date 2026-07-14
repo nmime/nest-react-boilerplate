@@ -1,1 +1,1 @@
-export const ApiAuthHeaderName = "authorization";
+export const ApiAuthHeaderName = 'authorization';

@@ -49,19 +49,10 @@ export interface AuthOAuthStoredState {
 
 export interface AuthOAuthStateStore {
   saveState(state: AuthOAuthStoredState): void;
-  consumeState(input: {
-    sessionId: string;
-    stateHash: string;
-    now: number;
-  }): AuthOAuthStoredState | undefined;
+  consumeState(input: { sessionId: string; stateHash: string; now: number }): AuthOAuthStoredState | undefined;
 }
 
-export type AuthOAuthErrorCode =
-  | "disabled"
-  | "not_configured"
-  | "invalid_request"
-  | "invalid_state"
-  | "provider_error";
+export type AuthOAuthErrorCode = 'disabled' | 'not_configured' | 'invalid_request' | 'invalid_state' | 'provider_error';
 
 export interface AuthOAuthError {
   code: AuthOAuthErrorCode;

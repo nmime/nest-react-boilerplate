@@ -1,18 +1,8 @@
-import type { Middleware } from "openapi-fetch";
+import type { Middleware } from 'openapi-fetch';
 
-import {
-  enrichJsonResponse,
-  normalizeApiError,
-  readJsonBody,
-  type NormalizedApiError,
-} from "./error-normalization";
-import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
-import {
-  apiToastRuntime,
-  defaultApiToastRules,
-  type ApiToastRule,
-  type ApiToastRuntime,
-} from "./toast-runtime";
+import { enrichJsonResponse, normalizeApiError, readJsonBody, type NormalizedApiError } from './error-normalization';
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
+import { apiToastRuntime, defaultApiToastRules, type ApiToastRule, type ApiToastRuntime } from './toast-runtime';
 
 export interface ApiResilienceMiddlewareOptions {
   eventHub?: ApiRuntimeEventHub;
@@ -65,8 +55,8 @@ export const createApiResilienceMiddleware = ({
       response,
     });
 
-    if (normalized.kind === "server") {
-      eventHub.emit({ type: "server-error", error: snapshotError(normalized) });
+    if (normalized.kind === 'server') {
+      eventHub.emit({ type: 'server-error', error: snapshotError(normalized) });
     }
 
     toastRuntime.showForApiResult(normalized, toastRules);
@@ -81,7 +71,7 @@ export const createApiResilienceMiddleware = ({
     });
 
     eventHub.emit({
-      type: "network-offline",
+      type: 'network-offline',
       error: snapshotError(normalized),
     });
     toastRuntime.showForApiResult(normalized, toastRules);

@@ -1,8 +1,8 @@
 /* v8 ignore file -- viewport and host-shell listeners are covered through integration and browser smoke tests. */
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable } from 'mobx';
 
-export type AppStatus = "idle" | "booting" | "ready" | "error";
-export type AppBreakpoint = "mobile" | "tablet" | "laptop" | "desktop";
+export type AppStatus = 'idle' | 'booting' | 'ready' | 'error';
+export type AppBreakpoint = 'mobile' | 'tablet' | 'laptop' | 'desktop';
 
 export const breakpointPixels: Readonly<Record<AppBreakpoint, number>> = {
   mobile: 0,
@@ -11,12 +11,7 @@ export const breakpointPixels: Readonly<Record<AppBreakpoint, number>> = {
   desktop: 1280,
 };
 
-export const orderedBreakpoints: readonly AppBreakpoint[] = [
-  "mobile",
-  "tablet",
-  "laptop",
-  "desktop",
-];
+export const orderedBreakpoints: readonly AppBreakpoint[] = ['mobile', 'tablet', 'laptop', 'desktop'];
 
 export interface BreakpointHelper {
   current: AppBreakpoint;
@@ -27,27 +22,26 @@ export interface BreakpointHelper {
   lte: (breakpoint: AppBreakpoint) => boolean;
 }
 
-const getBreakpointRank = (breakpoint: AppBreakpoint): number =>
-  orderedBreakpoints.indexOf(breakpoint);
+const getBreakpointRank = (breakpoint: AppBreakpoint): number => orderedBreakpoints.indexOf(breakpoint);
 
 export function getBreakpointForWidth(width: number): AppBreakpoint {
   if (width >= breakpointPixels.desktop) {
-    return "desktop";
+    return 'desktop';
   }
 
   if (width >= breakpointPixels.laptop) {
-    return "laptop";
+    return 'laptop';
   }
 
   if (width >= breakpointPixels.tablet) {
-    return "tablet";
+    return 'tablet';
   }
 
-  return "mobile";
+  return 'mobile';
 }
 
 function getViewportWidth(): number {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return breakpointPixels.desktop;
   }
 
@@ -68,7 +62,7 @@ function createBreakpointHelper(current: AppBreakpoint): BreakpointHelper {
 }
 
 export class AppStore {
-  appStatus: AppStatus = "idle";
+  appStatus: AppStatus = 'idle';
   currentBreakpoint: AppBreakpoint;
   isBackHandlerVisible = false;
   isTabBarVisible = true;
@@ -108,14 +102,14 @@ export class AppStore {
   }
 
   dispose(): void {
-    if (typeof window !== "undefined") {
-      window.removeEventListener("resize", this.resizeListener);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.resizeListener);
     }
   }
 
   private subscribeToViewport(): void {
-    if (typeof window !== "undefined") {
-      window.addEventListener("resize", this.resizeListener, { passive: true });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.resizeListener, { passive: true });
     }
   }
 }

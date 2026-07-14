@@ -1,14 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsObject, IsOptional, IsString, IsUUID } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
   ExternalAuthIntent,
   externalAuthIntents,
   externalAuthProviders,
   type ExternalAuthProvider,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 export class ExternalAuthIntentDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -31,7 +31,7 @@ export class ExternalAuthIntentDto {
 }
 
 export class TelegramWebLoginDto extends ExternalAuthIntentDto {
-  @ApiProperty({ type: "object", additionalProperties: true })
+  @ApiProperty({ type: 'object', additionalProperties: true })
   @IsObject()
   payload!: Record<string, string | number | boolean | null | undefined>;
 }
@@ -43,7 +43,7 @@ export class TelegramTmaDto extends ExternalAuthIntentDto {
 }
 
 export class TelegramBotLinkDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -78,7 +78,7 @@ export class TelegramBotLinkDto {
 }
 
 export class LinkTokenDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -103,7 +103,7 @@ export class LinkTokenDto {
 export class DiscordAuthorizationRequestDto extends ExternalAuthIntentDto {}
 
 export class DiscordCallbackQueryDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;

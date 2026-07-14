@@ -25,14 +25,14 @@ The client can set `x-request-id` in the request header; the server preserves it
 
 Each NestJS backend service exposes an `/metrics` endpoint (HTTP GET, no auth by default — place behind your ingress/auth gateway). Metrics are emitted in OpenMetrics/Prometheus text format.
 
-| Service                | Endpoint                          |
-| ---------------------- | --------------------------------- |
-| `admin-app-api`        | `http://localhost:3001/metrics`   |
-| `user-app-api`         | `http://localhost:3002/metrics`   |
-| `auth-app-api`         | `http://localhost:3003/metrics`   |
-| `discord-app-api`      | `http://localhost:3007/metrics`   |
-| `telegram-bot-api`     | `http://localhost:3013/metrics`   |
-| `telegram-bot-worker`  | `http://localhost:3023/metrics`   |
+| Service               | Endpoint                        |
+| --------------------- | ------------------------------- |
+| `admin-app-api`       | `http://localhost:3001/metrics` |
+| `user-app-api`        | `http://localhost:3002/metrics` |
+| `auth-app-api`        | `http://localhost:3003/metrics` |
+| `discord-app-api`     | `http://localhost:3007/metrics` |
+| `telegram-bot-api`    | `http://localhost:3013/metrics` |
+| `telegram-bot-worker` | `http://localhost:3023/metrics` |
 
 **How it works:** The shared bootstrap layer (`libs/backend/common`) registers an `express-prom` / `prom-client` middleware that collects HTTP request duration histograms, request/response sizes, active request counters, and application-level gauges (DB pool, queue depth). OpenTelemetry SDK (`@opentelemetry/sdk-node`) instruments the HTTP server layer and exports metrics via OTLP when `OTEL_ENABLED=true`.
 
@@ -106,8 +106,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "High error rate on {{ $labels.job }} ({{ $value | humanizePercentage }})"
-          description: "More than 5% of requests returned 5xx in the last 5 minutes."
+          summary: 'High error rate on {{ $labels.job }} ({{ $value | humanizePercentage }})'
+          description: 'More than 5% of requests returned 5xx in the last 5 minutes.'
 
       # --- High p99 latency ---
       - alert: HighLatencyP99
@@ -120,8 +120,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High p99 latency on {{ $labels.service }} ({{ $value }}s)"
-          description: "p99 request latency has exceeded 2 seconds for 5 minutes."
+          summary: 'High p99 latency on {{ $labels.service }} ({{ $value }}s)'
+          description: 'p99 request latency has exceeded 2 seconds for 5 minutes.'
 
       # --- Service down ---
       - alert: ServiceDown
@@ -130,8 +130,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Service {{ $labels.instance }} is down"
-          description: "{{ $labels.instance }} has been unreachable for 2 minutes."
+          summary: 'Service {{ $labels.instance }} is down'
+          description: '{{ $labels.instance }} has been unreachable for 2 minutes.'
 
       # --- DB connection pool exhaustion ---
       - alert: DBPoolExhausted
@@ -140,8 +140,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "DB connection pool near exhaustion on {{ $labels.instance }}"
-          description: "{{ $value | humanizePercentage }} of DB connections are in use."
+          summary: 'DB connection pool near exhaustion on {{ $labels.instance }}'
+          description: '{{ $value | humanizePercentage }} of DB connections are in use.'
 
       # --- NATS queue depth ---
       - alert: QueueDepthHigh
@@ -150,8 +150,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "NATS queue depth high on {{ $labels.instance }}"
-          description: "Queue depth has exceeded 1000 messages for 5 minutes."
+          summary: 'NATS queue depth high on {{ $labels.instance }}'
+          description: 'Queue depth has exceeded 1000 messages for 5 minutes.'
 ```
 
 ## Dead Man's Switch (DeadMan's Snitch)
@@ -164,15 +164,15 @@ Use DeadMan's Snitch as a watchdog to ensure your monitoring pipeline itself is 
 2. Add a Prometheus rule that POSTs to the snitch on every evaluation cycle:
 
 ```yaml
-  - name: deadmanssnitch
-    rules:
-      - alert: DeadMansSwitch
-        expr: vector(1)
-        for: 0m
-        labels:
-          severity: none
-        annotations:
-          snitch_url: 'https://deadmanssnitch.com/api/v3/snitches/YOUR_SNITCH_UUID'
+- name: deadmanssnitch
+  rules:
+    - alert: DeadMansSwitch
+      expr: vector(1)
+      for: 0m
+      labels:
+        severity: none
+      annotations:
+        snitch_url: 'https://deadmanssnitch.com/api/v3/snitches/YOUR_SNITCH_UUID'
 ```
 
 3. In Alertmanager, route `DeadMansSwitch` to a webhook receiver that POSTs to the snitch URL:
@@ -196,12 +196,12 @@ route:
 
 For external uptime checks (outside your own Prometheus), use a third-party monitor that hits your public health endpoints.
 
-| Provider        | What to use it for                              | Free tier           |
-| --------------- | ----------------------------------------------- | ------------------- |
-| **BetterStack** | HTTP uptime + synthetic checks + log aggregation | 3 monitors free     |
-| **healthchecks.io** | Cron-job / worker heartbeat monitoring        | 20 checks free      |
-| **UptimeRobot**  | Basic HTTP/SOCK/DNS uptime pings               | 50 monitors free    |
-| **Pingdom**      | Synthetic browser checks + global pings        | 1 monitor (trial)   |
+| Provider            | What to use it for                               | Free tier         |
+| ------------------- | ------------------------------------------------ | ----------------- |
+| **BetterStack**     | HTTP uptime + synthetic checks + log aggregation | 3 monitors free   |
+| **healthchecks.io** | Cron-job / worker heartbeat monitoring           | 20 checks free    |
+| **UptimeRobot**     | Basic HTTP/SOCK/DNS uptime pings                 | 50 monitors free  |
+| **Pingdom**         | Synthetic browser checks + global pings          | 1 monitor (trial) |
 
 ### Recommended configuration
 
@@ -218,18 +218,18 @@ For the Telegram bot worker, register a heartbeat with healthchecks.io — the w
 
 ## Key metrics to track
 
-| Metric                     | Type        | Labels                              | Why it matters                          | SLO / Threshold      |
-| -------------------------- | ----------- | ----------------------------------- | --------------------------------------- | -------------------- |
-| `http_request_rate`        | Counter     | `service`, `method`, `status`       | Traffic volume, capacity planning       | —                    |
-| `http_error_rate`          | Gauge       | `service`, `status`                 | User-facing failures                    | < 1% 5m avg         |
-| `http_request_duration_p50` | Histogram  | `service`, `method`, `route`        | Median user experience                  | < 200ms              |
-| `http_request_duration_p99` | Histogram  | `service`, `method`, `route`        | Tail latency, p99 SLA                   | < 2s                 |
-| `db_pool_active_connections` | Gauge     | `instance`                          | DB saturation, connection leaks         | < 80% of max         |
-| `db_pool_idle_connections`  | Gauge       | `instance`                          | Over-provisioned connections            | —                    |
-| `nats_queue_depth`         | Gauge       | `queue_name`, `instance`            | Message backlog, consumer lag           | < 1000               |
-| `process_resident_memory_bytes` | Gauge   | `instance`                          | Memory leaks, OOM risk                  | < 70% of container limit |
-| `process_cpu_seconds_total` | Counter    | `instance`                          | CPU saturation                          | < 80% sustained      |
-| `up`                       | Gauge       | `instance`, `job`                   | Service availability                    | == 1                 |
-| `nodejs_active_handles`    | Gauge       | `instance`                          | Event loop stall risk                   | < 100 sustained      |
-| `telegram_polling_errors`  | Counter     | `instance`                          | Bot connectivity issues                 | < 1/min              |
-| `discord_interaction_failures` | Counter | `instance`                          | User-facing bot failures                | < 0.5% of total      |
+| Metric                          | Type      | Labels                        | Why it matters                    | SLO / Threshold          |
+| ------------------------------- | --------- | ----------------------------- | --------------------------------- | ------------------------ |
+| `http_request_rate`             | Counter   | `service`, `method`, `status` | Traffic volume, capacity planning | —                        |
+| `http_error_rate`               | Gauge     | `service`, `status`           | User-facing failures              | < 1% 5m avg              |
+| `http_request_duration_p50`     | Histogram | `service`, `method`, `route`  | Median user experience            | < 200ms                  |
+| `http_request_duration_p99`     | Histogram | `service`, `method`, `route`  | Tail latency, p99 SLA             | < 2s                     |
+| `db_pool_active_connections`    | Gauge     | `instance`                    | DB saturation, connection leaks   | < 80% of max             |
+| `db_pool_idle_connections`      | Gauge     | `instance`                    | Over-provisioned connections      | —                        |
+| `nats_queue_depth`              | Gauge     | `queue_name`, `instance`      | Message backlog, consumer lag     | < 1000                   |
+| `process_resident_memory_bytes` | Gauge     | `instance`                    | Memory leaks, OOM risk            | < 70% of container limit |
+| `process_cpu_seconds_total`     | Counter   | `instance`                    | CPU saturation                    | < 80% sustained          |
+| `up`                            | Gauge     | `instance`, `job`             | Service availability              | == 1                     |
+| `nodejs_active_handles`         | Gauge     | `instance`                    | Event loop stall risk             | < 100 sustained          |
+| `telegram_polling_errors`       | Counter   | `instance`                    | Bot connectivity issues           | < 1/min                  |
+| `discord_interaction_failures`  | Counter   | `instance`                    | User-facing bot failures          | < 0.5% of total          |

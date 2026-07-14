@@ -2,14 +2,14 @@
  * Setup command — interactive and non-interactive boilerplate configuration.
  *
  * Usage:
- *   nrb setup                        # interactive wizard
- *   nrb setup --preset fullstack     # preset-based, non-interactive
- *   nrb setup --config path.json     # config file
- *   nrb setup --dry-run              # show plan only
- *   nrb setup --prune                # remove orphaned files
- *   nrb setup --force                # overwrite conflicts
- *   nrb setup --non-interactive      # CI mode with defaults
- *   nrb setup --json                 # output plan as JSON
+ *   pnpm nrb setup                        # interactive wizard
+ *   pnpm nrb setup --preset fullstack     # preset-based, non-interactive
+ *   pnpm nrb setup --config path.json     # config file
+ *   pnpm nrb setup --dry-run              # show plan only
+ *   pnpm nrb setup --prune                # remove orphaned files
+ *   pnpm nrb setup --force                # overwrite conflicts
+ *   pnpm nrb setup --non-interactive      # CI mode with defaults
+ *   pnpm nrb setup --json                 # output plan as JSON
  *
  * Routes through the shared setup engine (schema → planner → apply).
  * No direct file writes in this command.
@@ -395,7 +395,7 @@ export async function runSetupFromContext(
 
 function printUsage(): void {
   process.stdout.write(
-    `Usage: repo-tooling project setup [options]
+    `Usage: pnpm nrb setup [options]
 
 Interactive and non-interactive boilerplate configuration.
 
@@ -412,10 +412,10 @@ Options:
   -h, --help                 Show this help
 
 Examples:
-  nrb setup                                  # interactive wizard
-  nrb setup --preset fullstack --dry-run     # preview fullstack preset
-  nrb setup --config nrb.config.json         # apply from config file
-  nrb setup --non-interactive --preset minimal  # CI mode`,
+  pnpm nrb setup                                  # interactive wizard
+  pnpm nrb setup --preset fullstack --dry-run     # preview fullstack preset
+  pnpm nrb setup --config nrb.config.json         # apply from config file
+  pnpm nrb setup --non-interactive --preset minimal  # CI mode\n`,
   );
 }
 

@@ -1,7 +1,7 @@
-import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
-export type ApiToastCategory = "error" | "info" | "success" | "warning";
-export type ApiToastDisplay = "custom" | "modal" | "silent" | "toast";
+export type ApiToastCategory = 'error' | 'info' | 'success' | 'warning';
+export type ApiToastDisplay = 'custom' | 'modal' | 'silent' | 'toast';
 
 export interface ApiToastMetadata {
   color: string;
@@ -54,82 +54,64 @@ export interface ApiToastRuntimeOptions {
   rateLimitMs?: number;
 }
 
-export const ApiToastCategoryMetadata: Record<
-  ApiToastCategory,
-  ApiToastMetadata
-> = {
-  error: { color: "danger", icon: "circle-alert" },
-  info: { color: "info", icon: "circle-info" },
-  success: { color: "success", icon: "circle-check" },
-  warning: { color: "warning", icon: "triangle-alert" },
+export const ApiToastCategoryMetadata: Record<ApiToastCategory, ApiToastMetadata> = {
+  error: { color: 'danger', icon: 'circle-alert' },
+  info: { color: 'info', icon: 'circle-info' },
+  success: { color: 'success', icon: 'circle-check' },
+  warning: { color: 'warning', icon: 'triangle-alert' },
 };
 
-const ApiToastCategories: readonly ApiToastCategory[] = [
-  "error",
-  "info",
-  "success",
-  "warning",
-];
+const ApiToastCategories: readonly ApiToastCategory[] = ['error', 'info', 'success', 'warning'];
 
-const ApiToastDisplays: readonly ApiToastDisplay[] = [
-  "custom",
-  "modal",
-  "silent",
-  "toast",
-];
+const ApiToastDisplays: readonly ApiToastDisplay[] = ['custom', 'modal', 'silent', 'toast'];
 const ApiToastCategoryValues: ReadonlySet<string> = new Set(ApiToastCategories);
 const ApiToastDisplayValues: ReadonlySet<string> = new Set(ApiToastDisplays);
 
 export const defaultApiToastRules: ApiToastRule[] = [
   {
-    display: "toast",
-    id: "api.network.offline",
-    match: { kind: "network" },
+    display: 'toast',
+    id: 'api.network.offline',
+    match: { kind: 'network' },
     toast: {
-      category: "warning",
-      title: "Connection lost",
-      message: "Check your internet connection and try again.",
+      category: 'warning',
+      title: 'Connection lost',
+      message: 'Check your internet connection and try again.',
     },
   },
   {
-    display: "toast",
-    id: "api.server.error",
+    display: 'toast',
+    id: 'api.server.error',
     match: { statusRange: [500, 599] },
     toast: {
-      category: "error",
-      title: "Service is temporarily unavailable",
-      message: "Please try again in a moment.",
+      category: 'error',
+      title: 'Service is temporarily unavailable',
+      message: 'Please try again in a moment.',
     },
   },
   {
-    display: "silent",
-    id: "api.auth.unauthorized",
+    display: 'silent',
+    id: 'api.auth.unauthorized',
     match: { status: 401 },
-    toast: { category: "info", title: "Authentication required" },
+    toast: { category: 'info', title: 'Authentication required' },
   },
 ];
 
-const normalizeMethod = (method?: string): string | undefined =>
-  method?.toUpperCase();
+const normalizeMethod = (method?: string): string | undefined => method?.toUpperCase();
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object";
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object';
 
-const isUnknownArray = (value: unknown): value is readonly unknown[] =>
-  Array.isArray(value);
+const isUnknownArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
 
 const isApiToastCategory = (value: unknown): value is ApiToastCategory =>
-  typeof value === "string" && ApiToastCategoryValues.has(value);
+  typeof value === 'string' && ApiToastCategoryValues.has(value);
 
 const isApiToastDisplay = (value: unknown): value is ApiToastDisplay =>
-  typeof value === "string" && ApiToastDisplayValues.has(value);
+  typeof value === 'string' && ApiToastDisplayValues.has(value);
 
 const readOptionalString = (value: unknown): string | undefined =>
-  typeof value === "string" && value.trim() ? value : undefined;
+  typeof value === 'string' && value.trim() ? value : undefined;
 
-const readToastRuleMatch = (
-  value: Record<string, unknown>,
-): ApiToastRuleMatch => {
+const readToastRuleMatch = (value: Record<string, unknown>): ApiToastRuleMatch => {
   const match: ApiToastRuleMatch = {};
   const code = readOptionalString(value.code);
   const endpoint = readOptionalString(value.endpoint);
@@ -148,13 +130,13 @@ const readToastRuleMatch = (
   if (method) {
     match.method = method;
   }
-  if (typeof value.status === "number") {
+  if (typeof value.status === 'number') {
     match.status = value.status;
   }
   if (isUnknownArray(value.statusRange)) {
     const min = value.statusRange[0];
     const max = value.statusRange[1];
-    if (typeof min === "number" && typeof max === "number") {
+    if (typeof min === 'number' && typeof max === 'number') {
       match.statusRange = [min, max];
     }
   }
@@ -238,8 +220,7 @@ export const parseApiToastRules = (value: unknown): ApiToastRule[] => {
 export const resolveApiToastRule = (
   context: ApiToastContext,
   rules: readonly ApiToastRule[] = defaultApiToastRules,
-): ApiToastRule | null =>
-  rules.find((rule) => matchesRule(rule, context)) ?? null;
+): ApiToastRule | null => rules.find((rule) => matchesRule(rule, context)) ?? null;
 
 export class ApiToastRuntime {
   private readonly clock: () => number;
@@ -272,16 +253,9 @@ export class ApiToastRuntime {
     this.visibleToasts = this.visibleToasts.filter((toast) => toast.id !== id);
   }
 
-  show(input: {
-    category: ApiToastCategory;
-    dedupeKey?: string;
-    message?: string;
-    title: string;
-  }): ApiToast | null {
+  show(input: { category: ApiToastCategory; dedupeKey?: string; message?: string; title: string }): ApiToast | null {
     const now = this.clock();
-    const dedupeKey =
-      input.dedupeKey ??
-      `${input.category}:${input.title}:${input.message ?? ""}`;
+    const dedupeKey = input.dedupeKey ?? `${input.category}:${input.title}:${input.message ?? ''}`;
     const lastShownAt = this.recentByKey.get(dedupeKey);
 
     if (lastShownAt !== undefined && now - lastShownAt < this.rateLimitMs) {
@@ -301,18 +275,15 @@ export class ApiToastRuntime {
     };
 
     this.visibleToasts = [...this.visibleToasts, toast].slice(-this.maxVisible);
-    this.eventHub?.emit({ type: "toast", toast });
+    this.eventHub?.emit({ type: 'toast', toast });
 
     return toast;
   }
 
-  showForApiResult(
-    context: ApiToastContext,
-    rules: readonly ApiToastRule[] = defaultApiToastRules,
-  ): ApiToast | null {
+  showForApiResult(context: ApiToastContext, rules: readonly ApiToastRule[] = defaultApiToastRules): ApiToast | null {
     const rule = resolveApiToastRule(context, rules);
 
-    if (!rule || rule.display === "silent" || rule.display === "modal") {
+    if (!rule || rule.display === 'silent' || rule.display === 'modal') {
       return null;
     }
 

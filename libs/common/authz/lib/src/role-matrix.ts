@@ -13,16 +13,13 @@ import {
   AdminUsersWritePermission,
   UserProfileReadPermission,
   type PermissionKey,
-} from "./permission-catalog";
-import type { RoleKey } from "./types";
+} from './permission-catalog';
+import type { RoleKey } from './types';
 
-export const UserRole = "user";
-export const AdminRole = "admin";
+export const UserRole = 'user';
+export const AdminRole = 'admin';
 
-export const roleKeys = [
-  UserRole,
-  AdminRole,
-] as const satisfies readonly RoleKey[];
+export const roleKeys = [UserRole, AdminRole] as const satisfies readonly RoleKey[];
 
 // Default role -> permission grants. `admin` holds the full admin-scoped catalog
 // including the break-glass `admin:manage:all` and the DB-backed role management
@@ -48,11 +45,5 @@ export const defaultRolePermissions = {
 // De-duplicated union of the default grants for the given roles, preserving
 // catalog order. Unknown roles contribute nothing (fail closed).
 export const permissionsForRoles = (roles: readonly string[]): string[] => [
-  ...new Set(
-    roles.flatMap((role) =>
-      role === UserRole || role === AdminRole
-        ? defaultRolePermissions[role]
-        : [],
-    ),
-  ),
+  ...new Set(roles.flatMap((role) => (role === UserRole || role === AdminRole ? defaultRolePermissions[role] : []))),
 ];

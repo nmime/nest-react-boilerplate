@@ -1,22 +1,22 @@
-import { Injectable } from "@nestjs/common";
-import type { HealthIndicatorResult } from "@app/backend-common-health";
-import { InjectRedis } from "./decorator";
-import type { RedisClientLike } from "./type";
+import { Injectable } from '@nestjs/common';
+import type { HealthIndicatorResult } from '@app/backend-common-health';
+import { InjectRedis } from './decorator';
+import type { RedisClientLike } from './type';
 
 @Injectable()
 export class RedisHealthIndicator {
-  readonly name = "redis";
+  readonly name = 'redis';
 
   constructor(@InjectRedis() private readonly redis: RedisClientLike) {}
 
   async check(): Promise<HealthIndicatorResult> {
     try {
       await this.redis.ping();
-      return { name: this.name, status: "ok" };
+      return { name: this.name, status: 'ok' };
     } catch (error) {
       return {
         name: this.name,
-        status: "error",
+        status: 'error',
         details: safeErrorDetails(error),
       };
     }
@@ -35,14 +35,11 @@ function safeErrorDetails(error: unknown): Record<string, unknown> {
 }
 
 const connectionCredentialPattern = new RegExp(
-  ["([a-z][a-z0-9+.-]*://)", "([^\\s/@:]+)", ":", "([^\\s/@]+)", "@"].join(""),
-  "giu",
+  ['([a-z][a-z0-9+.-]*://)', '([^\\s/@:]+)', ':', '([^\\s/@]+)', '@'].join(''),
+  'giu',
 );
-const secretAssignmentPattern =
-  /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu;
+const secretAssignmentPattern = /\b(password|passwd|pwd|token|secret|api[_-]?key)=([^\s,;]+)/giu;
 
 function redactDependencyDetail(value: string): string {
-  return value
-    .replace(connectionCredentialPattern, "$1[redacted]@")
-    .replace(secretAssignmentPattern, "$1=[redacted]");
+  return value.replace(connectionCredentialPattern, '$1[redacted]@').replace(secretAssignmentPattern, '$1=[redacted]');
 }

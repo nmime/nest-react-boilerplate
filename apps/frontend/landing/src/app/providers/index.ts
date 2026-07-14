@@ -1,1 +1,1 @@
-export * from "./with-landing-providers";
+export * from './with-landing-providers';

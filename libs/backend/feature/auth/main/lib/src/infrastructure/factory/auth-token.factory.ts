@@ -1,24 +1,16 @@
-import { randomUUID } from "node:crypto";
-import { DefaultAuthTenantId } from "@app/backend-feature-auth-shared";
+import { randomUUID } from 'node:crypto';
+import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import type {
   IssuedRefreshToken,
   IssuedUserActionToken,
   RefreshTokenIssueInput,
   UserActionTokenIssueInput,
-} from "../type/auth-token-store.type";
-import { DefaultRefreshTokenTtlSeconds } from "../const/auth-token-store-ttl.const";
-import {
-  defaultUserActionTokenTtl,
-  secondsFromNow,
-} from "../util/auth-token-store.util";
-import {
-  createOpaqueToken,
-  hashOpaqueToken,
-} from "./auth-token-crypto.factory";
+} from '../type/auth-token-store.type';
+import { DefaultRefreshTokenTtlSeconds } from '../const/auth-token-store-ttl.const';
+import { defaultUserActionTokenTtl, secondsFromNow } from '../util/auth-token-store.util';
+import { createOpaqueToken, hashOpaqueToken } from './auth-token-crypto.factory';
 
-export function createIssuedRefreshToken(
-  input: RefreshTokenIssueInput,
-): IssuedRefreshToken {
+export function createIssuedRefreshToken(input: RefreshTokenIssueInput): IssuedRefreshToken {
   const token = createOpaqueToken();
   const tokenHash = hashOpaqueToken(token);
   return {
@@ -28,15 +20,11 @@ export function createIssuedRefreshToken(
     token,
     tokenHash,
     familyId: input.familyId ?? randomUUID(),
-    expiresAt: secondsFromNow(
-      input.ttlSeconds ?? DefaultRefreshTokenTtlSeconds,
-    ),
+    expiresAt: secondsFromNow(input.ttlSeconds ?? DefaultRefreshTokenTtlSeconds),
   };
 }
 
-export function createIssuedUserActionToken(
-  input: UserActionTokenIssueInput,
-): IssuedUserActionToken {
+export function createIssuedUserActionToken(input: UserActionTokenIssueInput): IssuedUserActionToken {
   const token = createOpaqueToken();
   const tokenHash = hashOpaqueToken(token);
   return {
@@ -46,8 +34,6 @@ export function createIssuedUserActionToken(
     purpose: input.purpose,
     token,
     tokenHash,
-    expiresAt: secondsFromNow(
-      input.ttlSeconds ?? defaultUserActionTokenTtl(input.purpose),
-    ),
+    expiresAt: secondsFromNow(input.ttlSeconds ?? defaultUserActionTokenTtl(input.purpose)),
   };
 }

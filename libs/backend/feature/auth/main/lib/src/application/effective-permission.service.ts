@@ -1,8 +1,5 @@
-import { ConflictException, Inject, Injectable } from "@nestjs/common";
-import {
-  orderPermissionKeys,
-  orderRoleKeys,
-} from "@app/backend-feature-auth-shared";
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { orderPermissionKeys, orderRoleKeys } from '@app/backend-feature-auth-shared';
 import {
   AuthRoleStoreInjectToken,
   AuthUserStoreInjectToken,
@@ -10,7 +7,7 @@ import {
   type AuthUserRecord,
   type AuthUserStore,
   type EffectiveAccess,
-} from "../infrastructure";
+} from '../infrastructure';
 
 export interface AssignBootstrapRolesInput {
   userId: string;
@@ -37,10 +34,7 @@ export class EffectivePermissionService {
   ) {}
 
   // Resolve the canonical effective access for a user from the RBAC join.
-  async resolveEffectiveAccess(
-    userId: string,
-    tenantId: string,
-  ): Promise<EffectiveAccess> {
+  async resolveEffectiveAccess(userId: string, tenantId: string): Promise<EffectiveAccess> {
     const resolved = await this.roles.resolveEffectiveAccess(userId, tenantId);
     if (resolved.isErr()) {
       throw new ConflictException(resolved.error.message);
@@ -54,9 +48,7 @@ export class EffectivePermissionService {
 
   // Assign bootstrap roles to a user, then refresh the jsonb cache and return
   // the updated record. Used by the account-creation paths.
-  async assignRolesAndRefresh(
-    input: AssignBootstrapRolesInput,
-  ): Promise<AuthUserRecord | null> {
+  async assignRolesAndRefresh(input: AssignBootstrapRolesInput): Promise<AuthUserRecord | null> {
     const assigned = await this.roles.assignRoles({
       userId: input.userId,
       tenantId: input.tenantId,
@@ -74,10 +66,7 @@ export class EffectivePermissionService {
   // into the denormalized jsonb cache. If the normalized tables resolve no
   // roles (e.g. a tenant whose system roles are not seeded yet), the cache is
   // left untouched so previously persisted claims are never silently wiped.
-  async refresh(
-    userId: string,
-    tenantId: string,
-  ): Promise<AuthUserRecord | null> {
+  async refresh(userId: string, tenantId: string): Promise<AuthUserRecord | null> {
     const access = await this.resolveEffectiveAccess(userId, tenantId);
     if (access.roleKeys.length === 0) {
       const current = await this.users.findById(userId, tenantId);

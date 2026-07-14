@@ -1,32 +1,32 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import type { MouseEvent } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
-import { UiButton } from "./button";
-import { UiCard } from "./card";
-import { UiForm } from "./form";
-import { UiTextField } from "./form-field";
-import { UiSelect } from "./select";
-import { UiSection } from "./section";
-import { UiStatCard } from "./stat-card";
-import { UiStatusPill } from "./status-pill";
-import { UiEmptyState, UiLoading, UiToast } from "./feedback";
+import { fireEvent, render, screen } from '@testing-library/react';
+import type { MouseEvent } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import { UiButton } from './button';
+import { UiCard } from './card';
+import { UiForm } from './form';
+import { UiTextField } from './form-field';
+import { UiSelect } from './select';
+import { UiSection } from './section';
+import { UiStatCard } from './stat-card';
+import { UiStatusPill } from './status-pill';
+import { UiEmptyState, UiLoading, UiToast } from './feedback';
 
-describe("shared UI components", () => {
-  it("renders links with href and variant class", () => {
+describe('shared UI components', () => {
+  it('renders links with href and variant class', () => {
     const html = renderToStaticMarkup(
       <UiButton href="/dashboard" variant="secondary">
         Open dashboard
       </UiButton>,
     );
 
-    expect(html).toContain("<a");
+    expect(html).toContain('<a');
     expect(html).toContain('href="/dashboard"');
-    expect(html).toContain("xr-button--secondary");
-    expect(html).toContain("Open dashboard");
+    expect(html).toContain('xr-button--secondary');
+    expect(html).toContain('Open dashboard');
   });
 
-  it("hardens links that open in a new tab", () => {
+  it('hardens links that open in a new tab', () => {
     const html = renderToStaticMarkup(
       <UiButton href="https://example.com/docs" rel="nofollow" target="_blank">
         External docs
@@ -37,7 +37,7 @@ describe("shared UI components", () => {
     expect(html).toContain('target="_blank"');
   });
 
-  it("renders disabled links outside the tab order", () => {
+  it('renders disabled links outside the tab order', () => {
     const html = renderToStaticMarkup(
       <UiButton disabled href="/danger" variant="secondary">
         Dangerous action
@@ -48,15 +48,15 @@ describe("shared UI components", () => {
     expect(html).toContain('tabindex="-1"');
   });
 
-  it("renders safe button controls by default", () => {
+  it('renders safe button controls by default', () => {
     const html = renderToStaticMarkup(<UiButton>Confirm</UiButton>);
 
-    expect(html).toContain("<button");
+    expect(html).toContain('<button');
     expect(html).toContain('type="button"');
-    expect(html).toContain("xr-button--primary");
+    expect(html).toContain('xr-button--primary');
   });
 
-  it("marks loading buttons as busy and disabled", () => {
+  it('marks loading buttons as busy and disabled', () => {
     const html = renderToStaticMarkup(
       <UiButton isLoading loadingLabel="Saving">
         Save changes
@@ -64,12 +64,12 @@ describe("shared UI components", () => {
     );
 
     expect(html).toContain('aria-busy="true"');
-    expect(html).toContain("disabled");
-    expect(html).toContain("xr-button--loading");
-    expect(html).toContain("Saving");
+    expect(html).toContain('disabled');
+    expect(html).toContain('xr-button--loading');
+    expect(html).toContain('Saving');
   });
 
-  it("prevents unavailable link actions while forwarding available clicks", () => {
+  it('prevents unavailable link actions while forwarding available clicks', () => {
     const unavailableClick = vi.fn();
     const availableClick = vi.fn((event: MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
@@ -81,7 +81,7 @@ describe("shared UI components", () => {
       </UiButton>,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Reports" }));
+    fireEvent.click(screen.getByRole('link', { name: 'Reports' }));
     expect(unavailableClick).not.toHaveBeenCalled();
 
     rerender(
@@ -90,11 +90,11 @@ describe("shared UI components", () => {
       </UiButton>,
     );
 
-    fireEvent.click(screen.getByRole("link", { name: "Reports" }));
+    fireEvent.click(screen.getByRole('link', { name: 'Reports' }));
     expect(availableClick).toHaveBeenCalledOnce();
   });
 
-  it("honors explicit stat-card accessibility props", () => {
+  it('honors explicit stat-card accessibility props', () => {
     const html = renderToStaticMarkup(
       <UiStatCard
         aria-label="Custom stat label"
@@ -111,77 +111,64 @@ describe("shared UI components", () => {
     expect(html).toContain('role="figure"');
   });
 
-  it("renders card title and body content with a stable label", () => {
+  it('renders card title and body content with a stable label', () => {
     const html = renderToStaticMarkup(
       <UiCard title="Security" titleId="security-card-title">
         Strict validation enabled
       </UiCard>,
     );
 
-    expect(html).toContain("<article");
+    expect(html).toContain('<article');
     expect(html).toContain('aria-labelledby="security-card-title"');
     expect(html).toContain('id="security-card-title"');
-    expect(html).toContain("Security");
-    expect(html).toContain("Strict validation enabled");
+    expect(html).toContain('Security');
+    expect(html).toContain('Strict validation enabled');
   });
 
-  it("renders card body without an optional title", () => {
+  it('renders card body without an optional title', () => {
     const html = renderToStaticMarkup(<UiCard>Body only</UiCard>);
 
-    expect(html).toContain("Body only");
-    expect(html).not.toContain("xr-card__title");
-    expect(html).not.toContain("aria-labelledby");
+    expect(html).toContain('Body only');
+    expect(html).not.toContain('xr-card__title');
+    expect(html).not.toContain('aria-labelledby');
   });
 
-  it("renders sections with and without optional eyebrow copy", () => {
+  it('renders sections with and without optional eyebrow copy', () => {
     const withEyebrow = renderToStaticMarkup(
       <UiSection eyebrow="Overview" title="Workspace" titleId="workspace-title">
         Section content
       </UiSection>,
     );
-    const withoutEyebrow = renderToStaticMarkup(
-      <UiSection title="Workspace">Section content</UiSection>,
-    );
+    const withoutEyebrow = renderToStaticMarkup(<UiSection title="Workspace">Section content</UiSection>);
 
-    expect(withEyebrow).toContain("Overview");
-    expect(withEyebrow).toContain("xr-eyebrow");
+    expect(withEyebrow).toContain('Overview');
+    expect(withEyebrow).toContain('xr-eyebrow');
     expect(withEyebrow).toContain('aria-labelledby="workspace-title"');
-    expect(withoutEyebrow).toContain("Workspace");
-    expect(withoutEyebrow).not.toContain("xr-eyebrow");
+    expect(withoutEyebrow).toContain('Workspace');
+    expect(withoutEyebrow).not.toContain('xr-eyebrow');
   });
 
-  it("renders stat cards and status pill tones", () => {
+  it('renders stat cards and status pill tones', () => {
     const stat = renderToStaticMarkup(
-      <UiStatCard
-        detail="Always available"
-        label="Availability"
-        value="24/7"
-        valueLabel="twenty four seven"
-      />,
+      <UiStatCard detail="Always available" label="Availability" value="24/7" valueLabel="twenty four seven" />,
     );
     const defaultStatus = renderToStaticMarkup(<UiStatusPill label="Ready" />);
-    const liveStatus = renderToStaticMarkup(
-      <UiStatusPill label="Internal" live="polite" tone="warning" />,
-    );
+    const liveStatus = renderToStaticMarkup(<UiStatusPill label="Internal" live="polite" tone="warning" />);
 
     expect(stat).toContain('role="group"');
-    expect(stat).toContain(
-      'aria-label="Availability: twenty four seven. Always available"',
-    );
-    expect(defaultStatus).toContain("xr-status--info");
+    expect(stat).toContain('aria-label="Availability: twenty four seven. Always available"');
+    expect(defaultStatus).toContain('xr-status--info');
     expect(defaultStatus).toContain('data-tone="info"');
-    expect(liveStatus).toContain("xr-status--warning");
+    expect(liveStatus).toContain('xr-status--warning');
     expect(liveStatus).toContain('aria-live="polite"');
     expect(liveStatus).toContain('role="status"');
 
-    const valueLabelFallback = renderToStaticMarkup(
-      <UiStatCard detail="Median" label="Latency" value="12ms" />,
-    );
+    const valueLabelFallback = renderToStaticMarkup(<UiStatCard detail="Median" label="Latency" value="12ms" />);
 
     expect(valueLabelFallback).toContain('aria-label="Latency: 12ms. Median"');
   });
 
-  it("renders feedback primitives", () => {
+  it('renders feedback primitives', () => {
     const loading = renderToStaticMarkup(<UiLoading label="Loading profile" />);
     const empty = renderToStaticMarkup(
       <UiEmptyState
@@ -192,36 +179,27 @@ describe("shared UI components", () => {
       />,
     );
     const staticEmpty = renderToStaticMarkup(
-      <UiEmptyState
-        aria-live="off"
-        description="Static onboarding copy."
-        role="region"
-        title="Welcome"
-      />,
+      <UiEmptyState aria-live="off" description="Static onboarding copy." role="region" title="Welcome" />,
     );
-    const toast = renderToStaticMarkup(
-      <UiToast message="Saved" tone="success" />,
-    );
-    const warningToast = renderToStaticMarkup(
-      <UiToast message="Sync delayed" tone="warning" />,
-    );
+    const toast = renderToStaticMarkup(<UiToast message="Saved" tone="success" />);
+    const warningToast = renderToStaticMarkup(<UiToast message="Sync delayed" tone="warning" />);
 
     expect(loading).toContain('role="status"');
     expect(loading).toContain('aria-live="polite"');
-    expect(loading).toContain("Loading profile");
+    expect(loading).toContain('Loading profile');
     expect(empty).toContain('aria-labelledby="empty-title"');
     expect(empty).toContain('aria-describedby="empty-description"');
     expect(empty).toContain('role="status"');
     expect(empty).toContain('aria-live="polite"');
     expect(staticEmpty).toContain('role="region"');
     expect(staticEmpty).toContain('aria-live="off"');
-    expect(toast).toContain("xr-toast--success");
+    expect(toast).toContain('xr-toast--success');
     expect(toast).toContain('aria-live="polite"');
     expect(warningToast).toContain('role="alert"');
     expect(warningToast).toContain('aria-live="assertive"');
   });
 
-  it("renders accessible text fields with labels and descriptions", () => {
+  it('renders accessible text fields with labels and descriptions', () => {
     const html = renderToStaticMarkup(
       <UiTextField
         error="Use a work email"
@@ -236,28 +214,28 @@ describe("shared UI components", () => {
 
     expect(html).toContain('class="xr-field__label');
     expect(html).toContain('class="xr-input');
-    expect(html).toContain("aria-describedby=");
+    expect(html).toContain('aria-describedby=');
     expect(html).toContain('aria-invalid="true"');
     expect(html).toContain('role="alert"');
-    expect(html).toContain("Email address");
-    expect(html).toContain("We never share this address.");
-    expect(html).toContain("Use a work email");
+    expect(html).toContain('Email address');
+    expect(html).toContain('We never share this address.');
+    expect(html).toContain('Use a work email');
   });
 
-  it("renders as a slotted child element when asChild is set", () => {
+  it('renders as a slotted child element when asChild is set', () => {
     render(
       <UiButton asChild variant="ghost">
         <a href="/child">Child link</a>
       </UiButton>,
     );
 
-    const link = screen.getByRole("link", { name: "Child link" });
-    expect(link.getAttribute("href")).toBe("/child");
-    expect(link.getAttribute("type")).toBeNull();
-    expect(link.hasAttribute("disabled")).toBe(false);
+    const link = screen.getByRole('link', { name: 'Child link' });
+    expect(link.getAttribute('href')).toBe('/child');
+    expect(link.getAttribute('type')).toBeNull();
+    expect(link.hasAttribute('disabled')).toBe(false);
   });
 
-  it("adds hardening rel tokens for blank links without an explicit rel", () => {
+  it('adds hardening rel tokens for blank links without an explicit rel', () => {
     const html = renderToStaticMarkup(
       <UiButton href="https://example.com" target="_blank">
         Open external
@@ -268,7 +246,7 @@ describe("shared UI components", () => {
     expect(html).toContain('target="_blank"');
   });
 
-  it("marks loading links as busy and unavailable", () => {
+  it('marks loading links as busy and unavailable', () => {
     const html = renderToStaticMarkup(
       <UiButton href="/reports" isLoading loadingLabel="Loading reports">
         Reports
@@ -277,10 +255,10 @@ describe("shared UI components", () => {
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('aria-disabled="true"');
-    expect(html).toContain("Loading reports");
+    expect(html).toContain('Loading reports');
   });
 
-  it("renders shadcn-style form and Radix select primitives", () => {
+  it('renders shadcn-style form and Radix select primitives', () => {
     const onValueChange = vi.fn();
 
     render(
@@ -291,27 +269,27 @@ describe("shared UI components", () => {
           label="Language"
           onValueChange={onValueChange}
           options={[
-            { label: "English", value: "en" },
-            { label: "Русский", value: "ru" },
+            { label: 'English', value: 'en' },
+            { label: 'Русский', value: 'ru' },
           ]}
           value="en"
         />
       </>,
     );
 
-    expect(screen.getByRole("form", { name: "Preferences" })).toBeDefined();
-    expect(document.querySelectorAll("select")).toHaveLength(0);
-    expect(document.querySelector(".xr-select-native")).toBeNull();
+    expect(screen.getByRole('form', { name: 'Preferences' })).toBeDefined();
+    expect(document.querySelectorAll('select')).toHaveLength(0);
+    expect(document.querySelector('.xr-select-native')).toBeNull();
 
-    const trigger = screen.getByRole("combobox", { name: "Language" });
-    expect(trigger.tagName.toLowerCase()).toBe("button");
-    expect(trigger.getAttribute("aria-hidden")).toBeNull();
-    expect(trigger.getAttribute("tabindex")).not.toBe("-1");
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(trigger.className).toContain("xr-select-trigger");
-    expect(trigger.className).toContain("rounded-[var(--xr-radius-md)]");
+    const trigger = screen.getByRole('combobox', { name: 'Language' });
+    expect(trigger.tagName.toLowerCase()).toBe('button');
+    expect(trigger.getAttribute('aria-hidden')).toBeNull();
+    expect(trigger.getAttribute('tabindex')).not.toBe('-1');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.className).toContain('xr-select-trigger');
+    expect(trigger.className).toContain('rounded-[var(--xr-radius-md)]');
     trigger.focus();
     expect(document.activeElement).toBe(trigger);
-    expect(trigger.textContent).toContain("English");
+    expect(trigger.textContent).toContain('English');
   });
 });

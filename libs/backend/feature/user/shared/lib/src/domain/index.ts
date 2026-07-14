@@ -1,2 +1,2 @@
-export * from "./user-permissions";
-export * from "./user-profile";
+export * from './user-permissions';
+export * from './user-profile';

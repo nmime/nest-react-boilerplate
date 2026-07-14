@@ -5,7 +5,7 @@ import { NotificationMainModule } from '@app/backend-feature-notification';
 import { AuthAppHealthServiceProvider } from './health.config';
 
 @Module({
-  imports: [AuthMainModule.forRoot(), NotificationMainModule],
+  imports: [AuthMainModule.forRoot(), NotificationMainModule.forRoot()],
   controllers: [BaseHealthController],
   providers: [AuthAppHealthServiceProvider, HealthPrivateNetworkIpGuard],
 })

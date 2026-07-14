@@ -1,16 +1,11 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { extname, join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { extname, join, relative } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
-const workspaceRoot = join(import.meta.dirname, "../../../../..");
-const uiSourceRoot = join(workspaceRoot, "libs/frontend/ui-web/lib/src");
-const allowedExtensions = new Set([".ts", ".tsx", ".css"]);
-const ignoredSuffixes = [
-  ".spec.ts",
-  ".spec.tsx",
-  ".stories.ts",
-  ".stories.tsx",
-];
+const workspaceRoot = join(import.meta.dirname, '../../../../..');
+const uiSourceRoot = join(workspaceRoot, 'libs/frontend/ui-web/lib/src');
+const allowedExtensions = new Set(['.ts', '.tsx', '.css']);
+const ignoredSuffixes = ['.spec.ts', '.spec.tsx', '.stories.ts', '.stories.tsx'];
 const forbiddenProductionPatterns = [
   /@app\/api-client/u,
   /@app\/api-contracts/u,
@@ -31,19 +26,16 @@ const walk = (directory: string): string[] =>
   });
 
 const isCheckedFile = (path: string): boolean =>
-  allowedExtensions.has(extname(path)) &&
-  !ignoredSuffixes.some((suffix) => path.endsWith(suffix));
+  allowedExtensions.has(extname(path)) && !ignoredSuffixes.some((suffix) => path.endsWith(suffix));
 
-describe("shared UI FSD boundary", () => {
-  it("keeps production UI sources free of API/client/app/backend coupling", () => {
+describe('shared UI FSD boundary', () => {
+  it('keeps production UI sources free of API/client/app/backend coupling', () => {
     const offenders = walk(uiSourceRoot)
       .filter(isCheckedFile)
       .flatMap((path) => {
         const relativePath = relative(workspaceRoot, path);
-        const content = readFileSync(path, "utf8");
-        const isForbidden = forbiddenProductionPatterns.some((pattern) =>
-          pattern.test(content),
-        );
+        const content = readFileSync(path, 'utf8');
+        const isForbidden = forbiddenProductionPatterns.some((pattern) => pattern.test(content));
 
         return isForbidden ? [relativePath] : [];
       });
@@ -51,9 +43,9 @@ describe("shared UI FSD boundary", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("does not publicly re-export API-support helpers", () => {
-    const publicBarrel = readFileSync(join(uiSourceRoot, "index.ts"), "utf8");
+  it('does not publicly re-export API-support helpers', () => {
+    const publicBarrel = readFileSync(join(uiSourceRoot, 'index.ts'), 'utf8');
 
-    expect(publicBarrel).not.toContain("./api/api-client");
+    expect(publicBarrel).not.toContain('./api/api-client');
   });
 });

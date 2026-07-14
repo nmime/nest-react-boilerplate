@@ -1,20 +1,11 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import {
   PublicAuthMetadataKey,
   RequiredPermissionsMetadataKey,
   RequiredRolesMetadataKey,
-} from "./access-control.decorators";
-import type {
-  AuthenticatedPrincipal,
-  AuthenticatedRequest,
-} from "./access-control.types";
+} from './access-control.decorators';
+import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
 
 export interface PermissionEvaluationContext {
   permission: string;
@@ -36,26 +27,18 @@ export class RbacGuard implements CanActivate {
     }
 
     const requiredRoles = this.getMetadata(RequiredRolesMetadataKey, context);
-    const requiredPermissions = this.getMetadata(
-      RequiredPermissionsMetadataKey,
-      context,
-    );
+    const requiredPermissions = this.getMetadata(RequiredPermissionsMetadataKey, context);
     const principal = this.getPrincipal(context);
 
-    if (
-      this.requiresPermissionMetadata(context) &&
-      requiredPermissions.length === 0
-    ) {
-      throw new ForbiddenException("Access permission metadata is missing.");
+    if (this.requiresPermissionMetadata(context) && requiredPermissions.length === 0) {
+      throw new ForbiddenException('Access permission metadata is missing.');
     }
 
     if (requiredRoles.length > 0 && !hasAnyRole(principal, requiredRoles)) {
-      throw new ForbiddenException("Required role is missing.");
+      throw new ForbiddenException('Required role is missing.');
     }
-    if (
-      !this.hasAllPermissions(principal, requiredPermissions, requiredRoles)
-    ) {
-      throw new ForbiddenException("Required permission is missing.");
+    if (!this.hasAllPermissions(principal, requiredPermissions, requiredRoles)) {
+      throw new ForbiddenException('Required permission is missing.');
     }
 
     return true;
@@ -63,19 +46,16 @@ export class RbacGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean | undefined>(
-        PublicAuthMetadataKey,
-        [context.getHandler(), context.getClass()],
-      ) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(PublicAuthMetadataKey, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false
     );
   }
 
   private getMetadata(key: string, context: ExecutionContext): string[] {
     return (
-      this.reflector.getAllAndOverride<string[] | undefined>(key, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? []
+      this.reflector.getAllAndOverride<string[] | undefined>(key, [context.getHandler(), context.getClass()]) ?? []
     );
   }
 
@@ -83,7 +63,7 @@ export class RbacGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const principal = request.user ?? request.auth;
     if (!principal) {
-      throw new UnauthorizedException("Authenticated principal is missing.");
+      throw new UnauthorizedException('Authenticated principal is missing.');
     }
 
     return principal;
@@ -94,9 +74,7 @@ export class RbacGuard implements CanActivate {
     return false;
   }
 
-  protected evaluateDomainPermission(
-    context: PermissionEvaluationContext,
-  ): PermissionEvaluationResult;
+  protected evaluateDomainPermission(context: PermissionEvaluationContext): PermissionEvaluationResult;
   protected evaluateDomainPermission(): PermissionEvaluationResult {
     return undefined;
   }
@@ -118,9 +96,6 @@ export class RbacGuard implements CanActivate {
   }
 }
 
-function hasAnyRole(
-  principal: AuthenticatedPrincipal,
-  roles: string[],
-): boolean {
+function hasAnyRole(principal: AuthenticatedPrincipal, roles: string[]): boolean {
   return roles.some((role) => principal.roles.includes(role));
 }

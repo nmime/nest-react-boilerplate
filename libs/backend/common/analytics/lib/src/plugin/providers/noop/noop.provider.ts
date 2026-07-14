@@ -1,7 +1,7 @@
-import { AbstractAnalyticsProvider } from "../base";
+import { AbstractAnalyticsProvider } from '../base';
 
 export class NoopAnalyticsProvider extends AbstractAnalyticsProvider {
-  constructor(readonly name = "noop") {
+  constructor(readonly name = 'noop') {
     super();
   }
 

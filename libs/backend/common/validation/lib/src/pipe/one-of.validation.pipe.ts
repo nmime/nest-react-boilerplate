@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  type PipeTransform,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, type PipeTransform } from '@nestjs/common';
 
 @Injectable()
 export class OneOfValidationPipe<T> implements PipeTransform<T> {
@@ -10,7 +6,7 @@ export class OneOfValidationPipe<T> implements PipeTransform<T> {
 
   transform(value: T): T {
     if (!this.allowedValues.includes(value)) {
-      throw new BadRequestException("Value is not allowed.");
+      throw new BadRequestException('Value is not allowed.');
     }
 
     return value;

@@ -1,18 +1,15 @@
-import { MikroORM } from "@mikro-orm/core";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { Test, type TestingModule } from "@nestjs/testing";
+import { MikroORM } from '@mikro-orm/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Test, type TestingModule } from '@nestjs/testing';
 import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
-} from "@app/backend-common-component-test";
-import { type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+} from '@app/backend-common-component-test';
+import { type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   AdminAuditLogEntity,
   AdminAuditLogEntitySchema,
@@ -23,17 +20,15 @@ import {
   AuthUserRepository,
   TransactionalOutboxEventEntity,
   TransactionalOutboxEventEntitySchema,
-} from "@app/backend-postgres-main-auth";
+} from '@app/backend-postgres-main-auth';
 
 const dockerAvailable = hasDockerRuntime();
 if (!dockerAvailable) {
-  process.stderr.write(
-    "AuthUserRepository component tests: skipped because Docker is not available on this host.\n",
-  );
+  process.stderr.write('AuthUserRepository component tests: skipped because Docker is not available on this host.\n');
 }
 const describeIfDocker = dockerAvailable ? describe : describe.skip;
 
-describeIfDocker("AuthUserRepository component", () => {
+describeIfDocker('AuthUserRepository component', () => {
   let container: StartedPostgreSqlContainer | undefined;
   let moduleRef: TestingModule | undefined;
   let app: NestFastifyApplication | undefined;
@@ -57,9 +52,7 @@ describeIfDocker("AuthUserRepository component", () => {
       ],
     }).compile();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     await app.init();
 
     orm = moduleRef.get(MikroORM);
@@ -81,189 +74,160 @@ describeIfDocker("AuthUserRepository component", () => {
     await stopPostgresContainer(container);
   });
 
-  it("creates and finds users through a real Postgres repository", async () => {
+  it('creates and finds users through a real Postgres repository', async () => {
     const created = await authUsers.createUser({
-      email: "user@example.com",
-      displayName: "Component User",
-      permissions: ["profile:read"],
-      roles: ["user"],
+      email: 'user@example.com',
+      displayName: 'Component User',
+      permissions: ['profile:read'],
+      roles: ['user'],
     });
 
     const user = created._unsafeUnwrap();
-    expect(user.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
-    );
-    expect(user.email).toBe("user@example.com");
-    expect(user.roles).toEqual(["user"]);
-    expect(user.permissions).toEqual(["profile:read"]);
+    expect(user.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u);
+    expect(user.email).toBe('user@example.com');
+    expect(user.roles).toEqual(['user']);
+    expect(user.permissions).toEqual(['profile:read']);
 
-    const found = await authUsers.findByEmail("user@example.com");
+    const found = await authUsers.findByEmail('user@example.com');
     expect(found._unsafeUnwrap()).toMatchObject({
       id: user.id,
-      email: "user@example.com",
-      displayName: "Component User",
-      permissions: ["profile:read"],
-      roles: ["user"],
-      status: "active",
+      email: 'user@example.com',
+      displayName: 'Component User',
+      permissions: ['profile:read'],
+      roles: ['user'],
+      status: 'active',
     });
   });
 
-  it("updates access policy and records logins", async () => {
-    const user = (
-      await authUsers.createUser({ email: "admin@example.com" })
-    )._unsafeUnwrap();
+  it('updates access policy and records logins', async () => {
+    const user = (await authUsers.createUser({ email: 'admin@example.com' }))._unsafeUnwrap();
     const policy = await authUsers.setAccessPolicy(user.id, {
-      permissions: ["admin:read"],
-      roles: ["admin"],
-      status: "disabled",
+      permissions: ['admin:read'],
+      roles: ['admin'],
+      status: 'disabled',
     });
-    const loggedInAt = new Date("2026-01-01T00:00:00.000Z");
+    const loggedInAt = new Date('2026-01-01T00:00:00.000Z');
     const login = await authUsers.recordLogin(user.id, loggedInAt);
 
     expect(policy._unsafeUnwrap()).toMatchObject({
-      permissions: ["admin:read"],
-      roles: ["admin"],
-      status: "disabled",
+      permissions: ['admin:read'],
+      roles: ['admin'],
+      status: 'disabled',
     });
-    expect(login._unsafeUnwrap()?.lastLoginAt.toISOString()).toBe(
-      loggedInAt.toISOString(),
-    );
+    expect(login._unsafeUnwrap()?.lastLoginAt.toISOString()).toBe(loggedInAt.toISOString());
   });
 
-  it("persists supported locales and rejects unsupported locales", async () => {
+  it('persists supported locales and rejects unsupported locales', async () => {
     const user = (
       await authUsers.createUser({
-        email: "locale@example.com",
-        locale: "ru",
+        email: 'locale@example.com',
+        locale: 'ru',
       })
     )._unsafeUnwrap();
 
-    expect(user.locale).toBe("ru");
-    expect(
-      (await authUsers.setLocale(user.id, "en"))._unsafeUnwrap(),
-    ).toMatchObject({ locale: "en" });
-    expect(
-      (await authUsers.setLocale(user.id, "ru"))._unsafeUnwrap(),
-    ).toMatchObject({ locale: "ru" });
+    expect(user.locale).toBe('ru');
+    expect((await authUsers.setLocale(user.id, 'en'))._unsafeUnwrap()).toMatchObject({ locale: 'en' });
+    expect((await authUsers.setLocale(user.id, 'ru'))._unsafeUnwrap()).toMatchObject({ locale: 'ru' });
 
-    const unsupportedLocale = "es" as unknown as Parameters<
-      AuthUserRepository["setLocale"]
-    >[1];
+    const unsupportedLocale = 'es' as unknown as Parameters<AuthUserRepository['setLocale']>[1];
     const unsupported = await authUsers.setLocale(user.id, unsupportedLocale);
 
     expect(unsupported._unsafeUnwrapErr()).toMatchObject({
-      code: "repository_error",
+      code: 'repository_error',
     });
   });
 
-  it("returns null for missing users", async () => {
-    const found = await authUsers.findByEmail("missing@example.com");
+  it('returns null for missing users', async () => {
+    const found = await authUsers.findByEmail('missing@example.com');
 
     expect(found._unsafeUnwrap()).toBeNull();
-    expect(
-      (
-        await authUsers.findById("00000000-0000-4000-8000-000000000000")
-      )._unsafeUnwrap(),
-    ).toBeNull();
-    expect(
-      (
-        await authUsers.setAccessPolicy(
-          "00000000-0000-4000-8000-000000000000",
-          {},
-        )
-      )._unsafeUnwrap(),
-    ).toBeNull();
-    expect(
-      (
-        await authUsers.recordLogin("00000000-0000-4000-8000-000000000000")
-      )._unsafeUnwrap(),
-    ).toBeNull();
+    expect((await authUsers.findById('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
+    expect((await authUsers.setAccessPolicy('00000000-0000-4000-8000-000000000000', {}))._unsafeUnwrap()).toBeNull();
+    expect((await authUsers.recordLogin('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
   });
 
-  it("maps real unique-constraint failures to repository errors", async () => {
-    await authUsers
-      .createUser({ email: "duplicate@example.com" })
-      .mapErr((error) => {
-        throw new Error(error.message);
-      });
-
-    const duplicate = await authUsers.createUser({
-      email: "duplicate@example.com",
+  it('maps real unique-constraint failures to repository errors', async () => {
+    await authUsers.createUser({ email: 'duplicate@example.com' }).mapErr((error) => {
+      throw new Error(error.message);
     });
 
-    expect(duplicate._unsafeUnwrapErr().code).toBe("repository_error");
+    const duplicate = await authUsers.createUser({
+      email: 'duplicate@example.com',
+    });
+
+    expect(duplicate._unsafeUnwrapErr().code).toBe('repository_error');
   });
 
-  it("atomically writes sensitive admin mutations with audit and outbox rows", async () => {
+  it('atomically writes sensitive admin mutations with audit and outbox rows', async () => {
     const user = (
       await authUsers.createUser({
-        email: "powerful-admin@example.com",
-        roles: ["admin"],
-        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+        email: 'powerful-admin@example.com',
+        roles: ['admin'],
+        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
     const actor = (
       await authUsers.createUser({
-        email: "second-powerful-admin@example.com",
-        roles: ["admin"],
-        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+        email: 'second-powerful-admin@example.com',
+        roles: ['admin'],
+        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
 
     const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
       targetUserId: user.id,
       actorUserId: actor.id,
-      action: "admin.user.status.update",
-      policy: { status: "disabled" },
-      audit: { metadata: { requestId: "req-component" } },
+      action: 'admin.user.status.update',
+      policy: { status: 'disabled' },
+      audit: { metadata: { requestId: 'req-component' } },
     });
 
     expect(mutation._unsafeUnwrap()).toMatchObject({
-      before: { status: "active" },
-      after: { status: "disabled" },
+      before: { status: 'active' },
+      after: { status: 'disabled' },
       auditLog: {
-        action: "admin.user.status.update",
-        before: { status: "active" },
-        after: { status: "disabled" },
+        action: 'admin.user.status.update',
+        before: { status: 'active' },
+        after: { status: 'disabled' },
       },
       outboxEvent: {
-        aggregateType: "admin.user",
+        aggregateType: 'admin.user',
         aggregateId: user.id,
-        eventType: "admin.user.status.update",
-        status: "pending",
+        eventType: 'admin.user.status.update',
+        status: 'pending',
       },
     });
     expect(await orm.em.count(AdminAuditLogEntity, {})).toBe(1);
     expect(await orm.em.count(TransactionalOutboxEventEntity, {})).toBe(1);
   });
 
-  it("blocks last powerful admin changes when another active admin lacks required permissions", async () => {
+  it('blocks last powerful admin changes when another active admin lacks required permissions', async () => {
     const onlyPowerfulAdmin = (
       await authUsers.createUser({
-        email: "only-powerful-admin@example.com",
-        roles: ["admin"],
-        permissions: ["admin:users:write", "admin:users:access-policy:update"],
+        email: 'only-powerful-admin@example.com',
+        roles: ['admin'],
+        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
     await authUsers.createUser({
-      email: "role-only-admin@example.com",
-      roles: ["admin"],
-      permissions: ["admin:users:read"],
+      email: 'role-only-admin@example.com',
+      roles: ['admin'],
+      permissions: ['admin:users:read'],
     });
 
     const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
       targetUserId: onlyPowerfulAdmin.id,
-      actorUserId: "00000000-0000-4000-8000-000000000099",
-      action: "admin.user.access_policy.update",
+      actorUserId: '00000000-0000-4000-8000-000000000099',
+      action: 'admin.user.access_policy.update',
       policy: {
-        roles: ["admin"],
-        permissions: ["admin:users:write"],
+        roles: ['admin'],
+        permissions: ['admin:users:write'],
       },
-      audit: { metadata: { requestId: "req-component" } },
+      audit: { metadata: { requestId: 'req-component' } },
     });
 
     expect(mutation._unsafeUnwrapErr().message).toBe(
-      "At least one active administrator must retain admin write access.",
+      'At least one active administrator must retain admin write access.',
     );
     expect(await orm.em.count(AdminAuditLogEntity, {})).toBe(0);
     expect(await orm.em.count(TransactionalOutboxEventEntity, {})).toBe(0);

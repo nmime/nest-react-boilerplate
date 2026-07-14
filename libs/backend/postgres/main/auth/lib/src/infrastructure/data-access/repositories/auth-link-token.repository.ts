@@ -1,16 +1,13 @@
-import { EntityManager, LockMode } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
+import { EntityManager, LockMode } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
 import {
   AuthLinkTokenEntity,
   DefaultAuthTenantId,
   type AuthLinkTokenPurpose,
   type ExternalAuthProvider,
-} from "../entities";
-import {
-  mapSocialAuthError,
-  type SocialAuthRepositoryError,
-} from "./external-identity.repository";
+} from '../entities';
+import { mapSocialAuthError, type SocialAuthRepositoryError } from './external-identity.repository';
 
 export interface CreateAuthLinkTokenInput {
   id?: string;
@@ -31,13 +28,8 @@ export class AuthLinkTokenRepository {
     private readonly entityManager: EntityManager,
   ) {}
 
-  createToken(
-    input: CreateAuthLinkTokenInput,
-  ): ResultAsync<AuthLinkTokenEntity, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistToken(input),
-      mapSocialAuthError,
-    );
+  createToken(input: CreateAuthLinkTokenInput): ResultAsync<AuthLinkTokenEntity, SocialAuthRepositoryError> {
+    return ResultAsync.fromPromise(this.persistToken(input), mapSocialAuthError);
   }
 
   consumeToken(
@@ -46,10 +38,7 @@ export class AuthLinkTokenRepository {
     tenantId: string = DefaultAuthTenantId,
     now: Date = new Date(),
   ): ResultAsync<AuthLinkTokenEntity | null, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.consumeTokenTransaction(tokenHash, purpose, tenantId, now),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.consumeTokenTransaction(tokenHash, purpose, tenantId, now), mapSocialAuthError);
   }
 
   revokeToken(
@@ -57,15 +46,10 @@ export class AuthLinkTokenRepository {
     tenantId: string = DefaultAuthTenantId,
     now: Date = new Date(),
   ): ResultAsync<boolean, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.revokeTokenTransaction(tokenHash, tenantId, now),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.revokeTokenTransaction(tokenHash, tenantId, now), mapSocialAuthError);
   }
 
-  private async persistToken(
-    input: CreateAuthLinkTokenInput,
-  ): Promise<AuthLinkTokenEntity> {
+  private async persistToken(input: CreateAuthLinkTokenInput): Promise<AuthLinkTokenEntity> {
     const entity = new AuthLinkTokenEntity();
     if (input.id) {
       entity.id = input.id;
@@ -113,11 +97,7 @@ export class AuthLinkTokenRepository {
     });
   }
 
-  private async revokeTokenTransaction(
-    tokenHash: string,
-    tenantId: string,
-    now: Date,
-  ): Promise<boolean> {
+  private async revokeTokenTransaction(tokenHash: string, tenantId: string, now: Date): Promise<boolean> {
     return this.entityManager.transactional(async (em) => {
       const current = await em.findOne(
         AuthLinkTokenEntity,

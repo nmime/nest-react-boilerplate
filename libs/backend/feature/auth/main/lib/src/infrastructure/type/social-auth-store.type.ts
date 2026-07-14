@@ -1,14 +1,14 @@
-import type { ResultAsync } from "neverthrow";
+import type { ResultAsync } from 'neverthrow';
 import type {
   AuthLinkTokenPurpose,
   AuthMethodType,
   AuthProviderTokenKind,
   ExternalAuthProvider,
   ExternalAuthProviderChannel,
-} from "@app/backend-postgres-main-auth";
+} from '@app/backend-postgres-main-auth';
 
 export interface SocialAuthStoreError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 
@@ -98,18 +98,9 @@ export interface SocialAuthStore {
     providerSubject: string,
     tenantId: string,
   ): ResultAsync<ExternalIdentityRecord | null, SocialAuthStoreError>;
-  listIdentities(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError>;
-  upsertIdentity(
-    input: UpsertIdentityInput,
-  ): ResultAsync<ExternalIdentityRecord, SocialAuthStoreError>;
-  deleteIdentity(
-    identityId: string,
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<boolean, SocialAuthStoreError>;
+  listIdentities(userId: string, tenantId: string): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError>;
+  upsertIdentity(input: UpsertIdentityInput): ResultAsync<ExternalIdentityRecord, SocialAuthStoreError>;
+  deleteIdentity(identityId: string, userId: string, tenantId: string): ResultAsync<boolean, SocialAuthStoreError>;
   upsertMethod(input: {
     tenantId: string;
     userId: string;
@@ -118,33 +109,16 @@ export interface SocialAuthStore {
     externalIdentityId?: string | null;
     lastUsedAt?: Date | null;
   }): ResultAsync<AuthMethodRecord, SocialAuthStoreError>;
-  listMethods(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<AuthMethodRecord[], SocialAuthStoreError>;
-  countMethods(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<number, SocialAuthStoreError>;
-  createLinkToken(
-    input: CreateLinkTokenInput,
-  ): ResultAsync<LinkTokenRecord, SocialAuthStoreError>;
+  listMethods(userId: string, tenantId: string): ResultAsync<AuthMethodRecord[], SocialAuthStoreError>;
+  countMethods(userId: string, tenantId: string): ResultAsync<number, SocialAuthStoreError>;
+  createLinkToken(input: CreateLinkTokenInput): ResultAsync<LinkTokenRecord, SocialAuthStoreError>;
   consumeLinkToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
     tenantId: string,
     now?: Date,
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError>;
-  revokeLinkToken(
-    tokenHash: string,
-    tenantId: string,
-    now?: Date,
-  ): ResultAsync<boolean, SocialAuthStoreError>;
-  persistProviderToken(
-    input: PersistProviderTokenInput,
-  ): ResultAsync<boolean, SocialAuthStoreError>;
-  revokeProviderTokens(
-    externalIdentityId: string,
-    tenantId: string,
-  ): ResultAsync<number, SocialAuthStoreError>;
+  revokeLinkToken(tokenHash: string, tenantId: string, now?: Date): ResultAsync<boolean, SocialAuthStoreError>;
+  persistProviderToken(input: PersistProviderTokenInput): ResultAsync<boolean, SocialAuthStoreError>;
+  revokeProviderTokens(externalIdentityId: string, tenantId: string): ResultAsync<number, SocialAuthStoreError>;
 }

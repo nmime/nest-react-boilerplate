@@ -1,28 +1,19 @@
-import {
-  QueryClient,
-  useQueryClient,
-  type DefaultOptions,
-} from "@tanstack/react-query";
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
-import {
-  FrontendQueryProvider,
-  createFrontendQueryClient,
-} from "./query-provider";
+import { QueryClient, useQueryClient, type DefaultOptions } from '@tanstack/react-query';
+import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { FrontendQueryProvider, createFrontendQueryClient } from './query-provider';
 
-function QueryClientProbe({
-  onClient,
-}: Readonly<{ onClient: (client: QueryClient) => void }>) {
+function QueryClientProbe({ onClient }: Readonly<{ onClient: (client: QueryClient) => void }>) {
   onClient(useQueryClient());
   return null;
 }
 
-describe("frontend query provider", () => {
+describe('frontend query provider', () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("creates frontend query clients with defaults and overrides", () => {
+  it('creates frontend query clients with defaults and overrides', () => {
     const defaultClient = createFrontendQueryClient();
     const customClient = createFrontendQueryClient({
       defaultOptions: {
@@ -50,7 +41,7 @@ describe("frontend query provider", () => {
     });
   });
 
-  it("uses an injected query client", () => {
+  it('uses an injected query client', () => {
     const client = new QueryClient();
     let observedClient: QueryClient | undefined;
 

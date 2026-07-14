@@ -15,7 +15,7 @@ import {
   AdminSettingsUpdatePermission,
   AdminManageAllPermission,
   normalizeStringList,
-} from "@app/common-authz";
+} from '@app/common-authz';
 
 // Re-export the shared permission and role identifiers plus the claim normalizer
 // so importers of @app/frontend-feature-admin-shared keep resolving them here.
@@ -61,41 +61,24 @@ export interface AdminAccessPolicy {
   canUpdateSettings: boolean;
 }
 
-const hasPermission = (
-  permissions: readonly string[],
-  permission: string,
-): boolean =>
-  permissions.includes(permission) ||
-  permissions.includes(AdminManageAllPermission);
+const hasPermission = (permissions: readonly string[], permission: string): boolean =>
+  permissions.includes(permission) || permissions.includes(AdminManageAllPermission);
 
-export const createAdminAccessPolicy = (
-  principal?: AdminPrincipalClaims,
-): AdminAccessPolicy => {
+export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): AdminAccessPolicy => {
   const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
   const isAdmin = Boolean(principal?.subject && roles.includes(AdminRole));
 
-  const canReadProfile =
-    isAdmin && hasPermission(permissions, AdminProfileReadPermission);
-  const canReadDashboard =
-    isAdmin && hasPermission(permissions, AdminDashboardReadPermission);
-  const canReadUsers =
-    isAdmin && hasPermission(permissions, AdminUsersReadPermission);
-  const canUpdateUserStatus =
-    isAdmin && hasPermission(permissions, AdminUsersStatusUpdatePermission);
-  const canUpdateUserAccessPolicy =
-    isAdmin &&
-    hasPermission(permissions, AdminUsersAccessPolicyUpdatePermission);
-  const canReadRoles =
-    isAdmin && hasPermission(permissions, AdminRolesReadPermission);
-  const canWriteRoles =
-    isAdmin && hasPermission(permissions, AdminRolesWritePermission);
-  const canReadAudit =
-    isAdmin && hasPermission(permissions, AdminAuditReadPermission);
-  const canReadSettings =
-    isAdmin && hasPermission(permissions, AdminSettingsReadPermission);
-  const canUpdateSettings =
-    isAdmin && hasPermission(permissions, AdminSettingsUpdatePermission);
+  const canReadProfile = isAdmin && hasPermission(permissions, AdminProfileReadPermission);
+  const canReadDashboard = isAdmin && hasPermission(permissions, AdminDashboardReadPermission);
+  const canReadUsers = isAdmin && hasPermission(permissions, AdminUsersReadPermission);
+  const canUpdateUserStatus = isAdmin && hasPermission(permissions, AdminUsersStatusUpdatePermission);
+  const canUpdateUserAccessPolicy = isAdmin && hasPermission(permissions, AdminUsersAccessPolicyUpdatePermission);
+  const canReadRoles = isAdmin && hasPermission(permissions, AdminRolesReadPermission);
+  const canWriteRoles = isAdmin && hasPermission(permissions, AdminRolesWritePermission);
+  const canReadAudit = isAdmin && hasPermission(permissions, AdminAuditReadPermission);
+  const canReadSettings = isAdmin && hasPermission(permissions, AdminSettingsReadPermission);
+  const canUpdateSettings = isAdmin && hasPermission(permissions, AdminSettingsUpdatePermission);
 
   return {
     isAuthenticated: isAdmin,
@@ -125,11 +108,9 @@ export const createAdminAccessPolicy = (
   };
 };
 
-export const assertCanReadAdminProfile = (
-  principal?: AdminPrincipalClaims,
-): void => {
+export const assertCanReadAdminProfile = (principal?: AdminPrincipalClaims): void => {
   const policy = createAdminAccessPolicy(principal);
   if (!policy.canReadProfile) {
-    throw new Error("Admin profile permission is required.");
+    throw new Error('Admin profile permission is required.');
   }
 };

@@ -1,24 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
-import { ApiBearerAuth } from "@nestjs/swagger";
-import {
-  createOkResponse,
-  type OkResponse,
-} from "@app/backend-common-response";
-import {
-  ApiOkDataResponse,
-  ApiExceptions,
-  ApiSessionCookieAuth,
-} from "@app/backend-common-swagger";
+import { Body, Controller, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { createOkResponse, type OkResponse } from '@app/backend-common-response';
+import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import {
   CurrentUser,
   RequirePermissions,
@@ -26,22 +9,18 @@ import {
   SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 import {
   AdminRole,
   AdminRolesReadPermission,
   AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersWritePermission,
-} from "@app/backend-feature-admin-shared";
-import { AdminRolesUseCase } from "../../application";
-import type {
-  AdminRbacCatalog,
-  AdminRoleView,
-  AdminUserView,
-} from "../../domain";
-import { AdminRbacGuard } from "./admin-rbac.guard";
-import { executeAdminUseCase, requestContextFromRequest } from "./admin-http";
+} from '@app/backend-feature-admin-shared';
+import { AdminRolesUseCase } from '../../application';
+import type { AdminRbacCatalog, AdminRoleView, AdminUserView } from '../../domain';
+import { AdminRbacGuard } from './admin-rbac.guard';
+import { executeAdminUseCase, requestContextFromRequest } from './admin-http';
 import {
   AdminRbacCatalogPayloadDto,
   AdminRoleViewDto,
@@ -50,31 +29,25 @@ import {
   CreateAdminRoleDto,
   SetAdminRolePermissionsDto,
   UpdateAdminRoleDto,
-} from "./dto";
+} from './dto';
 
 @ApiExceptions(400, 401, 403, 404, 409, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
-@Controller("admin")
+@Controller('admin')
 export class AdminRolesController {
   constructor(private readonly adminRoles: AdminRolesUseCase) {}
 
-  @Get("roles")
+  @Get('roles')
   @ApiOkDataResponse(AdminRbacCatalogPayloadDto)
   @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesReadPermission)
-  async listRoles(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-  ): Promise<OkResponse<AdminRbacCatalog>> {
-    return createOkResponse(
-      await executeAdminUseCase(() =>
-        this.adminRoles.listRolesCatalog(principal),
-      ),
-    );
+  async listRoles(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<AdminRbacCatalog>> {
+    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.listRolesCatalog(principal)));
   }
 
-  @Post("roles")
+  @Post('roles')
   @ApiOkDataResponse(AdminRoleViewDto)
   @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
@@ -82,66 +55,46 @@ export class AdminRolesController {
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: CreateAdminRoleDto,
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(
-      await executeAdminUseCase(() =>
-        this.adminRoles.createRole(principal, input),
-      ),
-    );
+    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.createRole(principal, input)));
   }
 
-  @Patch("roles/:id")
+  @Patch('roles/:id')
   @ApiOkDataResponse(AdminRoleViewDto)
   @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
   async updateRole(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body() input: UpdateAdminRoleDto,
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(
-      await executeAdminUseCase(() =>
-        this.adminRoles.updateRole(principal, id, input),
-      ),
-    );
+    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.updateRole(principal, id, input)));
   }
 
-  @Put("roles/:id/permissions")
+  @Put('roles/:id/permissions')
   @ApiOkDataResponse(AdminRoleViewDto)
   @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
   async setRolePermissions(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body() input: SetAdminRolePermissionsDto,
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(
-      await executeAdminUseCase(() =>
-        this.adminRoles.setRolePermissions(principal, id, input),
-      ),
-    );
+    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.setRolePermissions(principal, id, input)));
   }
 
-  @Put("users/:id/roles")
+  @Put('users/:id/roles')
   @ApiOkDataResponse(AdminUserViewDto)
   @RequireRoles(AdminRole)
-  @RequirePermissions(
-    AdminUsersWritePermission,
-    AdminUsersAccessPolicyUpdatePermission,
-  )
+  @RequirePermissions(AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission)
   async assignUserRoles(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param("id") id: string,
+    @Param('id') id: string,
     @Body() input: AssignAdminUserRolesDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AdminUserView>> {
     return createOkResponse(
       await executeAdminUseCase(() =>
-        this.adminRoles.assignUserRoles(
-          principal,
-          id,
-          input,
-          requestContextFromRequest(request),
-        ),
+        this.adminRoles.assignUserRoles(principal, id, input, requestContextFromRequest(request)),
       ),
     );
   }

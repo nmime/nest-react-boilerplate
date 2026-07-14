@@ -1,11 +1,9 @@
-import { randomUUID } from "node:crypto";
-import { EntitySchema } from "@mikro-orm/core";
-import { DefaultAuthTenantId } from "./auth-user.entity";
+import { randomUUID } from 'node:crypto';
+import { EntitySchema } from '@mikro-orm/core';
+import { DefaultAuthTenantId } from './auth-user.entity';
 
 export type AdminAuditAction =
-  | "admin.user.status.update"
-  | "admin.user.access_policy.update"
-  | "admin.user.roles.update";
+  'admin.user.status.update' | 'admin.user.access_policy.update' | 'admin.user.roles.update';
 
 export interface AdminAuditLogEntityInput {
   tenantId?: string;
@@ -48,47 +46,47 @@ export class AdminAuditLogEntity {
 
 export const AdminAuditLogEntitySchema = new EntitySchema<AdminAuditLogEntity>({
   class: AdminAuditLogEntity,
-  tableName: "admin_audit_logs",
+  tableName: 'admin_audit_logs',
   properties: {
-    id: { type: "uuid", primary: true },
+    id: { type: 'uuid', primary: true },
     tenantId: {
-      type: "uuid",
-      fieldName: "tenant_id",
+      type: 'uuid',
+      fieldName: 'tenant_id',
       default: DefaultAuthTenantId,
     },
     actorUserId: {
-      type: "uuid",
-      fieldName: "actor_user_id",
+      type: 'uuid',
+      fieldName: 'actor_user_id',
       nullable: true,
     },
-    action: { type: "varchar", length: 128 },
-    resource: { type: "varchar", length: 128 },
+    action: { type: 'varchar', length: 128 },
+    resource: { type: 'varchar', length: 128 },
     targetUserId: {
-      type: "uuid",
-      fieldName: "target_user_id",
+      type: 'uuid',
+      fieldName: 'target_user_id',
       nullable: true,
     },
-    before: { type: "json", defaultRaw: "'{}'::jsonb" },
-    after: { type: "json", defaultRaw: "'{}'::jsonb" },
-    metadata: { type: "json", defaultRaw: "'{}'::jsonb" },
+    before: { type: 'json', defaultRaw: "'{}'::jsonb" },
+    after: { type: 'json', defaultRaw: "'{}'::jsonb" },
+    metadata: { type: 'json', defaultRaw: "'{}'::jsonb" },
     createdAt: {
-      type: "timestamptz",
-      fieldName: "created_at",
+      type: 'timestamptz',
+      fieldName: 'created_at',
       onCreate: () => new Date(),
     },
   },
   indexes: [
     {
-      name: "ix__admin_audit_logs__tenant_id_created_at",
-      properties: ["tenantId", "createdAt"],
+      name: 'ix__admin_audit_logs__tenant_id_created_at',
+      properties: ['tenantId', 'createdAt'],
     },
     {
-      name: "ix__admin_audit_logs__tenant_id_action",
-      properties: ["tenantId", "action"],
+      name: 'ix__admin_audit_logs__tenant_id_action',
+      properties: ['tenantId', 'action'],
     },
     {
-      name: "ix__admin_audit_logs__tenant_id_target_user_id",
-      properties: ["tenantId", "targetUserId"],
+      name: 'ix__admin_audit_logs__tenant_id_target_user_id',
+      properties: ['tenantId', 'targetUserId'],
     },
   ],
 });

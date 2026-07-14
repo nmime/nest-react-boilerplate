@@ -4,13 +4,17 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 
 ## Frontend apps
 
+- `starter-app` in `apps/frontend/starter-app`
 - `admin-app` in `apps/frontend/admin`
 - `user-app` in `apps/frontend/app`
 - `landing-app` in `apps/frontend/landing`
 - `site-app` in `apps/frontend/site`
 - `mobile-app` in `apps/frontend/mobile`
 
-The frontend runtime is now split by deployment shape. `landing-app` is the
+`starter-app` is the neutral Vite product shell and the default before setup.
+The other frontend applications are reference implementations: reuse their
+architecture and shared libraries, not their product copy or page composition.
+The frontend runtime is split by deployment shape. `landing-app` is the
 Astro + React islands marketing surface, `site-app` is the Vike + React SSR
 product/user site scaffold, `admin-app` remains a Vite React SPA, and
 `user-app` remains the current Vite user SPA until `site-app` reaches route and
@@ -36,7 +40,7 @@ Each API imports app-specific health configuration from its local `health.config
 
 ### Request context (CLS)
 
-Every HTTP request runs inside a **Continuation Local Storage** context via Node's built-in `AsyncLocalStorage` — same pattern as xrocket, zero new dependencies.
+Every HTTP request runs inside a **Continuation Local Storage** context via Node's built-in `AsyncLocalStorage`, with zero new dependencies.
 
 **Pipeline:**
 
@@ -55,8 +59,8 @@ Request → ClsInterceptor (enters CLS, generates requestId from x-request-id or
 import { requestContext } from '@app/backend-common-bootstrap';
 
 const requestId = requestContext.getRequestId(); // string | undefined
-requestContext.set('userId', 'abc-123');        // attach to context
-const userId = requestContext.get('userId');     // read from context
+requestContext.set('userId', 'abc-123'); // attach to context
+const userId = requestContext.get('userId'); // read from context
 ```
 
 **Why CLS over middleware headers:** async/await, promises, and NestJS interceptors naturally cross async boundaries. `AsyncLocalStorage` follows the execution context automatically — no manual passing, guaranteed same ID across the entire pipeline.

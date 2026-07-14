@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  OnApplicationBootstrap,
-  OnApplicationShutdown,
-} from '@nestjs/common';
+import { Inject, Injectable, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
 import { run, type RunnerHandle } from '@grammyjs/runner';
 import {
   TelegramBotInstanceInjectToken,
@@ -12,9 +7,7 @@ import {
 } from '@app/backend-feature-telegram-bot';
 
 @Injectable()
-export class TelegramPollingService
-  implements OnApplicationBootstrap, OnApplicationShutdown
-{
+export class TelegramPollingService implements OnApplicationBootstrap, OnApplicationShutdown {
   private handle: RunnerHandle | null = null;
 
   constructor(

@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
     url: https://github.com/nmime/nest-react-boilerplate/security/advisories/new
-    about: "Report security vulnerabilities privately via GitHub Security Advisories"
+    about: 'Report security vulnerabilities privately via GitHub Security Advisories'
   - name: Questions and Discussions
     url: https://github.com/nmime/nest-react-boilerplate/discussions
-    about: "Ask questions and discuss with the community"
+    about: 'Ask questions and discuss with the community'

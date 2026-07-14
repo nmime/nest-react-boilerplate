@@ -1,13 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
-import { Test } from "@nestjs/testing";
-import type { NatsConnection } from "@nats-io/nats-core";
-import { NatsInjectToken } from "./const";
-import { NatsModule } from "./nats.module";
-import type { NatsConnectionFactory } from "./type";
+import { describe, expect, it, vi } from 'vitest';
+import { Test } from '@nestjs/testing';
+import type { NatsConnection } from '@nats-io/nats-core';
+import { NatsInjectToken } from './const';
+import { NatsModule } from './nats.module';
+import type { NatsConnectionFactory } from './type';
 
-function mockConnection(
-  overrides: Partial<NatsConnection> = {},
-): NatsConnection {
+function mockConnection(overrides: Partial<NatsConnection> = {}): NatsConnection {
   return {
     isClosed: vi.fn(() => false),
     isDraining: vi.fn(() => false),
@@ -18,8 +16,8 @@ function mockConnection(
   } as unknown as NatsConnection;
 }
 
-describe("NatsModule.forRoot", () => {
-  it("provides a null connection and no-ops shutdown when no servers are configured", async () => {
+describe('NatsModule.forRoot', () => {
+  it('provides a null connection and no-ops shutdown when no servers are configured', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [NatsModule.forRoot()],
     }).compile();
@@ -31,7 +29,7 @@ describe("NatsModule.forRoot", () => {
     await expect(moduleRef.close()).resolves.toBeUndefined();
   });
 
-  it("uses an injected client connection verbatim and drains it on shutdown", async () => {
+  it('uses an injected client connection verbatim and drains it on shutdown', async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const client = mockConnection({ drain });
 
@@ -46,17 +44,15 @@ describe("NatsModule.forRoot", () => {
     expect(drain).toHaveBeenCalledTimes(1);
   });
 
-  it("builds the connection through a custom connection factory", async () => {
+  it('builds the connection through a custom connection factory', async () => {
     const created = mockConnection();
-    const connectionFactory = vi.fn<NatsConnectionFactory>(() =>
-      Promise.resolve(created),
-    );
+    const connectionFactory = vi.fn<NatsConnectionFactory>(() => Promise.resolve(created));
 
     const moduleRef = await Test.createTestingModule({
       imports: [
         NatsModule.forRoot({
-          servers: ["nats://nats:4222"],
-          name: "unit",
+          servers: ['nats://nats:4222'],
+          name: 'unit',
           connectionFactory,
         }),
       ],
@@ -66,8 +62,8 @@ describe("NatsModule.forRoot", () => {
     expect(connectionFactory).toHaveBeenCalledTimes(1);
     expect(connectionFactory).toHaveBeenCalledWith(
       expect.objectContaining({
-        servers: ["nats://nats:4222"],
-        name: "unit",
+        servers: ['nats://nats:4222'],
+        name: 'unit',
       }),
     );
 

@@ -1,1 +1,1 @@
-export * from "./otel-sdk-config.factory";
+export * from './otel-sdk-config.factory';

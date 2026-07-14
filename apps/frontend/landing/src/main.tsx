@@ -1,10 +1,10 @@
-import { StrictMode } from "react";
-import * as ReactDOM from "react-dom/client";
-import { UiErrorBoundary } from "@app/frontend-ui-web";
-import { App } from "./app";
-import "./app/styles";
+import { StrictMode } from 'react';
+import * as ReactDOM from 'react-dom/client';
+import { UiErrorBoundary } from '@app/frontend-ui-web';
+import { App } from './app';
+import './app/styles';
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 
 if (!container) {
   throw new Error('Missing required root element with id "root".');

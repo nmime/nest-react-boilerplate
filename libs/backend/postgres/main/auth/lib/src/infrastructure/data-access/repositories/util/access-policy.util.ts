@@ -1,9 +1,6 @@
-import type { AuthUserAccessPolicyInput, AuthUserEntity } from "../../entities";
+import type { AuthUserAccessPolicyInput, AuthUserEntity } from '../../entities';
 
-export function applyAccessPolicy(
-  entity: AuthUserEntity,
-  policy: AuthUserAccessPolicyInput,
-): void {
+export function applyAccessPolicy(entity: AuthUserEntity, policy: AuthUserAccessPolicyInput): void {
   if (policy.status) {
     entity.status = policy.status;
   }

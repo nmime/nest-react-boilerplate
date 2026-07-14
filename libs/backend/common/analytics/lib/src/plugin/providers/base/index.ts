@@ -1,1 +1,1 @@
-export * from "./abstract-analytics.provider";
+export * from './abstract-analytics.provider';

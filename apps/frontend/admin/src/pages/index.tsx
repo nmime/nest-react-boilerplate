@@ -1,2 +1,2 @@
-export * from "../shared";
-export * from "../widgets/admin-shell";
+export * from '../shared';
+export * from '../widgets/admin-shell';

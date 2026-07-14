@@ -1,27 +1,20 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Msg } from "@nats-io/nats-core";
-import type { NatsConnection } from "@nats-io/nats-core";
-import { NatsConfigService } from "./config";
-import {
-  closeNatsConnection,
-  createNatsConnection,
-  toNatsConnectionOptions,
-} from "./nats-client.factory";
-import {
-  createJetStream,
-  createJetStreamManager,
-} from "./nats-jetstream.factory";
-import { NatsJetStreamService } from "./nats-jetstream.service";
-import { createKvm } from "./nats-kv.factory";
-import { NatsKvService } from "./nats-kv.service";
-import { createObjm } from "./nats-object-store.factory";
-import { NatsObjectStoreService } from "./nats-object-store.service";
-import { createServices } from "./nats-services.factory";
-import { NatsServicesService } from "./nats-services.service";
-import { NatsHealthIndicator } from "./nats.health";
-import { NatsConnectionUnavailableError, NatsService } from "./nats.service";
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Msg } from '@nats-io/nats-core';
+import type { NatsConnection } from '@nats-io/nats-core';
+import { NatsConfigService } from './config';
+import { closeNatsConnection, createNatsConnection, toNatsConnectionOptions } from './nats-client.factory';
+import { createJetStream, createJetStreamManager } from './nats-jetstream.factory';
+import { NatsJetStreamService } from './nats-jetstream.service';
+import { createKvm } from './nats-kv.factory';
+import { NatsKvService } from './nats-kv.service';
+import { createObjm } from './nats-object-store.factory';
+import { NatsObjectStoreService } from './nats-object-store.service';
+import { createServices } from './nats-services.factory';
+import { NatsServicesService } from './nats-services.service';
+import { NatsHealthIndicator } from './nats.health';
+import { NatsConnectionUnavailableError, NatsService } from './nats.service';
 
 const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
@@ -32,16 +25,16 @@ const mocks = vi.hoisted(() => ({
   svcmConstructor: vi.fn(),
 }));
 
-vi.mock("@nats-io/transport-node", () => ({
+vi.mock('@nats-io/transport-node', () => ({
   connect: mocks.connect,
 }));
 
-vi.mock("@nats-io/jetstream", () => ({
+vi.mock('@nats-io/jetstream', () => ({
   jetstream: mocks.jetstream,
   jetstreamManager: mocks.jetstreamManager,
 }));
 
-vi.mock("@nats-io/kv", () => ({
+vi.mock('@nats-io/kv', () => ({
   Kvm: class Kvm {
     create = vi.fn();
     open = vi.fn();
@@ -52,7 +45,7 @@ vi.mock("@nats-io/kv", () => ({
   },
 }));
 
-vi.mock("@nats-io/obj", () => ({
+vi.mock('@nats-io/obj', () => ({
   Objm: class Objm {
     create = vi.fn();
     open = vi.fn();
@@ -64,7 +57,7 @@ vi.mock("@nats-io/obj", () => ({
   },
 }));
 
-vi.mock("@nats-io/services", () => ({
+vi.mock('@nats-io/services', () => ({
   Svcm: class Svcm {
     add = vi.fn();
     client = vi.fn();
@@ -76,24 +69,22 @@ vi.mock("@nats-io/services", () => ({
 }));
 
 const natsEnvKeys = [
-  "NATS_SERVERS",
-  "NATS_NAME",
-  "NATS_USER",
-  "NATS_PASS",
-  "NATS_TOKEN",
-  "NATS_TIMEOUT_MS",
-  "NATS_RECONNECT",
-  "NATS_MAX_RECONNECT_ATTEMPTS",
-  "NATS_RECONNECT_TIME_WAIT_MS",
-  "NATS_WAIT_ON_FIRST_CONNECT",
-  "NATS_PING_INTERVAL_MS",
-  "NATS_DRAIN_TIMEOUT_MS",
+  'NATS_SERVERS',
+  'NATS_NAME',
+  'NATS_USER',
+  'NATS_PASS',
+  'NATS_TOKEN',
+  'NATS_TIMEOUT_MS',
+  'NATS_RECONNECT',
+  'NATS_MAX_RECONNECT_ATTEMPTS',
+  'NATS_RECONNECT_TIME_WAIT_MS',
+  'NATS_WAIT_ON_FIRST_CONNECT',
+  'NATS_PING_INTERVAL_MS',
+  'NATS_DRAIN_TIMEOUT_MS',
 ] as const;
 
-describe("NATS foundation", () => {
-  const originalEnvironment = Object.fromEntries(
-    natsEnvKeys.map((key) => [key, process.env[key]]),
-  );
+describe('NATS foundation', () => {
+  const originalEnvironment = Object.fromEntries(natsEnvKeys.map((key) => [key, process.env[key]]));
 
   beforeEach(() => {
     for (const mock of Object.values(mocks)) {
@@ -116,33 +107,33 @@ describe("NATS foundation", () => {
     }
   });
 
-  it("keeps NATS disabled when no servers are configured", () => {
+  it('keeps NATS disabled when no servers are configured', () => {
     const config = new NatsConfigService();
 
     expect(config.connectionConfig).toBeUndefined();
     expect(config.drainTimeoutMs).toBe(5000);
   });
 
-  it("builds connection config from environment variables", () => {
-    process.env.NATS_SERVERS = "nats://nats-a:4222, nats://nats-b:4222";
-    process.env.NATS_NAME = "backend-api";
-    process.env.NATS_USER = "app";
-    process.env.NATS_PASS = "secret";
-    process.env.NATS_TIMEOUT_MS = "1500";
-    process.env.NATS_RECONNECT = "false";
-    process.env.NATS_MAX_RECONNECT_ATTEMPTS = "3";
-    process.env.NATS_RECONNECT_TIME_WAIT_MS = "250";
-    process.env.NATS_WAIT_ON_FIRST_CONNECT = "true";
-    process.env.NATS_PING_INTERVAL_MS = "30000";
-    process.env.NATS_DRAIN_TIMEOUT_MS = "7500";
+  it('builds connection config from environment variables', () => {
+    process.env.NATS_SERVERS = 'nats://nats-a:4222, nats://nats-b:4222';
+    process.env.NATS_NAME = 'backend-api';
+    process.env.NATS_USER = 'app';
+    process.env.NATS_PASS = 'secret';
+    process.env.NATS_TIMEOUT_MS = '1500';
+    process.env.NATS_RECONNECT = 'false';
+    process.env.NATS_MAX_RECONNECT_ATTEMPTS = '3';
+    process.env.NATS_RECONNECT_TIME_WAIT_MS = '250';
+    process.env.NATS_WAIT_ON_FIRST_CONNECT = 'true';
+    process.env.NATS_PING_INTERVAL_MS = '30000';
+    process.env.NATS_DRAIN_TIMEOUT_MS = '7500';
 
     const config = new NatsConfigService();
 
     expect(config.connectionConfig).toEqual({
-      servers: ["nats://nats-a:4222", "nats://nats-b:4222"],
-      name: "backend-api",
-      user: "app",
-      pass: "secret",
+      servers: ['nats://nats-a:4222', 'nats://nats-b:4222'],
+      name: 'backend-api',
+      user: 'app',
+      pass: 'secret',
       token: undefined,
       timeoutMs: 1500,
       reconnect: false,
@@ -154,43 +145,41 @@ describe("NATS foundation", () => {
     expect(config.drainTimeoutMs).toBe(7500);
   });
 
-  it("rejects NATS integer environment values with trailing junk", () => {
-    process.env.NATS_SERVERS = "nats://nats:4222";
-    process.env.NATS_TIMEOUT_MS = "1500ms";
+  it('rejects NATS integer environment values with trailing junk', () => {
+    process.env.NATS_SERVERS = 'nats://nats:4222';
+    process.env.NATS_TIMEOUT_MS = '1500ms';
 
     expect(() => new NatsConfigService().connectionConfig).toThrow(
       /Invalid environment configuration.*NATS_TIMEOUT_MS/u,
     );
   });
 
-  it("accepts explicit negative reconnect attempts without trailing junk", () => {
-    process.env.NATS_SERVERS = "nats://nats:4222";
-    process.env.NATS_MAX_RECONNECT_ATTEMPTS = "-1";
+  it('accepts explicit negative reconnect attempts without trailing junk', () => {
+    process.env.NATS_SERVERS = 'nats://nats:4222';
+    process.env.NATS_MAX_RECONNECT_ATTEMPTS = '-1';
 
     expect(new NatsConfigService().connectionConfig).toMatchObject({
       maxReconnectAttempts: -1,
     });
   });
 
-  it("rejects mutually exclusive NATS authentication settings", () => {
+  it('rejects mutually exclusive NATS authentication settings', () => {
     const config = new NatsConfigService({
-      servers: ["nats://nats:4222"],
-      token: "token",
-      user: "user",
-      pass: "pass",
+      servers: ['nats://nats:4222'],
+      token: 'token',
+      user: 'user',
+      pass: 'pass',
     });
 
-    expect(() => config.connectionConfig).toThrow(
-      "NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.",
-    );
+    expect(() => config.connectionConfig).toThrow('NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.');
   });
 
-  it("maps local config names to official v3 Node/Bun transport options", () => {
+  it('maps local config names to official v3 Node/Bun transport options', () => {
     expect(
       toNatsConnectionOptions({
-        servers: ["nats://nats:4222"],
-        name: "api",
-        token: "token",
+        servers: ['nats://nats:4222'],
+        name: 'api',
+        token: 'token',
         timeoutMs: 1000,
         reconnect: true,
         maxReconnectAttempts: -1,
@@ -199,9 +188,9 @@ describe("NATS foundation", () => {
         pingIntervalMs: 10000,
       }),
     ).toEqual({
-      servers: ["nats://nats:4222"],
-      name: "api",
-      token: "token",
+      servers: ['nats://nats:4222'],
+      name: 'api',
+      token: 'token',
       timeout: 1000,
       reconnect: true,
       maxReconnectAttempts: -1,
@@ -211,113 +200,95 @@ describe("NATS foundation", () => {
     });
   });
 
-  it("creates a NATS connection with official @nats-io/transport-node", async () => {
+  it('creates a NATS connection with official @nats-io/transport-node', async () => {
     const connection = natsConnection();
     mocks.connect.mockResolvedValue(connection);
 
     await expect(
       createNatsConnection({
-        servers: ["nats://nats:4222"],
-        name: "api",
+        servers: ['nats://nats:4222'],
+        name: 'api',
       }),
     ).resolves.toBe(connection);
 
     expect(mocks.connect).toHaveBeenCalledWith({
-      servers: ["nats://nats:4222"],
-      name: "api",
+      servers: ['nats://nats:4222'],
+      name: 'api',
     });
   });
 
-  it("publishes and requests JSON with v3 string payload and msg.json behavior", async () => {
+  it('publishes and requests JSON with v3 string payload and msg.json behavior', async () => {
     const responsePayload = { ok: true };
     const response = msg({
       jsonValue: responsePayload,
-      stringValue: "response",
+      stringValue: 'response',
     });
     const request = vi.fn(() => Promise.resolve(response));
     const publish = vi.fn();
     const connection = natsConnection({ publish, request });
     const service = new NatsService(connection);
 
-    service.publishJson("events.user.created", { userId: "user-1" });
+    service.publishJson('events.user.created', { userId: 'user-1' });
     await expect(
       service.requestJson<{ ok: boolean }, { userId: string }>(
-        "rpc.user.lookup",
-        { userId: "user-1" },
+        'rpc.user.lookup',
+        { userId: 'user-1' },
         { timeout: 250 },
       ),
     ).resolves.toEqual(responsePayload);
 
-    expect(publish).toHaveBeenCalledWith(
-      "events.user.created",
-      JSON.stringify({ userId: "user-1" }),
-      undefined,
-    );
-    expect(request).toHaveBeenCalledWith(
-      "rpc.user.lookup",
-      JSON.stringify({ userId: "user-1" }),
-      { timeout: 250 },
-    );
+    expect(publish).toHaveBeenCalledWith('events.user.created', JSON.stringify({ userId: 'user-1' }), undefined);
+    expect(request).toHaveBeenCalledWith('rpc.user.lookup', JSON.stringify({ userId: 'user-1' }), { timeout: 250 });
     expect(response.json()).toEqual(responsePayload);
   });
 
-  it("publishes and requests strings directly", async () => {
-    const response = msg({ stringValue: "pong" });
+  it('publishes and requests strings directly', async () => {
+    const response = msg({ stringValue: 'pong' });
     const request = vi.fn(() => Promise.resolve(response));
     const publish = vi.fn();
     const service = new NatsService(natsConnection({ publish, request }));
 
-    service.publishString("events.text", "hello");
-    await expect(
-      service.requestString("rpc.text", "ping", { timeout: 100 }),
-    ).resolves.toBe("pong");
+    service.publishString('events.text', 'hello');
+    await expect(service.requestString('rpc.text', 'ping', { timeout: 100 })).resolves.toBe('pong');
 
-    expect(publish).toHaveBeenCalledWith("events.text", "hello", undefined);
-    expect(request).toHaveBeenCalledWith("rpc.text", "ping", {
+    expect(publish).toHaveBeenCalledWith('events.text', 'hello', undefined);
+    expect(request).toHaveBeenCalledWith('rpc.text', 'ping', {
       timeout: 100,
     });
-    expect(response.string()).toBe("pong");
+    expect(response.string()).toBe('pong');
   });
 
-  it("does not allow publishing when NATS is not configured", () => {
+  it('does not allow publishing when NATS is not configured', () => {
     const service = new NatsService(null);
 
     expect(() => {
-      service.publishJson("events", {});
+      service.publishJson('events', {});
     }).toThrow(NatsConnectionUnavailableError);
   });
 
-  it("does not allow using a closed or draining connection", () => {
-    expect(() =>
-      new NatsService(
-        natsConnection({ isClosed: vi.fn(() => true) }),
-      ).getConnection(),
-    ).toThrow("closed");
-    expect(() =>
-      new NatsService(
-        natsConnection({ isDraining: vi.fn(() => true) }),
-      ).getConnection(),
-    ).toThrow("draining");
+  it('does not allow using a closed or draining connection', () => {
+    expect(() => new NatsService(natsConnection({ isClosed: vi.fn(() => true) })).getConnection()).toThrow('closed');
+    expect(() => new NatsService(natsConnection({ isDraining: vi.fn(() => true) })).getConnection()).toThrow(
+      'draining',
+    );
   });
 
-  it("creates JetStream, manager, KV, object store, and services factories", async () => {
+  it('creates JetStream, manager, KV, object store, and services factories', async () => {
     const connection = natsConnection();
-    const js = { kind: "jetstream" };
-    const jsm = { kind: "jetstreamManager" };
+    const js = { kind: 'jetstream' };
+    const jsm = { kind: 'jetstreamManager' };
     mocks.jetstream.mockReturnValue(js);
     mocks.jetstreamManager.mockResolvedValue(jsm);
 
-    expect(createJetStream(connection, { domain: "hub" })).toBe(js);
-    await expect(
-      createJetStreamManager(connection, { domain: "hub", checkAPI: false }),
-    ).resolves.toBe(jsm);
+    expect(createJetStream(connection, { domain: 'hub' })).toBe(js);
+    await expect(createJetStreamManager(connection, { domain: 'hub', checkAPI: false })).resolves.toBe(jsm);
     const kvm = createKvm(js as never);
     const objm = createObjm(js as never);
     const services = createServices(connection);
 
-    expect(mocks.jetstream).toHaveBeenCalledWith(connection, { domain: "hub" });
+    expect(mocks.jetstream).toHaveBeenCalledWith(connection, { domain: 'hub' });
     expect(mocks.jetstreamManager).toHaveBeenCalledWith(connection, {
-      domain: "hub",
+      domain: 'hub',
       checkAPI: false,
     });
     expect(mocks.kvmConstructor).toHaveBeenCalledWith(js);
@@ -328,7 +299,7 @@ describe("NATS foundation", () => {
     expect(services).toBeDefined();
   });
 
-  it("exposes ready-to-use JetStream, KV, Obj, and Services providers", async () => {
+  it('exposes ready-to-use JetStream, KV, Obj, and Services providers', async () => {
     const connection = natsConnection();
     const core = new NatsService(connection);
     const jsClient = { publish: vi.fn(() => Promise.resolve({ seq: 1 })) };
@@ -337,20 +308,12 @@ describe("NATS foundation", () => {
     mocks.jetstreamManager.mockResolvedValue(jsManager);
 
     const jsService = new NatsJetStreamService(core);
-    expect(jsService.getClient({ domain: "hub" })).toBe(jsClient);
-    await expect(jsService.getManager({ checkAPI: false })).resolves.toBe(
-      jsManager,
-    );
-    await expect(
-      jsService.publishJson("events", { ok: true }),
-    ).resolves.toEqual({
+    expect(jsService.getClient({ domain: 'hub' })).toBe(jsClient);
+    await expect(jsService.getManager({ checkAPI: false })).resolves.toBe(jsManager);
+    await expect(jsService.publishJson('events', { ok: true })).resolves.toEqual({
       seq: 1,
     });
-    expect(jsClient.publish).toHaveBeenCalledWith(
-      "events",
-      JSON.stringify({ ok: true }),
-      undefined,
-    );
+    expect(jsClient.publish).toHaveBeenCalledWith('events', JSON.stringify({ ok: true }), undefined);
 
     expect(new NatsKvService(core).getManager()).toBeDefined();
     expect(mocks.kvmConstructor).toHaveBeenLastCalledWith(connection);
@@ -360,24 +323,16 @@ describe("NATS foundation", () => {
     expect(mocks.svcmConstructor).toHaveBeenLastCalledWith(connection);
   });
 
-  it("keeps extended providers disabled until a NATS connection is configured", () => {
+  it('keeps extended providers disabled until a NATS connection is configured', () => {
     const core = new NatsService(null);
 
-    expect(() => new NatsJetStreamService(core).getClient()).toThrow(
-      NatsConnectionUnavailableError,
-    );
-    expect(() => new NatsKvService(core).getManager()).toThrow(
-      NatsConnectionUnavailableError,
-    );
-    expect(() => new NatsObjectStoreService(core).getManager()).toThrow(
-      NatsConnectionUnavailableError,
-    );
-    expect(() => new NatsServicesService(core).getManager()).toThrow(
-      NatsConnectionUnavailableError,
-    );
+    expect(() => new NatsJetStreamService(core).getClient()).toThrow(NatsConnectionUnavailableError);
+    expect(() => new NatsKvService(core).getManager()).toThrow(NatsConnectionUnavailableError);
+    expect(() => new NatsObjectStoreService(core).getManager()).toThrow(NatsConnectionUnavailableError);
+    expect(() => new NatsServicesService(core).getManager()).toThrow(NatsConnectionUnavailableError);
   });
 
-  it("reports extended providers as enabled while a connection is active", () => {
+  it('reports extended providers as enabled while a connection is active', () => {
     const core = new NatsService(natsConnection());
 
     expect(new NatsJetStreamService(core).isEnabled).toBe(true);
@@ -386,50 +341,46 @@ describe("NATS foundation", () => {
     expect(new NatsServicesService(core).isEnabled).toBe(true);
   });
 
-  it("delegates bucket, store, and service manager operations", async () => {
+  it('delegates bucket, store, and service manager operations', async () => {
     const core = new NatsService(natsConnection());
     const kv = new NatsKvService(core);
     const objectStore = new NatsObjectStoreService(core);
     const services = new NatsServicesService(core);
 
-    await kv.createBucket("bucket");
-    await kv.createBucket("bucket", { history: 1 });
-    await kv.openBucket("bucket");
-    await kv.openBucket("bucket", { history: 1 });
-    await objectStore.createStore("store");
-    await objectStore.createStore("store", { description: "store" });
-    await objectStore.openStore("store");
-    await objectStore.openStore("store", { check: true });
+    await kv.createBucket('bucket');
+    await kv.createBucket('bucket', { history: 1 });
+    await kv.openBucket('bucket');
+    await kv.openBucket('bucket', { history: 1 });
+    await objectStore.createStore('store');
+    await objectStore.createStore('store', { description: 'store' });
+    await objectStore.openStore('store');
+    await objectStore.openStore('store', { check: true });
     objectStore.listStores();
-    await services.add({ name: "svc", version: "1.0.0", queue: "" });
+    await services.add({ name: 'svc', version: '1.0.0', queue: '' });
     services.client();
-    services.client({ strategy: "count", maxMessages: 1, maxWait: 10 }, "acme");
+    services.client({ strategy: 'count', maxMessages: 1, maxWait: 10 }, 'acme');
 
     expect(mocks.kvmConstructor).toHaveBeenCalled();
     expect(mocks.objmConstructor).toHaveBeenCalled();
     expect(mocks.svcmConstructor).toHaveBeenCalled();
   });
 
-  it("requests JSON without a payload", async () => {
+  it('requests JSON without a payload', async () => {
     const response = msg({ jsonValue: { ok: true } });
     const request = vi.fn(() => Promise.resolve(response));
     const service = new NatsService(natsConnection({ request }));
 
-    await expect(service.requestJson("rpc.no.payload")).resolves.toEqual({
+    await expect(service.requestJson('rpc.no.payload')).resolves.toEqual({
       ok: true,
     });
-    expect(request).toHaveBeenCalledWith(
-      "rpc.no.payload",
-      undefined,
-      undefined,
-    );
+    expect(request).toHaveBeenCalledWith('rpc.no.payload', undefined, undefined);
   });
 
-  it("prefers explicit NATS options over environment values", () => {
+  it('prefers explicit NATS options over environment values', () => {
     const config = new NatsConfigService({
-      servers: ["nats://explicit:4222"],
-      name: "explicit",
-      token: "explicit-token",
+      servers: ['nats://explicit:4222'],
+      name: 'explicit',
+      token: 'explicit-token',
       timeoutMs: 1234,
       reconnect: true,
       maxReconnectAttempts: 7,
@@ -440,11 +391,11 @@ describe("NATS foundation", () => {
     });
 
     expect(config.connectionConfig).toEqual({
-      servers: ["nats://explicit:4222"],
-      name: "explicit",
+      servers: ['nats://explicit:4222'],
+      name: 'explicit',
       user: undefined,
       pass: undefined,
-      token: "explicit-token",
+      token: 'explicit-token',
       timeoutMs: 1234,
       reconnect: true,
       maxReconnectAttempts: 7,
@@ -455,76 +406,62 @@ describe("NATS foundation", () => {
     expect(config.drainTimeoutMs).toBe(9999);
   });
 
-  it("prefers explicit NATS user and password credentials", () => {
+  it('prefers explicit NATS user and password credentials', () => {
     const config = new NatsConfigService({
-      servers: ["nats://explicit:4222"],
-      user: "app",
-      pass: "secret",
+      servers: ['nats://explicit:4222'],
+      user: 'app',
+      pass: 'secret',
     });
 
     expect(config.connectionConfig).toMatchObject({
-      user: "app",
-      pass: "secret",
+      user: 'app',
+      pass: 'secret',
     });
   });
 
-  it("rejects a NATS token combined with only a password", () => {
+  it('rejects a NATS token combined with only a password', () => {
     const config = new NatsConfigService({
-      servers: ["nats://nats:4222"],
-      token: "token",
-      pass: "secret",
+      servers: ['nats://nats:4222'],
+      token: 'token',
+      pass: 'secret',
     });
 
-    expect(() => config.connectionConfig).toThrow(
-      "NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.",
-    );
+    expect(() => config.connectionConfig).toThrow('NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.');
   });
 
-  it("rejects a NATS user configured without a password", () => {
+  it('rejects a NATS user configured without a password', () => {
     const config = new NatsConfigService({
-      servers: ["nats://nats:4222"],
-      user: "app",
+      servers: ['nats://nats:4222'],
+      user: 'app',
     });
 
-    expect(() => config.connectionConfig).toThrow(
-      "NATS_USER and NATS_PASS must be configured together.",
-    );
+    expect(() => config.connectionConfig).toThrow('NATS_USER and NATS_PASS must be configured together.');
   });
 
-  it("rejects a NATS password configured without a user", () => {
+  it('rejects a NATS password configured without a user', () => {
     const config = new NatsConfigService({
-      servers: ["nats://nats:4222"],
-      pass: "secret",
+      servers: ['nats://nats:4222'],
+      pass: 'secret',
     });
 
-    expect(() => config.connectionConfig).toThrow(
-      "NATS_USER and NATS_PASS must be configured together.",
-    );
+    expect(() => config.connectionConfig).toThrow('NATS_USER and NATS_PASS must be configured together.');
   });
 
-  it("reports NATS health errors for closed and draining connections", async () => {
-    await expect(
-      new NatsHealthIndicator(
-        natsConnection({ isClosed: vi.fn(() => true) }),
-      ).check(),
-    ).resolves.toEqual({
-      name: "nats",
-      status: "error",
-      details: { message: "connection is closed" },
+  it('reports NATS health errors for closed and draining connections', async () => {
+    await expect(new NatsHealthIndicator(natsConnection({ isClosed: vi.fn(() => true) })).check()).resolves.toEqual({
+      name: 'nats',
+      status: 'error',
+      details: { message: 'connection is closed' },
     });
 
-    await expect(
-      new NatsHealthIndicator(
-        natsConnection({ isDraining: vi.fn(() => true) }),
-      ).check(),
-    ).resolves.toEqual({
-      name: "nats",
-      status: "error",
-      details: { message: "connection is draining" },
+    await expect(new NatsHealthIndicator(natsConnection({ isDraining: vi.fn(() => true) })).check()).resolves.toEqual({
+      name: 'nats',
+      status: 'error',
+      details: { message: 'connection is draining' },
     });
   });
 
-  it("skips draining a connection that is already closed", async () => {
+  it('skips draining a connection that is already closed', async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const connection = natsConnection({ isClosed: vi.fn(() => true), drain });
 
@@ -533,7 +470,7 @@ describe("NATS foundation", () => {
     expect(drain).not.toHaveBeenCalled();
   });
 
-  it("waits for an already draining connection to finish closing", async () => {
+  it('waits for an already draining connection to finish closing', async () => {
     const closed = vi.fn(() => Promise.resolve(undefined));
     const drain = vi.fn(() => Promise.resolve(undefined));
     const connection = natsConnection({
@@ -548,7 +485,7 @@ describe("NATS foundation", () => {
     expect(drain).not.toHaveBeenCalled();
   });
 
-  it("drains without a timeout guard when none is configured", async () => {
+  it('drains without a timeout guard when none is configured', async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const connection = natsConnection({ drain });
 
@@ -557,70 +494,65 @@ describe("NATS foundation", () => {
     expect(drain).toHaveBeenCalledTimes(1);
   });
 
-  it("checks NATS health with flush and without publishing fake data", async () => {
+  it('checks NATS health with flush and without publishing fake data', async () => {
     const flush = vi.fn(() => Promise.resolve(undefined));
     const publish = vi.fn();
     const connection = natsConnection({ flush, publish });
     const health = new NatsHealthIndicator(connection);
 
     await expect(health.check()).resolves.toEqual({
-      name: "nats",
-      status: "ok",
-      details: { enabled: true, server: "nats://nats:4222" },
+      name: 'nats',
+      status: 'ok',
+      details: { enabled: true, server: 'nats://nats:4222' },
     });
 
     expect(flush).toHaveBeenCalledTimes(1);
     expect(publish).not.toHaveBeenCalled();
   });
 
-  it("reports disabled health as ok for config-disabled apps", async () => {
+  it('reports disabled health as ok for config-disabled apps', async () => {
     await expect(new NatsHealthIndicator(null).check()).resolves.toEqual({
-      name: "nats",
-      status: "ok",
+      name: 'nats',
+      status: 'ok',
       details: { enabled: false },
     });
   });
 
-  it("redacts connection URLs and secret-like fields from NATS health details", async () => {
+  it('redacts connection URLs and secret-like fields from NATS health details', async () => {
     const unsafeMessage = [
-      "connect",
-      credentialUrl("nats", "user", "super-secret", "nats:4222"),
-      secretPair("password", "super-secret"),
-      secretPair("token", "abc"),
-    ].join(" ");
+      'connect',
+      credentialUrl('nats', 'user', 'super-secret', 'nats:4222'),
+      secretPair('password', 'super-secret'),
+      secretPair('token', 'abc'),
+    ].join(' ');
     const connection = natsConnection({
       flush: vi.fn(() => Promise.reject(new Error(unsafeMessage))),
     });
 
     await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
-      name: "nats",
-      status: "error",
+      name: 'nats',
+      status: 'error',
       details: {
-        message: [
-          "connect",
-          redactedUrl("nats", "nats:4222"),
-          redactedPair("password"),
-          redactedPair("token"),
-        ].join(" "),
+        message: ['connect', redactedUrl('nats', 'nats:4222'), redactedPair('password'), redactedPair('token')].join(
+          ' ',
+        ),
       },
     });
   });
 
-  it("redacts credentials from reported NATS server URLs", async () => {
+  it('redacts credentials from reported NATS server URLs', async () => {
     const connection = natsConnection({
-      getServer: vi.fn(() =>
-        credentialUrl("nats", "user", "super-secret", "nats:4222"),
-      ),
+      getServer: vi.fn(() => credentialUrl('nats', 'user', 'super-secret', 'nats:4222')),
     });
 
     await expect(new NatsHealthIndicator(connection).check()).resolves.toEqual({
-      name: "nats",
-      status: "ok",
-      details: { enabled: true, server: redactedUrl("nats", "nats:4222") },
+      name: 'nats',
+      status: 'ok',
+      details: { enabled: true, server: redactedUrl('nats', 'nats:4222') },
     });
   });
 
-  it("drains NATS connections during shutdown", async () => {
+  it('drains NATS connections during shutdown', async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const close = vi.fn(() => Promise.resolve(undefined));
     const connection = natsConnection({ drain, close });
@@ -631,7 +563,7 @@ describe("NATS foundation", () => {
     expect(close).not.toHaveBeenCalled();
   });
 
-  it("closes connections if draining times out", async () => {
+  it('closes connections if draining times out', async () => {
     const drain = vi.fn(() => new Promise<void>(() => undefined));
     const close = vi.fn(() => Promise.resolve(undefined));
     const connection = natsConnection({ drain, close });
@@ -642,23 +574,19 @@ describe("NATS foundation", () => {
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it("guards source against removed v2 APIs and legacy messaging runtimes", () => {
-    const root = join(__dirname, "../../../../../..");
+  it('guards source against removed v2 APIs and legacy messaging runtimes', () => {
+    const root = join(__dirname, '../../../../../..');
     const files = collectSourceFiles(root);
-    const sourceByFile = new Map(
-      files.map((file) => [file, readFileSync(join(root, file), "utf8")]),
-    );
+    const sourceByFile = new Map(files.map((file) => [file, readFileSync(join(root, file), 'utf8')]));
     const source = [...sourceByFile.entries()]
-      .filter(
-        ([file]) => file !== "libs/backend/common/nats/lib/src/nats.spec.ts",
-      )
+      .filter(([file]) => file !== 'libs/backend/common/nats/lib/src/nats.spec.ts')
       .map(([, content]) => content)
-      .join("\n");
-    const removedCodecA = ["String", "Codec"].join("");
-    const removedCodecB = ["JSON", "Codec"].join("");
-    const removedMethodA = [".", "jetstream", "("].join("");
-    const removedMethodB = [".", "jetstreamManager", "("].join("");
-    const legacyImport = ["from ", JSON.stringify("nats")].join("");
+      .join('\n');
+    const removedCodecA = ['String', 'Codec'].join('');
+    const removedCodecB = ['JSON', 'Codec'].join('');
+    const removedMethodA = ['.', 'jetstream', '('].join('');
+    const removedMethodB = ['.', 'jetstreamManager', '('].join('');
+    const legacyImport = ['from ', JSON.stringify('nats')].join('');
 
     for (const forbidden of [
       legacyImport,
@@ -666,24 +594,18 @@ describe("NATS foundation", () => {
       removedCodecB,
       removedMethodA,
       removedMethodB,
-      ["rabbitmq", "-container"].join(""),
-      ["create", "Rabbit", "Mq"].join(""),
-      ["Default", "Rabbit", "Mq"].join(""),
-      ["RABBIT", "MQ_"].join(""),
-      ["@nestjs", "/microservices"].join(""),
+      ['rabbitmq', '-container'].join(''),
+      ['create', 'Rabbit', 'Mq'].join(''),
+      ['Default', 'Rabbit', 'Mq'].join(''),
+      ['RABBIT', 'MQ_'].join(''),
+      ['@nestjs', '/microservices'].join(''),
     ]) {
       expect(source).not.toContain(forbidden);
     }
   });
 });
 
-function msg({
-  jsonValue = {},
-  stringValue = "",
-}: {
-  jsonValue?: unknown;
-  stringValue?: string;
-}): Msg {
+function msg({ jsonValue = {}, stringValue = '' }: { jsonValue?: unknown; stringValue?: string }): Msg {
   return {
     data: new Uint8Array(),
     json: vi.fn(() => jsonValue),
@@ -691,9 +613,7 @@ function msg({
   } as unknown as Msg;
 }
 
-function natsConnection(
-  overrides: Partial<NatsConnection> = {},
-): NatsConnection {
+function natsConnection(overrides: Partial<NatsConnection> = {}): NatsConnection {
   const connection = {
     closed: vi.fn(() => Promise.resolve(undefined)),
     close: vi.fn(() => Promise.resolve(undefined)),
@@ -703,7 +623,7 @@ function natsConnection(
     drain: vi.fn(() => Promise.resolve(undefined)),
     isClosed: vi.fn(() => false),
     isDraining: vi.fn(() => false),
-    getServer: vi.fn(() => "nats://nats:4222"),
+    getServer: vi.fn(() => 'nats://nats:4222'),
     ...overrides,
   };
 
@@ -711,23 +631,9 @@ function natsConnection(
 }
 
 function collectSourceFiles(root: string): string[] {
-  const allowedRoots = ["libs", "apps", "packages", "scripts", "docs"];
-  const allowedExtensions = new Set([
-    ".ts",
-    ".tsx",
-    ".js",
-    ".mjs",
-    ".cjs",
-    ".json",
-    ".md",
-  ]);
-  const ignoredDirectories = new Set([
-    "node_modules",
-    "dist",
-    ".nx",
-    ".git",
-    "coverage",
-  ]);
+  const allowedRoots = ['libs', 'apps', 'packages', 'scripts', 'docs'];
+  const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.mjs', '.cjs', '.json', '.md']);
+  const ignoredDirectories = new Set(['node_modules', 'dist', '.nx', '.git', 'coverage']);
   const files: string[] = [];
 
   const visit = (relativeDirectory: string): void => {
@@ -744,9 +650,7 @@ function collectSourceFiles(root: string): string[] {
         continue;
       }
 
-      const extension = entry.includes(".")
-        ? `.${entry.split(".").pop() ?? ""}`
-        : "";
+      const extension = entry.includes('.') ? `.${entry.split('.').pop() ?? ''}` : '';
       if (stat.isFile() && allowedExtensions.has(extension)) {
         files.push(relativePath);
       }
@@ -760,12 +664,7 @@ function collectSourceFiles(root: string): string[] {
   return files;
 }
 
-function credentialUrl(
-  protocol: string,
-  username: string,
-  password: string,
-  hostAndPath: string,
-): string {
+function credentialUrl(protocol: string, username: string, password: string, hostAndPath: string): string {
   return `${protocol}://${username}:${password}@${hostAndPath}`;
 }
 

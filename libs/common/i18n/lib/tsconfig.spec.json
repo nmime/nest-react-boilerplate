@@ -5,10 +5,5 @@
     "types": ["node", "vitest/globals"],
     "resolveJsonModule": true
   },
-  "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.ts",
-    "locales/*.json"
-  ]
+  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts", "locales/*.json"]
 }

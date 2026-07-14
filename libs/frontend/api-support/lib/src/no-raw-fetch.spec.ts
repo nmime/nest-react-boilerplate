@@ -1,41 +1,29 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { extname, join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { extname, join, relative } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
-const workspaceRoot = join(import.meta.dirname, "../../../../../..");
+const workspaceRoot = join(import.meta.dirname, '../../../../../..');
 
 const sourceRoots = [
-  "apps/frontend/app/src",
-  "apps/frontend/admin/src",
-  "apps/frontend/landing/src",
-  "apps/frontend/site/pages",
-  "apps/frontend/site/renderer",
-  "apps/frontend/site/server",
-  "libs/frontend/ui/lib/src",
-  "libs/frontend/ui-native/lib/src",
-  "libs/frontend/ui-web/lib/src",
-  "libs/frontend/runtime/lib/src",
-  "libs/frontend/api-support/lib/src",
-  "libs/frontend/api-client/lib/src",
-  "libs/frontend/feature/admin/shared/lib/src",
+  'apps/frontend/app/src',
+  'apps/frontend/admin/src',
+  'apps/frontend/landing/src',
+  'apps/frontend/site/pages',
+  'apps/frontend/site/renderer',
+  'apps/frontend/site/server',
+  'apps/frontend/mobile/src',
+  'libs/frontend/ui/lib/src',
+  'libs/frontend/ui-native/lib/src',
+  'libs/frontend/ui-web/lib/src',
+  'libs/frontend/runtime/lib/src',
+  'libs/frontend/api-support/lib/src',
+  'libs/frontend/api-client/lib/src',
+  'libs/frontend/feature/admin/shared/lib/src',
 ];
-const allowedExtensions = new Set([".ts", ".tsx"]);
-const ignoredSuffixes = [
-  ".spec.ts",
-  ".spec.tsx",
-  ".stories.ts",
-  ".stories.tsx",
-];
-const ignoredDirectories = new Set([
-  ".git",
-  ".nx",
-  "coverage",
-  "dist",
-  "node_modules",
-]);
-const rawFetchOwnerFiles = new Set([
-  "libs/frontend/api-support/lib/src/api-client.ts",
-]);
+const allowedExtensions = new Set(['.ts', '.tsx']);
+const ignoredSuffixes = ['.spec.ts', '.spec.tsx', '.stories.ts', '.stories.tsx'];
+const ignoredDirectories = new Set(['.git', '.nx', 'coverage', 'dist', 'node_modules']);
+const rawFetchOwnerFiles = new Set(['libs/frontend/api-support/lib/src/api-client.ts']);
 
 const walk = (directory: string): string[] => {
   if (!existsSync(directory)) {
@@ -55,20 +43,18 @@ const isCheckedSourceFile = (path: string): boolean => {
 
   return (
     allowedExtensions.has(extname(path)) &&
-    !relativePath
-      .split(/[/\\]/u)
-      .some((segment) => ignoredDirectories.has(segment)) &&
+    !relativePath.split(/[/\\]/u).some((segment) => ignoredDirectories.has(segment)) &&
     !ignoredSuffixes.some((suffix) => path.endsWith(suffix)) &&
     !rawFetchOwnerFiles.has(relativePath)
   );
 };
 
-describe("frontend raw fetch boundary", () => {
-  it("keeps raw fetch centralized in @app/frontend-api-support", () => {
+describe('frontend raw fetch boundary', () => {
+  it('keeps raw fetch centralized in @app/frontend-api-support', () => {
     const offenders = sourceRoots
       .flatMap((root) => walk(join(workspaceRoot, root)))
       .filter(isCheckedSourceFile)
-      .filter((path) => /\bfetch\s*\(/u.test(readFileSync(path, "utf8")))
+      .filter((path) => /\bfetch\s*\(/u.test(readFileSync(path, 'utf8')))
       .map((path) => relative(workspaceRoot, path));
 
     expect(offenders).toEqual([]);

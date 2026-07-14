@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { describe, expect, it } from "vitest";
-import { Test } from "@nestjs/testing";
+import { Injectable } from '@nestjs/common';
+import { describe, expect, it } from 'vitest';
+import { Test } from '@nestjs/testing';
 import {
   NatsInjectToken,
   NatsJetStreamInjectToken,
@@ -8,7 +8,7 @@ import {
   NatsKvManagerInjectToken,
   NatsObjectStoreManagerInjectToken,
   NatsServiceManagerInjectToken,
-} from "../const";
+} from '../const';
 import {
   InjectNatsConnection,
   InjectNatsJetStream,
@@ -16,7 +16,7 @@ import {
   InjectNatsKvManager,
   InjectNatsObjectStoreManager,
   InjectNatsServiceManager,
-} from "./inject-nats.decorator";
+} from './inject-nats.decorator';
 
 @Injectable()
 class DecoratorProbe {
@@ -30,15 +30,15 @@ class DecoratorProbe {
   ) {}
 }
 
-describe("NATS inject decorators", () => {
-  it("wire each provider token to its decorated constructor parameter", async () => {
+describe('NATS inject decorators', () => {
+  it('wire each provider token to its decorated constructor parameter', async () => {
     const values = {
-      connection: Symbol("connection"),
-      jetStream: Symbol("jetStream"),
-      jetStreamManager: Symbol("jetStreamManager"),
-      kvManager: Symbol("kvManager"),
-      objectStoreManager: Symbol("objectStoreManager"),
-      serviceManager: Symbol("serviceManager"),
+      connection: Symbol('connection'),
+      jetStream: Symbol('jetStream'),
+      jetStreamManager: Symbol('jetStreamManager'),
+      kvManager: Symbol('kvManager'),
+      objectStoreManager: Symbol('objectStoreManager'),
+      serviceManager: Symbol('serviceManager'),
     };
 
     const moduleRef = await Test.createTestingModule({

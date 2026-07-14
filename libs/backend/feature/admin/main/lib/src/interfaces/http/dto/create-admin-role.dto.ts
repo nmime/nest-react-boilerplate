@@ -1,13 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsArray,
-  IsIn,
-  IsOptional,
-  IsString,
-  Length,
-  MaxLength,
-} from "class-validator";
-import { adminAssignablePermissions } from "@app/backend-feature-admin-shared";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsIn, IsOptional, IsString, Length, MaxLength } from 'class-validator';
+import { adminAssignablePermissions } from '@app/backend-feature-admin-shared';
 
 export class CreateAdminRoleDto {
   @ApiProperty({ maxLength: 64, minLength: 1 })

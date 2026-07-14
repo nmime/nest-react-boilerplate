@@ -1,9 +1,4 @@
-import type {
-  AnalyticsIdentifyPayload,
-  AnalyticsPagePayload,
-  AnalyticsPayload,
-  AnalyticsPlugin,
-} from "../../../type";
+import type { AnalyticsIdentifyPayload, AnalyticsPagePayload, AnalyticsPayload, AnalyticsPlugin } from '../../../type';
 
 export abstract class AbstractAnalyticsProvider implements AnalyticsPlugin {
   abstract readonly name: string;

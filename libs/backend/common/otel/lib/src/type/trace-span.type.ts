@@ -10,9 +10,5 @@ export interface TraceSpan {
 export interface TracerLike {
   startSpan(name: string, attributes?: Record<string, unknown>): TraceSpan;
   endSpan(span: TraceSpan, error?: Error): void;
-  addEvent(
-    span: TraceSpan,
-    name: string,
-    attributes?: Record<string, unknown>,
-  ): void;
+  addEvent(span: TraceSpan, name: string, attributes?: Record<string, unknown>): void;
 }

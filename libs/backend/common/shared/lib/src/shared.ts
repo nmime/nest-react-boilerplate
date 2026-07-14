@@ -1,18 +1,14 @@
-export const uniqueStrings = (values: readonly string[]): string[] => [
-  ...new Set(values),
-];
+export const uniqueStrings = (values: readonly string[]): string[] => [...new Set(values)];
 
 export const isNonEmptyString = (value: unknown): value is string =>
-  typeof value === "string" && value.trim().length > 0;
+  typeof value === 'string' && value.trim().length > 0;
 
 export const normalizeStringList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return uniqueStrings(
-      value.filter(isNonEmptyString).map((item) => item.trim()),
-    );
+    return uniqueStrings(value.filter(isNonEmptyString).map((item) => item.trim()));
   }
 
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return uniqueStrings(
       value
         .split(/[\s,]+/u)
@@ -24,10 +20,7 @@ export const normalizeStringList = (value: unknown): string[] => {
   return [];
 };
 
-export const readRequiredEnv = (
-  env: Record<string, string | undefined>,
-  key: string,
-): string => {
+export const readRequiredEnv = (env: Record<string, string | undefined>, key: string): string => {
   const value = env[key];
   if (!isNonEmptyString(value)) {
     throw new Error(`${key} is required.`);
@@ -38,11 +31,9 @@ export const readRequiredEnv = (
 
 export const maskSecret = (value: string | undefined): string => {
   if (!isNonEmptyString(value)) {
-    return "not-configured";
+    return 'not-configured';
   }
 
   const trimmed = value.trim();
-  return trimmed.length <= 8
-    ? "********"
-    : `${trimmed.slice(0, 4)}…${trimmed.slice(-4)}`;
+  return trimmed.length <= 8 ? '********' : `${trimmed.slice(0, 4)}…${trimmed.slice(-4)}`;
 };

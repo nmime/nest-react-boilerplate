@@ -1,19 +1,19 @@
-import { useEffect, useMemo, type ReactNode } from "react";
-import { observer } from "mobx-react-lite";
+import { useEffect, useMemo, type ReactNode } from 'react';
+import { observer } from 'mobx-react-lite';
 import {
   ApiClientProvider,
   authApi,
   authApiToastRules,
   throwOnOpenApiErrorData,
   userApiToastRules,
-} from "@app/frontend-api-client";
+} from '@app/frontend-api-client';
 import {
   configureApiLocale,
   createApiRuntimeFetch,
   createAuthRefreshFetch,
   defaultApiToastRules,
   useApiRuntimeOverlayModel,
-} from "@app/frontend-api-support";
+} from '@app/frontend-api-support';
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
@@ -23,18 +23,16 @@ import {
   useAppStore,
   useI18n,
   useStore,
-} from "@app/frontend-runtime";
-import { UiApiRuntimeOverlay } from "@app/frontend-ui-web";
-import { userFrontendTranslations } from "@app/frontend-feature-user-i18n";
-import { useUserPreferenceControls } from "../../features/preferences";
-import { getAuthApiBaseUrl, getUserApiBaseUrl } from "../../shared/config";
-import { UiErrorBoundary } from "../../shared/ui";
-import { AuthRedirectBridge } from "./auth-redirect-bridge";
-import { UserRouter } from "../router/user-router";
+} from '@app/frontend-runtime';
+import { UiApiRuntimeOverlay } from '@app/frontend-ui-web';
+import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
+import { useUserPreferenceControls } from '../../features/preferences';
+import { getAuthApiBaseUrl, getUserApiBaseUrl } from '../../shared/config';
+import { UiErrorBoundary } from '../../shared/ui';
+import { AuthRedirectBridge } from './auth-redirect-bridge';
+import { UserRouter } from '../router/user-router';
 
-const ApiClientLocaleBridge = ({
-  children,
-}: Readonly<{ children: ReactNode }>) => {
+const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactNode }>) => {
   const { locale } = useI18n();
   useEffect(() => {
     configureApiLocale({ locale });
@@ -61,25 +59,15 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
             }
 
             const session = await throwOnOpenApiErrorData(
-              authApi.authControllerRefresh(
-                { refreshToken },
-                { baseUrl: getAuthApiBaseUrl() },
-              ),
+              authApi.authControllerRefresh({ refreshToken }, { baseUrl: getAuthApiBaseUrl() }),
             );
-            authStore.setSession(
-              session.accessToken,
-              session.refreshToken ?? refreshToken,
-            );
+            authStore.setSession(session.accessToken, session.refreshToken ?? refreshToken);
 
             return session.accessToken;
           },
         }),
-        redirectTo: "/auth",
-        toastRules: [
-          ...authApiToastRules,
-          ...userApiToastRules,
-          ...defaultApiToastRules,
-        ],
+        redirectTo: '/auth',
+        toastRules: [...authApiToastRules, ...userApiToastRules, ...defaultApiToastRules],
       }),
     [authStore],
   );
@@ -88,7 +76,7 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
     <ApiClientProvider
       authToken={authStore.bearerToken}
       baseUrls={{
-        admin: "",
+        admin: '',
         auth: getAuthApiBaseUrl(),
         user: getUserApiBaseUrl(),
       }}
@@ -99,52 +87,44 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
   );
 });
 
-const ApiRuntimeOverlayProvider = observer(
-  function ApiRuntimeOverlayProvider() {
-    const appStore = useAppStore();
-    const locale = useStore().locale.locale;
-    const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
+const ApiRuntimeOverlayProvider = observer(function ApiRuntimeOverlayProvider() {
+  const appStore = useAppStore();
+  const locale = useStore().locale.locale;
+  const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
 
-    return (
-      <UiApiRuntimeOverlay
-        authRequired={state.authRequired}
-        className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
-        copy={{
-          apiNotificationsLabel: translate("ui.runtime.notifications.label", {
-            locale,
-          }),
-          authRequiredTitle: translate("ui.runtime.authRequired.title", {
-            locale,
-          }),
-          continueToSignInLabel: translate("ui.runtime.authRequired.continue", {
-            locale,
-          }),
-          defaultAuthDescription: translate(
-            "ui.runtime.authRequired.description",
-            { locale },
-          ),
-          defaultOfflineMessage: translate("ui.runtime.offline.description", {
-            locale,
-          }),
-          defaultServerErrorMessage: translate(
-            "ui.runtime.serverUnavailable.description",
-            { locale },
-          ),
-          dismissLabel: translate("ui.runtime.dismissToast", { locale }),
-          offlineTitle: translate("ui.runtime.offline.title", { locale }),
-          serverErrorTitle: translate("ui.runtime.serverUnavailable.title", {
-            locale,
-          }),
-        }}
-        lastError={state.lastError}
-        onDismissToast={dismissToast}
-        redirectTo={state.redirectTo ?? "/auth"}
-        status={state.status}
-        toasts={toasts}
-      />
-    );
-  },
-);
+  return (
+    <UiApiRuntimeOverlay
+      authRequired={state.authRequired}
+      className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
+      copy={{
+        apiNotificationsLabel: translate('ui.runtime.notifications.label', {
+          locale,
+        }),
+        authRequiredTitle: translate('ui.runtime.authRequired.title', {
+          locale,
+        }),
+        continueToSignInLabel: translate('ui.runtime.authRequired.continue', {
+          locale,
+        }),
+        defaultAuthDescription: translate('ui.runtime.authRequired.description', { locale }),
+        defaultOfflineMessage: translate('ui.runtime.offline.description', {
+          locale,
+        }),
+        defaultServerErrorMessage: translate('ui.runtime.serverUnavailable.description', { locale }),
+        dismissLabel: translate('ui.runtime.dismissToast', { locale }),
+        offlineTitle: translate('ui.runtime.offline.title', { locale }),
+        serverErrorTitle: translate('ui.runtime.serverUnavailable.title', {
+          locale,
+        }),
+      }}
+      lastError={state.lastError}
+      onDismissToast={dismissToast}
+      redirectTo={state.redirectTo ?? '/auth'}
+      status={state.status}
+      toasts={toasts}
+    />
+  );
+});
 
 const UserAppRouterProviders = observer(function UserAppRouterProviders() {
   const preferences = useUserPreferenceControls();
@@ -158,18 +138,13 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
       userTheme={preferences.userTheme}
     >
       <ApiClientLocaleBridge>
-        <UserRouter
-          applyUserLocale={preferences.applyUserLocale}
-          applyUserTheme={preferences.applyUserTheme}
-        />
+        <UserRouter applyUserLocale={preferences.applyUserLocale} applyUserTheme={preferences.applyUserTheme} />
       </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );
 });
 
-export function AppProviders({
-  children,
-}: Readonly<{ children?: ReactNode }> = {}) {
+export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = {}) {
   return (
     <FrontendStateProvider>
       <UserAppApiClientProvider>

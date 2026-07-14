@@ -22,8 +22,8 @@ corepack prepare pnpm@11.11.0 --activate
 ## 1. Clone and install
 
 ```bash
-git clone https://github.com/nest-react-boilerplate/monorepo.git
-cd monorepo
+git clone https://github.com/nmime/nest-react-boilerplate.git
+cd nest-react-boilerplate
 pnpm install --frozen-lockfile
 ```
 
@@ -38,7 +38,7 @@ pnpm --filter @repo/tooling tooling doctor
 Expected output (clean install, no setup yet):
 
 ```
-  ✓ node-version         Node.js v24.x.x
+  ✓ node-version         Node.js v24.18.0
   ✓ pnpm                 pnpm 11.11.0
   ✓ docker               Docker version ...
   ✓ manifests            package.json, tsconfig.base.json present
@@ -55,12 +55,14 @@ The two `○ skipped` entries for `nrb-config` and `nrb-state` are expected on a
 
 ## 3. Configure the boilerplate
 
-The boilerplate ships with all apps and capabilities present. You can run it as-is, or configure it to your needs.
+The boilerplate ships with neutral and reference applications. The recommended
+`starter` preset selects `starter-app`; it does not reuse the reference
+admin/user page composition.
 
 ### Interactive setup (recommended)
 
 ```bash
-pnpm --filter @repo/tooling tooling setup
+pnpm nrb setup
 ```
 
 You will be guided through preset selection, app toggles, and capability toggles.
@@ -68,21 +70,23 @@ You will be guided through preset selection, app toggles, and capability toggles
 ### Non-interactive setup (CI / scripted)
 
 ```bash
-# Using a preset:
-pnpm --filter @repo/tooling tooling setup --preset fullstack --non-interactive
+# Neutral product baseline:
+pnpm nrb setup --preset starter --non-interactive
 
 # Using a config file:
 cp nrb.config.example.json nrb.config.json
 # Edit nrb.config.json
-pnpm --filter @repo/tooling tooling setup --config nrb.config.json
+pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-pnpm --filter @repo/tooling tooling setup --preset starter --dry-run
+pnpm nrb setup --preset starter --dry-run
 ```
 
 ### Skip setup
 
-If you want all apps and capabilities, skip setup entirely. The boilerplate is pre-configured for the full stack.
+Before setup, `pnpm run dev` uses the neutral starter selection:
+`starter-app`, `user-app-api`, and `auth-app-api`. Run the `fullstack` or
+`enterprise` preset only when you intentionally want the richer reference apps.
 
 ## 4. Environment variables
 
@@ -107,10 +111,14 @@ pnpm run db:migrate
 ## 6. Start development servers
 
 ```bash
-# All apps (recommended for full-stack dev):
-pnpm run dev:fullstack
+# Neutral starter plus its APIs:
+pnpm run dev
+
+# Explicitly start every serve target, including reference apps:
+pnpm run dev:all
 
 # Or start specific apps with Nx:
+pnpm exec nx serve starter-app
 pnpm exec nx serve admin-app
 pnpm exec nx serve user-app
 pnpm exec nx serve admin-app-api
@@ -120,6 +128,7 @@ pnpm exec nx serve admin-app-api
 
 | App         | Port | Framework         |
 | ----------- | ---- | ----------------- |
+| starter-app | 4204 | React + Vite      |
 | admin-app   | 4200 | React + Vite      |
 | user-app    | 4201 | React + Vite      |
 | landing-app | 4202 | Astro             |

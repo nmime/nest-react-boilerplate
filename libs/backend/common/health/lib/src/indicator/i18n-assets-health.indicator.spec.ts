@@ -1,14 +1,8 @@
-import {
-  mkdtempSync,
-  mkdirSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
-import { I18nAssetsHealthIndicator } from "./i18n-assets-health.indicator";
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { I18nAssetsHealthIndicator } from './i18n-assets-health.indicator';
 
 const tempRoots: string[] = [];
 
@@ -18,134 +12,134 @@ afterEach(() => {
   }
 });
 
-describe("I18nAssetsHealthIndicator", () => {
-  it("skips when no root path is configured", () => {
+describe('I18nAssetsHealthIndicator', () => {
+  it('skips when no root path is configured', () => {
     expect(new I18nAssetsHealthIndicator().check()).toEqual({
-      name: "i18n",
-      status: "skipped",
+      name: 'i18n',
+      status: 'skipped',
       required: false,
-      details: { reason: "no i18n assets path configured" },
+      details: { reason: 'no i18n assets path configured' },
     });
   });
 
-  it("checks configured locale directories without importing app internals", () => {
-    const root = mkdtempSync(join(tmpdir(), "health-i18n-"));
+  it('checks configured locale directories without importing app internals', () => {
+    const root = mkdtempSync(join(tmpdir(), 'health-i18n-'));
     tempRoots.push(root);
-    mkdirSync(join(root, "en"));
+    mkdirSync(join(root, 'en'));
 
     expect(
       new I18nAssetsHealthIndicator({
         rootPath: root,
-        locales: ["en", "fr"],
+        locales: ['en', 'fr'],
       }).check(),
     ).toEqual({
-      name: "i18n",
-      status: "degraded",
+      name: 'i18n',
+      status: 'degraded',
       required: false,
       details: {
         configured: true,
         rootExists: true,
         localeCount: 1,
-        checkedLocales: ["en", "fr"],
-        missingLocales: ["fr"],
+        checkedLocales: ['en', 'fr'],
+        missingLocales: ['fr'],
       },
     });
   });
 
-  it("reports ok when every configured locale directory exists", () => {
-    const root = mkdtempSync(join(tmpdir(), "health-i18n-"));
+  it('reports ok when every configured locale directory exists', () => {
+    const root = mkdtempSync(join(tmpdir(), 'health-i18n-'));
     tempRoots.push(root);
-    mkdirSync(join(root, "en"));
-    mkdirSync(join(root, "fr"));
+    mkdirSync(join(root, 'en'));
+    mkdirSync(join(root, 'fr'));
 
     expect(
       new I18nAssetsHealthIndicator({
         rootPath: root,
-        locales: ["en", "fr"],
+        locales: ['en', 'fr'],
       }).check(),
     ).toEqual({
-      name: "i18n",
-      status: "ok",
+      name: 'i18n',
+      status: 'ok',
       required: false,
       details: {
         configured: true,
         rootExists: true,
         localeCount: 2,
-        checkedLocales: ["en", "fr"],
+        checkedLocales: ['en', 'fr'],
         missingLocales: [],
       },
     });
   });
 
-  it("ignores non-directory entries while listing available locales", () => {
-    const root = mkdtempSync(join(tmpdir(), "health-i18n-"));
+  it('ignores non-directory entries while listing available locales', () => {
+    const root = mkdtempSync(join(tmpdir(), 'health-i18n-'));
     tempRoots.push(root);
-    mkdirSync(join(root, "en"));
-    writeFileSync(join(root, "readme.txt"), "not a locale directory");
+    mkdirSync(join(root, 'en'));
+    writeFileSync(join(root, 'readme.txt'), 'not a locale directory');
     // A dangling symlink surfaces from readdir but statSync throws when the
     // target is missing, exercising the defensive catch in listDirectoryNames.
-    symlinkSync(join(root, "missing-target"), join(root, "broken-link"));
+    symlinkSync(join(root, 'missing-target'), join(root, 'broken-link'));
 
     expect(
       new I18nAssetsHealthIndicator({
         rootPath: root,
-        locales: ["en"],
+        locales: ['en'],
       }).check(),
     ).toEqual({
-      name: "i18n",
-      status: "ok",
+      name: 'i18n',
+      status: 'ok',
       required: false,
       details: {
         configured: true,
         rootExists: true,
         localeCount: 1,
-        checkedLocales: ["en"],
+        checkedLocales: ['en'],
         missingLocales: [],
       },
     });
   });
 
-  it("degrades an optional check when the configured root is missing", () => {
-    const root = join(tmpdir(), "health-i18n-does-not-exist-optional");
+  it('degrades an optional check when the configured root is missing', () => {
+    const root = join(tmpdir(), 'health-i18n-does-not-exist-optional');
 
     expect(
       new I18nAssetsHealthIndicator({
         rootPath: root,
-        locales: ["en", "fr"],
+        locales: ['en', 'fr'],
       }).check(),
     ).toEqual({
-      name: "i18n",
-      status: "degraded",
+      name: 'i18n',
+      status: 'degraded',
       required: false,
       details: {
         configured: true,
         rootExists: false,
-        missingLocales: ["en", "fr"],
+        missingLocales: ['en', 'fr'],
       },
     });
   });
 
-  it("errors a required check when the configured root is not a directory", () => {
-    const root = mkdtempSync(join(tmpdir(), "health-i18n-"));
+  it('errors a required check when the configured root is not a directory', () => {
+    const root = mkdtempSync(join(tmpdir(), 'health-i18n-'));
     tempRoots.push(root);
-    const filePath = join(root, "catalog.json");
-    writeFileSync(filePath, "{}");
+    const filePath = join(root, 'catalog.json');
+    writeFileSync(filePath, '{}');
 
     expect(
       new I18nAssetsHealthIndicator({
-        name: "translations",
+        name: 'translations',
         required: true,
         rootPath: filePath,
-        locales: ["en"],
+        locales: ['en'],
       }).check(),
     ).toEqual({
-      name: "translations",
-      status: "error",
+      name: 'translations',
+      status: 'error',
       required: true,
       details: {
         configured: true,
         rootExists: false,
-        missingLocales: ["en"],
+        missingLocales: ['en'],
       },
     });
   });

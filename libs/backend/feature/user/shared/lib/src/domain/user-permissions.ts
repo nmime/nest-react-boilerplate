@@ -1,1 +1,1 @@
-export const UserProfileReadPermission = "profile:read";
+export const UserProfileReadPermission = 'profile:read';

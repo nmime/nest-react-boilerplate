@@ -54,7 +54,7 @@ export {
   useTabBarVisibility,
   useTheme,
   useUiStore,
-} from "@app/frontend-runtime";
+} from '@app/frontend-runtime';
 export type {
   AnyQueryClient,
   AppBreakpoint,
@@ -86,7 +86,7 @@ export type {
   TranslationKey,
   TranslationParams,
   UiTheme,
-} from "@app/frontend-runtime";
+} from '@app/frontend-runtime';
 export {
   AdminDataTable,
   AdminSearchFilterToolbar,
@@ -135,7 +135,7 @@ export {
   UiTextarea,
   UiTextField,
   UiToast,
-} from "@app/frontend-ui-web";
+} from '@app/frontend-ui-web';
 export type {
   ProductShellAction,
   ProductShellProps,
@@ -179,4 +179,4 @@ export type {
   UiTextareaProps,
   UiTextFieldProps,
   UiToastProps,
-} from "@app/frontend-ui-web";
+} from '@app/frontend-ui-web';

@@ -30,6 +30,14 @@ export interface AppEntry {
  */
 export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
   /* --- Frontend apps --- */
+  'starter-app': {
+    id: 'starter-app',
+    label: 'Neutral Product Starter',
+    platform: 'frontend',
+    requiresCapabilities: ['design-tokens', 'i18n'],
+    requiresApps: ['user-app-api', 'auth-app-api'],
+    conflictsWithCapabilities: [],
+  },
   'admin-app': {
     id: 'admin-app',
     label: 'Admin Dashboard',
@@ -110,6 +118,14 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     requiresCapabilities: ['telegram-bot', 'postgres'],
     requiresApps: [],
+    conflictsWithCapabilities: [],
+  },
+  'telegram-bot-worker': {
+    id: 'telegram-bot-worker',
+    label: 'Telegram Bot Worker',
+    platform: 'backend',
+    requiresCapabilities: ['telegram-bot', 'redis'],
+    requiresApps: ['telegram-bot-api'],
     conflictsWithCapabilities: [],
   },
 

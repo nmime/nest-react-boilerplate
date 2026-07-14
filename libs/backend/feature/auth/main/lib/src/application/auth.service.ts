@@ -6,7 +6,7 @@ import {
   Optional,
   NotFoundException,
   UnauthorizedException,
-} from "@nestjs/common";
+} from '@nestjs/common';
 import {
   AuthProvider,
   AuthProviderChannel,
@@ -18,8 +18,8 @@ import {
   type AuthMethodClaims,
   type AuthenticatedUserView,
   type UserThemePreference,
-} from "@app/backend-feature-auth-shared";
-import { normalizeLocale } from "@app/common-i18n";
+} from '@app/backend-feature-auth-shared';
+import { normalizeLocale } from '@app/common-i18n';
 import {
   AuthUserStoreInjectToken,
   type AuthUserRecord,
@@ -30,29 +30,29 @@ import {
   InMemoryAuthTokenStore,
   SocialAuthStoreInjectToken,
   type SocialAuthStore,
-} from "../infrastructure";
-import { createAuthSession } from "./auth-session.factory";
-import { EffectivePermissionService } from "./effective-permission.service";
+} from '../infrastructure';
+import { createAuthSession } from './auth-session.factory';
+import { EffectivePermissionService } from './effective-permission.service';
 import {
   normalizeEmail,
   AuthJwtSigningError,
   type JwtSigningEnvironment,
   hashPassword,
   verifyPassword,
-} from "../domain";
+} from '../domain';
 import type {
   LoginInput,
   RefreshSessionInput,
   RegisterUserInput,
   UserActionTokenInput,
-} from "./type/auth-service.type";
-import { parseTenantId } from "./util/auth-error-adapter.util";
+} from './type/auth-service.type';
+import { parseTenantId } from './util/auth-error-adapter.util';
 
 // Input DTOs and the JWT/tenant exception-translation helpers were decomposed
 // into role-based sibling files; they are re-exported here so the application
 // barrel stays stable.
-export * from "./type/auth-service.type";
-export * from "./util/auth-error-adapter.util";
+export * from './type/auth-service.type';
+export * from './util/auth-error-adapter.util';
 
 @Injectable()
 export class AuthService {
@@ -77,7 +77,7 @@ export class AuthService {
       throw new ConflictException(existing.error.message);
     }
     if (existing.value) {
-      throw new ConflictException("Email is already registered for tenant.");
+      throw new ConflictException('Email is already registered for tenant.');
     }
 
     // Assign bootstrap ROLES; the effective-permission resolver then refreshes
@@ -101,21 +101,14 @@ export class AuthService {
     const sessionUser = await this.bootstrapUserAccess(created.value, roleKeys);
     await this.recordPasswordMethod(sessionUser);
 
-    return this.createSession(
-      sessionUser,
-      process.env,
-      await this.issueRefreshTokenForUser(sessionUser),
-    );
+    return this.createSession(sessionUser, process.env, await this.issueRefreshTokenForUser(sessionUser));
   }
 
   // Assign the bootstrap roles to a freshly created user and refresh the
   // denormalized jsonb cache from the normalized RBAC tables. When no resolver
   // is wired (in-memory unit tests), the account already carries the
   // matrix-derived arrays from `create`, so the record is returned unchanged.
-  async bootstrapUserAccess(
-    user: AuthUserRecord,
-    roleKeys: readonly string[],
-  ): Promise<AuthUserRecord> {
+  async bootstrapUserAccess(user: AuthUserRecord, roleKeys: readonly string[]): Promise<AuthUserRecord> {
     if (!this.effectivePermissions) {
       return user;
     }
@@ -133,58 +126,39 @@ export class AuthService {
     const tenantId = parseTenantId(input.tenantId);
     const email = normalizeEmail(input.email);
     const user = await this.users.findByEmail(email, tenantId);
-    if (
-      user.isErr() ||
-      !user.value ||
-      !verifyPassword(input.password, user.value.passwordHash)
-    ) {
-      throw new UnauthorizedException("Invalid email or password.");
+    if (user.isErr() || !user.value || !verifyPassword(input.password, user.value.passwordHash)) {
+      throw new UnauthorizedException('Invalid email or password.');
     }
-    if (user.value.status !== "active") {
-      throw new UnauthorizedException("User is not active.");
+    if (user.value.status !== 'active') {
+      throw new UnauthorizedException('User is not active.');
     }
 
-    const loggedIn = await this.users.recordLogin(
-      user.value.id,
-      new Date(),
-      tenantId,
-    );
-    const sessionUser =
-      loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
+    const loggedIn = await this.users.recordLogin(user.value.id, new Date(), tenantId);
+    const sessionUser = loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
     await this.recordPasswordMethod(sessionUser);
-    return this.createSession(
-      sessionUser,
-      process.env,
-      await this.issueRefreshTokenForUser(sessionUser),
-    );
+    return this.createSession(sessionUser, process.env, await this.issueRefreshTokenForUser(sessionUser));
   }
 
   async refreshSession(input: RefreshSessionInput): Promise<AuthSessionView> {
     const tenantId = parseTenantId(input.tenantId);
-    const existing = await this.tokens.findRefreshToken(
-      input.refreshToken,
-      tenantId,
-    );
+    const existing = await this.tokens.findRefreshToken(input.refreshToken, tenantId);
     if (existing.isErr() || !existing.value) {
       // The token is not currently usable. Still attempt rotation so a replay of
       // an already-rotated token can trigger refresh-token family reuse detection.
       await this.tokens.rotateRefreshToken(input.refreshToken, tenantId);
-      throw new UnauthorizedException("Invalid refresh token.");
+      throw new UnauthorizedException('Invalid refresh token.');
     }
 
     // Verify the user is active before rotating so a deactivated user's token is
     // rejected without being rotated into an orphaned replacement.
     const user = await this.users.findById(existing.value.userId, tenantId);
-    if (user.isErr() || !user.value || user.value.status !== "active") {
-      throw new UnauthorizedException("Invalid refresh token.");
+    if (user.isErr() || !user.value || user.value.status !== 'active') {
+      throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    const rotated = await this.tokens.rotateRefreshToken(
-      input.refreshToken,
-      tenantId,
-    );
+    const rotated = await this.tokens.rotateRefreshToken(input.refreshToken, tenantId);
     if (rotated.isErr() || !rotated.value) {
-      throw new UnauthorizedException("Invalid refresh token.");
+      throw new UnauthorizedException('Invalid refresh token.');
     }
 
     return this.createSession(user.value, process.env, rotated.value.token);
@@ -192,10 +166,7 @@ export class AuthService {
 
   async revokeRefreshToken(input: RefreshSessionInput): Promise<boolean> {
     const tenantId = parseTenantId(input.tenantId);
-    const revoked = await this.tokens.revokeRefreshToken(
-      input.refreshToken,
-      tenantId,
-    );
+    const revoked = await this.tokens.revokeRefreshToken(input.refreshToken, tenantId);
     if (revoked.isErr()) {
       return false;
     }
@@ -203,16 +174,12 @@ export class AuthService {
     return revoked.value;
   }
 
-  async issueEmailVerificationToken(
-    input: UserActionTokenInput,
-  ): Promise<string | null> {
-    return this.issueUserActionToken(input, "email_verification");
+  async issueEmailVerificationToken(input: UserActionTokenInput): Promise<string | null> {
+    return this.issueUserActionToken(input, 'email_verification');
   }
 
-  async issuePasswordResetToken(
-    input: UserActionTokenInput,
-  ): Promise<string | null> {
-    return this.issueUserActionToken(input, "password_reset");
+  async issuePasswordResetToken(input: UserActionTokenInput): Promise<string | null> {
+    return this.issueUserActionToken(input, 'password_reset');
   }
 
   async consumeUserActionToken(
@@ -220,18 +187,11 @@ export class AuthService {
     purpose: AuthUserTokenPurpose,
     tenantId?: string | null,
   ): Promise<boolean> {
-    const consumed = await this.tokens.consumeUserActionToken(
-      token,
-      purpose,
-      parseTenantId(tenantId),
-    );
+    const consumed = await this.tokens.consumeUserActionToken(token, purpose, parseTenantId(tenantId));
     return consumed.isOk() && Boolean(consumed.value);
   }
 
-  async getUserById(
-    id: string,
-    tenantId?: string | null,
-  ): Promise<AuthenticatedUserView | null> {
+  async getUserById(id: string, tenantId?: string | null): Promise<AuthenticatedUserView | null> {
     const resolvedTenantId = parseTenantId(tenantId);
     const user = await this.users.findById(id, resolvedTenantId);
     if (user.isErr() || !user.value) {
@@ -267,51 +227,44 @@ export class AuthService {
       theme?: string | null;
     } | null,
   ): Promise<AuthenticatedUserView> {
-    const hasExplicitTenant =
-      typeof tenantIdOrInput === "string" || arguments.length >= 3;
+    const hasExplicitTenant = typeof tenantIdOrInput === 'string' || arguments.length >= 3;
     const tenantIdInput =
       hasExplicitTenant &&
-      (typeof tenantIdOrInput === "string" ||
-        tenantIdOrInput === null ||
-        tenantIdOrInput === undefined)
+      (typeof tenantIdOrInput === 'string' || tenantIdOrInput === null || tenantIdOrInput === undefined)
         ? tenantIdOrInput
         : undefined;
     const resolvedTenantId = parseTenantId(tenantIdInput);
     const input = hasExplicitTenant ? maybeInput : tenantIdOrInput;
-    if (input === null || typeof input !== "object" || Array.isArray(input)) {
-      throw new BadRequestException("Preferences payload must be an object.");
+    if (input === null || typeof input !== 'object' || Array.isArray(input)) {
+      throw new BadRequestException('Preferences payload must be an object.');
     }
 
     const preferences: { locale?: ReturnType<typeof normalizeLocale> } & {
       theme?: UserThemePreference;
     } = {};
 
-    if (Object.hasOwn(input, "locale")) {
+    if (Object.hasOwn(input, 'locale')) {
       const locale = normalizeLocale(input.locale);
       if (!locale) {
-        throw new BadRequestException("Unsupported locale.");
+        throw new BadRequestException('Unsupported locale.');
       }
       preferences.locale = locale;
     }
 
-    if (Object.hasOwn(input, "theme")) {
+    if (Object.hasOwn(input, 'theme')) {
       const theme = normalizeUserThemePreference(input.theme);
       if (!theme) {
-        throw new BadRequestException("Unsupported theme.");
+        throw new BadRequestException('Unsupported theme.');
       }
       preferences.theme = theme;
     }
 
-    const updated = await this.users.setPreferences(
-      id,
-      preferences,
-      resolvedTenantId,
-    );
+    const updated = await this.users.setPreferences(id, preferences, resolvedTenantId);
     if (updated.isErr()) {
       throw new ConflictException(updated.error.message);
     }
     if (!updated.value) {
-      throw new NotFoundException("User was not found in tenant.");
+      throw new NotFoundException('User was not found in tenant.');
     }
 
     return toAuthenticatedUserView(updated.value);
@@ -322,7 +275,7 @@ export class AuthService {
     env: JwtSigningEnvironment = process.env,
     refreshToken?: string,
     claims: AuthMethodClaims = {
-      amr: ["pwd"],
+      amr: ['pwd'],
       authProvider: AuthProvider.Password,
       authChannel: AuthProviderChannel.Password,
       authTime: Math.floor(Date.now() / 1000),
@@ -339,16 +292,11 @@ export class AuthService {
     }
   }
 
-  createUserSession(
-    user: AuthUserRecord,
-    env: JwtSigningEnvironment = process.env,
-  ): AuthSessionView {
+  createUserSession(user: AuthUserRecord, env: JwtSigningEnvironment = process.env): AuthSessionView {
     return this.createSession(user, env);
   }
 
-  private async issueRefreshTokenForUser(
-    user: AuthUserRecord,
-  ): Promise<string | undefined> {
+  private async issueRefreshTokenForUser(user: AuthUserRecord): Promise<string | undefined> {
     const issued = await this.tokens.issueRefreshToken({
       tenantId: user.tenantId,
       userId: user.id,
@@ -383,7 +331,7 @@ export class AuthService {
       tenantId: user.tenantId,
       userId: user.id,
       method: AuthProviderChannel.Password,
-      amr: ["pwd"],
+      amr: ['pwd'],
       lastUsedAt: new Date(),
     });
   }

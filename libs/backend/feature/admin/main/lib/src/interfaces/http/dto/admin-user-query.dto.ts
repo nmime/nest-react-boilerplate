@@ -1,15 +1,8 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
-import { Type } from "class-transformer";
-import {
-  adminAssignablePermissions,
-  adminAssignableRoles,
-} from "@app/backend-feature-admin-shared";
-import {
-  AdminMaxPageSize,
-  adminUserStatuses,
-  type AdminUserStatus,
-} from "../../../domain";
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { adminAssignablePermissions, adminAssignableRoles } from '@app/backend-feature-admin-shared';
+import { AdminMaxPageSize, adminUserStatuses, type AdminUserStatus } from '../../../domain';
 
 export class AdminUserQueryDto {
   @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
@@ -28,7 +21,7 @@ export class AdminUserQueryDto {
   offset?: number;
 
   @ApiPropertyOptional({
-    description: "Case-insensitive email/display name search.",
+    description: 'Case-insensitive email/display name search.',
   })
   @IsOptional()
   @IsString()

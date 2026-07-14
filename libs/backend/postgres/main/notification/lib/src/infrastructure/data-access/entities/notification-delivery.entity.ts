@@ -1,10 +1,5 @@
 import { EntitySchema } from '@mikro-orm/core';
-import {
-  type NotificationError,
-  NotificationPriority,
-  NotificationStatus,
-  NotificationChannel,
-} from '../../../domain';
+import { type NotificationError, NotificationPriority, NotificationStatus, NotificationChannel } from '../../../domain';
 
 export enum NotificationDeliveryProvider {
   Telegram = 'telegram',
@@ -31,7 +26,7 @@ export class NotificationDeliveryEntity {
   channel!: NotificationChannel;
   status!: NotificationStatus;
   error: NotificationError | null = null;
-  attempts: number = 0;
+  attempts = 0;
   provider: NotificationDeliveryProvider | null = null;
   priority: number = NotificationPriority.Default;
   sendTimeFrom: string | null = null;
@@ -76,6 +71,16 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
-  uniques: [{ name: 'uq__notification_deliveries__notification_id__channel', properties: ['notificationId', 'channel', 'createdAt'] }],
-  indexes: [{ name: 'ix__notification_deliveries__status__send_time', properties: ['status', 'sendTimeFrom', 'sendTimeTo'] }],
+  uniques: [
+    {
+      name: 'uq__notification_deliveries__notification_id__channel',
+      properties: ['notificationId', 'channel', 'createdAt'],
+    },
+  ],
+  indexes: [
+    {
+      name: 'ix__notification_deliveries__status_send_time_from_send_time_to',
+      properties: ['status', 'sendTimeFrom', 'sendTimeTo'],
+    },
+  ],
 });

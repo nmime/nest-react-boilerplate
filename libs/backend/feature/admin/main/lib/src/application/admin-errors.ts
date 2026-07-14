@@ -1,9 +1,5 @@
 export type AdminApplicationErrorCode =
-  | "conflict"
-  | "invalid_access_policy"
-  | "not_found"
-  | "repository_error"
-  | "sensitive_policy_violation";
+  'conflict' | 'invalid_access_policy' | 'not_found' | 'repository_error' | 'sensitive_policy_violation';
 
 export class AdminApplicationError extends Error {
   constructor(
@@ -11,12 +7,10 @@ export class AdminApplicationError extends Error {
     message: string,
   ) {
     super(message);
-    this.name = "AdminApplicationError";
+    this.name = 'AdminApplicationError';
   }
 }
 
 export const isSensitiveAdminPolicyMessage = (message: string): boolean =>
-  message ===
-    "Administrators cannot remove their own active admin write access." ||
-  message ===
-    "At least one active administrator must retain admin write access.";
+  message === 'Administrators cannot remove their own active admin write access.' ||
+  message === 'At least one active administrator must retain admin write access.';

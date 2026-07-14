@@ -7,10 +7,5 @@
     "moduleResolution": "bundler"
   },
   "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
-  "include": [
-    "pages/**/*.ts",
-    "pages/**/*.tsx",
-    "server/**/*.ts",
-    "site.vite.config.mts"
-  ]
+  "include": ["pages/**/*.ts", "pages/**/*.tsx", "server/**/*.ts", "site.vite.config.mts"]
 }

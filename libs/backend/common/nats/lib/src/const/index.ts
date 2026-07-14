@@ -1,1 +1,1 @@
-export * from "./nats-inject-token.const";
+export * from './nats-inject-token.const';

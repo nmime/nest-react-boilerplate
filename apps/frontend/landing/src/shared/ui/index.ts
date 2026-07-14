@@ -1,1 +1,1 @@
-export * from "./landing-stat-card";
+export * from './landing-stat-card';

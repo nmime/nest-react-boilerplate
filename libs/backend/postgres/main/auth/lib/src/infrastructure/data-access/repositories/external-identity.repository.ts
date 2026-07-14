@@ -1,15 +1,15 @@
-import { EntityManager, LockMode } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
+import { EntityManager, LockMode } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
 import {
   DefaultAuthTenantId,
   ExternalIdentityEntity,
   type ExternalAuthProvider,
   type ExternalAuthProviderChannel,
-} from "../entities";
+} from '../entities';
 
 export interface SocialAuthRepositoryError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 
@@ -37,13 +37,8 @@ export class ExternalIdentityRepository {
     private readonly entityManager: EntityManager,
   ) {}
 
-  upsertIdentity(
-    input: UpsertExternalIdentityInput,
-  ): ResultAsync<ExternalIdentityEntity, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistIdentity(input),
-      mapSocialAuthError,
-    );
+  upsertIdentity(input: UpsertExternalIdentityInput): ResultAsync<ExternalIdentityEntity, SocialAuthRepositoryError> {
+    return ResultAsync.fromPromise(this.persistIdentity(input), mapSocialAuthError);
   }
 
   findByProviderSubject(
@@ -66,11 +61,7 @@ export class ExternalIdentityRepository {
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<ExternalIdentityEntity[], SocialAuthRepositoryError> {
     return ResultAsync.fromPromise(
-      this.entityManager.find(
-        ExternalIdentityEntity,
-        { tenantId, userId },
-        { orderBy: { linkedAt: "ASC" } },
-      ),
+      this.entityManager.find(ExternalIdentityEntity, { tenantId, userId }, { orderBy: { linkedAt: 'ASC' } }),
       mapSocialAuthError,
     );
   }
@@ -80,15 +71,10 @@ export class ExternalIdentityRepository {
     userId: string,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<boolean, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.deleteIdentity(id, userId, tenantId),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.deleteIdentity(id, userId, tenantId), mapSocialAuthError);
   }
 
-  private async persistIdentity(
-    input: UpsertExternalIdentityInput,
-  ): Promise<ExternalIdentityEntity> {
+  private async persistIdentity(input: UpsertExternalIdentityInput): Promise<ExternalIdentityEntity> {
     const tenantId = input.tenantId ?? DefaultAuthTenantId;
 
     return this.entityManager.transactional(async (em) => {
@@ -125,11 +111,7 @@ export class ExternalIdentityRepository {
     });
   }
 
-  private async deleteIdentity(
-    id: string,
-    userId: string,
-    tenantId: string,
-  ): Promise<boolean> {
+  private async deleteIdentity(id: string, userId: string, tenantId: string): Promise<boolean> {
     const entity = await this.entityManager.findOne(ExternalIdentityEntity, {
       id,
       userId,
@@ -144,17 +126,14 @@ export class ExternalIdentityRepository {
   }
 }
 
-function normalizeOptionalText(
-  value: string | null | undefined,
-): string | null {
+function normalizeOptionalText(value: string | null | undefined): string | null {
   const normalized = value?.trim();
   return normalized ? normalized : null;
 }
 
 export function mapSocialAuthError(cause: unknown): SocialAuthRepositoryError {
   return {
-    code: "repository_error",
-    message:
-      cause instanceof Error ? cause.message : "Social auth repository failed.",
+    code: 'repository_error',
+    message: cause instanceof Error ? cause.message : 'Social auth repository failed.',
   };
 }

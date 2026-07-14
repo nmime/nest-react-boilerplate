@@ -8,9 +8,10 @@
  * Second-run idempotency: if the config hasn't changed and the state
  * matches, the planner returns an empty operation list.
  *
- * The planner also generates two metadata files:
+ * The planner also generates repository configuration artifacts:
  *   - `nrb.config.json` — the resolved configuration
  *   - `.nrb/summary.md` — a human-readable summary of the plan
+ *   - `.nrb/workspace.json` — the runtime/CI selection consumed by tooling
  */
 import type { NrbConfig } from './schema.js';
 import type { AppId, CapabilityId } from './schema.js';
@@ -19,6 +20,7 @@ import { createFile, sortOperations, deleteFile, updateFile } from './operations
 import type { SetupState } from './state.js';
 import { configHash, hashString, buildState, diffState, emptyState } from './state.js';
 import { expandDependencies, validateSelection } from './catalog.js';
+import { appCatalog } from './catalog.js';
 import { expandPreset } from './presets.js';
 
 // ---------------------------------------------------------------------------
@@ -111,6 +113,23 @@ export function generateSummaryMd(summary: PlanSummary): { path: string; content
   };
 }
 
+export function generateWorkspaceManifest(summary: PlanSummary): { path: string; content: string } {
+  const byPlatform = {
+    backend: summary.apps.filter((id) => appCatalog[id as keyof typeof appCatalog]?.platform === 'backend'),
+    e2e: summary.apps.filter((id) => appCatalog[id as keyof typeof appCatalog]?.platform === 'e2e'),
+    frontend: summary.apps.filter((id) => appCatalog[id as keyof typeof appCatalog]?.platform === 'frontend'),
+  };
+  const manifest = {
+    schemaVersion: 1,
+    configHash: summary.configHash,
+    preset: summary.preset ?? null,
+    apps: [...summary.apps].sort(),
+    capabilities: [...summary.capabilities].sort(),
+    byPlatform,
+  };
+  return { path: '.nrb/workspace.json', content: `${JSON.stringify(manifest, null, 2)}\n` };
+}
+
 // ---------------------------------------------------------------------------
 // Plan generation
 // ---------------------------------------------------------------------------
@@ -187,11 +206,19 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
   const configFile = generateConfigFile(config);
   const summary = { apps: [...apps].sort(), capabilities: [...capabilities].sort(), preset, configHash: cfgHash };
   const summaryFile = generateSummaryMd(summary);
+  const workspaceFile = generateWorkspaceManifest(summary);
+
+  const desiredContent = new Map([
+    [configFile.path, configFile.content],
+    [summaryFile.path, summaryFile.content],
+    [workspaceFile.path, workspaceFile.content],
+  ]);
 
   // Build desired files map with stable hashes
   const desiredFiles: Record<string, string> = {};
-  desiredFiles[configFile.path] = hashString(configFile.content);
-  desiredFiles[summaryFile.path] = hashString(summaryFile.content);
+  for (const [filePath, content] of desiredContent) {
+    desiredFiles[filePath] = hashString(content);
+  }
 
   // Diff against current state
   const diff = diffState(currentState, desiredFiles);
@@ -209,13 +236,19 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
 
   // Creates (files not in current state)
   for (const p of diff.toCreate) {
-    const content = p === configFile.path ? configFile.content : summaryFile.content;
+    const content = desiredContent.get(p);
+    if (content === undefined) {
+      throw new Error(`Missing planned content for ${p}`);
+    }
     operations.push(createFile(p, content, 'Create ' + p));
   }
 
   // Updates (files whose content hash changed)
   for (const p of diff.toUpdate) {
-    const content = p === configFile.path ? configFile.content : summaryFile.content;
+    const content = desiredContent.get(p);
+    if (content === undefined) {
+      throw new Error(`Missing planned content for ${p}`);
+    }
     operations.push(updateFile(p, content, 'Update ' + p));
   }
 

@@ -1,12 +1,8 @@
-import { ArgumentMetadata, HttpStatus, ValidationPipe } from "@nestjs/common";
-import { IsString } from "class-validator";
-import type { ValidationError as CVValidationError } from "class-validator";
-import { describe, expect, it } from "vitest";
-import {
-  ClientDataValidationException,
-  createValidationExceptionBody,
-  createValidationPipe,
-} from "./index";
+import { ArgumentMetadata, HttpStatus, ValidationPipe } from '@nestjs/common';
+import { IsString } from 'class-validator';
+import type { ValidationError as CVValidationError } from 'class-validator';
+import { describe, expect, it } from 'vitest';
+import { ClientDataValidationException, createValidationExceptionBody, createValidationPipe } from './index';
 
 /**
  * Build a minimal ValidationError for testing.
@@ -31,60 +27,59 @@ function makeError(
   };
 }
 
-describe("createValidationPipe", () => {
-  it("creates a Nest validation pipe", () => {
+describe('createValidationPipe', () => {
+  it('creates a Nest validation pipe', () => {
     expect(createValidationPipe()).toBeInstanceOf(ValidationPipe);
   });
 
-  it("creates problem details for validation errors", () => {
+  it('creates problem details for validation errors', () => {
     expect(
       createValidationExceptionBody([
-        makeError("name", {
-          constraints: { isString: "name must be a string" },
-          message: "name must be a string",
+        makeError('name', {
+          constraints: { isString: 'name must be a string' },
+          message: 'name must be a string',
         }),
       ]),
     ).toEqual({
-      type: "urn:problem:nest-react-boilerplate:client-data-validation",
-      title: "Client data validation failed",
+      type: 'urn:problem:nest-react-boilerplate:client-data-validation',
+      title: 'Client data validation failed',
       status: 400,
-      code: "client-data-validation",
-      detail: "Request client data validation failed.",
+      code: 'client-data-validation',
+      detail: 'Request client data validation failed.',
       errors: [
         {
-          property: "name",
-          constraints: { isString: "name must be a string" },
-          message: "name must be a string",
-          pointer: "/name",
+          property: 'name',
+          constraints: { isString: 'name must be a string' },
+          message: 'name must be a string',
+          detail: 'name must be a string',
+          pointer: '/name',
         },
       ],
     });
   });
 
-  it("uses empty constraints when class-validator provides none", () => {
-    expect(
-      createValidationExceptionBody([makeError("nested")]),
-    ).toMatchObject({
-      errors: [{ property: "nested", constraints: {}, pointer: "/nested" }],
+  it('uses empty constraints when class-validator provides none', () => {
+    expect(createValidationExceptionBody([makeError('nested')])).toMatchObject({
+      errors: [{ property: 'nested', constraints: {}, pointer: '/nested' }],
     });
   });
 
-  it("flattens nested validation errors", () => {
+  it('flattens nested validation errors', () => {
     expect(
       createValidationExceptionBody([
-        makeError("profile", {
+        makeError('profile', {
           children: [
-            makeError("displayName", {
-              constraints: { isString: "displayName must be a string" },
-              message: "displayName must be a string",
+            makeError('displayName', {
+              constraints: { isString: 'displayName must be a string' },
+              message: 'displayName must be a string',
             }),
-            makeError("addresses", {
+            makeError('addresses', {
               children: [
-                makeError("0", {
+                makeError('0', {
                   children: [
-                    makeError("city", {
-                      constraints: { isString: "city must be a string" },
-                      message: "city must be a string",
+                    makeError('city', {
+                      constraints: { isString: 'city must be a string' },
+                      message: 'city must be a string',
                     }),
                   ],
                 }),
@@ -96,28 +91,28 @@ describe("createValidationPipe", () => {
     ).toMatchObject({
       errors: [
         {
-          property: "profile.displayName",
-          constraints: { isString: "displayName must be a string" },
-          message: "displayName must be a string",
-          pointer: "/profile/displayName",
+          property: 'profile.displayName',
+          constraints: { isString: 'displayName must be a string' },
+          message: 'displayName must be a string',
+          pointer: '/profile/displayName',
         },
         {
-          property: "profile.addresses.0.city",
-          constraints: { isString: "city must be a string" },
-          message: "city must be a string",
-          pointer: "/profile/addresses/0/city",
+          property: 'profile.addresses.0.city',
+          constraints: { isString: 'city must be a string' },
+          message: 'city must be a string',
+          pointer: '/profile/addresses/0/city',
         },
       ],
     });
   });
 
-  it("escapes JSON Pointer path segments", () => {
+  it('escapes JSON Pointer path segments', () => {
     expect(
       createValidationExceptionBody([
-        makeError("profile/primary", {
+        makeError('profile/primary', {
           children: [
-            makeError("tilde~field", {
-              constraints: { isString: "tilde~field must be a string" },
+            makeError('tilde~field', {
+              constraints: { isString: 'tilde~field must be a string' },
             }),
           ],
         }),
@@ -125,20 +120,20 @@ describe("createValidationPipe", () => {
     ).toMatchObject({
       errors: [
         {
-          property: "profile/primary.tilde~field",
-          pointer: "/profile~1primary/tilde~0field",
+          property: 'profile/primary.tilde~field',
+          pointer: '/profile~1primary/tilde~0field',
         },
       ],
     });
   });
 
-  it("creates typed exceptions with static definition and info", () => {
+  it('creates typed exceptions with static definition and info', () => {
     const exception = new ClientDataValidationException([
       {
-        property: "age",
-        constraints: { isInt: "age must be an integer number" },
-        message: "age must be an integer number",
-        pointer: "/age",
+        property: 'age',
+        constraints: { isInt: 'age must be an integer number' },
+        message: 'age must be an integer number',
+        pointer: '/age',
       },
     ]);
 
@@ -146,26 +141,26 @@ describe("createValidationPipe", () => {
     const response = exception.getResponse();
 
     // Static fields from RFC 9457 definition
-    expect(response.type).toBe("urn:problem:nest-react-boilerplate:client_data_validation");
-    expect(response.title).toBe("Client Data Validation Failed");
-    expect(response.detail).toBe("The provided data failed validation");
+    expect(response.type).toBe('urn:problem:nest-react-boilerplate:client_data_validation');
+    expect(response.title).toBe('Client Data Validation Failed');
+    expect(response.detail).toBe('The provided data failed validation');
     expect(response.status).toBe(HttpStatus.BAD_REQUEST);
-    expect(response.code).toBe("client_data_validation");
+    expect(response.code).toBe('client_data_validation');
 
     // Dynamic data is in `info`
     expect((response as Record<string, unknown>).info).toEqual({
       errors: [
         {
-          property: "age",
-          constraints: { isInt: "age must be an integer number" },
-          message: "age must be an integer number",
-          pointer: "/age",
+          property: 'age',
+          constraints: { isInt: 'age must be an integer number' },
+          message: 'age must be an integer number',
+          pointer: '/age',
         },
       ],
     });
   });
 
-  it("throws typed exceptions from the pipe exception factory", async () => {
+  it('throws typed exceptions from the pipe exception factory', async () => {
     class CreateUserDto {
       @IsString()
       name!: string;
@@ -175,30 +170,28 @@ describe("createValidationPipe", () => {
     const metadata: ArgumentMetadata = {
       data: undefined,
       metatype: CreateUserDto,
-      type: "body",
+      type: 'body',
     };
 
-    await expect(
-      pipe.transform({ name: 123 }, metadata),
-    ).rejects.toBeInstanceOf(ClientDataValidationException);
+    await expect(pipe.transform({ name: 123 }, metadata)).rejects.toBeInstanceOf(ClientDataValidationException);
 
     try {
       await pipe.transform({ name: 123 }, metadata);
     } catch (error) {
       const response = (error as ClientDataValidationException).getResponse();
       expect(response).toMatchObject({
-        code: "client_data_validation",
+        code: 'client_data_validation',
         status: HttpStatus.BAD_REQUEST,
-        title: "Client Data Validation Failed",
-        type: "urn:problem:nest-react-boilerplate:client_data_validation",
+        title: 'Client Data Validation Failed',
+        type: 'urn:problem:nest-react-boilerplate:client_data_validation',
       });
       expect((response as Record<string, unknown>).info).toMatchObject({
         errors: [
           {
-            constraints: { isString: "name must be a string" },
-            message: "name must be a string",
-            pointer: "/name",
-            property: "name",
+            constraints: { isString: 'name must be a string' },
+            message: 'name must be a string',
+            pointer: '/name',
+            property: 'name',
           },
         ],
       });

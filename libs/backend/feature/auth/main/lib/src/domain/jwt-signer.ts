@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac } from 'node:crypto';
 
 export interface JwtSigningEnvironment {
   AUTH_JWT_SECRET?: string;
@@ -15,7 +15,7 @@ const MinimumProductionJwtSecretLength = 32;
 export class AuthJwtSigningError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "AuthJwtSigningError";
+    this.name = 'AuthJwtSigningError';
   }
 }
 
@@ -26,14 +26,11 @@ export function signDomainJwt(
 ): string {
   const secret = env.AUTH_JWT_SECRET?.trim();
   if (!secret) {
-    throw new AuthJwtSigningError("AUTH_JWT_SECRET is not configured.");
+    throw new AuthJwtSigningError('AUTH_JWT_SECRET is not configured.');
   }
-  if (
-    env.NODE_ENV === "production" &&
-    secret.length < MinimumProductionJwtSecretLength
-  ) {
+  if (env.NODE_ENV === 'production' && secret.length < MinimumProductionJwtSecretLength) {
     throw new AuthJwtSigningError(
-      "AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.",
+      'AUTH_JWT_SECRET must be at least 32 characters (excluding leading/trailing whitespace) in production.',
     );
   }
   const now = Math.floor(Date.now() / 1000);
@@ -44,10 +41,8 @@ export function signDomainJwt(
     iat: now,
     exp: now + expiresIn,
   };
-  const signingInput = `${base64UrlJson({ alg: "HS256", typ: "JWT" })}.${base64UrlJson(fullPayload)}`;
-  const signature = createHmac("sha256", secret)
-    .update(signingInput)
-    .digest("base64url");
+  const signingInput = `${base64UrlJson({ alg: 'HS256', typ: 'JWT' })}.${base64UrlJson(fullPayload)}`;
+  const signature = createHmac('sha256', secret).update(signingInput).digest('base64url');
   return `${signingInput}.${signature}`;
 }
 
@@ -56,11 +51,9 @@ export function readExpiresInSeconds(value: string | undefined): number {
     return DefaultExpiresInSeconds;
   }
   const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0
-    ? parsed
-    : DefaultExpiresInSeconds;
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : DefaultExpiresInSeconds;
 }
 
 function base64UrlJson(value: unknown): string {
-  return Buffer.from(JSON.stringify(value), "utf8").toString("base64url");
+  return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
 }

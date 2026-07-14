@@ -1,4 +1,4 @@
-import type { TelegramBotContext, TelegramBotRoute } from "./type";
+import type { TelegramBotContext, TelegramBotRoute } from './type';
 
 const maxStackDepth = 8;
 
@@ -7,9 +7,7 @@ export function navigateTo(
   route: TelegramBotRoute,
   params: Record<string, string> = {},
 ): void {
-  const stack: TelegramBotRoute[] = ctx.session.stack.length
-    ? ctx.session.stack
-    : ["main"];
+  const stack: TelegramBotRoute[] = ctx.session.stack.length ? ctx.session.stack : ['main'];
   const current = ctx.session.currentRoute;
   ctx.session.currentRoute = route;
   ctx.session.params = params;
@@ -21,14 +19,12 @@ export function navigateTo(
 }
 
 export function goBack(ctx: TelegramBotContext): TelegramBotRoute {
-  const stack: TelegramBotRoute[] = ctx.session.stack.length
-    ? [...ctx.session.stack]
-    : ["main"];
+  const stack: TelegramBotRoute[] = ctx.session.stack.length ? [...ctx.session.stack] : ['main'];
   if (stack.length > 1) {
     stack.pop();
   }
 
-  const route: TelegramBotRoute = stack[stack.length - 1] ?? "main";
+  const route: TelegramBotRoute = stack[stack.length - 1] ?? 'main';
   ctx.session.stack = stack;
   ctx.session.currentRoute = route;
   ctx.session.params = {};
@@ -37,32 +33,32 @@ export function goBack(ctx: TelegramBotContext): TelegramBotRoute {
 }
 
 export function goHome(ctx: TelegramBotContext): void {
-  ctx.session.currentRoute = "main";
-  ctx.session.stack = ["main"];
+  ctx.session.currentRoute = 'main';
+  ctx.session.stack = ['main'];
   ctx.session.params = {};
-  ctx.session.lastMenuId = menuIdForRoute("main");
+  ctx.session.lastMenuId = menuIdForRoute('main');
 }
 
 export function menuIdForRoute(route: TelegramBotRoute): string {
-  if (route.startsWith("settings.language")) {
-    return "telegram:menu:language";
+  if (route.startsWith('settings.language')) {
+    return 'telegram:menu:language';
   }
 
-  if (route.startsWith("support")) {
-    return "telegram:menu:support";
+  if (route.startsWith('support')) {
+    return 'telegram:menu:support';
   }
 
-  if (route.startsWith("link")) {
-    return "telegram:menu:link";
+  if (route.startsWith('link')) {
+    return 'telegram:menu:link';
   }
 
-  if (route === "settings") {
-    return "telegram:menu:settings";
+  if (route === 'settings') {
+    return 'telegram:menu:settings';
   }
 
-  if (route === "profile") {
-    return "telegram:menu:profile";
+  if (route === 'profile') {
+    return 'telegram:menu:profile';
   }
 
-  return "telegram:menu:main";
+  return 'telegram:menu:main';
 }

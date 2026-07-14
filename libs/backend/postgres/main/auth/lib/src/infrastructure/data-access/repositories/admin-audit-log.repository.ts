@@ -1,16 +1,9 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
-import {
-  AdminAuditLogEntity,
-  DefaultAuthTenantId,
-  type AdminAuditLogEntityInput,
-} from "../entities";
-import {
-  normalizePageLimit,
-  normalizePageOffset,
-} from "./admin-user-mutation.repository";
-import type { AuthUserRepositoryError } from "./auth-user.repository";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
+import { AdminAuditLogEntity, DefaultAuthTenantId, type AdminAuditLogEntityInput } from '../entities';
+import { normalizePageLimit, normalizePageOffset } from './admin-user-mutation.repository';
+import type { AuthUserRepositoryError } from './auth-user.repository';
 
 export interface AdminAuditLogListInput {
   tenantId?: string;
@@ -28,37 +21,29 @@ export class AdminAuditLogRepository {
     private readonly entityManager: EntityManager,
   ) {}
 
-  record(
-    input: AdminAuditLogEntityInput,
-  ): ResultAsync<AdminAuditLogEntity, AuthUserRepositoryError> {
+  record(input: AdminAuditLogEntityInput): ResultAsync<AdminAuditLogEntity, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(this.persist(input), mapRepositoryError);
   }
 
-  list(
-    input: AdminAuditLogListInput = {},
-  ): ResultAsync<AdminAuditLogEntity[], AuthUserRepositoryError> {
+  list(input: AdminAuditLogListInput = {}): ResultAsync<AdminAuditLogEntity[], AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.find(AdminAuditLogEntity, toAuditFilter(input), {
         limit: normalizePageLimit(input.limit),
         offset: normalizePageOffset(input.offset),
-        orderBy: { createdAt: "DESC", id: "DESC" },
+        orderBy: { createdAt: 'DESC', id: 'DESC' },
       }),
       mapRepositoryError,
     );
   }
 
-  count(
-    input: AdminAuditLogListInput = {},
-  ): ResultAsync<number, AuthUserRepositoryError> {
+  count(input: AdminAuditLogListInput = {}): ResultAsync<number, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.count(AdminAuditLogEntity, toAuditFilter(input)),
       mapRepositoryError,
     );
   }
 
-  private async persist(
-    input: AdminAuditLogEntityInput,
-  ): Promise<AdminAuditLogEntity> {
+  private async persist(input: AdminAuditLogEntityInput): Promise<AdminAuditLogEntity> {
     const entity = new AdminAuditLogEntity(input);
     this.entityManager.persist(entity);
     await this.entityManager.flush();
@@ -78,8 +63,7 @@ function toAuditFilter(input: AdminAuditLogListInput): Record<string, unknown> {
 
 function mapRepositoryError(cause: unknown): AuthUserRepositoryError {
   return {
-    code: "repository_error",
-    message:
-      cause instanceof Error ? cause.message : "Admin audit repository failed.",
+    code: 'repository_error',
+    message: cause instanceof Error ? cause.message : 'Admin audit repository failed.',
   };
 }

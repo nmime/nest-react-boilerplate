@@ -4,7 +4,7 @@ import type {
   AuthSessionView,
   ExternalAuthIdentityView,
   ExternalAuthIntent,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 export interface ExternalAuthSessionClaims {
   amr: string[];
@@ -63,7 +63,7 @@ export interface DiscordAuthorizationRequestResult {
 }
 
 export interface ExternalAuthLoginResult {
-  status: "authenticated" | "linked" | "needs_link" | "conflict";
+  status: 'authenticated' | 'linked' | 'needs_link' | 'conflict';
   code?: string;
   message?: string;
   session?: AuthSessionView;

@@ -21,17 +21,39 @@ const workspaceRoot = resolve(__dirname, "../../../../..");
 const TEST_DB_SUFFIX = randomUUID().slice(0, 8);
 const TEST_DB_NAME = `test_nrb_${TEST_DB_SUFFIX}`;
 const TEST_CONTAINER = `nrb-migrate-test-${TEST_DB_SUFFIX}`;
-const SKIP = process.env.SKIP_INTEGRATION === "1";
+const SKIP_BY_ENV = process.env.SKIP_INTEGRATION === "1";
 
 function findFreePort() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const srv = createServer();
-    srv.listen(0, () => {
+    srv.once("error", reject);
+    srv.listen(0, "127.0.0.1", () => {
       const { port } = srv.address();
-      srv.close(() => resolve(port));
+      srv.close((error) => {
+        if (error) reject(error);
+        else resolve(port);
+      });
     });
   });
 }
+
+async function canBindLocalPort() {
+  try {
+    await findFreePort();
+    return true;
+  } catch (error) {
+    const code = typeof error === "object" && error !== null && "code" in error ? error.code : undefined;
+    if (code === "EACCES" || code === "EPERM") return false;
+    throw error;
+  }
+}
+
+const LOCAL_BIND_AVAILABLE = SKIP_BY_ENV ? false : await canBindLocalPort();
+const SKIP = SKIP_BY_ENV
+  ? "SKIP_INTEGRATION=1"
+  : LOCAL_BIND_AVAILABLE
+    ? false
+    : "local TCP port binding is unavailable in this execution environment";
 
 function runDocker(args) {
   return new Promise((resolve) => {

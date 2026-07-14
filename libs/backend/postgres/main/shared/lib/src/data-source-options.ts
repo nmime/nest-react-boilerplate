@@ -1,13 +1,10 @@
-import type { MigrationsOptions } from "@mikro-orm/core";
-import { Migrator } from "@mikro-orm/migrations";
-import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import {
-  createPostgresEnvironment,
-  type PostgresEnvironment,
-} from "./database.config";
+import type { MigrationsOptions } from '@mikro-orm/core';
+import { Migrator } from '@mikro-orm/migrations';
+import type { MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { createPostgresEnvironment, type PostgresEnvironment } from './database.config';
 
-export const PostgresMigrationsTableName = "mikro_orm_migrations";
+export const PostgresMigrationsTableName = 'mikro_orm_migrations';
 
 export const defaultPostgresMigrationOptions: MigrationsOptions = {
   tableName: PostgresMigrationsTableName,
@@ -20,10 +17,7 @@ export type PostgresMikroOrmOverrides = Partial<PostgresMikroOrmOptions>;
 
 export function createPostgresMikroOrmOptions(
   overrides: PostgresMikroOrmOverrides = {},
-  env:
-    | Partial<PostgresEnvironment>
-    | NodeJS.ProcessEnv
-    | Record<string, unknown> = process.env,
+  env: Partial<PostgresEnvironment> | NodeJS.ProcessEnv | Record<string, unknown> = process.env,
 ): PostgresMikroOrmOptions {
   const config = createPostgresEnvironment(env);
   const connection: PostgresMikroOrmOptions = config.DATABASE_URL
@@ -50,9 +44,7 @@ export function createPostgresMikroOrmOptions(
       max: config.POSTGRES_POOL_MAX,
       idleTimeoutMillis: config.POSTGRES_POOL_IDLE_TIMEOUT_MS,
     },
-    ...(config.POSTGRES_SLOW_QUERY_MS === undefined
-      ? {}
-      : { slowQueryThreshold: config.POSTGRES_SLOW_QUERY_MS }),
+    ...(config.POSTGRES_SLOW_QUERY_MS === undefined ? {} : { slowQueryThreshold: config.POSTGRES_SLOW_QUERY_MS }),
     driverOptions: config.POSTGRES_SSL
       ? {
           connection: {

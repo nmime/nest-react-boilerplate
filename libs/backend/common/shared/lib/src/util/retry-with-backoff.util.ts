@@ -1,5 +1,5 @@
-import { unknownToError } from "./error.util";
-import { sleep } from "./sleep.util";
+import { unknownToError } from './error.util';
+import { sleep } from './sleep.util';
 
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
@@ -23,10 +23,7 @@ export async function retryWithBackoff<T>(
       return await operation();
     } catch (caught) {
       const error = unknownToError(caught);
-      if (
-        attempt >= retries ||
-        options.shouldRetry?.(error, attempt) === false
-      ) {
+      if (attempt >= retries || options.shouldRetry?.(error, attempt) === false) {
         throw error;
       }
 

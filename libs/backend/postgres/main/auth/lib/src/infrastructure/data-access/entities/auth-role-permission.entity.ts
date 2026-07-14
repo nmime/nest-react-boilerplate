@@ -1,4 +1,4 @@
-import { EntitySchema } from "@mikro-orm/core";
+import { EntitySchema } from '@mikro-orm/core';
 
 export interface AuthRolePermissionEntityInput {
   roleId: string;
@@ -18,27 +18,26 @@ export class AuthRolePermissionEntity {
   }
 }
 
-export const AuthRolePermissionEntitySchema =
-  new EntitySchema<AuthRolePermissionEntity>({
-    class: AuthRolePermissionEntity,
-    tableName: "auth_role_permissions",
-    properties: {
-      roleId: { type: "uuid", fieldName: "role_id", primary: true },
-      permissionId: {
-        type: "uuid",
-        fieldName: "permission_id",
-        primary: true,
-      },
-      createdAt: {
-        type: "timestamptz",
-        fieldName: "created_at",
-        onCreate: () => new Date(),
-      },
+export const AuthRolePermissionEntitySchema = new EntitySchema<AuthRolePermissionEntity>({
+  class: AuthRolePermissionEntity,
+  tableName: 'auth_role_permissions',
+  properties: {
+    roleId: { type: 'uuid', fieldName: 'role_id', primary: true },
+    permissionId: {
+      type: 'uuid',
+      fieldName: 'permission_id',
+      primary: true,
     },
-    indexes: [
-      {
-        name: "ix__auth_role_permissions__permission_id",
-        properties: ["permissionId"],
-      },
-    ],
-  });
+    createdAt: {
+      type: 'timestamptz',
+      fieldName: 'created_at',
+      onCreate: () => new Date(),
+    },
+  },
+  indexes: [
+    {
+      name: 'ix__auth_role_permissions__permission_id',
+      properties: ['permissionId'],
+    },
+  ],
+});

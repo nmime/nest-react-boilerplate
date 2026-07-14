@@ -1,10 +1,10 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import type { ReactNode } from "react";
-import { UiButton } from "./button";
+import type { ReactNode } from 'react';
+import { UiButton } from './button';
 
-const previousPageLabel = ["Go", "to", "previous", "page"].join(" ");
-const nextPageLabel = ["Go", "to", "next", "page"].join(" ");
-import { cn } from "../util/cn";
+const previousPageLabel = ['Go', 'to', 'previous', 'page'].join(' ');
+const nextPageLabel = ['Go', 'to', 'next', 'page'].join(' ');
+import { cn } from '../util/cn';
 
 export interface UiPaginationProps {
   className?: string;
@@ -22,10 +22,7 @@ const getVisiblePages = (currentPage: number, totalPages: number): number[] => {
   const end = Math.min(safeTotal, start + 4);
   const adjustedStart = Math.max(1, end - 4);
 
-  return Array.from(
-    { length: end - adjustedStart + 1 },
-    (_, index) => adjustedStart + index,
-  );
+  return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
 };
 
 const renderSummary = ({
@@ -33,10 +30,7 @@ const renderSummary = ({
   pageSize,
   totalItems,
   totalPages,
-}: Pick<
-  UiPaginationProps,
-  "currentPage" | "pageSize" | "totalItems" | "totalPages"
->): ReactNode => {
+}: Pick<UiPaginationProps, 'currentPage' | 'pageSize' | 'totalItems' | 'totalPages'>): ReactNode => {
   if (!pageSize || totalItems === undefined) {
     return `Page ${currentPage} of ${totalPages}`;
   }
@@ -50,7 +44,7 @@ const renderSummary = ({
 export const UiPagination = ({
   className,
   currentPage,
-  label = "Pagination",
+  label = 'Pagination',
   onPageChange,
   pageSize,
   totalItems,
@@ -61,11 +55,7 @@ export const UiPagination = ({
   const pages = getVisiblePages(safeCurrentPage, safeTotalPages);
 
   return (
-    <nav
-      aria-label={label}
-      className={cn("xr-pagination", className)}
-      data-admin-primitive="pagination"
-    >
+    <nav aria-label={label} className={cn('xr-pagination', className)} data-admin-primitive="pagination">
       <p aria-live="polite" className="xr-pagination__summary">
         {renderSummary({
           currentPage: safeCurrentPage,
@@ -87,14 +77,14 @@ export const UiPagination = ({
         </UiButton>
         {pages.map((page) => (
           <UiButton
-            aria-current={page === safeCurrentPage ? "page" : undefined}
+            aria-current={page === safeCurrentPage ? 'page' : undefined}
             aria-label={`Go to page ${page}`}
             className="xr-pagination__page"
             key={page}
             onClick={() => {
               onPageChange(page);
             }}
-            variant={page === safeCurrentPage ? "primary" : "secondary"}
+            variant={page === safeCurrentPage ? 'primary' : 'secondary'}
           >
             {page}
           </UiButton>

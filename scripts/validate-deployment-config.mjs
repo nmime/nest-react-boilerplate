@@ -293,19 +293,19 @@ has(prodRedisService, 'ping', 'production Compose Redis ping healthcheck');
 has(prodCompose, 'redis-data:', 'production Compose persists Redis data volume');
 
 const sharedHealthController = read('libs/backend/common/health/lib/src/base-health.controller.ts');
-has(sharedHealthController, '@Get("health")', 'shared health controller exposes /health');
+has(sharedHealthController, "@Get('health')", 'shared health controller exposes /health');
 has(
   sharedHealthController,
-  'return this.healthService.check("health");',
+  "return this.healthService.check('health');",
   'shared /health endpoint delegates to health service',
 );
-has(sharedHealthController, '@Get("live")', 'shared health controller exposes /live');
+has(sharedHealthController, "@Get('live')", 'shared health controller exposes /live');
 has(
   sharedHealthController,
   'return this.healthService.checkLiveness();',
   'shared /live endpoint delegates to liveness checks',
 );
-has(sharedHealthController, '@Get("ready")', 'shared health controller exposes /ready');
+has(sharedHealthController, "@Get('ready')", 'shared health controller exposes /ready');
 has(
   sharedHealthController,
   'await this.healthService.checkReadiness();',

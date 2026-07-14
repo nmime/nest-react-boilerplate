@@ -1,94 +1,94 @@
-import { HttpStatus } from "@nestjs/common";
-import { describe, expect, it } from "vitest";
-import { localizeProblemDetails } from "./localize-problem-details.util";
+import { HttpStatus } from '@nestjs/common';
+import { describe, expect, it } from 'vitest';
+import { localizeProblemDetails } from './localize-problem-details.util';
 
-describe("localizeProblemDetails", () => {
-  it("localizes validation issues and preserves unmapped problem fields", () => {
+describe('localizeProblemDetails', () => {
+  it('localizes validation issues and preserves unmapped problem fields', () => {
     expect(
       localizeProblemDetails(
         {
-          type: "about:blank",
-          title: "Bad Request",
+          type: 'about:blank',
+          title: 'Bad Request',
           status: HttpStatus.BAD_REQUEST,
           errors: [
             {
-              property: "email",
-              detail: "email must be an email address",
-              message: "email must be an email address",
+              property: 'email',
+              detail: 'email must be an email address',
+              message: 'email must be an email address',
               constraints: {
-                isEmail: "email must be an email address",
-                custom: "custom",
+                isEmail: 'email must be an email address',
+                custom: 'custom',
               },
             },
-            { constraints: { minLength: "short" } },
-            "plain",
+            { constraints: { minLength: 'short' } },
+            'plain',
           ],
         },
-        "ru",
+        'ru',
       ),
     ).toMatchObject({
-      code: "bad-request",
+      code: 'bad-request',
       errors: [
         {
-          property: "email",
+          property: 'email',
           constraints: {
-            isEmail: "Поле email должно быть действительным email-адресом",
-            custom: "custom",
+            isEmail: 'Поле email должно быть действительным email-адресом',
+            custom: 'custom',
           },
-          detail: "Поле email должно быть действительным email-адресом",
-          message: "Поле email должно быть действительным email-адресом",
+          detail: 'Поле email должно быть действительным email-адресом',
+          message: 'Поле email должно быть действительным email-адресом',
         },
-        { constraints: { minLength: "Поле value слишком короткое" } },
-        "plain",
+        { constraints: { minLength: 'Поле value слишком короткое' } },
+        'plain',
       ],
-      type: "urn:problem:nest-react-boilerplate:bad-request",
+      type: 'urn:problem:nest-react-boilerplate:bad-request',
     });
     expect(
       localizeProblemDetails({
-        type: "urn:custom",
-        title: "Custom",
+        type: 'urn:custom',
+        title: 'Custom',
         status: 499,
-        code: "unmapped",
-        detail: "No translation",
-        errors: "raw",
+        code: 'unmapped',
+        detail: 'No translation',
+        errors: 'raw',
       }),
     ).toEqual({
-      type: "urn:custom",
-      title: "Custom",
+      type: 'urn:custom',
+      title: 'Custom',
       status: 499,
-      code: "unmapped",
-      detail: "No translation",
-      errors: "raw",
+      code: 'unmapped',
+      detail: 'No translation',
+      errors: 'raw',
     });
   });
 
-  it("leaves validation text untouched when it matches no constraint template", () => {
+  it('leaves validation text untouched when it matches no constraint template', () => {
     expect(
       localizeProblemDetails(
         {
-          type: "about:blank",
-          title: "Bad Request",
+          type: 'about:blank',
+          title: 'Bad Request',
           status: HttpStatus.BAD_REQUEST,
           errors: [
             {
-              property: "custom",
-              message: "totally-unmatched-validation-message",
-              detail: "another-unmatched-message",
+              property: 'custom',
+              message: 'totally-unmatched-validation-message',
+              detail: 'another-unmatched-message',
               constraints: {
-                unknownRule: "totally-unmatched-validation-message",
+                unknownRule: 'totally-unmatched-validation-message',
               },
             },
           ],
         },
-        "ru",
+        'ru',
       ),
     ).toMatchObject({
       errors: [
         {
-          property: "custom",
-          message: "totally-unmatched-validation-message",
-          detail: "another-unmatched-message",
-          constraints: { unknownRule: "totally-unmatched-validation-message" },
+          property: 'custom',
+          message: 'totally-unmatched-validation-message',
+          detail: 'another-unmatched-message',
+          constraints: { unknownRule: 'totally-unmatched-validation-message' },
         },
       ],
     });

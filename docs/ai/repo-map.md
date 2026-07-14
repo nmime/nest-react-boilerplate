@@ -27,11 +27,11 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 
 ## Backend cross-cutting concerns
 
-| Concern              | Package / Path                                              | Agent doc reference                              |
-| -------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
-| Request Context (CLS)| `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib` | [Agent policy: Request Context](agent-policy.md#request-context-cls) |
-| Exception System     | `@app/backend-common-exception` / `libs/backend/common/exception/lib` | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457) |
-| Health checks        | `@app/backend-common-health` / `libs/backend/common/health/lib` | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout) |
+| Concern               | Package / Path                                                        | Agent doc reference                                                         |
+| --------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Request Context (CLS) | `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib` | [Agent policy: Request Context](agent-policy.md#request-context-cls)        |
+| Exception System      | `@app/backend-common-exception` / `libs/backend/common/exception/lib` | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457) |
+| Health checks         | `@app/backend-common-health` / `libs/backend/common/health/lib`       | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout)            |
 
 ### Request Context (CLS)
 
@@ -62,6 +62,7 @@ Backend deployables:
 
 Frontend deployables:
 
+- `starter-app`: `apps/frontend/starter-app` (neutral product starting point)
 - `admin-app`: `apps/frontend/admin`
 - `user-app`: `apps/frontend/app`
 - `landing-app`: `apps/frontend/landing`

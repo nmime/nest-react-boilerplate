@@ -1,1 +1,1 @@
-export * from "./umami.provider";
+export * from './umami.provider';

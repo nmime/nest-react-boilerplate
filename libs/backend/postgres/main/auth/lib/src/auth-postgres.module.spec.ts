@@ -1,20 +1,16 @@
-import { describe, expect, it } from "vitest";
-import { AuthPostgresModule } from "./auth-postgres.module";
-import { AuthTokenCleanupService } from "./auth-token-cleanup.service";
-import {
-  AuthRefreshTokenEntity,
-  AuthUserEntity,
-  AuthUserTokenEntity,
-} from "./infrastructure/data-access/entities";
+import { describe, expect, it } from 'vitest';
+import { AuthPostgresModule } from './auth-postgres.module';
+import { AuthTokenCleanupService } from './auth-token-cleanup.service';
+import { AuthRefreshTokenEntity, AuthUserEntity, AuthUserTokenEntity } from './infrastructure/data-access/entities';
 import {
   AuthRoleRepository,
   AuthTokenRepository,
   AuthUserRepository,
   AuthUserRoleRepository,
-} from "./infrastructure/data-access/repositories";
+} from './infrastructure/data-access/repositories';
 
-describe("AuthPostgresModule", () => {
-  it("exposes the auth data-access module pieces", () => {
+describe('AuthPostgresModule', () => {
+  it('exposes the auth data-access module pieces', () => {
     expect(AuthPostgresModule).toBeDefined();
     expect(AuthUserEntity).toBeDefined();
     expect(AuthRefreshTokenEntity).toBeDefined();

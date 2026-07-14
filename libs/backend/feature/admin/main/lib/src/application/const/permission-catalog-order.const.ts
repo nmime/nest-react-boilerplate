@@ -1,4 +1,4 @@
-import { permissionCatalog } from "@app/common-authz";
+import { permissionCatalog } from '@app/common-authz';
 
 // Canonical ordering index for permission keys, sourced from the shared catalog
 // so admin views present permissions in a stable, catalog-defined sequence.

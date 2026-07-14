@@ -9,6 +9,7 @@ Repo-local skills live under `.agents/skills/**`:
 - [PR review](../.agents/skills/pr-review/SKILL.md) for branch, PR, or merge-request review.
 - [CI triage](../.agents/skills/ci-triage/SKILL.md) for failed workflow or pipeline investigation.
 - [Service audit](../.agents/skills/service-audit/SKILL.md) for app, service, worker, frontend app, or package audits.
+- [Scaffold feature](../.agents/skills/scaffold-feature/SKILL.md) for repository-valid app, library, and vertical-slice generation.
 
 See [AI agent workflows](ai/agent-workflows.md), [retrieval policy](ai/retrieval-policy.md), and [context packing](ai/context-packing.md) for when to use always-loaded instructions, docs, skills, or nested `AGENTS.md` files.
 

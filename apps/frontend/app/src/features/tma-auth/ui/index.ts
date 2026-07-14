@@ -1,1 +1,1 @@
-export * from "./tma-auth-panel";
+export * from './tma-auth-panel';

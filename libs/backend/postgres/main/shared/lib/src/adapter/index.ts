@@ -1,1 +1,1 @@
-export * from "./mikro-orm-postgres-health.adapter";
+export * from './mikro-orm-postgres-health.adapter';

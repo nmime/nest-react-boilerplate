@@ -1,6 +1,6 @@
 export function stripTrailingSlash(value: string): string {
   let end = value.length;
-  while (end > 0 && value[end - 1] === "/") {
+  while (end > 0 && value[end - 1] === '/') {
     end -= 1;
   }
 

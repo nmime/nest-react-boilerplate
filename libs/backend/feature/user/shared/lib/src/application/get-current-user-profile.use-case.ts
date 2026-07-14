@@ -1,8 +1,4 @@
-import {
-  createUserProfile,
-  type UserProfile,
-  type UserProfilePrincipal,
-} from "../domain";
+import { createUserProfile, type UserProfile, type UserProfilePrincipal } from '../domain';
 
 export interface CurrentUserProfile {
   principal: UserProfilePrincipal;

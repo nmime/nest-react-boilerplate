@@ -1,5 +1,5 @@
-import { HttpStatus } from "@nestjs/common";
-import type { HealthStatus } from "../dto";
+import { HttpStatus } from '@nestjs/common';
+import type { HealthStatus } from '../dto';
 
 export const HealthHttpStatus: Record<HealthStatus, number> = {
   ok: HttpStatus.OK,

@@ -41,12 +41,28 @@ export class NotificationTemplateChannelEntity {
     if (this.channel !== NotificationChannel.Bot) {
       return undefined;
     }
-    const c = this.content as NotificationBotChannelContent;
-    if ('body' in c && typeof c.body === 'object') {
-      return c;
+    const body = this.content['body'];
+    if (!isLocalizedStringRecord(body)) {
+      return undefined;
     }
-    return undefined;
+
+    const image = this.content['image'];
+    const buttons = this.content['buttons'];
+
+    return {
+      body,
+      ...(isLocalizedStringRecord(image) ? { image } : {}),
+      ...(isRecord(buttons) ? { buttons } : {}),
+    };
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isLocalizedStringRecord(value: unknown): value is Record<string, string> {
+  return isRecord(value) && Object.values(value).every((entry) => typeof entry === 'string');
 }
 
 export const NotificationTemplateChannelEntitySchema = new EntitySchema<NotificationTemplateChannelEntity>({
@@ -61,5 +77,7 @@ export const NotificationTemplateChannelEntitySchema = new EntitySchema<Notifica
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
-  uniques: [{ name: 'uq__notification_template_channels__template_id__channel', properties: ['templateId', 'channel'] }],
+  uniques: [
+    { name: 'uq__notification_template_channels__template_id__channel', properties: ['templateId', 'channel'] },
+  ],
 });

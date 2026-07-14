@@ -1,5 +1,5 @@
-import type { RedisClientLike } from "./redis-client.type";
-import type { RedisMode } from "../const";
+import type { RedisClientLike } from './redis-client.type';
+import type { RedisMode } from '../const';
 
 export interface RedisConfig {
   mode?: RedisMode | `${RedisMode}`;

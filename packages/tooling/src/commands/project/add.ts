@@ -1,10 +1,10 @@
 /**
- * `nrb add` command — add an app, library, or feature to the workspace.
+ * `pnpm nrb add` command — add an app, library, or feature to the workspace.
  *
  * Usage:
- *   nrb add app <name>           # invoke Nx @repo/tooling:application generator
- *   nrb add lib <name>           # invoke Nx @repo/tooling:library generator
- *   nrb add feature <name>       # invoke Nx @repo/tooling:feature generator
+ *   pnpm nrb add app <name>           # invoke Nx @repo/tooling:application generator
+ *   pnpm nrb add lib <name>           # invoke Nx @repo/tooling:library generator
+ *   pnpm nrb add feature <name>       # invoke Nx @repo/tooling:feature generator
  *
  * All branches call a mockable Nx generator runner (for testability).
  */
@@ -24,6 +24,11 @@ interface AddArgs {
   dryRun: boolean;
   force: boolean;
   apiApp: string;
+  frontendApp: string;
+  entityKind?: "frontend" | "backend" | "common";
+  renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "worker";
+  libraryType?: string;
+  scope?: string;
   /** Extra arguments forwarded to the underlying generator. */
   extra: string[];
 }
@@ -34,6 +39,7 @@ export function parseAddArgs(argv: string[]): AddArgs {
     dryRun: false,
     force: false,
     apiApp: "user-app-api",
+    frontendApp: "user-app",
     extra: [],
   };
 
@@ -64,6 +70,46 @@ export function parseAddArgs(argv: string[]): AddArgs {
     }
     if (arg.startsWith("--api-app=")) {
       result.apiApp = arg.slice("--api-app=".length);
+      continue;
+    }
+    if (arg === "--frontend-app") {
+      result.frontendApp = argv[++i] ?? result.frontendApp;
+      continue;
+    }
+    if (arg.startsWith("--frontend-app=")) {
+      result.frontendApp = arg.slice("--frontend-app=".length);
+      continue;
+    }
+    if (arg === "--kind") {
+      result.entityKind = argv[++i] as AddArgs["entityKind"];
+      continue;
+    }
+    if (arg.startsWith("--kind=")) {
+      result.entityKind = arg.slice("--kind=".length) as AddArgs["entityKind"];
+      continue;
+    }
+    if (arg === "--renderer") {
+      result.renderer = argv[++i] as AddArgs["renderer"];
+      continue;
+    }
+    if (arg.startsWith("--renderer=")) {
+      result.renderer = arg.slice("--renderer=".length) as AddArgs["renderer"];
+      continue;
+    }
+    if (arg === "--type") {
+      result.libraryType = argv[++i];
+      continue;
+    }
+    if (arg.startsWith("--type=")) {
+      result.libraryType = arg.slice("--type=".length);
+      continue;
+    }
+    if (arg === "--scope") {
+      result.scope = argv[++i];
+      continue;
+    }
+    if (arg.startsWith("--scope=")) {
+      result.scope = arg.slice("--scope=".length);
       continue;
     }
 
@@ -101,7 +147,7 @@ const GENERATOR_MAP: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 /**
- * The main handler for `nrb add`.  Resolves the sub-command and delegates to
+ * The main handler for `pnpm nrb add`.  Resolves the sub-command and delegates to
  * the corresponding Nx generator from `@repo/tooling`:
  *
  * - `app <name>`   → @repo/tooling:application
@@ -138,6 +184,28 @@ export async function runAddCommand(
     return 1;
   }
 
+  if ((args.kind === "app" || args.kind === "lib") && !args.entityKind) {
+    process.stderr.write(`Error: add ${args.kind} requires --kind (${args.kind === "app" ? "frontend | backend" : "frontend | backend | common"})\n`);
+    return 1;
+  }
+
+  if (args.kind === "lib" && !args.libraryType) {
+    process.stderr.write(
+      "Error: add lib requires --type (common | util | ui | sdk | feature-main | feature-shared | data-access | test-util | asset)\n",
+    );
+    return 1;
+  }
+
+  if (args.kind === "app" && args.entityKind === "frontend" && !args.renderer) {
+    process.stderr.write("Error: frontend applications require --renderer (vite | astro | vike | expo)\n");
+    return 1;
+  }
+
+  if (args.kind === "app" && args.entityKind === "backend" && args.renderer && !["nest-api", "worker"].includes(args.renderer)) {
+    process.stderr.write('Error: backend applications support --renderer "nest-api" or "worker"\n');
+    return 1;
+  }
+
   return runAddWithNx(args, context.workspaceRoot, generatorName, runner);
 }
 
@@ -157,6 +225,11 @@ function runAddWithNx(
   if (args.dryRun) genArgs.push("--dryRun=true");
   if (args.force) genArgs.push("--force=true");
   if (args.apiApp !== "user-app-api") genArgs.push(`--apiApp=${args.apiApp}`);
+  if (args.frontendApp !== "user-app") genArgs.push(`--frontendApp=${args.frontendApp}`);
+  if (args.entityKind) genArgs.push(`--kind=${args.entityKind}`);
+  if (args.renderer) genArgs.push(`--renderer=${args.renderer}`);
+  if (args.libraryType) genArgs.push(`--type=${args.libraryType}`);
+  if (args.scope) genArgs.push(`--scope=${args.scope}`);
   for (const e of args.extra) genArgs.push(e);
 
   const kindLabel = args.kind!;
@@ -169,10 +242,14 @@ function runAddWithNx(
   });
 
   if (result.success) {
+    if (result.stdout.trim().length > 0) {
+      process.stdout.write(`${result.stdout.trimEnd()}\n`);
+    }
     process.stdout.write(`✓ ${kindLabel} "${name}" added (Nx generator exited 0).\n`);
     return 0;
   }
-  process.stderr.write(`Nx generator failed (exit ${result.exitCode}):\n${result.stderr}\n`);
+  const details = [result.stdout, result.stderr].filter((value) => value.trim().length > 0).join("\n");
+  process.stderr.write(`Nx generator failed (exit ${result.exitCode}):\n${details}\n`);
   return result.exitCode;
 }
 
@@ -189,11 +266,11 @@ export async function runAddFromContext(context: CommandContext): Promise<number
 // ---------------------------------------------------------------------------
 
 function printAddUsage(): void {
-  process.stdout.write(`Usage: nrb add <kind> <name> [options]
+  process.stdout.write(`Usage: pnpm nrb add <kind> <name> [options]
 
 Kind:
-  app <name>    Generate a new application via @repo/tooling:application.
-  lib <name>    Generate a new library via @repo/tooling:library.
+  app <name>    Generate a renderer-aware application via @repo/tooling:application.
+  lib <name>    Generate a boundary-aware library via @repo/tooling:library.
   feature <name> Scaffold a vertical feature slice via @repo/tooling:feature
                   (shared DTOs, Nest module, PostgreSQL infrastructure, frontend page).
 
@@ -201,12 +278,19 @@ Options:
   --dry-run             Show what would be done without making changes.
   --force               Overwrite existing files without refusing.
   --api-app <name>      Target API app (for feature; default: user-app-api).
+  --frontend-app <name> Target frontend app (for feature; default: user-app).
+  --kind <kind>         App/lib platform: frontend, backend, or common.
+  --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, or worker.
+  --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
+                        feature-shared, data-access, test-util, or asset).
+  --scope <scope>       Nx ownership scope tag for a library.
   --help, -h            Show this help message.
   ...                   Additional arguments forwarded to the Nx generator.
 
 Examples:
-  nrb add app payments
-  nrb add lib shared-utils
-  nrb add feature invoices --api-app user-app-api
-  nrb add feature billing --dry-run`);
+  pnpm nrb add app payments-api --kind backend --renderer nest-api
+  pnpm nrb add app portal --kind frontend --renderer vite
+  pnpm nrb add lib currency --kind common --type util --scope shared
+  pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app
+  pnpm nrb add feature billing --dry-run\n`);
 }

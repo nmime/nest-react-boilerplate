@@ -4,8 +4,8 @@ import {
   UserProfileReadPermission,
   defaultRolePermissions,
   permissionCatalog,
-} from "@app/common-authz";
-import type { AdminSubject } from "../type/admin-permission.type";
+} from '@app/common-authz';
+import type { AdminSubject } from '../type/admin-permission.type';
 
 // The admin-scoped catalog is the subset of the shared catalog granted to the
 // admin role (everything except the user-scoped `profile:read`), sourced from
@@ -26,14 +26,14 @@ export const adminRolePermissionMatrix = defaultRolePermissions;
 export const adminRoleCatalog = [
   {
     role: UserRole,
-    label: "User",
-    description: "Baseline application user role.",
+    label: 'User',
+    description: 'Baseline application user role.',
     permissions: [...adminRolePermissionMatrix[UserRole]],
   },
   {
     role: AdminRole,
-    label: "Administrator",
-    description: "Back-office administrator with explicit granular grants.",
+    label: 'Administrator',
+    description: 'Back-office administrator with explicit granular grants.',
     permissions: [...adminRolePermissionMatrix[AdminRole]],
   },
 ] as const;

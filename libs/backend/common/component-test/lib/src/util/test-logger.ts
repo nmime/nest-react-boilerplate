@@ -1,7 +1,7 @@
-import { ConsoleLogger } from "@nestjs/common";
+import { ConsoleLogger } from '@nestjs/common';
 
-export const createTestLogger = (context = "ComponentTest"): ConsoleLogger => {
+export const createTestLogger = (context = 'ComponentTest'): ConsoleLogger => {
   const logger = new ConsoleLogger(context);
-  logger.setLogLevels(["error", "warn"]);
+  logger.setLogLevels(['error', 'warn']);
   return logger;
 };

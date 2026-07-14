@@ -1,71 +1,60 @@
-import type { ReactElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import {
-  FrontendI18nProvider,
-  FrontendStateProvider,
-} from "@app/frontend-runtime";
-import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
-import { createAdminAccess } from "../entities/admin-session";
-import { renderAdminRoute } from "../App";
-import { normalizeAdminPath } from "../shared";
-import { AdminLayout } from "../widgets/admin-shell";
+import type { ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
+import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
+import { createAdminAccess } from '../entities/admin-session';
+import { renderAdminRoute } from '../App';
+import { normalizeAdminPath } from '../shared';
+import { AdminLayout } from '../widgets/admin-shell';
 
 const renderAdminMarkup = (element: ReactElement): string =>
   renderToStaticMarkup(
     <FrontendStateProvider>
-      <FrontendI18nProvider translations={adminFrontendTranslations}>
-        {element}
-      </FrontendI18nProvider>
+      <FrontendI18nProvider translations={adminFrontendTranslations}>{element}</FrontendI18nProvider>
     </FrontendStateProvider>,
   );
 
-describe("admin route base handling", () => {
+describe('admin route base handling', () => {
   const access = createAdminAccess({
-    subject: "admin-id",
-    roles: ["admin"],
-    permissions: ["admin:dashboard:read", "admin:profile:read"],
+    subject: 'admin-id',
+    roles: ['admin'],
+    permissions: ['admin:dashboard:read', 'admin:profile:read'],
   });
   const payload = {
-    principal: { subject: "admin-id" },
+    principal: { subject: 'admin-id' },
     profile: {
-      id: "admin-id",
-      displayName: "Ada Admin",
-      email: "admin@example.com",
+      id: 'admin-id',
+      displayName: 'Ada Admin',
+      email: 'admin@example.com',
     },
   };
 
-  it("normalizes reverse-proxy /admin paths", () => {
-    expect(normalizeAdminPath("/admin")).toBe("/");
-    expect(normalizeAdminPath("/admin/")).toBe("/");
-    expect(normalizeAdminPath("/admin/dashboard?tab=overview")).toBe(
-      "/dashboard",
-    );
-    expect(normalizeAdminPath("/admin/users/admin-id?panel=access")).toBe(
-      "/users/admin-id",
-    );
-    expect(normalizeAdminPath("/admin/profile")).toBe("/profile");
-    expect(normalizeAdminPath("/profile")).toBe("/profile");
+  it('normalizes reverse-proxy /admin paths', () => {
+    expect(normalizeAdminPath('/admin')).toBe('/');
+    expect(normalizeAdminPath('/admin/')).toBe('/');
+    expect(normalizeAdminPath('/admin/dashboard?tab=overview')).toBe('/dashboard');
+    expect(normalizeAdminPath('/admin/users/admin-id?panel=access')).toBe('/users/admin-id');
+    expect(normalizeAdminPath('/admin/profile')).toBe('/profile');
+    expect(normalizeAdminPath('/profile')).toBe('/profile');
   });
 
-  it("renders dashboard and profile routes when mounted at /admin", () => {
+  it('renders dashboard and profile routes when mounted at /admin', () => {
+    expect(renderAdminMarkup(renderAdminRoute('/admin', { status: 'ready', payload, access }))).toContain(
+      'Admin dashboard',
+    );
     expect(
       renderAdminMarkup(
-        renderAdminRoute("/admin", { status: "ready", payload, access }),
-      ),
-    ).toContain("Admin dashboard");
-    expect(
-      renderAdminMarkup(
-        renderAdminRoute("/admin/profile", {
-          status: "ready",
+        renderAdminRoute('/admin/profile', {
+          status: 'ready',
           payload,
           access,
         }),
       ),
-    ).toContain("Ada Admin");
+    ).toContain('Ada Admin');
   });
 
-  it("keeps admin shell navigation scoped and exposes the current page", () => {
+  it('keeps admin shell navigation scoped and exposes the current page', () => {
     const html = renderAdminMarkup(
       <AdminLayout currentPath="/admin/profile">
         <span>Profile content</span>
@@ -82,16 +71,16 @@ describe("admin route base handling", () => {
     expect(html).toContain('class="admin-main-panel"');
   });
 
-  it("renders the production admin sidebar for permissioned routes", () => {
+  it('renders the production admin sidebar for permissioned routes', () => {
     const fullAccess = createAdminAccess({
-      subject: "admin-id",
-      roles: ["admin"],
+      subject: 'admin-id',
+      roles: ['admin'],
       permissions: [
-        "admin:dashboard:read",
-        "admin:profile:read",
-        "admin:users:read",
-        "admin:roles:read",
-        "admin:audit:read",
+        'admin:dashboard:read',
+        'admin:profile:read',
+        'admin:users:read',
+        'admin:roles:read',
+        'admin:audit:read',
       ],
     });
 
@@ -107,71 +96,64 @@ describe("admin route base handling", () => {
     expect(html).toContain('data-current="true"');
   });
 
-  it("keeps user and tenant routes explicit and fail-closed", () => {
+  it('keeps user and tenant routes explicit and fail-closed', () => {
     const fullAccess = createAdminAccess({
-      subject: "admin-id",
-      roles: ["admin"],
-      permissions: [
-        "admin:dashboard:read",
-        "admin:profile:read",
-        "admin:users:read",
-        "admin:roles:read",
-      ],
+      subject: 'admin-id',
+      roles: ['admin'],
+      permissions: ['admin:dashboard:read', 'admin:profile:read', 'admin:users:read', 'admin:roles:read'],
     });
 
     expect(
       renderAdminMarkup(
-        renderAdminRoute("/users-but-not-users", {
-          status: "ready",
+        renderAdminRoute('/users-but-not-users', {
+          status: 'ready',
           payload,
           access: fullAccess,
         }),
       ),
-    ).toContain("Admin page not found");
+    ).toContain('Admin page not found');
     expect(
       renderAdminMarkup(
-        renderAdminRoute("/admin/tenants", {
-          status: "ready",
+        renderAdminRoute('/admin/tenants', {
+          status: 'ready',
           payload,
           access,
         }),
       ),
-    ).toContain("Missing admin roles permission");
+    ).toContain('Missing admin roles permission');
     expect(
       renderAdminMarkup(
-        renderAdminRoute("/admin/tenants", {
-          status: "ready",
+        renderAdminRoute('/admin/tenants', {
+          status: 'ready',
           payload,
           access: fullAccess,
         }),
       ),
-    ).toContain("Tenant administration roadmap");
+    ).toContain('Tenant administration roadmap');
   });
 });
 
-describe("admin frontend CASL RBAC gating", () => {
-  it("denies menu/action access for admin role without permissions", () => {
+describe('admin frontend CASL RBAC gating', () => {
+  it('denies menu/action access for admin role without permissions', () => {
     const access = createAdminAccess({
-      subject: "admin-id",
-      roles: ["admin"],
+      subject: 'admin-id',
+      roles: ['admin'],
       permissions: [],
     });
 
     expect(access.canAccessAdmin).toBe(false);
     expect(access.canReadDashboard).toBe(false);
     expect(access.canReadProfile).toBe(false);
-    expect(
-      renderAdminMarkup(
-        renderAdminRoute("/admin", { status: "ready", payload: {}, access }),
-      ),
-    ).toContain("Missing admin dashboard permission");
+    expect(renderAdminMarkup(renderAdminRoute('/admin', { status: 'ready', payload: {}, access }))).toContain(
+      'Missing admin dashboard permission',
+    );
   });
 
-  it("denies permissions without admin role in client-side hints", () => {
+  it('denies permissions without admin role in client-side hints', () => {
     const access = createAdminAccess({
-      subject: "support-id",
-      roles: ["support"],
-      permissions: ["admin:dashboard:read", "admin:profile:read"],
+      subject: 'support-id',
+      roles: ['support'],
+      permissions: ['admin:dashboard:read', 'admin:profile:read'],
     });
 
     expect(access.canAccessAdmin).toBe(false);
@@ -179,11 +161,11 @@ describe("admin frontend CASL RBAC gating", () => {
     expect(access.canReadProfile).toBe(false);
   });
 
-  it("uses explicit manage/all for broad frontend admin access hints", () => {
+  it('uses explicit manage/all for broad frontend admin access hints', () => {
     const access = createAdminAccess({
-      subject: "admin-id",
-      roles: ["admin"],
-      permissions: ["admin:manage:all"],
+      subject: 'admin-id',
+      roles: ['admin'],
+      permissions: ['admin:manage:all'],
     });
 
     expect(access.canAccessAdmin).toBe(true);

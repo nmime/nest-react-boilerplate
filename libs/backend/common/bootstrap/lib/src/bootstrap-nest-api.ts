@@ -17,7 +17,6 @@ import {
 } from '@app/backend-common-redis';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { ClsInterceptor } from './cls.interceptor';
-import { requestContext } from './request-context';
 import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/common-i18n';
 import { setupSwagger } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
@@ -725,15 +724,6 @@ export function resolveBackendEnvironmentConfig(
 
 export function resolveListenPort(config: BackendEnvironmentConfig): number {
   return config.port;
-}
-
-function getHeader(request: RequestLike, name: string): string | undefined {
-  const value = request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
-  if (Array.isArray(value)) {
-    return value[0];
-  }
-
-  return value;
 }
 
 function createRobotsMiddleware() {

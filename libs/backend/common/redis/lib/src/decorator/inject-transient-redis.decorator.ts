@@ -1,5 +1,4 @@
-import { Inject } from "@nestjs/common";
-import { RedisTransientInjectToken } from "../const";
+import { Inject } from '@nestjs/common';
+import { RedisTransientInjectToken } from '../const';
 
-export const InjectTransientRedis = (): ParameterDecorator =>
-  Inject(RedisTransientInjectToken);
+export const InjectTransientRedis = (): ParameterDecorator => Inject(RedisTransientInjectToken);

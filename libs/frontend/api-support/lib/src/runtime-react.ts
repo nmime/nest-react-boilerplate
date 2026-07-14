@@ -1,27 +1,23 @@
-import { useCallback, useEffect, useReducer } from "react";
+import { useCallback, useEffect, useReducer } from 'react';
 
-import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
-import { emitBrowserOfflineEvent } from "./runtime-fetch";
-import { apiToastRuntime, type ApiToastRuntime } from "./toast-runtime";
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
+import { emitBrowserOfflineEvent } from './runtime-fetch';
+import { apiToastRuntime, type ApiToastRuntime } from './toast-runtime';
 
 export interface ApiRuntimeOverlayModelOptions {
   eventHub?: ApiRuntimeEventHub;
   toastRuntime?: ApiToastRuntime;
 }
 
-export const resetApiRuntimeForOnline = (
-  eventHub: ApiRuntimeEventHub = apiRuntimeEvents,
-): void => {
+export const resetApiRuntimeForOnline = (eventHub: ApiRuntimeEventHub = apiRuntimeEvents): void => {
   eventHub.reset();
 };
 
-export const clearApiAuthRequired = (
-  eventHub: ApiRuntimeEventHub = apiRuntimeEvents,
-): void => {
+export const clearApiAuthRequired = (eventHub: ApiRuntimeEventHub = apiRuntimeEvents): void => {
   eventHub.clearAuthRequired();
 };
 
-export const hasBrowserWindow = (): boolean => typeof window !== "undefined";
+export const hasBrowserWindow = (): boolean => typeof window !== 'undefined';
 
 export function useApiRuntimeOverlayModel({
   eventHub = apiRuntimeEvents,
@@ -55,12 +51,12 @@ export function useApiRuntimeOverlayModel({
       handleOffline();
     }
 
-    window.addEventListener("offline", handleOffline);
-    window.addEventListener("online", handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
 
     return () => {
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("online", handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
     };
   }, [eventHub, rerender]);
 

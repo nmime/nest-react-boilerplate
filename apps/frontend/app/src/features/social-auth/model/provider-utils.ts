@@ -1,43 +1,32 @@
-import type { TranslationKey } from "@app/frontend-runtime";
-import { SocialAuthProvider, type ProviderIdentity } from "./types";
+import type { TranslationKey } from '@app/frontend-runtime';
+import { SocialAuthProvider, type ProviderIdentity } from './types';
 
 const providerKeys: Record<SocialAuthProvider, TranslationKey> = {
-  [SocialAuthProvider.Discord]: "auth.provider.discord",
-  [SocialAuthProvider.Telegram]: "auth.provider.telegram",
+  [SocialAuthProvider.Discord]: 'auth.provider.discord',
+  [SocialAuthProvider.Telegram]: 'auth.provider.telegram',
 };
 
-export const socialAuthProviders: SocialAuthProvider[] = [
-  SocialAuthProvider.Telegram,
-  SocialAuthProvider.Discord,
-];
+export const socialAuthProviders: SocialAuthProvider[] = [SocialAuthProvider.Telegram, SocialAuthProvider.Discord];
 
-export const getProviderTranslationKey = (
-  provider: SocialAuthProvider,
-): TranslationKey => providerKeys[provider];
+export const getProviderTranslationKey = (provider: SocialAuthProvider): TranslationKey => providerKeys[provider];
 
 const readString = (value: unknown): string | undefined =>
-  typeof value === "string" && value.trim() ? value.trim() : undefined;
+  typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
-const readBoolean = (value: unknown): boolean | undefined =>
-  typeof value === "boolean" ? value : undefined;
+const readBoolean = (value: unknown): boolean | undefined => (typeof value === 'boolean' ? value : undefined);
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === "object";
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object';
 
 const isSocialProvider = (value: unknown): value is SocialAuthProvider =>
   value === SocialAuthProvider.Telegram || value === SocialAuthProvider.Discord;
 
-export const normalizeProviderIdentity = (
-  value: unknown,
-): ProviderIdentity | null => {
+export const normalizeProviderIdentity = (value: unknown): ProviderIdentity | null => {
   if (!isRecord(value)) {
     return null;
   }
 
   const provider = value.provider ?? value.authProvider;
-  const id = readString(
-    value.id ?? value.identityId ?? value.externalIdentityId,
-  );
+  const id = readString(value.id ?? value.identityId ?? value.externalIdentityId);
 
   if (!id || !isSocialProvider(provider)) {
     return null;
@@ -65,7 +54,7 @@ const readIdentityList = (payload: unknown): unknown[] => {
     return [];
   }
 
-  for (const key of ["identities", "items", "providerIdentities", "data"]) {
+  for (const key of ['identities', 'items', 'providerIdentities', 'data']) {
     const candidate = payload[key];
     if (Array.isArray(candidate)) {
       return candidate;
@@ -85,13 +74,9 @@ export const normalizeProviderIdentities = (payload: unknown) => {
     identities,
     providers: {
       [SocialAuthProvider.Discord]:
-        identities.find(
-          (identity) => identity.provider === SocialAuthProvider.Discord,
-        ) ?? null,
+        identities.find((identity) => identity.provider === SocialAuthProvider.Discord) ?? null,
       [SocialAuthProvider.Telegram]:
-        identities.find(
-          (identity) => identity.provider === SocialAuthProvider.Telegram,
-        ) ?? null,
+        identities.find((identity) => identity.provider === SocialAuthProvider.Telegram) ?? null,
     },
   };
 };

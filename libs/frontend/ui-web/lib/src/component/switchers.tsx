@@ -1,20 +1,14 @@
-import {
-  observer,
-  supportedLocales,
-  useI18n,
-  type Locale,
-  type UiTheme,
-} from "@app/frontend-runtime";
-import { UiSelect } from "./select";
+import { observer, supportedLocales, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
+import { UiSelect } from './select';
 
 export const LanguageSwitcher = observer(function LanguageSwitcher() {
   const { locale, setLocale, t } = useI18n();
 
   return (
     <UiSelect
-      aria-label={t("common.language")}
+      aria-label={t('common.language')}
       className="xr-language-switcher"
-      label={t("common.language")}
+      label={t('common.language')}
       onValueChange={(value) => {
         setLocale(value as Locale);
       }}
@@ -27,16 +21,16 @@ export const LanguageSwitcher = observer(function LanguageSwitcher() {
   );
 });
 
-const supportedThemes: readonly UiTheme[] = ["system", "light", "dark"];
+const supportedThemes: readonly UiTheme[] = ['system', 'light', 'dark'];
 
 export const ThemeSwitcher = observer(function ThemeSwitcher() {
   const { setTheme, t, theme } = useI18n();
 
   return (
     <UiSelect
-      aria-label={t("common.theme")}
+      aria-label={t('common.theme')}
       className="xr-theme-switcher"
-      label={t("common.theme")}
+      label={t('common.theme')}
       onValueChange={(value) => {
         setTheme(value as UiTheme);
       }}

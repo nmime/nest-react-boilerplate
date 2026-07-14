@@ -1,5 +1,5 @@
-import { getTracer } from "../otel";
-import type { TraceSpan } from "../type/trace-span.type";
+import { getTracer } from '../otel';
+import type { TraceSpan } from '../type/trace-span.type';
 
 export async function withSpan<T>(
   name: string,

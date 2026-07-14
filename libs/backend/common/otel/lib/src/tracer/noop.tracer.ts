@@ -1,4 +1,4 @@
-import type { TraceSpan, TracerLike } from "../type/trace-span.type";
+import type { TraceSpan, TracerLike } from '../type/trace-span.type';
 
 export class NoopTracer implements TracerLike {
   startSpan(name: string, attributes: Record<string, unknown> = {}): TraceSpan {
@@ -15,11 +15,7 @@ export class NoopTracer implements TracerLike {
     span.error = error;
   }
 
-  addEvent(
-    span: TraceSpan,
-    name: string,
-    attributes?: Record<string, unknown>,
-  ): void {
+  addEvent(span: TraceSpan, name: string, attributes?: Record<string, unknown>): void {
     span.events.push({ name, attributes, at: new Date() });
   }
 }

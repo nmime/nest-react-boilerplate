@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it } from 'vitest';
-import { Exception, ExceptionKind, BaseException } from '@app/backend-common-exception';
+import { Exception, ExceptionKind } from '@app/backend-common-exception';
 import { WebSocketResponseTransformer } from './websocket-response.transformer';
 
 const contextWithData = (data: unknown): ExecutionContext =>
@@ -19,10 +19,7 @@ const intercept = (context: ExecutionContext, next: CallHandler) =>
 
 describe('WebSocketResponseTransformer', () => {
   it('wraps object results with the request id and a success flag', async () => {
-    const response = await intercept(
-      contextWithData({ id: 'req-1' }),
-      handlerOf({ balance: 100 }),
-    );
+    const response = await intercept(contextWithData({ id: 'req-1' }), handlerOf({ balance: 100 }));
 
     expect(response).toEqual({
       id: 'req-1',
@@ -31,10 +28,7 @@ describe('WebSocketResponseTransformer', () => {
   });
 
   it('wraps primitive results under a value key', async () => {
-    const response = await intercept(
-      contextWithData({ id: 'req-2' }),
-      handlerOf('pong'),
-    );
+    const response = await intercept(contextWithData({ id: 'req-2' }), handlerOf('pong'));
 
     expect(response.result).toEqual({ value: 'pong', success: true });
   });
@@ -76,8 +70,7 @@ describe('WebSocketResponseTransformer', () => {
 
   it('falls back to the problem title when an HttpException carries no detail', async () => {
     const response = await intercept(contextWithData({ id: 'req-title' }), {
-      handle: () =>
-        throwError(() => new HttpException('', HttpStatus.BAD_GATEWAY)),
+      handle: () => throwError(() => new HttpException('', HttpStatus.BAD_GATEWAY)),
     });
 
     expect(response.error?.code).toBe('bad-gateway');
@@ -94,18 +87,9 @@ describe('WebSocketResponseTransformer', () => {
   });
 
   it('returns a null id when the payload lacks a usable id', async () => {
-    const missing = await intercept(
-      contextWithData({ method: 'ping' }),
-      handlerOf({ ok: true }),
-    );
-    const notObject = await intercept(
-      contextWithData('raw'),
-      handlerOf({ ok: true }),
-    );
-    const numericId = await intercept(
-      contextWithData({ id: 7 }),
-      handlerOf({ ok: true }),
-    );
+    const missing = await intercept(contextWithData({ method: 'ping' }), handlerOf({ ok: true }));
+    const notObject = await intercept(contextWithData('raw'), handlerOf({ ok: true }));
+    const numericId = await intercept(contextWithData({ id: 7 }), handlerOf({ ok: true }));
 
     expect(missing.id).toBeNull();
     expect(notObject.id).toBeNull();

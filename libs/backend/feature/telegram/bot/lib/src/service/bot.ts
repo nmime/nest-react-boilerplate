@@ -1,22 +1,18 @@
-import { Bot, Composer, MemorySessionStorage } from "grammy";
-import { sequentialize } from "@grammyjs/runner";
-import { conversations, createConversation } from "@grammyjs/conversations";
-import { hydrate, hydrateApi } from "@grammyjs/hydrate";
-import { limit } from "@grammyjs/ratelimiter";
-import { Router } from "@grammyjs/router";
-import { autoRetry } from "@grammyjs/auto-retry";
-import { apiThrottler } from "@grammyjs/transformer-throttler";
-import {
-  createTelegramApplication,
-  resolveTelegramApplication,
-  type TelegramBotApplicationPort,
-} from "./application";
-import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from "./config";
-import { resolveTelegramIdentity } from "../identity";
-import { createI18nMiddleware, resolveTelegramLocale } from "../i18n";
-import { createTelegramMenus } from "./menus";
-import { goHome, navigateTo } from "../navigation";
-import { createSessionMiddleware } from "./session";
+import { Bot, Composer, MemorySessionStorage } from 'grammy';
+import { sequentialize } from '@grammyjs/runner';
+import { conversations, createConversation } from '@grammyjs/conversations';
+import { hydrate, hydrateApi } from '@grammyjs/hydrate';
+import { limit } from '@grammyjs/ratelimiter';
+import { Router } from '@grammyjs/router';
+import { autoRetry } from '@grammyjs/auto-retry';
+import { apiThrottler } from '@grammyjs/transformer-throttler';
+import { createTelegramApplication, resolveTelegramApplication, type TelegramBotApplicationPort } from './application';
+import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from './config';
+import { resolveTelegramIdentity } from '../identity';
+import { createI18nMiddleware, resolveTelegramLocale } from '../i18n';
+import { createTelegramMenus } from './menus';
+import { goHome, navigateTo } from '../navigation';
+import { createSessionMiddleware } from './session';
 import type {
   TelegramBotConfig,
   TelegramBotContext,
@@ -24,47 +20,35 @@ import type {
   TelegramBotInstance,
   TelegramBotSession,
   TelegramLinkPayload,
-} from "../type";
-import { writeStderrLine } from "../util";
+} from '../type';
+import { writeStderrLine } from '../util';
 
 export function createTelegramBot(
   config: TelegramBotConfig = resolveTelegramBotConfig(),
   dependencies: TelegramBotDependencies = {},
 ): TelegramBotInstance {
-  const safeAppUrl =
-    config.appUrl && isSafeTelegramAppUrl(config.appUrl)
-      ? config.appUrl
-      : undefined;
+  const safeAppUrl = config.appUrl && isSafeTelegramAppUrl(config.appUrl) ? config.appUrl : undefined;
   const bot = new Bot<TelegramBotContext>(config.token, {
     botInfo: config.botInfo,
-    client: dependencies.fetch
-      ? { fetch: dependencies.fetch as never }
-      : undefined,
+    client: dependencies.fetch ? { fetch: dependencies.fetch as never } : undefined,
   });
 
   if (dependencies.api) {
-    Object.defineProperty(bot, "api", { value: dependencies.api });
+    Object.defineProperty(bot, 'api', { value: dependencies.api });
   }
 
-  bot.api.config.use(
-    autoRetry({ maxRetryAttempts: 2, maxDelaySeconds: 2 }),
-    apiThrottler(),
-    hydrateApi(),
-  );
+  bot.api.config.use(autoRetry({ maxRetryAttempts: 2, maxDelaySeconds: 2 }), apiThrottler(), hydrateApi());
 
   /* v8 ignore next 5 -- grammy invokes this only after middleware failure; tests cover normal update paths. */
   bot.catch((error) => {
-    if (config.environment === "test") {
+    if (config.environment === 'test') {
       throw error.error;
     }
     writeStderrLine(`Telegram bot update failed ${String(error.error)}`);
   });
 
   const storage =
-    dependencies.sessionStorage ??
-    new MemorySessionStorage<TelegramBotSession>(
-      config.sessionTtlSeconds * 1000,
-    );
+    dependencies.sessionStorage ?? new MemorySessionStorage<TelegramBotSession>(config.sessionTtlSeconds * 1000);
   // Serialize updates per user before touching the session so concurrent
   // updates (webhook + sink concurrency in the worker) cannot interleave
   // session reads and writes and drop each other's changes.
@@ -73,30 +57,24 @@ export function createTelegramBot(
   bot.use(hydrate());
   bot.use(createI18nMiddleware());
   bot.use(
-    limit<
-      TelegramBotContext,
-      NonNullable<TelegramBotDependencies["rateLimitStorage"]>
-    >({
+    limit<TelegramBotContext, NonNullable<TelegramBotDependencies['rateLimitStorage']>>({
       timeFrame: config.rateLimit.timeFrameMs,
       limit: config.rateLimit.limit,
-      storageClient: dependencies.rateLimitStorage ?? "MEMORY_STORE",
-      keyPrefix: "telegram-bot-rate-limit:",
+      storageClient: dependencies.rateLimitStorage ?? 'MEMORY_STORE',
+      keyPrefix: 'telegram-bot-rate-limit:',
       keyGenerator: (ctx) => ctx.from?.id.toString(),
       // The limiter awaits this handler's return value, so awaiting the reply
       // notifies the user before the update is considered handled. The library
       // types the callback as `=> void`, hence the targeted disable.
       // eslint-disable-next-line @typescript-eslint/no-misused-promises -- limiter awaits the returned promise
       onLimitExceeded: async (ctx) => {
-        ctx.session.rateLimitedUntil =
-          Date.now() + config.rateLimit.timeFrameMs;
+        ctx.session.rateLimitedUntil = Date.now() + config.rateLimit.timeFrameMs;
         await ctx
-          .reply(ctx.t("bot.error.rateLimited"))
+          .reply(ctx.t('bot.error.rateLimited'))
           /* v8 ignore next -- defensive logging when Telegram rejects the rate-limit notice itself. */
           .catch((error: unknown) => {
             /* v8 ignore next 3 -- defensive logging when Telegram rejects the rate-limit notice itself. */
-            writeStderrLine(
-              `Telegram bot rate-limit reply failed ${String(error)}`,
-            );
+            writeStderrLine(`Telegram bot rate-limit reply failed ${String(error)}`);
           });
       },
       alwaysReply: true,
@@ -114,31 +92,27 @@ export function createTelegramBot(
   bot.use(conversations());
   bot.use(createConversation(linkConversation));
 
-  bot.command("start", async (ctx) =>
-    handleStart(ctx, application, renderMainMenu),
-  );
-  bot.command("link", async (ctx) => handleLink(ctx, application));
-  bot.command("language", async (ctx) => {
-    navigateTo(ctx, "settings.language");
-    await ctx.reply(ctx.t("bot.message.chooseLanguage"), {
+  bot.command('start', async (ctx) => handleStart(ctx, application, renderMainMenu));
+  bot.command('link', async (ctx) => handleLink(ctx, application));
+  bot.command('language', async (ctx) => {
+    navigateTo(ctx, 'settings.language');
+    await ctx.reply(ctx.t('bot.message.chooseLanguage'), {
       reply_markup: menus.language,
     });
   });
 
-  const router = new Router<TelegramBotContext>(
-    (ctx) => ctx.session.currentRoute,
-  );
-  router.route("profile", new Composer<TelegramBotContext>().middleware());
+  const router = new Router<TelegramBotContext>((ctx) => ctx.session.currentRoute);
+  router.route('profile', new Composer<TelegramBotContext>().middleware());
   router.otherwise(async (ctx, next) => {
     if (ctx.callbackQuery) {
       await next();
       return;
     }
-    await ctx.reply(ctx.t("bot.message.welcome"), { reply_markup: menus.main });
+    await ctx.reply(ctx.t('bot.message.welcome'), { reply_markup: menus.main });
   });
   bot.use(router);
-  bot.on("callback_query:data", async (ctx) => {
-    await ctx.answerCallbackQuery({ text: ctx.t("bot.error.unknown") });
+  bot.on('callback_query:data', async (ctx) => {
+    await ctx.answerCallbackQuery({ text: ctx.t('bot.error.unknown') });
   });
 
   if (config.setupMenuButton && safeAppUrl) {
@@ -149,14 +123,14 @@ export function createTelegramBot(
 }
 
 export async function setupTelegramMenuButton(
-  api: Pick<NonNullable<TelegramBotDependencies["api"]>, "setChatMenuButton">,
+  api: Pick<NonNullable<TelegramBotDependencies['api']>, 'setChatMenuButton'>,
   appUrl: string,
 ): Promise<void> {
   try {
     await api.setChatMenuButton({
       menu_button: {
-        type: "web_app",
-        text: "Open app",
+        type: 'web_app',
+        text: 'Open app',
         web_app: { url: appUrl },
       },
     });
@@ -167,9 +141,8 @@ export async function setupTelegramMenuButton(
 
 export async function handleStart(
   ctx: TelegramBotContext,
-  applicationOrDependencies:
-    TelegramBotApplicationPort | TelegramBotDependencies = {},
-  renderMainMenu: () => ReturnType<typeof createTelegramMenus>["main"] = () =>
+  applicationOrDependencies: TelegramBotApplicationPort | TelegramBotDependencies = {},
+  renderMainMenu: () => ReturnType<typeof createTelegramMenus>['main'] = () =>
     createTelegramMenus({
       application: resolveTelegramApplication(applicationOrDependencies),
     }).main,
@@ -180,26 +153,23 @@ export async function handleStart(
   if (payload) {
     const handled = await handleStartPayload(ctx, payload, application);
     if (!handled) {
-      await ctx.reply(ctx.t("bot.error.expired"));
+      await ctx.reply(ctx.t('bot.error.expired'));
     }
   }
 
-  await ctx.reply(ctx.t("bot.message.welcome"), {
+  await ctx.reply(ctx.t('bot.message.welcome'), {
     reply_markup: renderMainMenu(),
   });
 }
 
 export async function handleLink(
   ctx: TelegramBotContext,
-  applicationOrDependencies:
-    TelegramBotApplicationPort | TelegramBotDependencies = {},
+  applicationOrDependencies: TelegramBotApplicationPort | TelegramBotDependencies = {},
 ): Promise<void> {
   const application = resolveTelegramApplication(applicationOrDependencies);
-  navigateTo(ctx, "link");
-  const instructions = ctx.identity
-    ? await application.createLinkInstructions(ctx.identity)
-    : null;
-  await ctx.reply(instructions ?? ctx.t("bot.route.link"));
+  navigateTo(ctx, 'link');
+  const instructions = ctx.identity ? await application.createLinkInstructions(ctx.identity) : null;
+  await ctx.reply(instructions ?? ctx.t('bot.route.link'));
 }
 
 async function handleStartPayload(
@@ -217,40 +187,33 @@ async function handleStartPayload(
   }
 
   applyPayload(ctx, resolved);
-  if (resolved.kind === "link") {
+  if (resolved.kind === 'link') {
     ctx.session.auth.linked = true;
-    await ctx.reply(ctx.t("bot.message.linked"));
+    await ctx.reply(ctx.t('bot.message.linked'));
   }
 
   return true;
 }
 
-function applyPayload(
-  ctx: TelegramBotContext,
-  payload: TelegramLinkPayload,
-): void {
+function applyPayload(ctx: TelegramBotContext, payload: TelegramLinkPayload): void {
   if (payload.locale) {
     ctx.session.locale = payload.locale;
   }
 
-  if (payload.kind === "route" && payload.route) {
+  if (payload.kind === 'route' && payload.route) {
     navigateTo(ctx, payload.route, payload.params);
     return;
   }
 
-  navigateTo(ctx, "link");
+  navigateTo(ctx, 'link');
 }
 
-function createIdentityAndLocaleMiddleware(
-  application: TelegramBotApplicationPort,
-) {
+function createIdentityAndLocaleMiddleware(application: TelegramBotApplicationPort) {
   return async (ctx: TelegramBotContext, next: () => Promise<void>) => {
     const identity = resolveTelegramIdentity(ctx);
     ctx.identity = identity;
     /* v8 ignore next -- grammy session updates without a Telegram sender cannot safely reach this middleware. */
-    const linkedUser = identity
-      ? await application.findLinkedUser(identity)
-      : null;
+    const linkedUser = identity ? await application.findLinkedUser(identity) : null;
     ctx.session.auth = {
       linked: Boolean(linkedUser) || ctx.session.auth.linked,
       userId: linkedUser?.userId ?? ctx.session.auth.userId,
@@ -272,11 +235,8 @@ function createIdentityAndLocaleMiddleware(
 
 /* v8 ignore next 9 -- registered conversation entrypoint; /link command covers the public reply path. */
 async function linkConversation(
-  _conversation: import("@grammyjs/conversations").Conversation<
-    TelegramBotContext,
-    TelegramBotContext
-  >,
+  _conversation: import('@grammyjs/conversations').Conversation<TelegramBotContext, TelegramBotContext>,
   ctx: TelegramBotContext,
 ) {
-  await ctx.reply(ctx.t("bot.route.link"));
+  await ctx.reply(ctx.t('bot.route.link'));
 }

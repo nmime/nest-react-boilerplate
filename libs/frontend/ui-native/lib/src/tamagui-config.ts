@@ -1,10 +1,5 @@
-import {
-  designColors,
-  designRadii,
-  designSpacing,
-  designTypography,
-} from "@app/common-design-tokens";
-import { createFont, createTamagui, createTokens } from "tamagui";
+import { designColors, designRadii, designSpacing, designTypography } from '@app/common-design-tokens';
+import { createFont, createTamagui, createTokens } from 'tamagui';
 
 const nativeFont = createFont({
   family: designTypography.fontSans,
@@ -25,10 +20,10 @@ const nativeFont = createFont({
     6: 40,
   },
   weight: {
-    1: "400",
-    2: "500",
-    3: "600",
-    4: "700",
+    1: '400',
+    2: '500',
+    3: '600',
+    4: '700',
   },
 });
 
@@ -51,10 +46,10 @@ export const nativeTokens = createTokens({
   size: designSpacing,
   space: {
     ...designSpacing,
-    "-1": -designSpacing[1],
-    "-2": -designSpacing[2],
-    "-3": -designSpacing[3],
-    "-4": -designSpacing[4],
+    '-1': -designSpacing[1],
+    '-2': -designSpacing[2],
+    '-3': -designSpacing[3],
+    '-4': -designSpacing[4],
   },
   zIndex: {
     0: 0,
@@ -67,7 +62,7 @@ export const nativeTokens = createTokens({
 export const nativeTamaguiConfig = createTamagui({
   defaultProps: {
     Text: {
-      color: "$color",
+      color: '$color',
     },
   },
   fonts: {
@@ -79,12 +74,12 @@ export const nativeTamaguiConfig = createTamagui({
     sm: { maxWidth: 640 },
   },
   shorthands: {
-    bg: "backgroundColor",
-    f: "flex",
-    m: "margin",
-    p: "padding",
-    px: "paddingHorizontal",
-    py: "paddingVertical",
+    bg: 'backgroundColor',
+    f: 'flex',
+    m: 'margin',
+    p: 'padding',
+    px: 'paddingHorizontal',
+    py: 'paddingVertical',
   } as const,
   themes: {
     dark: {

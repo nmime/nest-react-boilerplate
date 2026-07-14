@@ -1,12 +1,9 @@
-import { EntityManager } from '@mikro-orm/core';
 import { format } from 'date-fns';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  NotificationChannel,
-  NotificationStatus,
-  NotificationTargetType,
-  type NotificationEntity,
-} from '../domain';
+import { NotificationChannel, NotificationStatus, NotificationTargetType } from '../domain';
+import { NotificationEntity } from '../infrastructure/data-access/entities';
+import { NotificationTemplateChannelEntity } from '../infrastructure/data-access/entities';
 
 @Injectable()
 export class NotificationRepository {
@@ -27,46 +24,75 @@ export class NotificationRepository {
     const { targetType, targetId, count } = params;
     const currentTime = format(new Date(), 'HH:mm:ss');
 
-    const qb = this.entityManager
-      .createQueryBuilder(NotificationEntity.name as any, 'notification')
-      .innerJoin(
-        'notification_deliveries',
-        'delivery',
-        'delivery.notification_id = notification.id AND delivery.channel = notification.channel',
-      )
-      .where({ 'notification.target_type': targetType, 'delivery.status': NotificationStatus.Pending })
-      .andWhereRaw(
-        '(delivery.send_time_from IS NULL OR delivery.send_time_from <= %L) AND (delivery.send_time_to IS NULL OR delivery.send_time_to >= %L)',
-        [currentTime, currentTime],
-      )
-      .orderBy({ 'delivery.priority': 'DESC', 'delivery.id': 'ASC' })
-      .limit(count);
+    const values: unknown[] = [targetType, NotificationStatus.Pending, currentTime];
+    const targetClause = targetId ? `and notification.target_id = $${values.push(targetId)}` : '';
+    const countPlaceholder = `$${values.push(count)}`;
 
-    if (targetId) {
-      qb.andWhere({ 'notification.target_id': targetId });
+    const idRows = await this.entityManager.getConnection().execute<Array<{ id: string }>>(
+      `select notification.id
+         from notifications notification
+         inner join notification_deliveries delivery
+           on delivery.notification_id = notification.id
+          and delivery.channel = notification.channel
+        where notification.target_type = $1
+          and delivery.status = $2
+          and (delivery.send_time_from is null or delivery.send_time_from <= $3)
+          and (delivery.send_time_to is null or delivery.send_time_to >= $3)
+          ${targetClause}
+        order by delivery.priority desc, delivery.id asc
+        limit ${countPlaceholder}`,
+      values,
+    );
+
+    if (idRows.length === 0) {
+      return [];
     }
 
-    return (await qb.execute('all')) as unknown as NotificationEntity[];
+    const ids = idRows.map((row) => row.id);
+    const notifications = await this.entityManager.find(
+      NotificationEntity,
+      { id: { $in: ids } },
+      { populate: ['template'] },
+    );
+    const templateIds = notifications.flatMap((notification) =>
+      notification.template ? [notification.template.id] : [],
+    );
+    if (templateIds.length > 0) {
+      const botChannels = await this.entityManager.find(NotificationTemplateChannelEntity, {
+        templateId: { $in: templateIds },
+        channel: NotificationChannel.Bot,
+      });
+      const channelByTemplateId = new Map(botChannels.map((channel) => [channel.templateId, channel]));
+      for (const notification of notifications) {
+        if (notification.template) {
+          notification.template.botChannel = channelByTemplateId.get(notification.template.id) ?? null;
+        }
+      }
+    }
+
+    const notificationById = new Map(notifications.map((notification) => [notification.id, notification]));
+    return ids.flatMap((id) => {
+      const notification = notificationById.get(id);
+      return notification ? [notification] : [];
+    });
   }
 
   async findPendingTargets(targetType: NotificationTargetType): Promise<string[]> {
     const currentTime = format(new Date(), 'HH:mm:ss');
 
-    const results = await this.entityManager
-      .createQueryBuilder(NotificationEntity.name as any, 'notification')
-      .select('DISTINCT notification.target_id')
-      .innerJoin(
-        'notification_deliveries',
-        'delivery',
-        'delivery.notification_id = notification.id AND delivery.channel = notification.channel',
-      )
-      .where({ 'notification.target_type': targetType, 'delivery.status': NotificationStatus.Pending })
-      .andWhereRaw(
-        '(delivery.send_time_from IS NULL OR delivery.send_time_from <= %L) AND (delivery.send_time_to IS NULL OR delivery.send_time_to >= %L)',
-        [currentTime, currentTime],
-      )
-      .execute('all');
+    const results = await this.entityManager.getConnection().execute<Array<{ target_id: string }>>(
+      `select distinct notification.target_id
+         from notifications notification
+         inner join notification_deliveries delivery
+           on delivery.notification_id = notification.id
+          and delivery.channel = notification.channel
+        where notification.target_type = $1
+          and delivery.status = $2
+          and (delivery.send_time_from is null or delivery.send_time_from <= $3)
+          and (delivery.send_time_to is null or delivery.send_time_to >= $3)`,
+      [targetType, NotificationStatus.Pending, currentTime],
+    );
 
-    return results.map((r: Record<string, unknown>) => String(r.target_id));
+    return results.map((result) => result.target_id);
   }
 }

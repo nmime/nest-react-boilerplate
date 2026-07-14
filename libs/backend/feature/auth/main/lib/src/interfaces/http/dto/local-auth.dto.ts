@@ -1,22 +1,15 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {
-  IsEmail,
-  IsIn,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MinLength,
-} from "class-validator";
-import { supportedLocales } from "@app/common-i18n";
-import { userThemePreferences } from "@app/backend-feature-auth-shared";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { supportedLocales } from '@app/common-i18n';
+import { userThemePreferences } from '@app/backend-feature-auth-shared';
 
 export class RegisterDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
 
-  @ApiProperty({ example: "user@example.com", format: "email" })
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
   @IsEmail()
   email!: string;
 
@@ -25,7 +18,7 @@ export class RegisterDto {
   @MinLength(8)
   password!: string;
 
-  @ApiPropertyOptional({ example: "Ada Lovelace" })
+  @ApiPropertyOptional({ example: 'Ada Lovelace' })
   @IsOptional()
   @IsString()
   displayName?: string;
@@ -38,12 +31,12 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
 
-  @ApiProperty({ example: "user@example.com", format: "email" })
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
   @IsEmail()
   email!: string;
 
@@ -54,7 +47,7 @@ export class LoginDto {
 }
 
 export class RefreshTokenDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -66,12 +59,12 @@ export class RefreshTokenDto {
 }
 
 export class UserActionTokenRequestDto {
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
 
-  @ApiProperty({ example: "user@example.com", format: "email" })
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
   @IsEmail()
   email!: string;
 }

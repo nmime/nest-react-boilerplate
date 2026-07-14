@@ -1,9 +1,8 @@
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { Injectable } from "@nestjs/common";
-import { DefaultDiscordCustomIdTtlSeconds } from "./discord-config";
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { Injectable } from '@nestjs/common';
+import { DefaultDiscordCustomIdTtlSeconds } from './discord-config';
 
-export type DiscordCustomIdAction =
-  "back" | "home" | "cancel" | "open_app" | "link" | "unlink" | "confirm";
+export type DiscordCustomIdAction = 'back' | 'home' | 'cancel' | 'open_app' | 'link' | 'unlink' | 'confirm';
 
 export interface DiscordCustomIdPayload {
   action: DiscordCustomIdAction;
@@ -24,11 +23,10 @@ export interface DiscordCustomIdCodecOptions {
 }
 
 export interface DiscordDecodedCustomId extends Required<DiscordCustomIdPayload> {
-  version: "1";
+  version: '1';
 }
 
-export type DiscordCustomIdValidationFailure =
-  "expired" | "tampered" | "wrong-owner" | "wrong-guild" | "wrong-tenant";
+export type DiscordCustomIdValidationFailure = 'expired' | 'tampered' | 'wrong-owner' | 'wrong-guild' | 'wrong-tenant';
 
 export class DiscordCustomIdValidationError extends Error {
   constructor(readonly failure: DiscordCustomIdValidationFailure) {
@@ -36,31 +34,24 @@ export class DiscordCustomIdValidationError extends Error {
   }
 }
 
-const prefix = "nrb";
-const version = "1";
+const prefix = 'nrb';
+const version = '1';
 const maxCustomIdLength = 100;
 // 16 bytes (128-bit) keeps forgery resistance well above an 8-byte truncation
 // while the resulting custom_id still fits Discord's 100-char limit for every
 // existing custom-id shape.
 const defaultSignatureBytes = 16;
-const emptyGuild = "-";
+const emptyGuild = '-';
 
 /* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
 @Injectable()
 /* v8 ignore stop */
 export class DiscordCustomIdCodec {
-  encode(
-    payload: DiscordCustomIdPayload,
-    options: DiscordCustomIdCodecOptions,
-  ): string {
+  encode(payload: DiscordCustomIdPayload, options: DiscordCustomIdCodecOptions): string {
     const now = Math.floor((options.now?.() ?? Date.now()) / 1000);
-    const nonce =
-      payload.nonce ??
-      randomBytes(options.nonceBytes ?? 8).toString("base64url");
+    const nonce = payload.nonce ?? randomBytes(options.nonceBytes ?? 8).toString('base64url');
     const issuedAt = payload.issuedAt ?? now;
-    const expiresAt =
-      payload.expiresAt ??
-      issuedAt + (options.ttlSeconds ?? DefaultDiscordCustomIdTtlSeconds);
+    const expiresAt = payload.expiresAt ?? issuedAt + (options.ttlSeconds ?? DefaultDiscordCustomIdTtlSeconds);
     const body = [
       prefix,
       version,
@@ -71,74 +62,45 @@ export class DiscordCustomIdCodec {
       shortTenant(payload.tenantId),
       issuedAt.toString(36),
       expiresAt.toString(36),
-    ].join(":");
+    ].join(':');
     const customId = `${body}:${sign(body, options.secret, options.signatureBytes)}`;
     if (customId.length > maxCustomIdLength) {
-      throw new Error(
-        `Discord custom_id exceeds ${maxCustomIdLength} characters.`,
-      );
+      throw new Error(`Discord custom_id exceeds ${maxCustomIdLength} characters.`);
     }
     return customId;
   }
 
-  decode(
-    customId: string,
-    options: DiscordCustomIdCodecOptions,
-  ): DiscordDecodedCustomId {
-    const parts = customId.split(":");
+  decode(customId: string, options: DiscordCustomIdCodecOptions): DiscordDecodedCustomId {
+    const parts = customId.split(':');
     if (parts.length !== 10) {
-      throw new DiscordCustomIdValidationError("tampered");
+      throw new DiscordCustomIdValidationError('tampered');
     }
-    const [
-      actualPrefix,
-      actualVersion,
-      actionCode,
-      nonce,
-      userId,
-      guildId,
-      tenantId,
-      issued,
-      expires,
-      signature,
-    ] = parts as [
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-    ];
+    const [actualPrefix, actualVersion, actionCode, nonce, userId, guildId, tenantId, issued, expires, signature] =
+      parts as [string, string, string, string, string, string, string, string, string, string];
     if (actualPrefix !== prefix || actualVersion !== version) {
-      throw new DiscordCustomIdValidationError("tampered");
+      throw new DiscordCustomIdValidationError('tampered');
     }
     const action = codeToAction(actionCode);
-    const body = parts.slice(0, -1).join(":");
-    if (
-      !safeEqual(signature, sign(body, options.secret, options.signatureBytes))
-    ) {
-      throw new DiscordCustomIdValidationError("tampered");
+    const body = parts.slice(0, -1).join(':');
+    if (!safeEqual(signature, sign(body, options.secret, options.signatureBytes))) {
+      throw new DiscordCustomIdValidationError('tampered');
     }
     const issuedAt = Number.parseInt(issued, 36);
     const expiresAt = Number.parseInt(expires, 36);
     const now = Math.floor((options.now?.() ?? Date.now()) / 1000);
     if (!Number.isFinite(issuedAt) || !Number.isFinite(expiresAt)) {
-      throw new DiscordCustomIdValidationError("tampered");
+      throw new DiscordCustomIdValidationError('tampered');
     }
     if (expiresAt <= now) {
-      throw new DiscordCustomIdValidationError("expired");
+      throw new DiscordCustomIdValidationError('expired');
     }
     return {
       version,
       action,
       nonce,
       userId: decodeSnowflake(userId),
-      guildId: guildId === emptyGuild ? "" : decodeSnowflake(guildId),
-      tenantId:
-        tenantId === "0" ? "00000000000000000000000000000000" : tenantId,
+      guildId: guildId === emptyGuild ? '' : decodeSnowflake(guildId),
+      tenantId: tenantId === '0' ? '00000000000000000000000000000000' : tenantId,
       issuedAt,
       expiresAt,
     };
@@ -149,48 +111,37 @@ export class DiscordCustomIdCodec {
     owner: { userId: string; guildId?: string | null; tenantId: string },
   ): void {
     if (decoded.userId !== owner.userId) {
-      throw new DiscordCustomIdValidationError("wrong-owner");
+      throw new DiscordCustomIdValidationError('wrong-owner');
     }
-    if ((decoded.guildId || "") !== (owner.guildId?.trim() || "")) {
-      throw new DiscordCustomIdValidationError("wrong-guild");
+    if ((decoded.guildId || '') !== (owner.guildId?.trim() || '')) {
+      throw new DiscordCustomIdValidationError('wrong-guild');
     }
     if (normalizeTenant(decoded.tenantId) !== normalizeTenant(owner.tenantId)) {
-      throw new DiscordCustomIdValidationError("wrong-tenant");
+      throw new DiscordCustomIdValidationError('wrong-tenant');
     }
   }
 }
 
 export const DiscordCustomIdMaxLength = maxCustomIdLength;
 
-function sign(
-  body: string,
-  secret: string,
-  signatureBytes = defaultSignatureBytes,
-): string {
-  return createHmac("sha256", secret)
-    .update(body)
-    .digest()
-    .subarray(0, signatureBytes)
-    .toString("base64url");
+function sign(body: string, secret: string, signatureBytes = defaultSignatureBytes): string {
+  return createHmac('sha256', secret).update(body).digest().subarray(0, signatureBytes).toString('base64url');
 }
 
 function safeEqual(left: string, right: string): boolean {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    timingSafeEqual(leftBuffer, rightBuffer)
-  );
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
 const actionCodes: Record<DiscordCustomIdAction, string> = {
-  back: "b",
-  home: "h",
-  cancel: "c",
-  open_app: "o",
-  link: "l",
-  unlink: "u",
-  confirm: "y",
+  back: 'b',
+  home: 'h',
+  cancel: 'c',
+  open_app: 'o',
+  link: 'l',
+  unlink: 'u',
+  confirm: 'y',
 };
 
 function actionToCode(action: DiscordCustomIdAction): string {
@@ -198,44 +149,37 @@ function actionToCode(action: DiscordCustomIdAction): string {
 }
 
 function codeToAction(code: string): DiscordCustomIdAction {
-  const action = Object.entries(actionCodes).find(
-    ([, value]) => value === code,
-  )?.[0];
+  const action = Object.entries(actionCodes).find(([, value]) => value === code)?.[0];
   if (!action) {
-    throw new DiscordCustomIdValidationError("tampered");
+    throw new DiscordCustomIdValidationError('tampered');
   }
   return action as DiscordCustomIdAction;
 }
 
 function encodeSnowflake(value: string): string {
-  return /^\d+$/u.test(value)
-    ? BigInt(value).toString(36)
-    : `_${Buffer.from(value).toString("base64url")}`;
+  return /^\d+$/u.test(value) ? BigInt(value).toString(36) : `_${Buffer.from(value).toString('base64url')}`;
 }
 
 function decodeSnowflake(value: string): string {
-  return value.startsWith("_")
-    ? Buffer.from(value.slice(1), "base64url").toString("utf8")
+  return value.startsWith('_')
+    ? Buffer.from(value.slice(1), 'base64url').toString('utf8')
     : parseBase36BigInt(value).toString(10);
 }
 
 function normalizeTenant(value: string): string {
-  return value.trim().toLowerCase().replaceAll("-", "");
+  return value.trim().toLowerCase().replaceAll('-', '');
 }
 
 function shortTenant(value: string): string {
   const normalized = normalizeTenant(value);
-  return normalized === "00000000000000000000000000000000" ? "0" : normalized;
+  return normalized === '00000000000000000000000000000000' ? '0' : normalized;
 }
 
 function parseBase36BigInt(value: string): bigint {
   if (!/^[0-9a-z]+$/iu.test(value)) {
-    throw new DiscordCustomIdValidationError("tampered");
+    throw new DiscordCustomIdValidationError('tampered');
   }
   // Every character already matched /^[0-9a-z]+$/i above, so each is a valid
   // base-36 digit (0-35) and BigInt accumulation cannot see a non-finite digit.
-  return [...value].reduce(
-    (sum, char) => sum * 36n + BigInt(Number.parseInt(char, 36)),
-    0n,
-  );
+  return [...value].reduce((sum, char) => sum * 36n + BigInt(Number.parseInt(char, 36)), 0n);
 }

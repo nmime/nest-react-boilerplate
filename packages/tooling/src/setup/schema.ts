@@ -17,7 +17,14 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /** Frontend application shells that can be enabled / disabled. */
-export const frontendAppIds = ['admin-app', 'user-app', 'landing-app', 'site-app', 'mobile-app'] as const;
+export const frontendAppIds = [
+  'starter-app',
+  'admin-app',
+  'user-app',
+  'landing-app',
+  'site-app',
+  'mobile-app',
+] as const;
 export type FrontendAppId = (typeof frontendAppIds)[number];
 
 /** Backend services that can be enabled / disabled. */
@@ -27,6 +34,7 @@ export const backendAppIds = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
+  'telegram-bot-worker',
 ] as const;
 export type BackendAppId = (typeof backendAppIds)[number];
 

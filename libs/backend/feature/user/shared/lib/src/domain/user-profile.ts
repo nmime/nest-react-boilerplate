@@ -1,4 +1,4 @@
-import { normalizeStringList } from "./util";
+import { normalizeStringList } from './util';
 
 export interface UserProfilePrincipal {
   subject: string;
@@ -18,9 +18,7 @@ export interface UserProfile {
   permissions: string[];
 }
 
-export function createUserProfile(
-  principal: UserProfilePrincipal,
-): UserProfile {
+export function createUserProfile(principal: UserProfilePrincipal): UserProfile {
   return {
     id: principal.subject,
     email: principal.email,

@@ -23,11 +23,7 @@
 .xr-v3-banner {
   align-items: center;
   background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--xr-color-primary) 18%, transparent),
-      transparent 62%
-    ),
+    linear-gradient(135deg, color-mix(in srgb, var(--xr-color-primary) 18%, transparent), transparent 62%),
     color-mix(in srgb, var(--xr-card-background) 94%, transparent);
   border: 1px solid color-mix(in srgb, var(--xr-color-border) 78%, transparent);
   border-radius: calc(var(--xr-radius-lg) + 0.35rem);
@@ -109,14 +105,10 @@
     transform 160ms ease;
 }
 
-.xr-route-rail__item[data-active="true"],
+.xr-route-rail__item[data-active='true'],
 .xr-route-rail__item:focus-visible,
 .xr-route-rail__item:hover {
-  background: color-mix(
-    in srgb,
-    var(--xr-color-primary) 12%,
-    var(--xr-card-background)
-  );
+  background: color-mix(in srgb, var(--xr-color-primary) 12%, var(--xr-card-background));
   border-color: color-mix(in srgb, var(--xr-color-primary) 48%, transparent);
   transform: translateY(-1px);
 }
@@ -184,17 +176,9 @@
 
 .xr-surface-glow::before {
   background:
-    radial-gradient(
-      circle at top right,
-      color-mix(in srgb, var(--xr-color-primary) 18%, transparent),
-      transparent 32%
-    ),
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--xr-card-background) 86%, white),
-      transparent
-    );
-  content: "";
+    radial-gradient(circle at top right, color-mix(in srgb, var(--xr-color-primary) 18%, transparent), transparent 32%),
+    linear-gradient(135deg, color-mix(in srgb, var(--xr-card-background) 86%, white), transparent);
+  content: '';
   inset: 0;
   opacity: 0.72;
   pointer-events: none;
@@ -295,8 +279,7 @@
 .xr-route-chip:focus-visible,
 .xr-route-chip:hover {
   border-color: color-mix(in srgb, var(--xr-color-primary) 56%, transparent);
-  box-shadow: 0 0 0 4px
-    color-mix(in srgb, var(--xr-color-primary) 14%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--xr-color-primary) 14%, transparent);
   transform: translateY(-1px);
 }
 
@@ -437,10 +420,9 @@
   margin-top: 0.2rem;
 }
 
-.xr-tma-stage-grid span[data-active="true"] {
+.xr-tma-stage-grid span[data-active='true'] {
   border-color: color-mix(in srgb, var(--xr-color-primary) 50%, transparent);
-  box-shadow: 0 0 0 4px
-    color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
 }
 
 .xr-tma-card,

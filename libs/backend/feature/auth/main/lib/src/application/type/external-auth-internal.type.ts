@@ -2,7 +2,7 @@ import type {
   ExternalAuthIntent,
   ExternalAuthProvider,
   ExternalAuthProviderChannel,
-} from "@app/backend-feature-auth-shared";
+} from '@app/backend-feature-auth-shared';
 
 export interface VerifiedExternalProfile {
   provider: ExternalAuthProvider;

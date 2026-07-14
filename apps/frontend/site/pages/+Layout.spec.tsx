@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@app/frontend-runtime', () => ({
   FrontendI18nProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  FrontendQueryProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  FrontendStateProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useI18n: () => ({
     t: (key: string) => (key === 'user.appName' ? 'Nest React Boilerplate' : key),
   }),

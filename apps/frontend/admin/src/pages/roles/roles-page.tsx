@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
@@ -14,13 +14,9 @@ import {
   AdminUsersStatusUpdatePermission,
   AdminUsersWritePermission,
   UserProfileReadPermission,
-} from "@app/common-authz";
-import {
-  adminApi,
-  throwOnOpenApiErrorData,
-  type ApiClientRequestOptions,
-} from "@app/frontend-api-client";
-import { useI18n } from "@app/frontend-runtime";
+} from '@app/common-authz';
+import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
+import { useI18n } from '@app/frontend-runtime';
 import {
   UiButton,
   UiCard,
@@ -33,19 +29,14 @@ import {
   UiStatCard,
   UiStatusTag,
   UiTextarea,
-} from "@app/frontend-ui-web";
-import {
-  createRole,
-  setRolePermissions,
-  updateRole,
-} from "../../features/role-management";
-import type { AdminAccess } from "../../entities/admin-session";
-import type { RoleRow } from "../../entities/admin-role";
-import { errorText } from "../../shared";
+} from '@app/frontend-ui-web';
+import { createRole, setRolePermissions, updateRole } from '../../features/role-management';
+import type { AdminAccess } from '../../entities/admin-session';
+import type { RoleRow } from '../../entities/admin-role';
+import { errorText } from '../../shared';
 
-type RoleColumn = adminApi.AdminRbacCatalogPayloadDto["roles"][number];
-type RolePermission =
-  adminApi.SetAdminRolePermissionsDto["permissions"][number];
+type RoleColumn = adminApi.AdminRbacCatalogPayloadDto['roles'][number];
+type RolePermission = adminApi.SetAdminRolePermissionsDto['permissions'][number];
 
 // Permission identifiers come from the shared @app/common-authz catalog. The
 // `satisfies` check keeps them aligned with the generated DTO union so values
@@ -80,26 +71,20 @@ export const RolesPage = ({
   const qc = useQueryClient();
   const canWriteRoles = Boolean(access?.canWriteRoles);
   const [notice, setNotice] = useState<{
-    tone: "success" | "warning";
+    tone: 'success' | 'warning';
     message: string;
   }>();
   const [createOpen, setCreateOpen] = useState(false);
-  const [newKey, setNewKey] = useState("");
-  const [newLabel, setNewLabel] = useState("");
-  const [newDescription, setNewDescription] = useState("");
+  const [newKey, setNewKey] = useState('');
+  const [newLabel, setNewLabel] = useState('');
+  const [newDescription, setNewDescription] = useState('');
   const [editTarget, setEditTarget] = useState<RoleColumn>();
-  const [editLabel, setEditLabel] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [editLabel, setEditLabel] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   const roles = useQuery({
-    queryKey: [
-      ...adminApi.getAdminUsersControllerRolesQueryKey(),
-      requestOptions,
-    ] as const,
-    queryFn: () =>
-      throwOnOpenApiErrorData(
-        adminApi.adminUsersControllerRoles(requestOptions),
-      ),
+    queryKey: [...adminApi.getAdminUsersControllerRolesQueryKey(), requestOptions] as const,
+    queryFn: () => throwOnOpenApiErrorData(adminApi.adminUsersControllerRoles(requestOptions)),
     retry: false,
   });
   const rows = roles.data?.permissions ?? [];
@@ -111,78 +96,59 @@ export const RolesPage = ({
     });
 
   const permissionsMutation = useMutation({
-    mutationFn: ({
-      id,
-      permissions,
-    }: {
-      id: string;
-      permissions: RolePermission[];
-    }) => setRolePermissions(id, permissions, requestOptions),
+    mutationFn: ({ id, permissions }: { id: string; permissions: RolePermission[] }) =>
+      setRolePermissions(id, permissions, requestOptions),
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.roles.notice.permissionsUpdated"),
+        tone: 'success',
+        message: t('admin.roles.notice.permissionsUpdated'),
       });
       await refetchRoles();
     },
     onError: (error: unknown) => {
       setNotice({
-        tone: "warning",
-        message: errorText(
-          error,
-          "admin.roles.error.permissionsUpdateFailed",
-          t,
-        ),
+        tone: 'warning',
+        message: errorText(error, 'admin.roles.error.permissionsUpdateFailed', t),
       });
     },
   });
   const createMutation = useMutation({
-    mutationFn: (body: adminApi.CreateAdminRoleDto) =>
-      createRole(body, requestOptions),
+    mutationFn: (body: adminApi.CreateAdminRoleDto) => createRole(body, requestOptions),
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.roles.notice.roleCreated"),
+        tone: 'success',
+        message: t('admin.roles.notice.roleCreated'),
       });
       await refetchRoles();
     },
     onError: (error: unknown) => {
       setNotice({
-        tone: "warning",
-        message: errorText(error, "admin.roles.error.createFailed", t),
+        tone: 'warning',
+        message: errorText(error, 'admin.roles.error.createFailed', t),
       });
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      id: string;
-      body: adminApi.UpdateAdminRoleDto;
-    }) => updateRole(id, body, requestOptions),
+    mutationFn: ({ id, body }: { id: string; body: adminApi.UpdateAdminRoleDto }) =>
+      updateRole(id, body, requestOptions),
     onSuccess: async () => {
       setNotice({
-        tone: "success",
-        message: t("admin.roles.notice.roleUpdated"),
+        tone: 'success',
+        message: t('admin.roles.notice.roleUpdated'),
       });
       await refetchRoles();
     },
     onError: (error: unknown) => {
       setNotice({
-        tone: "warning",
-        message: errorText(error, "admin.roles.error.updateFailed", t),
+        tone: 'warning',
+        message: errorText(error, 'admin.roles.error.updateFailed', t),
       });
     },
   });
 
   const isRoleEditable = (role: RoleColumn) => canWriteRoles && !role.isSystem;
 
-  const togglePermission = (
-    role: RoleColumn,
-    permission: string,
-    checked: boolean,
-  ) => {
+  const togglePermission = (role: RoleColumn, permission: string, checked: boolean) => {
     const next = new Set(role.permissions);
     if (checked) {
       next.add(permission);
@@ -204,30 +170,25 @@ export const RolesPage = ({
   return (
     <UiSection
       className="admin-page admin-roles-page"
-      eyebrow={t("admin.roles.eyebrow")}
-      title={t("admin.roles.title")}
+      eyebrow={t('admin.roles.eyebrow')}
+      title={t('admin.roles.title')}
     >
       <UiCard className="admin-command-center" title="Role governance map">
         <div className="admin-command-center__hero">
           <div>
             <p className="xr-eyebrow">Access model v3</p>
-            <strong>
-              Matrix-first role review with policy-aware assignments.
-            </strong>
+            <strong>Matrix-first role review with policy-aware assignments.</strong>
             <span>
-              Administrators can compare roles, permissions, resources, and
-              actions and, with roles:write, edit them in place.
+              Administrators can compare roles, permissions, resources, and actions and, with roles:write, edit them in
+              place.
             </span>
           </div>
           <UiStatusTag
-            label={roles.isLoading ? t("admin.state.loading") : "RBAC catalog"}
-            tone={roles.error ? "warning" : "info"}
+            label={roles.isLoading ? t('admin.state.loading') : 'RBAC catalog'}
+            tone={roles.error ? 'warning' : 'info'}
           />
         </div>
-        <div
-          className="admin-chip-row"
-          aria-label={t("admin.users.filter.role")}
-        >
+        <div className="admin-chip-row" aria-label={t('admin.users.filter.role')}>
           {(roleCatalog.length ? roleCatalog : []).map((role) => (
             <span className="admin-chip admin-chip--strong" key={role.role}>
               {role.label}
@@ -238,103 +199,87 @@ export const RolesPage = ({
       <div className="admin-stat-grid xr-stat-grid">
         <UiStatCard
           className="admin-stat-card"
-          label={t("admin.users.filter.role")}
-          value={`${roles.data?.roles.length ?? "—"}`}
-          detail={t("admin.roles.title")}
+          label={t('admin.users.filter.role')}
+          value={`${roles.data?.roles.length ?? '—'}`}
+          detail={t('admin.roles.title')}
         />
         <UiStatCard
           className="admin-stat-card"
-          label={t("admin.users.filter.permission")}
-          value={`${rows.length || "—"}`}
-          detail={t("admin.roles.emptyTitle")}
+          label={t('admin.users.filter.permission')}
+          value={`${rows.length || '—'}`}
+          detail={t('admin.roles.emptyTitle')}
         />
       </div>
-      {notice ? (
-        <UiNotification message={notice.message} tone={notice.tone} />
-      ) : null}
+      {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
       {canWriteRoles ? (
-        <UiCard
-          className="admin-table-card"
-          title={t("admin.roles.manage.title")}
-        >
+        <UiCard className="admin-table-card" title={t('admin.roles.manage.title')}>
           <div className="admin-table-toolbar">
             <UiButton
               onClick={() => {
-                setNewKey("");
-                setNewLabel("");
-                setNewDescription("");
+                setNewKey('');
+                setNewLabel('');
+                setNewDescription('');
                 setCreateOpen(true);
               }}
             >
-              {t("admin.roles.action.newRole")}
+              {t('admin.roles.action.newRole')}
             </UiButton>
           </div>
           <div className="admin-chip-row">
             {roleCatalog.map((role) => (
               <span className="admin-chip admin-chip--strong" key={role.id}>
                 {role.label}
-                {role.isSystem ? (
-                  <UiStatusTag
-                    label={t("admin.roles.manage.systemBadge")}
-                    tone="info"
-                  />
-                ) : null}
+                {role.isSystem ? <UiStatusTag label={t('admin.roles.manage.systemBadge')} tone="info" /> : null}
                 <UiButton
                   variant="ghost"
                   onClick={() => {
                     openEdit(role);
                   }}
                 >
-                  {t("admin.roles.action.editRole")}
+                  {t('admin.roles.action.editRole')}
                 </UiButton>
               </span>
             ))}
           </div>
         </UiCard>
       ) : null}
-      <UiCard className="admin-table-card" title={t("admin.roles.title")}>
+      <UiCard className="admin-table-card" title={t('admin.roles.title')}>
         <UiDataTable<RoleRow>
           rows={rows}
           rowKey={(row) => row.permission}
           isLoading={roles.isLoading}
-          loadingLabel={t("admin.roles.loading")}
-          error={
-            roles.error
-              ? errorText(roles.error, "admin.roles.error.requestFailed", t)
-              : undefined
-          }
-          emptyTitle={t("admin.roles.emptyEyebrow")}
-          emptyDescription={t("admin.roles.emptyTitle")}
+          loadingLabel={t('admin.roles.loading')}
+          error={roles.error ? errorText(roles.error, 'admin.roles.error.requestFailed', t) : undefined}
+          emptyTitle={t('admin.roles.emptyEyebrow')}
+          emptyDescription={t('admin.roles.emptyTitle')}
           columns={[
             {
-              id: "permission",
-              header: t("admin.roles.column.permission"),
+              id: 'permission',
+              header: t('admin.roles.column.permission'),
               render: (row) => row.permission,
             },
             {
-              id: "resource",
-              header: t("admin.roles.column.resource"),
+              id: 'resource',
+              header: t('admin.roles.column.resource'),
               render: (row) => row.resource,
             },
             {
-              id: "action",
-              header: t("admin.roles.column.action"),
+              id: 'action',
+              header: t('admin.roles.column.action'),
               render: (row) => row.action,
             },
             ...roleCatalog.map((role) => ({
               id: role.role,
               header: role.label,
-              align: "center" as const,
+              align: 'center' as const,
               render: (row: RoleRow) => (
                 <UiCheckbox
-                  disabled={
-                    !isRoleEditable(role) || permissionsMutation.isPending
-                  }
+                  disabled={!isRoleEditable(role) || permissionsMutation.isPending}
                   checked={role.permissions.includes(row.permission)}
-                  onCheckedChange={(checked: boolean | "indeterminate") => {
+                  onCheckedChange={(checked: boolean | 'indeterminate') => {
                     togglePermission(role, row.permission, checked === true);
                   }}
-                  label={t("admin.roles.assignmentLabel", {
+                  label={t('admin.roles.assignmentLabel', {
                     permission: row.permission,
                     role: role.role,
                   })}
@@ -347,43 +292,41 @@ export const RolesPage = ({
       <UiConfirmDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        title={t("admin.roles.createDialog.title")}
-        description={t("admin.roles.createDialog.description")}
-        confirmLabel={t("admin.roles.createDialog.title")}
+        title={t('admin.roles.createDialog.title')}
+        description={t('admin.roles.createDialog.description')}
+        confirmLabel={t('admin.roles.createDialog.title')}
         onConfirm={() => {
           if (!newKey.trim()) {
             setNotice({
-              tone: "warning",
-              message: t("admin.roles.error.keyRequired"),
+              tone: 'warning',
+              message: t('admin.roles.error.keyRequired'),
             });
             return;
           }
           createMutation.mutate({
             key: newKey.trim(),
             ...(newLabel.trim() ? { label: newLabel.trim() } : {}),
-            ...(newDescription.trim()
-              ? { description: newDescription.trim() }
-              : {}),
+            ...(newDescription.trim() ? { description: newDescription.trim() } : {}),
           });
           setCreateOpen(false);
         }}
       >
         <UiInput
-          aria-label={t("admin.roles.field.key")}
+          aria-label={t('admin.roles.field.key')}
           value={newKey}
           onChange={(event) => {
             setNewKey(event.currentTarget.value);
           }}
         />
         <UiInput
-          aria-label={t("admin.roles.field.label")}
+          aria-label={t('admin.roles.field.label')}
           value={newLabel}
           onChange={(event) => {
             setNewLabel(event.currentTarget.value);
           }}
         />
         <UiTextarea
-          aria-label={t("admin.roles.field.description")}
+          aria-label={t('admin.roles.field.description')}
           value={newDescription}
           onChange={(event) => {
             setNewDescription(event.currentTarget.value);
@@ -396,11 +339,11 @@ export const RolesPage = ({
           onOpenChange={() => {
             setEditTarget(undefined);
           }}
-          title={t("admin.roles.editDialog.title")}
-          description={t("admin.roles.editDialog.description", {
+          title={t('admin.roles.editDialog.title')}
+          description={t('admin.roles.editDialog.description', {
             role: editTarget.role,
           })}
-          confirmLabel={t("admin.roles.editDialog.title")}
+          confirmLabel={t('admin.roles.editDialog.title')}
           onConfirm={() => {
             updateMutation.mutate({
               id: editTarget.id,
@@ -413,14 +356,14 @@ export const RolesPage = ({
           }}
         >
           <UiInput
-            aria-label={t("admin.roles.field.label")}
+            aria-label={t('admin.roles.field.label')}
             value={editLabel}
             onChange={(event) => {
               setEditLabel(event.currentTarget.value);
             }}
           />
           <UiTextarea
-            aria-label={t("admin.roles.field.description")}
+            aria-label={t('admin.roles.field.description')}
             value={editDescription}
             onChange={(event) => {
               setEditDescription(event.currentTarget.value);

@@ -19,6 +19,20 @@
       "x-prompt": "What kind of application?",
       "x-priority": "important"
     },
+    "renderer": {
+      "type": "string",
+      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, worker.",
+      "enum": ["vite", "astro", "vike", "expo", "nest-api", "worker"],
+      "x-priority": "important"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Default local port; runtime PORT takes precedence",
+      "default": 3100,
+      "x-priority": "optional"
+    },
     "directory": {
       "type": "string",
       "description": "Directory path prefix (default: apps/<kind>/<name>)",
@@ -36,5 +50,5 @@
       "x-priority": "optional"
     }
   },
-  "required": ["name", "kind"]
+  "required": ["name", "kind", "renderer"]
 }

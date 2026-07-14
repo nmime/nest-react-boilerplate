@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
 import type {
   HealthCheckKind,
   HealthIndicator,
@@ -6,17 +6,17 @@ import type {
   HealthIndicatorStatus,
   HealthResponse,
   HealthResponseDto,
-} from "./dto";
-import { toHealthResponseDto } from "./mapper";
-import { resolveHealthStatus } from "./util/health-status.util";
-import { sanitizeHealthDetails } from "./util/health-sanitize.util";
+} from './dto';
+import { toHealthResponseDto } from './mapper';
+import { resolveHealthStatus } from './util/health-status.util';
+import { sanitizeHealthDetails } from './util/health-sanitize.util';
 
 export interface HealthServiceOptions {
   appName?: string;
   indicators?: readonly HealthIndicator[];
 }
 
-const defaultAppName = "app";
+const defaultAppName = 'app';
 
 @Injectable()
 export class HealthService {
@@ -34,7 +34,7 @@ export class HealthService {
     this.indicators = options.indicators ?? [];
   }
 
-  async check(kind: HealthCheckKind = "health"): Promise<HealthResponse> {
+  async check(kind: HealthCheckKind = 'health'): Promise<HealthResponse> {
     const checks = await this.runIndicators(kind);
 
     return {
@@ -45,35 +45,29 @@ export class HealthService {
     };
   }
 
-  async checkEnvelope(
-    kind: HealthCheckKind = "health",
-  ): Promise<HealthResponseDto> {
+  async checkEnvelope(kind: HealthCheckKind = 'health'): Promise<HealthResponseDto> {
     return toHealthResponseDto(this.appName, await this.check(kind));
   }
 
   async checkReadiness(): Promise<HealthResponseDto> {
-    return this.checkEnvelope("ready");
+    return this.checkEnvelope('ready');
   }
 
   async checkLiveness(): Promise<HealthResponseDto> {
-    return this.checkEnvelope("live");
+    return this.checkEnvelope('live');
   }
 
   async checkPrivate(): Promise<HealthResponseDto> {
-    return this.checkEnvelope("private");
+    return this.checkEnvelope('private');
   }
 
-  private async runIndicators(
-    kind: HealthCheckKind,
-  ): Promise<HealthIndicatorResult[]> {
+  private async runIndicators(kind: HealthCheckKind): Promise<HealthIndicatorResult[]> {
     // Liveness must only prove the process is alive: run no dependency
     // indicators, only those explicitly marked liveness-safe. Otherwise a
     // transient dependency blip would fail liveness and Kubernetes would
     // restart an otherwise healthy pod. Readiness/health run every indicator.
     const indicators =
-      kind === "live"
-        ? this.indicators.filter((indicator) => indicator.livenessSafe === true)
-        : this.indicators;
+      kind === 'live' ? this.indicators.filter((indicator) => indicator.livenessSafe === true) : this.indicators;
 
     return Promise.all(
       indicators.map(async (indicator) => {
@@ -89,9 +83,9 @@ export class HealthService {
             indicator,
             {
               name: indicator.name,
-              status: "error",
+              status: 'error',
               required: indicator.required,
-              details: { message: "Health indicator failed." },
+              details: { message: 'Health indicator failed.' },
             },
             performance.now() - startedAt,
           );

@@ -1,7 +1,7 @@
-import type { AuthUserTokenPurpose } from "../../entities";
+import type { AuthUserTokenPurpose } from '../../entities';
 
 export interface AuthTokenRepositoryError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 

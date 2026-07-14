@@ -1,10 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import type { Msg, PublishOptions, RequestOptions } from "@nats-io/nats-core";
-import type { NatsConnection } from "@nats-io/nats-core";
-import { InjectNatsConnection } from "./decorator";
-import { NatsConnectionUnavailableError } from "./exception";
+import { Injectable } from '@nestjs/common';
+import type { Msg, PublishOptions, RequestOptions } from '@nats-io/nats-core';
+import type { NatsConnection } from '@nats-io/nats-core';
+import { InjectNatsConnection } from './decorator';
+import { NatsConnectionUnavailableError } from './exception';
 
-export * from "./exception";
+export * from './exception';
 
 @Injectable()
 export class NatsService {
@@ -21,19 +21,11 @@ export class NatsService {
     return this.activeConnection();
   }
 
-  publishJson<TPayload>(
-    subject: string,
-    payload: TPayload,
-    options?: PublishOptions,
-  ): void {
+  publishJson<TPayload>(subject: string, payload: TPayload, options?: PublishOptions): void {
     this.publishString(subject, JSON.stringify(payload), options);
   }
 
-  publishString(
-    subject: string,
-    payload: string,
-    options?: PublishOptions,
-  ): void {
+  publishString(subject: string, payload: string, options?: PublishOptions): void {
     this.activeConnection().publish(subject, payload, options);
   }
 
@@ -51,35 +43,27 @@ export class NatsService {
     return response.json<TResponse>();
   }
 
-  async requestString(
-    subject: string,
-    payload?: string,
-    options?: RequestOptions,
-  ): Promise<string> {
+  async requestString(subject: string, payload?: string, options?: RequestOptions): Promise<string> {
     const response = await this.requestMessage(subject, payload, options);
 
     return response.string();
   }
 
-  private async requestMessage(
-    subject: string,
-    payload?: string,
-    options?: RequestOptions,
-  ): Promise<Msg> {
+  private async requestMessage(subject: string, payload?: string, options?: RequestOptions): Promise<Msg> {
     return await this.activeConnection().request(subject, payload, options);
   }
 
   private activeConnection(): NatsConnection {
     if (!this.connection) {
-      throw new NatsConnectionUnavailableError("not configured");
+      throw new NatsConnectionUnavailableError('not configured');
     }
 
     if (this.connection.isClosed()) {
-      throw new NatsConnectionUnavailableError("closed");
+      throw new NatsConnectionUnavailableError('closed');
     }
 
     if (this.connection.isDraining()) {
-      throw new NatsConnectionUnavailableError("draining");
+      throw new NatsConnectionUnavailableError('draining');
     }
 
     return this.connection;

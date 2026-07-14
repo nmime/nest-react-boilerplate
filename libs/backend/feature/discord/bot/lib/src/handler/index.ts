@@ -1,1 +1,1 @@
-export * from "./discord-interaction-router";
+export * from './discord-interaction-router';

@@ -4,5 +4,4 @@ export interface WebsocketClientLike<TMessage = unknown> {
   close?(code?: number, reason?: string): Promise<void> | void;
 }
 
-export type IWebSocketClient<TMessage = unknown> =
-  WebsocketClientLike<TMessage>;
+export type IWebSocketClient<TMessage = unknown> = WebsocketClientLike<TMessage>;

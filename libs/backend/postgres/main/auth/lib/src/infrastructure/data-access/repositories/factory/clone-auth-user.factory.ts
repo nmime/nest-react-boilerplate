@@ -1,4 +1,4 @@
-import { AuthUserEntity } from "../../entities";
+import { AuthUserEntity } from '../../entities';
 
 export function cloneAuthUser(entity: AuthUserEntity): AuthUserEntity {
   const clone = new AuthUserEntity({

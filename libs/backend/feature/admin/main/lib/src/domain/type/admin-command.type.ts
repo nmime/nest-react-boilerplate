@@ -1,4 +1,4 @@
-import type { AdminUserStatus } from "./admin-user.type";
+import type { AdminUserStatus } from './admin-user.type';
 
 export interface UpdateAdminUserStatusCommand {
   readonly status: AdminUserStatus;

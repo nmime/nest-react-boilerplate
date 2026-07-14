@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 import {
   ApiError,
   apiFetch,
@@ -7,11 +7,11 @@ import {
   configureApiLocale,
   resolveApiUrl,
   setApiLocale,
-} from "./api-client";
+} from './api-client';
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
   ({
-    headers: new Headers({ "content-type": "application/json" }),
+    headers: new Headers({ 'content-type': 'application/json' }),
     json: vi.fn().mockResolvedValue(body),
     ok,
     status,
@@ -23,115 +23,104 @@ type CapturedRequestInit = RequestInit & {
   headers: Record<string, string>;
 };
 
-const getCapturedRequest = (
-  fetchImpl: ReturnType<typeof vi.fn<typeof fetch>>,
-  index: number,
-): CapturedRequestInit =>
+const getCapturedRequest = (fetchImpl: ReturnType<typeof vi.fn<typeof fetch>>, index: number): CapturedRequestInit =>
   fetchImpl.mock.calls[index]?.[1] as CapturedRequestInit;
 
-describe("frontend API client", () => {
-  it("injects Accept-Language into every request and updates with the locale getter", async () => {
-    let locale: "en" | "ru" = "en";
+describe('frontend API client', () => {
+  it('injects Accept-Language into every request and updates with the locale getter', async () => {
+    let locale: 'en' | 'ru' = 'en';
     configureApiLocale({ getLocale: () => locale });
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(jsonResponse({ data: { ok: true } }));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ data: { ok: true } }));
 
-    await apiFetch("/first", { fetchImpl });
-    locale = "ru";
-    await apiFetch("/second", { fetchImpl });
+    await apiFetch('/first', { fetchImpl });
+    locale = 'ru';
+    await apiFetch('/second', { fetchImpl });
 
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe("/first");
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('/first');
     expect(getCapturedRequest(fetchImpl, 0).headers).toMatchObject({
-      Accept: "application/json",
-      "Accept-Language": "en",
+      Accept: 'application/json',
+      'Accept-Language': 'en',
     });
-    expect(fetchImpl.mock.calls[1]?.[0]).toBe("/second");
+    expect(fetchImpl.mock.calls[1]?.[0]).toBe('/second');
     expect(getCapturedRequest(fetchImpl, 1).headers).toMatchObject({
-      "Accept-Language": "ru",
+      'Accept-Language': 'ru',
     });
   });
 
-  it("sets JSON and authorization headers consistently", async () => {
-    setApiLocale("ru");
-    configureApiLocale({ locale: "ru" });
+  it('sets JSON and authorization headers consistently', async () => {
+    setApiLocale('ru');
+    configureApiLocale({ locale: 'ru' });
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
 
-    await apiFetch("profile/me", {
-      authToken: " token ",
-      baseUrl: "https://api.example.test/",
+    await apiFetch('profile/me', {
+      authToken: ' token ',
+      baseUrl: 'https://api.example.test/',
       fetchImpl,
-      json: { displayName: "Ada" },
-      method: "PATCH",
+      json: { displayName: 'Ada' },
+      method: 'PATCH',
     });
 
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe(
-      "https://api.example.test/profile/me",
-    );
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://api.example.test/profile/me');
     const request = getCapturedRequest(fetchImpl, 0);
     expect(request).toMatchObject({
-      body: JSON.stringify({ displayName: "Ada" }),
-      method: "PATCH",
+      body: JSON.stringify({ displayName: 'Ada' }),
+      method: 'PATCH',
     });
     expect(request.headers).toMatchObject({
-      Accept: "application/json",
-      "Accept-Language": "ru",
-      Authorization: "Bearer token",
-      "Content-Type": "application/json",
+      Accept: 'application/json',
+      'Accept-Language': 'ru',
+      Authorization: 'Bearer token',
+      'Content-Type': 'application/json',
     });
   });
 
-  it("uses localized fallback copy when a problem response has no message", async () => {
-    configureApiLocale({ locale: "ru" });
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(jsonResponse({}, false, 500));
+  it('uses localized fallback copy when a problem response has no message', async () => {
+    configureApiLocale({ locale: 'ru' });
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}, false, 500));
 
-    await expect(apiFetch("/profile", { fetchImpl })).rejects.toMatchObject({
+    await expect(apiFetch('/profile', { fetchImpl })).rejects.toMatchObject({
       body: {},
-      message: "Запрос не удался со статусом 500.",
+      message: 'Запрос не удался со статусом 500.',
       status: 500,
     } satisfies Partial<ApiError>);
   });
 
-  it("apiRequest returns non-OK responses without throwing", async () => {
-    configureApiLocale({ locale: "en" });
-    const response = jsonResponse({ detail: "Nope" }, false, 403);
+  it('apiRequest returns non-OK responses without throwing', async () => {
+    configureApiLocale({ locale: 'en' });
+    const response = jsonResponse({ detail: 'Nope' }, false, 403);
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(response);
 
-    await expect(apiRequest("/profile", { fetchImpl })).resolves.toBe(response);
-    expect(fetchImpl.mock.calls[0]?.[0]).toBe("/profile");
+    await expect(apiRequest('/profile', { fetchImpl })).resolves.toBe(response);
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('/profile');
   });
 
-  it("parses problem responses into ApiError", async () => {
+  it('parses problem responses into ApiError', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(
-        jsonResponse({ detail: "Forbidden profile" }, false, 403),
-      );
+      .mockResolvedValue(jsonResponse({ detail: 'Forbidden profile' }, false, 403));
 
-    await expect(apiFetch("/profile", { fetchImpl })).rejects.toMatchObject({
-      body: { detail: "Forbidden profile" },
-      message: "Forbidden profile",
+    await expect(apiFetch('/profile', { fetchImpl })).rejects.toMatchObject({
+      body: { detail: 'Forbidden profile' },
+      message: 'Forbidden profile',
       status: 403,
     } satisfies Partial<ApiError>);
   });
 
-  it("builds URLs and headers without letting callers remove Accept-Language", () => {
-    configureApiLocale({ locale: "en" });
+  it('builds URLs and headers without letting callers remove Accept-Language', () => {
+    configureApiLocale({ locale: 'en' });
 
-    expect(resolveApiUrl("profile", "/api/")).toBe("/api/profile");
-    expect(resolveApiUrl("/profile", "")).toBe("/profile");
+    expect(resolveApiUrl('profile', '/api/')).toBe('/api/profile');
+    expect(resolveApiUrl('/profile', '')).toBe('/profile');
     expect(
       buildApiHeaders({
         authToken: null,
         hasJsonBody: false,
-        headers: { "Accept-Language": "ru", "x-request-id": "1" },
+        headers: { 'Accept-Language': 'ru', 'x-request-id': '1' },
       }),
     ).toEqual({
-      Accept: "application/json",
-      "Accept-Language": "en",
-      "x-request-id": "1",
+      Accept: 'application/json',
+      'Accept-Language': 'en',
+      'x-request-id': '1',
     });
   });
 });

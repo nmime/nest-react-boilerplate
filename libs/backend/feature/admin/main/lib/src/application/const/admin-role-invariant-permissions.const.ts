@@ -2,7 +2,7 @@ import {
   AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersWritePermission,
-} from "@app/common-authz";
+} from '@app/common-authz';
 
 // The system `admin` role must always retain the grants that let administrators
 // manage users and roles; stripping any of these would lock the tenant out of

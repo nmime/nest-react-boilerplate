@@ -1,1 +1,1 @@
-export * from "./external-auth.mapper";
+export * from './external-auth.mapper';

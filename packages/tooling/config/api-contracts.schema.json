@@ -10,14 +10,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "name",
-          "app",
-          "port",
-          "artifactPath",
-          "typesPath",
-          "clientOutputPath"
-        ],
+        "required": ["name", "app", "port", "artifactPath", "typesPath", "clientOutputPath"],
         "properties": {
           "name": { "type": "string" },
           "app": { "type": "string" },

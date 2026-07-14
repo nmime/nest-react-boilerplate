@@ -10,7 +10,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Setup and configuration
 
-- [Setup and Configuration](setup/configuration.md) — interactive and noninteractive setup, `nrb doctor`, config schema.
+- [Setup and Configuration](setup/configuration.md) — interactive and noninteractive setup, `pnpm nrb doctor`, config schema.
 - [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
 - [Nx Generators](setup/nx-generators.md) — built-in Nx generators, schema overrides, and `nx g` examples.

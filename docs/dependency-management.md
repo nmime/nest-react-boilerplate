@@ -4,20 +4,21 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 ## Compatibility matrix
 
-| Constraint | Version    | Rationale                                                                       |
-| ---------- | ---------- | ------------------------------------------------------------------------------- |
-| Node.js    | 24.x (LTS) | Runtime for all apps and libs                                                   |
-| pnpm       | 11.11.0    | Workspace packageManager field; Docker aligned                                  |
-| TypeScript | 6.0.3      | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
-| React      | 19.2.7     | All frontend apps and libs                                                      |
-| Nx         | 23.0.1     | All @nx/* packages aligned                                                      |
-| Vitest     | 4.1.10     | All workspace consumers                                                         |
-| Vite       | 8.1.4      | All workspace consumers                                                         |
-| Expo SDK   | 57.0.x     | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
+| Constraint | Version | Rationale                                                                       |
+| ---------- | ------- | ------------------------------------------------------------------------------- |
+| Node.js    | 24.18.0 | Current Node 24 LTS baseline; engines accept `>=24 <25`                         |
+| pnpm       | 11.11.0 | Workspace packageManager field; Docker aligned                                  |
+| TypeScript | 6.0.3   | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
+| React      | 19.2.7  | All frontend apps and libs                                                      |
+| Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
+| Vitest     | 4.1.10  | All workspace consumers                                                         |
+| Vite       | 8.1.4   | All workspace consumers                                                         |
+| Expo SDK   | 57.0.x  | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
 
 ## Package updates
 
 - Keep `pnpm-lock.yaml` committed and install with `pnpm install --frozen-lockfile` in CI and release builds.
+- pnpm's implicit dependency reconciliation is disabled with `verifyDepsBeforeRun: false` in `pnpm-workspace.yaml`. Run `pnpm install` explicitly when manifests change; ordinary scripts must not mutate `node_modules` or the lockfile.
 - Prefer grouped minor/patch Dependabot PRs for routine updates; review major updates one ecosystem at a time.
 - Run `pnpm run format:check`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:coverage`, and `pnpm run audit` before merging dependency PRs.
 - Regenerate API contracts/clients only when dependency changes affect generated output, then commit the generated diff in the same PR.
@@ -37,11 +38,11 @@ All 15 workspace manifests must use the same version for shared direct dependenc
 
 ## Deferred major updates
 
-| Package     | Current | Latest | Blocker                                                 | Revisit trigger                                  |
-| ----------- | ------- | ------ | ------------------------------------------------------- | ------------------------------------------------ |
-| TypeScript  | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs       | First NestJS/Nx release with TS 7 peer ranges    |
-| Babel       | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer) | Expo SDK release declaring Babel 8 compatibility |
-| @types/node | 24.13.3 | 26.x   | Node 24 runtime — type defs must match runtime major    | Runtime upgrade to Node 26 LTS                   |
+| Package     | Current | Latest | Blocker                                                    | Revisit trigger                                  |
+| ----------- | ------- | ------ | ---------------------------------------------------------- | ------------------------------------------------ |
+| TypeScript  | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs          | First NestJS/Nx release with TS 7 peer ranges    |
+| Babel       | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)    | Expo SDK release declaring Babel 8 compatibility |
+| @types/node | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major | Runtime upgrade to Node 26                       |
 
 ## Build scripts
 

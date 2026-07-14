@@ -1,11 +1,8 @@
-import type { EntityManager } from "@mikro-orm/postgresql";
-import { describe, expect, it, vi } from "vitest";
-import { DefaultFeatureFlagTenantId } from "@app/common-feature-flags";
-import { FeatureFlagEntity } from "../entities";
-import {
-  FeatureFlagRepository,
-  resolveTenantId,
-} from "./feature-flag.repository";
+import type { EntityManager } from '@mikro-orm/postgresql';
+import { describe, expect, it, vi } from 'vitest';
+import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
+import { FeatureFlagEntity } from '../entities';
+import { FeatureFlagRepository, resolveTenantId } from './feature-flag.repository';
 
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
@@ -22,178 +19,170 @@ function createEntityManagerMock() {
   return { persist, flush, findOne, find, entityManager };
 }
 
-describe("FeatureFlagRepository", () => {
-  it("finds flags by tenant-scoped key", async () => {
-    const flag = new FeatureFlagEntity({ key: "billing.portal", value: true });
+describe('FeatureFlagRepository', () => {
+  it('finds flags by tenant-scoped key', async () => {
+    const flag = new FeatureFlagEntity({ key: 'billing.portal', value: true });
     const { findOne, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(flag);
     const repository = new FeatureFlagRepository(entityManager);
 
     const result = await repository
-      .findByKey("billing.portal", "00000000-0000-4000-8000-000000000001")
+      .findByKey('billing.portal', '00000000-0000-4000-8000-000000000001')
       .then((value) => value._unsafeUnwrap());
 
     expect(result).toBe(flag);
     expect(findOne).toHaveBeenCalledWith(FeatureFlagEntity, {
-      key: "billing.portal",
-      tenantId: "00000000-0000-4000-8000-000000000001",
+      key: 'billing.portal',
+      tenantId: '00000000-0000-4000-8000-000000000001',
     });
   });
 
-  it("creates persistent DB-backed flags", async () => {
+  it('creates persistent DB-backed flags', async () => {
     const { persist, flush, entityManager } = createEntityManagerMock();
     const repository = new FeatureFlagRepository(entityManager);
 
     const flag = await repository
-      .upsert({ key: "billing.portal", value: true, description: "Billing UI" })
+      .upsert({ key: 'billing.portal', value: true, description: 'Billing UI' })
       .then((value) => value._unsafeUnwrap());
 
     expect(flag).toMatchObject({
       tenantId: DefaultFeatureFlagTenantId,
-      key: "billing.portal",
+      key: 'billing.portal',
       value: true,
-      description: "Billing UI",
+      description: 'Billing UI',
       enabled: true,
     });
     expect(persist).toHaveBeenCalledWith(flag);
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("creates flags for an explicitly supplied tenant", async () => {
+  it('creates flags for an explicitly supplied tenant', async () => {
     const { persist, flush, entityManager } = createEntityManagerMock();
     const repository = new FeatureFlagRepository(entityManager);
 
     const flag = await repository
       .upsert({
-        tenantId: "00000000-0000-4000-8000-000000000001",
-        key: "billing.portal",
+        tenantId: '00000000-0000-4000-8000-000000000001',
+        key: 'billing.portal',
         value: true,
       })
       .then((value) => value._unsafeUnwrap());
 
-    expect(flag.tenantId).toBe("00000000-0000-4000-8000-000000000001");
+    expect(flag.tenantId).toBe('00000000-0000-4000-8000-000000000001');
     expect(persist).toHaveBeenCalledWith(flag);
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("updates existing flags without creating duplicates", async () => {
+  it('updates existing flags without creating duplicates', async () => {
     const existing = new FeatureFlagEntity({
-      key: "billing.portal",
+      key: 'billing.portal',
       value: false,
       enabled: true,
     });
-    const { persist, flush, findOne, entityManager } =
-      createEntityManagerMock();
+    const { persist, flush, findOne, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(existing);
     const repository = new FeatureFlagRepository(entityManager);
 
     const flag = await repository
-      .upsert({ key: "billing.portal", value: "on", enabled: false })
+      .upsert({ key: 'billing.portal', value: 'on', enabled: false })
       .then((value) => value._unsafeUnwrap());
 
     expect(flag).toBe(existing);
-    expect(flag.value).toBe("on");
+    expect(flag.value).toBe('on');
     expect(flag.enabled).toBe(false);
     expect(persist).not.toHaveBeenCalled();
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("preserves description and enabled when the update omits them", async () => {
+  it('preserves description and enabled when the update omits them', async () => {
     const existing = new FeatureFlagEntity({
-      key: "billing.portal",
+      key: 'billing.portal',
       value: false,
-      description: "Existing description",
+      description: 'Existing description',
       enabled: false,
     });
-    const { persist, flush, findOne, entityManager } =
-      createEntityManagerMock();
+    const { persist, flush, findOne, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(existing);
     const repository = new FeatureFlagRepository(entityManager);
 
-    const flag = await repository
-      .upsert({ key: "billing.portal", value: "on" })
-      .then((value) => value._unsafeUnwrap());
+    const flag = await repository.upsert({ key: 'billing.portal', value: 'on' }).then((value) => value._unsafeUnwrap());
 
     expect(flag).toBe(existing);
-    expect(flag.value).toBe("on");
-    expect(flag.description).toBe("Existing description");
+    expect(flag.value).toBe('on');
+    expect(flag.description).toBe('Existing description');
     expect(flag.enabled).toBe(false);
     expect(persist).not.toHaveBeenCalled();
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("returns enabled snapshots for the resolved tenant", async () => {
+  it('returns enabled snapshots for the resolved tenant', async () => {
     const { find, entityManager } = createEntityManagerMock();
     find.mockResolvedValue([
-      new FeatureFlagEntity({ key: "billing.portal", value: true }),
-      new FeatureFlagEntity({ key: "rollout.percent", value: 25 }),
+      new FeatureFlagEntity({ key: 'billing.portal', value: true }),
+      new FeatureFlagEntity({ key: 'rollout.percent', value: 25 }),
     ]);
     const repository = new FeatureFlagRepository(entityManager);
 
     const snapshot = await repository
-      .getSnapshot({ tenantId: "00000000-0000-4000-8000-000000000001" })
+      .getSnapshot({ tenantId: '00000000-0000-4000-8000-000000000001' })
       .then((value) => value._unsafeUnwrap());
 
     expect(snapshot).toEqual({
-      source: "postgres",
-      values: { "billing.portal": true, "rollout.percent": 25 },
+      source: 'postgres',
+      values: { 'billing.portal': true, 'rollout.percent': 25 },
     });
     expect(find).toHaveBeenCalledWith(
       FeatureFlagEntity,
       {
         enabled: true,
-        tenantId: "00000000-0000-4000-8000-000000000001",
+        tenantId: '00000000-0000-4000-8000-000000000001',
       },
-      { orderBy: { key: "ASC" } },
+      { orderBy: { key: 'ASC' } },
     );
   });
 
-  it("maps repository errors and default tenant resolution", async () => {
+  it('maps repository errors and default tenant resolution', async () => {
     const { findOne, entityManager } = createEntityManagerMock();
-    findOne.mockRejectedValue(new Error("db unavailable"));
+    findOne.mockRejectedValue(new Error('db unavailable'));
     const repository = new FeatureFlagRepository(entityManager);
 
-    const result = await repository.findByKey("billing.portal");
+    const result = await repository.findByKey('billing.portal');
 
     expect(resolveTenantId()).toBe(DefaultFeatureFlagTenantId);
     expect(result._unsafeUnwrapErr()).toEqual({
-      code: "repository_error",
-      message: "db unavailable",
+      code: 'repository_error',
+      message: 'db unavailable',
     });
   });
 
-  it("maps non-Error rejections to a default message", async () => {
+  it('maps non-Error rejections to a default message', async () => {
     const { findOne, entityManager } = createEntityManagerMock();
-    findOne.mockRejectedValue("connection reset");
+    findOne.mockRejectedValue('connection reset');
     const repository = new FeatureFlagRepository(entityManager);
 
-    const result = await repository.findByKey("billing.portal");
+    const result = await repository.findByKey('billing.portal');
 
     expect(result._unsafeUnwrapErr()).toEqual({
-      code: "repository_error",
-      message: "Feature flag repository failed.",
+      code: 'repository_error',
+      message: 'Feature flag repository failed.',
     });
   });
 
-  it("lists enabled flags for the default tenant when no context is given", async () => {
+  it('lists enabled flags for the default tenant when no context is given', async () => {
     const { find, entityManager } = createEntityManagerMock();
-    find.mockResolvedValue([
-      new FeatureFlagEntity({ key: "billing.portal", value: true }),
-    ]);
+    find.mockResolvedValue([new FeatureFlagEntity({ key: 'billing.portal', value: true })]);
     const repository = new FeatureFlagRepository(entityManager);
 
-    const snapshot = await repository
-      .getSnapshot()
-      .then((value) => value._unsafeUnwrap());
+    const snapshot = await repository.getSnapshot().then((value) => value._unsafeUnwrap());
 
     expect(snapshot).toEqual({
-      source: "postgres",
-      values: { "billing.portal": true },
+      source: 'postgres',
+      values: { 'billing.portal': true },
     });
     expect(find).toHaveBeenCalledWith(
       FeatureFlagEntity,
       { enabled: true, tenantId: DefaultFeatureFlagTenantId },
-      { orderBy: { key: "ASC" } },
+      { orderBy: { key: 'ASC' } },
     );
   });
 });

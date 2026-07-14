@@ -1,11 +1,7 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from "class-validator";
-import { Type } from "class-transformer";
-import {
-  AdminMaxPageSize,
-  adminAuditActions,
-  type AdminAuditAction,
-} from "../../../domain";
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { AdminMaxPageSize, adminAuditActions, type AdminAuditAction } from '../../../domain';
 
 export class AdminAuditQueryDto {
   @ApiPropertyOptional({ maximum: AdminMaxPageSize, minimum: 1 })
@@ -28,12 +24,12 @@ export class AdminAuditQueryDto {
   @IsIn(adminAuditActions)
   action?: AdminAuditAction;
 
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   actorUserId?: string;
 
-  @ApiPropertyOptional({ format: "uuid" })
+  @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
   @IsUUID()
   targetUserId?: string;

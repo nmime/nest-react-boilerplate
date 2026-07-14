@@ -1,7 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
 import { Exception } from '@app/backend-common-exception';
 import { ExceptionKind } from '@app/backend-common-exception';
-import type { ClientDataValidationInfo, ValidationErrorInfo } from './validation-error-info.type';
+import type { ValidationErrorInfo } from './validation-error-info.type';
 
 export const ClientDataValidationInfoType = class {
   errors!: ValidationErrorInfo[];

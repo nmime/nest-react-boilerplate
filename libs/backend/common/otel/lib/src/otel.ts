@@ -1,15 +1,11 @@
-import { trace } from "@opentelemetry/api";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { createOpenTelemetrySdkConfig } from "./factory";
-import { NoopTracer } from "./tracer";
-import { OpenTelemetryTracer } from "./tracer/open-telemetry.tracer";
-import type {
-  OpenTelemetryOptions,
-  OpenTelemetrySdkConfig,
-  TelemetrySdk,
-} from "./type/otel-options.type";
-import type { TracerLike } from "./type/trace-span.type";
-import { isOpenTelemetryEnabled } from "./util/otel-env.util";
+import { trace } from '@opentelemetry/api';
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { createOpenTelemetrySdkConfig } from './factory';
+import { NoopTracer } from './tracer';
+import { OpenTelemetryTracer } from './tracer/open-telemetry.tracer';
+import type { OpenTelemetryOptions, OpenTelemetrySdkConfig, TelemetrySdk } from './type/otel-options.type';
+import type { TracerLike } from './type/trace-span.type';
+import { isOpenTelemetryEnabled } from './util/otel-env.util';
 
 let activeTracer: TracerLike = new NoopTracer();
 let activeSdk: TelemetrySdk | undefined;
@@ -29,9 +25,7 @@ export function initOpenTelemetry(options: OpenTelemetryOptions): TracerLike {
   }
 
   /* v8 ignore start -- real NodeSDK integration path; unit tests inject a fake SDK via sdkFactory to avoid mutating global providers. */
-  const sdkFactory =
-    options.sdkFactory ??
-    ((config: OpenTelemetrySdkConfig) => new NodeSDK(config));
+  const sdkFactory = options.sdkFactory ?? ((config: OpenTelemetrySdkConfig) => new NodeSDK(config));
   /* v8 ignore stop */
   const sdk = sdkFactory(createOpenTelemetrySdkConfig(options, env));
   const startResult = sdk.start();
@@ -45,9 +39,7 @@ export function initOpenTelemetry(options: OpenTelemetryOptions): TracerLike {
     void Promise.resolve(startResult).catch((error: unknown) => {
       activeSdk = undefined;
       activeTracer = new NoopTracer();
-      process.stderr.write(
-        `OpenTelemetry SDK failed to start; falling back to noop tracer: ${String(error)}\n`,
-      );
+      process.stderr.write(`OpenTelemetry SDK failed to start; falling back to noop tracer: ${String(error)}\n`);
     });
   }
 
@@ -55,11 +47,7 @@ export function initOpenTelemetry(options: OpenTelemetryOptions): TracerLike {
 }
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as { then?: unknown }).then === "function"
-  );
+  return typeof value === 'object' && value !== null && typeof (value as { then?: unknown }).then === 'function';
 }
 
 export const getTracer = (): TracerLike => activeTracer;

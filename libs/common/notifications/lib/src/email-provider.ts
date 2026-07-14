@@ -33,10 +33,10 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<SendEmailResult>;
 }
 
-export const EmailProviderInjectToken = Symbol("EmailProviderInjectToken");
+export const EmailProviderInjectToken = Symbol('EmailProviderInjectToken');
 
 export class NoopEmailProvider implements EmailProvider {
-  readonly name = "noop";
+  readonly name = 'noop';
 
   send(message: EmailMessage): Promise<SendEmailResult> {
     const validationError = getValidationError(message);
@@ -55,7 +55,7 @@ export class NoopEmailProvider implements EmailProvider {
 }
 
 export class InMemoryEmailProvider implements EmailProvider {
-  readonly name = "in-memory";
+  readonly name = 'in-memory';
   readonly sent: EmailMessage[] = [];
 
   send(message: EmailMessage): Promise<SendEmailResult> {
@@ -82,18 +82,15 @@ export function createNoopEmailProvider(): EmailProvider {
 
 export function validateEmailMessage(message: EmailMessage): void {
   if (message.to.length === 0) {
-    throw new Error("Email message requires at least one recipient.");
+    throw new Error('Email message requires at least one recipient.');
   }
 
-  if (message.subject.trim() === "") {
-    throw new Error("Email message requires a subject.");
+  if (message.subject.trim() === '') {
+    throw new Error('Email message requires a subject.');
   }
 
-  if (
-    (message.text ?? "").trim() === "" &&
-    (message.html ?? "").trim() === ""
-  ) {
-    throw new Error("Email message requires text or html content.");
+  if ((message.text ?? '').trim() === '' && (message.html ?? '').trim() === '') {
+    throw new Error('Email message requires text or html content.');
   }
 }
 
@@ -101,22 +98,19 @@ function cloneEmailMessage(message: EmailMessage): EmailMessage {
   return {
     ...message,
     attachments: message.attachments?.map((attachment) => ({ ...attachment })),
-    metadata:
-      message.metadata === undefined ? undefined : { ...message.metadata },
+    metadata: message.metadata === undefined ? undefined : { ...message.metadata },
     tags: message.tags === undefined ? undefined : [...message.tags],
     to: message.to.map((address) => ({ ...address })),
   };
 }
 
 function stableMessageId(message: EmailMessage): string {
-  return base64UrlEncodeUtf8(
-    `${message.subject}:${message.to.map(({ email }) => email).join(",")}`,
-  ).slice(0, 24);
+  return base64UrlEncodeUtf8(`${message.subject}:${message.to.map(({ email }) => email).join(',')}`).slice(0, 24);
 }
 
 function base64UrlEncodeUtf8(value: string): string {
   const bytes = utf8Bytes(value);
-  let encoded = "";
+  let encoded = '';
 
   for (let index = 0; index < bytes.length; index += 3) {
     const first = bytes[index] as number;
@@ -142,11 +136,7 @@ function base64UrlEncodeUtf8(value: string): string {
 }
 
 function base64UrlCharacter(index: number): string {
-  const alphabet =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    "abcdefghijklmnopqrstuvwxyz" +
-    "0123456789" +
-    "-_";
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' + 'abcdefghijklmnopqrstuvwxyz' + '0123456789' + '-_';
 
   return alphabet.charAt(index);
 }
@@ -164,11 +154,7 @@ function utf8Bytes(value: string): number[] {
     }
 
     if (codePoint <= 0xffff) {
-      return [
-        0xe0 | (codePoint >> 12),
-        0x80 | ((codePoint >> 6) & 0x3f),
-        0x80 | (codePoint & 0x3f),
-      ];
+      return [0xe0 | (codePoint >> 12), 0x80 | ((codePoint >> 6) & 0x3f), 0x80 | (codePoint & 0x3f)];
     }
 
     return [

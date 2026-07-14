@@ -1,1 +1,1 @@
-export * from "./health-private-network-ip.guard";
+export * from './health-private-network-ip.guard';

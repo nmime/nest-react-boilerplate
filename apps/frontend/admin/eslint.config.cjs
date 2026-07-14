@@ -1,3 +1,3 @@
-const baseConfig = require("../../../eslint.config.js");
+const baseConfig = require('../../../eslint.config.js');
 
-module.exports = [{ ignores: ["tsconfig.spec.json"] }, ...baseConfig];
+module.exports = [{ ignores: ['tsconfig.spec.json'] }, ...baseConfig];

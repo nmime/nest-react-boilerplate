@@ -1,1 +1,1 @@
-export * from "./health.decorator";
+export * from './health.decorator';

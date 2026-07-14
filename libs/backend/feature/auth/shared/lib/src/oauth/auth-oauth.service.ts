@@ -1,6 +1,6 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { Inject, Injectable, Optional } from "@nestjs/common";
-import { ResultAsync, errAsync, okAsync } from "neverthrow";
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import { ResultAsync, errAsync, okAsync } from 'neverthrow';
 import type {
   AuthOAuthAuthorizationInput,
   AuthOAuthAuthorizationRequest,
@@ -11,15 +11,14 @@ import type {
   AuthOAuthError,
   AuthOAuthStateStore,
   AuthOAuthStoredState,
-} from "./auth-oauth.types";
+} from './auth-oauth.types';
 
-export const AuthOAuthConfigInjectToken = Symbol("AuthOAuthConfigInjectToken");
+export const AuthOAuthConfigInjectToken = Symbol('AuthOAuthConfigInjectToken');
 
 const DefaultStateTtlMs = 10 * 60 * 1000;
-const PlaceholderOrigin = "https://return.invalid";
+const PlaceholderOrigin = 'https://return.invalid';
 
-type ReturnUrlValidation =
-  { ok: true; returnUrl?: string } | { ok: false; error: AuthOAuthError };
+type ReturnUrlValidation = { ok: true; returnUrl?: string } | { ok: false; error: AuthOAuthError };
 
 export class InMemoryAuthOAuthStateStore implements AuthOAuthStateStore {
   private readonly statesBySession = new Map<string, AuthOAuthStoredState[]>();
@@ -31,11 +30,7 @@ export class InMemoryAuthOAuthStateStore implements AuthOAuthStateStore {
     this.statesBySession.set(state.sessionId, states);
   }
 
-  consumeState(input: {
-    sessionId: string;
-    stateHash: string;
-    now: number;
-  }): AuthOAuthStoredState | undefined {
+  consumeState(input: { sessionId: string; stateHash: string; now: number }): AuthOAuthStoredState | undefined {
     const states = this.statesBySession.get(input.sessionId);
     if (!states) {
       return undefined;
@@ -91,26 +86,22 @@ export class AuthOAuthService {
     input: AuthOAuthAuthorizationInput = {},
   ): ResultAsync<AuthOAuthAuthorizationRequest, AuthOAuthError> {
     if (!this.config.enabled) {
-      return errAsync({ code: "disabled", message: "OAuth is disabled." });
+      return errAsync({ code: 'disabled', message: 'OAuth is disabled.' });
     }
 
-    const missing = this.getMissingConfiguration([
-      "issuerUrl",
-      "clientId",
-      "redirectUri",
-    ]);
+    const missing = this.getMissingConfiguration(['issuerUrl', 'clientId', 'redirectUri']);
     if (missing.length > 0) {
       return errAsync({
-        code: "not_configured",
-        message: `OAuth configuration is incomplete: ${missing.join(", ")}.`,
+        code: 'not_configured',
+        message: `OAuth configuration is incomplete: ${missing.join(', ')}.`,
       });
     }
 
     const sessionId = normalizeSessionId(input.sessionId);
     if (!sessionId) {
       return errAsync({
-        code: "invalid_request",
-        message: "OAuth authorization requires a server-side session.",
+        code: 'invalid_request',
+        message: 'OAuth authorization requires a server-side session.',
       });
     }
 
@@ -123,16 +114,16 @@ export class AuthOAuthService {
       const state = createOAuthState();
       const now = this.now();
       const stateExpiresAt = now + this.getStateTtlMs();
-      const scopes = this.config.scopes ?? ["openid", "profile", "email"];
+      const scopes = this.config.scopes ?? ['openid', 'profile', 'email'];
       const issuerUrl = this.config.issuerUrl as string;
       const clientId = this.config.clientId as string;
       const redirectUri = this.config.redirectUri as string;
-      const authorizationUrl = new URL("authorize", issuerUrl);
-      authorizationUrl.searchParams.set("client_id", clientId);
-      authorizationUrl.searchParams.set("redirect_uri", redirectUri);
-      authorizationUrl.searchParams.set("response_type", "code");
-      authorizationUrl.searchParams.set("scope", scopes.join(" "));
-      authorizationUrl.searchParams.set("state", state);
+      const authorizationUrl = new URL('authorize', issuerUrl);
+      authorizationUrl.searchParams.set('client_id', clientId);
+      authorizationUrl.searchParams.set('redirect_uri', redirectUri);
+      authorizationUrl.searchParams.set('response_type', 'code');
+      authorizationUrl.searchParams.set('scope', scopes.join(' '));
+      authorizationUrl.searchParams.set('state', state);
 
       this.stateStore.saveState({
         sessionId,
@@ -150,17 +141,15 @@ export class AuthOAuthService {
       });
     } catch (error) {
       return errAsync({
-        code: "provider_error",
+        code: 'provider_error',
         message: (error as Error).message,
       });
     }
   }
 
-  consumeAuthorizationState(
-    input: AuthOAuthCallbackInput = {},
-  ): ResultAsync<AuthOAuthConsumedState, AuthOAuthError> {
+  consumeAuthorizationState(input: AuthOAuthCallbackInput = {}): ResultAsync<AuthOAuthConsumedState, AuthOAuthError> {
     if (!this.config.enabled) {
-      return errAsync({ code: "disabled", message: "OAuth is disabled." });
+      return errAsync({ code: 'disabled', message: 'OAuth is disabled.' });
     }
 
     const consumed = this.consumeAuthorizationStateRecord(input);
@@ -175,11 +164,9 @@ export class AuthOAuthService {
     });
   }
 
-  handleCallback(
-    input: AuthOAuthCallbackInput = {},
-  ): ResultAsync<AuthOAuthCallbackResult, AuthOAuthError> {
+  handleCallback(input: AuthOAuthCallbackInput = {}): ResultAsync<AuthOAuthCallbackResult, AuthOAuthError> {
     if (!this.config.enabled) {
-      return errAsync({ code: "disabled", message: "OAuth is disabled." });
+      return errAsync({ code: 'disabled', message: 'OAuth is disabled.' });
     }
 
     const consumed = this.consumeAuthorizationStateRecord(input);
@@ -188,21 +175,18 @@ export class AuthOAuthService {
     }
 
     return errAsync({
-      code: "provider_error",
-      message:
-        "OAuth callback exchange is not configured for this boilerplate.",
+      code: 'provider_error',
+      message: 'OAuth callback exchange is not configured for this boilerplate.',
     });
   }
 
-  private consumeAuthorizationStateRecord(
-    input: AuthOAuthCallbackInput,
-  ): AuthOAuthStoredState | AuthOAuthError {
+  private consumeAuthorizationStateRecord(input: AuthOAuthCallbackInput): AuthOAuthStoredState | AuthOAuthError {
     const sessionId = normalizeSessionId(input.sessionId);
     const state = normalizeState(input.state);
     if (!sessionId || !state) {
       return {
-        code: "invalid_state",
-        message: "OAuth callback state is required for this session.",
+        code: 'invalid_state',
+        message: 'OAuth callback state is required for this session.',
       };
     }
 
@@ -214,38 +198,31 @@ export class AuthOAuthService {
       });
       if (!consumed) {
         return {
-          code: "invalid_state",
-          message:
-            "OAuth callback state is missing, expired, already used, or does not match this session.",
+          code: 'invalid_state',
+          message: 'OAuth callback state is missing, expired, already used, or does not match this session.',
         };
       }
       return consumed;
     } catch (error) {
-      return { code: "provider_error", message: (error as Error).message };
+      return { code: 'provider_error', message: (error as Error).message };
     }
   }
 
-  private getMissingConfiguration(
-    keys: Array<keyof AuthOAuthConfig>,
-  ): string[] {
+  private getMissingConfiguration(keys: Array<keyof AuthOAuthConfig>): string[] {
     return keys.filter((key) => !this.config[key]);
   }
 
   private getStateTtlMs(): number {
     const ttl = this.config.stateTtlMs;
-    return typeof ttl === "number" && Number.isFinite(ttl) && ttl > 0
-      ? ttl
-      : DefaultStateTtlMs;
+    return typeof ttl === 'number' && Number.isFinite(ttl) && ttl > 0 ? ttl : DefaultStateTtlMs;
   }
 
   private now(): number {
     return this.config.clock?.() ?? Date.now();
   }
 
-  private validateReturnUrl(
-    value: string | null | undefined,
-  ): ReturnUrlValidation {
-    if (value === null || value === undefined || value.trim() === "") {
+  private validateReturnUrl(value: string | null | undefined): ReturnUrlValidation {
+    if (value === null || value === undefined || value.trim() === '') {
       return { ok: true };
     }
 
@@ -258,8 +235,8 @@ export class AuthOAuthService {
       return {
         ok: false,
         error: {
-          code: "invalid_request",
-          message: "OAuth return URL is not allowlisted.",
+          code: 'invalid_request',
+          message: 'OAuth return URL is not allowlisted.',
         },
       };
     }
@@ -268,9 +245,7 @@ export class AuthOAuthService {
   }
 }
 
-function normalizeSessionId(
-  value: string | null | undefined,
-): string | undefined {
+function normalizeSessionId(value: string | null | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
 }
@@ -287,8 +262,8 @@ function normalizeReturnUrl(value: string): string | undefined {
   }
 
   try {
-    if (trimmed.startsWith("/")) {
-      if (trimmed.startsWith("//")) {
+    if (trimmed.startsWith('/')) {
+      if (trimmed.startsWith('//')) {
         return undefined;
       }
       const url = new URL(trimmed, PlaceholderOrigin);
@@ -296,7 +271,7 @@ function normalizeReturnUrl(value: string): string | undefined {
     }
 
     const url = new URL(trimmed);
-    if (url.protocol !== "https:" && url.protocol !== "http:") {
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
       return undefined;
     }
     return url.toString();
@@ -306,26 +281,19 @@ function normalizeReturnUrl(value: string): string | undefined {
 }
 
 function createOAuthState(): string {
-  return randomBytes(32).toString("base64url");
+  return randomBytes(32).toString('base64url');
 }
 
 function hashOAuthValue(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
+  return createHash('sha256').update(value).digest('hex');
 }
 
 function hashEquals(left: string, right: string): boolean {
-  const leftBuffer = Buffer.from(left, "hex");
-  const rightBuffer = Buffer.from(right, "hex");
-  return (
-    leftBuffer.length === rightBuffer.length &&
-    timingSafeEqual(leftBuffer, rightBuffer)
-  );
+  const leftBuffer = Buffer.from(left, 'hex');
+  const rightBuffer = Buffer.from(right, 'hex');
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-function isAuthOAuthError(
-  value: AuthOAuthError | AuthOAuthStoredState | string | undefined,
-): value is AuthOAuthError {
-  return Boolean(
-    value && typeof value === "object" && "code" in value && "message" in value,
-  );
+function isAuthOAuthError(value: AuthOAuthError | AuthOAuthStoredState | string | undefined): value is AuthOAuthError {
+  return Boolean(value && typeof value === 'object' && 'code' in value && 'message' in value);
 }

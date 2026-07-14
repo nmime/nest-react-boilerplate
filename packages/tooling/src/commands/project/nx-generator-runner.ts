@@ -1,11 +1,12 @@
 /**
- * Mockable Nx generator runner for the `nrb add` command.
+ * Mockable Nx generator runner for the `pnpm nrb add` command.
  *
- * By default invokes `npx nx generate`.  Tests can replace the factory
+ * By default invokes the workspace-local `nx generate`. Tests can replace the factory
  * to inject a stubbed runner that records calls without hitting the
  * filesystem.
  */
 import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -20,9 +21,9 @@ interface ChildProcessExecError {
 export interface NxGeneratorResult {
   /** Whether the generator process exited successfully. */
   success: boolean;
-  /** stdout (truncated to 2 KB). */
+  /** stdout (truncated to a bounded diagnostic payload). */
   stdout: string;
-  /** stderr (truncated to 2 KB). */
+  /** stderr (truncated to a bounded diagnostic payload). */
   stderr: string;
   /** Exit code from the process (0 = success). */
   exitCode: number;
@@ -59,15 +60,16 @@ export function createNxGeneratorRunner(
 
 function realNxGeneratorRunner(args: NxGeneratorArgs): NxGeneratorResult {
   const { collectionGenerator, generatorArgs, cwd } = args;
+  const nxBin = join(cwd, "node_modules", ".bin", process.platform === "win32" ? "nx.cmd" : "nx");
   try {
-    const output = execFileSync("npx", ["nx", "generate", collectionGenerator, ...generatorArgs], {
+    const output = execFileSync(nxBin, ["generate", collectionGenerator, ...generatorArgs], {
       encoding: "utf8",
       cwd,
       timeout: 120000,
     });
     return {
       success: true,
-      stdout: truncate(output, 2048),
+      stdout: truncate(output, 65536),
       stderr: "",
       exitCode: 0,
     };
@@ -77,8 +79,8 @@ function realNxGeneratorRunner(args: NxGeneratorArgs): NxGeneratorResult {
     const stderr = err instanceof Error && "stderr" in err ? String((err as ChildProcessExecError).stderr ?? "") : String(err);
     return {
       success: false,
-      stdout: truncate(stdout, 2048),
-      stderr: truncate(stderr, 2048),
+      stdout: truncate(stdout, 65536),
+      stderr: truncate(stderr, 65536),
       exitCode: typeof status === "number" ? status : 1,
     };
   }

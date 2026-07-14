@@ -4,11 +4,7 @@
     "outDir": "../../../dist/out-tsc/apps/frontend/site-spec",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": [
-      "vitest",
-      "node",
-      "vite/client"
-    ]
+    "types": ["vitest", "node", "vite/client"]
   },
   "include": [
     "vitest.config.mts",

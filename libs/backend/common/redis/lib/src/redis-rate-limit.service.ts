@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRedis } from "./decorator";
-import type { RedisClientLike } from "./type";
+import { Injectable } from '@nestjs/common';
+import { InjectRedis } from './decorator';
+import type { RedisClientLike } from './type';
 
 export interface RateLimitHitInput {
   key: string;
@@ -18,9 +18,7 @@ export interface SharedRateLimiter {
   hit(params: RateLimitHitInput): Promise<RateLimitHitResult>;
 }
 
-export const SharedRateLimiterInjectToken = Symbol(
-  "SharedRateLimiterInjectToken",
-);
+export const SharedRateLimiterInjectToken = Symbol('SharedRateLimiterInjectToken');
 
 @Injectable()
 export class RedisRateLimitService implements SharedRateLimiter {
@@ -46,8 +44,8 @@ export function buildRateLimitKey(parts: {
   subject?: string | null;
   action: string;
 }): string {
-  const tenant = sanitizeRateLimitKeyPart(parts.tenantId || "global");
-  const subject = sanitizeRateLimitKeyPart(parts.subject || "anonymous");
+  const tenant = sanitizeRateLimitKeyPart(parts.tenantId || 'global');
+  const subject = sanitizeRateLimitKeyPart(parts.subject || 'anonymous');
   return `rate-limit:${sanitizeRateLimitKeyPart(parts.scope)}:${tenant}:${subject}:${sanitizeRateLimitKeyPart(parts.action)}`;
 }
 
@@ -55,5 +53,5 @@ function sanitizeRateLimitKeyPart(value: string): string {
   return value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9._:-]/gu, "_");
+    .replace(/[^a-z0-9._:-]/gu, '_');
 }

@@ -1,7 +1,4 @@
-export function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number | undefined,
-): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, timeoutMs: number | undefined): Promise<T> {
   if (!timeoutMs) {
     return promise;
   }

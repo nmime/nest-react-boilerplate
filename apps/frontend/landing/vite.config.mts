@@ -1,33 +1,33 @@
 /// <reference types='vitest' />
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
-import istanbul from "vite-plugin-istanbul";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import istanbul from 'vite-plugin-istanbul';
 import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
-} from "../../../libs/frontend/api-support/lib/src/frontend-env";
-import { workspaceTsconfigAliases } from "../../../config/vite/workspace-tsconfig-aliases.mjs";
+} from '../../../libs/frontend/api-support/lib/src/frontend-env';
+import { workspaceTsconfigAliases } from '../../../config/vite/workspace-tsconfig-aliases.mjs';
 
 export default defineConfig(({ command, mode }) => {
-  const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";
+  const isE2eCoverage = process.env.VITE_E2E_COVERAGE === 'true';
   applyDefaultFrontendBuildApiBaseUrlMode(process.env, command, mode);
   assertRequiredFrontendBuildApiBaseUrls(process.env, command, mode);
 
   return {
     root: import.meta.dirname,
-    cacheDir: "../../../node_modules/.vite/apps/frontend/landing",
+    cacheDir: '../../../node_modules/.vite/apps/frontend/landing',
     resolve: {
       tsconfigPaths: true,
       alias: workspaceTsconfigAliases(),
     },
     server: {
       port: 4202,
-      host: "localhost",
+      host: 'localhost',
     },
     preview: {
       port: 4202,
-      host: "localhost",
+      host: 'localhost',
     },
     plugins: [
       tailwindcss(),
@@ -36,9 +36,9 @@ export default defineConfig(({ command, mode }) => {
         ? [
             istanbul({
               cwd: import.meta.dirname,
-              include: "src/**/*.{ts,tsx}",
-              exclude: ["src/**/*.spec.*", "src/**/*.test.*"],
-              extension: [".ts", ".tsx"],
+              include: 'src/**/*.{ts,tsx}',
+              exclude: ['src/**/*.spec.*', 'src/**/*.test.*'],
+              extension: ['.ts', '.tsx'],
               requireEnv: false,
               forceBuildInstrument: true,
               // Vite 8/Rolldown validates pure annotations after Istanbul wraps JSX
@@ -52,7 +52,7 @@ export default defineConfig(({ command, mode }) => {
         : []),
     ],
     build: {
-      outDir: "../../../dist/apps/frontend/landing",
+      outDir: '../../../dist/apps/frontend/landing',
       emptyOutDir: true,
       reportCompressedSize: true,
       sourcemap: isE2eCoverage,

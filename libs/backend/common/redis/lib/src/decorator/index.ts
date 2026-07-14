@@ -1,2 +1,2 @@
-export * from "./inject-redis.decorator";
-export * from "./inject-transient-redis.decorator";
+export * from './inject-redis.decorator';
+export * from './inject-transient-redis.decorator';

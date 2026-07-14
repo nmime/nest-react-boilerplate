@@ -5,17 +5,14 @@
 ## API
 
 ```ts
-import {
-  NoopEmailProvider,
-  type EmailProvider,
-} from "@app/common-notifications";
+import { NoopEmailProvider, type EmailProvider } from '@app/common-notifications';
 
 const email: EmailProvider = new NoopEmailProvider();
 await email.send({
-  to: [{ email: "user@example.com", name: "User" }],
-  subject: "Welcome",
-  text: "Thanks for joining.",
-  tags: ["onboarding"],
+  to: [{ email: 'user@example.com', name: 'User' }],
+  subject: 'Welcome',
+  text: 'Thanks for joining.',
+  tags: ['onboarding'],
 });
 ```
 

@@ -1,4 +1,4 @@
 export enum NetworkCode {
-  Mainnet = "mainnet",
-  Testnet = "testnet",
+  Mainnet = 'mainnet',
+  Testnet = 'testnet',
 }

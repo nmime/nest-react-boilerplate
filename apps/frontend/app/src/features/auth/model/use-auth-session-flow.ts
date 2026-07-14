@@ -1,12 +1,8 @@
-import { useEffect, useMemo, type SubmitEvent } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient, useUserApiClient } from "@app/frontend-api-client";
-import { clearApiAuthRequired } from "@app/frontend-api-support";
-import {
-  useAuthShellStore,
-  type Locale,
-  type UiTheme,
-} from "@app/frontend-runtime";
+import { useEffect, useMemo, type SubmitEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthApiClient, useUserApiClient } from '@app/frontend-api-client';
+import { clearApiAuthRequired } from '@app/frontend-api-support';
+import { useAuthShellStore, type Locale, type UiTheme } from '@app/frontend-runtime';
 import {
   fetchUserProfile,
   getPayloadLocale,
@@ -14,10 +10,10 @@ import {
   getProfileState,
   profileQueryKey,
   type ProfileState,
-} from "../../../entities/profile";
-import { getErrorReason } from "../../../shared/lib";
-import { authMeQueryKey, createAuthSession, fetchAuthMe } from "../api";
-import { AuthMode } from "./auth-model";
+} from '../../../entities/profile';
+import { getErrorReason } from '../../../shared/lib';
+import { authMeQueryKey, createAuthSession, fetchAuthMe } from '../api';
+import { AuthMode } from './auth-model';
 
 export interface AuthSessionFlowMessages {
   authenticationFailed: string;
@@ -55,10 +51,7 @@ export function useAuthSessionFlow({
   const authClient = useAuthApiClient();
   const userClient = useUserApiClient();
   const bearerToken = authStore.bearerToken;
-  const safeReturnUrl =
-    returnUrl?.startsWith("/") && !returnUrl.startsWith("//")
-      ? returnUrl
-      : null;
+  const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
 
   const authMeQuery = useQuery({
     enabled: Boolean(bearerToken),
@@ -82,10 +75,7 @@ export function useAuthSessionFlow({
   }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
-    enabled:
-      Boolean(bearerToken) &&
-      !authMeQuery.isLoading &&
-      (!authLocale || authLocale === locale),
+    enabled: Boolean(bearerToken) && !authMeQuery.isLoading && (!authLocale || authLocale === locale),
     queryFn: () => fetchUserProfile(userClient.api, userClient.requestOptions),
     queryKey: [...profileQueryKey(), locale, bearerToken],
     retry: false,
@@ -101,12 +91,7 @@ export function useAuthSessionFlow({
 
   const authMutation = useMutation({
     mutationFn: (input: Parameters<typeof createAuthSession>[2]) =>
-      createAuthSession(
-        authClient.api,
-        authClient.requestOptions,
-        input,
-        locale,
-      ),
+      createAuthSession(authClient.api, authClient.requestOptions, input, locale),
     onSuccess: (body) => {
       authStore.setSession(body.accessToken, body.refreshToken);
       clearApiAuthRequired();
@@ -130,25 +115,20 @@ export function useAuthSessionFlow({
   const profileState = useMemo(() => {
     if (authMutation.isError) {
       return {
-        status: "forbidden" as const,
-        reason: getErrorReason(
-          authMutation.error,
-          messages.authenticationFailed,
-        ),
+        status: 'forbidden' as const,
+        reason: getErrorReason(authMutation.error, messages.authenticationFailed),
       };
     }
 
     if (!bearerToken) {
       return {
-        status: "missing-token" as const,
+        status: 'missing-token' as const,
         reason: messages.missingToken,
       };
     }
 
     return getProfileState(
-      authMeQuery.isLoading ||
-        profileQuery.isLoading ||
-        Boolean(authLocale && authLocale !== locale),
+      authMeQuery.isLoading || profileQuery.isLoading || Boolean(authLocale && authLocale !== locale),
       profileQuery.data,
       messages.profileRequestFailed,
       messages.profileUnknown,
@@ -171,19 +151,16 @@ export function useAuthSessionFlow({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     authMutation.mutate({
-      displayName: form.get("displayName"),
-      email: form.get("email"),
+      displayName: form.get('displayName'),
+      email: form.get('email'),
       mode,
-      password: form.get("password"),
+      password: form.get('password'),
     });
   };
 
   return {
-    isLoginPending:
-      authMutation.isPending && authMutation.variables.mode === AuthMode.Login,
-    isRegisterPending:
-      authMutation.isPending &&
-      authMutation.variables.mode === AuthMode.Register,
+    isLoginPending: authMutation.isPending && authMutation.variables.mode === AuthMode.Login,
+    isRegisterPending: authMutation.isPending && authMutation.variables.mode === AuthMode.Register,
     profileState,
     submitAuth,
   };

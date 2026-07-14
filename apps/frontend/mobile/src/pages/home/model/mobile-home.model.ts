@@ -1,29 +1,24 @@
 export const mobileRuntime = {
-  appName: "Nest React Mobile",
-  status: "Ready for release",
-  platforms: ["ios", "android", "web"],
-  nativeUiPackage: "@app/frontend-ui-native",
-  apiBaseUrlEnv: "EXPO_PUBLIC_API_BASE_URL",
+  platforms: ['ios', 'android', 'web'],
+  nativeUiPackage: '@app/frontend-ui-native',
+  apiBaseUrlEnv: 'EXPO_PUBLIC_API_BASE_URL',
 } as const;
 
 export const mobileCapabilityCards = [
   {
-    label: "Account shell",
-    value: "Expo Router",
-    detail:
-      "One navigation model covers installed apps and the exported web UI.",
+    labelKey: 'mobile.card.account.label',
+    valueKey: 'mobile.card.account.value',
+    detailKey: 'mobile.card.account.detail',
   },
   {
-    label: "Native system",
-    value: "Shared tokens",
-    detail:
-      "The screen uses the native facade and design tokens from the repo.",
+    labelKey: 'mobile.card.native.label',
+    valueKey: 'mobile.card.native.value',
+    detailKey: 'mobile.card.native.detail',
   },
   {
-    label: "Delivery",
-    value: "Nx + export",
-    detail:
-      "Native commands and the web export target are registered for CI and Docker.",
+    labelKey: 'mobile.card.delivery.label',
+    valueKey: 'mobile.card.delivery.value',
+    detailKey: 'mobile.card.delivery.detail',
   },
 ] as const;
 

@@ -1,7 +1,7 @@
-import { BadRequestException } from "@nestjs/common";
-import { readList } from "./external-auth.util";
+import { BadRequestException } from '@nestjs/common';
+import { readList } from './external-auth.util';
 
-const AllowedReturnUrlProtocols = new Set(["http:", "https:"]);
+const AllowedReturnUrlProtocols = new Set(['http:', 'https:']);
 
 export function assertReturnUrlAllowed(returnUrl?: string | null): void {
   if (!returnUrl) {
@@ -9,10 +9,10 @@ export function assertReturnUrlAllowed(returnUrl?: string | null): void {
   }
   const allowed = readList(process.env.AUTH_ALLOWED_RETURN_URLS) ?? [];
   if (allowed.length === 0) {
-    throw new BadRequestException("return_url_not_allowed");
+    throw new BadRequestException('return_url_not_allowed');
   }
   if (!isReturnUrlAllowed(returnUrl, allowed)) {
-    throw new BadRequestException("return_url_not_allowed");
+    throw new BadRequestException('return_url_not_allowed');
   }
 }
 
@@ -22,17 +22,9 @@ export function assertReturnUrlAllowed(returnUrl?: string | null): void {
 // supported; allowlist entries must be absolute origins) with no embedded
 // credentials, whose origin exactly matches an allowlist entry and whose path
 // is contained within the entry's path at a segment boundary.
-export function isReturnUrlAllowed(
-  returnUrl: string,
-  allowed: string[],
-): boolean {
+export function isReturnUrlAllowed(returnUrl: string, allowed: string[]): boolean {
   const target = parseAbsoluteUrl(returnUrl);
-  if (
-    !target ||
-    !AllowedReturnUrlProtocols.has(target.protocol) ||
-    target.username !== "" ||
-    target.password !== ""
-  ) {
+  if (!target || !AllowedReturnUrlProtocols.has(target.protocol) || target.username !== '' || target.password !== '') {
     return false;
   }
 
@@ -48,7 +40,7 @@ export function isReturnUrlAllowed(
       return false;
     }
     // Only pin the port when the allowlist entry specifies a non-default one.
-    if (allowedUrl.port !== "" && target.port !== allowedUrl.port) {
+    if (allowedUrl.port !== '' && target.port !== allowedUrl.port) {
       return false;
     }
     return isPathWithinBoundary(target.pathname, allowedUrl.pathname);
@@ -64,19 +56,10 @@ export function parseAbsoluteUrl(value: string): URL | undefined {
 }
 
 export function normalizeReturnUrlHost(url: URL): string {
-  return url.hostname.replace(/\.$/, "").toLowerCase();
+  return url.hostname.replace(/\.$/, '').toLowerCase();
 }
 
-export function isPathWithinBoundary(
-  targetPath: string,
-  entryPath: string,
-): boolean {
-  const normalizedEntry = entryPath.endsWith("/")
-    ? entryPath.slice(0, -1)
-    : entryPath;
-  return (
-    targetPath === entryPath ||
-    targetPath === normalizedEntry ||
-    targetPath.startsWith(`${normalizedEntry}/`)
-  );
+export function isPathWithinBoundary(targetPath: string, entryPath: string): boolean {
+  const normalizedEntry = entryPath.endsWith('/') ? entryPath.slice(0, -1) : entryPath;
+  return targetPath === entryPath || targetPath === normalizedEntry || targetPath.startsWith(`${normalizedEntry}/`);
 }

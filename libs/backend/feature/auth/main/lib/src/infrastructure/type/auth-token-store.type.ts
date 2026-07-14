@@ -1,6 +1,6 @@
-import type { ResultAsync } from "neverthrow";
+import type { ResultAsync } from 'neverthrow';
 
-export type AuthUserTokenPurpose = "email_verification" | "password_reset";
+export type AuthUserTokenPurpose = 'email_verification' | 'password_reset';
 
 export interface RefreshTokenIssueInput {
   tenantId: string;
@@ -60,29 +60,16 @@ export interface UserActionTokenRecord {
 }
 
 export interface AuthTokenStoreError {
-  code: "token_store_error";
+  code: 'token_store_error';
   message: string;
 }
 
 export interface AuthTokenStore {
-  issueRefreshToken(
-    input: RefreshTokenIssueInput,
-  ): ResultAsync<IssuedRefreshToken, AuthTokenStoreError>;
-  rotateRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError>;
-  revokeRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<boolean, AuthTokenStoreError>;
-  findRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError>;
-  issueUserActionToken(
-    input: UserActionTokenIssueInput,
-  ): ResultAsync<IssuedUserActionToken, AuthTokenStoreError>;
+  issueRefreshToken(input: RefreshTokenIssueInput): ResultAsync<IssuedRefreshToken, AuthTokenStoreError>;
+  rotateRefreshToken(token: string, tenantId?: string): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError>;
+  revokeRefreshToken(token: string, tenantId?: string): ResultAsync<boolean, AuthTokenStoreError>;
+  findRefreshToken(token: string, tenantId?: string): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError>;
+  issueUserActionToken(input: UserActionTokenIssueInput): ResultAsync<IssuedUserActionToken, AuthTokenStoreError>;
   consumeUserActionToken(
     token: string,
     purpose: AuthUserTokenPurpose,

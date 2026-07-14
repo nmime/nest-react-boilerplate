@@ -1,11 +1,11 @@
-import type { AdminAuditLogEntityInput, AuthUserEntity } from "../../entities";
-import type { AdminUserMutationAction } from "../type/admin-user-mutation.type";
+import type { AdminAuditLogEntityInput, AuthUserEntity } from '../../entities';
+import type { AdminUserMutationAction } from '../type/admin-user-mutation.type';
 
 export function auditSnapshotFor(
   action: AdminUserMutationAction,
   entity: AuthUserEntity,
-): AdminAuditLogEntityInput["before"] {
-  if (action === "admin.user.status.update") {
+): AdminAuditLogEntityInput['before'] {
+  if (action === 'admin.user.status.update') {
     return { status: entity.status };
   }
 

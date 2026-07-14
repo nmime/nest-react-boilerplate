@@ -1,21 +1,14 @@
-import { Inject, Module } from "@nestjs/common";
-import type {
-  DynamicModule,
-  OnApplicationShutdown,
-  Provider,
-} from "@nestjs/common";
-import { RedisConfigService } from "./config";
-import { RedisInjectToken, RedisTransientInjectToken } from "./const";
-import { InMemoryRedisClient } from "./in-memory-redis.client";
-import { closeRedisClient, createRedisClient } from "./redis-client.factory";
-import { RedisCacheService } from "./redis-cache.service";
-import { RedisHealthIndicator } from "./redis.health";
-import {
-  RedisRateLimitService,
-  SharedRateLimiterInjectToken,
-} from "./redis-rate-limit.service";
-import { RedisRedlockService } from "./redis-redlock.service";
-import type { RedisClientLike, RedisConfig } from "./type";
+import { Inject, Module } from '@nestjs/common';
+import type { DynamicModule, OnApplicationShutdown, Provider } from '@nestjs/common';
+import { RedisConfigService } from './config';
+import { RedisInjectToken, RedisTransientInjectToken } from './const';
+import { InMemoryRedisClient } from './in-memory-redis.client';
+import { closeRedisClient, createRedisClient } from './redis-client.factory';
+import { RedisCacheService } from './redis-cache.service';
+import { RedisHealthIndicator } from './redis.health';
+import { RedisRateLimitService, SharedRateLimiterInjectToken } from './redis-rate-limit.service';
+import { RedisRedlockService } from './redis-redlock.service';
+import type { RedisClientLike, RedisConfig } from './type';
 
 export type RedisModuleOptions = RedisConfig;
 
@@ -27,11 +20,7 @@ class RedisShutdownService implements OnApplicationShutdown {
   ) {}
 
   async onApplicationShutdown(): Promise<void> {
-    await Promise.all(
-      [...new Set([this.redis, this.transientRedis])].map((client) =>
-        closeRedisClient(client),
-      ),
-    );
+    await Promise.all([...new Set([this.redis, this.transientRedis])].map((client) => closeRedisClient(client)));
   }
 }
 
@@ -53,9 +42,7 @@ export class RedisModule {
       {
         provide: RedisTransientInjectToken,
         useFactory: (configService: RedisConfigService) =>
-          options.transientClient ??
-          options.client ??
-          createClient(configService, fallbackClient),
+          options.transientClient ?? options.client ?? createClient(configService, fallbackClient),
         inject: [RedisConfigService],
       },
       RedisShutdownService,
@@ -77,10 +64,7 @@ export class RedisModule {
   }
 }
 
-function createClient(
-  configService: RedisConfigService,
-  fallbackClient: RedisClientLike,
-): RedisClientLike {
+function createClient(configService: RedisConfigService, fallbackClient: RedisClientLike): RedisClientLike {
   const config = configService.connectionConfig;
   return config ? createRedisClient(config) : fallbackClient;
 }

@@ -1,13 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { ResultAsync, okAsync } from "neverthrow";
-import {
-  DefaultAuthTenantId,
-  permissionsForRoles,
-} from "@app/backend-feature-auth-shared";
-import { AuthUserRoleRepository } from "@app/backend-postgres-main-auth";
+import { Injectable } from '@nestjs/common';
+import { ResultAsync, okAsync } from 'neverthrow';
+import { DefaultAuthTenantId, permissionsForRoles } from '@app/backend-feature-auth-shared';
+import { AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
 
 export interface AuthRoleStoreError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 
@@ -31,20 +28,12 @@ export interface AssignRolesInput {
  * database.
  */
 export interface AuthRoleStore {
-  assignRoles(
-    input: AssignRolesInput,
-  ): ResultAsync<string[], AuthRoleStoreError>;
-  listRoleKeys(
-    userId: string,
-    tenantId?: string,
-  ): ResultAsync<string[], AuthRoleStoreError>;
-  resolveEffectiveAccess(
-    userId: string,
-    tenantId?: string,
-  ): ResultAsync<EffectiveAccess, AuthRoleStoreError>;
+  assignRoles(input: AssignRolesInput): ResultAsync<string[], AuthRoleStoreError>;
+  listRoleKeys(userId: string, tenantId?: string): ResultAsync<string[], AuthRoleStoreError>;
+  resolveEffectiveAccess(userId: string, tenantId?: string): ResultAsync<EffectiveAccess, AuthRoleStoreError>;
 }
 
-export const AuthRoleStoreInjectToken = Symbol("AuthRoleStoreInjectToken");
+export const AuthRoleStoreInjectToken = Symbol('AuthRoleStoreInjectToken');
 
 /* v8 ignore start -- Nest decorator metadata is framework glue, not runtime branch logic. */
 @Injectable()
@@ -52,9 +41,7 @@ export class PostgresAuthRoleStore implements AuthRoleStore {
   constructor(private readonly repository: AuthUserRoleRepository) {}
   /* v8 ignore stop */
 
-  assignRoles(
-    input: AssignRolesInput,
-  ): ResultAsync<string[], AuthRoleStoreError> {
+  assignRoles(input: AssignRolesInput): ResultAsync<string[], AuthRoleStoreError> {
     return this.repository.assignRoles({
       userId: input.userId,
       tenantId: input.tenantId,
@@ -63,10 +50,7 @@ export class PostgresAuthRoleStore implements AuthRoleStore {
     });
   }
 
-  listRoleKeys(
-    userId: string,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<string[], AuthRoleStoreError> {
+  listRoleKeys(userId: string, tenantId: string = DefaultAuthTenantId): ResultAsync<string[], AuthRoleStoreError> {
     return this.repository.listRoleKeys(userId, tenantId);
   }
 
@@ -82,18 +66,13 @@ export class PostgresAuthRoleStore implements AuthRoleStore {
 export class InMemoryAuthRoleStore implements AuthRoleStore {
   private readonly roleKeysByUser = new Map<string, Set<string>>();
 
-  assignRoles(
-    input: AssignRolesInput,
-  ): ResultAsync<string[], AuthRoleStoreError> {
+  assignRoles(input: AssignRolesInput): ResultAsync<string[], AuthRoleStoreError> {
     const assigned = new Set(input.roleKeys);
     this.roleKeysByUser.set(userKey(input.tenantId, input.userId), assigned);
     return okAsync([...assigned]);
   }
 
-  listRoleKeys(
-    userId: string,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<string[], AuthRoleStoreError> {
+  listRoleKeys(userId: string, tenantId: string = DefaultAuthTenantId): ResultAsync<string[], AuthRoleStoreError> {
     return okAsync(this.rolesFor(tenantId, userId));
   }
 

@@ -1,4 +1,4 @@
-import type { Locale } from "@app/common-i18n";
+import type { Locale } from '@app/common-i18n';
 
 export interface DiscordAccountLinkResult {
   authorizationUrl: string;
@@ -44,7 +44,7 @@ export interface DiscordAccountUnlinkResult {
 export interface DiscordExternalAuthPort {
   createDiscordAuthorizationRequest(input: {
     tenantId: string;
-    intent: "link";
+    intent: 'link';
     returnUrl?: string | null;
     principal: { subject: string; tenantId: string };
   }): { authorizationUrl: string; stateExpiresAt: string };
@@ -73,20 +73,12 @@ export interface DiscordExternalAuthPort {
  * service degrades gracefully (link falls back to a URL template/builder,
  * status/unlink report "not linked"/no-op).
  */
-export const DiscordAccountExternalAuthInjectToken = Symbol(
-  "DiscordAccountExternalAuthInjectToken",
-);
+export const DiscordAccountExternalAuthInjectToken = Symbol('DiscordAccountExternalAuthInjectToken');
 
 export abstract class DiscordAccountApplicationPort {
-  abstract createLink(
-    input: DiscordCreateAccountLinkInput,
-  ): Promise<DiscordAccountLinkResult>;
+  abstract createLink(input: DiscordCreateAccountLinkInput): Promise<DiscordAccountLinkResult>;
 
-  abstract status(
-    input: DiscordAccountStatusInput,
-  ): Promise<DiscordAccountStatusResult>;
+  abstract status(input: DiscordAccountStatusInput): Promise<DiscordAccountStatusResult>;
 
-  abstract unlink(
-    input: DiscordAccountUnlinkInput,
-  ): Promise<DiscordAccountUnlinkResult>;
+  abstract unlink(input: DiscordAccountUnlinkInput): Promise<DiscordAccountUnlinkResult>;
 }

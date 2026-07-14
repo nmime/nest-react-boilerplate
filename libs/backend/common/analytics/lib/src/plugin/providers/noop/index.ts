@@ -1,1 +1,1 @@
-export * from "./noop.provider";
+export * from './noop.provider';

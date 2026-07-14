@@ -1,4 +1,4 @@
-import type { NatsConnection } from "@nats-io/nats-core";
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export interface NatsConnectionConfig {
   servers: string[];
@@ -14,9 +14,7 @@ export interface NatsConnectionConfig {
   pingIntervalMs?: number;
 }
 
-export type NatsConnectionFactory = (
-  config: NatsConnectionConfig,
-) => Promise<NatsConnection>;
+export type NatsConnectionFactory = (config: NatsConnectionConfig) => Promise<NatsConnection>;
 
 export interface NatsConfig extends Partial<NatsConnectionConfig> {
   client?: NatsConnection | null;

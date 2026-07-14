@@ -1,1 +1,1 @@
-export * from "./problem-type-base-url.const";
+export * from './problem-type-base-url.const';

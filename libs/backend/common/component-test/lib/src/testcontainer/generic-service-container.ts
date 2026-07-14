@@ -1,8 +1,4 @@
-import {
-  GenericContainer,
-  Wait,
-  type StartedTestContainer,
-} from "testcontainers";
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
 
 export interface StartedServiceContainer {
   container: StartedTestContainer;
@@ -21,15 +17,11 @@ export interface GenericServiceContainerOptions {
 
 export const DefaultServiceStartupTimeoutMs = 120_000;
 
-export function createGenericServiceContainer(
-  options: GenericServiceContainerOptions,
-): GenericContainer {
+export function createGenericServiceContainer(options: GenericServiceContainerOptions): GenericContainer {
   let container = new GenericContainer(options.image)
     .withExposedPorts(options.internalPort)
     .withWaitStrategy(Wait.forListeningPorts())
-    .withStartupTimeout(
-      options.startupTimeoutMs ?? DefaultServiceStartupTimeoutMs,
-    );
+    .withStartupTimeout(options.startupTimeoutMs ?? DefaultServiceStartupTimeoutMs);
 
   for (const [key, value] of Object.entries(options.environment ?? {})) {
     container = container.withEnvironment({ [key]: value });
@@ -44,7 +36,7 @@ export async function startGenericServiceContainer(
   const container = await createGenericServiceContainer(options).start();
   const host = container.getHost();
   const port = container.getMappedPort(options.internalPort);
-  const protocol = options.protocol ?? "tcp";
+  const protocol = options.protocol ?? 'tcp';
 
   return {
     container,
@@ -54,8 +46,6 @@ export async function startGenericServiceContainer(
   };
 }
 
-export async function stopGenericServiceContainer(
-  service: StartedServiceContainer | undefined,
-): Promise<void> {
+export async function stopGenericServiceContainer(service: StartedServiceContainer | undefined): Promise<void> {
   await service?.container.stop();
 }

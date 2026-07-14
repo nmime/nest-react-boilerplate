@@ -1,9 +1,9 @@
-import { Module, type DynamicModule, type Type } from "@nestjs/common";
-import { BaseHealthController } from "./base-health.controller";
-import { HealthPrivateNetworkIpGuard } from "./guard";
-import { HealthService, type HealthServiceOptions } from "./health.service";
-import { RuntimeHealthIndicator } from "./indicator";
-import type { HealthIndicator } from "./dto";
+import { Module, type DynamicModule, type Type } from '@nestjs/common';
+import { BaseHealthController } from './base-health.controller';
+import { HealthPrivateNetworkIpGuard } from './guard';
+import { HealthService, type HealthServiceOptions } from './health.service';
+import { RuntimeHealthIndicator } from './indicator';
+import type { HealthIndicator } from './dto';
 
 export interface HealthModuleOptions extends HealthServiceOptions {
   indicators?: HealthIndicator[];
@@ -15,9 +15,7 @@ export interface HealthModuleOptions extends HealthServiceOptions {
 export class HealthModule {
   static forRoot(options: HealthModuleOptions = {}): DynamicModule {
     const indicators = [
-      ...(options.includeRuntimeIndicator === false
-        ? []
-        : [new RuntimeHealthIndicator()]),
+      ...(options.includeRuntimeIndicator === false ? [] : [new RuntimeHealthIndicator()]),
       ...(options.indicators ?? []),
     ];
 

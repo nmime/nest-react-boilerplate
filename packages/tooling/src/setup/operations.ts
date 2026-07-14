@@ -204,10 +204,12 @@ export function operationsEqual(a: SetupOperation, b: SetupOperation): boolean {
       return false;
     }
     for (let i = 0; i < ka.length; i++) {
-      if (ka[i] !== kb[i]) {
+      const keyA = ka[i];
+      const keyB = kb[i];
+      if (keyA === undefined || keyB === undefined || keyA !== keyB) {
         return false;
       }
-      if (JSON.stringify(pa[ka[i]!]) !== JSON.stringify(pb[kb[i]!])) {
+      if (JSON.stringify(pa[keyA]) !== JSON.stringify(pb[keyB])) {
         return false;
       }
     }
@@ -221,7 +223,9 @@ export function operationArraysEqual(a: SetupOperation[], b: SetupOperation[]): 
     return false;
   }
   for (let i = 0; i < a.length; i++) {
-    if (!operationsEqual(a[i]!, b[i]!)) {
+    const operationA = a[i];
+    const operationB = b[i];
+    if (operationA === undefined || operationB === undefined || !operationsEqual(operationA, operationB)) {
       return false;
     }
   }

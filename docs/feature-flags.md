@@ -5,14 +5,11 @@
 ## API
 
 ```ts
-import {
-  EnvironmentFeatureFlagProvider,
-  type FeatureFlagProvider,
-} from "@app/common-feature-flags";
+import { EnvironmentFeatureFlagProvider, type FeatureFlagProvider } from '@app/common-feature-flags';
 
 const flags: FeatureFlagProvider = new EnvironmentFeatureFlagProvider();
-const enabled = await flags.isEnabled("billing.portal", {
-  tenantId: "tenant_123",
+const enabled = await flags.isEnabled('billing.portal', {
+  tenantId: 'tenant_123',
 });
 ```
 

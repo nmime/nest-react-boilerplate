@@ -1,26 +1,21 @@
-const baseConfig = require("../../../../../../eslint.config.js");
+const baseConfig = require('../../../../../../eslint.config.js');
 
 module.exports = [
   {
-    ignores: [
-      "eslint.config.cjs",
-      "project.json",
-      "tsconfig*.json",
-      "vitest.component.config.mts",
-    ],
+    ignores: ['eslint.config.cjs', 'project.json', 'tsconfig*.json', 'vitest.component.config.mts'],
   },
   ...baseConfig,
   {
     languageOptions: {
       parserOptions: {
-        project: "tsconfig.*?.json",
+        project: 'tsconfig.*?.json',
       },
     },
   },
   {
-    files: ["src/**/*spec.ts"],
+    files: ['src/**/*spec.ts'],
     rules: {
-      "@typescript-eslint/require-await": "off",
+      '@typescript-eslint/require-await': 'off',
     },
   },
 ];

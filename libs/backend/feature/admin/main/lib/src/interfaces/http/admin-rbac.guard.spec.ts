@@ -1,12 +1,12 @@
-import { ExecutionContext, ForbiddenException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { describe, expect, it } from "vitest";
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { describe, expect, it } from 'vitest';
 import {
   AdminManageAllPermission,
   AdminProfileReadPermission,
   AdminRole,
   AdminUsersReadPermission,
-} from "@app/backend-feature-admin-shared";
+} from '@app/backend-feature-admin-shared';
 import {
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
@@ -14,10 +14,10 @@ import {
   DefaultAuthTenantId,
   RequiredPermissionsMetadataKey,
   RequiredRolesMetadataKey,
-} from "@app/backend-feature-auth-shared";
-import { AdminRbacGuard } from "./admin-rbac.guard";
-import { AdminProfileController } from "./admin-profile.controller";
-import { AdminUsersController } from "./admin-users.controller";
+} from '@app/backend-feature-auth-shared';
+import { AdminRbacGuard } from './admin-rbac.guard';
+import { AdminProfileController } from './admin-profile.controller';
+import { AdminUsersController } from './admin-users.controller';
 
 function createContext(
   request: AuthenticatedRequest,
@@ -32,13 +32,11 @@ function createContext(
   return context;
 }
 
-function createPrincipal(
-  partial: Partial<AuthenticatedPrincipal>,
-): AuthenticatedPrincipal {
+function createPrincipal(partial: Partial<AuthenticatedPrincipal>): AuthenticatedPrincipal {
   return {
     permissions: [],
     roles: [],
-    subject: "admin-id",
+    subject: 'admin-id',
     tenantId: DefaultAuthTenantId,
     ...partial,
   };
@@ -52,17 +50,13 @@ function createGuardedHandler(permission: string): () => undefined {
   return handler;
 }
 
-describe("AdminRbacGuard", () => {
-  it("wires admin controllers through the admin RBAC adapter", () => {
-    expect(
-      Reflect.getMetadata("__guards__", AdminProfileController),
-    ).toContainEqual(expect.any(AdminRbacGuard));
-    expect(
-      Reflect.getMetadata("__guards__", AdminUsersController),
-    ).toContainEqual(expect.any(AdminRbacGuard));
+describe('AdminRbacGuard', () => {
+  it('wires admin controllers through the admin RBAC adapter', () => {
+    expect(Reflect.getMetadata('__guards__', AdminProfileController)).toContainEqual(expect.any(AdminRbacGuard));
+    expect(Reflect.getMetadata('__guards__', AdminUsersController)).toContainEqual(expect.any(AdminRbacGuard));
   });
 
-  it("denies protected admin routes without permission metadata", () => {
+  it('denies protected admin routes without permission metadata', () => {
     class AdminNoMetadataController {}
     const guard = new AdminRbacGuard(new Reflector());
 
@@ -71,7 +65,7 @@ describe("AdminRbacGuard", () => {
         createContext(
           {
             user: createPrincipal({ roles: [AdminRole] }),
-            url: "/admin/nope",
+            url: '/admin/nope',
           },
           () => undefined,
           AdminNoMetadataController,
@@ -80,8 +74,8 @@ describe("AdminRbacGuard", () => {
     ).toThrow(ForbiddenException);
   });
 
-  it("denies unknown admin permissions", () => {
-    const handler = createGuardedHandler("admin:unknown:read");
+  it('denies unknown admin permissions', () => {
+    const handler = createGuardedHandler('admin:unknown:read');
     const guard = new AdminRbacGuard(new Reflector());
 
     expect(() =>
@@ -89,7 +83,7 @@ describe("AdminRbacGuard", () => {
         createContext(
           {
             user: createPrincipal({
-              permissions: ["admin:unknown:read"],
+              permissions: ['admin:unknown:read'],
               roles: [AdminRole],
             }),
           },
@@ -99,21 +93,16 @@ describe("AdminRbacGuard", () => {
     ).toThrow(ForbiddenException);
   });
 
-  it("denies admin role alone", () => {
+  it('denies admin role alone', () => {
     const handler = createGuardedHandler(AdminUsersReadPermission);
     const guard = new AdminRbacGuard(new Reflector());
 
-    expect(() =>
-      guard.canActivate(
-        createContext(
-          { user: createPrincipal({ roles: [AdminRole] }) },
-          handler,
-        ),
-      ),
-    ).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(createContext({ user: createPrincipal({ roles: [AdminRole] }) }, handler))).toThrow(
+      ForbiddenException,
+    );
   });
 
-  it("ignores admin permissions without the admin role", () => {
+  it('ignores admin permissions without the admin role', () => {
     const handler = createGuardedHandler(AdminUsersReadPermission);
     const guard = new AdminRbacGuard(new Reflector());
 
@@ -123,7 +112,7 @@ describe("AdminRbacGuard", () => {
           {
             user: createPrincipal({
               permissions: [AdminUsersReadPermission],
-              roles: ["support"],
+              roles: ['support'],
             }),
           },
           handler,
@@ -132,7 +121,7 @@ describe("AdminRbacGuard", () => {
     ).toThrow(ForbiddenException);
   });
 
-  it("allows explicit manage/all admin permission for admin route permissions", () => {
+  it('allows explicit manage/all admin permission for admin route permissions', () => {
     const handler = createGuardedHandler(AdminProfileReadPermission);
 
     expect(
@@ -150,7 +139,7 @@ describe("AdminRbacGuard", () => {
     ).toBe(true);
   });
 
-  it("defers non-admin permissions to the base RBAC evaluation", () => {
+  it('defers non-admin permissions to the base RBAC evaluation', () => {
     class ExposedAdminRbacGuard extends AdminRbacGuard {
       evaluate(context: PermissionEvaluationContext): boolean | undefined {
         return this.evaluateDomainPermission(context);
@@ -160,24 +149,24 @@ describe("AdminRbacGuard", () => {
 
     expect(
       guard.evaluate({
-        permission: "profile:read",
+        permission: 'profile:read',
         principal: createPrincipal({
-          permissions: ["profile:read"],
-          roles: ["user"],
+          permissions: ['profile:read'],
+          roles: ['user'],
         }),
-        requiredRoles: ["user"],
+        requiredRoles: ['user'],
       }),
     ).toBeUndefined();
   });
 
-  it("treats the /admin root path as an admin route for non-admin classes", () => {
+  it('treats the /admin root path as an admin route for non-admin classes', () => {
     class PlainController {}
     const guard = new AdminRbacGuard(new Reflector());
 
     expect(() =>
       guard.canActivate(
         createContext(
-          { user: createPrincipal({ roles: [AdminRole] }), url: "/admin" },
+          { user: createPrincipal({ roles: [AdminRole] }), url: '/admin' },
           () => undefined,
           PlainController,
         ),
@@ -185,7 +174,7 @@ describe("AdminRbacGuard", () => {
     ).toThrow(ForbiddenException);
   });
 
-  it("treats nested /admin/ paths as admin routes for non-admin classes", () => {
+  it('treats nested /admin/ paths as admin routes for non-admin classes', () => {
     class PlainController {}
     const guard = new AdminRbacGuard(new Reflector());
 
@@ -194,7 +183,7 @@ describe("AdminRbacGuard", () => {
         createContext(
           {
             user: createPrincipal({ roles: [AdminRole] }),
-            url: "/admin/users",
+            url: '/admin/users',
           },
           () => undefined,
           PlainController,

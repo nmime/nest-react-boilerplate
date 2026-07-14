@@ -1,14 +1,13 @@
-import type { ReactNode } from "react";
-import { observer, useI18n, useOptionalRootStore } from "@app/frontend-runtime";
-import { UiButton } from "../component/button";
-import { LanguageSwitcher, ThemeSwitcher } from "../component/switchers";
-import { UiStatusPill } from "../component/status-pill";
+import type { ReactNode } from 'react';
+import { observer, useI18n, useOptionalRootStore } from '@app/frontend-runtime';
+import { UiButton } from '../component/button';
+import { LanguageSwitcher, ThemeSwitcher } from '../component/switchers';
+import { UiStatusPill } from '../component/status-pill';
 
 export interface ProductShellAction {
   label: string;
   href: string;
-  variant?:
-    "primary" | "secondary" | "outline" | "ghost" | "destructive" | "link";
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
   isCurrent?: boolean;
 }
 
@@ -18,7 +17,7 @@ export interface ProductShellProps {
   title: string;
   description: string;
   status: string;
-  statusTone?: "success" | "info" | "warning";
+  statusTone?: 'success' | 'info' | 'warning';
   homeHref?: string;
   actionsLabel?: string;
   skipLinkLabel?: string;
@@ -32,8 +31,8 @@ export const ProductShell = observer(function ProductShell({
   title,
   description,
   status,
-  statusTone = "info",
-  homeHref = "/",
+  statusTone = 'info',
+  homeHref = '/',
   actionsLabel,
   skipLinkLabel,
   actions,
@@ -42,16 +41,16 @@ export const ProductShell = observer(function ProductShell({
   const { locale } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
   const defaultLabels =
-    locale === "ru"
+    locale === 'ru'
       ? {
           actionsLabel: `Навигация ${appName}`,
           homeLinkLabel: `Домой в ${appName}`,
-          skipLinkLabel: "Перейти к содержимому",
+          skipLinkLabel: 'Перейти к содержимому',
         }
       : {
           actionsLabel: `${appName} navigation`,
           homeLinkLabel: `${appName} home`,
-          skipLinkLabel: "Skip to content",
+          skipLinkLabel: 'Skip to content',
         };
   const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
   const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
@@ -65,15 +64,11 @@ export const ProductShell = observer(function ProductShell({
       <main
         className="xr-shell"
         data-sidebar-open={uiStore?.sidebarOpen ?? false}
-        data-theme={uiStore?.resolvedTheme ?? "light"}
-        data-theme-preference={uiStore?.theme ?? "system"}
+        data-theme={uiStore?.resolvedTheme ?? 'light'}
+        data-theme-preference={uiStore?.theme ?? 'system'}
       >
         <header className="xr-header">
-          <a
-            aria-label={resolvedHomeLinkLabel}
-            className="xr-brand"
-            href={homeHref}
-          >
+          <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
             <span className="xr-brand__mark">xR</span>
             <span>{appName}</span>
           </a>
@@ -93,7 +88,7 @@ export const ProductShell = observer(function ProductShell({
               <nav aria-label={resolvedActionsLabel} className="xr-actions">
                 {actions.map((action) => (
                   <UiButton
-                    aria-current={action.isCurrent ? "page" : undefined}
+                    aria-current={action.isCurrent ? 'page' : undefined}
                     href={action.href}
                     key={action.label}
                     variant={action.variant}

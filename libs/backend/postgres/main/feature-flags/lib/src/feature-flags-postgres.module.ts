@@ -1,9 +1,9 @@
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
-import { FeatureFlagProviderToken } from "@app/common-feature-flags";
-import { FeatureFlagEntitySchema } from "./infrastructure/data-access/entities";
-import { PostgresFeatureFlagProvider } from "./feature-flag-postgres.service";
-import { FeatureFlagRepository } from "./infrastructure/data-access/repositories";
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+import { FeatureFlagProviderToken } from '@app/common-feature-flags';
+import { FeatureFlagEntitySchema } from './infrastructure/data-access/entities';
+import { PostgresFeatureFlagProvider } from './feature-flag-postgres.service';
+import { FeatureFlagRepository } from './infrastructure/data-access/repositories';
 
 @Module({
   imports: [MikroOrmModule.forFeature([FeatureFlagEntitySchema])],
@@ -15,11 +15,6 @@ import { FeatureFlagRepository } from "./infrastructure/data-access/repositories
       useExisting: PostgresFeatureFlagProvider,
     },
   ],
-  exports: [
-    MikroOrmModule,
-    FeatureFlagRepository,
-    PostgresFeatureFlagProvider,
-    FeatureFlagProviderToken,
-  ],
+  exports: [MikroOrmModule, FeatureFlagRepository, PostgresFeatureFlagProvider, FeatureFlagProviderToken],
 })
 export class FeatureFlagsPostgresModule {}

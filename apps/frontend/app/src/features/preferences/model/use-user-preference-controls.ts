@@ -1,14 +1,10 @@
-import { useCallback, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend-api-client";
-import type { Locale, UiTheme } from "@app/frontend-runtime";
-import {
-  getPayloadLocale,
-  getPayloadTheme,
-  profileQueryKey,
-} from "../../../entities/profile";
-import { authPreferencesQueryKey, updateUserPreferences } from "../api";
-import type { UserPreferencePatch } from "./preferences-model";
+import { useCallback, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthApiClient } from '@app/frontend-api-client';
+import type { Locale, UiTheme } from '@app/frontend-runtime';
+import { getPayloadLocale, getPayloadTheme, profileQueryKey } from '../../../entities/profile';
+import { authPreferencesQueryKey, updateUserPreferences } from '../api';
+import type { UserPreferencePatch } from './preferences-model';
 
 export interface UserPreferenceControls {
   applyUserLocale: (locale: Locale) => void;
@@ -27,19 +23,11 @@ export function useUserPreferenceControls(): UserPreferenceControls {
 
   const preferencesMutation = useMutation({
     mutationFn: (nextPreferences: UserPreferencePatch) =>
-      updateUserPreferences(
-        authClient.api,
-        authClient.requestOptions,
-        nextPreferences,
-      ),
+      updateUserPreferences(authClient.api, authClient.requestOptions, nextPreferences),
     onSuccess: (body, nextPreferences) => {
       /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
-      setUserLocale(
-        getPayloadLocale(body) ?? nextPreferences.locale ?? userLocale ?? null,
-      );
-      setUserTheme(
-        getPayloadTheme(body) ?? nextPreferences.theme ?? userTheme ?? null,
-      );
+      setUserLocale(getPayloadLocale(body) ?? nextPreferences.locale ?? userLocale ?? null);
+      setUserTheme(getPayloadTheme(body) ?? nextPreferences.theme ?? userTheme ?? null);
       void queryClient.invalidateQueries({
         queryKey: authPreferencesQueryKey(),
       });

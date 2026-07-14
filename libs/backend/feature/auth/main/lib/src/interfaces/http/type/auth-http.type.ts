@@ -1,8 +1,5 @@
-import type { supportedLocales } from "@app/common-i18n";
-import type {
-  AuthenticatedPrincipal,
-  AuthSessionView,
-} from "@app/backend-feature-auth-shared";
+import type { supportedLocales } from '@app/common-i18n';
+import type { AuthenticatedPrincipal, AuthSessionView } from '@app/backend-feature-auth-shared';
 
 export interface UserActionTokenPayload {
   issued: boolean;
@@ -10,7 +7,7 @@ export interface UserActionTokenPayload {
 
 export interface MePayload {
   principal: AuthenticatedPrincipal;
-  user: AuthSessionView["user"] | null;
+  user: AuthSessionView['user'] | null;
 }
 
 export interface SupportedLocalesPayload {

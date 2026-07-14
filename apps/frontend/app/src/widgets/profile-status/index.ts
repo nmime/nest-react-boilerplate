@@ -1,1 +1,1 @@
-export * from "./ui/profile-status-card";
+export * from './ui/profile-status-card';

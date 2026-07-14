@@ -1,3 +1,7 @@
-export type NotificationDataValue = string | number | Record<string, NotificationDataValue>;
+export interface NotificationDataObject {
+  [key: string]: NotificationDataValue;
+}
 
-export type NotificationData = Record<string, NotificationDataValue> | Record<string, never>;
+export type NotificationDataValue = string | number | NotificationDataObject;
+
+export type NotificationData = NotificationDataObject;

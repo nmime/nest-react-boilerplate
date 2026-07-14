@@ -1,1 +1,1 @@
-export * from "./model/theme-preferences";
+export * from './model/theme-preferences';

@@ -1,5 +1,5 @@
-import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
-import { AdminRole } from "@app/common-authz";
+import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { AdminRole } from '@app/common-authz';
 import type {
   AuthRoleRepository,
   AdminUserMutationRepository,
@@ -7,17 +7,17 @@ import type {
   AuthPermissionEntity,
   AuthRoleEntity,
   AuthRoleWithPermissions,
-} from "@app/backend-postgres-main-auth";
-import { AdminApplicationError } from "./admin-errors";
-import { adminRoleInvariantPermissions } from "./const";
-import { toAdminRoleView, toAdminUserView, toPermissionView } from "./mapper";
+} from '@app/backend-postgres-main-auth';
+import { AdminApplicationError } from './admin-errors';
+import { adminRoleInvariantPermissions } from './const';
+import { toAdminRoleView, toAdminUserView, toPermissionView } from './mapper';
 import {
   orderPermissionViews,
   requireKnownPermissions,
   resolveTenantId,
   unwrapRepositoryResult,
   unwrapSensitiveMutationResult,
-} from "./util";
+} from './util';
 import type {
   AdminRbacCatalog,
   AdminRoleView,
@@ -27,7 +27,7 @@ import type {
   CreateAdminRoleCommand,
   SetAdminRolePermissionsCommand,
   UpdateAdminRoleCommand,
-} from "../domain";
+} from '../domain';
 
 export class AdminRolesUseCase {
   constructor(
@@ -35,60 +35,39 @@ export class AdminRolesUseCase {
     private readonly adminUserMutations: AdminUserMutationRepository,
   ) {}
 
-  async listRolesCatalog(
-    principal: AuthenticatedPrincipal,
-  ): Promise<AdminRbacCatalog> {
+  async listRolesCatalog(principal: AuthenticatedPrincipal): Promise<AdminRbacCatalog> {
     const tenantId = resolveTenantId(principal);
-    const rolesWithPermissions = unwrapRepositoryResult<
-      AuthRoleWithPermissions[]
-    >(await this.roles.listRolesWithPermissions(tenantId));
-    const permissions = unwrapRepositoryResult<AuthPermissionEntity[]>(
-      await this.roles.listPermissions(),
+    const rolesWithPermissions = unwrapRepositoryResult<AuthRoleWithPermissions[]>(
+      await this.roles.listRolesWithPermissions(tenantId),
     );
+    const permissions = unwrapRepositoryResult<AuthPermissionEntity[]>(await this.roles.listPermissions());
 
-    const permissionViews = orderPermissionViews(
-      permissions.map(toPermissionView),
-    );
+    const permissionViews = orderPermissionViews(permissions.map(toPermissionView));
     const roleViews = rolesWithPermissions.map(toAdminRoleView);
-    const resources = [
-      ...new Set(permissionViews.map((permission) => permission.resource)),
-    ].sort((left, right) => left.localeCompare(right));
+    const resources = [...new Set(permissionViews.map((permission) => permission.resource))].sort((left, right) =>
+      left.localeCompare(right),
+    );
 
     return {
       resources,
       roles: roleViews,
       permissions: permissionViews,
       assignableRoles: roleViews.map((role) => role.role),
-      assignablePermissions: permissionViews.map(
-        (permission) => permission.permission,
-      ),
+      assignablePermissions: permissionViews.map((permission) => permission.permission),
     };
   }
 
-  async createRole(
-    principal: AuthenticatedPrincipal,
-    input: CreateAdminRoleCommand,
-  ): Promise<AdminRoleView> {
+  async createRole(principal: AuthenticatedPrincipal, input: CreateAdminRoleCommand): Promise<AdminRoleView> {
     const tenantId = resolveTenantId(principal);
     const key = input.key.trim();
     if (key.length === 0) {
-      throw new AdminApplicationError(
-        "invalid_access_policy",
-        "A role key is required.",
-      );
+      throw new AdminApplicationError('invalid_access_policy', 'A role key is required.');
     }
-    const requestedPermissions = requireKnownPermissions(
-      input.permissions ?? [],
-    );
+    const requestedPermissions = requireKnownPermissions(input.permissions ?? []);
 
-    const existing = unwrapRepositoryResult<AuthRoleEntity | null>(
-      await this.roles.findByKey(key, tenantId),
-    );
+    const existing = unwrapRepositoryResult<AuthRoleEntity | null>(await this.roles.findByKey(key, tenantId));
     if (existing) {
-      throw new AdminApplicationError(
-        "conflict",
-        `A role with key "${key}" already exists.`,
-      );
+      throw new AdminApplicationError('conflict', `A role with key "${key}" already exists.`);
     }
 
     const created = unwrapRepositoryResult<AuthRoleEntity>(
@@ -106,14 +85,10 @@ export class AdminRolesUseCase {
     }
 
     const updated = unwrapRepositoryResult<AuthRoleWithPermissions | null>(
-      await this.roles.setRolePermissions(
-        created.id,
-        requestedPermissions,
-        tenantId,
-      ),
+      await this.roles.setRolePermissions(created.id, requestedPermissions, tenantId),
     );
     if (!updated) {
-      throw new AdminApplicationError("not_found", "Role was not found.");
+      throw new AdminApplicationError('not_found', 'Role was not found.');
     }
 
     return toAdminRoleView(updated);
@@ -130,15 +105,13 @@ export class AdminRolesUseCase {
         id,
         {
           ...(input.label !== undefined ? { label: input.label.trim() } : {}),
-          ...(input.description !== undefined
-            ? { description: input.description.trim() }
-            : {}),
+          ...(input.description !== undefined ? { description: input.description.trim() } : {}),
         },
         tenantId,
       ),
     );
     if (!updated) {
-      throw new AdminApplicationError("not_found", "Role was not found.");
+      throw new AdminApplicationError('not_found', 'Role was not found.');
     }
 
     return this.roleViewFor(updated.id, tenantId);
@@ -152,21 +125,17 @@ export class AdminRolesUseCase {
     const tenantId = resolveTenantId(principal);
     const requestedPermissions = requireKnownPermissions(input.permissions);
 
-    const role = unwrapRepositoryResult<AuthRoleEntity | null>(
-      await this.roles.findById(id, tenantId),
-    );
+    const role = unwrapRepositoryResult<AuthRoleEntity | null>(await this.roles.findById(id, tenantId));
     if (!role) {
-      throw new AdminApplicationError("not_found", "Role was not found.");
+      throw new AdminApplicationError('not_found', 'Role was not found.');
     }
 
     if (role.isSystem && role.key === AdminRole) {
-      const missing = adminRoleInvariantPermissions.filter(
-        (permission) => !requestedPermissions.includes(permission),
-      );
+      const missing = adminRoleInvariantPermissions.filter((permission) => !requestedPermissions.includes(permission));
       if (missing.length > 0) {
         throw new AdminApplicationError(
-          "sensitive_policy_violation",
-          `The admin role must retain its core management grants: ${missing.join(", ")}.`,
+          'sensitive_policy_violation',
+          `The admin role must retain its core management grants: ${missing.join(', ')}.`,
         );
       }
     }
@@ -175,7 +144,7 @@ export class AdminRolesUseCase {
       await this.roles.setRolePermissions(id, requestedPermissions, tenantId),
     );
     if (!updated) {
-      throw new AdminApplicationError("not_found", "Role was not found.");
+      throw new AdminApplicationError('not_found', 'Role was not found.');
     }
 
     return toAdminRoleView(updated);
@@ -201,46 +170,37 @@ export class AdminRolesUseCase {
         metadata: { ...context },
       },
     });
-    const result =
-      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    const result = unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
     if (!result) {
-      throw new AdminApplicationError("not_found", "Admin user was not found.");
+      throw new AdminApplicationError('not_found', 'Admin user was not found.');
     }
 
     return toAdminUserView(result.after);
   }
 
-  private async roleViewFor(
-    id: string,
-    tenantId: string,
-  ): Promise<AdminRoleView> {
-    const rolesWithPermissions = unwrapRepositoryResult<
-      AuthRoleWithPermissions[]
-    >(await this.roles.listRolesWithPermissions(tenantId));
+  private async roleViewFor(id: string, tenantId: string): Promise<AdminRoleView> {
+    const rolesWithPermissions = unwrapRepositoryResult<AuthRoleWithPermissions[]>(
+      await this.roles.listRolesWithPermissions(tenantId),
+    );
     const match = rolesWithPermissions.find((entry) => entry.role.id === id);
     if (!match) {
-      throw new AdminApplicationError("not_found", "Role was not found.");
+      throw new AdminApplicationError('not_found', 'Role was not found.');
     }
 
     return toAdminRoleView(match);
   }
 
-  private async requireKnownRoles(
-    roleKeys: readonly string[],
-    tenantId: string,
-  ): Promise<void> {
+  private async requireKnownRoles(roleKeys: readonly string[], tenantId: string): Promise<void> {
     if (roleKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult<AuthRoleEntity[]>(
-      await this.roles.findByKeys(roleKeys, tenantId),
-    );
+    const found = unwrapRepositoryResult<AuthRoleEntity[]>(await this.roles.findByKeys(roleKeys, tenantId));
     const foundKeys = new Set(found.map((role) => role.key));
     const unknown = roleKeys.filter((key) => !foundKeys.has(key));
     if (unknown.length > 0) {
       throw new AdminApplicationError(
-        "invalid_access_policy",
-        `Unknown role keys for this tenant: ${unknown.join(", ")}.`,
+        'invalid_access_policy',
+        `Unknown role keys for this tenant: ${unknown.join(', ')}.`,
       );
     }
   }

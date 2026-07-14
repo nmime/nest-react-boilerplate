@@ -16,6 +16,8 @@ import { validateName, generateNames } from '../names.ts';
 export interface ApplicationGeneratorOptions {
   name: string;
   kind: 'frontend' | 'backend';
+  renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'worker';
+  port?: number;
   directory?: string;
   tags?: string;
   skipFormat?: boolean;
@@ -64,7 +66,14 @@ function dots(dir: string): string {
 // Backend app skeleton
 // ---------------------------------------------------------------------------
 
-function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
+function createBackendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  renderer: 'nest-api' | 'worker',
+  port: number,
+): void {
   const projectName = names.kebab;
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -84,7 +93,7 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
             executor: '@nx/js:tsc',
             outputs: ['{options.outputPath}'],
             options: {
-              outputPath: `dist/apps/backend/${projectName}`,
+              outputPath: `dist/${dir}`,
               main: `${srcRoot}/main.ts`,
               tsConfig: `${dir}/tsconfig.app.json`,
               assets: [],
@@ -194,10 +203,10 @@ function createBackendApp(tree: Tree, names: ReturnType<typeof generateNames>, d
     ) + '\n',
   );
 
-  // src/main.ts — uses bootstrapNestApi like existing backend apps
-  tree.write(
-    `${srcRoot}/main.ts`,
-    `import {
+  if (renderer === 'nest-api') {
+    tree.write(
+      `${srcRoot}/main.ts`,
+      `import {
   bootstrapNestApi,
   resolveDefaultDevelopmentCorsOrigins,
 } from "@app/backend-common-bootstrap";
@@ -206,24 +215,73 @@ import { ${names.pascal}Module } from "./${names.kebab}.module";
 void bootstrapNestApi(${names.pascal}Module, {
   appName: "${projectName}",
   corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  port: 3000,
+  port: Number(process.env.PORT ?? ${port}),
 });
 `,
-  );
+    );
+  } else {
+    tree.write(
+      `${srcRoot}/main.ts`,
+      `import { NestFactory } from "@nestjs/core";
+import { ${names.pascal}Module } from "./${names.kebab}.module";
 
-  // src/app.module.ts
+async function bootstrap(): Promise<void> {
+  await NestFactory.createApplicationContext(${names.pascal}Module, {
+    logger: ["error", "warn", "log"],
+  });
+}
+
+void bootstrap();
+`,
+    );
+  }
+
+  // A generated API includes the repository-standard health surface. Workers
+  // keep a minimal application-context module without HTTP controllers.
   tree.write(
     `${srcRoot}/${names.kebab}.module.ts`,
-    `import { Module } from "@nestjs/common";
+    renderer === 'nest-api'
+      ? `import { Module } from "@nestjs/common";
+import {
+  BaseHealthController,
+  HealthPrivateNetworkIpGuard,
+} from "@app/backend-common-health";
+import { ${names.pascal}HealthServiceProvider } from "./health.config";
 
 @Module({
   imports: [],
-  controllers: [],
-  providers: [],
+  controllers: [BaseHealthController],
+  providers: [${names.pascal}HealthServiceProvider, HealthPrivateNetworkIpGuard],
 })
+export class ${names.pascal}Module {}
+`
+      : `import { Module } from "@nestjs/common";
+
+@Module({})
 export class ${names.pascal}Module {}
 `,
   );
+
+  if (renderer === 'nest-api') {
+    tree.write(
+      `${srcRoot}/health.config.ts`,
+      `import type { Provider } from "@nestjs/common";
+import {
+  HealthService,
+  RuntimeHealthIndicator,
+} from "@app/backend-common-health";
+
+export const ${names.pascal}HealthServiceProvider: Provider = {
+  provide: HealthService,
+  useFactory: () =>
+    new HealthService({
+      appName: "${projectName}",
+      indicators: [new RuntimeHealthIndicator()],
+    }),
+};
+`,
+    );
+  }
 
   // src/app.module.spec.ts — import from vitest, not globals
   tree.write(
@@ -294,13 +352,50 @@ module.exports = [
 ];
 `,
   );
+
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md), the [backend app rules](${d}apps/backend/AGENTS.md), and the [AI agent policy](${d}docs/ai/agent-policy.md).
+
+- Runtime: ${renderer}
+- Keep transport and process bootstrap code in this deployable application.
+- Put reusable domain logic in \`libs/backend/**\` and cross-runtime contracts in \`libs/common/**\`.
+- Import libraries through public aliases from \`tsconfig.base.json\`; do not reach into another project by relative path.
+- Preserve the standard health endpoints and private-network guard for HTTP APIs.
+`,
+  );
+  tree.write(
+    `${dir}/README.md`,
+    `# ${names.title}
+
+Generated ${renderer} backend application at \`${dir}\`.
+
+## Verification
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:build
+pnpm exec nx run ${projectName}:test
+pnpm exec nx run ${projectName}:serve
+\`\`\`
+
+Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+`,
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Frontend app skeleton
 // ---------------------------------------------------------------------------
 
-function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
+function createViteFrontendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  port: number,
+): void {
   const projectName = names.kebab;
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -316,25 +411,6 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
         projectType: 'application',
         tags,
         targets: {
-          build: {
-            executor: '@nx/vite:build',
-            outputs: ['{options.outputPath}'],
-            defaultConfiguration: 'production',
-            options: { outputPath: `dist/${dir}` },
-            configurations: {
-              development: { mode: 'development' },
-              production: { mode: 'production' },
-            },
-          },
-          serve: {
-            executor: '@nx/vite:dev-server',
-            defaultConfiguration: 'development',
-            options: { buildTarget: `${projectName}:build` },
-            configurations: {
-              development: { buildTarget: `${projectName}:build:development`, hmr: true },
-              production: { buildTarget: `${projectName}:build:production` },
-            },
-          },
           test: {
             executor: 'nx:run-commands',
             cache: true,
@@ -344,6 +420,24 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
             },
             inputs: ['default', '^production', { externalDependencies: ['vitest'] }],
             outputs: [`{workspaceRoot}/coverage/${dir}`],
+          },
+          typecheck: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: {
+              cwd: dir,
+              command: 'tsc --noEmit --project tsconfig.app.json && tsc --noEmit --project tsconfig.spec.json',
+            },
+            inputs: ['default', '^production', { externalDependencies: ['typescript'] }],
+          },
+          e2e: {
+            executor: 'nx:run-commands',
+            cache: false,
+            options: {
+              command: `VITE_E2E_COVERAGE=true node_modules/.bin/vite build --config ${dir}/vite.config.mts && node packages/tooling/bin/repo-tooling.mjs testing frontend-browser-e2e-coverage --dist dist/${dir} --app-name ${projectName} --contains ${JSON.stringify(names.title)} --coverage-dir coverage/e2e/${dir}`,
+            },
+            inputs: ['production', { externalDependencies: ['@playwright/test', 'vite-plugin-istanbul'] }],
+            outputs: [`{workspaceRoot}/coverage/e2e/${dir}`],
           },
         },
       },
@@ -362,14 +456,19 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
         private: true,
         type: 'module',
         scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0' },
+        dependencies: {
+          react: runtimePackage(tree, 'react', '19.2.7', 'dependencies'),
+          'react-dom': runtimePackage(tree, 'react-dom', '19.2.7', 'dependencies'),
+        },
         devDependencies: {
-          '@types/react': '^19.0.0',
-          '@types/react-dom': '^19.0.0',
-          '@vitejs/plugin-react': '^4.3.0',
-          typescript: '^5.7.0',
-          vite: '^6.0.0',
-          vitest: '^3.0.0',
+          '@tailwindcss/vite': runtimePackage(tree, '@tailwindcss/vite', '4.3.2'),
+          '@types/react': runtimePackage(tree, '@types/react', '19.2.17'),
+          '@types/react-dom': runtimePackage(tree, '@types/react-dom', '19.2.3'),
+          '@vitejs/plugin-react': runtimePackage(tree, '@vitejs/plugin-react', '6.0.3'),
+          typescript: runtimePackage(tree, 'typescript', '6.0.3'),
+          vite: runtimePackage(tree, 'vite', '8.1.4'),
+          'vite-plugin-istanbul': runtimePackage(tree, 'vite-plugin-istanbul', '9.0.1'),
+          vitest: runtimePackage(tree, 'vitest', '4.1.10'),
         },
       },
       null,
@@ -471,18 +570,42 @@ function createFrontendApp(tree: Tree, names: ReturnType<typeof generateNames>, 
     `${dir}/vite.config.mts`,
     `import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
-import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
+import tailwindcss from "@tailwindcss/vite";
+import istanbul from "vite-plugin-istanbul";
 
-export default defineConfig({
-  cacheDir: "${d}node_modules/.cache/vite",
-  root: import.meta.dirname,
-  plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"])],
-  build: {
-    outDir: "${d}dist/${dir}",
-    emptyOutDir: true,
-    reportCompressedSize: false,
-  },
+export default defineConfig(() => {
+  const isE2eCoverage = process.env.VITE_E2E_COVERAGE === "true";
+
+  return {
+    cacheDir: "${d}node_modules/.cache/vite",
+    root: import.meta.dirname,
+    resolve: { tsconfigPaths: true },
+    server: { host: "localhost", port: ${port} },
+    preview: { host: "localhost", port: ${port} },
+    plugins: [
+      tailwindcss(),
+      react(),
+      ...(isE2eCoverage
+        ? [
+            istanbul({
+              cwd: import.meta.dirname,
+              include: "src/**/*.{ts,tsx}",
+              exclude: ["src/**/*.spec.*", "src/**/*.test.*"],
+              extension: [".ts", ".tsx"],
+              requireEnv: false,
+              forceBuildInstrument: true,
+              generatorOpts: { comments: false },
+            }),
+          ]
+        : []),
+    ],
+    build: {
+      outDir: "${d}dist/${dir}",
+      emptyOutDir: true,
+      reportCompressedSize: false,
+      sourcemap: isE2eCoverage,
+    },
+  };
 });
 `,
   );
@@ -492,11 +615,11 @@ export default defineConfig({
     `${dir}/vitest.config.mts`,
     `import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
 
 export default defineConfig({
   cacheDir: "${d}node_modules/.cache/vitest",
-  plugins: [react(), nxViteTsPaths()],
+  resolve: { tsconfigPaths: true },
+  plugins: [react()],
   test: {
     globals: true,
     environment: "happy-dom",
@@ -512,6 +635,7 @@ export default defineConfig({
     `${srcRoot}/main.tsx`,
     `import { StrictMode } from "react";
 import * as ReactDOM from "react-dom/client";
+import { UiErrorBoundary } from "@app/frontend-ui-web";
 import { App } from "./app";
 
 const container = document.getElementById("root");
@@ -524,7 +648,9 @@ const root = ReactDOM.createRoot(container);
 
 root.render(
   <StrictMode>
-    <App />
+    <UiErrorBoundary>
+      <App />
+    </UiErrorBoundary>
   </StrictMode>,
 );
 `,
@@ -533,12 +659,33 @@ root.render(
   // src/app.tsx
   tree.write(
     `${srcRoot}/app.tsx`,
-    `export function App() {
+    `import {
+  FrontendI18nProvider,
+  FrontendQueryProvider,
+  FrontendStateProvider,
+  useI18n,
+} from "@app/frontend-runtime";
+
+function AppShell() {
+  const { t } = useI18n();
+
   return (
-    <div>
-      <h1>${names.title}</h1>
-      <p>Welcome to ${names.title}</p>
-    </div>
+    <main>
+      <h1>{document.title}</h1>
+      <p>{t("common.ready")}</p>
+    </main>
+  );
+}
+
+export function App() {
+  return (
+    <FrontendStateProvider>
+      <FrontendQueryProvider>
+        <FrontendI18nProvider>
+          <AppShell />
+        </FrontendI18nProvider>
+      </FrontendQueryProvider>
+    </FrontendStateProvider>
   );
 }
 `,
@@ -572,6 +719,398 @@ module.exports = [...baseConfig];
 
 // ---------------------------------------------------------------------------
 
+function runtimePackage(
+  tree: Tree,
+  name: string,
+  fallback: string,
+  section: 'dependencies' | 'devDependencies' = 'devDependencies',
+): string {
+  const rootPackage = tree.read('package.json', 'utf8');
+  if (!rootPackage) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(rootPackage) as Record<string, Record<string, string> | undefined>;
+    return parsed[section]?.[name] ?? parsed.dependencies?.[name] ?? parsed.devDependencies?.[name] ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeFrontendPolicy(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  renderer: string,
+  tags: string[],
+): void {
+  const d = dots(dir);
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${names.kebab} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md) and [frontend app rules](${d}apps/frontend/AGENTS.md).
+
+- Runtime: ${renderer}
+- Keep renderer entrypoints and routing in this application.
+- Put reusable browser UI, state, and API plumbing in \`libs/frontend/**\`.
+- Never import backend aliases from frontend source.
+- Run \`pnpm run frontend:fsd:check\` after structural changes.
+`,
+  );
+  tree.write(
+    `${dir}/README.md`,
+    `# ${names.title}
+
+Generated ${renderer} frontend application at \`${dir}\`.
+
+## Verification
+
+\`\`\`bash
+pnpm exec nx run ${names.kebab}:build
+pnpm exec nx run ${names.kebab}:test
+pnpm run frontend:fsd:check
+\`\`\`
+
+Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+`,
+  );
+}
+
+function writeRunCommandProject(
+  tree: Tree,
+  dir: string,
+  name: string,
+  sourceRoot: string,
+  tags: string[],
+  commands: { build: string; serve: string; typecheck: string },
+): void {
+  const d = dots(dir);
+  tree.write(
+    `${dir}/project.json`,
+    JSON.stringify(
+      {
+        name,
+        $schema: `${d}node_modules/nx/schemas/project-schema.json`,
+        sourceRoot,
+        projectType: 'application',
+        tags,
+        targets: {
+          serve: {
+            executor: 'nx:run-commands',
+            cache: false,
+            options: { cwd: dir, command: commands.serve },
+          },
+          build: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: { cwd: dir, command: commands.build },
+            outputs: [`{workspaceRoot}/dist/${dir}`],
+          },
+          typecheck: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: { cwd: dir, command: commands.typecheck },
+          },
+          test: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: { cwd: dir, command: 'node --test scaffold.test.mjs' },
+          },
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  tree.write(
+    `${dir}/scaffold.test.mjs`,
+    `import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+test("generated application metadata is coherent", async () => {
+  const project = JSON.parse(await readFile(new URL("./project.json", import.meta.url), "utf8"));
+  const manifest = JSON.parse(await readFile(new URL("./package.json", import.meta.url), "utf8"));
+  assert.equal(project.name, "${name}");
+  assert.equal(manifest.name, "@app/${name}");
+});
+`,
+  );
+}
+
+function createAstroFrontendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  port: number,
+): void {
+  const d = dots(dir);
+  writeRunCommandProject(tree, dir, names.kebab, `${dir}/src`, tags, {
+    serve: `node_modules/.bin/astro dev --host localhost --port ${port}`,
+    build: 'node_modules/.bin/astro build',
+    typecheck: 'node_modules/.bin/astro check',
+  });
+  tree.write(
+    `${dir}/package.json`,
+    JSON.stringify(
+      {
+        name: `@app/${names.kebab}`,
+        version: '0.0.0',
+        private: true,
+        type: 'module',
+        dependencies: {
+          react: runtimePackage(tree, 'react', '19.2.7', 'dependencies'),
+          'react-dom': runtimePackage(tree, 'react-dom', '19.2.7', 'dependencies'),
+        },
+        devDependencies: {
+          '@astrojs/check': runtimePackage(tree, '@astrojs/check', '0.9.9'),
+          astro: runtimePackage(tree, 'astro', '7.0.8'),
+          '@astrojs/react': runtimePackage(tree, '@astrojs/react', '6.0.1'),
+          '@astrojs/node': runtimePackage(tree, '@astrojs/node', '11.0.2'),
+          typescript: runtimePackage(tree, 'typescript', '6.0.3'),
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  tree.write(
+    `${dir}/astro.config.mjs`,
+    `import node from "@astrojs/node";
+import react from "@astrojs/react";
+import { defineConfig } from "astro/config";
+
+export default defineConfig({
+  root: import.meta.dirname,
+  adapter: node({ mode: "standalone" }),
+  integrations: [react()],
+  outDir: "${d}dist/${dir}",
+  output: "server",
+  server: { host: "localhost", port: ${port} },
+});
+`,
+  );
+  tree.write(`${dir}/tsconfig.json`, `${JSON.stringify({ extends: 'astro/tsconfigs/strict' }, null, 2)}\n`);
+  tree.write(
+    `${dir}/src/pages/index.astro`,
+    `---
+const title = "${names.title}";
+---
+
+<html lang="en">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>{title}</title></head>
+  <body><main><h1>{title}</h1><p>Astro application scaffold is ready.</p></main></body>
+</html>
+`,
+  );
+  tree.write(`${dir}/src/env.d.ts`, '/// <reference types="astro/client" />\n');
+  writeFrontendPolicy(tree, names, dir, 'Astro', tags);
+}
+
+function createVikeFrontendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  port: number,
+): void {
+  const d = dots(dir);
+  const configFile = `${names.kebab}.vite.config.mts`;
+  writeRunCommandProject(tree, dir, names.kebab, `${dir}/pages`, tags, {
+    serve: `VITE_CONFIG="{configFile:'./${configFile}'}" node_modules/.bin/vike dev --host localhost --port ${port}`,
+    build: `VITE_CONFIG="{configFile:'./${configFile}'}" node_modules/.bin/vike build`,
+    typecheck: 'node_modules/.bin/tsc --noEmit --project tsconfig.json',
+  });
+  tree.write(
+    `${dir}/package.json`,
+    JSON.stringify(
+      {
+        name: `@app/${names.kebab}`,
+        version: '0.0.0',
+        private: true,
+        type: 'module',
+        dependencies: {
+          react: runtimePackage(tree, 'react', '19.2.7', 'dependencies'),
+          'react-dom': runtimePackage(tree, 'react-dom', '19.2.7', 'dependencies'),
+          vike: runtimePackage(tree, 'vike', '0.4.260', 'dependencies'),
+          'vike-react': runtimePackage(tree, 'vike-react', '0.6.25', 'dependencies'),
+        },
+        devDependencies: {
+          '@vitejs/plugin-react': runtimePackage(tree, '@vitejs/plugin-react', '6.0.3'),
+          typescript: runtimePackage(tree, 'typescript', '6.0.3'),
+          vite: runtimePackage(tree, 'vite', '8.1.4'),
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  tree.write(
+    `${dir}/${configFile}`,
+    `import react from "@vitejs/plugin-react";
+import vike from "vike/plugin";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  root: import.meta.dirname,
+  cacheDir: "${d}node_modules/.cache/vite/${dir}",
+  resolve: { tsconfigPaths: true },
+  server: { host: "localhost", port: ${port} },
+  preview: { host: "localhost", port: ${port} },
+  plugins: [react(), vike()],
+  build: { outDir: "${d}dist/${dir}", emptyOutDir: true },
+});
+`,
+  );
+  const tsconfig = {
+    extends: `${d}tsconfig.base.json`,
+    compilerOptions: {
+      jsx: 'react-jsx',
+      module: 'esnext',
+      moduleResolution: 'bundler',
+      types: ['vite/client'],
+    },
+    include: ['pages/**/*.ts', 'pages/**/*.tsx', configFile],
+  };
+  tree.write(`${dir}/tsconfig.json`, `${JSON.stringify(tsconfig, null, 2)}\n`);
+  tree.write(
+    `${dir}/pages/+config.ts`,
+    'import vikeReact from "vike-react/config";\n\nexport default { extends: vikeReact };\n',
+  );
+  tree.write(
+    `${dir}/pages/index/+Page.tsx`,
+    `export default function Page() {
+  return <main><h1>${names.title}</h1><p>Vike SSR application scaffold is ready.</p></main>;
+}
+`,
+  );
+  writeFrontendPolicy(tree, names, dir, 'Vike SSR', tags);
+}
+
+function createExpoFrontendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  port: number,
+): void {
+  const d = dots(dir);
+  writeRunCommandProject(tree, dir, names.kebab, `${dir}/app`, tags, {
+    serve: `EXPO_NO_TELEMETRY=1 node_modules/.bin/expo start --port ${port}`,
+    build: `EXPO_NO_TELEMETRY=1 node_modules/.bin/expo export --platform web --output-dir ${d}dist/${dir}`,
+    typecheck: 'node_modules/.bin/tsc --noEmit --project tsconfig.json',
+  });
+  tree.write(
+    `${dir}/package.json`,
+    JSON.stringify(
+      {
+        name: `@app/${names.kebab}`,
+        version: '0.0.0',
+        private: true,
+        main: 'expo-router/entry',
+        dependencies: {
+          expo: runtimePackage(tree, 'expo', '57.0.4', 'dependencies'),
+          '@expo/metro-runtime': runtimePackage(tree, '@expo/metro-runtime', '57.0.3', 'dependencies'),
+          'expo-router': runtimePackage(tree, 'expo-router', '57.0.4', 'dependencies'),
+          react: runtimePackage(tree, 'react', '19.2.7', 'dependencies'),
+          'react-dom': runtimePackage(tree, 'react-dom', '19.2.7', 'dependencies'),
+          'react-native': runtimePackage(tree, 'react-native', '0.86.0', 'dependencies'),
+          'react-native-safe-area-context': runtimePackage(
+            tree,
+            'react-native-safe-area-context',
+            '5.8.0',
+            'dependencies',
+          ),
+          'react-native-screens': runtimePackage(tree, 'react-native-screens', '4.26.0', 'dependencies'),
+          'react-native-web': runtimePackage(tree, 'react-native-web', '0.21.2', 'dependencies'),
+        },
+        devDependencies: {
+          '@babel/core': runtimePackage(tree, '@babel/core', '7.29.7'),
+          '@types/react': runtimePackage(tree, '@types/react', '19.2.17'),
+          'babel-preset-expo': runtimePackage(tree, 'babel-preset-expo', '57.0.2'),
+          typescript: runtimePackage(tree, 'typescript', '6.0.3'),
+        },
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  tree.write(
+    `${dir}/app.json`,
+    `${JSON.stringify({ expo: { name: names.title, slug: names.kebab, scheme: names.kebab, plugins: ['expo-router'], web: { bundler: 'metro' } } }, null, 2)}\n`,
+  );
+  tree.write(
+    `${dir}/metro.config.js`,
+    `const path = require("node:path");
+const { getDefaultConfig } = require("expo/metro-config");
+const { configureWorkspaceMetro } = require("${d}config/metro/workspace-tsconfig-aliases.cjs");
+
+const projectRoot = __dirname;
+const workspaceRoot = path.resolve(projectRoot, "${d}");
+const config = getDefaultConfig(projectRoot);
+
+module.exports = configureWorkspaceMetro(config, { projectRoot, workspaceRoot });
+`,
+  );
+  tree.write(
+    `${dir}/babel.config.js`,
+    `module.exports = function configureExpoBabel(api) {
+  api.cache(true);
+  return { presets: ["babel-preset-expo"] };
+};
+`,
+  );
+  tree.write(
+    `${dir}/tsconfig.json`,
+    `${JSON.stringify({ extends: 'expo/tsconfig.base', compilerOptions: { strict: true }, include: ['app/**/*.ts', 'app/**/*.tsx', 'expo-env.d.ts'] }, null, 2)}\n`,
+  );
+  tree.write(`${dir}/expo-env.d.ts`, '/// <reference types="expo/types" />\n');
+  tree.write(
+    `${dir}/app/_layout.tsx`,
+    'import { Stack } from "expo-router";\n\nexport default function Layout() { return <Stack />; }\n',
+  );
+  tree.write(
+    `${dir}/app/index.tsx`,
+    `import { Text, View } from "react-native";
+
+export default function HomeScreen() {
+  return <View accessibilityRole="summary"><Text accessibilityRole="header">${names.title}</Text></View>;
+}
+`,
+  );
+  writeFrontendPolicy(tree, names, dir, 'Expo/React Native', tags);
+}
+
+function createFrontendApp(
+  tree: Tree,
+  names: ReturnType<typeof generateNames>,
+  dir: string,
+  tags: string[],
+  renderer: 'vite' | 'astro' | 'vike' | 'expo',
+  port: number,
+): void {
+  switch (renderer) {
+    case 'vite':
+      createViteFrontendApp(tree, names, dir, tags, port);
+      writeFrontendPolicy(tree, names, dir, 'Vite/React', tags);
+      break;
+    case 'astro':
+      createAstroFrontendApp(tree, names, dir, tags, port);
+      break;
+    case 'vike':
+      createVikeFrontendApp(tree, names, dir, tags, port);
+      break;
+    case 'expo':
+      createExpoFrontendApp(tree, names, dir, tags, port);
+      break;
+  }
+}
+
+// ---------------------------------------------------------------------------
+
 export async function applicationGenerator(tree: Tree, options: ApplicationGeneratorOptions): Promise<void> {
   const nameError = validateName(options.name);
   if (nameError) {
@@ -580,6 +1119,21 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
 
   if (options.kind !== 'frontend' && options.kind !== 'backend') {
     throw new Error(`Unsupported application kind "${options.kind}". Must be "frontend" or "backend".`);
+  }
+
+  const renderer = options.renderer ?? (options.kind === 'frontend' ? 'vite' : 'nest-api');
+  const frontendRenderers = ['vite', 'astro', 'vike', 'expo'];
+  const backendRenderers = ['nest-api', 'worker'];
+  const allowedRenderers = options.kind === 'frontend' ? frontendRenderers : backendRenderers;
+  if (!allowedRenderers.includes(renderer)) {
+    throw new Error(
+      `Unsupported ${options.kind} renderer "${renderer}". Must be one of: ${allowedRenderers.join(', ')}`,
+    );
+  }
+
+  const port = options.port ?? (options.kind === 'frontend' ? 4200 : 3100);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('Application port must be an integer between 1 and 65535.');
   }
 
   const names = generateNames(options.name);
@@ -599,9 +1153,9 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
     : computeAppTags(options.kind, names.kebab);
 
   if (options.kind === 'backend') {
-    createBackendApp(tree, names, dir, tags);
+    createBackendApp(tree, names, dir, tags, renderer as 'nest-api' | 'worker', port);
   } else {
-    createFrontendApp(tree, names, dir, tags);
+    createFrontendApp(tree, names, dir, tags, renderer as 'vite' | 'astro' | 'vike' | 'expo', port);
   }
 
   if (!options.skipFormat) {

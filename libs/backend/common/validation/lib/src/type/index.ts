@@ -1,1 +1,1 @@
-export * from "./validation-error-response.type";
+export * from './validation-error-response.type';

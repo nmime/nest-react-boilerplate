@@ -1,5 +1,5 @@
-import type { Transaction } from "@mikro-orm/core";
-import { Migration } from "@mikro-orm/migrations";
+import type { Transaction } from '@mikro-orm/core';
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260609100000CreateFeatureFlags extends Migration {
   override isTransactional(): boolean {
@@ -30,9 +30,7 @@ export class Migration20260609100000CreateFeatureFlags extends Migration {
         constraint "ck__feature_flags__key" check ("key" ~ '^[a-z][a-z0-9]*([.][a-z][a-z0-9]*)*$')
       );
     `);
-    this.addSql(
-      'create index "ix__feature_flags__tenant_id" on "feature_flags" ("tenant_id");',
-    );
+    this.addSql('create index "ix__feature_flags__tenant_id" on "feature_flags" ("tenant_id");');
   }
 
   override down(): void {

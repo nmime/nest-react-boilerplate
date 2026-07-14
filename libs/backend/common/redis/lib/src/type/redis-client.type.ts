@@ -1,6 +1,6 @@
-export type RedisSetExpirationMode = "EX" | "PX";
+export type RedisSetExpirationMode = 'EX' | 'PX';
 
-export type RedisSetCondition = "NX" | "XX";
+export type RedisSetCondition = 'NX' | 'XX';
 
 export interface RedisPipelineLike {
   setex(key: string, ttlSeconds: number, value: string): RedisPipelineLike;
@@ -52,19 +52,12 @@ export interface RedisClientLike {
    * separate SET and INCR). Returns the post-increment count and the window's
    * reset time derived from the key's actual remaining TTL.
    */
-  incrementWithWindow(
-    key: string,
-    windowMs: number,
-  ): Promise<RedisIncrementWithWindowResult>;
+  incrementWithWindow(key: string, windowMs: number): Promise<RedisIncrementWithWindowResult>;
   expire(key: string, ttlSeconds: number): Promise<unknown>;
   hset(key: string, field: string, value: string): Promise<unknown>;
   hgetall(key: string): Promise<Record<string, string>>;
   hdel(key: string, field: string): Promise<unknown>;
   deleteIfValue(key: string, expectedValue: string): Promise<boolean>;
-  extendIfValue(
-    key: string,
-    expectedValue: string,
-    ttlMs: number,
-  ): Promise<boolean>;
+  extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean>;
   pipeline(): RedisPipelineLike;
 }

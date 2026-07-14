@@ -1,8 +1,8 @@
-import { Module } from "@nestjs/common";
-import type { DynamicModule, Provider } from "@nestjs/common";
-import { AnalyticsConfigModule, AnalyticsConfigService } from "./config";
-import { AnalyticsService } from "./analytics.service";
-import type { AnalyticsConfig } from "./type";
+import { Module } from '@nestjs/common';
+import type { DynamicModule, Provider } from '@nestjs/common';
+import { AnalyticsConfigModule, AnalyticsConfigService } from './config';
+import { AnalyticsService } from './analytics.service';
+import type { AnalyticsConfig } from './type';
 
 @Module({
   imports: [AnalyticsConfigModule],

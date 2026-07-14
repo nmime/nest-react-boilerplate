@@ -1,1 +1,1 @@
-export const SocialAuthStoreInjectToken = Symbol("SocialAuthStoreInjectToken");
+export const SocialAuthStoreInjectToken = Symbol('SocialAuthStoreInjectToken');

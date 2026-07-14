@@ -1,1 +1,1 @@
-export * from "./model/use-landing-actions";
+export * from './model/use-landing-actions';

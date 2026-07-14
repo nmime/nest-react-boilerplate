@@ -4,10 +4,5 @@
     "outDir": "../../../../dist/out-tsc/apps/backend/admin/admin-app-api-spec",
     "types": ["node", "vitest"]
   },
-  "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.e2e-spec.ts",
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.e2e-spec.ts", "src/**/*.ts"]
 }

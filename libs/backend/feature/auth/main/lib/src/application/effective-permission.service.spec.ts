@@ -1,67 +1,50 @@
-import { ConflictException } from "@nestjs/common";
-import { describe, expect, it, vi } from "vitest";
-import { errAsync, okAsync } from "neverthrow";
+import { ConflictException } from '@nestjs/common';
+import { describe, expect, it, vi } from 'vitest';
+import { errAsync, okAsync } from 'neverthrow';
 import {
   AdminRole,
   DefaultAuthTenantId,
   UserProfileReadPermission,
   UserRole,
   createDefaultAccessPolicy,
-} from "@app/backend-feature-auth-shared";
-import {
-  InMemoryAuthRoleStore,
-  type AuthRoleStore,
-} from "../infrastructure/auth-role-store";
-import {
-  InMemoryAuthUserStore,
-  type AuthUserStore,
-} from "../infrastructure/auth-user-store";
-import { EffectivePermissionService } from "./effective-permission.service";
+} from '@app/backend-feature-auth-shared';
+import { InMemoryAuthRoleStore, type AuthRoleStore } from '../infrastructure/auth-role-store';
+import { InMemoryAuthUserStore, type AuthUserStore } from '../infrastructure/auth-user-store';
+import { EffectivePermissionService } from './effective-permission.service';
 
 const repositoryError = {
-  code: "repository_error" as const,
-  message: "boom",
+  code: 'repository_error' as const,
+  message: 'boom',
 };
 
-describe("EffectivePermissionService", () => {
-  it("canonicalizes resolved roles and permissions from the RBAC join", async () => {
+describe('EffectivePermissionService', () => {
+  it('canonicalizes resolved roles and permissions from the RBAC join', async () => {
     const roles = {
       resolveEffectiveAccess: () =>
         okAsync({
           // Deliberately scrambled + a permission key not granted through the
           // seeded matrix to prove the service orders by catalog index.
           roleKeys: [AdminRole, UserRole],
-          permissionKeys: [
-            "admin:manage:all",
-            UserProfileReadPermission,
-            "admin:dashboard:read",
-          ],
+          permissionKeys: ['admin:manage:all', UserProfileReadPermission, 'admin:dashboard:read'],
         }),
     } as unknown as AuthRoleStore;
     const users = {} as unknown as AuthUserStore;
     const service = new EffectivePermissionService(roles, users);
 
-    const access = await service.resolveEffectiveAccess(
-      "user-id",
-      DefaultAuthTenantId,
-    );
+    const access = await service.resolveEffectiveAccess('user-id', DefaultAuthTenantId);
 
     expect(access.roleKeys).toEqual([UserRole, AdminRole]);
-    expect(access.permissionKeys).toEqual([
-      UserProfileReadPermission,
-      "admin:dashboard:read",
-      "admin:manage:all",
-    ]);
+    expect(access.permissionKeys).toEqual([UserProfileReadPermission, 'admin:dashboard:read', 'admin:manage:all']);
   });
 
-  it("assigns roles and refreshes the jsonb cache to the shared-matrix arrays", async () => {
+  it('assigns roles and refreshes the jsonb cache to the shared-matrix arrays', async () => {
     const users = new InMemoryAuthUserStore();
     const roles = new InMemoryAuthRoleStore();
     const service = new EffectivePermissionService(roles, users);
     const created = (
       await users.create({
-        email: "member@example.com",
-        passwordHash: "hash",
+        email: 'member@example.com',
+        passwordHash: 'hash',
         roles: [],
         permissions: [],
       })
@@ -73,9 +56,9 @@ describe("EffectivePermissionService", () => {
       roleKeys: [UserRole, AdminRole],
     });
 
-    const adminPolicy = createDefaultAccessPolicy("admin@example.com", {
-      ADMIN_BOOTSTRAP_ENABLED: "true",
-      ADMIN_BOOTSTRAP_EMAILS: "admin@example.com",
+    const adminPolicy = createDefaultAccessPolicy('admin@example.com', {
+      ADMIN_BOOTSTRAP_ENABLED: 'true',
+      ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com',
     });
     expect(refreshed?.roles).toEqual(adminPolicy.roles);
     expect(refreshed?.permissions).toEqual(adminPolicy.permissions);
@@ -85,19 +68,19 @@ describe("EffectivePermissionService", () => {
     expect(persisted?.permissions).toEqual(adminPolicy.permissions);
   });
 
-  it("never wipes the cache when the normalized tables resolve no roles", async () => {
+  it('never wipes the cache when the normalized tables resolve no roles', async () => {
     const users = new InMemoryAuthUserStore();
     const roles = new InMemoryAuthRoleStore();
     const service = new EffectivePermissionService(roles, users);
     const created = (
       await users.create({
-        email: "member@example.com",
-        passwordHash: "hash",
+        email: 'member@example.com',
+        passwordHash: 'hash',
         roles: [UserRole],
         permissions: [UserProfileReadPermission],
       })
     )._unsafeUnwrap();
-    const setAccessPolicy = vi.spyOn(users, "setAccessPolicy");
+    const setAccessPolicy = vi.spyOn(users, 'setAccessPolicy');
 
     const refreshed = await service.refresh(created.id, created.tenantId);
 
@@ -107,46 +90,36 @@ describe("EffectivePermissionService", () => {
     expect(refreshed?.permissions).toEqual([UserProfileReadPermission]);
   });
 
-  it("returns null when refreshing an unknown user with no resolved roles", async () => {
+  it('returns null when refreshing an unknown user with no resolved roles', async () => {
     const users = new InMemoryAuthUserStore();
     const roles = new InMemoryAuthRoleStore();
     const service = new EffectivePermissionService(roles, users);
 
-    await expect(service.refresh("missing", DefaultAuthTenantId)).resolves.toBe(
-      null,
-    );
+    await expect(service.refresh('missing', DefaultAuthTenantId)).resolves.toBe(null);
   });
 
-  it("returns null when the current user lookup fails after resolving no roles", async () => {
+  it('returns null when the current user lookup fails after resolving no roles', async () => {
     const roles = {
-      resolveEffectiveAccess: () =>
-        okAsync({ roleKeys: [], permissionKeys: [] }),
+      resolveEffectiveAccess: () => okAsync({ roleKeys: [], permissionKeys: [] }),
     } as unknown as AuthRoleStore;
     const users = {
       findById: () => errAsync(repositoryError),
     } as unknown as AuthUserStore;
 
     await expect(
-      new EffectivePermissionService(roles, users).refresh(
-        "missing",
-        DefaultAuthTenantId,
-      ),
+      new EffectivePermissionService(roles, users).refresh('missing', DefaultAuthTenantId),
     ).resolves.toBeNull();
   });
 
-  it("maps store failures to ConflictException", async () => {
+  it('maps store failures to ConflictException', async () => {
     const failingAssign = {
       assignRoles: () => errAsync(repositoryError),
-      resolveEffectiveAccess: () =>
-        okAsync({ roleKeys: [], permissionKeys: [] }),
+      resolveEffectiveAccess: () => okAsync({ roleKeys: [], permissionKeys: [] }),
     } as unknown as AuthRoleStore;
     const users = {} as unknown as AuthUserStore;
     await expect(
-      new EffectivePermissionService(
-        failingAssign,
-        users,
-      ).assignRolesAndRefresh({
-        userId: "user-id",
+      new EffectivePermissionService(failingAssign, users).assignRolesAndRefresh({
+        userId: 'user-id',
         tenantId: DefaultAuthTenantId,
         roleKeys: [UserRole],
       }),
@@ -156,10 +129,7 @@ describe("EffectivePermissionService", () => {
       resolveEffectiveAccess: () => errAsync(repositoryError),
     } as unknown as AuthRoleStore;
     await expect(
-      new EffectivePermissionService(
-        failingResolve,
-        users,
-      ).resolveEffectiveAccess("user-id", DefaultAuthTenantId),
+      new EffectivePermissionService(failingResolve, users).resolveEffectiveAccess('user-id', DefaultAuthTenantId),
     ).rejects.toBeInstanceOf(ConflictException);
 
     const resolvingRoles = {
@@ -173,10 +143,7 @@ describe("EffectivePermissionService", () => {
       setAccessPolicy: () => errAsync(repositoryError),
     } as unknown as AuthUserStore;
     await expect(
-      new EffectivePermissionService(resolvingRoles, failingUsers).refresh(
-        "user-id",
-        DefaultAuthTenantId,
-      ),
+      new EffectivePermissionService(resolvingRoles, failingUsers).refresh('user-id', DefaultAuthTenantId),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 });

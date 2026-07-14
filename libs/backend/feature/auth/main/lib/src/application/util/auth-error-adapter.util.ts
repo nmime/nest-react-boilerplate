@@ -1,11 +1,11 @@
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import {
   AuthJwtSigningError,
   InvalidAuthTenantIdError,
   parseDomainTenantId,
   signDomainJwt,
   type JwtSigningEnvironment,
-} from "../../domain";
+} from '../../domain';
 
 export function parseTenantId(value: string | null | undefined): string {
   try {
@@ -21,11 +21,7 @@ export function parseTenantId(value: string | null | undefined): string {
   }
 }
 
-export function signJwt(
-  payload: Record<string, unknown>,
-  env: JwtSigningEnvironment,
-  expiresIn?: number,
-): string {
+export function signJwt(payload: Record<string, unknown>, env: JwtSigningEnvironment, expiresIn?: number): string {
   try {
     return signDomainJwt(payload, env, expiresIn);
   } catch (error) {

@@ -1,1 +1,1 @@
-export * from "./normalize-string-list.util";
+export * from './normalize-string-list.util';

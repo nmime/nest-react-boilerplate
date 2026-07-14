@@ -1,5 +1,5 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { verifyKey } from "discord-interactions";
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { verifyKey } from 'discord-interactions';
 
 export interface DiscordSignatureHeaders {
   signature?: string | string[];
@@ -16,16 +16,11 @@ export class DiscordInteractionSecurity {
     const signature = first(input.headers.signature);
     const timestamp = first(input.headers.timestamp);
     if (!signature || !timestamp) {
-      throw new UnauthorizedException("Missing Discord signature headers.");
+      throw new UnauthorizedException('Missing Discord signature headers.');
     }
-    const ok = await verifyKey(
-      input.rawBody,
-      signature,
-      timestamp,
-      input.publicKey,
-    );
+    const ok = await verifyKey(input.rawBody, signature, timestamp, input.publicKey);
     if (!ok) {
-      throw new UnauthorizedException("Bad Discord request signature.");
+      throw new UnauthorizedException('Bad Discord request signature.');
     }
   }
 }

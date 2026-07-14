@@ -1,1 +1,1 @@
-export * from "./frontend-env";
+export * from './frontend-env';

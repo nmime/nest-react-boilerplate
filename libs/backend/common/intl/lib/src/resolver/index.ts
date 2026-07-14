@@ -1,1 +1,1 @@
-export * from "./bot-lang.resolver";
+export * from './bot-lang.resolver';

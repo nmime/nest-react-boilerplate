@@ -1,5 +1,5 @@
-import type { AnalyticsPayload } from "../../../type";
-import { AbstractAnalyticsProvider } from "../base";
+import type { AnalyticsPayload } from '../../../type';
+import { AbstractAnalyticsProvider } from '../base';
 
 export interface Ga4MeasurementProtocolPluginOptions {
   measurementId: string;
@@ -11,27 +11,26 @@ export interface Ga4MeasurementProtocolPluginOptions {
 type Ga4ParamValue = string | number;
 
 export class Ga4MeasurementProtocolProvider extends AbstractAnalyticsProvider {
-  readonly name = "ga4-measurement-protocol";
+  readonly name = 'ga4-measurement-protocol';
 
   private readonly endpoint: string;
   private readonly fetcher: typeof fetch;
 
   constructor(private readonly options: Ga4MeasurementProtocolPluginOptions) {
     super();
-    this.endpoint =
-      options.endpoint ?? "https://www.google-analytics.com/mp/collect";
+    this.endpoint = options.endpoint ?? 'https://www.google-analytics.com/mp/collect';
     this.fetcher = options.fetch ?? fetch;
   }
 
   override async track(payload: AnalyticsPayload): Promise<void> {
-    const clientId = payload.anonymousId ?? payload.userId ?? "server";
+    const clientId = payload.anonymousId ?? payload.userId ?? 'server';
     const url = new URL(this.endpoint);
-    url.searchParams.set("measurement_id", this.options.measurementId);
-    url.searchParams.set("api_secret", this.options.apiSecret);
+    url.searchParams.set('measurement_id', this.options.measurementId);
+    url.searchParams.set('api_secret', this.options.apiSecret);
 
     const response = await this.fetcher(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         client_id: clientId,
         user_id: payload.userId,
@@ -51,9 +50,7 @@ export class Ga4MeasurementProtocolProvider extends AbstractAnalyticsProvider {
   }
 }
 
-function buildGa4EventParams(
-  payload: AnalyticsPayload,
-): Record<string, Ga4ParamValue> {
+function buildGa4EventParams(payload: AnalyticsPayload): Record<string, Ga4ParamValue> {
   return compactObject({
     ...normalizeParamRecord(payload.properties),
     source: normalizeGa4ParamValue(payload.source),
@@ -61,27 +58,15 @@ function buildGa4EventParams(
   });
 }
 
-function normalizeContextParams(
-  context?: Record<string, unknown>,
-): Record<string, Ga4ParamValue> {
+function normalizeContextParams(context?: Record<string, unknown>): Record<string, Ga4ParamValue> {
   return Object.fromEntries(
-    Object.entries(normalizeParamRecord(context)).map(([key, value]) => [
-      `context_${key}`,
-      value,
-    ]),
+    Object.entries(normalizeParamRecord(context)).map(([key, value]) => [`context_${key}`, value]),
   );
 }
 
-function normalizeParamRecord(
-  record?: Record<string, unknown>,
-): Record<string, Ga4ParamValue> {
+function normalizeParamRecord(record?: Record<string, unknown>): Record<string, Ga4ParamValue> {
   return compactObject(
-    Object.fromEntries(
-      Object.entries(record ?? {}).map(([key, value]) => [
-        key,
-        normalizeGa4ParamValue(value),
-      ]),
-    ),
+    Object.fromEntries(Object.entries(record ?? {}).map(([key, value]) => [key, normalizeGa4ParamValue(value)])),
   );
 }
 
@@ -92,15 +77,15 @@ function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
     return undefined;
   }
 
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return value;
   }
 
-  if (typeof value === "number") {
+  if (typeof value === 'number') {
     return Number.isFinite(value) ? value : undefined;
   }
 
-  if (typeof value === "boolean") {
+  if (typeof value === 'boolean') {
     return String(value);
   }
 
@@ -108,7 +93,7 @@ function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
     return value.toISOString();
   }
 
-  if (typeof value === "bigint") {
+  if (typeof value === 'bigint') {
     return value.toString();
   }
 
@@ -123,12 +108,11 @@ function normalizeGa4ParamValue(value: unknown): Ga4ParamValue | undefined {
   }
 }
 
-function compactObject<T extends Record<string, unknown>>(
-  value: T,
-): Record<string, Ga4ParamValue> {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined),
-  ) as Record<string, Ga4ParamValue>;
+function compactObject<T extends Record<string, unknown>>(value: T): Record<string, Ga4ParamValue> {
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as Record<
+    string,
+    Ga4ParamValue
+  >;
 }
 
 function toMicros(timestamp?: Date): number | undefined {

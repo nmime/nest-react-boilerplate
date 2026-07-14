@@ -36,8 +36,8 @@ These values are mapped to `NodeConnectionOptions` from `@nats-io/transport-node
 ## Nest module usage
 
 ```ts
-import { Module } from "@nestjs/common";
-import { NatsModule } from "@app/backend-common-nats";
+import { Module } from '@nestjs/common';
+import { NatsModule } from '@app/backend-common-nats';
 
 @Module({
   imports: [NatsModule.forRoot()],
@@ -52,23 +52,19 @@ Inject `NatsService` for ready-to-use JSON/string Core helpers, or inject the ra
 ## Core
 
 ```ts
-import { Injectable } from "@nestjs/common";
-import { NatsService } from "@app/backend-common-nats";
+import { Injectable } from '@nestjs/common';
+import { NatsService } from '@app/backend-common-nats';
 
 @Injectable()
 export class UserEvents {
   constructor(private readonly nats: NatsService) {}
 
   userCreated(userId: string): void {
-    this.nats.publishJson("events.user.created", { userId });
+    this.nats.publishJson('events.user.created', { userId });
   }
 
   lookupUser(userId: string): Promise<{ ok: boolean }> {
-    return this.nats.requestJson(
-      "rpc.user.lookup",
-      { userId },
-      { timeout: 500 },
-    );
+    return this.nats.requestJson('rpc.user.lookup', { userId }, { timeout: 500 });
   }
 }
 ```
@@ -76,17 +72,15 @@ export class UserEvents {
 NATS.js v3 removed the old codec helpers. Publish strings or bytes directly, use `JSON.stringify(value)` for JSON payloads, and use `msg.string()` or `msg.json<T>()` on received messages.
 
 ```ts
-import { InjectNatsConnection } from "@app/backend-common-nats";
-import type { NatsConnection } from "@nats-io/nats-core";
+import { InjectNatsConnection } from '@app/backend-common-nats';
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export class RawCoreExample {
-  constructor(
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(@InjectNatsConnection() private readonly nc: NatsConnection | null) {}
 
   publish(): void {
     if (!this.nc) return;
-    this.nc.publish("events.example", JSON.stringify({ ok: true }));
+    this.nc.publish('events.example', JSON.stringify({ ok: true }));
   }
 }
 ```
@@ -96,24 +90,18 @@ export class RawCoreExample {
 Use the v3 module functions from `@nats-io/jetstream`; do not call removed connection methods.
 
 ```ts
-import {
-  createJetStream,
-  createJetStreamManager,
-  InjectNatsConnection,
-} from "@app/backend-common-nats";
-import type { NatsConnection } from "@nats-io/nats-core";
+import { createJetStream, createJetStreamManager, InjectNatsConnection } from '@app/backend-common-nats';
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export class JetStreamExample {
-  constructor(
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(@InjectNatsConnection() private readonly nc: NatsConnection | null) {}
 
   async streams(): Promise<void> {
     if (!this.nc) return;
     const js = createJetStream(this.nc);
     const jsm = await createJetStreamManager(this.nc);
-    await jsm.streams.add({ name: "EVENTS", subjects: ["events.>"] });
-    await js.publish("events.created", JSON.stringify({ ok: true }));
+    await jsm.streams.add({ name: 'EVENTS', subjects: ['events.>'] });
+    await js.publish('events.created', JSON.stringify({ ok: true }));
   }
 }
 ```
@@ -121,23 +109,17 @@ export class JetStreamExample {
 ## KV
 
 ```ts
-import {
-  createJetStream,
-  createKvm,
-  InjectNatsConnection,
-} from "@app/backend-common-nats";
-import type { NatsConnection } from "@nats-io/nats-core";
+import { createJetStream, createKvm, InjectNatsConnection } from '@app/backend-common-nats';
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export class KvExample {
-  constructor(
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(@InjectNatsConnection() private readonly nc: NatsConnection | null) {}
 
   async openBucket(): Promise<void> {
     if (!this.nc) return;
     const kvm = createKvm(createJetStream(this.nc));
-    const bucket = await kvm.create("profiles");
-    await bucket.put("user-1", JSON.stringify({ name: "Ada" }));
+    const bucket = await kvm.create('profiles');
+    await bucket.put('user-1', JSON.stringify({ name: 'Ada' }));
   }
 }
 ```
@@ -145,23 +127,17 @@ export class KvExample {
 ## Object Store
 
 ```ts
-import {
-  createJetStream,
-  createObjm,
-  InjectNatsConnection,
-} from "@app/backend-common-nats";
-import type { NatsConnection } from "@nats-io/nats-core";
+import { createJetStream, createObjm, InjectNatsConnection } from '@app/backend-common-nats';
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export class ObjectStoreExample {
-  constructor(
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(@InjectNatsConnection() private readonly nc: NatsConnection | null) {}
 
   async openStore(): Promise<void> {
     if (!this.nc) return;
     const objm = createObjm(createJetStream(this.nc));
-    const store = await objm.create("files");
-    await store.put({ name: "readme.txt" }, "hello");
+    const store = await objm.create('files');
+    await store.put({ name: 'readme.txt' }, 'hello');
   }
 }
 ```
@@ -171,19 +147,17 @@ export class ObjectStoreExample {
 The published services manager export is `Svcm` from `@nats-io/services`; `@app/backend-common-nats` exposes `createServices(nc)`.
 
 ```ts
-import { createServices, InjectNatsConnection } from "@app/backend-common-nats";
-import type { NatsConnection } from "@nats-io/nats-core";
+import { createServices, InjectNatsConnection } from '@app/backend-common-nats';
+import type { NatsConnection } from '@nats-io/nats-core';
 
 export class ServicesExample {
-  constructor(
-    @InjectNatsConnection() private readonly nc: NatsConnection | null,
-  ) {}
+  constructor(@InjectNatsConnection() private readonly nc: NatsConnection | null) {}
 
   async start(): Promise<void> {
     if (!this.nc) return;
     const services = createServices(this.nc);
-    const service = await services.add({ name: "math", version: "1.0.0" });
-    service.addEndpoint("sum", (err, msg) => {
+    const service = await services.add({ name: 'math', version: '1.0.0' });
+    service.addEndpoint('sum', (err, msg) => {
       if (err) return;
       const request = msg.json<{ a: number; b: number }>();
       msg.respond(JSON.stringify({ result: request.a + request.b }));

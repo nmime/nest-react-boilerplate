@@ -122,6 +122,17 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/frontend/mobile"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["export"],
+      "options": {
+        "cwd": "apps/frontend/mobile",
+        "command": "node scripts/smoke-expo-export.mjs"
+      },
+      "inputs": ["production"],
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile"]
     }
   }
 }

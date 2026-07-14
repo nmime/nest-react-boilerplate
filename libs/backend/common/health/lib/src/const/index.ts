@@ -1,1 +1,1 @@
-export * from "./health.const";
+export * from './health.const';

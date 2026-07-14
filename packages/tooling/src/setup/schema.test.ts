@@ -113,6 +113,7 @@ describe('schema — parseNrbConfig', () => {
 describe('schema — constants', () => {
   it('exports all known app IDs', () => {
     const expected = [
+      'starter-app',
       'admin-app',
       'user-app',
       'landing-app',
@@ -123,6 +124,7 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
+      'telegram-bot-worker',
       'fullstack-e2e',
     ] as const;
     assert.deepEqual([...appIds].sort(), [...expected].sort());
@@ -262,10 +264,7 @@ describe('catalog — validateSelection', () => {
   });
 
   it('no issues for telegram-bot-api with telegram-bot capability', () => {
-    assert.deepEqual(
-      validateSelection(['telegram-bot-api'], ['telegram-bot', 'postgres']),
-      [],
-    );
+    assert.deepEqual(validateSelection(['telegram-bot-api'], ['telegram-bot', 'postgres']), []);
   });
 });
 
@@ -377,9 +376,10 @@ describe('presets — expandPreset', () => {
     assert.equal(e.apps.length, 2);
   });
 
-  it('starter: user-app + user-app-api + auth-app-api + deps', () => {
+  it('starter: neutral starter-app + user-app-api + auth-app-api + deps', () => {
     const e = expandPreset('starter');
-    assert.ok(e.apps.includes('user-app'));
+    assert.ok(e.apps.includes('starter-app'));
+    assert.ok(!e.apps.includes('user-app'));
     assert.ok(e.apps.includes('user-app-api'));
     assert.ok(e.apps.includes('auth-app-api'));
     assert.ok(e.capabilities.includes('postgres'));

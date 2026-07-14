@@ -1,27 +1,17 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Headers,
-  Post,
-  Req,
-} from "@nestjs/common";
-import type { FastifyRequest } from "fastify";
-import type {
-  APIInteraction,
-  APIInteractionResponse,
-} from "discord-api-types/v10";
+import { BadRequestException, Body, Controller, Headers, Post, Req } from '@nestjs/common';
+import type { FastifyRequest } from 'fastify';
+import type { APIInteraction, APIInteractionResponse } from 'discord-api-types/v10';
 import {
   DiscordBotConfig,
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
-} from "@app/backend-feature-discord-bot";
+} from '@app/backend-feature-discord-bot';
 
 interface RawBodyRequest extends FastifyRequest {
   rawBody?: Buffer | string;
 }
 
-@Controller("discord")
+@Controller('discord')
 export class DiscordInteractionsController {
   constructor(
     private readonly config: DiscordBotConfig,
@@ -29,11 +19,11 @@ export class DiscordInteractionsController {
     private readonly router: DiscordInteractionRouter,
   ) {}
 
-  @Post("interactions")
+  @Post('interactions')
   async interactions(
     @Req() request: RawBodyRequest,
-    @Headers("x-signature-ed25519") signature: string | string[] | undefined,
-    @Headers("x-signature-timestamp") timestamp: string | string[] | undefined,
+    @Headers('x-signature-ed25519') signature: string | string[] | undefined,
+    @Headers('x-signature-timestamp') timestamp: string | string[] | undefined,
     @Body() body: APIInteraction,
   ): Promise<APIInteractionResponse> {
     const snapshot = this.config.snapshot();
@@ -41,7 +31,7 @@ export class DiscordInteractionsController {
     // the parsed body would produce different bytes and fail verification, so
     // reject when the raw body is unavailable instead of silently re-encoding.
     if (request.rawBody === undefined) {
-      throw new BadRequestException("discord_raw_body_required");
+      throw new BadRequestException('discord_raw_body_required');
     }
     await this.security.verify({
       rawBody: request.rawBody,

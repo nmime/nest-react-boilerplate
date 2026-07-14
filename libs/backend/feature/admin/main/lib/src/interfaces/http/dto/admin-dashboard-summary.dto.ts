@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { AdminAuditLogViewDto } from "./admin-audit-log-view.dto";
+import { ApiProperty } from '@nestjs/swagger';
+import { AdminAuditLogViewDto } from './admin-audit-log-view.dto';
 
 export class AdminDashboardSummaryDto {
   @ApiProperty()

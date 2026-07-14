@@ -17,7 +17,7 @@ import {
   defaultRolePermissions,
   permissionCatalog,
   type PermissionKey,
-} from "@app/common-authz";
+} from '@app/common-authz';
 
 // Re-export the shared permission and role identifiers so importers of
 // @app/backend-feature-admin-shared keep resolving them from this module.
@@ -41,25 +41,25 @@ export {
 
 // CASL-specific vocabulary stays in the backend admin lib; the shared catalog is
 // framework-neutral, so the CASL subject/action universe is declared here.
-export const AdminManageAction = "manage";
-export const AdminAllResource = "all";
+export const AdminManageAction = 'manage';
+export const AdminAllResource = 'all';
 
 export const adminActions = [
-  "read",
-  "write",
-  "status:update",
-  "access-policy:update",
-  "update",
+  'read',
+  'write',
+  'status:update',
+  'access-policy:update',
+  'update',
   AdminManageAction,
 ] as const;
 
 export const adminResources = [
-  "admin.dashboard",
-  "admin.profile",
-  "admin.users",
-  "admin.roles",
-  "admin.audit",
-  "admin.settings",
+  'admin.dashboard',
+  'admin.profile',
+  'admin.users',
+  'admin.roles',
+  'admin.audit',
+  'admin.settings',
 ] as const;
 
 export type AdminAction = (typeof adminActions)[number];
@@ -86,29 +86,25 @@ export const adminPermissionCatalog = permissionCatalog
     description: entry.description,
   }));
 
-export type AdminPermission = Exclude<
-  PermissionKey,
-  typeof UserProfileReadPermission
->;
+export type AdminPermission = Exclude<PermissionKey, typeof UserProfileReadPermission>;
 
-const adminPermissionByName: ReadonlyMap<
-  string,
-  (typeof adminPermissionCatalog)[number]
-> = new Map(adminPermissionCatalog.map((item) => [item.permission, item]));
+const adminPermissionByName: ReadonlyMap<string, (typeof adminPermissionCatalog)[number]> = new Map(
+  adminPermissionCatalog.map((item) => [item.permission, item]),
+);
 
 export const adminRolePermissionMatrix = defaultRolePermissions;
 
 export const adminRoleCatalog = [
   {
     role: UserRole,
-    label: "User",
-    description: "Baseline application user role.",
+    label: 'User',
+    description: 'Baseline application user role.',
     permissions: [...adminRolePermissionMatrix[UserRole]],
   },
   {
     role: AdminRole,
-    label: "Administrator",
-    description: "Back-office administrator with explicit granular grants.",
+    label: 'Administrator',
+    description: 'Back-office administrator with explicit granular grants.',
     permissions: [...adminRolePermissionMatrix[AdminRole]],
   },
 ] as const;
@@ -123,13 +119,9 @@ export const isAdminAssignableRole = (value: string): boolean =>
   adminAssignableRoles.includes(value as (typeof adminAssignableRoles)[number]);
 
 export const isAdminAssignablePermission = (value: string): boolean =>
-  adminAssignablePermissions.includes(
-    value as (typeof adminAssignablePermissions)[number],
-  );
+  adminAssignablePermissions.includes(value as (typeof adminAssignablePermissions)[number]);
 
-export const isKnownAdminPermission = (
-  value: string,
-): value is AdminPermission => adminPermissionByName.has(value);
+export const isKnownAdminPermission = (value: string): value is AdminPermission => adminPermissionByName.has(value);
 
 export const adminPermissionToAbility = (
   permission: string,

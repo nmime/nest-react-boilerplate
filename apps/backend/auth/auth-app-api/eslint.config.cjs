@@ -1,32 +1,26 @@
-const baseConfig = require("../../../../eslint.config.js");
+const baseConfig = require('../../../../eslint.config.js');
 
 module.exports = [
   {
-    ignores: [
-      "eslint.config.cjs",
-      "project.json",
-      "package.json",
-      "tsconfig*.json",
-      "vitest.config.mts",
-    ],
+    ignores: ['eslint.config.cjs', 'project.json', 'package.json', 'tsconfig*.json', 'vitest.config.mts'],
   },
   ...baseConfig,
   {
     languageOptions: {
       parserOptions: {
-        project: "tsconfig.*?.json",
+        project: 'tsconfig.*?.json',
       },
     },
   },
   {
     // Nest and Better Auth test doubles expose intentionally untyped surfaces.
-    files: ["src/**/*spec.ts"],
+    files: ['src/**/*spec.ts'],
     rules: {
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/require-await": "off",
-      "sonarjs/todo-tag": "off",
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/require-await': 'off',
+      'sonarjs/todo-tag': 'off',
     },
   },
 ];

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
 import { NotificationTemplateEngine } from '../../../domain';
+import type { NotificationTemplateChannelEntity } from './notification-template-channel.entity';
 
 export interface NotificationTemplateEntityInput {
   code: string;
@@ -51,9 +52,15 @@ export const NotificationTemplateEntitySchema = new EntitySchema<NotificationTem
     body: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     image: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     buttons: { type: 'json', nullable: true, defaultRaw: 'NULL' },
-    templateEngine: { type: 'varchar', length: 50, fieldName: 'template_engine', default: NotificationTemplateEngine.StringFormat },
+    templateEngine: {
+      type: 'varchar',
+      length: 50,
+      fieldName: 'template_engine',
+      default: NotificationTemplateEngine.StringFormat,
+    },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
+    botChannel: { type: 'json', persist: false, nullable: true },
   },
   uniques: [{ name: 'uq__notification_templates__code', properties: ['code'] }],
 });

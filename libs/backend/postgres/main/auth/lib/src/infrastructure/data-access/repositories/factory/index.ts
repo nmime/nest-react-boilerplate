@@ -1,1 +1,1 @@
-export * from "./clone-auth-user.factory";
+export * from './clone-auth-user.factory';

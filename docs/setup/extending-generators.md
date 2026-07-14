@@ -22,7 +22,7 @@ Apply (apply.ts) — execute operations through filesystem adapter
 State (state.ts) — track file hashes for idempotency
 ```
 
-The feature generator (`generate-vertical-slice.ts`) is a separate path used by `nrb add feature`.
+The feature generator (`generate-vertical-slice.ts`) is a separate path used by `pnpm nrb add feature`.
 
 ## Adding a new app to the catalog
 

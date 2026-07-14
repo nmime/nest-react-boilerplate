@@ -2,7 +2,7 @@ import { BadRequestException, HttpStatus, Logger } from '@nestjs/common';
 import { err, ok } from 'neverthrow';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
-import { Exception, BaseException, ExceptionKind } from '@app/backend-common-exception';
+import { Exception, ExceptionKind } from '@app/backend-common-exception';
 import {
   createOkResponse,
   createProblemResponse,
@@ -17,12 +17,8 @@ import {
 const testValue = <T>(value: unknown): T => value as T;
 
 const muteExceptionLogger = (): (() => void) => {
-  const errorSpy = vi
-    .spyOn(Logger.prototype, 'error')
-    .mockImplementation(() => undefined);
-  const debugSpy = vi
-    .spyOn(Logger.prototype, 'debug')
-    .mockImplementation(() => undefined);
+  const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+  const debugSpy = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
 
   return () => {
     errorSpy.mockRestore();
@@ -49,9 +45,7 @@ describe('exceptions response mapper', () => {
 
   it('maps neverthrow results to API responses', () => {
     expect(mapResultToResponse(ok('ready'))).toEqual({ data: 'ready' });
-    expect(
-      mapResultToResponse(err({ code: 'disabled', message: 'OAuth disabled' })),
-    ).toMatchObject({
+    expect(mapResultToResponse(err({ code: 'disabled', message: 'OAuth disabled' }))).toMatchObject({
       code: 'disabled',
       detail: 'Bad Request',
       status: 400,
@@ -66,11 +60,11 @@ describe('exceptions response mapper', () => {
       detail: 'Resource conflict',
       status: HttpStatus.CONFLICT,
     });
-    expect(
-      mapResultToResponse(
-        err(new ConflictException({ data: { resource: 'user' } })),
-      ),
-    ).toMatchObject({ code: 'conflict', status: 409, title: 'Conflict' });
+    expect(mapResultToResponse(err(new ConflictException({ data: { resource: 'user' } })))).toMatchObject({
+      code: 'conflict',
+      status: 409,
+      title: 'Conflict',
+    });
 
     // Error.message is NEVER exposed — static generic
     expect(mapResultToResponse(err(new Error('Boom')))).toMatchObject({
@@ -84,9 +78,7 @@ describe('exceptions response mapper', () => {
 
   it('detects already mapped responses and maps result values', () => {
     expect(isOkResponse({ data: 'value' })).toBe(true);
-    expect(
-      isProblemResponse({ type: 'about:blank', title: 'Bad', status: 400 }),
-    ).toBe(true);
+    expect(isProblemResponse({ type: 'about:blank', title: 'Bad', status: 400 })).toBe(true);
     expect(mapValueToApiResponse({ data: 'value' })).toEqual({ data: 'value' });
     expect(mapValueToApiResponse(ok('value'))).toEqual({ data: 'value' });
     expect(mapValueToApiResponse('raw')).toBe('raw');
@@ -95,11 +87,9 @@ describe('exceptions response mapper', () => {
   it('intercepts successful values and preserves thrown errors', async () => {
     const transformer = new ExceptionsResponseTransformer();
     const context = testValue<Parameters<typeof transformer.intercept>[0]>({});
-    await expect(
-      lastValueFrom(
-        transformer.intercept(context, { handle: () => of(ok('ready')) }),
-      ),
-    ).resolves.toEqual({ data: 'ready' });
+    await expect(lastValueFrom(transformer.intercept(context, { handle: () => of(ok('ready')) }))).resolves.toEqual({
+      data: 'ready',
+    });
     await expect(
       lastValueFrom(
         transformer.intercept(context, {
@@ -122,10 +112,7 @@ describe('exceptions response mapper', () => {
     };
 
     try {
-      new ExceptionsFilter().catch(
-        new BadRequestException('Invalid input'),
-        host as never,
-      );
+      new ExceptionsFilter().catch(new BadRequestException('Invalid input'), host as never);
 
       expect(status).toHaveBeenCalledWith(400);
       expect(type).toHaveBeenCalledWith('application/problem+json');
@@ -172,12 +159,8 @@ describe('exceptions response mapper', () => {
   });
 
   it('logs 500 responses with the exception stack for production traceability', () => {
-    const errorSpy = vi
-      .spyOn(Logger.prototype, 'error')
-      .mockImplementation(() => undefined);
-    const debugSpy = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const debugSpy = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
     const status = vi.fn(() => ({ type }));
@@ -193,10 +176,7 @@ describe('exceptions response mapper', () => {
 
     expect(status).toHaveBeenCalledWith(500);
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('500'),
-      boom.stack,
-    );
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('500'), boom.stack);
     expect(debugSpy).not.toHaveBeenCalled();
 
     errorSpy.mockRestore();
@@ -204,12 +184,8 @@ describe('exceptions response mapper', () => {
   });
 
   it('logs expected 4xx problems at debug without error noise', () => {
-    const errorSpy = vi
-      .spyOn(Logger.prototype, 'error')
-      .mockImplementation(() => undefined);
-    const debugSpy = vi
-      .spyOn(Logger.prototype, 'debug')
-      .mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const debugSpy = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
     const json = vi.fn();
     const type = vi.fn(() => ({ json }));
     const status = vi.fn(() => ({ type }));
@@ -220,10 +196,7 @@ describe('exceptions response mapper', () => {
       }),
     };
 
-    new ExceptionsFilter().catch(
-      new BadRequestException('Invalid input'),
-      host as never,
-    );
+    new ExceptionsFilter().catch(new BadRequestException('Invalid input'), host as never);
 
     expect(status).toHaveBeenCalledWith(400);
     expect(errorSpy).not.toHaveBeenCalled();
@@ -276,10 +249,7 @@ describe('exceptions response mapper', () => {
     };
 
     try {
-      new ExceptionsFilter().catch(
-        new BadRequestException('test'),
-        host as never,
-      );
+      new ExceptionsFilter().catch(new BadRequestException('test'), host as never);
 
       expect(header).toHaveBeenCalledWith('x-request-id', 'test-req-123');
     } finally {

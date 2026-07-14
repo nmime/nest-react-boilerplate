@@ -1,1 +1,1 @@
-export * from "./ui/auth-panel";
+export * from './ui/auth-panel';

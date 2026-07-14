@@ -1,1 +1,1 @@
-export * from "./admin-casl.const";
+export * from './admin-casl.const';

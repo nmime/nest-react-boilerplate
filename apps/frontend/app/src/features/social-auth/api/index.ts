@@ -1,1 +1,1 @@
-export * from "./social-auth-api";
+export * from './social-auth-api';

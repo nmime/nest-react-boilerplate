@@ -16,17 +16,10 @@
         "default",
         "^production",
         {
-          "externalDependencies": [
-            "vitest",
-            "supertest",
-            "testcontainers",
-            "@testcontainers/postgresql"
-          ]
+          "externalDependencies": ["vitest", "supertest", "testcontainers", "@testcontainers/postgresql"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/feature/auth/test/lib-component"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/feature/auth/test/lib-component"]
     }
   }
 }

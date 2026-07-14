@@ -1,7 +1,7 @@
-import { Inject, Injectable } from "@nestjs/common";
-import type { KV, KvOptions } from "@nats-io/kv";
-import { createKvm, type NatsKvSource } from "./nats-kv.factory";
-import { NatsService } from "./nats.service";
+import { Inject, Injectable } from '@nestjs/common';
+import type { KV, KvOptions } from '@nats-io/kv';
+import { createKvm, type NatsKvSource } from './nats-kv.factory';
+import { NatsService } from './nats.service';
 
 @Injectable()
 export class NatsKvService {
@@ -15,17 +15,11 @@ export class NatsKvService {
     return createKvm(source ?? this.natsService.getConnection());
   }
 
-  async createBucket(
-    name: string,
-    options: Partial<KvOptions> = {},
-  ): Promise<KV> {
+  async createBucket(name: string, options: Partial<KvOptions> = {}): Promise<KV> {
     return await this.getManager().create(name, options);
   }
 
-  async openBucket(
-    name: string,
-    options: Partial<KvOptions> = {},
-  ): Promise<KV> {
+  async openBucket(name: string, options: Partial<KvOptions> = {}): Promise<KV> {
     return await this.getManager().open(name, options);
   }
 }

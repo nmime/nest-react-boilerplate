@@ -18,4 +18,4 @@ Backend startup applies Helmet, a strict validation pipe, and CORS behavior that
 
 ## Dependency compatibility
 
-Patch updates within the current Nest major are preferred. TypeScript 6 and ESLint 10 are the active compiler/linter baselines. The workspace targets Node.js `>=24 <25` while using the newest published Node type definitions available in the registry.
+Patch updates within the current Nest major are preferred. TypeScript 6 and ESLint 10 are the active compiler/linter baselines. The workspace targets Node.js `>=24 <25` and matches its Node type definitions to that runtime major.

@@ -1,16 +1,16 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   DefaultFeatureFlagTenantId,
   type FeatureFlagContext,
   type FeatureFlagSnapshot,
   type FeatureFlagValue,
-} from "@app/common-feature-flags";
-import { ResultAsync } from "neverthrow";
-import { FeatureFlagEntity } from "../entities";
+} from '@app/common-feature-flags';
+import { ResultAsync } from 'neverthrow';
+import { FeatureFlagEntity } from '../entities';
 
 export interface FeatureFlagRepositoryError {
-  code: "repository_error";
+  code: 'repository_error';
   message: string;
 }
 
@@ -39,37 +39,29 @@ export class FeatureFlagRepository {
     );
   }
 
-  listEnabled(
-    context: FeatureFlagContext = {},
-  ): ResultAsync<FeatureFlagEntity[], FeatureFlagRepositoryError> {
+  listEnabled(context: FeatureFlagContext = {}): ResultAsync<FeatureFlagEntity[], FeatureFlagRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager.find(
         FeatureFlagEntity,
         { enabled: true, tenantId: resolveTenantId(context) },
-        { orderBy: { key: "ASC" } },
+        { orderBy: { key: 'ASC' } },
       ),
       mapRepositoryError,
     );
   }
 
-  getSnapshot(
-    context: FeatureFlagContext = {},
-  ): ResultAsync<FeatureFlagSnapshot, FeatureFlagRepositoryError> {
+  getSnapshot(context: FeatureFlagContext = {}): ResultAsync<FeatureFlagSnapshot, FeatureFlagRepositoryError> {
     return this.listEnabled(context).map((flags) => ({
-      source: "postgres",
+      source: 'postgres',
       values: Object.fromEntries(flags.map((flag) => [flag.key, flag.value])),
     }));
   }
 
-  upsert(
-    input: FeatureFlagUpsertInput,
-  ): ResultAsync<FeatureFlagEntity, FeatureFlagRepositoryError> {
+  upsert(input: FeatureFlagUpsertInput): ResultAsync<FeatureFlagEntity, FeatureFlagRepositoryError> {
     return ResultAsync.fromPromise(this.persistFlag(input), mapRepositoryError);
   }
 
-  private async persistFlag(
-    input: FeatureFlagUpsertInput,
-  ): Promise<FeatureFlagEntity> {
+  private async persistFlag(input: FeatureFlagUpsertInput): Promise<FeatureFlagEntity> {
     const tenantId = input.tenantId ?? DefaultFeatureFlagTenantId;
     const existing = await this.entityManager.findOne(FeatureFlagEntity, {
       key: input.key,
@@ -98,10 +90,7 @@ export function resolveTenantId(context: FeatureFlagContext = {}): string {
 
 function mapRepositoryError(cause: unknown): FeatureFlagRepositoryError {
   return {
-    code: "repository_error",
-    message:
-      cause instanceof Error
-        ? cause.message
-        : "Feature flag repository failed.",
+    code: 'repository_error',
+    message: cause instanceof Error ? cause.message : 'Feature flag repository failed.',
   };
 }

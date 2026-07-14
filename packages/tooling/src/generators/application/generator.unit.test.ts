@@ -70,6 +70,42 @@ describe('application generator', () => {
   // -----------------------------------------------------------------------
 
   describe('backend application', () => {
+    it('creates a health-enabled Nest API and respects the configured port', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'billing-api',
+        kind: 'backend',
+        renderer: 'nest-api',
+        port: 3210,
+        skipFormat: true,
+      });
+
+      const main = tree.read('apps/backend/billing/billing-api/src/main.ts', 'utf8')!;
+      const module = tree.read('apps/backend/billing/billing-api/src/billing-api.module.ts', 'utf8')!;
+      assert.match(main, /process\.env\.PORT \?\? 3210/);
+      assert.match(module, /BaseHealthController/);
+      assert.ok(tree.exists('apps/backend/billing/billing-api/src/health.config.ts'));
+      assert.match(tree.read('apps/backend/billing/billing-api/AGENTS.md', 'utf8')!, /libs\/backend/);
+      assert.match(tree.read('apps/backend/billing/billing-api/README.md', 'utf8')!, /billing-api:build/);
+    });
+
+    it('creates an application-context worker without HTTP bootstrap', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'billing-worker',
+        kind: 'backend',
+        renderer: 'worker',
+        skipFormat: true,
+      });
+
+      const main = tree.read('apps/backend/billing/billing-worker/src/main.ts', 'utf8')!;
+      assert.match(main, /createApplicationContext/);
+      assert.equal(main.includes('bootstrapNestApi'), false);
+    });
     it('creates project.json with correct structure', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
@@ -233,6 +269,37 @@ describe('application generator', () => {
   // -----------------------------------------------------------------------
 
   describe('frontend application', () => {
+    it('creates renderer-specific Astro, Vike, and Expo applications', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, { name: 'docs', kind: 'frontend', renderer: 'astro', skipFormat: true });
+      await applicationGenerator(tree, { name: 'store', kind: 'frontend', renderer: 'vike', skipFormat: true });
+      await applicationGenerator(tree, { name: 'native', kind: 'frontend', renderer: 'expo', skipFormat: true });
+
+      assert.ok(tree.exists('apps/frontend/docs/src/pages/index.astro'));
+      const docsPackage = JSON.parse(tree.read('apps/frontend/docs/package.json', 'utf8')!);
+      assert.equal(docsPackage.devDependencies['@astrojs/check'], '0.9.9');
+      assert.equal(docsPackage.devDependencies.typescript, '6.0.3');
+      assert.ok(tree.exists('apps/frontend/store/pages/index/+Page.tsx'));
+      assert.ok(tree.exists('apps/frontend/store/store.vite.config.mts'));
+      assert.equal(tree.exists('apps/frontend/store/vite.config.mts'), false);
+      assert.ok(tree.exists('apps/frontend/native/app/_layout.tsx'));
+      assert.ok(tree.exists('apps/frontend/native/babel.config.js'));
+      assert.match(tree.read('apps/frontend/native/metro.config.js', 'utf8')!, /workspace-tsconfig-aliases/);
+      const nativePackage = JSON.parse(tree.read('apps/frontend/native/package.json', 'utf8')!);
+      assert.equal(nativePackage.main, 'expo-router/entry');
+      assert.equal(nativePackage.devDependencies['@babel/core'], '7.29.7');
+    });
+
+    it('rejects a renderer from the wrong platform', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () => applicationGenerator(tree, { name: 'bad', kind: 'frontend', renderer: 'nest-api' }),
+        /Unsupported frontend renderer/,
+      );
+    });
     it('creates project.json with correct structure', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
@@ -291,6 +358,33 @@ describe('application generator', () => {
 
       const viteConfig = tree.read('apps/frontend/my-dashboard/vite.config.mts', 'utf8')!;
       assert.ok(viteConfig.includes('root: import.meta.dirname'), "vite root must be import.meta.dirname, not '.'");
+      assert.match(viteConfig, /port: 4200/);
+      assert.match(viteConfig, /vite-plugin-istanbul/);
+
+      const project = JSON.parse(tree.read('apps/frontend/my-dashboard/project.json', 'utf8')!);
+      assert.equal(project.targets.build, undefined);
+      assert.equal(project.targets.serve, undefined);
+      assert.ok(project.targets.typecheck);
+      assert.ok(project.targets.e2e);
+
+      const main = tree.read('apps/frontend/my-dashboard/src/main.tsx', 'utf8')!;
+      assert.match(main, /UiErrorBoundary/);
+    });
+
+    it('uses the configured Vite development and preview port', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'portal',
+        kind: 'frontend',
+        renderer: 'vite',
+        port: 4317,
+        skipFormat: true,
+      });
+
+      const viteConfig = tree.read('apps/frontend/portal/vite.config.mts', 'utf8')!;
+      assert.match(viteConfig, /port: 4317/);
     });
 
     it('creates tsconfig files', async () => {

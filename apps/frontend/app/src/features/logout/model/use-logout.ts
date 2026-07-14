@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuthApiClient } from "@app/frontend-api-client";
-import { useAuthShellStore } from "@app/frontend-runtime";
-import { requestLogout } from "../api";
-import { LogoutModel } from "./logout-model";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthApiClient } from '@app/frontend-api-client';
+import { useAuthShellStore } from '@app/frontend-runtime';
+import { requestLogout } from '../api';
+import { LogoutModel } from './logout-model';
 
 export interface UseLogoutInput {
   navigate?: (to: string, options?: { replace?: boolean }) => void;
@@ -20,10 +20,7 @@ export interface UseLogoutResult {
  * auth api-client, and auth shell store. The api-client is read through a live
  * ref so a refreshed bearer token is always attached to the logout request.
  */
-export function useLogout({
-  navigate,
-  redirectTo = "/auth",
-}: UseLogoutInput = {}): UseLogoutResult {
+export function useLogout({ navigate, redirectTo = '/auth' }: UseLogoutInput = {}): UseLogoutResult {
   const queryClient = useQueryClient();
   const authClient = useAuthApiClient();
   const authStore = useAuthShellStore();

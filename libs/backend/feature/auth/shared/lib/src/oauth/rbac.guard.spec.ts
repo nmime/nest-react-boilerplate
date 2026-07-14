@@ -1,13 +1,10 @@
-import { ExecutionContext, ForbiddenException } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { describe, expect, it } from "vitest";
-import { RequiredPermissionsMetadataKey } from "./access-control.decorators";
-import type {
-  AuthenticatedPrincipal,
-  AuthenticatedRequest,
-} from "./access-control.types";
-import { RbacGuard, type PermissionEvaluationResult } from "./rbac.guard";
-import { DefaultAuthTenantId } from "./tenant-context";
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { describe, expect, it } from 'vitest';
+import { RequiredPermissionsMetadataKey } from './access-control.decorators';
+import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
+import { RbacGuard, type PermissionEvaluationResult } from './rbac.guard';
+import { DefaultAuthTenantId } from './tenant-context';
 
 function createContext(
   request: AuthenticatedRequest,
@@ -19,7 +16,7 @@ function createContext(
     getArgs: () => [request],
     getClass: () => controller,
     getHandler: () => handler,
-    getType: () => "http",
+    getType: () => 'http',
     switchToHttp: () => ({ getRequest: () => request }),
     switchToRpc: () => ({
       getContext: () => undefined,
@@ -34,13 +31,11 @@ function createContext(
   return context as ExecutionContext;
 }
 
-function createPrincipal(
-  partial: Partial<AuthenticatedPrincipal>,
-): AuthenticatedPrincipal {
+function createPrincipal(partial: Partial<AuthenticatedPrincipal>): AuthenticatedPrincipal {
   return {
     permissions: [],
     roles: [],
-    subject: "user-id",
+    subject: 'user-id',
     tenantId: DefaultAuthTenantId,
     ...partial,
   };
@@ -62,33 +57,25 @@ class MetadataRequiredGuard extends RbacGuard {
   }
 }
 
-describe("RbacGuard domain extension points", () => {
-  it("constructs with a default reflector and admits an authenticated principal", () => {
+describe('RbacGuard domain extension points', () => {
+  it('constructs with a default reflector and admits an authenticated principal', () => {
     const guard = new RbacGuard();
 
-    expect(
-      guard.canActivate(createContext({ user: createPrincipal({}) })),
-    ).toBe(true);
+    expect(guard.canActivate(createContext({ user: createPrincipal({}) }))).toBe(true);
   });
 
-  it("rejects when domain permission metadata is required but absent", () => {
+  it('rejects when domain permission metadata is required but absent', () => {
     const guard = new MetadataRequiredGuard(new Reflector());
 
-    expect(() =>
-      guard.canActivate(createContext({ user: createPrincipal({}) })),
-    ).toThrow(ForbiddenException);
-    expect(() =>
-      guard.canActivate(createContext({ user: createPrincipal({}) })),
-    ).toThrow("Access permission metadata is missing.");
+    expect(() => guard.canActivate(createContext({ user: createPrincipal({}) }))).toThrow(ForbiddenException);
+    expect(() => guard.canActivate(createContext({ user: createPrincipal({}) }))).toThrow(
+      'Access permission metadata is missing.',
+    );
   });
 
-  it("honors a domain permission grant over an empty generic permission set", () => {
+  it('honors a domain permission grant over an empty generic permission set', () => {
     const handler = () => undefined;
-    Reflect.defineMetadata(
-      RequiredPermissionsMetadataKey,
-      ["domain:special"],
-      handler,
-    );
+    Reflect.defineMetadata(RequiredPermissionsMetadataKey, ['domain:special'], handler);
 
     expect(
       new DomainPermissionGuard(true).canActivate(
@@ -97,20 +84,13 @@ describe("RbacGuard domain extension points", () => {
     ).toBe(true);
   });
 
-  it("honors a domain permission denial even when the generic permission is present", () => {
+  it('honors a domain permission denial even when the generic permission is present', () => {
     const handler = () => undefined;
-    Reflect.defineMetadata(
-      RequiredPermissionsMetadataKey,
-      ["domain:special"],
-      handler,
-    );
+    Reflect.defineMetadata(RequiredPermissionsMetadataKey, ['domain:special'], handler);
 
     expect(() =>
       new DomainPermissionGuard(false).canActivate(
-        createContext(
-          { user: createPrincipal({ permissions: ["domain:special"] }) },
-          handler,
-        ),
+        createContext({ user: createPrincipal({ permissions: ['domain:special'] }) }, handler),
       ),
     ).toThrow(ForbiddenException);
   });

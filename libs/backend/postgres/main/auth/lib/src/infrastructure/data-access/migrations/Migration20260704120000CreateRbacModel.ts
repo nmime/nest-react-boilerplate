@@ -1,11 +1,7 @@
-import { Migration } from "@mikro-orm/migrations";
-import {
-  defaultRolePermissions,
-  permissionCatalog,
-  roleKeys,
-} from "@app/common-authz";
+import { Migration } from '@mikro-orm/migrations';
+import { defaultRolePermissions, permissionCatalog, roleKeys } from '@app/common-authz';
 
-const DefaultTenantId = "00000000-0000-0000-0000-000000000000";
+const DefaultTenantId = '00000000-0000-0000-0000-000000000000';
 
 // Wrap a value as a single-quoted SQL string literal, doubling embedded quotes
 // so catalog descriptions such as "signed-in user's own profile" stay valid.
@@ -13,8 +9,7 @@ const sqlText = (value: string): string => `'${value.replace(/'/g, "''")}'`;
 
 // Human-friendly default label derived from the role key (e.g. "admin" ->
 // "Admin"); the catalog only ships keys, so we do not re-hardcode label data.
-const roleLabel = (key: string): string =>
-  key.length > 0 ? `${key.charAt(0).toUpperCase()}${key.slice(1)}` : key;
+const roleLabel = (key: string): string => (key.length > 0 ? `${key.charAt(0).toUpperCase()}${key.slice(1)}` : key);
 
 export class Migration20260704120000CreateRbacModel extends Migration {
   override up(): void {
@@ -75,12 +70,8 @@ export class Migration20260704120000CreateRbacModel extends Migration {
         constraint "fk__auth_user_roles__role_id" foreign key ("role_id") references "auth_roles" ("id") on delete cascade
       );
     `);
-    this.addSql(
-      'create index if not exists "ix__auth_user_roles__role_id" on "auth_user_roles" ("role_id");',
-    );
-    this.addSql(
-      'create index if not exists "ix__auth_user_roles__tenant_id" on "auth_user_roles" ("tenant_id");',
-    );
+    this.addSql('create index if not exists "ix__auth_user_roles__role_id" on "auth_user_roles" ("role_id");');
+    this.addSql('create index if not exists "ix__auth_user_roles__tenant_id" on "auth_user_roles" ("tenant_id");');
 
     // Seed the global permission catalog straight from @app/common-authz so this
     // table never drifts from the shared source of truth.
@@ -89,7 +80,7 @@ export class Migration20260704120000CreateRbacModel extends Migration {
         (permission) =>
           `(gen_random_uuid(), ${sqlText(permission.key)}, ${sqlText(permission.resource)}, ${sqlText(permission.action)}, ${sqlText(permission.description)}, now())`,
       )
-      .join(", ");
+      .join(', ');
     this.addSql(
       `insert into "auth_permissions" ("id", "key", "resource", "action", "description", "created_at") values ${permissionValues} on conflict ("key") do nothing;`,
     );
@@ -100,7 +91,7 @@ export class Migration20260704120000CreateRbacModel extends Migration {
         (key) =>
           `(gen_random_uuid(), ${sqlText(DefaultTenantId)}, ${sqlText(key)}, ${sqlText(roleLabel(key))}, '', true, now(), now())`,
       )
-      .join(", ");
+      .join(', ');
     this.addSql(
       `insert into "auth_roles" ("id", "tenant_id", "key", "label", "description", "is_system", "created_at", "updated_at") values ${roleValues} on conflict ("tenant_id", "key") do nothing;`,
     );
@@ -108,9 +99,7 @@ export class Migration20260704120000CreateRbacModel extends Migration {
     // Seed role -> permission grants from the shared default matrix, joining on
     // keys so the concrete row ids stay decoupled from this migration.
     for (const key of roleKeys) {
-      const permissionList = defaultRolePermissions[key]
-        .map((permissionKey) => sqlText(permissionKey))
-        .join(", ");
+      const permissionList = defaultRolePermissions[key].map((permissionKey) => sqlText(permissionKey)).join(', ');
       this.addSql(
         `insert into "auth_role_permissions" ("role_id", "permission_id", "created_at") ` +
           `select r."id", p."id", now() from "auth_roles" r ` +

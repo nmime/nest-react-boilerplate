@@ -1,5 +1,5 @@
-import { Global, Module } from "@nestjs/common";
-import { NatsConfigService } from "./nats.config.service";
+import { Global, Module } from '@nestjs/common';
+import { NatsConfigService } from './nats.config.service';
 
 @Global()
 @Module({

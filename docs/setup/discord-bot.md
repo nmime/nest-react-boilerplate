@@ -21,17 +21,18 @@
 ## 4. Intents
 
 Enable these in **Bot** → **Privileged Gateway Intents**:
+
 - Message Content
 - Server Members
 
 ## 5. Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| DISCORD_BOT_TOKEN | Yes | Bot authentication token |
-| DISCORD_CLIENT_ID | Yes | OAuth2 client ID |
-| DISCORD_CLIENT_SECRET | Yes | OAuth2 client secret |
-| DISCORD_REDIRECT_URI | Yes | OAuth2 callback URL |
+| Variable              | Required | Description              |
+| --------------------- | -------- | ------------------------ |
+| DISCORD_BOT_TOKEN     | Yes      | Bot authentication token |
+| DISCORD_CLIENT_ID     | Yes      | OAuth2 client ID         |
+| DISCORD_CLIENT_SECRET | Yes      | OAuth2 client secret     |
+| DISCORD_REDIRECT_URI  | Yes      | OAuth2 callback URL      |
 
 ## 6. Invite the Bot
 
@@ -39,10 +40,10 @@ URL: `https://discord.com/api/oauth2/authorize?client_id=<CLIENT_ID>&permissions
 
 ## 7. Webhook vs Polling
 
-| Mode | Use Case | Config |
-|------|----------|--------|
-| polling | Local development | `TELEGRAM_BOT_MODE=polling` |
-| webhook | Production | Set up Discord webhook endpoint, `TELEGRAM_BOT_MODE=webhook` |
+| Mode    | Use Case          | Config                                                       |
+| ------- | ----------------- | ------------------------------------------------------------ |
+| polling | Local development | `TELEGRAM_BOT_MODE=polling`                                  |
+| webhook | Production        | Set up Discord webhook endpoint, `TELEGRAM_BOT_MODE=webhook` |
 
 ## 8. Production Deployment
 

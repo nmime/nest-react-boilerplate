@@ -4,7 +4,7 @@ Common issues and recovery procedures for the NRB setup engine, Nx builds, and t
 
 ## Setup engine issues
 
-### `nrb setup` fails with configuration validation error
+### `pnpm nrb setup` fails with configuration validation error
 
 ```
 Configuration validation failed:
@@ -16,12 +16,12 @@ Configuration validation failed:
 **Fix**: The setup engine auto-enables required capabilities. If running non-interactively, add the missing capabilities:
 
 ```bash
-nrb setup --preset fullstack --capability authz --non-interactive
+pnpm nrb setup --preset fullstack --capability authz --non-interactive
 ```
 
 Or use a preset that includes all required dependencies.
 
-### `nrb setup` refuses to overwrite existing files
+### `pnpm nrb setup` refuses to overwrite existing files
 
 ```
 Refusing to overwrite existing files or aliases. Re-run with --force if intentional:
@@ -33,7 +33,7 @@ Refusing to overwrite existing files or aliases. Re-run with --force if intentio
 **Fix**: Review the conflict, then use `--force`:
 
 ```bash
-nrb setup --force
+pnpm nrb setup --force
 ```
 
 Or manually edit the file and delete `.nrb/state.json` to force a fresh plan.
@@ -50,15 +50,15 @@ Or manually edit the file and delete `.nrb/state.json` to force a fresh plan.
 
 ```bash
 rm -rf .nrb/state.json
-nrb setup --dry-run    # review the plan
-nrb setup              # apply
+pnpm nrb setup --dry-run    # review the plan
+pnpm nrb setup              # apply
 ```
 
-### `nrb doctor` shows failed checks
+### `pnpm nrb doctor` shows failed checks
 
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `node-version`    | `Node.js v16.x.x — minimum 24.x required`              | `nvm use` or install Node.js >=24.                                          |
+| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install Node.js 26.                                            |
 | `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |
@@ -104,7 +104,7 @@ error TS2307: Cannot find module '@app/backend-feature-invoices-main'
 **Fix**: The path alias was generated but `tsconfig.base.json` wasn't updated correctly. Run:
 
 ```bash
-nrb add feature invoices --force
+pnpm nrb add feature invoices --force
 ```
 
 Or manually add the alias to `tsconfig.base.json`:
@@ -155,16 +155,16 @@ The setup engine does not check Git status. If you have uncommitted changes that
 ```bash
 # Option 1: stash changes
 git stash
-nrb setup
+pnpm nrb setup
 git stash pop
 
 # Option 2: commit changes first
 git add .
 git commit -m "WIP: save current state"
-nrb setup
+pnpm nrb setup
 
 # Option 3: force overwrite
-nrb setup --force
+pnpm nrb setup --force
 ```
 
 ### Failed rollback from apply

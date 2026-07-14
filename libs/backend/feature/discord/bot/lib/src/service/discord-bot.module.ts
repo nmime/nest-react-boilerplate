@@ -1,17 +1,12 @@
-import {
-  Module,
-  type DynamicModule,
-  type ModuleMetadata,
-  type Provider,
-} from "@nestjs/common";
-import { DiscordAccountApplicationPort } from "../type/discord-account.port";
-import { DiscordAccountService } from "./discord-account.service";
-import { DiscordCommandRegistrationService } from "./discord-command-registration.service";
-import { DiscordBotConfig } from "./discord-config";
-import { DiscordCustomIdCodec } from "./discord-custom-id.codec";
-import { DiscordInteractionRouter } from "../handler/discord-interaction-router";
-import { DiscordInteractionSecurity } from "../discord-interaction-security";
-import { DiscordNavigationStateService } from "./discord-navigation-state.service";
+import { Module, type DynamicModule, type ModuleMetadata, type Provider } from '@nestjs/common';
+import { DiscordAccountApplicationPort } from '../type/discord-account.port';
+import { DiscordAccountService } from './discord-account.service';
+import { DiscordCommandRegistrationService } from './discord-command-registration.service';
+import { DiscordBotConfig } from './discord-config';
+import { DiscordCustomIdCodec } from './discord-custom-id.codec';
+import { DiscordInteractionRouter } from '../handler/discord-interaction-router';
+import { DiscordInteractionSecurity } from '../discord-interaction-security';
+import { DiscordNavigationStateService } from './discord-navigation-state.service';
 
 @Module({
   providers: [
@@ -54,16 +49,14 @@ export class DiscordBotModule {
    */
   static forRoot(
     options: {
-      imports?: NonNullable<ModuleMetadata["imports"]>;
+      imports?: NonNullable<ModuleMetadata['imports']>;
       externalAuthProvider?: Provider;
     } = {},
   ): DynamicModule {
     return {
       module: DiscordBotModule,
       imports: options.imports ?? [],
-      providers: options.externalAuthProvider
-        ? [options.externalAuthProvider]
-        : [],
+      providers: options.externalAuthProvider ? [options.externalAuthProvider] : [],
     };
   }
 }

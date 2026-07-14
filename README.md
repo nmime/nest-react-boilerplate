@@ -7,6 +7,7 @@ A production-oriented Nx monorepo starter for teams building React frontends, Ex
 ```mermaid
 flowchart TB
   subgraph Product["Product surfaces"]
+    Starter["starter-app neutral React + Vite shell"]
     Admin["admin-app React + Vite"]
     User["user-app React + Vite"]
     Landing["landing-app Astro + React islands"]
@@ -36,6 +37,8 @@ flowchart TB
   Data[(PostgreSQL)]
   Ops["Docker, GitHub Actions, Helm, operations docs"]
 
+  Starter --> UI
+  Starter --> Runtime
   Admin --> UI
   User --> UI
   Landing --> UI
@@ -66,56 +69,57 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 ## Quick links
 
-| Topic | Doc |
-|-------|-----|
-| Getting started | [Quick Start](docs/quick-start.md) |
-| Command reference | [Command Matrix](docs/command-matrix.md) |
-| System architecture | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md) |
-| Environment config | [Environment Variables](docs/environment-variables.md) |
-| Monitoring & alerting | [Monitoring](docs/monitoring.md) |
-| Supply chain & SLSA | [Supply Chain Security](docs/supply-chain.md) |
-| API contracts | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md) |
-| Database | [Migrations](docs/database-migrations.md) |
-| Deployment | [Production Deploy](docs/production-deploy.md) · [Helm](.helm/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
-| Testing | [Testing](docs/testing.md) |
-| Operations | [Runbooks](docs/runbooks/README.md) |
-| ADRs | [Architecture Decision Records](docs/adr/README.md) |
+| Topic                 | Doc                                                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Getting started       | [Quick Start](docs/quick-start.md)                                                                                           |
+| Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                     |
+| System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                             |
+| Environment config    | [Environment Variables](docs/environment-variables.md)                                                                       |
+| Monitoring & alerting | [Monitoring](docs/monitoring.md)                                                                                             |
+| Supply chain & SLSA   | [Supply Chain Security](docs/supply-chain.md)                                                                                |
+| API contracts         | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md)                                           |
+| Database              | [Migrations](docs/database-migrations.md)                                                                                    |
+| Deployment            | [Production Deploy](docs/production-deploy.md) · [Helm](.helm/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
+| Testing               | [Testing](docs/testing.md)                                                                                                   |
+| Operations            | [Runbooks](docs/runbooks/README.md)                                                                                          |
+| ADRs                  | [Architecture Decision Records](docs/adr/README.md)                                                                          |
 
 ## Integrations
 
-| Integration | Status | Notes |
-|-------------|--------|-------|
-| PostgreSQL | ✅ Wired | Primary database via MikroORM; migrations committed |
-| Redis | ✅ Wired | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`) |
-| NATS | ✅ Wired | Async messaging backbone for bot workers and event-driven features |
-| Telegram Bot | ✅ Wired | Webhook + polling modes, Mini App / Open App support, social auth |
-| Discord Bot | ✅ Wired | Slash commands, interactions endpoint, OAuth 2.0 social auth |
-| S3 / MinIO | ✅ Wired | Object storage; uses `@aws-sdk/client-s3`, MinIO in local Compose |
-| SendGrid | 📋 Contract-only | Email service SDK wired; requires `SENDGRID_API_KEY` to activate |
-| PostHog | 📋 Contract-only | Analytics client configured; requires `POSTHOG_API_KEY` to activate |
-| OpenTelemetry | ✅ Wired | OTLP exporter for traces, metrics, logs; disabled by default (`OTEL_ENABLED=false`) |
-| Prometheus | ✅ Wired | Each backend exposes `/metrics`; see [Monitoring](docs/monitoring.md) for scrape config |
-| OAuth (generic) | 📋 Contract-only | Better Auth social provider slot; disabled until provider code is added |
+| Integration     | Status           | Notes                                                                                   |
+| --------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| PostgreSQL      | ✅ Wired         | Primary database via MikroORM; migrations committed                                     |
+| Redis           | ✅ Wired         | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`)       |
+| NATS            | ✅ Wired         | Async messaging backbone for bot workers and event-driven features                      |
+| Telegram Bot    | ✅ Wired         | Webhook + polling modes, Mini App / Open App support, social auth                       |
+| Discord Bot     | ✅ Wired         | Slash commands, interactions endpoint, OAuth 2.0 social auth                            |
+| S3 / MinIO      | ✅ Wired         | Object storage; uses `@aws-sdk/client-s3`, MinIO in local Compose                       |
+| SendGrid        | 📋 Contract-only | Email service SDK wired; requires `SENDGRID_API_KEY` to activate                        |
+| PostHog         | 📋 Contract-only | Analytics client configured; requires `POSTHOG_API_KEY` to activate                     |
+| OpenTelemetry   | ✅ Wired         | OTLP exporter for traces, metrics, logs; disabled by default (`OTEL_ENABLED=false`)     |
+| Prometheus      | ✅ Wired         | Each backend exposes `/metrics`; see [Monitoring](docs/monitoring.md) for scrape config |
+| OAuth (generic) | 📋 Contract-only | Better Auth social provider slot; disabled until provider code is added                 |
 
 **Wired** = runtime code exists and is exercised by tests. **Contract-only** = env vars and config slots exist; activate by providing credentials and flipping the feature flag.
 
 ## Tech stack
 
-| Area          | Choices                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| Workspace     | Nx, pnpm `11.11.0`, Node.js `>=24 <25`, TypeScript                                          |
-| Frontend      | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook         |
-| Backend       | NestJS on Fastify, CLS request context, Helmet, validation pipes, health/readiness endpoints |
-| Error handling| RFC 9457 (`application/problem+json`), static exception definitions, zero message leakage    |
-| Persistence   | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                  |
-| API contracts | Nest Swagger/OpenAPI JSON, `openapi-typescript`, `openapi-fetch`, typed React Query helpers |
-| Quality       | ESLint, Prettier, Vitest, Playwright, Storybook tests, repo tooling checks, GitHub Actions  |
-| Delivery      | Docker Compose, Dockerfiles, Kubernetes/Helm guidance, production runbooks                  |
+| Area           | Choices                                                                                      |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| Workspace      | Nx, pnpm `11.11.0`, Node.js `>=24 <25`, TypeScript                                           |
+| Frontend       | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook          |
+| Backend        | NestJS on Fastify, CLS request context, Helmet, validation pipes, health/readiness endpoints |
+| Error handling | RFC 9457 (`application/problem+json`), static exception definitions, zero message leakage    |
+| Persistence    | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                   |
+| API contracts  | Nest Swagger/OpenAPI JSON, `openapi-typescript`, `openapi-fetch`, typed React Query helpers  |
+| Quality        | ESLint, Prettier, Vitest, Playwright, Storybook tests, repo tooling checks, GitHub Actions   |
+| Delivery       | Docker Compose, Dockerfiles, Kubernetes/Helm guidance, production runbooks                   |
 
 ## Repository map
 
 | Path                                          | Purpose                                                                     |
 | --------------------------------------------- | --------------------------------------------------------------------------- |
+| `apps/frontend/starter-app`                   | Neutral Vite product shell used by the starter preset.                      |
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
 | `apps/frontend/app`                           | User-facing React app shell.                                                |
 | `apps/frontend/landing`                       | Public Astro landing app with React islands.                                |
@@ -164,7 +168,8 @@ pnpm run dev
 
 Default local services:
 
-- Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. `pnpm run dev:fullstack` starts the three core APIs plus the admin/user/landing dev frontends; run `pnpm exec nx serve site-app` for Vike and `pnpm run dev:mobile` for Expo.
+- Neutral start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts `starter-app`, `user-app-api`, and `auth-app-api`. `starter-app` uses Vite on port `4204` and intentionally contains no reference-product page composition. Use `pnpm run dev:all` only when you intentionally need every serve target.
+- Reference frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. Select them explicitly through setup when their example flows are useful.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 

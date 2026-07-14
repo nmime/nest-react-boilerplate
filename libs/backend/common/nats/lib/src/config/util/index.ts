@@ -1,1 +1,1 @@
-export * from "./parse-servers-config.util";
+export * from './parse-servers-config.util';

@@ -24,6 +24,14 @@
       "default": "user-app",
       "x-priority": "important"
     },
+    "migrationTimestamp": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9]{14}$" },
+        { "type": "integer", "minimum": 10000000000000, "maximum": 99999999999999 }
+      ],
+      "description": "Optional deterministic migration timestamp in YYYYMMDDHHmmss form",
+      "x-priority": "optional"
+    },
     "force": {
       "type": "boolean",
       "description": "Overwrite existing files without prompting",

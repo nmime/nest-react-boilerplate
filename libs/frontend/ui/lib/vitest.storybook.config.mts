@@ -1,10 +1,10 @@
 /// <reference types="vitest" />
-import path from "node:path";
-import { workspaceTsconfigAliases } from "../../../../config/vite/workspace-tsconfig-aliases.mjs";
+import path from 'node:path';
+import { workspaceTsconfigAliases } from '../../../../config/vite/workspace-tsconfig-aliases.mjs';
 
-import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
-import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   root: import.meta.dirname,
@@ -18,17 +18,17 @@ export default defineConfig({
         extends: true,
         plugins: [
           storybookTest({
-            configDir: path.join(import.meta.dirname, ".storybook"),
+            configDir: path.join(import.meta.dirname, '.storybook'),
           }),
         ],
         test: {
           browser: {
             enabled: true,
             headless: true,
-            instances: [{ browser: "chromium" }],
+            instances: [{ browser: 'chromium' }],
             provider: playwright({}),
           },
-          name: "storybook",
+          name: 'storybook',
         },
       },
     ],

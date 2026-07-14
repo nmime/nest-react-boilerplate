@@ -108,7 +108,11 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'Support Cases', skipFormat: true });
+      await featureGenerator(tree, {
+        name: 'Support Cases',
+        migrationTimestamp: '20260713000000',
+        skipFormat: true,
+      });
 
       // Shared library
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/src/index.ts'));
@@ -138,9 +142,13 @@ describe('feature generator', () => {
       );
       assert.ok(
         tree.exists(
-          'libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/migrations/Migration00000000000000CreateSupportCases.ts',
+          'libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/migrations/Migration20260713000000CreateSupportCases.ts',
         ),
       );
+      assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/src/support-cases-postgres.module.ts'));
+      assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
+      assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
+      assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));
     });
 
     it('creates frontend files', async () => {
@@ -150,16 +158,13 @@ describe('feature generator', () => {
       const { featureGenerator } = await import('./generator.js');
       await featureGenerator(tree, { name: 'invoices', skipFormat: true });
 
-      // API client
-      assert.ok(tree.exists('libs/frontend/api-client/lib/src/features/invoices.ts'));
-      const client = tree.read('libs/frontend/api-client/lib/src/features/invoices.ts', 'utf8')!;
-      assert.ok(client.includes('InvoicesApiClient'));
-      assert.ok(client.includes('createInvoicesApiClient'));
-
-      // Frontend page
-      assert.ok(tree.exists('apps/frontend/app/src/app/features/invoices/InvoicesPage.tsx'));
-      const page = tree.read('apps/frontend/app/src/app/features/invoices/InvoicesPage.tsx', 'utf8')!;
+      assert.equal(tree.exists('libs/frontend/api-client/lib/src/features/invoices.ts'), false);
+      const pagePath = 'apps/frontend/app/src/pages/invoices/ui/InvoicesPage.tsx';
+      assert.ok(tree.exists(pagePath));
+      const page = tree.read(pagePath, 'utf8')!;
       assert.ok(page.includes('InvoicesPage'));
+      assert.equal(page.includes('@app/backend-'), false);
+      assert.ok(tree.exists('docs/features/invoices/scaffold.md'));
     });
 
     it('updates tsconfig.base.json path aliases', async () => {
@@ -210,6 +215,9 @@ describe('feature generator', () => {
       assert.ok(controller.includes('@Controller("invoices")'));
       assert.ok(controller.includes('@app/backend-common-swagger'));
       assert.ok(controller.includes('@app/backend-common-response'));
+      assert.ok(controller.includes('SessionAuthGuard'));
+      assert.ok(controller.includes('RequirePermissions'));
+      assert.ok(controller.includes('@Length(1, 255)'));
     });
 
     it('generates correct content in service file', async () => {
@@ -222,6 +230,7 @@ describe('feature generator', () => {
       const service = tree.read('libs/backend/feature/invoices/main/lib/src/invoices.service.ts', 'utf8')!;
       assert.ok(service.includes('InvoicesService'));
       assert.ok(service.includes('@Injectable()'));
+      assert.ok(service.includes('InvoicesRepository'));
     });
 
     it('generates correct entity schema', async () => {
@@ -253,6 +262,39 @@ describe('feature generator', () => {
       const sharedPj = JSON.parse(tree.read('libs/backend/feature/invoices/shared/lib/project.json', 'utf8')!);
       assert.equal(sharedPj.name, '@app/backend-feature-invoices-shared');
       assert.ok(sharedPj.tags.includes('type:feature-shared'));
+    });
+  });
+
+  describe('application wiring', () => {
+    it('targets the selected frontend root and wires the API module', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      tree.write(
+        'apps/backend/user/user-app-api/project.json',
+        JSON.stringify({ name: 'user-app-api', root: 'apps/backend/user/user-app-api', tags: ['type:backend-app'] }),
+      );
+      tree.write(
+        'apps/backend/user/user-app-api/src/user-app-api.module.ts',
+        'import { Module } from "@nestjs/common";\n\n@Module({ imports: [], controllers: [], providers: [] })\nexport class UserAppApiModule {}\n',
+      );
+      tree.write(
+        'apps/frontend/admin/project.json',
+        JSON.stringify({ name: 'admin-app', root: 'apps/frontend/admin', tags: ['type:frontend-app'] }),
+      );
+
+      const { featureGenerator } = await import('./generator.js');
+      await featureGenerator(tree, {
+        name: 'audit-log',
+        apiApp: 'user-app-api',
+        frontendApp: 'admin-app',
+        migrationTimestamp: '20260713010101',
+        skipFormat: true,
+      });
+
+      assert.ok(tree.exists('apps/frontend/admin/src/pages/audit-log/ui/AuditLogPage.tsx'));
+      const module = tree.read('apps/backend/user/user-app-api/src/user-app-api.module.ts', 'utf8')!;
+      assert.match(module, /import \{ AuditLogModule \} from "@app\/backend-feature-audit-log-main"/);
+      assert.match(module, /imports: \[AuditLogModule,/);
     });
   });
 

@@ -1,25 +1,29 @@
-import { requestContext } from './request-context';
+import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 
 function createRequestLoggingMiddleware(appName: string) {
   return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
-    const startedAt = Date.now();
-    // Read from CLS — same requestId as filters, services, everything
-    const requestId = requestContext.getRequestId();
+    const incomingRequestId = normalizeRequestId(request.headers?.['x-request-id']);
 
-    response.on('finish', () => {
-      const logEntry = {
-        appName,
-        durationMs: Date.now() - startedAt,
-        method: request.method,
-        /* v8 ignore next -- some adapters expose only one URL-like request field. */
-        path: request.originalUrl ?? request.url ?? request.path,
-        requestId,
-        status: response.statusCode,
-      };
-      process.stdout.write(`${JSON.stringify(logEntry)}\n`);
-    });
+    requestContext.run(() => {
+      const startedAt = Date.now();
+      const requestId = requestContext.getRequestId();
+      response.setHeader?.('x-request-id', requestId ?? '');
 
-    next();
+      response.on('finish', () => {
+        const logEntry = {
+          appName,
+          durationMs: Date.now() - startedAt,
+          method: request.method,
+          /* v8 ignore next -- some adapters expose only one URL-like request field. */
+          path: request.originalUrl ?? request.url ?? request.path,
+          requestId,
+          status: response.statusCode,
+        };
+        process.stdout.write(`${JSON.stringify(logEntry)}\n`);
+      });
+
+      next();
+    }, incomingRequestId);
   };
 }
 
@@ -36,6 +40,7 @@ interface RequestLike {
 interface ResponseLike {
   statusCode?: number;
   on: (event: 'finish', listener: () => void) => void;
+  setHeader?: (name: string, value: string) => unknown;
 }
 
 interface NextFunctionLike {

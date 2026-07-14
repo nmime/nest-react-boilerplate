@@ -1,14 +1,7 @@
-import type { TranslationKey, TranslationParams } from "@app/frontend-runtime";
-import type { ReactNode, SubmitEvent } from "react";
-import {
-  UiAlert,
-  UiButton,
-  UiCard,
-  UiForm,
-  UiStatusPill,
-  UiTextField,
-} from "../../../shared/ui";
-import { AuthMode } from "../model";
+import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
+import type { ReactNode, SubmitEvent } from 'react';
+import { UiAlert, UiButton, UiCard, UiForm, UiStatusPill, UiTextField } from '../../../shared/ui';
+import { AuthMode } from '../model';
 
 export interface AuthCardsProps {
   isLoginPending: boolean;
@@ -29,14 +22,11 @@ export function AuthCards({
 }: Readonly<AuthCardsProps>) {
   return (
     <>
-      <UiCard
-        className="xr-auth-card xr-surface-glow"
-        title={t("user.login.title")}
-      >
+      <UiCard className="xr-auth-card xr-surface-glow" title={t('user.login.title')}>
         <div className="xr-card-stack">
           <UiAlert className="xr-card-note" tone="info">
-            <span>{t("user.description")}</span>
-            <UiStatusPill label={t("user.form.login")} tone="success" />
+            <span>{t('user.description')}</span>
+            <UiStatusPill label={t('user.form.login')} tone="success" />
           </UiAlert>
         </div>
         <UiForm
@@ -47,47 +37,39 @@ export function AuthCards({
           }}
         >
           <UiTextField
-            aria-label={t("user.form.loginEmailLabel")}
+            aria-label={t('user.form.loginEmailLabel')}
             autoComplete="email"
-            label={t("user.form.email")}
+            label={t('user.form.email')}
             name="email"
-            placeholder={t("user.form.emailPlaceholder")}
+            placeholder={t('user.form.emailPlaceholder')}
             required
             type="email"
           />
           <UiTextField
-            aria-label={t("user.form.loginPasswordLabel")}
+            aria-label={t('user.form.loginPasswordLabel')}
             autoComplete="current-password"
-            label={t("user.form.password")}
+            label={t('user.form.password')}
             minLength={8}
             name="password"
-            placeholder={t("user.form.loginPasswordPlaceholder")}
+            placeholder={t('user.form.loginPasswordPlaceholder')}
             required
             type="password"
           />
-          <UiButton
-            className="xr-submit-button"
-            isLoading={isLoginPending}
-            loadingLabel={loadingLabel}
-            type="submit"
-          >
-            {t("user.form.login")}
+          <UiButton className="xr-submit-button" isLoading={isLoginPending} loadingLabel={loadingLabel} type="submit">
+            {t('user.form.login')}
           </UiButton>
         </UiForm>
       </UiCard>
       {socialAuthSlot}
-      <UiCard
-        className="xr-auth-card xr-surface-glow"
-        title={t("user.register.title")}
-      >
+      <UiCard className="xr-auth-card xr-surface-glow" title={t('user.register.title')}>
         <div className="xr-card-stack">
           <UiAlert className="xr-card-note" tone="info">
             <span>
-              {t("auth.social.createAccount.prompt", {
-                provider: t("auth.provider.telegram"),
+              {t('auth.social.createAccount.prompt', {
+                provider: t('auth.provider.telegram'),
               })}
             </span>
-            <UiStatusPill label={t("user.form.register")} tone="info" />
+            <UiStatusPill label={t('user.form.register')} tone="info" />
           </UiAlert>
         </div>
         <UiForm
@@ -98,27 +80,27 @@ export function AuthCards({
           }}
         >
           <UiTextField
-            aria-label={t("user.form.registerDisplayNameLabel")}
-            label={t("user.form.displayName")}
+            aria-label={t('user.form.registerDisplayNameLabel')}
+            label={t('user.form.displayName')}
             name="displayName"
-            placeholder={t("user.form.displayName")}
+            placeholder={t('user.form.displayName')}
           />
           <UiTextField
-            aria-label={t("user.form.registerEmailLabel")}
+            aria-label={t('user.form.registerEmailLabel')}
             autoComplete="email"
-            label={t("user.form.email")}
+            label={t('user.form.email')}
             name="email"
-            placeholder={t("user.form.registerEmailPlaceholder")}
+            placeholder={t('user.form.registerEmailPlaceholder')}
             required
             type="email"
           />
           <UiTextField
-            aria-label={t("user.form.registerPasswordLabel")}
+            aria-label={t('user.form.registerPasswordLabel')}
             autoComplete="new-password"
-            label={t("user.form.password")}
+            label={t('user.form.password')}
             minLength={8}
             name="password"
-            placeholder={t("user.form.registerPasswordPlaceholder")}
+            placeholder={t('user.form.registerPasswordPlaceholder')}
             required
             type="password"
           />
@@ -128,7 +110,7 @@ export function AuthCards({
             loadingLabel={loadingLabel}
             type="submit"
           >
-            {t("user.form.register")}
+            {t('user.form.register')}
           </UiButton>
         </UiForm>
       </UiCard>

@@ -1,22 +1,22 @@
-import { EntityManager, LockMode } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
+import { EntityManager, LockMode } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
 import {
   AuthRefreshTokenEntity,
   AuthUserTokenEntity,
   DefaultAuthTenantId,
   type AuthUserTokenPurpose,
-} from "../entities";
-import { mapAuthTokenRepositoryError } from "./mapper/auth-token-error.mapper";
+} from '../entities';
+import { mapAuthTokenRepositoryError } from './mapper/auth-token-error.mapper';
 import type {
   AuthTokenCleanupResult,
   AuthTokenRepositoryError,
   PersistAuthRefreshTokenInput,
   PersistAuthUserTokenInput,
   RotateAuthRefreshTokenInput,
-} from "./type/auth-token.type";
+} from './type/auth-token.type';
 
-export * from "./type/auth-token.type";
+export * from './type/auth-token.type';
 
 @Injectable()
 export class AuthTokenRepository {
@@ -28,10 +28,7 @@ export class AuthTokenRepository {
   createRefreshToken(
     input: PersistAuthRefreshTokenInput,
   ): ResultAsync<AuthRefreshTokenEntity, AuthTokenRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistRefreshToken(input),
-      mapAuthTokenRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.persistRefreshToken(input), mapAuthTokenRepositoryError);
   }
 
   findUsableRefreshToken(
@@ -53,10 +50,7 @@ export class AuthTokenRepository {
   rotateRefreshToken(
     input: RotateAuthRefreshTokenInput,
   ): ResultAsync<AuthRefreshTokenEntity | null, AuthTokenRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.rotateRefreshTokenTransaction(input),
-      mapAuthTokenRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.rotateRefreshTokenTransaction(input), mapAuthTokenRepositoryError);
   }
 
   revokeRefreshToken(
@@ -70,13 +64,8 @@ export class AuthTokenRepository {
     );
   }
 
-  createUserToken(
-    input: PersistAuthUserTokenInput,
-  ): ResultAsync<AuthUserTokenEntity, AuthTokenRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistUserToken(input),
-      mapAuthTokenRepositoryError,
-    );
+  createUserToken(input: PersistAuthUserTokenInput): ResultAsync<AuthUserTokenEntity, AuthTokenRepositoryError> {
+    return ResultAsync.fromPromise(this.persistUserToken(input), mapAuthTokenRepositoryError);
   }
 
   consumeUserToken(
@@ -91,18 +80,11 @@ export class AuthTokenRepository {
     );
   }
 
-  cleanupExpiredTokens(
-    before: Date = new Date(),
-  ): ResultAsync<AuthTokenCleanupResult, AuthTokenRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.deleteExpiredTokens(before),
-      mapAuthTokenRepositoryError,
-    );
+  cleanupExpiredTokens(before: Date = new Date()): ResultAsync<AuthTokenCleanupResult, AuthTokenRepositoryError> {
+    return ResultAsync.fromPromise(this.deleteExpiredTokens(before), mapAuthTokenRepositoryError);
   }
 
-  private async persistRefreshToken(
-    input: PersistAuthRefreshTokenInput,
-  ): Promise<AuthRefreshTokenEntity> {
+  private async persistRefreshToken(input: PersistAuthRefreshTokenInput): Promise<AuthRefreshTokenEntity> {
     const entity = new AuthRefreshTokenEntity();
     entity.id = input.id;
     entity.tenantId = input.tenantId ?? DefaultAuthTenantId;
@@ -179,11 +161,7 @@ export class AuthTokenRepository {
     );
   }
 
-  private async revokeRefreshTokenTransaction(
-    tokenHash: string,
-    tenantId: string,
-    now: Date,
-  ): Promise<boolean> {
+  private async revokeRefreshTokenTransaction(tokenHash: string, tenantId: string, now: Date): Promise<boolean> {
     return this.entityManager.transactional(async (em) => {
       const current = await em.findOne(
         AuthRefreshTokenEntity,
@@ -205,9 +183,7 @@ export class AuthTokenRepository {
     });
   }
 
-  private async persistUserToken(
-    input: PersistAuthUserTokenInput,
-  ): Promise<AuthUserTokenEntity> {
+  private async persistUserToken(input: PersistAuthUserTokenInput): Promise<AuthUserTokenEntity> {
     const entity = new AuthUserTokenEntity();
     entity.id = input.id;
     entity.tenantId = input.tenantId ?? DefaultAuthTenantId;
@@ -249,17 +225,13 @@ export class AuthTokenRepository {
     });
   }
 
-  private async deleteExpiredTokens(
-    before: Date,
-  ): Promise<AuthTokenCleanupResult> {
-    const refreshTokensDeleted = await this.entityManager.nativeDelete(
-      AuthRefreshTokenEntity,
-      { expiresAt: { $lte: before } },
-    );
-    const userTokensDeleted = await this.entityManager.nativeDelete(
-      AuthUserTokenEntity,
-      { expiresAt: { $lte: before } },
-    );
+  private async deleteExpiredTokens(before: Date): Promise<AuthTokenCleanupResult> {
+    const refreshTokensDeleted = await this.entityManager.nativeDelete(AuthRefreshTokenEntity, {
+      expiresAt: { $lte: before },
+    });
+    const userTokensDeleted = await this.entityManager.nativeDelete(AuthUserTokenEntity, {
+      expiresAt: { $lte: before },
+    });
 
     return { refreshTokensDeleted, userTokensDeleted };
   }

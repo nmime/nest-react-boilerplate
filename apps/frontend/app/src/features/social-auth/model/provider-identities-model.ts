@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { useAuthApiClient, type AuthApiClient } from "@app/frontend-api-client";
+import { useEffect, useRef, useState } from 'react';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useAuthApiClient, type AuthApiClient } from '@app/frontend-api-client';
 import {
   createMobxMutation,
   createMobxQuery,
@@ -8,19 +8,13 @@ import {
   type AuthShellStore,
   type MobxMutation,
   type MobxQuery,
-} from "@app/frontend-runtime";
-import {
-  fetchProviderIdentities,
-  providerIdentitiesQueryKey,
-  unlinkProviderIdentity,
-} from "../api";
+} from '@app/frontend-runtime';
+import { fetchProviderIdentities, providerIdentitiesQueryKey, unlinkProviderIdentity } from '../api';
 
-type ProviderIdentitiesData = Awaited<
-  ReturnType<typeof fetchProviderIdentities>
->;
+type ProviderIdentitiesData = Awaited<ReturnType<typeof fetchProviderIdentities>>;
 
 export interface ProviderIdentitiesModelOptions {
-  authStore: Pick<AuthShellStore, "isAuthenticated">;
+  authStore: Pick<AuthShellStore, 'isAuthenticated'>;
   getAuthClient: () => AuthApiClient;
   queryClient: QueryClient;
 }
@@ -36,11 +30,7 @@ export class ProviderIdentitiesModel {
   readonly identitiesQuery: MobxQuery<ProviderIdentitiesData>;
   readonly unlinkMutation: MobxMutation<unknown, string>;
 
-  constructor({
-    authStore,
-    getAuthClient,
-    queryClient,
-  }: ProviderIdentitiesModelOptions) {
+  constructor({ authStore, getAuthClient, queryClient }: ProviderIdentitiesModelOptions) {
     this.identitiesQuery = createMobxQuery<ProviderIdentitiesData>({
       options: () => ({ enabled: authStore.isAuthenticated }),
       queryClient,
@@ -49,8 +39,7 @@ export class ProviderIdentitiesModel {
       retry: false,
     });
     this.unlinkMutation = createMobxMutation<unknown, string>({
-      mutationFn: (identityId) =>
-        unlinkProviderIdentity(getAuthClient(), identityId),
+      mutationFn: (identityId) => unlinkProviderIdentity(getAuthClient(), identityId),
       onSuccess: () =>
         queryClient.invalidateQueries({
           queryKey: providerIdentitiesQueryKey(),

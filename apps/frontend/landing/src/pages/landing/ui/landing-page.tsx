@@ -1,7 +1,7 @@
-import { observer, useAppStore, useI18n } from "@app/frontend-runtime";
-import { ProductShell, UiAlert } from "@app/frontend-ui-web";
-import { useLandingActionsState } from "../../../features/landing-actions";
-import { ProductOverview } from "../../../widgets/product-overview";
+import { observer, useAppStore, useI18n } from '@app/frontend-runtime';
+import { ProductShell, UiAlert } from '@app/frontend-ui-web';
+import { useLandingActionsState } from '../../../features/landing-actions';
+import { ProductOverview } from '../../../widgets/product-overview';
 
 export const LandingPage = observer(function LandingPage() {
   const appStore = useAppStore();
@@ -11,12 +11,12 @@ export const LandingPage = observer(function LandingPage() {
   return (
     <ProductShell
       actions={actions}
-      appName={t("landing.productName")}
-      description={t("landing.description")}
-      eyebrow={t("landing.eyebrow")}
-      status={`${t("common.status.ready")} · ${appStore.currentBreakpoint}`}
+      appName={t('landing.productName')}
+      description={t('landing.description')}
+      eyebrow={t('landing.eyebrow')}
+      status={`${t('common.status.ready')} · ${appStore.currentBreakpoint}`}
       statusTone="success"
-      title={t("landing.title")}
+      title={t('landing.title')}
     >
       <div data-responsive-breakpoint={appStore.currentBreakpoint}>
         <ProductOverview actions={actions} />

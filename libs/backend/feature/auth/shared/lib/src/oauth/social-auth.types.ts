@@ -1,30 +1,27 @@
-import { createIsEnum } from "../util";
+import { createIsEnum } from '../util';
 
 export enum AuthProvider {
-  Password = "password",
-  Telegram = "telegram",
-  Discord = "discord",
+  Password = 'password',
+  Telegram = 'telegram',
+  Discord = 'discord',
 }
 
 export const authProviders = Object.values(AuthProvider);
 export const isAuthProvider = createIsEnum(AuthProvider);
 
 export enum AuthProviderChannel {
-  Password = "password",
-  TelegramWebLogin = "telegram_web_login",
-  TelegramTma = "telegram_tma",
-  TelegramBot = "telegram_bot",
-  DiscordOauth = "discord_oauth",
-  DiscordBot = "discord_bot",
+  Password = 'password',
+  TelegramWebLogin = 'telegram_web_login',
+  TelegramTma = 'telegram_tma',
+  TelegramBot = 'telegram_bot',
+  DiscordOauth = 'discord_oauth',
+  DiscordBot = 'discord_bot',
 }
 
 export const authProviderChannels = Object.values(AuthProviderChannel);
 export const isAuthProviderChannel = createIsEnum(AuthProviderChannel);
 
-export const externalAuthProviders = [
-  AuthProvider.Telegram,
-  AuthProvider.Discord,
-] as const;
+export const externalAuthProviders = [AuthProvider.Telegram, AuthProvider.Discord] as const;
 export type ExternalAuthProvider = (typeof externalAuthProviders)[number];
 
 export const externalAuthProviderChannels = [
@@ -34,28 +31,27 @@ export const externalAuthProviderChannels = [
   AuthProviderChannel.DiscordOauth,
   AuthProviderChannel.DiscordBot,
 ] as const;
-export type ExternalAuthProviderChannel =
-  (typeof externalAuthProviderChannels)[number];
+export type ExternalAuthProviderChannel = (typeof externalAuthProviderChannels)[number];
 
 export enum ExternalAuthIntent {
-  Login = "login",
-  Link = "link",
+  Login = 'login',
+  Link = 'link',
 }
 
 export const externalAuthIntents = Object.values(ExternalAuthIntent);
 
 export enum ExternalAuthErrorCode {
-  ProviderDisabled = "provider_disabled",
-  ProviderNotConfigured = "provider_not_configured",
-  InvalidSignature = "invalid_signature",
-  InvalidState = "invalid_state",
-  AccountConflict = "account_conflict",
-  NeedsLink = "needs_link",
-  LinkTokenExpired = "link_token_expired",
-  LinkTokenConsumed = "link_token_consumed",
-  StepUpRequired = "step_up_required",
-  LastMethodUnlinkForbidden = "last_method_unlink_forbidden",
-  ReturnUrlNotAllowed = "return_url_not_allowed",
+  ProviderDisabled = 'provider_disabled',
+  ProviderNotConfigured = 'provider_not_configured',
+  InvalidSignature = 'invalid_signature',
+  InvalidState = 'invalid_state',
+  AccountConflict = 'account_conflict',
+  NeedsLink = 'needs_link',
+  LinkTokenExpired = 'link_token_expired',
+  LinkTokenConsumed = 'link_token_consumed',
+  StepUpRequired = 'step_up_required',
+  LastMethodUnlinkForbidden = 'last_method_unlink_forbidden',
+  ReturnUrlNotAllowed = 'return_url_not_allowed',
 }
 
 export const externalAuthErrorCodes = Object.values(ExternalAuthErrorCode);
@@ -83,7 +79,7 @@ export interface ExternalAuthIdentityView {
 }
 
 export interface ExternalAuthResult {
-  status: "authenticated" | "linked" | "needs_link" | "conflict";
+  status: 'authenticated' | 'linked' | 'needs_link' | 'conflict';
   code?: ExternalAuthErrorCode;
   message?: string;
   session?: unknown;

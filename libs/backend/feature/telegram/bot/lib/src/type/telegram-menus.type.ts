@@ -1,5 +1,5 @@
-import type { Menu } from "@grammyjs/menu";
-import type { TelegramBotContext } from "./telegram.type";
+import type { Menu } from '@grammyjs/menu';
+import type { TelegramBotContext } from './telegram.type';
 
 export interface TelegramBotMenus {
   main: Menu<TelegramBotContext>;

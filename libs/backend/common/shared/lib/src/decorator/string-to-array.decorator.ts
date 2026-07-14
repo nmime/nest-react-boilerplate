@@ -1,5 +1,4 @@
-import { Transform } from "class-transformer";
-import { normalizeStringList } from "../shared";
+import { Transform } from 'class-transformer';
+import { normalizeStringList } from '../shared';
 
-export const StringToArray = (): PropertyDecorator =>
-  Transform(({ value }) => normalizeStringList(value));
+export const StringToArray = (): PropertyDecorator => Transform(({ value }) => normalizeStringList(value));

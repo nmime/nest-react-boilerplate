@@ -1,20 +1,13 @@
-import {
-  Body,
-  Controller,
-  ForbiddenException,
-  Headers,
-  Inject,
-  Post,
-} from "@nestjs/common";
-import type { OnApplicationBootstrap } from "@nestjs/common";
+import { Body, Controller, ForbiddenException, Headers, Inject, Post } from '@nestjs/common';
+import type { OnApplicationBootstrap } from '@nestjs/common';
 import {
   TelegramBotInstanceInjectToken,
   assertWebhookRuntimeAllowed,
   verifyWebhookSecret,
   type TelegramBotInstance,
-} from "@app/backend-feature-telegram-bot";
+} from '@app/backend-feature-telegram-bot';
 
-@Controller("telegram/webhook")
+@Controller('telegram/webhook')
 export class TelegramWebhookController implements OnApplicationBootstrap {
   private botInitPromise: Promise<void> | null = null;
 
@@ -31,7 +24,7 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
 
   @Post()
   async handleWebhook(
-    @Headers("x-telegram-bot-api-secret-token")
+    @Headers('x-telegram-bot-api-secret-token')
     secretHeader: string | undefined,
     @Body() update: unknown,
   ): Promise<{ ok: true }> {
@@ -41,7 +34,7 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
         header: secretHeader,
       })
     ) {
-      throw new ForbiddenException("telegram_webhook_secret_invalid");
+      throw new ForbiddenException('telegram_webhook_secret_invalid');
     }
 
     await this.ensureBotInitialized();

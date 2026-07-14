@@ -1,23 +1,9 @@
-import type { ReactNode } from "react";
-import {
-  observer,
-  useAppStore,
-  useI18n,
-  type Locale,
-  type UiTheme,
-} from "@app/frontend-runtime";
-import { useAuthSessionFlow } from "../../../features/auth";
-import {
-  UiAlert,
-  UiButton,
-  ProductShell,
-  UiCard,
-  UiSection,
-  UiStatCard,
-  UiStatusPill,
-} from "../../../shared/ui";
-import { AuthPanel } from "../../../widgets/auth-panel";
-import { ProfileStatusCard } from "../../../widgets/profile-status";
+import type { ReactNode } from 'react';
+import { observer, useAppStore, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
+import { useAuthSessionFlow } from '../../../features/auth';
+import { UiAlert, UiButton, ProductShell, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
+import { AuthPanel } from '../../../widgets/auth-panel';
+import { ProfileStatusCard } from '../../../widgets/profile-status';
 
 export interface UserHomePageProps {
   applyUserLocale: (locale: Locale) => void;
@@ -26,7 +12,7 @@ export interface UserHomePageProps {
     href: string;
     isCurrent?: boolean;
     label: string;
-    variant?: "primary" | "secondary";
+    variant?: 'primary' | 'secondary';
   }>;
   activeRoute?: string;
   children?: ReactNode;
@@ -38,22 +24,22 @@ interface UserHomeContentProps {
 }
 
 const routeReadiness = [
-  { route: "/", group: "Home", value: "dashboard" },
-  { route: "/auth", group: "Auth", value: "password + social" },
-  { route: "/auth/discord/callback", group: "OAuth", value: "callback" },
-  { route: "/profile", group: "Account", value: "profile" },
-  { route: "/settings", group: "Account", value: "settings" },
-  { route: "/tma", group: "Telegram", value: "mini app" },
-  { route: "/tma/auth", group: "Telegram", value: "auth" },
-  { route: "/telegram-mini-app", group: "Telegram", value: "alias" },
-  { route: "/link/telegram", group: "Linking", value: "telegram" },
-  { route: "/link/discord", group: "Linking", value: "discord" },
+  { route: '/', group: 'Home', value: 'dashboard' },
+  { route: '/auth', group: 'Auth', value: 'password + social' },
+  { route: '/auth/discord/callback', group: 'OAuth', value: 'callback' },
+  { route: '/profile', group: 'Account', value: 'profile' },
+  { route: '/settings', group: 'Account', value: 'settings' },
+  { route: '/tma', group: 'Telegram', value: 'mini app' },
+  { route: '/tma/auth', group: 'Telegram', value: 'auth' },
+  { route: '/telegram-mini-app', group: 'Telegram', value: 'alias' },
+  { route: '/link/telegram', group: 'Linking', value: 'telegram' },
+  { route: '/link/discord', group: 'Linking', value: 'discord' },
 ] as const;
 
 const experienceSignals = [
-  { label: "Responsive shell", value: "mobile-first" },
-  { label: "State coverage", value: "loading / empty / error / success" },
-  { label: "Social linking", value: "Telegram + Discord" },
+  { label: 'Responsive shell', value: 'mobile-first' },
+  { label: 'State coverage', value: 'loading / empty / error / success' },
+  { label: 'Social linking', value: 'Telegram + Discord' },
 ] as const;
 
 const UserExperienceBanner = observer(function UserExperienceBanner({
@@ -71,15 +57,12 @@ const UserExperienceBanner = observer(function UserExperienceBanner({
     >
       <div className="xr-v3-banner__copy">
         <span className="xr-v3-kicker">User design v3</span>
-        <h2>{t("user.appName")} command center</h2>
-        <p>{t("user.description")}</p>
+        <h2>{t('user.appName')} command center</h2>
+        <p>{t('user.description')}</p>
       </div>
       <div className="xr-v3-banner__meta" aria-label="Current route status">
         <UiStatusPill label={activeRoute} tone="info" />
-        <UiStatusPill
-          label={`layout ${appStore.currentBreakpoint}`}
-          tone="info"
-        />
+        <UiStatusPill label={`layout ${appStore.currentBreakpoint}`} tone="info" />
         <UiStatusPill label="nonblank smoke marker" tone="success" />
       </div>
     </section>
@@ -87,37 +70,30 @@ const UserExperienceBanner = observer(function UserExperienceBanner({
 });
 
 function UserRouteRail({ activeRoute }: Readonly<{ activeRoute: string }>) {
-  const activeIndex = routeReadiness.findIndex(
-    ({ route }) => route === activeRoute,
-  );
+  const activeIndex = routeReadiness.findIndex(({ route }) => route === activeRoute);
 
   return (
     <aside className="xr-route-rail" aria-label="User route experience map">
       {routeReadiness.map(({ group, route, value }, index) => {
         const isActive = route === activeRoute;
-        const readinessLabel = index < activeIndex ? "ready" : "wired";
-        const statusLabel = isActive ? "current" : readinessLabel;
+        const readinessLabel = index < activeIndex ? 'ready' : 'wired';
+        const statusLabel = isActive ? 'current' : readinessLabel;
         return (
           <a
-            aria-current={isActive ? "page" : undefined}
+            aria-current={isActive ? 'page' : undefined}
             className="xr-route-rail__item"
             data-active={isActive}
             href={route}
             key={route}
           >
-            <span className="xr-route-rail__step">
-              {String(index + 1).padStart(2, "0")}
-            </span>
+            <span className="xr-route-rail__step">{String(index + 1).padStart(2, '0')}</span>
             <span>
               <strong>{route}</strong>
               <small>
                 {group} · {value}
               </small>
             </span>
-            <UiStatusPill
-              label={statusLabel}
-              tone={isActive ? "success" : "info"}
-            />
+            <UiStatusPill label={statusLabel} tone={isActive ? 'success' : 'info'} />
           </a>
         );
       })}
@@ -125,10 +101,7 @@ function UserRouteRail({ activeRoute }: Readonly<{ activeRoute: string }>) {
   );
 }
 
-function UserExperienceFrame({
-  activeRoute,
-  children,
-}: Readonly<{ activeRoute: string; children: ReactNode }>) {
+function UserExperienceFrame({ activeRoute, children }: Readonly<{ activeRoute: string; children: ReactNode }>) {
   return (
     <div className="xr-v3-frame">
       <UserExperienceBanner activeRoute={activeRoute} />
@@ -144,25 +117,14 @@ function UserReadinessOverview() {
   const { t } = useI18n();
 
   return (
-    <section
-      className="xr-readiness-panel"
-      aria-label={t("user.routeReadiness.label")}
-    >
-      <UiCard
-        className="xr-route-card xr-surface-glow"
-        title={t("user.status")}
-      >
+    <section className="xr-readiness-panel" aria-label={t('user.routeReadiness.label')}>
+      <UiCard className="xr-route-card xr-surface-glow" title={t('user.status')}>
         <div className="xr-card-stack">
           <UiAlert className="xr-inline-alert" tone="info">
-            <strong>{t("user.routeReadiness.label")}</strong>
-            <span>
-              Every preserved route now has a visible v3 landing state.
-            </span>
+            <strong>{t('user.routeReadiness.label')}</strong>
+            <span>Every preserved route now has a visible v3 landing state.</span>
           </UiAlert>
-          <div
-            className="xr-route-list"
-            aria-label={t("user.routeReadiness.label")}
-          >
+          <div className="xr-route-list" aria-label={t('user.routeReadiness.label')}>
             {routeReadiness.map(({ group, route, value }) => (
               <a className="xr-route-chip" href={route} key={route}>
                 <span>{route}</span>
@@ -175,12 +137,7 @@ function UserReadinessOverview() {
       </UiCard>
       <div className="xr-stat-grid xr-stat-grid--compact">
         {experienceSignals.map((signal) => (
-          <UiStatCard
-            detail={signal.value}
-            key={signal.label}
-            label={signal.label}
-            value="v3"
-          />
+          <UiStatCard detail={signal.value} key={signal.label} label={signal.label} value="v3" />
         ))}
       </div>
     </section>
@@ -197,37 +154,27 @@ const UserHomeContent = observer(function UserHomeContent({
     applyUserTheme,
     locale,
     messages: {
-      authenticationFailed: t("user.error.authenticationFailed"),
-      missingToken: t("user.state.missingToken"),
-      profileRequestFailed: t("user.error.profileRequestFailed"),
-      profileUnknown: t("user.profile.unknown"),
+      authenticationFailed: t('user.error.authenticationFailed'),
+      missingToken: t('user.state.missingToken'),
+      profileRequestFailed: t('user.error.profileRequestFailed'),
+      profileUnknown: t('user.profile.unknown'),
     },
   });
 
   return (
     <>
-      <UiSection
-        className="xr-home-section"
-        eyebrow={t("user.eyebrow")}
-        title={t("user.title")}
-      >
+      <UiSection className="xr-home-section" eyebrow={t('user.eyebrow')} title={t('user.title')}>
         <div className="xr-home-grid">
-          <UiCard
-            className="xr-command-card xr-command-card--hero xr-surface-glow"
-            title="Start from the safest path"
-          >
+          <UiCard className="xr-command-card xr-command-card--hero xr-surface-glow" title="Start from the safest path">
             <div className="xr-card-stack">
-              <p className="xr-lead-copy">{t("user.description")}</p>
-              <div
-                className="xr-command-actions"
-                aria-label={t("user.appName")}
-              >
-                <UiButton href="/auth">{t("user.form.login")}</UiButton>
+              <p className="xr-lead-copy">{t('user.description')}</p>
+              <div className="xr-command-actions" aria-label={t('user.appName')}>
+                <UiButton href="/auth">{t('user.form.login')}</UiButton>
                 <UiButton href="/profile" variant="secondary">
-                  {t("user.action.profile")}
+                  {t('user.action.profile')}
                 </UiButton>
                 <UiButton href="/settings" variant="secondary">
-                  {t("user.nav.settings")}
+                  {t('user.nav.settings')}
                 </UiButton>
                 <UiButton href="/tma" variant="secondary">
                   Telegram mini app
@@ -235,16 +182,11 @@ const UserHomeContent = observer(function UserHomeContent({
               </div>
             </div>
           </UiCard>
-          <UiCard
-            className="xr-command-card xr-surface-glow"
-            title="Account pulse"
-          >
+          <UiCard className="xr-command-card xr-surface-glow" title="Account pulse">
             <div className="xr-card-stack">
               <UiAlert className="xr-inline-alert" tone="info">
-                <strong>{t("user.nav.profile")}</strong>
-                <span>
-                  Profile, preferences, and linked identities share one flow.
-                </span>
+                <strong>{t('user.nav.profile')}</strong>
+                <span>Profile, preferences, and linked identities share one flow.</span>
               </UiAlert>
               <div className="xr-status-row">
                 <span className="xr-status-heading">Design readiness</span>
@@ -258,7 +200,7 @@ const UserHomeContent = observer(function UserHomeContent({
       <AuthPanel
         isLoginPending={authSession.isLoginPending}
         isRegisterPending={authSession.isRegisterPending}
-        loadingLabel={t("user.loadingProfile")}
+        loadingLabel={t('user.loadingProfile')}
         onAuthSubmit={authSession.submitAuth}
         t={t}
       >
@@ -269,7 +211,7 @@ const UserHomeContent = observer(function UserHomeContent({
 });
 
 export const UserHomePage = observer(function UserHomePage({
-  activeRoute = "/",
+  activeRoute = '/',
   applyUserLocale,
   actions,
   applyUserTheme,
@@ -278,36 +220,31 @@ export const UserHomePage = observer(function UserHomePage({
   const appStore = useAppStore();
   const { t } = useI18n();
   const productActions = actions ?? [
-    { href: "/auth", label: t("user.form.login") },
+    { href: '/auth', label: t('user.form.login') },
     {
-      href: "/profile",
-      label: t("user.action.profile"),
-      variant: "secondary" as const,
+      href: '/profile',
+      label: t('user.action.profile'),
+      variant: 'secondary' as const,
     },
     {
-      href: "/tma",
-      label: "Telegram",
-      variant: "secondary" as const,
+      href: '/tma',
+      label: 'Telegram',
+      variant: 'secondary' as const,
     },
   ];
 
   return (
     <ProductShell
       actions={productActions}
-      appName={t("user.appName")}
-      description={t("user.description")}
-      eyebrow={t("user.eyebrow")}
+      appName={t('user.appName')}
+      description={t('user.description')}
+      eyebrow={t('user.eyebrow')}
       status={`design v3 · ${appStore.currentBreakpoint}`}
       statusTone="success"
-      title={t("user.title")}
+      title={t('user.title')}
     >
       <UserExperienceFrame activeRoute={activeRoute}>
-        {children ?? (
-          <UserHomeContent
-            applyUserLocale={applyUserLocale}
-            applyUserTheme={applyUserTheme}
-          />
-        )}
+        {children ?? <UserHomeContent applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />}
       </UserExperienceFrame>
     </ProductShell>
   );

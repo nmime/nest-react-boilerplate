@@ -1,1 +1,1 @@
-export * from "./api-exceptions.decorator";
+export * from './api-exceptions.decorator';

@@ -15,7 +15,7 @@ export class ContainerStopError extends Error {
     options: ErrorOptions,
   ) {
     super(message, options);
-    this.name = "ContainerStopError";
+    this.name = 'ContainerStopError';
   }
 
   get container(): ManagedTestContainer {
@@ -48,15 +48,13 @@ export class ContainerManager {
     );
     const stopErrors = containers.flatMap((container, stopIndex) => {
       const result = stopResults[stopIndex];
-      if (result === undefined || result.status === "fulfilled") {
+      if (result === undefined || result.status === 'fulfilled') {
         return [];
       }
 
       return [
         new ContainerStopError(
-          `Failed to stop managed test container at teardown index ${
-            stopIndex + 1
-          }/${containers.length}.`,
+          `Failed to stop managed test container at teardown index ${stopIndex + 1}/${containers.length}.`,
           {
             container,
             stopIndex,

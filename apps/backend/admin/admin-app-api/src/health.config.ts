@@ -1,11 +1,7 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { MikroORM } from "@mikro-orm/core";
-import type {
-  InjectionToken,
-  OptionalFactoryDependency,
-  Provider,
-} from "@nestjs/common";
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { MikroORM } from '@mikro-orm/core';
+import type { InjectionToken, OptionalFactoryDependency, Provider } from '@nestjs/common';
 import {
   EnvHealthIndicator,
   HealthService,
@@ -13,34 +9,26 @@ import {
   RuntimeHealthIndicator,
   type HealthIndicator,
   type HealthIndicatorResult,
-} from "@app/backend-common-health";
-import { supportedLocales } from "@app/common-i18n";
-import { NatsHealthIndicator } from "@app/backend-common-nats";
-import { RedisHealthIndicator } from "@app/backend-common-redis";
+} from '@app/backend-common-health';
+import { supportedLocales } from '@app/common-i18n';
+import { NatsHealthIndicator } from '@app/backend-common-nats';
+import { RedisHealthIndicator } from '@app/backend-common-redis';
 import {
   MikroOrmPostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
-} from "@app/backend-postgres-main";
+} from '@app/backend-postgres-main';
 
-const appName = "admin-app-api";
+const appName = 'admin-app-api';
 
 export const AdminAppHealthServiceProvider: Provider = {
   provide: HealthService,
-  useFactory: (
-    orm?: MikroORM,
-    redisHealth?: RedisHealthIndicator,
-    natsHealth?: NatsHealthIndicator,
-  ) =>
+  useFactory: (orm?: MikroORM, redisHealth?: RedisHealthIndicator, natsHealth?: NatsHealthIndicator) =>
     new HealthService({
       appName,
       indicators: createHealthIndicators({ orm, redisHealth, natsHealth }),
     }),
-  inject: [
-    optionalProvider(MikroORM),
-    optionalProvider(RedisHealthIndicator),
-    optionalProvider(NatsHealthIndicator),
-  ],
+  inject: [optionalProvider(MikroORM), optionalProvider(RedisHealthIndicator), optionalProvider(NatsHealthIndicator)],
 };
 
 interface HealthIndicatorDependencies {
@@ -49,25 +37,15 @@ interface HealthIndicatorDependencies {
   natsHealth?: NatsHealthIndicator;
 }
 
-function createHealthIndicators({
-  orm,
-  redisHealth,
-  natsHealth,
-}: HealthIndicatorDependencies): HealthIndicator[] {
+function createHealthIndicators({ orm, redisHealth, natsHealth }: HealthIndicatorDependencies): HealthIndicator[] {
   const postgresAdapter = new MikroOrmPostgresHealthAdapter(orm ?? null);
 
   return [
     new RuntimeHealthIndicator(),
     new EnvHealthIndicator({
-      name: "config",
+      name: 'config',
       required: false,
-      optionalVariables: [
-        "DATABASE_URL",
-        "SESSION_SECRET",
-        "AUTH_JWT_SECRET",
-        "REDIS_URL",
-        "NATS_SERVERS",
-      ],
+      optionalVariables: ['DATABASE_URL', 'SESSION_SECRET', 'AUTH_JWT_SECRET', 'REDIS_URL', 'NATS_SERVERS'],
     }),
     new I18nAssetsHealthIndicator({
       rootPath: resolveI18nRootPath(),
@@ -86,19 +64,12 @@ function createHealthIndicators({
       }),
       false,
     ),
-    redisHealth
-      ? withRequired(redisHealth, false)
-      : createSkippedOptionalDependencyIndicator("redis"),
-    natsHealth
-      ? withRequired(natsHealth, false)
-      : createSkippedOptionalDependencyIndicator("nats"),
+    redisHealth ? withRequired(redisHealth, false) : createSkippedOptionalDependencyIndicator('redis'),
+    natsHealth ? withRequired(natsHealth, false) : createSkippedOptionalDependencyIndicator('nats'),
   ];
 }
 
-function withRequired(
-  indicator: HealthIndicator,
-  required: boolean,
-): HealthIndicator {
+function withRequired(indicator: HealthIndicator, required: boolean): HealthIndicator {
   return {
     name: indicator.name,
     required,
@@ -109,25 +80,20 @@ function withRequired(
 }
 
 function resolveI18nRootPath(): string | undefined {
-  const candidates = [
-    join(process.cwd(), "i18n"),
-    join(process.cwd(), "../../../i18n"),
-  ];
+  const candidates = [join(process.cwd(), 'i18n'), join(process.cwd(), '../../../i18n')];
   return candidates.find((candidate) => existsSync(candidate));
 }
 
-function createSkippedOptionalDependencyIndicator(
-  name: "redis" | "nats",
-): HealthIndicator {
+function createSkippedOptionalDependencyIndicator(name: 'redis' | 'nats'): HealthIndicator {
   return {
     name,
     required: false,
     check(): HealthIndicatorResult {
       return {
         name,
-        status: "ok",
+        status: 'ok',
         required: false,
-        details: { enabled: false, skipped: true, reason: "not_configured" },
+        details: { enabled: false, skipped: true, reason: 'not_configured' },
       };
     },
   };

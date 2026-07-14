@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
-import type { HealthIndicator, HealthIndicatorResult } from "../dto";
+import { existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import type { HealthIndicator, HealthIndicatorResult } from '../dto';
 
 export interface I18nAssetsHealthIndicatorOptions {
   name?: string;
@@ -16,7 +16,7 @@ export class I18nAssetsHealthIndicator implements HealthIndicator {
   private readonly locales: readonly string[];
 
   constructor(options: I18nAssetsHealthIndicatorOptions = {}) {
-    this.name = options.name ?? "i18n";
+    this.name = options.name ?? 'i18n';
     this.required = options.required ?? false;
     this.rootPath = options.rootPath;
     this.locales = options.locales ?? [];
@@ -26,16 +26,16 @@ export class I18nAssetsHealthIndicator implements HealthIndicator {
     if (!this.rootPath) {
       return {
         name: this.name,
-        status: "skipped",
+        status: 'skipped',
         required: false,
-        details: { reason: "no i18n assets path configured" },
+        details: { reason: 'no i18n assets path configured' },
       };
     }
 
     if (!existsSync(this.rootPath) || !statSync(this.rootPath).isDirectory()) {
       return {
         name: this.name,
-        status: this.required ? "error" : "degraded",
+        status: this.required ? 'error' : 'degraded',
         required: this.required,
         details: {
           configured: true,
@@ -46,13 +46,11 @@ export class I18nAssetsHealthIndicator implements HealthIndicator {
     }
 
     const availableLocales = listDirectoryNames(this.rootPath);
-    const missingLocales = this.locales.filter(
-      (locale) => !availableLocales.includes(locale),
-    );
+    const missingLocales = this.locales.filter((locale) => !availableLocales.includes(locale));
 
     return {
       name: this.name,
-      status: missingLocales.length > 0 ? "degraded" : "ok",
+      status: missingLocales.length > 0 ? 'degraded' : 'ok',
       required: this.required,
       details: {
         configured: true,

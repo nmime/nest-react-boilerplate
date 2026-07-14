@@ -1,1 +1,1 @@
-export * from "./product-shell";
+export * from './product-shell';

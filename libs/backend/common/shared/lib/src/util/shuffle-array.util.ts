@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { randomInt } from 'node:crypto';
 
 export function shuffleArray<T>(values: readonly T[]): T[] {
   const copy = [...values];

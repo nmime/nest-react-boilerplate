@@ -1,6 +1,6 @@
-import type { adminApi } from "@app/frontend-api-client";
-import type { UserStatus } from "../../../entities/admin-user";
-import { pageSize } from "../../../shared";
+import type { adminApi } from '@app/frontend-api-client';
+import type { UserStatus } from '../../../entities/admin-user';
+import { pageSize } from '../../../shared';
 
 export const toUserListParams = ({
   page,
@@ -18,10 +18,7 @@ export const toUserListParams = ({
   limit: pageSize,
   offset: (Math.max(1, page) - 1) * pageSize,
   search: search.trim() || undefined,
-  status: status === "all" ? undefined : (status as UserStatus),
-  role: role === "all" ? undefined : (role as "user" | "admin"),
-  permission:
-    permission === "all"
-      ? undefined
-      : (permission as adminApi.AdminUsersListQuery["permission"]),
+  status: status === 'all' ? undefined : (status as UserStatus),
+  role: role === 'all' ? undefined : (role as 'user' | 'admin'),
+  permission: permission === 'all' ? undefined : (permission as adminApi.AdminUsersListQuery['permission']),
 });

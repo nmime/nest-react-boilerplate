@@ -4,26 +4,27 @@ Complete reference for all `nrb` / `repo-tooling` commands, including flags, exa
 
 ## Invoking the CLI
 
-The tooling package is installed at `packages/tooling`. Invoke it in three ways:
+The tooling package is installed at `packages/tooling`. Use the root script as
+the canonical entrypoint:
 
 ```bash
-# Short form (via pnpm filter):
+# Canonical from the repository root:
+pnpm nrb <command>
+
+# Equivalent package-scoped form:
 pnpm --filter @repo/tooling tooling <command>
 
-# Direct node invocation:
+# Direct Node invocation for CLI debugging:
 node packages/tooling/bin/repo-tooling.mjs <command>
-
-# Via nrb bin (if registered in PATH):
-nrb <command>
 ```
 
-All examples below use `pnpm --filter @repo/tooling tooling` (aliased as `tooling` in the examples).
+Every example below is directly runnable from the repository root.
 
 ## Help
 
 ```bash
-tooling --help
-tooling <command> --help
+pnpm nrb --help
+pnpm nrb <command> --help
 ```
 
 ## Setup commands
@@ -33,15 +34,15 @@ tooling <command> --help
 Interactive and non-interactive boilerplate configuration.
 
 ```bash
-tooling setup                                # interactive wizard
-tooling setup --preset fullstack             # preset-based, non-interactive
-tooling setup --config nrb.config.json       # config file
-tooling setup --dry-run                      # show plan only
-tooling setup --prune                        # remove orphaned files
-tooling setup --force                        # overwrite conflicts
-tooling setup --non-interactive              # CI mode with defaults
-tooling setup --json                         # output plan as JSON
-tooling setup --app user-app --capability i18n  # explicit apps/caps
+pnpm nrb setup                                # interactive wizard
+pnpm nrb setup --preset fullstack             # preset-based, non-interactive
+pnpm nrb setup --config nrb.config.json       # config file
+pnpm nrb setup --dry-run                      # show plan only
+pnpm nrb setup --prune                        # remove stale setup-managed files
+pnpm nrb setup --force                        # overwrite conflicts
+pnpm nrb setup --non-interactive              # CI mode with defaults
+pnpm nrb setup --json                         # output plan as JSON
+pnpm nrb setup --app user-app --capability i18n  # explicit apps/caps
 ```
 
 | Flag                | Type    | Description                                                         |
@@ -51,7 +52,7 @@ tooling setup --app user-app --capability i18n  # explicit apps/caps
 | `--app <id>`        | string  | App ID to enable (repeatable).                                      |
 | `--capability <id>` | string  | Capability ID to enable (repeatable).                               |
 | `--dry-run`         | boolean | Show plan without modifying files.                                  |
-| `--prune`           | boolean | Remove files no longer needed.                                      |
+| `--prune`           | boolean | Remove stale files previously managed by setup.                     |
 | `--force`           | boolean | Overwrite existing files without refusing.                          |
 | `--non-interactive` | boolean | CI mode; skips prompts, uses defaults.                              |
 | `--json`            | boolean | Output plan as JSON.                                                |
@@ -64,8 +65,8 @@ Exit codes: `0` success, `1` configuration or validation error.
 Run workspace health checks.
 
 ```bash
-tooling doctor
-tooling doctor --json
+pnpm nrb doctor
+pnpm nrb doctor --json
 ```
 
 Exit codes: `0` all checks pass (or skip/warn), `1` any check failed.
@@ -75,18 +76,37 @@ Exit codes: `0` all checks pass (or skip/warn), `1` any check failed.
 Add an app, library, or feature to the workspace.
 
 ```bash
-tooling add app <name> [--dry-run] [--force] [-- ...extra-args]
-tooling add lib <name> [--dry-run] [--force] [-- ...extra-args]
-tooling add feature <name> [--dry-run] [--force] [--api-app <api-name>]
+pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--dry-run]
+pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> [--scope <scope>]
+pnpm nrb add feature <name> [--dry-run] [--force] [--api-app <api-name>] [--frontend-app <app-name>]
 ```
 
-| Flag               | Type    | Description                                            |
-| ------------------ | ------- | ------------------------------------------------------ |
-| `--dry-run`        | boolean | Show what would be done.                               |
-| `--force`          | boolean | Overwrite existing files.                              |
-| `--api-app <name>` | string  | Target API app for features (default: `user-app-api`). |
-| `--help`, `-h`     | boolean | Show usage.                                            |
-| `--`               |         | Pass remaining args to the underlying generator.       |
+| Flag                    | Type    | Description                                               |
+| ----------------------- | ------- | --------------------------------------------------------- |
+| `--dry-run`             | boolean | Show what would be done.                                  |
+| `--force`               | boolean | Overwrite existing feature files.                         |
+| `--kind <kind>`         | string  | Required app/lib platform.                                |
+| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, or `worker`. |
+| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.  |
+| `--scope <scope>`       | string  | Owning domain scope for a library.                        |
+| `--api-app <name>`      | string  | Target API app for features (default: `user-app-api`).    |
+| `--frontend-app <name>` | string  | Target frontend app for features (default: `user-app`).   |
+| `--help`, `-h`          | boolean | Show usage.                                               |
+| `--`                    |         | Pass remaining args to the underlying generator.          |
+
+Examples:
+
+```bash
+pnpm nrb add app billing-api --kind backend --renderer nest-api -- --port=3200
+pnpm nrb add app docs --kind frontend --renderer astro
+pnpm nrb add lib billing --kind backend --type feature-main --scope billing
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
+```
+
+An app or library generator writes a workspace package manifest. After the
+non-dry-run command, run `pnpm install` once to update `pnpm-lock.yaml` and
+create the new workspace links; then verify that
+`pnpm install --frozen-lockfile` is clean. Do not hand-edit the lockfile.
 
 Exit codes: `0` success, `1` missing args or unknown kind.
 
@@ -133,16 +153,16 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 | Command                                  | Description                           |
 | ---------------------------------------- | ------------------------------------- |
 | `project:init`                           | Initialize project placeholders.      |
-| `project:generate-vertical-slice <name>` | Scaffold a vertical feature slice.    |
+| `project:generate-vertical-slice <name>` | Deprecated adapter to `add feature`.  |
 | `project:check-library-configs`          | Validate Nx library config placement. |
 
 ### `project:generate-vertical-slice`
 
 ```bash
-tooling project:generate-vertical-slice <name> [--dry-run] [--force] [--api-app <name>]
+pnpm nrb project:generate-vertical-slice <name> [--dry-run] [--force] [--api-app <name>]
 ```
 
-Scaffolds backend DTOs, Nest module, controller, service, PostgreSQL entity, frontend API client stub, and React page stub. Updates `tsconfig.base.json` path aliases.
+Delegates to `add feature`; it does not maintain a second template engine.
 
 ## Frontend commands
 

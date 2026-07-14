@@ -20,20 +20,14 @@ export interface WebSocketResponse<T = unknown> {
 
 @Injectable()
 export class WebSocketResponseTransformer implements NestInterceptor {
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<WebSocketResponse> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<WebSocketResponse> {
     return next.handle().pipe(
       map((value: unknown) => this.handleSuccess(context, value)),
       catchError((error: unknown) => of(this.handleError(context, error))),
     );
   }
 
-  private handleSuccess(
-    context: ExecutionContext,
-    result: unknown,
-  ): WebSocketResponse {
+  private handleSuccess(context: ExecutionContext, result: unknown): WebSocketResponse {
     return {
       id: this.getRequestId(context),
       result: {
@@ -43,10 +37,7 @@ export class WebSocketResponseTransformer implements NestInterceptor {
     };
   }
 
-  private handleError(
-    context: ExecutionContext,
-    error: unknown,
-  ): WebSocketResponse {
+  private handleError(context: ExecutionContext, error: unknown): WebSocketResponse {
     const problem = toProblemDetails(error);
     return {
       id: this.getRequestId(context),

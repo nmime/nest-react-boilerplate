@@ -1,0 +1,17 @@
+{
+  "mobile.appName": "Nest React Mobile",
+  "mobile.status": "Scaffold ready",
+  "mobile.subtitle": "Shared account shell for installed apps, Expo web, and the Docker web export.",
+  "mobile.api.label": "API target",
+  "mobile.api.value": "Configured endpoint",
+  "mobile.action.openApi": "Open configured API",
+  "mobile.card.account.label": "Account shell",
+  "mobile.card.account.value": "Expo Router",
+  "mobile.card.account.detail": "One navigation model covers installed apps and the exported web UI.",
+  "mobile.card.native.label": "Native system",
+  "mobile.card.native.value": "Shared tokens",
+  "mobile.card.native.detail": "The screen uses the native facade and design tokens from the repo.",
+  "mobile.card.delivery.label": "Delivery",
+  "mobile.card.delivery.value": "Nx and export",
+  "mobile.card.delivery.detail": "Native commands and the web export target are registered for CI and Docker."
+}

@@ -47,8 +47,13 @@ function writeImportSmokeFixture(workspaceRoot: string): void {
   writeText(workspaceRoot, "packages/tooling/src/cli.ts", "export const main = () => 0;\n");
 }
 
-function writeTranslationKeyUnion(workspaceRoot: string, keys: string[]): void {
-  const union = keys.map((key) => `  | ${JSON.stringify(key)}`).join("\n");
+function writeTranslationKeyUnion(
+  workspaceRoot: string,
+  keys: string[],
+  quote: 'single' | 'double' = 'double',
+): void {
+  const delimiter = quote === 'single' ? "'" : '"';
+  const union = keys.map((key) => `  | ${delimiter}${key}${delimiter}`).join("\n");
   writeText(
     workspaceRoot,
     "libs/common/i18n/keys/lib/src/index.ts",
@@ -66,7 +71,7 @@ describe("static-check translation key drift guard", () => {
         "i18n/en/common/shared.json",
         JSON.stringify({ "common.a": "A", "common.b": "B" }),
       );
-      writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.b"]);
+      writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.b"], 'single');
 
       assert.deepEqual(checkTranslationKeyDrift(workspaceRoot), []);
     } finally {
@@ -841,6 +846,35 @@ describe("static-check stale admin API name guard", () => {
   });
 });
 
+describe("static-check Node version guard", () => {
+  it("rejects an old NODE_VERSION assignment", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(workspaceRoot, "Dockerfile", "ARG NODE_VERSION=" + "22.14.0-alpine\n");
+
+      const failures = checkStaleReferences(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.match(failures[0].stderr, /unsupported workflow Node version reference/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("does not treat the minor component of Node 24 as an old major", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(workspaceRoot, "Dockerfile", "ARG NODE_VERSION=24.18.0-alpine\n");
+
+      assert.deepEqual(checkStaleReferences(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
 describe("static-check package project reference guard", () => {
   it("rejects stale package test scripts that reference removed Nx projects", () => {
     const workspaceRoot = createWorkspace();
@@ -852,7 +886,7 @@ describe("static-check package project reference guard", () => {
         JSON.stringify({
           scripts: {
             "test:e2e":
-              "nx run-many -t e2e --projects=admin-app,user-app,landing-app,admin-app-api,user-app-api,auth-app-api",
+              "nx run-many -t e2e --projects=admin-app,user-app,landing-app,site-app,mobile-app,admin-app-api,user-app-api,auth-app-api",
           },
         }),
       );
@@ -911,7 +945,7 @@ describe("static-check package project reference guard", () => {
         JSON.stringify({
           scripts: {
             "test:e2e":
-              "nx run-many -t e2e --projects=admin-app,user-app,landing-app,admin-app-api,user-app-api,auth-app-api",
+              "nx run-many -t e2e --projects=admin-app,user-app,landing-app,site-app,mobile-app,admin-app-api,user-app-api,auth-app-api",
           },
         }),
       );

@@ -1,4 +1,4 @@
-import { Migration } from "@mikro-orm/migrations";
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260605143000CreateAdminAuditLogs extends Migration {
   override up(): void {
@@ -17,15 +17,9 @@ export class Migration20260605143000CreateAdminAuditLogs extends Migration {
   }
 
   override down(): void {
-    this.addSql(
-      'drop index if exists "ix__admin_audit_logs__tenant_id_target_user_id";',
-    );
-    this.addSql(
-      'drop index if exists "ix__admin_audit_logs__tenant_id_action";',
-    );
-    this.addSql(
-      'drop index if exists "ix__admin_audit_logs__tenant_id_created_at";',
-    );
+    this.addSql('drop index if exists "ix__admin_audit_logs__tenant_id_target_user_id";');
+    this.addSql('drop index if exists "ix__admin_audit_logs__tenant_id_action";');
+    this.addSql('drop index if exists "ix__admin_audit_logs__tenant_id_created_at";');
     this.addSql('drop table if exists "admin_audit_logs";');
   }
 }

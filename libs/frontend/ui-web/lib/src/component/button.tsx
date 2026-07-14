@@ -5,47 +5,45 @@ import {
   type MouseEvent,
   type ReactElement,
   type ReactNode,
-} from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../util/cn";
+} from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../util/cn';
 
-type ButtonVariant = NonNullable<
-  VariantProps<typeof buttonVariants>["variant"]
->;
-type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>["size"]>;
+type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>['variant']>;
+type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 export const buttonVariants = cva(
   [
-    "xr-button inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out",
-    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+    'xr-button inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out',
+    'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+    'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   ],
   {
     variants: {
       variant: {
         primary:
-          "xr-button--primary border-transparent bg-primary text-primary-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
+          'xr-button--primary border-transparent bg-primary text-primary-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
         secondary:
-          "xr-button--secondary border-border bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0",
+          'xr-button--secondary border-border bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0',
         outline:
-          "xr-button--outline border-input bg-background text-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0",
+          'xr-button--outline border-input bg-background text-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0',
         ghost:
-          "xr-button--ghost border-transparent bg-transparent text-foreground shadow-none hover:bg-accent hover:text-accent-foreground",
+          'xr-button--ghost border-transparent bg-transparent text-foreground shadow-none hover:bg-accent hover:text-accent-foreground',
         destructive:
-          "xr-button--destructive border-transparent bg-destructive text-destructive-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0",
-        link: "xr-button--link h-auto border-transparent bg-transparent p-0 text-primary shadow-none underline-offset-4 hover:underline",
+          'xr-button--destructive border-transparent bg-destructive text-destructive-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
+        link: 'xr-button--link h-auto border-transparent bg-transparent p-0 text-primary shadow-none underline-offset-4 hover:underline',
       },
       size: {
-        sm: "h-9 px-3 text-xs",
-        md: "h-10 px-4",
-        lg: "h-11 px-5 text-base",
-        icon: "size-10 p-0",
+        sm: 'h-9 px-3 text-xs',
+        md: 'h-10 px-4',
+        lg: 'h-11 px-5 text-base',
+        icon: 'size-10 p-0',
       },
     },
     defaultVariants: {
-      size: "md",
-      variant: "primary",
+      size: 'md',
+      variant: 'primary',
     },
   },
 );
@@ -65,10 +63,7 @@ type NativeButtonProps = BaseUiButtonProps &
   };
 
 type AnchorButtonProps = BaseUiButtonProps &
-  Omit<
-    AnchorHTMLAttributes<HTMLAnchorElement>,
-    keyof BaseUiButtonProps | "href" | "type"
-  > & {
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof BaseUiButtonProps | 'href' | 'type'> & {
     asChild?: never;
     href: string;
   };
@@ -80,25 +75,22 @@ const buildClassName = ({
   isLoading,
   size,
   variant,
-}: Pick<BaseUiButtonProps, "className" | "isLoading" | "size" | "variant">) =>
+}: Pick<BaseUiButtonProps, 'className' | 'isLoading' | 'size' | 'variant'>) =>
   cn(
     buttonVariants({
       size: size as ButtonSize,
       variant: variant as ButtonVariant,
     }),
-    isLoading && "xr-button--loading",
+    isLoading && 'xr-button--loading',
     className,
   );
 
-const getAccessibleRel = (
-  rel: AnchorButtonProps["rel"],
-  target: AnchorButtonProps["target"],
-): string | undefined => {
-  if (target !== "_blank") {
+const getAccessibleRel = (rel: AnchorButtonProps['rel'], target: AnchorButtonProps['target']): string | undefined => {
+  if (target !== '_blank') {
     return rel;
   }
 
-  const relTokens = new Set(["noopener", "noreferrer"]);
+  const relTokens = new Set(['noopener', 'noreferrer']);
 
   rel
     ?.split(/\s+/)
@@ -106,14 +98,10 @@ const getAccessibleRel = (
     .filter(Boolean)
     .forEach((token) => relTokens.add(token));
 
-  return Array.from(relTokens).join(" ");
+  return Array.from(relTokens).join(' ');
 };
 
-const renderButtonContent = (
-  children: ReactNode,
-  isLoading: boolean,
-  loadingLabel: string,
-): ReactElement => {
+const renderButtonContent = (children: ReactNode, isLoading: boolean, loadingLabel: string): ReactElement => {
   if (!isLoading) {
     return <>{children}</>;
   }
@@ -133,9 +121,9 @@ export const UiButton = ({
   className,
   disabled = false,
   isLoading = false,
-  loadingLabel = "Loading",
-  size = "md",
-  variant = "primary",
+  loadingLabel = 'Loading',
+  size = 'md',
+  variant = 'primary',
   ...interactiveProps
 }: Readonly<UiButtonProps>) => {
   const isUnavailable = disabled || isLoading;
@@ -147,9 +135,8 @@ export const UiButton = ({
   });
   const content = renderButtonContent(children, isLoading, loadingLabel);
 
-  if ("href" in interactiveProps && interactiveProps.href !== undefined) {
-    const { href, onClick, rel, target, ...anchorProps } =
-      interactiveProps as AnchorButtonProps;
+  if ('href' in interactiveProps && interactiveProps.href !== undefined) {
+    const { href, onClick, rel, target, ...anchorProps } = interactiveProps as AnchorButtonProps;
 
     const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
       if (isUnavailable) {
@@ -178,13 +165,8 @@ export const UiButton = ({
     );
   }
 
-  const {
-    asChild = false,
-    onClick,
-    type = "button",
-    ...buttonProps
-  } = interactiveProps as NativeButtonProps;
-  const Comp = asChild ? Slot : "button";
+  const { asChild = false, onClick, type = 'button', ...buttonProps } = interactiveProps as NativeButtonProps;
+  const Comp = asChild ? Slot : 'button';
 
   return (
     <Comp

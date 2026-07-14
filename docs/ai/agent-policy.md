@@ -85,37 +85,35 @@ All exceptions flow through the `@app/backend-common-exception` library.
   ```ts
   import { Exception, ExceptionKind } from '@app/backend-common-exception';
 
-  throw new Exception({
+  export class MyCustomException extends Exception({
     name: 'MyCustomError',
-    kind: ExceptionKind.BAD_REQUEST,
-    problemType: 'urn:problem:my-custom-error',
+    kind: ExceptionKind.Client,
+    problemType: 'my_custom_error',
     title: 'My Custom Error',
     detail: 'What went wrong and why.',
     status: 400,
-  });
+  }) {}
+
+  throw new MyCustomException({ meta: { operation: 'example' } });
   ```
 
 - **Domain exception classes** (pre-configured for common HTTP error codes):
 
-  | Class                     | HTTP Status | ExceptionKind       | Typical use                       |
-  | ------------------------- | ----------- | ------------------- | --------------------------------- |
-  | `ResourceNotFoundException` | 404         | `NOT_FOUND`         | Entity or resource not found      |
-  | `UnauthorizedException`    | 401         | `UNAUTHORIZED`      | Missing or invalid authentication |
-  | `ForbiddenException`       | 403         | `FORBIDDEN`         | Authenticated but no permission   |
-  | `ConflictException`        | 409         | `CONFLICT`          | Resource conflict / duplicate     |
-  | `BadRequestException`      | 400         | `BAD_REQUEST`       | Invalid input / validation fail   |
-  | `InternalException`        | 500         | `INTERNAL`          | Unexpected server error           |
+  | Class                       | HTTP Status | ExceptionKind | Typical use                       |
+  | --------------------------- | ----------- | ------------- | --------------------------------- |
+  | `ResourceNotFoundException` | 404         | `Client`      | Entity or resource not found      |
+  | `UnauthorizedException`     | 401         | `Client`      | Missing or invalid authentication |
+  | `ForbiddenException`        | 403         | `Client`      | Authenticated but no permission   |
+  | `ConflictException`         | 409         | `Client`      | Resource conflict / duplicate     |
+  | `BadRequestException`       | 400         | `Client`      | Invalid input / validation fail   |
+  | `InternalException`         | 500         | `Server`      | Unexpected server error           |
 
   Usage:
 
   ```ts
   import { ResourceNotFoundException } from '@app/backend-common-exception';
 
-  throw new ResourceNotFoundException({
-    problemType: 'urn:problem:user-not-found',
-    title: 'User Not Found',
-    detail: `User with id "${userId}" does not exist.`,
-  });
+  throw new ResourceNotFoundException('user', userId);
   ```
 
 - **Wire format**: All exceptions serialize to RFC 9457 Problem Details

@@ -9,7 +9,7 @@ Tests that depend on the current time must use a controlled clock:
 
 ```ts
 // Use `useFakeTimers` in Jest/Mocha
-jest.useFakeTimers().setSystemTime(new Date("2025-01-01T00:00:00Z"));
+jest.useFakeTimers().setSystemTime(new Date('2025-01-01T00:00:00Z'));
 // ... assertions ...
 jest.useRealTimers();
 ```
@@ -17,7 +17,7 @@ jest.useRealTimers();
 Or inject a time provider:
 
 ```ts
-const timeProvider = () => new Date("2025-01-01T00:00:00Z");
+const timeProvider = () => new Date('2025-01-01T00:00:00Z');
 // Pass timeProvider to services that read Date.now()
 ```
 
@@ -39,8 +39,8 @@ Tests tagged `@quarantine` are excluded from normal CI runs:
 
 ```ts
 // playwright test
-test.describe("@quarantine flaky feature", () => {
-  test("flaky scenario", async ({ page }) => {
+test.describe('@quarantine flaky feature', () => {
+  test('flaky scenario', async ({ page }) => {
     // ...
   });
 });

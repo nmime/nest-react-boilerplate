@@ -1,6 +1,6 @@
-export type HealthIndicatorStatus = "ok" | "degraded" | "error" | "skipped";
-export type HealthStatus = Exclude<HealthIndicatorStatus, "skipped">;
-export type HealthCheckKind = "health" | "live" | "ready" | "private";
+export type HealthIndicatorStatus = 'ok' | 'degraded' | 'error' | 'skipped';
+export type HealthStatus = Exclude<HealthIndicatorStatus, 'skipped'>;
+export type HealthCheckKind = 'health' | 'live' | 'ready' | 'private';
 
 export interface HealthIndicatorContext {
   appName: string;
@@ -30,9 +30,7 @@ export interface HealthIndicator {
    * leave this unset so a transient dependency blip never fails liveness.
    */
   livenessSafe?: boolean;
-  check(
-    context?: HealthIndicatorContext,
-  ): Promise<HealthIndicatorResult> | HealthIndicatorResult;
+  check(context?: HealthIndicatorContext): Promise<HealthIndicatorResult> | HealthIndicatorResult;
 }
 
 export interface HealthDependencyDto {

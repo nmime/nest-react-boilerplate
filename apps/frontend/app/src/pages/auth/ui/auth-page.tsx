@@ -1,23 +1,9 @@
-import {
-  observer,
-  useI18n,
-  type Locale,
-  type UiTheme,
-} from "@app/frontend-runtime";
-import { useAuthSessionFlow } from "../../../features/auth";
-import {
-  SocialAuthButtons,
-  useSocialAuth,
-} from "../../../features/social-auth";
-import {
-  UiAlert,
-  UiCard,
-  UiSection,
-  UiStatCard,
-  UiStatusPill,
-} from "../../../shared/ui";
-import { AuthPanel } from "../../../widgets/auth-panel";
-import { ProfileStatusCard } from "../../../widgets/profile-status";
+import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
+import { useAuthSessionFlow } from '../../../features/auth';
+import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
+import { UiAlert, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
+import { AuthPanel } from '../../../widgets/auth-panel';
+import { ProfileStatusCard } from '../../../widgets/profile-status';
 
 interface AuthPageProps {
   applyUserLocale: (locale: Locale) => void;
@@ -31,17 +17,16 @@ export const AuthPage = observer(function AuthPage({
   navigate,
 }: Readonly<AuthPageProps>) {
   const { locale, t } = useI18n();
-  const returnUrl =
-    new URLSearchParams(globalThis.location.search).get("returnUrl") ?? null;
+  const returnUrl = new URLSearchParams(globalThis.location.search).get('returnUrl') ?? null;
   const authSession = useAuthSessionFlow({
     applyUserLocale,
     applyUserTheme,
     locale,
     messages: {
-      authenticationFailed: t("user.error.authenticationFailed"),
-      missingToken: t("user.state.missingToken"),
-      profileRequestFailed: t("user.error.profileRequestFailed"),
-      profileUnknown: t("user.profile.unknown"),
+      authenticationFailed: t('user.error.authenticationFailed'),
+      missingToken: t('user.state.missingToken'),
+      profileRequestFailed: t('user.error.profileRequestFailed'),
+      profileUnknown: t('user.profile.unknown'),
     },
     navigate,
     returnUrl,
@@ -50,59 +35,34 @@ export const AuthPage = observer(function AuthPage({
 
   return (
     <div className="xr-auth-layout" data-design-marker="auth-v3">
-      <UiSection
-        eyebrow={t("user.nav.auth")}
-        title="Choose a secure sign-in route"
-      >
+      <UiSection eyebrow={t('user.nav.auth')} title="Choose a secure sign-in route">
         <div className="xr-auth-hero-grid">
-          <UiCard
-            className="xr-auth-spotlight xr-surface-glow"
-            title={t("user.auth.title")}
-          >
+          <UiCard className="xr-auth-spotlight xr-surface-glow" title={t('user.auth.title')}>
             <div className="xr-card-stack">
               <UiAlert className="xr-inline-alert" tone="info">
                 <strong>Session-first experience</strong>
-                <span>
-                  Password, Telegram Mini App, and Discord OAuth stay on
-                  preserved routes.
-                </span>
+                <span>Password, Telegram Mini App, and Discord OAuth stay on preserved routes.</span>
               </UiAlert>
               <div className="xr-status-row">
                 <span className="xr-status-heading">Current auth state</span>
                 <UiStatusPill
                   label={authSession.profileState.status}
-                  tone={
-                    authSession.profileState.status === "ready"
-                      ? "success"
-                      : "info"
-                  }
+                  tone={authSession.profileState.status === 'ready' ? 'success' : 'info'}
                 />
               </div>
             </div>
           </UiCard>
           <div className="xr-stat-grid xr-stat-grid--compact">
-            <UiStatCard
-              detail="email + password"
-              label="Primary"
-              value="form"
-            />
-            <UiStatCard
-              detail="Telegram deep link"
-              label="Mobile"
-              value="TMA"
-            />
-            <UiStatCard
-              detail="OAuth callback"
-              label="Social"
-              value="Discord"
-            />
+            <UiStatCard detail="email + password" label="Primary" value="form" />
+            <UiStatCard detail="Telegram deep link" label="Mobile" value="TMA" />
+            <UiStatCard detail="OAuth callback" label="Social" value="Discord" />
           </div>
         </div>
       </UiSection>
       <AuthPanel
         isLoginPending={authSession.isLoginPending}
         isRegisterPending={authSession.isRegisterPending}
-        loadingLabel={t("user.loadingProfile")}
+        loadingLabel={t('user.loadingProfile')}
         onAuthSubmit={authSession.submitAuth}
         socialAuthSlot={
           <SocialAuthButtons
@@ -112,7 +72,7 @@ export const AuthPage = observer(function AuthPage({
               socialAuth.continueWithDiscord({ intent });
             }}
             onTelegramTma={() => {
-              navigate("/tma/auth", { replace: false });
+              navigate('/tma/auth', { replace: false });
             }}
             t={t}
           />

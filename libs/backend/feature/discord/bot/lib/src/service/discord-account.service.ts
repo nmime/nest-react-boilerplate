@@ -1,6 +1,6 @@
-import { Inject, Injectable, Optional } from "@nestjs/common";
-import type { Locale } from "@app/common-i18n";
-import { DefaultDiscordTenantId } from "./discord-config";
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import type { Locale } from '@app/common-i18n';
+import { DefaultDiscordTenantId } from './discord-config';
 import {
   DiscordAccountApplicationPort,
   DiscordAccountExternalAuthInjectToken,
@@ -11,11 +11,11 @@ import {
   type DiscordAccountUnlinkResult,
   type DiscordCreateAccountLinkInput,
   type DiscordExternalAuthPort,
-} from "../type/discord-account.port";
+} from '../type/discord-account.port';
 
 export class DiscordAccountLinkNotConfiguredError extends Error {
   constructor() {
-    super("Discord account link URL builder is not configured.");
+    super('Discord account link URL builder is not configured.');
   }
 }
 
@@ -41,9 +41,7 @@ export class DiscordAccountService extends DiscordAccountApplicationPort {
     super();
   }
 
-  async createLink(
-    input: DiscordCreateAccountLinkInput,
-  ): Promise<DiscordAccountLinkResult> {
+  async createLink(input: DiscordCreateAccountLinkInput): Promise<DiscordAccountLinkResult> {
     const tenantId = input.tenantId ?? DefaultDiscordTenantId;
     if (this.linkUrlBuilder) {
       return this.linkUrlBuilder.build({ ...input, tenantId });
@@ -51,7 +49,7 @@ export class DiscordAccountService extends DiscordAccountApplicationPort {
     if (this.externalAuth) {
       const result = this.externalAuth.createDiscordAuthorizationRequest({
         tenantId,
-        intent: "link",
+        intent: 'link',
         returnUrl: input.returnUrl,
         principal: { subject: input.userId, tenantId },
       });
@@ -66,16 +64,14 @@ export class DiscordAccountService extends DiscordAccountApplicationPort {
     }
     return {
       authorizationUrl: configured
-        .replaceAll("{discordUserId}", encodeURIComponent(input.userId))
-        .replaceAll("{guildId}", encodeURIComponent(input.guildId ?? ""))
-        .replaceAll("{tenantId}", encodeURIComponent(tenantId))
-        .replaceAll("{locale}", encodeURIComponent(input.locale)),
+        .replaceAll('{discordUserId}', encodeURIComponent(input.userId))
+        .replaceAll('{guildId}', encodeURIComponent(input.guildId ?? ''))
+        .replaceAll('{tenantId}', encodeURIComponent(tenantId))
+        .replaceAll('{locale}', encodeURIComponent(input.locale)),
     };
   }
 
-  async status(
-    input: DiscordAccountStatusInput,
-  ): Promise<DiscordAccountStatusResult> {
+  async status(input: DiscordAccountStatusInput): Promise<DiscordAccountStatusResult> {
     if (!this.externalAuth) {
       return { linked: false };
     }
@@ -83,32 +79,21 @@ export class DiscordAccountService extends DiscordAccountApplicationPort {
       input.userId,
       input.tenantId ?? DefaultDiscordTenantId,
     );
-    const identity = identities.find(
-      (item) =>
-        item.provider === "discord" && item.providerSubject === input.userId,
-    );
+    const identity = identities.find((item) => item.provider === 'discord' && item.providerSubject === input.userId);
     return {
       linked: Boolean(identity),
       displayName: identity?.displayName ?? identity?.username ?? null,
     };
   }
 
-  async unlink(
-    input: DiscordAccountUnlinkInput,
-  ): Promise<DiscordAccountUnlinkResult> {
+  async unlink(input: DiscordAccountUnlinkInput): Promise<DiscordAccountUnlinkResult> {
     if (!this.externalAuth?.unlinkProviderIdentity) {
       return { unlinked: false };
     }
 
     const tenantId = input.tenantId ?? DefaultDiscordTenantId;
-    const identities = await this.externalAuth.listProviderIdentities(
-      input.userId,
-      tenantId,
-    );
-    const identity = identities.find(
-      (item) =>
-        item.provider === "discord" && item.providerSubject === input.userId,
-    );
+    const identities = await this.externalAuth.listProviderIdentities(input.userId, tenantId);
+    const identity = identities.find((item) => item.provider === 'discord' && item.providerSubject === input.userId);
     if (!identity?.id) {
       return { unlinked: false };
     }

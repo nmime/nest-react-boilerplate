@@ -1,5 +1,5 @@
-import type { AuthSessionView, AuthenticatedUserView } from "@app/backend-feature-auth-shared";
-import { AuthProvider, AuthProviderChannel } from "@app/backend-feature-auth-shared";
+import type { AuthSessionView, AuthenticatedUserView } from '@app/backend-feature-auth-shared';
+import { AuthProvider, AuthProviderChannel } from '@app/backend-feature-auth-shared';
 
 export interface BetterAuthSessionView {
   user: BetterAuthUserView;
@@ -33,13 +33,11 @@ export function toSessionView(
 ): AuthSessionView {
   return {
     accessToken,
-    tokenType: "Bearer",
-    expiresIn: Math.max(0, Math.floor(
-      (betterAuthSession.expiresAt.getTime() - Date.now()) / 1000,
-    )),
+    tokenType: 'Bearer',
+    expiresIn: Math.max(0, Math.floor((betterAuthSession.expiresAt.getTime() - Date.now()) / 1000)),
     refreshToken,
     user: toUserView(betterAuthSession.user),
-    amr: ["pwd"],
+    amr: ['pwd'],
     authProvider: AuthProvider.Password,
     authChannel: AuthProviderChannel.Password,
     authTime: Math.floor(Date.now() / 1000),
@@ -49,11 +47,11 @@ export function toSessionView(
 export function toUserView(user: BetterAuthUserView): AuthenticatedUserView {
   return {
     id: user.id,
-    tenantId: user.tenantId || "00000000-0000-0000-0000-000000000000",
-    email: user.email || "",
+    tenantId: user.tenantId || '00000000-0000-0000-0000-000000000000',
+    email: user.email || '',
     displayName: user.name || user.displayName,
-    locale: user.locale as AuthenticatedUserView["locale"],
-    theme: (user.theme || "system") as AuthenticatedUserView["theme"],
+    locale: user.locale as AuthenticatedUserView['locale'],
+    theme: (user.theme || 'system') as AuthenticatedUserView['theme'],
     roles: user.roles || [],
     permissions: user.permissions || [],
   };
@@ -61,13 +59,13 @@ export function toUserView(user: BetterAuthUserView): AuthenticatedUserView {
 
 export function toBetterAuthUser(
   user: AuthenticatedUserView,
-): Omit<BetterAuthUserView, "id" | "createdAt" | "updatedAt"> {
+): Omit<BetterAuthUserView, 'id' | 'createdAt' | 'updatedAt'> {
   return {
     tenantId: user.tenantId,
-    name: user.displayName || "",
-    email: user.email || "",
+    name: user.displayName || '',
+    email: user.email || '',
     emailVerified: false,
-    locale: user.locale || "en",
+    locale: user.locale || 'en',
     theme: user.theme,
     roles: user.roles,
     permissions: user.permissions,

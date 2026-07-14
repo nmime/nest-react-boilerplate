@@ -1,4 +1,4 @@
-import type { HealthStatus } from "@app/backend-common-health";
+import type { HealthStatus } from '@app/backend-common-health';
 
 export interface PostgresHealthIndicatorOptions {
   name?: string;
@@ -7,7 +7,7 @@ export interface PostgresHealthIndicatorOptions {
 }
 
 export interface PostgresMigrationsHealthIndicatorOptions extends PostgresHealthIndicatorOptions {
-  pendingStatus?: Extract<HealthStatus, "degraded" | "error">;
+  pendingStatus?: Extract<HealthStatus, 'degraded' | 'error'>;
 }
 
 export interface PostgresPendingMigration {

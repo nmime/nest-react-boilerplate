@@ -1,5 +1,5 @@
-import { randomInt } from "node:crypto";
-import type { RedisLockAcquireOptions } from "../type";
+import { randomInt } from 'node:crypto';
+import type { RedisLockAcquireOptions } from '../type';
 
 export function getRetryDelay(options: RedisLockAcquireOptions): number {
   const delayMs = options.retryDelayMs ?? 100;

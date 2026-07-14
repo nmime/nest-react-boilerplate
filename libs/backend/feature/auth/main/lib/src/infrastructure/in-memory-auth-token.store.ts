@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { okAsync, ResultAsync } from "neverthrow";
+import { Injectable } from '@nestjs/common';
+import { okAsync, ResultAsync } from 'neverthrow';
 import type {
   AuthTokenStore,
   AuthTokenStoreError,
@@ -10,21 +10,16 @@ import type {
   RefreshTokenRecord,
   UserActionTokenIssueInput,
   UserActionTokenRecord,
-} from "./type/auth-token-store.type";
-import { hashOpaqueToken } from "./factory/auth-token-crypto.factory";
-import {
-  createIssuedRefreshToken,
-  createIssuedUserActionToken,
-} from "./factory/auth-token.factory";
+} from './type/auth-token-store.type';
+import { hashOpaqueToken } from './factory/auth-token-crypto.factory';
+import { createIssuedRefreshToken, createIssuedUserActionToken } from './factory/auth-token.factory';
 
 @Injectable()
 export class InMemoryAuthTokenStore implements AuthTokenStore {
   private readonly refreshTokensByHash = new Map<string, RefreshTokenRecord>();
   private readonly userTokensByHash = new Map<string, UserActionTokenRecord>();
 
-  issueRefreshToken(
-    input: RefreshTokenIssueInput,
-  ): ResultAsync<IssuedRefreshToken, AuthTokenStoreError> {
+  issueRefreshToken(input: RefreshTokenIssueInput): ResultAsync<IssuedRefreshToken, AuthTokenStoreError> {
     const issued = createIssuedRefreshToken(input);
     this.refreshTokensByHash.set(issued.tokenHash, {
       id: issued.id,
@@ -41,10 +36,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return okAsync(issued);
   }
 
-  rotateRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError> {
+  rotateRefreshToken(token: string, tenantId?: string): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError> {
     const record = this.getUsableRefreshToken(token, tenantId);
     if (!record) {
       return okAsync(null);
@@ -61,10 +53,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return okAsync(issued);
   }
 
-  revokeRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<boolean, AuthTokenStoreError> {
+  revokeRefreshToken(token: string, tenantId?: string): ResultAsync<boolean, AuthTokenStoreError> {
     const record = this.getUsableRefreshToken(token, tenantId);
     if (!record) {
       return okAsync(false);
@@ -74,16 +63,11 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return okAsync(true);
   }
 
-  findRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError> {
+  findRefreshToken(token: string, tenantId?: string): ResultAsync<RefreshTokenRecord | null, AuthTokenStoreError> {
     return okAsync(this.getUsableRefreshToken(token, tenantId));
   }
 
-  issueUserActionToken(
-    input: UserActionTokenIssueInput,
-  ): ResultAsync<IssuedUserActionToken, AuthTokenStoreError> {
+  issueUserActionToken(input: UserActionTokenIssueInput): ResultAsync<IssuedUserActionToken, AuthTokenStoreError> {
     const issued = createIssuedUserActionToken(input);
     this.userTokensByHash.set(issued.tokenHash, {
       id: issued.id,
@@ -118,9 +102,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return okAsync(record);
   }
 
-  private createRefreshToken(
-    input: RefreshTokenIssueInput,
-  ): IssuedRefreshToken {
+  private createRefreshToken(input: RefreshTokenIssueInput): IssuedRefreshToken {
     const issued = createIssuedRefreshToken(input);
     this.refreshTokensByHash.set(issued.tokenHash, {
       id: issued.id,
@@ -137,18 +119,10 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return issued;
   }
 
-  private getUsableRefreshToken(
-    token: string,
-    tenantId?: string,
-  ): RefreshTokenRecord | null {
+  private getUsableRefreshToken(token: string, tenantId?: string): RefreshTokenRecord | null {
     const tokenHash = hashOpaqueToken(token);
     const record = this.refreshTokensByHash.get(tokenHash) ?? null;
-    if (
-      !record ||
-      record.revokedAt ||
-      record.expiresAt <= new Date() ||
-      (tenantId && record.tenantId !== tenantId)
-    ) {
+    if (!record || record.revokedAt || record.expiresAt <= new Date() || (tenantId && record.tenantId !== tenantId)) {
       return null;
     }
 

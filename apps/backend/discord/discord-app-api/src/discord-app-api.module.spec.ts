@@ -1,15 +1,12 @@
-import { Test } from "@nestjs/testing";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  DiscordAccountApplicationPort,
-  DiscordAccountService,
-} from "@app/backend-feature-discord-bot";
-import { ExternalAuthService } from "@app/backend-feature-auth-main";
-import { DiscordAppApiModule } from "./discord-app-api.module";
-import { DiscordExternalAuthAdapter } from "./discord-external-auth.adapter";
+import { Test } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DiscordAccountApplicationPort, DiscordAccountService } from '@app/backend-feature-discord-bot';
+import { ExternalAuthService } from '@app/backend-feature-auth-main';
+import { DiscordAppApiModule } from './discord-app-api.module';
+import { DiscordExternalAuthAdapter } from './discord-external-auth.adapter';
 
-const tenantId = "00000000-0000-0000-0000-000000000000";
-const discordUserId = "123456789012345678";
+const tenantId = '00000000-0000-0000-0000-000000000000';
+const discordUserId = '123456789012345678';
 
 /**
  * Boots the real application module and replaces only the auth feature's
@@ -38,7 +35,7 @@ async function boot(externalAuth: Partial<ExternalAuthService>): Promise<{
   };
 }
 
-describe("DiscordAppApiModule wiring", () => {
+describe('DiscordAppApiModule wiring', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -51,51 +48,46 @@ describe("DiscordAppApiModule wiring", () => {
     try {
       // Same instance the DiscordBotModule resolves the application port to.
       expect(accounts).toBeInstanceOf(DiscordAccountService);
-      const port = (accounts as unknown as { externalAuth: unknown })
-        .externalAuth;
+      const port = (accounts as unknown as { externalAuth: unknown }).externalAuth;
       expect(port).toBeInstanceOf(DiscordExternalAuthAdapter);
     } finally {
       await close();
     }
   });
 
-  it("reports linked status from the wired ExternalAuthService identities", async () => {
+  it('reports linked status from the wired ExternalAuthService identities', async () => {
     const listProviderIdentities = vi.fn().mockResolvedValue([
       {
-        id: "identity-1",
-        provider: "discord",
+        id: 'identity-1',
+        provider: 'discord',
         providerSubject: discordUserId,
-        displayName: "Tester",
-        username: "tester",
+        displayName: 'Tester',
+        username: 'tester',
       },
     ]);
     const { accounts, close } = await boot({ listProviderIdentities });
 
     try {
-      await expect(
-        accounts.status({ userId: discordUserId, tenantId }),
-      ).resolves.toEqual({ linked: true, displayName: "Tester" });
-      expect(listProviderIdentities).toHaveBeenCalledWith(
-        discordUserId,
-        tenantId,
-      );
+      await expect(accounts.status({ userId: discordUserId, tenantId })).resolves.toEqual({
+        linked: true,
+        displayName: 'Tester',
+      });
+      expect(listProviderIdentities).toHaveBeenCalledWith(discordUserId, tenantId);
     } finally {
       await close();
     }
   });
 
-  it("unlinks through the wired ExternalAuthService with a fresh step-up authTime", async () => {
-    const unlinkProviderIdentity = vi
-      .fn()
-      .mockResolvedValue({ unlinked: true });
+  it('unlinks through the wired ExternalAuthService with a fresh step-up authTime', async () => {
+    const unlinkProviderIdentity = vi.fn().mockResolvedValue({ unlinked: true });
     const { accounts, close } = await boot({
       listProviderIdentities: vi.fn().mockResolvedValue([
         {
-          id: "identity-1",
-          provider: "discord",
+          id: 'identity-1',
+          provider: 'discord',
           providerSubject: discordUserId,
           displayName: null,
-          username: "tester",
+          username: 'tester',
         },
       ]),
       unlinkProviderIdentity,
@@ -103,59 +95,53 @@ describe("DiscordAppApiModule wiring", () => {
 
     try {
       const nowSeconds = Math.floor(Date.now() / 1000);
-      await expect(
-        accounts.unlink({ userId: discordUserId, tenantId }),
-      ).resolves.toEqual({ unlinked: true });
+      await expect(accounts.unlink({ userId: discordUserId, tenantId })).resolves.toEqual({ unlinked: true });
 
       expect(unlinkProviderIdentity).toHaveBeenCalledTimes(1);
       const [identityId, principal] = unlinkProviderIdentity.mock.calls[0] as [
         string,
         { subject: string; tenantId: string; authTime: number },
       ];
-      expect(identityId).toBe("identity-1");
+      expect(identityId).toBe('identity-1');
       expect(principal.subject).toBe(discordUserId);
       expect(principal.tenantId).toBe(tenantId);
       // The adapter supplies the verified interaction moment as the step-up
       // authTime the auth feature requires, so unlink is not a no-op.
       expect(principal.authTime).toBeGreaterThanOrEqual(nowSeconds - 1);
-      expect(principal.authTime).toBeLessThanOrEqual(
-        Math.floor(Date.now() / 1000) + 1,
-      );
+      expect(principal.authTime).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 1);
     } finally {
       await close();
     }
   });
 
-  it("creates Discord authorization requests through the wired ExternalAuthService", async () => {
+  it('creates Discord authorization requests through the wired ExternalAuthService', async () => {
     const createDiscordAuthorizationRequest = vi.fn().mockReturnValue({
-      authorizationUrl: "https://discord.com/oauth2/authorize?state=abc",
-      stateExpiresAt: "2026-07-03T00:00:00.000Z",
+      authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
+      stateExpiresAt: '2026-07-03T00:00:00.000Z',
     });
     const { accounts, close } = await boot({
       createDiscordAuthorizationRequest,
     });
 
     try {
-      const port = (
-        accounts as unknown as { externalAuth: DiscordExternalAuthAdapter }
-      ).externalAuth;
+      const port = (accounts as unknown as { externalAuth: DiscordExternalAuthAdapter }).externalAuth;
       const withReturnUrl = port.createDiscordAuthorizationRequest({
         tenantId,
-        intent: "link",
-        returnUrl: "https://example.com/settings",
+        intent: 'link',
+        returnUrl: 'https://example.com/settings',
         principal: { subject: discordUserId, tenantId },
       });
-      expect(withReturnUrl.authorizationUrl).toContain("discord.com");
+      expect(withReturnUrl.authorizationUrl).toContain('discord.com');
       const withoutReturnUrl = port.createDiscordAuthorizationRequest({
         tenantId,
-        intent: "link",
+        intent: 'link',
         principal: { subject: discordUserId, tenantId },
       });
-      expect(withoutReturnUrl.stateExpiresAt).toBe("2026-07-03T00:00:00.000Z");
+      expect(withoutReturnUrl.stateExpiresAt).toBe('2026-07-03T00:00:00.000Z');
       expect(createDiscordAuthorizationRequest).toHaveBeenCalledTimes(2);
       expect(createDiscordAuthorizationRequest).toHaveBeenLastCalledWith({
         tenantId,
-        intent: "link",
+        intent: 'link',
         returnUrl: undefined,
         principal: { subject: discordUserId, tenantId },
       });
@@ -164,7 +150,7 @@ describe("DiscordAppApiModule wiring", () => {
     }
   });
 
-  it("exposes the account application port from the module graph", async () => {
+  it('exposes the account application port from the module graph', async () => {
     process.env.AUTH_PERSISTENCE = 'memory';
     process.env.OPENAPI_ENABLED = 'true';
     const moduleRef = await Test.createTestingModule({
@@ -175,9 +161,7 @@ describe("DiscordAppApiModule wiring", () => {
       .compile();
 
     try {
-      expect(
-        moduleRef.get(DiscordAccountApplicationPort, { strict: false }),
-      ).toBeInstanceOf(DiscordAccountService);
+      expect(moduleRef.get(DiscordAccountApplicationPort, { strict: false })).toBeInstanceOf(DiscordAccountService);
     } finally {
       await moduleRef.close();
     }

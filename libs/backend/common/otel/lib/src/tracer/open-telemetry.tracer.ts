@@ -1,8 +1,8 @@
-import { SpanStatusCode, type Span, type Tracer } from "@opentelemetry/api";
-import type { TraceSpan, TracerLike } from "../type/trace-span.type";
-import { toAttributes } from "../util/attributes.util";
+import { SpanStatusCode, type Span, type Tracer } from '@opentelemetry/api';
+import type { TraceSpan, TracerLike } from '../type/trace-span.type';
+import { toAttributes } from '../util/attributes.util';
 
-const otelSpanSymbol = Symbol("otelSpan");
+const otelSpanSymbol = Symbol('otelSpan');
 
 type OtelSpanHolder = TraceSpan & { [otelSpanSymbol]?: Span };
 
@@ -40,15 +40,8 @@ export class OpenTelemetryTracer implements TracerLike {
     otelSpan.end();
   }
 
-  addEvent(
-    span: TraceSpan,
-    name: string,
-    attributes?: Record<string, unknown>,
-  ): void {
+  addEvent(span: TraceSpan, name: string, attributes?: Record<string, unknown>): void {
     span.events.push({ name, attributes, at: new Date() });
-    (span as OtelSpanHolder)[otelSpanSymbol]?.addEvent(
-      name,
-      toAttributes(attributes ?? {}),
-    );
+    (span as OtelSpanHolder)[otelSpanSymbol]?.addEvent(name, toAttributes(attributes ?? {}));
   }
 }

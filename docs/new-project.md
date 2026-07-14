@@ -2,22 +2,26 @@
 
 ## Setup engine (recommended)
 
-The `nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
+The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
+
+The `starter` preset selects `starter-app`, a deliberately neutral Vite shell.
+The existing `admin-app`, `user-app`, landing, site, and mobile surfaces are
+reference implementations; they are not copied into a new product shell.
 
 ```bash
 # Interactive wizard:
-nrb setup
+pnpm nrb setup
 
-# Non-interactive with a preset:
-nrb setup --preset fullstack --non-interactive
+# Non-interactive neutral product baseline:
+pnpm nrb setup --preset starter --non-interactive
 
 # Config file:
 cp nrb.config.example.json nrb.config.json
 # Edit nrb.config.json, then:
-nrb setup --config nrb.config.json
+pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-nrb setup --preset starter --dry-run
+pnpm nrb setup --preset starter --dry-run
 ```
 
 See [Setup and Configuration](setup/configuration.md) for details.
@@ -33,7 +37,10 @@ pnpm init:project -- --name "Acme App" --domain acme.example --owner your-github
 pnpm init:project -- --name "Acme App" --domain acme.example --owner your-github-org
 ```
 
-**Recommendation**: run `init:project` first (token replacement), then `nrb setup` (app/capability selection).
+**Recommendation**: run `init:project` first (token replacement), then
+`pnpm nrb setup --preset starter` for a neutral product shell. Select
+`fullstack` or `enterprise` only when you intentionally want the reference
+applications as working examples.
 
 ## Manual checklist
 

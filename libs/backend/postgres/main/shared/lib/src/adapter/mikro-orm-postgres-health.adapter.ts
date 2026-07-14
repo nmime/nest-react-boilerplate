@@ -1,14 +1,8 @@
-import { MikroORM } from "@mikro-orm/core";
-import { Injectable, Optional } from "@nestjs/common";
-import {
-  PostgresDependencyNotConfiguredError,
-  PostgresMigrationStatusUnsupportedError,
-} from "../exception";
-import type {
-  PostgresDependencyHealthAdapter,
-  PostgresPendingMigration,
-} from "../type";
-import { normalizePendingMigration } from "../util";
+import { MikroORM } from '@mikro-orm/core';
+import { Injectable, Optional } from '@nestjs/common';
+import { PostgresDependencyNotConfiguredError, PostgresMigrationStatusUnsupportedError } from '../exception';
+import type { PostgresDependencyHealthAdapter, PostgresPendingMigration } from '../type';
+import { normalizePendingMigration } from '../util';
 
 @Injectable()
 export class MikroOrmPostgresHealthAdapter implements PostgresDependencyHealthAdapter {
@@ -21,7 +15,7 @@ export class MikroOrmPostgresHealthAdapter implements PostgresDependencyHealthAd
   async checkReadiness(): Promise<void> {
     const orm = this.getConfiguredOrm();
 
-    await orm.em.getConnection().execute("select 1");
+    await orm.em.getConnection().execute('select 1');
   }
 
   async getPendingMigrations(): Promise<readonly PostgresPendingMigration[]> {
@@ -34,19 +28,15 @@ export class MikroOrmPostgresHealthAdapter implements PostgresDependencyHealthAd
     }
 
     const pendingMigrationsReader = migrator as {
-      getPendingMigrations?: () =>
-        Promise<readonly unknown[]> | readonly unknown[];
+      getPendingMigrations?: () => Promise<readonly unknown[]> | readonly unknown[];
     };
     if (!pendingMigrationsReader.getPendingMigrations) {
       throw new PostgresMigrationStatusUnsupportedError();
     }
 
-    const pendingMigrations =
-      await pendingMigrationsReader.getPendingMigrations();
+    const pendingMigrations = await pendingMigrationsReader.getPendingMigrations();
 
-    return pendingMigrations.map((migration) =>
-      normalizePendingMigration(migration),
-    );
+    return pendingMigrations.map((migration) => normalizePendingMigration(migration));
   }
 
   private getConfiguredOrm(): MikroORM {

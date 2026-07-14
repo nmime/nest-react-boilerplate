@@ -1,1 +1,1 @@
-export * from "./s3-operation-failed.exception";
+export * from './s3-operation-failed.exception';

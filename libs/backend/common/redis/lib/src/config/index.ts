@@ -1,2 +1,2 @@
-export * from "./redis.config.module";
-export * from "./redis.config.service";
+export * from './redis.config.module';
+export * from './redis.config.service';

@@ -1,38 +1,23 @@
-import {
-  adminApi,
-  throwOnOpenApiErrorData,
-  type ApiClientRequestOptions,
-} from "@app/frontend-api-client";
+import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import {
   createAdminAccessPolicy,
   type AdminAccessPolicy,
   type AdminPrincipalClaims,
-} from "@app/frontend-feature-admin-shared";
-import {
-  getRequiredApiBaseUrl,
-  type FrontendEnv,
-} from "@app/frontend-api-support";
+} from '@app/frontend-feature-admin-shared';
+import { getRequiredApiBaseUrl, type FrontendEnv } from '@app/frontend-api-support';
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 
-export type AdminProfilePayload = Partial<
-  Omit<adminApi.AdminProfilePayloadDto, "principal" | "profile">
-> & {
+export type AdminProfilePayload = Partial<Omit<adminApi.AdminProfilePayloadDto, 'principal' | 'profile'>> & {
   principal?: AdminPrincipal;
-  profile?: Partial<adminApi.AdminProfilePayloadDto["profile"]>;
+  profile?: Partial<adminApi.AdminProfilePayloadDto['profile']>;
 };
 
 export type AdminAccess = AdminAccessPolicy;
 
 export const normalizeClaimList = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return [
-      ...new Set(
-        value.filter(
-          (item): item is string => typeof item === "string" && item.length > 0,
-        ),
-      ),
-    ];
+    return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length > 0))];
   }
 
   return [];
@@ -45,17 +30,13 @@ export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess =>
     subject: principal?.subject,
   } satisfies AdminPrincipalClaims);
 
-export const getAdminApiBaseUrl = (env: FrontendEnv): string =>
-  getRequiredApiBaseUrl(env, "VITE_ADMIN_API_BASE_URL");
+export const getAdminApiBaseUrl = (env: FrontendEnv): string => getRequiredApiBaseUrl(env, 'VITE_ADMIN_API_BASE_URL');
 
-export const getAuthApiBaseUrl = (env: FrontendEnv): string =>
-  getRequiredApiBaseUrl(env, "VITE_AUTH_API_BASE_URL");
+export const getAuthApiBaseUrl = (env: FrontendEnv): string => getRequiredApiBaseUrl(env, 'VITE_AUTH_API_BASE_URL');
 
 export const fetchAdminProfile = async (
-  adminClient: Pick<typeof adminApi, "adminProfileControllerMe">,
+  adminClient: Pick<typeof adminApi, 'adminProfileControllerMe'>,
   requestOptions?: ApiClientRequestOptions,
 ): Promise<AdminProfilePayload> => {
-  return throwOnOpenApiErrorData(
-    adminClient.adminProfileControllerMe(requestOptions),
-  );
+  return throwOnOpenApiErrorData(adminClient.adminProfileControllerMe(requestOptions));
 };

@@ -1,5 +1,5 @@
-import { configureApiLocale } from "@app/frontend-api-support";
-import { describe, expect, expectTypeOf, it, vi } from "vitest";
+import { configureApiLocale } from '@app/frontend-api-support';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {
   authControllerCreateLinkToken,
   authControllerDiscordAuthorizationRequest,
@@ -49,7 +49,7 @@ import {
   useAuthControllerRegisterMutation,
   useAuthControllerUpdateLocaleMutation,
   useAuthControllerUpdatePreferencesMutation,
-} from "./auth";
+} from './auth';
 import {
   adminProfileControllerMe,
   adminUsersControllerListUsers,
@@ -60,7 +60,7 @@ import {
   getAdminUsersControllerUpdateUserStatusMutationKey,
   type UpdateAdminUserAccessPolicyDto,
   type UpdateAdminUserStatusDto,
-} from "./admin";
+} from './admin';
 import {
   ApiClientError,
   isApiClientError,
@@ -68,58 +68,58 @@ import {
   throwOnOpenApiErrorData,
   toOpenApiFetchOptions,
   unwrapEnvelopeData,
-} from "./service-options";
-import { profileControllerMe } from "./user";
+} from './service-options';
+import { profileControllerMe } from './user';
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
-    headers: { "content-type": "application/json" },
+    headers: { 'content-type': 'application/json' },
     status,
   });
 
 const session: AuthSessionViewDto = {
-  accessToken: "access-token",
+  accessToken: 'access-token',
   expiresIn: 3600,
-  tokenType: "Bearer",
+  tokenType: 'Bearer',
   user: {
-    email: "ada@example.com",
-    id: "user-1",
-    permissions: ["profile:read"],
-    roles: ["user"],
+    email: 'ada@example.com',
+    id: 'user-1',
+    permissions: ['profile:read'],
+    roles: ['user'],
   },
 };
 
 const externalAuthResult: ExternalAuthResultDto = {
   identity: {
     email: null,
-    provider: "telegram",
-    providerSubject: "telegram-user-1",
+    provider: 'telegram',
+    providerSubject: 'telegram-user-1',
   },
   session: {
     ...session,
-    authChannel: "telegram_web_login",
-    authProvider: "telegram",
+    authChannel: 'telegram_web_login',
+    authProvider: 'telegram',
     user: { ...session.user, email: null },
   },
-  status: "authenticated",
+  status: 'authenticated',
 };
 
 const providerIdentities: ProviderIdentitiesPayloadDto = {
   items: [
     {
       email: null,
-      id: "identity-1",
-      provider: "telegram",
-      providerSubject: "telegram-user-1",
+      id: 'identity-1',
+      provider: 'telegram',
+      providerSubject: 'telegram-user-1',
     },
   ],
 };
 
 const linkTokenResult: LinkTokenResultDto = {
-  expiresAt: "2025-01-01T00:00:00.000Z",
-  intent: "link",
-  provider: "telegram",
-  token: "link-token",
+  expiresAt: '2025-01-01T00:00:00.000Z',
+  intent: 'link',
+  provider: 'telegram',
+  token: 'link-token',
 };
 
 type FetchMock = typeof fetch & {
@@ -127,90 +127,78 @@ type FetchMock = typeof fetch & {
 };
 
 const mockFetch = (body: unknown, status = 200): FetchMock =>
-  vi.fn(() =>
-    Promise.resolve(jsonResponse(body, status)),
-  ) as unknown as FetchMock;
+  vi.fn(() => Promise.resolve(jsonResponse(body, status))) as unknown as FetchMock;
 
 const firstRequest = (fetchImpl: FetchMock): Request => {
   expect(fetchImpl).toHaveBeenCalledTimes(1);
   return fetchImpl.mock.calls[0][0] as Request;
 };
 
-describe("generated api clients", () => {
-  it("sends centralized headers and normalized baseUrl for auth, user, and admin clients", async () => {
-    configureApiLocale({ locale: "ru" });
+describe('generated api clients', () => {
+  it('sends centralized headers and normalized baseUrl for auth, user, and admin clients', async () => {
+    configureApiLocale({ locale: 'ru' });
     const abortController = new AbortController();
     const { signal } = abortController;
     const authFetch = mockFetch({ data: { principal: null, user: null } });
 
     await authControllerMe({
-      authToken: " token-123 ",
-      baseUrl: "/api/",
+      authToken: ' token-123 ',
+      baseUrl: '/api/',
       fetchImpl: authFetch,
-      headers: { "x-request-id": "req-1" },
+      headers: { 'x-request-id': 'req-1' },
       signal,
     });
 
     const authRequest = firstRequest(authFetch);
     expect(authRequest.url).toBe(`${globalThis.location.origin}/api/auth/me`);
-    expect(authRequest.method).toBe("GET");
-    expect(authRequest.headers.get("accept")).toBe("application/json");
-    expect(authRequest.headers.get("accept-language")).toBe("ru");
-    expect(authRequest.headers.get("authorization")).toBe("Bearer token-123");
-    expect(authRequest.headers.get("x-request-id")).toBe("req-1");
+    expect(authRequest.method).toBe('GET');
+    expect(authRequest.headers.get('accept')).toBe('application/json');
+    expect(authRequest.headers.get('accept-language')).toBe('ru');
+    expect(authRequest.headers.get('authorization')).toBe('Bearer token-123');
+    expect(authRequest.headers.get('x-request-id')).toBe('req-1');
     expect(authRequest.signal.aborted).toBe(false);
     abortController.abort();
     expect(authRequest.signal.aborted).toBe(true);
 
     const userFetch = mockFetch({ data: { principal: null, profile: null } });
     await profileControllerMe({
-      authToken: "user-token",
-      baseUrl: "https://api.example.test/root/",
+      authToken: 'user-token',
+      baseUrl: 'https://api.example.test/root/',
       fetchImpl: userFetch,
     });
     const userRequest = firstRequest(userFetch);
-    expect(userRequest.url).toBe("https://api.example.test/root/profile/me");
-    expect(userRequest.headers.get("authorization")).toBe("Bearer user-token");
-    expect(userRequest.headers.get("accept-language")).toBe("ru");
+    expect(userRequest.url).toBe('https://api.example.test/root/profile/me');
+    expect(userRequest.headers.get('authorization')).toBe('Bearer user-token');
+    expect(userRequest.headers.get('accept-language')).toBe('ru');
 
     const adminFetch = mockFetch({ data: { principal: null, profile: null } });
     await adminProfileControllerMe({
-      authToken: "admin-token",
-      baseUrl: "https://admin.example.test",
+      authToken: 'admin-token',
+      baseUrl: 'https://admin.example.test',
       fetchImpl: adminFetch,
     });
     const adminRequest = firstRequest(adminFetch);
-    expect(adminRequest.url).toBe(
-      "https://admin.example.test/admin/profile/me",
-    );
-    expect(adminRequest.headers.get("authorization")).toBe(
-      "Bearer admin-token",
-    );
-    expect(adminRequest.headers.get("accept-language")).toBe("ru");
+    expect(adminRequest.url).toBe('https://admin.example.test/admin/profile/me');
+    expect(adminRequest.headers.get('authorization')).toBe('Bearer admin-token');
+    expect(adminRequest.headers.get('accept-language')).toBe('ru');
   });
 
-  it("normalizes OpenAPI options and unwraps non-envelope data", () => {
-    expect(toOpenApiFetchOptions({ baseUrl: "" }).baseUrl).toBe(
-      globalThis.location.origin,
-    );
-    expect(toOpenApiFetchOptions({ baseUrl: "/api/" }).baseUrl).toBe(
-      `${globalThis.location.origin}/api`,
-    );
-    expect(toOpenApiFetchOptions({ baseUrl: "http://api.test/" }).baseUrl).toBe(
-      "http://api.test",
-    );
-    expect(unwrapEnvelopeData({ value: "raw" })).toEqual({ value: "raw" });
+  it('normalizes OpenAPI options and unwraps non-envelope data', () => {
+    expect(toOpenApiFetchOptions({ baseUrl: '' }).baseUrl).toBe(globalThis.location.origin);
+    expect(toOpenApiFetchOptions({ baseUrl: '/api/' }).baseUrl).toBe(`${globalThis.location.origin}/api`);
+    expect(toOpenApiFetchOptions({ baseUrl: 'http://api.test/' }).baseUrl).toBe('http://api.test');
+    expect(unwrapEnvelopeData({ value: 'raw' })).toEqual({ value: 'raw' });
   });
 
-  it("unwraps success envelopes through the data helper", async () => {
+  it('unwraps success envelopes through the data helper', async () => {
     const fetchImpl = mockFetch({ data: session });
 
     await expect(
       throwOnOpenApiErrorData(
         authControllerLogin(
           {
-            email: "ada@example.com",
-            password: "password123",
+            email: 'ada@example.com',
+            password: 'password123',
           },
           { fetchImpl },
         ),
@@ -218,52 +206,43 @@ describe("generated api clients", () => {
     ).resolves.toEqual(session);
   });
 
-  it("keeps HTTP errors as typed low-level results until explicitly thrown", async () => {
+  it('keeps HTTP errors as typed low-level results until explicitly thrown', async () => {
     const problem = {
-      code: "auth.invalid_credentials",
-      detail: "Invalid email or password",
+      code: 'auth.invalid_credentials',
+      detail: 'Invalid email or password',
       status: 401,
-      title: "Unauthorized",
-      type: "about:blank",
+      title: 'Unauthorized',
+      type: 'about:blank',
     } satisfies AuthControllerLoginError;
     const fetchImpl = mockFetch(problem, 401);
 
-    const result = await authControllerLogin(
-      { email: "ada@example.com", password: "password123" },
-      { fetchImpl },
-    );
+    const result = await authControllerLogin({ email: 'ada@example.com', password: 'password123' }, { fetchImpl });
 
     expect(result).toMatchObject({ error: problem });
     expect(result.response.status).toBe(401);
-    expect("data" in result).toBe(false);
+    expect('data' in result).toBe(false);
   });
 
-  it("throws ApiClientError with status, typed body, response, and useful message", async () => {
+  it('throws ApiClientError with status, typed body, response, and useful message', async () => {
     const problem = {
-      detail: "Use a stronger password",
+      detail: 'Use a stronger password',
       status: 400,
-      title: "Bad Request",
-      type: "about:blank",
+      title: 'Bad Request',
+      type: 'about:blank',
     } satisfies AuthControllerRegisterError;
     const response = jsonResponse(problem, 400);
 
-    await expect(
-      throwOnOpenApiError(
-        Promise.resolve({ error: problem, response } as const),
-      ),
-    ).rejects.toMatchObject({
+    await expect(throwOnOpenApiError(Promise.resolve({ error: problem, response } as const))).rejects.toMatchObject({
       body: problem,
-      message: "Use a stronger password",
-      name: "ApiClientError",
+      message: 'Use a stronger password',
+      name: 'ApiClientError',
       response,
       status: 400,
     });
 
     try {
-      await throwOnOpenApiError(
-        Promise.resolve({ error: problem, response } as const),
-      );
-      throw new Error("expected throw");
+      await throwOnOpenApiError(Promise.resolve({ error: problem, response } as const));
+      throw new Error('expected throw');
     } catch (error) {
       expect(isApiClientError<AuthControllerRegisterError>(error)).toBe(true);
       if (!isApiClientError<AuthControllerRegisterError>(error)) {
@@ -274,70 +253,62 @@ describe("generated api clients", () => {
       expect(error.response).toBe(response);
     }
 
-    expect(isApiClientError(new Error("plain"))).toBe(false);
+    expect(isApiClientError(new Error('plain'))).toBe(false);
   });
 
-  it("serializes mutation bodies for login, register, locale, and preferences updates", async () => {
+  it('serializes mutation bodies for login, register, locale, and preferences updates', async () => {
     const loginBody: LoginDto = {
-      email: "ada@example.com",
-      password: "password123",
+      email: 'ada@example.com',
+      password: 'password123',
     };
     const loginFetch = mockFetch({ data: session });
     await authControllerLogin(loginBody, { fetchImpl: loginFetch });
-    await expect(firstRequest(loginFetch).clone().json()).resolves.toEqual(
-      loginBody,
-    );
+    await expect(firstRequest(loginFetch).clone().json()).resolves.toEqual(loginBody);
 
     const registerBody: RegisterDto = {
-      displayName: "Ada Lovelace",
-      email: "ada@example.com",
-      locale: "en",
-      password: "password123",
+      displayName: 'Ada Lovelace',
+      email: 'ada@example.com',
+      locale: 'en',
+      password: 'password123',
     };
     const registerFetch = mockFetch({ data: session });
     await authControllerRegister(registerBody, { fetchImpl: registerFetch });
     const registerRequest = firstRequest(registerFetch);
-    expect(registerRequest.method).toBe("POST");
-    expect(registerRequest.headers.get("content-type")).toContain(
-      "application/json",
-    );
+    expect(registerRequest.method).toBe('POST');
+    expect(registerRequest.headers.get('content-type')).toContain('application/json');
     await expect(registerRequest.clone().json()).resolves.toEqual(registerBody);
 
-    const updateLocaleBody: UpdateLocaleDto = { locale: "ru" };
+    const updateLocaleBody: UpdateLocaleDto = { locale: 'ru' };
     const updateFetch = mockFetch({ data: session.user });
     await authControllerUpdateLocale(updateLocaleBody, {
       fetchImpl: updateFetch,
     });
     const updateRequest = firstRequest(updateFetch);
-    expect(updateRequest.method).toBe("PATCH");
-    await expect(updateRequest.clone().json()).resolves.toEqual(
-      updateLocaleBody,
-    );
+    expect(updateRequest.method).toBe('PATCH');
+    await expect(updateRequest.clone().json()).resolves.toEqual(updateLocaleBody);
 
     const updatePreferencesBody: UpdatePreferencesDto = {
-      locale: "en",
-      theme: "dark",
+      locale: 'en',
+      theme: 'dark',
     };
     const updatePreferencesFetch = mockFetch({ data: session.user });
     await authControllerUpdatePreferences(updatePreferencesBody, {
       fetchImpl: updatePreferencesFetch,
     });
     const updatePreferencesRequest = firstRequest(updatePreferencesFetch);
-    expect(updatePreferencesRequest.method).toBe("PATCH");
-    await expect(updatePreferencesRequest.clone().json()).resolves.toEqual(
-      updatePreferencesBody,
-    );
+    expect(updatePreferencesRequest.method).toBe('PATCH');
+    await expect(updatePreferencesRequest.clone().json()).resolves.toEqual(updatePreferencesBody);
   });
 
-  it("serializes social auth wrappers and preserves nullable social response email types", async () => {
+  it('serializes social auth wrappers and preserves nullable social response email types', async () => {
     const webLoginBody = {
-      intent: "login",
+      intent: 'login',
       payload: {
         auth_date: 1,
-        hash: "telegram-hash",
+        hash: 'telegram-hash',
         id: 123,
       },
-      returnUrl: "/after-login",
+      returnUrl: '/after-login',
     } as const;
     const webLoginFetch = mockFetch({ data: externalAuthResult });
     await expect(
@@ -348,67 +319,57 @@ describe("generated api clients", () => {
       ),
     ).resolves.toEqual(externalAuthResult);
     const webLoginRequest = firstRequest(webLoginFetch);
-    expect(webLoginRequest.method).toBe("POST");
-    expect(webLoginRequest.url).toBe(
-      `${globalThis.location.origin}/auth/telegram/web-login`,
-    );
+    expect(webLoginRequest.method).toBe('POST');
+    expect(webLoginRequest.url).toBe(`${globalThis.location.origin}/auth/telegram/web-login`);
     await expect(webLoginRequest.clone().json()).resolves.toEqual(webLoginBody);
 
-    const tmaBody = { initData: "query_id=abc&hash=telegram-hash" };
+    const tmaBody = { initData: 'query_id=abc&hash=telegram-hash' };
     const tmaFetch = mockFetch({ data: externalAuthResult });
     await authControllerTelegramTma(tmaBody, { fetchImpl: tmaFetch });
     const tmaRequest = firstRequest(tmaFetch);
-    expect(tmaRequest.url).toBe(
-      `${globalThis.location.origin}/auth/telegram/tma`,
-    );
+    expect(tmaRequest.url).toBe(`${globalThis.location.origin}/auth/telegram/tma`);
     await expect(tmaRequest.clone().json()).resolves.toEqual(tmaBody);
 
     const botLinkBody = {
-      displayName: "Telegram User",
-      linkToken: "link-token",
-      providerSubject: "telegram-user-1",
-      username: "telegram_user",
+      displayName: 'Telegram User',
+      linkToken: 'link-token',
+      providerSubject: 'telegram-user-1',
+      username: 'telegram_user',
     };
     const botLinkFetch = mockFetch({ data: externalAuthResult });
     await authControllerTelegramBotLink(botLinkBody, {
       fetchImpl: botLinkFetch,
     });
     const botLinkRequest = firstRequest(botLinkFetch);
-    expect(botLinkRequest.url).toBe(
-      `${globalThis.location.origin}/auth/telegram/bot-link`,
-    );
+    expect(botLinkRequest.url).toBe(`${globalThis.location.origin}/auth/telegram/bot-link`);
     await expect(botLinkRequest.clone().json()).resolves.toEqual(botLinkBody);
 
     const discordAuthorizationBody = {
-      intent: "link",
-      linkToken: "link-token",
-      returnUrl: "/after-discord",
+      intent: 'link',
+      linkToken: 'link-token',
+      returnUrl: '/after-discord',
     } as const;
     const discordAuthorizationFetch = mockFetch({
-      data: { authorizationUrl: "https://discord.example/oauth" },
+      data: { authorizationUrl: 'https://discord.example/oauth' },
     });
     await authControllerDiscordAuthorizationRequest(discordAuthorizationBody, {
       fetchImpl: discordAuthorizationFetch,
     });
     const discordAuthorizationRequest = firstRequest(discordAuthorizationFetch);
-    expect(discordAuthorizationRequest.method).toBe("POST");
-    expect(discordAuthorizationRequest.url).toBe(
-      `${globalThis.location.origin}/auth/discord/authorization-request`,
-    );
-    await expect(discordAuthorizationRequest.clone().json()).resolves.toEqual(
-      discordAuthorizationBody,
-    );
+    expect(discordAuthorizationRequest.method).toBe('POST');
+    expect(discordAuthorizationRequest.url).toBe(`${globalThis.location.origin}/auth/discord/authorization-request`);
+    await expect(discordAuthorizationRequest.clone().json()).resolves.toEqual(discordAuthorizationBody);
 
     const discordCallbackFetch = mockFetch(undefined);
     await authControllerDiscordCallback(
-      { code: "oauth-code", state: "oauth-state", tenantId: "tenant-1" },
+      { code: 'oauth-code', state: 'oauth-state', tenantId: 'tenant-1' },
       { fetchImpl: discordCallbackFetch },
     );
     const discordCallbackUrl = new URL(firstRequest(discordCallbackFetch).url);
-    expect(discordCallbackUrl.pathname).toBe("/auth/discord/callback");
-    expect(discordCallbackUrl.searchParams.get("code")).toBe("oauth-code");
-    expect(discordCallbackUrl.searchParams.get("state")).toBe("oauth-state");
-    expect(discordCallbackUrl.searchParams.get("tenantId")).toBe("tenant-1");
+    expect(discordCallbackUrl.pathname).toBe('/auth/discord/callback');
+    expect(discordCallbackUrl.searchParams.get('code')).toBe('oauth-code');
+    expect(discordCallbackUrl.searchParams.get('state')).toBe('oauth-state');
+    expect(discordCallbackUrl.searchParams.get('tenantId')).toBe('tenant-1');
 
     await expect(
       throwOnOpenApiErrorData(
@@ -419,19 +380,17 @@ describe("generated api clients", () => {
     ).resolves.toEqual(providerIdentities);
 
     const unlinkFetch = mockFetch({ data: {} });
-    await authControllerUnlinkProviderIdentity("identity-1", {
+    await authControllerUnlinkProviderIdentity('identity-1', {
       fetchImpl: unlinkFetch,
     });
     const unlinkRequest = firstRequest(unlinkFetch);
-    expect(unlinkRequest.method).toBe("DELETE");
-    expect(unlinkRequest.url).toBe(
-      `${globalThis.location.origin}/auth/provider-identities/identity-1`,
-    );
+    expect(unlinkRequest.method).toBe('DELETE');
+    expect(unlinkRequest.url).toBe(`${globalThis.location.origin}/auth/provider-identities/identity-1`);
 
     const linkTokenBody = {
-      intent: "link",
-      provider: "telegram",
-      returnUrl: "/settings/linked-accounts",
+      intent: 'link',
+      provider: 'telegram',
+      returnUrl: '/settings/linked-accounts',
     } as const;
     const linkTokenFetch = mockFetch({ data: linkTokenResult });
     await expect(
@@ -442,22 +401,14 @@ describe("generated api clients", () => {
       ),
     ).resolves.toEqual(linkTokenResult);
     const linkTokenRequest = firstRequest(linkTokenFetch);
-    expect(linkTokenRequest.url).toBe(
-      `${globalThis.location.origin}/auth/link-tokens`,
-    );
-    await expect(linkTokenRequest.clone().json()).resolves.toEqual(
-      linkTokenBody,
-    );
+    expect(linkTokenRequest.url).toBe(`${globalThis.location.origin}/auth/link-tokens`);
+    await expect(linkTokenRequest.clone().json()).resolves.toEqual(linkTokenBody);
 
-    expectTypeOf<AuthSessionViewDto["user"]["email"]>().toEqualTypeOf<
-      string | null
-    >();
-    expectTypeOf<
-      NonNullable<ExternalAuthResultDto["session"]>["user"]["email"]
-    >().toEqualTypeOf<string | null>();
+    expectTypeOf<AuthSessionViewDto['user']['email']>().toEqualTypeOf<string | null>();
+    expectTypeOf<NonNullable<ExternalAuthResultDto['session']>['user']['email']>().toEqualTypeOf<string | null>();
   });
 
-  it("serializes admin user filters and protected mutation bodies", async () => {
+  it('serializes admin user filters and protected mutation bodies', async () => {
     const listFetch = mockFetch({
       data: { items: [], limit: 25, offset: 5, total: 0 },
     });
@@ -465,131 +416,91 @@ describe("generated api clients", () => {
       {
         limit: 25,
         offset: 5,
-        permission: "admin:users:read",
-        role: "admin",
-        search: "ada",
-        status: "active",
+        permission: 'admin:users:read',
+        role: 'admin',
+        search: 'ada',
+        status: 'active',
       },
       { fetchImpl: listFetch },
     );
     const listUrl = new URL(firstRequest(listFetch).url);
-    expect(listUrl.pathname).toBe("/admin/users");
-    expect(listUrl.searchParams.get("limit")).toBe("25");
-    expect(listUrl.searchParams.get("offset")).toBe("5");
-    expect(listUrl.searchParams.get("permission")).toBe("admin:users:read");
-    expect(listUrl.searchParams.get("role")).toBe("admin");
-    expect(listUrl.searchParams.get("search")).toBe("ada");
-    expect(listUrl.searchParams.get("status")).toBe("active");
+    expect(listUrl.pathname).toBe('/admin/users');
+    expect(listUrl.searchParams.get('limit')).toBe('25');
+    expect(listUrl.searchParams.get('offset')).toBe('5');
+    expect(listUrl.searchParams.get('permission')).toBe('admin:users:read');
+    expect(listUrl.searchParams.get('role')).toBe('admin');
+    expect(listUrl.searchParams.get('search')).toBe('ada');
+    expect(listUrl.searchParams.get('status')).toBe('active');
 
-    const statusBody: UpdateAdminUserStatusDto = { status: "disabled" };
-    const statusFetch = mockFetch({ data: { id: "user-id" } });
-    await adminUsersControllerUpdateUserStatus("user-id", statusBody, {
+    const statusBody: UpdateAdminUserStatusDto = { status: 'disabled' };
+    const statusFetch = mockFetch({ data: { id: 'user-id' } });
+    await adminUsersControllerUpdateUserStatus('user-id', statusBody, {
       fetchImpl: statusFetch,
     });
     const statusRequest = firstRequest(statusFetch);
-    expect(statusRequest.method).toBe("PATCH");
-    expect(statusRequest.url).toBe(
-      `${globalThis.location.origin}/admin/users/user-id/status`,
-    );
+    expect(statusRequest.method).toBe('PATCH');
+    expect(statusRequest.url).toBe(`${globalThis.location.origin}/admin/users/user-id/status`);
     await expect(statusRequest.clone().json()).resolves.toEqual(statusBody);
 
     const policyBody: UpdateAdminUserAccessPolicyDto = {
-      permissions: ["profile:read", "admin:users:read"],
-      roles: ["user", "admin"],
+      permissions: ['profile:read', 'admin:users:read'],
+      roles: ['user', 'admin'],
     };
-    const policyFetch = mockFetch({ data: { id: "user-id" } });
-    await adminUsersControllerUpdateUserAccessPolicy("user-id", policyBody, {
+    const policyFetch = mockFetch({ data: { id: 'user-id' } });
+    await adminUsersControllerUpdateUserAccessPolicy('user-id', policyBody, {
       fetchImpl: policyFetch,
     });
     const policyRequest = firstRequest(policyFetch);
-    expect(policyRequest.method).toBe("PATCH");
-    expect(policyRequest.url).toBe(
-      `${globalThis.location.origin}/admin/users/user-id/access-policy`,
-    );
+    expect(policyRequest.method).toBe('PATCH');
+    expect(policyRequest.url).toBe(`${globalThis.location.origin}/admin/users/user-id/access-policy`);
     await expect(policyRequest.clone().json()).resolves.toEqual(policyBody);
   });
 
-  it("exposes stable GET query keys", () => {
-    expect(getAuthControllerMeQueryKey()).toEqual(["get", "/auth/me"]);
-    expect(getAuthControllerLocalesQueryKey()).toEqual([
-      "get",
-      "/auth/locales",
-    ]);
-    expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual([
-      "patch",
-      "/auth/me/preferences",
-    ]);
-    expect(getAuthControllerProviderIdentitiesQueryKey()).toEqual([
-      "get",
-      "/auth/provider-identities",
-    ]);
-    expect(getAuthControllerTelegramWebLoginMutationKey()).toEqual([
-      "post",
-      "/auth/telegram/web-login",
-    ]);
-    expect(getAuthControllerTelegramTmaMutationKey()).toEqual([
-      "post",
-      "/auth/telegram/tma",
-    ]);
-    expect(getAuthControllerTelegramBotLinkMutationKey()).toEqual([
-      "post",
-      "/auth/telegram/bot-link",
-    ]);
+  it('exposes stable GET query keys', () => {
+    expect(getAuthControllerMeQueryKey()).toEqual(['get', '/auth/me']);
+    expect(getAuthControllerLocalesQueryKey()).toEqual(['get', '/auth/locales']);
+    expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual(['patch', '/auth/me/preferences']);
+    expect(getAuthControllerProviderIdentitiesQueryKey()).toEqual(['get', '/auth/provider-identities']);
+    expect(getAuthControllerTelegramWebLoginMutationKey()).toEqual(['post', '/auth/telegram/web-login']);
+    expect(getAuthControllerTelegramTmaMutationKey()).toEqual(['post', '/auth/telegram/tma']);
+    expect(getAuthControllerTelegramBotLinkMutationKey()).toEqual(['post', '/auth/telegram/bot-link']);
     expect(getAuthControllerDiscordAuthorizationRequestMutationKey()).toEqual([
-      "post",
-      "/auth/discord/authorization-request",
+      'post',
+      '/auth/discord/authorization-request',
     ]);
     expect(getAuthControllerUnlinkProviderIdentityMutationKey()).toEqual([
-      "delete",
-      "/auth/provider-identities/{identityId}",
+      'delete',
+      '/auth/provider-identities/{identityId}',
     ]);
-    expect(getAuthControllerCreateLinkTokenMutationKey()).toEqual([
-      "post",
-      "/auth/link-tokens",
+    expect(getAuthControllerCreateLinkTokenMutationKey()).toEqual(['post', '/auth/link-tokens']);
+    expect(getAdminUsersControllerListUsersQueryKey({ status: 'active' })).toEqual([
+      'get',
+      '/admin/users',
+      { status: 'active' },
     ]);
-    expect(
-      getAdminUsersControllerListUsersQueryKey({ status: "active" }),
-    ).toEqual(["get", "/admin/users", { status: "active" }]);
-    expect(getAdminUsersControllerUpdateUserStatusMutationKey()).toEqual([
-      "patch",
-      "/admin/users/{id}/status",
-    ]);
+    expect(getAdminUsersControllerUpdateUserStatusMutationKey()).toEqual(['patch', '/admin/users/{id}/status']);
     expect(getAdminUsersControllerUpdateUserAccessPolicyMutationKey()).toEqual([
-      "patch",
-      "/admin/users/{id}/access-policy",
+      'patch',
+      '/admin/users/{id}/access-policy',
     ]);
   });
 
-  it("keeps generated success/error aliases and mutation error variables usable", () => {
-    type LoginMutationOptions = NonNullable<
-      Parameters<typeof useAuthControllerLoginMutation>[0]
-    >;
-    type LoginOnError = NonNullable<LoginMutationOptions["onError"]>;
-    type RegisterMutationOptions = NonNullable<
-      Parameters<typeof useAuthControllerRegisterMutation>[0]
-    >;
-    type RegisterOnError = NonNullable<RegisterMutationOptions["onError"]>;
-    type UpdateLocaleMutationOptions = NonNullable<
-      Parameters<typeof useAuthControllerUpdateLocaleMutation>[0]
-    >;
-    type UpdateLocaleOnError = NonNullable<
-      UpdateLocaleMutationOptions["onError"]
-    >;
+  it('keeps generated success/error aliases and mutation error variables usable', () => {
+    type LoginMutationOptions = NonNullable<Parameters<typeof useAuthControllerLoginMutation>[0]>;
+    type LoginOnError = NonNullable<LoginMutationOptions['onError']>;
+    type RegisterMutationOptions = NonNullable<Parameters<typeof useAuthControllerRegisterMutation>[0]>;
+    type RegisterOnError = NonNullable<RegisterMutationOptions['onError']>;
+    type UpdateLocaleMutationOptions = NonNullable<Parameters<typeof useAuthControllerUpdateLocaleMutation>[0]>;
+    type UpdateLocaleOnError = NonNullable<UpdateLocaleMutationOptions['onError']>;
     type UpdatePreferencesMutationOptions = NonNullable<
       Parameters<typeof useAuthControllerUpdatePreferencesMutation>[0]
     >;
-    type UpdatePreferencesOnError = NonNullable<
-      UpdatePreferencesMutationOptions["onError"]
-    >;
+    type UpdatePreferencesOnError = NonNullable<UpdatePreferencesMutationOptions['onError']>;
 
     expectTypeOf<AuthControllerLoginData>().toEqualTypeOf<AuthSessionViewDto>();
     expectTypeOf<AuthControllerRegisterData>().toEqualTypeOf<AuthSessionViewDto>();
-    expectTypeOf<AuthControllerUpdateLocaleData>().toEqualTypeOf<
-      AuthSessionViewDto["user"]
-    >();
-    expectTypeOf<AuthControllerUpdatePreferencesData>().toEqualTypeOf<
-      AuthSessionViewDto["user"]
-    >();
+    expectTypeOf<AuthControllerUpdateLocaleData>().toEqualTypeOf<AuthSessionViewDto['user']>();
+    expectTypeOf<AuthControllerUpdatePreferencesData>().toEqualTypeOf<AuthSessionViewDto['user']>();
     expectTypeOf<AuthControllerTelegramWebLoginData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramTmaData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramBotLinkData>().toEqualTypeOf<ExternalAuthResultDto>();
@@ -597,16 +508,10 @@ describe("generated api clients", () => {
     expectTypeOf<AuthControllerProviderIdentitiesData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
     expectTypeOf<AuthControllerUnlinkProviderIdentityData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
     expectTypeOf<AuthControllerCreateLinkTokenData>().toEqualTypeOf<LinkTokenResultDto>();
-    expectTypeOf<Parameters<LoginOnError>[0]>().toEqualTypeOf<
-      ApiClientError<AuthControllerLoginError>
-    >();
+    expectTypeOf<Parameters<LoginOnError>[0]>().toEqualTypeOf<ApiClientError<AuthControllerLoginError>>();
     expectTypeOf<Parameters<LoginOnError>[1]>().toEqualTypeOf<LoginDto>();
     expectTypeOf<Parameters<RegisterOnError>[1]>().toEqualTypeOf<RegisterDto>();
-    expectTypeOf<
-      Parameters<UpdateLocaleOnError>[1]
-    >().toEqualTypeOf<UpdateLocaleDto>();
-    expectTypeOf<
-      Parameters<UpdatePreferencesOnError>[1]
-    >().toEqualTypeOf<UpdatePreferencesDto>();
+    expectTypeOf<Parameters<UpdateLocaleOnError>[1]>().toEqualTypeOf<UpdateLocaleDto>();
+    expectTypeOf<Parameters<UpdatePreferencesOnError>[1]>().toEqualTypeOf<UpdatePreferencesDto>();
   });
 });

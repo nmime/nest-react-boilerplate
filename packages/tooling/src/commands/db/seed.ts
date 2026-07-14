@@ -21,7 +21,7 @@
  */
 
 import { pbkdf2Sync, randomBytes } from "node:crypto";
-import pg, { type Row } from "pg";
+import pg from "pg";
 import {
   assertSeedSafety,
   DefaultAdminEmail,

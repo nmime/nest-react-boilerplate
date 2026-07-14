@@ -1,5 +1,5 @@
-import { Global, Module } from "@nestjs/common";
-import { AnalyticsConfigService } from "./analytics.config.service";
+import { Global, Module } from '@nestjs/common';
+import { AnalyticsConfigService } from './analytics.config.service';
 
 @Global()
 @Module({

@@ -1,24 +1,18 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import App from "./app";
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import App from './app';
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
   new Response(JSON.stringify(body), {
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
     status,
-    statusText: ok ? "OK" : "Error",
+    statusText: ok ? 'OK' : 'Error',
   });
 
 const installStorage = () => {
   const values = new Map<string, string>();
-  Object.defineProperty(window, "localStorage", {
+  Object.defineProperty(window, 'localStorage', {
     configurable: true,
     value: {
       clear: () => {
@@ -31,33 +25,31 @@ const installStorage = () => {
 };
 
 function installRadixPointerMocks() {
-  Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
+  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
     configurable: true,
     value: vi.fn(() => false),
   });
-  Object.defineProperty(HTMLElement.prototype, "releasePointerCapture", {
+  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
     configurable: true,
     value: vi.fn(),
   });
-  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
     configurable: true,
     value: vi.fn(),
   });
 }
 
 function chooseSelectOption(label: string | RegExp, option: string) {
-  const trigger = screen.getByRole("combobox", { name: label });
+  const trigger = screen.getByRole('combobox', { name: label });
 
   installRadixPointerMocks();
   fireEvent.pointerDown(trigger, {
     button: 0,
     ctrlKey: false,
-    pointerType: "mouse",
+    pointerType: 'mouse',
   });
 
-  const optionElement = document.querySelector<HTMLElement>(
-    `[role="option"][data-value="${option}"]`,
-  );
+  const optionElement = document.querySelector<HTMLElement>(`[role="option"][data-value="${option}"]`);
 
   expect(optionElement).toBeTruthy();
   fireEvent.click(optionElement as HTMLElement);
@@ -68,13 +60,13 @@ type FetchReply = Response | { rejectsWith: unknown };
 const setFetch = (...responses: FetchReply[]) => {
   const fetchMock = vi.fn();
   for (const response of responses) {
-    if ("rejectsWith" in response) {
+    if ('rejectsWith' in response) {
       fetchMock.mockRejectedValueOnce(response.rejectsWith);
     } else {
       fetchMock.mockResolvedValueOnce(response);
     }
   }
-  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 };
 
@@ -87,9 +79,7 @@ type FetchInit = {
 type FetchMock = ReturnType<typeof setFetch>;
 type FetchCall = [unknown, unknown?];
 
-const normalizeHeaders = (
-  headers: HeadersInit | undefined,
-): Record<string, string> | undefined =>
+const normalizeHeaders = (headers: HeadersInit | undefined): Record<string, string> | undefined =>
   headers ? Object.fromEntries(new Headers(headers).entries()) : undefined;
 
 const getCalledUrl = (calledInput: unknown): string =>
@@ -118,7 +108,7 @@ const matchesUrl = (actualUrl: string, expectedUrl: string): boolean => {
     return true;
   }
 
-  if (expectedUrl.startsWith("/")) {
+  if (expectedUrl.startsWith('/')) {
     try {
       return new URL(actualUrl).pathname === expectedUrl;
     } catch {
@@ -141,9 +131,7 @@ const findFetchCall = (
     return (
       matchesUrl(getCalledUrl(calledInput), url) &&
       (!method || fetchInit.method === method) &&
-      Object.entries(expectedHeaders).every(
-        ([key, value]) => fetchInit.headers?.[key.toLowerCase()] === value,
-      )
+      Object.entries(expectedHeaders).every(([key, value]) => fetchInit.headers?.[key.toLowerCase()] === value)
     );
   }) as FetchCall | undefined;
 
@@ -174,7 +162,7 @@ const readFetchBody = async (
   }
 
   const body = getCalledInit(call[0], call[1]).body;
-  return typeof body === "string" ? body : undefined;
+  return typeof body === 'string' ? body : undefined;
 };
 
 const expectFetchRequest = (
@@ -184,11 +172,11 @@ const expectFetchRequest = (
   method?: string,
 ): FetchInit => {
   const init = findFetchInit(fetchMock, url, expectedHeaders, method);
-  expect(init, `missing ${method ?? "GET"} ${url}`).toBeTruthy();
+  expect(init, `missing ${method ?? 'GET'} ${url}`).toBeTruthy();
   expect(init?.headers).toMatchObject(
     Object.fromEntries(
       Object.entries({
-        Accept: "application/json",
+        Accept: 'application/json',
         ...expectedHeaders,
       }).map(([key, value]) => [key.toLowerCase(), value]),
     ),
@@ -197,23 +185,23 @@ const expectFetchRequest = (
   return init as FetchInit;
 };
 
-const submitLogin = (email = "user@example.com") => {
-  fireEvent.change(screen.getByLabelText("Login email"), {
+const submitLogin = (email = 'user@example.com') => {
+  fireEvent.change(screen.getByLabelText('Login email'), {
     target: { value: email },
   });
-  fireEvent.change(screen.getByLabelText("Login password"), {
-    target: { value: "password123" },
+  fireEvent.change(screen.getByLabelText('Login password'), {
+    target: { value: 'password123' },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Login" }));
+  fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 };
 
-describe("User app shell", () => {
+describe('User app shell', () => {
   beforeEach(() => {
     installStorage();
     window.localStorage.clear();
-    document.cookie = "locale=; path=/; max-age=0";
-    document.cookie = "lang=; path=/; max-age=0";
-    window.history.pushState({}, "", "/");
+    document.cookie = 'locale=; path=/; max-age=0';
+    document.cookie = 'lang=; path=/; max-age=0';
+    window.history.pushState({}, '', '/');
     vi.unstubAllEnvs();
   });
 
@@ -223,494 +211,443 @@ describe("User app shell", () => {
     vi.unstubAllEnvs();
   });
 
-  it("renders auth and profile copy through the shared shell", () => {
+  it('renders auth and profile copy through the shared shell', () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("User App");
-    expect(html).toContain("User design v3");
-    expect(html).toContain(
-      "Sign in, register, and load your protected profile.",
-    );
-    expect(html).toContain("Development login/register flow");
-    expect(html).toContain("Profile state");
+    expect(html).toContain('User App');
+    expect(html).toContain('User design v3');
+    expect(html).toContain('Sign in, register, and load your protected profile.');
+    expect(html).toContain('Development login/register flow');
+    expect(html).toContain('Profile state');
   });
 
-  it("renders a nonblank v3 marker on every preserved user route", () => {
+  it('renders a nonblank v3 marker on every preserved user route', () => {
     const routes = [
-      "/",
-      "/auth",
-      "/auth/discord/callback",
-      "/profile",
-      "/settings",
-      "/tma",
-      "/tma/auth",
-      "/telegram-mini-app",
-      "/link/telegram",
-      "/link/discord",
+      '/',
+      '/auth',
+      '/auth/discord/callback',
+      '/profile',
+      '/settings',
+      '/tma',
+      '/tma/auth',
+      '/telegram-mini-app',
+      '/link/telegram',
+      '/link/discord',
     ];
 
     for (const route of routes) {
-      window.history.pushState({}, "", route);
+      window.history.pushState({}, '', route);
       const html = renderToStaticMarkup(<App />);
 
-      expect(html).toContain(
-        'data-design-marker="user-app-frontend-design-v3"',
-      );
-      expect(html).toContain("User design v3");
+      expect(html).toContain('data-design-marker="user-app-frontend-design-v3"');
+      expect(html).toContain('User design v3');
       expect(html).toContain(route);
     }
   });
 
-  it("renders static markup without browser globals or usable storage", () => {
-    vi.stubGlobal("window", undefined);
-    expect(renderToStaticMarkup(<App />)).toContain("User App");
+  it('renders static markup without browser globals or usable storage', () => {
+    vi.stubGlobal('window', undefined);
+    expect(renderToStaticMarkup(<App />)).toContain('User App');
     vi.unstubAllGlobals();
     installStorage();
 
-    Object.defineProperty(window, "localStorage", {
+    Object.defineProperty(window, 'localStorage', {
       configurable: true,
       get: () => {
-        throw new Error("storage blocked");
+        throw new Error('storage blocked');
       },
     });
 
-    expect(renderToStaticMarkup(<App />)).toContain(
-      "Provide a token or use login/register.",
-    );
+    expect(renderToStaticMarkup(<App />)).toContain('Provide a token or use login/register.');
   });
 
-  it("loads a profile after login returns a session token", async () => {
-    vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
+  it('loads a profile after login returns a session token', async () => {
+    vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
-      jsonResponse({ data: { accessToken: "session-token" } }),
-      jsonResponse({ data: { user: { locale: "en" } } }),
+      jsonResponse({ data: { accessToken: 'session-token' } }),
+      jsonResponse({ data: { user: { locale: 'en' } } }),
       jsonResponse({
         data: {
-          principal: { subject: "subject-id", email: "ready@example.com" },
+          principal: { subject: 'subject-id', email: 'ready@example.com' },
         },
       }),
     );
 
     render(<App />);
-    submitLogin("ready@example.com");
+    submitLogin('ready@example.com');
 
-    expect(await screen.findByText("Ready: ready@example.com")).toBeTruthy();
-    expectFetchRequest(fetchMock, "/auth/me", {
-      "Accept-Language": "en",
-      Authorization: "Bearer session-token",
+    expect(await screen.findByText('Ready: ready@example.com')).toBeTruthy();
+    expectFetchRequest(fetchMock, '/auth/me', {
+      'Accept-Language': 'en',
+      Authorization: 'Bearer session-token',
     });
-    expectFetchRequest(fetchMock, "https://user-api/profile/me", {
-      "Accept-Language": "en",
-      Authorization: "Bearer session-token",
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
+      'Accept-Language': 'en',
+      Authorization: 'Bearer session-token',
     });
   });
 
-  it("returns to the protected route after auth redirect login", async () => {
-    window.history.pushState({}, "", "/auth?returnUrl=/profile");
+  it('returns to the protected route after auth redirect login', async () => {
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(
-      jsonResponse({ data: { accessToken: "return-token" } }),
-      jsonResponse({ data: { user: { locale: "en" } } }),
+      jsonResponse({ data: { accessToken: 'return-token' } }),
+      jsonResponse({ data: { user: { locale: 'en' } } }),
       jsonResponse({
         data: {
-          principal: { subject: "return-subject", email: "return@example.com" },
+          principal: { subject: 'return-subject', email: 'return@example.com' },
         },
       }),
     );
 
     render(<App />);
-    submitLogin("return@example.com");
+    submitLogin('return@example.com');
 
     await waitFor(() => {
-      expect(window.location.pathname).toBe("/profile");
+      expect(window.location.pathname).toBe('/profile');
     });
-    expect(await screen.findByText("Ready: return@example.com")).toBeTruthy();
+    expect(await screen.findByText('Ready: return@example.com')).toBeTruthy();
   });
 
-  it("shows forbidden states for profile response and thrown failures", async () => {
+  it('shows forbidden states for profile response and thrown failures', async () => {
     setFetch(
-      jsonResponse({ data: { accessToken: "bad-token" } }),
+      jsonResponse({ data: { accessToken: 'bad-token' } }),
       jsonResponse({ data: {} }),
       jsonResponse({}, false, 403),
     );
     const { unmount } = render(<App />);
     submitLogin();
-    expect(
-      await screen.findByText("Forbidden: Request failed with 403."),
-    ).toBeTruthy();
+    expect(await screen.findByText('Forbidden: Request failed with 403.')).toBeTruthy();
     unmount();
 
-    setFetch(
-      jsonResponse({ data: { accessToken: "throw-token" } }),
-      jsonResponse({ data: {} }),
-      { rejectsWith: "network failed" },
-    );
+    setFetch(jsonResponse({ data: { accessToken: 'throw-token' } }), jsonResponse({ data: {} }), {
+      rejectsWith: 'network failed',
+    });
     render(<App />);
     submitLogin();
-    expect(
-      await screen.findByText("Forbidden: Profile request failed."),
-    ).toBeTruthy();
+    expect(await screen.findByText('Forbidden: Profile request failed.')).toBeTruthy();
   });
 
-  it("handles incomplete profile payloads and non-error auth rejections", async () => {
+  it('handles incomplete profile payloads and non-error auth rejections', async () => {
     setFetch(
-      jsonResponse({ data: { accessToken: "no-profile-token" } }),
+      jsonResponse({ data: { accessToken: 'no-profile-token' } }),
       jsonResponse({ data: {} }),
       jsonResponse({ data: {} }),
     );
     const { unmount } = render(<App />);
     submitLogin();
-    expect(await screen.findByText("Ready: unknown")).toBeTruthy();
+    expect(await screen.findByText('Ready: unknown')).toBeTruthy();
     unmount();
     cleanup();
     window.localStorage.clear();
-    document.cookie = "locale=; path=/; max-age=0";
-    document.cookie = "lang=; path=/; max-age=0";
-    window.history.pushState({}, "", "/");
+    document.cookie = 'locale=; path=/; max-age=0';
+    document.cookie = 'lang=; path=/; max-age=0';
+    window.history.pushState({}, '', '/');
 
-    const rejectAuthJson = vi
-      .fn<() => Promise<unknown>>()
-      .mockRejectedValue("auth offline");
+    const rejectAuthJson = vi.fn<() => Promise<unknown>>().mockRejectedValue('auth offline');
     const rejectAuthResponse = new Response(null, {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
       status: 200,
     });
-    vi.spyOn(rejectAuthResponse, "json").mockImplementation(rejectAuthJson);
+    vi.spyOn(rejectAuthResponse, 'json').mockImplementation(rejectAuthJson);
     setFetch(rejectAuthResponse);
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Provide a token or use login/register."),
-      ).toBeTruthy();
+      expect(screen.getByText('Provide a token or use login/register.')).toBeTruthy();
     });
   });
 
-  it("uses saved user locale before profile calls and ignores stale local storage", async () => {
-    window.localStorage.setItem("boilerplate.locale", "en");
-    vi.stubEnv("VITE_USER_API_BASE_URL", "https://user-api/");
+  it('uses saved user locale before profile calls and ignores stale local storage', async () => {
+    window.localStorage.setItem('boilerplate.locale', 'en');
+    vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
-      jsonResponse({ data: { accessToken: "saved-locale-token" } }),
-      jsonResponse({ data: { user: { locale: "ru" } } }),
-      jsonResponse({ data: { user: { locale: "ru" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { accessToken: 'saved-locale-token' } }),
+      jsonResponse({ data: { user: { locale: 'ru' } } }),
+      jsonResponse({ data: { user: { locale: 'ru' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
 
     render(<App />);
     submitLogin();
 
-    expect(await screen.findByText("Готово: profile-subject")).toBeTruthy();
-    expectFetchRequest(fetchMock, "/auth/me", {
-      "Accept-Language": "en",
-      Authorization: "Bearer saved-locale-token",
+    expect(await screen.findByText('Готово: profile-subject')).toBeTruthy();
+    expectFetchRequest(fetchMock, '/auth/me', {
+      'Accept-Language': 'en',
+      Authorization: 'Bearer saved-locale-token',
     });
-    expectFetchRequest(fetchMock, "/auth/me", {
-      "Accept-Language": "ru",
-      Authorization: "Bearer saved-locale-token",
+    expectFetchRequest(fetchMock, '/auth/me', {
+      'Accept-Language': 'ru',
+      Authorization: 'Bearer saved-locale-token',
     });
-    expectFetchRequest(fetchMock, "https://user-api/profile/me", {
-      "Accept-Language": "ru",
-      Authorization: "Bearer saved-locale-token",
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
+      'Accept-Language': 'ru',
+      Authorization: 'Bearer saved-locale-token',
     });
   });
 
-  it("persists language switches for authenticated users and subsequent calls", async () => {
+  it('persists language switches for authenticated users and subsequent calls', async () => {
     const fetchMock = setFetch(
-      jsonResponse({ data: { accessToken: "switch-token" } }),
-      jsonResponse({ data: { user: { locale: "en" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
-      jsonResponse({ data: { user: { locale: "ru" } } }),
-      jsonResponse({ data: { user: { locale: "ru" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { accessToken: 'switch-token' } }),
+      jsonResponse({ data: { user: { locale: 'en' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
+      jsonResponse({ data: { user: { locale: 'ru' } } }),
+      jsonResponse({ data: { user: { locale: 'ru' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
 
     render(<App />);
     submitLogin();
-    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+    expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
-    chooseSelectOption("Language", "ru");
+    chooseSelectOption('Language', 'ru');
 
     await waitFor(() => {
       expect(
         findFetchInit(
           fetchMock,
-          "/auth/me/preferences",
+          '/auth/me/preferences',
           {
-            "Accept-Language": "ru",
-            Authorization: "Bearer switch-token",
-            "Content-Type": "application/json",
+            'Accept-Language': 'ru',
+            Authorization: 'Bearer switch-token',
+            'Content-Type': 'application/json',
           },
-          "PATCH",
+          'PATCH',
         ),
       ).toBeTruthy();
     });
     expectFetchRequest(
       fetchMock,
-      "/auth/me/preferences",
+      '/auth/me/preferences',
       {
-        "Accept-Language": "ru",
-        Authorization: "Bearer switch-token",
-        "Content-Type": "application/json",
+        'Accept-Language': 'ru',
+        Authorization: 'Bearer switch-token',
+        'Content-Type': 'application/json',
       },
-      "PATCH",
+      'PATCH',
     );
     await expect(
       readFetchBody(
         fetchMock,
-        "/auth/me/preferences",
+        '/auth/me/preferences',
         {
-          "Accept-Language": "ru",
-          Authorization: "Bearer switch-token",
-          "Content-Type": "application/json",
+          'Accept-Language': 'ru',
+          Authorization: 'Bearer switch-token',
+          'Content-Type': 'application/json',
         },
-        "PATCH",
+        'PATCH',
       ),
-    ).resolves.toBe(JSON.stringify({ locale: "ru" }));
+    ).resolves.toBe(JSON.stringify({ locale: 'ru' }));
     await waitFor(() => {
       expect(
-        findFetchInit(fetchMock, "/profile/me", {
-          "Accept-Language": "ru",
-          Authorization: "Bearer switch-token",
+        findFetchInit(fetchMock, '/profile/me', {
+          'Accept-Language': 'ru',
+          Authorization: 'Bearer switch-token',
         }),
       ).toBeTruthy();
     });
   });
 
-  it("persists theme switches for authenticated users", async () => {
+  it('persists theme switches for authenticated users', async () => {
     const fetchMock = setFetch(
-      jsonResponse({ data: { accessToken: "theme-token" } }),
-      jsonResponse({ data: { user: { locale: "en", theme: "system" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
-      jsonResponse({ data: { theme: "dark" } }),
-      jsonResponse({ data: { user: { locale: "en", theme: "dark" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { accessToken: 'theme-token' } }),
+      jsonResponse({ data: { user: { locale: 'en', theme: 'system' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
+      jsonResponse({ data: { theme: 'dark' } }),
+      jsonResponse({ data: { user: { locale: 'en', theme: 'dark' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
 
     render(<App />);
     submitLogin();
-    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+    expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
-    chooseSelectOption("Theme", "dark");
+    chooseSelectOption('Theme', 'dark');
 
     await waitFor(() => {
       expect(
         findFetchInit(
           fetchMock,
-          "/auth/me/preferences",
+          '/auth/me/preferences',
           {
-            "Accept-Language": "en",
-            Authorization: "Bearer theme-token",
-            "Content-Type": "application/json",
+            'Accept-Language': 'en',
+            Authorization: 'Bearer theme-token',
+            'Content-Type': 'application/json',
           },
-          "PATCH",
+          'PATCH',
         ),
       ).toBeTruthy();
     });
     await expect(
       readFetchBody(
         fetchMock,
-        "/auth/me/preferences",
+        '/auth/me/preferences',
         {
-          "Accept-Language": "en",
-          Authorization: "Bearer theme-token",
-          "Content-Type": "application/json",
+          'Accept-Language': 'en',
+          Authorization: 'Bearer theme-token',
+          'Content-Type': 'application/json',
         },
-        "PATCH",
+        'PATCH',
       ),
-    ).resolves.toBe(JSON.stringify({ theme: "dark" }));
+    ).resolves.toBe(JSON.stringify({ theme: 'dark' }));
   });
 
-  it("logs in then loads the protected profile", async () => {
-    vi.stubEnv("VITE_AUTH_API_BASE_URL", "https://auth-api/");
+  it('logs in then loads the protected profile', async () => {
+    vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth-api/');
     setFetch(
-      jsonResponse({ data: { accessToken: "login-token" } }),
-      jsonResponse({ data: { user: { locale: "en" } } }),
-      jsonResponse({ data: { principal: { subject: "profile-subject" } } }),
+      jsonResponse({ data: { accessToken: 'login-token' } }),
+      jsonResponse({ data: { user: { locale: 'en' } } }),
+      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Login email"), {
-      target: { value: "user@example.com" },
+    fireEvent.change(screen.getByLabelText('Login email'), {
+      target: { value: 'user@example.com' },
     });
-    fireEvent.change(screen.getByLabelText("Login password"), {
-      target: { value: "password123" },
+    fireEvent.change(screen.getByLabelText('Login password'), {
+      target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 
-    expect(await screen.findByText("Ready: profile-subject")).toBeTruthy();
+    expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
   });
 
-  it("handles register failures and empty success tokens", async () => {
+  it('handles register failures and empty success tokens', async () => {
     setFetch(jsonResponse({}, false, 409));
     const { unmount } = render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Register display name"), {
-      target: { value: "Registered User" },
+    fireEvent.change(screen.getByLabelText('Register display name'), {
+      target: { value: 'Registered User' },
     });
-    fireEvent.change(
-      screen.getByLabelText(/^(Register email|Email de registro)$/u),
-      {
-        target: { value: "new@example.com" },
-      },
-    );
-    fireEvent.change(
-      screen.getByLabelText(/^(Register password|Contraseña de registro)$/u),
-      {
-        target: { value: "password123" },
-      },
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: /^(Register|Registrarse)$/u }),
-    );
-    expect(
-      await screen.findByText("Forbidden: Request failed with 409."),
-    ).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/^(Register email|Email de registro)$/u), {
+      target: { value: 'new@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^(Register password|Contraseña de registro)$/u), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^(Register|Registrarse)$/u }));
+    expect(await screen.findByText('Forbidden: Request failed with 409.')).toBeTruthy();
     unmount();
 
     setFetch(jsonResponse({ data: {} }));
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Login" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
     await waitFor(() => {
-      expect(
-        screen.getByText("Provide a token or use login/register."),
-      ).toBeTruthy();
+      expect(screen.getByText('Provide a token or use login/register.')).toBeTruthy();
     });
   });
 
-  it("continues after auth/me failures and uses object error details", async () => {
+  it('continues after auth/me failures and uses object error details', async () => {
     setFetch(
-      jsonResponse({ data: { accessToken: "retry-token" } }),
-      { rejectsWith: new Error("auth offline") },
-      jsonResponse({ data: { profile: { email: "after-auth@example.com" } } }),
+      jsonResponse({ data: { accessToken: 'retry-token' } }),
+      { rejectsWith: new Error('auth offline') },
+      jsonResponse({ data: { profile: { email: 'after-auth@example.com' } } }),
     );
     const { unmount } = render(<App />);
     submitLogin();
-    expect(
-      await screen.findByText("Ready: after-auth@example.com"),
-    ).toBeTruthy();
+    expect(await screen.findByText('Ready: after-auth@example.com')).toBeTruthy();
     unmount();
 
-    setFetch(
-      jsonResponse({ data: { accessToken: "object-error-token" } }),
-      jsonResponse({ data: {} }),
-      { rejectsWith: { detail: "Object detail" } },
-    );
+    setFetch(jsonResponse({ data: { accessToken: 'object-error-token' } }), jsonResponse({ data: {} }), {
+      rejectsWith: { detail: 'Object detail' },
+    });
     render(<App />);
     submitLogin();
-    expect(await screen.findByText("Forbidden: Object detail")).toBeTruthy();
+    expect(await screen.findByText('Forbidden: Object detail')).toBeTruthy();
   });
 
-  it("applies profile locales and auth success locale/theme payloads", async () => {
+  it('applies profile locales and auth success locale/theme payloads', async () => {
     setFetch(
-      jsonResponse({ data: { accessToken: "profile-locale-token" } }),
-      jsonResponse({ data: { user: { locale: "en", theme: "light" } } }),
+      jsonResponse({ data: { accessToken: 'profile-locale-token' } }),
+      jsonResponse({ data: { user: { locale: 'en', theme: 'light' } } }),
       jsonResponse({
         data: {
-          profile: { email: "locale@example.com", locale: "ru", theme: "blue" },
+          profile: { email: 'locale@example.com', locale: 'ru', theme: 'blue' },
         },
       }),
-      jsonResponse({ data: { user: { locale: "ru", theme: "light" } } }),
+      jsonResponse({ data: { user: { locale: 'ru', theme: 'light' } } }),
       jsonResponse({
         data: {
-          profile: { email: "locale@example.com", locale: "ru", theme: "blue" },
+          profile: { email: 'locale@example.com', locale: 'ru', theme: 'blue' },
         },
       }),
     );
     const { unmount } = render(<App />);
     submitLogin();
-    expect(await screen.findByText("Готово: locale@example.com")).toBeTruthy();
+    expect(await screen.findByText('Готово: locale@example.com')).toBeTruthy();
     unmount();
 
     setFetch(
       jsonResponse({
-        data: { accessToken: "register-token", locale: "ru", theme: "dark" },
+        data: { accessToken: 'register-token', locale: 'ru', theme: 'dark' },
       }),
-      jsonResponse({ data: { user: { locale: "ru", theme: "dark" } } }),
-      jsonResponse({ data: { profile: { email: "registered@example.com" } } }),
+      jsonResponse({ data: { user: { locale: 'ru', theme: 'dark' } } }),
+      jsonResponse({ data: { profile: { email: 'registered@example.com' } } }),
     );
     render(<App />);
-    screen
-      .getByLabelText(
-        /^(Register display name|Отображаемое имя для регистрации)$/u,
-      )
-      .remove();
-    fireEvent.change(
-      screen.getByLabelText(/^(Register email|Email для регистрации)$/u),
-      {
-        target: { value: "registered@example.com" },
-      },
-    );
-    fireEvent.change(
-      screen.getByLabelText(/^(Register password|Пароль для регистрации)$/u),
-      {
-        target: { value: "password123" },
-      },
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: /^(Register|Зарегистрироваться)$/u }),
-    );
+    screen.getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u).remove();
+    fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации)$/u), {
+      target: { value: 'registered@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText(/^(Register password|Пароль для регистрации)$/u), {
+      target: { value: 'password123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^(Register|Зарегистрироваться)$/u }));
 
-    expect(
-      await screen.findByText("Готово: registered@example.com"),
-    ).toBeTruthy();
+    expect(await screen.findByText('Готово: registered@example.com')).toBeTruthy();
   });
 
-  it("renders link-discord and unknown routes through the shell", async () => {
-    window.history.pushState({}, "", "/link/discord");
+  it('renders link-discord and unknown routes through the shell', async () => {
+    window.history.pushState({}, '', '/link/discord');
     const { unmount } = render(<App />);
 
-    expect(await screen.findByText("Account control room")).toBeTruthy();
+    expect(await screen.findByText('Account control room')).toBeTruthy();
     unmount();
 
-    window.history.pushState({}, "", "/settings/");
+    window.history.pushState({}, '', '/settings/');
     const trailingSlash = render(<App />);
-    expect(await screen.findByText("Account control room")).toBeTruthy();
+    expect(await screen.findByText('Account control room')).toBeTruthy();
     trailingSlash.unmount();
 
-    window.history.pushState({}, "", "/unknown");
+    window.history.pushState({}, '', '/unknown');
     render(<App />);
 
-    expect(screen.getAllByText("User design v3").length).toBeGreaterThan(0);
-    expect(window.location.pathname).toBe("/unknown");
+    expect(screen.getAllByText('User design v3').length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe('/unknown');
   });
 
-  it("lets the browser handle non-SPA link clicks", () => {
+  it('lets the browser handle non-SPA link clicks', () => {
     render(<App />);
     const startPath = window.location.pathname;
     const preventBrowserNavigation = (event: MouseEvent) => {
       event.preventDefault();
     };
-    const appendAnchor = (
-      href: string,
-      configure?: (anchor: HTMLAnchorElement) => void,
-    ) => {
-      const anchor = document.createElement("a");
-      anchor.setAttribute("href", href);
+    const appendAnchor = (href: string, configure?: (anchor: HTMLAnchorElement) => void) => {
+      const anchor = document.createElement('a');
+      anchor.setAttribute('href', href);
       anchor.textContent = href;
       configure?.(anchor);
       document.body.append(anchor);
       return anchor;
     };
 
-    document.addEventListener("click", preventBrowserNavigation);
+    document.addEventListener('click', preventBrowserNavigation);
     try {
-      document.dispatchEvent(
-        new MouseEvent("click", { bubbles: true, button: 0 }),
-      );
-      fireEvent.click(appendAnchor("/settings"), { metaKey: true });
+      document.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+      fireEvent.click(appendAnchor('/settings'), { metaKey: true });
       fireEvent.click(
-        appendAnchor("/profile", (anchor) => {
-          anchor.target = "_blank";
+        appendAnchor('/profile', (anchor) => {
+          anchor.target = '_blank';
         }),
       );
       fireEvent.click(
-        appendAnchor("/download", (anchor) => {
-          anchor.setAttribute("download", "report.txt");
+        appendAnchor('/download', (anchor) => {
+          anchor.setAttribute('download', 'report.txt');
         }),
       );
-      fireEvent.click(appendAnchor("mailto:support@example.test"));
+      fireEvent.click(appendAnchor('mailto:support@example.test'));
     } finally {
-      document.removeEventListener("click", preventBrowserNavigation);
+      document.removeEventListener('click', preventBrowserNavigation);
     }
 
     expect(window.location.pathname).toBe(startPath);

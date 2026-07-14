@@ -1,34 +1,29 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { makeAutoObservable } from "mobx";
-import {
-  fallbackLocale,
-  resolveLocale,
-  supportedLocales,
-  type Locale,
-} from "../i18n/locale";
+import { makeAutoObservable } from 'mobx';
+import { fallbackLocale, resolveLocale, supportedLocales, type Locale } from '../i18n/locale';
 
-export const LocaleStorageKey = "boilerplate.locale";
+export const LocaleStorageKey = 'boilerplate.locale';
 
 function applyLocaleToDocument(locale: Locale): void {
-  if (typeof document !== "undefined") {
+  if (typeof document !== 'undefined') {
     document.documentElement.lang = locale;
   }
 }
 
 function readCookie(name: string): string | undefined {
-  if (typeof document === "undefined") {
+  if (typeof document === 'undefined') {
     return undefined;
   }
 
   return document.cookie
-    .split(";")
+    .split(';')
     .map((part) => part.trim())
     .find((part) => part.startsWith(`${name}=`))
     ?.slice(name.length + 1);
 }
 
 function readStoredLocale(): string | undefined {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return undefined;
   }
 
@@ -40,7 +35,7 @@ function readStoredLocale(): string | undefined {
 }
 
 export function persistLocale(locale: Locale): void {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     try {
       window.localStorage.setItem(LocaleStorageKey, locale);
     } catch {
@@ -48,28 +43,27 @@ export function persistLocale(locale: Locale): void {
     }
   }
 
-  if (typeof document !== "undefined") {
+  if (typeof document !== 'undefined') {
     document.cookie = `locale=${locale}; path=/; max-age=31536000; samesite=lax`;
   }
 }
 
 export function detectBrowserLocale(): Locale {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return fallbackLocale;
   }
 
   const url = new URL(window.location.href);
-  const queryLocale =
-    url.searchParams.get("lang") ?? url.searchParams.get("locale");
+  const queryLocale = url.searchParams.get('lang') ?? url.searchParams.get('locale');
 
   return resolveLocale(
     queryLocale,
     readStoredLocale(),
-    readCookie("locale"),
-    readCookie("lang"),
+    readCookie('locale'),
+    readCookie('lang'),
     // `navigator.languages` is typed as always present but is undefined in
     // older browsers and when tests stub a partial navigator.
-    (window.navigator.languages as readonly string[] | undefined)?.join(","),
+    (window.navigator.languages as readonly string[] | undefined)?.join(','),
     window.navigator.language,
   );
 }

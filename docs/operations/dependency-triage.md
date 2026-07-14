@@ -5,11 +5,11 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 ## Dependency matrix
 
-| Dependency | Env vars                              | Indicator name | Required by default |
-| ---------- | ------------------------------------- | -------------- | ------------------- |
-| Postgres   | `DATABASE_URL`                        | `postgres`     | Yes                 |
-| Redis      | `REDIS_URL` or `CACHE_REDIS_*`        | `@redis/client`        | Yes (if registered) |
-| NATS       | `NATS_URL` or `NATS_HOST`/`NATS_PORT` | `nats`         | Yes (if registered) |
+| Dependency | Env vars                              | Indicator name  | Required by default |
+| ---------- | ------------------------------------- | --------------- | ------------------- |
+| Postgres   | `DATABASE_URL`                        | `postgres`      | Yes                 |
+| Redis      | `REDIS_URL` or `CACHE_REDIS_*`        | `@redis/client` | Yes (if registered) |
+| NATS       | `NATS_URL` or `NATS_HOST`/`NATS_PORT` | `nats`          | Yes (if registered) |
 
 ## Postgres connection failure
 

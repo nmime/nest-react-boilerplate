@@ -7,38 +7,23 @@
       color-mix(in srgb, var(--xr-color-primary) 24%, transparent),
       transparent 34rem
     ),
-    radial-gradient(
-      circle at 85% 8%,
-      color-mix(in srgb, var(--xr-color-success) 18%, transparent),
-      transparent 30rem
-    ),
+    radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--xr-color-success) 18%, transparent), transparent 30rem),
     radial-gradient(
       circle at 50% 42rem,
       color-mix(in srgb, var(--xr-color-primary) 9%, transparent),
       transparent 34rem
     ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--xr-color-surface) 96%, transparent),
-      var(--xr-color-surface)
-    );
+    linear-gradient(180deg, color-mix(in srgb, var(--xr-color-surface) 96%, transparent), var(--xr-color-surface));
   overflow: hidden;
   position: relative;
 }
 
 .xr-shell::before {
   background-image:
-    linear-gradient(
-      color-mix(in srgb, var(--xr-color-border) 55%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--xr-color-border) 55%, transparent) 1px,
-      transparent 1px
-    );
+    linear-gradient(color-mix(in srgb, var(--xr-color-border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--xr-color-border) 55%, transparent) 1px, transparent 1px);
   background-size: 72px 72px;
-  content: "";
+  content: '';
   inset: 0;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.62), transparent 48rem);
   opacity: 0.2;
@@ -48,18 +33,9 @@
 
 .xr-shell::after {
   background:
-    linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in srgb, var(--xr-color-primary) 11%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      circle,
-      color-mix(in srgb, var(--xr-color-success) 14%, transparent),
-      transparent 66%
-    );
-  content: "";
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--xr-color-primary) 11%, transparent), transparent),
+    radial-gradient(circle, color-mix(in srgb, var(--xr-color-success) 14%, transparent), transparent 66%);
+  content: '';
   filter: blur(12px);
   height: 22rem;
   left: 50%;
@@ -88,8 +64,7 @@
 }
 
 .xr-brand__mark {
-  box-shadow: 0 14px 30px
-    color-mix(in srgb, var(--xr-color-primary) 32%, transparent);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--xr-color-primary) 32%, transparent);
 }
 
 .xr-hero {
@@ -107,7 +82,7 @@
 .xr-hero::after {
   border: 1px solid color-mix(in srgb, var(--xr-color-border) 78%, transparent);
   border-radius: calc(var(--xr-radius-lg) + 1rem);
-  content: "";
+  content: '';
   pointer-events: none;
   position: absolute;
   z-index: -1;
@@ -120,26 +95,15 @@
       color-mix(in srgb, var(--xr-card-background) 70%, transparent),
       color-mix(in srgb, var(--xr-card-background) 34%, transparent)
     ),
-    radial-gradient(
-      circle at 32% 28%,
-      color-mix(in srgb, var(--xr-color-primary) 16%, transparent),
-      transparent 34%
-    );
+    radial-gradient(circle at 32% 28%, color-mix(in srgb, var(--xr-color-primary) 16%, transparent), transparent 34%);
   box-shadow: 0 34px 110px rgba(15, 23, 42, 0.12);
   inset: clamp(1.5rem, 4vw, 3rem) 0 0;
 }
 
 .xr-hero::after {
   background:
-    linear-gradient(
-      color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px,
-      transparent 1px
-    );
+    linear-gradient(color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--xr-color-border) 56%, transparent) 1px, transparent 1px);
   background-size: 38px 38px;
   inset: clamp(3.2rem, 7vw, 5.8rem) clamp(1rem, 5vw, 5rem) 2rem;
   mask-image: radial-gradient(circle, rgba(0, 0, 0, 0.72), transparent 70%);
@@ -187,7 +151,7 @@
 .landing-feature-card__eyebrow::before {
   background: currentcolor;
   border-radius: 999px;
-  content: "";
+  content: '';
   height: 0.45rem;
   width: 0.45rem;
 }
@@ -221,12 +185,8 @@
 .landing-overview::before,
 .landing-journey::before,
 .landing-operations::before {
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--xr-color-primary) 13%, transparent),
-    transparent 68%
-  );
-  content: "";
+  background: radial-gradient(circle, color-mix(in srgb, var(--xr-color-primary) 13%, transparent), transparent 68%);
+  content: '';
   height: 20rem;
   pointer-events: none;
   position: absolute;
@@ -311,11 +271,7 @@
 .landing-journey-card,
 .landing-operations-card {
   background:
-    linear-gradient(
-        145deg,
-        color-mix(in srgb, var(--xr-card-background) 96%, white 4%),
-        var(--xr-card-background)
-      )
+    linear-gradient(145deg, color-mix(in srgb, var(--xr-card-background) 96%, white 4%), var(--xr-card-background))
       padding-box,
     linear-gradient(
         145deg,
@@ -334,12 +290,8 @@
 }
 
 .landing-value-card::after {
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--xr-color-primary) 16%, transparent),
-    transparent 68%
-  );
-  content: "";
+  background: radial-gradient(circle, color-mix(in srgb, var(--xr-color-primary) 16%, transparent), transparent 68%);
+  content: '';
   height: 12rem;
   position: absolute;
   right: -5rem;
@@ -437,15 +389,10 @@
 
 .landing-feature-card li::before,
 .landing-readiness li::before {
-  background: linear-gradient(
-    135deg,
-    var(--xr-color-primary),
-    var(--xr-color-success)
-  );
+  background: linear-gradient(135deg, var(--xr-color-primary), var(--xr-color-success));
   border-radius: 999px;
-  box-shadow: 0 0 0 0.32rem
-    color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
-  content: "";
+  box-shadow: 0 0 0 0.32rem color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  content: '';
   height: 0.56rem;
   margin-top: 0.58rem;
   width: 0.56rem;

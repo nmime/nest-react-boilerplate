@@ -1,26 +1,5 @@
-import { ProblemTypeBaseUrl } from "../const/problem-type-base-url.const";
-import type { ProblemDetails } from "../type/problem-details.type";
-
-const problemDetailsReservedKeys = new Set([
-  "type",
-  "title",
-  "status",
-  "detail",
-  "instance",
-  "code",
-  "localizedDetail",
-  "info",
-]);
-
-function sanitizeExtensions(
-  extensions: Record<string, unknown>,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(extensions).filter(
-      ([key]) => !problemDetailsReservedKeys.has(key),
-    ),
-  );
-}
+import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
+import type { ProblemDetails } from '../type/problem-details.type';
 
 interface ProblemDetailsOptions {
   title: string;
@@ -36,7 +15,7 @@ export const createProblemDetails = ({
   status,
   code,
   detail,
-  type = code ? `${ProblemTypeBaseUrl}:${code}` : "about:blank",
+  type = code ? `${ProblemTypeBaseUrl}:${code}` : 'about:blank',
   instance,
 }: ProblemDetailsOptions): ProblemDetails => {
   const normalizedInstance = instance?.trim();
@@ -46,9 +25,7 @@ export const createProblemDetails = ({
     title,
     status,
     detail,
-    ...(normalizedInstance && !normalizedInstance.startsWith("/")
-      ? { instance: normalizedInstance }
-      : {}),
+    ...(normalizedInstance && !normalizedInstance.startsWith('/') ? { instance: normalizedInstance } : {}),
     ...(code ? { code } : {}),
-  } as ProblemDetails;
+  };
 };

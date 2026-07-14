@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- Fastify inject response JSON is intentionally dynamic in e2e tests. */
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { Test } from "@nestjs/testing";
-import type { Response as InjectResponse } from "light-my-request";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createValidationPipe } from "@app/backend-common-validation";
-import { UserAppApiModule } from "./user-app-api.module";
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Test } from '@nestjs/testing';
+import type { Response as InjectResponse } from 'light-my-request';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { createValidationPipe } from '@app/backend-common-validation';
+import { UserAppApiModule } from './user-app-api.module';
 
 interface HealthEnvelope {
   status?: string;
@@ -19,10 +16,9 @@ interface HealthEnvelope {
   };
 }
 
-const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
-  response.json<HealthEnvelope>();
+const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
-describe("user-app-api health e2e", () => {
+describe('user-app-api health e2e', () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
@@ -30,9 +26,7 @@ describe("user-app-api health e2e", () => {
       imports: [UserAppApiModule],
     }).compile();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
@@ -41,57 +35,57 @@ describe("user-app-api health e2e", () => {
     await app.close();
   });
 
-  it("GET /health returns shared liveness-compatible health details", async () => {
-    const response = await app.inject({ method: "GET", url: "/health" });
+  it('GET /health returns shared liveness-compatible health details', async () => {
+    const response = await app.inject({ method: 'GET', url: '/health' });
 
     expect(response.statusCode).toBe(200);
     expect(parseHealthEnvelope(response)).toMatchObject({
       status: expect.stringMatching(/^(ok|degraded)$/),
       checks: expect.arrayContaining([
-        expect.objectContaining({ name: "runtime", status: "ok" }),
-        expect.objectContaining({ name: "config" }),
-        expect.objectContaining({ name: "i18n" }),
-        expect.objectContaining({ name: "session-config" }),
+        expect.objectContaining({ name: 'runtime', status: 'ok' }),
+        expect.objectContaining({ name: 'config' }),
+        expect.objectContaining({ name: 'i18n' }),
+        expect.objectContaining({ name: 'session-config' }),
         expect.objectContaining({
-          name: "postgres",
-          status: "ok",
+          name: 'postgres',
+          status: 'ok',
           required: false,
         }),
       ]),
     });
   });
 
-  it("GET /live and /ready return ok without a MikroORM provider", async () => {
-    const liveResponse = await app.inject({ method: "GET", url: "/live" });
+  it('GET /live and /ready return ok without a MikroORM provider', async () => {
+    const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
-        app: "user-app-api",
+        app: 'user-app-api',
         status: expect.stringMatching(/^(ok|degraded)$/),
       },
     });
 
-    const readyResponse = await app.inject({ method: "GET", url: "/ready" });
+    const readyResponse = await app.inject({ method: 'GET', url: '/ready' });
     expect(readyResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
-        app: "user-app-api",
+        app: 'user-app-api',
         status: expect.stringMatching(/^(ok|degraded)$/),
         dependencies: expect.arrayContaining([
           expect.objectContaining({
-            name: "postgres",
-            status: "ok",
+            name: 'postgres',
+            status: 'ok',
             required: false,
             details: expect.objectContaining({ skipped: true }),
           }),
           expect.objectContaining({
-            name: "redis",
-            status: "ok",
+            name: 'redis',
+            status: 'ok',
             required: false,
           }),
           expect.objectContaining({
-            name: "nats",
-            status: "ok",
+            name: 'nats',
+            status: 'ok',
             required: false,
           }),
         ]),

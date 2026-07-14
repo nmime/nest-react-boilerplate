@@ -1,11 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { AnalyticsConfigService } from "./config";
-import type {
-  AnalyticsIdentifyPayload,
-  AnalyticsPagePayload,
-  AnalyticsPayload,
-  AnalyticsPlugin,
-} from "./type";
+import { Injectable, Logger } from '@nestjs/common';
+import { AnalyticsConfigService } from './config';
+import type { AnalyticsIdentifyPayload, AnalyticsPagePayload, AnalyticsPayload, AnalyticsPlugin } from './type';
 
 /* v8 ignore start -- the @Injectable() decorator transpiles to a decorator-helper call whose empty-slot branch is unreachable from tests; only this class trips it because its overloaded dispatch() shifts esbuild's emit */
 @Injectable()
@@ -19,14 +14,12 @@ export class AnalyticsService {
     return this.configService.environment;
   }
 
-  async identify<
-    TTraits extends Record<string, unknown> = Record<string, unknown>,
-  >(
+  async identify<TTraits extends Record<string, unknown> = Record<string, unknown>>(
     userId: string,
     traits?: TTraits,
     context?: Record<string, unknown>,
   ): Promise<void> {
-    await this.dispatch("identify", {
+    await this.dispatch('identify', {
       userId,
       traits,
       context,
@@ -37,12 +30,12 @@ export class AnalyticsService {
   track<TProperties extends Record<string, unknown> = Record<string, unknown>>(
     event: string,
     properties?: TProperties,
-    options: Omit<AnalyticsPayload<TProperties>, "event" | "properties"> = {},
+    options: Omit<AnalyticsPayload<TProperties>, 'event' | 'properties'> = {},
   ): void {
     // track() is fire-and-forget: dispatch can reject synchronously when config
     // getters throw on malformed env, so guard the rejection to avoid crashing
     // the process with an unhandled rejection.
-    this.dispatch("track", {
+    this.dispatch('track', {
       ...options,
       event,
       properties,
@@ -52,29 +45,20 @@ export class AnalyticsService {
     });
   }
 
-  async page<
-    TProperties extends Record<string, unknown> = Record<string, unknown>,
-  >(payload: AnalyticsPagePayload<TProperties> = {}): Promise<void> {
-    await this.dispatch("page", {
+  async page<TProperties extends Record<string, unknown> = Record<string, unknown>>(
+    payload: AnalyticsPagePayload<TProperties> = {},
+  ): Promise<void> {
+    await this.dispatch('page', {
       ...payload,
       timestamp: payload.timestamp ?? new Date(),
     });
   }
 
+  private async dispatch(method: 'track', payload: AnalyticsPayload): Promise<void>;
+  private async dispatch(method: 'identify', payload: AnalyticsIdentifyPayload): Promise<void>;
+  private async dispatch(method: 'page', payload: AnalyticsPagePayload): Promise<void>;
   private async dispatch(
-    method: "track",
-    payload: AnalyticsPayload,
-  ): Promise<void>;
-  private async dispatch(
-    method: "identify",
-    payload: AnalyticsIdentifyPayload,
-  ): Promise<void>;
-  private async dispatch(
-    method: "page",
-    payload: AnalyticsPagePayload,
-  ): Promise<void>;
-  private async dispatch(
-    method: keyof Pick<AnalyticsPlugin, "track" | "identify" | "page">,
+    method: keyof Pick<AnalyticsPlugin, 'track' | 'identify' | 'page'>,
     payload: AnalyticsPayload | AnalyticsIdentifyPayload | AnalyticsPagePayload,
   ): Promise<void> {
     if (!this.configService.enabled) {

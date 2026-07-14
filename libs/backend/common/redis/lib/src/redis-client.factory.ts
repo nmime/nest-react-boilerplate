@@ -1,8 +1,8 @@
-import { Logger } from "@nestjs/common";
-import { createClient, createCluster, createSentinel } from "redis";
-import { RedisMode } from "./const";
-import { redisLuaScripts } from "./const/redis-lua-script.const";
-import type { RedisLuaScriptName } from "./const/redis-lua-script.const";
+import { Logger } from '@nestjs/common';
+import { createClient, createCluster, createSentinel } from 'redis';
+import { RedisMode } from './const';
+import { redisLuaScripts } from './const/redis-lua-script.const';
+import type { RedisLuaScriptName } from './const/redis-lua-script.const';
 import type {
   RedisClientLike,
   RedisConnectionConfig,
@@ -10,12 +10,9 @@ import type {
   RedisPipelineLike,
   RedisSetCondition,
   RedisSetExpirationMode,
-} from "./type";
-import type {
-  NativeRedisClient,
-  NativeRedisSetOptions,
-} from "./type/native-redis-client.type";
-import { connectionIdentity, firstHost } from "./util";
+} from './type';
+import type { NativeRedisClient, NativeRedisSetOptions } from './type/native-redis-client.type';
+import { connectionIdentity, firstHost } from './util';
 
 export class RedisClientAdapter implements RedisClientLike {
   private static readonly logger = new Logger(RedisClientAdapter.name);
@@ -31,9 +28,9 @@ export class RedisClientAdapter implements RedisClientLike {
     },
   ) {
     this.connectionId = options.connectionId;
-    this.client.on?.("error", (error) => {
+    this.client.on?.('error', (error) => {
       RedisClientAdapter.logger.error(
-        "Redis client connection error",
+        'Redis client connection error',
         error instanceof Error ? error.stack : String(error),
       );
     });
@@ -72,11 +69,7 @@ export class RedisClientAdapter implements RedisClientLike {
     return await this.client.set(this.key(key), value, options);
   }
 
-  async setex(
-    key: string,
-    ttlSeconds: number,
-    value: string,
-  ): Promise<unknown> {
+  async setex(key: string, ttlSeconds: number, value: string): Promise<unknown> {
     await this.ensureConnected();
     return await this.client.setEx(this.key(key), ttlSeconds, value);
   }
@@ -96,30 +89,19 @@ export class RedisClientAdapter implements RedisClientLike {
     return await this.client.incr(this.key(key));
   }
 
-  async incrementWithWindow(
-    key: string,
-    windowMs: number,
-  ): Promise<RedisIncrementWithWindowResult> {
+  async incrementWithWindow(key: string, windowMs: number): Promise<RedisIncrementWithWindowResult> {
     const ttlMs = Math.max(Math.trunc(windowMs), 1);
     // A fixed Lua script performs INCR, reads PTTL, and attaches PEXPIRE only
     // when the key has no TTL yet — all in a single atomic server-side step,
     // so the counter can never be observed (or expire) between operations.
-    const result = await this.runKnownLuaScript(
-      "increment-window",
-      key,
-      String(ttlMs),
-    );
+    const result = await this.runKnownLuaScript('increment-window', key, String(ttlMs));
     const reply = (Array.isArray(result) ? result : []) as unknown[];
     const remainingMs = Number(reply[1]);
     return {
       count: Number(reply[0]),
       // PTTL reflects the authoritative remaining window; fall back to the
       // requested window only if the reply is malformed so resetAt stays sane.
-      resetAt:
-        Date.now() +
-        (Number.isFinite(remainingMs) && remainingMs >= 0
-          ? remainingMs
-          : ttlMs),
+      resetAt: Date.now() + (Number.isFinite(remainingMs) && remainingMs >= 0 ? remainingMs : ttlMs),
     };
   }
 
@@ -144,25 +126,12 @@ export class RedisClientAdapter implements RedisClientLike {
   }
 
   async deleteIfValue(key: string, expectedValue: string): Promise<boolean> {
-    const result = await this.runKnownLuaScript(
-      "delete-if-value",
-      key,
-      expectedValue,
-    );
+    const result = await this.runKnownLuaScript('delete-if-value', key, expectedValue);
     return Number(result) === 1;
   }
 
-  async extendIfValue(
-    key: string,
-    expectedValue: string,
-    ttlMs: number,
-  ): Promise<boolean> {
-    const result = await this.runKnownLuaScript(
-      "extend-if-value",
-      key,
-      expectedValue,
-      String(ttlMs),
-    );
+  async extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean> {
+    const result = await this.runKnownLuaScript('extend-if-value', key, expectedValue, String(ttlMs));
 
     return Number(result) === 1;
   }
@@ -183,24 +152,12 @@ export class RedisClientAdapter implements RedisClientLike {
     return await this.client.destroy();
   }
 
-  private async runKnownLuaScript(
-    scriptName: RedisLuaScriptName,
-    key: string,
-    ...args: string[]
-  ): Promise<unknown> {
+  private async runKnownLuaScript(scriptName: RedisLuaScriptName, key: string, ...args: string[]): Promise<unknown> {
     await this.ensureConnected();
-    return await this.client.sendCommand([
-      "EVAL",
-      redisLuaScripts[scriptName],
-      "1",
-      this.key(key),
-      ...args,
-    ]);
+    return await this.client.sendCommand(['EVAL', redisLuaScripts[scriptName], '1', this.key(key), ...args]);
   }
 
-  private pipelineFromOperations(
-    operations: (() => Promise<unknown>)[],
-  ): RedisPipelineLike {
+  private pipelineFromOperations(operations: (() => Promise<unknown>)[]): RedisPipelineLike {
     return {
       setex: (key, ttl, value) => {
         operations.push(() => this.setex(key, ttl, value));
@@ -222,8 +179,7 @@ export class RedisClientAdapter implements RedisClientLike {
         operations.push(() => this.del(key));
         return this.pipelineFromOperations(operations);
       },
-      exec: async () =>
-        await Promise.all(operations.map((operation) => operation())),
+      exec: async () => await Promise.all(operations.map((operation) => operation())),
     };
   }
 
@@ -244,9 +200,7 @@ export class RedisClientAdapter implements RedisClientLike {
   }
 }
 
-export function createRedisClient(
-  config: RedisConnectionConfig,
-): RedisClientLike {
+export function createRedisClient(config: RedisConnectionConfig): RedisClientLike {
   if (config.mode === RedisMode.Cluster) {
     return createClusterClient(config);
   }
@@ -258,19 +212,17 @@ export function createRedisClient(
   return createSingleClient(config);
 }
 
-export async function closeRedisClient(
-  client: RedisClientLike,
-): Promise<unknown> {
+export async function closeRedisClient(client: RedisClientLike): Promise<unknown> {
   const closable = client as RedisClientLike & {
     close?: () => Promise<unknown>;
     destroy?: () => Promise<void> | void;
   };
 
-  if (typeof closable.close === "function") {
+  if (typeof closable.close === 'function') {
     return await closable.close();
   }
 
-  if (typeof closable.destroy === "function") {
+  if (typeof closable.destroy === 'function') {
     await closable.destroy();
     return;
   }
@@ -318,9 +270,7 @@ function createClusterClient(config: RedisConnectionConfig): RedisClientLike {
 
 function createSentinelClient(config: RedisConnectionConfig): RedisClientLike {
   if (!config.sentinelGroupIdentifier) {
-    throw new Error(
-      "Redis sentinel mode requires a sentinel group identifier.",
-    );
+    throw new Error('Redis sentinel mode requires a sentinel group identifier.');
   }
 
   const client = createSentinel({
@@ -339,10 +289,7 @@ function createSentinelClient(config: RedisConnectionConfig): RedisClientLike {
   return toAdapter(client, config);
 }
 
-function toAdapter(
-  client: unknown,
-  config: RedisConnectionConfig,
-): RedisClientLike {
+function toAdapter(client: unknown, config: RedisConnectionConfig): RedisClientLike {
   return new RedisClientAdapter(client as NativeRedisClient, {
     keyPrefix: config.keyPrefix,
     connectionId: connectionIdentity(config),

@@ -22,9 +22,7 @@ describe('createProblemDetails (RFC 9457)', () => {
   });
 
   it('defaults type to about:blank when no code provided', () => {
-    expect(
-      createProblemDetails({ title: 'Bad', detail: 'Bad request', status: 400 }),
-    ).toEqual({
+    expect(createProblemDetails({ title: 'Bad', detail: 'Bad request', status: 400 })).toEqual({
       type: 'about:blank',
       title: 'Bad',
       detail: 'Bad request',

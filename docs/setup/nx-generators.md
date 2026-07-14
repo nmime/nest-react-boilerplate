@@ -61,7 +61,7 @@ Configured defaults: `style: "css"`, `linter: "none"`.
 
 ## Custom generators
 
-### `nrb add feature` (via `project:generate-vertical-slice`)
+### `pnpm nrb add feature` (via `project:generate-vertical-slice`)
 
 The custom feature generator scaffolds a complete vertical slice:
 

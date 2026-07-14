@@ -1,4 +1,4 @@
-import type { ProblemDetails } from "@app/backend-common-exception";
+import type { ProblemDetails } from '@app/backend-common-exception';
 
 /**
  * Builds the single-line log descriptor for a problem, dropping any absent
@@ -11,4 +11,4 @@ export const formatProblemDescriptor = (problem: ProblemDetails): string =>
     problem.instance ? `instance=${problem.instance}` : undefined,
   ]
     .filter((part): part is string => Boolean(part))
-    .join(" ");
+    .join(' ');

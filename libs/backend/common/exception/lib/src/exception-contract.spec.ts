@@ -15,19 +15,13 @@ describe('RFC 9457 exception contract', () => {
           title: 'Test Error',
         } as ExceptionDefinition;
         if (!def.detail) {
-          throw new Error(
-            `Exception definition "${def.name}" must include a static detail string`,
-          );
+          throw new Error(`Exception definition "${def.name}" must include a static detail string`);
         }
       }).toThrow('must include a static detail string');
     });
 
     it('rejects template expressions in definition strings', () => {
-      const goodTitles = [
-        'User not found',
-        'Item not found',
-        'User not found',
-      ];
+      const goodTitles = ['User not found', 'Item not found', 'User not found'];
 
       for (const title of goodTitles) {
         expect(title).not.toMatch(/\${|\{[a-z]+\}/);
@@ -35,10 +29,7 @@ describe('RFC 9457 exception contract', () => {
     });
 
     it('rejects runtime identifiers in definition strings', () => {
-      const badDetails = [
-        'User id=123 not found',
-        'Failed for referrerId=abc',
-      ];
+      const badDetails = ['User id=123 not found', 'Failed for referrerId=abc'];
 
       for (const detail of badDetails) {
         expect(detail).toMatch(/=\w+/);
@@ -180,13 +171,7 @@ describe('RFC 9457 exception contract', () => {
 
   describe('problem type uniqueness', () => {
     it('rejects duplicate problem types', () => {
-      const types = [
-        'user_not_found',
-        'user_not_found',
-        'invalid_token',
-        'batch_not_found',
-        'batch_not_found',
-      ];
+      const types = ['user_not_found', 'user_not_found', 'invalid_token', 'batch_not_found', 'batch_not_found'];
 
       const seen = new Set<string>();
       const duplicates: string[] = [];

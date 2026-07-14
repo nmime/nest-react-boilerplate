@@ -1,6 +1,6 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
 import {
   AuthProviderTokenEntity,
   DefaultAuthTenantId,
@@ -8,12 +8,9 @@ import {
   type AuthProviderTokenKind,
   type ExternalAuthProvider,
   type RedactedAuthProviderTokenView,
-} from "../entities";
-import type { ProviderTokenCiphertext } from "../../../provider-token-crypto.service";
-import {
-  mapSocialAuthError,
-  type SocialAuthRepositoryError,
-} from "./external-identity.repository";
+} from '../entities';
+import type { ProviderTokenCiphertext } from '../../../provider-token-crypto.service';
+import { mapSocialAuthError, type SocialAuthRepositoryError } from './external-identity.repository';
 
 export interface PersistAuthProviderTokenInput extends ProviderTokenCiphertext {
   tenantId?: string;
@@ -35,10 +32,7 @@ export class AuthProviderTokenRepository {
   persistEncryptedToken(
     input: PersistAuthProviderTokenInput,
   ): ResultAsync<AuthProviderTokenEntity, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistToken(input),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.persistToken(input), mapSocialAuthError);
   }
 
   listRedactedByExternalIdentity(
@@ -47,11 +41,7 @@ export class AuthProviderTokenRepository {
   ): ResultAsync<RedactedAuthProviderTokenView[], SocialAuthRepositoryError> {
     return ResultAsync.fromPromise(
       this.entityManager
-        .find(
-          AuthProviderTokenEntity,
-          { tenantId, externalIdentityId },
-          { orderBy: { createdAt: "DESC" } },
-        )
+        .find(AuthProviderTokenEntity, { tenantId, externalIdentityId }, { orderBy: { createdAt: 'DESC' } })
         .then((tokens) => tokens.map(toRedactedAuthProviderTokenView)),
       mapSocialAuthError,
     );
@@ -62,20 +52,15 @@ export class AuthProviderTokenRepository {
     tenantId: string = DefaultAuthTenantId,
     revokedAt: Date = new Date(),
   ): ResultAsync<AuthProviderTokenEntity | null, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.revokePersistedToken(id, tenantId, revokedAt),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.revokePersistedToken(id, tenantId, revokedAt), mapSocialAuthError);
   }
 
-  private async persistToken(
-    input: PersistAuthProviderTokenInput,
-  ): Promise<AuthProviderTokenEntity> {
+  private async persistToken(input: PersistAuthProviderTokenInput): Promise<AuthProviderTokenEntity> {
     const entity = new AuthProviderTokenEntity();
     entity.tenantId = input.tenantId ?? DefaultAuthTenantId;
     entity.userId = input.userId;
     entity.externalIdentityId = input.externalIdentityId;
-    entity.provider = input.provider ?? "discord";
+    entity.provider = input.provider ?? 'discord';
     entity.tokenKind = input.tokenKind;
     entity.ciphertext = input.ciphertext;
     entity.iv = input.iv;

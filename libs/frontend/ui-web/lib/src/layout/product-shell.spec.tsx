@@ -1,16 +1,16 @@
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import { FrontendI18nProvider } from "@app/frontend-runtime";
-import { UiCard } from "../component/card";
-import { ProductShell } from "./product-shell";
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import { FrontendI18nProvider } from '@app/frontend-runtime';
+import { UiCard } from '../component/card';
+import { ProductShell } from './product-shell';
 
-describe("ProductShell", () => {
-  it("renders landmark, heading, status, actions, and children", () => {
+describe('ProductShell', () => {
+  it('renders landmark, heading, status, actions, and children', () => {
     const html = renderToStaticMarkup(
       <ProductShell
         actions={[
-          { href: "#primary", isCurrent: true, label: "Primary action" },
-          { href: "/status", label: "Status", variant: "secondary" },
+          { href: '#primary', isCurrent: true, label: 'Primary action' },
+          { href: '/status', label: 'Status', variant: 'secondary' },
         ]}
         actionsLabel="Test primary navigation"
         appName="Product Test"
@@ -27,25 +27,25 @@ describe("ProductShell", () => {
     );
 
     expect(html).toContain('href="#xr-content"');
-    expect(html).toContain("Skip ahead");
-    expect(html).toContain("<main");
+    expect(html).toContain('Skip ahead');
+    expect(html).toContain('<main');
     expect(html).toContain('aria-label="Product Test home"');
     expect(html).toContain('href="/admin"');
     expect(html).toContain('aria-label="Test primary navigation"');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain("<h1>Unified product surface</h1>");
-    expect(html).toContain("Shared shell description");
-    expect(html).toContain("xr-status--success");
+    expect(html).toContain('<h1>Unified product surface</h1>');
+    expect(html).toContain('Shared shell description');
+    expect(html).toContain('xr-status--success');
     expect(html).toContain('href="#primary"');
     expect(html).toContain('href="/status"');
     expect(html).toContain('id="xr-content"');
-    expect(html).toContain("Reusable content");
+    expect(html).toContain('Reusable content');
   });
 
-  it("localizes default skip link and navigation labels", () => {
+  it('localizes default skip link and navigation labels', () => {
     const html = renderToStaticMarkup(
       <ProductShell
-        actions={[{ href: "#primary", label: "Primary action" }]}
+        actions={[{ href: '#primary', label: 'Primary action' }]}
         appName="Product Test"
         description="Shared shell description"
         eyebrow="Shared shell"
@@ -56,15 +56,15 @@ describe("ProductShell", () => {
       </ProductShell>,
     );
 
-    expect(html).toContain("Skip to content");
+    expect(html).toContain('Skip to content');
     expect(html).toContain('aria-label="Product Test navigation"');
   });
 
-  it("uses locale-aware default shell labels", () => {
+  it('uses locale-aware default shell labels', () => {
     const html = renderToStaticMarkup(
       <FrontendI18nProvider initialLocale="ru">
         <ProductShell
-          actions={[{ href: "#primary", label: "Primary action" }]}
+          actions={[{ href: '#primary', label: 'Primary action' }]}
           appName="Product Test"
           description="Shared shell description"
           eyebrow="Shared shell"
@@ -76,12 +76,12 @@ describe("ProductShell", () => {
       </FrontendI18nProvider>,
     );
 
-    expect(html).toContain("Перейти к содержимому");
+    expect(html).toContain('Перейти к содержимому');
     expect(html).toContain('aria-label="Домой в Product Test"');
     expect(html).toContain('aria-label="Навигация Product Test"');
   });
 
-  it("omits empty action navigation", () => {
+  it('omits empty action navigation', () => {
     const html = renderToStaticMarkup(
       <ProductShell
         actions={[]}
@@ -96,6 +96,6 @@ describe("ProductShell", () => {
     );
 
     expect(html).not.toContain('class="xr-actions"');
-    expect(html).toContain("Reusable content");
+    expect(html).toContain('Reusable content');
   });
 });

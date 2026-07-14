@@ -1,39 +1,37 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 import {
   createSessionMiddleware,
   createTelegramSessionStorage,
   initialTelegramBotSession,
   toRatelimiterRedisClient,
-} from "./session";
-import type { TelegramBotContext, TelegramBotSession } from "../type";
+} from './session';
+import type { TelegramBotContext, TelegramBotSession } from '../type';
 
 const testValue = <T>(value: unknown): T => value as T;
 
-describe("Telegram bot sessions", () => {
-  it("creates an isolated public main-menu session", () => {
+describe('Telegram bot sessions', () => {
+  it('creates an isolated public main-menu session', () => {
     expect(initialTelegramBotSession()).toEqual({
-      currentRoute: "main",
-      stack: ["main"],
+      currentRoute: 'main',
+      stack: ['main'],
       params: {},
       auth: { linked: false },
     });
     expect(initialTelegramBotSession()).not.toBe(initialTelegramBotSession());
   });
 
-  it("uses memory fallback storage when Redis is unavailable", () => {
+  it('uses memory fallback storage when Redis is unavailable', () => {
     const fallback = {
       read: vi.fn(),
       write: vi.fn(),
       delete: vi.fn(),
     };
 
-    expect(
-      createTelegramSessionStorage({ ttlSeconds: 60, fallback, redis: null }),
-    ).toBe(fallback);
+    expect(createTelegramSessionStorage({ ttlSeconds: 60, fallback, redis: null })).toBe(fallback);
     expect(createTelegramSessionStorage({ ttlSeconds: 60 })).toBeDefined();
   });
 
-  it("selects the Redis adapter when a Redis client is configured", () => {
+  it('selects the Redis adapter when a Redis client is configured', () => {
     const redis = {
       get: vi.fn(),
       set: vi.fn(),
@@ -55,7 +53,7 @@ describe("Telegram bot sessions", () => {
     ).not.toBe(fallback);
   });
 
-  it("uses Telegram sender id as the only session key source", async () => {
+  it('uses Telegram sender id as the only session key source', async () => {
     const stored = new Map<string, TelegramBotSession>();
     const middleware = createSessionMiddleware({
       read: vi.fn((key: string) => Promise.resolve(stored.get(key))),
@@ -72,10 +70,10 @@ describe("Telegram bot sessions", () => {
 
     await middleware(ctx, () => Promise.resolve());
 
-    expect([...stored.keys()]).toEqual(["telegram-bot:123"]);
+    expect([...stored.keys()]).toEqual(['telegram-bot:123']);
   });
 
-  it("skips persistence when Telegram sender id is unavailable", async () => {
+  it('skips persistence when Telegram sender id is unavailable', async () => {
     const storage = {
       read: vi.fn(),
       write: vi.fn(),
@@ -90,31 +88,19 @@ describe("Telegram bot sessions", () => {
     expect(storage.write).not.toHaveBeenCalled();
   });
 
-  it("adapts Redis counters for rate limiter windows without network access", async () => {
+  it('adapts Redis counters for rate limiter windows without network access', async () => {
     const redis = {
       incr: vi.fn(() => Promise.resolve(2)),
       expire: vi.fn(() => Promise.resolve(true)),
     };
     const client = toRatelimiterRedisClient(redis);
 
-    await expect(client?.incr("telegram-bot-rate-limit:1")).resolves.toBe(2);
-    await expect(
-      client?.pexpire("telegram-bot-rate-limit:1", 1500),
-    ).resolves.toBe(1);
-    await expect(client?.pexpire("telegram-bot-rate-limit:1", 1)).resolves.toBe(
-      1,
-    );
+    await expect(client?.incr('telegram-bot-rate-limit:1')).resolves.toBe(2);
+    await expect(client?.pexpire('telegram-bot-rate-limit:1', 1500)).resolves.toBe(1);
+    await expect(client?.pexpire('telegram-bot-rate-limit:1', 1)).resolves.toBe(1);
 
-    expect(redis.expire).toHaveBeenNthCalledWith(
-      1,
-      "telegram-bot-rate-limit:1",
-      2,
-    );
-    expect(redis.expire).toHaveBeenNthCalledWith(
-      2,
-      "telegram-bot-rate-limit:1",
-      1,
-    );
+    expect(redis.expire).toHaveBeenNthCalledWith(1, 'telegram-bot-rate-limit:1', 2);
+    expect(redis.expire).toHaveBeenNthCalledWith(2, 'telegram-bot-rate-limit:1', 1);
     expect(toRatelimiterRedisClient(null)).toBeUndefined();
   });
 });

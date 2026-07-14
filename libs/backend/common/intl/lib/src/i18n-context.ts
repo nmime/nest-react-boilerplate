@@ -4,12 +4,9 @@ export interface IntlContextValue {
 }
 
 export class IntlContext {
-  private static fallbackLocale = "en";
+  private static fallbackLocale = 'en';
 
-  static resolve(
-    locale: string | undefined,
-    fallbackLocale = IntlContext.fallbackLocale,
-  ): IntlContextValue {
+  static resolve(locale: string | undefined, fallbackLocale = IntlContext.fallbackLocale): IntlContextValue {
     return {
       locale: locale?.trim() || fallbackLocale,
       fallbackLocale,

@@ -25,6 +25,7 @@ type CommandHandler = (context: CommandContext) => number | Promise<number>;
 interface CommandDefinition {
   description: string;
   handler: CommandHandler;
+  forwardHelp?: boolean;
 }
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -60,15 +61,15 @@ register(
   'Scaffold a checklist-driven product vertical slice.',
   runGenerateVerticalSliceFromContext,
 );
-register('project:setup', 'Interactive and non-interactive boilerplate configuration.', runSetupFromContext);
+register('project:setup', 'Interactive and non-interactive boilerplate configuration.', runSetupFromContext, true);
 register(
   'project:doctor',
   'Run workspace health checks (Node, pnpm, Docker, manifests, config).',
   runDoctorFromContext,
 );
-register('setup', 'Shorthand for project:setup — boilerplate configuration.', runSetupFromContext);
+register('setup', 'Shorthand for project:setup — boilerplate configuration.', runSetupFromContext, true);
 register('doctor', 'Shorthand for project:doctor — workspace health checks.', runDoctorFromContext);
-register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext);
+register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
 );
@@ -163,6 +164,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
 
   if (resolved.argv[0] === '--help' || resolved.argv[0] === '-h') {
+    if (resolved.command.forwardHelp) {
+      return await resolved.command.handler({ argv: ['--help'], packageRoot, workspaceRoot });
+    }
     printCommandHelp(resolved.name, resolved.command);
     return 0;
   }
@@ -176,8 +180,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   });
 }
 
-function register(name: string, description: string, handler: CommandHandler): void {
-  commands.set(name, { description, handler });
+function register(name: string, description: string, handler: CommandHandler, forwardHelp = false): void {
+  commands.set(name, { description, handler, forwardHelp });
 }
 
 function registerScript(name: string, description: string, commandPath: string): void {
@@ -216,7 +220,7 @@ function resolveCommand(argv: string[]): { name: string; command: CommandDefinit
 }
 
 function printHelp(): void {
-  writeStdoutLine('Usage: repo-tooling <command> [args]');
+  writeStdoutLine('Usage: pnpm nrb <command> [args]');
   writeStdoutLine();
   writeStdoutLine('Commands:');
 
@@ -226,7 +230,7 @@ function printHelp(): void {
 }
 
 function printCommandHelp(name: string, command: CommandDefinition): void {
-  writeStdoutLine(`Usage: repo-tooling ${name} [args]`);
+  writeStdoutLine(`Usage: pnpm nrb ${name} [args]`);
   writeStdoutLine();
   writeStdoutLine(command.description);
 }

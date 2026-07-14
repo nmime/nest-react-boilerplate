@@ -92,7 +92,7 @@ Example:
 ### Fixed
 
 - Deploy workflow now gated on CI success (#42)
-- Docker Node.js version corrected to 24.11.0 (#43)
+- Docker Node.js version corrected to 24.18.0 (#43)
 ```
 
 ## Backend changes

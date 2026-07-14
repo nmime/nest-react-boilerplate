@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
-import { createTestLogger } from "../util/test-logger";
-import { setupContainers, teardownContainers } from "./setup-containers";
-import { setupNock } from "./setup-nock";
+import { describe, expect, it, vi } from 'vitest';
+import { createTestLogger } from '../util/test-logger';
+import { setupContainers, teardownContainers } from './setup-containers';
+import { setupNock } from './setup-nock';
 
-describe("component test setup helpers", () => {
-  it("installs the shared container manager on globalThis", () => {
+describe('component test setup helpers', () => {
+  it('installs the shared container manager on globalThis', () => {
     delete (
       globalThis as typeof globalThis & {
         componentTestContainerManager?: unknown;
@@ -22,7 +22,7 @@ describe("component test setup helpers", () => {
     ).toBeDefined();
   });
 
-  it("runs teardown through the shared manager", async () => {
+  it('runs teardown through the shared manager', async () => {
     setupContainers();
     const stop = vi.fn(() => Promise.resolve());
     const globalWithManager: typeof globalThis & {
@@ -37,10 +37,10 @@ describe("component test setup helpers", () => {
     expect(stop).toHaveBeenCalledOnce();
   });
 
-  it("keeps the nock setup hook and quiet test logger available", () => {
+  it('keeps the nock setup hook and quiet test logger available', () => {
     setupNock();
 
-    const logger = createTestLogger("SpecContext");
+    const logger = createTestLogger('SpecContext');
     expect(logger).toBeDefined();
     expect(logger.getTimestamp()).toEqual(expect.any(String));
   });

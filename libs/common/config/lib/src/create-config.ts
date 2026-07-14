@@ -30,20 +30,15 @@ export function createConfig<TConfig>(
   schema: ConfigSchema<TConfig>,
   options: ConfigAccessorOptions = {},
 ): ConfigAccessor<TConfig> {
-  const validation = schema.validate(
-    options.env ?? defaultConfigEnvironment(),
-    {
-      abortEarly: false,
-      allowUnknown: true,
-      convert: true,
-      stripUnknown: false,
-    },
-  );
+  const validation = schema.validate(options.env ?? defaultConfigEnvironment(), {
+    abortEarly: false,
+    allowUnknown: true,
+    convert: true,
+    stripUnknown: false,
+  });
 
   if (validation.error) {
-    throw new Error(
-      `Invalid environment configuration: ${validation.error.message}`,
-    );
+    throw new Error(`Invalid environment configuration: ${validation.error.message}`);
   }
 
   const values = Object.freeze(validation.value);

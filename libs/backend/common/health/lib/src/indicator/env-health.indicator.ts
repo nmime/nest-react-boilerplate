@@ -1,4 +1,4 @@
-import type { HealthIndicator, HealthIndicatorResult } from "../dto";
+import type { HealthIndicator, HealthIndicatorResult } from '../dto';
 
 export interface EnvHealthIndicatorOptions {
   name?: string;
@@ -16,7 +16,7 @@ export class EnvHealthIndicator implements HealthIndicator {
   private readonly env: NodeJS.ProcessEnv;
 
   constructor(options: EnvHealthIndicatorOptions = {}) {
-    this.name = options.name ?? "env";
+    this.name = options.name ?? 'env';
     this.required = options.required ?? true;
     this.requiredVariables = options.requiredVariables ?? [];
     this.optionalVariables = options.optionalVariables ?? [];
@@ -24,40 +24,28 @@ export class EnvHealthIndicator implements HealthIndicator {
   }
 
   check(): HealthIndicatorResult {
-    if (
-      this.requiredVariables.length === 0 &&
-      this.optionalVariables.length === 0
-    ) {
+    if (this.requiredVariables.length === 0 && this.optionalVariables.length === 0) {
       return {
         name: this.name,
-        status: "skipped",
+        status: 'skipped',
         required: false,
-        details: { reason: "no env variables configured" },
+        details: { reason: 'no env variables configured' },
       };
     }
 
-    const missingRequired = this.requiredVariables.filter(
-      (key) => !hasEnvValue(this.env[key]),
-    );
-    const missingOptional = this.optionalVariables.filter(
-      (key) => !hasEnvValue(this.env[key]),
-    );
+    const missingRequired = this.requiredVariables.filter((key) => !hasEnvValue(this.env[key]));
+    const missingOptional = this.optionalVariables.filter((key) => !hasEnvValue(this.env[key]));
 
-    const status = resolveEnvStatus(
-      missingRequired.length,
-      missingOptional.length,
-    );
+    const status = resolveEnvStatus(missingRequired.length, missingOptional.length);
 
     return {
       name: this.name,
       status,
       required: this.required,
       details: {
-        requiredConfigured:
-          this.requiredVariables.length - missingRequired.length,
+        requiredConfigured: this.requiredVariables.length - missingRequired.length,
         requiredTotal: this.requiredVariables.length,
-        optionalConfigured:
-          this.optionalVariables.length - missingOptional.length,
+        optionalConfigured: this.optionalVariables.length - missingOptional.length,
         optionalTotal: this.optionalVariables.length,
         missingRequired,
         missingOptional,
@@ -67,20 +55,17 @@ export class EnvHealthIndicator implements HealthIndicator {
 }
 
 function hasEnvValue(value: string | undefined): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
-function resolveEnvStatus(
-  missingRequiredCount: number,
-  missingOptionalCount: number,
-): HealthIndicatorResult["status"] {
+function resolveEnvStatus(missingRequiredCount: number, missingOptionalCount: number): HealthIndicatorResult['status'] {
   if (missingRequiredCount > 0) {
-    return "error";
+    return 'error';
   }
 
   if (missingOptionalCount > 0) {
-    return "degraded";
+    return 'degraded';
   }
 
-  return "ok";
+  return 'ok';
 }

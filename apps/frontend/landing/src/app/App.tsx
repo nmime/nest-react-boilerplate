@@ -1,5 +1,5 @@
-import { LandingPage } from "../pages/landing";
-import { withLandingProviders } from "./providers";
+import { LandingPage } from '../pages/landing';
+import { withLandingProviders } from './providers';
 
 const LandingApp = function LandingApp() {
   return <LandingPage />;

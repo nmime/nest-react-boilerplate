@@ -1,6 +1,6 @@
-import type { EntityManager } from "@mikro-orm/postgresql";
-import { LockMode } from "@mikro-orm/core";
-import { describe, expect, it, vi } from "vitest";
+import type { EntityManager } from '@mikro-orm/postgresql';
+import { LockMode } from '@mikro-orm/core';
+import { describe, expect, it, vi } from 'vitest';
 import {
   AuthLinkTokenEntity,
   AuthMethodEntity,
@@ -8,11 +8,11 @@ import {
   DefaultAuthTenantId,
   ExternalIdentityEntity,
   toRedactedAuthProviderTokenView,
-} from "../entities";
-import { AuthLinkTokenRepository } from "./auth-link-token.repository";
-import { AuthMethodRepository } from "./auth-method.repository";
-import { AuthProviderTokenRepository } from "./auth-provider-token.repository";
-import { ExternalIdentityRepository } from "./external-identity.repository";
+} from '../entities';
+import { AuthLinkTokenRepository } from './auth-link-token.repository';
+import { AuthMethodRepository } from './auth-method.repository';
+import { AuthProviderTokenRepository } from './auth-provider-token.repository';
+import { ExternalIdentityRepository } from './external-identity.repository';
 
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
@@ -20,9 +20,7 @@ function createEntityManagerMock() {
   const findOne = vi.fn(() => Promise.resolve(null));
   const find = vi.fn(() => Promise.resolve([]));
   const count = vi.fn(() => Promise.resolve(0));
-  const transactional = vi.fn((callback: (em: EntityManager) => unknown) =>
-    Promise.resolve(callback(entityManager)),
-  );
+  const transactional = vi.fn((callback: (em: EntityManager) => unknown) => Promise.resolve(callback(entityManager)));
   const entityManager = {
     persist,
     flush,
@@ -35,87 +33,70 @@ function createEntityManagerMock() {
   return { persist, flush, findOne, find, count, transactional, entityManager };
 }
 
-const tenantId = "11111111-1111-4111-8111-111111111111";
-const userId = "22222222-2222-4222-8222-222222222222";
-const now = new Date("2026-06-14T12:00:00.000Z");
-const expiresAt = new Date("2026-06-14T12:10:00.000Z");
+const tenantId = '11111111-1111-4111-8111-111111111111';
+const userId = '22222222-2222-4222-8222-222222222222';
+const now = new Date('2026-06-14T12:00:00.000Z');
+const expiresAt = new Date('2026-06-14T12:10:00.000Z');
 
-describe("social auth repositories", () => {
-  it("upserts external identities by tenant provider subject", async () => {
-    const { findOne, persist, flush, entityManager } =
-      createEntityManagerMock();
+describe('social auth repositories', () => {
+  it('upserts external identities by tenant provider subject', async () => {
+    const { findOne, persist, flush, entityManager } = createEntityManagerMock();
     const repository = new ExternalIdentityRepository(entityManager);
 
     const result = await repository.upsertIdentity({
       tenantId,
       userId,
-      provider: "telegram",
-      providerSubject: "tg-123",
-      channel: "telegram_tma",
-      profileMetadata: { firstName: "Ada" },
+      provider: 'telegram',
+      providerSubject: 'tg-123',
+      channel: 'telegram_tma',
+      profileMetadata: { firstName: 'Ada' },
       email: null,
-      username: "ada",
+      username: 'ada',
       lastAuthenticatedAt: now,
     });
 
     const entity = result._unsafeUnwrap();
     expect(findOne).toHaveBeenCalledWith(
       ExternalIdentityEntity,
-      { tenantId, provider: "telegram", providerSubject: "tg-123" },
+      { tenantId, provider: 'telegram', providerSubject: 'tg-123' },
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
     expect(entity).toMatchObject({
       tenantId,
       userId,
-      provider: "telegram",
-      providerSubject: "tg-123",
-      channel: "telegram_tma",
-      profileMetadata: { firstName: "Ada" },
+      provider: 'telegram',
+      providerSubject: 'tg-123',
+      channel: 'telegram_tma',
+      profileMetadata: { firstName: 'Ada' },
       email: null,
-      username: "ada",
+      username: 'ada',
       lastAuthenticatedAt: now,
     });
     expect(persist).toHaveBeenCalledWith(entity);
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("maps external identity unique conflicts to repository errors", async () => {
+  it('maps external identity unique conflicts to repository errors', async () => {
     const { findOne, entityManager } = createEntityManagerMock();
-    findOne.mockRejectedValue(
-      new Error("duplicate key value violates unique constraint"),
-    );
+    findOne.mockRejectedValue(new Error('duplicate key value violates unique constraint'));
     const repository = new ExternalIdentityRepository(entityManager);
 
-    const result = await repository.findByProviderSubject(
-      "discord",
-      "discord-123",
-      tenantId,
-    );
+    const result = await repository.findByProviderSubject('discord', 'discord-123', tenantId);
 
     expect(result._unsafeUnwrapErr()).toMatchObject({
-      code: "repository_error",
-      message: "duplicate key value violates unique constraint",
+      code: 'repository_error',
+      message: 'duplicate key value violates unique constraint',
     });
   });
 
-  it("consumes link tokens once and excludes expired or revoked tokens", async () => {
+  it('consumes link tokens once and excludes expired or revoked tokens', async () => {
     const { findOne, flush, entityManager } = createEntityManagerMock();
     const token = new AuthLinkTokenEntity();
     findOne.mockResolvedValueOnce(token).mockResolvedValueOnce(null);
     const repository = new AuthLinkTokenRepository(entityManager);
 
-    const consumed = await repository.consumeToken(
-      "hashed-link-token",
-      "login",
-      tenantId,
-      now,
-    );
-    const consumedAgain = await repository.consumeToken(
-      "hashed-link-token",
-      "login",
-      tenantId,
-      now,
-    );
+    const consumed = await repository.consumeToken('hashed-link-token', 'login', tenantId, now);
+    const consumedAgain = await repository.consumeToken('hashed-link-token', 'login', tenantId, now);
 
     expect(consumed._unsafeUnwrap()).toBe(token);
     expect(consumedAgain._unsafeUnwrap()).toBeNull();
@@ -123,8 +104,8 @@ describe("social auth repositories", () => {
     expect(findOne).toHaveBeenCalledWith(
       AuthLinkTokenEntity,
       {
-        tokenHash: "hashed-link-token",
-        purpose: "login",
+        tokenHash: 'hashed-link-token',
+        purpose: 'login',
         tenantId,
         consumedAt: null,
         revokedAt: null,
@@ -135,51 +116,47 @@ describe("social auth repositories", () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("revokes only usable unconsumed link tokens", async () => {
+  it('revokes only usable unconsumed link tokens', async () => {
     const { findOne, flush, entityManager } = createEntityManagerMock();
     const token = new AuthLinkTokenEntity();
     findOne.mockResolvedValue(token);
     const repository = new AuthLinkTokenRepository(entityManager);
 
-    const revoked = await repository.revokeToken(
-      "hashed-link-token",
-      tenantId,
-      now,
-    );
+    const revoked = await repository.revokeToken('hashed-link-token', tenantId, now);
 
     expect(revoked._unsafeUnwrap()).toBe(true);
     expect(token.revokedAt).toBe(now);
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("persists hashed link tokens with nullable users and never needs opaque token input", async () => {
+  it('persists hashed link tokens with nullable users and never needs opaque token input', async () => {
     const { persist, flush, entityManager } = createEntityManagerMock();
     const repository = new AuthLinkTokenRepository(entityManager);
 
     const created = await repository.createToken({
-      deepLinkMetadata: { returnUrl: "https://app.example.test/link" },
+      deepLinkMetadata: { returnUrl: 'https://app.example.test/link' },
       expiresAt,
-      provider: "discord",
-      purpose: "login",
-      tokenHash: "sha256-link-token-hash",
+      provider: 'discord',
+      purpose: 'login',
+      tokenHash: 'sha256-link-token-hash',
     });
 
     const entity = created._unsafeUnwrap();
     expect(entity).toMatchObject({
-      deepLinkMetadata: { returnUrl: "https://app.example.test/link" },
-      provider: "discord",
-      purpose: "login",
-      tokenHash: "sha256-link-token-hash",
+      deepLinkMetadata: { returnUrl: 'https://app.example.test/link' },
+      provider: 'discord',
+      purpose: 'login',
+      tokenHash: 'sha256-link-token-hash',
       userId: null,
     });
-    expect(entity).not.toHaveProperty("token");
+    expect(entity).not.toHaveProperty('token');
     expect(persist).toHaveBeenCalledWith(entity);
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("supports last auth method policy queries", async () => {
+  it('supports last auth method policy queries', async () => {
     const method = new AuthMethodEntity();
-    method.method = "discord_oauth";
+    method.method = 'discord_oauth';
     method.lastUsedAt = now;
     const { findOne, count, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(method);
@@ -187,148 +164,129 @@ describe("social auth repositories", () => {
     const repository = new AuthMethodRepository(entityManager);
 
     const lastMethod = await repository.findLastUsedByUser(userId, tenantId);
-    const usableCount = await repository.countUsableMethodsForUser(
-      userId,
-      tenantId,
-    );
+    const usableCount = await repository.countUsableMethodsForUser(userId, tenantId);
 
     expect(lastMethod._unsafeUnwrap()).toBe(method);
     expect(usableCount._unsafeUnwrap()).toBe(2);
     expect(findOne).toHaveBeenCalledWith(
       AuthMethodEntity,
       { tenantId, userId, lastUsedAt: { $ne: null } },
-      { orderBy: { lastUsedAt: "DESC" } },
+      { orderBy: { lastUsedAt: 'DESC' } },
     );
     expect(count).toHaveBeenCalledWith(AuthMethodEntity, { tenantId, userId });
   });
 
-  it("persists provider token ciphertext and redacts plaintext from loggable views", async () => {
+  it('persists provider token ciphertext and redacts plaintext from loggable views', async () => {
     const { persist, flush, entityManager } = createEntityManagerMock();
     const repository = new AuthProviderTokenRepository(entityManager);
 
     const created = await repository.persistEncryptedToken({
       tenantId,
       userId,
-      externalIdentityId: "33333333-3333-4333-8333-333333333333",
-      provider: "discord",
-      tokenKind: "access",
-      ciphertext: "ciphertext-base64",
-      iv: "iv-base64",
-      authTag: "tag-base64",
-      keyId: "key-2026-06",
-      scopes: ["identify", "email"],
+      externalIdentityId: '33333333-3333-4333-8333-333333333333',
+      provider: 'discord',
+      tokenKind: 'access',
+      ciphertext: 'ciphertext-base64',
+      iv: 'iv-base64',
+      authTag: 'tag-base64',
+      keyId: 'key-2026-06',
+      scopes: ['identify', 'email'],
       expiresAt,
     });
 
     const entity = created._unsafeUnwrap();
     expect(entity).toMatchObject({
-      ciphertext: "ciphertext-base64",
-      iv: "iv-base64",
-      authTag: "tag-base64",
-      keyId: "key-2026-06",
+      ciphertext: 'ciphertext-base64',
+      iv: 'iv-base64',
+      authTag: 'tag-base64',
+      keyId: 'key-2026-06',
     });
     expect(persist).toHaveBeenCalledWith(entity);
     expect(flush).toHaveBeenCalledTimes(1);
 
     const redacted = toRedactedAuthProviderTokenView(entity);
-    expect(redacted).toMatchObject({ redacted: true, keyId: "key-2026-06" });
-    expect(JSON.stringify(redacted)).not.toContain("ciphertext-base64");
-    expect(JSON.stringify(redacted)).not.toContain("iv-base64");
-    expect(JSON.stringify(redacted)).not.toContain("tag-base64");
+    expect(redacted).toMatchObject({ redacted: true, keyId: 'key-2026-06' });
+    expect(JSON.stringify(redacted)).not.toContain('ciphertext-base64');
+    expect(JSON.stringify(redacted)).not.toContain('iv-base64');
+    expect(JSON.stringify(redacted)).not.toContain('tag-base64');
   });
 
-  it("lists redacted provider tokens by external identity and tenant without ciphertext fields", async () => {
+  it('lists redacted provider tokens by external identity and tenant without ciphertext fields', async () => {
     const token = new AuthProviderTokenEntity();
-    token.id = "provider-token-id";
+    token.id = 'provider-token-id';
     token.tenantId = tenantId;
     token.userId = userId;
-    token.externalIdentityId = "33333333-3333-4333-8333-333333333333";
-    token.provider = "discord";
-    token.tokenKind = "refresh";
-    token.ciphertext = "ciphertext-value";
-    token.iv = "iv-value";
-    token.authTag = "auth-tag-value";
-    token.keyId = "key-id";
+    token.externalIdentityId = '33333333-3333-4333-8333-333333333333';
+    token.provider = 'discord';
+    token.tokenKind = 'refresh';
+    token.ciphertext = 'ciphertext-value';
+    token.iv = 'iv-value';
+    token.authTag = 'auth-tag-value';
+    token.keyId = 'key-id';
     token.revokedAt = now;
     const { find, entityManager } = createEntityManagerMock();
     find.mockResolvedValue([token]);
     const repository = new AuthProviderTokenRepository(entityManager);
 
-    const listed = await repository.listRedactedByExternalIdentity(
-      token.externalIdentityId,
-      tenantId,
-    );
+    const listed = await repository.listRedactedByExternalIdentity(token.externalIdentityId, tenantId);
 
     expect(find).toHaveBeenCalledWith(
       AuthProviderTokenEntity,
       { tenantId, externalIdentityId: token.externalIdentityId },
-      { orderBy: { createdAt: "DESC" } },
+      { orderBy: { createdAt: 'DESC' } },
     );
     expect(listed._unsafeUnwrap()).toEqual([
       expect.objectContaining({
-        id: "provider-token-id",
-        keyId: "key-id",
+        id: 'provider-token-id',
+        keyId: 'key-id',
         redacted: true,
         revokedAt: now,
-        tokenKind: "refresh",
+        tokenKind: 'refresh',
       }),
     ]);
-    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain(
-      "ciphertext-value",
-    );
-    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain("iv-value");
-    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain(
-      "auth-tag-value",
-    );
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain('ciphertext-value');
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain('iv-value');
+    expect(JSON.stringify(listed._unsafeUnwrap())).not.toContain('auth-tag-value');
   });
 
-  it("revokes provider tokens by id and tenant while returning null for tenant mismatches", async () => {
+  it('revokes provider tokens by id and tenant while returning null for tenant mismatches', async () => {
     const token = new AuthProviderTokenEntity();
     const { findOne, flush, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(token);
     const repository = new AuthProviderTokenRepository(entityManager);
 
-    const missing = await repository.revokeToken(
-      "provider-token-id",
-      "33333333-3333-4333-8333-333333333333",
-      now,
-    );
-    const revoked = await repository.revokeToken(
-      "provider-token-id",
-      tenantId,
-      now,
-    );
+    const missing = await repository.revokeToken('provider-token-id', '33333333-3333-4333-8333-333333333333', now);
+    const revoked = await repository.revokeToken('provider-token-id', tenantId, now);
 
     expect(missing._unsafeUnwrap()).toBeNull();
     expect(revoked._unsafeUnwrap()).toBe(token);
     expect(token.revokedAt).toBe(now);
     expect(findOne).toHaveBeenNthCalledWith(1, AuthProviderTokenEntity, {
-      id: "provider-token-id",
-      tenantId: "33333333-3333-4333-8333-333333333333",
+      id: 'provider-token-id',
+      tenantId: '33333333-3333-4333-8333-333333333333',
     });
     expect(findOne).toHaveBeenNthCalledWith(2, AuthProviderTokenEntity, {
-      id: "provider-token-id",
+      id: 'provider-token-id',
       tenantId,
     });
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("updates an existing identity in place with normalized optional fields and defaults", async () => {
+  it('updates an existing identity in place with normalized optional fields and defaults', async () => {
     const existing = new ExternalIdentityEntity();
     const previousLinkedAt = existing.linkedAt;
-    const { findOne, persist, flush, entityManager } =
-      createEntityManagerMock();
+    const { findOne, persist, flush, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(existing);
     const repository = new ExternalIdentityRepository(entityManager);
 
     const result = await repository.upsertIdentity({
       userId,
-      provider: "discord",
-      providerSubject: "discord-1",
-      channel: "discord_oauth",
+      provider: 'discord',
+      providerSubject: 'discord-1',
+      channel: 'discord_oauth',
       emailVerified: true,
-      displayName: "   ",
-      username: "ada",
+      displayName: '   ',
+      username: 'ada',
     });
 
     const entity = result._unsafeUnwrap();
@@ -336,7 +294,7 @@ describe("social auth repositories", () => {
     expect(entity.tenantId).toBe(DefaultAuthTenantId);
     expect(entity.emailVerified).toBe(true);
     expect(entity.displayName).toBeNull();
-    expect(entity.username).toBe("ada");
+    expect(entity.username).toBe('ada');
     expect(entity.email).toBeNull();
     expect(entity.profileMetadata).toEqual({});
     expect(entity.linkedAt).toBe(previousLinkedAt);
@@ -344,7 +302,7 @@ describe("social auth repositories", () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
-  it("lists external identities for a user ordered by link time", async () => {
+  it('lists external identities for a user ordered by link time', async () => {
     const identity = new ExternalIdentityEntity();
     const { find, entityManager } = createEntityManagerMock();
     find.mockResolvedValue([identity]);
@@ -356,18 +314,15 @@ describe("social auth repositories", () => {
     expect(find).toHaveBeenCalledWith(
       ExternalIdentityEntity,
       { tenantId: DefaultAuthTenantId, userId },
-      { orderBy: { linkedAt: "ASC" } },
+      { orderBy: { linkedAt: 'ASC' } },
     );
   });
 
-  it("deletes an identity when found and reports false when missing", async () => {
+  it('deletes an identity when found and reports false when missing', async () => {
     const identity = new ExternalIdentityEntity();
     const remove = vi.fn();
     const flush = vi.fn(() => Promise.resolve());
-    const findOne = vi
-      .fn()
-      .mockResolvedValueOnce(identity)
-      .mockResolvedValueOnce(null);
+    const findOne = vi.fn().mockResolvedValueOnce(identity).mockResolvedValueOnce(null);
     const entityManager = {
       findOne,
       remove,
@@ -375,101 +330,97 @@ describe("social auth repositories", () => {
     } as unknown as EntityManager;
     const repository = new ExternalIdentityRepository(entityManager);
 
-    const deleted = await repository.deleteById("id-1", userId, tenantId);
-    const missing = await repository.deleteById("id-2", userId);
+    const deleted = await repository.deleteById('id-1', userId, tenantId);
+    const missing = await repository.deleteById('id-2', userId);
 
     expect(deleted._unsafeUnwrap()).toBe(true);
     expect(remove).toHaveBeenCalledWith(identity);
     expect(missing._unsafeUnwrap()).toBe(false);
   });
 
-  it("maps non-error social failures to a stable message", async () => {
+  it('maps non-error social failures to a stable message', async () => {
     const { find, entityManager } = createEntityManagerMock();
-    find.mockRejectedValue("db down");
+    find.mockRejectedValue('db down');
     const repository = new ExternalIdentityRepository(entityManager);
 
     const result = await repository.findByUser(userId);
 
     expect(result._unsafeUnwrapErr()).toEqual({
-      code: "repository_error",
-      message: "Social auth repository failed.",
+      code: 'repository_error',
+      message: 'Social auth repository failed.',
     });
   });
 
-  it("persists link tokens with explicit id, tenant, user, and trimmed nonce", async () => {
+  it('persists link tokens with explicit id, tenant, user, and trimmed nonce', async () => {
     const { persist, entityManager } = createEntityManagerMock();
     const repository = new AuthLinkTokenRepository(entityManager);
 
     const created = await repository.createToken({
-      id: "44444444-4444-4444-8444-444444444444",
+      id: '44444444-4444-4444-8444-444444444444',
       tenantId,
       userId,
-      provider: "telegram",
-      purpose: "link",
-      tokenHash: "hash",
-      nonce: "  n-once  ",
+      provider: 'telegram',
+      purpose: 'link',
+      tokenHash: 'hash',
+      nonce: '  n-once  ',
       expiresAt,
     });
 
     const entity = created._unsafeUnwrap();
     expect(entity).toMatchObject({
-      id: "44444444-4444-4444-8444-444444444444",
+      id: '44444444-4444-4444-8444-444444444444',
       tenantId,
       userId,
-      nonce: "n-once",
+      nonce: 'n-once',
       deepLinkMetadata: {},
     });
     expect(persist).toHaveBeenCalledWith(entity);
   });
 
-  it("stores a blank nonce as null", async () => {
+  it('stores a blank nonce as null', async () => {
     const { entityManager } = createEntityManagerMock();
     const repository = new AuthLinkTokenRepository(entityManager);
 
     const created = await repository.createToken({
-      provider: "discord",
-      purpose: "login",
-      tokenHash: "hash",
-      nonce: "   ",
+      provider: 'discord',
+      purpose: 'login',
+      tokenHash: 'hash',
+      nonce: '   ',
       expiresAt,
     });
 
     expect(created._unsafeUnwrap().nonce).toBeNull();
   });
 
-  it("does not revoke a link token that is missing or already consumed", async () => {
+  it('does not revoke a link token that is missing or already consumed', async () => {
     const { findOne, flush, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(null);
     const repository = new AuthLinkTokenRepository(entityManager);
 
-    const revoked = await repository.revokeToken(
-      "hashed-link-token",
-      tenantId,
-      now,
-    );
+    const revoked = await repository.revokeToken('hashed-link-token', tenantId, now);
 
     expect(revoked._unsafeUnwrap()).toBe(false);
     expect(flush).not.toHaveBeenCalled();
   });
 
-  it("persists provider tokens with default tenant, provider, scopes, and null expiry", async () => {
+  it('persists provider tokens with default tenant, provider, scopes, and null expiry', async () => {
     const { entityManager } = createEntityManagerMock();
     const repository = new AuthProviderTokenRepository(entityManager);
 
     const created = await repository.persistEncryptedToken({
       userId,
-      externalIdentityId: "33333333-3333-4333-8333-333333333333",
-      tokenKind: "refresh",
-      ciphertext: "c",
-      iv: "i",
-      authTag: "t",
-      keyId: "k",
+      externalIdentityId: '33333333-3333-4333-8333-333333333333',
+      tokenKind: 'refresh',
+      ciphertext: 'c',
+      iv: 'i',
+      authTag: 't',
+      keyId: 'k',
     });
 
     const entity = created._unsafeUnwrap();
     expect(entity).toMatchObject({
       tenantId: DefaultAuthTenantId,
-      provider: "discord",
+      provider: 'discord',
       scopes: [],
       expiresAt: null,
     });

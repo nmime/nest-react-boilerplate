@@ -1,9 +1,9 @@
-import { createIsEnum } from "../util";
+import { createIsEnum } from '../util';
 
 export enum Language {
-  En = "en",
-  Ru = "ru",
-  Zh = "zh",
+  En = 'en',
+  Ru = 'ru',
+  Zh = 'zh',
 }
 
 export const defaultLanguage = Language.En;

@@ -1,14 +1,11 @@
-import { Module } from "@nestjs/common";
-import {
-  BaseHealthController,
-  HealthPrivateNetworkIpGuard,
-} from "@app/backend-common-health";
-import { UserMainModule } from "@app/backend-feature-user-main";
-import { NotificationMainModule } from "@app/backend-feature-notification";
-import { UserAppHealthServiceProvider } from "./health.config";
+import { Module } from '@nestjs/common';
+import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
+import { UserMainModule } from '@app/backend-feature-user-main';
+import { NotificationMainModule } from '@app/backend-feature-notification';
+import { UserAppHealthServiceProvider } from './health.config';
 
 @Module({
-  imports: [UserMainModule, NotificationMainModule],
+  imports: [UserMainModule, NotificationMainModule.forRoot()],
   controllers: [BaseHealthController],
   providers: [UserAppHealthServiceProvider, HealthPrivateNetworkIpGuard],
 })

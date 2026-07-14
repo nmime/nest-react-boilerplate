@@ -1,1 +1,1 @@
-export * from "./redis-lock-unavailable.exception";
+export * from './redis-lock-unavailable.exception';

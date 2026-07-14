@@ -7,7 +7,7 @@ const telegramUsernamePattern = new RegExp(
 const telegramUsernameSeparatorPattern = /[,\s]+/u;
 
 function parseTelegramUsernameCandidate(value: string): string | null {
-  const normalized = value.trim().replace(/^@/u, "");
+  const normalized = value.trim().replace(/^@/u, '');
 
   if (normalized.length === 0) {
     return null;
@@ -16,9 +16,7 @@ function parseTelegramUsernameCandidate(value: string): string | null {
   return telegramUsernamePattern.test(normalized) ? normalized : null;
 }
 
-export function normalizeTelegramUsernames(
-  usernames: readonly string[] = [],
-): string[] {
+export function normalizeTelegramUsernames(usernames: readonly string[] = []): string[] {
   const uniqueUsernames = new Set<string>();
   const normalizedUsernames: string[] = [];
 
@@ -41,17 +39,14 @@ export function normalizeTelegramUsernames(
   return normalizedUsernames;
 }
 
-export function addTgUsernamesToMessage(
-  message: string,
-  usernames: readonly string[] = [],
-): string {
-  const suffix = normalizeTelegramUsernames(usernames).join(" ");
+export function addTgUsernamesToMessage(message: string, usernames: readonly string[] = []): string {
+  const suffix = normalizeTelegramUsernames(usernames).join(' ');
 
   if (suffix.length === 0) {
     return message;
   }
 
-  const separator = message.endsWith("\n") ? "" : "\n";
+  const separator = message.endsWith('\n') ? '' : '\n';
 
   return `${message}${separator}${suffix}`;
 }

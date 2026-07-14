@@ -1,11 +1,11 @@
 # Architecture Decision: Use Nx over Turborepo
 
-| Field     | Value                                    |
-|-----------|------------------------------------------|
-| Status    | Accepted                                 |
-| Date      | 2025-01-15                              |
-| Authors   | @nmime                                   |
-| Decision  | Use Nx as the monorepo build system      |
+| Field    | Value                               |
+| -------- | ----------------------------------- |
+| Status   | Accepted                            |
+| Date     | 2025-01-15                          |
+| Authors  | @nmime                              |
+| Decision | Use Nx as the monorepo build system |
 
 ## Context
 
@@ -30,6 +30,7 @@ We chose **Nx** as our build system.
 ## Turborepo Considerations
 
 Turborepo is faster in raw task scheduling (Go-based) and simpler to configure for flat task pipelines. However, it lacks:
+
 - Code generation
 - Strict module boundary enforcement
 - An accurate dependency graph for large monorepos

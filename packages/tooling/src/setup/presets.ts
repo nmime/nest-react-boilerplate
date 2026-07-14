@@ -51,8 +51,8 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
    */
   {
     id: 'starter',
-    description: 'One frontend + backend + auth — MVP-ready starter',
-    apps: ['user-app', 'user-app-api', 'auth-app-api'],
+    description: 'Neutral frontend + backend + auth — product-ready starting point',
+    apps: ['starter-app', 'user-app-api', 'auth-app-api'],
     capabilities: ['postgres', 'design-tokens', 'i18n'],
   },
 
@@ -75,6 +75,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     id: 'enterprise',
     description: 'Every supported app and capability — complete stack',
     apps: [
+      'starter-app',
       'admin-app',
       'admin-app-api',
       'user-app',
@@ -85,6 +86,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'mobile-app',
       'discord-app-api',
       'telegram-bot-api',
+      'telegram-bot-worker',
       'fullstack-e2e',
     ],
     capabilities: [
@@ -112,7 +114,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   {
     id: 'bots',
     description: 'Telegram + Discord bots — bot-first setup',
-    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'discord-app-api'],
+    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'discord-app-api'],
     capabilities: ['postgres', 'redis', 'telegram-bot', 'discord-bot', 'otel'],
   },
 ] as const;

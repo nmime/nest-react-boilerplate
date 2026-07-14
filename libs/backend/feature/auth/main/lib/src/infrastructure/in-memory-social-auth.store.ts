@@ -1,10 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { ResultAsync, okAsync } from "neverthrow";
-import type {
-  AuthLinkTokenPurpose,
-  AuthMethodType,
-  ExternalAuthProvider,
-} from "@app/backend-postgres-main-auth";
+import { Injectable } from '@nestjs/common';
+import { ResultAsync, okAsync } from 'neverthrow';
+import type { AuthLinkTokenPurpose, AuthMethodType, ExternalAuthProvider } from '@app/backend-postgres-main-auth';
 import type {
   AuthMethodRecord,
   CreateLinkTokenInput,
@@ -14,8 +10,8 @@ import type {
   SocialAuthStore,
   SocialAuthStoreError,
   UpsertIdentityInput,
-} from "./type/social-auth-store.type";
-import { identityKey } from "./util/social-auth-store.util";
+} from './type/social-auth-store.type';
+import { identityKey } from './util/social-auth-store.util';
 
 @Injectable()
 export class InMemorySocialAuthStore implements SocialAuthStore {
@@ -30,32 +26,20 @@ export class InMemorySocialAuthStore implements SocialAuthStore {
     providerSubject: string,
     tenantId: string,
   ): ResultAsync<ExternalIdentityRecord | null, SocialAuthStoreError> {
-    const id = this.identityIdsByKey.get(
-      identityKey(tenantId, provider, providerSubject),
-    );
+    const id = this.identityIdsByKey.get(identityKey(tenantId, provider, providerSubject));
     return okAsync(id ? (this.identitiesById.get(id) ?? null) : null);
   }
 
-  listIdentities(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError> {
+  listIdentities(userId: string, tenantId: string): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError> {
     return okAsync(
       [...this.identitiesById.values()].filter(
-        (identity) =>
-          identity.userId === userId && identity.tenantId === tenantId,
+        (identity) => identity.userId === userId && identity.tenantId === tenantId,
       ),
     );
   }
 
-  upsertIdentity(
-    input: UpsertIdentityInput,
-  ): ResultAsync<ExternalIdentityRecord, SocialAuthStoreError> {
-    const key = identityKey(
-      input.tenantId,
-      input.provider,
-      input.providerSubject,
-    );
+  upsertIdentity(input: UpsertIdentityInput): ResultAsync<ExternalIdentityRecord, SocialAuthStoreError> {
+    const key = identityKey(input.tenantId, input.provider, input.providerSubject);
     const existing = this.identityIdsByKey.get(key);
     const current = existing ? this.identitiesById.get(existing) : null;
     const record: ExternalIdentityRecord = {
@@ -80,19 +64,13 @@ export class InMemorySocialAuthStore implements SocialAuthStore {
     return okAsync(record);
   }
 
-  deleteIdentity(
-    identityId: string,
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<boolean, SocialAuthStoreError> {
+  deleteIdentity(identityId: string, userId: string, tenantId: string): ResultAsync<boolean, SocialAuthStoreError> {
     const record = this.identitiesById.get(identityId);
     if (!record || record.userId !== userId || record.tenantId !== tenantId) {
       return okAsync(false);
     }
     this.identitiesById.delete(identityId);
-    this.identityIdsByKey.delete(
-      identityKey(record.tenantId, record.provider, record.providerSubject),
-    );
+    this.identityIdsByKey.delete(identityKey(record.tenantId, record.provider, record.providerSubject));
     return okAsync(true);
   }
 
@@ -124,27 +102,17 @@ export class InMemorySocialAuthStore implements SocialAuthStore {
     return okAsync(record);
   }
 
-  listMethods(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<AuthMethodRecord[], SocialAuthStoreError> {
+  listMethods(userId: string, tenantId: string): ResultAsync<AuthMethodRecord[], SocialAuthStoreError> {
     return okAsync(
-      [...this.methodsById.values()].filter(
-        (method) => method.userId === userId && method.tenantId === tenantId,
-      ),
+      [...this.methodsById.values()].filter((method) => method.userId === userId && method.tenantId === tenantId),
     );
   }
 
-  countMethods(
-    userId: string,
-    tenantId: string,
-  ): ResultAsync<number, SocialAuthStoreError> {
+  countMethods(userId: string, tenantId: string): ResultAsync<number, SocialAuthStoreError> {
     return this.listMethods(userId, tenantId).map((items) => items.length);
   }
 
-  createLinkToken(
-    input: CreateLinkTokenInput,
-  ): ResultAsync<LinkTokenRecord, SocialAuthStoreError> {
+  createLinkToken(input: CreateLinkTokenInput): ResultAsync<LinkTokenRecord, SocialAuthStoreError> {
     const record: LinkTokenRecord = {
       id: crypto.randomUUID(),
       tenantId: input.tenantId,
@@ -190,34 +158,20 @@ export class InMemorySocialAuthStore implements SocialAuthStore {
     now: Date = new Date(),
   ): ResultAsync<boolean, SocialAuthStoreError> {
     const record = this.linkTokensByHash.get(tokenHash);
-    if (
-      !record ||
-      record.tenantId !== tenantId ||
-      record.consumedAt ||
-      record.revokedAt ||
-      record.expiresAt <= now
-    ) {
+    if (!record || record.tenantId !== tenantId || record.consumedAt || record.revokedAt || record.expiresAt <= now) {
       return okAsync(false);
     }
     this.linkTokensByHash.set(tokenHash, { ...record, revokedAt: now });
     return okAsync(true);
   }
 
-  persistProviderToken(
-    input: PersistProviderTokenInput,
-  ): ResultAsync<boolean, SocialAuthStoreError> {
+  persistProviderToken(input: PersistProviderTokenInput): ResultAsync<boolean, SocialAuthStoreError> {
     const key = `${input.tenantId}:${input.externalIdentityId}`;
-    this.providerTokenExternalIds.set(
-      key,
-      (this.providerTokenExternalIds.get(key) ?? 0) + 1,
-    );
+    this.providerTokenExternalIds.set(key, (this.providerTokenExternalIds.get(key) ?? 0) + 1);
     return okAsync(true);
   }
 
-  revokeProviderTokens(
-    externalIdentityId: string,
-    tenantId: string,
-  ): ResultAsync<number, SocialAuthStoreError> {
+  revokeProviderTokens(externalIdentityId: string, tenantId: string): ResultAsync<number, SocialAuthStoreError> {
     const key = `${tenantId}:${externalIdentityId}`;
     const count = this.providerTokenExternalIds.get(key) ?? 0;
     this.providerTokenExternalIds.set(key, 0);

@@ -1,16 +1,16 @@
-import { Wait } from "testcontainers";
+import { Wait } from 'testcontainers';
 import {
   createGenericServiceContainer,
   type GenericServiceContainerOptions,
   type StartedServiceContainer,
-} from "./generic-service-container";
+} from './generic-service-container';
 
-export const DefaultNatsTestImage = "nats:2.10-alpine";
+export const DefaultNatsTestImage = 'nats:2.10-alpine';
 export const DefaultNatsClientPort = 4222;
 export const DefaultNatsMonitoringPort = 8222;
 
 export interface NatsContainerOptions extends Partial<
-  Pick<GenericServiceContainerOptions, "image" | "startupTimeoutMs">
+  Pick<GenericServiceContainerOptions, 'image' | 'startupTimeoutMs'>
 > {
   jetStream?: boolean;
 }
@@ -23,16 +23,12 @@ export function createNatsContainer(options: NatsContainerOptions = {}) {
   })
     .withExposedPorts(DefaultNatsClientPort, DefaultNatsMonitoringPort)
     .withCommand(
-      options.jetStream
-        ? ["-js", "-m", `${DefaultNatsMonitoringPort}`]
-        : ["-m", `${DefaultNatsMonitoringPort}`],
+      options.jetStream ? ['-js', '-m', `${DefaultNatsMonitoringPort}`] : ['-m', `${DefaultNatsMonitoringPort}`],
     )
     .withWaitStrategy(Wait.forLogMessage(/Server is ready/));
 }
 
-export async function startNatsContainer(
-  options: NatsContainerOptions = {},
-): Promise<
+export async function startNatsContainer(options: NatsContainerOptions = {}): Promise<
   StartedServiceContainer & {
     server: string;
     clientUrl: string;
@@ -58,9 +54,7 @@ export async function startNatsContainer(
   };
 }
 
-export async function stopNatsContainer(
-  container: StartedServiceContainer | undefined,
-): Promise<void> {
+export async function stopNatsContainer(container: StartedServiceContainer | undefined): Promise<void> {
   if (container) {
     await container.container.stop();
   }

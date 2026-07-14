@@ -16,13 +16,13 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): ParsedArgs {
       continue;
     }
 
-    if (!value.startsWith("--")) {
+    if (!value.startsWith('--')) {
       positional.push(value);
       continue;
     }
 
     const raw = value.slice(2);
-    const equalsIndex = raw.indexOf("=");
+    const equalsIndex = raw.indexOf('=');
 
     if (equalsIndex >= 0) {
       options.set(raw.slice(0, equalsIndex), raw.slice(equalsIndex + 1));
@@ -31,7 +31,7 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): ParsedArgs {
 
     const next = argv.at(index + 1);
 
-    if (next !== undefined && !next.startsWith("--")) {
+    if (next !== undefined && !next.startsWith('--')) {
       options.set(raw, next);
       index += 1;
     } else {

@@ -85,7 +85,10 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    const status = await runAddCommand(makeContext(["app", "payments"]), runner);
+    const status = await runAddCommand(
+      makeContext(["app", "payments", "--kind", "backend", "--renderer", "nest-api"]),
+      runner,
+    );
     assert.equal(status, 0);
     assert.equal(capturedCg, "@repo/tooling:application");
   });
@@ -97,7 +100,10 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    const status = await runAddCommand(makeContext(["lib", "shared-utils"]), runner);
+    const status = await runAddCommand(
+      makeContext(["lib", "shared-utils", "--kind", "common", "--type", "util"]),
+      runner,
+    );
     assert.equal(status, 0);
     assert.equal(capturedCg, "@repo/tooling:library");
   });
@@ -147,6 +153,29 @@ describe("runAddCommand", () => {
     assert.ok(capturedArgs?.includes("--apiApp=auth-app-api"));
   });
 
+  it("prints Nx dry-run output so the file plan is reviewable", async () => {
+    const writes: string[] = [];
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((value: string | Uint8Array) => {
+      writes.push(String(value));
+      return true;
+    }) as typeof process.stdout.write;
+    try {
+      await runAddCommand(
+        makeContext(["feature", "billing", "--dry-run"]),
+        makeMockRunner({
+          success: true,
+          stdout: "CREATE libs/backend/feature/billing/main/lib/project.json\n",
+          stderr: "",
+          exitCode: 0,
+        }),
+      );
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+    assert.match(writes.join(""), /CREATE libs\/backend\/feature\/billing/);
+  });
+
   it("forwards extra args to Nx", async () => {
     let capturedArgs: string[] | undefined;
     const runner: NxGeneratorFn = (args) => {
@@ -154,7 +183,10 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(["app", "my-app", "--", "--skip-format"]), runner);
+    await runAddCommand(
+      makeContext(["app", "my-app", "--kind", "frontend", "--renderer", "vite", "--", "--skip-format"]),
+      runner,
+    );
     assert.ok(capturedArgs?.includes("--skip-format"));
   });
 
@@ -166,7 +198,10 @@ describe("runAddCommand", () => {
       exitCode: 1,
     });
 
-    const status = await runAddCommand(makeContext(["app", "x"]), runner);
+    const status = await runAddCommand(
+      makeContext(["app", "x", "--kind", "backend", "--renderer", "worker"]),
+      runner,
+    );
     assert.equal(status, 1);
   });
 
@@ -180,6 +215,36 @@ describe("runAddCommand", () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     const status = await runAddCommand(makeContext(["app"]), runner);
     assert.equal(status, 1);
+  });
+
+  it("requires explicit app kind and frontend renderer", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(await runAddCommand(makeContext(["app", "portal"]), runner), 1);
+    assert.equal(
+      await runAddCommand(makeContext(["app", "portal", "--kind", "frontend"]), runner),
+      1,
+    );
+  });
+
+  it("passes typed app and feature options to Nx", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext(["app", "portal", "--kind=frontend", "--renderer=vike"]),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--kind=frontend"));
+    assert.ok(capturedArgs.includes("--renderer=vike"));
+
+    await runAddCommand(
+      makeContext(["feature", "billing", "--frontend-app=admin-app"]),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--frontendApp=admin-app"));
   });
 });
 

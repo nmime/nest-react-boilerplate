@@ -1,14 +1,14 @@
 // Composition root
-export * from "./auth-main.module";
+export * from './auth-main.module';
 
 // HTTP interface
-export * from "./interfaces/http";
+export * from './interfaces/http';
 
 // Application services (includes Better-Auth integration)
-export * from "./application";
+export * from './application';
 
 // Infrastructure stores
-export * from "./infrastructure";
+export * from './infrastructure';
 
 // Shared types
-export * from "@app/backend-feature-auth-shared";
+export * from '@app/backend-feature-auth-shared';

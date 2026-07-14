@@ -43,7 +43,9 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "fk__notification_template_channels__template_id" foreign key ("template_id") references "notification_templates" ("id") on delete cascade
       );
     `);
-    this.addSql('create index "ix__notification_template_channels__template_id" on "notification_template_channels" ("template_id");');
+    this.addSql(
+      'create index "ix__notification_template_channels__template_id" on "notification_template_channels" ("template_id");',
+    );
 
     this.addSql(`
       create table "notifications" (
@@ -71,8 +73,12 @@ export class Migration20260715100000CreateNotifications extends Migration {
     this.addSql('create index "ix__notifications__custom_template" on "notifications" ("custom_template");');
     this.addSql('create index "ix__notifications__template_id" on "notifications" ("template_id");');
     this.addSql('create index "ix__notifications__created_at" on "notifications" ("created_at");');
-    this.addSql('create index "ix__notifications__status_target_type_send_time" on "notifications" ("status", "target_type", "send_time_from", "send_time_to");');
-    this.addSql('create index "ix__notifications__feed" on "notifications" ("target_type", "target_id", "in_app_visible", "created_at", "id");');
+    this.addSql(
+      'create index "ix__notifications__status_target_type_send_time_from_send_time_to" on "notifications" ("status", "target_type", "send_time_from", "send_time_to");',
+    );
+    this.addSql(
+      'create index "ix__notifications__target_type_target_id_in_app_visible_created_at_id" on "notifications" ("target_type", "target_id", "in_app_visible", "created_at", "id");',
+    );
 
     this.addSql(`
       create table "notification_deliveries" (
@@ -94,8 +100,12 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "fk__notification_deliveries__notification_id" foreign key ("notification_id") references "notifications" ("id") on delete cascade
       );
     `);
-    this.addSql('create index "ix__notification_deliveries__status__send_time" on "notification_deliveries" ("status", "send_time_from", "send_time_to");');
-    this.addSql('create index "ix__notification_deliveries__notification_id" on "notification_deliveries" ("notification_id");');
+    this.addSql(
+      'create index "ix__notification_deliveries__status_send_time_from_send_time_to" on "notification_deliveries" ("status", "send_time_from", "send_time_to");',
+    );
+    this.addSql(
+      'create index "ix__notification_deliveries__notification_id" on "notification_deliveries" ("notification_id");',
+    );
   }
 
   override down(): void {

@@ -1,2 +1,2 @@
-export * from "./mobx-query";
-export * from "./query-provider";
+export * from './mobx-query';
+export * from './query-provider';

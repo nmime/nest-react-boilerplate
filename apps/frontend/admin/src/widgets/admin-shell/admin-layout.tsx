@@ -1,14 +1,10 @@
-import { type ReactNode } from "react";
-import { observer, useI18n, useOptionalRootStore } from "@app/frontend-runtime";
-import {
-  ProductShell,
-  UiStatusTag,
-  type ProductShellAction,
-} from "@app/frontend-ui-web";
-import type { AdminAccess } from "../../entities/admin-session";
-import { normalizeAdminPath } from "../../shared";
+import { type ReactNode } from 'react';
+import { observer, useI18n, useOptionalRootStore } from '@app/frontend-runtime';
+import { ProductShell, UiStatusTag, type ProductShellAction } from '@app/frontend-ui-web';
+import type { AdminAccess } from '../../entities/admin-session';
+import { normalizeAdminPath } from '../../shared';
 
-interface AdminNavItem extends Omit<ProductShellAction, "isCurrent"> {
+interface AdminNavItem extends Omit<ProductShellAction, 'isCurrent'> {
   detail: string;
   isCurrent: boolean;
 }
@@ -16,88 +12,87 @@ interface AdminNavItem extends Omit<ProductShellAction, "isCurrent"> {
 export const AdminLayout = observer(function AdminLayout({
   access,
   children,
-  currentPath = "/",
+  currentPath = '/',
 }: Readonly<{
   access?: AdminAccess;
   children: ReactNode;
   currentPath?: string;
 }>) {
-  const currentBreakpoint =
-    useOptionalRootStore()?.app.currentBreakpoint ?? "desktop";
+  const currentBreakpoint = useOptionalRootStore()?.app.currentBreakpoint ?? 'desktop';
   const { t } = useI18n();
   const path = normalizeAdminPath(currentPath);
   const navItems: AdminNavItem[] = [];
 
   if (access?.canReadDashboard ?? true) {
     navItems.push({
-      href: "/admin",
-      isCurrent: path === "/" || path === "/dashboard",
-      label: t("admin.action.dashboard"),
-      detail: t("admin.dashboard.description"),
+      href: '/admin',
+      isCurrent: path === '/' || path === '/dashboard',
+      label: t('admin.action.dashboard'),
+      detail: t('admin.dashboard.description'),
     });
   }
   if (access?.canReadUsers) {
     navItems.push({
-      href: "/admin/users",
-      isCurrent: path.startsWith("/users"),
-      label: t("admin.action.users"),
-      detail: t("admin.dashboard.card.visibility.description"),
-      variant: "secondary",
+      href: '/admin/users',
+      isCurrent: path.startsWith('/users'),
+      label: t('admin.action.users'),
+      detail: t('admin.dashboard.card.visibility.description'),
+      variant: 'secondary',
     });
   }
   if (access?.canReadRoles) {
     navItems.push({
-      href: "/admin/roles",
-      isCurrent: path === "/roles",
-      label: t("admin.action.roles"),
-      detail: t("admin.roles.title"),
-      variant: "secondary",
+      href: '/admin/roles',
+      isCurrent: path === '/roles',
+      label: t('admin.action.roles'),
+      detail: t('admin.roles.title'),
+      variant: 'secondary',
     });
   }
   if (access?.canReadAudit) {
     navItems.push({
-      href: "/admin/audit",
-      isCurrent: path === "/audit",
-      label: t("admin.action.audit"),
-      detail: t("admin.dashboard.summary.recentAuditDetail"),
-      variant: "secondary",
+      href: '/admin/audit',
+      isCurrent: path === '/audit',
+      label: t('admin.action.audit'),
+      detail: t('admin.dashboard.summary.recentAuditDetail'),
+      variant: 'secondary',
     });
   }
   if (access?.canReadRoles) {
     navItems.push({
-      href: "/admin/tenants",
-      isCurrent: path === "/tenants",
-      label: t("admin.tenants.title"),
-      detail: t("admin.tenants.description"),
-      variant: "secondary",
+      href: '/admin/tenants',
+      isCurrent: path === '/tenants',
+      label: t('admin.tenants.title'),
+      detail: t('admin.tenants.description'),
+      variant: 'secondary',
     });
   }
   if (access?.canReadProfile ?? true) {
     navItems.push({
-      href: "/admin/profile",
-      isCurrent: path === "/profile",
-      label: t("admin.action.profile"),
-      detail: t("admin.dashboard.stat.profile.detail"),
-      variant: "secondary",
+      href: '/admin/profile',
+      isCurrent: path === '/profile',
+      label: t('admin.action.profile'),
+      detail: t('admin.dashboard.stat.profile.detail'),
+      variant: 'secondary',
     });
   }
   const currentItem = navItems.find((item) => item.isCurrent);
   const routeSignals = [
     {
-      label: "RBAC fail-closed",
-      tone: access?.canAccessAdmin === false ? "warning" : "success",
+      label: 'RBAC fail-closed',
+      tone: access?.canAccessAdmin === false ? 'warning' : 'success',
     },
     {
       label: `${navItems.length} scoped routes`,
-      tone: "info",
+      tone: 'info',
     },
     {
-      label: currentItem?.label ?? t("admin.notFound.title"),
-      tone: currentItem ? "success" : "warning",
+      label: currentItem?.label ?? t('admin.notFound.title'),
+      tone: currentItem ? 'success' : 'warning',
     },
   ] satisfies Array<{
     label: string;
-    tone: "info" | "success" | "warning";
+    tone: 'info' | 'success' | 'warning';
   }>;
 
   return (
@@ -106,40 +101,35 @@ export const AdminLayout = observer(function AdminLayout({
         href: item.href,
         isCurrent: item.isCurrent,
         label: item.label,
-        variant: item.isCurrent ? "primary" : "secondary",
+        variant: item.isCurrent ? 'primary' : 'secondary',
       }))}
-      appName={t("admin.appName")}
-      description={t("admin.description")}
+      appName={t('admin.appName')}
+      description={t('admin.description')}
       homeHref="/admin"
-      eyebrow={t("admin.eyebrow")}
-      status={`${t("admin.status")} · ${currentBreakpoint}`}
+      eyebrow={t('admin.eyebrow')}
+      status={`${t('admin.status')} · ${currentBreakpoint}`}
       statusTone="warning"
-      title={t("admin.title")}
+      title={t('admin.title')}
     >
-      <div
-        className="admin-shell"
-        data-responsive-breakpoint={currentBreakpoint}
-      >
-        <aside className="admin-sidebar" aria-label={t("admin.appName")}>
+      <div className="admin-shell" data-responsive-breakpoint={currentBreakpoint}>
+        <aside className="admin-sidebar" aria-label={t('admin.appName')}>
           <div className="admin-sidebar__card">
-            <p className="xr-eyebrow">{t("admin.eyebrow")}</p>
-            <strong>{t("admin.title")}</strong>
-            <span>{t("admin.description")}</span>
-            <UiStatusTag label={t("admin.status")} tone="warning" />
+            <p className="xr-eyebrow">{t('admin.eyebrow')}</p>
+            <strong>{t('admin.title')}</strong>
+            <span>{t('admin.description')}</span>
+            <UiStatusTag label={t('admin.status')} tone="warning" />
           </div>
-          <nav className="admin-sidebar__nav" aria-label={t("admin.appName")}>
+          <nav className="admin-sidebar__nav" aria-label={t('admin.appName')}>
             {navItems.map((item, index) => (
               <a
-                aria-current={item.isCurrent ? "page" : undefined}
+                aria-current={item.isCurrent ? 'page' : undefined}
                 className="admin-sidebar__link"
-                data-current={item.isCurrent ? "true" : "false"}
+                data-current={item.isCurrent ? 'true' : 'false'}
                 href={item.href}
                 key={item.href}
               >
                 <span className="admin-sidebar__indicator" />
-                <span className="admin-sidebar__number">
-                  {(index + 1).toString().padStart(2, "0")}
-                </span>
+                <span className="admin-sidebar__number">{(index + 1).toString().padStart(2, '0')}</span>
                 <span className="admin-sidebar__label">{item.label}</span>
                 <small>{item.detail}</small>
               </a>
@@ -149,29 +139,18 @@ export const AdminLayout = observer(function AdminLayout({
             Permission-scoped navigation hides unavailable routes before render.
           </div>
         </aside>
-        <section
-          aria-label={currentItem?.label ?? t("admin.title")}
-          className="admin-main-panel"
-        >
-          <div
-            className="admin-command-bar"
-            data-design-version="admin-frontend-v3"
-          >
+        <section aria-label={currentItem?.label ?? t('admin.title')} className="admin-main-panel">
+          <div className="admin-command-bar" data-design-version="admin-frontend-v3">
             <div>
               <p className="xr-eyebrow">Admin console v3</p>
-              <h2>{currentItem?.label ?? t("admin.notFound.title")}</h2>
+              <h2>{currentItem?.label ?? t('admin.notFound.title')}</h2>
               <span>
-                Product-ops workspace with guarded routing, quick context, and
-                nonblank empty/error/loading states.
+                Product-ops workspace with guarded routing, quick context, and nonblank empty/error/loading states.
               </span>
             </div>
             <div className="admin-command-bar__signals">
               {routeSignals.map((signal) => (
-                <UiStatusTag
-                  key={signal.label}
-                  label={signal.label}
-                  tone={signal.tone}
-                />
+                <UiStatusTag key={signal.label} label={signal.label} tone={signal.tone} />
               ))}
             </div>
           </div>

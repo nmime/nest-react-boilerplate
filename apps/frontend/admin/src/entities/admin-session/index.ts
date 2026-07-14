@@ -1,1 +1,1 @@
-export * from "./model/auth-rbac";
+export * from './model/auth-rbac';

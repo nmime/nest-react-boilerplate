@@ -1,12 +1,9 @@
-import {
-  normalizeTenantId,
-  resolveTenantId,
-} from "@app/backend-feature-auth-shared";
+import { normalizeTenantId, resolveTenantId } from '@app/backend-feature-auth-shared';
 
 export class InvalidAuthTenantIdError extends Error {
   constructor() {
-    super("Invalid tenant id.");
-    this.name = "InvalidAuthTenantIdError";
+    super('Invalid tenant id.');
+    this.name = 'InvalidAuthTenantIdError';
   }
 }
 

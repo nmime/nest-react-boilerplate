@@ -174,6 +174,7 @@ export const thinLocaleCatalogFileNames = [
   "admin/roles.json",
   "user/shell.json",
   "user/site.json",
+  "user/mobile.json",
   "user/auth.json",
   "user/social-auth.json",
   "user/tma.json",
@@ -280,15 +281,15 @@ const staleReferencePatterns: StaleReferencePattern[] = [
   { label: "retired pnpm major", pattern: /\bpnpm\s+10(?:\.\d+)?\b/u },
   {
     label: "unsupported current Node version reference",
-    pattern: /\bNode(?:\.js)?\s+(?:20|22)\b/u,
+    pattern: /\bNode(?:\.js)?\s+(?:18|20|22)\b/u,
   },
   {
     label: "unsupported workflow Node version reference",
-    pattern: /\bnode-version:\s*['"]?(?:20|22)(?:\.x)?['"]?\b/u,
+    pattern: /\bnode-version:\s*['"]?(?:18|20|22)(?:\.x)?['"]?\b/u,
   },
   {
     label: "unsupported workflow Node version reference",
-    pattern: /\bNODE_VERSION\b[^\n]*(?:20|22)\b/u,
+    pattern: /\bNODE_VERSION\b[^\S\r\n]*[:=][^\S\r\n]*['"]?(?:18|20|22)(?=[.\s'"]|$)/u,
   },
   { label: "retired Problem Details RFC", pattern: /\bRFC\s?7807\b/iu },
   {
@@ -587,6 +588,8 @@ function readTsPathAliasMap(workspaceRoot: string): Record<string, string> {
 function getSmokeCommands(): string[][] {
   return [
     ["packages/tooling/bin/repo-tooling.mjs", "--help"],
+    ["packages/tooling/bin/repo-tooling.mjs", "setup", "--help"],
+    ["packages/tooling/bin/repo-tooling.mjs", "add", "--help"],
     [
       "packages/tooling/bin/repo-tooling.mjs",
       "git",
@@ -1476,7 +1479,7 @@ function readTranslationKeyUnion(keysSource: string): Set<string> {
   const declarationStart = text.indexOf("=");
   const body = declarationStart >= 0 ? text.slice(declarationStart) : text;
   return new Set(
-    [...body.matchAll(/"([^"]+)"/gu)].map((match) => match[1] ?? ""),
+    [...body.matchAll(/["']([^"']+)["']/gu)].map((match) => match[1] ?? ""),
   );
 }
 
@@ -1663,7 +1666,7 @@ export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
           file: `${relativeFile}:${index + 1}`,
           status: 1,
           stdout: "",
-          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node 24, and pnpm 11.11.0 references.`,
+          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node >=24 <25, and pnpm 11.11.0 references.`,
         });
       }
     });

@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Exception } from '../abstract/base.exception';
 import { ExceptionKind } from '../type/exception-kind.type';
 import { createProblemDetails } from './create-problem-details.util';
@@ -16,7 +16,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     // HttpException — never exposes message
     expect(toProblemDetails(badRequest)).toEqual({
       code: 'bad-request',
-      detail: 'Bad Request',
+      detail: 'The request could not be processed.',
       type: 'urn:problem:nest-react-boilerplate:bad-request',
       title: 'Bad Request',
       status: 400,
@@ -77,9 +77,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     expect(p1.title).toBe(p2.title);
     expect(p1.detail).toBe(p2.detail);
     expect(p1.status).toBe(p2.status);
-    expect((p1 as Record<string, unknown>).info).not.toEqual(
-      (p2 as Record<string, unknown>).info,
-    );
+    expect((p1 as Record<string, unknown>).info).not.toEqual((p2 as Record<string, unknown>).info);
   });
 
   it('does not expose meta, cause, or stack in problem details', () => {

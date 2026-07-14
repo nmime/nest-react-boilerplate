@@ -1,32 +1,20 @@
-import { authApi, throwOnOpenApiErrorData } from "@app/frontend-api-client";
-import { formValueToString } from "../../../shared/lib";
-import type {
-  AuthMePayload,
-  AuthSessionPayload,
-} from "../../../entities/profile";
-import {
-  AuthMode,
-  type AuthFormInput,
-  type AuthRequest,
-} from "../model/auth-model";
+import { authApi, throwOnOpenApiErrorData } from '@app/frontend-api-client';
+import { formValueToString } from '../../../shared/lib';
+import type { AuthMePayload, AuthSessionPayload } from '../../../entities/profile';
+import { AuthMode, type AuthFormInput, type AuthRequest } from '../model/auth-model';
 
 export async function fetchAuthMe(
-  authClient: Pick<typeof authApi, "authControllerMe">,
+  authClient: Pick<typeof authApi, 'authControllerMe'>,
   requestOptions: Parameters<typeof authApi.authControllerMe>[0],
 ): Promise<AuthMePayload | null> {
   try {
-    return await throwOnOpenApiErrorData(
-      authClient.authControllerMe(requestOptions),
-    );
+    return await throwOnOpenApiErrorData(authClient.authControllerMe(requestOptions));
   } catch {
     return null;
   }
 }
 
-const mapAuthFormInput = (
-  input: AuthFormInput,
-  locale: AuthRequest["locale"],
-): AuthRequest => ({
+const mapAuthFormInput = (input: AuthFormInput, locale: AuthRequest['locale']): AuthRequest => ({
   displayName: formValueToString(input.displayName) || undefined,
   email: formValueToString(input.email),
   locale,
@@ -35,23 +23,17 @@ const mapAuthFormInput = (
 });
 
 export async function createAuthSession(
-  authClient: Pick<
-    typeof authApi,
-    "authControllerLogin" | "authControllerRegister"
-  >,
+  authClient: Pick<typeof authApi, 'authControllerLogin' | 'authControllerRegister'>,
   requestOptions: Parameters<typeof authApi.authControllerLogin>[1],
   input: AuthFormInput,
-  locale: AuthRequest["locale"],
+  locale: AuthRequest['locale'],
 ): Promise<AuthSessionPayload> {
   const request = mapAuthFormInput(input, locale);
 
   const payload =
     request.mode === AuthMode.Login
       ? await throwOnOpenApiErrorData(
-          authClient.authControllerLogin(
-            { email: request.email, password: request.password },
-            requestOptions,
-          ),
+          authClient.authControllerLogin({ email: request.email, password: request.password }, requestOptions),
         )
       : await throwOnOpenApiErrorData(
           authClient.authControllerRegister(

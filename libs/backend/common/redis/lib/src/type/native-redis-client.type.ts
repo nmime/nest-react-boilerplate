@@ -1,10 +1,7 @@
 // Lib-private boundary types for the native `redis` client. Intentionally NOT
 // re-exported from type/index.ts: they describe the third-party client surface
 // the adapter wraps and must stay out of the public @app/backend-common-redis API.
-import type {
-  RedisSetCondition,
-  RedisSetExpirationMode,
-} from "./redis-client.type";
+import type { RedisSetCondition, RedisSetExpirationMode } from './redis-client.type';
 
 export interface NativeRedisSetOptions {
   expiration?: {
@@ -21,11 +18,7 @@ export interface NativeRedisClient {
   destroy(): void | Promise<unknown>;
   ping(): Promise<string>;
   get(key: string): Promise<string | null>;
-  set(
-    key: string,
-    value: string,
-    options?: NativeRedisSetOptions,
-  ): Promise<string | null>;
+  set(key: string, value: string, options?: NativeRedisSetOptions): Promise<string | null>;
   setEx(key: string, ttlSeconds: number, value: string): Promise<string>;
   mGet(keys: string[]): Promise<Array<string | null>>;
   del(keys: string | string[]): Promise<number>;
@@ -35,5 +28,5 @@ export interface NativeRedisClient {
   hGetAll(key: string): Promise<Record<string, string>>;
   hDel(key: string, field: string): Promise<number>;
   sendCommand(command: string[]): Promise<unknown>;
-  on?(event: "error", listener: (error: Error) => void): NativeRedisClient;
+  on?(event: 'error', listener: (error: Error) => void): NativeRedisClient;
 }

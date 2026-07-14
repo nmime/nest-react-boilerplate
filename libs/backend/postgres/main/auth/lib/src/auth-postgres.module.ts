@@ -1,6 +1,6 @@
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import { Module } from "@nestjs/common";
-import { AuthTokenCleanupService } from "./auth-token-cleanup.service";
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { Module } from '@nestjs/common';
+import { AuthTokenCleanupService } from './auth-token-cleanup.service';
 import {
   AdminAuditLogEntitySchema,
   AuthLinkTokenEntitySchema,
@@ -18,7 +18,7 @@ import {
   AuthUserTokenEntitySchema,
   ExternalIdentityEntitySchema,
   TransactionalOutboxEventEntitySchema,
-} from "./infrastructure/data-access/entities";
+} from './infrastructure/data-access/entities';
 import {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
@@ -30,7 +30,7 @@ import {
   AuthUserRepository,
   AuthUserRoleRepository,
   ExternalIdentityRepository,
-} from "./infrastructure/data-access/repositories";
+} from './infrastructure/data-access/repositories';
 
 @Module({
   imports: [

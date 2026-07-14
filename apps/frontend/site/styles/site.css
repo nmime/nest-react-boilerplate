@@ -7,7 +7,7 @@
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
+    'Segoe UI',
     sans-serif;
 }
 
@@ -122,9 +122,7 @@ a {
   padding: 28px;
   border: 1px solid #d9e2ec;
   border-radius: 8px;
-  background:
-    linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(22, 78, 99, 0.92)),
-    #0f172a;
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(22, 78, 99, 0.92)), #0f172a;
   color: #ffffff;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
 }

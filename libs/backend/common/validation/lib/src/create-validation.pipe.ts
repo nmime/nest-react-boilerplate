@@ -1,6 +1,6 @@
-import { ValidationPipe } from "@nestjs/common";
-import type { ValidationError } from "class-validator";
-import { ClientDataValidationException } from "./exception";
+import { ValidationPipe } from '@nestjs/common';
+import type { ValidationError } from 'class-validator';
+import { ClientDataValidationException } from './exception';
 
 export interface ValidationExceptionIssue {
   property: string;
@@ -11,38 +11,30 @@ export interface ValidationExceptionIssue {
 }
 
 export interface ValidationExceptionBody {
-  type: "urn:problem:nest-react-boilerplate:client-data-validation";
-  title: "Client data validation failed";
+  type: 'urn:problem:nest-react-boilerplate:client-data-validation';
+  title: 'Client data validation failed';
   status: 400;
   detail: string;
-  code: "client-data-validation";
+  code: 'client-data-validation';
   errors: ValidationExceptionIssue[];
 }
 
-function getValidationPropertyPath(
-  error: ValidationError,
-  parentPath?: string,
-): string {
+function getValidationPropertyPath(error: ValidationError, parentPath?: string): string {
   return parentPath ? `${parentPath}.${error.property}` : error.property;
 }
 
 function toJsonPointer(propertyPath: string): string {
   return `/${propertyPath
-    .split(".")
-    .map((segment) => segment.replace(/~/gu, "~0").replace(/\//gu, "~1"))
-    .join("/")}`;
+    .split('.')
+    .map((segment) => segment.replace(/~/gu, '~0').replace(/\//gu, '~1'))
+    .join('/')}`;
 }
 
-function getFirstConstraintMessage(
-  constraints: Record<string, string>,
-): string | undefined {
+function getFirstConstraintMessage(constraints: Record<string, string>): string | undefined {
   return Object.values(constraints)[0];
 }
 
-function createValidationIssue(
-  property: string,
-  constraints: Record<string, string>,
-): ValidationExceptionIssue {
+function createValidationIssue(property: string, constraints: Record<string, string>): ValidationExceptionIssue {
   const message = getFirstConstraintMessage(constraints);
 
   return {
@@ -53,10 +45,7 @@ function createValidationIssue(
   };
 }
 
-function flattenValidationIssues(
-  errors: ValidationError[],
-  parentPath?: string,
-): ValidationExceptionIssue[] {
+function flattenValidationIssues(errors: ValidationError[], parentPath?: string): ValidationExceptionIssue[] {
   return errors.flatMap((error) => {
     const property = getValidationPropertyPath(error, parentPath);
     const issues: ValidationExceptionIssue[] = [];
@@ -78,15 +67,13 @@ function flattenValidationIssues(
   });
 }
 
-export function createValidationExceptionBody(
-  errors: ValidationError[],
-): ValidationExceptionBody {
+export function createValidationExceptionBody(errors: ValidationError[]): ValidationExceptionBody {
   return {
-    type: "urn:problem:nest-react-boilerplate:client-data-validation",
-    title: "Client data validation failed",
+    type: 'urn:problem:nest-react-boilerplate:client-data-validation',
+    title: 'Client data validation failed',
     status: 400,
-    detail: "Request client data validation failed.",
-    code: "client-data-validation",
+    detail: 'Request client data validation failed.',
+    code: 'client-data-validation',
     errors: flattenValidationIssues(errors),
   };
 }
@@ -96,9 +83,6 @@ export function createValidationPipe(): ValidationPipe {
     transform: true,
     whitelist: true,
     forbidNonWhitelisted: true,
-    exceptionFactory: (errors) =>
-      new ClientDataValidationException(
-        createValidationExceptionBody(errors).errors,
-      ),
+    exceptionFactory: (errors) => new ClientDataValidationException(createValidationExceptionBody(errors).errors),
   });
 }

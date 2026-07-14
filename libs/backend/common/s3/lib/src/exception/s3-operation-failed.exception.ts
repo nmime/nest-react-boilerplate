@@ -1,7 +1,7 @@
 export class ObjectStorageOperationFailedException extends Error {
   constructor(operation: string, cause: unknown) {
     super(`Object storage operation failed: ${operation}`);
-    this.name = "ObjectStorageOperationFailedException";
+    this.name = 'ObjectStorageOperationFailedException';
     this.cause = cause;
   }
 }

@@ -21,10 +21,10 @@ docker compose up grafana loki tempo
 
 Tempo exposes OTLP receivers on the following endpoints:
 
-| Protocol | Endpoint                  |
-|----------|---------------------------|
-| gRPC     | http://localhost:4317     |
-| HTTP     | http://localhost:4318     |
+| Protocol | Endpoint              |
+| -------- | --------------------- |
+| gRPC     | http://localhost:4317 |
+| HTTP     | http://localhost:4318 |
 
 ## Connecting Applications
 
@@ -38,10 +38,10 @@ This is the **Docker-internal** hostname. When running outside of Docker (e.g., 
 
 ### Environment Variables
 
-| Variable                          | Value                     | Description                         |
-|-----------------------------------|---------------------------|-------------------------------------|
-| `OTEL_EXPORTER_OTLP_ENDPOINT`     | `http://tempo:4317`       | OTLP gRPC endpoint (Docker-internal)|
-| `OTEL_SERVICE_NAME`               | *(your service name)*     | Name shown in Grafana Tempo         |
+| Variable                      | Value                 | Description                          |
+| ----------------------------- | --------------------- | ------------------------------------ |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://tempo:4317`   | OTLP gRPC endpoint (Docker-internal) |
+| `OTEL_SERVICE_NAME`           | _(your service name)_ | Name shown in Grafana Tempo          |
 
 ### Example (NestJS with the OTel lib)
 
@@ -51,10 +51,10 @@ The project includes `libs/backend/common/otel/lib` for OpenTelemetry setup. Aft
 
 Once Grafana is running, two data sources are auto-provisioned:
 
-| Name  | Type  | URL                  | Purpose            |
-|-------|-------|----------------------|--------------------|
-| Loki  | Loki  | http://loki:3100     | Log aggregation    |
-| Tempo | Tempo | http://tempo:3200    | Distributed traces |
+| Name  | Type  | URL               | Purpose            |
+| ----- | ----- | ----------------- | ------------------ |
+| Loki  | Loki  | http://loki:3100  | Log aggregation    |
+| Tempo | Tempo | http://tempo:3200 | Distributed traces |
 
 Tempo is linked to Loki via **Traces to Logs** — clicking a span in Tempo navigates to the corresponding logs in Loki, filtered by trace ID.
 

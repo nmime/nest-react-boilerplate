@@ -133,21 +133,21 @@ argocd app history nest-react-boilerplate
 
 ### GitHub Repository Secrets
 
-| Secret | Purpose | Required For |
-|--------|---------|-------------|
-| `GH_DEPLOY_TOKEN` | PAT with repo write access for the deploy workflow to push changes | `deploy.yml` |
-| `ARGOCD_SERVER` | ArgoCD server URL (e.g., `https://argocd.example.com`) | `argo-sync.yml` |
-| `ARGOCD_AUTH_TOKEN` | ArgoCD auth token for CLI authentication | `argo-sync.yml` |
+| Secret              | Purpose                                                            | Required For    |
+| ------------------- | ------------------------------------------------------------------ | --------------- |
+| `GH_DEPLOY_TOKEN`   | PAT with repo write access for the deploy workflow to push changes | `deploy.yml`    |
+| `ARGOCD_SERVER`     | ArgoCD server URL (e.g., `https://argocd.example.com`)             | `argo-sync.yml` |
+| `ARGOCD_AUTH_TOKEN` | ArgoCD auth token for CLI authentication                           | `argo-sync.yml` |
 
 ### Kubernetes Secrets
 
-| Secret | Purpose |
-|--------|---------|
-| `ghcr-credentials` | Docker pull secret for `ghcr.io` |
-| `nest-react-boilerplate-production-secrets` | App secrets (JWT keys, DB passwords, etc.) |
-| `nest-react-boilerplate-tls` | TLS certificate (auto-provisioned by cert-manager) |
-| `nest-react-boilerplate-backup-object-store` | S3/Object store credentials for backups |
-| `nest-react-boilerplate-backup-encryption` | Age encryption recipient for backups |
+| Secret                                       | Purpose                                            |
+| -------------------------------------------- | -------------------------------------------------- |
+| `ghcr-credentials`                           | Docker pull secret for `ghcr.io`                   |
+| `nest-react-boilerplate-production-secrets`  | App secrets (JWT keys, DB passwords, etc.)         |
+| `nest-react-boilerplate-tls`                 | TLS certificate (auto-provisioned by cert-manager) |
+| `nest-react-boilerplate-backup-object-store` | S3/Object store credentials for backups            |
+| `nest-react-boilerplate-backup-encryption`   | Age encryption recipient for backups               |
 
 ### Creating the GHCR Pull Secret
 
@@ -240,12 +240,12 @@ after CI passes, updating the image tags and triggering ArgoCD to sync.
 The application depends on the following infrastructure services, which should be
 available in the Kubernetes cluster (managed by the platform repository):
 
-| Service     | Purpose                            | Helm values key                    |
-| ----------- | ---------------------------------- | ---------------------------------- |
-| PostgreSQL  | Primary datastore                  | `config.databaseUrl` or `POSTGRES_*` env vars |
-| Redis v6    | Caching, rate limiting, sessions   | `config.redisUrl` or `REDIS_*` env vars |
-| NATS        | Event streaming, inter-service messaging | `config.natsServers` or `NATS_SERVERS` env var |
-| Object Store| Backups, file storage              | Configured per-environment in secrets |
+| Service      | Purpose                                  | Helm values key                                |
+| ------------ | ---------------------------------------- | ---------------------------------------------- |
+| PostgreSQL   | Primary datastore                        | `config.databaseUrl` or `POSTGRES_*` env vars  |
+| Redis v6     | Caching, rate limiting, sessions         | `config.redisUrl` or `REDIS_*` env vars        |
+| NATS         | Event streaming, inter-service messaging | `config.natsServers` or `NATS_SERVERS` env var |
+| Object Store | Backups, file storage                    | Configured per-environment in secrets          |
 
 The Redis migration from `ioredis` to `@redis/client` (v6) is transparent at the
 configuration level — `REDIS_URL` and `REDIS_MODE` environment variables remain

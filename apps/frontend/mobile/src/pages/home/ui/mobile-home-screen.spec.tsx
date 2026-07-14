@@ -1,5 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
+import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 
 vi.mock('@app/frontend-ui-native', () => ({
   TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -24,46 +26,51 @@ vi.mock('react-native-safe-area-context', () => ({
 }));
 
 describe('mobile home screen', () => {
+  const renderScreen = async () => {
+    const { MobileHomeScreen } = await import('./mobile-home-screen');
+    return render(
+      <FrontendStateProvider>
+        <FrontendI18nProvider translations={userFrontendTranslations}>
+          <MobileHomeScreen />
+        </FrontendI18nProvider>
+      </FrontendStateProvider>,
+    );
+  };
+
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
-    vi.resetModules();
   });
 
   it('renders the app title', async () => {
-    const { MobileHomeScreen } = await import('./mobile-home-screen');
-    render(<MobileHomeScreen />);
+    await renderScreen();
 
     expect(screen.getByText('Nest React Mobile')).toBeTruthy();
   });
 
   it('renders the runtime status badge', async () => {
-    const { MobileHomeScreen } = await import('./mobile-home-screen');
-    render(<MobileHomeScreen />);
+    await renderScreen();
 
-    expect(screen.getByText('Ready for release')).toBeTruthy();
+    expect(screen.getByText('Scaffold ready')).toBeTruthy();
   });
 
   it('renders three capability cards', async () => {
-    const { MobileHomeScreen } = await import('./mobile-home-screen');
-    render(<MobileHomeScreen />);
+    await renderScreen();
 
     expect(screen.getByText('Expo Router')).toBeTruthy();
     expect(screen.getByText('Shared tokens')).toBeTruthy();
-    expect(screen.getByText('Nx + export')).toBeTruthy();
+    expect(screen.getByText('Nx and export')).toBeTruthy();
   });
 
   it('renders the configured API endpoint panel', async () => {
-    const { MobileHomeScreen } = await import('./mobile-home-screen');
-    render(<MobileHomeScreen />);
+    await renderScreen();
 
     expect(screen.getByText('API target')).toBeTruthy();
     expect(screen.getByText('Configured endpoint')).toBeTruthy();
   });
 
   it('renders a primary action button', async () => {
-    const { MobileHomeScreen } = await import('./mobile-home-screen');
-    render(<MobileHomeScreen />);
+    await renderScreen();
 
     const button = screen.getByRole('button', { name: 'Open configured API' });
     expect(button).toBeTruthy();

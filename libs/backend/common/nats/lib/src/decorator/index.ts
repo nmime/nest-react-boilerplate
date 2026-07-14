@@ -1,1 +1,1 @@
-export * from "./inject-nats.decorator";
+export * from './inject-nats.decorator';

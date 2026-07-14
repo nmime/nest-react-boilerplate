@@ -1,7 +1,7 @@
-import type { Middleware } from "openapi-fetch";
+import type { Middleware } from 'openapi-fetch';
 
-import { normalizeApiError, readJsonBody } from "./error-normalization";
-import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
+import { normalizeApiError, readJsonBody } from './error-normalization';
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
 export interface AuthRefreshResult {
   accessToken: string;
@@ -11,12 +11,9 @@ export interface ApiAuthMiddlewareOptions {
   clearAuth: () => Promise<void> | void;
   eventHub?: ApiRuntimeEventHub;
   fetchImpl?: typeof fetch;
-  getAccessToken: () =>
-    Promise<string | null | undefined> | string | null | undefined;
+  getAccessToken: () => Promise<string | null | undefined> | string | null | undefined;
   redirectTo?: string;
-  refreshAccessToken: () => Promise<
-    AuthRefreshResult | string | null | undefined
-  >;
+  refreshAccessToken: () => Promise<AuthRefreshResult | string | null | undefined>;
   shouldHandle401?: (request: Request) => boolean;
 }
 
@@ -28,10 +25,8 @@ const requestEndpoint = (request: Request): string => {
   }
 };
 
-const toAccessToken = (
-  result: AuthRefreshResult | string | null | undefined,
-): string | null => {
-  if (typeof result === "string") {
+const toAccessToken = (result: AuthRefreshResult | string | null | undefined): string | null => {
+  if (typeof result === 'string') {
     return result.trim() || null;
   }
 
@@ -39,7 +34,7 @@ const toAccessToken = (
 };
 
 const createSingleFlightRefresh = (
-  refreshAccessToken: ApiAuthMiddlewareOptions["refreshAccessToken"],
+  refreshAccessToken: ApiAuthMiddlewareOptions['refreshAccessToken'],
 ): (() => Promise<string | null>) => {
   let refreshPromise: Promise<string | null> | null = null;
 
@@ -63,7 +58,7 @@ export const createAuthRefreshMiddleware = ({
   eventHub = apiRuntimeEvents,
   fetchImpl = globalThis.fetch,
   getAccessToken,
-  redirectTo = "/login",
+  redirectTo = '/login',
   refreshAccessToken,
   shouldHandle401 = () => true,
 }: ApiAuthMiddlewareOptions): Middleware => {
@@ -72,7 +67,7 @@ export const createAuthRefreshMiddleware = ({
   const clearAndEmit = async (
     request: Request,
     response: Response,
-    reason: "refresh-failed" | "retry-rejected",
+    reason: 'refresh-failed' | 'retry-rejected',
   ): Promise<void> => {
     const body = await readJsonBody(response);
     const normalized = normalizeApiError({
@@ -84,7 +79,7 @@ export const createAuthRefreshMiddleware = ({
 
     await clearAuth();
     eventHub.emit({
-      type: "auth-required",
+      type: 'auth-required',
       error: {
         code: normalized.code,
         endpoint: normalized.endpoint,
@@ -104,7 +99,7 @@ export const createAuthRefreshMiddleware = ({
       const token = await getAccessToken();
 
       if (token?.trim()) {
-        request.headers.set("Authorization", `Bearer ${token.trim()}`);
+        request.headers.set('Authorization', `Bearer ${token.trim()}`);
       }
 
       return request;
@@ -117,16 +112,16 @@ export const createAuthRefreshMiddleware = ({
       const token = await refreshOnce();
 
       if (!token) {
-        await clearAndEmit(request, response, "refresh-failed");
+        await clearAndEmit(request, response, 'refresh-failed');
         return undefined;
       }
 
       const retryRequest = request.clone();
-      retryRequest.headers.set("Authorization", `Bearer ${token}`);
+      retryRequest.headers.set('Authorization', `Bearer ${token}`);
       const retryResponse = await fetchImpl(retryRequest);
 
       if (retryResponse.status === 401) {
-        await clearAndEmit(request, retryResponse, "retry-rejected");
+        await clearAndEmit(request, retryResponse, 'retry-rejected');
       }
 
       return retryResponse;
@@ -137,12 +132,11 @@ export const createAuthRefreshMiddleware = ({
 export interface AuthRefreshFetchOptions {
   baseFetch?: typeof fetch;
   clearAuth: () => Promise<void> | void;
-  refreshAccessToken: ApiAuthMiddlewareOptions["refreshAccessToken"];
+  refreshAccessToken: ApiAuthMiddlewareOptions['refreshAccessToken'];
   shouldHandle401?: (request: Request) => boolean;
 }
 
-const hasAuthorizationHeader = (request: Request): boolean =>
-  Boolean(request.headers.get("Authorization")?.trim());
+const hasAuthorizationHeader = (request: Request): boolean => Boolean(request.headers.get('Authorization')?.trim());
 
 /**
  * Fetch wrapper variant of the auth-refresh middleware for clients that
@@ -175,7 +169,7 @@ export const createAuthRefreshFetch = ({
       return response;
     }
 
-    retryable.headers.set("Authorization", `Bearer ${token}`);
+    retryable.headers.set('Authorization', `Bearer ${token}`);
     const retryResponse = await baseFetch(retryable);
 
     if (retryResponse.status === 401) {

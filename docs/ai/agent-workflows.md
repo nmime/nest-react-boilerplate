@@ -4,14 +4,15 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 
 ## Workflow selection
 
-| Task                          | Use                                     | Read first                                                                     |
-| ----------------------------- | --------------------------------------- | ------------------------------------------------------------------------------ |
-| PR or branch review           | `.agents/skills/pr-review/SKILL.md`     | `AGENTS.md`, `docs/ai/agent-policy.md`, changed files, project configs, tests  |
-| CI failure triage             | `.agents/skills/ci-triage/SKILL.md`     | failing job logs, workflow file, command matrix, local reproduction target     |
-| Service or module audit       | `.agents/skills/service-audit/SKILL.md` | owning app/library config, source, tests, API contracts, operations docs       |
-| Frontend UX or shared UI work | `docs/agent-skills.md`                  | frontend app shell, shared UI libraries, Storybook/tests, design workflow docs |
-| API contract change           | no separate skill yet                   | controller/DTO source, OpenAPI output, generated clients, API lifecycle docs   |
-| Database migration change     | no separate skill yet                   | migration source, entity/repository source, migration docs, rollback checks    |
+| Task                              | Use                                        | Read first                                                                     |
+| --------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| PR or branch review               | `.agents/skills/pr-review/SKILL.md`        | `AGENTS.md`, `docs/ai/agent-policy.md`, changed files, project configs, tests  |
+| CI failure triage                 | `.agents/skills/ci-triage/SKILL.md`        | failing job logs, workflow file, command matrix, local reproduction target     |
+| Service or module audit           | `.agents/skills/service-audit/SKILL.md`    | owning app/library config, source, tests, API contracts, operations docs       |
+| App, library, or feature scaffold | `.agents/skills/scaffold-feature/SKILL.md` | architecture, FSD, owning app/API, generator dry-run                           |
+| Frontend UX or shared UI work     | `docs/agent-skills.md`                     | frontend app shell, shared UI libraries, Storybook/tests, design workflow docs |
+| API contract change               | no separate skill yet                      | controller/DTO source, OpenAPI output, generated clients, API lifecycle docs   |
+| Database migration change         | no separate skill yet                      | migration source, entity/repository source, migration docs, rollback checks    |
 
 ## Error handling and exception workflows
 
@@ -21,18 +22,21 @@ When adding or changing error handling in backend code:
 2. **Prefer domain exceptions** over raw `Exception` construction when a matching class exists:
    - `ResourceNotFoundException` (404), `UnauthorizedException` (401), `ForbiddenException` (403),
      `ConflictException` (409), `BadRequestException` (400), `InternalException` (500).
-3. **Use the `Exception` factory** for domain-specific errors that don't have a pre-built class:
+3. **Use the `Exception` class factory** for domain-specific errors that don't have a pre-built class:
    ```ts
+   import { HttpStatus } from '@nestjs/common';
    import { Exception, ExceptionKind } from '@app/backend-common-exception';
 
-   throw new Exception({
+   export class PaymentFailedException extends Exception({
      name: 'PaymentFailedError',
-     kind: ExceptionKind.BAD_REQUEST,
-     problemType: 'urn:problem:payment-failed',
+     kind: ExceptionKind.Client,
+     problemType: 'payment_failed',
      title: 'Payment Failed',
      detail: 'The payment gateway returned an error.',
-     status: 400,
-   });
+     status: HttpStatus.BAD_REQUEST,
+   }) {}
+
+   throw new PaymentFailedException({ meta: { provider: 'example' } });
    ```
 4. **Do not create** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these types
    do not exist in the codebase.

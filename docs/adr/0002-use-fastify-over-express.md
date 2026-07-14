@@ -1,11 +1,11 @@
 # Architecture Decision: Use Fastify over Express
 
-| Field     | Value                                      |
-|-----------|--------------------------------------------|
-| Status    | Accepted                                   |
-| Date      | 2025-01-15                                |
-| Authors   | @nmime                                     |
-| Decision  | Use Fastify as the HTTP server framework   |
+| Field    | Value                                    |
+| -------- | ---------------------------------------- |
+| Status   | Accepted                                 |
+| Date     | 2025-01-15                               |
+| Authors  | @nmime                                   |
+| Decision | Use Fastify as the HTTP server framework |
 
 ## Context
 
@@ -32,6 +32,7 @@ We chose **Fastify** as the underlying HTTP platform for all NestJS backend serv
 ## Express Considerations
 
 Express has a larger ecosystem of middleware and a longer track record. However:
+
 - No built-in schema validation or serialization
 - Callback-based middleware model leads to "middleware hell" in large apps
 - Significantly lower throughput in benchmarks

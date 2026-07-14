@@ -6,7 +6,7 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 
 ## Runtime stack
 
-- Node.js `>=24 <25`, pnpm, TypeScript
+- Node.js `>=24 <25`, pnpm `11.11.0`, TypeScript
 - CLS request context: `requestContext.getRequestId()` (no setup needed in tooling)
 - Exception system: RFC 9457 via `@app/backend-common-exception`
 

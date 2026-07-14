@@ -1,1 +1,1 @@
-export * from "./normalize-admin-page.util";
+export * from './normalize-admin-page.util';

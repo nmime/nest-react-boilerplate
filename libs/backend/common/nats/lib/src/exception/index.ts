@@ -1,1 +1,1 @@
-export * from "./nats-connection-unavailable.exception";
+export * from './nats-connection-unavailable.exception';

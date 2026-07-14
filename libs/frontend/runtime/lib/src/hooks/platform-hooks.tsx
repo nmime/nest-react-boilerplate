@@ -1,14 +1,6 @@
 /* v8 ignore file -- host shell hooks depend on browser/TMA integration and degrade to no-ops for SSR. */
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { useAppStore, useUiStore, type UiTheme } from "../state";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useAppStore, useUiStore, type UiTheme } from '../state';
 
 type TelegramWebApp = {
   BackButton?: {
@@ -43,17 +35,13 @@ const fallbackOverlayContext: GlobalOverlayContextValue = {
   showOverlay: () => undefined,
 };
 
-const GlobalOverlayContext = createContext<GlobalOverlayContextValue | null>(
-  null,
-);
+const GlobalOverlayContext = createContext<GlobalOverlayContextValue | null>(null);
 
 export interface GlobalOverlayProviderProps {
   children: ReactNode;
 }
 
-export function GlobalOverlayProvider({
-  children,
-}: Readonly<GlobalOverlayProviderProps>) {
+export function GlobalOverlayProvider({ children }: Readonly<GlobalOverlayProviderProps>) {
   const [overlay, setOverlay] = useState<ReactNode | null>(null);
   const hideOverlay = useCallback(() => {
     setOverlay(null);
@@ -79,7 +67,7 @@ export function useGlobalOverlayContext(): GlobalOverlayContextValue {
 }
 
 export interface ThemeHookValue {
-  resolvedTheme: "light" | "dark";
+  resolvedTheme: 'light' | 'dark';
   setTheme: (theme: UiTheme) => void;
   theme: UiTheme;
 }
@@ -100,16 +88,13 @@ export function useTheme(): ThemeHookValue {
 }
 
 const getTelegramWebApp = (): TelegramWebApp | undefined =>
-  typeof window === "undefined" ? undefined : window.Telegram?.WebApp;
+  typeof window === 'undefined' ? undefined : window.Telegram?.WebApp;
 
 export interface BackHandlerOptions {
   forceHide?: boolean;
 }
 
-export function useBackHandler(
-  handler?: () => void,
-  options: BackHandlerOptions = {},
-): void {
+export function useBackHandler(handler?: () => void, options: BackHandlerOptions = {}): void {
   const appStore = useAppStore();
   const { forceHide = false } = options;
 
@@ -125,12 +110,12 @@ export function useBackHandler(
 
     backButton?.show?.();
     backButton?.onClick?.(handler);
-    window.addEventListener("popstate", handler);
+    window.addEventListener('popstate', handler);
 
     return () => {
       backButton?.offClick?.(handler);
       backButton?.hide?.();
-      window.removeEventListener("popstate", handler);
+      window.removeEventListener('popstate', handler);
       appStore.setBackHandlerVisible(false);
     };
   }, [appStore, forceHide, handler]);

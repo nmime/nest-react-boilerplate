@@ -225,22 +225,19 @@ export interface UseSocialAuthReturn {
 export function useSocialAuth(): UseSocialAuthReturn {
   const queryClient = useQueryClient();
 
-  const discordAuthorize = useCallback(
-    async (data?: DiscordAuthorizationRequestDto): Promise<void> => {
-      const res = await fetch('/auth/discord/authorization-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data || {}),
-      });
-      if (!res.ok) {
-        throw new Error('Discord authorization failed');
-      }
-      const body = ((await res.json()) as { data: { authorizationUrl: string } }).data;
-      window.location.href = body.authorizationUrl;
-    },
-    [],
-  );
+  const discordAuthorize = useCallback(async (data?: DiscordAuthorizationRequestDto): Promise<void> => {
+    const res = await fetch('/auth/discord/authorization-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data || {}),
+    });
+    if (!res.ok) {
+      throw new Error('Discord authorization failed');
+    }
+    const body = ((await res.json()) as { data: { authorizationUrl: string } }).data;
+    window.location.href = body.authorizationUrl;
+  }, []);
 
   const telegramWebLogin = useCallback(
     async (data: TelegramWebLoginDto): Promise<void> => {
@@ -274,20 +271,17 @@ export function useSocialAuth(): UseSocialAuthReturn {
     [queryClient],
   );
 
-  const telegramBotLink = useCallback(
-    async (data: TelegramBotLinkDto): Promise<void> => {
-      const res = await fetch('/auth/telegram/bot-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        throw new Error('Telegram bot link failed');
-      }
-    },
-    [],
-  );
+  const telegramBotLink = useCallback(async (data: TelegramBotLinkDto): Promise<void> => {
+    const res = await fetch('/auth/telegram/bot-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      throw new Error('Telegram bot link failed');
+    }
+  }, []);
 
   const createLinkToken = useCallback(async (data: LinkTokenDto): Promise<void> => {
     const res = await fetch('/auth/link-tokens', {

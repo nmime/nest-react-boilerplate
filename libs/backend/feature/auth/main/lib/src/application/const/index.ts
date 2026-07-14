@@ -1,1 +1,1 @@
-export * from "./external-auth.const";
+export * from './external-auth.const';

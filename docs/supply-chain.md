@@ -6,18 +6,18 @@ Supply-chain posture, SLSA alignment, SBOM generation, and dependency management
 
 [SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. Here is where this repository stands:
 
-| SLSA 3 Requirement | Status | Details |
-|--------------------|--------|---------|
-| **Build authenticity** | ✅ Implemented | Builds run in GitHub Actions with pinned action SHAs, frozen lockfile (`--frozen-lockfile`), and pinned runner images (`ubuntu-22.04`). |
-| **Build provenance** | ✅ Implemented | `docker/build-push-action` emits `provenance: mode=max` (SLSA 1 provenance via in-toto attestation) for every image. |
-| **Build reproducibility** | ⚠️ Partial | Dockerfile is multi-stage with explicit base images, but `pnpm install` is not fully deterministic (network fetches). Recommend: pnpm cachedir volume + `--frozen-lockfile` (already done). |
-| **Source integrity** | ✅ Implemented | Source is hosted on GitHub with branch protection. PRs require reviews and pass CI gates. |
-| **Dependency review** | ✅ Implemented | `dependency-review.yml` runs `pnpm audit` on every PR. Workspace overrides pin vulnerable transitive versions. |
-| **SBOM generation** | ✅ Implemented | `anchore/sbom-action` generates SPDX JSON for every container image in the release workflow. |
-| **Vulnerability scanning** | ✅ Implemented | Trivy scans images for CRITICAL/HIGH vulnerabilities; fails the build on findings. CodeQL scans source on every PR. |
-| **Image signing** | ✅ Implemented | `sigstore/cosign-installer` + keyless signing via GitHub OIDC on every release image. |
-| **SLSA provenance attestation** | ⚠️ Partial | Docker Buildx `provenance: mode=max` emits SLSA 1 provenance. Full SLSA 3 requires a hermetic build with `slsa-framework/slsa-github-generator`. |
-| **Workflow protection** | ⚠️ Partial | Workflows use `permissions: contents: read` (least privilege), but workflow edits are not protected by additional approval gates. |
+| SLSA 3 Requirement              | Status         | Details                                                                                                                                                                                     |
+| ------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Build authenticity**          | ✅ Implemented | Builds run in GitHub Actions with pinned action SHAs, frozen lockfile (`--frozen-lockfile`), and pinned runner images (`ubuntu-22.04`).                                                     |
+| **Build provenance**            | ✅ Implemented | `docker/build-push-action` emits `provenance: mode=max` (SLSA 1 provenance via in-toto attestation) for every image.                                                                        |
+| **Build reproducibility**       | ⚠️ Partial     | Dockerfile is multi-stage with explicit base images, but `pnpm install` is not fully deterministic (network fetches). Recommend: pnpm cachedir volume + `--frozen-lockfile` (already done). |
+| **Source integrity**            | ✅ Implemented | Source is hosted on GitHub with branch protection. PRs require reviews and pass CI gates.                                                                                                   |
+| **Dependency review**           | ✅ Implemented | `dependency-review.yml` runs `pnpm audit` on every PR. Workspace overrides pin vulnerable transitive versions.                                                                              |
+| **SBOM generation**             | ✅ Implemented | `anchore/sbom-action` generates SPDX JSON for every container image in the release workflow.                                                                                                |
+| **Vulnerability scanning**      | ✅ Implemented | Trivy scans images for CRITICAL/HIGH vulnerabilities; fails the build on findings. CodeQL scans source on every PR.                                                                         |
+| **Image signing**               | ✅ Implemented | `sigstore/cosign-installer` + keyless signing via GitHub OIDC on every release image.                                                                                                       |
+| **SLSA provenance attestation** | ⚠️ Partial     | Docker Buildx `provenance: mode=max` emits SLSA 1 provenance. Full SLSA 3 requires a hermetic build with `slsa-framework/slsa-github-generator`.                                            |
+| **Workflow protection**         | ⚠️ Partial     | Workflows use `permissions: contents: read` (least privilege), but workflow edits are not protected by additional approval gates.                                                           |
 
 ### What's missing for full SLSA 3
 
@@ -97,14 +97,14 @@ pnpm config set quarantine 0s
 
 Critical transitive dependencies are pinned to safe versions in `pnpm-workspace.yaml`:
 
-| Package | Pinned to | Reason |
-|---------|-----------|--------|
-| `better-auth` | `1.6.23` | Multiple CVEs in `1.4.21` |
-| `drizzle-orm` | `0.45.2` | SQL injection in `0.41.0` |
-| `typescript` | `6.0.3` | Workspace consistency until NestJS/Nx support TS 7 |
-| `follow-redirects` | security-pinned | CVE in older versions |
-| `axios` | security-pinned | Multiple CVEs in older versions |
-| `ws` | security-pinned | Remote code execution in older versions |
+| Package            | Pinned to       | Reason                                             |
+| ------------------ | --------------- | -------------------------------------------------- |
+| `better-auth`      | `1.6.23`        | Multiple CVEs in `1.4.21`                          |
+| `drizzle-orm`      | `0.45.2`        | SQL injection in `0.41.0`                          |
+| `typescript`       | `6.0.3`         | Workspace consistency until NestJS/Nx support TS 7 |
+| `follow-redirects` | security-pinned | CVE in older versions                              |
+| `axios`            | security-pinned | Multiple CVEs in older versions                    |
+| `ws`               | security-pinned | Remote code execution in older versions            |
 
 ### .npmrc settings
 
@@ -119,12 +119,12 @@ These prevent accidental installs with incompatible toolchain versions that migh
 
 Dependabot runs automated dependency updates with grouped PRs:
 
-| Grouping | Schedule | Packages |
-|----------|----------|----------|
-| `npm-minor-patch` | Daily | All npm packages (minor + patch) |
-| `npm-major` | Weekly | All npm packages (major) |
-| `github-actions` | Weekly | GitHub Actions versions |
-| `docker` | Weekly | Docker base images |
+| Grouping          | Schedule | Packages                         |
+| ----------------- | -------- | -------------------------------- |
+| `npm-minor-patch` | Daily    | All npm packages (minor + patch) |
+| `npm-major`       | Weekly   | All npm packages (major)         |
+| `github-actions`  | Weekly   | GitHub Actions versions          |
+| `docker`          | Weekly   | Docker base images               |
 
 Dependabot PRs are labeled `dependencies` and prefixed with `ci:`. All PRs must pass the full CI gate before merging.
 
@@ -134,13 +134,13 @@ Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep 
 
 ## CI gates for supply chain
 
-| Workflow | Gate | What it checks |
-|----------|------|----------------|
-| `dependency-review.yml` | `Supported lockfile audit` | `pnpm audit` on production deps; fails on moderate+ |
-| `ci.yml` | `Native security gates` | Secret scanning, SAST |
-| `codeql.yml` | `Analyze JavaScript/TypeScript` | CodeQL semantic analysis |
-| `release-images.yml` | `Trivy vulnerability scan` | Container image vuln scan (CRITICAL, HIGH) |
-| `release-images.yml` | `Cosign keyless sign` | Image signing attestation |
+| Workflow                | Gate                            | What it checks                                      |
+| ----------------------- | ------------------------------- | --------------------------------------------------- |
+| `dependency-review.yml` | `Supported lockfile audit`      | `pnpm audit` on production deps; fails on moderate+ |
+| `ci.yml`                | `Native security gates`         | Secret scanning, SAST                               |
+| `codeql.yml`            | `Analyze JavaScript/TypeScript` | CodeQL semantic analysis                            |
+| `release-images.yml`    | `Trivy vulnerability scan`      | Container image vuln scan (CRITICAL, HIGH)          |
+| `release-images.yml`    | `Cosign keyless sign`           | Image signing attestation                           |
 
 ## Recommendations
 

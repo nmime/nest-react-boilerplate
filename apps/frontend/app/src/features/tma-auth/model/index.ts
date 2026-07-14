@@ -1,2 +1,2 @@
-export * from "./tma-launch";
-export * from "./use-tma-auth";
+export * from './tma-launch';
+export * from './use-tma-auth';

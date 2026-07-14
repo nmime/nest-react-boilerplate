@@ -1,7 +1,4 @@
-import type {
-  CleanupInterval,
-  UnrefableTimer,
-} from "../type/auth-token-cleanup-internal.type";
+import type { CleanupInterval, UnrefableTimer } from '../type/auth-token-cleanup-internal.type';
 
 export function unrefTimer(timer: CleanupInterval): void {
   if (isUnrefableTimer(timer)) {
@@ -9,12 +6,6 @@ export function unrefTimer(timer: CleanupInterval): void {
   }
 }
 
-function isUnrefableTimer(
-  timer: CleanupInterval,
-): timer is CleanupInterval & UnrefableTimer {
-  return (
-    typeof timer === "object" &&
-    "unref" in timer &&
-    typeof timer.unref === "function"
-  );
+function isUnrefableTimer(timer: CleanupInterval): timer is CleanupInterval & UnrefableTimer {
+  return typeof timer === 'object' && 'unref' in timer && typeof timer.unref === 'function';
 }

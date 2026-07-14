@@ -1,5 +1,5 @@
-import { EntitySchema } from "@mikro-orm/core";
-import { DefaultAuthTenantId } from "./auth-user.entity";
+import { EntitySchema } from '@mikro-orm/core';
+import { DefaultAuthTenantId } from './auth-user.entity';
 
 export interface AuthUserRoleEntityInput {
   userId: string;
@@ -27,28 +27,28 @@ export class AuthUserRoleEntity {
 
 export const AuthUserRoleEntitySchema = new EntitySchema<AuthUserRoleEntity>({
   class: AuthUserRoleEntity,
-  tableName: "auth_user_roles",
+  tableName: 'auth_user_roles',
   properties: {
-    userId: { type: "uuid", fieldName: "auth_user_id", primary: true },
-    roleId: { type: "uuid", fieldName: "role_id", primary: true },
+    userId: { type: 'uuid', fieldName: 'auth_user_id', primary: true },
+    roleId: { type: 'uuid', fieldName: 'role_id', primary: true },
     tenantId: {
-      type: "uuid",
-      fieldName: "tenant_id",
+      type: 'uuid',
+      fieldName: 'tenant_id',
       default: DefaultAuthTenantId,
     },
     grantedByUserId: {
-      type: "uuid",
-      fieldName: "granted_by_user_id",
+      type: 'uuid',
+      fieldName: 'granted_by_user_id',
       nullable: true,
     },
     createdAt: {
-      type: "timestamptz",
-      fieldName: "created_at",
+      type: 'timestamptz',
+      fieldName: 'created_at',
       onCreate: () => new Date(),
     },
   },
   indexes: [
-    { name: "ix__auth_user_roles__role_id", properties: ["roleId"] },
-    { name: "ix__auth_user_roles__tenant_id", properties: ["tenantId"] },
+    { name: 'ix__auth_user_roles__role_id', properties: ['roleId'] },
+    { name: 'ix__auth_user_roles__tenant_id', properties: ['tenantId'] },
   ],
 });

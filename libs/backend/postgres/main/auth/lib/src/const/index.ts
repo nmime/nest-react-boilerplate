@@ -1,1 +1,1 @@
-export * from "./auth-token-cleanup.const";
+export * from './auth-token-cleanup.const';

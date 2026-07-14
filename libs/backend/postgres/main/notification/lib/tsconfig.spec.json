@@ -1,5 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "outDir": "../../../../../../../dist/out-tsc/libs/backend/postgres/main/notification-spec", "types": ["node", "vitest"] },
+  "compilerOptions": {
+    "outDir": "../../../../../../../dist/out-tsc/libs/backend/postgres/main/notification-spec",
+    "types": ["node", "vitest"]
+  },
   "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.ts"]
 }

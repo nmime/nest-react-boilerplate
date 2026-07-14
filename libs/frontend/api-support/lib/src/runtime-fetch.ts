@@ -1,16 +1,6 @@
-import {
-  enrichJsonResponse,
-  normalizeApiError,
-  readJsonBody,
-  type NormalizedApiError,
-} from "./error-normalization";
-import { apiRuntimeEvents, type ApiRuntimeEventHub } from "./runtime-events";
-import {
-  apiToastRuntime,
-  defaultApiToastRules,
-  type ApiToastRule,
-  type ApiToastRuntime,
-} from "./toast-runtime";
+import { enrichJsonResponse, normalizeApiError, readJsonBody, type NormalizedApiError } from './error-normalization';
+import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
+import { apiToastRuntime, defaultApiToastRules, type ApiToastRule, type ApiToastRuntime } from './toast-runtime';
 
 export interface ApiRuntimeFetchOptions {
   baseFetch?: typeof fetch;
@@ -40,22 +30,18 @@ const snapshotError = (error: NormalizedApiError) => ({
   status: error.status,
 });
 
-const hasAuthorization = (request: Request): boolean =>
-  Boolean(request.headers.get("Authorization")?.trim());
+const hasAuthorization = (request: Request): boolean => Boolean(request.headers.get('Authorization')?.trim());
 
-const toRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
-  new Request(input, init);
+const toRequest = (input: RequestInfo | URL, init?: RequestInit): Request => new Request(input, init);
 
-export const emitBrowserOfflineEvent = (
-  eventHub: ApiRuntimeEventHub = apiRuntimeEvents,
-): void => {
+export const emitBrowserOfflineEvent = (eventHub: ApiRuntimeEventHub = apiRuntimeEvents): void => {
   eventHub.emit({
-    type: "network-offline",
+    type: 'network-offline',
     error: {
-      code: "network.offline",
-      id: "browser:navigator:offline:network.offline",
-      kind: "network",
-      message: "Network connection is offline.",
+      code: 'network.offline',
+      id: 'browser:navigator:offline:network.offline',
+      kind: 'network',
+      message: 'Network connection is offline.',
       status: null,
     },
   });
@@ -66,7 +52,7 @@ export const createApiRuntimeFetch =
     baseFetch = globalThis.fetch.bind(globalThis),
     emitMissingTokenAuthRequired = false,
     eventHub = apiRuntimeEvents,
-    redirectTo = "/auth",
+    redirectTo = '/auth',
     toastRules = defaultApiToastRules,
     toastRuntime = apiToastRuntime,
   }: ApiRuntimeFetchOptions = {}): typeof fetch =>
@@ -97,22 +83,19 @@ export const createApiRuntimeFetch =
         response,
       });
 
-      if (normalized.kind === "server") {
+      if (normalized.kind === 'server') {
         eventHub.emit({
-          type: "server-error",
+          type: 'server-error',
           error: snapshotError(normalized),
         });
       }
 
       const requestHasAuthorization = hasAuthorization(request);
-      if (
-        response.status === 401 &&
-        (requestHasAuthorization || emitMissingTokenAuthRequired)
-      ) {
+      if (response.status === 401 && (requestHasAuthorization || emitMissingTokenAuthRequired)) {
         eventHub.emit({
-          type: "auth-required",
+          type: 'auth-required',
           error: snapshotError(normalized),
-          reason: requestHasAuthorization ? "refresh-failed" : "missing-token",
+          reason: requestHasAuthorization ? 'refresh-failed' : 'missing-token',
           redirectTo,
         });
       }
@@ -128,7 +111,7 @@ export const createApiRuntimeFetch =
       });
 
       eventHub.emit({
-        type: "network-offline",
+        type: 'network-offline',
         error: snapshotError(normalized),
       });
       toastRuntime.showForApiResult(normalized, toastRules);

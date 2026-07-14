@@ -9,7 +9,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "04:00"
+      time: '04:00'
     open-pull-requests-limit: 10
     labels: [dependencies, security]
     commit-message:
@@ -20,14 +20,14 @@ updates:
         update-types: [minor, patch]
       nx:
         patterns:
-          - "@nx/*"
+          - '@nx/*'
           - nx
       nestjs:
         patterns:
-          - "@nestjs/*"
+          - '@nestjs/*'
       opentelemetry:
         patterns:
-          - "@opentelemetry/*"
+          - '@opentelemetry/*'
   - package-ecosystem: github-actions
     directory: /
     assignees:
@@ -37,7 +37,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "04:15"
+      time: '04:15'
     open-pull-requests-limit: 5
     labels: [dependencies]
     commit-message:
@@ -45,7 +45,7 @@ updates:
       include: scope
     groups:
       github-actions-minor-patch:
-        patterns: ["*"]
+        patterns: ['*']
         update-types: [minor, patch]
   - package-ecosystem: docker
     directory: /
@@ -56,7 +56,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "04:30"
+      time: '04:30'
     open-pull-requests-limit: 5
     labels: [dependencies, docker]
     commit-message:
@@ -71,7 +71,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-      time: "04:45"
+      time: '04:45'
     open-pull-requests-limit: 5
     labels: [dependencies, docker]
     commit-message:

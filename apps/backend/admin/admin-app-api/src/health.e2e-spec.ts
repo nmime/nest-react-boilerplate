@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- Fastify inject response JSON is intentionally dynamic in e2e tests. */
-import { MikroORM } from "@mikro-orm/core";
-import {
-  FastifyAdapter,
-  type NestFastifyApplication,
-} from "@nestjs/platform-fastify";
-import { Test } from "@nestjs/testing";
-import type { Response as InjectResponse } from "light-my-request";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createValidationPipe } from "@app/backend-common-validation";
-import { AdminAppApiModule } from "./admin-app-api.module";
+import { MikroORM } from '@mikro-orm/core';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Test } from '@nestjs/testing';
+import type { Response as InjectResponse } from 'light-my-request';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createValidationPipe } from '@app/backend-common-validation';
+import { AdminAppApiModule } from './admin-app-api.module';
 
 interface HealthEnvelope {
   status?: string;
@@ -28,10 +25,9 @@ interface HealthEnvelope {
   dependencies?: unknown[];
 }
 
-const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope =>
-  response.json<HealthEnvelope>();
+const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
-describe("admin-app-api health e2e", () => {
+describe('admin-app-api health e2e', () => {
   let app: NestFastifyApplication;
   const ormMock = {
     close: vi.fn(() => Promise.resolve()),
@@ -53,9 +49,7 @@ describe("admin-app-api health e2e", () => {
       .useValue(ormMock)
       .compile();
 
-    app = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
+    app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
@@ -67,64 +61,62 @@ describe("admin-app-api health e2e", () => {
     await app?.close();
   });
 
-  it("GET /health returns shared liveness-compatible health details", async () => {
-    const response = await app.inject({ method: "GET", url: "/health" });
+  it('GET /health returns shared liveness-compatible health details', async () => {
+    const response = await app.inject({ method: 'GET', url: '/health' });
 
     expect(response.statusCode).toBe(200);
     expect(parseHealthEnvelope(response)).toMatchObject({
       status: expect.stringMatching(/^(ok|degraded)$/),
       checks: expect.arrayContaining([
-        expect.objectContaining({ name: "runtime", status: "ok" }),
-        expect.objectContaining({ name: "config" }),
-        expect.objectContaining({ name: "i18n" }),
-        expect.objectContaining({ name: "postgres", status: "ok" }),
-        expect.objectContaining({ name: "postgres-migrations", status: "ok" }),
+        expect.objectContaining({ name: 'runtime', status: 'ok' }),
+        expect.objectContaining({ name: 'config' }),
+        expect.objectContaining({ name: 'i18n' }),
+        expect.objectContaining({ name: 'postgres', status: 'ok' }),
+        expect.objectContaining({ name: 'postgres-migrations', status: 'ok' }),
         expect.objectContaining({
-          name: "redis",
-          status: "ok",
+          name: 'redis',
+          status: 'ok',
           required: false,
         }),
         expect.objectContaining({
-          name: "nats",
-          status: "ok",
+          name: 'nats',
+          status: 'ok',
           required: false,
         }),
       ]),
     });
   });
 
-  it("GET /live and /ready return shared envelopes with dependencies", async () => {
-    const liveResponse = await app.inject({ method: "GET", url: "/live" });
+  it('GET /live and /ready return shared envelopes with dependencies', async () => {
+    const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({
       data: {
-        app: "admin-app-api",
+        app: 'admin-app-api',
         status: expect.stringMatching(/^(ok|degraded)$/),
-        dependencies: expect.arrayContaining([
-          expect.objectContaining({ name: "runtime", status: "ok" }),
-        ]),
+        dependencies: expect.arrayContaining([expect.objectContaining({ name: 'runtime', status: 'ok' })]),
       },
     });
 
-    const readyResponse = await app.inject({ method: "GET", url: "/ready" });
+    const readyResponse = await app.inject({ method: 'GET', url: '/ready' });
     expect(readyResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(readyResponse)).toMatchObject({
       data: {
-        app: "admin-app-api",
+        app: 'admin-app-api',
         dependencies: expect.arrayContaining([
-          expect.objectContaining({ name: "postgres", status: "ok" }),
+          expect.objectContaining({ name: 'postgres', status: 'ok' }),
           expect.objectContaining({
-            name: "postgres-migrations",
-            status: "ok",
+            name: 'postgres-migrations',
+            status: 'ok',
           }),
           expect.objectContaining({
-            name: "redis",
-            status: "ok",
+            name: 'redis',
+            status: 'ok',
             required: false,
           }),
           expect.objectContaining({
-            name: "nats",
-            status: "ok",
+            name: 'nats',
+            status: 'ok',
             required: false,
           }),
         ]),
@@ -133,19 +125,13 @@ describe("admin-app-api health e2e", () => {
     });
   });
 
-  it("GET /ready returns 503 with safe details for mandatory Postgres failure", async () => {
+  it('GET /ready returns 503 with safe details for mandatory Postgres failure', async () => {
     const failingOrmMock = {
       ...ormMock,
       em: {
         ...ormMock.em,
         getConnection: () => ({
-          execute: vi.fn(() =>
-            Promise.reject(
-              new Error(
-                "password=redacted postgres://user:redacted@db:5432/app",
-              ),
-            ),
-          ),
+          execute: vi.fn(() => Promise.reject(new Error('password=redacted postgres://user:redacted@db:5432/app'))),
         }),
       },
     };
@@ -155,31 +141,28 @@ describe("admin-app-api health e2e", () => {
       .overrideProvider(MikroORM)
       .useValue(failingOrmMock)
       .compile();
-    const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(
-      new FastifyAdapter(),
-    );
+    const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
 
     try {
       await failingApp.init();
       const response = await failingApp.inject({
-        method: "GET",
-        url: "/ready",
+        method: 'GET',
+        url: '/ready',
       });
       const body = parseHealthEnvelope(response);
 
       expect(response.statusCode).toBe(503);
-      expect(JSON.stringify(body)).not.toContain("super-secret");
-      const errorPayload =
-        body.response?.data ?? body.data ?? body.response ?? body;
-      expect(errorPayload.app).toBe("admin-app-api");
+      expect(JSON.stringify(body)).not.toContain('super-secret');
+      const errorPayload = body.response?.data ?? body.data ?? body.response ?? body;
+      expect(errorPayload.app).toBe('admin-app-api');
       expect(errorPayload.dependencies).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            name: "postgres",
-            status: "error",
-            detail: expect.not.stringContaining("super-secret"),
+            name: 'postgres',
+            status: 'error',
+            detail: expect.not.stringContaining('super-secret'),
             details: expect.objectContaining({
-              message: expect.not.stringContaining("super-secret"),
+              message: expect.not.stringContaining('super-secret'),
             }),
           }),
         ]),

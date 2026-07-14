@@ -30,9 +30,9 @@ return {count, ttl}
 `;
 
 export const redisLuaScripts = Object.freeze({
-  "delete-if-value": deleteIfValueScript,
-  "extend-if-value": extendIfValueScript,
-  "increment-window": incrementWithWindowScript,
+  'delete-if-value': deleteIfValueScript,
+  'extend-if-value': extendIfValueScript,
+  'increment-window': incrementWithWindowScript,
 } as const);
 
 export type RedisLuaScriptName = keyof typeof redisLuaScripts;

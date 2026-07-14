@@ -1,14 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { observer } from "mobx-react-lite";
-import { afterEach, describe, expect, it } from "vitest";
-import { FrontendI18nProvider, useI18n } from "../i18n/i18n-provider";
-import {
-  AppStore,
-  FrontendStateProvider,
-  createRootStore,
-  useRootStore,
-  useStore,
-} from "./index";
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { observer } from 'mobx-react-lite';
+import { afterEach, describe, expect, it } from 'vitest';
+import { FrontendI18nProvider, useI18n } from '../i18n/i18n-provider';
+import { AppStore, FrontendStateProvider, createRootStore, useRootStore, useStore } from './index';
 
 const LocalePreview = observer(function LocalePreview() {
   const { locale, setLocale } = useI18n();
@@ -21,7 +15,7 @@ const LocalePreview = observer(function LocalePreview() {
       <span>{appStore.currentBreakpoint}</span>
       <button
         onClick={() => {
-          setLocale("ru");
+          setLocale('ru');
         }}
         type="button"
       >
@@ -33,20 +27,20 @@ const LocalePreview = observer(function LocalePreview() {
         }}
         type="button"
       >
-        {ui.sidebarOpen ? "open" : "closed"}
+        {ui.sidebarOpen ? 'open' : 'closed'}
       </button>
     </div>
   );
 });
 
-describe("frontend MobX state foundation", () => {
+describe('frontend MobX state foundation', () => {
   afterEach(() => {
     cleanup();
-    document.cookie = "locale=; path=/; max-age=0";
+    document.cookie = 'locale=; path=/; max-age=0';
   });
 
-  it("drives i18n locale from the shared LocaleStore", () => {
-    const store = createRootStore({ initialLocale: "en" });
+  it('drives i18n locale from the shared LocaleStore', () => {
+    const store = createRootStore({ initialLocale: 'en' });
     render(
       <FrontendStateProvider store={store}>
         <FrontendI18nProvider>
@@ -55,25 +49,25 @@ describe("frontend MobX state foundation", () => {
       </FrontendStateProvider>,
     );
 
-    expect(screen.getByText("en")).toBeTruthy();
+    expect(screen.getByText('en')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "switch locale" }));
+    fireEvent.click(screen.getByRole('button', { name: 'switch locale' }));
 
-    expect(screen.getByText("ru")).toBeTruthy();
-    expect(document.documentElement.lang).toBe("ru");
+    expect(screen.getByText('ru')).toBeTruthy();
+    expect(document.documentElement.lang).toBe('ru');
   });
 
-  it("keeps client-only shell state in MobX without server cache data", () => {
-    const store = createRootStore({ initialTheme: "dark" });
-    store.authShell.setBearerToken(" shell-token ");
-    store.ui.openModal("profile-menu");
+  it('keeps client-only shell state in MobX without server cache data', () => {
+    const store = createRootStore({ initialTheme: 'dark' });
+    store.authShell.setBearerToken(' shell-token ');
+    store.ui.openModal('profile-menu');
     store.ui.toggleSidebar();
 
     expect(store.authShell.isAuthenticated).toBe(true);
-    expect(store.authShell.bearerToken).toBe("shell-token");
-    expect(store.ui.activeModal).toBe("profile-menu");
+    expect(store.authShell.bearerToken).toBe('shell-token');
+    expect(store.ui.activeModal).toBe('profile-menu');
     expect(store.ui.sidebarOpen).toBe(false);
-    expect(store.ui.theme).toBe("dark");
-    expect(store.app.breakpoints.gte("mobile")).toBe(true);
+    expect(store.ui.theme).toBe('dark');
+    expect(store.app.breakpoints.gte('mobile')).toBe(true);
   });
 });

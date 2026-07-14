@@ -20,15 +20,21 @@ Report via the **Vulnerability Report** option in the repository's **Issues** pa
 
 Report via private message to the repository owner, or contact security@example.com.
 
+### Response targets
+
+- We acknowledge a private vulnerability report within 3 business days.
+- We complete initial severity and ownership triage within 5 business days.
+- We keep the reporter informed when remediation timing or disclosure plans change.
+
 ## Automated security scans
 
 This repository includes automated security scanning for all supported platforms:
 
-| Platform | Secret detection | Dependency audit | SAST | Container scanning |
-|----------|-----------------|------------------|------|-------------------|
-| GitHub | Gitleaks | Dependabot + audit:ci | CodeQL | Docker build validation |
-| GitLab | Secret Detection | Dependency Scanning | SAST | Container Scanning |
-| Bitbucket | Gitleaks | audit:ci | — | Docker build validation |
+| Platform  | Secret detection | Dependency audit      | SAST   | Container scanning      |
+| --------- | ---------------- | --------------------- | ------ | ----------------------- |
+| GitHub    | Gitleaks         | Dependabot + audit:ci | CodeQL | Docker build validation |
+| GitLab    | Secret Detection | Dependency Scanning   | SAST   | Container Scanning      |
+| Bitbucket | Gitleaks         | audit:ci              | —      | Docker build validation |
 
 ## Secured components
 

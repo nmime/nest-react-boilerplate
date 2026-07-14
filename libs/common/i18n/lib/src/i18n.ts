@@ -1,4 +1,4 @@
-import { translations, type TranslationKey } from "./locales";
+import { translations, type TranslationKey } from './locales';
 import {
   fallbackLocale,
   hasTranslationKeyIn,
@@ -13,9 +13,9 @@ import {
   type LocaleRequestSource,
   type TranslateOptions,
   type TranslationParams,
-} from "@app/common-i18n-runtime";
+} from '@app/common-i18n-runtime';
 
-export * from "./locales";
+export * from './locales';
 export {
   fallbackLocale,
   interpolate,
@@ -25,21 +25,13 @@ export {
   resolveLocaleFromRequest,
   supportedLocales,
 };
-export type {
-  Locale,
-  LocaleRequestSource,
-  TranslateOptions,
-  TranslationParams,
-};
+export type { Locale, LocaleRequestSource, TranslateOptions, TranslationParams };
 
 export function hasTranslationKey(key: string): key is TranslationKey {
   return hasTranslationKeyIn(translations, key);
 }
 
-export function translate(
-  key: TranslationKey,
-  options: TranslateOptions = {},
-): string {
+export function translate(key: TranslationKey, options: TranslateOptions = {}): string {
   return translateFromCatalog(translations, key, options);
 }
 
@@ -61,11 +53,7 @@ export class I18nService {
 }
 
 export function createRequestLocaleMiddleware(i18n = new I18nService()) {
-  return (
-    request: LocaleRequestSource,
-    _response: unknown,
-    next: () => void,
-  ): void => {
+  return (request: LocaleRequestSource, _response: unknown, next: () => void): void => {
     const locale = i18n.resolveLocaleFromRequest(request);
     request.locale = locale;
     request.language = locale;

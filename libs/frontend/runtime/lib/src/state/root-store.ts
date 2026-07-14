@@ -1,8 +1,8 @@
-import type { Locale } from "../i18n/locale";
-import { AppStore } from "./app-store";
-import { AuthShellStore } from "./auth-shell-store";
-import { LocaleStore } from "./locale-store";
-import { UiStore, type UiTheme } from "./ui-store";
+import type { Locale } from '../i18n/locale';
+import { AppStore } from './app-store';
+import { AuthShellStore } from './auth-shell-store';
+import { LocaleStore } from './locale-store';
+import { UiStore, type UiTheme } from './ui-store';
 
 export interface RootStoreOptions {
   initialBearerToken?: string | null;
@@ -29,5 +29,4 @@ export class RootStore {
   }
 }
 
-export const createRootStore = (options?: RootStoreOptions): RootStore =>
-  new RootStore(options);
+export const createRootStore = (options?: RootStoreOptions): RootStore => new RootStore(options);

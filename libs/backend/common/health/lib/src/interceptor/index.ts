@@ -1,1 +1,1 @@
-export * from "./health-transform.interceptor";
+export * from './health-transform.interceptor';

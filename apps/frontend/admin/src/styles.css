@@ -39,9 +39,7 @@
 }
 
 .admin-sidebar__card {
-  background:
-    linear-gradient(135deg, rgba(88, 213, 255, 0.14), transparent),
-    var(--xr-card-background);
+  background: linear-gradient(135deg, rgba(88, 213, 255, 0.14), transparent), var(--xr-card-background);
   border: 1px solid var(--xr-color-border);
   border-radius: var(--xr-radius-lg);
   box-shadow: var(--xr-shadow-lg);
@@ -87,7 +85,7 @@
 
 .admin-sidebar__link:hover,
 .admin-sidebar__link:focus-visible,
-.admin-sidebar__link[data-current="true"] {
+.admin-sidebar__link[data-current='true'] {
   background: color-mix(in srgb, var(--xr-color-primary) 13%, transparent);
   border-color: color-mix(in srgb, var(--xr-color-primary) 38%, transparent);
   color: var(--xr-color-text);
@@ -113,10 +111,9 @@
   padding-top: 0.12rem;
 }
 
-.admin-sidebar__link[data-current="true"] .admin-sidebar__indicator {
+.admin-sidebar__link[data-current='true'] .admin-sidebar__indicator {
   background: var(--xr-color-primary);
-  box-shadow: 0 0 24px
-    color-mix(in srgb, var(--xr-color-primary) 58%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--xr-color-primary) 58%, transparent);
 }
 
 .admin-sidebar__label {
@@ -131,8 +128,7 @@
 
 .admin-sidebar__footnote {
   background: color-mix(in srgb, var(--xr-color-primary) 8%, transparent);
-  border: 1px dashed
-    color-mix(in srgb, var(--xr-color-primary) 35%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--xr-color-primary) 35%, transparent);
   border-radius: var(--xr-radius-md);
   color: var(--xr-color-muted);
   font-size: 0.82rem;
@@ -224,11 +220,7 @@
 .admin-command-center__score {
   align-items: center;
   aspect-ratio: 1;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--xr-color-primary) 22%, transparent),
-    transparent 70%
-  );
+  background: radial-gradient(circle, color-mix(in srgb, var(--xr-color-primary) 22%, transparent), transparent 70%);
   border: 1px solid color-mix(in srgb, var(--xr-color-primary) 32%, transparent);
   border-radius: 999px;
   display: grid;
@@ -336,12 +328,8 @@
   padding: 0.85rem;
 }
 
-.admin-readiness-card[data-ready="true"] {
-  border-color: color-mix(
-    in srgb,
-    var(--xr-color-success) 40%,
-    var(--xr-color-border)
-  );
+.admin-readiness-card[data-ready='true'] {
+  border-color: color-mix(in srgb, var(--xr-color-success) 40%, var(--xr-color-border));
 }
 
 .admin-readiness-card__header {
@@ -448,13 +436,7 @@
 
 .admin-avatar {
   align-items: center;
-  background:
-    radial-gradient(
-      circle at 30% 25%,
-      rgba(255, 255, 255, 0.32),
-      transparent 32%
-    ),
-    var(--xr-color-primary);
+  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.32), transparent 32%), var(--xr-color-primary);
   border-radius: 999px;
   color: var(--xr-color-primary-contrast);
   display: inline-flex;

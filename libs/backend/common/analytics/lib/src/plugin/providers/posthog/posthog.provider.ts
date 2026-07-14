@@ -1,9 +1,5 @@
-import type {
-  AnalyticsIdentifyPayload,
-  AnalyticsPagePayload,
-  AnalyticsPayload,
-} from "../../../type";
-import { AbstractAnalyticsProvider } from "../base";
+import type { AnalyticsIdentifyPayload, AnalyticsPagePayload, AnalyticsPayload } from '../../../type';
+import { AbstractAnalyticsProvider } from '../base';
 
 export interface PostHogAnalyticsPluginOptions {
   apiKey: string;
@@ -12,7 +8,7 @@ export interface PostHogAnalyticsPluginOptions {
 }
 
 export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
-  readonly name = "posthog";
+  readonly name = 'posthog';
 
   private readonly captureUrl: string;
   private readonly fetcher: typeof fetch;
@@ -20,9 +16,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
   constructor(private readonly options: PostHogAnalyticsPluginOptions) {
     super();
     this.fetcher = options.fetch ?? fetch;
-    this.captureUrl = `${stripTrailingSlash(
-      options.host ?? "https://app.posthog.com",
-    )}/capture/`;
+    this.captureUrl = `${stripTrailingSlash(options.host ?? 'https://app.posthog.com')}/capture/`;
   }
 
   override async track(payload: AnalyticsPayload): Promise<void> {
@@ -42,7 +36,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
 
   override async identify(payload: AnalyticsIdentifyPayload): Promise<void> {
     await sendPostHogEvent(this.fetcher, this.captureUrl, this.options.apiKey, {
-      event: "$identify",
+      event: '$identify',
       distinct_id: payload.userId,
       timestamp: payload.timestamp?.toISOString(),
       properties: compactObject({
@@ -54,7 +48,7 @@ export class PostHogAnalyticsProvider extends AbstractAnalyticsProvider {
 
   override async page(payload: AnalyticsPagePayload): Promise<void> {
     await sendPostHogEvent(this.fetcher, this.captureUrl, this.options.apiKey, {
-      event: "$pageview",
+      event: '$pageview',
       distinct_id: pageDistinctId(payload),
       timestamp: payload.timestamp?.toISOString(),
       properties: compactObject({
@@ -74,8 +68,8 @@ async function sendPostHogEvent(
   payload: Record<string, unknown>,
 ): Promise<void> {
   const response = await fetcher(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ api_key: apiKey, ...payload }),
   });
 
@@ -85,31 +79,24 @@ async function sendPostHogEvent(
 }
 
 function distinctId(payload: AnalyticsPayload): string {
-  return payload.userId ?? payload.anonymousId ?? "server";
+  return payload.userId ?? payload.anonymousId ?? 'server';
 }
 
 function pageDistinctId(payload: AnalyticsPagePayload): string {
-  const contextDistinctId =
-    typeof payload.context?.distinctId === "string"
-      ? payload.context.distinctId
-      : undefined;
+  const contextDistinctId = typeof payload.context?.distinctId === 'string' ? payload.context.distinctId : undefined;
 
-  return contextDistinctId ?? "server";
+  return contextDistinctId ?? 'server';
 }
 
 function stripTrailingSlash(value: string): string {
   let end = value.length;
-  while (end > 0 && value[end - 1] === "/") {
+  while (end > 0 && value[end - 1] === '/') {
     end -= 1;
   }
 
   return value.slice(0, end);
 }
 
-function compactObject<T extends Record<string, unknown>>(
-  value: T,
-): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined),
-  ) as Partial<T>;
+function compactObject<T extends Record<string, unknown>>(value: T): Partial<T> {
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as Partial<T>;
 }

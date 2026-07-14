@@ -1,1 +1,1 @@
-export const adminUserMutationOutboxAggregateType = "admin.user";
+export const adminUserMutationOutboxAggregateType = 'admin.user';

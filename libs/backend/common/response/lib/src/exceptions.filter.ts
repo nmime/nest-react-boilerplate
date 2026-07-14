@@ -1,12 +1,9 @@
 import { ArgumentsHost, Catch, HttpStatus, Logger } from '@nestjs/common';
 import type { ExceptionFilter } from '@nestjs/common';
 import { toProblemDetails, type ProblemDetails } from '@app/backend-common-exception';
-import {
-  type LocaleRequestSource,
-  resolveLocaleFromRequest,
-} from '@app/common-i18n';
+import { type LocaleRequestSource, resolveLocaleFromRequest } from '@app/common-i18n';
 import { formatProblemDescriptor } from './problem-descriptor.util';
-import { requestContext } from '@app/backend-common-bootstrap';
+import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 
 interface ProblemHttpResponse {
   status: (code: number) => ProblemHttpResponse;
@@ -31,21 +28,17 @@ export class ExceptionsFilter implements ExceptionFilter {
     const response = http.getResponse<ProblemHttpResponse>();
     const locale = resolveLocaleFromRequest(request);
 
-    // Read requestId from CLS — same id as logging, controllers, services
-    const requestId = requestContext.getRequestId();
+    const requestId =
+      requestContext.getRequestId() ??
+      normalizeRequestId(request.headers?.['x-request-id']) ??
+      normalizeRequestId(request.id);
 
     // Build problem details — static fields from exception, instance from boundary
-    const problem = toProblemDetails(
-      exception,
-      requestId ? `/${requestId}` : undefined,
-      locale,
-    );
+    const problem = toProblemDetails(exception, requestId ? `/${requestId}` : undefined, locale);
 
     this.logProblem(problem, exception);
 
-    const problemResponse = response
-      .status(problem.status)
-      .type('application/problem+json');
+    const problemResponse = response.status(problem.status).type('application/problem+json');
 
     problemResponse.header?.('content-language', locale);
     if (requestId) {

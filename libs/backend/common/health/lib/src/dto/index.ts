@@ -1,1 +1,1 @@
-export * from "./health-response.dto-schema";
+export * from './health-response.dto-schema';

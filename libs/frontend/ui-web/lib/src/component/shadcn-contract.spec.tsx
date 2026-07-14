@@ -1,5 +1,5 @@
-import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
 import {
   Alert,
   AlertDescription,
@@ -47,21 +47,21 @@ import {
   UiButton,
   UiCard,
   UiInput,
-} from "./index";
+} from './index';
 
-describe("shadcn-compatible public component contract", () => {
-  it("keeps canonical shadcn names behind the shared web UI facade", () => {
+describe('shadcn-compatible public component contract', () => {
+  it('keeps canonical shadcn names behind the shared web UI facade', () => {
     expect(Button).toBe(UiButton);
     expect(Input).toBe(UiInput);
     expect(Card).not.toBe(UiCard);
-    expect(DataTable).toBeTypeOf("function");
+    expect(DataTable).toBeTypeOf('function');
     expect(Dialog).toBeDefined();
     expect(DropdownMenu).toBeDefined();
     expect(Select).toBeDefined();
     expect(Tabs).toBeDefined();
   });
 
-  it("marks copied-source primitives with stable shadcn data slots", () => {
+  it('marks copied-source primitives with stable shadcn data slots', () => {
     const html = renderToStaticMarkup(
       <div>
         <Button>Save</Button>
@@ -107,49 +107,49 @@ describe("shadcn-compatible public component contract", () => {
     );
 
     for (const slot of [
-      "button",
-      "input",
-      "textarea",
-      "label",
-      "form",
-      "card",
-      "card-header",
-      "card-title",
-      "card-description",
-      "card-content",
-      "card-footer",
-      "alert",
-      "alert-title",
-      "alert-description",
-      "badge",
-      "checkbox",
-      "switch",
-      "table",
-      "table-header",
-      "table-row",
-      "table-head",
-      "table-body",
-      "table-cell",
-      "tabs-list",
-      "tabs-trigger",
-      "tabs-content",
+      'button',
+      'input',
+      'textarea',
+      'label',
+      'form',
+      'card',
+      'card-header',
+      'card-title',
+      'card-description',
+      'card-content',
+      'card-footer',
+      'alert',
+      'alert-title',
+      'alert-description',
+      'badge',
+      'checkbox',
+      'switch',
+      'table',
+      'table-header',
+      'table-row',
+      'table-head',
+      'table-body',
+      'table-cell',
+      'tabs-list',
+      'tabs-trigger',
+      'tabs-content',
     ]) {
       expect(html).toContain(`data-slot="${slot}"`);
     }
   });
 
-  it("keeps Radix composition parts available for generated shadcn-style code", () => {
-    expect(DialogContent).toBeTypeOf("object");
-    expect(DialogHeader).toBeTypeOf("function");
-    expect(DialogFooter).toBeTypeOf("function");
-    expect(DialogTitle).toBeTypeOf("object");
-    expect(DialogDescription).toBeTypeOf("object");
-    expect(DropdownMenuTrigger).toBeTypeOf("object");
-    expect(DropdownMenuContent).toBeTypeOf("object");
-    expect(DropdownMenuItem).toBeTypeOf("object");
-    expect(SelectTrigger).toBeTypeOf("object");
-    expect(SelectValue).toBeTypeOf("object");
-    expect(SelectContent).toBeTypeOf("object");
-    expect(SelectItem).toBeTypeOf("object");
+  it('keeps Radix composition parts available for generated shadcn-style code', () => {
+    expect(DialogContent).toBeTypeOf('object');
+    expect(DialogHeader).toBeTypeOf('function');
+    expect(DialogFooter).toBeTypeOf('function');
+    expect(DialogTitle).toBeTypeOf('object');
+    expect(DialogDescription).toBeTypeOf('object');
+    expect(DropdownMenuTrigger).toBeTypeOf('object');
+    expect(DropdownMenuContent).toBeTypeOf('object');
+    expect(DropdownMenuItem).toBeTypeOf('object');
+    expect(SelectTrigger).toBeTypeOf('object');
+    expect(SelectValue).toBeTypeOf('object');
+    expect(SelectContent).toBeTypeOf('object');
+    expect(SelectItem).toBeTypeOf('object');
   });
 });

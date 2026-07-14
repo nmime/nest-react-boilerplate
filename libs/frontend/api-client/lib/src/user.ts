@@ -1,7 +1,7 @@
-import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
-import createClient from "openapi-fetch";
-import createQueryClient from "openapi-react-query";
-import type { components, paths } from "./generated/user";
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import createClient from 'openapi-fetch';
+import createQueryClient from 'openapi-react-query';
+import type { components, paths } from './generated/user';
 import {
   type ApiClientRequestOptions,
   type ApiClientError,
@@ -10,50 +10,39 @@ import {
   type OpenApiError,
   throwOnOpenApiErrorData,
   toOpenApiFetchOptions,
-} from "./service-options";
+} from './service-options';
 
-const profileMePath = "/profile/me";
+const profileMePath = '/profile/me';
 
 export const client = createClient<paths>();
 export const query = createQueryClient(client);
 
-export type AuthenticatedPrincipalDto =
-  components["schemas"]["AuthenticatedPrincipalDto"];
-export type UserProfileViewDto = components["schemas"]["UserProfileViewDto"];
-export type ProfilePayloadDto = components["schemas"]["ProfilePayloadDto"];
+export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
+export type UserProfileViewDto = components['schemas']['UserProfileViewDto'];
+export type ProfilePayloadDto = components['schemas']['ProfilePayloadDto'];
 
 export const profileControllerMe = (options?: ApiClientRequestOptions) =>
   client.GET(profileMePath, toOpenApiFetchOptions(options));
-export type ProfileControllerMeResponse = OpenApiData<
-  typeof profileControllerMe
->;
+export type ProfileControllerMeResponse = OpenApiData<typeof profileControllerMe>;
 export type ProfileControllerMeData = EnvelopeData<ProfileControllerMeResponse>;
 export type ProfileControllerMeError = OpenApiError<typeof profileControllerMe>;
 
-export const getProfileControllerMeQueryKey = () =>
-  ["get", profileMePath] as const;
+export const getProfileControllerMeQueryKey = () => ['get', profileMePath] as const;
 export const getProfileControllerMeQueryOptions = (
   options?: ApiClientRequestOptions,
 ): OpenApiQueryOptions<ProfileControllerMeResponse, ProfileControllerMeError> =>
-  query.queryOptions(
-    "get",
-    profileMePath,
-    toOpenApiFetchOptions(options),
-  ) as unknown as OpenApiQueryOptions<
+  query.queryOptions('get', profileMePath, toOpenApiFetchOptions(options)) as unknown as OpenApiQueryOptions<
     ProfileControllerMeResponse,
     ProfileControllerMeError
   >;
 
-type OpenApiQueryOptions<TData, TError> = Omit<
-  UseQueryOptions<TData, TError, TData>,
-  "queryFn"
-> & {
-  queryFn: NonNullable<UseQueryOptions<TData, TError, TData>["queryFn"]>;
+type OpenApiQueryOptions<TData, TError> = Omit<UseQueryOptions<TData, TError, TData>, 'queryFn'> & {
+  queryFn: NonNullable<UseQueryOptions<TData, TError, TData>['queryFn']>;
 };
 
 type QueryConfig<TData, TError> = Omit<
   UseQueryOptions<TData, ApiClientError<TError>, TData>,
-  "queryFn" | "queryKey"
+  'queryFn' | 'queryKey'
 > & {
   request?: ApiClientRequestOptions;
 };

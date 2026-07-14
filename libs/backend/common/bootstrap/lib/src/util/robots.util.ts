@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import type { NestMiddleware } from "@nestjs/common";
+import { Injectable } from '@nestjs/common';
+import type { NestMiddleware } from '@nestjs/common';
 
 interface RobotsRequestLike {
   method?: string;
@@ -16,21 +16,14 @@ interface RobotsResponseLike {
 
 @Injectable()
 export class RobotsMiddleware implements NestMiddleware {
-  use(
-    request: RobotsRequestLike,
-    response: RobotsResponseLike,
-    next: () => void,
-  ): void {
-    if (
-      request.method === "GET" &&
-      (request.path ?? request.url) === "/robots.txt"
-    ) {
-      response.type?.("text/plain");
-      response.setHeader?.("content-type", "text/plain");
+  use(request: RobotsRequestLike, response: RobotsResponseLike, next: () => void): void {
+    if (request.method === 'GET' && (request.path ?? request.url) === '/robots.txt') {
+      response.type?.('text/plain');
+      response.setHeader?.('content-type', 'text/plain');
       if (response.send) {
-        response.send("User-agent: *\nDisallow: /\n");
+        response.send('User-agent: *\nDisallow: /\n');
       } else {
-        response.end?.("User-agent: *\nDisallow: /\n");
+        response.end?.('User-agent: *\nDisallow: /\n');
       }
       return;
     }

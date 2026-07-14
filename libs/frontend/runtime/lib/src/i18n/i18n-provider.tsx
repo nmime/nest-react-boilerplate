@@ -1,14 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { observer } from "mobx-react-lite";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { observer } from 'mobx-react-lite';
 import {
   fallbackLocale,
   sharedFrontendTranslations,
@@ -18,14 +10,8 @@ import {
   type Locale,
   type TranslationKey,
   type TranslationParams,
-} from "./locale";
-import {
-  createRootStore,
-  detectBrowserLocale,
-  useOptionalRootStore,
-  type UiTheme,
-  type RootStore,
-} from "../state";
+} from './locale';
+import { createRootStore, detectBrowserLocale, useOptionalRootStore, type UiTheme, type RootStore } from '../state';
 
 export interface FrontendI18nContextValue {
   locale: Locale;
@@ -40,13 +26,12 @@ const fallbackContext: FrontendI18nContextValue = {
   locale: fallbackLocale,
   supportedLocales,
   setLocale: () => undefined,
-  theme: "system",
+  theme: 'system',
   setTheme: () => undefined,
   t: (key, params) => translate(key, { locale: fallbackLocale, params }),
 };
 
-const FrontendI18nContext =
-  createContext<FrontendI18nContextValue>(fallbackContext);
+const FrontendI18nContext = createContext<FrontendI18nContextValue>(fallbackContext);
 
 export interface FrontendI18nProviderProps {
   children: ReactNode;
@@ -64,10 +49,7 @@ const createI18nRootStore = ({
   initialTheme,
   userLocale,
   userTheme,
-}: Pick<
-  FrontendI18nProviderProps,
-  "initialLocale" | "initialTheme" | "userLocale" | "userTheme"
->): RootStore =>
+}: Pick<FrontendI18nProviderProps, 'initialLocale' | 'initialTheme' | 'userLocale' | 'userTheme'>): RootStore =>
   createRootStore({
     initialLocale: userLocale ?? initialLocale ?? detectBrowserLocale(),
     initialTheme: userTheme ?? initialTheme,
@@ -111,9 +93,7 @@ export const FrontendI18nProvider = observer(function FrontendI18nProvider({
   }, [ownedRootStore]);
 
   if (!localeStore || !uiStore) {
-    throw new Error(
-      "FrontendI18nProvider could not resolve a frontend state store.",
-    );
+    throw new Error('FrontendI18nProvider could not resolve a frontend state store.');
   }
   const { locale } = localeStore;
   const { theme } = uiStore;
@@ -154,21 +134,10 @@ export const FrontendI18nProvider = observer(function FrontendI18nProvider({
       supportedLocales: localeStore.supportedLocales,
       t: (key, params) => translate(key, { locale, params, translations }),
     }),
-    [
-      locale,
-      localeStore.supportedLocales,
-      setLocale,
-      setTheme,
-      theme,
-      translations,
-    ],
+    [locale, localeStore.supportedLocales, setLocale, setTheme, theme, translations],
   );
 
-  return (
-    <FrontendI18nContext.Provider value={value}>
-      {children}
-    </FrontendI18nContext.Provider>
-  );
+  return <FrontendI18nContext.Provider value={value}>{children}</FrontendI18nContext.Provider>;
 });
 
 export function useI18n(): FrontendI18nContextValue {

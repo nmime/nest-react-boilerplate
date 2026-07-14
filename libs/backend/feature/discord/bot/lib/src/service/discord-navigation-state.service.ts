@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import type { DiscordCustomIdAction } from "./discord-custom-id.codec";
+import { Injectable } from '@nestjs/common';
+import type { DiscordCustomIdAction } from './discord-custom-id.codec';
 
 export interface DiscordNavigationState {
   nonce: string;

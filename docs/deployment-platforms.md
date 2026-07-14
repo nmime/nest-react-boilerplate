@@ -4,14 +4,14 @@ This boilerplate supports deployment from GitHub, GitLab, or Bitbucket.
 
 ## CI/CD comparison
 
-| Feature | GitHub | GitLab | Bitbucket |
-|---------|--------|--------|-----------|
-| CI config | .github/workflows/ | .gitlab-ci.yml | bitbucket-pipelines.yml |
-| MR/PR templates | .github/PULL_REQUEST_TEMPLATE.md | .gitlab/merge_request_templates/ | bitbucket (partial) |
-| Issue templates | .github/ISSUE_TEMPLATE/ | .gitlab/issue_templates/ | ❌ |
-| Dependabot | ✅ | ❌ (use GitLab Dep Scanning) | ❌ |
-| ArgoCD | ✅ deploy.yml triggers | Manual pipeline trigger | Manual pipeline trigger |
-| Container registry | GHCR | GitLab Container Registry | Bitbucket (no native) |
+| Feature            | GitHub                           | GitLab                           | Bitbucket               |
+| ------------------ | -------------------------------- | -------------------------------- | ----------------------- |
+| CI config          | .github/workflows/               | .gitlab-ci.yml                   | bitbucket-pipelines.yml |
+| MR/PR templates    | .github/PULL_REQUEST_TEMPLATE.md | .gitlab/merge_request_templates/ | bitbucket (partial)     |
+| Issue templates    | .github/ISSUE_TEMPLATE/          | .gitlab/issue_templates/         | ❌                      |
+| Dependabot         | ✅                               | ❌ (use GitLab Dep Scanning)     | ❌                      |
+| ArgoCD             | ✅ deploy.yml triggers           | Manual pipeline trigger          | Manual pipeline trigger |
+| Container registry | GHCR                             | GitLab Container Registry        | Bitbucket (no native)   |
 
 ## Helm values
 

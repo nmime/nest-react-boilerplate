@@ -1,1 +1,1 @@
-export * from "./ui/tma-page";
+export * from './ui/tma-page';

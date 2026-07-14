@@ -1,4 +1,4 @@
-import type { AnalyticsSourceType } from "../enum";
+import type { AnalyticsSourceType } from '../enum';
 
 export interface AnalyticsPayload<TProperties = Record<string, unknown>> {
   event: string;

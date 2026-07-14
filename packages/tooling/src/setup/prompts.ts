@@ -45,15 +45,20 @@ async function askChoice(
   defaultIndex = 0,
 ): Promise<string> {
   for (let i = 0; i < choices.length; i++) {
+    const choice = choices[i];
+    if (choice === undefined) {
+      continue;
+    }
     const marker = i === defaultIndex ? ' (*)' : '';
-    process.stdout.write(`  ${i + 1}. ${choices[i]!.label}${marker}\n`);
+    process.stdout.write(`  ${i + 1}. ${choice.label}${marker}\n`);
   }
   const answer = await ask(`${question}\n  Select (1-${choices.length})`, String(defaultIndex + 1));
   const idx = parseInt(answer, 10) - 1;
-  if (idx >= 0 && idx < choices.length) {
-    return choices[idx]!.value;
+  const selected = choices[idx] ?? choices[defaultIndex];
+  if (selected === undefined) {
+    throw new Error(`Cannot ask "${question}" without at least one choice.`);
   }
-  return choices[defaultIndex]!.value;
+  return selected.value;
 }
 
 // ---------------------------------------------------------------------------

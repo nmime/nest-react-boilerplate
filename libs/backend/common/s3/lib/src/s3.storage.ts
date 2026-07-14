@@ -1,4 +1,4 @@
-export const ObjectStorageInjectToken = Symbol("ObjectStorageInjectToken");
+export const ObjectStorageInjectToken = Symbol('ObjectStorageInjectToken');
 
 export interface ObjectStorageObject {
   key: string;
@@ -25,10 +25,7 @@ export interface ObjectStorageClient {
   putObject(params: PutObjectParams): Promise<void>;
   getObject(params: GetObjectParams): Promise<ObjectStorageObject | null>;
   deleteObject(params: GetObjectParams): Promise<void>;
-  listObjects(params: {
-    bucket: string;
-    prefix?: string;
-  }): Promise<ObjectStorageObject[]>;
+  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObject[]>;
 }
 
 export class InMemoryObjectStorageClient implements ObjectStorageClient {
@@ -37,10 +34,7 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
   putObject(params: PutObjectParams): Promise<void> {
     this.objects.set(this.createId(params.bucket, params.key), {
       key: params.key,
-      body:
-        typeof params.body === "string"
-          ? Buffer.from(params.body)
-          : new Uint8Array(params.body),
+      body: typeof params.body === 'string' ? Buffer.from(params.body) : new Uint8Array(params.body),
       contentType: params.contentType,
       metadata: params.metadata,
       updatedAt: new Date(),
@@ -49,9 +43,7 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
   }
 
   getObject(params: GetObjectParams): Promise<ObjectStorageObject | null> {
-    return Promise.resolve(
-      this.objects.get(this.createId(params.bucket, params.key)) ?? null,
-    );
+    return Promise.resolve(this.objects.get(this.createId(params.bucket, params.key)) ?? null);
   }
 
   deleteObject(params: GetObjectParams): Promise<void> {
@@ -59,18 +51,11 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
     return Promise.resolve();
   }
 
-  listObjects(params: {
-    bucket: string;
-    prefix?: string;
-  }): Promise<ObjectStorageObject[]> {
+  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObject[]> {
     const prefix = `${params.bucket}/`;
     return Promise.resolve(
       [...this.objects.entries()]
-        .filter(
-          ([id, object]) =>
-            id.startsWith(prefix) &&
-            (!params.prefix || object.key.startsWith(params.prefix)),
-        )
+        .filter(([id, object]) => id.startsWith(prefix) && (!params.prefix || object.key.startsWith(params.prefix)))
         .map(([, object]) => object),
     );
   }

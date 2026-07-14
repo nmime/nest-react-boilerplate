@@ -1,24 +1,17 @@
-import { Injectable, Module } from "@nestjs/common";
-import type {
-  DynamicModule,
-  OnApplicationShutdown,
-  Provider,
-} from "@nestjs/common";
-import type { NatsConnection } from "@nats-io/nats-core";
-import { NatsConfigService } from "./config";
-import { NatsInjectToken } from "./const";
-import { InjectNatsConnection } from "./decorator";
-import {
-  closeNatsConnection,
-  createNatsConnection,
-} from "./nats-client.factory";
-import { NatsHealthIndicator } from "./nats.health";
-import { NatsJetStreamService } from "./nats-jetstream.service";
-import { NatsKvService } from "./nats-kv.service";
-import { NatsObjectStoreService } from "./nats-object-store.service";
-import { NatsServicesService } from "./nats-services.service";
-import { NatsService } from "./nats.service";
-import type { NatsConfig } from "./type";
+import { Injectable, Module } from '@nestjs/common';
+import type { DynamicModule, OnApplicationShutdown, Provider } from '@nestjs/common';
+import type { NatsConnection } from '@nats-io/nats-core';
+import { NatsConfigService } from './config';
+import { NatsInjectToken } from './const';
+import { InjectNatsConnection } from './decorator';
+import { closeNatsConnection, createNatsConnection } from './nats-client.factory';
+import { NatsHealthIndicator } from './nats.health';
+import { NatsJetStreamService } from './nats-jetstream.service';
+import { NatsKvService } from './nats-kv.service';
+import { NatsObjectStoreService } from './nats-object-store.service';
+import { NatsServicesService } from './nats-services.service';
+import { NatsService } from './nats.service';
+import type { NatsConfig } from './type';
 
 export type NatsModuleOptions = NatsConfig;
 
@@ -51,9 +44,7 @@ export class NatsModule {
       },
       {
         provide: NatsInjectToken,
-        useFactory: async (
-          configService: NatsConfigService,
-        ): Promise<NatsConnection | null> => {
+        useFactory: async (configService: NatsConfigService): Promise<NatsConnection | null> => {
           if (options.client !== undefined) {
             return options.client;
           }
@@ -63,9 +54,7 @@ export class NatsModule {
             return null;
           }
 
-          return await (options.connectionFactory ?? createNatsConnection)(
-            config,
-          );
+          return await (options.connectionFactory ?? createNatsConnection)(config);
         },
         inject: [NatsConfigService],
       },

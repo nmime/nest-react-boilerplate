@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from 'react';
 import {
   backButton,
   deepSnakeToCamelObjKeys,
@@ -7,16 +7,12 @@ import {
   retrieveLaunchParams,
   useRawInitData,
   viewport,
-} from "@tma.js/sdk-react";
-import { parseTmaLaunchState, type TmaLaunchIntent } from "./tma-launch";
+} from '@tma.js/sdk-react';
+import { parseTmaLaunchState, type TmaLaunchIntent } from './tma-launch';
 
 interface UseTmaAuthInput {
   fallbackStartParam?: string;
-  onAuthenticate: (input: {
-    initData: string;
-    intent: TmaLaunchIntent;
-    returnUrl?: string;
-  }) => void;
+  onAuthenticate: (input: { initData: string; intent: TmaLaunchIntent; returnUrl?: string }) => void;
   onBack: () => void;
   status: string;
   error: unknown;
@@ -35,9 +31,9 @@ const readBrowserStartParam = (): string | undefined => {
   try {
     const searchParams = new URLSearchParams(globalThis.location.search);
     return (
-      searchParams.get("startapp") ??
-      searchParams.get("start_param") ??
-      searchParams.get("tgWebAppStartParam") ??
+      searchParams.get('startapp') ??
+      searchParams.get('start_param') ??
+      searchParams.get('tgWebAppStartParam') ??
       undefined
     );
   } catch {
@@ -68,9 +64,7 @@ export function useTmaAuth({
   const rawInitData = useRawInitData();
 
   const telegramStartParam =
-    launchParams && "tgWebAppStartParam" in launchParams
-      ? launchParams.tgWebAppStartParam
-      : undefined;
+    launchParams && 'tgWebAppStartParam' in launchParams ? launchParams.tgWebAppStartParam : undefined;
   const isTelegram = Boolean(rawInitData);
   const browserStartParam = readBrowserStartParam();
   const parsedLaunchState = useMemo(
@@ -78,16 +72,9 @@ export function useTmaAuth({
       parseTmaLaunchState({
         initData: rawInitData,
         isTelegram,
-        startParam:
-          telegramStartParam ?? browserStartParam ?? fallbackStartParam,
+        startParam: telegramStartParam ?? browserStartParam ?? fallbackStartParam,
       }),
-    [
-      browserStartParam,
-      fallbackStartParam,
-      isTelegram,
-      rawInitData,
-      telegramStartParam,
-    ],
+    [browserStartParam, fallbackStartParam, isTelegram, rawInitData, telegramStartParam],
   );
 
   useEffect(() => {
@@ -131,7 +118,7 @@ export function useTmaAuth({
   }, [isTelegram, onBack]);
 
   useEffect(() => {
-    if (!rawInitData || status !== "idle") {
+    if (!rawInitData || status !== 'idle') {
       return;
     }
 

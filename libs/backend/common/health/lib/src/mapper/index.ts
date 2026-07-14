@@ -1,1 +1,1 @@
-export * from "./health-response.mapper";
+export * from './health-response.mapper';

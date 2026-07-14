@@ -4,11 +4,11 @@ Step-by-step guide to creating and wiring a new NestJS backend service in the mo
 
 ## 1. Generate the service scaffold
 
-Use the Nx generator through the `nrb add` CLI:
+Use the Nx generator through the `pnpm nrb add` CLI:
 
 ```bash
-nrb add app my-service --dry-run
-nrb add app my-service
+pnpm nrb add app my-service --dry-run
+pnpm nrb add app my-service
 ```
 
 This runs `nx g @nx/node:app --name=my-service` and creates the project structure.
@@ -106,7 +106,7 @@ The bootstrap module automatically provides:
 If the service needs domain logic, scaffold a feature:
 
 ```bash
-nrb add feature my-feature --api-app my-service
+pnpm nrb add feature my-feature --api-app my-service
 ```
 
 Then import the generated module into the service's main NestJS module.

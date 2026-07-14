@@ -4,11 +4,6 @@
     "outDir": "../../../dist/out-tsc/apps/frontend/mobile",
     "types": ["node"]
   },
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.tsx"
-  ],
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.spec.tsx", "src/**/*.test.tsx"],
   "include": ["app.config.ts", "src/**/*.ts", "src/**/*.tsx"]
 }

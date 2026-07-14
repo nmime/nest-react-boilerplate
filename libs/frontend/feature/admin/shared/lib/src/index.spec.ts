@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import {
   AdminDashboardReadPermission,
   AdminManageAllPermission,
@@ -10,13 +10,13 @@ import {
   createAdminAccessPolicy,
   assertCanReadAdminProfile,
   normalizeStringList,
-} from "./index";
+} from './index';
 
-describe("@app/frontend-feature-admin-shared access policy", () => {
-  it("derives a frontend-safe admin access policy from principal claims", () => {
+describe('@app/frontend-feature-admin-shared access policy', () => {
+  it('derives a frontend-safe admin access policy from principal claims', () => {
     expect(
       createAdminAccessPolicy({
-        subject: "admin-id",
+        subject: 'admin-id',
         roles: [AdminRole],
         permissions: [
           AdminProfileReadPermission,
@@ -48,9 +48,9 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
     });
   });
 
-  it("derives canWriteRoles from the admin:roles:write claim", () => {
+  it('derives canWriteRoles from the admin:roles:write claim', () => {
     const policy = createAdminAccessPolicy({
-      subject: "admin-id",
+      subject: 'admin-id',
       roles: [AdminRole],
       permissions: [AdminRolesWritePermission],
     });
@@ -60,7 +60,7 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
     expect(policy.canAccessAdmin).toBe(true);
   });
 
-  it("fails closed when subject or admin role is missing", () => {
+  it('fails closed when subject or admin role is missing', () => {
     expect(
       createAdminAccessPolicy({
         permissions: [AdminManageAllPermission],
@@ -69,17 +69,17 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
     ).toBe(false);
     expect(
       createAdminAccessPolicy({
-        subject: "user-id",
+        subject: 'user-id',
         permissions: [AdminManageAllPermission],
-        roles: ["user"],
+        roles: ['user'],
       }).canAccessAdmin,
     ).toBe(false);
   });
 
-  it("treats manage-all as a frontend-safe wildcard access claim", () => {
+  it('treats manage-all as a frontend-safe wildcard access claim', () => {
     expect(
       createAdminAccessPolicy({
-        subject: "admin-id",
+        subject: 'admin-id',
         roles: [AdminRole],
         permissions: [AdminManageAllPermission],
       }),
@@ -98,19 +98,17 @@ describe("@app/frontend-feature-admin-shared access policy", () => {
     });
   });
 
-  it("normalizes claim lists", () => {
-    expect(normalizeStringList([" admin ", "", "admin", null])).toEqual([
-      "admin",
-    ]);
+  it('normalizes claim lists', () => {
+    expect(normalizeStringList([' admin ', '', 'admin', null])).toEqual(['admin']);
   });
 
-  it("throws when the principal cannot read the admin profile", () => {
+  it('throws when the principal cannot read the admin profile', () => {
     expect(() => {
       assertCanReadAdminProfile();
-    }).toThrow("Admin profile permission is required.");
+    }).toThrow('Admin profile permission is required.');
     expect(() => {
       assertCanReadAdminProfile({
-        subject: "admin-id",
+        subject: 'admin-id',
         roles: [AdminRole],
         permissions: [AdminProfileReadPermission],
       });

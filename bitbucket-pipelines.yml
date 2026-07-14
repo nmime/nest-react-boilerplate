@@ -1,32 +1,32 @@
 # Bitbucket Pipelines — mirrors .github/workflows/ci.yml
-image: node:24-alpine
+image: node:24.18.0-alpine
 
 pipelines:
   default:
     - parallel:
-      - step:
-          name: Gitleaks secret scan
-          image: zricethezav/gitleaks:latest
-          script:
-            - gitleaks detect --source=. --report-format json --report-path gl-secret-report.json || true
-          artifacts:
-            - gl-secret-report.json
+        - step:
+            name: Gitleaks secret scan
+            image: zricethezav/gitleaks:latest
+            script:
+              - gitleaks detect --source=. --report-format json --report-path gl-secret-report.json || true
+            artifacts:
+              - gl-secret-report.json
 
-      - step:
-          name: Fast check (lint, typecheck, test)
-          caches:
-            - node
-            - pnpm
-          script:
-            - corepack enable pnpm
-            - corepack prepare pnpm@11.11.0 --activate
-            - pnpm install --frozen-lockfile
-            - pnpm exec nx run-many -t lint --all
-            - pnpm exec nx run-many -t typecheck --all
-            - pnpm format:check
-            - pnpm test
-          size: 2x
-          timeout: 30
+        - step:
+            name: Fast check (lint, typecheck, test)
+            caches:
+              - node
+              - pnpm
+            script:
+              - corepack enable pnpm
+              - corepack prepare pnpm@11.11.0 --activate
+              - pnpm install --frozen-lockfile
+              - pnpm exec nx run-many -t lint --all
+              - pnpm exec nx run-many -t typecheck --all
+              - pnpm format:check
+              - pnpm test
+            size: 2x
+            timeout: 30
 
   pull-requests:
     '**':

@@ -1,4 +1,4 @@
-export { LanguageSwitcher, ThemeSwitcher } from "@app/frontend-ui-web";
+export { LanguageSwitcher, ThemeSwitcher } from '@app/frontend-ui-web';
 
 export {
   ProductShell,
@@ -14,4 +14,4 @@ export {
   UiStatusPill,
   UiTextField,
   UiToast,
-} from "@app/frontend-ui-web";
+} from '@app/frontend-ui-web';

@@ -1,10 +1,10 @@
 export function parseServersConfig(value: string): string[] {
-  if (value === "") {
+  if (value === '') {
     return [];
   }
 
   return value
-    .split(",")
+    .split(',')
     .map((server) => server.trim())
     .filter(Boolean);
 }

@@ -1,1 +1,1 @@
-export * from "./auth-http.type";
+export * from './auth-http.type';

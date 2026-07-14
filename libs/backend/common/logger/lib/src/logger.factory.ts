@@ -1,63 +1,59 @@
-import {
-  ConsoleLogger,
-  type LoggerService,
-  type LogLevel,
-} from "@nestjs/common";
-import { requestContext } from '@app/backend-common-bootstrap';
+import { ConsoleLogger, type LoggerService, type LogLevel } from '@nestjs/common';
+import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 
 export const ProtectedLoggerFields = [
-  "authorization",
-  "cookie",
-  "set-cookie",
-  "password",
-  "passwd",
-  "pwd",
-  "token",
-  "access-token",
-  "access_token",
-  "refresh-token",
-  "refresh_token",
-  "id-token",
-  "id_token",
-  "signature",
-  "x-signature",
-  "x-api-key",
-  "api-key",
-  "api_key",
-  "apikey",
-  "access_key",
-  "secret",
-  "client-secret",
-  "client_secret",
-  "private-key",
-  "private_key",
-  "session",
-  "sid",
-  "csrf",
-  "xsrf",
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'password',
+  'passwd',
+  'pwd',
+  'token',
+  'access-token',
+  'access_token',
+  'refresh-token',
+  'refresh_token',
+  'id-token',
+  'id_token',
+  'signature',
+  'x-signature',
+  'x-api-key',
+  'api-key',
+  'api_key',
+  'apikey',
+  'access_key',
+  'secret',
+  'client-secret',
+  'client_secret',
+  'private-key',
+  'private_key',
+  'session',
+  'sid',
+  'csrf',
+  'xsrf',
 ] as const;
 
-export const RedactedValue = "[redacted]";
+export const RedactedValue = '[redacted]';
 
 const MaxRedactionDepth = 8;
 const MaxStringLength = 8_192;
-const JsonOutputValues = new Set(["1", "true", "yes", "json", "structured"]);
-const PrettyOutputValues = new Set(["0", "false", "no", "pretty", "text"]);
+const JsonOutputValues = new Set(['1', 'true', 'yes', 'json', 'structured']);
+const PrettyOutputValues = new Set(['0', 'false', 'no', 'pretty', 'text']);
 const HealthCheckPaths = new Set([
-  "/favicon.ico",
-  "/health",
-  "/health/",
-  "/healthz",
-  "/healthz/",
-  "/live",
-  "/live/",
-  "/livez",
-  "/livez/",
-  "/metrics",
-  "/ready",
-  "/ready/",
-  "/readyz",
-  "/readyz/",
+  '/favicon.ico',
+  '/health',
+  '/health/',
+  '/healthz',
+  '/healthz/',
+  '/live',
+  '/live/',
+  '/livez',
+  '/livez/',
+  '/metrics',
+  '/ready',
+  '/ready/',
+  '/readyz',
+  '/readyz/',
 ]);
 
 export interface RequestLogLike {
@@ -72,16 +68,12 @@ export interface RequestLogLike {
 
 export interface ResponseLogLike {
   statusCode?: number;
-  on(event: "finish", listener: () => void): unknown;
+  on(event: 'finish', listener: () => void): unknown;
   setHeader(name: string, value: string): unknown;
   getHeader?(name: string): unknown;
 }
 
-export type RequestLoggerMiddleware = (
-  request: RequestLogLike,
-  response: ResponseLogLike,
-  next: () => void,
-) => void;
+export type RequestLoggerMiddleware = (request: RequestLogLike, response: ResponseLogLike, next: () => void) => void;
 
 export interface CommonLoggerFactoryParams {
   name: string;
@@ -104,14 +96,13 @@ type LogPayload = {
 };
 
 function getHeader(request: RequestLogLike, name: string): string | undefined {
-  const value =
-    request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
+  const value = request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
   return Array.isArray(value) ? value[0] : value;
 }
 
 function isJsonRecord(value: unknown): value is Record<string, unknown> {
   return (
-    typeof value === "object" &&
+    typeof value === 'object' &&
     value !== null &&
     !Array.isArray(value) &&
     !(value instanceof Error) &&
@@ -120,7 +111,7 @@ function isJsonRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function normalizeFieldName(key: string): string {
-  return key.toLowerCase().replaceAll(/[^a-z0-9]/g, "");
+  return key.toLowerCase().replaceAll(/[^a-z0-9]/g, '');
 }
 
 function isProtectedField(key: string): boolean {
@@ -145,23 +136,14 @@ function redactAuthorizationHeader(value: string): string {
 }
 
 export function redactSensitiveString(value: string): string {
-  const truncated =
-    value.length > MaxStringLength
-      ? `${value.slice(0, MaxStringLength)}…[truncated]`
-      : value;
+  const truncated = value.length > MaxStringLength ? `${value.slice(0, MaxStringLength)}…[truncated]` : value;
 
   return ProtectedLoggerFields.reduce((result, field) => {
-    const escapedField = field.replaceAll(/[$()*+.?[\\\]^{|}]/g, "\\$&");
+    const escapedField = field.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
 
     return result
-      .replace(
-        new RegExp(`(${escapedField}\\s*[=:]\\s*)([^\\s,;&]+)`, "giu"),
-        `$1${RedactedValue}`,
-      )
-      .replace(
-        new RegExp(`(["']${escapedField}["']\\s*:\\s*["'])(.*?)(["'])`, "giu"),
-        `$1${RedactedValue}$3`,
-      );
+      .replace(new RegExp(`(${escapedField}\\s*[=:]\\s*)([^\\s,;&]+)`, 'giu'), `$1${RedactedValue}`)
+      .replace(new RegExp(`(["']${escapedField}["']\\s*:\\s*["'])(.*?)(["'])`, 'giu'), `$1${RedactedValue}$3`);
   }, redactAuthorizationHeader(truncated));
 }
 
@@ -185,19 +167,19 @@ function serializeError(value: Error): Record<string, unknown> {
 }
 
 export function redactProtectedVariables<T>(value: T, depth = 0): T {
-  if (value === null || typeof value === "undefined") {
+  if (value === null || typeof value === 'undefined') {
     return value;
   }
 
-  if (typeof value === "string") {
+  if (typeof value === 'string') {
     return redactSensitiveString(value) as T;
   }
 
-  if (typeof value === "bigint") {
+  if (typeof value === 'bigint') {
     return value.toString() as T;
   }
 
-  if (typeof value !== "object") {
+  if (typeof value !== 'object') {
     return value;
   }
 
@@ -210,23 +192,19 @@ export function redactProtectedVariables<T>(value: T, depth = 0): T {
   }
 
   if (depth >= MaxRedactionDepth) {
-    return "[max-depth]" as T;
+    return '[max-depth]' as T;
   }
 
   if (Array.isArray(value)) {
     const values = value as readonly unknown[];
 
-    return values.map((item) =>
-      redactProtectedVariables(item, depth + 1),
-    ) as unknown as T;
+    return values.map((item) => redactProtectedVariables(item, depth + 1)) as unknown as T;
   }
 
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).map(([key, item]) => [
       key,
-      isProtectedField(key)
-        ? RedactedValue
-        : redactProtectedVariables(item, depth + 1),
+      isProtectedField(key) ? RedactedValue : redactProtectedVariables(item, depth + 1),
     ]),
   ) as unknown as T;
 }
@@ -243,7 +221,7 @@ function shouldUseJsonOutput(): boolean {
     return JsonOutputValues.has(normalizedOutput);
   }
 
-  return process.env.NODE_ENV !== "development";
+  return process.env.NODE_ENV !== 'development';
 }
 
 const LogLevelRanks: Record<LogLevel, number> = {
@@ -255,18 +233,18 @@ const LogLevelRanks: Record<LogLevel, number> = {
   warn: 2,
 };
 
-const DefaultLogLevel: LogLevel = "log";
+const DefaultLogLevel: LogLevel = 'log';
 
 // Common level names that other ecosystems use, mapped onto Nest's levels so a
 // near-universal value like "info" behaves as expected instead of silencing all
 // output (including errors).
 const LogLevelAliases: Partial<Record<string, LogLevel>> = {
-  info: "log",
-  trace: "verbose",
-  warning: "warn",
-  err: "error",
-  crit: "fatal",
-  critical: "fatal",
+  info: 'log',
+  trace: 'verbose',
+  warning: 'warn',
+  err: 'error',
+  crit: 'fatal',
+  critical: 'fatal',
 };
 
 let hasWarnedAboutLogLevel = false;
@@ -288,27 +266,20 @@ function resolveConfiguredLogLevel(raw: string): LogLevel {
 
   if (!hasWarnedAboutLogLevel) {
     hasWarnedAboutLogLevel = true;
-    process.stderr.write(
-      `Unknown LOG_LEVEL "${raw}"; falling back to "${DefaultLogLevel}".\n`,
-    );
+    process.stderr.write(`Unknown LOG_LEVEL "${raw}"; falling back to "${DefaultLogLevel}".\n`);
   }
 
   return DefaultLogLevel;
 }
 
-function isLevelEnabled(
-  level: LogLevel,
-  levels?: readonly LogLevel[],
-): boolean {
+function isLevelEnabled(level: LogLevel, levels?: readonly LogLevel[]): boolean {
   if (levels) {
     return levels.includes(level);
   }
 
   const configuredLevel = process.env.LOG_LEVEL;
   if (configuredLevel?.trim()) {
-    return (
-      levelRank(level) <= levelRank(resolveConfiguredLogLevel(configuredLevel))
-    );
+    return levelRank(level) <= levelRank(resolveConfiguredLogLevel(configuredLevel));
   }
 
   return true;
@@ -317,7 +288,7 @@ function isLevelEnabled(
 function normalizeMessage(message: unknown): LogPayload {
   const redacted = redactProtectedVariables(message);
 
-  if (typeof redacted === "string") {
+  if (typeof redacted === 'string') {
     return { fields: {}, message: redacted };
   }
 
@@ -335,10 +306,7 @@ function normalizeMessage(message: unknown): LogPayload {
 
     return {
       fields,
-      message:
-        typeof messageValue === "string"
-          ? redactSensitiveString(messageValue)
-          : JSON.stringify(redacted),
+      message: typeof messageValue === 'string' ? redactSensitiveString(messageValue) : JSON.stringify(redacted),
     };
   }
 
@@ -346,29 +314,26 @@ function normalizeMessage(message: unknown): LogPayload {
 }
 
 function getRequestPath(request: RequestLogLike): string {
-  return request.originalUrl ?? request.url ?? request.path ?? "";
+  return request.originalUrl ?? request.url ?? request.path ?? '';
 }
 
 function isSuppressedPath(path: string): boolean {
   /* v8 ignore next -- noUncheckedIndexedAccess forces the `?? path` guard, but String.prototype.split() always yields a non-empty array so [0] is never undefined */
-  const pathname = path.split("?")[0] ?? path;
+  const pathname = path.split('?')[0] ?? path;
 
   return HealthCheckPaths.has(pathname);
 }
 
 function getClientIp(request: RequestLogLike): string | undefined {
-  const forwardedFor = getHeader(request, "x-forwarded-for");
+  const forwardedFor = getHeader(request, 'x-forwarded-for');
   if (forwardedFor) {
-    return forwardedFor.split(",")[0]?.trim();
+    return forwardedFor.split(',')[0]?.trim();
   }
 
   return request.ip ?? request.socket?.remoteAddress;
 }
 
-export class StructuredConsoleLogger
-  extends ConsoleLogger
-  implements LoggerService
-{
+export class StructuredConsoleLogger extends ConsoleLogger implements LoggerService {
   private readonly appName: string;
   private readonly jsonOutput: boolean;
   private enabledLevels?: readonly LogLevel[];
@@ -385,39 +350,30 @@ export class StructuredConsoleLogger
   }
 
   override log(message: unknown, context?: string): void {
-    this.write("log", message, context);
+    this.write('log', message, context);
   }
 
-  override error(
-    message: unknown,
-    stackOrContext?: string,
-    context?: string,
-  ): void {
-    this.write("error", message, context ?? stackOrContext, stackOrContext);
+  override error(message: unknown, stackOrContext?: string, context?: string): void {
+    this.write('error', message, context ?? stackOrContext, stackOrContext);
   }
 
   override warn(message: unknown, context?: string): void {
-    this.write("warn", message, context);
+    this.write('warn', message, context);
   }
 
   override debug(message: unknown, context?: string): void {
-    this.write("debug", message, context);
+    this.write('debug', message, context);
   }
 
   override verbose(message: unknown, context?: string): void {
-    this.write("verbose", message, context);
+    this.write('verbose', message, context);
   }
 
   override fatal(message: unknown, context?: string): void {
-    this.write("fatal", message, context);
+    this.write('fatal', message, context);
   }
 
-  private write(
-    level: LogLevel,
-    message: unknown,
-    context?: string,
-    stack?: string,
-  ): void {
+  private write(level: LogLevel, message: unknown, context?: string, stack?: string): void {
     if (!isLevelEnabled(level, this.enabledLevels)) {
       return;
     }
@@ -435,7 +391,7 @@ export class StructuredConsoleLogger
 
     if (this.jsonOutput) {
       const line = JSON.stringify(entry);
-      if (level === "error" || level === "fatal") {
+      if (level === 'error' || level === 'fatal') {
         process.stderr.write(`${line}\n`);
       } else {
         process.stdout.write(`${line}\n`);
@@ -447,27 +403,27 @@ export class StructuredConsoleLogger
   }
 
   private writePretty(level: LogLevel, line: string, context?: string): void {
-    if (level === "fatal") {
+    if (level === 'fatal') {
       super.fatal(line, context);
       return;
     }
 
-    if (level === "error") {
+    if (level === 'error') {
       super.error(line, context);
       return;
     }
 
-    if (level === "warn") {
+    if (level === 'warn') {
       super.warn(line, context);
       return;
     }
 
-    if (level === "debug") {
+    if (level === 'debug') {
       super.debug(line, context);
       return;
     }
 
-    if (level === "verbose") {
+    if (level === 'verbose') {
       super.verbose(line, context);
       return;
     }
@@ -479,7 +435,7 @@ export class StructuredConsoleLogger
 export function createRequestLoggerMiddleware(
   logger: LoggerService,
   appName: string,
-  requestIdHeader = "x-request-id",
+  requestIdHeader = 'x-request-id',
 ): RequestLoggerMiddleware {
   return (request, response, next) => {
     const path = getRequestPath(request);
@@ -488,23 +444,26 @@ export function createRequestLoggerMiddleware(
       return;
     }
 
-    const startedAt = Date.now();
-    // Read requestId from CLS — same id as bootstrap logging, filter, services
-    const requestId = requestContext.getRequestId();
+    const incomingRequestId = normalizeRequestId(getHeader(request, requestIdHeader));
+    requestContext.run(() => {
+      const startedAt = Date.now();
+      const requestId = requestContext.getRequestId();
+      response.setHeader(requestIdHeader, requestId ?? '');
 
-    response.on("finish", () => {
-      logger.log({
-        appName,
-        durationMs: Date.now() - startedAt,
-        ip: getClientIp(request),
-        method: request.method,
-        path,
-        requestId,
-        status: response.statusCode,
+      response.on('finish', () => {
+        logger.log({
+          appName,
+          durationMs: Date.now() - startedAt,
+          ip: getClientIp(request),
+          method: request.method,
+          path,
+          requestId,
+          status: response.statusCode,
+        });
       });
-    });
 
-    next();
+      next();
+    }, incomingRequestId);
   };
 }
 
@@ -519,12 +478,6 @@ export function createLogger(params: CommonLoggerFactoryParams): {
 
   return {
     logger,
-    middlewares: [
-      createRequestLoggerMiddleware(
-        logger,
-        params.name,
-        params.requestIdHeader,
-      ),
-    ],
+    middlewares: [createRequestLoggerMiddleware(logger, params.name, params.requestIdHeader)],
   };
 }

@@ -1,8 +1,8 @@
-import { Inject, Injectable } from "@nestjs/common";
-import type { RequestManyOptions } from "@nats-io/nats-core";
-import type { Service, ServiceClient, ServiceConfig } from "@nats-io/services";
-import { createServices } from "./nats-services.factory";
-import { NatsService } from "./nats.service";
+import { Inject, Injectable } from '@nestjs/common';
+import type { RequestManyOptions } from '@nats-io/nats-core';
+import type { Service, ServiceClient, ServiceConfig } from '@nats-io/services';
+import { createServices } from './nats-services.factory';
+import { NatsService } from './nats.service';
 
 @Injectable()
 export class NatsServicesService {

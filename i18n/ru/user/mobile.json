@@ -1,0 +1,17 @@
+{
+  "mobile.appName": "Nest React Mobile",
+  "mobile.status": "Каркас готов",
+  "mobile.subtitle": "Общая оболочка аккаунта для установленных приложений, Expo web и Docker web export.",
+  "mobile.api.label": "Адрес API",
+  "mobile.api.value": "Настроенная точка подключения",
+  "mobile.action.openApi": "Открыть настроенный API",
+  "mobile.card.account.label": "Оболочка аккаунта",
+  "mobile.card.account.value": "Expo Router",
+  "mobile.card.account.detail": "Единая модель навигации для установленных приложений и экспортированного web-интерфейса.",
+  "mobile.card.native.label": "Нативная система",
+  "mobile.card.native.value": "Общие токены",
+  "mobile.card.native.detail": "Экран использует нативный фасад и дизайн-токены репозитория.",
+  "mobile.card.delivery.label": "Доставка",
+  "mobile.card.delivery.value": "Nx и export",
+  "mobile.card.delivery.detail": "Нативные команды и web export зарегистрированы для CI и Docker."
+}

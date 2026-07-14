@@ -60,7 +60,7 @@ optional-tool availability.
 When validating auth/session and preference-token fix-forward work, use the same Node and pnpm versions as CI, install from the lockfile, then run the fast aggregate plus the focused projects/specs that cover the risky paths:
 
 ```bash
-nvm use 24.11.0
+nvm use 24.18.0
 pnpm --version # 11.11.0
 pnpm install --frozen-lockfile
 pnpm run check:fast

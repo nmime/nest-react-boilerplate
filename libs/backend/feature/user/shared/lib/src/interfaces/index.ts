@@ -1,1 +1,1 @@
-export * from "./profile-view.presenter";
+export * from './profile-view.presenter';

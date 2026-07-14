@@ -1,16 +1,16 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   type FeatureFlagContext,
   type FeatureFlagProvider,
   type FeatureFlagSnapshot,
   type FeatureFlagValue,
   toFeatureFlagBoolean,
-} from "@app/common-feature-flags";
-import { FeatureFlagRepository } from "./infrastructure/data-access/repositories";
+} from '@app/common-feature-flags';
+import { FeatureFlagRepository } from './infrastructure/data-access/repositories';
 
 @Injectable()
 export class PostgresFeatureFlagProvider implements FeatureFlagProvider {
-  readonly name = "postgres";
+  readonly name = 'postgres';
   private readonly logger = new Logger(PostgresFeatureFlagProvider.name);
 
   constructor(
@@ -18,24 +18,13 @@ export class PostgresFeatureFlagProvider implements FeatureFlagProvider {
     private readonly featureFlags: FeatureFlagRepository,
   ) {}
 
-  async isEnabled(
-    key: string,
-    context: FeatureFlagContext = {},
-  ): Promise<boolean> {
+  async isEnabled(key: string, context: FeatureFlagContext = {}): Promise<boolean> {
     const result = await this.featureFlags.findByKey(key, context.tenantId);
 
-    return (
-      result.isOk() &&
-      result.value?.enabled === true &&
-      toFeatureFlagBoolean(result.value.value)
-    );
+    return result.isOk() && result.value?.enabled === true && toFeatureFlagBoolean(result.value.value);
   }
 
-  async getValue<T extends FeatureFlagValue>(
-    key: string,
-    fallback: T,
-    context: FeatureFlagContext = {},
-  ): Promise<T> {
+  async getValue<T extends FeatureFlagValue>(key: string, fallback: T, context: FeatureFlagContext = {}): Promise<T> {
     const result = await this.featureFlags.findByKey(key, context.tenantId);
     if (!result.isOk() || result.value?.enabled !== true) {
       return fallback;
@@ -55,9 +44,7 @@ export class PostgresFeatureFlagProvider implements FeatureFlagProvider {
     return persisted as T;
   }
 
-  async getSnapshot(
-    context: FeatureFlagContext = {},
-  ): Promise<FeatureFlagSnapshot> {
+  async getSnapshot(context: FeatureFlagContext = {}): Promise<FeatureFlagSnapshot> {
     const result = await this.featureFlags.getSnapshot(context);
 
     return result.isOk() ? result.value : { source: this.name, values: {} };

@@ -1,6 +1,6 @@
-import { spawnSync } from "node:child_process";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { spawnSync } from 'node:child_process';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DefaultPostgresStartupTimeoutMs,
   createPostgresContainer,
@@ -8,9 +8,9 @@ import {
   hasDockerRuntime,
   shouldSkipDockerTest,
   stopPostgresContainer,
-} from "./postgres-container";
+} from './postgres-container';
 
-vi.mock("node:child_process", () => ({
+vi.mock('node:child_process', () => ({
   spawnSync: vi.fn(),
 }));
 
@@ -23,26 +23,25 @@ interface FakeStartedPostgresContainer {
 }
 
 const mockedSpawnSync = vi.mocked(spawnSync);
-const createTestCredential = (scope: string): string =>
-  [scope, "credential"].join("_");
+const createTestCredential = (scope: string): string => [scope, 'credential'].join('_');
 const testValue = <T>(value: unknown): T => value as T;
 
-describe("postgres test container helpers", () => {
+describe('postgres test container helpers', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     mockedSpawnSync.mockReset();
   });
 
-  it("creates a default PostgreSQL container without starting it", () => {
+  it('creates a default PostgreSQL container without starting it', () => {
     expect(createPostgresContainer()).toBeDefined();
   });
 
-  it("creates a configured PostgreSQL container without starting it", () => {
-    const unitCredential = createTestCredential("unit");
+  it('creates a configured PostgreSQL container without starting it', () => {
+    const unitCredential = createTestCredential('unit');
     const container = createPostgresContainer({
-      image: "postgres:17-alpine",
-      database: "unit_db",
-      username: "unit_user",
+      image: 'postgres:17-alpine',
+      database: 'unit_db',
+      username: 'unit_user',
       password: unitCredential,
       startupTimeoutMs: DefaultPostgresStartupTimeoutMs,
     });
@@ -50,14 +49,14 @@ describe("postgres test container helpers", () => {
     expect(container).toBeDefined();
   });
 
-  it("maps a started container to safe MikroORM component-test options", () => {
-    const componentCredential = createTestCredential("component");
+  it('maps a started container to safe MikroORM component-test options', () => {
+    const componentCredential = createTestCredential('component');
     const container: FakeStartedPostgresContainer = {
-      getHost: () => "127.0.0.1",
+      getHost: () => '127.0.0.1',
       getPort: () => 15432,
-      getUsername: () => "component_user",
+      getUsername: () => 'component_user',
       getPassword: () => componentCredential,
-      getDatabase: () => "component_db",
+      getDatabase: () => 'component_db',
     };
 
     expect(
@@ -66,11 +65,11 @@ describe("postgres test container helpers", () => {
       }),
     ).toMatchObject({
       driver: PostgreSqlDriver,
-      host: "127.0.0.1",
+      host: '127.0.0.1',
       port: 15432,
-      user: "component_user",
+      user: 'component_user',
       password: componentCredential,
-      dbName: "component_db",
+      dbName: 'component_db',
       entities: [],
       autoLoadEntities: true,
       allowGlobalContext: true,
@@ -79,64 +78,58 @@ describe("postgres test container helpers", () => {
     });
   });
 
-  it("maps a started container host from localhost to 127.0.0.1", () => {
+  it('maps a started container host from localhost to 127.0.0.1', () => {
     const container: FakeStartedPostgresContainer = {
-      getHost: () => "localhost",
+      getHost: () => 'localhost',
       getPort: () => 15432,
-      getUsername: () => "component_user",
-      getPassword: () => "component_password",
-      getDatabase: () => "component_db",
+      getUsername: () => 'component_user',
+      getPassword: () => 'component_password',
+      getDatabase: () => 'component_db',
     };
 
-    expect(
-      createPostgresContainerMikroOrmOptions(container as never, []),
-    ).toMatchObject({
-      host: "127.0.0.1",
+    expect(createPostgresContainerMikroOrmOptions(container as never, [])).toMatchObject({
+      host: '127.0.0.1',
     });
   });
 
-  it("detects Docker availability from explicit skip, CI, and local runtime checks", () => {
-    vi.stubEnv("SKIP_TESTCONTAINERS", "true");
+  it('detects Docker availability from explicit skip, CI, and local runtime checks', () => {
+    vi.stubEnv('SKIP_TESTCONTAINERS', 'true');
     expect(hasDockerRuntime()).toBe(false);
     expect(mockedSpawnSync).not.toHaveBeenCalled();
 
-    vi.stubEnv("SKIP_TESTCONTAINERS", "false");
-    vi.stubEnv("CI", "true");
+    vi.stubEnv('SKIP_TESTCONTAINERS', 'false');
+    vi.stubEnv('CI', 'true');
     expect(hasDockerRuntime()).toBe(true);
     expect(mockedSpawnSync).not.toHaveBeenCalled();
 
-    vi.stubEnv("CI", "false");
-    mockedSpawnSync.mockReturnValueOnce(
-      testValue<ReturnType<typeof spawnSync>>({ status: 0 }),
-    );
+    vi.stubEnv('CI', 'false');
+    mockedSpawnSync.mockReturnValueOnce(testValue<ReturnType<typeof spawnSync>>({ status: 0 }));
     expect(hasDockerRuntime()).toBe(true);
-    expect(mockedSpawnSync).toHaveBeenCalledWith("docker", ["version"], {
-      stdio: "ignore",
+    expect(mockedSpawnSync).toHaveBeenCalledWith('docker', ['version'], {
+      stdio: 'ignore',
       timeout: 5_000,
     });
 
     mockedSpawnSync.mockReset();
     mockedSpawnSync
       .mockImplementationOnce(() => {
-        throw new Error("missing docker");
+        throw new Error('missing docker');
       })
-      .mockReturnValueOnce(
-        testValue<ReturnType<typeof spawnSync>>({ status: 1 }),
-      );
+      .mockReturnValueOnce(testValue<ReturnType<typeof spawnSync>>({ status: 1 }));
 
     expect(hasDockerRuntime()).toBe(false);
   });
 
-  it("mirrors Docker availability through the skip helper", () => {
-    vi.stubEnv("SKIP_TESTCONTAINERS", "true");
+  it('mirrors Docker availability through the skip helper', () => {
+    vi.stubEnv('SKIP_TESTCONTAINERS', 'true');
     expect(shouldSkipDockerTest()).toBe(true);
 
-    vi.stubEnv("SKIP_TESTCONTAINERS", "false");
-    vi.stubEnv("CI", "true");
+    vi.stubEnv('SKIP_TESTCONTAINERS', 'false');
+    vi.stubEnv('CI', 'true');
     expect(shouldSkipDockerTest()).toBe(false);
   });
 
-  it("stops containers when provided and ignores undefined", async () => {
+  it('stops containers when provided and ignores undefined', async () => {
     const stop = vi.fn(() => Promise.resolve());
     const container = testValue<Parameters<typeof stopPostgresContainer>[0]>({
       stop,

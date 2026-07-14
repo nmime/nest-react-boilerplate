@@ -19,6 +19,25 @@
       "x-prompt": "What kind of library?",
       "x-priority": "important"
     },
+    "type": {
+      "type": "string",
+      "description": "Semantic library role used for layout and Nx boundaries",
+      "enum": ["common", "util", "ui", "sdk", "feature-main", "feature-shared", "data-access", "test-util", "asset"],
+      "default": "common",
+      "x-priority": "important"
+    },
+    "scope": {
+      "type": "string",
+      "description": "Owning product/domain scope; defaults to the first name segment",
+      "x-priority": "optional"
+    },
+    "fsdLayer": {
+      "type": "string",
+      "description": "Feature-Sliced Design layer for frontend libraries",
+      "enum": ["shared", "entities", "features", "widgets", "pages"],
+      "default": "shared",
+      "x-priority": "optional"
+    },
     "directory": {
       "type": "string",
       "description": "Directory path prefix (default: libs/<kind>/<name>)",
@@ -36,5 +55,5 @@
       "x-priority": "optional"
     }
   },
-  "required": ["name", "kind"]
+  "required": ["name", "kind", "type"]
 }

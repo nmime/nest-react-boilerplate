@@ -1,9 +1,9 @@
-import type { Locale } from "@app/common-i18n";
-import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
-import { GetCurrentUserProfileUseCase } from "../application";
-import type { UserProfile } from "../domain";
+import type { Locale } from '@app/common-i18n';
+import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { GetCurrentUserProfileUseCase } from '../application';
+import type { UserProfile } from '../domain';
 
-export interface UserProfileView extends Omit<UserProfile, "locale"> {
+export interface UserProfileView extends Omit<UserProfile, 'locale'> {
   locale?: Locale;
 }
 
@@ -38,4 +38,4 @@ export function presentUserProfile(profile: UserProfile): UserProfileView {
   };
 }
 
-export * from "../application/get-current-user-profile.use-case";
+export * from '../application/get-current-user-profile.use-case';

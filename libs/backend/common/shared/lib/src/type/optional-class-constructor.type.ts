@@ -1,2 +1,1 @@
-export type OptionalClassConstructor<T = unknown> =
-  (new (...args: never[]) => T) | undefined;
+export type OptionalClassConstructor<T = unknown> = (new (...args: never[]) => T) | undefined;

@@ -1,16 +1,12 @@
-import type { ExternalAuthIdentityView } from "@app/backend-feature-auth-shared";
-import type { ExternalIdentityRecord } from "../../infrastructure";
+import type { ExternalAuthIdentityView } from '@app/backend-feature-auth-shared';
+import type { ExternalIdentityRecord } from '../../infrastructure';
 import {
   externalAuthProviderByStorageValue,
   externalAuthProviderChannelByStorageValue,
-} from "../const/external-auth.const";
-import type { VerifiedExternalProfile } from "../type/external-auth-internal.type";
+} from '../const/external-auth.const';
+import type { VerifiedExternalProfile } from '../type/external-auth-internal.type';
 
-export function profileToIdentityInput(
-  profile: VerifiedExternalProfile,
-  tenantId: string,
-  userId: string,
-) {
+export function profileToIdentityInput(profile: VerifiedExternalProfile, tenantId: string, userId: string) {
   return {
     tenantId,
     userId,
@@ -28,9 +24,7 @@ export function profileToIdentityInput(
   };
 }
 
-export function toIdentityView(
-  identity: ExternalIdentityRecord,
-): ExternalAuthIdentityView {
+export function toIdentityView(identity: ExternalIdentityRecord): ExternalAuthIdentityView {
   return {
     id: identity.id,
     provider: externalAuthProviderByStorageValue[identity.provider],

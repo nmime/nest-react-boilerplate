@@ -1,5 +1,5 @@
-import createClient, { type Middleware } from "openapi-fetch";
-import createQueryClient from "openapi-react-query";
+import createClient, { type Middleware } from 'openapi-fetch';
+import createQueryClient from 'openapi-react-query';
 
 export interface TypedOpenApiRuntimeOptions {
   baseUrl?: string;
@@ -8,9 +8,10 @@ export interface TypedOpenApiRuntimeOptions {
   middlewares?: readonly Middleware[];
 }
 
-export const createTypedOpenApiRuntime = <
-  TPaths extends Record<string, unknown>,
->({ middlewares = [], ...options }: TypedOpenApiRuntimeOptions = {}) => {
+export const createTypedOpenApiRuntime = <TPaths extends Record<string, unknown>>({
+  middlewares = [],
+  ...options
+}: TypedOpenApiRuntimeOptions = {}) => {
   const client = createClient<TPaths>(options);
 
   middlewares.forEach((middleware) => {

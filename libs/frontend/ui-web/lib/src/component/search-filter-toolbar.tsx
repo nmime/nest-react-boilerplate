@@ -1,8 +1,8 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { useId, type ReactNode } from "react";
-import { UiInput } from "./input";
-import { UiLabel } from "./label";
-import { cn } from "../util/cn";
+import { useId, type ReactNode } from 'react';
+import { UiInput } from './input';
+import { UiLabel } from './label';
+import { cn } from '../util/cn';
 
 export interface UiSearchFilterToolbarProps {
   actions?: ReactNode;
@@ -20,12 +20,12 @@ export const UiSearchFilterToolbar = ({
   actions,
   children,
   className,
-  label = "Search and filters",
+  label = 'Search and filters',
   onSearchChange,
   onSubmit,
-  searchLabel = "Search",
-  searchPlaceholder = "Search resources",
-  searchValue = "",
+  searchLabel = 'Search',
+  searchPlaceholder = 'Search resources',
+  searchValue = '',
 }: Readonly<UiSearchFilterToolbarProps>) => {
   const searchId = useId();
   const handleSubmit = (event: { preventDefault: () => void }) => {
@@ -34,16 +34,8 @@ export const UiSearchFilterToolbar = ({
   };
 
   return (
-    <div
-      className={cn("xr-toolbar", className)}
-      data-admin-primitive="search-filter-toolbar"
-    >
-      <form
-        aria-label={label}
-        className="xr-toolbar__search-form"
-        onSubmit={handleSubmit}
-        role="search"
-      >
+    <div className={cn('xr-toolbar', className)} data-admin-primitive="search-filter-toolbar">
+      <form aria-label={label} className="xr-toolbar__search-form" onSubmit={handleSubmit} role="search">
         <div className="xr-toolbar__search">
           <UiLabel className="sr-only" htmlFor={searchId}>
             {searchLabel}

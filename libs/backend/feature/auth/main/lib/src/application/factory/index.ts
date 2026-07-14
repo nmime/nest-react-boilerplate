@@ -1,1 +1,1 @@
-export * from "./discord-provider.factory";
+export * from './discord-provider.factory';

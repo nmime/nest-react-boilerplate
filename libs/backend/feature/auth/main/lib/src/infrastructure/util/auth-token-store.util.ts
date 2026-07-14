@@ -1,21 +1,16 @@
-import type {
-  AuthRefreshTokenEntity,
-  AuthUserTokenEntity,
-} from "@app/backend-postgres-main-auth";
+import type { AuthRefreshTokenEntity, AuthUserTokenEntity } from '@app/backend-postgres-main-auth';
 import type {
   AuthTokenStoreError,
   AuthUserTokenPurpose,
   RefreshTokenRecord,
   UserActionTokenRecord,
-} from "../type/auth-token-store.type";
+} from '../type/auth-token-store.type';
 import {
   DefaultEmailVerificationTtlSeconds,
   DefaultPasswordResetTtlSeconds,
-} from "../const/auth-token-store-ttl.const";
+} from '../const/auth-token-store-ttl.const';
 
-export function toRefreshTokenRecord(
-  entity: AuthRefreshTokenEntity,
-): RefreshTokenRecord {
+export function toRefreshTokenRecord(entity: AuthRefreshTokenEntity): RefreshTokenRecord {
   return {
     id: entity.id,
     tenantId: entity.tenantId,
@@ -29,9 +24,7 @@ export function toRefreshTokenRecord(
   };
 }
 
-export function toUserActionTokenRecord(
-  entity: AuthUserTokenEntity,
-): UserActionTokenRecord {
+export function toUserActionTokenRecord(entity: AuthUserTokenEntity): UserActionTokenRecord {
   return {
     id: entity.id,
     tenantId: entity.tenantId,
@@ -43,12 +36,10 @@ export function toUserActionTokenRecord(
   };
 }
 
-export function mapTokenStoreError(cause: {
-  message?: string;
-}): AuthTokenStoreError {
+export function mapTokenStoreError(cause: { message?: string }): AuthTokenStoreError {
   return {
-    code: "token_store_error",
-    message: cause.message ?? "Auth token store failed.",
+    code: 'token_store_error',
+    message: cause.message ?? 'Auth token store failed.',
   };
 }
 
@@ -56,10 +47,6 @@ export function secondsFromNow(seconds: number): Date {
   return new Date(Date.now() + seconds * 1000);
 }
 
-export function defaultUserActionTokenTtl(
-  purpose: AuthUserTokenPurpose,
-): number {
-  return purpose === "email_verification"
-    ? DefaultEmailVerificationTtlSeconds
-    : DefaultPasswordResetTtlSeconds;
+export function defaultUserActionTokenTtl(purpose: AuthUserTokenPurpose): number {
+  return purpose === 'email_verification' ? DefaultEmailVerificationTtlSeconds : DefaultPasswordResetTtlSeconds;
 }

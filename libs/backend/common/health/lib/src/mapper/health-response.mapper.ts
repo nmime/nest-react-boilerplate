@@ -4,13 +4,10 @@ import type {
   HealthPayloadDto,
   HealthResponse,
   HealthResponseDto,
-} from "../dto";
-import { sanitizeHealthDetails } from "../util/health-sanitize.util";
+} from '../dto';
+import { sanitizeHealthDetails } from '../util/health-sanitize.util';
 
-export function toHealthResponseDto(
-  appName: string,
-  response: HealthResponse,
-): HealthResponseDto {
+export function toHealthResponseDto(appName: string, response: HealthResponse): HealthResponseDto {
   const payload: HealthPayloadDto = {
     app: appName,
     status: response.status,
@@ -23,17 +20,13 @@ export function toHealthResponseDto(
   return { data: payload };
 }
 
-function toHealthDependencyDto(
-  check: HealthIndicatorResult,
-): HealthDependencyDto {
+function toHealthDependencyDto(check: HealthIndicatorResult): HealthDependencyDto {
   const details = sanitizeHealthDetails(check.details);
   return {
     name: check.name,
     status: check.status,
     ...(details ? { details } : {}),
-    ...(typeof details?.message === "string"
-      ? { detail: details.message }
-      : {}),
+    ...(typeof details?.message === 'string' ? { detail: details.message } : {}),
     required: check.required,
   };
 }

@@ -65,7 +65,7 @@ describe('library generator', () => {
 
       await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
 
-      const projectJson = JSON.parse(tree.read('libs/backend/shared-utils/lib/project.json', 'utf8')!);
+      const projectJson = JSON.parse(tree.read('libs/backend/common/shared-utils/lib/project.json', 'utf8')!);
       assert.equal(projectJson.name, '@app/backend-shared-utils');
       assert.equal(projectJson.projectType, 'library');
       assert.ok(projectJson.tags.includes('platform:backend'));
@@ -80,9 +80,9 @@ describe('library generator', () => {
 
       await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
 
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/tsconfig.json'));
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/tsconfig.lib.json'));
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/tsconfig.spec.json'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/tsconfig.json'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/tsconfig.lib.json'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/tsconfig.spec.json'));
     });
 
     it('creates source files', async () => {
@@ -91,10 +91,10 @@ describe('library generator', () => {
 
       await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
 
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/src/index.ts'));
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/src/index.spec.ts'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/src/index.ts'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/src/index.spec.ts'));
 
-      const index = tree.read('libs/backend/shared-utils/lib/src/index.ts', 'utf8')!;
+      const index = tree.read('libs/backend/common/shared-utils/lib/src/index.ts', 'utf8')!;
       assert.ok(index.includes('sharedUtilsVersion'));
     });
 
@@ -104,7 +104,7 @@ describe('library generator', () => {
 
       await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
 
-      assert.ok(tree.exists('libs/backend/shared-utils/lib/vitest.config.mts'));
+      assert.ok(tree.exists('libs/backend/common/shared-utils/lib/vitest.config.mts'));
     });
 
     it('accepts custom tags', async () => {
@@ -118,7 +118,7 @@ describe('library generator', () => {
         skipFormat: true,
       });
 
-      const projectJson = JSON.parse(tree.read('libs/backend/shared-utils/lib/project.json', 'utf8')!);
+      const projectJson = JSON.parse(tree.read('libs/backend/common/shared-utils/lib/project.json', 'utf8')!);
       assert.ok(projectJson.tags.includes('custom:lib'));
       assert.ok(projectJson.tags.includes('type:utility'));
     });
@@ -133,7 +133,7 @@ describe('library generator', () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');
 
-      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', skipFormat: true });
+      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', type: 'ui', skipFormat: true });
 
       const projectJson = JSON.parse(tree.read('libs/frontend/ui-components/lib/project.json', 'utf8')!);
       assert.equal(projectJson.name, '@app/frontend-ui-components');
@@ -149,7 +149,7 @@ describe('library generator', () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');
 
-      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', skipFormat: true });
+      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', type: 'ui', skipFormat: true });
 
       assert.ok(tree.exists('libs/frontend/ui-components/lib/src/ui-components.component.tsx'));
       const component = tree.read('libs/frontend/ui-components/lib/src/ui-components.component.tsx', 'utf8')!;
@@ -160,7 +160,7 @@ describe('library generator', () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');
 
-      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', skipFormat: true });
+      await libraryGenerator(tree, { name: 'ui-components', kind: 'frontend', type: 'ui', skipFormat: true });
 
       const index = tree.read('libs/frontend/ui-components/lib/src/index.ts', 'utf8')!;
       // Template uses `export * from "./..."` barrel — verify it re-exports the component file.
@@ -182,7 +182,7 @@ describe('library generator', () => {
       const projectJson = JSON.parse(tree.read('libs/common/config/lib/project.json', 'utf8')!);
       assert.equal(projectJson.name, '@app/common-config');
       assert.equal(projectJson.projectType, 'library');
-      assert.ok(projectJson.tags.includes('platform:common'));
+      assert.ok(projectJson.tags.includes('platform:shared'));
     });
 
     it('creates source files', async () => {
@@ -193,6 +193,51 @@ describe('library generator', () => {
 
       assert.ok(tree.exists('libs/common/config/lib/src/index.ts'));
       assert.ok(tree.exists('libs/common/config/lib/src/index.spec.ts'));
+    });
+  });
+
+  describe('semantic layouts and aliases', () => {
+    it('creates backend feature and data-access libraries in canonical roots', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+
+      await libraryGenerator(tree, {
+        name: 'billing-main',
+        kind: 'backend',
+        type: 'feature-main',
+        scope: 'billing',
+        skipFormat: true,
+      });
+      await libraryGenerator(tree, {
+        name: 'billing-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'billing',
+        skipFormat: true,
+      });
+
+      assert.ok(tree.exists('libs/backend/feature/billing/main/lib/project.json'));
+      assert.ok(tree.exists('libs/backend/postgres/main/billing/lib/project.json'));
+      const tsconfig = JSON.parse(tree.read('tsconfig.base.json', 'utf8')!);
+      assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-feature-billing-main'], [
+        'libs/backend/feature/billing/main/lib/src/index.ts',
+      ]);
+      assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-postgres-main-billing'], [
+        'libs/backend/postgres/main/billing/lib/src/index.ts',
+      ]);
+    });
+
+    it('rejects platform-incompatible library roles', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () => libraryGenerator(tree, { name: 'bad', kind: 'frontend', type: 'data-access' }),
+        /backend-only/,
+      );
+      await assert.rejects(
+        () => libraryGenerator(tree, { name: 'bad-ui', kind: 'common', type: 'ui' }),
+        /frontend or backend/,
+      );
     });
   });
 });

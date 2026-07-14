@@ -1,2 +1,2 @@
-export * from "./postgres-environment.type";
-export * from "./postgres-health.type";
+export * from './postgres-environment.type';
+export * from './postgres-health.type';

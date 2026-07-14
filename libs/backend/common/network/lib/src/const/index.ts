@@ -1,1 +1,1 @@
-export * from "./private-network-ip.const";
+export * from './private-network-ip.const';

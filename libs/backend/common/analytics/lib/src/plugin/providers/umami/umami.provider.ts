@@ -1,9 +1,5 @@
-import type {
-  AnalyticsIdentifyPayload,
-  AnalyticsPagePayload,
-  AnalyticsPayload,
-} from "../../../type";
-import { AbstractAnalyticsProvider } from "../base";
+import type { AnalyticsIdentifyPayload, AnalyticsPagePayload, AnalyticsPayload } from '../../../type';
+import { AbstractAnalyticsProvider } from '../base';
 
 export interface UmamiAnalyticsPluginOptions {
   websiteId: string;
@@ -14,7 +10,7 @@ export interface UmamiAnalyticsPluginOptions {
 }
 
 export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
-  readonly name = "umami";
+  readonly name = 'umami';
 
   private readonly endpoint: string;
   private readonly fetcher: typeof fetch;
@@ -24,7 +20,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
     super();
     this.fetcher = options.fetch ?? fetch;
     this.endpoint = resolveUmamiEndpoint(options);
-    this.hostname = options.hostname ?? "server";
+    this.hostname = options.hostname ?? 'server';
   }
 
   override async track(payload: AnalyticsPayload): Promise<void> {
@@ -47,7 +43,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
     await sendUmamiEvent(this.fetcher, this.endpoint, {
       website: this.options.websiteId,
       hostname: this.hostname,
-      name: "identify",
+      name: 'identify',
       data: compactObject({
         userId: payload.userId,
         traits: payload.traits,
@@ -63,7 +59,7 @@ export class UmamiAnalyticsProvider extends AbstractAnalyticsProvider {
       hostname: this.hostname,
       url: payload.path,
       title: payload.name,
-      name: payload.name ?? "pageview",
+      name: payload.name ?? 'pageview',
       data: compactObject({
         ...payload.properties,
         context: payload.context,
@@ -84,9 +80,7 @@ function resolveUmamiEndpoint(options: UmamiAnalyticsPluginOptions): string {
     return `${stripTrailingSlash(host)}/api/send`;
   }
 
-  throw new Error(
-    "Umami analytics requires either endpoint or host when websiteId is configured.",
-  );
+  throw new Error('Umami analytics requires either endpoint or host when websiteId is configured.');
 }
 
 async function sendUmamiEvent(
@@ -95,9 +89,9 @@ async function sendUmamiEvent(
   payload: Record<string, unknown>,
 ): Promise<void> {
   const response = await fetcher(endpoint, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ type: "event", payload }),
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ type: 'event', payload }),
   });
 
   if (!response.ok) {
@@ -107,17 +101,13 @@ async function sendUmamiEvent(
 
 function stripTrailingSlash(value: string): string {
   let end = value.length;
-  while (end > 0 && value[end - 1] === "/") {
+  while (end > 0 && value[end - 1] === '/') {
     end -= 1;
   }
 
   return value.slice(0, end);
 }
 
-function compactObject<T extends Record<string, unknown>>(
-  value: T,
-): Partial<T> {
-  return Object.fromEntries(
-    Object.entries(value).filter(([, entry]) => entry !== undefined),
-  ) as Partial<T>;
+function compactObject<T extends Record<string, unknown>>(value: T): Partial<T> {
+  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as Partial<T>;
 }

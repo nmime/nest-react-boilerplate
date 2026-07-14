@@ -1,22 +1,15 @@
-import type { AnyEntity, EntityClass, EntitySchema } from "@mikro-orm/core";
-import type { MikroOrmModuleSyncOptions } from "@mikro-orm/nestjs";
-import { PostgreSqlDriver } from "@mikro-orm/postgresql";
-import {
-  PostgreSqlContainer,
-  type StartedPostgreSqlContainer,
-} from "@testcontainers/postgresql";
+import type { AnyEntity, EntityClass, EntitySchema } from '@mikro-orm/core';
+import type { MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
-export const DefaultPostgresTestImage = "postgres:17-alpine";
-export const DefaultPostgresTestDatabase = "app_component_test";
-export const DefaultPostgresTestUsername = "component_test";
-export const DefaultPostgresTestPassword = [
-  "component",
-  "test",
-  `${"pass"}${"word"}`,
-].join("_");
+export const DefaultPostgresTestImage = 'postgres:17-alpine';
+export const DefaultPostgresTestDatabase = 'app_component_test';
+export const DefaultPostgresTestUsername = 'component_test';
+export const DefaultPostgresTestPassword = ['component', 'test', `${'pass'}${'word'}`].join('_');
 export const DefaultPostgresStartupTimeoutMs = 120_000;
 
-export * from "./docker-runtime";
+export * from './docker-runtime';
 
 export interface PostgresContainerOptions {
   image?: string;
@@ -26,22 +19,16 @@ export interface PostgresContainerOptions {
   startupTimeoutMs?: number;
 }
 
-export type PostgresEntityList = (
-  string | EntityClass<AnyEntity> | EntitySchema
-)[];
+export type PostgresEntityList = (string | EntityClass<AnyEntity> | EntitySchema)[];
 
 export type PostgresMikroOrmTestOptions = MikroOrmModuleSyncOptions;
 
-export function createPostgresContainer(
-  options: PostgresContainerOptions = {},
-): PostgreSqlContainer {
+export function createPostgresContainer(options: PostgresContainerOptions = {}): PostgreSqlContainer {
   return new PostgreSqlContainer(options.image ?? DefaultPostgresTestImage)
     .withDatabase(options.database ?? DefaultPostgresTestDatabase)
     .withUsername(options.username ?? DefaultPostgresTestUsername)
     .withPassword(options.password ?? DefaultPostgresTestPassword)
-    .withStartupTimeout(
-      options.startupTimeoutMs ?? DefaultPostgresStartupTimeoutMs,
-    );
+    .withStartupTimeout(options.startupTimeoutMs ?? DefaultPostgresStartupTimeoutMs);
 }
 
 /* v8 ignore next 4 -- exercised by downstream component specs to avoid starting Docker in unit tests. */
@@ -51,9 +38,7 @@ export async function startPostgresContainer(
   return createPostgresContainer(options).start();
 }
 
-export async function stopPostgresContainer(
-  container: StartedPostgreSqlContainer | undefined,
-): Promise<void> {
+export async function stopPostgresContainer(container: StartedPostgreSqlContainer | undefined): Promise<void> {
   if (container) {
     await container.stop();
   }
@@ -67,7 +52,7 @@ export function createPostgresContainerMikroOrmOptions(
   const host = container.getHost();
   return {
     driver: PostgreSqlDriver,
-    host: host === "localhost" ? "127.0.0.1" : host,
+    host: host === 'localhost' ? '127.0.0.1' : host,
     port: container.getPort(),
     user: container.getUsername(),
     password: container.getPassword(),

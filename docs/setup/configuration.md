@@ -1,13 +1,13 @@
 # Setup and Configuration
 
-The NRB setup engine lets you configure which applications and capabilities the monorepo enables. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops.
+The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `starter` preset selects the neutral `starter-app`; reference apps remain available but are not the default product shell.
 
 ## How it works
 
 1. **Schema** — validates your configuration against a Zod schema (`schemaVersion`, `preset`, `apps`, `capabilities`, `options`).
 2. **Catalog** — pure data that defines apps, capabilities, their dependencies, and conflicts.
 3. **Planner** — resolves presets, expands transitive dependencies, validates the selection, and produces a sorted list of file operations.
-4. **Apply** — executes operations (create/update/delete) through a filesystem adapter with rollback on failure.
+4. **Apply** — writes `nrb.config.json`, `.nrb/summary.md`, and the runtime-consumed `.nrb/workspace.json` through a filesystem adapter with rollback on failure.
 5. **State** — tracks file hashes in `.nrb/state.json` so re-runs with the same config produce zero operations.
 
 ## Interactive setup
@@ -21,7 +21,7 @@ The wizard guides you through:
 1. **Preset selection** — choose a starting point (minimal, starter, fullstack, enterprise, bots).
 2. **App toggles** — enable/disable each frontend, backend, and e2e app.
 3. **Capability toggles** — enable/disable cross-cutting features.
-4. **Options** — prune unused files, force overwrites, dry-run mode.
+4. **Options** — prune stale setup-managed artifacts, force overwrites, dry-run mode.
 
 Required dependencies are auto-enabled. For example, selecting `admin-app` auto-enables `admin-app-api`, `authz`, and `design-tokens`.
 
@@ -80,7 +80,7 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 | `preset`                 | `string`   | Optional. One of: `minimal`, `starter`, `fullstack`, `enterprise`, `bots`. |
 | `apps`                   | `string[]` | List of app IDs to enable.                                                 |
 | `capabilities`           | `string[]` | List of capability IDs to enable.                                          |
-| `options.prune`          | `boolean`  | Remove files no longer needed (default `false`).                           |
+| `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).                   |
 | `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                      |
 | `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                          |
 | `options.nonInteractive` | `boolean`  | CI mode with defaults (default `false`).                                   |
@@ -104,7 +104,7 @@ Unknown top-level keys are rejected with a clear error. Every field is validated
 }
 ```
 
-## `nrb doctor`
+## `pnpm nrb doctor`
 
 Run workspace health checks:
 
@@ -114,17 +114,17 @@ pnpm --filter @repo/tooling tooling doctor
 
 ### Checks performed
 
-| Check             | Status              | Description                                        |
-| ----------------- | ------------------- | -------------------------------------------------- |
-| `node-version`    | pass/fail/warn      | Node.js version (>=18 required, >=20 recommended). |
-| `pnpm`            | pass/fail           | pnpm availability and version.                     |
-| `docker`          | pass/skip           | Docker availability (optional for E2E).            |
-| `manifests`       | pass/fail           | `package.json`, `tsconfig.base.json` present.      |
-| `lock-file`       | pass/warn           | `pnpm-lock.yaml` present.                          |
-| `nx-graph`        | pass/warn           | Nx project graph resolves.                         |
-| `nrb-config`      | pass/fail/warn/skip | `nrb.config.json` validity.                        |
-| `nrb-state`       | pass/fail/warn/skip | `.nrb/state.json` consistency.                     |
-| `tooling-package` | pass/fail/warn      | `@repo/tooling` bin entries.                       |
+| Check             | Status              | Description                                   |
+| ----------------- | ------------------- | --------------------------------------------- |
+| `node-version`    | pass/fail           | Node.js version must satisfy `>=24 <25`.      |
+| `pnpm`            | pass/fail           | pnpm must be exactly `11.11.0`.               |
+| `docker`          | pass/skip           | Docker availability (optional for E2E).       |
+| `manifests`       | pass/fail           | `package.json`, `tsconfig.base.json` present. |
+| `lock-file`       | pass/warn           | `pnpm-lock.yaml` present.                     |
+| `nx-graph`        | pass/warn           | Nx project graph resolves.                    |
+| `nrb-config`      | pass/fail/warn/skip | `nrb.config.json` validity.                   |
+| `nrb-state`       | pass/fail/warn/skip | `.nrb/state.json` consistency.                |
+| `tooling-package` | pass/fail/warn      | `@repo/tooling` bin entries.                  |
 
 ### JSON output
 
@@ -150,11 +150,13 @@ On each run:
 
 This guarantees idempotency: running setup twice with the same config produces zero operations.
 
+The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts the neutral `starter-app` with `user-app-api` and `auth-app-api`.
+
 ## Recovery
 
 - **Stale state**: delete `.nrb/state.json` and re-run setup.
 - **Conflicting files**: use `--force` or manually resolve.
-- **Dirty worktree**: the setup engine does not check Git status; use `nrb doctor` to see the overall workspace health.
+- **Dirty worktree**: setup writes only its managed config/state files, but you should still review `git diff` before applying a plan.
 - **Failed rollback**: the apply engine rolls back on failure. If rollback itself fails, the `rollbackError` message explains what went wrong.
 
 ## Staging Environment

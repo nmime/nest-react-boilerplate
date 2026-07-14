@@ -14,23 +14,11 @@ export interface FeatureFlagSnapshot {
 
 export interface FeatureFlagProvider {
   readonly name: string;
-  isEnabled(
-    key: string,
-    context?: FeatureFlagContext,
-  ): Promise<boolean> | boolean;
-  getValue<T extends FeatureFlagValue>(
-    key: string,
-    fallback: T,
-    context?: FeatureFlagContext,
-  ): Promise<T> | T;
-  getSnapshot?(
-    context?: FeatureFlagContext,
-  ): Promise<FeatureFlagSnapshot> | FeatureFlagSnapshot;
+  isEnabled(key: string, context?: FeatureFlagContext): Promise<boolean> | boolean;
+  getValue<T extends FeatureFlagValue>(key: string, fallback: T, context?: FeatureFlagContext): Promise<T> | T;
+  getSnapshot?(context?: FeatureFlagContext): Promise<FeatureFlagSnapshot> | FeatureFlagSnapshot;
 }
 
-export const FeatureFlagProviderToken = ["app.feature-flags", "provider"].join(
-  ".",
-);
+export const FeatureFlagProviderToken = ['app.feature-flags', 'provider'].join('.');
 
-export const DefaultFeatureFlagTenantId =
-  "00000000-0000-0000-0000-000000000000";
+export const DefaultFeatureFlagTenantId = '00000000-0000-0000-0000-000000000000';

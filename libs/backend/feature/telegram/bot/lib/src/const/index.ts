@@ -1,1 +1,1 @@
-export * from "./telegram-tokens.const";
+export * from './telegram-tokens.const';

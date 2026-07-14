@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable } from 'mobx';
 
 export class AuthShellStore {
   bearerToken: string | null = null;
@@ -17,10 +17,7 @@ export class AuthShellStore {
     this.bearerToken = this.normalizeToken(nextToken);
   }
 
-  setSession(
-    nextBearerToken?: string | null,
-    nextRefreshToken?: string | null,
-  ): void {
+  setSession(nextBearerToken?: string | null, nextRefreshToken?: string | null): void {
     this.bearerToken = this.normalizeToken(nextBearerToken);
     this.refreshToken = this.normalizeToken(nextRefreshToken);
   }
@@ -35,7 +32,7 @@ export class AuthShellStore {
   }
 
   private normalizeToken(token?: string | null): string | null {
-    const normalized = token?.trim() ?? "";
+    const normalized = token?.trim() ?? '';
     return normalized ? normalized : null;
   }
 }

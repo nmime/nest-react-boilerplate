@@ -3,12 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "i18n/en/admin",
   "projectType": "library",
-  "tags": [
-    "platform:frontend",
-    "type:asset",
-    "scope:admin",
-    "boundary:i18n-assets"
-  ],
+  "tags": ["platform:frontend", "type:asset", "scope:admin", "boundary:i18n-assets"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",

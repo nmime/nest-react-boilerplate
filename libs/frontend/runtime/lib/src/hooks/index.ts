@@ -1,1 +1,1 @@
-export * from "./platform-hooks";
+export * from './platform-hooks';

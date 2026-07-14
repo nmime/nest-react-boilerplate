@@ -1,15 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-import { PublicAuthMetadataKey } from "./access-control.decorators";
-import { validateBearerAuthorization } from "./bearer-auth.guard";
-import type {
-  AuthenticatedPrincipal,
-  AuthenticatedRequest,
-} from "./access-control.types";
-import {
-  assertRequestTenantMatchesPrincipal,
-  normalizeTenantId,
-} from "./tenant-context";
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { PublicAuthMetadataKey } from './access-control.decorators';
+import { validateBearerAuthorization } from './bearer-auth.guard';
+import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
+import { assertRequestTenantMatchesPrincipal, normalizeTenantId } from './tenant-context';
 
 /* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
 @Injectable()
@@ -24,11 +18,7 @@ export class SessionAuthGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const principal =
-      getSessionPrincipal(request) ??
-      validateBearerAuthorization(
-        readAuthorizationHeader(request),
-        process.env,
-      );
+      getSessionPrincipal(request) ?? validateBearerAuthorization(readAuthorizationHeader(request), process.env);
 
     assertRequestTenantMatchesPrincipal(request, principal);
     request.user = principal;
@@ -38,18 +28,15 @@ export class SessionAuthGuard implements CanActivate {
 
   private isPublicRoute(context: ExecutionContext): boolean {
     return (
-      this.reflector.getAllAndOverride<boolean | undefined>(
-        PublicAuthMetadataKey,
-        [context.getHandler(), context.getClass()],
-      ) ?? false
+      this.reflector.getAllAndOverride<boolean | undefined>(PublicAuthMetadataKey, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false
     );
   }
 }
 
-export function setSessionPrincipal(
-  request: AuthenticatedRequest,
-  principal: AuthenticatedPrincipal,
-): void {
+export function setSessionPrincipal(request: AuthenticatedRequest, principal: AuthenticatedPrincipal): void {
   if (request.session) {
     request.session.user = principal;
   }
@@ -68,44 +55,37 @@ export function clearSessionPrincipal(request: AuthenticatedRequest): void {
   delete request.auth;
 }
 
-function readAuthorizationHeader(
-  request: AuthenticatedRequest,
-): string | undefined {
-  const directHeader =
-    request.headers?.authorization ?? request.headers?.Authorization;
+function readAuthorizationHeader(request: AuthenticatedRequest): string | undefined {
+  const directHeader = request.headers?.authorization ?? request.headers?.Authorization;
   if (Array.isArray(directHeader)) {
     return directHeader[0];
   }
-  if (typeof directHeader === "string") {
+  if (typeof directHeader === 'string') {
     return directHeader;
   }
 
-  return request.get?.("authorization") ?? request.get?.("Authorization");
+  return request.get?.('authorization') ?? request.get?.('Authorization');
 }
 
-function getSessionPrincipal(
-  request: AuthenticatedRequest,
-): AuthenticatedPrincipal | undefined {
+function getSessionPrincipal(request: AuthenticatedRequest): AuthenticatedPrincipal | undefined {
   const principal = request.session?.user;
   return isAuthenticatedPrincipal(principal) ? principal : undefined;
 }
 
-function isAuthenticatedPrincipal(
-  value: unknown,
-): value is AuthenticatedPrincipal {
-  if (!value || typeof value !== "object") {
+function isAuthenticatedPrincipal(value: unknown): value is AuthenticatedPrincipal {
+  if (!value || typeof value !== 'object') {
     return false;
   }
 
   const principal = value as Partial<AuthenticatedPrincipal>;
   return (
-    typeof principal.subject === "string" &&
+    typeof principal.subject === 'string' &&
     principal.subject.length > 0 &&
-    typeof principal.tenantId === "string" &&
+    typeof principal.tenantId === 'string' &&
     normalizeTenantId(principal.tenantId) === principal.tenantId &&
     Array.isArray(principal.roles) &&
-    principal.roles.every((role) => typeof role === "string") &&
+    principal.roles.every((role) => typeof role === 'string') &&
     Array.isArray(principal.permissions) &&
-    principal.permissions.every((permission) => typeof permission === "string")
+    principal.permissions.every((permission) => typeof permission === 'string')
   );
 }

@@ -1,17 +1,11 @@
-import {
-  type ReactElement,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   configureApiLocale,
   createApiRuntimeFetch,
   defaultApiToastRules,
   useApiRuntimeOverlayModel,
-} from "@app/frontend-api-support";
+} from '@app/frontend-api-support';
 import {
   ApiClientProvider,
   adminApi,
@@ -22,7 +16,7 @@ import {
   useAdminApiClient,
   useAuthApiClient,
   type ApiClientRequestOptions,
-} from "@app/frontend-api-client";
+} from '@app/frontend-api-client';
 import {
   FrontendI18nProvider,
   FrontendQueryProvider,
@@ -35,38 +29,27 @@ import {
   normalizeLocale,
   type Locale,
   type UiTheme,
-} from "@app/frontend-runtime";
-import {
-  UiErrorBoundary,
-  UiApiRuntimeOverlay,
-  UiLoading,
-  UiSection,
-} from "@app/frontend-ui-web";
-import { adminFrontendTranslations } from "@app/frontend-feature-admin-i18n";
-import { createAdminAccess, fetchAdminProfile } from "./entities/admin-session";
+} from '@app/frontend-runtime';
+import { UiErrorBoundary, UiApiRuntimeOverlay, UiLoading, UiSection } from '@app/frontend-ui-web';
+import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
+import { createAdminAccess, fetchAdminProfile } from './entities/admin-session';
 import {
   getBrowserPath,
   getConfiguredAdminApiBaseUrl,
   getConfiguredAuthApiBaseUrl,
   type AuthMePayload,
-} from "./features/admin-auth";
-import { getPayloadTheme } from "./features/admin-preferences";
-import { AuditPage } from "./pages/audit";
-import { DashboardPage } from "./pages/dashboard";
-import { ForbiddenPage } from "./pages/forbidden";
-import { NotFoundPage } from "./pages/not-found";
-import { ProfilePage } from "./pages/profile";
-import { RolesPage } from "./pages/roles";
-import { TenantRoadmapPage } from "./pages/tenants";
-import { UsersPage } from "./pages/users";
-import {
-  fallbackTranslate,
-  isUsersRoute,
-  normalizeAdminPath,
-  type AdminProfileState,
-  type Translate,
-} from "./shared";
-import { AdminLayout } from "./widgets/admin-shell";
+} from './features/admin-auth';
+import { getPayloadTheme } from './features/admin-preferences';
+import { AuditPage } from './pages/audit';
+import { DashboardPage } from './pages/dashboard';
+import { ForbiddenPage } from './pages/forbidden';
+import { NotFoundPage } from './pages/not-found';
+import { ProfilePage } from './pages/profile';
+import { RolesPage } from './pages/roles';
+import { TenantRoadmapPage } from './pages/tenants';
+import { UsersPage } from './pages/users';
+import { fallbackTranslate, isUsersRoute, normalizeAdminPath, type AdminProfileState, type Translate } from './shared';
+import { AdminLayout } from './widgets/admin-shell';
 
 export interface AdminRouteRuntime {
   requestOptions?: ApiClientRequestOptions;
@@ -81,61 +64,51 @@ interface AdminAppProps {
 /* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
 function renderReadyAdminRoute(
   path: string,
-  state: Extract<AdminProfileState, { status: "ready" }>,
+  state: Extract<AdminProfileState, { status: 'ready' }>,
   t: Translate,
   runtime: AdminRouteRuntime,
 ): ReactElement {
   const routePath = normalizeAdminPath(path);
-  if (routePath === "/" || routePath === "/dashboard") {
+  if (routePath === '/' || routePath === '/dashboard') {
     return state.access.canReadDashboard ? (
-      <DashboardPage
-        access={state.access}
-        requestOptions={runtime.requestOptions}
-      />
+      <DashboardPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.dashboardMissing")} />
+      <ForbiddenPage reason={t('admin.permission.dashboardMissing')} />
     );
   }
   if (isUsersRoute(routePath)) {
     return state.access.canReadUsers ? (
-      <UsersPage
-        access={state.access}
-        currentPath={path}
-        requestOptions={runtime.requestOptions}
-      />
+      <UsersPage access={state.access} currentPath={path} requestOptions={runtime.requestOptions} />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.usersMissing")} />
+      <ForbiddenPage reason={t('admin.permission.usersMissing')} />
     );
   }
-  if (routePath === "/roles") {
+  if (routePath === '/roles') {
     return state.access.canReadRoles ? (
-      <RolesPage
-        access={state.access}
-        requestOptions={runtime.requestOptions}
-      />
+      <RolesPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.rolesMissing")} />
+      <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
     );
   }
-  if (routePath === "/audit") {
+  if (routePath === '/audit') {
     return state.access.canReadAudit ? (
       <AuditPage requestOptions={runtime.requestOptions} />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.auditMissing")} />
+      <ForbiddenPage reason={t('admin.permission.auditMissing')} />
     );
   }
-  if (routePath === "/profile") {
+  if (routePath === '/profile') {
     return state.access.canReadProfile ? (
       <ProfilePage payload={state.payload} />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.profileMissing")} />
+      <ForbiddenPage reason={t('admin.permission.profileMissing')} />
     );
   }
-  if (routePath === "/tenants") {
+  if (routePath === '/tenants') {
     return state.access.canReadRoles ? (
       <TenantRoadmapPage />
     ) : (
-      <ForbiddenPage reason={t("admin.permission.rolesMissing")} />
+      <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
     );
   }
   return <NotFoundPage />;
@@ -148,17 +121,14 @@ export function renderAdminRoute(
   t: Translate = fallbackTranslate,
   runtime: AdminRouteRuntime = {},
 ): ReactElement {
-  if (state.status === "loading") {
+  if (state.status === 'loading') {
     return (
-      <UiSection
-        eyebrow={t("admin.loadingEyebrow")}
-        title={t("admin.loadingProfile")}
-      >
-        <UiLoading label={t("admin.loadingProfile")} />
+      <UiSection eyebrow={t('admin.loadingEyebrow')} title={t('admin.loadingProfile')}>
+        <UiLoading label={t('admin.loadingProfile')} />
       </UiSection>
     );
   }
-  if (state.status === "forbidden") {
+  if (state.status === 'forbidden') {
     return <ForbiddenPage reason={state.reason} />;
   }
   const rendered = renderReadyAdminRoute(path, state, t, runtime);
@@ -166,7 +136,7 @@ export function renderAdminRoute(
 }
 
 async function fetchAuthMe(
-  authClient: Pick<typeof authApi, "authControllerMe">,
+  authClient: Pick<typeof authApi, 'authControllerMe'>,
   requestOptions?: ApiClientRequestOptions,
 ): Promise<AuthMePayload | null> {
   try {
@@ -185,29 +155,26 @@ export const getProfileState = (
   profileRequestFailedMessage: string,
 ): AdminProfileState => {
   if (loading) {
-    return { status: "loading" };
+    return { status: 'loading' };
   }
   if (error) {
     return {
-      status: "forbidden",
-      reason:
-        error instanceof Error ? error.message : profileRequestFailedMessage,
+      status: 'forbidden',
+      reason: error instanceof Error ? error.message : profileRequestFailedMessage,
     };
   }
 
   const access = createAdminAccess(payload?.principal);
   /* v8 ignore next 4 -- authenticated payloads normalize missing envelope data to an empty profile shell. */
   return access.isAuthenticated
-    ? { status: "ready", payload: payload ?? {}, access }
+    ? { status: 'ready', payload: payload ?? {}, access }
     : {
-        status: "forbidden",
+        status: 'forbidden',
         reason: principalMissingMessage,
       };
 };
 
-const ApiClientLocaleBridge = ({
-  children,
-}: Readonly<{ children: ReactElement }>) => {
+const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactElement }>) => {
   const { locale } = useI18n();
 
   useEffect(() => {
@@ -217,11 +184,7 @@ const ApiClientLocaleBridge = ({
   return children;
 };
 
-const AdminWorkspace = ({
-  applyUserLocale,
-  applyUserTheme,
-  bearerToken,
-}: Readonly<AdminAppProps>) => {
+const AdminWorkspace = ({ applyUserLocale, applyUserTheme, bearerToken }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const authClient = useAuthApiClient();
   const adminClient = useAdminApiClient();
@@ -233,9 +196,7 @@ const AdminWorkspace = ({
     retry: false,
     staleTime: 15_000,
   });
-  const authLocale = normalizeLocale(
-    authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal.locale,
-  );
+  const authLocale = normalizeLocale(authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal.locale);
   const authTheme = getPayloadTheme(authMeQuery.data);
 
   useEffect(() => {
@@ -251,20 +212,13 @@ const AdminWorkspace = ({
 
   const profileQuery = useQuery({
     enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
-    queryFn: () =>
-      fetchAdminProfile(adminClient.api, adminClient.requestOptions),
-    queryKey: [
-      ...adminApi.getAdminProfileControllerMeQueryKey(),
-      locale,
-      bearerToken,
-    ],
+    queryFn: () => fetchAdminProfile(adminClient.api, adminClient.requestOptions),
+    queryKey: [...adminApi.getAdminProfileControllerMeQueryKey(), locale, bearerToken],
     retry: false,
     staleTime: 15_000,
   });
   const payloadLocale = normalizeLocale(
-    profileQuery.data?.profile?.locale ??
-      profileQuery.data?.principal?.locale ??
-      authLocale,
+    profileQuery.data?.profile?.locale ?? profileQuery.data?.principal?.locale ?? authLocale,
   );
 
   useEffect(() => {
@@ -279,25 +233,16 @@ const AdminWorkspace = ({
         authMeQuery.isLoading || profileQuery.isLoading,
         profileQuery.data,
         profileQuery.error,
-        t("errors.auth.principalMissing"),
-        t("admin.error.profileRequestFailed"),
+        t('errors.auth.principalMissing'),
+        t('admin.error.profileRequestFailed'),
       ),
-    [
-      authMeQuery.isLoading,
-      profileQuery.data,
-      profileQuery.error,
-      profileQuery.isLoading,
-      t,
-    ],
+    [authMeQuery.isLoading, profileQuery.data, profileQuery.error, profileQuery.isLoading, t],
   );
 
   const adminRequestOptions = adminClient.requestOptions;
 
   return (
-    <AdminLayout
-      access={state.status === "ready" ? state.access : undefined}
-      currentPath={path}
-    >
+    <AdminLayout access={state.status === 'ready' ? state.access : undefined} currentPath={path}>
       {renderAdminRoute(path, state, t, {
         requestOptions: adminRequestOptions,
       })}
@@ -305,9 +250,7 @@ const AdminWorkspace = ({
   );
 };
 
-const AdminRoot = ({
-  initialBearerToken,
-}: Readonly<{ initialBearerToken: string | null }>) => {
+const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string | null }>) => {
   const bearerToken = initialBearerToken;
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
@@ -325,13 +268,9 @@ const AdminRoot = ({
       const persistedLocale = normalizeLocale(body.locale);
       const persistedTheme = getPayloadTheme(body);
       /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
-      setUserLocale(
-        persistedLocale ?? nextPreferences.locale ?? userLocale ?? null,
-      );
+      setUserLocale(persistedLocale ?? nextPreferences.locale ?? userLocale ?? null);
       /* v8 ignore next 3 -- preference mutation theme falls back through optional response/request/current values. */
-      setUserTheme(
-        persistedTheme ?? nextPreferences.theme ?? userTheme ?? null,
-      );
+      setUserTheme(persistedTheme ?? nextPreferences.theme ?? userTheme ?? null);
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),
       });
@@ -379,11 +318,7 @@ const AdminRoot = ({
       userTheme={userTheme}
     >
       <ApiClientLocaleBridge>
-        <AdminWorkspace
-          applyUserLocale={applyUserLocale}
-          applyUserTheme={applyUserTheme}
-          bearerToken={bearerToken}
-        />
+        <AdminWorkspace applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} bearerToken={bearerToken} />
       </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );
@@ -396,12 +331,8 @@ const AdminApiClientProvider = ({
   const runtimeFetch = useMemo(
     () =>
       createApiRuntimeFetch({
-        redirectTo: "/admin",
-        toastRules: [
-          ...adminApiToastRules,
-          ...authApiToastRules,
-          ...defaultApiToastRules,
-        ],
+        redirectTo: '/admin',
+        toastRules: [...adminApiToastRules, ...authApiToastRules, ...defaultApiToastRules],
       }),
     [],
   );
@@ -412,7 +343,7 @@ const AdminApiClientProvider = ({
       baseUrls={{
         admin: getConfiguredAdminApiBaseUrl(),
         auth: getConfiguredAuthApiBaseUrl(),
-        user: "",
+        user: '',
       }}
       fetchImpl={runtimeFetch}
     >
@@ -421,52 +352,44 @@ const AdminApiClientProvider = ({
   );
 };
 
-const ApiRuntimeOverlayProvider = observer(
-  function ApiRuntimeOverlayProvider() {
-    const appStore = useAppStore();
-    const locale = useStore().locale.locale;
-    const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
+const ApiRuntimeOverlayProvider = observer(function ApiRuntimeOverlayProvider() {
+  const appStore = useAppStore();
+  const locale = useStore().locale.locale;
+  const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
 
-    return (
-      <UiApiRuntimeOverlay
-        authRequired={state.authRequired}
-        className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
-        copy={{
-          apiNotificationsLabel: translate("ui.runtime.notifications.label", {
-            locale,
-          }),
-          authRequiredTitle: translate("ui.runtime.authRequired.title", {
-            locale,
-          }),
-          continueToSignInLabel: translate("ui.runtime.authRequired.continue", {
-            locale,
-          }),
-          defaultAuthDescription: translate(
-            "ui.runtime.authRequired.description",
-            { locale },
-          ),
-          defaultOfflineMessage: translate("ui.runtime.offline.description", {
-            locale,
-          }),
-          defaultServerErrorMessage: translate(
-            "ui.runtime.serverUnavailable.description",
-            { locale },
-          ),
-          dismissLabel: translate("ui.runtime.dismissToast", { locale }),
-          offlineTitle: translate("ui.runtime.offline.title", { locale }),
-          serverErrorTitle: translate("ui.runtime.serverUnavailable.title", {
-            locale,
-          }),
-        }}
-        lastError={state.lastError}
-        onDismissToast={dismissToast}
-        redirectTo={state.redirectTo ?? "/admin"}
-        status={state.status}
-        toasts={toasts}
-      />
-    );
-  },
-);
+  return (
+    <UiApiRuntimeOverlay
+      authRequired={state.authRequired}
+      className={`xr-runtime-overlay--${appStore.currentBreakpoint}`}
+      copy={{
+        apiNotificationsLabel: translate('ui.runtime.notifications.label', {
+          locale,
+        }),
+        authRequiredTitle: translate('ui.runtime.authRequired.title', {
+          locale,
+        }),
+        continueToSignInLabel: translate('ui.runtime.authRequired.continue', {
+          locale,
+        }),
+        defaultAuthDescription: translate('ui.runtime.authRequired.description', { locale }),
+        defaultOfflineMessage: translate('ui.runtime.offline.description', {
+          locale,
+        }),
+        defaultServerErrorMessage: translate('ui.runtime.serverUnavailable.description', { locale }),
+        dismissLabel: translate('ui.runtime.dismissToast', { locale }),
+        offlineTitle: translate('ui.runtime.offline.title', { locale }),
+        serverErrorTitle: translate('ui.runtime.serverUnavailable.title', {
+          locale,
+        }),
+      }}
+      lastError={state.lastError}
+      onDismissToast={dismissToast}
+      redirectTo={state.redirectTo ?? '/admin'}
+      status={state.status}
+      toasts={toasts}
+    />
+  );
+});
 
 const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
   <FrontendStateProvider>

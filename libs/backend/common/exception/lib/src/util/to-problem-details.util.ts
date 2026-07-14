@@ -8,10 +8,7 @@ import { mapHttpStatusToProblemTitle } from './map-http-status-to-problem-title.
 import { problemCodeForStatus } from './problem-code-for-status.util';
 
 const isProblemDetails = (value: unknown): value is ProblemDetails =>
-  isObjectRecord(value) &&
-  'type' in value &&
-  'title' in value &&
-  'status' in value;
+  isObjectRecord(value) && 'type' in value && 'title' in value && 'status' in value;
 
 export const getProblemStatus = (error: unknown): number => {
   if (error instanceof BaseException) {
@@ -36,11 +33,7 @@ export const getProblemStatus = (error: unknown): number => {
  * - HttpException.message NEVER exposed — use static generic messages
  * - Unknown errors → generic internal error
  */
-export const toProblemDetails = (
-  error: unknown,
-  instance?: string,
-  locale?: string,
-): ProblemDetails => {
+export const toProblemDetails = (error: unknown, instance?: string, locale?: string): ProblemDetails => {
   // 1. Factory exceptions (RFC 9457 compliant)
   if (error instanceof BaseException) {
     const problem = error.toProblemDetails(instance);

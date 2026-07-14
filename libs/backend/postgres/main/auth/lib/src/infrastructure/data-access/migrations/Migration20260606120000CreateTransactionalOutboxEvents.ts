@@ -1,4 +1,4 @@
-import { Migration } from "@mikro-orm/migrations";
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20260606120000CreateTransactionalOutboxEvents extends Migration {
   override up(): void {
@@ -17,15 +17,9 @@ export class Migration20260606120000CreateTransactionalOutboxEvents extends Migr
   }
 
   override down(): void {
-    this.addSql(
-      'drop index if exists "ix__admin_audit_logs__tenant_id_created_at_id";',
-    );
-    this.addSql(
-      'drop index if exists "ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id";',
-    );
-    this.addSql(
-      'drop index if exists "ix__transactional_outbox_events__tenant_id_status_created_at";',
-    );
+    this.addSql('drop index if exists "ix__admin_audit_logs__tenant_id_created_at_id";');
+    this.addSql('drop index if exists "ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id";');
+    this.addSql('drop index if exists "ix__transactional_outbox_events__tenant_id_status_created_at";');
     this.addSql('drop table if exists "transactional_outbox_events";');
   }
 }

@@ -1,15 +1,8 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
-import {
-  AuthMethodEntity,
-  DefaultAuthTenantId,
-  type AuthMethodType,
-} from "../entities";
-import {
-  mapSocialAuthError,
-  type SocialAuthRepositoryError,
-} from "./external-identity.repository";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
+import { AuthMethodEntity, DefaultAuthTenantId, type AuthMethodType } from '../entities';
+import { mapSocialAuthError, type SocialAuthRepositoryError } from './external-identity.repository';
 
 export interface UpsertAuthMethodInput {
   tenantId?: string;
@@ -27,13 +20,8 @@ export class AuthMethodRepository {
     private readonly entityManager: EntityManager,
   ) {}
 
-  upsertMethod(
-    input: UpsertAuthMethodInput,
-  ): ResultAsync<AuthMethodEntity, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistMethod(input),
-      mapSocialAuthError,
-    );
+  upsertMethod(input: UpsertAuthMethodInput): ResultAsync<AuthMethodEntity, SocialAuthRepositoryError> {
+    return ResultAsync.fromPromise(this.persistMethod(input), mapSocialAuthError);
   }
 
   recordLastUsed(
@@ -41,10 +29,7 @@ export class AuthMethodRepository {
     tenantId: string = DefaultAuthTenantId,
     lastUsedAt: Date = new Date(),
   ): ResultAsync<AuthMethodEntity | null, SocialAuthRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.updateLastUsed(id, tenantId, lastUsedAt),
-      mapSocialAuthError,
-    );
+    return ResultAsync.fromPromise(this.updateLastUsed(id, tenantId, lastUsedAt), mapSocialAuthError);
   }
 
   findByUser(
@@ -55,7 +40,7 @@ export class AuthMethodRepository {
       this.entityManager.find(
         AuthMethodEntity,
         { tenantId, userId },
-        { orderBy: { lastUsedAt: "DESC", createdAt: "DESC" } },
+        { orderBy: { lastUsedAt: 'DESC', createdAt: 'DESC' } },
       ),
       mapSocialAuthError,
     );
@@ -69,7 +54,7 @@ export class AuthMethodRepository {
       this.entityManager.findOne(
         AuthMethodEntity,
         { tenantId, userId, lastUsedAt: { $ne: null } },
-        { orderBy: { lastUsedAt: "DESC" } },
+        { orderBy: { lastUsedAt: 'DESC' } },
       ),
       mapSocialAuthError,
     );
@@ -85,9 +70,7 @@ export class AuthMethodRepository {
     );
   }
 
-  private async persistMethod(
-    input: UpsertAuthMethodInput,
-  ): Promise<AuthMethodEntity> {
+  private async persistMethod(input: UpsertAuthMethodInput): Promise<AuthMethodEntity> {
     const tenantId = input.tenantId ?? DefaultAuthTenantId;
     const existing = await this.entityManager.findOne(AuthMethodEntity, {
       tenantId,
@@ -110,11 +93,7 @@ export class AuthMethodRepository {
     return entity;
   }
 
-  private async updateLastUsed(
-    id: string,
-    tenantId: string,
-    lastUsedAt: Date,
-  ): Promise<AuthMethodEntity | null> {
+  private async updateLastUsed(id: string, tenantId: string, lastUsedAt: Date): Promise<AuthMethodEntity | null> {
     const entity = await this.entityManager.findOne(AuthMethodEntity, {
       id,
       tenantId,
@@ -130,5 +109,5 @@ export class AuthMethodRepository {
 }
 
 function defaultAmr(method: AuthMethodType): string[] {
-  return method === "password" ? ["pwd"] : [method];
+  return method === 'password' ? ['pwd'] : [method];
 }

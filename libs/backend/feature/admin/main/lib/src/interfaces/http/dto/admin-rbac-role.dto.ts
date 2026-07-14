@@ -1,7 +1,7 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class AdminRbacRoleDto {
-  @ApiProperty({ format: "uuid" })
+  @ApiProperty({ format: 'uuid' })
   id!: string;
 
   @ApiProperty()
@@ -16,6 +16,6 @@ export class AdminRbacRoleDto {
   @ApiProperty()
   isSystem!: boolean;
 
-  @ApiProperty({ items: { type: "string" }, type: "array" })
+  @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
 }

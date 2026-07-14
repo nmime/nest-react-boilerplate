@@ -78,7 +78,7 @@ Backups are opt-in:
 ```yaml
 backups:
   enabled: true
-  schedule: "17 * * * *" # hourly => <= 60 minute RPO
+  schedule: '17 * * * *' # hourly => <= 60 minute RPO
   destination:
     objectStore:
       enabled: true

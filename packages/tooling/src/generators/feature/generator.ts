@@ -45,10 +45,6 @@ function permissionWriteName(names: ReturnType<typeof generateNames>): string {
   return names.pascal + 'WritePermission';
 }
 
-function frontendFeatureAlias(names: ReturnType<typeof generateNames>): string {
-  return `@app/frontend-feature-${names.kebab}`;
-}
-
 function libDepth(dir: string): number {
   return dir.split('/').length;
 }
@@ -105,6 +101,41 @@ function projectJson(
         2,
       ) + '\n',
   };
+}
+
+function projectGuides(libDir: string, projectName: string, tags: string[], responsibility: string): TemplateFile[] {
+  const d = dots(libDir);
+  return [
+    {
+      path: `${libDir}/AGENTS.md`,
+      contents: `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md), [backend library rules](${d}libs/backend/AGENTS.md), and [AI agent policy](${d}docs/ai/agent-policy.md).
+
+- Responsibility: ${responsibility}
+- Keep the public API behind \`src/index.ts\`.
+- Import other projects only through aliases declared in \`tsconfig.base.json\`.
+- Do not move transport, domain, and persistence concerns across their generated boundaries.
+- Run the local build and test targets after changes.
+
+Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+`,
+    },
+    {
+      path: `${libDir}/README.md`,
+      contents: `# ${projectName}
+
+${responsibility}
+
+## Verification
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:build
+pnpm exec nx run ${projectName}:test
+\`\`\`
+`,
+    },
+  ];
 }
 
 function tsconfig(libDir: string): TemplateFile[] {
@@ -225,7 +256,11 @@ module.exports = [
 
 // ---------------------------------------------------------------------------
 
-function createBackendTemplateFiles(names: ReturnType<typeof generateNames>, apiApp: string): TemplateFile[] {
+function createBackendTemplateFiles(
+  names: ReturnType<typeof generateNames>,
+  frontendRoot: string,
+  migrationTimestamp: string,
+): TemplateFile[] {
   const base = `libs/backend/feature/${names.kebab}`;
   const mainAlias = backendFeatureMainAlias(names);
   const sharedAlias = backendFeatureSharedAlias(names);
@@ -288,6 +323,12 @@ describe("${names.pascal}Dto", () => {
       `scope:${names.kebab}`,
     ]),
     ...tsconfig(`${base}/shared/lib`),
+    ...projectGuides(
+      `${base}/shared/lib`,
+      sharedAlias,
+      ['platform:backend', 'type:feature-shared', `scope:${names.kebab}`],
+      `Stable ${names.title} DTOs and permission contracts shared by backend adapters.`,
+    ),
 
     // Main library
     {
@@ -296,19 +337,19 @@ describe("${names.pascal}Dto", () => {
     },
     {
       path: `${base}/main/lib/src/${names.kebab}.module.ts`,
-      contents: `import { Module } from "@nestjs/common";\nimport { ${names.pascal}Controller } from "./${names.kebab}.controller";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\n@Module({\n  controllers: [${names.pascal}Controller],\n  providers: [${names.pascal}Service],\n  exports: [${names.pascal}Service],\n})\nexport class ${names.pascal}Module {}\n`,
+      contents: `import { Module } from "@nestjs/common";\nimport { ${names.pascal}PostgresModule } from "${backendPostgresMainAlias(names)}";\nimport { ${names.pascal}Controller } from "./${names.kebab}.controller";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\n@Module({\n  imports: [${names.pascal}PostgresModule],\n  controllers: [${names.pascal}Controller],\n  providers: [${names.pascal}Service],\n  exports: [${names.pascal}Service],\n})\nexport class ${names.pascal}Module {}\n`,
     },
     {
       path: `${base}/main/lib/src/${names.kebab}.service.ts`,
-      contents: `import { Injectable } from "@nestjs/common";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\n@Injectable()\nexport class ${names.pascal}Service {\n  list(): ${names.pascal}Dto[] {\n    return [];\n  }\n\n  create(input: Create${names.pascal}Dto): ${names.pascal}Dto {\n    const now = new Date().toISOString();\n\n    return {\n      id: crypto.randomUUID(),\n      name: input.name,\n      createdAt: now,\n    };\n  }\n}\n`,
+      contents: `import { Inject, Injectable } from "@nestjs/common";\nimport { InternalException } from "@app/backend-common-exception";\nimport { ${names.pascal}Repository } from "${backendPostgresMainAlias(names)}";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\n@Injectable()\nexport class ${names.pascal}Service {\n  constructor(\n    @Inject(${names.pascal}Repository)\n    private readonly repository: ${names.pascal}Repository,\n  ) {}\n\n  async list(): Promise<${names.pascal}Dto[]> {\n    const result = await this.repository.list();\n    if (result.isErr()) throw new InternalException({ feature: "${names.kebab}", operation: "list" });\n    return result.value.map(toDto);\n  }\n\n  async create(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto> {\n    const result = await this.repository.create(input.name);\n    if (result.isErr()) throw new InternalException({ feature: "${names.kebab}", operation: "create" });\n    return toDto(result.value);\n  }\n}\n\nfunction toDto(entity: { id: string; name: string; createdAt: Date }): ${names.pascal}Dto {\n  return { id: entity.id, name: entity.name, createdAt: entity.createdAt.toISOString() };\n}\n`,
     },
     {
       path: `${base}/main/lib/src/${names.kebab}.controller.ts`,
-      contents: `import { Body, Controller, Get, Post } from "@nestjs/common";\nimport { ApiProperty } from "@nestjs/swagger";\nimport { ApiOkDataResponse, ApiExceptions } from "@app/backend-common-swagger";\nimport { createOkResponse, type OkResponse } from "@app/backend-common-response";\nimport type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty()\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty()\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@Controller("${names.kebab}")\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  list(): OkResponse<${names.pascal}Dto[]> {\n    return createOkResponse(this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): OkResponse<${names.pascal}Dto> {\n    return createOkResponse(this.${names.camel}Service.create(input));\n  }\n}\n`,
+      contents: `import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";\nimport { ApiBearerAuth, ApiProperty } from "@nestjs/swagger";\nimport { IsString, Length } from "class-validator";\nimport { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from "@app/backend-common-swagger";\nimport { createOkResponse, type OkResponse } from "@app/backend-common-response";\nimport { RbacGuard, SessionAuthGuard, RequirePermissions } from "@app/backend-feature-auth-shared";\nimport { ${permissionReadName(names)}, ${permissionWriteName(names)}, type Create${names.pascal}Dto, type ${names.pascal}Dto } from "${sharedAlias}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\nclass Create${names.pascal}BodyDto implements Create${names.pascal}Dto {\n  @ApiProperty({ minLength: 1, maxLength: 255 })\n  @IsString()\n  @Length(1, 255)\n  name!: string;\n}\n\nclass ${names.pascal}ResponseDto implements ${names.pascal}Dto {\n  @ApiProperty({ format: "uuid" })\n  id!: string;\n\n  @ApiProperty()\n  name!: string;\n\n  @ApiProperty({ format: "date-time" })\n  createdAt!: string;\n}\n\n@ApiExceptions(400, 401, 403, 429, 500)\n@ApiBearerAuth()\n@ApiSessionCookieAuth()\n@Controller("${names.kebab}")\n@UseGuards(new SessionAuthGuard(), new RbacGuard())\nexport class ${names.pascal}Controller {\n  constructor(private readonly ${names.camel}Service: ${names.pascal}Service) {}\n\n  @Get()\n  @RequirePermissions(${permissionReadName(names)})\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async list(): Promise<OkResponse<${names.pascal}Dto[]>> {\n    return createOkResponse(await this.${names.camel}Service.list());\n  }\n\n  @Post()\n  @RequirePermissions(${permissionWriteName(names)})\n  @ApiOkDataResponse(${names.pascal}ResponseDto)\n  async create(\n    @Body() input: Create${names.pascal}BodyDto,\n  ): Promise<OkResponse<${names.pascal}Dto>> {\n    return createOkResponse(await this.${names.camel}Service.create(input));\n  }\n}\n`,
     },
     {
       path: `${base}/main/lib/src/${names.kebab}.service.spec.ts`,
-      contents: `import { describe, expect, it } from "vitest";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("creates a ${names.title.toLowerCase()} placeholder", () => {\n    expect(new ${names.pascal}Service().create({ name: "Example" })).toMatchObject({\n      name: "Example",\n    });\n  });\n});\n`,
+      contents: `import { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport { ${names.pascal}Entity } from "${backendPostgresMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity = new ${names.pascal}Entity({ name: "Example" });\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`,
     },
     projectJson(`${base}/main/lib`, mainAlias, `${base}/main/lib/src`, `dist/${base}/main`, [
       'platform:backend',
@@ -316,11 +357,21 @@ describe("${names.pascal}Dto", () => {
       `scope:${names.kebab}`,
     ]),
     ...tsconfig(`${base}/main/lib`),
+    ...projectGuides(
+      `${base}/main/lib`,
+      mainAlias,
+      ['platform:backend', 'type:feature-main', `scope:${names.kebab}`],
+      `${names.title} application orchestration and HTTP transport.`,
+    ),
 
     // Postgres data access
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`,
-      contents: `export * from "./infrastructure/data-access";\n`,
+      contents: `export * from "./${names.kebab}-postgres.module";\nexport * from "./infrastructure/data-access";\n`,
+    },
+    {
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/${names.kebab}-postgres.module.ts`,
+      contents: `import { MikroOrmModule } from "@mikro-orm/nestjs";\nimport { Module } from "@nestjs/common";\nimport { ${names.pascal}EntitySchema } from "./infrastructure/data-access/entities";\nimport { ${names.pascal}Repository } from "./infrastructure/data-access/repositories";\n\n@Module({\n  imports: [MikroOrmModule.forFeature([${names.pascal}EntitySchema])],\n  providers: [${names.pascal}Repository],\n  exports: [MikroOrmModule, ${names.pascal}Repository],\n})\nexport class ${names.pascal}PostgresModule {}\n`,
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/index.ts`,
@@ -336,24 +387,24 @@ describe("${names.pascal}Dto", () => {
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/${names.kebab}.repository.ts`,
-      contents: `import { EntityManager } from "@mikro-orm/core";\nimport { Inject, Injectable } from "@nestjs/common";\nimport { ${names.pascal}Entity } from "../entities";\n\n@Injectable()\nexport class ${names.pascal}Repository {\n  constructor(\n    @Inject(EntityManager)\n    private readonly entityManager: EntityManager,\n  ) {}\n\n  async list(): Promise<${names.pascal}Entity[]> {\n    return this.entityManager.find(${names.pascal}Entity, {});\n  }\n\n  async create(name: string): Promise<${names.pascal}Entity> {\n    const entity = new ${names.pascal}Entity({ name });\n    this.entityManager.persist(entity);\n    await this.entityManager.flush();\n\n    return entity;\n  }\n}\n`,
+      contents: `import { EntityManager } from "@mikro-orm/core";\nimport { Inject, Injectable } from "@nestjs/common";\nimport { ResultAsync } from "neverthrow";\nimport { ${names.pascal}Entity } from "../entities";\n\nexport interface ${names.pascal}RepositoryError { code: "repository_error"; }\n\n@Injectable()\nexport class ${names.pascal}Repository {\n  constructor(\n    @Inject(EntityManager)\n    private readonly entityManager: EntityManager,\n  ) {}\n\n  list(): ResultAsync<${names.pascal}Entity[], ${names.pascal}RepositoryError> {\n    return ResultAsync.fromPromise(\n      this.entityManager.find(${names.pascal}Entity, {}, { orderBy: { createdAt: "DESC" } }),\n      () => ({ code: "repository_error" as const }),\n    );\n  }\n\n  create(name: string): ResultAsync<${names.pascal}Entity, ${names.pascal}RepositoryError> {\n    return ResultAsync.fromPromise(this.persist(name), () => ({ code: "repository_error" as const }));\n  }\n\n  private async persist(name: string): Promise<${names.pascal}Entity> {\n    const entity = new ${names.pascal}Entity({ name });\n    this.entityManager.persist(entity);\n    await this.entityManager.flush();\n    return entity;\n  }\n}\n`,
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/index.ts`,
       contents: `export * from "./${names.kebab}.repository";\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.ts`,
-      contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration00000000000000Create${names.pascal} extends Migration {\n  override up(): void {\n    this.addSql('create table "${names.kebab.replaceAll('-', '_')}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll('-', '_')}_pkey" primary key ("id"));');\n  }\n\n  override down(): void {\n    this.addSql('drop table if exists "${names.kebab.replaceAll('-', '_')}" cascade;');\n  }\n}\n`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration${migrationTimestamp}Create${names.pascal}.ts`,
+      contents: `import { Migration } from "@mikro-orm/migrations";\n\nexport class Migration${migrationTimestamp}Create${names.pascal} extends Migration {\n  override up(): void {\n    this.addSql('create table "${names.kebab.replaceAll('-', '_')}" ("id" uuid not null, "name" varchar(255) not null, "created_at" timestamptz not null, constraint "${names.kebab.replaceAll('-', '_')}_pkey" primary key ("id"));');\n  }\n\n  override down(): void {\n    this.addSql('drop table if exists "${names.kebab.replaceAll('-', '_')}" cascade;');\n  }\n}\n`,
     },
     {
-      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration00000000000000Create${names.pascal}.spec.ts`,
+      path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration${migrationTimestamp}Create${names.pascal}.spec.ts`,
       contents: `import { describe, expect, it } from "vitest";
-import { Migration00000000000000Create${names.pascal} } from "./Migration00000000000000Create${names.pascal}";
+import { Migration${migrationTimestamp}Create${names.pascal} } from "./Migration${migrationTimestamp}Create${names.pascal}";
 
-describe("Migration00000000000000Create${names.pascal}", () => {
+describe("Migration${migrationTimestamp}Create${names.pascal}", () => {
   it("up() generates CREATE TABLE SQL with required columns", () => {
-    const migration = new Migration00000000000000Create${names.pascal}();
+    const migration = new Migration${migrationTimestamp}Create${names.pascal}();
     const sql: string[] = [];
     migration.addSql = (query: string) => {
       sql.push(query);
@@ -371,7 +422,7 @@ describe("Migration00000000000000Create${names.pascal}", () => {
   });
 
   it("down() generates DROP TABLE SQL", () => {
-    const migration = new Migration00000000000000Create${names.pascal}();
+    const migration = new Migration${migrationTimestamp}Create${names.pascal}();
     const sql: string[] = [];
     migration.addSql = (query: string) => {
       sql.push(query);
@@ -390,7 +441,7 @@ describe("Migration00000000000000Create${names.pascal}", () => {
     },
     {
       path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/index.ts`,
-      contents: `export * from "./Migration00000000000000Create${names.pascal}";\n`,
+      contents: `export * from "./Migration${migrationTimestamp}Create${names.pascal}";\n`,
     },
     projectJson(
       `libs/backend/postgres/main/${names.kebab}/lib`,
@@ -400,17 +451,27 @@ describe("Migration00000000000000Create${names.pascal}", () => {
       ['platform:backend', 'type:data-access', `scope:${names.kebab}`],
     ),
     ...tsconfig(`libs/backend/postgres/main/${names.kebab}/lib`),
+    ...projectGuides(
+      `libs/backend/postgres/main/${names.kebab}/lib`,
+      backendPostgresMainAlias(names),
+      ['platform:backend', 'type:data-access', `scope:${names.kebab}`],
+      `${names.title} PostgreSQL entities, repository, and migrations.`,
+    ),
 
-    // Frontend API client
+    // The OpenAPI contract and generated API clients remain generated artifacts.
+    // This feature-facing page accepts translated copy and can consume the
+    // regenerated client after `pnpm api:contracts && pnpm api:clients`.
     {
-      path: `libs/frontend/api-client/lib/src/features/${names.kebab}.ts`,
-      contents: `import type { Create${names.pascal}Dto, ${names.pascal}Dto } from "${sharedAlias}";\n\nexport interface ${names.pascal}ApiClient {\n  list${names.pascal}s(): Promise<${names.pascal}Dto[]>;\n  create${names.pascal}(input: Create${names.pascal}Dto): Promise<${names.pascal}Dto>;\n}\n\nexport function create${names.pascal}ApiClient(\n  request: <T>(path: string, init?: RequestInit) => Promise<T>,\n): ${names.pascal}ApiClient {\n  return {\n    list${names.pascal}s: () => request<${names.pascal}Dto[]>("/${names.kebab}"),\n    create${names.pascal}: (input) => request<${names.pascal}Dto>("/${names.kebab}", { method: "POST", body: JSON.stringify(input) }),\n  };\n}\n`,
+      path: `${frontendRoot}/src/pages/${names.kebab}/ui/${names.pascal}Page.tsx`,
+      contents: `export interface ${names.pascal}PageProps {\n  title: string;\n  description?: string;\n}\n\nexport function ${names.pascal}Page({ title, description }: ${names.pascal}PageProps) {\n  return (\n    <main>\n      <h1>{title}</h1>\n      {description ? <p>{description}</p> : null}\n    </main>\n  );\n}\n`,
     },
-
-    // Frontend page
     {
-      path: `apps/frontend/app/src/app/features/${names.kebab}/${names.pascal}Page.tsx`,
-      contents: `export function ${names.pascal}Page() {\n  return (\n    <div>\n      <h1>${names.title}</h1>\n      <p>Generated ${apiApp} route — replace with real implementation.</p>\n    </div>\n  );\n}\n`,
+      path: `${frontendRoot}/src/pages/${names.kebab}/index.ts`,
+      contents: `export * from "./ui/${names.pascal}Page";\n`,
+    },
+    {
+      path: `docs/features/${names.kebab}/scaffold.md`,
+      contents: `# ${names.title} scaffold\n\nThe backend route, persistence module, migration, and frontend page boundary are generated.\n\n## Finish the product flow\n\n1. Run \`pnpm api:contracts\` and \`pnpm api:clients\` after the API compiles.\n2. Add a frontend API wrapper that imports only \`@app/frontend-api-client\`.\n3. Register the page in the owning application router with translated copy.\n4. Add component and e2e coverage for loading, error, empty, success, auth, and RBAC states.\n`,
     },
   ];
 }
@@ -422,7 +483,6 @@ function createTsconfigAliases(names: ReturnType<typeof generateNames>): Record<
     [backendFeatureMainAlias(names)]: [`libs/backend/feature/${names.kebab}/main/lib/src/index.ts`],
     [backendFeatureSharedAlias(names)]: [`libs/backend/feature/${names.kebab}/shared/lib/src/index.ts`],
     [backendPostgresMainAlias(names)]: [`libs/backend/postgres/main/${names.kebab}/lib/src/index.ts`],
-    [frontendFeatureAlias(names)]: [`libs/frontend/feature/${names.kebab}/lib/src/index.ts`],
   };
 }
 
@@ -449,11 +509,62 @@ function listApiApps(tree: Tree): string[] {
   return apiApps.sort();
 }
 
+function listFrontendApps(tree: Tree): string[] {
+  const projects = getProjects(tree);
+  const frontendApps: string[] = [];
+  for (const [name, config] of projects.entries()) {
+    if (config.root?.startsWith('apps/frontend/') && config.tags?.includes('type:frontend-app')) {
+      frontendApps.push(name);
+    }
+  }
+  return frontendApps.sort();
+}
+
+function projectRoot(tree: Tree, projectName: string): string | undefined {
+  return getProjects(tree).get(projectName)?.root;
+}
+
+function defaultMigrationTimestamp(): string {
+  return new Date().toISOString().replaceAll(/\D/g, '').slice(0, 14);
+}
+
+function wireApiModule(tree: Tree, apiApp: string, names: ReturnType<typeof generateNames>, dryRun: boolean): void {
+  const root = projectRoot(tree, apiApp);
+  if (!root) {
+    return;
+  }
+
+  const modulePath = `${root}/src/${apiApp}.module.ts`;
+  const contents = tree.read(modulePath, 'utf8');
+  if (!contents) {
+    throw new Error(`Cannot wire ${backendFeatureMainAlias(names)}: expected API module at ${modulePath}.`);
+  }
+
+  const moduleName = `${names.pascal}Module`;
+  if (contents.includes(`import { ${moduleName} } from "${backendFeatureMainAlias(names)}"`)) {
+    return;
+  }
+  if (!/imports:\s*\[/.test(contents)) {
+    throw new Error(`Cannot wire ${backendFeatureMainAlias(names)}: ${modulePath} has no @Module imports array.`);
+  }
+
+  if (dryRun) {
+    console.log(`UPDATE ${modulePath} import ${moduleName}`);
+    return;
+  }
+
+  const importLine = `import { ${moduleName} } from "${backendFeatureMainAlias(names)}";\n`;
+  const updated = `${importLine}${contents}`.replace(/imports:\s*\[/, (match) => `${match}${moduleName}, `);
+  tree.write(modulePath, updated);
+}
+
 // ---------------------------------------------------------------------------
 
 export interface FeatureGeneratorOptions {
   name: string;
   apiApp?: string;
+  frontendApp?: string;
+  migrationTimestamp?: string | number;
   force?: boolean;
   dryRun?: boolean;
   skipFormat?: boolean;
@@ -467,6 +578,11 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
 
   const names = generateNames(options.name);
   const apiApp = options.apiApp ?? 'user-app-api';
+  const frontendApp = options.frontendApp ?? 'user-app';
+  const migrationTimestamp = String(options.migrationTimestamp ?? defaultMigrationTimestamp());
+  if (!/^\d{14}$/.test(migrationTimestamp)) {
+    throw new Error('--migration-timestamp must contain exactly 14 digits (YYYYMMDDHHmmss).');
+  }
 
   const validApiApps = listApiApps(tree);
   if (validApiApps.length > 0 && !validApiApps.includes(apiApp)) {
@@ -475,7 +591,13 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
     );
   }
 
-  const files = createBackendTemplateFiles(names, apiApp);
+  const validFrontendApps = listFrontendApps(tree);
+  if (validFrontendApps.length > 0 && !validFrontendApps.includes(frontendApp)) {
+    throw new Error(`Invalid --frontend-app "${frontendApp}". Expected one of: ${validFrontendApps.join(', ')}.`);
+  }
+  const frontendRoot = projectRoot(tree, frontendApp) ?? 'apps/frontend/app';
+
+  const files = createBackendTemplateFiles(names, frontendRoot, migrationTimestamp);
 
   if (!options.force) {
     const existingFiles = findExistingFiles(tree, files);
@@ -513,13 +635,15 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
     console.log('UPDATE tsconfig.base.json path aliases');
   }
 
+  wireApiModule(tree, apiApp, names, options.dryRun === true);
+
   if (options.dryRun) {
     console.log('');
     console.log('Next steps:');
-    console.log(`1. Add ${backendFeatureMainAlias(names)} to the ${apiApp} API module imports.`);
-    console.log('2. Wire the generated client from the React route/page that owns this feature.');
-    console.log('3. Replace placeholder persistence with a repository and commit a real migration.');
-    console.log('4. Run pnpm run lint && pnpm run typecheck && pnpm run test.');
+    console.log(`1. Compile ${apiApp}; the generator wires ${backendFeatureMainAlias(names)} into its module.`);
+    console.log('2. Run pnpm api:contracts && pnpm api:clients to regenerate API artifacts.');
+    console.log(`3. Register the generated page in ${frontendApp} with translated copy and the generated client.`);
+    console.log('4. Run pnpm run check and the owning app/API e2e targets.');
   }
 
   if (!options.skipFormat && !options.dryRun) {

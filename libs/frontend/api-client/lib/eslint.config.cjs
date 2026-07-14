@@ -1,11 +1,8 @@
-const base = require("../../../../eslint.config.js");
+const base = require('../../../../eslint.config.js');
 
 module.exports = [
   {
-    ignores: [
-      "src/generated/**",
-      "libs/frontend/api-client/lib/src/generated/**",
-    ],
+    ignores: ['src/generated/**', 'libs/frontend/api-client/lib/src/generated/**'],
   },
   ...base,
 ];

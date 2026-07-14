@@ -1,4 +1,4 @@
-import type { Locale, UiTheme } from "@app/frontend-runtime";
+import type { Locale, UiTheme } from '@app/frontend-runtime';
 
 export interface AppliedUserPreferences {
   locale: Locale | null;

@@ -1,5 +1,5 @@
-import type { adminAuditActions } from "../const";
-import type { AdminPageQuery } from "./admin-page.type";
+import type { adminAuditActions } from '../const';
+import type { AdminPageQuery } from './admin-page.type';
 
 export type AdminAuditAction = (typeof adminAuditActions)[number];
 

@@ -1,20 +1,10 @@
-import type {
-  FeatureFlagProvider,
-  FeatureFlagSnapshot,
-  FeatureFlagValue,
-} from "./feature-flag.types";
-import {
-  type FeatureFlagEnvironment,
-  readEnvironmentFlags,
-  toFeatureFlagBoolean,
-} from "./feature-flag-value";
+import type { FeatureFlagProvider, FeatureFlagSnapshot, FeatureFlagValue } from './feature-flag.types';
+import { type FeatureFlagEnvironment, readEnvironmentFlags, toFeatureFlagBoolean } from './feature-flag-value';
 
 export class InMemoryFeatureFlagProvider implements FeatureFlagProvider {
-  readonly name: string = "in-memory";
+  readonly name: string = 'in-memory';
 
-  constructor(
-    private readonly flags: Readonly<Record<string, FeatureFlagValue>> = {},
-  ) {}
+  constructor(private readonly flags: Readonly<Record<string, FeatureFlagValue>> = {}) {}
 
   isEnabled(key: string): boolean {
     return toFeatureFlagBoolean(this.flags[key]);
@@ -38,19 +28,14 @@ export class InMemoryFeatureFlagProvider implements FeatureFlagProvider {
 }
 
 export class EnvironmentFeatureFlagProvider extends InMemoryFeatureFlagProvider {
-  override readonly name = "environment";
+  override readonly name = 'environment';
 
-  constructor(
-    env: FeatureFlagEnvironment = defaultFeatureFlagEnvironment(),
-    prefix = "FEATURE_",
-  ) {
+  constructor(env: FeatureFlagEnvironment = defaultFeatureFlagEnvironment(), prefix = 'FEATURE_') {
     super(readEnvironmentFlags(env, prefix));
   }
 }
 
-export function createFeatureFlagProvider(
-  flags: Readonly<Record<string, FeatureFlagValue>> = {},
-): FeatureFlagProvider {
+export function createFeatureFlagProvider(flags: Readonly<Record<string, FeatureFlagValue>> = {}): FeatureFlagProvider {
   return new InMemoryFeatureFlagProvider(flags);
 }
 

@@ -1,20 +1,18 @@
-import { MemorySessionStorage, session, type StorageAdapter } from "grammy";
-import type { RedisClientLike } from "@app/backend-common-redis";
-import type { TelegramBotContext, TelegramBotSession } from "../type";
-import { RedisSessionStorage } from "../storage/redis-session-adapter";
+import { MemorySessionStorage, session, type StorageAdapter } from 'grammy';
+import type { RedisClientLike } from '@app/backend-common-redis';
+import type { TelegramBotContext, TelegramBotSession } from '../type';
+import { RedisSessionStorage } from '../storage/redis-session-adapter';
 
 export function initialTelegramBotSession(): TelegramBotSession {
   return {
-    currentRoute: "main",
-    stack: ["main"],
+    currentRoute: 'main',
+    stack: ['main'],
     params: {},
     auth: { linked: false },
   };
 }
 
-export function createSessionMiddleware(
-  storage: StorageAdapter<TelegramBotSession>,
-) {
+export function createSessionMiddleware(storage: StorageAdapter<TelegramBotSession>) {
   return session<TelegramBotSession, TelegramBotContext>({
     initial: initialTelegramBotSession,
     storage,

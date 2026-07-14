@@ -1,1 +1,1 @@
-export * from "./admin-user-mutation-safety.exception";
+export * from './admin-user-mutation-safety.exception';

@@ -12,7 +12,7 @@
  *   - NRB state consistency
  *
  * Usage:
- *   nrb doctor
+ *   pnpm nrb doctor
  *   repo-tooling project doctor
  *   repo-tooling project doctor --json
  */
@@ -37,25 +37,39 @@ export interface DoctorCheck {
 // Individual checks
 // ---------------------------------------------------------------------------
 
-function checkNodeVersion(): DoctorCheck {
-  const version = process.version;
+export function checkNodeVersion(version = process.version): DoctorCheck {
   const major = parseInt(version.slice(1).split(".")[0], 10);
-  if (major < 18) {
-    return { name: "node-version", status: "fail", message: `Node.js ${version} — minimum 18.x required` };
-  }
-  if (major < 20) {
-    return { name: "node-version", status: "warn", message: `Node.js ${version} — 20.x+ recommended` };
+  if (!Number.isInteger(major) || major !== 24) {
+    return {
+      name: "node-version",
+      status: "fail",
+      message: `Node.js ${version} — repository requires >=24 <25`,
+    };
   }
   return { name: "node-version", status: "pass", message: `Node.js ${version}` };
+}
+
+export function checkPnpmVersion(version: string): DoctorCheck {
+  if (version !== "11.11.0") {
+    return {
+      name: "pnpm",
+      status: "fail",
+      message: `pnpm ${version} — repository requires exactly 11.11.0`,
+    };
+  }
+  return { name: "pnpm", status: "pass", message: `pnpm ${version}` };
 }
 
 function checkPnpm(): DoctorCheck {
   try {
     const output = execFileSync("pnpm", ["--version"], { encoding: "utf8", timeout: 10000 });
-    const version = output.trim();
-    return { name: "pnpm", status: "pass", message: `pnpm ${version}` };
+    return checkPnpmVersion(output.trim());
   } catch {
-    return { name: "pnpm", status: "fail", message: "pnpm not found — install with corepack enable" };
+    return {
+      name: "pnpm",
+      status: "fail",
+      message: "pnpm not found — install pnpm 11.11.0 through Corepack",
+    };
   }
 }
 
@@ -87,7 +101,11 @@ function checkLockFile(workspaceRoot: string): DoctorCheck {
 
 function checkNxGraph(workspaceRoot: string): DoctorCheck {
   try {
-    const output = execFileSync("npx", ["nx", "show", "project", "@repo/tooling", "--json"], {
+    const nxBin = join(workspaceRoot, "node_modules", ".bin", process.platform === "win32" ? "nx.cmd" : "nx");
+    if (!existsSync(nxBin)) {
+      return { name: "nx-graph", status: "warn", message: "Nx is not installed — run pnpm install" };
+    }
+    const output = execFileSync(nxBin, ["show", "project", "@repo/tooling", "--json"], {
       encoding: "utf8",
       timeout: 15000,
       cwd: workspaceRoot,

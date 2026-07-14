@@ -3,12 +3,10 @@ import type {
   AuthUserAccessPolicyInput,
   AuthUserEntity,
   TransactionalOutboxEventEntity,
-} from "../../entities";
+} from '../../entities';
 
 export type AdminUserMutationAction =
-  | "admin.user.status.update"
-  | "admin.user.access_policy.update"
-  | "admin.user.roles.update";
+  'admin.user.status.update' | 'admin.user.access_policy.update' | 'admin.user.roles.update';
 
 export interface AdminUserMutationAuditInput {
   actorUserId?: string | null;
@@ -47,6 +45,6 @@ export interface AdminSensitiveMutationSafety {
 }
 
 export interface AdminUserMutationSafetyViolation {
-  code: "self_lockout" | "last_powerful_admin";
+  code: 'self_lockout' | 'last_powerful_admin';
   message: string;
 }

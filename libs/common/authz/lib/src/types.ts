@@ -2,7 +2,7 @@
 // CASL, NestJS, MikroORM, and DOM references so both the backend and frontend
 // runtimes can import the shared permission catalog and role matrix.
 
-export type RoleKey = "user" | "admin";
+export type RoleKey = 'user' | 'admin';
 
 export interface PermissionDefinition {
   readonly key: string;

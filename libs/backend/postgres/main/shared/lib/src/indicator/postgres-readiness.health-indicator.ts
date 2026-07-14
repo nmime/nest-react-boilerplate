@@ -1,22 +1,14 @@
-import { Inject, Injectable, Optional } from "@nestjs/common";
-import type { HealthIndicatorResult } from "@app/backend-common-health";
+import { Inject, Injectable, Optional } from '@nestjs/common';
+import type { HealthIndicatorResult } from '@app/backend-common-health';
 import {
   DefaultPostgresReadinessName,
   DefaultTimeoutMs,
   PostgresHealthAdapter,
   PostgresReadinessHealthOptions,
-} from "../const";
-import { PostgresDependencyNotConfiguredError } from "../exception";
-import type {
-  PostgresDependencyHealthAdapter,
-  PostgresHealthIndicatorOptions,
-} from "../type";
-import {
-  dependencyError,
-  dependencyUnavailableResult,
-  isConfigured,
-  withTimeout,
-} from "../util";
+} from '../const';
+import { PostgresDependencyNotConfiguredError } from '../exception';
+import type { PostgresDependencyHealthAdapter, PostgresHealthIndicatorOptions } from '../type';
+import { dependencyError, dependencyUnavailableResult, isConfigured, withTimeout } from '../util';
 
 @Injectable()
 export class PostgresReadinessHealthIndicator {
@@ -39,21 +31,15 @@ export class PostgresReadinessHealthIndicator {
 
   async check(): Promise<HealthIndicatorResult> {
     if (!isConfigured(this.adapter)) {
-      return this.notConfigured(
-        "Postgres readiness adapter is not configured.",
-      );
+      return this.notConfigured('Postgres readiness adapter is not configured.');
     }
 
     try {
-      await withTimeout(
-        this.adapter.checkReadiness(),
-        this.timeoutMs,
-        "Postgres readiness check timed out.",
-      );
+      await withTimeout(this.adapter.checkReadiness(), this.timeoutMs, 'Postgres readiness check timed out.');
 
       return {
         name: this.name,
-        status: "ok",
+        status: 'ok',
         details: { skipped: false },
       };
     } catch (error) {
@@ -69,7 +55,7 @@ export class PostgresReadinessHealthIndicator {
     return dependencyUnavailableResult({
       name: this.name,
       mandatory: this.mandatory,
-      reason: "not_configured",
+      reason: 'not_configured',
       message,
     });
   }

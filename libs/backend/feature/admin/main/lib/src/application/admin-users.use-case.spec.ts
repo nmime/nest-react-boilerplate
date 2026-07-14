@@ -1,34 +1,34 @@
-import { okAsync } from "neverthrow";
-import { describe, expect, it, vi } from "vitest";
-import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
-import { UserProfileReadPermission } from "@app/common-authz";
-import { AdminUsersUseCase } from "./admin-users.use-case";
+import { okAsync } from 'neverthrow';
+import { describe, expect, it, vi } from 'vitest';
+import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { UserProfileReadPermission } from '@app/common-authz';
+import { AdminUsersUseCase } from './admin-users.use-case';
 
-const tenantId = "00000000-0000-0000-0000-000000000000";
+const tenantId = '00000000-0000-0000-0000-000000000000';
 
 const principal: AuthenticatedPrincipal = {
-  subject: "actor-id",
+  subject: 'actor-id',
   tenantId,
-  email: "admin@example.com",
-  roles: ["admin"],
+  email: 'admin@example.com',
+  roles: ['admin'],
   permissions: [],
 };
 
-const context = { requestId: "req-1" };
+const context = { requestId: 'req-1' };
 
 const createUser = () => ({
-  id: "user-id",
+  id: 'user-id',
   tenantId,
-  email: "user@example.com",
-  displayName: "User",
-  status: "active" as const,
-  roles: ["user"],
+  email: 'user@example.com',
+  displayName: 'User',
+  status: 'active' as const,
+  roles: ['user'],
   permissions: [UserProfileReadPermission],
-  locale: "en",
-  theme: "system",
-  lastLoginAt: new Date("2026-01-04T00:00:00.000Z"),
-  createdAt: new Date("2026-01-01T00:00:00.000Z"),
-  updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+  locale: 'en',
+  theme: 'system',
+  lastLoginAt: new Date('2026-01-04T00:00:00.000Z'),
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-02T00:00:00.000Z'),
 });
 
 const createDeps = () => {
@@ -42,69 +42,52 @@ const createDeps = () => {
     count: vi.fn(() => okAsync(0)),
   };
   const adminUserMutations = {
-    mutateAccessPolicyWithAudit: vi.fn(() =>
-      okAsync({ before: createUser(), after: createUser() }),
-    ),
+    mutateAccessPolicyWithAudit: vi.fn(() => okAsync({ before: createUser(), after: createUser() })),
   };
 
   return {
     users,
     auditLogs,
     adminUserMutations,
-    useCase: new AdminUsersUseCase(
-      users as never,
-      auditLogs as never,
-      adminUserMutations as never,
-    ),
+    useCase: new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never),
   };
 };
 
-describe("AdminUsersUseCase", () => {
-  it("returns the mapped view for an existing user", async () => {
+describe('AdminUsersUseCase', () => {
+  it('returns the mapped view for an existing user', async () => {
     const { useCase } = createDeps();
 
-    await expect(useCase.getUser(principal, "user-id")).resolves.toMatchObject({
-      id: "user-id",
-      email: "user@example.com",
+    await expect(useCase.getUser(principal, 'user-id')).resolves.toMatchObject({
+      id: 'user-id',
+      email: 'user@example.com',
     });
   });
 
-  it("throws not_found when the user is missing", async () => {
+  it('throws not_found when the user is missing', async () => {
     const { users, useCase } = createDeps();
     users.findById.mockReturnValue(okAsync(null));
 
-    await expect(useCase.getUser(principal, "missing")).rejects.toThrow(
+    await expect(useCase.getUser(principal, 'missing')).rejects.toThrow(/was not found/);
+  });
+
+  it('throws not_found when a status mutation resolves to no record', async () => {
+    const { adminUserMutations, useCase } = createDeps();
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(okAsync(null));
+
+    await expect(useCase.updateUserStatus(principal, 'missing', { status: 'disabled' }, context)).rejects.toThrow(
       /was not found/,
     );
   });
 
-  it("throws not_found when a status mutation resolves to no record", async () => {
+  it('throws not_found when an access-policy mutation resolves to no record', async () => {
     const { adminUserMutations, useCase } = createDeps();
-    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
-      okAsync(null),
-    );
-
-    await expect(
-      useCase.updateUserStatus(
-        principal,
-        "missing",
-        { status: "disabled" },
-        context,
-      ),
-    ).rejects.toThrow(/was not found/);
-  });
-
-  it("throws not_found when an access-policy mutation resolves to no record", async () => {
-    const { adminUserMutations, useCase } = createDeps();
-    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
-      okAsync(null),
-    );
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(okAsync(null));
 
     await expect(
       useCase.updateUserAccessPolicy(
         principal,
-        "missing",
-        { roles: ["user"], permissions: [UserProfileReadPermission] },
+        'missing',
+        { roles: ['user'], permissions: [UserProfileReadPermission] },
         context,
       ),
     ).rejects.toThrow(/was not found/);

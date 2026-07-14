@@ -1,4 +1,4 @@
-import { maxPageSize } from "../const/pagination.const";
+import { maxPageSize } from '../const/pagination.const';
 
 export function normalizePageLimit(value: number | undefined): number {
   if (!Number.isFinite(value)) {

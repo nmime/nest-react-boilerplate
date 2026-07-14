@@ -21,10 +21,7 @@ export function createOkResponse<T>(data: T): OkResponse<T> {
   return { data };
 }
 
-export function createProblemResponse(
-  code: string,
-  status = HttpStatus.BAD_REQUEST,
-): ProblemResponse {
+export function createProblemResponse(code: string, status = HttpStatus.BAD_REQUEST): ProblemResponse {
   return createProblemDetails({
     code,
     detail: mapHttpStatusToProblemTitle(status),
@@ -36,8 +33,7 @@ export function createProblemResponse(
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-export const isOkResponse = (value: unknown): value is OkResponse<unknown> =>
-  isObjectRecord(value) && 'data' in value;
+export const isOkResponse = (value: unknown): value is OkResponse<unknown> => isObjectRecord(value) && 'data' in value;
 
 export const isProblemResponse = (value: unknown): value is ProblemResponse =>
   isObjectRecord(value) &&
@@ -46,17 +42,11 @@ export const isProblemResponse = (value: unknown): value is ProblemResponse =>
   typeof value.status === 'number';
 
 const isNeverthrowResult = <T, E>(value: unknown): value is Result<T, E> =>
-  isObjectRecord(value) &&
-  typeof value.isOk === 'function' &&
-  typeof value.isErr === 'function';
+  isObjectRecord(value) && typeof value.isOk === 'function' && typeof value.isErr === 'function';
 
 export function mapResultToResponse<
   T,
-  E extends
-    | BaseException
-    | HttpException
-    | Error
-    | { code: string; message: string },
+  E extends BaseException | HttpException | Error | { code: string; message: string },
 >(result: Result<T, E>, locale?: string): ApiResponse<T> {
   if (result.isOk()) {
     return createOkResponse(result.value);
@@ -98,9 +88,7 @@ export function mapResultToResponse<
   );
 }
 
-export const mapValueToApiResponse = <T>(
-  value: T,
-): T | ApiResponse<unknown> => {
+export const mapValueToApiResponse = <T>(value: T): T | ApiResponse<unknown> => {
   let response: T | ApiResponse<unknown> = value;
 
   if (isNeverthrowResult<unknown, never>(value)) {

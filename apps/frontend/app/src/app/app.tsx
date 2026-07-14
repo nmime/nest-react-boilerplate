@@ -1,4 +1,4 @@
-import { AppProviders } from "./providers/app-providers";
+import { AppProviders } from './providers/app-providers';
 
 const App = () => <AppProviders />;
 

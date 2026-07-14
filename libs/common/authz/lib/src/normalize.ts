@@ -8,10 +8,6 @@ export const normalizeStringList = (value: unknown): string[] => {
   }
 
   return [
-    ...new Set(
-      value
-        .map((item) => (typeof item === "string" ? item.trim() : ""))
-        .filter((item) => item.length > 0),
-    ),
+    ...new Set(value.map((item) => (typeof item === 'string' ? item.trim() : '')).filter((item) => item.length > 0)),
   ];
 };

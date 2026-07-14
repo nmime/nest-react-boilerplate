@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { ExternalAuthService } from "@app/backend-feature-auth-main";
-import { ExternalAuthIntent } from "@app/backend-feature-auth-shared";
-import type { DiscordExternalAuthPort } from "@app/backend-feature-discord-bot";
+import { Injectable } from '@nestjs/common';
+import { ExternalAuthService } from '@app/backend-feature-auth-main';
+import { ExternalAuthIntent } from '@app/backend-feature-auth-shared';
+import type { DiscordExternalAuthPort } from '@app/backend-feature-discord-bot';
 
 /**
  * Binds the Discord bot's external-auth port to the auth feature's
@@ -17,7 +17,7 @@ export class DiscordExternalAuthAdapter implements DiscordExternalAuthPort {
 
   createDiscordAuthorizationRequest(input: {
     tenantId: string;
-    intent: "link";
+    intent: 'link';
     returnUrl?: string | null;
     principal: { subject: string; tenantId: string };
   }): { authorizationUrl: string; stateExpiresAt: string } {

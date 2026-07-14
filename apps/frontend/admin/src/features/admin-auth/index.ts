@@ -1,1 +1,1 @@
-export * from "./model/admin-auth";
+export * from './model/admin-auth';

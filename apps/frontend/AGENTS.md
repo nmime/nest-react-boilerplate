@@ -20,8 +20,14 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 
 ## App Notes
 
+- `starter-app` is the neutral product shell selected by the `starter` preset
+  and by `dev:fullstack` before setup. Extend it or generate a new app; do not
+  copy the visual composition of a reference app.
 - `admin-app` and `user-app` are Vite React SPAs.
 - `landing-app` is Astro with React islands.
 - `site-app` is Vike + React SSR.
 - `mobile-app` is Expo/React Native and should consume
   `@app/frontend-ui-native`, not web-only UI primitives.
+- `admin-app`, `user-app`, `landing-app`, `site-app`, and `mobile-app` are
+  reference implementations. Reuse their architectural patterns and public
+  libraries, not their product copy or page composition.

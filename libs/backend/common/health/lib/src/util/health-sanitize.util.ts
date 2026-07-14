@@ -1,12 +1,9 @@
-import type { HealthSafeDetails } from "../dto";
+import type { HealthSafeDetails } from '../dto';
 
-const unsafeDetailKeyPattern =
-  /(authorization|cookie|credential|passwd|password|private[_-]?key|secret|token)/iu;
-const redactedDetailValue = "[redacted]";
+const unsafeDetailKeyPattern = /(authorization|cookie|credential|passwd|password|private[_-]?key|secret|token)/iu;
+const redactedDetailValue = '[redacted]';
 
-export function sanitizeHealthDetails(
-  details: HealthSafeDetails | undefined,
-): HealthSafeDetails | undefined {
+export function sanitizeHealthDetails(details: HealthSafeDetails | undefined): HealthSafeDetails | undefined {
   if (!details) {
     return undefined;
   }
@@ -15,12 +12,7 @@ export function sanitizeHealthDetails(
 }
 
 function sanitizeRecord(record: HealthSafeDetails): HealthSafeDetails {
-  return Object.fromEntries(
-    Object.entries(record).map(([key, value]) => [
-      key,
-      sanitizeValue(key, value),
-    ]),
-  );
+  return Object.fromEntries(Object.entries(record).map(([key, value]) => [key, sanitizeValue(key, value)]));
 }
 
 function sanitizeValue(key: string, value: unknown): unknown {
@@ -32,7 +24,7 @@ function sanitizeValue(key: string, value: unknown): unknown {
     return value.map((item) => sanitizeValue(key, item));
   }
 
-  if (value && typeof value === "object") {
+  if (value && typeof value === 'object') {
     return sanitizeRecord(value as HealthSafeDetails);
   }
 

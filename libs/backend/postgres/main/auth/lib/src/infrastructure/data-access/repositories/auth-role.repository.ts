@@ -1,22 +1,17 @@
-import { EntityManager } from "@mikro-orm/core";
-import { Inject, Injectable } from "@nestjs/common";
-import { ResultAsync } from "neverthrow";
-import {
-  AuthPermissionEntity,
-  AuthRoleEntity,
-  AuthRolePermissionEntity,
-  DefaultAuthTenantId,
-} from "../entities";
-import { mapAuthRoleRepositoryError } from "./mapper/auth-role-error.mapper";
+import { EntityManager } from '@mikro-orm/core';
+import { Inject, Injectable } from '@nestjs/common';
+import { ResultAsync } from 'neverthrow';
+import { AuthPermissionEntity, AuthRoleEntity, AuthRolePermissionEntity, DefaultAuthTenantId } from '../entities';
+import { mapAuthRoleRepositoryError } from './mapper/auth-role-error.mapper';
 import type {
   AuthRoleRepositoryError,
   AuthRoleWithPermissions,
   CreateAuthRoleInput,
   UpdateAuthRoleInput,
-} from "./type/auth-role.type";
+} from './type/auth-role.type';
 
-export * from "./mapper/auth-role-error.mapper";
-export * from "./type/auth-role.type";
+export * from './mapper/auth-role-error.mapper';
+export * from './type/auth-role.type';
 
 @Injectable()
 export class AuthRoleRepository {
@@ -65,14 +60,8 @@ export class AuthRoleRepository {
 
   // Every permission the shared catalog was seeded with, sourced from the DB so
   // the admin roles view never re-hardcodes the catalog.
-  listPermissions(): ResultAsync<
-    AuthPermissionEntity[],
-    AuthRoleRepositoryError
-  > {
-    return ResultAsync.fromPromise(
-      this.entityManager.find(AuthPermissionEntity, {}),
-      mapAuthRoleRepositoryError,
-    );
+  listPermissions(): ResultAsync<AuthPermissionEntity[], AuthRoleRepositoryError> {
+    return ResultAsync.fromPromise(this.entityManager.find(AuthPermissionEntity, {}), mapAuthRoleRepositoryError);
   }
 
   // List every role in a tenant together with the permission keys granted to it
@@ -80,19 +69,11 @@ export class AuthRoleRepository {
   listRolesWithPermissions(
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthRoleWithPermissions[], AuthRoleRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.queryRolesWithPermissions(tenantId),
-      mapAuthRoleRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.queryRolesWithPermissions(tenantId), mapAuthRoleRepositoryError);
   }
 
-  createRole(
-    input: CreateAuthRoleInput,
-  ): ResultAsync<AuthRoleEntity, AuthRoleRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.persistNewRole(input),
-      mapAuthRoleRepositoryError,
-    );
+  createRole(input: CreateAuthRoleInput): ResultAsync<AuthRoleEntity, AuthRoleRepositoryError> {
+    return ResultAsync.fromPromise(this.persistNewRole(input), mapAuthRoleRepositoryError);
   }
 
   updateRole(
@@ -100,10 +81,7 @@ export class AuthRoleRepository {
     input: UpdateAuthRoleInput,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthRoleEntity | null, AuthRoleRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.applyRoleUpdate(id, input, tenantId),
-      mapAuthRoleRepositoryError,
-    );
+    return ResultAsync.fromPromise(this.applyRoleUpdate(id, input, tenantId), mapAuthRoleRepositoryError);
   }
 
   // Reconcile a role's permission grants to exactly `permissionKeys` that resolve
@@ -120,35 +98,22 @@ export class AuthRoleRepository {
     );
   }
 
-  private async queryRolesWithPermissions(
-    tenantId: string,
-  ): Promise<AuthRoleWithPermissions[]> {
-    const roles = await this.entityManager.find(
-      AuthRoleEntity,
-      { tenantId },
-      { orderBy: { key: "asc" } },
-    );
+  private async queryRolesWithPermissions(tenantId: string): Promise<AuthRoleWithPermissions[]> {
+    const roles = await this.entityManager.find(AuthRoleEntity, { tenantId }, { orderBy: { key: 'asc' } });
     if (roles.length === 0) {
       return [];
     }
 
     const roleIds = roles.map((role) => role.id);
-    const rolePermissions = await this.entityManager.find(
-      AuthRolePermissionEntity,
-      { roleId: { $in: roleIds } },
-    );
-    const permissionIds = [
-      ...new Set(rolePermissions.map((row) => row.permissionId)),
-    ];
+    const rolePermissions = await this.entityManager.find(AuthRolePermissionEntity, { roleId: { $in: roleIds } });
+    const permissionIds = [...new Set(rolePermissions.map((row) => row.permissionId))];
     const permissions =
       permissionIds.length === 0
         ? []
         : await this.entityManager.find(AuthPermissionEntity, {
             id: { $in: permissionIds },
           });
-    const permissionKeyById = new Map(
-      permissions.map((permission) => [permission.id, permission.key]),
-    );
+    const permissionKeyById = new Map(permissions.map((permission) => [permission.id, permission.key]));
     const keysByRoleId = new Map<string, string[]>();
     for (const row of rolePermissions) {
       const key = permissionKeyById.get(row.permissionId);
@@ -166,9 +131,7 @@ export class AuthRoleRepository {
     }));
   }
 
-  private async persistNewRole(
-    input: CreateAuthRoleInput,
-  ): Promise<AuthRoleEntity> {
+  private async persistNewRole(input: CreateAuthRoleInput): Promise<AuthRoleEntity> {
     const role = new AuthRoleEntity({
       tenantId: input.tenantId ?? DefaultAuthTenantId,
       key: input.key,
@@ -224,16 +187,12 @@ export class AuthRoleRepository {
           : await em.find(AuthPermissionEntity, {
               key: { $in: distinctKeys },
             });
-      const desiredPermissionIds = new Set(
-        permissions.map((permission) => permission.id),
-      );
+      const desiredPermissionIds = new Set(permissions.map((permission) => permission.id));
 
       const existing = await em.find(AuthRolePermissionEntity, {
         roleId: role.id,
       });
-      const existingPermissionIds = new Set(
-        existing.map((row) => row.permissionId),
-      );
+      const existingPermissionIds = new Set(existing.map((row) => row.permissionId));
 
       for (const permission of permissions) {
         if (!existingPermissionIds.has(permission.id)) {

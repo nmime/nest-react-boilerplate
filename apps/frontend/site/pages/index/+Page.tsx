@@ -8,7 +8,7 @@ const siteMetrics = [
   },
   {
     labelKey: 'site.metric.frontends.label',
-    value: '5',
+    value: '6',
     detailKey: 'site.metric.frontends.detail',
   },
   {

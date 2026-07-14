@@ -18,6 +18,7 @@ and no random free-port allocation.
 | User App            | 4201 | Frontend (user dashboard)    |
 | Landing App         | 4202 | Frontend (landing page)      |
 | Site App            | 4203 | Frontend (Vike SSR site)     |
+| Starter App         | 4204 | Frontend (neutral scaffold)  |
 | Mobile App          | 4300 | Frontend (Expo mobile/web)   |
 
 ## Infrastructure Services
@@ -60,6 +61,7 @@ Staging services use port offset +100 from production defaults:
 | User App            | 4301         | 4201            | Frontend (user dashboard)    |
 | Landing App         | 4302         | 4202            | Frontend (landing page)      |
 | Site App            | 4303         | 4203            | Frontend (Vike SSR site)     |
+| Starter App         | 4304         | 4204            | Frontend (neutral scaffold)  |
 | Mobile App          | 4400         | 4300            | Frontend (Expo mobile/web)   |
 
 Configure via `PORT` env var per service, or use `.env.staging` which sets the

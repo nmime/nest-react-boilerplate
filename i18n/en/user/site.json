@@ -10,7 +10,7 @@
   "site.metric.apis.label": "APIs",
   "site.metric.apis.detail": "auth, user, admin",
   "site.metric.frontends.label": "Frontends",
-  "site.metric.frontends.detail": "web, site, landing, admin, mobile",
+  "site.metric.frontends.detail": "web, starter, site, landing, admin, mobile",
   "site.metric.runtime.label": "Runtime",
   "site.metric.runtime.detail": "Vike on Node",
   "site.routeGroup.label": "Available product routes",

@@ -10,7 +10,7 @@
   "site.metric.apis.label": "API",
   "site.metric.apis.detail": "auth, user, admin",
   "site.metric.frontends.label": "Фронтенды",
-  "site.metric.frontends.detail": "web, site, landing, admin, mobile",
+  "site.metric.frontends.detail": "web, starter, site, landing, admin, mobile",
   "site.metric.runtime.label": "Рантайм",
   "site.metric.runtime.detail": "Vike на Node",
   "site.routeGroup.label": "Доступные продуктовые маршруты",

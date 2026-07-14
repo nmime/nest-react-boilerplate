@@ -3,8 +3,15 @@ import type { BetterAuthClientOptions } from 'better-auth';
 import { multiSessionClient } from 'better-auth/client/plugins';
 import { telegramClient } from './telegram-client';
 
+const getRuntimeEnvironment = (): Readonly<Record<string, string | undefined>> =>
+  typeof process === 'undefined' ? {} : process.env;
+
+export const resolveBetterAuthBaseUrl = (
+  environment: Readonly<Record<string, string | undefined>> = getRuntimeEnvironment(),
+): string => environment['NEXT_PUBLIC_API_URL'] ?? environment['VITE_API_BASE_URL'] ?? 'http://localhost:3003';
+
 const options: BetterAuthClientOptions = {
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.VITE_API_BASE_URL || 'http://localhost:3003',
+  baseURL: resolveBetterAuthBaseUrl(),
   plugins: [multiSessionClient(), telegramClient],
 };
 

@@ -1,3 +1,5 @@
+## [1.1.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.0.0...v1.1.0) (2026-07-14)
+
 ## 1.0.0 (2026-07-13)
 
 ### Features

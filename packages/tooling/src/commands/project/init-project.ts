@@ -172,9 +172,9 @@ function buildReplacements(c: InitConfig): Map<string, string> {
     ["nest-react-boilerplate-api", `${c.appSlug}-api`],
     ["NestReactBoilerplate", c.className],
     ["your-github-org", c.owner],
-    // Keep this last: every deployable uses <app-id>.example.com, so replacing
-    // the root preserves the app ID while updating production/staging hosts,
-    // TLS SANs, CSP, environment examples, and deployment documentation.
+    // Keep this last: landing-app owns the apex while every other deployable
+    // uses <app-id>.example.com. Replacing the root updates both forms plus
+    // staging hosts, TLS SANs, CSP, environment examples, and deployment docs.
     ["example.com", c.domain],
   ]);
 }

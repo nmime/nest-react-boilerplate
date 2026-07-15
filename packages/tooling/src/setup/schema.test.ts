@@ -210,14 +210,15 @@ describe('catalog — appCatalog', () => {
     assert.deepEqual(optional, ['discord-app-api', 'telegram-bot-api']);
   });
 
-  it('uses the app ID verbatim as every deployable hostname', () => {
+  it('uses landing-app as the apex and app IDs for every other deployable hostname', () => {
     const hostnames = new Set<string>();
     for (const entry of Object.values(appCatalog)) {
       if (entry.platform === 'e2e') {
         assert.equal(entry.publicHostname, null);
         continue;
       }
-      assert.equal(entry.publicHostname, `${entry.id}.example.com`);
+      const expectedHostname = entry.id === 'landing-app' ? 'example.com' : `${entry.id}.example.com`;
+      assert.equal(entry.publicHostname, expectedHostname);
       assert.equal(hostnames.has(entry.publicHostname), false, entry.publicHostname);
       hostnames.add(entry.publicHostname);
     }

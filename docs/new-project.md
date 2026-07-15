@@ -64,9 +64,11 @@ not rewrite Git history. Its required `--domain` replaces `example.com` across
 the root site, site/mobile/admin/user surfaces, auth/user/admin APIs, bot APIs,
 staging hosts, TLS/CSP/deployment values, and example emails. It does not create
 DNS records, certificates, environment secrets, or infrastructure accounts.
-Every deployable keeps its exact app ID as the hostname prefix: for example,
-`auth-app-api.example.com` becomes `auth-app-api.acme.example`. The
-`fullstack-e2e` test project is not deployed and therefore has no hostname.
+`landing-app` is the public entry point and owns the apex domain: `example.com`
+becomes `acme.example`. Every other deployable keeps its exact app ID as the
+hostname prefix; for example, `auth-app-api.example.com` becomes
+`auth-app-api.acme.example`. The `fullstack-e2e` test project is not deployed
+and therefore has no hostname.
 
 ## Manual checklist
 

@@ -487,7 +487,7 @@ if (validateHelmStatic) {
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const frontendDomainAssignments = [
-    ['landingApp', 'landing-app', 'landing-app.example.com'],
+    ['landingApp', 'landing-app', 'example.com'],
     ['siteApp', 'site-app', 'site-app.example.com'],
     ['userApp', 'user-app', 'user-app.example.com'],
     ['adminApp', 'admin-app', 'admin-app.example.com'],
@@ -513,7 +513,8 @@ if (validateHelmStatic) {
     has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
   }
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
-    assert.equal(host, `${service}.example.com`, `${service} default domain must match its app ID`);
+    const expectedHost = service === 'landing-app' ? 'example.com' : `${service}.example.com`;
+    assert.equal(host, expectedHost, `${service} default domain must match the public domain contract`);
   }
   for (const [label, values] of [
     ['default', helmValues],

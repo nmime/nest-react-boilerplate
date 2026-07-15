@@ -101,7 +101,7 @@ and confirm the assigned ports with `docker compose port <service> <port>`.
 Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
 from Compose:
 
-- `https://landing-app.example.com` -> `docker compose ... port landing-app 8080`
+- `https://example.com` -> `docker compose ... port landing-app 8080`
 - `https://site-app.example.com` -> `docker compose ... port site-app 80`
 - `https://admin-app.example.com` -> `docker compose ... port admin-app 8080`
 - `https://user-app.example.com` -> `docker compose ... port user-app 8080`

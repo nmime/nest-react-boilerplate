@@ -13,13 +13,13 @@ frontend and enabled public API. Replace `example.com` in environment-owned
 values, preserve the one-host-per-app mapping, and include every browser origin
 in `config.corsOrigins` and TLS:
 
-| Frontend app  | Default host              | Kubernetes service |
-| ------------- | ------------------------- | ------------------ |
-| `landing-app` | `landing-app.example.com` | `landing-app`      |
-| `site-app`    | `site-app.example.com`    | `site-app`         |
-| `user-app`    | `user-app.example.com`    | `user-app`         |
-| `admin-app`   | `admin-app.example.com`   | `admin-app`        |
-| `mobile-app`  | `mobile-app.example.com`  | `mobile-app`       |
+| Frontend app  | Default host             | Kubernetes service |
+| ------------- | ------------------------ | ------------------ |
+| `landing-app` | `example.com`            | `landing-app`      |
+| `site-app`    | `site-app.example.com`   | `site-app`         |
+| `user-app`    | `user-app.example.com`   | `user-app`         |
+| `admin-app`   | `admin-app.example.com`  | `admin-app`        |
+| `mobile-app`  | `mobile-app.example.com` | `mobile-app`       |
 
 | Backend app        | Default host                   | Exposure |
 | ------------------ | ------------------------------ | -------- |

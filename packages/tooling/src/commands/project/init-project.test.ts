@@ -21,7 +21,7 @@ function createFixture(): string {
   writeFileSync(
     join(root, "domains.txt"),
     [
-      "landing-app.example.com",
+      "example.com",
       "site-app.example.com",
       "mobile-app.example.com",
       "admin-app.example.com",
@@ -36,7 +36,7 @@ function createFixture(): string {
     ].join("\n") + "\n",
   );
   writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://user-app.example.com\n");
-  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://landing-app.example.com\n");
+  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://example.com\n");
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
@@ -97,7 +97,7 @@ describe("project init", () => {
       const domains = readFileSync(join(root, "domains.txt"), "utf8");
       assert.equal(domains.includes("example.com"), false);
       assert.deepEqual(domains.trim().split("\n"), [
-        "landing-app.acme.example",
+        "acme.example",
         "site-app.acme.example",
         "mobile-app.acme.example",
         "admin-app.acme.example",
@@ -117,7 +117,7 @@ describe("project init", () => {
       );
       assert.equal(
         readFileSync(join(root, ".env.production.example"), "utf8"),
-        "PUBLIC_URL=https://landing-app.acme.example\n",
+        "PUBLIC_URL=https://acme.example\n",
       );
       assert.equal(
         readFileSync(join(root, ".env"), "utf8"),

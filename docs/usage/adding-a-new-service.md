@@ -110,7 +110,7 @@ Before calling the service ready:
 
 The generator intentionally does not publish DNS or TLS. Register the service
 in the setup catalog with `<app-id>.example.com`, then provision the initialized
-`<app-id>.<root-domain>` hostname by following the full checklist in
+`<app-id>.<root-domain>` hostname (the apex exception is frontend-only) by following the full checklist in
 [Scaffolding and Extension Contract](../scaffolding-and-extension.md).
 
 ## 7. Verify

@@ -120,11 +120,8 @@ for (const entry of catalogApplications) {
     continue;
   }
 
-  assert.equal(
-    entry.hostname,
-    `${entry.id}.example.com`,
-    `Deployable application ${entry.id} must publish <app-id>.example.com.`,
-  );
+  const expectedHostname = entry.id === 'landing-app' ? 'example.com' : `${entry.id}.example.com`;
+  assert.equal(entry.hostname, expectedHostname, `Deployable application ${entry.id} has the wrong public hostname.`);
 }
 assert.deepEqual(
   catalogApplications

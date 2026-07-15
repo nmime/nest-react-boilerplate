@@ -312,7 +312,7 @@ AUTH_JWT_SECRET_FILE=/run/secrets/auth_jwt_secret
 
 ADMIN_BOOTSTRAP_ENABLED=false
 
-CORS_ORIGINS=https://admin-app.example.com,https://user-app.example.com,https://landing-app.example.com,https://site-app.example.com,https://mobile-app.example.com
+CORS_ORIGINS=https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
 
 TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
 TELEGRAM_BOT_MODE=webhook

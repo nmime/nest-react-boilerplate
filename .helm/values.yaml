@@ -15,7 +15,7 @@ secrets:
 
 config:
   nodeEnv: production
-  corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://landing-app.example.com,https://site-app.example.com,https://mobile-app.example.com
+  corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
   authJwtIssuer: https://auth-app-api.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
@@ -278,7 +278,7 @@ ingress:
   # explicit in an environment values file and verify asset routing before
   # traffic cutover; see docs/frontend-deployment-topology.md.
   hosts:
-    - host: landing-app.example.com
+    - host: example.com
       service: landing-app
       paths: ['/']
     - host: site-app.example.com
@@ -316,7 +316,7 @@ ingress:
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
-        - landing-app.example.com
+        - example.com
         - site-app.example.com
         - user-app.example.com
         - mobile-app.example.com

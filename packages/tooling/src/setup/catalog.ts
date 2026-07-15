@@ -59,7 +59,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Landing Page',
     platform: 'frontend',
     classification: 'reference',
-    publicHostname: 'landing-app.example.com',
+    publicHostname: 'example.com',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],

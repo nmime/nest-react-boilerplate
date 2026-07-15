@@ -108,13 +108,14 @@ pnpm nrb setup
 The checked-in `example.com` values are replaceable environment placeholders,
 not live domains.
 
-No deployable is selected by default. Every deployable follows one rule:
-`<app-id>.<root-domain>`. These hostnames are the complete mapping that
-`pnpm nrb init` rewrites when preparing the template for a product.
+No deployable is selected by default. `landing-app` is the canonical public
+entry point and owns the apex domain. Every other deployable follows
+`<app-id>.<root-domain>`. These hostnames are the complete mapping rewritten
+when `pnpm nrb init` prepares the template for a product.
 
 | Deployable         | Template hostname              | Catalog class |
 | ------------------ | ------------------------------ | ------------- |
-| `landing-app`      | `landing-app.example.com`      | reference     |
+| `landing-app`      | `example.com`                  | reference     |
 | `site-app`         | `site-app.example.com`         | reference     |
 | `user-app`         | `user-app.example.com`         | reference     |
 | `admin-app`        | `admin-app.example.com`        | reference     |

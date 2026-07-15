@@ -11,18 +11,23 @@ Use this workflow when creating an application, library, or vertical product fea
 ## Workflow
 
 1. Verify the repository, branch, `HEAD`, and current `origin/main` SHA.
-2. Run the intended generator with `--dry-run` and inspect every path before writing.
-3. Use one canonical command:
+2. Inspect the Nx project graph, setup catalog, nearest `AGENTS.md`, and owning
+   routes/modules. If ownership already exists, modify that owner in place;
+   do not generate a sibling app, `-new`/`-v2` variant, starter app, or nested
+   copy of the boilerplate.
+3. Only for genuinely new ownership, run the intended generator with
+   `--dry-run` and inspect every path before writing.
+4. Use one canonical command:
    - Application: `pnpm nrb add app <name> --kind <kind> --renderer <renderer> --dry-run`
    - Library: `pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope> --dry-run`
    - Feature: `pnpm nrb add feature <name> --api-app <api> --frontend-app <frontend> --dry-run`
-4. Run without `--dry-run` only after the selected roots and ownership are correct.
-5. When an app or library adds a package manifest, run `pnpm install` to update the lockfile and workspace links, then prove `pnpm install --frozen-lockfile`; never hand-edit `pnpm-lock.yaml`.
-6. For a new deployable, complete the explicit selection, environment, local runtime, Docker/Helm, DNS/TLS, probes/resources, observability, and e2e registration checklist in `docs/scaffolding-and-extension.md`. A generated source root is not automatically public or deployed.
-7. For a feature, replace the generic model fields with product invariants, review RBAC, validation, indexes, migration rollback, and repository error behavior.
-8. Compile the API, then run `pnpm api:contracts` and `pnpm api:clients`. Never hand-edit generated OpenAPI or client output.
-9. Register the generated FSD page through the owning app's public route boundary with translated copy.
-10. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states.
+5. Run without `--dry-run` only after the selected roots and ownership are correct.
+6. When an app or library adds a package manifest, run `pnpm install` to update the lockfile and workspace links, then prove `pnpm install --frozen-lockfile`; never hand-edit `pnpm-lock.yaml`.
+7. For a new deployable, complete the explicit selection, environment, local runtime, Docker/Helm, DNS/TLS, probes/resources, observability, and e2e registration checklist in `docs/scaffolding-and-extension.md`. A generated source root is not automatically public or deployed.
+8. For a feature, replace the generic model fields with product invariants, review RBAC, validation, indexes, migration rollback, and repository error behavior. Never use `--force` as a shortcut for editing an existing product feature; regeneration requires explicit maintainer intent and a reviewed dry run.
+9. Compile the API, then run `pnpm api:contracts` and `pnpm api:clients`. Never hand-edit generated OpenAPI or client output.
+10. Register the generated FSD page through the owning app's public route boundary with translated copy.
+11. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states.
 
 ## Required verification
 

@@ -8,7 +8,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -286,6 +286,11 @@ describe("setup — repeatable command selection", () => {
       const afterAdd = readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8");
       const selected = JSON.parse(afterAdd) as { apps: string[] };
       assert.deepEqual(selected.apps, ["auth-app-api", "landing-app", "user-app", "user-app-api"]);
+
+      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "nrb.config.json"]);
+      assert.equal(existsSync(join(workspaceRoot, "apps")), false, "setup must not create a parallel app tree");
+      assert.equal(existsSync(join(workspaceRoot, "services")), false, "setup must not invent a services tree");
+      assert.equal(existsSync(join(workspaceRoot, "starter-app")), false, "setup must not invent a default app");
 
       assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"])), 0);
       assert.equal(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8"), afterAdd);

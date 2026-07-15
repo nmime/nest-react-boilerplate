@@ -23,6 +23,13 @@ The repository separates three decisions that should not be conflated:
 This separation keeps setup repeatable and prevents a generator from silently
 publishing a new network surface.
 
+Before choosing `nrb add`, inspect the Nx project graph, setup catalog, nearest
+`AGENTS.md`, routes, and modules. Product work that belongs to an existing app,
+library, or feature must modify that owner in place. A new generator root is
+correct only when the product needs genuinely new runtime or library ownership;
+never create a sibling clone, `-new`/`-v2` variant, generic starter app, or
+nested copy of this repository to avoid understanding the existing structure.
+
 ## Fresh clone to verified product workspace
 
 Run from a clean branch created from current `main`:
@@ -238,7 +245,8 @@ Before completion:
 
 ## Generator maintenance
 
-Do not create a second scaffold path. Extend the custom generators under
+Do not create a second scaffold path. Do not use generator `--force` as a
+substitute for editing existing product code. Extend the custom generators under
 `packages/tooling/src/generators/**`, update `generators.json` and the unified
 CLI only when a new generator is genuinely needed, and add regression tests.
 

@@ -63,6 +63,14 @@ Always-loaded policy for human and AI contributors to
   before editing project structure.
 - Use `pnpm nrb add ... --dry-run` first. Do not copy an existing app directory
   or reproduce the reference `admin-app` / `user-app` product UI.
+- Inspect the Nx project graph, setup catalog, nearest `AGENTS.md`, and owning
+  routes/modules before generating. If the requested behavior belongs to an
+  existing app, library, or feature, modify that owner in place; `pnpm nrb add`
+  is only for genuinely new ownership. Never create an adjacent clone, `-new`,
+  `-v2`, `starter-app`, or nested copy of this boilerplate as a workaround.
+- `--force` is not a normal editing path. Use feature regeneration only when a
+  maintainer explicitly requests it and the dry-run proves every overwritten
+  file is intended; app and library roots are never overwritten by generators.
 - No deployable is the repository's default application. Admin, user, landing,
   site, mobile, API, worker, and newly generated apps keep separate
   product/runtime ownership; do not invent an additional generic deployable.

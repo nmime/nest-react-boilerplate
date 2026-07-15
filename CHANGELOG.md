@@ -179,6 +179,10 @@ Version bumps, changelog entries, and git tags are automated by semantic-release
 - Product initialization now rewrites tracked `.env*.example` domain templates while leaving real `.env` files untouched.
 - Database migration verification now allows cold Docker startup during the full repository test matrix.
 
+### Changed
+
+- Updated `@types/supertest` to 7.2.1 after a registry and peer-compatibility audit; newer incompatible runtime/compiler majors remain documented and intentionally deferred.
+
 ### Fixed
 
 - Docker Node.js version corrected (26 → 24.11.0)

@@ -81,12 +81,11 @@ All service images use explicit, immutable tags — never `latest` or floating m
 | NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
 | MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
-## Audit results (2026-07-10)
+## Audit results (2026-07-15)
 
 - **Production audit**: 0 vulnerabilities (exit 0)
-- **Development audit**: 0 vulnerabilities (exit 0) — resolved by `better-auth` and `drizzle-orm` overrides
-- **Peer dependencies**: 4 non-blocking warnings
-  - `@better-auth/core@1.4.21` wants `kysely@^0.28.5` — transitive from CLI tool only; overridden to 1.6.23 so no longer materializes
-  - `@testing-library/react-hooks@8.0.1` wants React 16/17 — known incompatibility with React 19; deferred to Task 2
+- **Development audit**: 0 vulnerabilities (exit 0)
+- **Peer dependencies**: 0 issues (`pnpm peers check`, exit 0)
 - **Frozen lockfile install**: exit 0
+- **Registry drift**: only the four incompatible majors listed above remain intentionally deferred
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)

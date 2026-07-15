@@ -13,7 +13,7 @@ spec:
     - name: {{ include "boilerplate.fullname" . }}.availability
       rules:
         - alert: NestReactBoilerplateNoReadyReplicas
-          expr: kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}",deployment=~"{{ include "boilerplate.fullname" . }}-(auth-app-api|user-app-api|admin-app-api|discord-app-api|telegram-bot-api|starter-app|landing-app|site-app|mobile-app|user-app|admin-app)"} == 0
+          expr: kube_deployment_status_replicas_available{namespace="{{ .Release.Namespace }}",deployment=~"{{ include "boilerplate.fullname" . }}-(auth-app-api|user-app-api|admin-app-api|discord-app-api|telegram-bot-api|landing-app|site-app|mobile-app|user-app|admin-app)"} == 0
           for: 10m
           labels:
             severity: page

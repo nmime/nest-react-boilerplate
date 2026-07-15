@@ -28,7 +28,7 @@ describe("dev fullstack selection", () => {
     const root = mkdtempSync(join(tmpdir(), "nrb-fullstack-"));
     try {
       assert.deepEqual(resolveFullstackSelection(root), {
-        projects: ["user-app-api", "auth-app-api", "starter-app"],
+        projects: ["user-app-api", "auth-app-api", "user-app"],
         capabilities: ["postgres"],
         source: "default",
       });

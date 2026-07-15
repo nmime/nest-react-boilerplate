@@ -153,22 +153,6 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
   # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).
   # In production, use telegramBotApi (webhook mode).
-  starterApp:
-    enabled: false
-    replicas: 3
-    image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/starter-app
-      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
-      digest: ''
-      pullPolicy: IfNotPresent
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 101
-      runAsGroup: 101
-      seccompProfile: { type: RuntimeDefault }
-    securityContext:
-      allowPrivilegeEscalation: false
-      capabilities: { drop: ['ALL'] }
   landingApp:
     replicas: 3
     image:

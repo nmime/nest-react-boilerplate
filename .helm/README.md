@@ -20,7 +20,7 @@ routes.
   include its documented Telegram or Discord runtime values in the same Secret.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
-- APIs probe `/live` and `/ready`; product frontends are deployable by default, the neutral `starter-app` is opt-in, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
+- APIs probe `/live` and `/ready`; product frontends are deployable by default, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
 - Frontend nginx supports same-origin API proxying for `/auth/*`, `/profile/*`,
   and `/admin/*` while serving `index.html` for HTML SPA navigations such as
   `/admin/users/:id`. Keep split-host and path-based routing choices aligned

@@ -31,15 +31,15 @@ initializer. New instructions and automation should use `pnpm nrb init`.
 
 The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
 
-The `starter` preset selects `starter-app`, a deliberately neutral Vite shell.
-The existing `admin-app`, `user-app`, landing, site, and mobile surfaces are
-reference implementations; they are not copied into a new product shell.
+The `starter` preset selects the canonical `user-app` product frontend together
+with `user-app-api` and `auth-app-api`. The preset name describes the setup
+size; it does not create an extra frontend application.
 
 ```bash
 # Interactive wizard:
 pnpm nrb setup
 
-# Non-interactive neutral product baseline:
+# Non-interactive product baseline:
 pnpm nrb setup --preset starter --non-interactive
 
 # Config file:

@@ -46,7 +46,6 @@ Complete reference of all environment variables used across the monorepo. Source
 | `TELEGRAM_BOT_WORKER_PORT` | `3023`  | Telegram worker port      |
 | `LANDING_APP_PORT`         | `4202`  | Landing page dev port     |
 | `SITE_APP_PORT`            | `4203`  | Site (Vike SSR) dev port  |
-| `STARTER_APP_PORT`         | `4204`  | Neutral starter dev port  |
 | `MOBILE_APP_PORT`          | `4300`  | Mobile (Expo) dev port    |
 
 ### CORS and origins

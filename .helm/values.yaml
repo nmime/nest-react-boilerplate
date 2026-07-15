@@ -77,8 +77,6 @@ frontendNginx:
   cspConnectSrc: "'self'"
 
 # The chart deploys Nest API services and the selected frontend renderers.
-# starterApp is the neutral starter-preset shell and is intentionally opt-in;
-# it is not an additional production product beside the reference frontends.
 # API probes should keep /live and /ready; nginx probes use
 # frontendNginx.healthPath when nginxConfig=true.
 apps:
@@ -175,25 +173,6 @@ apps:
   # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).
   # In production, use telegramBotApi (webhook mode). Run the worker locally with:
   #   pnpm exec nx run telegram-bot-worker:start
-  starterApp:
-    kind: frontend
-    enabled: false
-    replicas: 2
-    port: 8080
-    servicePort: 80
-    nginxConfig: true
-    livenessPath: /nginx-health
-    readinessPath: /nginx-health
-    image:
-      repository: ghcr.io/your-github-org/nest-react-boilerplate/starter-app
-      tag: latest
-      digest: ''
-      pullPolicy: IfNotPresent
-    resources:
-      requests: { cpu: 25m, memory: 64Mi }
-      limits: { cpu: 200m, memory: 128Mi }
-    podSecurityContext: {}
-    securityContext: {}
   landingApp:
     kind: frontend
     enabled: true
@@ -294,10 +273,7 @@ ingress:
   className: nginx
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: '10m'
-  # Defaults model split-host frontend/API origins. starterApp has no permanent
-  # host: when the starter preset is selected, assign the product-owned host in
-  # environment values and disable the reference frontend it replaces.
-  # For same-origin/path-based
+  # Defaults model split-host frontend/API origins. For same-origin/path-based
   # routing, keep API prefixes (/auth, /profile, /admin) and SPA service paths
   # explicit in an environment values file and verify asset routing before
   # traffic cutover; see docs/frontend-deployment-topology.md.

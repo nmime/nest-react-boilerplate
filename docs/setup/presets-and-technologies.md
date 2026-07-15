@@ -7,7 +7,7 @@ This page documents the five canonical presets, all supported apps and capabilit
 | Preset       | Description                                      | Apps (before expansion)                                                                                  | Capabilities (before expansion)                                          |
 | ------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `minimal`    | Single API with auth — minimal backend footprint | `auth-app-api`, `user-app-api`                                                                           | `postgres`                                                               |
-| `starter`    | Neutral frontend + backend + auth                | `starter-app`, `user-app-api`, `auth-app-api`                                                            | `postgres`, `design-tokens`, `i18n`                                      |
+| `starter`    | User product app + backend + auth                | `user-app`, `user-app-api`, `auth-app-api`                                                               | `postgres`, `design-tokens`, `i18n`                                      |
 | `fullstack`  | All core apps with standard capabilities         | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `fullstack-e2e` | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
 | `enterprise` | Every supported app and capability               | All apps                                                                                                 | All capabilities                                                         |
 | `bots`       | Telegram + Discord bots with workers             | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `telegram-bot-worker`, `discord-app-api`             | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
@@ -18,14 +18,13 @@ Presets act as starting points. Explicit `apps` and `capabilities` in the config
 
 ### Frontend apps
 
-| ID            | Label                   | Platform | Requires capabilities    | Requires apps                  |
-| ------------- | ----------------------- | -------- | ------------------------ | ------------------------------ |
-| `starter-app` | Neutral Product Starter | frontend | `design-tokens`, `i18n`  | `user-app-api`, `auth-app-api` |
-| `admin-app`   | Admin Dashboard         | frontend | `authz`, `design-tokens` | `admin-app-api`                |
-| `user-app`    | User Application        | frontend | `design-tokens`          | `user-app-api`                 |
-| `landing-app` | Landing Page            | frontend | _(none)_                 | _(none)_                       |
-| `site-app`    | Marketing Site          | frontend | _(none)_                 | _(none)_                       |
-| `mobile-app`  | Mobile App              | frontend | `design-tokens`          | `user-app-api`                 |
+| ID            | Label            | Platform | Requires capabilities    | Requires apps                  |
+| ------------- | ---------------- | -------- | ------------------------ | ------------------------------ |
+| `admin-app`   | Admin Dashboard  | frontend | `authz`, `design-tokens` | `admin-app-api`                |
+| `user-app`    | User Application | frontend | `design-tokens`, `i18n`  | `user-app-api`, `auth-app-api` |
+| `landing-app` | Landing Page     | frontend | _(none)_                 | _(none)_                       |
+| `site-app`    | Marketing Site   | frontend | _(none)_                 | _(none)_                       |
+| `mobile-app`  | Mobile App       | frontend | `design-tokens`          | `user-app-api`                 |
 
 ### Backend apps
 

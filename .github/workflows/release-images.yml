@@ -120,13 +120,6 @@ jobs:
               FRONTEND_OUTPUT=dist/apps/frontend/mobile
               VITE_API_BASE_URL_MODE=same-origin
               PNPM_VERSION=11.11.0
-          - name: starter-app
-            target: frontend
-            build-args: |
-              NX_PROJECT=starter-app
-              FRONTEND_OUTPUT=dist/apps/frontend/starter-app
-              VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.11.0
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 

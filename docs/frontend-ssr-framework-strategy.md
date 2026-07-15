@@ -1,6 +1,7 @@
 # Frontend SSR framework strategy
 
-Status: accepted for the next frontend architecture stage.
+Status: accepted and amended to preserve `user-app` as the canonical product
+frontend.
 
 Date: 2026-07-02.
 
@@ -9,14 +10,17 @@ Date: 2026-07-02.
 Use two SSR-capable web app targets with different ownership boundaries:
 
 - `landing-app` at `apps/frontend/landing`: Astro with React islands.
-- `site-app` at `apps/frontend/site`: Vike with React SSR for the product/user
-  site.
+- `site-app` at `apps/frontend/site`: Vike with React SSR for a distinct
+  product/site surface when SSR is required.
+- `user-app` at `apps/frontend/app`: Vite with React for the canonical
+  authenticated product application and the default setup selection.
 - `admin-app` at `apps/frontend/admin`: keep the existing Vite React SPA unless
   admin SEO, first-load SSR, or server auth gates become product requirements.
 
-This resolves the current framework choice as Astro for landing and Vike for
-the product site. Do not introduce Next.js for these two surfaces unless Vike
-fails a repo-local proof of authenticated SSR, route guards, and deployment.
+This resolves the framework choice as Astro for landing, Vike for a distinct
+SSR product/site surface, and Vite for the canonical authenticated product
+application. Do not introduce Next.js for these surfaces unless Vike fails a
+repo-local proof of authenticated SSR, route guards, and deployment.
 
 The final shared UI Nx project names and canonical aliases are split by
 platform. These package-style flattened names are the source import aliases and
@@ -40,9 +44,8 @@ authenticated site have different runtime needs:
 - Landing is content and SEO first. It should ship static or mostly static HTML,
   hydrate only the interactive React islands it needs, and support MDX/content
   workflows.
-- Site is application first. It needs authenticated SSR, server-side data
-  loading, redirects, route guards, app shell state, and a migration path from
-  the current Vite React user app.
+- Site is SSR first. It needs server-side data loading, redirects, route guards,
+  and app shell state when a product has a separately owned SSR surface.
 
 ## Why Astro for landing
 
@@ -69,9 +72,9 @@ or demos.
 
 ## Why Vike for site
 
-Vike is the better fit for the authenticated product site than Astro because it
-keeps the current Vite/React mental model while adding SSR, data loading, route
-configuration, and server integration.
+Vike is the better fit for the optional SSR product/site surface than Astro
+because it keeps the current Vite/React mental model while adding SSR, data
+loading, route configuration, and server integration.
 
 Use the current package baseline:
 
@@ -84,18 +87,10 @@ Site pages should use Vike page files and Vike server data hooks for initial
 SSR data. Client-side TanStack Query can still own live refetching, mutations,
 and cache updates after hydration.
 
-The site should be a new app boundary, not a hidden mutation of the current
-`user-app` until parity is proven. Migrate routes incrementally:
-
-1. Create `site-app` at `apps/frontend/site` with Vike and React SSR.
-2. Move route-independent runtime out of `@app/frontend-ui` into
-   `@app/frontend-runtime`; move business logic into
-   feature-core libraries.
-3. Move auth, profile, settings, and preference hooks into feature-core
-   libraries with no DOM, Vite, Vike, Astro, or React Native dependency.
-4. Rebuild each user route in `site` against the shared feature core and
-   `@app/frontend-ui-web`.
-5. Retire `user-app` after route, auth, e2e, and deployment parity.
+The site is its own app boundary, not a hidden mutation or automatic
+replacement of `user-app`. Share route-independent runtime and business logic
+through `@app/frontend-runtime` and feature-core libraries, while keeping
+routing, server data hooks, deployment, and domains app-owned.
 
 ## Nx integration
 

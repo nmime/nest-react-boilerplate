@@ -40,7 +40,7 @@ for (const name of requiredDoctorChecks) {
 
 const presetExpectations = {
   minimal: ['auth-app-api', 'user-app-api'],
-  starter: ['auth-app-api', 'starter-app', 'user-app-api'],
+  starter: ['auth-app-api', 'user-app', 'user-app-api'],
   fullstack: ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
   enterprise: [
     'admin-app',
@@ -51,7 +51,6 @@ const presetExpectations = {
     'landing-app',
     'mobile-app',
     'site-app',
-    'starter-app',
     'telegram-bot-api',
     'telegram-bot-worker',
     'user-app',

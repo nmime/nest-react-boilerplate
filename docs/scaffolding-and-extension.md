@@ -67,22 +67,21 @@ and backend/frontend/common library runtime.
 
 ## Required baseline and optional surfaces
 
-The neutral `starter` preset is the recommended product baseline:
+The `starter` preset is the recommended product baseline:
 
-| Classification | Application/capability                          | Why it is selected                                      |
-| -------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| Required       | `starter-app`                                   | Neutral Vite product shell without reference-product UI |
-| Required       | `auth-app-api`                                  | Authentication/session boundary                         |
-| Required       | `user-app-api`                                  | Product/user API boundary                               |
-| Required       | PostgreSQL                                      | Auth and product persistence                            |
-| Required       | design tokens and i18n                          | Shared visual/runtime baseline                          |
-| Optional       | `admin-app` + `admin-app-api`                   | Reference admin flow and RBAC surface                   |
-| Optional       | `user-app`                                      | Richer reference user flow                              |
-| Optional       | `landing-app`                                   | Astro public marketing surface                          |
-| Optional       | `site-app`                                      | Vike SSR surface                                        |
-| Optional       | `mobile-app`                                    | Expo/React Native client                                |
-| Optional       | Discord/Telegram APIs and Telegram worker       | Bot and social integrations                             |
-| Optional       | Redis, NATS, S3, OTEL, analytics, notifications | Enable only for selected product capabilities           |
+| Classification | Application/capability                          | Why it is selected                            |
+| -------------- | ----------------------------------------------- | --------------------------------------------- |
+| Required       | `user-app`                                      | Canonical authenticated product frontend      |
+| Required       | `auth-app-api`                                  | Authentication/session boundary               |
+| Required       | `user-app-api`                                  | Product/user API boundary                     |
+| Required       | PostgreSQL                                      | Auth and product persistence                  |
+| Required       | design tokens and i18n                          | Shared visual/runtime baseline                |
+| Optional       | `admin-app` + `admin-app-api`                   | Admin flow and RBAC surface                   |
+| Optional       | `landing-app`                                   | Astro public marketing surface                |
+| Optional       | `site-app`                                      | Vike SSR surface                              |
+| Optional       | `mobile-app`                                    | Expo/React Native client                      |
+| Optional       | Discord/Telegram APIs and Telegram worker       | Bot and social integrations                   |
+| Optional       | Redis, NATS, S3, OTEL, analytics, notifications | Enable only for selected product capabilities |
 
 `minimal`, `fullstack`, `enterprise`, and `bots` are deliberate alternatives,
 documented in [Presets and Technologies](setup/presets-and-technologies.md).
@@ -92,7 +91,7 @@ maintainer separately scopes their deletion.
 ## Existing public domain contract
 
 The checked-in `example.com` values are replaceable environment placeholders,
-not live or starter-specific domains.
+not live domains.
 
 | Deployable         | Template hostname          | Default state |
 | ------------------ | -------------------------- | ------------- |
@@ -106,11 +105,6 @@ not live or starter-specific domains.
 | `admin-app-api`    | `admin-api.example.com`    | enabled       |
 | `discord-app-api`  | `discord-api.example.com`  | opt-in        |
 | `telegram-bot-api` | `telegram-api.example.com` | opt-in        |
-
-`starter-app` intentionally has no permanent `starter.*` hostname. When it is
-the product frontend, assign it a product-owned hostname and replace the
-corresponding reference frontend in environment-specific Helm/Compose values.
-See [Frontend Deployment Topology](frontend-deployment-topology.md).
 
 ## Add an application
 
@@ -197,11 +191,11 @@ page boundary belong to one product capability:
 ```bash
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app \
+  --frontend-app user-app \
   --dry-run
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app
+  --frontend-app user-app
 ```
 
 The generator creates backend shared and main libraries, MikroORM persistence

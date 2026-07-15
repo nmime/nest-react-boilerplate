@@ -30,14 +30,6 @@ export interface AppEntry {
  */
 export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
   /* --- Frontend apps --- */
-  'starter-app': {
-    id: 'starter-app',
-    label: 'Neutral Product Starter',
-    platform: 'frontend',
-    requiresCapabilities: ['design-tokens', 'i18n'],
-    requiresApps: ['user-app-api', 'auth-app-api'],
-    conflictsWithCapabilities: [],
-  },
   'admin-app': {
     id: 'admin-app',
     label: 'Admin Dashboard',
@@ -50,8 +42,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'user-app',
     label: 'User Application',
     platform: 'frontend',
-    requiresCapabilities: ['design-tokens'],
-    requiresApps: ['user-app-api'],
+    requiresCapabilities: ['design-tokens', 'i18n'],
+    requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
   'landing-app': {

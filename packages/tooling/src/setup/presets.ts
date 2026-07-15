@@ -51,8 +51,8 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
    */
   {
     id: 'starter',
-    description: 'Neutral frontend + backend + auth — product-ready starting point',
-    apps: ['starter-app', 'user-app-api', 'auth-app-api'],
+    description: 'User product app + backend + auth — product-ready starting point',
+    apps: ['user-app', 'user-app-api', 'auth-app-api'],
     capabilities: ['postgres', 'design-tokens', 'i18n'],
   },
 
@@ -75,7 +75,6 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     id: 'enterprise',
     description: 'Every supported app and capability — complete stack',
     apps: [
-      'starter-app',
       'admin-app',
       'admin-app-api',
       'user-app',

@@ -24,7 +24,7 @@ non-empty `primary_domain` uniqueness, tenant status values, membership
 tenant/user uniqueness, invitation token uniqueness, and invitation status
 values.
 
-Existing `auth_users` remain tenant-scoped by `tenant_id`; the default tenant id is `00000000-0000-0000-0000-000000000000` for single-tenant starter apps.
+Existing `auth_users` remain tenant-scoped by `tenant_id`; the default tenant id is `00000000-0000-0000-0000-000000000000` for single-tenant applications.
 
 HTTP tenant helpers live in `@app/backend-feature-auth-shared`:
 

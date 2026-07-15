@@ -6,16 +6,13 @@ API/state/UI logic in the appropriate frontend library or lower FSD layer.
 
 ## 1. Choose the owning app
 
-| App           | Path                        | Renderer          | Role                              |
-| ------------- | --------------------------- | ----------------- | --------------------------------- |
-| `starter-app` | `apps/frontend/starter-app` | React + Vite      | Neutral product starting point    |
-| `admin-app`   | `apps/frontend/admin`       | React + Vite      | Reference admin/RBAC flow         |
-| `user-app`    | `apps/frontend/app`         | React + Vite      | Reference authenticated user flow |
-| `landing-app` | `apps/frontend/landing`     | Astro             | Public marketing pages            |
-| `site-app`    | `apps/frontend/site`        | Vike + React SSR  | SSR product/site routes           |
-| `mobile-app`  | `apps/frontend/mobile`      | Expo/React Native | Mobile screens                    |
-
-Do not copy the reference admin/user page composition into `starter-app`.
+| App           | Path                    | Renderer          | Role                              |
+| ------------- | ----------------------- | ----------------- | --------------------------------- |
+| `admin-app`   | `apps/frontend/admin`   | React + Vite      | Admin/RBAC flow                   |
+| `user-app`    | `apps/frontend/app`     | React + Vite      | Canonical authenticated user flow |
+| `landing-app` | `apps/frontend/landing` | Astro             | Public marketing pages            |
+| `site-app`    | `apps/frontend/site`    | Vike + React SSR  | SSR product/site routes           |
+| `mobile-app`  | `apps/frontend/mobile`  | Expo/React Native | Mobile screens                    |
 
 ## 2. Generate a vertical page boundary
 
@@ -24,15 +21,15 @@ When the page belongs to a backend feature, use the vertical generator:
 ```bash
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app \
+  --frontend-app user-app \
   --dry-run
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app
+  --frontend-app user-app
 ```
 
 It creates
-`apps/frontend/starter-app/src/pages/invoices/ui/InvoicesPage.tsx` and a public
+`apps/frontend/app/src/pages/invoices/ui/InvoicesPage.tsx` and a public
 `src/pages/invoices/index.ts`. It also creates and wires backend feature and
 PostgreSQL libraries. Generated OpenAPI and API-client output remain generated
 artifacts and must be refreshed after the API builds.
@@ -45,9 +42,6 @@ For a frontend-only page, create the same `src/pages/<feature>/ui` plus
 
 Routing is app-owned; there is no repository-wide React Router assumption.
 
-- `starter-app` currently has a deliberately minimal `src/app.tsx`. Introduce
-  the smallest product router at this app boundary when multiple routes are
-  needed.
 - `user-app` owns routing in
   `apps/frontend/app/src/app/router/user-router.tsx`.
 - `admin-app` owns its explicit route composition in
@@ -87,15 +81,15 @@ coverage for navigation and public behavior.
 
 ```bash
 pnpm run frontend:fsd:check
-pnpm exec nx run starter-app:lint
-pnpm exec nx run starter-app:typecheck
-pnpm exec nx run starter-app:test
-pnpm exec nx run starter-app:build
-pnpm exec nx run starter-app:e2e
+pnpm exec nx run user-app:lint
+pnpm exec nx run user-app:typecheck
+pnpm exec nx run user-app:test
+pnpm exec nx run user-app:build
+pnpm exec nx run user-app:e2e
 git diff --check
 ```
 
-Replace `starter-app` with the selected project. Add Storybook coverage when a
+Replace `user-app` with the selected project. Add Storybook coverage when a
 reusable shared UI state is introduced.
 
 ## 6. Public hostname and API routing

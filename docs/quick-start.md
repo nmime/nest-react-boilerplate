@@ -78,9 +78,9 @@ Skip this step only when evaluating the upstream template unchanged.
 
 ## 4. Select applications and capabilities
 
-The boilerplate ships with neutral and reference applications. The recommended
-`starter` preset selects `starter-app`; it does not reuse the reference
-admin/user page composition.
+The recommended `starter` preset selects the real `user-app` together with its
+`user-app-api` and `auth-app-api` boundaries. The preset name describes the
+setup size; it does not create an extra frontend application.
 
 ### Interactive setup (recommended)
 
@@ -93,7 +93,7 @@ You will be guided through preset selection, app toggles, and capability toggles
 ### Non-interactive setup (CI / scripted)
 
 ```bash
-# Neutral product baseline:
+# Product baseline:
 pnpm nrb setup --preset starter --non-interactive
 
 # Using a config file:
@@ -107,9 +107,9 @@ pnpm nrb setup --preset starter --dry-run
 
 ### Skip setup
 
-Before setup, `pnpm run dev` uses the neutral starter selection:
-`starter-app`, `user-app-api`, and `auth-app-api`. Run the `fullstack` or
-`enterprise` preset only when you intentionally want the richer reference apps.
+Before setup, `pnpm run dev` uses the product baseline: `user-app`,
+`user-app-api`, and `auth-app-api`. Run the `fullstack` or `enterprise` preset
+only when you intentionally want additional applications.
 
 ## 5. Environment variables
 
@@ -134,14 +134,13 @@ pnpm run db:migrate
 ## 7. Start development servers
 
 ```bash
-# Neutral starter plus its APIs:
+# User product app plus its APIs:
 pnpm run dev
 
 # Explicitly start every serve target, including reference apps:
 pnpm run dev:all
 
 # Or start specific apps with Nx:
-pnpm exec nx serve starter-app
 pnpm exec nx serve admin-app
 pnpm exec nx serve user-app
 pnpm exec nx serve admin-app-api
@@ -151,7 +150,6 @@ pnpm exec nx serve admin-app-api
 
 | App         | Port | Framework         |
 | ----------- | ---- | ----------------- |
-| starter-app | 4204 | React + Vite      |
 | admin-app   | 4200 | React + Vite      |
 | user-app    | 4201 | React + Vite      |
 | landing-app | 4202 | Astro             |

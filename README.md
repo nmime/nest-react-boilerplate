@@ -7,7 +7,6 @@ A production-oriented Nx monorepo starter for teams building React frontends, Ex
 ```mermaid
 flowchart TB
   subgraph Product["Product surfaces"]
-    Starter["starter-app neutral React + Vite shell"]
     Admin["admin-app React + Vite"]
     User["user-app React + Vite"]
     Landing["landing-app Astro + React islands"]
@@ -37,8 +36,6 @@ flowchart TB
   Data[(PostgreSQL)]
   Ops["Docker, GitHub Actions, Helm, operations docs"]
 
-  Starter --> UI
-  Starter --> Runtime
   Admin --> UI
   User --> UI
   Landing --> UI
@@ -120,9 +117,8 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 | Path                                          | Purpose                                                                     |
 | --------------------------------------------- | --------------------------------------------------------------------------- |
-| `apps/frontend/starter-app`                   | Neutral Vite product shell used by the starter preset.                      |
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
-| `apps/frontend/app`                           | User-facing React app shell.                                                |
+| `apps/frontend/app`                           | Canonical user-facing React product app.                                    |
 | `apps/frontend/landing`                       | Public Astro landing app with React islands.                                |
 | `apps/frontend/site`                          | Vike SSR product/user site.                                                 |
 | `apps/frontend/mobile`                        | Expo/React Native mobile app.                                               |
@@ -169,8 +165,8 @@ pnpm run dev
 
 Default local services:
 
-- Neutral start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts `starter-app`, `user-app-api`, and `auth-app-api`. `starter-app` uses Vite on port `4204` and intentionally contains no reference-product page composition. Use `pnpm run dev:all` only when you intentionally need every serve target.
-- Reference frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. Select them explicitly through setup when their example flows are useful.
+- Product start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts `user-app`, `user-app-api`, and `auth-app-api`. `user-app` uses Vite on port `4201`. Use `pnpm run dev:all` only when you intentionally need every serve target.
+- Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. Select optional surfaces explicitly through setup.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 

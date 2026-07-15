@@ -6,7 +6,7 @@ import { join } from "node:path";
 const defaultProjects = [
   "user-app-api",
   "auth-app-api",
-  "starter-app",
+  "user-app",
 ];
 
 interface WorkspaceManifest {

@@ -60,9 +60,9 @@ Always-loaded policy for human and AI contributors to
   before editing project structure.
 - Use `pnpm nrb add ... --dry-run` first. Do not copy an existing app directory
   or reproduce the reference `admin-app` / `user-app` product UI.
-- `starter-app` is the neutral product starting point. The richer admin/user,
-  landing, site, and mobile apps are reference implementations for architecture
-  and tests, not visual templates.
+- `user-app` is the canonical user-facing product frontend. Admin, landing,
+  site, mobile, and any newly generated apps keep separate product/runtime
+  ownership; do not invent an additional generic starter deployable.
 - Generated roots include their own `AGENTS.md` and `README.md`; read the nearest
   versions before completing product-specific routing, contracts, persistence,
   authorization, and tests.

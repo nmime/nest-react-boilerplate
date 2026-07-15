@@ -8,7 +8,6 @@ const backendServices = [
   "auth-app-api",
 ];
 const frontendServices = [
-  "starter-app",
   "admin-app",
   "user-app",
   "landing-app",
@@ -32,7 +31,6 @@ const ports = {
   landingApp: pickPort("LANDING_APP_PORT", 83),
   siteApp: pickPort("SITE_APP_PORT", 84),
   mobileApp: pickPort("MOBILE_APP_PORT", 85),
-  starterApp: pickPort("STARTER_APP_PORT", 86),
 };
 const url = (port: string, path = ""): string => `http://${host}:${port}${path}`;
 const frontendOrigins = [
@@ -41,7 +39,6 @@ const frontendOrigins = [
   ports.landingApp,
   ports.siteApp,
   ports.mobileApp,
-  ports.starterApp,
 ]
   .map((port) => url(port))
   .join(",");
@@ -59,7 +56,6 @@ const env = {
   LANDING_APP_PORT: ports.landingApp,
   SITE_APP_PORT: ports.siteApp,
   MOBILE_APP_PORT: ports.mobileApp,
-  STARTER_APP_PORT: ports.starterApp,
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
@@ -81,7 +77,6 @@ const probes: [string, string, string, number][] = [
   ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate", 200],
   ["site frontend", url(ports.siteApp, "/"), "Production web experience", 200],
   ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Mobile", 200],
-  ["starter frontend", url(ports.starterApp, "/"), "Starter App", 200],
   [
     "user proxy auth",
     url(ports.userApp, "/auth/me"),

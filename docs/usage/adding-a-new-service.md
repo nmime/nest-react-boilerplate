@@ -69,7 +69,7 @@ For a complete feature slice:
 ```bash
 pnpm nrb add feature invoices \
   --api-app billing-app-api \
-  --frontend-app starter-app \
+  --frontend-app user-app \
   --dry-run
 ```
 

@@ -110,11 +110,6 @@ from Compose:
 - `https://api.example.com` -> `docker compose ... port user-app-api 80`
 - `https://admin-api.example.com` -> `docker compose ... port admin-app-api 80`
 
-`starter-app` is the neutral shell selected by the `starter` setup preset, not
-an additional production surface. Start its optional Compose profile only when
-it is the selected product frontend, then route the product-owned hostname to
-`docker compose ... port starter-app 8080`.
-
 The bot webhook APIs are also opt-in because they require provider credentials
 and callback registration:
 

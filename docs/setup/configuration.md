@@ -1,6 +1,6 @@
 # Setup and Configuration
 
-The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `starter` preset selects the neutral `starter-app`; reference apps remain available but are not the default product shell.
+The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `starter` preset selects the canonical `user-app` product frontend with its user and auth APIs.
 
 ## How it works
 
@@ -150,7 +150,7 @@ On each run:
 
 This guarantees idempotency: running setup twice with the same config produces zero operations.
 
-The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts the neutral `starter-app` with `user-app-api` and `auth-app-api`.
+The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts `user-app` with `user-app-api` and `auth-app-api`.
 
 ## Recovery
 

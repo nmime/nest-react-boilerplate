@@ -193,7 +193,6 @@ const servicePortAssignments = {
   USER_APP_PORT: 4201,
   LANDING_APP_PORT: 4202,
   SITE_APP_PORT: 4203,
-  STARTER_APP_PORT: 4204,
   MOBILE_APP_PORT: 4300,
 };
 assert.equal(
@@ -240,7 +239,6 @@ for (const [service, variable, port] of [
   ['admin-app', 'ADMIN_APP_PORT', 4200],
   ['user-app', 'USER_APP_PORT', 4201],
   ['landing-app', 'LANDING_APP_PORT', 4202],
-  ['starter-app', 'STARTER_APP_PORT', 4204],
   ['mobile-app', 'MOBILE_APP_PORT', 4300],
 ]) {
   const serviceBlock = section(devCompose, `  ${service}:`, '\n\n  ');
@@ -267,11 +265,6 @@ for (const [service, variable, port, profile] of [
   has(serviceBlock, `published: '${'${'}${variable}:-${port}}'`, `${service} production host port ${port}`);
   has(serviceBlock, 'host_ip: 127.0.0.1', `${service} production binds published ports to loopback`);
 }
-has(
-  section(prodCompose, '  starter-app:', '\n\n  '),
-  'profiles: [starter]',
-  'starter-app production deployment is opt-in',
-);
 has(prodCompose, 'http://127.0.0.1:80/ready', 'prod backend healthcheck targets readiness-aware /ready endpoint');
 assert.ok(
   !prodCompose.includes('http://127.0.0.1:80/health'),
@@ -397,7 +390,6 @@ for (const [service, variable, port] of [
   ['admin-app', 'ADMIN_APP_PORT', 4200],
   ['user-app', 'USER_APP_PORT', 4201],
   ['landing-app', 'LANDING_APP_PORT', 4202],
-  ['starter-app', 'STARTER_APP_PORT', 4204],
   ['mobile-app', 'MOBILE_APP_PORT', 4300],
 ]) {
   const serviceBlock = section(prodCompose, `  ${service}:`, '\n\n  ');
@@ -468,7 +460,7 @@ if (validateHelmStatic) {
     has(appBlock, 'port: 80', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
   }
-  for (const app of ['starterApp', 'landingApp', 'userApp', 'adminApp', 'mobileApp']) {
+  for (const app of ['landingApp', 'userApp', 'adminApp', 'mobileApp']) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, 'port: 8080', `${app} container port`);
     has(appBlock, 'servicePort: 80', `${app} service port`);
@@ -517,11 +509,7 @@ if (validateHelmStatic) {
     publicDomainAssignments.length + optionalApiDomainAssignments.length,
     'Every public app contract must have a unique default domain.',
   );
-  for (const [app, service] of [
-    ...publicDomainAssignments,
-    ...optionalApiDomainAssignments,
-    ['starterApp', 'starter-app'],
-  ]) {
+  for (const [app, service] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
     has(releaseWorkflow, `- name: ${service}`, `${app} immutable release image`);
     has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
   }
@@ -552,11 +540,6 @@ if (validateHelmStatic) {
       }
     }
 
-    const starterBlock = yamlMapEntry(values, 'starterApp');
-    has(starterBlock, 'enabled: false', `${label} starterApp is opt-in`);
-    assert.ok(!ingressBlock.includes('starter.example.com'), `${label} must not publish a permanent starter host.`);
-    assert.ok(!configBlock.includes('starter.example.com'), `${label} must not allow an inactive starter origin.`);
-
     for (const [app, service, host] of optionalApiDomainAssignments) {
       const appBlock = yamlMapEntry(values, app);
       has(appBlock, 'enabled: false', `${label} ${app} remains opt-in`);
@@ -574,7 +557,6 @@ if (validateHelmStatic) {
     'authAppApi',
     'userAppApi',
     'adminAppApi',
-    'starterApp',
     'landingApp',
     'siteApp',
     'mobileApp',

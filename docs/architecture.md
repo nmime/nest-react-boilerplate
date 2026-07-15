@@ -4,21 +4,18 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 
 ## Frontend apps
 
-- `starter-app` in `apps/frontend/starter-app`
 - `admin-app` in `apps/frontend/admin`
 - `user-app` in `apps/frontend/app`
 - `landing-app` in `apps/frontend/landing`
 - `site-app` in `apps/frontend/site`
 - `mobile-app` in `apps/frontend/mobile`
 
-`starter-app` is the neutral Vite product shell and the default before setup.
-The other frontend applications are reference implementations: reuse their
-architecture and shared libraries, not their product copy or page composition.
+`user-app` is the canonical user-facing Vite product frontend and the default
+before setup. Each other frontend has a distinct product or runtime role.
 The frontend runtime is split by deployment shape. `landing-app` is the
 Astro + React islands marketing surface, `site-app` is the Vike + React SSR
 product/user site scaffold, `admin-app` remains a Vite React SPA, and
-`user-app` remains the current Vite user SPA until `site-app` reaches route and
-deployment parity. `mobile-app` is the Expo/React Native app and consumes the
+`user-app` is the Vite user SPA. `mobile-app` is the Expo/React Native app and consumes the
 Tamagui native facade from `@app/frontend-ui-native`. Web apps consume
 shadcn-style React DOM primitives from
 `@app/frontend-ui-web`, non-visual i18n/query/state helpers from

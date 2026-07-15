@@ -1,8 +1,8 @@
 # Frontend deployment topology
 
-This repository supports two safe frontend/API wiring modes across all six
-frontend shapes: the neutral Vite starter, Astro static landing, Vite SPA
-admin/user, the Vike SSR site, and the Expo mobile web export. Choose one mode
+This repository supports two safe frontend/API wiring modes across all five
+frontend shapes: Astro static landing, Vite SPA admin/user, the Vike SSR site,
+and the Expo mobile web export. Choose one mode
 per environment and keep build-time variables, nginx config, Vike server
 routing, ingress paths, and public DNS/CORS values aligned.
 
@@ -29,12 +29,6 @@ in `config.corsOrigins` and TLS:
 | `discord-app-api`  | `discord-api.example.com`  | opt-in   |
 | `telegram-bot-api` | `telegram-api.example.com` | opt-in   |
 
-`starter-app` is the neutral frontend selected by the `starter` setup preset.
-It remains buildable and releasable, but it is disabled in the default Helm and
-production Compose topology and has no permanent `starter.*` hostname. When it
-is the selected product shell, enable it in environment values, assign the
-product-owned hostname, and disable the reference frontend it replaces.
-
 The Discord and Telegram APIs are disabled until their provider credentials,
 callback registration, ingress route, DNS, and TLS host are configured together.
 The deployment validator fails when any enabled frontend or core API host,
@@ -51,7 +45,6 @@ values are configured:
 
 ```bash
 pnpm exec nx build landing-app
-pnpm exec nx build starter-app
 pnpm exec nx build site-app
 pnpm exec nx build user-app
 pnpm exec nx build admin-app
@@ -63,7 +56,6 @@ pipelines so the intended reverse-proxy topology is visible in logs:
 
 ```bash
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app
-VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build starter-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app
 VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
@@ -151,13 +143,11 @@ CI=true pnpm install --frozen-lockfile
 pnpm run tooling:static-check
 pnpm run typecheck
 CI=true pnpm exec nx build landing-app --skip-nx-cache
-CI=true pnpm exec nx build starter-app --skip-nx-cache
 CI=true pnpm exec nx build site-app --skip-nx-cache
 CI=true pnpm exec nx build user-app --skip-nx-cache
 CI=true pnpm exec nx build admin-app --skip-nx-cache
 CI=true pnpm exec nx run mobile-app:export --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build landing-app --skip-nx-cache
-CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build starter-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build site-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build user-app --skip-nx-cache
 CI=true VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app --skip-nx-cache

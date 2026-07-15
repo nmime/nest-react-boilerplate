@@ -10,8 +10,8 @@
     "@nx/js": "23.1.0",
     "@nx/node": "23.1.0",
     "@nx/vite": "23.1.0",
-    "@types/node": "26.1.1",
-    "typescript": "7.0.2",
+    "@types/node": "24.13.3",
+    "typescript": "6.0.3",
     "vitest": "4.1.10"
   },
   "description": "NestJS + Fastify Telegram bot API (webhook in prod, polling for local dev)"

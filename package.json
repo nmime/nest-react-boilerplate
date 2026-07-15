@@ -181,7 +181,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@babel/core": "8.0.1",
+    "@babel/core": "7.29.7",
     "@better-auth/cli": "^1.4.21",
     "@eslint/js": "10.0.1",
     "@nestjs/testing": "11.1.28",
@@ -210,7 +210,7 @@
     "@testing-library/react": "16.3.2",
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
-    "@types/node": "26.1.1",
+    "@types/node": "24.13.3",
     "@types/pg": "8.20.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -253,7 +253,7 @@
     "ts-loader": "9.6.2",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.64.0",
     "typescript-transform-paths": "4.0.0",
     "vite": "8.1.4",

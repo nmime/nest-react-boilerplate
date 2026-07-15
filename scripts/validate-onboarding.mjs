@@ -167,15 +167,7 @@ const e2eSelection = runJson([
 ]);
 assert.deepEqual(
   e2eSelection.summary?.apps,
-  [
-    'admin-app',
-    'admin-app-api',
-    'auth-app-api',
-    'fullstack-e2e',
-    'landing-app',
-    'user-app',
-    'user-app-api',
-  ],
+  ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
   'Selecting fullstack-e2e must include the complete stack that its runtime starts.',
 );
 

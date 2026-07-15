@@ -294,10 +294,7 @@ describe('catalog — validateSelection', () => {
 
   it('no issues when all deps satisfied', () => {
     assert.deepEqual(
-      validateSelection(
-        ['admin-app', 'admin-app-api', 'auth-app-api'],
-        ['authz', 'design-tokens', 'postgres'],
-      ),
+      validateSelection(['admin-app', 'admin-app-api', 'auth-app-api'], ['authz', 'design-tokens', 'postgres']),
       [],
     );
   });

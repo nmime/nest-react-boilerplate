@@ -131,14 +131,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'e2e',
     classification: 'reference',
     requiresCapabilities: [],
-    requiresApps: [
-      'admin-app',
-      'admin-app-api',
-      'auth-app-api',
-      'landing-app',
-      'user-app',
-      'user-app-api',
-    ],
+    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],
   },
 } as const;

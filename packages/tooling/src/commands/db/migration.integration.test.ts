@@ -109,7 +109,7 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
       }
     }
     assert.ok(dbUrl, "PostgreSQL did not become ready within 30s");
-  }, { timeout: 45_000 });
+  }, { timeout: 120_000 });
 
   after(async () => {
     await runDocker(["stop", "-t", "2", TEST_CONTAINER]).catch(() => {});

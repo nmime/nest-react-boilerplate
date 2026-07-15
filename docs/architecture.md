@@ -10,8 +10,8 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 - `site-app` in `apps/frontend/site`
 - `mobile-app` in `apps/frontend/mobile`
 
-`user-app` is the canonical user-facing Vite product frontend and the default
-before setup. Each other frontend has a distinct product or runtime role.
+No deployable is the monorepo default. Every frontend has a distinct product
+or runtime role, and the fullstack core profile selects them together.
 The frontend runtime is split by deployment shape. `landing-app` is the
 Astro + React islands marketing surface, `site-app` is the Vike + React SSR
 product/user site scaffold, `admin-app` remains a Vite React SPA, and
@@ -31,7 +31,6 @@ secondary TS path aliases that point at the same source root.
 - `auth-app-api` in `apps/backend/auth/auth-app-api`
 - `discord-app-api` in `apps/backend/discord/discord-app-api`
 - `telegram-bot-api` in `apps/backend/telegram/telegram-bot-api`
-- `telegram-bot-worker` in `apps/backend/telegram/telegram-bot-worker`
 
 Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend-common-health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
 

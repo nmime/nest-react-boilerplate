@@ -5,7 +5,10 @@ Workspace-local tooling package for repository scripts. Use the TypeScript CLI e
 ```bash
 pnpm --filter @repo/tooling tooling --help
 pnpm --filter @repo/tooling tooling project check-library-configs
-pnpm --filter @repo/tooling tooling project generate-vertical-slice invoices --dry-run
+pnpm --filter @repo/tooling tooling project generate-vertical-slice invoices \
+  --api-app user-app-api \
+  --frontend-app user-app \
+  --dry-run
 pnpm --filter @repo/tooling tooling qa mutation --dry-run
 pnpm --filter @repo/tooling tooling images webp --dry-run
 pnpm --filter @repo/tooling tooling tooling static-check

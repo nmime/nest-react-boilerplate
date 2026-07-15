@@ -2,12 +2,10 @@
 import { spawn, type SpawnOptions } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { expandPreset } from "../../setup/presets.js";
 
-const defaultProjects = [
-  "user-app-api",
-  "auth-app-api",
-  "user-app",
-];
+const coreSelection = expandPreset("fullstack");
+const coreProjects = coreSelection.apps.filter((project) => !project.endsWith("-e2e"));
 
 interface WorkspaceManifest {
   apps?: unknown;
@@ -17,13 +15,13 @@ interface WorkspaceManifest {
 export interface FullstackSelection {
   projects: string[];
   capabilities: string[];
-  source: "default" | "setup";
+  source: "core" | "setup";
 }
 
 export function resolveFullstackSelection(workspaceRoot: string): FullstackSelection {
   const manifestPath = join(workspaceRoot, ".nrb", "workspace.json");
   if (!existsSync(manifestPath)) {
-    return { projects: [...defaultProjects], capabilities: ["postgres"], source: "default" };
+    return { projects: [...coreProjects], capabilities: [...coreSelection.capabilities], source: "core" };
   }
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as WorkspaceManifest;
@@ -76,7 +74,7 @@ export async function runFullstack(workspaceRoot = process.cwd()): Promise<void>
   }
 
   console.log(
-    `Starting ${selection.projects.join(", ")} (${selection.source === "setup" ? ".nrb/workspace.json" : "default fullstack selection"}).`,
+    `Starting ${selection.projects.join(", ")} (${selection.source === "setup" ? ".nrb/workspace.json" : "complete core monorepo"}).`,
   );
   await run(
     "pnpm",

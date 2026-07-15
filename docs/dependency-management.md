@@ -13,6 +13,7 @@ Use this policy to keep dependency updates low-risk and reproducible.
 | Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
 | Vitest     | 4.1.10  | All workspace consumers                                                         |
 | Vite       | 8.1.4   | All workspace consumers                                                         |
+| Astro      | 7.0.9   | Landing app and generated Astro applications                                    |
 | Expo SDK   | 57.0.x  | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
 
 ## Package updates
@@ -38,11 +39,12 @@ All 15 workspace manifests must use the same version for shared direct dependenc
 
 ## Deferred major updates
 
-| Package     | Current | Latest | Blocker                                                    | Revisit trigger                                  |
-| ----------- | ------- | ------ | ---------------------------------------------------------- | ------------------------------------------------ |
-| TypeScript  | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs          | First NestJS/Nx release with TS 7 peer ranges    |
-| Babel       | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)    | Expo SDK release declaring Babel 8 compatibility |
-| @types/node | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major | Runtime upgrade to Node 26                       |
+| Package         | Current | Latest | Blocker                                                           | Revisit trigger                                      |
+| --------------- | ------- | ------ | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| TypeScript      | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs                 | First NestJS/Nx release with TS 7 peer ranges        |
+| Babel           | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)           | Expo SDK release declaring Babel 8 compatibility     |
+| @fastify/static | 9.3.0   | 10.x   | NestJS 11 platform and Swagger peer ranges accept only 8.x or 9.x | NestJS releases with @fastify/static 10 peer support |
+| @types/node     | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major        | Runtime upgrade to Node 26                           |
 
 ## Build scripts
 

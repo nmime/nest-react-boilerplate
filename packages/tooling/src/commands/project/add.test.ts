@@ -59,9 +59,10 @@ describe("parseAddArgs", () => {
     assert.deepEqual(args.extra, ["--extra-flag"]);
   });
 
-  it("default apiApp is user-app-api", () => {
+  it("does not assign implicit feature owners", () => {
     const args = parseAddArgs(["feature", "x"]);
-    assert.equal(args.apiApp, "user-app-api");
+    assert.equal(args.apiApp, undefined);
+    assert.equal(args.frontendApp, undefined);
   });
 });
 
@@ -75,6 +76,18 @@ function makeMockRunner(result: NxGeneratorResult): NxGeneratorFn {
 
 function makeContext(argv: string[]): CommandContext {
   return { argv, packageRoot: "/tmp", workspaceRoot: "/tmp" };
+}
+
+function featureArgs(name: string, ...extra: string[]): string[] {
+  return [
+    "feature",
+    name,
+    "--api-app",
+    "user-app-api",
+    "--frontend-app",
+    "user-app",
+    ...extra,
+  ];
 }
 
 describe("runAddCommand", () => {
@@ -115,7 +128,7 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    const status = await runAddCommand(makeContext(["feature", "billing"]), runner);
+    const status = await runAddCommand(makeContext(featureArgs("billing")), runner);
     assert.equal(status, 0);
     assert.equal(capturedCg, "@repo/tooling:feature");
   });
@@ -127,7 +140,7 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(["feature", "billing", "--dry-run"]), runner);
+    await runAddCommand(makeContext(featureArgs("billing", "--dry-run")), runner);
     assert.ok(capturedArgs?.includes("--dryRun=true"));
   });
 
@@ -138,7 +151,7 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(["feature", "billing", "--force"]), runner);
+    await runAddCommand(makeContext(featureArgs("billing", "--force")), runner);
     assert.ok(capturedArgs?.includes("--force=true"));
   });
 
@@ -149,7 +162,7 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(["feature", "billing", "--api-app", "auth-app-api"]), runner);
+    await runAddCommand(makeContext(featureArgs("billing", "--api-app", "auth-app-api")), runner);
     assert.ok(capturedArgs?.includes("--apiApp=auth-app-api"));
   });
 
@@ -162,7 +175,7 @@ describe("runAddCommand", () => {
     }) as typeof process.stdout.write;
     try {
       await runAddCommand(
-        makeContext(["feature", "billing", "--dry-run"]),
+        makeContext(featureArgs("billing", "--dry-run")),
         makeMockRunner({
           success: true,
           stdout: "CREATE libs/backend/feature/billing/main/lib/project.json\n",
@@ -215,6 +228,18 @@ describe("runAddCommand", () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     const status = await runAddCommand(makeContext(["app"]), runner);
     assert.equal(status, 1);
+  });
+
+  it("requires explicit feature owners", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(await runAddCommand(makeContext(["feature", "billing"]), runner), 1);
+    assert.equal(
+      await runAddCommand(
+        makeContext(["feature", "billing", "--api-app", "user-app-api"]),
+        runner,
+      ),
+      1,
+    );
   });
 
   it("requires explicit app kind and renderer for every application", async () => {
@@ -271,7 +296,7 @@ describe("runAddCommand", () => {
     assert.ok(capturedArgs.includes("--renderer=vike"));
 
     await runAddCommand(
-      makeContext(["feature", "billing", "--frontend-app=admin-app"]),
+      makeContext(featureArgs("billing", "--frontend-app=admin-app")),
       runner,
     );
     assert.ok(capturedArgs.includes("--frontendApp=admin-app"));

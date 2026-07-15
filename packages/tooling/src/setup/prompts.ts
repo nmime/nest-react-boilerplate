@@ -83,7 +83,7 @@ export interface PromptResult {
  * toggles, and generation options.
  *
  * When `nonInteractive` is true, skips all readline calls and returns a
- * sensible default configuration (minimal preset).
+ * complete core monorepo configuration (fullstack preset).
  */
 export async function runPrompts(nonInteractive: boolean = false): Promise<PromptResult> {
   if (nonInteractive) {
@@ -93,11 +93,11 @@ export async function runPrompts(nonInteractive: boolean = false): Promise<Promp
 }
 
 /**
- * Non-interactive defaults: minimal preset, no extra apps/caps, dry-run off.
+ * Non-interactive baseline: fullstack preset, no extra apps/caps, dry-run off.
  */
 function getNonInteractiveDefaults(): PromptResult {
   return {
-    preset: 'minimal',
+    preset: 'fullstack',
     apps: [],
     capabilities: [],
     prune: false,
@@ -118,7 +118,7 @@ async function interactiveFlow(): Promise<PromptResult> {
     label: `${p.id} — ${p.description}`,
     value: p.id,
   }));
-  const selectedPreset = (await askChoice('Select a starting preset', presetChoices, 1)) as PresetId;
+  const selectedPreset = (await askChoice('Select a repository profile', presetChoices, 2)) as PresetId;
   process.stdout.write('\n');
 
   // Show what the preset includes

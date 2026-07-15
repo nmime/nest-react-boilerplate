@@ -58,7 +58,7 @@ pnpm nrb setup              # apply
 
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install Node.js 26.                                            |
+| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install the latest Node.js 24 release.                         |
 | `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |
@@ -104,7 +104,7 @@ error TS2307: Cannot find module '@app/backend-feature-invoices-main'
 **Fix**: The path alias was generated but `tsconfig.base.json` wasn't updated correctly. Run:
 
 ```bash
-pnpm nrb add feature invoices --force
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --force
 ```
 
 Or manually add the alias to `tsconfig.base.json`:

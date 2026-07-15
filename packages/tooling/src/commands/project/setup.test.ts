@@ -104,7 +104,7 @@ describe("setup — parseArgs", () => {
 
   it("parses --preset <name>", () => {
     assert.equal(parseArgs(["--preset", "fullstack"]).preset, "fullstack");
-    assert.equal(parseArgs(["--preset=starter"]).preset, "starter");
+    assert.equal(parseArgs(["--preset=web"]).preset, "web");
   });
 
   it("parses --config <path>", () => {
@@ -379,10 +379,10 @@ describe("doctor — runDoctorCommand", () => {
 // ============================================================================
 
 describe("prompts — nonInteractive defaults", () => {
-  it("runPrompts with nonInteractive returns minimal defaults", async () => {
+  it("runPrompts with nonInteractive returns the complete core profile", async () => {
     const { runPrompts } = await import("../../setup/prompts.js");
     const result = await runPrompts(true); // nonInteractive = true
-    assert.equal(result.preset, "minimal");
+    assert.equal(result.preset, "fullstack");
     assert.ok(Array.isArray(result.apps));
     assert.ok(Array.isArray(result.capabilities));
     assert.equal(result.prune, false);
@@ -395,7 +395,7 @@ describe("prompts — buildConfig", () => {
   it("buildConfig merges prompts with overrides", async () => {
     const { buildConfig } = await import("../../setup/prompts.js");
     const prompts: PromptResult = {
-      preset: "starter",
+      preset: "web",
       apps: ["user-app"],
       capabilities: ["postgres"],
       prune: false,
@@ -404,7 +404,7 @@ describe("prompts — buildConfig", () => {
     };
     const config = buildConfig(prompts, { options: { nonInteractive: true } });
     assert.equal(config.schemaVersion, schemaVersion);
-    assert.equal(config.preset, "starter");
+    assert.equal(config.preset, "web");
     assert.equal(config.options.force, true);
     assert.equal(config.options.nonInteractive, true);
   });
@@ -429,14 +429,14 @@ describe("prompts — formatConfigSummary", () => {
     const { formatConfigSummary } = await import("../../setup/prompts.js");
     const config: NrbConfig = parseNrbConfig({
       schemaVersion: schemaVersion,
-      preset: "starter",
+      preset: "web",
       apps: ["user-app"] as unknown as string[],
       capabilities: ["postgres"] as unknown as string[],
       options: { prune: true, force: false, dryRun: true, nonInteractive: true },
     });
     const summary = formatConfigSummary(config);
     assert.ok(summary.includes("Configuration:"));
-    assert.ok(summary.includes("starter"));
+    assert.ok(summary.includes("web"));
     assert.ok(summary.includes("user-app"));
     assert.ok(summary.includes("postgres"));
     assert.ok(summary.includes("prune: true"));

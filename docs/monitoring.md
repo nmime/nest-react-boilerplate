@@ -25,14 +25,13 @@ The client can set `x-request-id` in the request header; the server preserves it
 
 Each NestJS backend service exposes an `/metrics` endpoint (HTTP GET, no auth by default — place behind your ingress/auth gateway). Metrics are emitted in OpenMetrics/Prometheus text format.
 
-| Service               | Endpoint                        |
-| --------------------- | ------------------------------- |
-| `admin-app-api`       | `http://localhost:3001/metrics` |
-| `user-app-api`        | `http://localhost:3002/metrics` |
-| `auth-app-api`        | `http://localhost:3003/metrics` |
-| `discord-app-api`     | `http://localhost:3007/metrics` |
-| `telegram-bot-api`    | `http://localhost:3013/metrics` |
-| `telegram-bot-worker` | `http://localhost:3023/metrics` |
+| Service            | Endpoint                        |
+| ------------------ | ------------------------------- |
+| `admin-app-api`    | `http://localhost:3001/metrics` |
+| `user-app-api`     | `http://localhost:3002/metrics` |
+| `auth-app-api`     | `http://localhost:3003/metrics` |
+| `discord-app-api`  | `http://localhost:3007/metrics` |
+| `telegram-bot-api` | `http://localhost:3013/metrics` |
 
 **How it works:** The shared bootstrap layer (`libs/backend/common`) registers an `express-prom` / `prom-client` middleware that collects HTTP request duration histograms, request/response sizes, active request counters, and application-level gauges (DB pool, queue depth). OpenTelemetry SDK (`@opentelemetry/sdk-node`) instruments the HTTP server layer and exports metrics via OTLP when `OTEL_ENABLED=true`.
 
@@ -65,7 +64,6 @@ scrape_configs:
           - 'auth-app-api:3003'
           - 'discord-app-api:3007'
           - 'telegram-bot-api:3013'
-          - 'telegram-bot-worker:3023'
     relabel_configs:
       - source_labels: [__address__]
         regex: '(.+):(.+)'

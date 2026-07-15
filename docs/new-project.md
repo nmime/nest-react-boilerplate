@@ -20,8 +20,8 @@ pnpm nrb init \
   --domain acme.example \
   --owner your-github-org
 
-pnpm nrb setup --preset starter --non-interactive --dry-run
-pnpm nrb setup --preset starter --non-interactive
+pnpm nrb setup --preset fullstack --non-interactive --dry-run
+pnpm nrb setup --preset fullstack --non-interactive
 ```
 
 The compatibility alias `pnpm init:project -- ...` invokes the same product
@@ -31,16 +31,16 @@ initializer. New instructions and automation should use `pnpm nrb init`.
 
 The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
 
-The `starter` preset selects the canonical `user-app` product frontend together
-with `user-app-api` and `auth-app-api`. The preset name describes the setup
-size; it does not create an extra frontend application.
+The `fullstack` profile selects all required core applications. `web` excludes
+only the mobile runtime, while bot services remain explicit profiles. There is
+no default frontend or API application.
 
 ```bash
 # Interactive wizard:
 pnpm nrb setup
 
-# Non-interactive product baseline:
-pnpm nrb setup --preset starter --non-interactive
+# Non-interactive core monorepo:
+pnpm nrb setup --preset fullstack --non-interactive
 
 # Config file:
 cp nrb.config.example.json nrb.config.json
@@ -48,7 +48,7 @@ cp nrb.config.example.json nrb.config.json
 pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-pnpm nrb setup --preset starter --dry-run
+pnpm nrb setup --preset fullstack --dry-run
 ```
 
 See [Setup and Configuration](setup/configuration.md) for details.

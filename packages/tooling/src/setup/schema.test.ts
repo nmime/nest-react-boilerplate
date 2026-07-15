@@ -36,12 +36,12 @@ describe('schema — parseNrbConfig', () => {
   it('accepts config with preset and explicit overrides', () => {
     const c = parseNrbConfig({
       schemaVersion,
-      preset: 'starter',
+      preset: 'web',
       apps: ['user-app'],
       capabilities: ['i18n'],
       options: { dryRun: true },
     });
-    assert.equal(c.preset, 'starter');
+    assert.equal(c.preset, 'web');
     assert.deepEqual(c.apps, ['user-app']);
     assert.deepEqual(c.capabilities, ['i18n']);
     assert.equal(c.options.dryRun, true);
@@ -123,7 +123,6 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
-      'telegram-bot-worker',
       'fullstack-e2e',
     ] as const;
     assert.deepEqual([...appIds].sort(), [...expected].sort());
@@ -151,7 +150,7 @@ describe('schema — constants', () => {
   });
 
   it('exports exactly five preset IDs', () => {
-    assert.deepEqual(presetIds, ['minimal', 'starter', 'fullstack', 'enterprise', 'bots']);
+    assert.deepEqual(presetIds, ['minimal', 'web', 'fullstack', 'enterprise', 'bots']);
   });
 
   it('frontend and backend app IDs are disjoint', () => {
@@ -375,14 +374,21 @@ describe('presets — expandPreset', () => {
     assert.equal(e.apps.length, 2);
   });
 
-  it('starter: user-app + user-app-api + auth-app-api + deps', () => {
-    const e = expandPreset('starter');
-    assert.ok(e.apps.includes('user-app'));
-    assert.ok(e.apps.includes('user-app-api'));
-    assert.ok(e.apps.includes('auth-app-api'));
-    assert.ok(e.capabilities.includes('postgres'));
-    assert.ok(e.capabilities.includes('design-tokens'));
-    assert.ok(e.capabilities.includes('i18n'));
+  it('web: every core web app, API, and E2E project', () => {
+    const e = expandPreset('web');
+    for (const app of [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ] as const) {
+      assert.ok(e.apps.includes(app), `web missing ${app}`);
+    }
+    assert.equal(e.apps.includes('mobile-app'), false);
   });
 
   it('fullstack: all core apps + capabilities', () => {
@@ -394,6 +400,8 @@ describe('presets — expandPreset', () => {
       'user-app-api',
       'auth-app-api',
       'landing-app',
+      'mobile-app',
+      'site-app',
       'fullstack-e2e',
     ] as const) {
       assert.ok(e.apps.includes(a), `fullstack missing ${a}`);
@@ -488,9 +496,9 @@ describe('component — schema → preset → catalog', () => {
 });
 
 describe('component — preset monotonicity', () => {
-  it('minimal < starter < fullstack <= enterprise (app count)', () => {
-    assert.ok(expandPreset('minimal').apps.length < expandPreset('starter').apps.length);
-    assert.ok(expandPreset('starter').apps.length < expandPreset('fullstack').apps.length);
+  it('minimal < web < fullstack <= enterprise (app count)', () => {
+    assert.ok(expandPreset('minimal').apps.length < expandPreset('web').apps.length);
+    assert.ok(expandPreset('web').apps.length < expandPreset('fullstack').apps.length);
     assert.ok(expandPreset('fullstack').apps.length <= expandPreset('enterprise').apps.length);
   });
 
@@ -529,6 +537,8 @@ describe('e2e — example config flow', () => {
       'auth-app-api',
       'fullstack-e2e',
       'landing-app',
+      'mobile-app',
+      'site-app',
       'user-app',
       'user-app-api',
     ];

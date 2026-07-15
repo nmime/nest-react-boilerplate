@@ -1,6 +1,6 @@
 # Setup and Configuration
 
-The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `starter` preset selects the canonical `user-app` product frontend with its user and auth APIs.
+The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `fullstack` profile contains every core application; no app is a default.
 
 ## How it works
 
@@ -18,7 +18,7 @@ pnpm --filter @repo/tooling tooling setup
 
 The wizard guides you through:
 
-1. **Preset selection** — choose a starting point (minimal, starter, fullstack, enterprise, bots).
+1. **Profile selection** — choose `minimal`, `web`, `fullstack`, `enterprise`, or `bots`.
 2. **App toggles** — enable/disable each frontend, backend, and e2e app.
 3. **Capability toggles** — enable/disable cross-cutting features.
 4. **Options** — prune stale setup-managed artifacts, force overwrites, dry-run mode.
@@ -59,7 +59,7 @@ pnpm --filter @repo/tooling tooling setup \
 ### Dry run
 
 ```bash
-pnpm --filter @repo/tooling tooling setup --preset starter --dry-run
+pnpm --filter @repo/tooling tooling setup --preset fullstack --dry-run
 ```
 
 Shows the plan without modifying any files.
@@ -74,16 +74,16 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 
 ## Configuration schema
 
-| Field                    | Type       | Description                                                                |
-| ------------------------ | ---------- | -------------------------------------------------------------------------- |
-| `schemaVersion`          | `string`   | Must be `"1.0.0"`.                                                         |
-| `preset`                 | `string`   | Optional. One of: `minimal`, `starter`, `fullstack`, `enterprise`, `bots`. |
-| `apps`                   | `string[]` | List of app IDs to enable.                                                 |
-| `capabilities`           | `string[]` | List of capability IDs to enable.                                          |
-| `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).                   |
-| `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                      |
-| `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                          |
-| `options.nonInteractive` | `boolean`  | CI mode with defaults (default `false`).                                   |
+| Field                    | Type       | Description                                                            |
+| ------------------------ | ---------- | ---------------------------------------------------------------------- |
+| `schemaVersion`          | `string`   | Must be `"1.0.0"`.                                                     |
+| `preset`                 | `string`   | Optional. One of: `minimal`, `web`, `fullstack`, `enterprise`, `bots`. |
+| `apps`                   | `string[]` | List of app IDs to enable.                                             |
+| `capabilities`           | `string[]` | List of capability IDs to enable.                                      |
+| `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).               |
+| `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                  |
+| `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                      |
+| `options.nonInteractive` | `boolean`  | CI mode with defaults (default `false`).                               |
 
 Unknown top-level keys are rejected with a clear error. Every field is validated against an explicit enum.
 
@@ -150,7 +150,7 @@ On each run:
 
 This guarantees idempotency: running setup twice with the same config produces zero operations.
 
-The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts `user-app` with `user-app-api` and `auth-app-api`.
+The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts every core deployable from the `fullstack` profile.
 
 ## Recovery
 

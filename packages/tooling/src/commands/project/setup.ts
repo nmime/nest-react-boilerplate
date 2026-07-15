@@ -334,7 +334,7 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
   // For non-interactive path, return defaults
   return {
     schemaVersion: schemaVersion,
-    preset: "minimal",
+    preset: "fullstack",
     apps: [],
     capabilities: [],
     options: {
@@ -400,7 +400,7 @@ function printUsage(): void {
 Interactive and non-interactive boilerplate configuration.
 
 Options:
-  --preset <name>            Start from a preset (minimal, starter, fullstack, enterprise, bots)
+  --preset <name>            Select a profile (minimal, web, fullstack, enterprise, bots)
   --config <path>            Load configuration from a JSON file
   --app <id>                 Add an application (repeatable)
   --capability <id>          Add a capability (repeatable)
@@ -415,7 +415,7 @@ Examples:
   pnpm nrb setup                                  # interactive wizard
   pnpm nrb setup --preset fullstack --dry-run     # preview fullstack preset
   pnpm nrb setup --config nrb.config.json         # apply from config file
-  pnpm nrb setup --non-interactive --preset minimal  # CI mode\n`,
+  pnpm nrb setup --non-interactive --preset fullstack # complete core monorepo\n`,
   );
 }
 

@@ -5,12 +5,12 @@ unified `pnpm nrb init`, `pnpm nrb setup`, and `pnpm nrb add` workflow.
 
 ## What changed
 
-| Legacy command                 | Replacement                                             | Notes                                         |
-| ------------------------------ | ------------------------------------------------------- | --------------------------------------------- |
-| `pnpm init:project`            | `pnpm nrb init`                                         | Same initializer under the unified CLI.       |
-| `pnpm generate:feature <name>` | `pnpm nrb add feature <name>`                           | Same vertical-slice engine, unified CLI.      |
-| Manual `project.json` edits    | `pnpm nrb add app/lib <name>` with required typed flags | Repository generators for apps and libraries. |
-| Hand-authored config files     | `pnpm nrb setup --config nrb.config.json`               | Schema-validated, idempotent configuration.   |
+| Legacy command                 | Replacement                                                        | Notes                                         |
+| ------------------------------ | ------------------------------------------------------------------ | --------------------------------------------- |
+| `pnpm init:project`            | `pnpm nrb init`                                                    | Same initializer under the unified CLI.       |
+| `pnpm generate:feature <name>` | `pnpm nrb add feature <name> --api-app <api> --frontend-app <app>` | Same engine with explicit app ownership.      |
+| Manual `project.json` edits    | `pnpm nrb add app/lib <name>` with required typed flags            | Repository generators for apps and libraries. |
+| Hand-authored config files     | `pnpm nrb setup --config nrb.config.json`                          | Schema-validated, idempotent configuration.   |
 
 ## Compatibility guarantees
 
@@ -37,8 +37,8 @@ This replaced known boilerplate tokens in files and did not rewrite Git history.
 pnpm nrb init --name "Acme App" --domain acme.example --owner my-org --dry-run
 pnpm nrb init --name "Acme App" --domain acme.example --owner my-org
 
-pnpm nrb setup --preset starter --non-interactive --dry-run
-pnpm nrb setup --preset starter --non-interactive
+pnpm nrb setup --preset fullstack --non-interactive --dry-run
+pnpm nrb setup --preset fullstack --non-interactive
 ```
 
 The commands have separate ownership: `init` replaces product identity and all
@@ -62,15 +62,15 @@ Run `pnpm nrb init` first, then `pnpm nrb setup`.
 ### Before (legacy)
 
 ```bash
-pnpm generate:feature invoices -- --dry-run
-pnpm generate:feature invoices
+pnpm generate:feature invoices -- --api-app user-app-api --frontend-app user-app --dry-run
+pnpm generate:feature invoices -- --api-app user-app-api --frontend-app user-app
 ```
 
 ### After (unified CLI)
 
 ```bash
-pnpm nrb add feature invoices --dry-run
-pnpm nrb add feature invoices
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app
 ```
 
 The generated files are identical because both paths invoke `@repo/tooling:feature`.
@@ -81,12 +81,9 @@ The `pnpm nrb add feature` command supports `--force`, `--api-app`, and `--front
 
 ```bash
 # Force overwrite existing files:
-pnpm nrb add feature invoices --force
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --force
 
-# Target a different API app:
-pnpm nrb add feature invoices --api-app admin-app-api
-
-# Target the admin frontend page boundary as well:
+# Target both owning applications explicitly:
 pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ```
 
@@ -97,7 +94,7 @@ pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 - [ ] Run `pnpm nrb setup --dry-run` to see what the engine would do.
 - [ ] Run `pnpm nrb setup` (interactive) or with `--config` (non-interactive).
 - [ ] Verify with `pnpm nrb doctor --json` that `nrb-config` and `nrb-state` checks now pass.
-- [ ] Use `pnpm nrb add feature <name> --dry-run` for future feature scaffolding.
+- [ ] Use `pnpm nrb add feature <name> --api-app <api> --frontend-app <app> --dry-run` for future feature scaffolding.
 - [ ] Update CI/scripts that reference `pnpm init:project` or `pnpm generate:feature` to use the unified CLI.
 
 ## Rollback

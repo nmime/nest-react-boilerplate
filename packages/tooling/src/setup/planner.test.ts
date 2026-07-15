@@ -456,7 +456,7 @@ describe('planner — generateConfigFile', () => {
   });
 
   it('content is deterministic', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const c1 = generateConfigFile(config);
     const c2 = generateConfigFile(config);
     assert.equal(c1.content, c2.content);
@@ -472,13 +472,13 @@ describe('planner — generateSummaryMd', () => {
     const summary = {
       apps: ['admin-app'],
       capabilities: ['postgres'],
-      preset: 'starter',
+      preset: 'web',
       configHash: 'abc123',
     };
     const result = generateSummaryMd(summary);
     assert.equal(result.path, '.nrb/summary.md');
     assert.ok(result.content.includes('# Setup Plan Summary'));
-    assert.ok(result.content.includes('`starter`'));
+    assert.ok(result.content.includes('`web`'));
     assert.ok(result.content.includes('- admin-app'));
   });
 
@@ -523,7 +523,7 @@ describe('planner — runtime workspace manifest', () => {
     const result = generateWorkspaceManifest({
       apps: ['user-app', 'user-app-api', 'fullstack-e2e'],
       capabilities: ['postgres'],
-      preset: 'starter',
+      preset: 'web',
       configHash: 'abc',
     });
     const manifest = JSON.parse(result.content);
@@ -562,7 +562,7 @@ describe('planner — plan() basic', () => {
   });
 
   it('generated plan includes the runtime-consumed workspace manifest', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const result = plan(config, emptyState);
     assert.ok(result.operations.some((operation) => operation.path === '.nrb/workspace.json'));
   });
@@ -675,7 +675,7 @@ describe('planner — E2E full flow', () => {
   });
 
   it('snapshots contain no timestamps or machine paths', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const result = plan(config, emptyState);
     for (const op of result.operations) {
       assert.ok(!op.path.startsWith('/'), `Path should be relative: ${op.path}`);

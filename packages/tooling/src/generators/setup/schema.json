@@ -9,7 +9,7 @@
     "preset": {
       "type": "string",
       "description": "Preset configuration to apply",
-      "enum": ["minimal", "starter", "fullstack", "enterprise", "bots"],
+      "enum": ["minimal", "web", "fullstack", "enterprise", "bots"],
       "x-priority": "important"
     },
     "apps": {
@@ -27,7 +27,6 @@
           "auth-app-api",
           "discord-app-api",
           "telegram-bot-api",
-          "telegram-bot-worker",
           "fullstack-e2e"
         ]
       },

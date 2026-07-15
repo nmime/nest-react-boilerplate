@@ -24,13 +24,22 @@ describe("dev fullstack selection", () => {
     }
   });
 
-  it("preserves a useful default before setup", () => {
+  it("starts every core deployable before setup", () => {
     const root = mkdtempSync(join(tmpdir(), "nrb-fullstack-"));
     try {
       assert.deepEqual(resolveFullstackSelection(root), {
-        projects: ["user-app-api", "auth-app-api", "user-app"],
-        capabilities: ["postgres"],
-        source: "default",
+        projects: [
+          "admin-app",
+          "admin-app-api",
+          "auth-app-api",
+          "landing-app",
+          "mobile-app",
+          "site-app",
+          "user-app",
+          "user-app-api",
+        ],
+        capabilities: ["authz", "design-tokens", "i18n", "otel", "postgres", "redis", "swagger"],
+        source: "core",
       });
     } finally {
       rmSync(root, { recursive: true, force: true });

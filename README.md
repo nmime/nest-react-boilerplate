@@ -25,7 +25,6 @@ flowchart TB
     AuthApi["auth-app-api NestJS"]
     DiscordApi["discord-app-api NestJS"]
     TelegramApi["telegram-bot-api NestJS"]
-    TelegramWorker["telegram-bot-worker"]
   end
   subgraph Backend["libs/backend/**"]
     Bootstrap["bootstrap + health"]
@@ -53,7 +52,6 @@ flowchart TB
   AuthApi --> Bootstrap
   DiscordApi --> Bootstrap
   TelegramApi --> Bootstrap
-  TelegramWorker --> Bootstrap
   Bootstrap --> Exception
   Bootstrap --> Features
   Features --> Postgres
@@ -118,7 +116,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | Path                                          | Purpose                                                                     |
 | --------------------------------------------- | --------------------------------------------------------------------------- |
 | `apps/frontend/admin`                         | Admin React app shell.                                                      |
-| `apps/frontend/app`                           | Canonical user-facing React product app.                                    |
+| `apps/frontend/app`                           | Authenticated user React application.                                       |
 | `apps/frontend/landing`                       | Public Astro landing app with React islands.                                |
 | `apps/frontend/site`                          | Vike SSR product/user site.                                                 |
 | `apps/frontend/mobile`                        | Expo/React Native mobile app.                                               |
@@ -128,7 +126,6 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/backend/auth/auth-app-api`              | Auth NestJS API.                                                            |
 | `apps/backend/discord/discord-app-api`        | Discord interaction/OAuth integration API.                                  |
 | `apps/backend/telegram/telegram-bot-api`      | Telegram bot webhook/API surface.                                           |
-| `apps/backend/telegram/telegram-bot-worker`   | Telegram bot worker process.                                                |
 | `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                |
 | `libs/frontend/ui-web`                        | Shared React DOM UI primitives.                                             |
 | `libs/frontend/ui-native`                     | Shared Tamagui/native UI facade for Expo/React Native.                      |
@@ -163,10 +160,10 @@ pnpm run db:migrate
 pnpm run dev
 ```
 
-Default local services:
+Core local services:
 
-- Product start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts `user-app`, `user-app-api`, and `auth-app-api`. `user-app` uses Vite on port `4201`. Use `pnpm run dev:all` only when you intentionally need every serve target.
-- Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile. Select optional surfaces explicitly through setup.
+- Monorepo start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts every core deployable: `admin-app`, `user-app`, `landing-app`, `site-app`, `mobile-app`, and the admin/user/auth APIs. After setup it starts the applications recorded in `.nrb/workspace.json`. Use `pnpm run dev:all` when bot APIs and workers are also required.
+- Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 

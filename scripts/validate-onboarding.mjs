@@ -2,6 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const workspaceRoot = process.cwd();
@@ -40,8 +41,27 @@ for (const name of requiredDoctorChecks) {
 
 const presetExpectations = {
   minimal: ['auth-app-api', 'user-app-api'],
-  starter: ['auth-app-api', 'user-app', 'user-app-api'],
-  fullstack: ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
+  web: [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'fullstack-e2e',
+    'landing-app',
+    'site-app',
+    'user-app',
+    'user-app-api',
+  ],
+  fullstack: [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'fullstack-e2e',
+    'landing-app',
+    'mobile-app',
+    'site-app',
+    'user-app',
+    'user-app-api',
+  ],
   enterprise: [
     'admin-app',
     'admin-app-api',
@@ -52,12 +72,33 @@ const presetExpectations = {
     'mobile-app',
     'site-app',
     'telegram-bot-api',
-    'telegram-bot-worker',
     'user-app',
     'user-app-api',
   ],
-  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'user-app-api'],
+  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app-api'],
 };
+
+function findApplicationProjects(directory) {
+  const projects = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) {
+      projects.push(...findApplicationProjects(path));
+    } else if (entry.name === 'project.json') {
+      const project = JSON.parse(readFileSync(path, 'utf8'));
+      assert.equal(typeof project.name, 'string', `${path} must declare an Nx project name.`);
+      projects.push(project.name);
+    }
+  }
+  return projects;
+}
+
+const actualApplications = findApplicationProjects(resolve(workspaceRoot, 'apps')).sort();
+assert.deepEqual(
+  [...presetExpectations.enterprise].sort(),
+  actualApplications,
+  'The enterprise profile must contain every real Nx application and no phantom projects.',
+);
 
 const verifiedPresets = [];
 for (const [preset, expectedApps] of Object.entries(presetExpectations)) {

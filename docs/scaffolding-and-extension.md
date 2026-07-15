@@ -44,8 +44,8 @@ pnpm nrb init \
   --domain acme.example \
   --owner acme-org
 
-pnpm nrb setup --preset starter --non-interactive --dry-run
-pnpm nrb setup --preset starter --non-interactive
+pnpm nrb setup --preset fullstack --non-interactive --dry-run
+pnpm nrb setup --preset fullstack --non-interactive
 
 cp .env.example .env
 # Replace placeholder secrets in .env from the environment's secret manager.
@@ -67,23 +67,24 @@ and backend/frontend/common library runtime.
 
 ## Required baseline and optional surfaces
 
-The `starter` preset is the recommended product baseline:
+The `fullstack` profile is the complete core monorepo baseline. These apps are
+all required reference deployables; none is the repository default:
 
-| Classification | Application/capability                          | Why it is selected                            |
-| -------------- | ----------------------------------------------- | --------------------------------------------- |
-| Required       | `user-app`                                      | Canonical authenticated product frontend      |
-| Required       | `auth-app-api`                                  | Authentication/session boundary               |
-| Required       | `user-app-api`                                  | Product/user API boundary                     |
-| Required       | PostgreSQL                                      | Auth and product persistence                  |
-| Required       | design tokens and i18n                          | Shared visual/runtime baseline                |
-| Optional       | `admin-app` + `admin-app-api`                   | Admin flow and RBAC surface                   |
-| Optional       | `landing-app`                                   | Astro public marketing surface                |
-| Optional       | `site-app`                                      | Vike SSR surface                              |
-| Optional       | `mobile-app`                                    | Expo/React Native client                      |
-| Optional       | Discord/Telegram APIs and Telegram worker       | Bot and social integrations                   |
-| Optional       | Redis, NATS, S3, OTEL, analytics, notifications | Enable only for selected product capabilities |
+| Classification | Application/capability                                        | Why it is selected                                      |
+| -------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Required       | `admin-app` + `admin-app-api`                                 | Admin flow and RBAC boundary                            |
+| Required       | `user-app` + `user-app-api`                                   | Authenticated user flow and API boundary                |
+| Required       | `auth-app-api`                                                | Authentication/session boundary                         |
+| Required       | `landing-app`                                                 | Astro public landing surface                            |
+| Required       | `site-app`                                                    | Vike SSR site surface                                   |
+| Required       | `mobile-app`                                                  | Expo/React Native client                                |
+| Required       | `fullstack-e2e`                                               | Cross-application contract and browser proof            |
+| Required       | PostgreSQL, Redis, OTEL, Swagger                              | Core persistence, cache, observability, and API tooling |
+| Required       | design tokens, i18n, and authz                                | Shared UI, locale, and authorization baseline           |
+| Optional       | Discord and Telegram APIs                                     | Bot and social integrations                             |
+| Optional       | NATS, S3, analytics, notifications, feature flags, websockets | Capability-driven extensions                            |
 
-`minimal`, `fullstack`, `enterprise`, and `bots` are deliberate alternatives,
+`minimal`, `web`, `enterprise`, and `bots` are deliberate alternatives,
 documented in [Presets and Technologies](setup/presets-and-technologies.md).
 Unselected applications remain as buildable reference implementations unless a
 maintainer separately scopes their deletion.

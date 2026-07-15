@@ -65,7 +65,7 @@ The package exposes `nrb` and keeps `repo-tooling` as a backward-compatible alia
 - `nrb doctor [--json]`
 - `nrb add app <kind> <name>`
 - `nrb add lib <kind> <name>`
-- `nrb add feature <name>`
+- `nrb add feature <name> --api-app <api> --frontend-app <app>`
 
 Interactive mode uses `node:readline/promises`, so setup does not add a prompt framework dependency. Noninteractive mode requires complete validated input and produces machine-readable failures.
 

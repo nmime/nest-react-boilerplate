@@ -10,8 +10,27 @@ import { describe, it } from 'node:test';
 
 async function createTree() {
   const { createTreeWithEmptyWorkspace } = await import('nx/src/devkit-testing-exports');
-  return createTreeWithEmptyWorkspace();
+  const tree = createTreeWithEmptyWorkspace();
+  tree.write(
+    'apps/backend/user/user-app-api/project.json',
+    JSON.stringify({
+      name: 'user-app-api',
+      root: 'apps/backend/user/user-app-api',
+      tags: ['type:backend-app'],
+    }),
+  );
+  tree.write(
+    'apps/backend/user/user-app-api/src/user-app-api.module.ts',
+    'import { Module } from "@nestjs/common";\n\n@Module({ imports: [], controllers: [], providers: [] })\nexport class UserAppApiModule {}\n',
+  );
+  tree.write(
+    'apps/frontend/app/project.json',
+    JSON.stringify({ name: 'user-app', root: 'apps/frontend/app', tags: ['type:frontend-app'] }),
+  );
+  return tree;
 }
+
+const featureTargets = { apiApp: 'user-app-api', frontendApp: 'user-app' } as const;
 
 describe('feature generator', () => {
   // -----------------------------------------------------------------------
@@ -22,13 +41,13 @@ describe('feature generator', () => {
     it('rejects empty name', async () => {
       const tree = await createTree();
       const { featureGenerator } = await import('./generator.js');
-      await assert.rejects(() => featureGenerator(tree, { name: '' }), /Name must not be empty/);
+      await assert.rejects(() => featureGenerator(tree, { ...featureTargets, name: '' }), /Name must not be empty/);
     });
 
     it('rejects whitespace-only name', async () => {
       const tree = await createTree();
       const { featureGenerator } = await import('./generator.js');
-      await assert.rejects(() => featureGenerator(tree, { name: '   ' }), /Name must not be empty/);
+      await assert.rejects(() => featureGenerator(tree, { ...featureTargets, name: '   ' }), /Name must not be empty/);
     });
   });
 
@@ -48,18 +67,21 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await assert.rejects(() => featureGenerator(tree, { name: 'test', apiApp: 'invalid-api' }), /Invalid --api-app/);
+      await assert.rejects(
+        () => featureGenerator(tree, { ...featureTargets, name: 'test', apiApp: 'invalid-api' }),
+        /Invalid --api-app/,
+      );
     });
 
-    it('defaults to user-app-api when no api-app specified', async () => {
+    it('requires explicit API and frontend owners', async () => {
       const tree = await createTree();
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
-
-      // Should succeed and use user-app-api as default
-      assert.ok(tree.exists('libs/backend/feature/invoices/shared/lib/src/index.ts'));
+      await assert.rejects(
+        () => featureGenerator(tree, { name: 'invoices' } as never),
+        /requires explicit --api-app and --frontend-app owners/,
+      );
     });
   });
 
@@ -75,11 +97,11 @@ describe('feature generator', () => {
       const { featureGenerator } = await import('./generator.js');
 
       // First generation succeeds
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       // Second generation should fail
       await assert.rejects(
-        () => featureGenerator(tree, { name: 'invoices', skipFormat: true }),
+        () => featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true }),
         /Refusing to overwrite/,
       );
     });
@@ -91,10 +113,10 @@ describe('feature generator', () => {
       const { featureGenerator } = await import('./generator.js');
 
       // First generation
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       // Second generation with force succeeds
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true, force: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true, force: true });
     });
   });
 
@@ -109,6 +131,7 @@ describe('feature generator', () => {
 
       const { featureGenerator } = await import('./generator.js');
       await featureGenerator(tree, {
+        ...featureTargets,
         name: 'Support Cases',
         migrationTimestamp: '20260713000000',
         skipFormat: true,
@@ -159,7 +182,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       assert.equal(tree.exists('libs/frontend/api-client/lib/src/features/invoices.ts'), false);
       const pagePath = 'apps/frontend/app/src/pages/invoices/ui/InvoicesPage.tsx';
@@ -180,7 +203,7 @@ describe('feature generator', () => {
       );
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       const tsconfig = JSON.parse(tree.read('tsconfig.base.json', 'utf8')!);
       const paths = tsconfig.compilerOptions.paths;
@@ -198,7 +221,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'Billing Events', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'Billing Events', skipFormat: true });
 
       const shared = tree.read('libs/backend/feature/billing-events/shared/lib/src/index.ts', 'utf8')!;
       assert.ok(shared.includes('export interface BillingEventsDto'));
@@ -211,7 +234,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       const controller = tree.read('libs/backend/feature/invoices/main/lib/src/invoices.controller.ts', 'utf8')!;
       assert.ok(controller.includes('InvoicesController'));
@@ -228,7 +251,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       const service = tree.read('libs/backend/feature/invoices/main/lib/src/invoices.service.ts', 'utf8')!;
       assert.ok(service.includes('InvoicesService'));
@@ -241,7 +264,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'support-cases', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'support-cases', skipFormat: true });
 
       const entity = tree.read(
         'libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/entities/support-cases.entity.ts',
@@ -256,7 +279,7 @@ describe('feature generator', () => {
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
       const { featureGenerator } = await import('./generator.js');
-      await featureGenerator(tree, { name: 'invoices', skipFormat: true });
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
       const mainPj = JSON.parse(tree.read('libs/backend/feature/invoices/main/lib/project.json', 'utf8')!);
       assert.equal(mainPj.name, '@app/backend-feature-invoices-main');
@@ -316,7 +339,7 @@ describe('feature generator', () => {
 
       try {
         const { featureGenerator } = await import('./generator.js');
-        await featureGenerator(tree, { name: 'invoices', skipFormat: true, dryRun: true });
+        await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true, dryRun: true });
 
         // Files should NOT exist
         assert.ok(!tree.exists('libs/backend/feature/invoices/shared/lib/src/index.ts'));

@@ -41,7 +41,7 @@ describe("setup E2E — idempotency", () => {
       // Build config
       const config: NrbConfig = parseNrbConfig({
         schemaVersion: schemaVersion,
-        preset: "starter",
+        preset: "web",
         apps: [],
         capabilities: [],
         options: { prune: false, force: false, dryRun: false, nonInteractive: true },
@@ -304,7 +304,7 @@ describe("setup E2E — config file", () => {
     try {
       const config: NrbConfig = parseNrbConfig({
         schemaVersion: schemaVersion,
-        preset: "starter",
+        preset: "web",
         apps: [],
         capabilities: [],
       });
@@ -316,7 +316,7 @@ describe("setup E2E — config file", () => {
       const summary = await fs.read(".nrb/summary.md");
       assert.ok(summary !== null, "Summary should exist");
       assert.ok(summary.includes("Setup Plan Summary"), "Should have title");
-      assert.ok(summary.includes("starter"), "Should mention preset");
+      assert.ok(summary.includes("web"), "Should mention preset");
       assert.ok(summary.includes("Applications"), "Should have apps section");
       assert.ok(summary.includes("Capabilities"), "Should have capabilities section");
     } finally {

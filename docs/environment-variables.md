@@ -34,19 +34,18 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Service ports
 
-| Variable                   | Default | Description               |
-| -------------------------- | ------- | ------------------------- |
-| `ADMIN_APP_API_PORT`       | `3001`  | Admin API port            |
-| `ADMIN_APP_PORT`           | `4200`  | Admin frontend dev port   |
-| `USER_APP_API_PORT`        | `3002`  | User API port             |
-| `USER_APP_PORT`            | `4201`  | User frontend dev port    |
-| `AUTH_APP_API_PORT`        | `3003`  | Auth API port             |
-| `DISCORD_APP_API_PORT`     | `3007`  | Discord API port          |
-| `TELEGRAM_BOT_API_PORT`    | `3013`  | Telegram webhook API port |
-| `TELEGRAM_BOT_WORKER_PORT` | `3023`  | Telegram worker port      |
-| `LANDING_APP_PORT`         | `4202`  | Landing page dev port     |
-| `SITE_APP_PORT`            | `4203`  | Site (Vike SSR) dev port  |
-| `MOBILE_APP_PORT`          | `4300`  | Mobile (Expo) dev port    |
+| Variable                | Default | Description               |
+| ----------------------- | ------- | ------------------------- |
+| `ADMIN_APP_API_PORT`    | `3001`  | Admin API port            |
+| `ADMIN_APP_PORT`        | `4200`  | Admin frontend dev port   |
+| `USER_APP_API_PORT`     | `3002`  | User API port             |
+| `USER_APP_PORT`         | `4201`  | User frontend dev port    |
+| `AUTH_APP_API_PORT`     | `3003`  | Auth API port             |
+| `DISCORD_APP_API_PORT`  | `3007`  | Discord API port          |
+| `TELEGRAM_BOT_API_PORT` | `3013`  | Telegram webhook API port |
+| `LANDING_APP_PORT`      | `4202`  | Landing page dev port     |
+| `SITE_APP_PORT`         | `4203`  | Site (Vike SSR) dev port  |
+| `MOBILE_APP_PORT`       | `4300`  | Mobile (Expo) dev port    |
 
 ### CORS and origins
 

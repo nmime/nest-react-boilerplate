@@ -1,7 +1,6 @@
 # Frontend SSR framework strategy
 
-Status: accepted and amended to preserve `user-app` as the canonical product
-frontend.
+Status: accepted with separate ownership for every frontend runtime.
 
 Date: 2026-07-02.
 
@@ -12,15 +11,16 @@ Use two SSR-capable web app targets with different ownership boundaries:
 - `landing-app` at `apps/frontend/landing`: Astro with React islands.
 - `site-app` at `apps/frontend/site`: Vike with React SSR for a distinct
   product/site surface when SSR is required.
-- `user-app` at `apps/frontend/app`: Vite with React for the canonical
-  authenticated product application and the default setup selection.
+- `user-app` at `apps/frontend/app`: Vite with React for the authenticated
+  user application.
 - `admin-app` at `apps/frontend/admin`: keep the existing Vite React SPA unless
   admin SEO, first-load SSR, or server auth gates become product requirements.
 
 This resolves the framework choice as Astro for landing, Vike for a distinct
-SSR product/site surface, and Vite for the canonical authenticated product
-application. Do not introduce Next.js for these surfaces unless Vike fails a
-repo-local proof of authenticated SSR, route guards, and deployment.
+SSR product/site surface, and Vite for the authenticated user and admin
+applications. None of these is a repository default. Do not introduce Next.js
+for these surfaces unless Vike fails a repo-local proof of authenticated SSR,
+route guards, and deployment.
 
 The final shared UI Nx project names and canonical aliases are split by
 platform. These package-style flattened names are the source import aliases and
@@ -55,7 +55,7 @@ page a React application.
 
 Use the current package baseline:
 
-- `astro@7.0.6`
+- `astro@7.0.9`
 - `@astrojs/react@6.0.1`
 - `@astrojs/mdx@7.0.2` when docs, changelog pages, pricing copy, or long-form
   content become part of the landing surface.
@@ -72,7 +72,7 @@ or demos.
 
 ## Why Vike for site
 
-Vike is the better fit for the optional SSR product/site surface than Astro
+Vike is the better fit for the SSR product/site surface than Astro
 because it keeps the current Vite/React mental model while adding SSR, data
 loading, route configuration, and server integration.
 

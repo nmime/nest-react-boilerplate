@@ -112,15 +112,6 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresApps: [],
     conflictsWithCapabilities: [],
   },
-  'telegram-bot-worker': {
-    id: 'telegram-bot-worker',
-    label: 'Telegram Bot Worker',
-    platform: 'backend',
-    requiresCapabilities: ['telegram-bot', 'redis'],
-    requiresApps: ['telegram-bot-api'],
-    conflictsWithCapabilities: [],
-  },
-
   /* --- E2E --- */
   'fullstack-e2e': {
     id: 'fullstack-e2e',

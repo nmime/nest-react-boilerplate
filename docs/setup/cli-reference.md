@@ -76,18 +76,18 @@ pnpm nrb setup --json                         # output plan as JSON
 pnpm nrb setup --app user-app --capability i18n  # explicit apps/caps
 ```
 
-| Flag                | Type    | Description                                                         |
-| ------------------- | ------- | ------------------------------------------------------------------- |
-| `--preset <name>`   | string  | Preset ID: `minimal`, `starter`, `fullstack`, `enterprise`, `bots`. |
-| `--config <path>`   | string  | Path to JSON config file.                                           |
-| `--app <id>`        | string  | App ID to enable (repeatable).                                      |
-| `--capability <id>` | string  | Capability ID to enable (repeatable).                               |
-| `--dry-run`         | boolean | Show plan without modifying files.                                  |
-| `--prune`           | boolean | Remove stale files previously managed by setup.                     |
-| `--force`           | boolean | Overwrite existing files without refusing.                          |
-| `--non-interactive` | boolean | CI mode; skips prompts, uses defaults.                              |
-| `--json`            | boolean | Output plan as JSON.                                                |
-| `--help`, `-h`      | boolean | Show usage.                                                         |
+| Flag                | Type    | Description                                                      |
+| ------------------- | ------- | ---------------------------------------------------------------- |
+| `--preset <name>`   | string  | Profile ID: `minimal`, `web`, `fullstack`, `enterprise`, `bots`. |
+| `--config <path>`   | string  | Path to JSON config file.                                        |
+| `--app <id>`        | string  | App ID to enable (repeatable).                                   |
+| `--capability <id>` | string  | Capability ID to enable (repeatable).                            |
+| `--dry-run`         | boolean | Show plan without modifying files.                               |
+| `--prune`           | boolean | Remove stale files previously managed by setup.                  |
+| `--force`           | boolean | Overwrite existing files without refusing.                       |
+| `--non-interactive` | boolean | CI mode; skips prompts, uses defaults.                           |
+| `--json`            | boolean | Output plan as JSON.                                             |
+| `--help`, `-h`      | boolean | Show usage.                                                      |
 
 Exit codes: `0` success, `1` configuration or validation error.
 
@@ -109,7 +109,7 @@ Add an app, library, or feature to the workspace.
 ```bash
 pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--dry-run]
 pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> [--scope <scope>]
-pnpm nrb add feature <name> [--dry-run] [--force] [--api-app <api-name>] [--frontend-app <app-name>]
+pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run] [--force]
 ```
 
 | Flag                    | Type    | Description                                               |
@@ -120,8 +120,8 @@ pnpm nrb add feature <name> [--dry-run] [--force] [--api-app <api-name>] [--fron
 | `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, or `worker`. |
 | `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.  |
 | `--scope <scope>`       | string  | Owning domain scope for a library.                        |
-| `--api-app <name>`      | string  | Target API app for features (default: `user-app-api`).    |
-| `--frontend-app <name>` | string  | Target frontend app for features (default: `user-app`).   |
+| `--api-app <name>`      | string  | Required API application that owns a feature.             |
+| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.       |
 | `--help`, `-h`          | boolean | Show usage.                                               |
 | `--`                    |         | Pass remaining args to the underlying generator.          |
 
@@ -196,7 +196,7 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 ### `project:generate-vertical-slice`
 
 ```bash
-pnpm nrb project:generate-vertical-slice <name> [--dry-run] [--force] [--api-app <name>]
+pnpm nrb project:generate-vertical-slice <name> --api-app <api-name> --frontend-app <app-name> [--dry-run] [--force]
 ```
 
 Delegates to `add feature`; it does not maintain a second template engine.

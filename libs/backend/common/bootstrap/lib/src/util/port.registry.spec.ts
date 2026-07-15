@@ -14,7 +14,6 @@ const servicePorts: Record<string, number> = {
   'auth-app-api': 3003,
   'discord-app-api': 3007,
   'telegram-bot-api': 3013,
-  'telegram-bot-worker': 3023,
 
   /* Frontend apps */
   'admin-app': 4200,
@@ -66,7 +65,7 @@ describe('port registry — explicit, collision-free assignments', () => {
   });
 
   it('has expected minimum number of registered services', () => {
-    expect(Object.keys(servicePorts).length).toBeGreaterThanOrEqual(11);
+    expect(Object.keys(servicePorts).length).toBeGreaterThanOrEqual(10);
     expect(Object.keys(infrastructurePorts).length).toBeGreaterThanOrEqual(6);
   });
 });

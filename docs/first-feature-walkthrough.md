@@ -7,13 +7,19 @@ This walkthrough is the preferred path for shipping a small vertical slice witho
 ### Unified CLI (recommended)
 
 ```bash
-pnpm nrb add feature invoices --dry-run
+pnpm nrb add feature invoices \
+  --api-app user-app-api \
+  --frontend-app user-app \
+  --dry-run
 ```
 
 ### Legacy alias (equivalent)
 
 ```bash
-pnpm generate:feature invoices -- --dry-run
+pnpm generate:feature invoices -- \
+  --api-app user-app-api \
+  --frontend-app user-app \
+  --dry-run
 ```
 
 The scaffold lists the files it would create for:
@@ -30,10 +36,14 @@ Remove `--dry-run` when the file plan is correct:
 
 ```bash
 # Unified CLI:
-pnpm nrb add feature invoices
+pnpm nrb add feature invoices \
+  --api-app user-app-api \
+  --frontend-app user-app
 
 # Legacy alias:
-pnpm generate:feature invoices
+pnpm generate:feature invoices -- \
+  --api-app user-app-api \
+  --frontend-app user-app
 ```
 
 ### Target a different API app
@@ -45,7 +55,10 @@ pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ### Force overwrite existing files
 
 ```bash
-pnpm nrb add feature invoices --force
+pnpm nrb add feature invoices \
+  --api-app user-app-api \
+  --frontend-app user-app \
+  --force
 ```
 
 ## 2. Verify backend ownership

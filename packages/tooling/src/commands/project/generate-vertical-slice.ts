@@ -8,12 +8,12 @@ interface GenerateVerticalSliceOptions {
   runner?: NxGeneratorFn;
 }
 
-/** Compatibility entrypoint that delegates to the one canonical feature generator. */
+/** Compatibility entrypoint that delegates to the feature generator. */
 export async function runGenerateVerticalSlice(
   options: GenerateVerticalSliceOptions,
 ): Promise<number> {
   process.stderr.write(
-    "Deprecated: use `pnpm nrb add feature <name>`; delegating to the canonical Nx generator.\n",
+    "Deprecated: use `pnpm nrb add feature <name> --api-app <api> --frontend-app <app>`; delegating to the feature generator.\n",
   );
 
   const context: CommandContext = {

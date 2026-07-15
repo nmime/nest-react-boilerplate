@@ -882,7 +882,7 @@ function createAstroFrontendApp(
         },
         devDependencies: {
           '@astrojs/check': runtimePackage(tree, '@astrojs/check', '0.9.9'),
-          astro: runtimePackage(tree, 'astro', '7.0.8'),
+          astro: runtimePackage(tree, 'astro', '7.0.9'),
           '@astrojs/react': runtimePackage(tree, '@astrojs/react', '6.0.1'),
           '@astrojs/node': runtimePackage(tree, '@astrojs/node', '11.0.2'),
           typescript: runtimePackage(tree, 'typescript', '6.0.3'),

@@ -78,9 +78,10 @@ Skip this step only when evaluating the upstream template unchanged.
 
 ## 4. Select applications and capabilities
 
-The recommended `starter` preset selects the real `user-app` together with its
-`user-app-api` and `auth-app-api` boundaries. The preset name describes the
-setup size; it does not create an extra frontend application.
+The `fullstack` profile selects every core monorepo application: all five
+frontend runtimes, the admin/user/auth APIs, and fullstack E2E coverage. Use
+`web` only when the mobile runtime is intentionally out of scope; bot services
+remain explicit integrations. No application is treated as the default.
 
 ### Interactive setup (recommended)
 
@@ -93,8 +94,8 @@ You will be guided through preset selection, app toggles, and capability toggles
 ### Non-interactive setup (CI / scripted)
 
 ```bash
-# Product baseline:
-pnpm nrb setup --preset starter --non-interactive
+# Complete core monorepo:
+pnpm nrb setup --preset fullstack --non-interactive
 
 # Using a config file:
 cp nrb.config.example.json nrb.config.json
@@ -102,14 +103,14 @@ cp nrb.config.example.json nrb.config.json
 pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-pnpm nrb setup --preset starter --dry-run
+pnpm nrb setup --preset fullstack --dry-run
 ```
 
 ### Skip setup
 
-Before setup, `pnpm run dev` uses the product baseline: `user-app`,
-`user-app-api`, and `auth-app-api`. Run the `fullstack` or `enterprise` preset
-only when you intentionally want additional applications.
+Before setup, `pnpm run dev` uses the complete `fullstack` core selection. After
+setup it follows `.nrb/workspace.json`. No individual app receives implicit
+priority.
 
 ## 5. Environment variables
 
@@ -134,10 +135,10 @@ pnpm run db:migrate
 ## 7. Start development servers
 
 ```bash
-# User product app plus its APIs:
+# Every core monorepo deployable:
 pnpm run dev
 
-# Explicitly start every serve target, including reference apps:
+# Start every serve target, including bot integrations:
 pnpm run dev:all
 
 # Or start specific apps with Nx:
@@ -146,7 +147,7 @@ pnpm exec nx serve user-app
 pnpm exec nx serve admin-app-api
 ```
 
-### Default local ports
+### Local port contract
 
 | App         | Port | Framework         |
 | ----------- | ---- | ----------------- |

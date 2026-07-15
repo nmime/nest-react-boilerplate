@@ -4,7 +4,7 @@
  * Usage:
  *   pnpm nrb add app <name> --kind <kind> --renderer <renderer>
  *   pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope>
- *   pnpm nrb add feature <name>       # invoke Nx @repo/tooling:feature generator
+ *   pnpm nrb add feature <name> --api-app <name> --frontend-app <name>
  *
  * All branches call a mockable Nx generator runner (for testability).
  */
@@ -23,8 +23,8 @@ interface AddArgs {
   help: boolean;
   dryRun: boolean;
   force: boolean;
-  apiApp: string;
-  frontendApp: string;
+  apiApp?: string;
+  frontendApp?: string;
   entityKind?: "frontend" | "backend" | "common";
   renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "worker";
   libraryType?: string;
@@ -38,8 +38,6 @@ export function parseAddArgs(argv: string[]): AddArgs {
     help: false,
     dryRun: false,
     force: false,
-    apiApp: "user-app-api",
-    frontendApp: "user-app",
     extra: [],
   };
 
@@ -65,7 +63,7 @@ export function parseAddArgs(argv: string[]): AddArgs {
     }
 
     if (arg === "--api-app") {
-      result.apiApp = argv[++i] ?? result.apiApp;
+      result.apiApp = argv[++i];
       continue;
     }
     if (arg.startsWith("--api-app=")) {
@@ -73,7 +71,7 @@ export function parseAddArgs(argv: string[]): AddArgs {
       continue;
     }
     if (arg === "--frontend-app") {
-      result.frontendApp = argv[++i] ?? result.frontendApp;
+      result.frontendApp = argv[++i];
       continue;
     }
     if (arg.startsWith("--frontend-app=")) {
@@ -196,6 +194,13 @@ export async function runAddCommand(
     return 1;
   }
 
+  if (args.kind === "feature" && (!args.apiApp || !args.frontendApp)) {
+    process.stderr.write(
+      "Error: add feature requires explicit --api-app and --frontend-app owners; this monorepo has no default application.\n",
+    );
+    return 1;
+  }
+
   if (args.kind === "app" && !args.renderer) {
     process.stderr.write(
       `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : "nest-api | worker"})\n`,
@@ -231,8 +236,8 @@ function runAddWithNx(
 
   if (args.dryRun) genArgs.push("--dryRun=true");
   if (args.force) genArgs.push("--force=true");
-  if (args.apiApp !== "user-app-api") genArgs.push(`--apiApp=${args.apiApp}`);
-  if (args.frontendApp !== "user-app") genArgs.push(`--frontendApp=${args.frontendApp}`);
+  if (args.apiApp) genArgs.push(`--apiApp=${args.apiApp}`);
+  if (args.frontendApp) genArgs.push(`--frontendApp=${args.frontendApp}`);
   if (args.entityKind) genArgs.push(`--kind=${args.entityKind}`);
   if (args.renderer) genArgs.push(`--renderer=${args.renderer}`);
   if (args.libraryType) genArgs.push(`--type=${args.libraryType}`);
@@ -284,8 +289,8 @@ Kind:
 Options:
   --dry-run             Show what would be done without making changes.
   --force               Regenerate an existing feature; never overwrites app/lib roots.
-  --api-app <name>      Target API app (for feature; default: user-app-api).
-  --frontend-app <name> Target frontend app (for feature; default: user-app).
+  --api-app <name>      Required API application that owns a feature.
+  --frontend-app <name> Required frontend application that hosts a feature.
   --kind <kind>         App/lib platform: frontend, backend, or common.
   --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, or worker.
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
@@ -299,5 +304,5 @@ Examples:
   pnpm nrb add app portal --kind frontend --renderer vite
   pnpm nrb add lib currency --kind common --type util --scope shared
   pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app
-  pnpm nrb add feature billing --dry-run\n`);
+  pnpm nrb add feature billing --api-app admin-app-api --frontend-app admin-app --dry-run\n`);
 }

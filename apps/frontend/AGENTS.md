@@ -20,13 +20,13 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 
 ## App Notes
 
-- `user-app` is the canonical user-facing product frontend selected by the
-  `starter` preset and by `dev:fullstack` before setup.
+- No frontend is the repository default. Select the owning app explicitly for
+  features, routes, tests, domains, and deployment changes.
 - `admin-app` and `user-app` are Vite React SPAs.
 - `landing-app` is Astro with React islands.
 - `site-app` is Vike + React SSR.
 - `mobile-app` is Expo/React Native and should consume
   `@app/frontend-ui-native`, not web-only UI primitives.
 - Add a genuinely separate frontend only when it has distinct product or
-  runtime ownership. Use `pnpm nrb add app ...`; do not add a generic starter
-  shell beside the real applications.
+  runtime ownership. Use `pnpm nrb add app ...`; do not add a generic shell
+  beside the real applications.

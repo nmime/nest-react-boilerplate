@@ -1,16 +1,16 @@
 # Presets and Technologies
 
-This page documents the five canonical presets, all supported apps and capabilities, and their dependency rules.
+This page documents the five supported repository profiles, all applications and capabilities, and their dependency rules. Profiles select groups; they do not designate a default app.
 
 ## Presets
 
-| Preset       | Description                                      | Apps (before expansion)                                                                                  | Capabilities (before expansion)                                          |
-| ------------ | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `minimal`    | Single API with auth — minimal backend footprint | `auth-app-api`, `user-app-api`                                                                           | `postgres`                                                               |
-| `starter`    | User product app + backend + auth                | `user-app`, `user-app-api`, `auth-app-api`                                                               | `postgres`, `design-tokens`, `i18n`                                      |
-| `fullstack`  | All core apps with standard capabilities         | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `fullstack-e2e` | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
-| `enterprise` | Every supported app and capability               | All apps                                                                                                 | All capabilities                                                         |
-| `bots`       | Telegram + Discord bots with workers             | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `telegram-bot-worker`, `discord-app-api`             | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
+| Profile      | Description                                  | Apps (before expansion)                                                                                                            | Capabilities (before expansion)                                          |
+| ------------ | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `minimal`    | API-only integration profile                 | `auth-app-api`, `user-app-api`                                                                                                     | `postgres`                                                               |
+| `web`        | Every core browser app, API, and E2E project | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `site-app`, `fullstack-e2e`               | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
+| `fullstack`  | Complete core monorepo, including mobile     | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `site-app`, `mobile-app`, `fullstack-e2e` | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
+| `enterprise` | Every supported app and capability           | All apps                                                                                                                           | All capabilities                                                         |
+| `bots`       | Telegram + Discord bot APIs                  | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `discord-app-api`                                                              | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
 
 Presets act as starting points. Explicit `apps` and `capabilities` in the config override or extend the preset. Transitive dependencies are auto-expanded.
 
@@ -28,14 +28,13 @@ Presets act as starting points. Explicit `apps` and `capabilities` in the config
 
 ### Backend apps
 
-| ID                    | Label               | Platform | Requires capabilities      | Requires apps      |
-| --------------------- | ------------------- | -------- | -------------------------- | ------------------ |
-| `admin-app-api`       | Admin API           | backend  | `postgres`, `authz`        | _(none)_           |
-| `user-app-api`        | User API            | backend  | `postgres`                 | _(none)_           |
-| `auth-app-api`        | Auth API            | backend  | `postgres`                 | _(none)_           |
-| `discord-app-api`     | Discord Bot API     | backend  | `discord-bot`, `postgres`  | _(none)_           |
-| `telegram-bot-api`    | Telegram Bot API    | backend  | `telegram-bot`, `postgres` | _(none)_           |
-| `telegram-bot-worker` | Telegram Bot Worker | backend  | `telegram-bot`, `redis`    | `telegram-bot-api` |
+| ID                 | Label            | Platform | Requires capabilities      | Requires apps |
+| ------------------ | ---------------- | -------- | -------------------------- | ------------- |
+| `admin-app-api`    | Admin API        | backend  | `postgres`, `authz`        | _(none)_      |
+| `user-app-api`     | User API         | backend  | `postgres`                 | _(none)_      |
+| `auth-app-api`     | Auth API         | backend  | `postgres`                 | _(none)_      |
+| `discord-app-api`  | Discord Bot API  | backend  | `discord-bot`, `postgres`  | _(none)_      |
+| `telegram-bot-api` | Telegram Bot API | backend  | `telegram-bot`, `postgres` | _(none)_      |
 
 ### E2E apps
 
@@ -74,13 +73,8 @@ The catalog engine resolves transitive dependencies automatically:
 
 ### Example: dependency chain
 
-Selecting `telegram-bot-worker` triggers:
-
-1. Requires `telegram-bot-api` (app → app).
-2. Requires `telegram-bot` (capability).
-3. Requires `redis` (capability).
-
-The final resolved set includes all four.
+Selecting `admin-app` automatically includes `admin-app-api`, `authz`,
+`design-tokens`, and `postgres` through app and capability dependencies.
 
 ## Schema version
 

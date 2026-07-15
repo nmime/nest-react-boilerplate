@@ -294,9 +294,15 @@ async function chaosResilience() {
   }
   const target = urls[0];
   const before = await probeUrl(target, { allowNonServerError: true });
-  const defaultCommand = existsSync("docker/docker-compose.yml") ? `docker compose -f docker/docker-compose.yml restart ${process.env.QA_CHAOS_SERVICE ?? "user-app-api"}` : undefined;
-  const command = configuredCommand(["QA_CHAOS_COMMAND", "CHAOS_TEST_COMMAND"], defaultCommand);
-  assertGate(command, "Chaos gate requires QA_CHAOS_COMMAND or docker/docker-compose.yml local default", { env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"] });
+  const chaosService = process.env.QA_CHAOS_SERVICE;
+  const composeCommand =
+    existsSync("docker/docker-compose.yml") && chaosService
+      ? `docker compose -f docker/docker-compose.yml restart ${chaosService}`
+      : undefined;
+  const command = configuredCommand(["QA_CHAOS_COMMAND", "CHAOS_TEST_COMMAND"], composeCommand);
+  assertGate(command, "Chaos gate requires QA_CHAOS_COMMAND or an explicit QA_CHAOS_SERVICE", {
+    env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"],
+  });
   const commandEvidence = runShell("chaos injection", command.command);
   const after = await probeUrlWithRetry(
     target,

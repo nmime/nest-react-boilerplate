@@ -562,8 +562,8 @@ function wireApiModule(tree: Tree, apiApp: string, names: ReturnType<typeof gene
 
 export interface FeatureGeneratorOptions {
   name: string;
-  apiApp?: string;
-  frontendApp?: string;
+  apiApp: string;
+  frontendApp: string;
   migrationTimestamp?: string | number;
   force?: boolean;
   dryRun?: boolean;
@@ -575,10 +575,15 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   if (nameError) {
     throw new Error(nameError);
   }
+  if (!options.apiApp || !options.frontendApp) {
+    throw new Error(
+      'Feature generation requires explicit --api-app and --frontend-app owners; this monorepo has no default application.',
+    );
+  }
 
   const names = generateNames(options.name);
-  const apiApp = options.apiApp ?? 'user-app-api';
-  const frontendApp = options.frontendApp ?? 'user-app';
+  const apiApp = options.apiApp;
+  const frontendApp = options.frontendApp;
   const migrationTimestamp = String(options.migrationTimestamp ?? defaultMigrationTimestamp());
   if (!/^\d{14}$/.test(migrationTimestamp)) {
     throw new Error('--migration-timestamp must contain exactly 14 digits (YYYYMMDDHHmmss).');
@@ -595,7 +600,10 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   if (validFrontendApps.length > 0 && !validFrontendApps.includes(frontendApp)) {
     throw new Error(`Invalid --frontend-app "${frontendApp}". Expected one of: ${validFrontendApps.join(', ')}.`);
   }
-  const frontendRoot = projectRoot(tree, frontendApp) ?? 'apps/frontend/app';
+  const frontendRoot = projectRoot(tree, frontendApp);
+  if (!frontendRoot) {
+    throw new Error(`Cannot resolve --frontend-app "${frontendApp}" to an Nx project root.`);
+  }
 
   const files = createBackendTemplateFiles(names, frontendRoot, migrationTimestamp);
 

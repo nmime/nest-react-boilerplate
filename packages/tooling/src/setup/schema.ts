@@ -27,7 +27,6 @@ export const backendAppIds = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
-  'telegram-bot-worker',
 ] as const;
 export type BackendAppId = (typeof backendAppIds)[number];
 
@@ -56,7 +55,7 @@ export const capabilityIds = [
 export type CapabilityId = (typeof capabilityIds)[number];
 
 /** Supported preset names — deterministic, expandable to apps + capabilities. */
-export const presetIds = ['minimal', 'starter', 'fullstack', 'enterprise', 'bots'] as const;
+export const presetIds = ['minimal', 'web', 'fullstack', 'enterprise', 'bots'] as const;
 export type PresetId = (typeof presetIds)[number];
 
 // ---------------------------------------------------------------------------

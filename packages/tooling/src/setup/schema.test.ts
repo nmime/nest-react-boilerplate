@@ -172,8 +172,8 @@ describe('catalog — appCatalog', () => {
     }
   });
 
-  it('admin-app requires admin-app-api', () => {
-    assert.ok(appCatalog['admin-app'].requiresApps.includes('admin-app-api'));
+  it('admin-app requires both APIs used by its authenticated runtime', () => {
+    assert.deepEqual(appCatalog['admin-app'].requiresApps, ['admin-app-api', 'auth-app-api']);
   });
 
   it('user-app requires user-app-api', () => {
@@ -184,6 +184,41 @@ describe('catalog — appCatalog', () => {
     const e = appCatalog['telegram-bot-api'];
     assert.ok(e.requiresCapabilities.includes('telegram-bot'));
     assert.ok(e.requiresCapabilities.includes('postgres'));
+  });
+
+  it('classifies only Telegram and Discord as optional applications', () => {
+    const reference = Object.values(appCatalog)
+      .filter((entry) => entry.classification === 'reference')
+      .map((entry) => entry.id)
+      .sort();
+    const optional = Object.values(appCatalog)
+      .filter((entry) => entry.classification === 'optional')
+      .map((entry) => entry.id)
+      .sort();
+
+    assert.deepEqual(reference, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'mobile-app',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ]);
+    assert.deepEqual(optional, ['discord-app-api', 'telegram-bot-api']);
+  });
+
+  it('fullstack-e2e requires the complete stack it starts', () => {
+    assert.deepEqual(appCatalog['fullstack-e2e'].requiresApps, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'landing-app',
+      'user-app',
+      'user-app-api',
+    ]);
   });
 
   it('every app references valid capability IDs', () => {
@@ -258,7 +293,13 @@ describe('catalog — validateSelection', () => {
   });
 
   it('no issues when all deps satisfied', () => {
-    assert.deepEqual(validateSelection(['admin-app', 'admin-app-api'], ['authz', 'design-tokens', 'postgres']), []);
+    assert.deepEqual(
+      validateSelection(
+        ['admin-app', 'admin-app-api', 'auth-app-api'],
+        ['authz', 'design-tokens', 'postgres'],
+      ),
+      [],
+    );
   });
 
   it('no issues for telegram-bot-api with telegram-bot capability', () => {

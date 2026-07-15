@@ -173,6 +173,10 @@ Version bumps, changelog entries, and git tags are automated by semantic-release
 
 ## [Unreleased]
 
+### Added
+
+- Explicit, repeatable application selection with reference frontend/API/E2E surfaces, optional Telegram and Discord APIs, and dependency-safe reruns.
+
 ### Fixed
 
 - Docker Node.js version corrected (26 → 24.11.0)

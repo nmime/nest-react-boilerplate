@@ -382,10 +382,13 @@ pnpm exec nx run ${projectName}:serve
 
 ## Completion contract
 
-This source scaffold is not automatically added to setup presets, local Compose,
-Docker/Helm, ingress, DNS, TLS, or observability. Complete the applicable
+This source scaffold is not automatically added to the setup catalog or runtime.
+Register its stable ID, classification, dependencies, and enterprise-profile
+membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify\`
+fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
-before calling the service production-ready.
+for local Compose, Docker/Helm, ingress, DNS, TLS, and observability before
+calling the service production-ready.
 
 Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
 `,
@@ -782,10 +785,12 @@ pnpm run frontend:fsd:check
 
 ## Completion contract
 
-This source scaffold is not automatically added to setup presets, local Compose,
-Docker/Helm, ingress, DNS, TLS, API routing, or observability. Complete the
-applicable
+This source scaffold is not automatically added to the setup catalog or runtime.
+Register its stable ID, classification, dependencies, and enterprise-profile
+membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify\`
+fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
+for local Compose, Docker/Helm, ingress, DNS, TLS, API routing, and observability
 before calling the application production-ready.
 
 Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.

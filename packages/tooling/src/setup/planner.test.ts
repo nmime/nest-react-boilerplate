@@ -417,16 +417,22 @@ describe('planner — M1 validateSelection rejection', () => {
     // but doesn't add its required capabilities.
     // Actually expandDependencies WILL add required caps. So we need
     // a case where an app's requiresApps are missing.
-    // fullstack-e2e requires auth-app-api + user-app-api; if we only
-    // list fullstack-e2e, expandDependencies should add those.
-    // Let's test that validation PASSES for valid deps.
+    // fullstack-e2e declares the exact Docker/runtime stack it starts. If we
+    // list only the E2E project, dependency expansion must add that stack.
     const config = parseNrbConfig({
       schemaVersion,
       apps: ['fullstack-e2e'],
     });
     const resolved = resolveConfig(config);
-    assert.ok(resolved.apps.includes('auth-app-api'));
-    assert.ok(resolved.apps.includes('user-app-api'));
+    assert.deepEqual(resolved.apps, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'user-app',
+      'user-app-api',
+    ]);
   });
 
   it('rejects config where expanded deps still have issues', () => {

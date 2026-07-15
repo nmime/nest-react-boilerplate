@@ -137,13 +137,16 @@ async function interactiveFlow(existing: NrbConfig | null, io: PromptIo): Promis
   }
 
   const selectedApps = new Set<AppId>(initial.apps);
-  const frontendApps = Object.values(appCatalog).filter((app) => app.platform === 'frontend');
-  const backendApps = Object.values(appCatalog).filter((app) => app.platform === 'backend');
-  const e2eApps = Object.values(appCatalog).filter((app) => app.platform === 'e2e');
+  const referenceApps = Object.values(appCatalog).filter((app) => app.classification === 'reference');
+  const frontendApps = referenceApps.filter((app) => app.platform === 'frontend');
+  const backendApps = referenceApps.filter((app) => app.platform === 'backend');
+  const e2eApps = referenceApps.filter((app) => app.platform === 'e2e');
+  const optionalApps = Object.values(appCatalog).filter((app) => app.classification === 'optional');
 
   await promptAppGroup(io, 'Frontend applications', frontendApps, selectedApps);
-  await promptAppGroup(io, 'Backend applications', backendApps, selectedApps);
-  await promptAppGroup(io, 'E2E applications', e2eApps, selectedApps);
+  await promptAppGroup(io, 'Backend APIs', backendApps, selectedApps);
+  await promptAppGroup(io, 'Full-stack E2E applications', e2eApps, selectedApps);
+  await promptAppGroup(io, 'Optional integration APIs', optionalApps, selectedApps);
 
   const appClosed = expandDependencies([...selectedApps], initial.capabilities);
   const selectedCapabilities = new Set<CapabilityId>(appClosed.capabilities);

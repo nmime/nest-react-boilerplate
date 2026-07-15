@@ -88,7 +88,10 @@ describe('application generator', () => {
       assert.match(module, /BaseHealthController/);
       assert.ok(tree.exists('apps/backend/billing/billing-api/src/health.config.ts'));
       assert.match(tree.read('apps/backend/billing/billing-api/AGENTS.md', 'utf8')!, /libs\/backend/);
-      assert.match(tree.read('apps/backend/billing/billing-api/README.md', 'utf8')!, /billing-api:build/);
+      const readme = tree.read('apps/backend/billing/billing-api/README.md', 'utf8')!;
+      assert.match(readme, /billing-api:build/);
+      assert.match(readme, /setup catalog/);
+      assert.match(readme, /onboarding:verify/);
     });
 
     it('creates an application-context worker without HTTP bootstrap', async () => {

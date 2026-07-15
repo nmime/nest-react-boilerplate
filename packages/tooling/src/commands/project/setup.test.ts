@@ -516,18 +516,25 @@ describe("prompts — nonInteractive defaults", () => {
 describe("prompts — interactive selection", () => {
   it("starts custom and selects individual frontend applications", async () => {
     const { runPrompts } = await import("../../setup/prompts.js");
+    const writes: string[] = [];
     const io: PromptIo = {
       async ask(question, defaultAnswer) {
         if (question.includes("Select (1-")) return "1";
         if (question.includes("User Application (user-app)")) return "y";
         return defaultAnswer ?? "";
       },
-      write() {},
+      write(content) {
+        writes.push(content);
+      },
     };
     const result = await runPrompts(false, null, io);
     assert.deepEqual(result.apps, ["auth-app-api", "user-app", "user-app-api"]);
     assert.deepEqual(result.capabilities, ["design-tokens", "i18n", "postgres"]);
     assert.equal(result.preset, undefined);
+    assert.match(writes.join(""), /Frontend applications:/);
+    assert.match(writes.join(""), /Backend APIs:/);
+    assert.match(writes.join(""), /Full-stack E2E applications:/);
+    assert.match(writes.join(""), /Optional integration APIs:/);
   });
 
   it("loads the existing selection and preserves it while adding another app", async () => {

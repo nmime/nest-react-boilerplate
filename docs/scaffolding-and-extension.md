@@ -108,18 +108,21 @@ pnpm nrb setup
 The checked-in `example.com` values are replaceable environment placeholders,
 not live domains.
 
-| Deployable         | Template hostname          | Default state |
+No deployable is selected by default. These hostnames are the complete mapping
+that `pnpm nrb init` rewrites when preparing the template for a product.
+
+| Deployable         | Template hostname          | Catalog class |
 | ------------------ | -------------------------- | ------------- |
-| `landing-app`      | `example.com`              | enabled       |
-| `site-app`         | `site.example.com`         | enabled       |
-| `user-app`         | `app.example.com`          | enabled       |
-| `admin-app`        | `admin.example.com`        | enabled       |
-| `mobile-app`       | `mobile.example.com`       | enabled       |
-| `auth-app-api`     | `auth.example.com`         | enabled       |
-| `user-app-api`     | `api.example.com`          | enabled       |
-| `admin-app-api`    | `admin-api.example.com`    | enabled       |
-| `discord-app-api`  | `discord-api.example.com`  | opt-in        |
-| `telegram-bot-api` | `telegram-api.example.com` | opt-in        |
+| `landing-app`      | `example.com`              | reference     |
+| `site-app`         | `site.example.com`         | reference     |
+| `user-app`         | `app.example.com`          | reference     |
+| `admin-app`        | `admin.example.com`        | reference     |
+| `mobile-app`       | `mobile.example.com`       | reference     |
+| `auth-app-api`     | `auth.example.com`         | reference     |
+| `user-app-api`     | `api.example.com`          | reference     |
+| `admin-app-api`    | `admin-api.example.com`    | reference     |
+| `discord-app-api`  | `discord-api.example.com`  | optional      |
+| `telegram-bot-api` | `telegram-api.example.com` | optional      |
 
 ## Add an application
 
@@ -158,9 +161,12 @@ A generated app is complete only after the applicable items are explicit:
 
 - **Ownership:** product purpose, owning team, renderer, Nx tags, local port,
   and nearest `README.md`/`AGENTS.md` are correct.
-- **Selection:** if `pnpm nrb setup` should select the app, add its stable ID to
-  `packages/tooling/src/setup/schema.ts`, its dependencies to `catalog.ts`, and
-  the intended preset(s) to `presets.ts`; update schema/planner/preset tests.
+- **Selection:** every generated deployable must be registered with a stable ID
+  in `packages/tooling/src/setup/schema.ts`, classified with its dependencies in
+  `catalog.ts`, and added to the complete `enterprise` profile in `presets.ts`.
+  Add it to other intended profiles only when it belongs there, then update
+  schema/planner/preset tests. `pnpm run onboarding:verify` intentionally fails
+  while any real Nx application is absent from this catalog contract.
 - **Environment:** add only required example variables, validation, secret
   ownership, CORS origins, API base URLs, CSP connect sources, and local ports.
 - **Backend API:** keep standard `/health`, `/health/private`, `/live`, and

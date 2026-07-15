@@ -15,6 +15,8 @@ export interface AppEntry {
   label: string;
   /** Platform layer this app belongs to. */
   platform: 'frontend' | 'backend' | 'e2e';
+  /** Whether this is a reference product surface or an optional integration. */
+  classification: 'reference' | 'optional';
   /** Capabilities that this app REQUIRES when present. */
   requiresCapabilities: CapabilityId[];
   /** Other apps that must be present when this app is enabled. */
@@ -34,14 +36,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'admin-app',
     label: 'Admin Dashboard',
     platform: 'frontend',
+    classification: 'reference',
     requiresCapabilities: ['authz', 'design-tokens'],
-    requiresApps: ['admin-app-api'],
+    requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
   'user-app': {
     id: 'user-app',
     label: 'User Application',
     platform: 'frontend',
+    classification: 'reference',
     requiresCapabilities: ['design-tokens', 'i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
@@ -50,6 +54,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'landing-app',
     label: 'Landing Page',
     platform: 'frontend',
+    classification: 'reference',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -58,6 +63,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'site-app',
     label: 'Marketing Site',
     platform: 'frontend',
+    classification: 'reference',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -66,6 +72,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'mobile-app',
     label: 'Mobile App',
     platform: 'frontend',
+    classification: 'reference',
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['user-app-api'],
     conflictsWithCapabilities: [],
@@ -76,6 +83,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'admin-app-api',
     label: 'Admin API',
     platform: 'backend',
+    classification: 'reference',
     requiresCapabilities: ['postgres', 'authz'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -84,6 +92,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'user-app-api',
     label: 'User API',
     platform: 'backend',
+    classification: 'reference',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -92,6 +101,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'auth-app-api',
     label: 'Auth API',
     platform: 'backend',
+    classification: 'reference',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -100,6 +110,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'discord-app-api',
     label: 'Discord Bot API',
     platform: 'backend',
+    classification: 'optional',
     requiresCapabilities: ['discord-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -108,6 +119,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'telegram-bot-api',
     label: 'Telegram Bot API',
     platform: 'backend',
+    classification: 'optional',
     requiresCapabilities: ['telegram-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -117,8 +129,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'fullstack-e2e',
     label: 'Fullstack E2E Tests',
     platform: 'e2e',
+    classification: 'reference',
     requiresCapabilities: [],
-    requiresApps: ['auth-app-api', 'user-app-api'],
+    requiresApps: [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'landing-app',
+      'user-app',
+      'user-app-api',
+    ],
     conflictsWithCapabilities: [],
   },
 } as const;

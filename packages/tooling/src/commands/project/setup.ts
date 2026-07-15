@@ -469,6 +469,7 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     id: app.id,
     label: app.label,
     platform: app.platform,
+    classification: app.classification,
     selected: selectedApps.has(app.id),
   }));
   const capabilities = Object.values(capabilityCatalog).map((capability) => ({
@@ -483,9 +484,30 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
   }
 
   process.stdout.write(existing ? "Current workspace selection:\n" : "No workspace selection yet.\n");
-  for (const platform of ["frontend", "backend", "e2e"] as const) {
-    process.stdout.write(`\n${platform}:\n`);
-    for (const app of applications.filter((candidate) => candidate.platform === platform)) {
+  const groups = [
+    {
+      label: "frontend applications",
+      matches: (app: (typeof applications)[number]) =>
+        app.classification === "reference" && app.platform === "frontend",
+    },
+    {
+      label: "backend APIs",
+      matches: (app: (typeof applications)[number]) =>
+        app.classification === "reference" && app.platform === "backend",
+    },
+    {
+      label: "full-stack E2E",
+      matches: (app: (typeof applications)[number]) =>
+        app.classification === "reference" && app.platform === "e2e",
+    },
+    {
+      label: "optional integration APIs",
+      matches: (app: (typeof applications)[number]) => app.classification === "optional",
+    },
+  ];
+  for (const group of groups) {
+    process.stdout.write(`\n${group.label}:\n`);
+    for (const app of applications.filter(group.matches)) {
       process.stdout.write(`  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label}\n`);
     }
   }

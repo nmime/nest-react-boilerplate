@@ -101,7 +101,7 @@ pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 
 If the setup engine changes files you want to undo:
 
-1. **If `.nrb/state.json` exists**: re-run setup with the original config or an empty preset to reverse changes.
+1. **If `.nrb/state.json` exists**: re-run setup with the original config, or use `--replace` with the exact apps and capabilities you want to keep.
 2. **Git reset**: `git checkout -- .nrb/ nrb.config.json` to discard setup-generated files.
 3. **Delete state**: `rm -rf .nrb/ nrb.config.json` and start fresh.
 

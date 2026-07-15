@@ -44,6 +44,9 @@ Always-loaded policy for human and AI contributors to
 - Repository tooling lives under `packages/tooling/**`.
 - Public path aliases in `tsconfig.base.json` are stable API. Do not rename,
   remove, or repoint aliases unless the task explicitly includes migration work.
+- Application selection is explicit and repeatable: use `pnpm nrb setup` for
+  interactive choices or `pnpm nrb setup --app <id>` to add later. Never invent
+  a default app or bypass `.nrb/workspace.json` with an implicit all-app fallback.
 
 ## Runtime Stack
 

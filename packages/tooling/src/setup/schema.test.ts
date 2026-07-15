@@ -33,7 +33,7 @@ describe('schema — parseNrbConfig', () => {
     assert.deepEqual(c.options, { prune: false, force: false, dryRun: false, nonInteractive: false });
   });
 
-  it('accepts config with preset and explicit overrides', () => {
+  it('accepts config with a preset plus explicit extensions', () => {
     const c = parseNrbConfig({
       schemaVersion,
       preset: 'web',
@@ -518,32 +518,21 @@ describe('component — preset monotonicity', () => {
  * E2E: Full flow — parse example JSON → expand → validate
  * ================================================================== */
 describe('e2e — example config flow', () => {
-  it('parses nrb.config.example.json and validates full preset expansion', () => {
+  it('parses an explicit app selection and validates dependency expansion', () => {
     const raw = {
       schemaVersion: '1.0.0',
-      preset: 'fullstack',
-      apps: [],
-      capabilities: [],
+      apps: ['landing-app', 'user-app'],
+      capabilities: ['otel', 'swagger'],
       options: { prune: false, force: false, dryRun: false, nonInteractive: false },
     };
     const c = parseNrbConfig(raw);
     assert.equal(c.schemaVersion, schemaVersion);
-    assert.equal(c.preset, 'fullstack');
-    const e = expandPreset(c.preset);
+    assert.equal(c.preset, undefined);
+    const e = expandDependencies(c.apps, c.capabilities);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
-    const expectedApps = [
-      'admin-app',
-      'admin-app-api',
-      'auth-app-api',
-      'fullstack-e2e',
-      'landing-app',
-      'mobile-app',
-      'site-app',
-      'user-app',
-      'user-app-api',
-    ];
+    const expectedApps = ['auth-app-api', 'landing-app', 'user-app', 'user-app-api'];
     assert.deepEqual(e.apps.sort(), expectedApps.sort());
-    const expectedCaps = ['authz', 'design-tokens', 'i18n', 'otel', 'postgres', 'redis', 'swagger'];
+    const expectedCaps = ['design-tokens', 'i18n', 'otel', 'postgres', 'swagger'];
     assert.deepEqual(e.capabilities.sort(), expectedCaps.sort());
   });
 

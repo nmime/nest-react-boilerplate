@@ -68,8 +68,8 @@ export const schemaVersion = '1.0.0' as const;
  * The root configuration schema.
  *
  * - `schemaVersion` MUST equal the current major version string.
- * - `preset` is mutually exclusive with explicit `apps` / `capabilities`
- *   (the preset acts as a starting point; explicit lists override).
+ * - `preset` is an optional exact shortcut; the CLI materializes it into a
+ *   custom selection before additive/removal updates.
  * - `apps` is a flat string[] restricted to known IDs.
  * - `capabilities` is a flat string[] restricted to known IDs.
  * - `options` holds boolean toggles for generation behaviour.

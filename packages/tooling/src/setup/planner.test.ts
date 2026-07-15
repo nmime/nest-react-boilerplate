@@ -378,7 +378,7 @@ describe('planner — resolveConfig', () => {
     assert.ok(resolved.capabilities.includes('postgres'));
   });
 
-  it('explicit apps override but preserve preset deps', () => {
+  it('explicit apps extend a preset and preserve its dependencies', () => {
     const config = parseNrbConfig({
       schemaVersion,
       preset: 'minimal',

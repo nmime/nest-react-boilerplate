@@ -71,23 +71,34 @@ pnpm nrb setup --config nrb.config.json       # config file
 pnpm nrb setup --dry-run                      # show plan only
 pnpm nrb setup --prune                        # remove stale setup-managed files
 pnpm nrb setup --force                        # overwrite conflicts
-pnpm nrb setup --non-interactive              # CI mode with defaults
+pnpm nrb setup --list                         # list current/available choices
 pnpm nrb setup --json                         # output plan as JSON
-pnpm nrb setup --app user-app --capability i18n  # explicit apps/caps
+pnpm nrb setup --app user-app --capability i18n  # add apps/caps
+pnpm nrb setup --app mobile-app --non-interactive # add later, preserving current selection
+pnpm nrb setup --remove-app landing-app --non-interactive
+pnpm nrb setup --replace --app landing-app --non-interactive
 ```
 
-| Flag                | Type    | Description                                                      |
-| ------------------- | ------- | ---------------------------------------------------------------- |
-| `--preset <name>`   | string  | Profile ID: `minimal`, `web`, `fullstack`, `enterprise`, `bots`. |
-| `--config <path>`   | string  | Path to JSON config file.                                        |
-| `--app <id>`        | string  | App ID to enable (repeatable).                                   |
-| `--capability <id>` | string  | Capability ID to enable (repeatable).                            |
-| `--dry-run`         | boolean | Show plan without modifying files.                               |
-| `--prune`           | boolean | Remove stale files previously managed by setup.                  |
-| `--force`           | boolean | Overwrite existing files without refusing.                       |
-| `--non-interactive` | boolean | CI mode; skips prompts, uses defaults.                           |
-| `--json`            | boolean | Output plan as JSON.                                             |
-| `--help`, `-h`      | boolean | Show usage.                                                      |
+| Flag                       | Type    | Description                                                                     |
+| -------------------------- | ------- | ------------------------------------------------------------------------------- |
+| `--preset <name>`          | string  | Exact profile shortcut: `minimal`, `web`, `fullstack`, `enterprise`, or `bots`. |
+| `--config <path>`          | string  | Exact JSON configuration source; cannot be combined with selection flags.       |
+| `--app <id>`               | string  | Add an app to the current selection (repeatable).                               |
+| `--capability <id>`        | string  | Add a capability to the current selection (repeatable).                         |
+| `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                          |
+| `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                 |
+| `--replace`                | boolean | Start from an empty selection before applying explicit additions.               |
+| `--list`                   | boolean | Show all available entries with current selection markers.                      |
+| `--dry-run`                | boolean | Show plan without modifying files.                                              |
+| `--prune`                  | boolean | Remove stale files previously managed by setup.                                 |
+| `--force`                  | boolean | Overwrite existing setup-managed files without refusing.                        |
+| `--non-interactive`        | boolean | Skip prompts; first run still requires an explicit selection.                   |
+| `--json`                   | boolean | Output a plan or `--list` result as JSON.                                       |
+| `--help`, `-h`             | boolean | Show usage.                                                                     |
+
+With no selection flags, interactive setup starts from `custom` on first run
+and from the current selection on later runs. Scripted additions are additive;
+use `--replace` only when intentionally replacing the complete selection.
 
 Exit codes: `0` success, `1` configuration or validation error.
 

@@ -78,10 +78,9 @@ Skip this step only when evaluating the upstream template unchanged.
 
 ## 4. Select applications and capabilities
 
-The `fullstack` profile selects every core monorepo application: all five
-frontend runtimes, the admin/user/auth APIs, and fullstack E2E coverage. Use
-`web` only when the mobile runtime is intentionally out of scope; bot services
-remain explicit integrations. No application is treated as the default.
+No application is selected by default. Choose only the frontend and backend
+deployables this product needs. Profiles such as `web` and `fullstack` are
+optional shortcuts; every application remains individually selectable.
 
 ### Interactive setup (recommended)
 
@@ -89,13 +88,22 @@ remain explicit integrations. No application is treated as the default.
 pnpm nrb setup
 ```
 
-You will be guided through preset selection, app toggles, and capability toggles.
+On the first run, `custom` is the default starting point. Select frontend,
+backend, E2E, and capability entries individually. On later runs, the wizard
+loads the current selection; pressing Enter keeps existing choices while `y`
+adds another application.
 
 ### Non-interactive setup (CI / scripted)
 
 ```bash
-# Complete core monorepo:
+# Exact profile shortcut:
 pnpm nrb setup --preset fullstack --non-interactive
+
+# Add another frontend later without replacing current choices:
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Inspect available/current choices:
+pnpm nrb setup --list
 
 # Using a config file:
 cp nrb.config.example.json nrb.config.json
@@ -106,11 +114,9 @@ pnpm nrb setup --config nrb.config.json
 pnpm nrb setup --preset fullstack --dry-run
 ```
 
-### Skip setup
-
-Before setup, `pnpm run dev` uses the complete `fullstack` core selection. After
-setup it follows `.nrb/workspace.json`. No individual app receives implicit
-priority.
+`pnpm run dev` requires `.nrb/workspace.json` and starts only its selected
+deployables. This deliberate refusal before setup prevents a hidden default app
+or an accidental all-services development stack.
 
 ## 5. Environment variables
 
@@ -135,7 +141,7 @@ pnpm run db:migrate
 ## 7. Start development servers
 
 ```bash
-# Every core monorepo deployable:
+# Applications selected by setup:
 pnpm run dev
 
 # Start every serve target, including bot integrations:

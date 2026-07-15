@@ -2,8 +2,8 @@
  * Interactive readline prompts for the NRB setup CLI.
  *
  * Pure prompt logic — no filesystem writes.  Uses Node's `readline/promises`
- * for interactive input.  When `nonInteractive` is true, all questions are
- * answered with defaults and nothing is read from stdin.
+ * for interactive input. When `nonInteractive` is true, nothing is read from
+ * stdin and no application is selected implicitly.
  *
  * Dependency-aware: enables required capabilities automatically and warns
  * the user when selected apps bring transitive dependencies.
@@ -11,35 +11,41 @@
 import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
 import { schemaVersion } from './schema.js';
-import { presets, findPreset } from './presets.js';
-import { appCatalog, capabilityCatalog } from './catalog.js';
+import { presets, expandPreset } from './presets.js';
+import { appCatalog, capabilityCatalog, expandDependencies } from './catalog.js';
 import type { AppId, CapabilityId } from './schema.js';
+import { materializeSelection } from './selection.js';
 
 // ---------------------------------------------------------------------------
-// Process I/O handles — lazy to avoid keeping the event loop alive in tests
+// Prompt I/O — injectable so the complete interactive flow is testable.
 // ---------------------------------------------------------------------------
 
-let rl: readline.Interface | null = null;
-
-function getRl(): readline.Interface {
-  if (rl === null) {
-    rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-  }
-  return rl;
+export interface PromptIo {
+  ask(question: string, defaultAnswer?: string): Promise<string>;
+  write(content: string): void;
+  close?(): void;
 }
 
-/** Ask a single question.  Returns the raw answer string. */
-async function ask(question: string, defaultAnswer?: string): Promise<string> {
-  const suffix = defaultAnswer !== undefined ? ` [${defaultAnswer}]` : '';
-  const answer = await getRl().question(`${question}${suffix}: `);
-  return answer.trim() || (defaultAnswer ?? '');
+function createPromptIo(): PromptIo {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return {
+    async ask(question, defaultAnswer) {
+      const suffix = defaultAnswer !== undefined ? ` [${defaultAnswer}]` : '';
+      const answer = await rl.question(`${question}${suffix}: `);
+      return answer.trim() || (defaultAnswer ?? '');
+    },
+    write(content) {
+      process.stdout.write(content);
+    },
+    close() {
+      rl.close();
+    },
+  };
 }
 
 /** Present numbered choices, return the selected value. */
 async function askChoice(
+  io: PromptIo,
   question: string,
   choices: { label: string; value: string }[],
   defaultIndex = 0,
@@ -50,9 +56,9 @@ async function askChoice(
       continue;
     }
     const marker = i === defaultIndex ? ' (*)' : '';
-    process.stdout.write(`  ${i + 1}. ${choice.label}${marker}\n`);
+    io.write(`  ${i + 1}. ${choice.label}${marker}\n`);
   }
-  const answer = await ask(`${question}\n  Select (1-${choices.length})`, String(defaultIndex + 1));
+  const answer = await io.ask(`${question}\n  Select (1-${choices.length})`, String(defaultIndex + 1));
   const idx = parseInt(answer, 10) - 1;
   const selected = choices[idx] ?? choices[defaultIndex];
   if (selected === undefined) {
@@ -79,146 +85,96 @@ export interface PromptResult {
 // ---------------------------------------------------------------------------
 
 /**
- * Run the interactive prompt flow.  Collects preset selection, app/capability
- * toggles, and generation options.
- *
- * When `nonInteractive` is true, skips all readline calls and returns a
- * complete core monorepo configuration (fullstack preset).
+ * Run the selection flow. Existing choices are the defaults on rerun. A fresh
+ * non-interactive invocation remains empty: the CLI requires an explicit
+ * preset, app, or config instead of choosing a default application.
  */
-export async function runPrompts(nonInteractive: boolean = false): Promise<PromptResult> {
+export async function runPrompts(
+  nonInteractive: boolean = false,
+  existing: NrbConfig | null = null,
+  injectedIo?: PromptIo,
+): Promise<PromptResult> {
   if (nonInteractive) {
-    return getNonInteractiveDefaults();
+    const selected = existing ? materializeSelection(existing) : { apps: [], capabilities: [] };
+    return {
+      apps: selected.apps,
+      capabilities: selected.capabilities,
+      prune: false,
+      force: false,
+      dryRun: false,
+    };
   }
-  return interactiveFlow();
+
+  const io = injectedIo ?? createPromptIo();
+  try {
+    return await interactiveFlow(existing, io);
+  } finally {
+    io.close?.();
+  }
 }
 
-/**
- * Non-interactive baseline: fullstack preset, no extra apps/caps, dry-run off.
- */
-function getNonInteractiveDefaults(): PromptResult {
-  return {
-    preset: 'fullstack',
-    apps: [],
-    capabilities: [],
-    prune: false,
-    force: false,
-    dryRun: false,
-  };
-}
+async function interactiveFlow(existing: NrbConfig | null, io: PromptIo): Promise<PromptResult> {
+  io.write('\n=== NRB Application Selection ===\n\n');
 
-/**
- * Interactive flow: guides the user through preset selection, app and
- * capability toggles, and generation options.
- */
-async function interactiveFlow(): Promise<PromptResult> {
-  process.stdout.write('\n=== NRB Setup Wizard ===\n\n');
-
-  // 1. Preset selection
-  const presetChoices = presets.map((p) => ({
-    label: `${p.id} — ${p.description}`,
-    value: p.id,
-  }));
-  const selectedPreset = (await askChoice('Select a repository profile', presetChoices, 2)) as PresetId;
-  process.stdout.write('\n');
-
-  // Show what the preset includes
-  const presetDef = findPreset(selectedPreset);
-  if (presetDef) {
-    process.stdout.write(`Preset "${selectedPreset}" includes:\n`);
-    process.stdout.write(`  Apps: ${presetDef.apps.join(', ')}\n`);
-    process.stdout.write(`  Capabilities: ${presetDef.capabilities.join(', ')}\n`);
-    process.stdout.write('\n');
+  let initial: { apps: AppId[]; capabilities: CapabilityId[] };
+  if (existing) {
+    initial = materializeSelection(existing);
+    io.write('Current selection loaded. Press Enter to keep an item, or answer y/n to change it.\n\n');
+  } else {
+    const startingPoints = [
+      { label: 'custom — select only the applications this product needs', value: 'custom' },
+      ...presets.map((preset) => ({
+        label: `${preset.id} — ${preset.description}`,
+        value: preset.id,
+      })),
+    ];
+    const selectedStartingPoint = await askChoice(io, 'Choose a starting point', startingPoints, 0);
+    initial =
+      selectedStartingPoint === 'custom'
+        ? { apps: [], capabilities: [] }
+        : expandPreset(selectedStartingPoint as PresetId);
+    io.write('\nEvery item remains individually selectable; profiles are shortcuts, not permanent defaults.\n');
   }
 
-  // 2. App toggles
-  const selectedApps = new Set<AppId>();
-  if (presetDef) {
-    for (const a of presetDef.apps) {
-      selectedApps.add(a);
-    }
+  const selectedApps = new Set<AppId>(initial.apps);
+  const frontendApps = Object.values(appCatalog).filter((app) => app.platform === 'frontend');
+  const backendApps = Object.values(appCatalog).filter((app) => app.platform === 'backend');
+  const e2eApps = Object.values(appCatalog).filter((app) => app.platform === 'e2e');
+
+  await promptAppGroup(io, 'Frontend applications', frontendApps, selectedApps);
+  await promptAppGroup(io, 'Backend applications', backendApps, selectedApps);
+  await promptAppGroup(io, 'E2E applications', e2eApps, selectedApps);
+
+  const appClosed = expandDependencies([...selectedApps], initial.capabilities);
+  const selectedCapabilities = new Set<CapabilityId>(appClosed.capabilities);
+  await promptCapabilityGroup(io, selectedCapabilities);
+
+  const resolved = expandDependencies([...selectedApps], [...selectedCapabilities]);
+  const autoAddedApps = resolved.apps.filter((app) => !selectedApps.has(app));
+  const autoAddedCapabilities = resolved.capabilities.filter((capability) => !selectedCapabilities.has(capability));
+  if (autoAddedApps.length > 0) {
+    io.write(`\nRequired applications added automatically: ${autoAddedApps.join(', ')}\n`);
+  }
+  if (autoAddedCapabilities.length > 0) {
+    io.write(`Required capabilities added automatically: ${autoAddedCapabilities.join(', ')}\n`);
   }
 
-  const frontendApps = Object.values(appCatalog).filter((a) => a.platform === 'frontend');
-  const backendApps = Object.values(appCatalog).filter((a) => a.platform === 'backend');
-  const e2eApps = Object.values(appCatalog).filter((a) => a.platform === 'e2e');
-
-  await promptAppGroup('Frontend Apps', frontendApps, selectedApps);
-  await promptAppGroup('Backend Apps', backendApps, selectedApps);
-  await promptAppGroup('E2E Apps', e2eApps, selectedApps);
-
-  // Auto-add required app dependencies
-  const autoAddedApps = new Set<AppId>();
-  for (const appId of [...selectedApps]) {
-    const entry = appCatalog[appId];
-    if (entry) {
-      for (const req of entry.requiresApps) {
-        if (!selectedApps.has(req)) {
-          selectedApps.add(req);
-          autoAddedApps.add(req);
-        }
-      }
-    }
-  }
-  if (autoAddedApps.size > 0) {
-    process.stdout.write(`\nAuto-enabled apps (required dependencies): ${[...autoAddedApps].join(', ')}\n\n`);
-  }
-
-  // 3. Capability toggles
-  const selectedCaps = new Set<CapabilityId>();
-  if (presetDef) {
-    for (const c of presetDef.capabilities) {
-      selectedCaps.add(c);
-    }
-  }
-
-  // Auto-add capabilities required by selected apps
-  for (const appId of [...selectedApps]) {
-    const entry = appCatalog[appId];
-    if (entry) {
-      for (const req of entry.requiresCapabilities) {
-        selectedCaps.add(req);
-      }
-    }
-  }
-
-  await promptCapabilityGroup(selectedCaps);
-
-  // Auto-add capability transitive deps
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const capId of [...selectedCaps]) {
-      const entry = capabilityCatalog[capId];
-      if (entry) {
-        for (const req of entry.requiresCapabilities) {
-          if (!selectedCaps.has(req)) {
-            selectedCaps.add(req);
-            changed = true;
-          }
-        }
-      }
-    }
-  }
-
-  // 4. Options
-  const prune = (await ask('Prune unused files on change', 'no')) !== 'no';
-  const force = (await ask('Force overwrite on conflicts', 'no')) !== 'no';
-  const dryRun = (await ask('Dry run (show plan only)', 'no')) !== 'no';
-
-  process.stdout.write('\n');
+  const prune = isYes(await io.ask('Prune stale setup-managed files', 'no'));
+  const force = isYes(await io.ask('Force overwrite setup-managed conflicts', 'no'));
+  const dryRun = isYes(await io.ask('Dry run (show plan only)', 'no'));
+  io.write('\n');
 
   return {
-    preset: selectedPreset,
-    apps: [...selectedApps].sort(),
-    capabilities: [...selectedCaps].sort(),
+    apps: resolved.apps,
+    capabilities: resolved.capabilities,
     prune,
     force,
     dryRun,
   };
 }
 
-/** Prompt the user to toggle a group of apps. */
 async function promptAppGroup(
+  io: PromptIo,
   groupLabel: string,
   apps: Array<{ id: AppId; label: string }>,
   selected: Set<AppId>,
@@ -227,11 +183,11 @@ async function promptAppGroup(
     return;
   }
 
-  process.stdout.write(`\n${groupLabel}:\n`);
+  io.write(`\n${groupLabel}:\n`);
   for (const app of apps) {
     const checked = selected.has(app.id) ? '[x]' : '[ ]';
-    const answer = await ask(`  ${checked} ${app.label} (${app.id}) [keep]`, selected.has(app.id) ? 'y' : 'n');
-    if (answer === 'y' || answer === 'yes' || answer === '') {
+    const answer = await io.ask(`  ${checked} ${app.label} (${app.id})`, selected.has(app.id) ? 'y' : 'n');
+    if (isYes(answer)) {
       selected.add(app.id);
     } else {
       selected.delete(app.id);
@@ -239,21 +195,23 @@ async function promptAppGroup(
   }
 }
 
-/** Prompt the user to toggle capabilities. */
-async function promptCapabilityGroup(selected: Set<CapabilityId>): Promise<void> {
-  process.stdout.write('\nCapabilities:\n');
-  for (const [capId, entry] of Object.entries(capabilityCatalog)) {
-    const checked = selected.has(capId as CapabilityId) ? '[x]' : '[ ]';
-    const answer = await ask(
-      `  ${checked} ${entry.label} (${capId}) [keep]`,
-      selected.has(capId as CapabilityId) ? 'y' : 'n',
-    );
-    if (answer === 'y' || answer === 'yes' || answer === '') {
-      selected.add(capId as CapabilityId);
+async function promptCapabilityGroup(io: PromptIo, selected: Set<CapabilityId>): Promise<void> {
+  io.write('\nCapabilities:\n');
+  for (const [capabilityId, entry] of Object.entries(capabilityCatalog)) {
+    const id = capabilityId as CapabilityId;
+    const checked = selected.has(id) ? '[x]' : '[ ]';
+    const answer = await io.ask(`  ${checked} ${entry.label} (${id})`, selected.has(id) ? 'y' : 'n');
+    if (isYes(answer)) {
+      selected.add(id);
     } else {
-      selected.delete(capId as CapabilityId);
+      selected.delete(id);
     }
   }
+}
+
+function isYes(answer: string): boolean {
+  const normalized = answer.toLowerCase();
+  return normalized === 'y' || normalized === 'yes';
 }
 
 // ---------------------------------------------------------------------------

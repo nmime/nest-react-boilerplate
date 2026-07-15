@@ -51,9 +51,11 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 
 ## Current deployables
 
-The core `fullstack` profile includes every product frontend, the admin/user/auth
-APIs, and the fullstack E2E project. Bot APIs are explicit integration
-profiles. No deployable is a repository default.
+Every deployable below is independently selectable. The `fullstack` profile is
+an explicit shortcut for all core product frontends, the admin/user/auth APIs,
+and fullstack E2E; bot APIs remain explicit integrations. No deployable is a
+repository default, and setup may be rerun to add another app without replacing
+the current selection.
 See the [Scaffolding and Extension Contract](../scaffolding-and-extension.md)
 before adding or registering a deployable.
 

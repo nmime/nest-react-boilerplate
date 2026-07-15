@@ -8,9 +8,9 @@
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles } from '@nx/devkit';
 import { plan, resolveConfig } from '../../setup/planner.js';
-import { NrbConfigSchema } from '../../setup/schema.js';
-import { createNxTreeAdapter } from '../../setup/adapters/nx-tree.js';
-import { schemaVersion } from '../../setup/schema.js';
+import { parseNrbConfig, type NrbConfig } from '../../setup/schema.js';
+import { createNxTreeAdapter, readJsonFile } from '../../setup/adapters/nx-tree.js';
+import { updateSelection } from '../../setup/selection.js';
 
 // ---------------------------------------------------------------------------
 
@@ -18,6 +18,9 @@ export interface SetupGeneratorOptions {
   preset?: string;
   apps?: string[];
   capabilities?: string[];
+  removeApps?: string[];
+  removeCapabilities?: string[];
+  replace?: boolean;
   prune?: boolean;
   force?: boolean;
   dryRun?: boolean;
@@ -26,19 +29,46 @@ export interface SetupGeneratorOptions {
 // ---------------------------------------------------------------------------
 
 export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions): Promise<void> {
-  // Build the NrbConfig from generator options
-  const config = NrbConfigSchema.parse({
-    schemaVersion,
-    preset: options.preset,
-    apps: options.apps ?? [],
-    capabilities: options.capabilities ?? [],
-    options: {
-      prune: options.prune ?? false,
-      force: options.force ?? false,
-      dryRun: options.dryRun ?? false,
-      nonInteractive: true,
-    },
-  });
+  const rawExisting = readJsonFile(tree, 'nrb.config.json');
+  const existing: NrbConfig | null = rawExisting ? parseNrbConfig(rawExisting) : null;
+  const hasSelection =
+    options.preset !== undefined ||
+    (options.apps?.length ?? 0) > 0 ||
+    (options.capabilities?.length ?? 0) > 0 ||
+    (options.removeApps?.length ?? 0) > 0 ||
+    (options.removeCapabilities?.length ?? 0) > 0 ||
+    options.replace === true;
+  if (!existing && !hasSelection) {
+    throw new Error('Setup requires an explicit preset or application selection on first run.');
+  }
+  if (!existing && ((options.removeApps?.length ?? 0) > 0 || (options.removeCapabilities?.length ?? 0) > 0)) {
+    throw new Error('Cannot remove selections before setup has created nrb.config.json.');
+  }
+
+  const config = hasSelection
+    ? updateSelection(existing, {
+        preset: options.preset,
+        addApps: options.apps,
+        addCapabilities: options.capabilities,
+        removeApps: options.removeApps,
+        removeCapabilities: options.removeCapabilities,
+        replace: options.replace,
+        options: {
+          prune: options.prune ?? false,
+          force: options.force ?? false,
+          dryRun: options.dryRun ?? false,
+          nonInteractive: true,
+        },
+      })
+    : parseNrbConfig({
+        ...existing,
+        options: {
+          prune: options.prune ?? false,
+          force: options.force ?? false,
+          dryRun: options.dryRun ?? false,
+          nonInteractive: true,
+        },
+      });
 
   // Validate and resolve the config (preset expansion, dependency resolution)
   const { apps, capabilities } = resolveConfig(config);

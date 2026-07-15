@@ -24,23 +24,10 @@ describe("dev fullstack selection", () => {
     }
   });
 
-  it("starts every core deployable before setup", () => {
+  it("requires an explicit setup selection", () => {
     const root = mkdtempSync(join(tmpdir(), "nrb-fullstack-"));
     try {
-      assert.deepEqual(resolveFullstackSelection(root), {
-        projects: [
-          "admin-app",
-          "admin-app-api",
-          "auth-app-api",
-          "landing-app",
-          "mobile-app",
-          "site-app",
-          "user-app",
-          "user-app-api",
-        ],
-        capabilities: ["authz", "design-tokens", "i18n", "otel", "postgres", "redis", "swagger"],
-        source: "core",
-      });
+      assert.throws(() => resolveFullstackSelection(root), /No application selection found/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

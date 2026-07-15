@@ -162,5 +162,28 @@ describe('setup generator', () => {
       assert.ok(config.apps.includes('user-app-api'));
       assert.ok(config.capabilities.includes('postgres'));
     });
+
+    it('adds to an existing selection when rerun', async () => {
+      const tree = await createTree();
+      const { setupGenerator } = await import('./generator.js');
+
+      await setupGenerator(tree, { apps: ['landing-app'] });
+      await setupGenerator(tree, { apps: ['user-app'] });
+
+      const config = JSON.parse(tree.read('nrb.config.json', 'utf8')!);
+      assert.deepEqual(config.apps, ['auth-app-api', 'landing-app', 'user-app', 'user-app-api']);
+    });
+
+    it('requires an explicit first selection', async () => {
+      const tree = await createTree();
+      const { setupGenerator } = await import('./generator.js');
+      await assert.rejects(() => setupGenerator(tree, {}), /explicit preset or application selection/);
+    });
+
+    it('refuses a removal before the first selection exists', async () => {
+      const tree = await createTree();
+      const { setupGenerator } = await import('./generator.js');
+      await assert.rejects(() => setupGenerator(tree, { removeApps: ['landing-app'] }), /Cannot remove selections/);
+    });
   });
 });

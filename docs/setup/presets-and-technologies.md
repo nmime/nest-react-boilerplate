@@ -12,7 +12,11 @@ This page documents the five supported repository profiles, all applications and
 | `enterprise` | Every supported app and capability           | All apps                                                                                                                           | All capabilities                                                         |
 | `bots`       | Telegram + Discord bot APIs                  | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `discord-app-api`                                                              | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
 
-Presets act as starting points. Explicit `apps` and `capabilities` in the config override or extend the preset. Transitive dependencies are auto-expanded.
+Profiles are exact CLI shortcuts for a known group of applications and
+capabilities. In the interactive wizard, a profile can be used as a starting
+point and the resulting custom selection is saved explicitly. On later CLI
+runs, `--app` and `--capability` add to the saved selection; use `--replace` for
+an exact custom replacement. Transitive dependencies are auto-expanded.
 
 ## Supported applications
 

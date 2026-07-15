@@ -154,6 +154,7 @@ nvm use
 corepack enable
 corepack prepare pnpm@11.11.0 --activate
 pnpm install --frozen-lockfile
+pnpm nrb setup
 cp .env.example .env
 pnpm run dev:db
 pnpm run db:migrate
@@ -162,7 +163,7 @@ pnpm run dev
 
 Core local services:
 
-- Monorepo start: before setup, `pnpm run dev` (or `pnpm run dev:fullstack`) starts every core deployable: `admin-app`, `user-app`, `landing-app`, `site-app`, `mobile-app`, and the admin/user/auth APIs. After setup it starts the applications recorded in `.nrb/workspace.json`. Use `pnpm run dev:all` when bot APIs and workers are also required.
+- Monorepo start: `pnpm nrb setup` selects the frontend/backend applications this product needs. `pnpm run dev` (or `pnpm run dev:fullstack`) then starts only the applications recorded in `.nrb/workspace.json`; it refuses to invent a pre-setup default. Rerun setup or use `pnpm nrb setup --app <id>` to add another application later. Use `pnpm run dev:all` only when intentionally running every serve target.
 - Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.

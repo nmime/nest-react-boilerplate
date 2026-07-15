@@ -8,7 +8,7 @@
  *   pnpm nrb setup --dry-run              # show plan only
  *   pnpm nrb setup --prune                # remove orphaned files
  *   pnpm nrb setup --force                # overwrite conflicts
- *   pnpm nrb setup --non-interactive      # CI mode with defaults
+ *   pnpm nrb setup --non-interactive      # CI mode; first run needs a selection
  *   pnpm nrb setup --json                 # output plan as JSON
  *
  * Routes through the shared setup engine (schema → planner → apply).
@@ -18,19 +18,19 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CommandContext } from "../../cli.js";
 import { parseNrbConfig, schemaVersion, type NrbConfig, type PresetId } from "../../setup/schema.js";
-import { plan, type PlanResult } from "../../setup/planner.js";
+import { plan } from "../../setup/planner.js";
 import { apply, type ApplyOptions } from "../../setup/apply.js";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
-import { emptyState, migrateState, hashString, type SetupState, buildState } from "../../setup/state.js";
+import { emptyState, migrateState, type SetupState } from "../../setup/state.js";
 import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from "../../setup/prompts.js";
-import { expandPreset } from "../../setup/presets.js";
-import { expandDependencies } from "../../setup/catalog.js";
+import { appCatalog, capabilityCatalog } from "../../setup/catalog.js";
+import { materializeSelection, updateSelection } from "../../setup/selection.js";
 
 // ---------------------------------------------------------------------------
 // Argument parser
 // ---------------------------------------------------------------------------
 
-interface SetupArgs {
+export interface SetupArgs {
   preset?: PresetId;
   config?: string;
   dryRun: boolean;
@@ -39,8 +39,12 @@ interface SetupArgs {
   nonInteractive: boolean;
   json: boolean;
   help: boolean;
-  apps?: string[];
-  capabilities?: string[];
+  list: boolean;
+  replace: boolean;
+  apps: string[];
+  capabilities: string[];
+  removeApps: string[];
+  removeCapabilities: string[];
 }
 
 export function parseArgs(argv: string[]): SetupArgs {
@@ -51,54 +55,104 @@ export function parseArgs(argv: string[]): SetupArgs {
     nonInteractive: false,
     json: false,
     help: false,
+    list: false,
+    replace: false,
     apps: [],
     capabilities: [],
+    removeApps: [],
+    removeCapabilities: [],
   };
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
 
-    if (arg === "--" ) { break; }
-    if (arg === "--help" || arg === "-h") { result.help = true; continue; }
-    if (arg === "--dry-run") { result.dryRun = true; continue; }
-    if (arg === "--prune") { result.prune = true; continue; }
-    if (arg === "--force") { result.force = true; continue; }
-    if (arg === "--non-interactive") { result.nonInteractive = true; continue; }
-    if (arg === "--json") { result.json = true; continue; }
+    if (arg === "--") {
+      break;
+    }
+    if (arg === "--help" || arg === "-h") {
+      result.help = true;
+      continue;
+    }
+    if (arg === "--dry-run") {
+      result.dryRun = true;
+      continue;
+    }
+    if (arg === "--prune") {
+      result.prune = true;
+      continue;
+    }
+    if (arg === "--force") {
+      result.force = true;
+      continue;
+    }
+    if (arg === "--non-interactive") {
+      result.nonInteractive = true;
+      continue;
+    }
+    if (arg === "--json") {
+      result.json = true;
+      continue;
+    }
+    if (arg === "--list") {
+      result.list = true;
+      continue;
+    }
+    if (arg === "--replace") {
+      result.replace = true;
+      continue;
+    }
 
-    if (arg === "--preset" || arg === "--preset=") {
-      result.preset = argv[++i] as PresetId;
+    if (arg === "--preset") {
+      result.preset = requireOptionValue(argv, ++i, "--preset") as PresetId;
       continue;
     }
     if (arg.startsWith("--preset=")) {
-      result.preset = arg.slice("--preset=".length) as PresetId;
+      result.preset = requireInlineValue(arg, "--preset") as PresetId;
       continue;
     }
 
-    if (arg === "--config" || arg === "--config=") {
-      result.config = argv[++i];
+    if (arg === "--config") {
+      result.config = requireOptionValue(argv, ++i, "--config");
       continue;
     }
     if (arg.startsWith("--config=")) {
-      result.config = arg.slice("--config=".length);
+      result.config = requireInlineValue(arg, "--config");
       continue;
     }
 
-    if (arg === "--app" || arg === "--app=") {
-      result.apps!.push(argv[++i]);
+    if (arg === "--app") {
+      result.apps.push(requireOptionValue(argv, ++i, "--app"));
       continue;
     }
     if (arg.startsWith("--app=")) {
-      result.apps!.push(arg.slice("--app=".length));
+      result.apps.push(requireInlineValue(arg, "--app"));
       continue;
     }
 
-    if (arg === "--capability" || arg === "--capability=") {
-      result.capabilities!.push(argv[++i]);
+    if (arg === "--capability") {
+      result.capabilities.push(requireOptionValue(argv, ++i, "--capability"));
       continue;
     }
     if (arg.startsWith("--capability=")) {
-      result.capabilities!.push(arg.slice("--capability=".length));
+      result.capabilities.push(requireInlineValue(arg, "--capability"));
+      continue;
+    }
+
+    if (arg === "--remove-app") {
+      result.removeApps.push(requireOptionValue(argv, ++i, "--remove-app"));
+      continue;
+    }
+    if (arg.startsWith("--remove-app=")) {
+      result.removeApps.push(requireInlineValue(arg, "--remove-app"));
+      continue;
+    }
+
+    if (arg === "--remove-capability") {
+      result.removeCapabilities.push(requireOptionValue(argv, ++i, "--remove-capability"));
+      continue;
+    }
+    if (arg.startsWith("--remove-capability=")) {
+      result.removeCapabilities.push(requireInlineValue(arg, "--remove-capability"));
       continue;
     }
 
@@ -106,6 +160,20 @@ export function parseArgs(argv: string[]): SetupArgs {
   }
 
   return result;
+}
+
+function requireOptionValue(argv: string[], index: number, option: string): string {
+  const value = argv[index];
+  if (!value || value.startsWith("--")) {
+    throw new Error(`${option} requires a value`);
+  }
+  return value;
+}
+
+function requireInlineValue(argument: string, option: string): string {
+  const value = argument.slice(`${option}=`.length);
+  if (!value) throw new Error(`${option} requires a value`);
+  return value;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,11 +188,7 @@ function loadConfigFromPath(path: string): NrbConfig {
 function loadExistingConfig(workspaceRoot: string): NrbConfig | null {
   const configPath = join(workspaceRoot, "nrb.config.json");
   if (!existsSync(configPath)) return null;
-  try {
-    return loadConfigFromPath(configPath);
-  } catch {
-    return null;
-  }
+  return loadConfigFromPath(configPath);
 }
 
 function loadState(workspaceRoot: string): SetupState {
@@ -156,10 +220,13 @@ function saveState(workspaceRoot: string, state: SetupState): void {
 // Main handler
 // ---------------------------------------------------------------------------
 
-export async function runSetupCommand(
-  context: CommandContext,
-): Promise<number> {
-  const args = parseArgs(context.argv);
+export async function runSetupCommand(context: CommandContext): Promise<number> {
+  let args: SetupArgs;
+  try {
+    args = parseArgs(context.argv);
+  } catch (err: unknown) {
+    return reportConfigurationError(err, context.argv.includes("--json"));
+  }
 
   if (args.help) {
     printUsage();
@@ -168,26 +235,37 @@ export async function runSetupCommand(
 
   const { workspaceRoot } = context;
 
-  // Build the config from args, config file, or prompts
+  if (args.list) {
+    try {
+      assertListOnly(args);
+      printSelectionCatalog(loadExistingConfig(workspaceRoot), args.json);
+      return 0;
+    } catch (err: unknown) {
+      return reportConfigurationError(err, args.json);
+    }
+  }
+
   let config: NrbConfig;
   try {
     config = buildConfigFromArgs(args, workspaceRoot);
   } catch (err: unknown) {
-    const msg = errorMessage(err);
-    process.stderr.write(`Configuration error: ${msg}\n`);
-    if (args.json) {
-      process.stdout.write(
-        JSON.stringify({ error: msg, code: 1 }, null, 2) + "\n",
-      );
-    }
-    return 1;
+    return reportConfigurationError(err, args.json);
   }
 
-  // Load current state
+  return executeSetup(context, args, config);
+}
+
+async function executeSetup(context: CommandContext, args: SetupArgs, config: NrbConfig): Promise<number> {
+  const { workspaceRoot } = context;
+
   const currentState = loadState(workspaceRoot);
 
-  // Plan
-  const planResult = plan(config, currentState);
+  let planResult: ReturnType<typeof plan>;
+  try {
+    planResult = plan(config, currentState);
+  } catch (err: unknown) {
+    return reportConfigurationError(err, args.json);
+  }
 
   if (args.json) {
     process.stdout.write(
@@ -203,7 +281,7 @@ export async function runSetupCommand(
         2,
       ) + "\n",
     );
-    return planResult.operations.length === 0 ? 0 : 0; // JSON output is informational
+    return 0;
   }
 
   // Show summary
@@ -242,108 +320,63 @@ export async function runSetupCommand(
   // Save state
   saveState(workspaceRoot, planResult.expectedState);
 
-  process.stdout.write(
-    `✓ Setup complete: ${result.applied} operations applied, ${result.skipped} skipped.\n`,
-  );
+  process.stdout.write(`✓ Setup complete: ${result.applied} operations applied, ${result.skipped} skipped.\n`);
   return 0;
 }
 
-/** Build NrbConfig from CLI arguments, config file, or interactive prompts. */
-function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig {
-  // If --config is provided, load from file
+/** Build a config from exact or additive CLI selection input. */
+export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig {
+  const hasSelectionUpdate =
+    args.preset !== undefined ||
+    args.apps.length > 0 ||
+    args.capabilities.length > 0 ||
+    args.removeApps.length > 0 ||
+    args.removeCapabilities.length > 0 ||
+    args.replace;
+
   if (args.config) {
-    const resolvedPath = args.config.startsWith("/")
-      ? args.config
-      : resolve(workspaceRoot, args.config);
+    if (hasSelectionUpdate) {
+      throw new Error("--config is an exact configuration source and cannot be combined with selection flags.");
+    }
+    const resolvedPath = args.config.startsWith("/") ? args.config : resolve(workspaceRoot, args.config);
     return loadConfigFromPath(resolvedPath);
   }
 
-  // If preset or apps/capabilities are provided, build from args
-  if (args.preset || (args.apps && args.apps.length > 0) || (args.capabilities && args.capabilities.length > 0)) {
-    const appIds = args.apps ?? [];
-    const capIds = args.capabilities ?? [];
-
-    // Expand preset if provided
-    let expandedApps = [...appIds];
-    let expandedCaps = [...capIds];
-    if (args.preset) {
-      const presetApps = expandPreset(args.preset);
-      for (const a of presetApps.apps) {
-        if (!expandedApps.includes(a)) expandedApps.push(a);
-      }
-      for (const c of presetApps.capabilities) {
-        if (!expandedCaps.includes(c)) expandedCaps.push(c);
-      }
+  const existing = loadExistingConfig(workspaceRoot);
+  if (hasSelectionUpdate) {
+    if (!existing && (args.removeApps.length > 0 || args.removeCapabilities.length > 0)) {
+      throw new Error("Cannot remove selections before setup has created nrb.config.json.");
     }
-
-    // Validate CLI-provided IDs before dependency expansion so the catalog
-    // receives the same typed IDs as file-based configuration.
-    const validated = parseNrbConfig({
-      schemaVersion: schemaVersion,
-      apps: expandedApps,
-      capabilities: expandedCaps,
-    });
-    const expanded = expandDependencies(validated.apps, validated.capabilities);
-
-    return {
-      schemaVersion: schemaVersion,
+    return updateSelection(existing, {
       preset: args.preset,
-      apps: expanded.apps,
-      capabilities: expanded.capabilities,
+      addApps: args.apps,
+      addCapabilities: args.capabilities,
+      removeApps: args.removeApps,
+      removeCapabilities: args.removeCapabilities,
+      replace: args.replace,
       options: {
         prune: args.prune,
         force: args.force,
         dryRun: args.dryRun,
         nonInteractive: args.nonInteractive,
       },
-    };
+    });
   }
 
-  // If there's an existing config, load it and apply option overrides
-  const existing = loadExistingConfig(workspaceRoot);
   if (existing) {
-    return {
+    return parseNrbConfig({
       ...existing,
       options: {
         ...existing.options,
         prune: args.prune || existing.options.prune,
         force: args.force || existing.options.force,
         dryRun: args.dryRun || existing.options.dryRun,
-        nonInteractive: args.nonInteractive || existing.options.nonInteractive,
+        nonInteractive: args.nonInteractive,
       },
-    };
+    });
   }
 
-  // Fall back to non-interactive defaults
-  if (args.nonInteractive) {
-    return {
-      schemaVersion: schemaVersion,
-      preset: "minimal",
-      apps: [],
-      capabilities: [],
-      options: {
-        prune: args.prune,
-        force: args.force,
-        dryRun: args.dryRun,
-        nonInteractive: true,
-      },
-    };
-  }
-
-  // Interactive mode: build config from prompts (deferred)
-  // For non-interactive path, return defaults
-  return {
-    schemaVersion: schemaVersion,
-    preset: "fullstack",
-    apps: [],
-    capabilities: [],
-    options: {
-      prune: args.prune,
-      force: args.force,
-      dryRun: args.dryRun,
-      nonInteractive: false,
-    },
-  };
+  throw new Error("No applications selected. Run `pnpm nrb setup` interactively or pass --preset, --app, or --config.");
 }
 
 // ---------------------------------------------------------------------------
@@ -352,38 +385,58 @@ function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): NrbConfig 
 
 export async function runSetupCommandInteractive(
   context: CommandContext,
+  promptRunner: typeof runPrompts = runPrompts,
 ): Promise<number> {
-  const args = parseArgs(context.argv);
+  let args: SetupArgs;
+  try {
+    args = parseArgs(context.argv);
+  } catch (err: unknown) {
+    return reportConfigurationError(err, context.argv.includes("--json"));
+  }
 
   if (args.help) {
     printUsage();
     return 0;
   }
 
-  if (!args.nonInteractive && !args.preset && !args.config) {
-    // Interactive mode: run prompts first
-    const prompts = await runPrompts(false);
-
-    // Merge prompts into args
-    if (prompts.preset) args.preset = prompts.preset;
-    args.apps = prompts.apps;
-    args.capabilities = prompts.capabilities;
-    args.prune = args.prune || prompts.prune;
-    args.force = args.force || prompts.force;
-    args.dryRun = args.dryRun || prompts.dryRun;
+  try {
+    const existing = loadExistingConfig(context.workspaceRoot);
+    const prompts = await promptRunner(false, existing);
+    const config = buildConfig(prompts, {
+      options: {
+        prune: args.prune || prompts.prune,
+        force: args.force || prompts.force,
+        dryRun: args.dryRun || prompts.dryRun,
+        nonInteractive: false,
+      },
+    });
+    return executeSetup(context, args, parseNrbConfig(config));
+  } catch (err: unknown) {
+    return reportConfigurationError(err, args.json);
   }
-
-  return runSetupCommand(context);
 }
 
 /** Entry point for CLI registration. */
-export async function runSetupFromContext(
-  context: CommandContext,
-): Promise<number> {
+export async function runSetupFromContext(context: CommandContext): Promise<number> {
   // Check if interactive mode is needed
-  const args = parseArgs(context.argv);
+  let args: SetupArgs;
+  try {
+    args = parseArgs(context.argv);
+  } catch (err: unknown) {
+    return reportConfigurationError(err, context.argv.includes("--json"));
+  }
 
-  if (!args.nonInteractive && !args.preset && !args.config && !args.apps?.length) {
+  const hasDirectSelection =
+    args.preset !== undefined ||
+    args.config !== undefined ||
+    args.apps.length > 0 ||
+    args.capabilities.length > 0 ||
+    args.removeApps.length > 0 ||
+    args.removeCapabilities.length > 0 ||
+    args.replace ||
+    args.list;
+
+  if (!args.nonInteractive && !hasDirectSelection) {
     // Check if stdin is a TTY for interactive mode
     if (process.stdin.isTTY) {
       return runSetupCommandInteractive(context);
@@ -391,6 +444,65 @@ export async function runSetupFromContext(
   }
 
   return runSetupCommand(context);
+}
+
+function assertListOnly(args: SetupArgs): void {
+  const combined =
+    args.config !== undefined ||
+    args.preset !== undefined ||
+    args.apps.length > 0 ||
+    args.capabilities.length > 0 ||
+    args.removeApps.length > 0 ||
+    args.removeCapabilities.length > 0 ||
+    args.replace ||
+    args.prune ||
+    args.force ||
+    args.dryRun;
+  if (combined) throw new Error("--list can only be combined with --json or --non-interactive.");
+}
+
+function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void {
+  const selected = existing ? materializeSelection(existing) : { apps: [], capabilities: [] };
+  const selectedApps = new Set(selected.apps);
+  const selectedCapabilities = new Set(selected.capabilities);
+  const applications = Object.values(appCatalog).map((app) => ({
+    id: app.id,
+    label: app.label,
+    platform: app.platform,
+    selected: selectedApps.has(app.id),
+  }));
+  const capabilities = Object.values(capabilityCatalog).map((capability) => ({
+    id: capability.id,
+    label: capability.label,
+    selected: selectedCapabilities.has(capability.id),
+  }));
+
+  if (json) {
+    process.stdout.write(`${JSON.stringify({ configured: existing !== null, applications, capabilities }, null, 2)}\n`);
+    return;
+  }
+
+  process.stdout.write(existing ? "Current workspace selection:\n" : "No workspace selection yet.\n");
+  for (const platform of ["frontend", "backend", "e2e"] as const) {
+    process.stdout.write(`\n${platform}:\n`);
+    for (const app of applications.filter((candidate) => candidate.platform === platform)) {
+      process.stdout.write(`  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label}\n`);
+    }
+  }
+  process.stdout.write("\ncapabilities:\n");
+  for (const capability of capabilities) {
+    process.stdout.write(`  ${capability.selected ? "[x]" : "[ ]"} ${capability.id} — ${capability.label}\n`);
+  }
+  process.stdout.write(
+    "\nRerun `pnpm nrb setup` to edit interactively, or use `--app <id>` / `--remove-app <id>` for scripted updates.\n",
+  );
+}
+
+function reportConfigurationError(err: unknown, json: boolean): number {
+  const msg = errorMessage(err);
+  process.stderr.write(`Configuration error: ${msg}\n`);
+  if (json) process.stdout.write(`${JSON.stringify({ error: msg, code: 1 }, null, 2)}\n`);
+  return 1;
 }
 
 function printUsage(): void {
@@ -402,17 +514,25 @@ Interactive and non-interactive boilerplate configuration.
 Options:
   --preset <name>            Select a profile (minimal, web, fullstack, enterprise, bots)
   --config <path>            Load configuration from a JSON file
-  --app <id>                 Add an application (repeatable)
-  --capability <id>          Add a capability (repeatable)
+  --app <id>                 Add an application to the current selection (repeatable)
+  --capability <id>          Add a capability to the current selection (repeatable)
+  --remove-app <id>          Remove an application when no selected app requires it
+  --remove-capability <id>   Remove a capability when no selection requires it
+  --replace                  Replace the current selection with explicit --app/--capability values
+  --list                     List available applications and current selection
   --dry-run                  Show the plan without applying changes
   --prune                    Remove files no longer needed by the configuration
   --force                    Overwrite conflicting files without refusing
-  --non-interactive          Use defaults without prompting (CI-friendly)
+  --non-interactive          Never prompt; an explicit selection is required on first run
   --json                     Output the plan as JSON
   -h, --help                 Show this help
 
 Examples:
   pnpm nrb setup                                  # interactive wizard
+  pnpm nrb setup --list                           # inspect available/current apps
+  pnpm nrb setup --app mobile-app --non-interactive # add mobile later, preserving current apps
+  pnpm nrb setup --remove-app landing-app --non-interactive # remove an optional app
+  pnpm nrb setup --replace --app landing-app --non-interactive # exact custom selection
   pnpm nrb setup --preset fullstack --dry-run     # preview fullstack preset
   pnpm nrb setup --config nrb.config.json         # apply from config file
   pnpm nrb setup --non-interactive --preset fullstack # complete core monorepo\n`,

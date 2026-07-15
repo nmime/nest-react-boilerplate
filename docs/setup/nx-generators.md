@@ -39,6 +39,15 @@ Generation deliberately does not publish a hostname or add the app to every
 preset/deployment. Complete the explicit registration checklist in
 [Scaffolding and Extension Contract](../scaffolding-and-extension.md).
 
+Once a generated application is registered in the setup catalog, select it in
+an existing product without resetting the other choices:
+
+```bash
+pnpm nrb setup --app <catalog-id> --non-interactive
+```
+
+Use `pnpm nrb setup --list` to inspect the current and available selections.
+
 ## Library generator
 
 `@repo/tooling:library` supports backend, frontend, and common runtimes plus

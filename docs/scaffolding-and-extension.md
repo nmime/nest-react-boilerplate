@@ -44,8 +44,7 @@ pnpm nrb init \
   --domain acme.example \
   --owner acme-org
 
-pnpm nrb setup --preset fullstack --non-interactive --dry-run
-pnpm nrb setup --preset fullstack --non-interactive
+pnpm nrb setup
 
 cp .env.example .env
 # Replace placeholder secrets in .env from the environment's secret manager.
@@ -65,29 +64,44 @@ runs the workspace doctor, resolves all five presets as dry runs with exact app
 closures, then generates and builds/tests every supported application renderer
 and backend/frontend/common library runtime.
 
-## Required baseline and optional surfaces
+## Selectable reference and optional surfaces
 
-The `fullstack` profile is the complete core monorepo baseline. These apps are
-all required reference deployables; none is the repository default:
+The repository ships complete reference implementations for each supported
+runtime, but a new product selects only what it needs. No deployable is the
+repository default. `fullstack` is an explicit shortcut for selecting every
+core reference surface, not a mandatory baseline:
 
-| Classification | Application/capability                                        | Why it is selected                                      |
-| -------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
-| Required       | `admin-app` + `admin-app-api`                                 | Admin flow and RBAC boundary                            |
-| Required       | `user-app` + `user-app-api`                                   | Authenticated user flow and API boundary                |
-| Required       | `auth-app-api`                                                | Authentication/session boundary                         |
-| Required       | `landing-app`                                                 | Astro public landing surface                            |
-| Required       | `site-app`                                                    | Vike SSR site surface                                   |
-| Required       | `mobile-app`                                                  | Expo/React Native client                                |
-| Required       | `fullstack-e2e`                                               | Cross-application contract and browser proof            |
-| Required       | PostgreSQL, Redis, OTEL, Swagger                              | Core persistence, cache, observability, and API tooling |
-| Required       | design tokens, i18n, and authz                                | Shared UI, locale, and authorization baseline           |
-| Optional       | Discord and Telegram APIs                                     | Bot and social integrations                             |
-| Optional       | NATS, S3, analytics, notifications, feature flags, websockets | Capability-driven extensions                            |
+| Classification | Application/capability                                        | Why it is selected                                 |
+| -------------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| Reference      | `admin-app` + `admin-app-api`                                 | Admin flow and RBAC boundary                       |
+| Reference      | `user-app` + `user-app-api`                                   | Authenticated user flow and API boundary           |
+| Reference      | `auth-app-api`                                                | Authentication/session boundary                    |
+| Reference      | `landing-app`                                                 | Astro public landing surface                       |
+| Reference      | `site-app`                                                    | Vike SSR site surface                              |
+| Reference      | `mobile-app`                                                  | Expo/React Native client                           |
+| Reference      | `fullstack-e2e`                                               | Cross-application contract and browser proof       |
+| Selectable     | PostgreSQL, Redis, OTEL, Swagger                              | Persistence, cache, observability, and API tooling |
+| Selectable     | design tokens, i18n, and authz                                | Shared UI, locale, and authorization capabilities  |
+| Optional       | Discord and Telegram APIs                                     | Bot and social integrations                        |
+| Optional       | NATS, S3, analytics, notifications, feature flags, websockets | Capability-driven extensions                       |
 
 `minimal`, `web`, `enterprise`, and `bots` are deliberate alternatives,
 documented in [Presets and Technologies](setup/presets-and-technologies.md).
 Unselected applications remain as buildable reference implementations unless a
 maintainer separately scopes their deletion.
+
+Setup is deliberately repeatable:
+
+```bash
+# See what is selected.
+pnpm nrb setup --list
+
+# Add another frontend and its required dependencies later.
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Or rerun the wizard; current choices are kept by default.
+pnpm nrb setup
+```
 
 ## Existing public domain contract
 

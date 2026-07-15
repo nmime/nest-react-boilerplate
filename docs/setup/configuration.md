@@ -1,6 +1,6 @@
 # Setup and Configuration
 
-The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. The `fullstack` profile contains every core application; no app is a default.
+The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. No app is selected implicitly.
 
 ## How it works
 
@@ -18,14 +18,22 @@ pnpm --filter @repo/tooling tooling setup
 
 The wizard guides you through:
 
-1. **Profile selection** — choose `minimal`, `web`, `fullstack`, `enterprise`, or `bots`.
-2. **App toggles** — enable/disable each frontend, backend, and e2e app.
+1. **Starting point** — start with an empty `custom` selection (default) or use a profile as a shortcut.
+2. **App toggles** — enable/disable each frontend, backend, and E2E app individually.
 3. **Capability toggles** — enable/disable cross-cutting features.
 4. **Options** — prune stale setup-managed artifacts, force overwrites, dry-run mode.
 
 Required dependencies are auto-enabled. For example, selecting `admin-app` auto-enables `admin-app-api`, `authz`, and `design-tokens`.
 
+On rerun, the wizard loads the resolved current selection. Press Enter to keep
+an item, answer `y` to add it, or `n` to remove it. A removal that would break
+another selected app's dependency is refused or restored as required.
+
 ## Non-interactive setup (CI / scripted)
+
+A fresh non-interactive workspace must provide `--preset`, at least one
+`--app`, or `--config`; there is no CI default selection. Once configured, a
+no-selection rerun preserves the existing config.
 
 ### Preset-based
 
@@ -56,6 +64,22 @@ pnpm --filter @repo/tooling tooling setup \
   --non-interactive
 ```
 
+`--app` and `--capability` are additive when `nrb.config.json` already exists:
+
+```bash
+# Add mobile later without losing the existing web/API selection.
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Inspect selected and available entries.
+pnpm nrb setup --list
+
+# Remove an optional app; dependency-breaking removals fail.
+pnpm nrb setup --remove-app landing-app --non-interactive
+
+# Deliberately replace the complete selection.
+pnpm nrb setup --replace --app landing-app --non-interactive
+```
+
 ### Dry run
 
 ```bash
@@ -83,7 +107,7 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 | `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).               |
 | `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                  |
 | `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                      |
-| `options.nonInteractive` | `boolean`  | CI mode with defaults (default `false`).                               |
+| `options.nonInteractive` | `boolean`  | Records that setup ran without prompts (default `false`).              |
 
 Unknown top-level keys are rejected with a clear error. Every field is validated against an explicit enum.
 
@@ -92,9 +116,8 @@ Unknown top-level keys are rejected with a clear error. Every field is validated
 ```json
 {
   "schemaVersion": "1.0.0",
-  "preset": "fullstack",
-  "apps": ["admin-app", "user-app", "admin-app-api", "user-app-api"],
-  "capabilities": ["postgres", "redis", "i18n"],
+  "apps": ["landing-app", "user-app"],
+  "capabilities": ["otel", "swagger"],
   "options": {
     "prune": false,
     "force": false,
@@ -150,7 +173,7 @@ On each run:
 
 This guarantees idempotency: running setup twice with the same config produces zero operations.
 
-The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables; before setup it starts every core deployable from the `fullstack` profile.
+The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables. Before setup it fails with an instruction to select apps; it never falls back to a hidden profile.
 
 ## Recovery
 

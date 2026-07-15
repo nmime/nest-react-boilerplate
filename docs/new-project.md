@@ -7,7 +7,8 @@ Product initialization has two deliberate phases:
 1. `pnpm nrb init` owns product identity and all example domains.
 2. `pnpm nrb setup` owns application/capability selection.
 
-Run both from a clean branch and inspect both dry runs:
+Run both from a clean branch. Preview identity replacement, then make the app
+selection interactively:
 
 ```bash
 pnpm nrb init \
@@ -20,8 +21,7 @@ pnpm nrb init \
   --domain acme.example \
   --owner your-github-org
 
-pnpm nrb setup --preset fullstack --non-interactive --dry-run
-pnpm nrb setup --preset fullstack --non-interactive
+pnpm nrb setup
 ```
 
 The compatibility alias `pnpm init:project -- ...` invokes the same product
@@ -31,16 +31,22 @@ initializer. New instructions and automation should use `pnpm nrb init`.
 
 The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
 
-The `fullstack` profile selects all required core applications. `web` excludes
-only the mobile runtime, while bot services remain explicit profiles. There is
-no default frontend or API application.
+There is no default frontend or API application. Interactive setup starts from
+an empty custom selection and asks which frontend, backend, E2E, and capability
+entries the product needs. Profiles remain optional exact shortcuts.
 
 ```bash
 # Interactive wizard:
 pnpm nrb setup
 
-# Non-interactive core monorepo:
+# Non-interactive exact profile shortcut:
 pnpm nrb setup --preset fullstack --non-interactive
+
+# Add another application later, preserving the current selection:
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Review current and available choices:
+pnpm nrb setup --list
 
 # Config file:
 cp nrb.config.example.json nrb.config.json

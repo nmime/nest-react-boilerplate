@@ -2,10 +2,6 @@
 import { spawn, type SpawnOptions } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { expandPreset } from "../../setup/presets.js";
-
-const coreSelection = expandPreset("fullstack");
-const coreProjects = coreSelection.apps.filter((project) => !project.endsWith("-e2e"));
 
 interface WorkspaceManifest {
   apps?: unknown;
@@ -15,13 +11,15 @@ interface WorkspaceManifest {
 export interface FullstackSelection {
   projects: string[];
   capabilities: string[];
-  source: "core" | "setup";
+  source: "setup";
 }
 
 export function resolveFullstackSelection(workspaceRoot: string): FullstackSelection {
   const manifestPath = join(workspaceRoot, ".nrb", "workspace.json");
   if (!existsSync(manifestPath)) {
-    return { projects: [...coreProjects], capabilities: [...coreSelection.capabilities], source: "core" };
+    throw new Error(
+      "No application selection found. Run `pnpm nrb setup` and choose the frontend/backend apps this workspace needs.",
+    );
   }
 
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as WorkspaceManifest;
@@ -33,7 +31,9 @@ export function resolveFullstackSelection(workspaceRoot: string): FullstackSelec
     : [];
 
   if (projects.length === 0) {
-    throw new Error(".nrb/workspace.json selects no runnable applications; run `pnpm nrb setup` with an app preset.");
+    throw new Error(
+      ".nrb/workspace.json selects no runnable applications; rerun `pnpm nrb setup` and select at least one app.",
+    );
   }
   return { projects, capabilities, source: "setup" };
 }
@@ -60,9 +60,7 @@ const run = (command: string, args: string[], options: SpawnOptions = {}) =>
     });
     child.on("error", reject);
     child.on("exit", (code) =>
-      code === 0
-        ? resolve()
-        : reject(new Error(`${command} ${args.join(" ")} exited with ${code}`)),
+      code === 0 ? resolve() : reject(new Error(`${command} ${args.join(" ")} exited with ${code}`)),
     );
   });
 
@@ -73,9 +71,7 @@ export async function runFullstack(workspaceRoot = process.cwd()): Promise<void>
     await run("node", ["packages/tooling/bin/repo-tooling.mjs", "db", "migrate"], { cwd: workspaceRoot });
   }
 
-  console.log(
-    `Starting ${selection.projects.join(", ")} (${selection.source === "setup" ? ".nrb/workspace.json" : "complete core monorepo"}).`,
-  );
+  console.log(`Starting ${selection.projects.join(", ")} (.nrb/workspace.json selection).`);
   await run(
     "pnpm",
     [

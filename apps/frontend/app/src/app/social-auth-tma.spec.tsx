@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
 
@@ -8,26 +8,55 @@ const sourceRoot = resolve(import.meta.dirname, '..');
 
 vi.mock('@tma.js/sdk-react', async () => {
   const actual = await vi.importActual<typeof import('@tma.js/sdk-react')>('@tma.js/sdk-react');
+  const availableMethod = Object.assign(vi.fn(), { isAvailable: vi.fn(() => true) });
+  const headerColorMethod = Object.assign(vi.fn(), {
+    isAvailable: vi.fn(() => true),
+    supports: vi.fn(() => true),
+  });
+  const requestFullscreen = Object.assign(
+    vi.fn(() => Promise.resolve()),
+    {
+      isAvailable: vi.fn(() => true),
+    },
+  );
   return {
     ...actual,
     backButton: {
       hide: vi.fn(),
+      isMounted: vi.fn(() => false),
       mount: vi.fn(),
       onClick: vi.fn(() => vi.fn()),
       show: vi.fn(),
     },
     init: vi.fn(),
+    isTMA: vi.fn(() => false),
     miniApp: {
-      bindCssVars: vi.fn(),
+      bindCssVars: vi.fn(() => vi.fn()),
+      isCssVarsBound: vi.fn(() => false),
+      isMounted: vi.fn(() => false),
       mount: vi.fn(),
       ready: vi.fn(),
+      setBgColor: availableMethod,
+      setBottomBarColor: availableMethod,
+      setHeaderColor: headerColorMethod,
+    },
+    shareURL: vi.fn(),
+    themeParams: {
+      bindCssVars: vi.fn(() => vi.fn()),
+      isCssVarsBound: vi.fn(() => false),
+      isMounted: vi.fn(() => false),
+      mount: vi.fn(),
     },
     useLaunchParams: vi.fn(() => ({})),
     useRawInitData: vi.fn(() => undefined),
     viewport: {
-      bindCssVars: vi.fn(),
+      bindCssVars: vi.fn(() => vi.fn()),
       expand: vi.fn(),
-      mount: vi.fn(),
+      isCssVarsBound: vi.fn(() => false),
+      isFullscreen: vi.fn(() => false),
+      isMounted: vi.fn(() => false),
+      mount: vi.fn(() => Promise.resolve()),
+      requestFullscreen,
     },
   };
 });
@@ -70,6 +99,7 @@ describe('social auth and TMA UI', () => {
     vi.stubEnv('VITE_API_BASE_URL_MODE', undefined);
     tma.useLaunchParams.mockReturnValue({});
     tma.useRawInitData.mockReturnValue(undefined);
+    tma.isTMA.mockReturnValue(false);
     resetPath();
   });
 
@@ -93,6 +123,59 @@ describe('social auth and TMA UI', () => {
       expect(screen.getByText('Loading Telegram Mini App…')).toBeTruthy();
     },
   );
+
+  it('negotiates fullscreen colored Telegram chrome with native back and share controls', async () => {
+    resetPath('/tma?startapp=profile');
+    tma.isTMA.mockReturnValue(true);
+
+    render(<App />);
+
+    const shell = document.querySelector<HTMLElement>('.xr-mini-app-shell');
+    expect(shell?.dataset.miniAppEnvironment).toBe('telegram');
+    expect(document.querySelector('.xr-header')).toBeTruthy();
+    expect(document.querySelector('.xr-mini-app-bottom-bar')).toBeTruthy();
+    await waitFor(() => {
+      expect(tma.viewport.requestFullscreen).toHaveBeenCalledOnce();
+    });
+    expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith('#2563eb');
+    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#0f172a');
+    expect(tma.backButton.onClick).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
+    expect(tma.shareURL).toHaveBeenCalledWith(
+      'https://app.local.test/tma?startapp=profile',
+      'Connect the React user app to the auth and user APIs using bearer authentication.',
+    );
+    act(() => {
+      tma.backButton.onClick.mock.calls[0]?.[0]();
+    });
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/');
+    });
+  });
+
+  it('uses browser back and Web Share from the same shell outside Telegram', async () => {
+    resetPath('/profile?tgWebAppData=secret&ref=friend');
+    const share = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { share });
+
+    render(<App />);
+
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
+    await waitFor(() => {
+      expect(share).toHaveBeenCalledOnce();
+    });
+    expect(share).toHaveBeenCalledWith({
+      text: 'Connect the React user app to the auth and user APIs using bearer authentication.',
+      title: 'User App',
+      url: 'https://app.local.test/profile?ref=friend',
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/');
+    });
+  });
 
   it('uses same-origin API URLs for Telegram Mini App verification when configured', async () => {
     resetPath('/telegram-mini-app');

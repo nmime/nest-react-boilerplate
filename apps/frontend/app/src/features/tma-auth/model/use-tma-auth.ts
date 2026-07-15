@@ -1,31 +1,14 @@
 import { useEffect, useMemo } from 'react';
-import {
-  backButton,
-  deepSnakeToCamelObjKeys,
-  init,
-  miniApp,
-  retrieveLaunchParams,
-  useRawInitData,
-  viewport,
-} from '@tma.js/sdk-react';
+import { deepSnakeToCamelObjKeys, retrieveLaunchParams, useRawInitData } from '@tma.js/sdk-react';
 import { parseTmaLaunchState, type TmaLaunchIntent } from './tma-launch';
 
 interface UseTmaAuthInput {
   fallbackStartParam?: string;
   onAuthenticate: (input: { initData: string; intent: TmaLaunchIntent; returnUrl?: string }) => void;
-  onBack: () => void;
   status: string;
   error: unknown;
   isVerifying: boolean;
 }
-
-const safely = (effect: () => void) => {
-  try {
-    effect();
-  } catch {
-    // Telegram features are optional outside the Telegram runtime.
-  }
-};
 
 const readBrowserStartParam = (): string | undefined => {
   try {
@@ -41,14 +24,7 @@ const readBrowserStartParam = (): string | undefined => {
   }
 };
 
-export function useTmaAuth({
-  error,
-  fallbackStartParam,
-  isVerifying,
-  onAuthenticate,
-  onBack,
-  status,
-}: UseTmaAuthInput) {
+export function useTmaAuth({ error, fallbackStartParam, isVerifying, onAuthenticate, status }: UseTmaAuthInput) {
   // The Telegram SDK hooks must run unconditionally in the same order on every
   // render. `useLaunchParams` throws (via retrieveLaunchParams) outside the
   // Telegram runtime, so we mirror its useMemo internals and guard the resolved
@@ -76,46 +52,6 @@ export function useTmaAuth({
       }),
     [browserStartParam, fallbackStartParam, isTelegram, rawInitData, telegramStartParam],
   );
-
-  useEffect(() => {
-    if (!isTelegram) {
-      return;
-    }
-
-    safely(() => init());
-    safely(() => {
-      miniApp.mount();
-    });
-    safely(() => {
-      miniApp.ready();
-    });
-    safely(() => miniApp.bindCssVars());
-    safely(() => void viewport.mount());
-    safely(() => {
-      viewport.expand();
-    });
-    safely(() => viewport.bindCssVars());
-    safely(() => {
-      backButton.mount();
-    });
-    safely(() => {
-      backButton.show();
-    });
-    const cleanup = (() => {
-      try {
-        return backButton.onClick(onBack);
-      } catch {
-        return undefined;
-      }
-    })();
-
-    return () => {
-      cleanup?.();
-      safely(() => {
-        backButton.hide();
-      });
-    };
-  }, [isTelegram, onBack]);
 
   useEffect(() => {
     if (!rawInitData || status !== 'idle') {

@@ -23,6 +23,33 @@ pnpm exec nx run user-app:e2e
 pnpm run frontend:fsd:check
 ```
 
+## Telegram Mini App and browser shell
+
+The same `user-app` bundle is the canonical Telegram Mini App and normal web
+application. Configure BotFather with
+`https://user-app.example.com/telegram-mini-app`; `/tma` and `/tma/auth` remain
+supported launch aliases.
+
+- `MiniAppProvider` in `@app/frontend-runtime` detects Telegram without making
+  browser or server rendering depend on Telegram globals. In Telegram it mounts
+  theme/viewport state, binds CSS variables, calls `ready()` and `expand()`,
+  requests Bot API 8.0 fullscreen when available, and sets the branded header,
+  background, and bottom-bar colors.
+- `MiniAppShell` in `@app/frontend-ui-web` is the single visual shell for both
+  environments. It owns safe-area spacing, the colored header and bottom
+  navigation, native Telegram or browser back behavior, and Telegram/Web
+  Share/clipboard fallback behavior.
+- Safe-area CSS consumes both Telegram's official
+  `--tg-safe-area-inset-*`/`--tg-content-safe-area-inset-*` variables and the
+  equivalent `@tma.js` viewport variables. The HTML viewport includes
+  `viewport-fit=cover`.
+- Share URLs strip all `tgWebApp*` launch parameters before leaving the app so
+  raw Telegram launch data is never copied or shared.
+
+Do not initialize Telegram SDK features inside a page or feature. Add product
+content below `MiniAppShell`, and use `useMiniApp()` only when a feature needs a
+platform action beyond the shell's built-in back and share controls.
+
 ## Docs
 
 - [Frontend app rules](../AGENTS.md)

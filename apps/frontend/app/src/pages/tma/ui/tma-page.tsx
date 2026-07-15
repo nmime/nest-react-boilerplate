@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useI18n } from '@app/frontend-runtime';
 import { useSocialAuth } from '../../../features/social-auth';
 import { TmaAuthPanel, useTmaAuth } from '../../../features/tma-auth';
@@ -11,20 +10,12 @@ interface TmaPageProps {
 
 export function TmaPage({ fallbackStartParam, navigate }: Readonly<TmaPageProps>) {
   const { t } = useI18n();
-  const handleBack = useCallback(() => {
-    if (globalThis.history.length > 1) {
-      globalThis.history.back();
-      return;
-    }
-    navigate('/', { replace: true });
-  }, [navigate]);
   const socialAuth = useSocialAuth({ navigate });
   const state = useTmaAuth({
     error: socialAuth.telegramTmaError,
     fallbackStartParam,
     isVerifying: socialAuth.isTelegramTmaPending,
     onAuthenticate: socialAuth.authenticateTelegramTma,
-    onBack: handleBack,
     status: socialAuth.telegramTmaStatus,
   });
 

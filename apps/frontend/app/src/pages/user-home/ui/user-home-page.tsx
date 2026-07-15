@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { observer, useAppStore, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionFlow } from '../../../features/auth';
-import { UiAlert, UiButton, ProductShell, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
+import { MiniAppShell, UiAlert, UiButton, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
 import { AuthPanel } from '../../../widgets/auth-panel';
 import { ProfileStatusCard } from '../../../widgets/profile-status';
 
@@ -16,6 +16,7 @@ export interface UserHomePageProps {
   }>;
   activeRoute?: string;
   children?: ReactNode;
+  onBack?: () => void;
 }
 
 interface UserHomeContentProps {
@@ -216,6 +217,9 @@ export const UserHomePage = observer(function UserHomePage({
   actions,
   applyUserTheme,
   children,
+  onBack = () => {
+    globalThis.history.back();
+  },
 }: Readonly<UserHomePageProps>) {
   const appStore = useAppStore();
   const { t } = useI18n();
@@ -234,11 +238,15 @@ export const UserHomePage = observer(function UserHomePage({
   ];
 
   return (
-    <ProductShell
+    <MiniAppShell
+      activePath={activeRoute}
       actions={productActions}
       appName={t('user.appName')}
       description={t('user.description')}
       eyebrow={t('user.eyebrow')}
+      onBack={onBack}
+      shareText={t('user.description')}
+      shareTitle={t('user.appName')}
       status={`design v3 · ${appStore.currentBreakpoint}`}
       statusTone="success"
       title={t('user.title')}
@@ -246,6 +254,6 @@ export const UserHomePage = observer(function UserHomePage({
       <UserExperienceFrame activeRoute={activeRoute}>
         {children ?? <UserHomeContent applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />}
       </UserExperienceFrame>
-    </ProductShell>
+    </MiniAppShell>
   );
 });

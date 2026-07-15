@@ -23,6 +23,8 @@ export interface ProductShellProps {
   skipLinkLabel?: string;
   actions: ProductShellAction[];
   children: ReactNode;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode;
 }
 
 export const ProductShell = observer(function ProductShell({
@@ -37,6 +39,8 @@ export const ProductShell = observer(function ProductShell({
   skipLinkLabel,
   actions,
   children,
+  headerLeading,
+  headerTrailing,
 }: Readonly<ProductShellProps>) {
   const { locale } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
@@ -68,14 +72,20 @@ export const ProductShell = observer(function ProductShell({
         data-theme-preference={uiStore?.theme ?? 'system'}
       >
         <header className="xr-header">
-          <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
-            <span className="xr-brand__mark">xR</span>
-            <span>{appName}</span>
-          </a>
+          <div className="xr-header__brand-group">
+            {headerLeading}
+            <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
+              <span className="xr-brand__mark">xR</span>
+              <span>{appName}</span>
+            </a>
+          </div>
           <div className="xr-header__controls">
-            <LanguageSwitcher />
-            <ThemeSwitcher />
-            <UiStatusPill label={status} tone={statusTone} />
+            <div className="xr-header__primary-controls">
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              <UiStatusPill label={status} tone={statusTone} />
+            </div>
+            {headerTrailing}
           </div>
         </header>
 

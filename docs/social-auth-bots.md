@@ -147,6 +147,14 @@ When adding runtime features, add keys to both locale catalogs and the `Translat
 Use `TELEGRAM_MINI_APP_URL=https://<user-frontend-host>/telegram-mini-app` for production.
 The same frontend bundle also supports `/tma` and `/tma/auth` as compatibility aliases. Configure BotFather's Mini App/Web App domain to the frontend host only; never point it at the auth API, bot webhook, backend root, or a raw backend service.
 
+The `user-app` root is wrapped by the shared `MiniAppProvider` and
+`MiniAppShell`, so every route uses the same browser/TMA compatibility layer.
+Telegram launches receive branded header and bottom-bar colors, expanded and
+fullscreen negotiation, native BackButton handling, and safe-area-aware
+full-height layout. Normal browsers keep the same shell and fall back to browser
+history plus Web Share, clipboard, or the Telegram share URL. Page features must
+not mount Telegram viewport or BackButton APIs independently.
+
 The Mini App frontend can be built in either API URL mode:
 
 - Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. TMA verification posts to `/auth/telegram/tma` on the frontend origin and relies on the production proxy to route it to auth API.

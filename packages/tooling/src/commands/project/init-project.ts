@@ -14,7 +14,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { apply, type ApplyOptions } from "../../setup/apply.js";
@@ -153,7 +153,9 @@ function* walk(dir: string): Generator<string> {
     if (stat.isDirectory()) yield* walk(path);
     else if (stat.isFile()) {
       const dot = path.lastIndexOf(".");
-      if (TEXT_EXTENSIONS.has(dot === -1 ? "" : path.slice(dot))) yield path;
+      const name = basename(path);
+      const isEnvironmentExample = name.startsWith(".env.") && name.endsWith(".example");
+      if (isEnvironmentExample || TEXT_EXTENSIONS.has(dot === -1 ? "" : path.slice(dot))) yield path;
     }
   }
 }

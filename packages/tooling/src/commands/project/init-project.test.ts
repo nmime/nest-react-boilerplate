@@ -35,6 +35,9 @@ function createFixture(): string {
       "user@example.com",
     ].join("\n") + "\n",
   );
+  writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://app.example.com\n");
+  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://example.com\n");
+  writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
 }
@@ -101,6 +104,20 @@ describe("project init", () => {
       assert.match(domains, /^telegram-api\.acme\.example$/mu);
       assert.match(domains, /^admin\.staging\.acme\.example$/mu);
       assert.match(domains, /^user@acme\.example$/mu);
+
+      assert.equal(
+        readFileSync(join(root, ".env.example"), "utf8"),
+        "PUBLIC_URL=https://app.acme.example\n",
+      );
+      assert.equal(
+        readFileSync(join(root, ".env.production.example"), "utf8"),
+        "PUBLIC_URL=https://acme.example\n",
+      );
+      assert.equal(
+        readFileSync(join(root, ".env"), "utf8"),
+        "PRIVATE_URL=https://example.com\n",
+        "Real environment files must never be rewritten by template initialization.",
+      );
 
       const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
         name: string;

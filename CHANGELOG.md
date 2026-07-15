@@ -176,6 +176,7 @@ Version bumps, changelog entries, and git tags are automated by semantic-release
 ### Added
 
 - Explicit, repeatable application selection with reference frontend/API/E2E surfaces, optional Telegram and Discord APIs, and dependency-safe reruns.
+- Product initialization now rewrites tracked `.env*.example` domain templates while leaving real `.env` files untouched.
 
 ### Fixed
 

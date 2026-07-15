@@ -51,6 +51,8 @@ overrides:
   webpack-dev-server@<5.2.5: 5.2.5
   http-proxy-middleware@>=2.0.0 <2.0.10: 2.0.10
 
+packageExtensionsChecksum: sha256-+4NdHSAD65eskCJ/YeZchJ6Lw62AhP4sRAAHP3tp44w=
+
 importers:
 
   .:
@@ -29259,6 +29261,7 @@ snapshots:
   react-native-worklets@0.10.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7)(supports-color@7.2.0))(react@19.2.7):
     dependencies:
       '@babel/core': 7.29.7(supports-color@7.2.0)
+      '@babel/generator': 7.29.7
       '@babel/plugin-transform-arrow-functions': 7.29.7(@babel/core@7.29.7)
       '@babel/plugin-transform-class-properties': 7.29.7(@babel/core@7.29.7)
       '@babel/plugin-transform-classes': 7.29.7(@babel/core@7.29.7)
@@ -29268,6 +29271,7 @@ snapshots:
       '@babel/plugin-transform-template-literals': 7.29.7(@babel/core@7.29.7)
       '@babel/plugin-transform-unicode-regex': 7.29.7(@babel/core@7.29.7)
       '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
+      '@babel/traverse': 7.29.7
       '@babel/types': 7.29.7
       '@react-native/metro-config': 0.86.0(@babel/core@7.29.7)
       convert-source-map: 2.0.0

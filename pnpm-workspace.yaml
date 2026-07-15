@@ -51,6 +51,15 @@ overrides:
   'webpack-dev-server@<5.2.5': '5.2.5'
   'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
 
+# react-native-worklets 0.10.2 imports these Babel packages from its compiled
+# plugin without declaring them. Keep the fix scoped to that exact release so
+# pnpm's isolated linker produces a reproducible mobile export.
+packageExtensions:
+  'react-native-worklets@0.10.2':
+    dependencies:
+      '@babel/generator': '7.29.7'
+      '@babel/traverse': '7.29.7'
+
 # Escape hatch for the hard audit:ci gate: when an advisory has no upstream
 # fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.
 auditConfig:

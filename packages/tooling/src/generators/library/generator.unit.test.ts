@@ -52,6 +52,20 @@ describe('library generator', () => {
         /already exists/,
       );
     });
+
+    it('rejects clone-style variants beside an existing library owner', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+
+      await libraryGenerator(tree, { name: 'money-utils', kind: 'common', skipFormat: true });
+
+      for (const name of ['money-utils-new', 'money-utils-v2', 'money-utils-clone']) {
+        await assert.rejects(
+          () => libraryGenerator(tree, { name, kind: 'common', skipFormat: true }),
+          /Modify the existing owner in place/,
+        );
+      }
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -110,20 +124,30 @@ describe('library generator', () => {
       assert.equal(config.includes('../coverage/'), false);
     });
 
-    it('accepts custom tags', async () => {
+    it('rejects custom roots and tags that bypass ownership boundaries', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');
 
-      await libraryGenerator(tree, {
-        name: 'shared-utils',
-        kind: 'backend',
-        tags: 'custom:lib,type:utility',
-        skipFormat: true,
-      });
-
-      const projectJson = JSON.parse(tree.read('libs/backend/common/shared-utils/lib/project.json', 'utf8')!);
-      assert.ok(projectJson.tags.includes('custom:lib'));
-      assert.ok(projectJson.tags.includes('type:utility'));
+      await assert.rejects(
+        () =>
+          libraryGenerator(tree, {
+            name: 'shared-utils',
+            kind: 'backend',
+            directory: 'libs/custom/shared-utils',
+            skipFormat: true,
+          }),
+        /Custom library directories are disabled/,
+      );
+      await assert.rejects(
+        () =>
+          libraryGenerator(tree, {
+            name: 'shared-utils',
+            kind: 'backend',
+            tags: 'custom:lib,type:utility',
+            skipFormat: true,
+          }),
+        /Custom library tags are disabled/,
+      );
     });
   });
 

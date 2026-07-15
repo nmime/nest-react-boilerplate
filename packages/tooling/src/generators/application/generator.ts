@@ -9,7 +9,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { validateName, generateNames } from '../names.ts';
+import { cloneStyleBaseName, findAdjacentOwner, validateName, generateNames } from '../names.ts';
 
 // ---------------------------------------------------------------------------
 
@@ -18,7 +18,9 @@ export interface ApplicationGeneratorOptions {
   kind: 'frontend' | 'backend';
   renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'worker';
   port?: number;
+  /** Compatibility input rejected at runtime; custom roots violate ownership. */
   directory?: string;
+  /** Compatibility input rejected at runtime; custom tags bypass boundaries. */
   tags?: string;
   skipFormat?: boolean;
 }
@@ -52,6 +54,49 @@ function computeAppTags(kind: string, name: string): string[] {
     return ['platform:backend', 'type:backend-app', `scope:${scope}`];
   }
   return ['platform:frontend', 'type:frontend-app', `scope:${scope}`, 'fsd:layer:app'];
+}
+
+function collectUsedAppPorts(tree: Tree): Set<number> {
+  const ports = new Set<number>();
+  const pending = ['apps'];
+  const patterns = [/\bport\s*:\s*(\d{2,5})/giu, /--port(?:=|\s+)(\d{2,5})/giu, /PORT\s*\?\?\s*(\d{2,5})/gu];
+
+  while (pending.length > 0) {
+    const directory = pending.pop();
+    if (!directory) {
+      continue;
+    }
+    for (const child of tree.children(directory)) {
+      const path = `${directory}/${child}`;
+      if (!tree.isFile(path)) {
+        pending.push(path);
+        continue;
+      }
+      if (!/\.(?:[cm]?[jt]s|json)$/u.test(path)) {
+        continue;
+      }
+      const content = tree.read(path, 'utf8') ?? '';
+      for (const pattern of patterns) {
+        pattern.lastIndex = 0;
+        for (const match of content.matchAll(pattern)) {
+          ports.add(Number(match[1]));
+        }
+      }
+    }
+  }
+
+  return ports;
+}
+
+function nextAvailablePort(kind: 'frontend' | 'backend', usedPorts: ReadonlySet<number>): number {
+  let port = kind === 'frontend' ? 4200 : 3100;
+  while (usedPorts.has(port) && port < 65535) {
+    port += 1;
+  }
+  if (port > 65535) {
+    throw new Error(`No available local ${kind} application port remains.`);
+  }
+  return port;
 }
 
 function depth(dir: string): number {
@@ -1151,26 +1196,54 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
     );
   }
 
-  const port = options.port ?? (options.kind === 'frontend' ? 4200 : 3100);
+  const usedPorts = collectUsedAppPorts(tree);
+  if (renderer === 'worker' && options.port !== undefined) {
+    throw new Error('Worker applications do not expose an HTTP port; omit --port.');
+  }
+  const port = options.port ?? (renderer === 'worker' ? 3100 : nextAvailablePort(options.kind, usedPorts));
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('Application port must be an integer between 1 and 65535.');
+  }
+  if (renderer !== 'worker' && options.port !== undefined && usedPorts.has(port)) {
+    throw new Error(`Application port ${port} is already used by another app. Choose a free port or omit --port.`);
   }
 
   const names = generateNames(options.name);
   const projectName = names.kebab;
+
+  const reservedOwners = new Set(['app', 'default-app', 'example-app', 'sample-app', 'starter-app', 'template-app']);
+  if (reservedOwners.has(cloneStyleBaseName(projectName))) {
+    throw new Error(`"${projectName}" is not a product owner. Choose the real application name and ownership.`);
+  }
+  if (options.directory) {
+    throw new Error(
+      'Custom application directories are disabled; use the canonical apps/frontend or apps/backend root.',
+    );
+  }
+  if (options.tags) {
+    throw new Error('Custom application tags are disabled; ownership tags are derived from application kind and name.');
+  }
 
   const existing = findExistingProject(tree, projectName);
   if (existing) {
     throw new Error(`Application "${existing}" already exists. Choose a different name.`);
   }
 
-  const dir = options.directory ?? computeAppDirectory(options.kind, names.kebab);
-  const tags = options.tags
-    ? options.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean)
-    : computeAppTags(options.kind, names.kebab);
+  const projects = getProjects(tree);
+  const adjacentOwner = findAdjacentOwner(
+    projectName,
+    [...projects.entries()]
+      .filter(([, config]) => config.projectType === 'application')
+      .map(([name, config]) => ({ name, root: config.root })),
+  );
+  if (adjacentOwner) {
+    throw new Error(
+      `Refusing adjacent application "${projectName}" beside existing owner "${adjacentOwner}". Modify the existing owner in place.`,
+    );
+  }
+
+  const dir = computeAppDirectory(options.kind, names.kebab);
+  const tags = computeAppTags(options.kind, names.kebab);
 
   if (options.kind === 'backend') {
     createBackendApp(tree, names, dir, tags, renderer as 'nest-api' | 'worker', port);

@@ -13,7 +13,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { generateNames, validateName } from '../names.ts';
+import { findAdjacentOwner, generateNames, validateName } from '../names.ts';
 import { readJsonFile, writeJsonFile } from '../../setup/adapters/nx-tree.ts';
 
 // ---------------------------------------------------------------------------
@@ -575,6 +575,9 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   if (nameError) {
     throw new Error(nameError);
   }
+  if (options.force) {
+    throw new Error('--force regeneration is disabled. Modify the existing feature owner in place.');
+  }
   if (!options.apiApp || !options.frontendApp) {
     throw new Error(
       'Feature generation requires explicit --api-app and --frontend-app owners; this monorepo has no default application.',
@@ -587,6 +590,18 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   const migrationTimestamp = String(options.migrationTimestamp ?? defaultMigrationTimestamp());
   if (!/^\d{14}$/.test(migrationTimestamp)) {
     throw new Error('--migration-timestamp must contain exactly 14 digits (YYYYMMDDHHmmss).');
+  }
+
+  const adjacentOwner = findAdjacentOwner(
+    names.kebab,
+    [...getProjects(tree).entries()]
+      .filter(([, config]) => config.root?.includes('/feature/'))
+      .map(([name, config]) => ({ name, root: config.root })),
+  );
+  if (adjacentOwner) {
+    throw new Error(
+      `Refusing adjacent feature "${names.kebab}" beside existing owner "${adjacentOwner}". Modify the existing owner in place.`,
+    );
   }
 
   const validApiApps = listApiApps(tree);
@@ -607,19 +622,19 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
 
   const files = createBackendTemplateFiles(names, frontendRoot, migrationTimestamp);
 
-  if (!options.force) {
-    const existingFiles = findExistingFiles(tree, files);
-    const existingAliases = findExistingTsconfigAliases(tree, names);
-    if (existingFiles.length > 0 || existingAliases.length > 0) {
-      const conflicts: string[] = [];
-      for (const p of existingFiles) {
-        conflicts.push(`File exists: ${p}`);
-      }
-      for (const a of existingAliases) {
-        conflicts.push(`Tsconfig alias exists: ${a}`);
-      }
-      throw new Error(`Refusing to overwrite existing files or aliases. Re-run with --force:\n${conflicts.join('\n')}`);
+  const existingFiles = findExistingFiles(tree, files);
+  const existingAliases = findExistingTsconfigAliases(tree, names);
+  if (existingFiles.length > 0 || existingAliases.length > 0) {
+    const conflicts: string[] = [];
+    for (const p of existingFiles) {
+      conflicts.push(`File exists: ${p}`);
     }
+    for (const a of existingAliases) {
+      conflicts.push(`Tsconfig alias exists: ${a}`);
+    }
+    throw new Error(
+      `Refusing to overwrite existing files or aliases. Modify the existing feature owner in place:\n${conflicts.join('\n')}`,
+    );
   }
 
   for (const file of files) {

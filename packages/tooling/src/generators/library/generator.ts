@@ -11,7 +11,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { validateName, generateNames } from '../names.ts';
+import { findAdjacentOwner, validateName, generateNames } from '../names.ts';
 
 // ---------------------------------------------------------------------------
 
@@ -21,7 +21,9 @@ export interface LibraryGeneratorOptions {
   type?: 'common' | 'util' | 'ui' | 'sdk' | 'feature-main' | 'feature-shared' | 'data-access' | 'test-util' | 'asset';
   scope?: string;
   fsdLayer?: 'shared' | 'entities' | 'features' | 'widgets' | 'pages';
+  /** Compatibility input rejected at runtime; custom roots violate ownership. */
   directory?: string;
+  /** Compatibility input rejected at runtime; custom tags bypass boundaries. */
   tags?: string;
   skipFormat?: boolean;
 }
@@ -644,21 +646,35 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
   }
 
   const names = generateNames(options.name);
+  if (options.directory) {
+    throw new Error('Custom library directories are disabled; choose kind, type, and scope for the canonical root.');
+  }
+  if (options.tags) {
+    throw new Error('Custom library tags are disabled; ownership tags are derived from kind, type, scope, and layer.');
+  }
   const [inferredScope] = names.kebab.split('-');
   const scope = options.scope?.trim() || inferredScope || names.kebab;
   const fsdLayer = options.fsdLayer ?? (type === 'feature-main' ? 'features' : 'shared');
   const projectName = computeProjectName(options.kind, names.kebab, type, scope);
-  const dir = options.directory ?? computeDirectory(options.kind, names.kebab, type, scope);
-  const tags = options.tags
-    ? options.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean)
-    : computeTags(options.kind, type, scope, fsdLayer);
+  const dir = computeDirectory(options.kind, names.kebab, type, scope);
+  const tags = computeTags(options.kind, type, scope, fsdLayer);
 
   const existing = findExistingProject(tree, projectName);
   if (existing) {
     throw new Error(`Library "${existing}" already exists. Choose a different name.`);
+  }
+
+  const projects = getProjects(tree);
+  const adjacentOwner = findAdjacentOwner(
+    names.kebab,
+    [...projects.entries()]
+      .filter(([, config]) => config.projectType === 'library')
+      .map(([name, config]) => ({ name, root: config.root })),
+  );
+  if (adjacentOwner) {
+    throw new Error(
+      `Refusing adjacent library "${names.kebab}" beside existing owner "${adjacentOwner}". Modify the existing owner in place.`,
+    );
   }
 
   switch (options.kind) {

@@ -75,17 +75,17 @@ pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app
 
 The generated files are identical because both paths invoke `@repo/tooling:feature`.
 
-### Additional options
+### Explicit owners
 
-The `pnpm nrb add feature` command supports `--force`, `--api-app`, and `--frontend-app`:
+The `pnpm nrb add feature` command requires both owning applications:
 
 ```bash
-# Force overwrite existing files:
-pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --force
-
 # Target both owning applications explicitly:
 pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ```
+
+Existing features are modified in place. The unified CLI rejects `--force`,
+and clone-style names are rejected when their base owner already exists.
 
 ## Migration checklist
 

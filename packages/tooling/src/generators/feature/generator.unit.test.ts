@@ -106,7 +106,7 @@ describe('feature generator', () => {
       );
     });
 
-    it('allows duplicate feature names with --force', async () => {
+    it('rejects duplicate feature regeneration with --force', async () => {
       const tree = await createTree();
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
 
@@ -115,8 +115,25 @@ describe('feature generator', () => {
       // First generation
       await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
 
-      // Second generation with force succeeds
-      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true, force: true });
+      await assert.rejects(
+        () => featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true, force: true }),
+        /Modify the existing feature owner in place/,
+      );
+    });
+
+    it('rejects clone-style variants beside an existing feature owner', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+
+      const { featureGenerator } = await import('./generator.js');
+      await featureGenerator(tree, { ...featureTargets, name: 'invoices', skipFormat: true });
+
+      for (const name of ['invoices-new', 'invoices-v2', 'invoices-copy']) {
+        await assert.rejects(
+          () => featureGenerator(tree, { ...featureTargets, name, skipFormat: true }),
+          /Modify the existing owner in place/,
+        );
+      }
     });
   });
 

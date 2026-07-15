@@ -24,7 +24,7 @@ Use this workflow when creating an application, library, or vertical product fea
 5. Run without `--dry-run` only after the selected roots and ownership are correct.
 6. When an app or library adds a package manifest, run `pnpm install` to update the lockfile and workspace links, then prove `pnpm install --frozen-lockfile`; never hand-edit `pnpm-lock.yaml`.
 7. For a new deployable, complete the explicit selection, environment, local runtime, Docker/Helm, DNS/TLS, probes/resources, observability, and e2e registration checklist in `docs/scaffolding-and-extension.md`. A generated source root is not automatically public or deployed.
-8. For a feature, replace the generic model fields with product invariants, review RBAC, validation, indexes, migration rollback, and repository error behavior. Never use `--force` as a shortcut for editing an existing product feature; regeneration requires explicit maintainer intent and a reviewed dry run.
+8. For a feature, replace the generic model fields with product invariants, review RBAC, validation, indexes, migration rollback, and repository error behavior. Never use `--force` or regenerate an existing product feature; modify its owning files in place.
 9. Compile the API, then run `pnpm api:contracts` and `pnpm api:clients`. Never hand-edit generated OpenAPI or client output.
 10. Register the generated FSD page through the owning app's public route boundary with translated copy.
 11. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states.
@@ -32,6 +32,7 @@ Use this workflow when creating an application, library, or vertical product fea
 ## Required verification
 
 ```bash
+pnpm run agent:verify
 pnpm run tooling:static-check
 pnpm run scaffold:verify
 pnpm run lib:configs:check

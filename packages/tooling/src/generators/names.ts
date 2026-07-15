@@ -81,3 +81,52 @@ export function validateName(raw: string): string | null {
   }
   return null;
 }
+
+const adjacentOwnershipSuffix = /-(?:clone|copy|new|v\d+)$/u;
+const adjacentOwnershipPrefix = /^(?:(?:clone|copy)-of|clone|copy|new)-/u;
+
+export interface ExistingOwner {
+  name: string;
+  root?: string;
+}
+
+export function cloneStyleBaseName(raw: string): string {
+  let base = toKebab(raw);
+  for (;;) {
+    const next = base.replace(adjacentOwnershipPrefix, '').replace(adjacentOwnershipSuffix, '');
+    if (next === base) {
+      return base;
+    }
+    base = next;
+  }
+}
+
+/**
+ * Return the existing owner that a clone-style name is trying to shadow.
+ *
+ * The guard is deliberately contextual: `payments-v2` remains a valid new
+ * owner when no `payments` owner exists, but it cannot be generated beside an
+ * existing `payments` app, library, or feature. That keeps version-like words
+ * available to real products without allowing agents to bypass ownership.
+ */
+export function findAdjacentOwner(raw: string, owners: Iterable<ExistingOwner>): string | null {
+  const requested = toKebab(raw);
+  const base = cloneStyleBaseName(requested);
+  if (!base || base === requested) {
+    return null;
+  }
+
+  for (const owner of owners) {
+    const projectName = owner.name.toLowerCase();
+    const rootSegments = (owner.root ?? '')
+      .split('/')
+      .map((segment) => toKebab(segment))
+      .filter(Boolean);
+
+    if (projectName === base || projectName.endsWith(`-${base}`) || rootSegments.includes(base)) {
+      return owner.name;
+    }
+  }
+
+  return null;
+}

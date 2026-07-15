@@ -29,6 +29,18 @@ library, or feature must modify that owner in place. A new generator root is
 correct only when the product needs genuinely new runtime or library ownership;
 never create a sibling clone, `-new`/`-v2` variant, generic starter app, or
 nested copy of this repository to avoid understanding the existing structure.
+The application, library, and feature generators enforce this for obvious
+clone-style names when the base owner already exists, and `starter-app` is a
+reserved non-product application name together with other generic
+default/example/template names. A version-like name remains valid when
+it represents genuinely new ownership and has no existing base owner.
+Run `pnpm agent:verify` to exercise these behavior guards together with
+repeatable setup and the canonical agent-instruction contract.
+Application and library roots and Nx ownership tags are derived by the
+generators; custom `--directory` and `--tags` escape hatches are rejected.
+HTTP application ports are selected from the first free canonical range value;
+an explicit `--port` is accepted only when it does not collide with an existing
+application. Workers reject `--port` because they do not expose HTTP.
 
 ## Fresh clone to verified product workspace
 
@@ -245,8 +257,9 @@ Before completion:
 
 ## Generator maintenance
 
-Do not create a second scaffold path. Do not use generator `--force` as a
-substitute for editing existing product code. Extend the custom generators under
+Do not create a second scaffold path. Generator `--force` is disabled for
+applications, libraries, and features; edit existing product code in place.
+Extend the custom generators under
 `packages/tooling/src/generators/**`, update `generators.json` and the unified
 CLI only when a new generator is genuinely needed, and add regression tests.
 

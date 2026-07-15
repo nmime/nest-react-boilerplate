@@ -52,14 +52,12 @@ pnpm generate:feature invoices -- \
 pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
 ```
 
-### Force overwrite existing files
+### Change an existing feature
 
-```bash
-pnpm nrb add feature invoices \
-  --api-app user-app-api \
-  --frontend-app user-app \
-  --force
-```
+Do not run the generator again and do not create an `invoices-new` or
+`invoices-v2` slice. Inspect the owning API module, backend feature libraries,
+PostgreSQL library, and frontend route, then modify those files in place.
+`pnpm nrb add --force` is intentionally rejected.
 
 ## 2. Verify backend ownership
 

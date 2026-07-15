@@ -127,13 +127,8 @@ pnpm run test:docker-smoke
 error TS2307: Cannot find module '@app/backend-feature-invoices-main'
 ```
 
-**Fix**: The path alias was generated but `tsconfig.base.json` wasn't updated correctly. Run:
-
-```bash
-pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --force
-```
-
-Or manually add the alias to `tsconfig.base.json`:
+**Fix**: Do not regenerate the feature. Confirm the owning library path and add
+the missing alias to `tsconfig.base.json`:
 
 ```json
 {

@@ -63,6 +63,46 @@ describe('application generator', () => {
         /already exists/,
       );
     });
+
+    it('rejects clone-style variants beside an existing application owner', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, { name: 'customer-portal', kind: 'frontend', skipFormat: true });
+
+      for (const name of [
+        'customer-portal-new',
+        'customer-portal-v2',
+        'customer-portal-copy',
+        'copy-of-customer-portal',
+      ]) {
+        await assert.rejects(
+          () => applicationGenerator(tree, { name, kind: 'frontend', skipFormat: true }),
+          /Modify the existing owner in place/,
+        );
+      }
+    });
+
+    it('rejects the generic starter application owner and clone variants', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      for (const name of ['app', 'default-app', 'example-app', 'starter-app', 'starter-app-new', 'template-app-v2']) {
+        await assert.rejects(
+          () => applicationGenerator(tree, { name, kind: 'frontend', skipFormat: true }),
+          /not a product owner/,
+        );
+      }
+    });
+
+    it('allows a version-like name when it is genuinely new ownership', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, { name: 'protocol-v2', kind: 'backend', skipFormat: true });
+
+      assert.ok(tree.exists('apps/backend/protocol/protocol-v2/project.json'));
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -108,6 +148,23 @@ describe('application generator', () => {
       const main = tree.read('apps/backend/billing/billing-worker/src/main.ts', 'utf8')!;
       assert.match(main, /createApplicationContext/);
       assert.equal(main.includes('bootstrapNestApi'), false);
+    });
+
+    it('rejects an HTTP port for a worker process', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'billing-worker',
+            kind: 'backend',
+            renderer: 'worker',
+            port: 3110,
+            skipFormat: true,
+          }),
+        /do not expose an HTTP port/,
+      );
     });
     it('creates project.json with correct structure', async () => {
       const tree = await createTree();
@@ -228,34 +285,36 @@ describe('application generator', () => {
       assert.equal(config.includes('../coverage/'), false);
     });
 
-    it('accepts custom directory', async () => {
+    it('rejects custom directories outside canonical ownership', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
-      await applicationGenerator(tree, {
-        name: 'my-api',
-        kind: 'backend',
-        directory: 'apps/custom/my-api',
-        skipFormat: true,
-      });
-
-      assert.ok(tree.exists('apps/custom/my-api/project.json'));
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'my-api',
+            kind: 'backend',
+            directory: 'apps/custom/my-api',
+            skipFormat: true,
+          }),
+        /Custom application directories are disabled/,
+      );
     });
 
-    it('accepts custom tags', async () => {
+    it('rejects custom tags that bypass ownership boundaries', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
-      await applicationGenerator(tree, {
-        name: 'my-api',
-        kind: 'backend',
-        tags: 'custom:tag,another:tag',
-        skipFormat: true,
-      });
-
-      const projectJson = JSON.parse(tree.read('apps/backend/my/my-api/project.json', 'utf8')!);
-      assert.ok(projectJson.tags.includes('custom:tag'));
-      assert.ok(projectJson.tags.includes('another:tag'));
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'my-api',
+            kind: 'backend',
+            tags: 'custom:tag,another:tag',
+            skipFormat: true,
+          }),
+        /Custom application tags are disabled/,
+      );
     });
 
     it('generates multi-word app names correctly', async () => {
@@ -391,6 +450,39 @@ describe('application generator', () => {
 
       const viteConfig = tree.read('apps/frontend/portal/vite.config.mts', 'utf8')!;
       assert.match(viteConfig, /port: 4317/);
+    });
+
+    it('selects the first free canonical port and rejects explicit collisions', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'customer-portal',
+        kind: 'frontend',
+        renderer: 'vite',
+        port: 4200,
+        skipFormat: true,
+      });
+      await applicationGenerator(tree, {
+        name: 'staff-portal',
+        kind: 'frontend',
+        renderer: 'vite',
+        skipFormat: true,
+      });
+
+      const config = tree.read('apps/frontend/staff-portal/vite.config.mts', 'utf8')!;
+      assert.match(config, /server: \{ host: "localhost", port: 4201 \}/);
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'partner-portal',
+            kind: 'frontend',
+            renderer: 'vite',
+            port: 4200,
+            skipFormat: true,
+          }),
+        /port 4200 is already used/,
+      );
     });
 
     it('creates tsconfig files', async () => {

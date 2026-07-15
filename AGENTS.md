@@ -68,9 +68,9 @@ Always-loaded policy for human and AI contributors to
   existing app, library, or feature, modify that owner in place; `pnpm nrb add`
   is only for genuinely new ownership. Never create an adjacent clone, `-new`,
   `-v2`, `starter-app`, or nested copy of this boilerplate as a workaround.
-- `--force` is not a normal editing path. Use feature regeneration only when a
-  maintainer explicitly requests it and the dry-run proves every overwritten
-  file is intended; app and library roots are never overwritten by generators.
+- `pnpm nrb add --force` and direct feature regeneration are forbidden. Modify
+  existing product code in place; app, library, and feature roots are never
+  overwritten by generators.
 - No deployable is the repository's default application. Admin, user, landing,
   site, mobile, API, worker, and newly generated apps keep separate
   product/runtime ownership; do not invent an additional generic deployable.
@@ -133,3 +133,7 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 Pick the smallest command set that proves the change, then broaden when touching
 shared/public APIs. Always run `git diff --check`; for docs, run Prettier on the
 touched Markdown when dependencies are available.
+
+Run `pnpm agent:verify` when setup, generators, ownership rules, or agent-facing
+scaffolding guidance changes. It exercises repeatable setup plus the executable
+in-place-first application, library, and feature guards.

@@ -165,7 +165,7 @@ Pass the adapter to `apply(operations, adapter, options)`.
 The feature generator lives in
 `packages/tooling/src/generators/feature/generator.ts`. It:
 
-1. Parses args (`--name`, `--dry-run`, `--force`, `--api-app`).
+1. Parses explicit owner args and rejects regeneration of existing features.
 2. Generates template files for backend DTOs, module, controller, service, PostgreSQL entity, and frontend client.
 3. Updates `tsconfig.base.json` path aliases.
 4. Outputs next steps.

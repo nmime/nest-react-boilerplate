@@ -7,7 +7,17 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { toKebab, toCamel, toPascal, toTitle, toConstant, generateNames, validateName } from './names.js';
+import {
+  cloneStyleBaseName,
+  findAdjacentOwner,
+  toKebab,
+  toCamel,
+  toPascal,
+  toTitle,
+  toConstant,
+  generateNames,
+  validateName,
+} from './names.js';
 
 describe('names utilities', () => {
   // -----------------------------------------------------------------------
@@ -108,6 +118,31 @@ describe('names utilities', () => {
       assert.equal(names.kebab, 'user-profile-settings-v2');
       assert.equal(names.pascal, 'UserProfileSettingsV2');
       assert.equal(names.camel, 'userProfileSettingsV2');
+    });
+  });
+
+  describe('findAdjacentOwner', () => {
+    const owners = [
+      { name: 'user-app', root: 'apps/frontend/app' },
+      { name: '@app/backend-feature-invoices-main', root: 'libs/backend/feature/invoices/main/lib' },
+    ];
+
+    it('finds clone-style variants through project names and ownership paths', () => {
+      assert.equal(findAdjacentOwner('user-app-v2', owners), 'user-app');
+      assert.equal(findAdjacentOwner('invoices-new', owners), '@app/backend-feature-invoices-main');
+      assert.equal(findAdjacentOwner('invoices-new-v2', owners), '@app/backend-feature-invoices-main');
+      assert.equal(findAdjacentOwner('copy-of-invoices', owners), '@app/backend-feature-invoices-main');
+    });
+
+    it('does not reject a version-like name without an existing base owner', () => {
+      assert.equal(findAdjacentOwner('protocol-v2', owners), null);
+    });
+  });
+
+  describe('cloneStyleBaseName', () => {
+    it('removes repeated clone prefixes and suffixes', () => {
+      assert.equal(cloneStyleBaseName('customer-portal-new-v2-copy'), 'customer-portal');
+      assert.equal(cloneStyleBaseName('new-copy-of-customer-portal'), 'customer-portal');
     });
   });
 

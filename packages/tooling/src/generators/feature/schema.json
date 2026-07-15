@@ -32,12 +32,6 @@
       "description": "Optional deterministic migration timestamp in YYYYMMDDHHmmss form",
       "x-priority": "optional"
     },
-    "force": {
-      "type": "boolean",
-      "description": "Overwrite existing files without prompting",
-      "default": false,
-      "x-priority": "optional"
-    },
     "dryRun": {
       "type": "boolean",
       "description": "Show what would be generated without writing files",

@@ -118,23 +118,23 @@ Exit codes: `0` all checks pass (or skip/warn), `1` any check failed.
 Add an app, library, or feature to the workspace.
 
 ```bash
-pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--dry-run]
+pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--port <port>] [--dry-run]
 pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> [--scope <scope>]
-pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run] [--force]
+pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run]
 ```
 
-| Flag                    | Type    | Description                                               |
-| ----------------------- | ------- | --------------------------------------------------------- |
-| `--dry-run`             | boolean | Show what would be done.                                  |
-| `--force`               | boolean | Overwrite existing feature files.                         |
-| `--kind <kind>`         | string  | Required app/lib platform.                                |
-| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, or `worker`. |
-| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.  |
-| `--scope <scope>`       | string  | Owning domain scope for a library.                        |
-| `--api-app <name>`      | string  | Required API application that owns a feature.             |
-| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.       |
-| `--help`, `-h`          | boolean | Show usage.                                               |
-| `--`                    |         | Pass remaining args to the underlying generator.          |
+| Flag                    | Type    | Description                                                        |
+| ----------------------- | ------- | ------------------------------------------------------------------ |
+| `--dry-run`             | boolean | Show what would be done.                                           |
+| `--kind <kind>`         | string  | Required app/lib platform.                                         |
+| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, or `worker`.          |
+| `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port. |
+| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.           |
+| `--scope <scope>`       | string  | Owning domain scope for a library.                                 |
+| `--api-app <name>`      | string  | Required API application that owns a feature.                      |
+| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                |
+| `--help`, `-h`          | boolean | Show usage.                                                        |
+| `--`                    |         | Pass remaining args to the underlying generator.                   |
 
 Examples:
 
@@ -207,10 +207,11 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 ### `project:generate-vertical-slice`
 
 ```bash
-pnpm nrb project:generate-vertical-slice <name> --api-app <api-name> --frontend-app <app-name> [--dry-run] [--force]
+pnpm nrb project:generate-vertical-slice <name> --api-app <api-name> --frontend-app <app-name> [--dry-run]
 ```
 
 Delegates to `add feature`; it does not maintain a second template engine.
+Existing features must be modified in place; regeneration is rejected.
 
 ## Frontend commands
 

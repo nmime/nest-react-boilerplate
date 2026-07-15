@@ -49,6 +49,11 @@ describe("parseAddArgs", () => {
     assert.equal(args.force, true);
   });
 
+  it("parses an explicit application port", () => {
+    assert.equal(parseAddArgs(["app", "portal", "--port", "4210"]).port, 4210);
+    assert.equal(parseAddArgs(["app", "portal", "--port=4211"]).port, 4211);
+  });
+
   it("parses --help", () => {
     const args = parseAddArgs(["--help"]);
     assert.equal(args.help, true);
@@ -144,15 +149,15 @@ describe("runAddCommand", () => {
     assert.ok(capturedArgs?.includes("--dryRun=true"));
   });
 
-  it("passes --force as --force=true to Nx", async () => {
-    let capturedArgs: string[] | undefined;
+  it("refuses --force instead of regenerating an existing feature", async () => {
+    let called = false;
     const runner: NxGeneratorFn = (args) => {
-      capturedArgs = args.generatorArgs;
+      called = true;
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(featureArgs("billing", "--force")), runner);
-    assert.ok(capturedArgs?.includes("--force=true"));
+    assert.equal(await runAddCommand(makeContext(featureArgs("billing", "--force")), runner), 1);
+    assert.equal(called, false);
   });
 
   it("passes --api-app to Nx", async () => {
@@ -255,7 +260,7 @@ describe("runAddCommand", () => {
     );
   });
 
-  it("refuses force-overwriting app and library roots", async () => {
+  it("refuses force-overwriting every ownership kind", async () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     assert.equal(
       await runAddCommand(
@@ -279,6 +284,19 @@ describe("runAddCommand", () => {
       ),
       1,
     );
+    assert.equal(await runAddCommand(makeContext(featureArgs("money", "--force")), runner), 1);
+  });
+
+  it("refuses application-only port options for other ownership kinds", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext(["lib", "money", "--kind", "common", "--type", "util", "--port", "4210"]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(await runAddCommand(makeContext(featureArgs("money", "--port", "4210")), runner), 1);
   });
 
   it("passes typed app and feature options to Nx", async () => {
@@ -289,11 +307,12 @@ describe("runAddCommand", () => {
     };
 
     await runAddCommand(
-      makeContext(["app", "portal", "--kind=frontend", "--renderer=vike"]),
+      makeContext(["app", "portal", "--kind=frontend", "--renderer=vike", "--port=4210"]),
       runner,
     );
     assert.ok(capturedArgs.includes("--kind=frontend"));
     assert.ok(capturedArgs.includes("--renderer=vike"));
+    assert.ok(capturedArgs.includes("--port=4210"));
 
     await runAddCommand(
       makeContext(featureArgs("billing", "--frontend-app=admin-app")),

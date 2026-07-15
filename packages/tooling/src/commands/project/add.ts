@@ -27,6 +27,7 @@ interface AddArgs {
   frontendApp?: string;
   entityKind?: "frontend" | "backend" | "common";
   renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "worker";
+  port?: number;
   libraryType?: string;
   scope?: string;
   /** Extra arguments forwarded to the underlying generator. */
@@ -92,6 +93,14 @@ export function parseAddArgs(argv: string[]): AddArgs {
     }
     if (arg.startsWith("--renderer=")) {
       result.renderer = arg.slice("--renderer=".length) as AddArgs["renderer"];
+      continue;
+    }
+    if (arg === "--port") {
+      result.port = Number(argv[++i]);
+      continue;
+    }
+    if (arg.startsWith("--port=")) {
+      result.port = Number(arg.slice("--port=".length));
       continue;
     }
     if (arg === "--type") {
@@ -213,8 +222,15 @@ export async function runAddCommand(
     return 1;
   }
 
-  if (args.force && args.kind !== "feature") {
-    process.stderr.write("Error: --force is supported only for feature regeneration; app and library roots are never overwritten.\n");
+  if (args.force) {
+    process.stderr.write(
+      "Error: --force is not supported by nrb add. Modify the existing app, library, or feature owner in place.\n",
+    );
+    return 1;
+  }
+
+  if (args.port !== undefined && args.kind !== "app") {
+    process.stderr.write("Error: --port is supported only when adding an application.\n");
     return 1;
   }
 
@@ -235,11 +251,11 @@ function runAddWithNx(
   const genArgs = [`--name=${name}`];
 
   if (args.dryRun) genArgs.push("--dryRun=true");
-  if (args.force) genArgs.push("--force=true");
   if (args.apiApp) genArgs.push(`--apiApp=${args.apiApp}`);
   if (args.frontendApp) genArgs.push(`--frontendApp=${args.frontendApp}`);
   if (args.entityKind) genArgs.push(`--kind=${args.entityKind}`);
   if (args.renderer) genArgs.push(`--renderer=${args.renderer}`);
+  if (args.port !== undefined) genArgs.push(`--port=${args.port}`);
   if (args.libraryType) genArgs.push(`--type=${args.libraryType}`);
   if (args.scope) genArgs.push(`--scope=${args.scope}`);
   for (const e of args.extra) genArgs.push(e);
@@ -288,11 +304,11 @@ Kind:
 
 Options:
   --dry-run             Show what would be done without making changes.
-  --force               Regenerate an existing feature; never overwrites app/lib roots.
   --api-app <name>      Required API application that owns a feature.
   --frontend-app <name> Required frontend application that hosts a feature.
   --kind <kind>         App/lib platform: frontend, backend, or common.
   --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, or worker.
+  --port <number>       Optional local app port; omit it to select the first free canonical port.
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
                         feature-shared, data-access, test-util, or asset).
   --scope <scope>       Nx ownership scope tag for a library.

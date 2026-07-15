@@ -31,7 +31,7 @@ Important env values:
 - `TELEGRAM_AUTH_BOT_USERNAME`
 - `TELEGRAM_AUTH_MAX_AGE_SECONDS`
 - `TELEGRAM_AUTH_REPLAY_TTL_SECONDS`
-- `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://app.example.com/telegram-mini-app`)
+- `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://user-app.example.com/telegram-mini-app`)
 - `TELEGRAM_WEB_APP_URL` / `TELEGRAM_TMA_URL` (backward-compatible aliases consumed by the bot resolver)
 - `TELEGRAM_LINK_TOKEN_TTL_SECONDS`
 

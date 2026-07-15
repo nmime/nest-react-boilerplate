@@ -15,8 +15,8 @@ secrets:
 
 config:
   nodeEnv: production
-  corsOrigins: https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
-  authJwtIssuer: https://auth.example.com
+  corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://landing-app.example.com,https://site-app.example.com,https://mobile-app.example.com
+  authJwtIssuer: https://auth-app-api.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
   # Expired persisted refresh/action token cleanup. Intervals below 60000ms are
@@ -278,52 +278,52 @@ ingress:
   # explicit in an environment values file and verify asset routing before
   # traffic cutover; see docs/frontend-deployment-topology.md.
   hosts:
-    - host: example.com
+    - host: landing-app.example.com
       service: landing-app
       paths: ['/']
-    - host: site.example.com
+    - host: site-app.example.com
       service: site-app
       paths: ['/']
-    - host: app.example.com
+    - host: user-app.example.com
       service: user-app
       paths: ['/']
-    - host: mobile.example.com
+    - host: mobile-app.example.com
       service: mobile-app
       paths: ['/']
-    - host: admin.example.com
+    - host: admin-app.example.com
       service: admin-app
       paths: ['/']
-    - host: auth.example.com
+    - host: auth-app-api.example.com
       service: auth-app-api
       paths: ['/']
-    - host: api.example.com
+    - host: user-app-api.example.com
       service: user-app-api
       paths: ['/']
-    - host: admin-api.example.com
+    - host: admin-app-api.example.com
       service: admin-app-api
       paths: ['/']
     # Bot webhook APIs are deployable but opt-in because they require provider
     # credentials and callback registration. Enable the matching app and route
     # together, then add the host to ingress.tls and provision DNS.
-    - host: discord-api.example.com
+    - host: discord-app-api.example.com
       service: discord-app-api
       paths: ['/']
       enabled: false
-    - host: telegram-api.example.com
+    - host: telegram-bot-api.example.com
       service: telegram-bot-api
       paths: ['/']
       enabled: false
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
-        - example.com
-        - site.example.com
-        - app.example.com
-        - mobile.example.com
-        - admin.example.com
-        - auth.example.com
-        - api.example.com
-        - admin-api.example.com
+        - landing-app.example.com
+        - site-app.example.com
+        - user-app.example.com
+        - mobile-app.example.com
+        - admin-app.example.com
+        - auth-app-api.example.com
+        - user-app-api.example.com
+        - admin-app-api.example.com
 
 autoscaling:
   enabled: false

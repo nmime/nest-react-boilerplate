@@ -95,9 +95,9 @@ reusable shared UI state is introduced.
 ## 6. Public hostname and API routing
 
 An additional page normally shares its app's hostname. A new frontend app does
-not: it needs an explicit product-owned hostname, same-origin or split-origin
-API routing decision, CORS/CSP updates, ingress, DNS, TLS, and deployment
-registration. See
+not: its public hostname must be `<app-id>.<root-domain>`, and it needs a
+same-origin or split-origin API routing decision, CORS/CSP updates, ingress,
+DNS, TLS, setup-catalog metadata, and deployment registration. See
 [Scaffolding and Extension Contract](../scaffolding-and-extension.md) and
 [Frontend Deployment Topology](../frontend-deployment-topology.md).
 

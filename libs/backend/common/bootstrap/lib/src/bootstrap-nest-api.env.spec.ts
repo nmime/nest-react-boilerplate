@@ -8,7 +8,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       { appName: 'test-api', port: 3010 },
       {
         AUTH_JWT_SECRET: 'development-secret',
-        CORS_ORIGINS: 'https://admin.example.com, https://app.example.com',
+        CORS_ORIGINS: 'https://admin-app.example.com, https://user-app.example.com',
         NODE_ENV: 'development',
         RATE_LIMIT_ENABLED: 'true',
         RATE_LIMIT_MAX: '25',
@@ -19,7 +19,7 @@ describe('resolveBackendEnvironmentConfig', () => {
     );
 
     expect(config).toMatchObject({
-      corsOrigins: ['https://admin.example.com', 'https://app.example.com'],
+      corsOrigins: ['https://admin-app.example.com', 'https://user-app.example.com'],
       isProduction: false,
       port: 3010,
       rateLimit: {

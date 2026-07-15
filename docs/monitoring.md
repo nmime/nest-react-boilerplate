@@ -204,7 +204,7 @@ For external uptime checks (outside your own Prometheus), use a third-party moni
 ### Recommended configuration
 
 ```
-Endpoint: https://api.example.com/health
+Endpoint: https://user-app-api.example.com/health
 Method:   GET
 Expected: HTTP 200, body contains "ok"
 Interval: 60s

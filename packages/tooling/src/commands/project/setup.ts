@@ -470,6 +470,7 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     label: app.label,
     platform: app.platform,
     classification: app.classification,
+    hostname: app.publicHostname,
     selected: selectedApps.has(app.id),
   }));
   const capabilities = Object.values(capabilityCatalog).map((capability) => ({
@@ -508,7 +509,8 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
   for (const group of groups) {
     process.stdout.write(`\n${group.label}:\n`);
     for (const app of applications.filter(group.matches)) {
-      process.stdout.write(`  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label}\n`);
+      const hostname = app.hostname ? ` — ${app.hostname}` : "";
+      process.stdout.write(`  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label}${hostname}\n`);
     }
   }
   process.stdout.write("\ncapabilities:\n");

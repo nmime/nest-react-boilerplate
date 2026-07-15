@@ -17,7 +17,7 @@ export function assertReturnUrlAllowed(returnUrl?: string | null): void {
 }
 
 // Structured origin+path comparison. Raw-string prefix matching is unsafe:
-// "https://app.example.com" would accept "https://app.example.com.evil.com".
+// "https://user-app.example.com" would accept "https://user-app.example.com.evil.com".
 // Return URLs must be absolute http(s) URLs (relative return URLs are not
 // supported; allowlist entries must be absolute origins) with no embedded
 // credentials, whose origin exactly matches an allowlist entry and whose path

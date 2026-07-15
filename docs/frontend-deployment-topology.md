@@ -13,21 +13,21 @@ frontend and enabled public API. Replace `example.com` in environment-owned
 values, preserve the one-host-per-app mapping, and include every browser origin
 in `config.corsOrigins` and TLS:
 
-| Frontend app  | Default host         | Kubernetes service |
-| ------------- | -------------------- | ------------------ |
-| `landing-app` | `example.com`        | `landing-app`      |
-| `site-app`    | `site.example.com`   | `site-app`         |
-| `user-app`    | `app.example.com`    | `user-app`         |
-| `admin-app`   | `admin.example.com`  | `admin-app`        |
-| `mobile-app`  | `mobile.example.com` | `mobile-app`       |
+| Frontend app  | Default host              | Kubernetes service |
+| ------------- | ------------------------- | ------------------ |
+| `landing-app` | `landing-app.example.com` | `landing-app`      |
+| `site-app`    | `site-app.example.com`    | `site-app`         |
+| `user-app`    | `user-app.example.com`    | `user-app`         |
+| `admin-app`   | `admin-app.example.com`   | `admin-app`        |
+| `mobile-app`  | `mobile-app.example.com`  | `mobile-app`       |
 
-| Backend app        | Default host               | Exposure |
-| ------------------ | -------------------------- | -------- |
-| `auth-app-api`     | `auth.example.com`         | enabled  |
-| `user-app-api`     | `api.example.com`          | enabled  |
-| `admin-app-api`    | `admin-api.example.com`    | enabled  |
-| `discord-app-api`  | `discord-api.example.com`  | opt-in   |
-| `telegram-bot-api` | `telegram-api.example.com` | opt-in   |
+| Backend app        | Default host                   | Exposure |
+| ------------------ | ------------------------------ | -------- |
+| `auth-app-api`     | `auth-app-api.example.com`     | enabled  |
+| `user-app-api`     | `user-app-api.example.com`     | enabled  |
+| `admin-app-api`    | `admin-app-api.example.com`    | enabled  |
+| `discord-app-api`  | `discord-app-api.example.com`  | opt-in   |
+| `telegram-bot-api` | `telegram-bot-api.example.com` | opt-in   |
 
 The Discord and Telegram APIs are disabled until their provider credentials,
 callback registration, ingress route, DNS, and TLS host are configured together.
@@ -100,9 +100,9 @@ origins:
 
 ```bash
 VITE_API_BASE_URL_MODE=split-origin \
-VITE_AUTH_API_BASE_URL=https://auth.example.com \
-VITE_USER_API_BASE_URL=https://api.example.com \
-VITE_ADMIN_API_BASE_URL=https://admin-api.example.com \
+VITE_AUTH_API_BASE_URL=https://auth-app-api.example.com \
+VITE_USER_API_BASE_URL=https://user-app-api.example.com \
+VITE_ADMIN_API_BASE_URL=https://admin-app-api.example.com \
 pnpm exec nx build admin-app
 ```
 

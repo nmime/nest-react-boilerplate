@@ -487,20 +487,20 @@ if (validateHelmStatic) {
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const frontendDomainAssignments = [
-    ['landingApp', 'landing-app', 'example.com'],
-    ['siteApp', 'site-app', 'site.example.com'],
-    ['userApp', 'user-app', 'app.example.com'],
-    ['adminApp', 'admin-app', 'admin.example.com'],
-    ['mobileApp', 'mobile-app', 'mobile.example.com'],
+    ['landingApp', 'landing-app', 'landing-app.example.com'],
+    ['siteApp', 'site-app', 'site-app.example.com'],
+    ['userApp', 'user-app', 'user-app.example.com'],
+    ['adminApp', 'admin-app', 'admin-app.example.com'],
+    ['mobileApp', 'mobile-app', 'mobile-app.example.com'],
   ];
   const coreApiDomainAssignments = [
-    ['authAppApi', 'auth-app-api', 'auth.example.com'],
-    ['userAppApi', 'user-app-api', 'api.example.com'],
-    ['adminAppApi', 'admin-app-api', 'admin-api.example.com'],
+    ['authAppApi', 'auth-app-api', 'auth-app-api.example.com'],
+    ['userAppApi', 'user-app-api', 'user-app-api.example.com'],
+    ['adminAppApi', 'admin-app-api', 'admin-app-api.example.com'],
   ];
   const optionalApiDomainAssignments = [
-    ['discordAppApi', 'discord-app-api', 'discord-api.example.com'],
-    ['telegramBotApi', 'telegram-bot-api', 'telegram-api.example.com'],
+    ['discordAppApi', 'discord-app-api', 'discord-app-api.example.com'],
+    ['telegramBotApi', 'telegram-bot-api', 'telegram-bot-api.example.com'],
   ];
   const publicDomainAssignments = [...frontendDomainAssignments, ...coreApiDomainAssignments];
   assert.equal(
@@ -511,6 +511,9 @@ if (validateHelmStatic) {
   for (const [app, service] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
     has(releaseWorkflow, `- name: ${service}`, `${app} immutable release image`);
     has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
+  }
+  for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
+    assert.equal(host, `${service}.example.com`, `${service} default domain must match its app ID`);
   }
   for (const [label, values] of [
     ['default', helmValues],

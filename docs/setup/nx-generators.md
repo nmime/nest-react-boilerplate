@@ -35,8 +35,9 @@ Frontend roots are `apps/frontend/<name>`. Backend roots are
 `apps/backend/<first-name-segment>/<name>`. Every generated root includes a
 local `README.md` and `AGENTS.md`.
 
-Generation deliberately does not publish a hostname or add the app to every
-preset/deployment. Complete the explicit registration checklist in
+Generation deliberately does not publish DNS/TLS or add the app to every
+preset/deployment. Its catalog hostname must be `<app-id>.example.com`; complete
+the explicit registration checklist in
 [Scaffolding and Extension Contract](../scaffolding-and-extension.md).
 
 Once a generated application is registered in the setup catalog, select it in

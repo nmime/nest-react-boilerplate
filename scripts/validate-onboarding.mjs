@@ -114,6 +114,18 @@ assert.deepEqual(
   actualApplications,
   'The setup catalog must contain every real Nx application and no phantom projects.',
 );
+for (const entry of catalogApplications) {
+  if (entry.platform === 'e2e') {
+    assert.equal(entry.hostname, null, `Non-deployable application ${entry.id} must not publish a hostname.`);
+    continue;
+  }
+
+  assert.equal(
+    entry.hostname,
+    `${entry.id}.example.com`,
+    `Deployable application ${entry.id} must publish <app-id>.example.com.`,
+  );
+}
 assert.deepEqual(
   catalogApplications
     .filter((entry) => entry.classification === 'reference')

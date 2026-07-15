@@ -103,13 +103,14 @@ Before calling the service ready:
 - add local Compose/dev-orchestrator registration if it belongs in the selected
   local stack;
 - add Docker image/build ownership and Helm Deployment/Service values;
-- define probes, resources, NetworkPolicy, ingress route, product-owned DNS,
-  TLS, and observability;
+- define probes, resources, NetworkPolicy, an `<app-id>.<root-domain>` ingress
+  route, DNS, TLS, and observability;
 - add the new origin to CORS/CSP and frontend API-base configuration;
 - regenerate OpenAPI/contracts/clients and add integration/e2e coverage.
 
-The generator intentionally cannot choose or publish a production hostname.
-Follow the full checklist in
+The generator intentionally does not publish DNS or TLS. Register the service
+in the setup catalog with `<app-id>.example.com`, then provision the initialized
+`<app-id>.<root-domain>` hostname by following the full checklist in
 [Scaffolding and Extension Contract](../scaffolding-and-extension.md).
 
 ## 7. Verify

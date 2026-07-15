@@ -182,6 +182,8 @@ Version bumps, changelog entries, and git tags are automated by semantic-release
 ### Changed
 
 - Updated `@types/supertest` to 7.2.1 after a registry and peer-compatibility audit; newer incompatible runtime/compiler majors remain documented and intentionally deferred.
+- Standardized every public deployable hostname as `<app-id>.<root-domain>`; for example, `auth-app-api.example.com` now maps directly to `auth-app-api`.
+- Stabilized Node.js 24 tooling tests by isolating Docker migration coverage and running process-output setup tests in-process.
 
 ### Fixed
 

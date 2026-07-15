@@ -7,7 +7,7 @@ This boilerplate ships with conservative production defaults for the Nest APIs a
 - `helmet()` is enabled for every API at bootstrap.
 - Request validation uses transform, whitelist, and forbid-non-whitelisted settings.
 - Production CORS does **not** reflect arbitrary origins. Set `CORS_ORIGINS` to a comma-separated allow-list.
-- Frontend nginx CSP permits API connections only to same-origin proxy routes or to the documented split-origin API hosts: `https://auth.example.com`, `https://api.example.com`, and `https://admin-api.example.com`.
+- Frontend nginx CSP permits API connections only to same-origin proxy routes or to the documented split-origin API hosts: `https://auth-app-api.example.com`, `https://user-app-api.example.com`, and `https://admin-app-api.example.com`.
 - Production rate limiting is enabled by default unless `RATE_LIMIT_ENABLED=false` or an explicit `rateLimit.enabled: false` option disables it.
 - Backend env used by bootstrap is parsed through a centralized fail-fast schema before the app listens.
 - `TRUST_PROXY` defaults to `false`; only set it to a known proxy configuration for trusted load balancers or ingress tiers.

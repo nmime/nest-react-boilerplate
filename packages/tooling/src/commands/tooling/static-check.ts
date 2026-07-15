@@ -471,10 +471,7 @@ function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
 }
 
 function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
-  const testFiles = collectToolingTestFiles(workspaceRoot);
-  if (testFiles.length === 0) return [];
-
-  const result = run(process.execPath, ["--test", "--import", "jiti/register", ...testFiles], {
+  const result = run(process.execPath, ["packages/tooling/scripts/run-tests.mjs"], {
     cwd: workspaceRoot,
     // Static validation must stay hermetic; Docker/PostgreSQL integration is
     // exercised by the dedicated integration and acceptance gates.
@@ -482,16 +479,6 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   });
 
   return result.status === 0 ? [] : [result];
-}
-
-function collectToolingTestFiles(workspaceRoot: string): string[] {
-  const testRoot = resolve(workspaceRoot, "packages/tooling/src");
-  if (!existsSync(testRoot)) return [];
-
-  return walk(testRoot)
-    .filter((path) => path.endsWith(".test.ts"))
-    .map((path) => relativeToWorkspace(workspaceRoot, path))
-    .sort((left, right) => left.localeCompare(right));
 }
 
 export function collectCommandModules(workspaceRoot: string): string[] {

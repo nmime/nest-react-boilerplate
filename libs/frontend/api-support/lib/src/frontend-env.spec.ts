@@ -60,9 +60,9 @@ describe('frontend build API URL mode defaults', () => {
 
   it('preserves explicit API origins and lets them satisfy production builds', () => {
     const env: FrontendBuildEnv = {
-      VITE_AUTH_API_BASE_URL: 'https://auth.example.com',
-      VITE_USER_API_BASE_URL: 'https://api.example.com',
-      VITE_ADMIN_API_BASE_URL: 'https://admin-api.example.com',
+      VITE_AUTH_API_BASE_URL: 'https://auth-app-api.example.com',
+      VITE_USER_API_BASE_URL: 'https://user-app-api.example.com',
+      VITE_ADMIN_API_BASE_URL: 'https://admin-app-api.example.com',
     };
 
     expect(applyDefaultFrontendBuildApiBaseUrlMode(env, 'build', 'production')).toBe(false);
@@ -83,7 +83,7 @@ describe('frontend build API URL mode defaults', () => {
 
   it('still fails closed for partial explicit API origin configuration', () => {
     const env: FrontendBuildEnv = {
-      VITE_AUTH_API_BASE_URL: 'https://auth.example.com',
+      VITE_AUTH_API_BASE_URL: 'https://auth-app-api.example.com',
     };
 
     expect(applyDefaultFrontendBuildApiBaseUrlMode(env, 'build', 'production')).toBe(false);

@@ -162,7 +162,7 @@ Verification:
 kubectl get pods,svc,ingress -n nest-react-boilerplate
 kubectl logs job/nest-react-boilerplate-migrate -n nest-react-boilerplate
 kubectl rollout status deploy/nest-react-boilerplate-auth-app-api -n nest-react-boilerplate
-curl -fsS https://auth.example.com/ready
+curl -fsS https://auth-app-api.example.com/ready
 ```
 
 Rollback:

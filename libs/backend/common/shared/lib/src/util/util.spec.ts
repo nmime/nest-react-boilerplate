@@ -173,16 +173,16 @@ describe('validateRequired', () => {
 
 describe('buildWebAppUrl', () => {
   it('resolves a path against the base URL', () => {
-    expect(buildWebAppUrl('https://app.example.com', '/settings')).toBe('https://app.example.com/settings');
+    expect(buildWebAppUrl('https://user-app.example.com', '/settings')).toBe('https://user-app.example.com/settings');
   });
 
   it('appends query parameters', () => {
     expect(
-      buildWebAppUrl('https://app.example.com', '/settings', {
+      buildWebAppUrl('https://user-app.example.com', '/settings', {
         ref: 'abc',
         tab: 'profile',
       }),
-    ).toBe('https://app.example.com/settings?ref=abc&tab=profile');
+    ).toBe('https://user-app.example.com/settings?ref=abc&tab=profile');
   });
 });
 

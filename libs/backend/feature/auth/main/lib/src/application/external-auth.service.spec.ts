@@ -529,24 +529,24 @@ describe('ExternalAuthService', () => {
     const { service } = createService();
 
     // Accepts a legitimately configured origin (including sub-paths).
-    process.env.AUTH_ALLOWED_RETURN_URLS = 'https://app.example.com';
+    process.env.AUTH_ALLOWED_RETURN_URLS = 'https://user-app.example.com';
     expect(() =>
       service.createDiscordAuthorizationRequest({
-        returnUrl: 'https://app.example.com/callback',
+        returnUrl: 'https://user-app.example.com/callback',
       }),
     ).not.toThrow();
 
     // Rejects the classic prefix-matching bypass (suffix-appended host).
     expect(() =>
       service.createDiscordAuthorizationRequest({
-        returnUrl: 'https://app.example.com.evil.com/callback',
+        returnUrl: 'https://user-app.example.com.evil.com/callback',
       }),
     ).toThrow('return_url_not_allowed');
 
     // Rejects URLs carrying userinfo credentials even when the host matches.
     expect(() =>
       service.createDiscordAuthorizationRequest({
-        returnUrl: 'https://user:pass@app.example.com/callback',
+        returnUrl: 'https://user:pass@user-app.example.com/callback',
       }),
     ).toThrow('return_url_not_allowed');
 
@@ -558,15 +558,15 @@ describe('ExternalAuthService', () => {
     ).toThrow('return_url_not_allowed');
 
     // Enforces a path-segment boundary: "/app" must not match "/appevil".
-    process.env.AUTH_ALLOWED_RETURN_URLS = 'https://app.example.com/app';
+    process.env.AUTH_ALLOWED_RETURN_URLS = 'https://user-app.example.com/app';
     expect(() =>
       service.createDiscordAuthorizationRequest({
-        returnUrl: 'https://app.example.com/appevil',
+        returnUrl: 'https://user-app.example.com/appevil',
       }),
     ).toThrow('return_url_not_allowed');
     expect(() =>
       service.createDiscordAuthorizationRequest({
-        returnUrl: 'https://app.example.com/app/next',
+        returnUrl: 'https://user-app.example.com/app/next',
       }),
     ).not.toThrow();
   });

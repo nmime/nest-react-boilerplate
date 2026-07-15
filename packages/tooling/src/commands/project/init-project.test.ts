@@ -21,22 +21,22 @@ function createFixture(): string {
   writeFileSync(
     join(root, "domains.txt"),
     [
-      "example.com",
-      "site.example.com",
-      "mobile.example.com",
-      "admin.example.com",
-      "app.example.com",
-      "auth.example.com",
-      "api.example.com",
-      "admin-api.example.com",
-      "discord-api.example.com",
-      "telegram-api.example.com",
-      "admin.staging.example.com",
+      "landing-app.example.com",
+      "site-app.example.com",
+      "mobile-app.example.com",
+      "admin-app.example.com",
+      "user-app.example.com",
+      "auth-app-api.example.com",
+      "user-app-api.example.com",
+      "admin-app-api.example.com",
+      "discord-app-api.example.com",
+      "telegram-bot-api.example.com",
+      "admin-app.staging.example.com",
       "user@example.com",
     ].join("\n") + "\n",
   );
-  writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://app.example.com\n");
-  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://example.com\n");
+  writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://user-app.example.com\n");
+  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://landing-app.example.com\n");
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
@@ -96,22 +96,28 @@ describe("project init", () => {
 
       const domains = readFileSync(join(root, "domains.txt"), "utf8");
       assert.equal(domains.includes("example.com"), false);
-      assert.match(domains, /^acme\.example$/mu);
-      assert.match(domains, /^site\.acme\.example$/mu);
-      assert.match(domains, /^mobile\.acme\.example$/mu);
-      assert.match(domains, /^admin-api\.acme\.example$/mu);
-      assert.match(domains, /^discord-api\.acme\.example$/mu);
-      assert.match(domains, /^telegram-api\.acme\.example$/mu);
-      assert.match(domains, /^admin\.staging\.acme\.example$/mu);
-      assert.match(domains, /^user@acme\.example$/mu);
+      assert.deepEqual(domains.trim().split("\n"), [
+        "landing-app.acme.example",
+        "site-app.acme.example",
+        "mobile-app.acme.example",
+        "admin-app.acme.example",
+        "user-app.acme.example",
+        "auth-app-api.acme.example",
+        "user-app-api.acme.example",
+        "admin-app-api.acme.example",
+        "discord-app-api.acme.example",
+        "telegram-bot-api.acme.example",
+        "admin-app.staging.acme.example",
+        "user@acme.example",
+      ]);
 
       assert.equal(
         readFileSync(join(root, ".env.example"), "utf8"),
-        "PUBLIC_URL=https://app.acme.example\n",
+        "PUBLIC_URL=https://user-app.acme.example\n",
       );
       assert.equal(
         readFileSync(join(root, ".env.production.example"), "utf8"),
-        "PUBLIC_URL=https://acme.example\n",
+        "PUBLIC_URL=https://landing-app.acme.example\n",
       );
       assert.equal(
         readFileSync(join(root, ".env"), "utf8"),

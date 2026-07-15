@@ -210,6 +210,20 @@ describe('catalog — appCatalog', () => {
     assert.deepEqual(optional, ['discord-app-api', 'telegram-bot-api']);
   });
 
+  it('uses the app ID verbatim as every deployable hostname', () => {
+    const hostnames = new Set<string>();
+    for (const entry of Object.values(appCatalog)) {
+      if (entry.platform === 'e2e') {
+        assert.equal(entry.publicHostname, null);
+        continue;
+      }
+      assert.equal(entry.publicHostname, `${entry.id}.example.com`);
+      assert.equal(hostnames.has(entry.publicHostname), false, entry.publicHostname);
+      hostnames.add(entry.publicHostname);
+    }
+    assert.equal(hostnames.size, 10);
+  });
+
   it('fullstack-e2e requires the complete stack it starts', () => {
     assert.deepEqual(appCatalog['fullstack-e2e'].requiresApps, [
       'admin-app',

@@ -17,6 +17,8 @@ export interface AppEntry {
   platform: 'frontend' | 'backend' | 'e2e';
   /** Whether this is a reference product surface or an optional integration. */
   classification: 'reference' | 'optional';
+  /** Canonical template hostname; non-deployable projects use null. */
+  publicHostname: string | null;
   /** Capabilities that this app REQUIRES when present. */
   requiresCapabilities: CapabilityId[];
   /** Other apps that must be present when this app is enabled. */
@@ -37,6 +39,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Admin Dashboard',
     platform: 'frontend',
     classification: 'reference',
+    publicHostname: 'admin-app.example.com',
     requiresCapabilities: ['authz', 'design-tokens'],
     requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
@@ -46,6 +49,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'User Application',
     platform: 'frontend',
     classification: 'reference',
+    publicHostname: 'user-app.example.com',
     requiresCapabilities: ['design-tokens', 'i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
@@ -55,6 +59,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Landing Page',
     platform: 'frontend',
     classification: 'reference',
+    publicHostname: 'landing-app.example.com',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -64,6 +69,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Marketing Site',
     platform: 'frontend',
     classification: 'reference',
+    publicHostname: 'site-app.example.com',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -73,6 +79,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Mobile App',
     platform: 'frontend',
     classification: 'reference',
+    publicHostname: 'mobile-app.example.com',
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['user-app-api'],
     conflictsWithCapabilities: [],
@@ -84,6 +91,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Admin API',
     platform: 'backend',
     classification: 'reference',
+    publicHostname: 'admin-app-api.example.com',
     requiresCapabilities: ['postgres', 'authz'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -93,6 +101,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'User API',
     platform: 'backend',
     classification: 'reference',
+    publicHostname: 'user-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -102,6 +111,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Auth API',
     platform: 'backend',
     classification: 'reference',
+    publicHostname: 'auth-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -111,6 +121,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Discord Bot API',
     platform: 'backend',
     classification: 'optional',
+    publicHostname: 'discord-app-api.example.com',
     requiresCapabilities: ['discord-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -120,6 +131,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Telegram Bot API',
     platform: 'backend',
     classification: 'optional',
+    publicHostname: 'telegram-bot-api.example.com',
     requiresCapabilities: ['telegram-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -130,6 +142,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Fullstack E2E Tests',
     platform: 'e2e',
     classification: 'reference',
+    publicHostname: null,
     requiresCapabilities: [],
     requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],

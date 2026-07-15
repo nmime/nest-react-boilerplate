@@ -69,17 +69,17 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Auth and JWT
 
-| Variable                          | Required            | Default                      | Description                                    |
-| --------------------------------- | ------------------- | ---------------------------- | ---------------------------------------------- |
-| `AUTH_JWT_SECRET`                 | **Required** (prod) | `<set-jwt-secret>`           | JWT signing key                                |
-| `AUTH_JWT_SECRET_FILE`            | Optional            | —                            | File path for JWT secret (Docker secret mount) |
-| `AUTH_JWT_ISSUER`                 | Optional            | `https://auth.example.com`   | JWT issuer claim                               |
-| `AUTH_JWT_AUDIENCE`               | Optional            | `nest-react-boilerplate-api` | JWT audience claim                             |
-| `AUTH_JWT_EXPIRES_IN_SECONDS`     | Optional            | `3600`                       | JWT TTL (1 hour)                               |
-| `AUTH_PERSISTENCE`                | Optional            | `postgres`                   | Auth token persistence: `postgres` or `memory` |
-| `AUTH_TOKEN_CLEANUP_ENABLED`      | Optional            | `true`                       | Enable stale token cleanup                     |
-| `AUTH_TOKEN_CLEANUP_INTERVAL_MS`  | Optional            | `3600000`                    | Cleanup interval (1 hour)                      |
-| `AUTH_TOKEN_CLEANUP_RUN_ON_START` | Optional            | `true`                       | Run cleanup on boot                            |
+| Variable                          | Required            | Default                            | Description                                    |
+| --------------------------------- | ------------------- | ---------------------------------- | ---------------------------------------------- |
+| `AUTH_JWT_SECRET`                 | **Required** (prod) | `<set-jwt-secret>`                 | JWT signing key                                |
+| `AUTH_JWT_SECRET_FILE`            | Optional            | —                                  | File path for JWT secret (Docker secret mount) |
+| `AUTH_JWT_ISSUER`                 | Optional            | `https://auth-app-api.example.com` | JWT issuer claim                               |
+| `AUTH_JWT_AUDIENCE`               | Optional            | `nest-react-boilerplate-api`       | JWT audience claim                             |
+| `AUTH_JWT_EXPIRES_IN_SECONDS`     | Optional            | `3600`                             | JWT TTL (1 hour)                               |
+| `AUTH_PERSISTENCE`                | Optional            | `postgres`                         | Auth token persistence: `postgres` or `memory` |
+| `AUTH_TOKEN_CLEANUP_ENABLED`      | Optional            | `true`                             | Enable stale token cleanup                     |
+| `AUTH_TOKEN_CLEANUP_INTERVAL_MS`  | Optional            | `3600000`                          | Cleanup interval (1 hour)                      |
+| `AUTH_TOKEN_CLEANUP_RUN_ON_START` | Optional            | `true`                             | Run cleanup on boot                            |
 
 ### Admin bootstrap
 
@@ -280,11 +280,11 @@ AUTH_JWT_SECRET_FILE=/run/secrets/auth_jwt_secret
 
 ADMIN_BOOTSTRAP_ENABLED=false
 
-CORS_ORIGINS=https://staging-admin.example.com,https://staging-app.example.com
+CORS_ORIGINS=https://admin-app.staging.example.com,https://user-app.staging.example.com
 
 TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
 TELEGRAM_BOT_MODE=webhook
-TELEGRAM_BOT_WEBHOOK_URL=https://staging-telegram-api.example.com/telegram/webhook
+TELEGRAM_BOT_WEBHOOK_URL=https://telegram-bot-api.staging.example.com/telegram/webhook
 
 DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token
 
@@ -312,13 +312,13 @@ AUTH_JWT_SECRET_FILE=/run/secrets/auth_jwt_secret
 
 ADMIN_BOOTSTRAP_ENABLED=false
 
-CORS_ORIGINS=https://admin.example.com,https://app.example.com,https://example.com,https://site.example.com,https://mobile.example.com
+CORS_ORIGINS=https://admin-app.example.com,https://user-app.example.com,https://landing-app.example.com,https://site-app.example.com,https://mobile-app.example.com
 
 TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
 TELEGRAM_BOT_MODE=webhook
 TELEGRAM_BOT_WEBHOOK_SECRET_FILE=/run/secrets/telegram_webhook_secret
-TELEGRAM_BOT_WEBHOOK_URL=https://telegram-api.example.com/telegram/webhook
-TELEGRAM_MINI_APP_URL=https://app.example.com/telegram-mini-app
+TELEGRAM_BOT_WEBHOOK_URL=https://telegram-bot-api.example.com/telegram/webhook
+TELEGRAM_MINI_APP_URL=https://user-app.example.com/telegram-mini-app
 
 DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token
 DISCORD_CLIENT_SECRET_FILE=/run/secrets/discord_client_secret

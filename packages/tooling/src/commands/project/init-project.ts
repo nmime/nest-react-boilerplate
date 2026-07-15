@@ -171,16 +171,10 @@ function buildReplacements(c: InitConfig): Map<string, string> {
     ["nest_react_boilerplate", c.dbName],
     ["nest-react-boilerplate-api", `${c.appSlug}-api`],
     ["NestReactBoilerplate", c.className],
-    ["admin.example.com", `admin.${c.domain}`],
-    ["app.example.com", `app.${c.domain}`],
-    ["auth.example.com", `auth.${c.domain}`],
-    ["issuer.example.com", `issuer.${c.domain}`],
-    ["user@example.com", `user@${c.domain}`],
-    ["admin@example.com", `admin@${c.domain}`],
     ["your-github-org", c.owner],
-    // Keep this last: it covers every remaining public surface, including
-    // site, mobile, user/admin APIs, bot APIs, staging hosts, TLS SANs, CSP,
-    // environment examples, and deployment documentation.
+    // Keep this last: every deployable uses <app-id>.example.com, so replacing
+    // the root preserves the app ID while updating production/staging hosts,
+    // TLS SANs, CSP, environment examples, and deployment documentation.
     ["example.com", c.domain],
   ]);
 }

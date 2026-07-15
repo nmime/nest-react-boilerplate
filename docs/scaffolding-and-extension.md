@@ -108,21 +108,22 @@ pnpm nrb setup
 The checked-in `example.com` values are replaceable environment placeholders,
 not live domains.
 
-No deployable is selected by default. These hostnames are the complete mapping
-that `pnpm nrb init` rewrites when preparing the template for a product.
+No deployable is selected by default. Every deployable follows one rule:
+`<app-id>.<root-domain>`. These hostnames are the complete mapping that
+`pnpm nrb init` rewrites when preparing the template for a product.
 
-| Deployable         | Template hostname          | Catalog class |
-| ------------------ | -------------------------- | ------------- |
-| `landing-app`      | `example.com`              | reference     |
-| `site-app`         | `site.example.com`         | reference     |
-| `user-app`         | `app.example.com`          | reference     |
-| `admin-app`        | `admin.example.com`        | reference     |
-| `mobile-app`       | `mobile.example.com`       | reference     |
-| `auth-app-api`     | `auth.example.com`         | reference     |
-| `user-app-api`     | `api.example.com`          | reference     |
-| `admin-app-api`    | `admin-api.example.com`    | reference     |
-| `discord-app-api`  | `discord-api.example.com`  | optional      |
-| `telegram-bot-api` | `telegram-api.example.com` | optional      |
+| Deployable         | Template hostname              | Catalog class |
+| ------------------ | ------------------------------ | ------------- |
+| `landing-app`      | `landing-app.example.com`      | reference     |
+| `site-app`         | `site-app.example.com`         | reference     |
+| `user-app`         | `user-app.example.com`         | reference     |
+| `admin-app`        | `admin-app.example.com`        | reference     |
+| `mobile-app`       | `mobile-app.example.com`       | reference     |
+| `auth-app-api`     | `auth-app-api.example.com`     | reference     |
+| `user-app-api`     | `user-app-api.example.com`     | reference     |
+| `admin-app-api`    | `admin-app-api.example.com`    | reference     |
+| `discord-app-api`  | `discord-app-api.example.com`  | optional      |
+| `telegram-bot-api` | `telegram-bot-api.example.com` | optional      |
 
 ## Add an application
 

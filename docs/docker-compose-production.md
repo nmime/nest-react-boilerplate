@@ -101,20 +101,20 @@ and confirm the assigned ports with `docker compose port <service> <port>`.
 Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
 from Compose:
 
-- `https://example.com` -> `docker compose ... port landing-app 8080`
-- `https://site.example.com` -> `docker compose ... port site-app 80`
-- `https://admin.example.com` -> `docker compose ... port admin-app 8080`
-- `https://app.example.com` -> `docker compose ... port user-app 8080`
-- `https://mobile.example.com` -> `docker compose ... port mobile-app 8080`
-- `https://auth.example.com` -> `docker compose ... port auth-app-api 80`
-- `https://api.example.com` -> `docker compose ... port user-app-api 80`
-- `https://admin-api.example.com` -> `docker compose ... port admin-app-api 80`
+- `https://landing-app.example.com` -> `docker compose ... port landing-app 8080`
+- `https://site-app.example.com` -> `docker compose ... port site-app 80`
+- `https://admin-app.example.com` -> `docker compose ... port admin-app 8080`
+- `https://user-app.example.com` -> `docker compose ... port user-app 8080`
+- `https://mobile-app.example.com` -> `docker compose ... port mobile-app 8080`
+- `https://auth-app-api.example.com` -> `docker compose ... port auth-app-api 80`
+- `https://user-app-api.example.com` -> `docker compose ... port user-app-api 80`
+- `https://admin-app-api.example.com` -> `docker compose ... port admin-app-api 80`
 
 The bot webhook APIs are also opt-in because they require provider credentials
 and callback registration:
 
-- `https://discord-api.example.com` -> `docker compose --profile discord ... port discord-app-api 80`
-- `https://telegram-api.example.com` -> `docker compose --profile telegram ... port telegram-bot-api 80`
+- `https://discord-app-api.example.com` -> `docker compose --profile discord ... port discord-app-api 80`
+- `https://telegram-bot-api.example.com` -> `docker compose --profile telegram ... port telegram-bot-api 80`
 
 Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
 build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to

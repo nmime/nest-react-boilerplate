@@ -5,6 +5,7 @@ import {
   resolveMode,
   resolveSafeTelegramAppUrl,
   resolveTelegramBotConfig,
+  resolveTelegramWebhookUrl,
   signStartPayload,
   verifyStartPayload,
   verifyWebhookSecret,
@@ -43,7 +44,8 @@ describe('Telegram bot config', () => {
         TELEGRAM_BOT_TOKEN: ' test-token ',
         VITEST: 'true',
         FRONTEND_URL: 'https://app.example.test/telegram-mini-app',
-        TELEGRAM_WEBHOOK_SECRET: ' webhook-secret ',
+        TELEGRAM_BOT_WEBHOOK_SECRET: ' webhook-secret ',
+        TELEGRAM_BOT_WEBHOOK_URL: 'https://telegram-bot-api.example.test/telegram/webhook',
         TELEGRAM_BOT_SESSION_TTL_SECONDS: '120',
         TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: '2500',
         TELEGRAM_BOT_RATE_LIMIT: '7',
@@ -51,8 +53,9 @@ describe('Telegram bot config', () => {
     ).toMatchObject({
       token: 'test-token',
       appUrl: 'https://app.example.test/telegram-mini-app',
-      setupMenuButton: false,
+      setupMenuButton: true,
       webhookSecret: 'webhook-secret',
+      webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
       mode: 'polling',
       environment: 'test',
       sessionTtlSeconds: 120,
@@ -95,9 +98,11 @@ describe('Telegram bot config', () => {
     ).toBe('https://frontend.example.test/app/');
 
     for (const unsafe of [
+      'http://frontend.example.test/telegram-mini-app',
       'ftp://frontend.example.test/telegram-mini-app',
       `https://${'telegram-bot'}.n0xeid.xyz/`,
       `https://${'telegram-bot'}.n0xeid.xyz/telegram/webhook`,
+      'https://telegram-bot-api.example.test/telegram-mini-app',
       'https://api.example.test/',
       'https://frontend.example.test/',
       'not-a-url',
@@ -106,7 +111,14 @@ describe('Telegram bot config', () => {
     }
   });
 
-  it('enables persistent Telegram menu button setup only by explicit env toggle', () => {
+  it('enables Telegram command/menu setup by default while retaining an explicit opt-out', () => {
+    expect(
+      resolveTelegramBotConfig({
+        TELEGRAM_BOT_TOKEN: 'test-token',
+        TELEGRAM_MINI_APP_URL: 'https://app.example.test/telegram-mini-app',
+      }).setupMenuButton,
+    ).toBe(true);
+
     expect(
       resolveTelegramBotConfig({
         TELEGRAM_BOT_TOKEN: 'test-token',
@@ -124,16 +136,49 @@ describe('Telegram bot config', () => {
     ).toBe(false);
   });
 
+  it('accepts only the canonical HTTPS Telegram webhook endpoint', () => {
+    expect(resolveTelegramWebhookUrl(' https://telegram-bot-api.example.test/telegram/webhook ')).toBe(
+      'https://telegram-bot-api.example.test/telegram/webhook',
+    );
+    expect(resolveTelegramWebhookUrl('https://telegram-bot-api.example.test/telegram/webhook/?ignored=true#hash')).toBe(
+      'https://telegram-bot-api.example.test/telegram/webhook',
+    );
+    for (const unsafe of [
+      'http://telegram-bot-api.example.test/telegram/webhook',
+      'https://user:password@telegram-bot-api.example.test/telegram/webhook',
+      'https://telegram-bot-api.example.test/',
+      'https://telegram-bot-api.example.test/other',
+      'not-a-url',
+    ]) {
+      expect(resolveTelegramWebhookUrl(unsafe)).toBeUndefined();
+    }
+  });
+
   it('guards webhook and polling runtimes by configured mode/environment', () => {
     expect(() => {
-      assertWebhookRuntimeAllowed({ mode: 'webhook', webhookSecret: 'secret' });
+      assertWebhookRuntimeAllowed({
+        mode: 'webhook',
+        webhookSecret: 'secret',
+        webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
+      });
     }).not.toThrow();
     expect(() => {
-      assertWebhookRuntimeAllowed({ mode: 'polling', webhookSecret: 'secret' });
+      assertWebhookRuntimeAllowed({
+        mode: 'polling',
+        webhookSecret: 'secret',
+        webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
+      });
     }).toThrow('Telegram webhook runtime cannot start when TELEGRAM_BOT_MODE=polling.');
     expect(() => {
-      assertWebhookRuntimeAllowed({ mode: 'webhook', webhookSecret: '  ' });
-    }).toThrow('Telegram webhook runtime requires a non-empty TELEGRAM_WEBHOOK_SECRET.');
+      assertWebhookRuntimeAllowed({
+        mode: 'webhook',
+        webhookSecret: '  ',
+        webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
+      });
+    }).toThrow('Telegram webhook runtime requires a non-empty TELEGRAM_BOT_WEBHOOK_SECRET.');
+    expect(() => {
+      assertWebhookRuntimeAllowed({ mode: 'webhook', webhookSecret: 'secret' });
+    }).toThrow('Telegram webhook runtime requires a valid HTTPS TELEGRAM_BOT_WEBHOOK_URL ending in /telegram/webhook.');
 
     expect(() => {
       assertPollingRuntimeAllowed({ mode: 'polling', environment: 'test' });

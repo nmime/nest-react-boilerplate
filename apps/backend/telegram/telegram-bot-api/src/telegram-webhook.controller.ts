@@ -10,12 +10,16 @@ import {
 @Controller('telegram/webhook')
 export class TelegramWebhookController implements OnApplicationBootstrap {
   private botInitPromise: Promise<void> | null = null;
+  private readonly webhookSecret: string;
+  private readonly webhookUrl: string;
 
   constructor(
     @Inject(TelegramBotInstanceInjectToken)
     private readonly telegram: TelegramBotInstance,
   ) {
     assertWebhookRuntimeAllowed(telegram.config);
+    this.webhookSecret = telegram.config.webhookSecret;
+    this.webhookUrl = telegram.config.webhookUrl;
   }
 
   async onApplicationBootstrap(): Promise<void> {
@@ -43,7 +47,15 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
   }
 
   private async ensureBotInitialized(): Promise<void> {
-    this.botInitPromise ??= this.telegram.bot.init();
+    this.botInitPromise ??= this.initializeBot();
     await this.botInitPromise;
+  }
+
+  private async initializeBot(): Promise<void> {
+    await this.telegram.bot.init();
+    await this.telegram.bot.api.setWebhook(this.webhookUrl, {
+      allowed_updates: ['message', 'callback_query'],
+      secret_token: this.webhookSecret,
+    });
   }
 }

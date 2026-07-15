@@ -12,8 +12,8 @@ export const TelegramBotApiHealthServiceProvider: Provider = {
       new EnvHealthIndicator({
         name: 'telegram-bot-config',
         required: true,
-        requiredVariables: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_WEBHOOK_SECRET'],
-        optionalVariables: ['TELEGRAM_BOT_MODE', 'REDIS_URL'],
+        requiredVariables: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_WEBHOOK_SECRET'],
+        optionalVariables: ['TELEGRAM_BOT_MODE', 'TELEGRAM_BOT_WEBHOOK_URL', 'REDIS_URL'],
       }),
     ],
   }),

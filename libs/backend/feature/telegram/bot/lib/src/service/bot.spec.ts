@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createTelegramBot, handleLink, handleStart } from './bot';
+import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
 import { goBack, goHome, navigateTo } from '../navigation';
 import { initialTelegramBotSession } from './session';
 import type { TelegramBotAuthPort, TelegramBotConfig, TelegramBotSession } from '../type';
@@ -20,6 +20,7 @@ function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
   return {
     token: '123:test',
     appUrl: 'https://app.example.test/tma',
+    setupMenuButton: false,
     webhookSecret: 'secret',
     mode: 'webhook',
     environment: 'test',
@@ -367,10 +368,55 @@ describe('createTelegramBot', () => {
     ).not.toMatch(/telegram-bot\.n0xeid\.xyz\/?$|\/telegram\/webhook$/u);
   });
 
-  it('sets persistent chat menu button only when explicitly enabled and app URL is safe', async () => {
+  it('handles every private-chat user menu command and provides a dedicated Mini App launch button', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    for (const command of ['/profile', '/settings', '/support', '/link']) {
+      // Each update mutates one bot session, so exercising the menu sequentially
+      // mirrors Telegram delivery and avoids testing impossible concurrent navigation.
+      // eslint-disable-next-line no-await-in-loop -- session-backed updates must remain ordered
+      await bot.handleUpdate(messageUpdate(command) as never);
+      expect(latestPayload(calls, 'sendMessage').reply_markup).toBeDefined();
+    }
+
+    await bot.handleUpdate(messageUpdate('/app') as never);
+    expect(
+      configuredWebAppButtons([
+        {
+          method: 'sendMessage',
+          payload: latestPayload(calls, 'sendMessage'),
+        },
+      ]),
+    ).toEqual([
+      {
+        text: 'Open app',
+        web_app: { url: 'https://app.example.test/tma' },
+      },
+    ]);
+  });
+
+  it('builds localized command menus and only advertises /app when a safe Mini App URL exists', () => {
+    expect(telegramBotCommands('en', true).map(({ command }) => command)).toEqual([
+      'start',
+      'app',
+      'profile',
+      'settings',
+      'language',
+      'support',
+      'link',
+    ]);
+    expect(telegramBotCommands('ru', true).find(({ command }) => command === 'app')?.description).toBe(
+      'Открыть приложение',
+    );
+    expect(telegramBotCommands('en', false).map(({ command }) => command)).not.toContain('app');
+  });
+
+  it('publishes localized private-chat commands and the persistent app menu button when setup is enabled', async () => {
     const api = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
     };
 
     createTelegramBot(
@@ -382,6 +428,13 @@ describe('createTelegramBot', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    expect(api.setMyCommands).toHaveBeenCalledTimes(2);
+    expect(api.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).toContain('app');
+    expect(api.setMyCommands.mock.calls[0]?.[1]).toEqual({ scope: { type: 'all_private_chats' } });
+    expect(api.setMyCommands.mock.calls[1]?.[1]).toEqual({
+      scope: { type: 'all_private_chats' },
+      language_code: 'ru',
+    });
     expect(api.setChatMenuButton).toHaveBeenCalledWith({
       menu_button: {
         type: 'web_app',
@@ -393,6 +446,7 @@ describe('createTelegramBot', () => {
     const unsafeApi = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
     };
     createTelegramBot(
       config({
@@ -404,6 +458,8 @@ describe('createTelegramBot', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(unsafeApi.setChatMenuButton).not.toHaveBeenCalled();
+    expect(unsafeApi.setMyCommands).toHaveBeenCalledTimes(2);
+    expect(unsafeApi.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).not.toContain('app');
   });
 
   it('does not fail startup when persistent chat menu button setup is rejected', async () => {
@@ -411,6 +467,7 @@ describe('createTelegramBot', () => {
     const api = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() => Promise.reject(new Error('Telegram API unavailable'))),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
     };
 
     expect(() =>

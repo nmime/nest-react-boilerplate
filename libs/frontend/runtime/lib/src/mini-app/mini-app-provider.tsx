@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { backButton, init, isTMA, miniApp, shareURL, themeParams, viewport } from '@tma.js/sdk-react';
+import { backButton, init, isTMA, miniApp, shareURL, swipeBehavior, themeParams, viewport } from '@tma.js/sdk-react';
 
 export type MiniAppEnvironment = 'browser' | 'telegram';
 export type MiniAppShareResult = 'cancelled' | 'copied' | 'opened' | 'shared' | 'unavailable';
@@ -153,6 +153,26 @@ export function MiniAppProvider({
       if (!backButton.isMounted()) {
         backButton.mount();
       }
+    });
+    safely(() => {
+      if (!swipeBehavior.isSupported()) {
+        return;
+      }
+      const mountedByProvider = !swipeBehavior.isMounted();
+      if (mountedByProvider) {
+        swipeBehavior.mount();
+      }
+      if (swipeBehavior.disableVertical.isAvailable()) {
+        swipeBehavior.disableVertical();
+      }
+      cleanups.push(() => {
+        if (swipeBehavior.enableVertical.isAvailable()) {
+          swipeBehavior.enableVertical();
+        }
+        if (mountedByProvider) {
+          swipeBehavior.unmount();
+        }
+      });
     });
 
     const prepareViewport = async () => {

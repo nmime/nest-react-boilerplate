@@ -18,8 +18,9 @@ export function resolveTelegramBotConfig(env: NodeJS.ProcessEnv = process.env): 
   return {
     token,
     appUrl: resolveSafeTelegramAppUrl(env),
-    setupMenuButton: readBoolean(env.TELEGRAM_BOT_MENU_BUTTON_ENABLED),
-    webhookSecret: env.TELEGRAM_WEBHOOK_SECRET?.trim(),
+    setupMenuButton: readBoolean(env.TELEGRAM_BOT_MENU_BUTTON_ENABLED, true),
+    webhookSecret: (env.TELEGRAM_BOT_WEBHOOK_SECRET ?? env.TELEGRAM_WEBHOOK_SECRET)?.trim(),
+    webhookUrl: resolveTelegramWebhookUrl(env.TELEGRAM_BOT_WEBHOOK_URL),
     mode,
     environment,
     sessionTtlSeconds: readPositiveInt(env.TELEGRAM_BOT_SESSION_TTL_SECONDS, DefaultSessionTtlSeconds),
@@ -45,12 +46,18 @@ export function isSafeTelegramAppUrl(value: string): boolean {
   try {
     const url = new URL(value);
     const protocol = url.protocol.toLowerCase();
-    if (protocol !== 'https:' && protocol !== 'http:') {
+    if (protocol !== 'https:') {
       return false;
     }
 
     const host = url.hostname.toLowerCase();
-    if (!host || host.startsWith('telegram-bot.') || host.includes('.api.')) {
+    if (
+      !host ||
+      host.startsWith('api.') ||
+      host.startsWith('telegram-bot.') ||
+      host.includes('.api.') ||
+      host.includes('-api.')
+    ) {
       return false;
     }
 
@@ -58,6 +65,30 @@ export function isSafeTelegramAppUrl(value: string): boolean {
     return pathname !== '/' && pathname !== '/telegram/webhook';
   } catch {
     return false;
+  }
+}
+
+export function resolveTelegramWebhookUrl(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return undefined;
+  }
+  try {
+    const url = new URL(normalized);
+    if (
+      url.protocol !== 'https:' ||
+      url.username ||
+      url.password ||
+      normalizePathname(url.pathname) !== '/telegram/webhook'
+    ) {
+      return undefined;
+    }
+    url.pathname = '/telegram/webhook';
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return undefined;
   }
 }
 
@@ -73,7 +104,15 @@ export function resolveMode(
   return environment === 'production' ? 'webhook' : 'polling';
 }
 
-export function assertWebhookRuntimeAllowed(config: Pick<TelegramBotConfig, 'mode' | 'webhookSecret'>): void {
+type TelegramWebhookRuntimeConfig = Pick<TelegramBotConfig, 'mode' | 'webhookSecret' | 'webhookUrl'>;
+
+export function assertWebhookRuntimeAllowed(
+  config: TelegramWebhookRuntimeConfig,
+): asserts config is TelegramWebhookRuntimeConfig & {
+  mode: 'webhook';
+  webhookSecret: string;
+  webhookUrl: string;
+} {
   if (config.mode === 'polling') {
     throw new Error('Telegram webhook runtime cannot start when TELEGRAM_BOT_MODE=polling.');
   }
@@ -81,7 +120,13 @@ export function assertWebhookRuntimeAllowed(config: Pick<TelegramBotConfig, 'mod
   // An empty secret would make verifyWebhookSecret reject every update, so the
   // bot would silently 403 all traffic. Fail fast at startup instead.
   if (!config.webhookSecret?.trim()) {
-    throw new Error('Telegram webhook runtime requires a non-empty TELEGRAM_WEBHOOK_SECRET.');
+    throw new Error('Telegram webhook runtime requires a non-empty TELEGRAM_BOT_WEBHOOK_SECRET.');
+  }
+
+  if (!config.webhookUrl) {
+    throw new Error(
+      'Telegram webhook runtime requires a valid HTTPS TELEGRAM_BOT_WEBHOOK_URL ending in /telegram/webhook.',
+    );
   }
 }
 
@@ -148,8 +193,11 @@ export function verifyStartPayload(
   return decoded.slice(separator + 1);
 }
 
-function readBoolean(value: string | undefined): boolean {
-  const normalized = value?.trim().toLowerCase();
+function readBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+  const normalized = value.trim().toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 

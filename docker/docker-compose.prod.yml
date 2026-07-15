@@ -53,7 +53,7 @@ x-backend-command: &backend-command
       export TELEGRAM_BOT_TOKEN="$$(cat /run/secrets/telegram_bot_token)"
     fi
     if [ -f /run/secrets/telegram_bot_webhook_secret ]; then
-      export TELEGRAM_WEBHOOK_SECRET="$$(cat /run/secrets/telegram_bot_webhook_secret)"
+      export TELEGRAM_BOT_WEBHOOK_SECRET="$$(cat /run/secrets/telegram_bot_webhook_secret)"
     fi
     if [ -f /run/secrets/discord_bot_token ]; then
       export DISCORD_BOT_TOKEN="$$(cat /run/secrets/discord_bot_token)"
@@ -268,8 +268,9 @@ services:
     environment:
       <<: *backend-env
       TELEGRAM_BOT_MODE: ${TELEGRAM_BOT_MODE:-webhook}
+      TELEGRAM_BOT_WEBHOOK_URL: ${TELEGRAM_BOT_WEBHOOK_URL:-https://telegram-bot-api.example.com/telegram/webhook}
       TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-https://user-app.example.com/telegram-mini-app}
-      TELEGRAM_BOT_MENU_BUTTON_ENABLED: ${TELEGRAM_BOT_MENU_BUTTON_ENABLED:-false}
+      TELEGRAM_BOT_MENU_BUTTON_ENABLED: ${TELEGRAM_BOT_MENU_BUTTON_ENABLED:-true}
       TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
       TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}

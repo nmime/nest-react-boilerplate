@@ -33,8 +33,9 @@ supported launch aliases.
 - `MiniAppProvider` in `@app/frontend-runtime` detects Telegram without making
   browser or server rendering depend on Telegram globals. In Telegram it mounts
   theme/viewport state, binds CSS variables, calls `ready()` and `expand()`,
-  requests Bot API 8.0 fullscreen when available, and sets the branded header,
-  background, and bottom-bar colors.
+  disables Telegram's vertical close/minimize swipe through the Bot API 7.7
+  swipe-behavior method, requests Bot API 8.0 fullscreen when available, and
+  sets the branded header, background, and bottom-bar colors.
 - `MiniAppShell` in `@app/frontend-ui-web` is the single visual shell for both
   environments. It owns safe-area spacing, the colored header and bottom
   navigation, native Telegram or browser back behavior, and Telegram/Web

@@ -20,10 +20,13 @@ const testValue = <T>(value: unknown): T => value as T;
 function instance() {
   const init = vi.fn(() => Promise.resolve(undefined));
   const handleUpdate = vi.fn(() => Promise.resolve(undefined));
+  const setWebhook = vi.fn(() => Promise.resolve(true as const));
   const telegram: TelegramBotInstance = {
     config: {
       token: '123:test',
+      setupMenuButton: false,
       webhookSecret: 'secret',
+      webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
       mode: 'webhook',
       environment: 'test',
       sessionTtlSeconds: 60,
@@ -33,17 +36,20 @@ function instance() {
     bot: testValue<TelegramBotInstance['bot']>({
       init,
       handleUpdate,
+      api: { setWebhook },
       isRunning: () => false,
       start: vi.fn(),
     }),
   };
-  return { telegram, init, handleUpdate };
+  return { telegram, init, handleUpdate, setWebhook };
 }
 
 function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
   return {
     token: '123:test',
+    setupMenuButton: false,
     webhookSecret: 'secret',
+    webhookUrl: 'https://telegram-bot-api.example.test/telegram/webhook',
     mode: 'webhook',
     environment: 'test',
     sessionTtlSeconds: 60,
@@ -171,14 +177,27 @@ describe('TelegramWebhookController', () => {
     );
   });
 
+  it('rejects webhook mode when the public HTTPS webhook URL is missing', () => {
+    const { telegram } = instance();
+    telegram.config.webhookUrl = undefined;
+
+    expect(() => new TelegramWebhookController(telegram)).toThrow(
+      'Telegram webhook runtime requires a valid HTTPS TELEGRAM_BOT_WEBHOOK_URL ending in /telegram/webhook.',
+    );
+  });
+
   it('accepts valid Telegram webhook secret headers', async () => {
-    const { telegram, init, handleUpdate } = instance();
+    const { telegram, init, handleUpdate, setWebhook } = instance();
     const controller = new TelegramWebhookController(telegram);
 
     await expect(controller.handleWebhook('secret', { update_id: 1 })).resolves.toEqual({
       ok: true,
     });
     expect(init).toHaveBeenCalledTimes(1);
+    expect(setWebhook).toHaveBeenCalledWith('https://telegram-bot-api.example.test/telegram/webhook', {
+      allowed_updates: ['message', 'callback_query'],
+      secret_token: 'secret',
+    });
     expect(handleUpdate).toHaveBeenCalledWith({ update_id: 1 });
   });
 
@@ -212,13 +231,14 @@ describe('TelegramWebhookController', () => {
   });
 
   it('initializes the bot once on application bootstrap so webhook traffic is not delayed', async () => {
-    const { telegram, init, handleUpdate } = instance();
+    const { telegram, init, handleUpdate, setWebhook } = instance();
     const controller = new TelegramWebhookController(telegram);
 
     await controller.onApplicationBootstrap();
     await expect(controller.handleWebhook('secret', { update_id: 1 })).resolves.toEqual({ ok: true });
 
     expect(init).toHaveBeenCalledTimes(1);
+    expect(setWebhook).toHaveBeenCalledTimes(1);
     expect(handleUpdate).toHaveBeenCalledWith({ update_id: 1 });
   });
 });

@@ -18,6 +18,9 @@ routes.
   The Secret must provide `AUTH_JWT_SECRET` and either `DATABASE_URL` or the
   `POSTGRES_*` values consumed by the app. When enabling an optional bot API,
   include its documented Telegram or Discord runtime values in the same Secret.
+  Telegram requires `TELEGRAM_BOT_TOKEN` and
+  `TELEGRAM_BOT_WEBHOOK_SECRET`; the chart ConfigMap supplies the webhook URL,
+  canonical Mini App URL, webhook mode, and enabled menu-setup defaults.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
 - APIs probe `/live` and `/ready`; product frontends are deployable by default, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.

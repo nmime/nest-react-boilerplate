@@ -41,9 +41,18 @@ Use grammY for future Telegram bot handlers and plugins. Keep bot code transport
 
 - Use webhook mode in production when a public HTTPS endpoint is available.
 - Use polling/worker mode only for local development or controlled worker deployments where webhooks are not available.
-- Validate webhook secret tokens when `TELEGRAM_BOT_WEBHOOK_MODE=webhook`.
+- Validate webhook secret tokens when `TELEGRAM_BOT_MODE=webhook`.
 - Keep session, menu, rate-limit, and i18n plugins close to the bot adapter.
 - Keep account-link tokens short lived and single use.
+
+The bot publishes its private-chat command menu on startup in English and
+Russian. The commands are `/start`, `/app`, `/profile`, `/settings`,
+`/language`, `/support`, and `/link`; `/app` is omitted when the Mini App URL is
+missing or unsafe. With `TELEGRAM_BOT_MENU_BUTTON_ENABLED=true` (the scaffold
+default), users can launch the same canonical TMA from the persistent chat menu
+button, the `/start` inline menu, and the `/app` command. In webhook mode,
+startup also registers the configured HTTPS `TELEGRAM_BOT_WEBHOOK_URL` with
+Telegram using the configured secret token.
 
 Bot copy keys are grouped as:
 
@@ -153,7 +162,17 @@ Telegram launches receive branded header and bottom-bar colors, expanded and
 fullscreen negotiation, native BackButton handling, and safe-area-aware
 full-height layout. Normal browsers keep the same shell and fall back to browser
 history plus Web Share, clipboard, or the Telegram share URL. Page features must
-not mount Telegram viewport or BackButton APIs independently.
+not mount Telegram viewport, swipe behavior, or BackButton APIs independently.
+The provider disables Telegram's vertical close/minimize swipe while mounted,
+then restores it during cleanup; normal document scrolling remains available
+for app content.
+
+BotFather still owns the bot-profile **Main Mini App** button and allowed Mini
+App domain; Telegram does not expose those two bot-profile settings through the
+Bot API. During initial provider setup, configure the Main Mini App URL as
+`https://user-app.example.com/telegram-mini-app` and the domain as
+`user-app.example.com`. Runtime startup then wires the webhook, command menu,
+persistent chat menu button, and in-message launch buttons automatically.
 
 The Mini App frontend can be built in either API URL mode:
 

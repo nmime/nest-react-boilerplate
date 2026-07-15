@@ -44,6 +44,14 @@ const sdk = vi.hoisted(() => {
       setHeaderColor: headerColorMethod,
     },
     shareURL: vi.fn(),
+    swipeBehavior: {
+      disableVertical: availableMethod(),
+      enableVertical: availableMethod(),
+      isMounted: vi.fn(() => false),
+      isSupported: vi.fn(() => true),
+      mount: vi.fn(),
+      unmount: vi.fn(),
+    },
     themeParams: {
       bindCssVars: vi.fn(() => cleanupThemeCss),
       isCssVarsBound: vi.fn(() => false),
@@ -144,6 +152,8 @@ describe('MiniAppProvider', () => {
     expect(sdk.miniApp.ready).toHaveBeenCalledOnce();
     expect(sdk.viewport.expand).toHaveBeenCalledOnce();
     expect(sdk.backButton.show).toHaveBeenCalledOnce();
+    expect(sdk.swipeBehavior.mount).toHaveBeenCalledOnce();
+    expect(sdk.swipeBehavior.disableVertical).toHaveBeenCalledOnce();
 
     sdk.backButton.onClick.mock.calls[0]?.[0]();
     expect(onBack).toHaveBeenCalledOnce();
@@ -155,5 +165,7 @@ describe('MiniAppProvider', () => {
     expect(sdk.cleanupThemeCss).toHaveBeenCalledOnce();
     expect(sdk.cleanupViewportCss).toHaveBeenCalledOnce();
     expect(sdk.cleanupBack).toHaveBeenCalledOnce();
+    expect(sdk.swipeBehavior.enableVertical).toHaveBeenCalledOnce();
+    expect(sdk.swipeBehavior.unmount).toHaveBeenCalledOnce();
   });
 });

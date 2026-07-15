@@ -41,6 +41,14 @@ vi.mock('@tma.js/sdk-react', async () => {
       setHeaderColor: headerColorMethod,
     },
     shareURL: vi.fn(),
+    swipeBehavior: {
+      disableVertical: availableMethod(),
+      enableVertical: availableMethod(),
+      isMounted: vi.fn(() => false),
+      isSupported: vi.fn(() => true),
+      mount: vi.fn(),
+      unmount: vi.fn(),
+    },
     themeParams: {
       bindCssVars: vi.fn(() => vi.fn()),
       isCssVarsBound: vi.fn(() => false),

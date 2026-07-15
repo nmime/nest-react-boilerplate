@@ -9,11 +9,15 @@ describe('TelegramBotApiModule', () => {
   it('wires webhook controller and health when TELEGRAM_BOT_MODE=webhook', async () => {
     let moduleRef: TestingModule | undefined;
     const previousToken = process.env.TELEGRAM_BOT_TOKEN;
-    const previousWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const previousWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
+    const previousWebhookUrl = process.env.TELEGRAM_BOT_WEBHOOK_URL;
+    const previousMenuSetup = process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED;
     const previousMode = process.env.TELEGRAM_BOT_MODE;
 
     process.env.TELEGRAM_BOT_TOKEN = '123:test';
-    process.env.TELEGRAM_WEBHOOK_SECRET = 'secret';
+    process.env.TELEGRAM_BOT_WEBHOOK_SECRET = 'secret';
+    process.env.TELEGRAM_BOT_WEBHOOK_URL = 'https://telegram-bot-api.example.test/telegram/webhook';
+    process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED = 'false';
     process.env.TELEGRAM_BOT_MODE = 'webhook';
 
     try {
@@ -28,7 +32,9 @@ describe('TelegramBotApiModule', () => {
       expect(() => moduleRef.get(TelegramPollingService)).toThrow();
     } finally {
       restoreEnv('TELEGRAM_BOT_TOKEN', previousToken);
-      restoreEnv('TELEGRAM_WEBHOOK_SECRET', previousWebhookSecret);
+      restoreEnv('TELEGRAM_BOT_WEBHOOK_SECRET', previousWebhookSecret);
+      restoreEnv('TELEGRAM_BOT_WEBHOOK_URL', previousWebhookUrl);
+      restoreEnv('TELEGRAM_BOT_MENU_BUTTON_ENABLED', previousMenuSetup);
       restoreEnv('TELEGRAM_BOT_MODE', previousMode);
       await moduleRef?.close();
     }
@@ -37,12 +43,14 @@ describe('TelegramBotApiModule', () => {
   it('wires polling service and no webhook controller when TELEGRAM_BOT_MODE=polling', async () => {
     let moduleRef: TestingModule | undefined;
     const previousToken = process.env.TELEGRAM_BOT_TOKEN;
-    const previousWebhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const previousWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
     const previousMode = process.env.TELEGRAM_BOT_MODE;
+    const previousMenuSetup = process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED;
 
     process.env.TELEGRAM_BOT_TOKEN = '123:test';
-    process.env.TELEGRAM_WEBHOOK_SECRET = 'secret';
+    process.env.TELEGRAM_BOT_WEBHOOK_SECRET = 'secret';
     process.env.TELEGRAM_BOT_MODE = 'polling';
+    process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED = 'false';
 
     try {
       moduleRef = await Test.createTestingModule({
@@ -56,8 +64,9 @@ describe('TelegramBotApiModule', () => {
       expect(() => moduleRef.get(TelegramWebhookController)).toThrow();
     } finally {
       restoreEnv('TELEGRAM_BOT_TOKEN', previousToken);
-      restoreEnv('TELEGRAM_WEBHOOK_SECRET', previousWebhookSecret);
+      restoreEnv('TELEGRAM_BOT_WEBHOOK_SECRET', previousWebhookSecret);
       restoreEnv('TELEGRAM_BOT_MODE', previousMode);
+      restoreEnv('TELEGRAM_BOT_MENU_BUTTON_ENABLED', previousMenuSetup);
       await moduleRef?.close();
     }
   });

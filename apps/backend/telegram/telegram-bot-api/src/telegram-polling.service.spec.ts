@@ -25,6 +25,7 @@ function instance(
   return {
     config: {
       token: '123:test',
+      setupMenuButton: false,
       webhookSecret: 'secret',
       mode,
       environment,

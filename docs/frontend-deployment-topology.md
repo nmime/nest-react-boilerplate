@@ -15,10 +15,10 @@ other.
 
 ## Public domain contract
 
-The Helm defaults assign one unique split-host domain to every production
-frontend and enabled public API. Replace `example.com` in environment-owned
-values, preserve the one-host-per-app mapping, and include every browser origin
-in `config.corsOrigins` and TLS:
+The Helm defaults and Compose `per-app-domains` mode assign one unique host to
+every production frontend and enabled public API. Replace `example.com` in
+environment-owned values, preserve the one-host-per-app mapping, and include
+every browser origin in CORS, Better Auth trusted origins, and TLS:
 
 | Frontend app  | Default host             | Kubernetes service |
 | ------------- | ------------------------ | ------------------ |
@@ -42,6 +42,15 @@ The deployment validator fails when any enabled frontend or core API host,
 service, or TLS assignment is missing. DNS records and certificates remain
 environment/platform responsibilities; the app chart owns the ingress contract
 they target.
+
+Compose derives this exact table from `PUBLIC_DOMAIN` and `PRIMARY_APP`; only
+`landing-app` or `site-app` may own the apex. A wildcard DNS record may point
+all subdomains to the Compose host, but Caddy still matches only these exact app
+IDs. `single-domain` is a separate reduced publishing mode: it exposes the
+selected apex frontend plus same-origin API paths and leaves the other
+frontends loopback-only. It does not pretend that five root-relative frontend
+asset trees can safely share invented URL prefixes. See
+[docker-compose-production.md](docker-compose-production.md).
 
 ## Mode 1: same-origin API proxy
 
@@ -69,9 +78,10 @@ VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
 EXPO_PUBLIC_API_BASE_URL=/ pnpm exec nx run mobile-app:export
 ```
 
-Docker/Compose uses `docker/nginx-fullstack.conf`. Helm uses the chart-rendered
-frontend nginx ConfigMap. Both keep browser-facing API roots empty and proxy the
-API prefixes server-side:
+Docker/Compose uses `docker/nginx-fullstack.conf`, with the Compose Caddy edge
+enforcing the same API matching before the request reaches a frontend. Helm
+uses the chart-rendered frontend nginx ConfigMap. Both keep browser-facing API
+roots empty and proxy the API prefixes server-side:
 
 - `/api/auth/*` -> Better Auth endpoints on the auth API.
 - `/auth/*` -> tenant/RBAC auth API, with `/auth/docs` kept as an API/docs route.

@@ -77,8 +77,11 @@ These public root scripts are part of the supported DX/CI contract even when the
 | `pnpm run images:webp` | `pnpm --filter @repo/tooling tooling images webp` | Converts PNG/JPG/JPEG assets to WebP side-by-side by default; pass inputs and options after `--`. |
 | `pnpm run images:webp:check` | `pnpm --filter @repo/tooling tooling images webp --dry-run` | Non-mutating image conversion preview for local and PR checks. |
 | `pnpm run docker:prod:config:check` | `node scripts/validate-docker-compose-prod.mjs` | Static production Compose config validation only; it does not start containers. |
+| `pnpm run docker:prod:config` | `node scripts/compose-production.mjs config` | Renders the database + domain + TLS + optional-profile topology selected in `.env.production`. |
+| `pnpm run docker:prod:up` | `node scripts/compose-production.mjs up -d` | Starts the validated production topology; the Compose edge is included only for `single-domain` or `per-app-domains`. |
+| `pnpm run docker:prod:down` | `node scripts/compose-production.mjs down` | Stops the same selected topology without deleting volumes. |
 | `pnpm run deploy:validate` | `node scripts/deploy-validate.mjs` | No-deploy validation bundle. Renders both Compose database topologies when Docker Compose is available, validates Argo CD and Flux, and renders Helm when available. CI can require every CLI with `REQUIRE_*` flags. |
-| `pnpm run deploy:validate:docker` | `node scripts/deploy-validate.mjs --mode=docker` | No-deploy validation of the common production Compose file plus bundled-db and external-db overlays; actual `docker compose up` is separate. |
+| `pnpm run deploy:validate:docker` | `node scripts/deploy-validate.mjs --mode=docker` | No-deploy validation of database, one-domain, per-app/wildcard-DNS, external-proxy, TLS, and optional-profile Compose contracts. |
 | `pnpm run docker:prod:bundled-db:config` | merged production base + bundled-db `docker compose ... config` | Renders the single-host stack with a Compose-owned PostgreSQL service and volume. |
 | `pnpm run docker:prod:external-db:config` | merged production base + external-db `docker compose ... config` | Renders the single-host stack without PostgreSQL and mounts `DATABASE_URL` as a Docker secret. |
 | `pnpm run deploy:validate:pm2` | `node scripts/deploy-validate.mjs --mode=pm2` | No-deploy PM2 validation. If no `ecosystem.config.{js,cjs,mjs}` exists, this optional mode reports a skip/no-op and exits successfully. |

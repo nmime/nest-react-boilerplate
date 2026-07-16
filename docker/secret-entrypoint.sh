@@ -22,6 +22,7 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret TELEGRAM_OIDC_CLIENT_SECRET /run/secrets/telegram_oidc_client_secret
   load_secret TELEGRAM_BOT_WEBHOOK_SECRET /run/secrets/telegram_bot_webhook_secret
   load_secret DISCORD_BOT_TOKEN /run/secrets/discord_bot_token
+  load_secret DISCORD_CLIENT_SECRET /run/secrets/discord_client_secret
   load_secret DISCORD_PUBLIC_KEY /run/secrets/discord_public_key
 
   exec su-exec node "$@"

@@ -13,8 +13,8 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 - [ ] `pnpm run deploy:validate` succeeds as a no-deploy generic preflight. If
       Helm is not installed, it clearly skips Helm render validation.
 - [ ] For Compose deployments, `pnpm run deploy:validate:docker` succeeds, then
-      the selected `docker:prod:bundled-db:config` or
-      `docker:prod:external-db:config` command succeeds for `.env.production`.
+      `pnpm run docker:prod:config` succeeds for the selected database, domain,
+      TLS, and optional-profile values in `.env.production`.
 - [ ] For PM2 deployments, `pnpm run deploy:validate:pm2` validates the product
       `ecosystem.config.{js,cjs,mjs}`; when no ecosystem config exists, the
       command is an expected no-op skip.
@@ -40,6 +40,8 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 - [ ] `NODE_ENV=production`, `POSTGRES_SYNCHRONIZE=false`, and
       `OPENAPI_ENABLED=false` unless explicitly protected.
 - [ ] `CORS_ORIGINS` is a comma-separated allow-list of real HTTPS origins.
+- [ ] `PUBLIC_DOMAIN`, `PRIMARY_APP`, DNS, Caddy/external-proxy routes, Better
+      Auth URLs, JWT issuer, and TLS SANs describe the same app-ID host map.
 - [ ] `AUTH_JWT_SECRET` is generated with high entropy and stored in Docker
       secret files, Kubernetes Secrets, Vault, or External Secrets Operator.
 - [ ] JWT issuer/audience values match the public auth/API hosts.

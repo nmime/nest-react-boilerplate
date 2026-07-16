@@ -217,6 +217,7 @@ function applyApexHostSelection(content: string, config: InitConfig): string {
   const landingHostname = `landing-app.${config.domain}`;
   const escapedDomain = config.domain.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   return content
+    .replace(/^PRIMARY_APP=landing-app$/gmu, "PRIMARY_APP=site-app")
     .split(siteHostname)
     .join(marker)
     .replace(new RegExp(`(?<![@\\w.-])${escapedDomain}(?![\\w.-])`, "gu"), landingHostname)

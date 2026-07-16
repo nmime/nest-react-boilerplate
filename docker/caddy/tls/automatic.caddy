@@ -1,0 +1,1 @@
+# Caddy's default automatic HTTPS is active when no explicit tls directive is present.

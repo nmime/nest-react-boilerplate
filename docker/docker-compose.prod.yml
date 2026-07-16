@@ -516,5 +516,7 @@ secrets:
     file: ${TELEGRAM_BOT_WEBHOOK_SECRET_FILE:-./secrets/telegram_bot_webhook_secret.txt}
   discord_bot_token:
     file: ${DISCORD_BOT_TOKEN_FILE:-./secrets/discord_bot_token.txt}
+  discord_client_secret:
+    file: ${DISCORD_CLIENT_SECRET_FILE:-./secrets/discord_client_secret.txt}
   discord_public_key:
     file: ${DISCORD_PUBLIC_KEY_FILE:-./secrets/discord_public_key.txt}

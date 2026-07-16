@@ -9,7 +9,13 @@ const has = (text, needle, label = needle) =>
 const prodCompose = read('docker/docker-compose.prod.yml');
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
+const edgeCompose = read('docker/docker-compose.prod.edge.yml');
+const providedTlsCompose = read('docker/docker-compose.prod.edge-provided-tls.yml');
 const telegramAuthCompose = read('docker/docker-compose.prod.telegram.yml');
+const discordAuthCompose = read('docker/docker-compose.prod.discord.yml');
+const singleDomainCaddyfile = read('docker/caddy/Caddyfile.single-domain');
+const perAppCaddyfile = read('docker/caddy/Caddyfile.per-app-domains');
+const composeWrapper = read('scripts/compose-production.mjs');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
@@ -75,6 +81,22 @@ has(bundledDbCompose, '\n  postgres:\n', 'bundled-db overlay defines PostgreSQL'
 has(bundledDbCompose, 'postgres_password:', 'bundled-db overlay defines its password secret');
 assert.ok(!externalDbCompose.includes('\n  postgres:\n'), 'external-db overlay must not define PostgreSQL');
 has(externalDbCompose, 'database_url:', 'external-db overlay defines its URL secret');
+has(edgeCompose, 'caddy:2.11.4-alpine', 'Compose-owned Caddy edge image');
+has(edgeCompose, 'host_ip: ${EDGE_BIND_ADDRESS:-0.0.0.0}', 'configurable public edge bind address');
+has(edgeCompose, "published: '${EDGE_HTTP_PORT:-80}'", 'configurable edge HTTP port');
+has(edgeCompose, "published: '${EDGE_HTTPS_PORT:-443}'", 'configurable edge HTTPS port');
+has(edgeCompose, 'protocol: udp', 'HTTP/3 UDP listener');
+has(edgeCompose, 'cap_drop: [ALL]', 'edge drops capabilities');
+has(edgeCompose, 'no-new-privileges:true', 'edge disallows privilege escalation');
+has(providedTlsCompose, 'EDGE_TLS_CERT_FILE', 'provided TLS certificate mount');
+has(providedTlsCompose, 'EDGE_TLS_KEY_FILE', 'provided TLS key mount');
+has(singleDomainCaddyfile, '{$PUBLIC_DOMAIN}', 'single-domain public hostname');
+has(singleDomainCaddyfile, '{$PRIMARY_APP_UPSTREAM}', 'single-domain selected apex frontend');
+has(perAppCaddyfile, '{$AUTH_APP_API_DOMAIN}', 'per-app auth API hostname');
+has(perAppCaddyfile, 'auth-app-api:80', 'per-app auth API upstream');
+has(composeWrapper, "'auth-app-api', 'AUTH_APP_API_DOMAIN'", 'app-id domain derivation');
+has(composeWrapper, "'landing-app': 'landing-app:8080'", 'landing apex upstream');
+has(composeWrapper, "'site-app': 'site-app:80'", 'site apex upstream');
 for (const expected of [
   'AUTH_TELEGRAM_ENABLED:',
   'TELEGRAM_OIDC_ENABLED:',
@@ -84,6 +106,14 @@ for (const expected of [
   '- telegram_oidc_client_secret',
 ]) {
   has(telegramAuthCompose, expected, `Telegram auth overlay ${expected}`);
+}
+for (const expected of [
+  'DISCORD_AUTH_ENABLED:',
+  'DISCORD_CLIENT_ID:',
+  'DISCORD_REDIRECT_URI:',
+  '- discord_client_secret',
+]) {
+  has(discordAuthCompose, expected, `Discord auth overlay ${expected}`);
 }
 
 for (const service of [
@@ -115,8 +145,19 @@ for (const expected of [
   'TELEGRAM_OIDC_CLIENT_SECRET_FILE=./secrets/telegram_oidc_client_secret.txt',
   'TELEGRAM_BOT_WEBHOOK_SECRET_FILE=./secrets/telegram_bot_webhook_secret.txt',
   'DISCORD_BOT_TOKEN_FILE=./secrets/discord_bot_token.txt',
+  'DISCORD_CLIENT_SECRET_FILE=./secrets/discord_client_secret.txt',
   'DISCORD_PUBLIC_KEY_FILE=./secrets/discord_public_key.txt',
   'IMAGE_TAG=sha-000000000000',
+  'PUBLIC_DOMAIN=example.com',
+  'PRIMARY_APP=landing-app',
+  'COMPOSE_DATABASE_MODE=bundled-db',
+  'COMPOSE_DOMAIN_MODE=per-app-domains',
+  'COMPOSE_TLS_MODE=automatic',
+  'EDGE_BIND_ADDRESS=0.0.0.0',
+  'EDGE_HTTP_PORT=80',
+  'EDGE_HTTPS_PORT=443',
+  'EDGE_TLS_CERT_FILE=./secrets/tls.crt',
+  'EDGE_TLS_KEY_FILE=./secrets/tls.key',
   'SITE_APP_PORT=',
   'MOBILE_APP_PORT=',
   'VITE_API_BASE_URL_MODE=same-origin',
@@ -170,11 +211,20 @@ for (const expected of [
 }
 
 for (const expected of [
+  'pnpm run docker:prod:config',
+  'pnpm run docker:prod:up',
   'pnpm run docker:prod:bundled-db:config',
   'pnpm run docker:prod:external-db:config',
+  'COMPOSE_DOMAIN_MODE=single-domain',
+  'COMPOSE_DOMAIN_MODE=per-app-domains',
+  'COMPOSE_DOMAIN_MODE=external-proxy',
+  'COMPOSE_TLS_MODE=provided',
+  'auth-app-api.example.com',
+  'wildcard DNS',
   'docker/docker-compose.prod.telegram.yml',
+  'docker/docker-compose.prod.discord.yml',
   'user-app.example.com/api/auth/oauth2/callback/telegram',
-  'node scripts/validate-docker-compose-prod.mjs',
+  'pnpm run docker:prod:config:check',
   'latest',
   'full immutable tag',
   'chmod 600',
@@ -183,8 +233,9 @@ for (const expected of [
 }
 
 has(deploymentDocs, '## Compose production', 'deployment docs production Compose section');
-has(deploymentDocs, 'docker:prod:bundled-db:config', 'deployment docs bundled-db entrypoint');
-has(deploymentDocs, 'docker:prod:external-db:config', 'deployment docs external-db entrypoint');
+has(deploymentDocs, 'docker:prod:config', 'deployment docs production Compose entrypoint');
+has(deploymentDocs, 'single-domain', 'deployment docs single-domain topology');
+has(deploymentDocs, 'per-app-domains', 'deployment docs per-app topology');
 has(securityPolicy, 'security@example.com', 'security contact placeholder');
 has(securityPolicy, 'within 3 business days', 'security acknowledgement SLA');
 has(securityPolicy, 'within 5 business days', 'security triage SLA');

@@ -1,0 +1,4 @@
+@discord_api path /discord /discord/*
+handle @discord_api {
+	reverse_proxy discord-app-api:80
+}

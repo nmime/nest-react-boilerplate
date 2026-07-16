@@ -46,8 +46,9 @@ const hasAny = (paths) => paths.some((path) => existsSync(join(rootDir, path)));
 
 const validateDocker = () => {
   run('Docker/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=docker']);
+  run('Docker Compose production wrapper tests', process.execPath, ['--test', 'scripts/compose-production.spec.mjs']);
   run('Docker Compose production config', process.execPath, ['scripts/validate-docker-compose-prod.mjs']);
-  run('Docker Compose database topology renders', process.execPath, ['scripts/validate-compose-modes.mjs']);
+  run('Docker Compose database/domain/TLS topology renders', process.execPath, ['scripts/validate-compose-modes.mjs']);
 };
 
 const validateHelm = () => {

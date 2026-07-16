@@ -1,0 +1,14 @@
+# Optional TLS overlay for an operator-provided certificate. The certificate
+# must cover every configured public hostname (commonly apex + wildcard SANs).
+
+services:
+  edge:
+    volumes:
+      - type: bind
+        source: ${EDGE_TLS_CERT_FILE:?set EDGE_TLS_CERT_FILE for provided TLS mode}
+        target: /certs/tls.crt
+        read_only: true
+      - type: bind
+        source: ${EDGE_TLS_KEY_FILE:?set EDGE_TLS_KEY_FILE for provided TLS mode}
+        target: /certs/tls.key
+        read_only: true

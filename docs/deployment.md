@@ -6,8 +6,8 @@ belong to the generated product.
 
 | Mode                         | Entrypoint                                                            | Database                                                    | Validation                        |
 | ---------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------- |
-| Compose + bundled PostgreSQL | production base + `docker-compose.prod.bundled-db.yml`                | PostgreSQL service and volume inside the Compose project    | `pnpm run deploy:validate:docker` |
-| Compose + external DB        | production base + `docker-compose.prod.external-db.yml`               | Secret-file URL to operator/cloud PostgreSQL; no Compose DB | `pnpm run deploy:validate:docker` |
+| Compose + bundled PostgreSQL | production wrapper + bundled DB and selected domain/TLS overlays      | PostgreSQL service and volume inside the Compose project    | `pnpm run deploy:validate:docker` |
+| Compose + external DB        | production wrapper + external DB and selected domain/TLS overlays     | Secret-file URL to operator/cloud PostgreSQL; no Compose DB | `pnpm run deploy:validate:docker` |
 | Direct Kubernetes            | `.helm/` + `.helm/values-production.yaml`                             | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:helm`   |
 | Kubernetes GitOps            | Helm chart through `deploy/argocd/` or `deploy/flux/`                 | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:gitops` |
 | PM2                          | Product-owned `ecosystem.config.*` when a project explicitly adds one | Product/platform-owned                                      | `pnpm run deploy:validate:pm2`    |
@@ -29,13 +29,19 @@ flowchart TD
   host -- Yes --> db{Database inside the Compose project?}
   db -- Yes --> bundled[Compose bundled-db overlay]
   db -- No --> external[Compose external-db overlay and DATABASE_URL secret]
+  bundled --> domains{Public routing owner?}
+  external --> domains
+  domains -- One hostname --> single[Compose Caddy single-domain]
+  domains -- Per app or wildcard DNS --> multi[Compose Caddy per-app-domains]
+  domains -- Existing edge --> proxy[external-proxy]
   host -- No --> k8s{Kubernetes?}
   k8s -- No --> pm2[Add and own a PM2/runtime runbook]
   k8s -- Yes --> controller{GitOps controller owns reconciliation?}
   controller -- No --> helm[Direct Helm upgrade/install]
   controller -- Yes --> gitops[Argo CD or Flux]
-  bundled --> verify[Migration, readiness, logs, backup, rollback]
-  external --> verify
+  single --> verify[Migration, readiness, logs, backup, rollback]
+  multi --> verify
+  proxy --> verify
   pm2 --> verify
   helm --> verify
   gitops --> verify
@@ -63,18 +69,16 @@ is active while every API still depends on a local `postgres` service.
 
 ```bash
 pnpm run deploy:validate:docker
-
-# Bundled PostgreSQL
-pnpm run docker:prod:bundled-db:config
-pnpm run docker:prod:bundled-db:up
-
-# External PostgreSQL
-pnpm run docker:prod:external-db:config
-pnpm run docker:prod:external-db:up
+pnpm run docker:prod:config
+pnpm run docker:prod:up
 ```
 
-Both modes mount credentials from files under `docker/secrets/`; production
-database credentials are never interpolated into the Compose model. See
+Select `COMPOSE_DATABASE_MODE`, `COMPOSE_DOMAIN_MODE`, and `COMPOSE_TLS_MODE` in
+`.env.production`. Compose supports one public hostname, deterministic per-app
+hostnames compatible with wildcard DNS, or an operator-owned external proxy.
+All modes mount credentials from files under `docker/secrets/`; production
+database credentials and TLS private keys are never interpolated into the
+Compose model. See
 [docker-compose-production.md](docker-compose-production.md) for setup,
 verification, backup, rollback, and shutdown commands.
 

@@ -1,0 +1,60 @@
+(common_server) {
+	encode zstd gzip
+	header {
+		-Server
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+	}
+}
+
+(core_same_origin_api_routes) {
+	@better_auth path /api/auth /api/auth/*
+	handle @better_auth {
+		reverse_proxy auth-app-api:80
+	}
+
+	@auth_docs path /auth/docs /auth/docs/*
+	handle @auth_docs {
+		reverse_proxy auth-app-api:80
+	}
+
+	@auth_api {
+		path /auth /auth/*
+		not {
+			method GET HEAD
+			header Accept *text/html*
+		}
+	}
+	handle @auth_api {
+		reverse_proxy auth-app-api:80
+	}
+
+	@user_api {
+		path /profile /profile/*
+		not {
+			method GET HEAD
+			header Accept *text/html*
+		}
+	}
+	handle @user_api {
+		reverse_proxy user-app-api:80
+	}
+
+	@admin_docs path /admin/docs /admin/docs/*
+	handle @admin_docs {
+		reverse_proxy admin-app-api:80
+	}
+
+	@admin_api {
+		path /admin /admin/*
+		not {
+			method GET HEAD
+			header Accept *text/html*
+		}
+	}
+	handle @admin_api {
+		reverse_proxy admin-app-api:80
+	}
+}

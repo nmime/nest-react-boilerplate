@@ -1,0 +1,2 @@
+import /etc/caddy/routes/optional/discord.caddy
+import /etc/caddy/routes/optional/telegram.caddy

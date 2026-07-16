@@ -36,7 +36,10 @@ function createFixture(): string {
     ].join("\n") + "\n",
   );
   writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://user-app.example.com\n");
-  writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://example.com\n");
+  writeFileSync(
+    join(root, ".env.production.example"),
+    "PUBLIC_URL=https://example.com\nPRIMARY_APP=landing-app\n",
+  );
   writeFileSync(
     join(root, "deployment.txt"),
     [
@@ -142,7 +145,7 @@ describe("project init", () => {
       );
       assert.equal(
         readFileSync(join(root, ".env.production.example"), "utf8"),
-        "PUBLIC_URL=https://acme.example\n",
+        "PUBLIC_URL=https://acme.example\nPRIMARY_APP=landing-app\n",
       );
       assert.equal(
         readFileSync(join(root, "deployment.txt"), "utf8"),
@@ -201,7 +204,7 @@ describe("project init", () => {
       ]);
       assert.equal(
         readFileSync(join(root, ".env.production.example"), "utf8"),
-        "PUBLIC_URL=https://landing-app.acme.example\n",
+        "PUBLIC_URL=https://landing-app.acme.example\nPRIMARY_APP=site-app\n",
       );
     } finally {
       rmSync(root, { force: true, recursive: true });

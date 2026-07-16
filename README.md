@@ -64,21 +64,21 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 ## Quick links
 
-| Topic                 | Doc                                                                                                                          |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Getting started       | [Quick Start](docs/quick-start.md)                                                                                           |
-| Scaffold and extend   | [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)                                                      |
-| Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                     |
-| System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                             |
-| Environment config    | [Environment Variables](docs/environment-variables.md)                                                                       |
-| Monitoring & alerting | [Monitoring](docs/monitoring.md)                                                                                             |
-| Supply chain & SLSA   | [Supply Chain Security](docs/supply-chain.md)                                                                                |
-| API contracts         | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md)                                           |
-| Database              | [Migrations](docs/database-migrations.md)                                                                                    |
-| Deployment            | [Production Deploy](docs/production-deploy.md) · [Helm](.helm/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
-| Testing               | [Testing](docs/testing.md)                                                                                                   |
-| Operations            | [Runbooks](docs/runbooks/README.md)                                                                                          |
-| ADRs                  | [Architecture Decision Records](docs/adr/README.md)                                                                          |
+| Topic                 | Doc                                                                                                                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Getting started       | [Quick Start](docs/quick-start.md)                                                                                                                                                      |
+| Scaffold and extend   | [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)                                                                                                                 |
+| Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                                                                                |
+| System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                                                                                        |
+| Environment config    | [Environment Variables](docs/environment-variables.md)                                                                                                                                  |
+| Monitoring & alerting | [Monitoring](docs/monitoring.md)                                                                                                                                                        |
+| Supply chain & SLSA   | [Supply Chain Security](docs/supply-chain.md)                                                                                                                                           |
+| API contracts         | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md)                                                                                                      |
+| Database              | [Migrations](docs/database-migrations.md)                                                                                                                                               |
+| Deployment            | [Production Deploy](docs/production-deploy.md) · [Compose domains/TLS](docs/docker-compose-production.md) · [Helm](.helm/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
+| Testing               | [Testing](docs/testing.md)                                                                                                                                                              |
+| Operations            | [Runbooks](docs/runbooks/README.md)                                                                                                                                                     |
+| ADRs                  | [Architecture Decision Records](docs/adr/README.md)                                                                                                                                     |
 
 ## Integrations
 

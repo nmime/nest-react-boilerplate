@@ -1,21 +1,59 @@
 # Production deployment with Docker Compose
 
-Docker Compose is the supported single-host production path. It has one common
-application file and exactly one required database overlay:
+Docker Compose is the supported production path for one Docker host. The
+repository owns the complete application stack, an optional PostgreSQL service,
+and an optional Caddy public edge. Kubernetes/Helm remains the preferred HA
+path; bundled PostgreSQL is not an HA database architecture.
 
-| Mode                        | Files                                                             | PostgreSQL ownership                                  |
-| --------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| Bundled PostgreSQL          | `docker-compose.prod.yml` + `docker-compose.prod.bundled-db.yml`  | Compose service and persistent `postgres-data` volume |
-| External/managed PostgreSQL | `docker-compose.prod.yml` + `docker-compose.prod.external-db.yml` | Operator/cloud provider; no Compose DB service/volume |
+The supported topology is selected in `.env.production`, then the repository
+wrapper assembles the correct overlays. Do not run
+`docker/docker-compose.prod.yml` alone.
 
-Do not run `docker/docker-compose.prod.yml` alone. The base file deliberately
-does not choose a database topology. Both overlays run the same migration
-container before APIs and keep all application image/build contracts identical.
+## Topology dimensions
 
-Kubernetes/Helm remains the preferred HA path. Compose is for one Docker host;
-the bundled database mode is not an HA database architecture.
+### Database ownership
 
-## 1. Initialize and prepare the host
+| `COMPOSE_DATABASE_MODE` | Overlay                               | PostgreSQL ownership                                  |
+| ----------------------- | ------------------------------------- | ----------------------------------------------------- |
+| `bundled-db`            | `docker-compose.prod.bundled-db.yml`  | Compose service and persistent `postgres-data` volume |
+| `external-db`           | `docker-compose.prod.external-db.yml` | Operator/cloud provider; secret-file connection URL   |
+
+### Public domain ownership
+
+| `COMPOSE_DOMAIN_MODE` | Public behavior                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `single-domain`       | The Compose Caddy edge publishes one hostname. It routes core APIs by path and sends all remaining requests to the selected `landing-app` or `site-app`. Other frontend containers stay loopback-only. |
+| `per-app-domains`     | The Compose Caddy edge publishes every frontend and API on its deterministic app-ID hostname. The selected landing/site app owns the apex. This is the full multi-app topology.                        |
+| `external-proxy`      | Compose publishes no edge. Every app/API port remains loopback-only for an operator-owned reverse proxy or load balancer.                                                                              |
+
+`single-domain` deliberately means one public frontend, not multiple SPAs hidden
+under invented path prefixes. Vite, Astro, Vike, and Expo assets have different
+base-path contracts; pretending they share one path namespace would produce a
+deployment that breaks after navigation or asset loading. Use
+`per-app-domains` when admin, user, mobile-web, site, and landing must all be
+public.
+
+Optional Telegram and Discord profiles require `per-app-domains` when Compose
+owns the edge. Their user-facing app and API/webhook endpoints must both be
+reachable. An `external-proxy` deployment may provide an equivalent operator-
+owned routing contract.
+
+### TLS ownership
+
+| `COMPOSE_TLS_MODE` | Valid with                         | Behavior                                                                  |
+| ------------------ | ---------------------------------- | ------------------------------------------------------------------------- |
+| `automatic`        | `single-domain`, `per-app-domains` | Caddy obtains and renews certificates for the exact configured hostnames. |
+| `provided`         | `single-domain`, `per-app-domains` | Caddy loads the operator-provided certificate and key.                    |
+| `external`         | `external-proxy`                   | TLS is terminated outside this Compose project.                           |
+
+Automatic HTTPS works with individual DNS records or a wildcard DNS record that
+points all subdomains to the host. Caddy still issues exact-host certificates.
+If policy requires one actual wildcard certificate, use `provided`; the
+certificate must cover the apex plus every configured subdomain, commonly with
+both apex and wildcard SANs. Caddy's standard image intentionally avoids a
+provider-specific DNS plugin.
+
+## 1. Initialize the product
 
 Initialize a fresh template before deploying so registry names, domains, and
 database names belong to the product:
@@ -23,11 +61,13 @@ database names belong to the product:
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
-pnpm nrb init --name "Acme" --domain acme.example --owner acme-org
+pnpm nrb init --name "Acme" --domain acme.example --owner acme-org --apex-app landing-app
 ```
 
-Install a current Docker Engine with the Compose plugin, then create local
-configuration and secret directories:
+`--apex-app` accepts exactly `landing-app` or `site-app`. The initializer updates
+`PRIMARY_APP` and every documented hostname together.
+
+Copy the environment file and create secret storage:
 
 ```bash
 cp .env.production.example .env.production
@@ -39,9 +79,8 @@ openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
 chmod 600 .env.production docker/secrets/*.txt
 ```
 
-Edit `.env.production` for real domains, CORS origins, frontend routing, registry,
-ports, and optional integrations. Replace `IMAGE_TAG=sha-000000000000` with the
-full immutable tag produced by the release workflow:
+Replace `IMAGE_TAG=sha-000000000000` with the full immutable tag produced by the
+release workflow:
 
 ```text
 IMAGE_TAG=sha-0123456789abcdef0123456789abcdef01234567
@@ -49,139 +88,229 @@ IMAGE_TAG=sha-0123456789abcdef0123456789abcdef01234567
 
 Never deploy `latest`, `main`, `dev`, `prod`, or another mutable tag.
 
-## 2. Choose exactly one database mode
+## 2. Configure domains
+
+The only hostname inputs are:
+
+```dotenv
+PUBLIC_DOMAIN=example.com
+PRIMARY_APP=landing-app
+COMPOSE_DOMAIN_MODE=per-app-domains
+```
+
+Do not include a scheme, port, path, or `*.` wildcard in `PUBLIC_DOMAIN`. The
+wrapper validates it and derives the full mapping:
+
+| Deployable         | `PRIMARY_APP=landing-app`                   |
+| ------------------ | ------------------------------------------- |
+| `landing-app`      | `example.com`                               |
+| `site-app`         | `site-app.example.com`                      |
+| `user-app`         | `user-app.example.com`                      |
+| `admin-app`        | `admin-app.example.com`                     |
+| `mobile-app`       | `mobile-app.example.com`                    |
+| `auth-app-api`     | `auth-app-api.example.com`                  |
+| `user-app-api`     | `user-app-api.example.com`                  |
+| `admin-app-api`    | `admin-app-api.example.com`                 |
+| `telegram-bot-api` | `telegram-bot-api.example.com` when enabled |
+| `discord-app-api`  | `discord-app-api.example.com` when enabled  |
+
+With `PRIMARY_APP=site-app`, `site-app` owns `example.com` and landing moves to
+`landing-app.example.com`; API hostnames do not change. In particular, an app
+called `auth-app-api` is always `auth-app-api.example.com`, never a starter or
+generic hostname.
+
+The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
+`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot
+web-app URLs from this mapping. Add exceptional origins through
+`CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
+requires the operator to set the complete values explicitly.
+
+### DNS choices
+
+For per-app domains, use either:
+
+- explicit A/AAAA records for the apex and every enabled app hostname; or
+- apex A/AAAA records plus wildcard DNS such as `*.example.com` pointing to the
+  same Docker host.
+
+Wildcard DNS controls address resolution; it does not enable unknown Caddy
+hosts. Caddy only serves the exact app hostnames generated by the wrapper.
+
+## 3. Configure the public edge
+
+The default full multi-app setup is:
+
+```dotenv
+COMPOSE_DOMAIN_MODE=per-app-domains
+COMPOSE_TLS_MODE=automatic
+EDGE_BIND_ADDRESS=0.0.0.0
+EDGE_HTTP_PORT=80
+EDGE_HTTPS_PORT=443
+```
+
+Caddy owns TCP 80, TCP 443, and UDP 443 (HTTP/3). Application, API,
+observability, and database ports are not exposed publicly. Change the bind
+address or published ports when a host firewall, upstream load balancer, or
+port-forwarding layer requires it.
+
+For one public hostname:
+
+```dotenv
+COMPOSE_DOMAIN_MODE=single-domain
+COMPOSE_TLS_MODE=automatic
+```
+
+For an existing reverse proxy:
+
+```dotenv
+COMPOSE_DOMAIN_MODE=external-proxy
+COMPOSE_TLS_MODE=external
+```
+
+In external-proxy mode, route only to the documented loopback ports and keep
+API/navigation matching equivalent to `docker/nginx-fullstack.conf`.
+
+### Operator-provided or wildcard certificate
+
+Set:
+
+```dotenv
+COMPOSE_TLS_MODE=provided
+EDGE_TLS_CERT_FILE=./secrets/tls.crt
+EDGE_TLS_KEY_FILE=./secrets/tls.key
+```
+
+Copy the PEM certificate chain and unencrypted PEM private key into
+`docker/secrets/`, then restrict access:
+
+```bash
+chmod 600 docker/secrets/tls.crt docker/secrets/tls.key
+```
+
+The files are mounted read-only and never copied into an image. Certificate
+issuance and renewal remain the operator's responsibility in this mode.
+
+## 4. Choose the database
 
 ### Bundled PostgreSQL
 
-Create the password file used by both the PostgreSQL container and application
-migration/API containers:
+```dotenv
+COMPOSE_DATABASE_MODE=bundled-db
+```
+
+Create the password file used by PostgreSQL, migrations, and API containers:
 
 ```bash
 openssl rand -base64 32 > docker/secrets/postgres_password.txt
 chmod 600 docker/secrets/postgres_password.txt
-pnpm run docker:prod:bundled-db:config
 ```
 
-The rendered model must contain `postgres`, `postgres-data`, and
-`postgres_password`. PostgreSQL is reachable only on the internal Compose
-database network and is not published to the host.
+PostgreSQL is reachable only on the internal Compose database network.
 
-The production migrator and API image entrypoint reads root-owned `0600` secret
-files before immediately dropping to the unprivileged `node` user. Application
-and migration processes never run as root, including on native Linux hosts.
+### External PostgreSQL
 
-### External or managed PostgreSQL
+```dotenv
+COMPOSE_DATABASE_MODE=external-db
+```
 
-Write the complete TLS-enabled connection URL to a Docker secret file. Do not put
-credentials in `.env.production`, Compose YAML, command history, or Git:
+Write the complete provider-issued TLS connection URL to a Docker secret file:
 
 ```bash
 install -m 600 /dev/null docker/secrets/database_url.txt
 # Edit docker/secrets/database_url.txt with your secret manager or editor.
-pnpm run docker:prod:external-db:config
 ```
 
-The file contains one connection URL, for example the provider-issued
-`postgresql://...` value. Percent-encode special characters in user/password
-segments and enable certificate verification according to the provider contract.
+Do not put database credentials in `.env.production`, Compose YAML, shell
+history, or Git. The external model contains no PostgreSQL service or volume.
 
-The rendered external model contains no `postgres` service, no `postgres-data`
-volume, and no `postgres_password` secret. Only the `database_url` secret is
-mounted into migrations and APIs. The migration service uses the egress-capable
-application network so it can reach the managed endpoint.
+## 5. Enable optional applications
 
-## 3. Validate both topology contracts
+Enable Telegram, Discord, or both:
 
-Run the repository preflight even if only one mode will be deployed:
+```dotenv
+COMPOSE_PROFILES=telegram
+# COMPOSE_PROFILES=discord
+# COMPOSE_PROFILES=telegram,discord
+```
+
+The wrapper enables the matching Compose services and only then imports their
+Caddy host/routes. Disabled optional domains do not trigger certificate
+issuance. For Telegram, also create the bot/OIDC/webhook secret files and set
+`TELEGRAM_OIDC_CLIENT_ID` and `VITE_TELEGRAM_AUTH_ENABLED=true`. The standard
+per-app callback is:
+
+```text
+https://user-app.example.com/api/auth/oauth2/callback/telegram
+```
+
+The TMA URL is `https://user-app.example.com/telegram-mini-app` and the webhook
+is `https://telegram-bot-api.example.com/telegram/webhook`. The wrapper derives
+both from `PUBLIC_DOMAIN`.
+
+For Discord, create `docker/secrets/discord_client_secret.txt`,
+`docker/secrets/discord_bot_token.txt`, and
+`docker/secrets/discord_public_key.txt`, set `DISCORD_CLIENT_ID` and
+`DISCORD_APPLICATION_ID`, then keep the derived callback and interactions URL
+registered in the Discord application. The wrapper adds
+`docker/docker-compose.prod.discord.yml`, enables Discord auth, mounts the OAuth
+client secret, starts the bot API profile, and publishes only
+`discord-app-api.example.com`.
+
+## 6. Validate before deployment
+
+Validate every database/domain/TLS/profile contract, the generated hostnames,
+both Caddyfiles, and the merged Compose models:
 
 ```bash
 pnpm run deploy:validate:docker
-node scripts/validate-docker-compose-prod.mjs
-node scripts/validate-compose-modes.mjs
+pnpm run test:compose-production-config
+pnpm run docker:prod:config:check
+pnpm run docker:prod:config
 ```
 
-CI renders both merged Compose models and asserts that their service, volume,
-secret, dependency, and network contracts differ exactly as documented.
+The last command uses `.env.production`. It should render exactly one database
+mode and, unless `external-proxy` is selected, exactly one `edge` service.
 
-## 4. Start or update
-
-Bundled database:
+Backward-compatible database-specific render commands remain available:
 
 ```bash
-pnpm run docker:prod:bundled-db:up
+pnpm run docker:prod:bundled-db:config
+pnpm run docker:prod:external-db:config
 ```
 
-External database:
+The validator also checks the explicit auth overlays
+`docker/docker-compose.prod.telegram.yml` and
+`docker/docker-compose.prod.discord.yml`.
+
+## 7. Start, inspect, update, and stop
+
+Start the selected topology:
 
 ```bash
-pnpm run docker:prod:external-db:up
+pnpm run docker:prod:up
 ```
 
-The scripts use published immutable images by default. Add `--build` to the
-equivalent explicit `docker compose` command only when intentionally building on
-the server from the checked-out commit. Prefer CI-built, scanned, signed images.
-
-For the optional Telegram bot API, append `--profile telegram` to the explicit
-Compose command. To enable Telegram OIDC/TMA on `auth-app-api`, also create
-`docker/secrets/telegram_bot_token.txt` and
-`docker/secrets/telegram_oidc_client_secret.txt`, set
-`TELEGRAM_OIDC_CLIENT_ID`, `VITE_TELEGRAM_AUTH_ENABLED=true`,
-`BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS`, then append the auth
-overlay:
+Inspect it without reconstructing overlay lists manually:
 
 ```bash
-docker compose --env-file .env.production \
-  -f docker/docker-compose.prod.yml \
-  -f docker/docker-compose.prod.bundled-db.yml \
-  -f docker/docker-compose.prod.telegram.yml up -d
+pnpm run docker:prod:ps
+pnpm run docker:prod:logs -- --tail=100 migrate edge auth-app-api user-app-api admin-app-api
 ```
 
-Use the external database overlay in place of the bundled one when applicable.
-The default same-origin Compose topology sets
-`BETTER_AUTH_URL=https://user-app.example.com`, so Telegram's registered
-callback must be
-`https://user-app.example.com/api/auth/oauth2/callback/telegram`, with the
-initialized product domain substituted. A split-origin build instead sets both
-`BETTER_AUTH_URL` and `VITE_AUTH_API_BASE_URL` to
-`https://auth-app-api.example.com` and registers that host. Do not mix the two
-hosts inside one flow because Better Auth state/session cookies are host-scoped.
-Discord provider secrets and callback setup are likewise required before its
-profile is enabled.
+Update by changing only to another verified immutable `IMAGE_TAG`, rendering the
+model again, and rerunning `pnpm run docker:prod:up`.
 
-## 5. Inspect health and logs
-
-Use the same two files as the selected mode. Bundled example:
+Stop containers while preserving all volumes:
 
 ```bash
-docker compose --env-file .env.production \
-  -f docker/docker-compose.prod.yml \
-  -f docker/docker-compose.prod.bundled-db.yml ps
-docker compose --env-file .env.production \
-  -f docker/docker-compose.prod.yml \
-  -f docker/docker-compose.prod.bundled-db.yml logs --tail=100 migrate auth-app-api user-app-api admin-app-api
+pnpm run docker:prod:down
 ```
 
-For external mode, replace the bundled overlay with
-`docker/docker-compose.prod.external-db.yml`.
+Never add `-v` unless intentionally destroying state after verifying a backup.
 
-Production API and Vike site health checks use `/ready`; static frontends use
-`/nginx-health`. `/ready` fails closed when required dependencies or migrations
-are unavailable. App ports bind to loopback by default; terminate public TLS at
-Caddy, nginx, Traefik, or a cloud load balancer.
+## 8. Backups and rollback
 
-Default domain routing after initialization is:
-
-- apex -> selected `landing-app` or `site-app`;
-- every other frontend -> `<app-id>.<base-domain>`;
-- every API -> `<api-id>.<base-domain>`;
-- optional bot webhook APIs -> their exact app-id domains when enabled.
-
-Keep `CORS_ORIGINS`, provider callback URLs, certificates, and reverse-proxy
-routes aligned with those product-owned hostnames.
-
-## 6. Backups
-
-For bundled mode, dump from the Compose PostgreSQL service to a host-owned path:
+For bundled mode, dump to a host-owned path:
 
 ```bash
 mkdir -p backups
@@ -192,43 +321,25 @@ docker compose --env-file .env.production \
   > backups/postgres.dump
 ```
 
-Validate restore procedures on an isolated copy before relying on a dump. For
-external mode, use provider-native automated backups/PITR and a separately tested
-restore runbook. The application Compose project intentionally does not pretend
-to own a managed database's lifecycle.
+Validate restores on an isolated copy. For external mode, use provider-native
+automated backups/PITR and a separately tested restore runbook.
 
-## 7. Rollback
+Rollback procedure:
 
-1. Record the current Git SHA and immutable image tag before every update.
-2. Take or verify a database backup before migrations.
-3. Change `IMAGE_TAG` back to a previously verified full SHA tag.
-4. Run the selected mode's `:up` script.
-5. Restore the database only when a migration is not backward-compatible;
-   otherwise roll forward with a corrective migration.
+1. Record the current Git SHA and image tag before every update.
+2. Verify a current database backup before migrations.
+3. Change `IMAGE_TAG` to a previously verified full SHA tag.
+4. Run `pnpm run docker:prod:config`, then `pnpm run docker:prod:up`.
+5. Restore the database only for a non-backward-compatible migration; otherwise
+   roll forward with a corrective migration.
 
-## 8. Shutdown
+## 9. Security and observability
 
-Bundled mode:
+The Caddy container uses a read-only root filesystem, drops all capabilities
+except low-port binding, prevents privilege escalation, and persists only its
+data/config volumes. Never publish application loopback ports as a shortcut.
 
-```bash
-pnpm run docker:prod:bundled-db:down
-```
-
-External mode:
-
-```bash
-pnpm run docker:prod:external-db:down
-```
-
-Bundled shutdown keeps `postgres-data`. Never add `-v` unless intentionally
-destroying local state after verifying a backup. External shutdown never acts on
-the managed database.
-
-## 9. Observability
-
-The base production model includes OpenTelemetry Collector, Prometheus,
-Alertmanager, and Grafana. Backends export OTLP to the colocated collector by
-default. Their host ports are loopback-only. Configure Grafana through
-`grafana_admin_password`, route Alertmanager to real receivers, protect operator
-surfaces behind SSO/VPN, and move durable telemetry to platform-managed storage
-when single-host retention is insufficient.
+The base model includes OpenTelemetry Collector, Prometheus, Alertmanager, and
+Grafana on loopback-only host ports. Protect operator surfaces behind SSO/VPN,
+configure real alert receivers, and move durable telemetry to platform-managed
+storage when single-host retention is insufficient.

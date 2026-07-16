@@ -22,7 +22,7 @@ flowchart LR
   commit[Reviewed Git SHA] --> release[Release images workflow]
   release --> verify[SBOM, scan, signature, immutable full-SHA tags]
   verify --> runtime{Selected runtime}
-  runtime --> compose[Compose bundled-db or external-db]
+  runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
   runtime --> gitops[Promotion PR then Argo CD or Flux]
   compose --> migrate[Controlled migration]
@@ -53,18 +53,19 @@ broken release contract.
 
 ## Compose
 
-Choose exactly one database overlay:
+Select database ownership, public-domain ownership, and TLS ownership in
+`.env.production`, then render the complete model:
 
 ```bash
-pnpm run docker:prod:bundled-db:config
-# or
-pnpm run docker:prod:external-db:config
+pnpm run docker:prod:config
 ```
 
 Bundled mode creates PostgreSQL and a persistent volume. External mode mounts a
 `DATABASE_URL` secret file and contains no PostgreSQL service, volume, or
 password secret. Both modes run the migrator before APIs. The production base
-file is not a standalone topology.
+file is not a standalone topology. Domain modes support one public hostname,
+deterministic per-app hostnames with explicit or wildcard DNS, or an existing
+external proxy. See the Compose runbook for automatic and provided TLS modes.
 
 ## Direct Helm
 

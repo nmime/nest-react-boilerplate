@@ -7,7 +7,11 @@ import { fileURLToPath } from 'node:url';
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const modeArg = process.argv.find((arg) => arg.startsWith('--mode='));
 const mode = modeArg?.split('=', 2)[1] ?? process.env.DEPLOY_VALIDATE_MODE ?? 'all';
-const requireHelm = mode === 'helm' || process.argv.includes('--require-helm') || process.env.REQUIRE_HELM === 'true';
+const requireHelm =
+  mode === 'helm' ||
+  mode === 'gitops' ||
+  process.argv.includes('--require-helm') ||
+  process.env.REQUIRE_HELM === 'true';
 const supportedModes = new Set(['all', 'docker', 'helm', 'gitops', 'pm2']);
 
 if (!supportedModes.has(mode)) {
@@ -43,6 +47,7 @@ const hasAny = (paths) => paths.some((path) => existsSync(join(rootDir, path)));
 const validateDocker = () => {
   run('Docker/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=docker']);
   run('Docker Compose production config', process.execPath, ['scripts/validate-docker-compose-prod.mjs']);
+  run('Docker Compose database topology renders', process.execPath, ['scripts/validate-compose-modes.mjs']);
 };
 
 const validateHelm = () => {
@@ -72,16 +77,16 @@ const validateHelm = () => {
 };
 
 const validateGitOps = () => {
-  const manifest = 'deploy/argocd/application.yaml';
-  if (!existsSync(join(rootDir, manifest))) {
+  const manifests = ['deploy/argocd/application.yaml', 'deploy/flux/release.yaml'];
+  if (!hasAny(manifests)) {
     if (mode === 'gitops') {
-      console.error(`GitOps mode selected but ${manifest} is missing.`);
+      console.error(`GitOps mode selected but no Argo CD or Flux manifests are present.`);
       process.exit(1);
     }
-    console.log('GitOps/Argo validation skipped: deploy/argocd/application.yaml not present.');
+    console.log('GitOps validation skipped: no Argo CD or Flux manifests are present.');
     return;
   }
-  run('GitOps/Argo static config', process.execPath, ['scripts/validate-gitops-config.mjs']);
+  run('GitOps/Argo CD and Flux config', process.execPath, ['scripts/validate-gitops-config.mjs']);
 };
 
 const validatePm2 = () => {
@@ -100,6 +105,7 @@ if (mode === 'docker') {
 } else if (mode === 'helm') {
   validateHelm();
 } else if (mode === 'gitops') {
+  validateHelm();
   validateGitOps();
 } else if (mode === 'pm2') {
   validatePm2();

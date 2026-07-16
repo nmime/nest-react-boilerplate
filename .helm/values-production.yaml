@@ -23,6 +23,9 @@
 secrets:
   existingSecret: nest-react-boilerplate-production-secrets
 
+imagePullSecrets:
+  - name: ghcr-credentials
+
 config:
   nodeEnv: production
   corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
@@ -55,7 +58,7 @@ frontendNginx:
 
 migrations:
   image:
-    repository: ghcr.io/nmime/nest-react-boilerplate/migrator
+    repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
     tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
     digest: ''
     pullPolicy: IfNotPresent
@@ -72,7 +75,7 @@ apps:
   authAppApi:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/auth-app-api
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -88,7 +91,7 @@ apps:
   userAppApi:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/user-app-api
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -104,7 +107,7 @@ apps:
   adminAppApi:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/admin-app-api
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -121,7 +124,7 @@ apps:
     enabled: false
     replicas: 1
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/discord-app-api
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/discord-app-api
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -138,7 +141,7 @@ apps:
     enabled: false
     replicas: 1
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/telegram-bot-api
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-api
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -156,7 +159,7 @@ apps:
   landingApp:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/landing-app
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -171,7 +174,7 @@ apps:
   siteApp:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/site-app
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/site-app
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -189,7 +192,7 @@ apps:
   mobileApp:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/mobile-app
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/mobile-app
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -204,7 +207,7 @@ apps:
   userApp:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/user-app
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent
@@ -219,7 +222,7 @@ apps:
   adminApp:
     replicas: 3
     image:
-      repository: ghcr.io/nmime/nest-react-boilerplate/admin-app
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent

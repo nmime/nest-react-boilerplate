@@ -1,0 +1,11 @@
+# Run `pnpm nrb init` before applying this manifest.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: nest-react-boilerplate
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/your-github-org/nest-react-boilerplate.git
+  ref:
+    branch: main

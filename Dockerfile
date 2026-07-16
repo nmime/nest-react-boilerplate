@@ -28,7 +28,9 @@ RUN pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace
 
 FROM workspace AS migrator
-USER node
+RUN apk add --no-cache su-exec
+COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
+ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 CMD ["pnpm", "db:migrate"]
 
 FROM workspace AS builder
@@ -76,7 +78,7 @@ ENV CONTAINER=true \
 WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
-RUN apk add --no-cache libcap \
+RUN apk add --no-cache libcap su-exec \
   && setcap 'cap_net_bind_service=+ep' "$(which node)"
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
@@ -84,8 +86,9 @@ COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
 COPY --from=builder /workspace/i18n ./i18n
+COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
-USER node
+ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 

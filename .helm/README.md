@@ -3,11 +3,11 @@
 Helm is an optional deployment mode for this application. It is required for
 strict chart render/lint validation and actual Helm releases, but it is not a
 global prerequisite for generic deployment validation. Use Docker/Compose, PM2,
-Helm, or Helm + GitOps/Argo independently according to the target environment.
+Helm, or Helm through Argo CD/Flux independently according to the target environment.
 
 This chart is intentionally small and application-owned. It mirrors the live
-`nmime/opwerf` pattern: the platform repository owns Kubernetes, ingress,
-cert-manager, ArgoCD, data services, monitoring, and secret controllers; this
+platform/application boundary: the platform repository owns Kubernetes, ingress,
+cert-manager, GitOps controllers, data services, monitoring, and secret controllers; this
 repository owns app Deployments, Services, probes, migration hooks, and ingress
 routes.
 
@@ -15,8 +15,7 @@ routes.
 
 - Build and publish immutable images for each service and the migrator. The release workflow pushes `sha-<git-sha>` GHCR tags, emits SBOM/provenance attestations, scans with Trivy, and signs digests with cosign keyless GitHub OIDC.
 - Create a Kubernetes Secret outside the chart and set `secrets.existingSecret`.
-  The Secret must provide `AUTH_JWT_SECRET` and either `DATABASE_URL` or the
-  `POSTGRES_*` values consumed by the app. When enabling an optional bot API,
+  The Secret must provide `AUTH_JWT_SECRET` and `DATABASE_URL`. When enabling an optional bot API,
   include its documented Telegram or Discord runtime values in the same Secret.
   Telegram requires `TELEGRAM_BOT_TOKEN` and
   `TELEGRAM_BOT_WEBHOOK_SECRET`; the chart ConfigMap supplies the webhook URL,
@@ -51,20 +50,20 @@ helm template nest-react-boilerplate .helm \
 
 The generic `pnpm run deploy:validate` command remains a no-deploy preflight and
 skips Helm render validation when Helm is unavailable. It does not apply this
-chart, sync ArgoCD, or deploy traffic.
+chart, sync a controller, or deploy traffic.
 
 ## GitOps
 
-Use `deploy/argocd/application.yaml` as a starting point. In production, point
-ArgoCD at an environment values file (for example `.helm/values-production.yaml`)
-and update image digests (preferred) or immutable `sha-[git-sha]` tags through your CI pipeline. See `docs/release-hardening.md`.
+Use `deploy/argocd/` or `deploy/flux/` as the controller entrypoint. Both read
+`.helm/values-production.yaml` and immutable full-SHA tags. See `GITOPS.md` and
+`docs/release-hardening.md`.
 
-For Helm + GitOps/Argo, this app repo owns the chart, values, image references,
+For GitOps, this app repo owns the chart, values, image references,
 Secret references, migration hooks, Services, probes, and app ingress routes.
-The platform repo owns the cluster, ArgoCD installation/projects, ingress
+The platform repo owns the cluster, Argo CD/Flux installation and RBAC, ingress
 controllers/Gateway API, DNS/TLS issuers, External Secrets/Vault, databases,
-observability, backups, and disaster recovery. Validate the optional ArgoCD
-manifest with `pnpm run deploy:validate:gitops`; the command does not sync Argo
+observability, backups, and disaster recovery. Validate both controller
+entrypoints with `pnpm run deploy:validate:gitops`; the command does not sync a controller
 or deploy.
 
 ## Observability and DR toggles

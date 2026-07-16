@@ -61,13 +61,14 @@ strings in logs.
 ## Deployment runbooks
 
 Deployment modes are optional and composable. Validation commands are no-deploy
-preflights; they do not start Compose, apply Kubernetes manifests, sync ArgoCD,
+preflights; they do not start Compose, apply Kubernetes manifests, sync a GitOps controller,
 push images, or restart PM2 processes.
 
 - Overview and mode matrix: [deployment.md](deployment.md)
 - Production mode guide: [production-deploy.md](production-deploy.md)
 - Single-server Docker Compose: [docker-compose-production.md](docker-compose-production.md)
-- Kubernetes/Helm/ArgoCD app chart notes: [.helm/README.md](../.helm/README.md)
+- Direct Kubernetes/Helm: [deploy/kubernetes/README.md](../deploy/kubernetes/README.md)
+- Argo CD and Flux GitOps: [GITOPS.md](../GITOPS.md)
 - Preflight checklist: [production-readiness.md](production-readiness.md)
 
 Mode-specific validation:
@@ -76,8 +77,8 @@ Mode-specific validation:
 pnpm run deploy:validate          # generic bundle; skips Helm render if Helm is missing
 pnpm run deploy:validate:docker   # Compose/static deployment checks
 pnpm run deploy:validate:pm2      # no-op until ecosystem.config.{js,cjs,mjs} exists
-pnpm run deploy:validate:gitops   # validates deploy/argocd/application.yaml
-pnpm run deploy:validate:helm     # strict Helm render/lint path; requires Helm 3
+pnpm run deploy:validate:gitops   # strict Helm plus Argo CD and Flux Kustomize validation
+pnpm run deploy:validate:helm     # strict Helm 4 render/lint path
 REQUIRE_HELM=true pnpm run deploy:validate
 ```
 
@@ -88,8 +89,8 @@ Rollback summary:
 - PM2: restart from the previous release directory, ecosystem config, and runtime
   environment when a product-owned PM2 config exists.
 - Helm: use `helm history` and `helm rollback` for direct releases.
-- GitOps/Argo: revert the Argo-tracked Git commit, values change, image digest,
-  or immutable tag and let Argo reconcile.
+- GitOps: revert the promotion commit, image digest, or immutable tag and let
+  the selected Argo CD or Flux controller reconcile.
 
 For every mode, take a database backup before migrations and decide whether the
 schema change is backward compatible before restoring or rolling forward.

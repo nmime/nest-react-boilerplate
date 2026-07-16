@@ -88,8 +88,17 @@ assertNginxHardening(nginxSpa, 'standalone SPA');
 has(dockerfile, 'USER 101', 'frontend runtime user 101');
 has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
 const migratorStage = section(dockerfile, 'FROM workspace AS migrator', 'FROM workspace AS builder');
-has(migratorStage, 'USER node', 'migrator runs as the non-root node user');
-before(migratorStage, 'USER node', 'CMD ["pnpm", "db:migrate"]', 'migrator USER node before db:migrate command');
+has(
+  migratorStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'migrator loads file secrets and drops privileges through the shared entrypoint',
+);
+before(
+  migratorStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'CMD ["pnpm", "db:migrate"]',
+  'migrator entrypoint before db:migrate command',
+);
 
 // Backend images ship per-app production dependencies computed from each app's
 // generated dist package.json + pruned lockfile, not the whole-workspace tree.
@@ -123,7 +132,11 @@ assert.ok(
   !backendStage.includes('COPY --from=prod-deps /workspace/node_modules'),
   'Backend image must not copy the whole-workspace node_modules.',
 );
-has(backendStage, 'USER node', 'backend runs as the non-root node user');
+has(
+  backendStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'backend loads file secrets and drops privileges through the shared entrypoint',
+);
 has(
   backendStage,
   "setcap 'cap_net_bind_service=+ep'",

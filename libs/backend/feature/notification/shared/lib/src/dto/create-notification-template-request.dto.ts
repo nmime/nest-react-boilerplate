@@ -1,7 +1,21 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { NotificationTemplateEngine } from '@app/backend-postgres-main-notification';
+import { Type } from 'class-transformer';
+import { ArrayNotEmpty, IsArray, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { NotificationChannel, NotificationTemplateEngine } from '@app/common-notifications';
+import type { NotificationTemplateChannelContent } from '@app/common-notifications';
 
-export class CreateNotificationTemplateRequestDto {
+export class UpsertNotificationTemplateChannelRequestDto {
+  @IsEnum(NotificationChannel)
+  channel!: NotificationChannel;
+
+  @IsEnum(NotificationTemplateEngine)
+  @IsOptional()
+  engine?: NotificationTemplateEngine;
+
+  @IsObject()
+  content!: NotificationTemplateChannelContent;
+}
+
+export class UpsertNotificationTemplateRequestDto {
   @IsString()
   code!: string;
 
@@ -9,13 +23,9 @@ export class CreateNotificationTemplateRequestDto {
   @IsOptional()
   description?: string;
 
-  @IsOptional()
-  body?: Record<string, string>;
-
-  @IsOptional()
-  image?: Record<string, string>;
-
-  @IsEnum(NotificationTemplateEngine)
-  @IsOptional()
-  templateEngine?: NotificationTemplateEngine;
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => UpsertNotificationTemplateChannelRequestDto)
+  channels!: UpsertNotificationTemplateChannelRequestDto[];
 }

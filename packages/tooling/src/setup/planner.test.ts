@@ -31,7 +31,16 @@ import {
   emptyState,
   computeConfigDigest,
 } from './state.js';
-import { plan, resolveConfig, generateConfigFile, generateSummaryMd, generateWorkspaceManifest } from './planner.js';
+import {
+  generateBackendCapabilityModule,
+  generateCapabilitiesManifest,
+  generateComposeEnvironment,
+  generateConfigFile,
+  generateSummaryMd,
+  generateWorkspaceManifest,
+  plan,
+  resolveConfig,
+} from './planner.js';
 
 /* ==================================================================
  * UNIT: operations.ts — path validation (C1)
@@ -436,14 +445,17 @@ describe('planner — M1 validateSelection rejection', () => {
   });
 
   it('rejects config where expanded deps still have issues', () => {
-    // notifications requires redis.  If we enable notifications without redis,
-    // expandDependencies should add redis.  Let's verify that works.
+    // Notifications use the final PostgreSQL queue and the currently implemented
+    // Telegram delivery worker. Dependency expansion wires both from scratch.
     const config = parseNrbConfig({
       schemaVersion,
       capabilities: ['notifications'],
     });
     const resolved = resolveConfig(config);
-    assert.ok(resolved.capabilities.includes('redis'));
+    assert.ok(resolved.capabilities.includes('postgres'));
+    assert.ok(resolved.capabilities.includes('telegram-bot'));
+    assert.ok(resolved.apps.includes('telegram-bot-api'));
+    assert.ok(!resolved.capabilities.includes('redis'));
   });
 });
 
@@ -540,6 +552,45 @@ describe('planner — runtime workspace manifest', () => {
   });
 });
 
+describe('planner — concrete capability activation', () => {
+  const summary = {
+    apps: ['user-app-api', 'telegram-bot-api'],
+    capabilities: ['notifications', 'postgres', 'telegram-bot'],
+    configHash: 'abc',
+  };
+
+  it('records owned projects, services, and environment contracts', () => {
+    const manifest = JSON.parse(generateCapabilitiesManifest(summary).content);
+    const notifications = manifest.capabilities.find((entry: { id: string }) => entry.id === 'notifications');
+    assert.ok(notifications.projects.includes('@app/backend-feature-notification-main'));
+    assert.ok(notifications.dockerServices.includes('telegram-bot-api'));
+    assert.ok(notifications.environmentVariables.includes('NOTIFICATION_REQUESTS_PER_SECOND'));
+    assert.ok(
+      notifications.generatedFiles.includes('apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts'),
+    );
+    assert.ok(
+      notifications.backendWiring.some((wiring: { moduleExpression: string }) =>
+        wiring.moduleExpression.includes('TelegramBotModule'),
+      ),
+    );
+  });
+
+  it('generates producer wiring for APIs and worker wiring for Telegram', () => {
+    const producer = generateBackendCapabilityModule('user-app-api', summary).content;
+    const worker = generateBackendCapabilityModule('telegram-bot-api', summary).content;
+    assert.match(producer, /enableWorker: false/);
+    assert.match(worker, /enableWorker: true/);
+    assert.match(worker, /import \{ TelegramBotModule \} from '@app\/backend-feature-telegram-bot'/);
+    assert.match(worker, /imports: \[TelegramBotModule\]/);
+  });
+
+  it('generates compose and bootstrap activation environment', () => {
+    const environment = generateComposeEnvironment(summary).content;
+    assert.match(environment, /COMPOSE_PROFILES=.*telegram-bot-api/);
+    assert.match(environment, /OTEL_ENABLED=false/);
+  });
+});
+
 /* ==================================================================
  * COMPONENT: planner + state — plan()
  * ================================================================== */
@@ -571,6 +622,17 @@ describe('planner — plan() basic', () => {
     const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const result = plan(config, emptyState);
     assert.ok(result.operations.some((operation) => operation.path === '.nrb/workspace.json'));
+  });
+
+  it('generated plan includes capability ownership and backend wiring files', () => {
+    const config = parseNrbConfig({ schemaVersion, capabilities: ['notifications'] });
+    const result = plan(config, emptyState);
+    assert.ok(result.operations.some((operation) => operation.path === '.nrb/capabilities.json'));
+    assert.ok(
+      result.operations.some(
+        (operation) => operation.path === 'apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts',
+      ),
+    );
   });
 });
 

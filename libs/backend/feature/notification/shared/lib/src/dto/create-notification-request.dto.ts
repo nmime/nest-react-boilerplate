@@ -1,14 +1,14 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
 import {
-  NotificationChannel,
+  notificationDeliveryChannels,
+  type NotificationData,
+  type NotificationDeliveryChannel,
+  type NotificationExtra,
   NotificationPriority,
   NotificationTargetType,
-} from '@app/backend-postgres-main-notification';
+} from '@app/common-notifications';
 
 export class CreateNotificationRequestDto {
-  @IsEnum(NotificationChannel)
-  channel!: NotificationChannel;
-
   @IsEnum(NotificationTargetType)
   targetType!: NotificationTargetType;
 
@@ -18,10 +18,28 @@ export class CreateNotificationRequestDto {
   @IsString()
   templateCode!: string;
 
+  @IsArray()
+  @IsIn(notificationDeliveryChannels, { each: true })
+  @IsOptional()
+  channels?: NotificationDeliveryChannel[];
+
+  @IsBoolean()
+  @IsOptional()
+  inAppVisible?: boolean;
+
   @IsEnum(NotificationPriority)
   @IsOptional()
   priority?: NotificationPriority;
 
+  @IsDateString()
   @IsOptional()
-  data?: Record<string, unknown>;
+  sendAfter?: string;
+
+  @IsObject()
+  @IsOptional()
+  data?: NotificationData;
+
+  @IsObject()
+  @IsOptional()
+  extra?: NotificationExtra;
 }

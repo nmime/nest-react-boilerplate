@@ -8,7 +8,7 @@ Use this checklist when changing the frontend/admin product shell, routing, auth
   `libs/frontend/ui-web/lib` and should follow shadcn/ui architecture:
   token-driven components, `cn` utility, Tailwind classes, and Radix primitives
   where behavior or semantics benefit from them. The legacy package under
-  `libs/frontend/ui/lib` is a compatibility facade only.
+  `libs/frontend/ui-web/lib` directly owns the web design system and Storybook configuration.
 - `@app/frontend-ui-web` exposes canonical shadcn-style component names such as
   `Button`, `Card`, `Dialog`, `Select`, `Tabs`, `Checkbox`, `Switch`, `Table`,
   and `Input`, while preserving `Ui*` compatibility wrappers for existing apps.

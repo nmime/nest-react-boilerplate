@@ -1,10 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import type { InlineKeyboardButton } from 'grammy/types';
 import {
   NotificationErrorReason,
   NotificationStatus,
   type NotificationExtra,
   type NotificationMessageButton,
-} from '@app/backend-postgres-main-notification';
+} from '@app/common-notifications';
+import { TelegramBotInstanceInjectToken, type TelegramBotTransport } from '@app/backend-feature-telegram-shared';
 
 export interface MassSenderMessage {
   image?: string;
@@ -22,72 +24,114 @@ export interface ChannelSendResult {
 export class BotChannelStrategy {
   private readonly logger = new Logger(BotChannelStrategy.name);
 
-  send(params: {
+  constructor(
+    @Optional()
+    @Inject(TelegramBotInstanceInjectToken)
+    private readonly telegram?: TelegramBotTransport,
+  ) {}
+
+  async send(params: {
     telegramId: string;
     message: MassSenderMessage;
     extra?: NotificationExtra | null;
   }): Promise<ChannelSendResult> {
+    if (!this.telegram) {
+      return {
+        status: NotificationStatus.Error,
+        errorReason: NotificationErrorReason.UnsupportedChannel,
+        errorMessage: 'TelegramBotModule is not wired for this application.',
+      };
+    }
+
     const { telegramId, message, extra } = params;
+    const options = {
+      disable_notification: extra?.disableNotification,
+      link_preview_options: extra?.disableWebPagePreview ? { is_disabled: true } : undefined,
+      reply_markup: message.buttons ? { inline_keyboard: toTelegramButtons(message.buttons) } : undefined,
+    };
 
     try {
-      this.logger.debug(
-        `Sending notification to ${telegramId}: ${message.text.substring(0, 100)}${message.image ? ' [with image]' : ''}`,
-      );
-
       if (message.image) {
-        this.logger.debug(`Photo message with caption to ${telegramId}`);
+        await this.telegram.bot.api.sendPhoto(telegramId, message.image, {
+          ...options,
+          caption: message.text,
+        });
+      } else {
+        await this.telegram.bot.api.sendMessage(telegramId, message.text, options);
       }
-      if (message.buttons) {
-        this.logger.debug(`Message has ${message.buttons.length} row(s) of buttons`);
-      }
-      if (extra?.disableNotification) {
-        this.logger.debug(`Silent notification for ${telegramId}`);
-      }
-
-      return Promise.resolve({ status: NotificationStatus.Sent });
-    } catch (e) {
-      return Promise.resolve(this.mapTelegramError(e));
+      return { status: NotificationStatus.Sent };
+    } catch (error) {
+      return this.mapTelegramError(error);
     }
   }
 
-  private mapTelegramError(e: unknown): ChannelSendResult {
-    const error = e as { response?: { error_code?: number; description?: string }; message?: string };
-    const errorDescription = String(error.response?.description ?? error.message ?? '');
+  private mapTelegramError(error: unknown): ChannelSendResult {
+    const telegramError = error as { error_code?: number; description?: string; message?: string };
+    const description = String(telegramError.description ?? telegramError.message ?? '');
 
-    if (errorDescription.includes('Forbidden: bot was blocked by the user')) {
+    if (description.includes('Forbidden: bot was blocked by the user')) {
       return { errorReason: NotificationErrorReason.BlockedBot, status: NotificationStatus.Rejected };
     }
-    if (errorDescription.includes('Forbidden: user is deactivated')) {
+    if (description.includes('Forbidden: user is deactivated')) {
       return { errorReason: NotificationErrorReason.TelegramUserDeactivated, status: NotificationStatus.Rejected };
     }
-    if (errorDescription.includes("Forbidden: bot can't initiate conversation with a user")) {
-      return { errorReason: NotificationErrorReason.BotCantInitiateConversation, status: NotificationStatus.Rejected };
-    }
-    if (errorDescription.includes('Bad Request: chat not found')) {
-      return { errorReason: NotificationErrorReason.ChatNotFound, status: NotificationStatus.Rejected };
-    }
-    if (errorDescription.includes('request to') && errorDescription.includes('failed')) {
-      this.logger.warn(`Network error on sending notification, will retry: ${errorDescription}`);
+    if (description.includes("Forbidden: bot can't initiate conversation with a user")) {
       return {
-        status: NotificationStatus.Pending,
-        errorReason: NotificationErrorReason.NetworkError,
-        errorMessage: errorDescription,
+        errorReason: NotificationErrorReason.BotCantInitiateConversation,
+        status: NotificationStatus.Rejected,
       };
     }
-    if (errorDescription.includes('Too Many Requests')) {
-      this.logger.warn(`Rate limit error on sending notification, will retry: ${errorDescription}`);
+    if (description.includes('Bad Request: chat not found')) {
+      return { errorReason: NotificationErrorReason.ChatNotFound, status: NotificationStatus.Rejected };
+    }
+    if (description.includes('Too Many Requests') || telegramError.error_code === 429) {
       return {
         status: NotificationStatus.Pending,
         errorReason: NotificationErrorReason.RateLimit,
-        errorMessage: errorDescription,
+        errorMessage: description,
+      };
+    }
+    if (description.includes('request to') || description.includes('fetch failed')) {
+      return {
+        status: NotificationStatus.Pending,
+        errorReason: NotificationErrorReason.NetworkError,
+        errorMessage: description,
+      };
+    }
+    if (telegramError.error_code === 502) {
+      return {
+        status: NotificationStatus.Pending,
+        errorReason: NotificationErrorReason.BadGateway,
+        errorMessage: description,
       };
     }
 
-    this.logger.error('Unknown error on sending notification', e);
+    this.logger.error('Telegram notification delivery failed', error);
     return {
-      errorReason: NotificationErrorReason.UnknownError,
-      errorMessage: e instanceof Error ? e.message : String(e),
       status: NotificationStatus.Error,
+      errorReason: NotificationErrorReason.UnknownError,
+      errorMessage: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+function toTelegramButtons(rows: NotificationMessageButton[][]): InlineKeyboardButton[][] {
+  return rows.map((row) => row.map(toTelegramButton));
+}
+
+function toTelegramButton(button: NotificationMessageButton): InlineKeyboardButton {
+  const emoji = button.iconCustomEmojiId ? { icon_custom_emoji_id: button.iconCustomEmojiId } : {};
+  if (button.callback) {
+    return { text: button.text, callback_data: button.callback, ...emoji };
+  }
+  if (button.webApp) {
+    return { text: button.text, web_app: { url: button.webApp }, ...emoji };
+  }
+  if (button.url) {
+    return { text: button.text, url: button.url, ...emoji };
+  }
+  if (button.switchInlineQuery) {
+    return { text: button.text, switch_inline_query: button.switchInlineQuery, ...emoji };
+  }
+  return { text: button.text, callback_data: 'noop', ...emoji };
 }

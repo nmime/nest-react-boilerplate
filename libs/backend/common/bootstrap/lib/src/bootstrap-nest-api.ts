@@ -17,7 +17,7 @@ import {
 } from '@app/backend-common-redis';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { ClsInterceptor } from './cls.interceptor';
-import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/common-i18n';
+import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/backend-common-i18n';
 import { setupSwagger } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';

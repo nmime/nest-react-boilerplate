@@ -37,6 +37,8 @@ Edit `packages/tooling/src/setup/catalog.ts`:
   id: "my-new-app",
   label: "My New App",
   platform: "backend",           // "frontend" | "backend" | "e2e"
+  classification: "reference",  // or "optional"
+  publicHostname: "my-new-app.example.com",
   requiresCapabilities: ["postgres"],
   requiresApps: [],
   conflictsWithCapabilities: [],
@@ -61,8 +63,19 @@ Edit `packages/tooling/src/setup/catalog.ts`:
 "my-capability": {
   id: "my-capability",
   label: "My Capability",
+  activation: "nest-module",
   requiresCapabilities: [],
+  requiresApps: [],
   conflictsWith: [],
+  ownedProjects: ["@app/backend-common-my-capability"],
+  dockerServices: [],
+  environmentVariables: ["MY_CAPABILITY_ENABLED"],
+  backendWiring: [{
+    hosts: "selected-backend",
+    importName: "MyCapabilityModule",
+    importPath: "@app/backend-common-my-capability",
+    moduleExpression: "MyCapabilityModule.forRoot()",
+  }],
 },
 ```
 
@@ -110,7 +123,7 @@ The planner produces three types of operations:
 To add new operations, edit `packages/tooling/src/setup/planner.ts`. The `plan()` function:
 
 1. Resolves the config (preset expansion + dependency resolution).
-2. Generates metadata files (`nrb.config.json`, `.nrb/summary.md`).
+2. Generates config/summary, workspace/capability/environment manifests, and canonical backend capability modules.
 3. Diffs desired state against current state.
 4. Returns sorted operations.
 
@@ -125,7 +138,7 @@ export function generateCustomFile(config: NrbConfig): { path: string; content: 
 }
 ```
 
-Then add it to the `desiredFiles` map in `plan()`.
+Then add it to the generated file list in `plan()`. Setup-owned backend modules must stay in `backendCapabilityModuleCatalog` so reruns also clear capability wiring from unselected applications. Extend Doctor drift checks and planner/setup tests for every new activation surface.
 
 ## Adding a filesystem adapter
 

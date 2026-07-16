@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../dist/out-tsc/libs/backend/common/i18n",
+    "rootDir": ".",
+    "declaration": true,
+    "composite": true
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "include": ["src/**/*.ts", "../../../../../i18n/**/*.json"]
+}

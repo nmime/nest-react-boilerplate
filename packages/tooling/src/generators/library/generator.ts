@@ -7,7 +7,7 @@
  *
  * Patterns derived from:
  *   - libs/backend/common/response/lib/{project.json,tsconfig*.json,vitest.config.mts}
- *   - libs/frontend/ui/lib/project.json
+ *   - libs/frontend/ui-web/lib/project.json
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';

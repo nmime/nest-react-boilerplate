@@ -21,7 +21,15 @@ import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { CommandContext } from "../../cli.js";
 import { safeParseNrbConfig, schemaVersion } from "../../setup/schema.js";
-import { migrateState, emptyState } from "../../setup/state.js";
+import { configHash, migrateState, emptyState } from "../../setup/state.js";
+import {
+  generateBackendCapabilityModule,
+  generateCapabilitiesManifest,
+  generateComposeEnvironment,
+  resolveConfig,
+} from "../../setup/planner.js";
+import { backendCapabilityModuleCatalog } from "../../setup/catalog.js";
+import { parseGeneratedEnvironment } from "../../setup/environment.js";
 
 // ---------------------------------------------------------------------------
 // Check types
@@ -156,6 +164,99 @@ function checkNrbState(workspaceRoot: string): DoctorCheck {
   }
 }
 
+export function checkCapabilityActivation(workspaceRoot: string): DoctorCheck {
+  const configPath = join(workspaceRoot, "nrb.config.json");
+  if (!existsSync(configPath)) {
+    return { name: "capability-wiring", status: "skip", message: "Run setup to activate capabilities" };
+  }
+  try {
+    const parsed = safeParseNrbConfig(JSON.parse(readFileSync(configPath, "utf8")));
+    if (!parsed.success) {
+      return { name: "capability-wiring", status: "fail", message: "Cannot verify an invalid nrb.config.json" };
+    }
+    const resolved = resolveConfig(parsed.data);
+    const summary = {
+      apps: resolved.apps,
+      capabilities: resolved.capabilities,
+      preset: resolved.preset,
+      configHash: configHash(parsed.data),
+    };
+    const expected = [
+      generateCapabilitiesManifest(summary),
+      generateComposeEnvironment(summary),
+      ...Object.keys(backendCapabilityModuleCatalog).map((appId) =>
+        generateBackendCapabilityModule(appId as (typeof resolved.apps)[number], summary),
+      ),
+    ];
+    const drifted = expected
+      .filter((file) => {
+        const path = join(workspaceRoot, file.path);
+        return !existsSync(path) || readFileSync(path, "utf8") !== file.content;
+      })
+      .map((file) => file.path);
+    return drifted.length === 0
+      ? {
+          name: "capability-wiring",
+          status: "pass",
+          message: `${resolved.capabilities.length} capabilities activated deterministically`,
+        }
+      : {
+          name: "capability-wiring",
+          status: "fail",
+          message: `Generated capability files drifted: ${drifted.join(", ")} — rerun setup`,
+        };
+  } catch (err: unknown) {
+    return { name: "capability-wiring", status: "fail", message: `Capability check failed: ${errorMessage(err)}` };
+  }
+}
+
+export function checkComposeSelection(workspaceRoot: string): DoctorCheck {
+  const environmentPath = join(workspaceRoot, ".nrb", "capabilities.env");
+  const composePath = join(workspaceRoot, "docker", "docker-compose.yml");
+  if (!existsSync(environmentPath) || !existsSync(composePath)) {
+    return {
+      name: "compose-selection",
+      status: "skip",
+      message: "Run setup to materialize the selected Compose profile",
+    };
+  }
+
+  try {
+    execFileSync("docker", ["--version"], { encoding: "utf8", timeout: 10000 });
+  } catch {
+    return {
+      name: "compose-selection",
+      status: "skip",
+      message: "Docker not available — selected Compose graph was not checked",
+    };
+  }
+
+  try {
+    const selectedEnvironment = parseGeneratedEnvironment(readFileSync(environmentPath, "utf8"));
+    execFileSync(
+      "docker",
+      ["compose", "--env-file", environmentPath, "-f", composePath, "config", "--quiet"],
+      {
+        cwd: workspaceRoot,
+        encoding: "utf8",
+        env: { ...process.env, ...selectedEnvironment },
+        timeout: 30000,
+      },
+    );
+    return {
+      name: "compose-selection",
+      status: "pass",
+      message: "Selected Compose service graph resolves",
+    };
+  } catch {
+    return {
+      name: "compose-selection",
+      status: "fail",
+      message: "Selected Compose service graph is invalid — rerun setup or fix service dependencies",
+    };
+  }
+}
+
 function checkToolingPackage(workspaceRoot: string): DoctorCheck {
   const pkgPath = join(workspaceRoot, "packages", "tooling", "package.json");
   if (!existsSync(pkgPath)) {
@@ -196,6 +297,8 @@ export async function runDoctorCommand(
     checkNxGraph(workspaceRoot),
     checkNrbConfig(workspaceRoot),
     checkNrbState(workspaceRoot),
+    checkCapabilityActivation(workspaceRoot),
+    checkComposeSelection(workspaceRoot),
     checkToolingPackage(workspaceRoot),
   ];
 

@@ -1,0 +1,25 @@
+{
+  "name": "@app/frontend-i18n-shared",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/i18n/shared/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:frontend",
+    "type:common",
+    "scope:shared",
+    "boundary:i18n",
+    "fsd:layer:shared",
+    "framework:neutral"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/i18n/shared/lib",
+        "command": "node ../../../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json"
+      },
+      "outputs": []
+    }
+  }
+}

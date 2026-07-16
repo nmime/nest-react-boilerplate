@@ -1,4 +1,4 @@
-import { normalizeStringList } from '@app/backend-common-shared';
+import { normalizeStringList } from './util';
 import {
   AdminRole,
   UserRole,

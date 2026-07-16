@@ -89,14 +89,14 @@ The `libs/common` namespace is intentionally small after the frontend/backend sp
 
 Current `libs/common` placement decisions:
 
-| Project                                                   | Decision                            | Why it remains or moves                                                                                                                                                                                                                                                                                                                 |
-| --------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `libs/common/api-contracts` (`@app/common-api-contracts`) | Keep common                         | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`.                                                                    |
-| `libs/common/config` (`@app/common-config`)               | Keep common                         | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                                                                                      |
-| `libs/common/i18n` (`@app/common-i18n`)                   | Keep common                         | Locale types, translation lookup, fallback behavior, interpolation, and request-locale helpers are shared by frontend UI/API support and backend response/locale middleware. Locale JSON assets live outside the library as thin scoped files under root `i18n/<locale>/<scope>/<component>.json`, with `en` as fallback.               |
-| `libs/common/notifications` (`@app/common-notifications`) | Keep common                         | The package exposes provider-neutral notification/email contracts plus noop/in-memory implementations for tests and local development. Real delivery adapters should be added under backend-specific infrastructure, but the message/result contract can remain shared.                                                                 |
-| `libs/common/websocket` (`@app/common-websocket`)         | Keep common for now; backend-tagged | It is currently an adapter/client abstraction and broadcast operation contract with no browser or Nest dependency. It is tagged `platform:backend` because no frontend consumer exists today; split into backend/frontend packages only when a browser websocket client or backend gateway implementation needs platform-specific code. |
-| `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common                         | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.                                                                              |
+| Project                                                   | Decision    | Why it remains or moves                                                                                                                                                                                                                                              |
+| --------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/common/api-contracts` (`@app/common-api-contracts`) | Keep common | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`. |
+| `libs/common/config` (`@app/common-config`)               | Keep common | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                   |
+| `libs/common/i18n/{runtime,keys}`                         | Keep common | Platform-neutral locale parsing, merge/fallback/interpolation mechanics and generated translation-key types. Backend/frontend/bot catalogs live under their owning runtime scopes.                                                                                   |
+| `libs/common/notifications` (`@app/common-notifications`) | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. PostgreSQL and transport implementations stay backend-owned.                                                                                               |
+| `libs/common/websocket` (`@app/common-websocket`)         | Keep common | Provider-neutral websocket/broadcast contracts with no browser, Nest, or backend-only dependency; the project is tagged `platform:shared`.                                                                                                                           |
+| `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.           |
 
 - `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: CLS request context (`ClsInterceptor`), raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
 - `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory (static `type`/`title`/`detail`/`status`), domain exception classes, and `toProblemDetails` utility. Runtime context limited to `{ data?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
@@ -104,20 +104,20 @@ Current `libs/common` placement decisions:
 - `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
 - `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.
-- `libs/common/notifications` defines cross-platform notification/email provider contracts plus noop/in-memory implementations for local development and tests.
+- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, PostgreSQL implements them, and Telegram is the only active transport.
 - `libs/backend/common/validation/lib` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
 - `libs/backend/feature/auth/shared/lib` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main/lib` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/backend/feature/user/shared/lib` and `libs/backend/feature/user/main/lib` contain the protected user profile feature.
 - Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC/permission logic. `libs/backend/feature/admin/main/lib` contains the protected admin API orchestration.
-- Bot behavior is feature code: Discord bot logic lives in `libs/backend/feature/discord/bot/lib` (`@app/backend-feature-discord-bot`) and Telegram bot logic lives in `libs/backend/feature/telegram/bot/lib` (`@app/backend-feature-telegram-bot`). Deployable bot HTTP/worker processes stay under `apps/backend/<scope>/<app>` beside other deployables for that scope.
+- Bot behavior is feature code: Discord logic lives in `@app/backend-feature-discord-bot`, Telegram runtime logic in `@app/backend-feature-telegram-bot`, and the narrow sibling transport contract in `@app/backend-feature-telegram-shared`. Deployable bot HTTP/worker processes stay under `apps/backend/<scope>/<app>`.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
 - `libs/common/design-tokens` is the renderer-neutral design-token package for web CSS variables and native Tamagui theme values.
 - `libs/frontend/runtime` contains non-visual frontend runtime helpers such as i18n, query providers, shell state, locale, theme, and guarded platform utilities.
 - `libs/frontend/ui-web` contains the shadcn-style React DOM UI facade for Astro islands, Vike SSR pages, and the admin SPA.
 - `libs/frontend/ui-native` contains the Tamagui native UI facade for `mobile-app` and future Expo/React Native surfaces.
-- `libs/frontend/ui` remains a compatibility facade that re-exports `@app/frontend-ui-web` and `@app/frontend-runtime`.
+- `libs/frontend/ui-web` and `libs/frontend/ui-native` are the explicit renderer owners; non-visual concerns live in `libs/frontend/runtime`.
 
 ## Nx architecture tags
 
@@ -151,7 +151,6 @@ Backend feature libraries use `libs/backend/feature/<scope>/<layer>/lib/...` pat
 - Frontend runtime: `@app/frontend-runtime`.
 - Frontend web UI: `@app/frontend-ui-web`.
 - Frontend native UI: `@app/frontend-ui-native`.
-- Frontend legacy UI compatibility: `@app/frontend-ui`.
 - Common design tokens: `@app/common-design-tokens`.
 - Backend exception foundation: `@app/backend-common-exception` only. Keep the path singular at `libs/backend/common/exception/lib` and Nx project name `@app/backend-common-exception`.
 - Backend health foundation: `@app/backend-common-health` at `libs/backend/common/health/lib`.
@@ -175,7 +174,7 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 ## i18n and Problem Details
 
-Supported locales are `en` and `ru`; root locale catalogs live as thin scoped files under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend apps pass scoped catalog sets from `@app/common-i18n-frontend-<scope>` so landing, user, and admin builds do not import each other or bot/Discord interaction catalogs. The scoped frontend i18n entrypoints and root locale asset folders are separate Nx projects, so feature catalog changes affect only the owning app; shared common catalogs remain intentionally shared. Backend exception localization preserves RFC 9457 wire terms: `type`, `title`, `status`, `detail`, `instance`, `application/problem+json`, and stable `urn:problem:*` values. Client logic should key off status/code/type rather than localized text.
+Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves RFC 9457 wire terms and stable `urn:problem:*` values; clients key logic off status/code/type rather than localized text.
 
 ## Planned testing layers
 
@@ -220,8 +219,6 @@ graph TD
   LandingApp --> FrontendRuntime[@app/frontend-runtime]
   UserApp --> FrontendRuntime
   SiteApp --> FrontendRuntime
-  LegacyFrontendUi[@app/frontend-ui compatibility] --> FrontendUiWeb
-  LegacyFrontendUi --> FrontendRuntime
   ApiClient --> ApiSupport[@app/frontend-api-support]
   ApiClient --> GeneratedClients[libs/frontend/api-client/lib/src/generated/**]
   GeneratedClients --> OpenApi[apps/backend/*/*-app-api/contracts/openapi/*.json]

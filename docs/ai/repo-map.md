@@ -27,11 +27,13 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 
 ## Backend cross-cutting concerns
 
-| Concern               | Package / Path                                                        | Agent doc reference                                                         |
-| --------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Request Context (CLS) | `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib` | [Agent policy: Request Context](agent-policy.md#request-context-cls)        |
-| Exception System      | `@app/backend-common-exception` / `libs/backend/common/exception/lib` | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457) |
-| Health checks         | `@app/backend-common-health` / `libs/backend/common/health/lib`       | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout)            |
+| Concern               | Package / Path                                                                                                 | Agent doc reference                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Request Context (CLS) | `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib`                                          | [Agent policy: Request Context](agent-policy.md#request-context-cls)                |
+| Exception System      | `@app/backend-common-exception` / `libs/backend/common/exception/lib`                                          | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457)         |
+| Health checks         | `@app/backend-common-health` / `libs/backend/common/health/lib`                                                | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout)                    |
+| Capability activation | `packages/tooling/src/setup/**`, `apps/backend/**/capabilities.generated.ts`                                   | [Setup](../setup/configuration.md), [Presets](../setup/presets-and-technologies.md) |
+| Notifications         | `libs/common/notifications`, `libs/backend/feature/notification/**`, `libs/backend/postgres/main/notification` | [Notifications](../notifications.md)                                                |
 
 ### Request Context (CLS)
 

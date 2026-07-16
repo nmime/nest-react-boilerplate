@@ -114,7 +114,7 @@ describe("frontend-browser-e2e-coverage: relative path mapping", () => {
   it("maps coverage files to relative paths from cwd", () => {
     const cmap = istanbulCoverage.createCoverageMap();
     cmap.addFileCoverage(istanbulCoverage.createFileCoverage("apps/frontend/app/src/App.tsx"));
-    cmap.addFileCoverage(istanbulCoverage.createFileCoverage("libs/frontend/ui/lib/src/Button.tsx"));
+    cmap.addFileCoverage(istanbulCoverage.createFileCoverage("libs/frontend/ui-web/lib/src/Button.tsx"));
 
     // Exact pattern from source: coverageMap.files().map((file: string) => path.relative(cwd, file))
     const paths = cmap.files().map((file: string) => file);

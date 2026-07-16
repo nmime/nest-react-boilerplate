@@ -37,11 +37,13 @@ Initialize product identity and replace every checked-in example domain.
 pnpm nrb init \
   --name "Acme App" \
   --domain acme.example \
+  --apex-app landing-app \
   --owner acme-org \
   --dry-run
 pnpm nrb init \
   --name "Acme App" \
   --domain acme.example \
+  --apex-app landing-app \
   --owner acme-org
 ```
 
@@ -52,6 +54,7 @@ pnpm nrb init \
 | `--package-name <id>` | string  | Root package name; defaults to the product slug.             |
 | `--app-slug <id>`     | string  | Product/application slug.                                    |
 | `--db-name <name>`    | string  | PostgreSQL database name.                                    |
+| `--apex-app <id>`     | string  | Apex owner: `landing-app` (default) or `site-app`.           |
 | `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.          |
 | `--dry-run`           | boolean | Print the file plan without writing.                         |
 | `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.     |

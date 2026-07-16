@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   DefaultPostgresClientImage,
   createDockerInvocation,
+  createLocalInvocation,
   isPostgresClientVersionMismatch,
   parsePostgresMajorVersion,
   redactCommand,
@@ -78,6 +79,30 @@ describe("postgres backup/restore client selection", () => {
     assert.match(commandLine, /\/workspace\/test-results\/dr\/postgres.dump/);
     assert.equal(commandLine.includes(new URL(databaseUrl).password), false);
     assert.equal(invocation.env.DATABASE_URL, databaseUrl);
+  });
+
+  it("resets the public schema before restoring partitioned tables", () => {
+    const local = createLocalInvocation({
+      connectionString: databaseUrl,
+      operation: "restore",
+      outputPath: "test-results/dr/postgres.dump",
+    });
+    const docker = createDockerInvocation({
+      connectionString: databaseUrl,
+      cwd: "/repo",
+      image: "postgres:17.6-alpine",
+      operation: "restore",
+      outputPath: "test-results/dr/postgres.dump",
+    });
+
+    for (const invocation of [local, docker]) {
+      const commandLine = [invocation.command, ...invocation.args].join(" ");
+      assert.match(commandLine, /DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public/);
+      assert.match(commandLine, /pg_restore --exit-on-error/);
+      assert.doesNotMatch(commandLine, /pg_restore --clean/);
+      assert.equal(commandLine.includes(new URL(databaseUrl).password), false);
+      assert.equal(invocation.env.DATABASE_URL, databaseUrl);
+    }
   });
 
   it("redacts local command dry-run output and detects version mismatch errors", () => {

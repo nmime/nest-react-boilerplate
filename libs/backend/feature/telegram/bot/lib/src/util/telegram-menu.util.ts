@@ -1,4 +1,4 @@
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import type { TelegramBotContext } from '../type/telegram.type';
 
 export function languageLabel(ctx: TelegramBotContext, locale: Locale): string {

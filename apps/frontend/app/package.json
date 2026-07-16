@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
-    "@tma.js/sdk-react": "3.0.22",
+    "@tma.js/sdk-react": "3.0.23",
     "mobx-react-lite": "^4.1.1",
     "react": "19.2.7",
     "react-dom": "19.2.7"

@@ -1,10 +1,23 @@
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import {
-  NotificationChannel,
+  notificationDeliveryChannels,
+  type NotificationData,
+  type NotificationDeliveryChannel,
+  type NotificationExtra,
   NotificationPriority,
   NotificationTargetType,
-} from '@app/backend-postgres-main-notification';
+} from '@app/common-notifications';
 
 export class BatchItemDto {
   @IsString()
@@ -13,20 +26,52 @@ export class BatchItemDto {
   @IsString()
   templateCode!: string;
 
+  @IsArray()
+  @IsIn(notificationDeliveryChannels, { each: true })
+  @IsOptional()
+  channels?: NotificationDeliveryChannel[];
+
+  @IsBoolean()
+  @IsOptional()
+  inAppVisible?: boolean;
+
   @IsEnum(NotificationPriority)
   @IsOptional()
   priority?: NotificationPriority;
 
+  @IsDateString()
   @IsOptional()
-  data?: Record<string, unknown>;
+  sendAfter?: string;
+
+  @IsObject()
+  @IsOptional()
+  data?: NotificationData;
+
+  @IsObject()
+  @IsOptional()
+  extra?: NotificationExtra;
 }
 
 export class CreateNotificationBatchRequestDto {
-  @IsEnum(NotificationChannel)
-  channel!: NotificationChannel;
-
   @IsEnum(NotificationTargetType)
   targetType!: NotificationTargetType;
+
+  @IsArray()
+  @IsIn(notificationDeliveryChannels, { each: true })
+  @IsOptional()
+  channels?: NotificationDeliveryChannel[];
+
+  @IsBoolean()
+  @IsOptional()
+  inAppVisible?: boolean;
+
+  @IsEnum(NotificationPriority)
+  @IsOptional()
+  priority?: NotificationPriority;
+
+  @IsDateString()
+  @IsOptional()
+  sendAfter?: string;
 
   @IsArray()
   @ValidateNested({ each: true })

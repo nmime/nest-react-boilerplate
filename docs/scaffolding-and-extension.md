@@ -12,9 +12,10 @@ The repository separates three decisions that should not be conflated:
 1. `pnpm nrb init` replaces the boilerplate identity, package/database names,
    owner, and every `example.com` frontend/API/staging hostname with the chosen
    product DNS base.
-2. `pnpm nrb setup` selects existing applications and capabilities. It writes
-   `nrb.config.json`, `.nrb/workspace.json`, `.nrb/summary.md`, and setup state.
-   It does not delete unselected source or invent production credentials.
+2. `pnpm nrb setup` selects existing applications and concretely activates
+   capabilities. It writes config/workspace/capability/environment manifests,
+   setup state, and canonical `capabilities.generated.ts` composition for every
+   backend app. It does not delete unselected source or invent credentials.
 3. `pnpm nrb add` generates a new app, library, or feature in the required
    architecture. A generated deployable is not publicly exposed until its
    product owner explicitly registers runtime configuration, DNS, TLS, and
@@ -56,11 +57,13 @@ pnpm nrb doctor
 pnpm nrb init \
   --name "Acme App" \
   --domain acme.example \
+  --apex-app landing-app \
   --owner acme-org \
   --dry-run
 pnpm nrb init \
   --name "Acme App" \
   --domain acme.example \
+  --apex-app landing-app \
   --owner acme-org
 
 pnpm nrb setup
@@ -74,9 +77,11 @@ pnpm run dev
 ```
 
 `pnpm nrb init` requires a DNS base without a protocol, port, path, or wildcard.
-It rewrites the root domain and all known subdomains, including site, mobile,
-admin, user, auth, public APIs, bot APIs, staging hosts, CSP entries, TLS SANs,
-and example email addresses. It never creates DNS records or certificates.
+`--apex-app` assigns the product apex to `landing-app` or `site-app`; the other
+keeps its exact app-ID hostname. Initialization rewrites the root domain and all
+known subdomains, including site, mobile, admin, user, auth, public APIs, bot
+APIs, staging hosts, CSP entries, TLS SANs, and example email addresses. It
+never creates DNS records or certificates.
 
 `pnpm run onboarding:verify` is a non-deploying proof after installation. It
 runs the workspace doctor, resolves all five presets as dry runs with exact app
@@ -122,6 +127,12 @@ pnpm nrb setup --app mobile-app --non-interactive
 pnpm nrb setup
 ```
 
+After setup, use `pnpm run docker:selected`. Capability removal rewrites all
+managed backend modules and clears stale imports; `pnpm nrb doctor` detects
+manual drift. Extend activation only through the machine-readable catalog
+(`ownedProjects`, Docker services, environment variables, and backend wiring),
+not by adding direct capability imports to app modules.
+
 ## Reference UI contract
 
 The checked-in frontends are reference implementations, not a fictional demo
@@ -158,10 +169,11 @@ preselected product design.
 The checked-in `example.com` values are replaceable environment placeholders,
 not live domains.
 
-No deployable is selected by default. `landing-app` is the canonical public
-entry point and owns the apex domain. Every other deployable follows
-`<app-id>.<root-domain>`. These hostnames are the complete mapping rewritten
-when `pnpm nrb init` prepares the template for a product.
+No deployable is selected by default. `landing-app` owns the template apex;
+`pnpm nrb init --apex-app site-app` can assign the product apex to `site-app`
+instead. Every other deployable follows `<app-id>.<root-domain>`. These
+hostnames are the complete mapping rewritten when initialization prepares the
+template for a product.
 
 | Deployable         | Template hostname              | Catalog class |
 | ------------------ | ------------------------------ | ------------- |

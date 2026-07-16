@@ -2,6 +2,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { dockerAvailable } from "../db/postgres-client.ts";
 import { commandExists, envList, ensureDir, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
 
 const args = parseArgs();
@@ -328,16 +329,23 @@ function runBackupRestore() {
 
   requireScripts(["db:backup", "db:restore"]);
   const missingTools = ["pg_dump", "pg_restore"].filter((tool) => !commandExists(tool));
-  if (missingTools.length) {
-    backupRestoreEvidence = missingRuntimeGate("Backup/restore runtime gate requires local PostgreSQL client tools or an explicit command in CI.", {
+  const hasDockerFallback = missingTools.length > 0 && dockerAvailable();
+  if (missingTools.length && !hasDockerFallback) {
+    backupRestoreEvidence = missingRuntimeGate("Backup/restore runtime gate requires local PostgreSQL client tools, the Docker fallback, or an explicit command in CI.", {
       missingTools,
+      dockerAvailable: false,
       env: ["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"],
     });
     return backupRestoreEvidence;
   }
 
   const command = configuredCommand(["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"], backupRestoreCommand("backup-restore.dump"));
-  backupRestoreEvidence = { mode: "command", source: command.source, ...runShell("backup/restore", command.command) };
+  backupRestoreEvidence = {
+    mode: "command",
+    source: command.source,
+    postgresClientMode: hasDockerFallback ? "docker-fallback" : "local",
+    ...runShell("backup/restore", command.command),
+  };
   return backupRestoreEvidence;
 }
 

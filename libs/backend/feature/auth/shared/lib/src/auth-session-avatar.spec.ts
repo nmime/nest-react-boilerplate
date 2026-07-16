@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import { toAuthenticatedUserView } from './auth-session.types';
 
 describe('toAuthenticatedUserView with avatar fields', () => {

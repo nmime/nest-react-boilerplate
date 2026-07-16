@@ -1,0 +1,30 @@
+{
+  "name": "@app/backend-common-i18n",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/common/i18n/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:common", "scope:shared", "boundary:backend-kernel", "framework:neutral"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/common/i18n",
+        "main": "libs/backend/common/i18n/lib/src/index.ts",
+        "rootDir": ".",
+        "tsConfig": "libs/backend/common/i18n/lib/tsconfig.lib.json",
+        "assets": ["i18n/**/*.json"]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/common/i18n/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "inputs": ["default", "^production", { "externalDependencies": ["vitest"] }],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/i18n"]
+    }
+  }
+}

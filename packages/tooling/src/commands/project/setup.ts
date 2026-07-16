@@ -290,7 +290,7 @@ async function executeSetup(context: CommandContext, args: SetupArgs, config: Nr
     return 0;
   }
 
-  process.stdout.write(formatConfigSummary(config) + "\n\n");
+  process.stdout.write(formatConfigSummary(config, planResult.summary) + "\n\n");
   process.stdout.write(formatPlanSummary(planResult.operations, planResult.configHash) + "\n\n");
 
   // Dry run — show plan and exit

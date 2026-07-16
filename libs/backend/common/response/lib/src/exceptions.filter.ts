@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, HttpStatus, Logger } from '@nestjs/common';
 import type { ExceptionFilter } from '@nestjs/common';
 import { toProblemDetails, type ProblemDetails } from '@app/backend-common-exception';
-import { type LocaleRequestSource, resolveLocaleFromRequest } from '@app/common-i18n';
+import { type LocaleRequestSource, resolveLocaleFromRequest } from '@app/backend-common-i18n';
 import { formatProblemDescriptor } from './problem-descriptor.util';
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 

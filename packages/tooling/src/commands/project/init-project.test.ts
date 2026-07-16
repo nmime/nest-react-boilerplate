@@ -70,6 +70,25 @@ describe("project init", () => {
       );
       assert.notEqual(invalid.status, 0);
       assert.match(`${invalid.stdout}${invalid.stderr}`, /DNS base name/u);
+
+      const invalidApex = spawnSync(
+        process.execPath,
+        [
+          runner,
+          command,
+          "--name",
+          "Acme App",
+          "--domain",
+          "acme.example",
+          "--apex-app",
+          "user-app",
+          "--dry-run",
+          "--force",
+        ],
+        { cwd: root, encoding: "utf8" },
+      );
+      assert.notEqual(invalidApex.status, 0);
+      assert.match(`${invalidApex.stdout}${invalidApex.stderr}`, /landing-app.*site-app/u);
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
@@ -95,7 +114,6 @@ describe("project init", () => {
       );
 
       const domains = readFileSync(join(root, "domains.txt"), "utf8");
-      assert.equal(domains.includes("example.com"), false);
       assert.deepEqual(domains.trim().split("\n"), [
         "acme.example",
         "site-app.acme.example",
@@ -129,6 +147,48 @@ describe("project init", () => {
         name: string;
       };
       assert.equal(manifest.name, "acme-app");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("can assign the product apex to site-app while preserving every other hostname", () => {
+    const root = createFixture();
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          runner,
+          command,
+          "--name",
+          "Acme App",
+          "--domain",
+          "acme.example",
+          "--apex-app",
+          "site-app",
+          "--force",
+        ],
+        { cwd: root, encoding: "utf8" },
+      );
+
+      assert.deepEqual(readFileSync(join(root, "domains.txt"), "utf8").trim().split("\n"), [
+        "landing-app.acme.example",
+        "acme.example",
+        "mobile-app.acme.example",
+        "admin-app.acme.example",
+        "user-app.acme.example",
+        "auth-app-api.acme.example",
+        "user-app-api.acme.example",
+        "admin-app-api.acme.example",
+        "discord-app-api.acme.example",
+        "telegram-bot-api.acme.example",
+        "admin-app.staging.acme.example",
+        "user@acme.example",
+      ]);
+      assert.equal(
+        readFileSync(join(root, ".env.production.example"), "utf8"),
+        "PUBLIC_URL=https://landing-app.acme.example\n",
+      );
     } finally {
       rmSync(root, { force: true, recursive: true });
     }

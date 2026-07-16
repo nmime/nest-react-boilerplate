@@ -24,7 +24,7 @@ module.exports = [
         'error',
         {
           ignoredFiles: ['{projectRoot}/eslint.config.{js,cjs,mjs}'],
-          ignoredDependencies: ['@app/frontend-ui', ...expoRuntimeDependencies],
+          ignoredDependencies: expoRuntimeDependencies,
           checkMissingDependencies: false,
         },
       ],

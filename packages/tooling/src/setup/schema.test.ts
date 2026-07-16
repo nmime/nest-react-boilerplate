@@ -7,6 +7,8 @@
  * Runs with `node --test --import jiti/register`.
  */
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { describe, it } from 'node:test';
 import {
   parseNrbConfig,
@@ -18,7 +20,13 @@ import {
   frontendAppIds,
   backendAppIds,
 } from './schema.js';
-import { appCatalog, capabilityCatalog, validateSelection, expandDependencies } from './catalog.js';
+import {
+  appCatalog,
+  backendCapabilityModuleCatalog,
+  capabilityCatalog,
+  validateSelection,
+  expandDependencies,
+} from './catalog.js';
 import { presets, findPreset, listPresetIds, listPresets, expandPreset } from './presets.js';
 
 /* ==================================================================
@@ -140,6 +148,7 @@ describe('schema — constants', () => {
       'postgres',
       'redis',
       's3',
+      'static-data',
       'nats',
       'otel',
       'swagger',
@@ -174,6 +183,10 @@ describe('catalog — appCatalog', () => {
 
   it('admin-app requires both APIs used by its authenticated runtime', () => {
     assert.deepEqual(appCatalog['admin-app'].requiresApps, ['admin-app-api', 'auth-app-api']);
+  });
+
+  it('mobile-app requires both APIs used by its authenticated runtime', () => {
+    assert.deepEqual(appCatalog['mobile-app'].requiresApps, ['auth-app-api', 'user-app-api']);
   });
 
   it('user-app requires user-app-api', () => {
@@ -261,14 +274,80 @@ describe('catalog — capabilityCatalog', () => {
     }
   });
 
-  it('notifications requires redis', () => {
-    assert.ok(capabilityCatalog['notifications'].requiresCapabilities.includes('redis'));
+  it('notifications requires its PostgreSQL queue and Telegram worker', () => {
+    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres', 'telegram-bot']);
+    assert.deepEqual(capabilityCatalog['notifications'].requiresApps, ['telegram-bot-api']);
   });
 
   it('every capability references valid IDs', () => {
     for (const entry of Object.values(capabilityCatalog)) {
       for (const cap of [...entry.requiresCapabilities, ...entry.conflictsWith]) {
         assert.ok(capabilityIds.includes(cap), `${entry.id} -> ${cap}`);
+      }
+    }
+  });
+
+  it('keeps enterprise backend wiring compatible with Nx scope boundaries', () => {
+    const workspaceRoot = process.cwd();
+    interface ScopeConstraint {
+      sourceTag: string;
+      onlyDependOnLibsWithTags: string[];
+    }
+
+    const constraintsPath = resolve(workspaceRoot, 'packages/tooling/config/nx-scope-constraints.json');
+    const constraints = JSON.parse(readFileSync(constraintsPath, 'utf8')) as ScopeConstraint[];
+    const scopeConstraints = new Map(
+      constraints
+        .filter((constraint) => constraint.sourceTag.startsWith('scope:'))
+        .map((constraint) => [constraint.sourceTag, constraint.onlyDependOnLibsWithTags]),
+    );
+    const tsconfig = JSON.parse(readFileSync(resolve(workspaceRoot, 'tsconfig.base.json'), 'utf8')) as {
+      compilerOptions: { paths: Record<string, string[]> };
+    };
+
+    const readScope = (workspacePath: string): string => {
+      let directory = dirname(resolve(workspaceRoot, workspacePath));
+      while (directory.startsWith(workspaceRoot)) {
+        const projectPath = resolve(directory, 'project.json');
+        if (existsSync(projectPath)) {
+          const project = JSON.parse(readFileSync(projectPath, 'utf8')) as { tags: string[] };
+          const scope = project.tags.find((tag) => tag.startsWith('scope:'));
+          assert.ok(scope, `${projectPath} must declare a scope tag`);
+          return scope;
+        }
+        if (directory === workspaceRoot) {
+          break;
+        }
+        directory = dirname(directory);
+      }
+      throw new Error(`No project.json owns ${workspacePath}`);
+    };
+
+    const selection = expandPreset('enterprise');
+    const selectedApps = new Set(selection.apps);
+    for (const capabilityId of selection.capabilities) {
+      for (const wiring of capabilityCatalog[capabilityId].backendWiring) {
+        const hosts =
+          wiring.hosts === 'selected-backend'
+            ? selection.apps.filter((appId) => appCatalog[appId].platform === 'backend')
+            : wiring.hosts.filter((appId) => selectedApps.has(appId));
+        const moduleImports = [wiring, ...(wiring.additionalImports ?? [])];
+        for (const appId of hosts) {
+          const appModule = backendCapabilityModuleCatalog[appId];
+          assert.ok(appModule, `${appId} must declare a generated capability module`);
+          const sourceScope = readScope(appModule.path);
+          const allowedScopes = scopeConstraints.get(sourceScope);
+          assert.ok(allowedScopes, `${sourceScope} must declare an Nx scope constraint`);
+          for (const moduleImport of moduleImports) {
+            const aliasTarget = tsconfig.compilerOptions.paths[moduleImport.importPath]?.[0];
+            assert.ok(aliasTarget, `${moduleImport.importPath} must be a public path alias`);
+            const targetScope = readScope(aliasTarget);
+            assert.ok(
+              allowedScopes.includes(targetScope),
+              `${appId} (${sourceScope}) cannot wire ${moduleImport.importPath} (${targetScope})`,
+            );
+          }
+        }
       }
     }
   });
@@ -299,10 +378,10 @@ describe('catalog — validateSelection', () => {
     );
   });
 
-  it('reports capability dependency for notifications without redis', () => {
+  it('reports capability dependencies for notifications without its queue and worker', () => {
     const issues = validateSelection([], ['notifications']);
     assert.ok(
-      issues.some((i) => i.message.includes('redis')),
+      issues.some((i) => i.message.includes('postgres')) && issues.some((i) => i.message.includes('telegram-bot-api')),
       `Got: ${issues.map((i) => i.message).join('; ')}`,
     );
   });
@@ -335,13 +414,14 @@ describe('catalog — expandDependencies', () => {
   it('adds transitive capability dependencies', () => {
     const { capabilities } = expandDependencies([], ['notifications']);
     assert.ok(capabilities.includes('notifications'));
-    assert.ok(capabilities.includes('redis'));
+    assert.ok(capabilities.includes('postgres'));
+    assert.ok(capabilities.includes('telegram-bot'));
   });
 
   it('handles deep transitive chains', () => {
     const { capabilities } = expandDependencies(['admin-app'], []);
     assert.ok(capabilities.includes('authz'));
-    assert.ok(capabilities.includes('design-tokens'));
+    assert.ok(!capabilities.includes('design-tokens'));
     assert.ok(capabilities.includes('postgres'));
   });
 
@@ -585,7 +665,7 @@ describe('e2e — example config flow', () => {
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
     const expectedApps = ['auth-app-api', 'landing-app', 'user-app', 'user-app-api'];
     assert.deepEqual(e.apps.sort(), expectedApps.sort());
-    const expectedCaps = ['design-tokens', 'i18n', 'otel', 'postgres', 'swagger'];
+    const expectedCaps = ['i18n', 'otel', 'postgres', 'swagger'];
     assert.deepEqual(e.capabilities.sort(), expectedCaps.sort());
   });
 

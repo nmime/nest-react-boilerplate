@@ -343,50 +343,6 @@
         ],
         "tags": ["Profile"]
       }
-    },
-    "/api/v1/notifications/template": {
-      "post": {
-        "operationId": "NotificationController_createTemplateNotification",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNotificationRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": ["Notification"]
-      }
-    },
-    "/api/v1/notifications/template/batch": {
-      "post": {
-        "operationId": "NotificationController_createTemplateNotificationsBatch",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNotificationBatchRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "tags": ["Notification"]
-      }
     }
   },
   "info": {
@@ -512,14 +468,6 @@
           }
         },
         "required": ["principal", "profile"]
-      },
-      "CreateNotificationRequestDto": {
-        "type": "object",
-        "properties": {}
-      },
-      "CreateNotificationBatchRequestDto": {
-        "type": "object",
-        "properties": {}
       }
     }
   }

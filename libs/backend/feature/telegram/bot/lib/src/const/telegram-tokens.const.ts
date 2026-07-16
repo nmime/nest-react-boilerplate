@@ -1,2 +1,2 @@
 export const TelegramBotAuthInjectToken = Symbol('TelegramBotAuthInjectToken');
-export const TelegramBotInstanceInjectToken = Symbol('TelegramBotInstanceInjectToken');
+export { TelegramBotInstanceInjectToken } from '@app/backend-feature-telegram-shared';

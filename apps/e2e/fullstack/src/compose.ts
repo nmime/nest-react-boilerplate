@@ -41,6 +41,8 @@ const writeStderrLine = (message: string): void => {
 
 export const composeEnv = {
   ...process.env,
+  COMPOSE_PROFILES:
+    process.env.COMPOSE_PROFILES ?? ['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(','),
   COMPOSE_PROJECT_NAME: process.env.COMPOSE_PROJECT_NAME ?? `nrbfullstack${fallbackRunId}`,
   POSTGRES_PORT: ports.postgres,
   ADMIN_APP_API_PORT: ports.adminApi,
@@ -108,7 +110,22 @@ export async function buildStackImages(): Promise<void> {
   writeStdoutLine(`fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`);
   for (const service of stackServices) {
     // eslint-disable-next-line no-await-in-loop -- sequential builds share the Docker layer cache
-    await run('docker', [...composeArgs, 'build', service]);
+    await buildService(service);
+  }
+}
+
+async function buildService(service: string): Promise<void> {
+  const args = [...composeArgs, 'build', service];
+  try {
+    await run('docker', args);
+  } catch (error) {
+    writeStderrLine(
+      `docker compose build ${service} reported a transient failure; retrying once: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5_000));
+    await run('docker', args);
   }
 }
 

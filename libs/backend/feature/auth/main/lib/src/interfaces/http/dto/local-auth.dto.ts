@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
-import { supportedLocales } from '@app/common-i18n';
+import { supportedLocales } from '@app/backend-common-i18n';
 import { userThemePreferences } from '@app/backend-feature-auth-shared';
 
 export class RegisterDto {

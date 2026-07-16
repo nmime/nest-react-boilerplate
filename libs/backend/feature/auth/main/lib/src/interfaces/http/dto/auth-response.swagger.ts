@@ -2,7 +2,7 @@
 // for OpenAPI only; they are imported directly by the controller and are
 // intentionally NOT barrelled (not part of the public API).
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { supportedLocales } from '@app/common-i18n';
+import { supportedLocales } from '@app/backend-common-i18n';
 import {
   authProviderChannels,
   authProviders,

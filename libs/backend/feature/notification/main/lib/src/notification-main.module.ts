@@ -1,69 +1,83 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Module, type ModuleMetadata } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationRecipientResolver, NotificationService } from '@app/backend-feature-notification-shared';
+import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
+import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
 import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
-import { NotificationSharedModule } from '@app/common-notification';
-import {
-  NotificationPostgresModule,
-  NotificationRepository,
-  NotificationTemplateRepository,
-  NotificationDeliveryRepository,
-} from '@app/backend-postgres-main-notification';
 import { NotificationConfigService, NotificationHealthConfigService } from './config';
+import { NotificationController } from './controller';
+import { MessagesModule } from './messages';
 import {
+  NotificationApplicationService,
+  NotificationDeliverySchedulerService,
+  NotificationDeliveryPartitionService,
   NotificationHealthService,
+  NotificationRecipientResolverService,
   NotificationStrategyResolverService,
-  UserNotificationSchedulerService,
 } from './service';
-import { MessagesModule, MessageStrategyResolver } from './messages';
 import {
   BotChannelStrategy,
   ChannelStrategyResolver,
   TelegramChatNotificationStrategy,
   UserNotificationStrategy,
 } from './strategy';
-import { NotificationController } from './controller';
 
 export interface NotificationMainModuleOptions {
+  /** Modules that provide selected transport implementations to the worker. */
+  imports?: NonNullable<ModuleMetadata['imports']>;
   postgres?: PostgresMikroOrmOverrides;
+  /** Run the delivery queue and partition maintenance in this process. */
+  enableWorker?: boolean;
+  /** Expose the reference notification creation endpoints in this process. */
+  exposeHttp?: boolean;
 }
 
 @Module({})
 export class NotificationMainModule {
   static forRoot(options: NotificationMainModuleOptions = {}): DynamicModule {
-    const isTestRuntime = process.env['NODE_ENV'] === 'test';
-
-    if (isTestRuntime) {
+    if (process.env['NODE_ENV'] === 'test') {
       return { module: NotificationMainModule };
     }
+
+    const enableWorker = options.enableWorker ?? false;
+    const exposeHttp = options.exposeHttp ?? false;
 
     return {
       module: NotificationMainModule,
       imports: [
+        ...(options.imports ?? []),
         ConfigModule,
         PostgresMainModule.forRoot(options.postgres),
-        ScheduleModule.forRoot(),
-        NotificationSharedModule.forRoot(),
         NotificationPostgresModule,
-        MessagesModule,
+        ...(enableWorker ? [ScheduleModule.forRoot(), AuthPostgresModule, MessagesModule] : []),
       ],
-      controllers: [NotificationController],
+      controllers: exposeHttp ? [NotificationController] : [],
       providers: [
         NotificationConfigService,
         NotificationHealthConfigService,
         NotificationHealthService,
-        NotificationStrategyResolverService,
-        UserNotificationSchedulerService,
-        MessageStrategyResolver,
-        BotChannelStrategy,
-        ChannelStrategyResolver,
-        UserNotificationStrategy,
-        TelegramChatNotificationStrategy,
-        NotificationRepository,
-        NotificationTemplateRepository,
-        NotificationDeliveryRepository,
+        NotificationApplicationService,
+        { provide: NotificationService, useExisting: NotificationApplicationService },
+        ...(enableWorker
+          ? [
+              NotificationRecipientResolverService,
+              { provide: NotificationRecipientResolver, useExisting: NotificationRecipientResolverService },
+              UserNotificationStrategy,
+              TelegramChatNotificationStrategy,
+              NotificationStrategyResolverService,
+              NotificationDeliverySchedulerService,
+              NotificationDeliveryPartitionService,
+              BotChannelStrategy,
+              ChannelStrategyResolver,
+            ]
+          : []),
       ],
-      exports: [NotificationHealthService, UserNotificationSchedulerService],
+      exports: [
+        NotificationService,
+        NotificationHealthService,
+        ...(enableWorker ? [NotificationDeliverySchedulerService] : []),
+      ],
     };
   }
 }

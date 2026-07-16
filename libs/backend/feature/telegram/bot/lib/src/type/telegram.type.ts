@@ -3,7 +3,7 @@ import type { UserFromGetMe } from 'grammy/types';
 import type { HydrateFlavor } from '@grammyjs/hydrate';
 import type { MenuFlavor } from '@grammyjs/menu';
 import type { ConversationFlavor } from '@grammyjs/conversations';
-import type { Locale, TranslationKey } from '@app/common-i18n';
+import type { Locale, TranslationKey } from '../i18n';
 
 export const telegramBotRoutes = [
   'main',

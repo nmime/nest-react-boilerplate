@@ -287,8 +287,12 @@ describe("setup — repeatable command selection", () => {
       const selected = JSON.parse(afterAdd) as { apps: string[] };
       assert.deepEqual(selected.apps, ["auth-app-api", "landing-app", "user-app", "user-app-api"]);
 
-      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "nrb.config.json"]);
-      assert.equal(existsSync(join(workspaceRoot, "apps")), false, "setup must not create a parallel app tree");
+      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "apps", "nrb.config.json"]);
+      assert.equal(
+        existsSync(join(workspaceRoot, "apps/backend/user/user-app-api/src/capabilities.generated.ts")),
+        true,
+        "setup must generate wiring only in the canonical app tree",
+      );
       assert.equal(existsSync(join(workspaceRoot, "services")), false, "setup must not invent a services tree");
       assert.equal(existsSync(join(workspaceRoot, "starter-app")), false, "setup must not invent a default app");
 
@@ -534,7 +538,7 @@ describe("prompts — interactive selection", () => {
     };
     const result = await runPrompts(false, null, io);
     assert.deepEqual(result.apps, ["auth-app-api", "user-app", "user-app-api"]);
-    assert.deepEqual(result.capabilities, ["design-tokens", "i18n", "postgres"]);
+    assert.deepEqual(result.capabilities, ["i18n", "postgres"]);
     assert.equal(result.preset, undefined);
     assert.match(writes.join(""), /Frontend applications:/);
     assert.match(writes.join(""), /Backend APIs:/);
@@ -618,6 +622,18 @@ describe("prompts — formatConfigSummary", () => {
     });
     const summary = formatConfigSummary(config);
     assert.ok(summary.includes("(none)"));
+  });
+
+  it("shows the materialized preset selection", async () => {
+    const { formatConfigSummary } = await import("../../setup/prompts.js");
+    const config = parseNrbConfig({ schemaVersion, preset: "enterprise" });
+    const summary = formatConfigSummary(config, {
+      apps: ["admin-app", "auth-app-api"],
+      capabilities: ["notifications", "postgres"],
+    });
+    assert.ok(summary.includes("Apps: admin-app, auth-app-api"));
+    assert.ok(summary.includes("Capabilities: notifications, postgres"));
+    assert.ok(!summary.includes("Apps: (none)"));
   });
 });
 

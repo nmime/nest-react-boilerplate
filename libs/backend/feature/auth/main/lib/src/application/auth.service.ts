@@ -19,7 +19,7 @@ import {
   type AuthenticatedUserView,
   type UserThemePreference,
 } from '@app/backend-feature-auth-shared';
-import { normalizeLocale } from '@app/common-i18n';
+import { normalizeLocale } from '@app/backend-common-i18n';
 import {
   AuthUserStoreInjectToken,
   type AuthUserRecord,

@@ -115,6 +115,7 @@ registerScript('db:restore-drill', 'Run a PostgreSQL backup/restore drill or CI-
 registerScript('dev:fullstack', 'Run the local fullstack dev helper.', 'dev/fullstack.ts');
 registerScript('docker:smoke', 'Run Docker smoke checks.', 'docker/smoke.ts');
 registerScript('docker:fullstack-e2e', 'Run Docker fullstack e2e checks.', 'docker/fullstack-e2e.ts');
+registerScript('docker:selected', 'Run Docker Compose for the generated setup selection.', 'docker/selected.ts', true);
 registerScript('project:init', 'Initialize project placeholders.', 'project/init-project.ts', true);
 registerScript('init', 'Initialize product identity and all example domains.', 'project/init-project.ts', true);
 registerScript('api:openapi', 'Export OpenAPI contracts.', 'api/export-openapi.ts');

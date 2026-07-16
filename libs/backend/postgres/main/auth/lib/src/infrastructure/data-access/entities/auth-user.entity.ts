@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 
 export type AuthUserThemePreference = 'system' | 'light' | 'dark';
 

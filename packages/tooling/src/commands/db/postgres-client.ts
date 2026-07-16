@@ -174,7 +174,7 @@ export function createPostgresClientInvocation({
 }) {
   const tool = operation === "backup" ? "pg_dump" : "pg_restore";
   const image = env.DB_BACKUP_DOCKER_IMAGE || env.POSTGRES_CLIENT_DOCKER_IMAGE || DefaultPostgresClientImage;
-  const localClientExists = commandExists(tool, spawn);
+  const localClientExists = commandExists(tool, spawn) && (operation === "backup" || commandExists("psql", spawn));
   const hasDocker = dockerAvailable(spawn);
   const localMajor = localClientExists ? detectLocalClientMajor(tool, spawn) : undefined;
   const serverMajor = detectServerMajor(connectionString, spawn);
@@ -220,20 +220,17 @@ export function createLocalInvocation({ connectionString, operation, outputPath 
   }
 
   const command = [
-    "pg_restore",
-    "--clean",
-    "--if-exists",
-    "--no-owner",
-    "--no-acl",
-    "--dbname",
-    connectionString,
+    "sh",
+    "-ec",
+    restoreScript(),
+    "postgres-client",
     outputPath,
   ];
   return {
     args: command.slice(1),
     command: command[0],
-    env: process.env,
-    redactedCommand: redactCommand(command, connectionString),
+    env: { ...process.env, DATABASE_URL: connectionString },
+    redactedCommand: command,
   };
 }
 
@@ -242,7 +239,7 @@ export function createDockerInvocation({ connectionString, cwd, image, operation
   const script =
     operation === "backup"
       ? 'exec pg_dump --format=custom --no-owner --no-acl --file "$1" "$DATABASE_URL"'
-      : 'exec pg_restore --clean --if-exists --no-owner --no-acl --dbname "$DATABASE_URL" "$1"';
+      : restoreScript();
   const command = [
     "docker",
     "run",
@@ -269,6 +266,16 @@ export function createDockerInvocation({ connectionString, cwd, image, operation
     env: { ...process.env, DATABASE_URL: connectionString },
     redactedCommand: command,
   };
+}
+
+function restoreScript(): string {
+  // pg_restore --clean cannot drop inherited constraints directly from child
+  // partitions and exits non-zero even when it later restores the archive. A
+  // restore is already a destructive, explicitly-confirmed operation, so reset
+  // the application schema atomically first and then fail on any real archive
+  // error. This works for both local clients and the version-matched Docker
+  // fallback.
+  return `psql "$DATABASE_URL" --no-psqlrc --set ON_ERROR_STOP=1 --command 'DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;' && exec pg_restore --exit-on-error --no-owner --no-acl --dbname "$DATABASE_URL" "$1"`;
 }
 
 export function runPostgresClient({ connectionString, operation, outputPath }: { connectionString: string; operation: PostgresOperation; outputPath: string }): number {

@@ -2,5 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["es2022", "dom"]
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "libs/frontend/ui-web/lib/.storybook/**/*.ts",
+    "libs/frontend/ui-web/lib/.storybook/**/*.tsx"
+  ]
 }

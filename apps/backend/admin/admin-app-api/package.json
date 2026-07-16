@@ -13,7 +13,7 @@
     "@nx/node": "23.1.0",
     "@nx/vite": "23.1.0",
     "@types/node": "24.13.3",
-    "@types/supertest": "7.2.0",
+    "@types/supertest": "7.2.1",
     "light-my-request": "6.6.0",
     "supertest": "7.2.2",
     "typescript": "6.0.3",

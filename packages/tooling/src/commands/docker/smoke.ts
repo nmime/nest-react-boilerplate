@@ -56,6 +56,9 @@ const env = {
   LANDING_APP_PORT: ports.landingApp,
   SITE_APP_PORT: ports.siteApp,
   MOBILE_APP_PORT: ports.mobileApp,
+  COMPOSE_PROFILES:
+    process.env.COMPOSE_PROFILES ??
+    ['postgres', ...backendServices, ...frontendServices].join(','),
   COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
@@ -130,6 +133,21 @@ async function composeUpServices(label: string, services: string[]): Promise<voi
   }
 }
 
+async function buildService(service: string): Promise<void> {
+  const args = [...compose, 'build', service];
+  try {
+    await run('docker', args, { stdio: 'inherit', env });
+  } catch (error) {
+    console.warn(
+      `docker compose build ${service} reported a transient failure; retrying once: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    await run('docker', args, { stdio: 'inherit', env });
+  }
+}
+
 async function composeUp() {
   await run("docker", [...compose, "up", "--no-build", "-d", "postgres"], {
     stdio: "inherit",
@@ -174,7 +192,7 @@ try {
     `docker smoke project=${env.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
   );
   for (const service of stackServices) {
-    await run("docker", [...compose, "build", service], { stdio: "inherit", env });
+    await buildService(service);
   }
   await composeUp();
   const backendProbeCount = backendServices.length;

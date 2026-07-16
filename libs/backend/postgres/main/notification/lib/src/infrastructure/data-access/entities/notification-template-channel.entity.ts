@@ -1,18 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import { NotificationChannel, NotificationTemplateEngine } from '../../../domain';
-
-export interface NotificationBotChannelContent {
-  body: Record<string, string>;
-  image?: Record<string, string>;
-  buttons?: Record<string, unknown>;
-}
+import {
+  NotificationChannel,
+  type NotificationTemplateChannelContent,
+  NotificationTemplateEngine,
+} from '@app/common-notifications';
 
 export interface NotificationTemplateChannelEntityInput {
   templateId: string;
   channel: NotificationChannel;
   engine?: NotificationTemplateEngine;
-  content: Record<string, unknown>;
+  content: NotificationTemplateChannelContent;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,7 +20,7 @@ export class NotificationTemplateChannelEntity {
   templateId!: string;
   channel!: NotificationChannel;
   engine: NotificationTemplateEngine = NotificationTemplateEngine.StringFormat;
-  content!: Record<string, unknown>;
+  content!: NotificationTemplateChannelContent;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -36,33 +34,6 @@ export class NotificationTemplateChannelEntity {
       this.updatedAt = input.updatedAt ?? new Date();
     }
   }
-
-  botContent(): NotificationBotChannelContent | undefined {
-    if (this.channel !== NotificationChannel.Bot) {
-      return undefined;
-    }
-    const body = this.content['body'];
-    if (!isLocalizedStringRecord(body)) {
-      return undefined;
-    }
-
-    const image = this.content['image'];
-    const buttons = this.content['buttons'];
-
-    return {
-      body,
-      ...(isLocalizedStringRecord(image) ? { image } : {}),
-      ...(isRecord(buttons) ? { buttons } : {}),
-    };
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isLocalizedStringRecord(value: unknown): value is Record<string, string> {
-  return isRecord(value) && Object.values(value).every((entry) => typeof entry === 'string');
 }
 
 export const NotificationTemplateChannelEntitySchema = new EntitySchema<NotificationTemplateChannelEntity>({

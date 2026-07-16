@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { join, resolve } from "node:path";
 
 const workspaceRoot = resolve(import.meta.dirname, "../../../../..");
-const storybookRoot = join(workspaceRoot, "libs/frontend/ui/lib");
+const storybookRoot = join(workspaceRoot, "libs/frontend/ui-web/lib");
 const vitestBin =
   process.platform === "win32"
     ? join(workspaceRoot, "node_modules/.bin/vitest.cmd")

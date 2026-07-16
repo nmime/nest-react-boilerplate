@@ -1,93 +1,41 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import {
+  NotificationChannel,
+  NotificationTargetType,
+  NotificationTemplateEngine,
+  type NotificationRecord,
+} from '@app/common-notifications';
 import { DefaultMessageStrategy } from './default-message.strategy';
-import { NotificationTemplateEngine } from '@app/backend-postgres-main-notification';
 
 describe(DefaultMessageStrategy.name, () => {
-  describe('getMessage', () => {
-    it('should return undefined when template is missing', () => {
-      const mockEntity = { template: undefined };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result).toBeUndefined();
-    });
-
-    it('should return undefined when bot content resolves to empty', () => {
-      const mockEntity = {
-        template: {
-          botChannel: undefined,
-          body: undefined,
+  it('renders the requested channel without a legacy template fallback', () => {
+    const notification: NotificationRecord = {
+      id: 'notification-1',
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: '123',
+      data: { name: 'Ada' },
+      extra: null,
+      inAppVisible: true,
+      createdAt: new Date(),
+      template: {
+        id: 'template-1',
+        code: 'welcome',
+        description: null,
+        channels: {
+          [NotificationChannel.Bot]: {
+            id: 'channel-1',
+            channel: NotificationChannel.Bot,
+            engine: NotificationTemplateEngine.StringFormat,
+            content: { body: { en: 'Hello {name}' } },
+          },
         },
-      };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result).toBeUndefined();
-    });
+      },
+    };
 
-    it('should return message with rendered body text', () => {
-      const mockEntity = {
-        template: {
-          botChannel: undefined,
-          body: { en: 'Hello {name}' },
-          templateEngine: NotificationTemplateEngine.StringFormat,
-        },
-        data: { name: 'World' },
-      };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result).toBeDefined();
-      expect(result?.text).toBe('Hello World');
-    });
-
-    it('should return undefined when body text renders to empty', () => {
-      const mockEntity = {
-        template: {
-          botChannel: undefined,
-          body: { en: '' },
-          templateEngine: NotificationTemplateEngine.StringFormat,
-        },
-      };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe('prepareData', () => {
-    it('should resolve language keys from nested objects', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const data = { greeting: { en: 'Hello', ru: 'Privet' } };
-      const result = strategy['prepareData'](data as any, 'en');
-      expect(result.greeting).toBe('Hello');
-    });
-
-    it('should fall back to default language', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const data = { greeting: { en: 'Hello', default: 'Hi' } };
-      const result = strategy['prepareData'](data as any, 'fr');
-      expect(result.greeting).toBe('Hello');
-    });
-
-    it('should pass through non-language objects', () => {
-      const strategy = new DefaultMessageStrategy({ template: {} } as any);
-      const data = { count: 42, name: 'test' };
-      const result = strategy['prepareData'](data as any, 'en');
-      expect(result.count).toBe(42);
-      expect(result.name).toBe('test');
-    });
-  });
-
-  describe('renderButtons', () => {
-    it('should return undefined when no buttons defined', () => {
-      const mockEntity = {
-        template: {
-          botChannel: undefined,
-          body: { en: 'Hello' },
-          templateEngine: NotificationTemplateEngine.StringFormat,
-        },
-      };
-      const strategy = new DefaultMessageStrategy(mockEntity as any);
-      const result = strategy.getMessage('en');
-      expect(result?.buttons).toBeUndefined();
+    expect(new DefaultMessageStrategy(notification, NotificationChannel.Bot).getMessage('en')).toEqual({
+      text: 'Hello Ada',
+      image: undefined,
+      buttons: undefined,
     });
   });
 });

@@ -1,90 +1,68 @@
-# Presets and Technologies
+# Presets and technologies
 
-This page documents the five supported repository profiles, all applications and capabilities, and their dependency rules. Profiles select groups; they do not designate a default app.
+The monorepo has no default application. Presets are exact shortcuts; the saved selection is explicit and can be rerun to add or remove applications and capabilities.
+
+## Applications
+
+| ID                 | Classification                     | Canonical hostname             | Required selection                              |
+| ------------------ | ---------------------------------- | ------------------------------ | ----------------------------------------------- |
+| `admin-app`        | required/reference                 | `admin-app.example.com`        | `admin-app-api`, `auth-app-api`, `authz`        |
+| `user-app`         | required/reference                 | `user-app.example.com`         | `user-app-api`, `auth-app-api`, `i18n`          |
+| `landing-app`      | required/reference                 | `example.com`                  | none                                            |
+| `site-app`         | required/reference                 | `site-app.example.com`         | none                                            |
+| `mobile-app`       | required/reference                 | `mobile-app.example.com`       | `auth-app-api`, `user-app-api`, `design-tokens` |
+| `admin-app-api`    | required/reference                 | `admin-app-api.example.com`    | `postgres`, `authz`                             |
+| `user-app-api`     | required/reference                 | `user-app-api.example.com`     | `postgres`                                      |
+| `auth-app-api`     | required/reference                 | `auth-app-api.example.com`     | `postgres`                                      |
+| `telegram-bot-api` | optional                           | `telegram-bot-api.example.com` | `telegram-bot`, `postgres`                      |
+| `discord-app-api`  | optional                           | `discord-app-api.example.com`  | `discord-bot`, `postgres`                       |
+| `fullstack-e2e`    | required/reference, not deployable | none                           | complete admin/auth/user/landing stack          |
+
+`landing-app` owns the apex in the template. During product initialization, choose either landing or site for the real apex and update the other to its app-ID subdomain. Every other deployable keeps `<app-id>.<base-domain>`; an app called `auth-app-api` therefore maps to `auth-app-api.example.com`, never an invented starter hostname.
 
 ## Presets
 
-| Profile      | Description                                  | Apps (before expansion)                                                                                                            | Capabilities (before expansion)                                          |
-| ------------ | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `minimal`    | API-only integration profile                 | `auth-app-api`, `user-app-api`                                                                                                     | `postgres`                                                               |
-| `web`        | Every core browser app, API, and E2E project | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `site-app`, `fullstack-e2e`               | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
-| `fullstack`  | Complete core monorepo, including mobile     | `admin-app`, `admin-app-api`, `user-app`, `user-app-api`, `auth-app-api`, `landing-app`, `site-app`, `mobile-app`, `fullstack-e2e` | `postgres`, `redis`, `design-tokens`, `authz`, `i18n`, `otel`, `swagger` |
-| `enterprise` | Every supported app and capability           | All apps                                                                                                                           | All capabilities                                                         |
-| `bots`       | Telegram + Discord bot APIs                  | `auth-app-api`, `user-app-api`, `telegram-bot-api`, `discord-app-api`                                                              | `postgres`, `redis`, `telegram-bot`, `discord-bot`, `otel`               |
+| Preset       | Purpose                                                    |
+| ------------ | ---------------------------------------------------------- |
+| `minimal`    | Auth and user APIs with PostgreSQL.                        |
+| `web`        | All browser apps, core APIs, and full-stack E2E.           |
+| `fullstack`  | Web plus Expo mobile. Bot applications remain opt-in.      |
+| `bots`       | Telegram and Discord APIs plus the core auth/user backend. |
+| `enterprise` | Every supported app and capability.                        |
 
-Profiles are exact CLI shortcuts for a known group of applications and
-capabilities. In the interactive wizard, a profile can be used as a starting
-point and the resulting custom selection is saved explicitly. On later CLI
-runs, `--app` and `--capability` add to the saved selection; use `--replace` for
-an exact custom replacement. Transitive dependencies are auto-expanded.
+## Capabilities
 
-## Supported applications
+Capabilities are executable selections, not labels. Each catalog entry declares its activation class, dependencies, owning Nx projects, Docker services, environment contract, and backend module/bootstrap wiring.
 
-### Frontend apps
+| Capability      | Activation                      | Dependencies / concrete effect                                                                                                |
+| --------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `i18n`          | source libraries                | Backend common, frontend shared/feature catalogs, common runtime and keys.                                                    |
+| `analytics`     | Nest module                     | Generates `AnalyticsModule.forRoot()` composition.                                                                            |
+| `websockets`    | source library                  | Enables the provider-neutral websocket contracts.                                                                             |
+| `feature-flags` | Nest module                     | Requires PostgreSQL; wires the Postgres feature-flag module.                                                                  |
+| `notifications` | Nest module + worker            | Requires PostgreSQL and Telegram; wires producer modules in selected APIs and the delivery worker only in `telegram-bot-api`. |
+| `design-tokens` | source library                  | Enables renderer-neutral tokens, required by native UI.                                                                       |
+| `authz`         | source library                  | Enables shared authorization contracts/policies.                                                                              |
+| `postgres`      | infrastructure                  | Enables `postgres` and `migrate` Compose services and `DATABASE_URL`.                                                         |
+| `redis`         | Nest module + infrastructure    | Wires `RedisModule.forRoot()` and the Redis Compose service.                                                                  |
+| `s3`            | Nest module + infrastructure    | Wires `S3Module.forRoot()` and MinIO.                                                                                         |
+| `static-data`   | Nest module                     | Wires filesystem static-data access.                                                                                          |
+| `nats`          | Nest module + infrastructure    | Wires `NatsModule.forRoot()` and NATS.                                                                                        |
+| `otel`          | bootstrap                       | Enables OpenTelemetry bootstrap environment.                                                                                  |
+| `swagger`       | bootstrap                       | Enables OpenAPI bootstrap environment.                                                                                        |
+| `telegram-bot`  | optional application capability | Selects `telegram-bot-api` and its Telegram environment contract.                                                             |
+| `discord-bot`   | optional application capability | Selects `discord-app-api` and its Discord environment contract.                                                               |
 
-| ID            | Label            | Platform | Requires capabilities    | Requires apps                  |
-| ------------- | ---------------- | -------- | ------------------------ | ------------------------------ |
-| `admin-app`   | Admin Dashboard  | frontend | `authz`, `design-tokens` | `admin-app-api`                |
-| `user-app`    | User Application | frontend | `design-tokens`, `i18n`  | `user-app-api`, `auth-app-api` |
-| `landing-app` | Landing Page     | frontend | _(none)_                 | _(none)_                       |
-| `site-app`    | Marketing Site   | frontend | _(none)_                 | _(none)_                       |
-| `mobile-app`  | Mobile App       | frontend | `design-tokens`          | `user-app-api`                 |
+Setup materializes this into `.nrb/capabilities.json`, `.nrb/capabilities.env`, `.nrb/workspace.json`, and one `capabilities.generated.ts` per backend application. Rerunning setup regenerates all managed modules, so removing a capability also removes stale imports/wiring. `pnpm nrb doctor` fails when generated activation drifts from the saved selection.
 
-### Backend apps
+Run selected infrastructure/apps with:
 
-| ID                 | Label            | Platform | Requires capabilities      | Requires apps |
-| ------------------ | ---------------- | -------- | -------------------------- | ------------- |
-| `admin-app-api`    | Admin API        | backend  | `postgres`, `authz`        | _(none)_      |
-| `user-app-api`     | User API         | backend  | `postgres`                 | _(none)_      |
-| `auth-app-api`     | Auth API         | backend  | `postgres`                 | _(none)_      |
-| `discord-app-api`  | Discord Bot API  | backend  | `discord-bot`, `postgres`  | _(none)_      |
-| `telegram-bot-api` | Telegram Bot API | backend  | `telegram-bot`, `postgres` | _(none)_      |
+```bash
+pnpm run docker:selected
+```
 
-### E2E apps
+Use `pnpm run docker:fullstack` only when intentionally starting every Compose profile.
 
-| ID              | Label               | Platform | Requires capabilities | Requires apps                  |
-| --------------- | ------------------- | -------- | --------------------- | ------------------------------ |
-| `fullstack-e2e` | Fullstack E2E Tests | e2e      | _(none)_              | `auth-app-api`, `user-app-api` |
+## Dependency expansion example
 
-## Supported capabilities
-
-| ID              | Label                       | Requires capabilities | Conflicts with |
-| --------------- | --------------------------- | --------------------- | -------------- |
-| `i18n`          | Internationalization        | _(none)_              | _(none)_       |
-| `analytics`     | Analytics Tracking          | _(none)_              | _(none)_       |
-| `websockets`    | WebSockets                  | _(none)_              | _(none)_       |
-| `feature-flags` | Feature Flags               | _(none)_              | _(none)_       |
-| `notifications` | Notifications               | `redis`               | _(none)_       |
-| `design-tokens` | Design Tokens               | _(none)_              | _(none)_       |
-| `authz`         | Authorization               | _(none)_              | _(none)_       |
-| `postgres`      | PostgreSQL Database         | _(none)_              | _(none)_       |
-| `redis`         | Redis Cache                 | _(none)_              | _(none)_       |
-| `s3`            | S3 Object Storage           | _(none)_              | _(none)_       |
-| `nats`          | NATS Messaging              | _(none)_              | _(none)_       |
-| `otel`          | OpenTelemetry Observability | _(none)_              | _(none)_       |
-| `swagger`       | Swagger API Docs            | _(none)_              | _(none)_       |
-| `telegram-bot`  | Telegram Bot Integration    | _(none)_              | _(none)_       |
-| `discord-bot`   | Discord Bot Integration     | _(none)_              | _(none)_       |
-
-## Dependency expansion rules
-
-The catalog engine resolves transitive dependencies automatically:
-
-1. **App → Capability**: if `admin-app` is selected, `authz` and `design-tokens` are auto-enabled.
-2. **App → App**: if `admin-app` is selected, `admin-app-api` is auto-enabled.
-3. **Capability → Capability**: if `notifications` is selected, `redis` is auto-enabled.
-4. **Conflict detection**: the planner errors if a selected app conflicts with an enabled capability.
-
-### Example: dependency chain
-
-Selecting `admin-app` automatically includes `admin-app-api`, `authz`,
-`design-tokens`, and `postgres` through app and capability dependencies.
-
-## Schema version
-
-Current schema version: `1.0.0`. The planner rejects configs with mismatched schema versions.
-
-## Next steps
-
-- [Setup and Configuration](configuration.md) — interactive and noninteractive setup.
-- [CLI Reference](cli-reference.md) — command-line flags for `pnpm nrb setup`.
+Selecting `notifications` expands to `postgres`, `telegram-bot`, and `telegram-bot-api`. Selecting `admin-app` expands to both required APIs and authorization/PostgreSQL requirements. Expansion is deterministic and dependency-breaking removals fail.

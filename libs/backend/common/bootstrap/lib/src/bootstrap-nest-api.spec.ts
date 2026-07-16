@@ -98,7 +98,7 @@ vi.mock('@app/backend-common-redis', () => ({
   },
 }));
 
-vi.mock('@app/common-i18n', () => ({
+vi.mock('@app/backend-common-i18n', () => ({
   createRequestLocaleMiddleware: mocks.createRequestLocaleMiddleware,
   resolveLocaleFromRequest: mocks.resolveLocaleFromRequest,
   translate: mocks.translate,

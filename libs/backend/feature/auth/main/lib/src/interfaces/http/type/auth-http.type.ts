@@ -1,4 +1,4 @@
-import type { supportedLocales } from '@app/common-i18n';
+import type { supportedLocales } from '@app/backend-common-i18n';
 import type { AuthenticatedPrincipal, AuthSessionView } from '@app/backend-feature-auth-shared';
 
 export interface UserActionTokenPayload {

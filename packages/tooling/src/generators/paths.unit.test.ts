@@ -79,7 +79,7 @@ describe('generated path resolution', () => {
   });
 
   it('dots(dir) computes correct depth for frontend lib', () => {
-    const dir = 'libs/frontend/ui/lib';
+    const dir = 'libs/frontend/ui-web/lib';
     const segments = dir.split('/').length; // 4
     const dots = '../'.repeat(segments);
     assert.strictEqual(dots, '../../../../');
@@ -166,7 +166,7 @@ describe('generated path resolution', () => {
       'apps/backend/user/user-app-api',
       'apps/frontend/app',
       'libs/backend/common/response/lib',
-      'libs/frontend/ui/lib',
+      'libs/frontend/ui-web/lib',
     ];
     for (const dir of existing) {
       const tcPath = path.join(ROOT, dir, 'tsconfig.json');

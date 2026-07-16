@@ -110,6 +110,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'postgres',
       'redis',
       's3',
+      'static-data',
       'nats',
       'otel',
       'swagger',

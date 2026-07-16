@@ -193,8 +193,8 @@ Rules:
   pages.
 - `@app/frontend-ui-native` is the Expo renderer consumed by `mobile-app` and
   imports the same feature core, not the web UI.
-- `@app/frontend-ui` can remain as a compatibility alias
-  during migration, but new shared runtime code should not be added there.
+- Do not add a generic `@app/frontend-ui` compatibility alias; choose the web,
+  native, runtime, or API-support owner explicitly.
 
 ## UI renderer split
 
@@ -279,8 +279,8 @@ pnpm exec nx run @app/frontend-ui-web:build
 pnpm run frontend:fsd:check
 ```
 
-Storybook still uses the compatibility config under `libs/frontend/ui/lib`, but
-it loads stories and styles from `@app/frontend-ui-web`. Run Storybook gates for
+Storybook is configured directly under `libs/frontend/ui-web/lib/.storybook`
+and loads that library's stories/styles. Run Storybook gates for
 web UI changes until a dedicated `ui-web` Storybook target replaces that config
 shell.
 

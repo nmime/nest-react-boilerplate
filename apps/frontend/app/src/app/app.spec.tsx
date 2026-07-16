@@ -226,6 +226,17 @@ describe('User app shell', () => {
     expect(html).not.toContain('3003');
   });
 
+  it('returns through browser history for routes opened by the app', () => {
+    window.history.replaceState({ userAppNavigation: true }, '', '/settings');
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(back).toHaveBeenCalledOnce();
+    back.mockRestore();
+  });
+
   it('renders every preserved user route without scaffold diagnostics', () => {
     const routes = [
       '/',

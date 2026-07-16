@@ -115,4 +115,33 @@ describe('ProductShell', () => {
     expect(html).toContain('class="xr-brand__mark">EP</span>');
     expect(html).not.toContain('xr-status-pill');
   });
+
+  it('accepts an explicit brand mark and falls back safely for a blank app name', () => {
+    const explicitHtml = renderToStaticMarkup(
+      <ProductShell
+        actions={[]}
+        appName="Example Product"
+        brandMark="EX"
+        description="Shared shell description"
+        eyebrow="Shared shell"
+        title="Unified product surface"
+      >
+        Content
+      </ProductShell>,
+    );
+    const blankHtml = renderToStaticMarkup(
+      <ProductShell
+        actions={[]}
+        appName=" "
+        description="Shared shell description"
+        eyebrow="Shared shell"
+        title="Unified product surface"
+      >
+        Content
+      </ProductShell>,
+    );
+
+    expect(explicitHtml).toContain('class="xr-brand__mark">EX</span>');
+    expect(blankHtml).toContain('class="xr-brand__mark">A</span>');
+  });
 });

@@ -7,6 +7,8 @@
   "admin.dashboard.summary.disabledUsersDetail": "Current disabled users",
   "admin.dashboard.summary.recentAudit": "Recent audit",
   "admin.dashboard.summary.recentAuditDetail": "Recent audit events",
+  "admin.dashboard.summary.invitedUsers": "Pending invitations",
+  "admin.dashboard.summary.invitedUsersDetail": "Users who have been invited but have not joined yet",
   "admin.dashboard.loadingSummary": "Loading admin dashboard summary",
   "admin.dashboard.error.summaryRequestFailed": "Dashboard summary request failed",
   "admin.dashboard.title": "Admin dashboard",

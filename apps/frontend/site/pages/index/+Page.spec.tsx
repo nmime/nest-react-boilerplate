@@ -7,15 +7,12 @@ vi.mock('@app/frontend-runtime', () => ({
       const fallback: Record<string, string> = {
         'user.appName': 'Nest React Boilerplate',
         'user.eyebrow': 'Fullstack monorepo',
-        'site.title': 'Nest React Boilerplate',
-        'site.description': 'Production-grade starter for NestJS + React teams.',
-        'site.actionGroup.label': 'Quick links',
-        'site.action.app': 'Open App',
-        'site.action.docs': 'Auth Docs',
-        'site.status.label': 'System status',
-        'site.status.online': 'All systems operational',
-        'site.metricGroup.label': 'Project metrics',
-        'site.routeGroup.label': 'Routes',
+        'site.title': 'A dependable home',
+        'site.description': 'Durable server-rendered content.',
+        'site.actionGroup.label': 'Site actions',
+        'site.action.app': 'Open account',
+        'site.action.docs': 'View public landing',
+        'site.metricGroup.label': 'Site principles',
       };
       return fallback[key] ?? key;
     },
@@ -39,14 +36,14 @@ describe('site home page', () => {
     const { Page } = await import('./+Page');
     render(<Page />);
 
-    const heading = screen.getByRole('heading', { name: 'Nest React Boilerplate' });
+    const heading = screen.getByRole('heading', { name: 'A dependable home' });
     expect(heading).toBeTruthy();
 
-    const appLink = screen.getByRole('link', { name: 'Open App' });
+    const appLink = screen.getByRole('link', { name: 'Open account' });
     expect(appLink.getAttribute('href')).toBe('/app');
 
-    const docsLink = screen.getByRole('link', { name: 'Auth Docs' });
-    expect(docsLink.getAttribute('href')).toBe('/auth/docs');
+    const landingLink = screen.getByRole('link', { name: 'View public landing' });
+    expect(landingLink.getAttribute('href')).toBe('/');
   });
 
   it('renders three metric articles', async () => {
@@ -57,12 +54,11 @@ describe('site home page', () => {
     expect(articles).toHaveLength(3);
   });
 
-  it('renders three route links', async () => {
+  it('keeps the page focused on the two primary destinations', async () => {
     const { Page } = await import('./+Page');
     render(<Page />);
 
-    const routeLinks = screen.getAllByRole('link', { name: /[A-Za-z]/ });
-    // CTA links + route links
-    expect(routeLinks.length).toBeGreaterThanOrEqual(5);
+    const links = screen.getAllByRole('link', { name: /[A-Za-z]/ });
+    expect(links).toHaveLength(2);
   });
 });

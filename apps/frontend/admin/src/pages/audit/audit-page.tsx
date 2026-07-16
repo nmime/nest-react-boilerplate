@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';
-import { UiCard, UiDataTable, UiPagination, UiSection, UiStatCard, UiStatusTag } from '@app/frontend-ui-web';
+import { UiCard, UiDataTable, UiPagination, UiSection, UiStatCard } from '@app/frontend-ui-web';
 import type { AuditRow } from '../../entities/admin-audit';
 import { errorText, formatDate, pageSize, totalPages } from '../../shared';
 
@@ -25,21 +25,6 @@ export const AuditPage = ({ requestOptions }: Readonly<{ requestOptions?: ApiCli
       eyebrow={t('admin.audit.eyebrow')}
       title={t('admin.audit.title')}
     >
-      <UiCard className="admin-command-center" title="Audit operations timeline">
-        <div className="admin-command-center__hero">
-          <div>
-            <p className="xr-eyebrow">Tamper-aware review</p>
-            <strong>Newest events stay readable before pagination.</strong>
-            <span>
-              Actor, target, resource, and timestamp columns are optimized for incident triage and empty-state clarity.
-            </span>
-          </div>
-          <UiStatusTag
-            label={audit.error ? t('admin.health.unavailable') : 'Audit stream'}
-            tone={audit.error ? 'warning' : 'success'}
-          />
-        </div>
-      </UiCard>
       <div className="admin-stat-grid xr-stat-grid">
         <UiStatCard
           className="admin-stat-card"

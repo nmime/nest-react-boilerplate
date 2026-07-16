@@ -189,15 +189,12 @@ describe('admin pages integration', () => {
     expect(screen.getByText('7')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
     expect(screen.getByText('4')).toBeTruthy();
-    expect(screen.getByText('Operations command center')).toBeTruthy();
     expect(screen.getByText('Pending invitations')).toBeTruthy();
     expect(screen.getAllByText('Ready').length).toBeGreaterThanOrEqual(3);
 
     renderRoute('/admin/profile');
     expect(screen.getAllByText('Ada Admin').length).toBeGreaterThan(0);
     expect(screen.getByText('Email: admin@example.com')).toBeTruthy();
-    expect(screen.getByText('Session control plane')).toBeTruthy();
-    expect(screen.getByText('Frontend guardrails')).toBeTruthy();
   });
 
   it('renders dashboard summary and health endpoint errors', async () => {
@@ -394,7 +391,6 @@ describe('admin pages integration', () => {
       }),
     );
     expect((await screen.findAllByText('Administrator')).length).toBeGreaterThan(0);
-    expect(screen.getByText('Role governance map')).toBeTruthy();
     expect(screen.getByText('admin.users')).toBeTruthy();
 
     cleanup();
@@ -406,7 +402,6 @@ describe('admin pages integration', () => {
       }),
     );
     expect(await screen.findByText('user.disabled')).toBeTruthy();
-    expect(screen.getByText('Audit operations timeline')).toBeTruthy();
     expect(screen.getByText('user-1')).toBeTruthy();
 
     cleanup();
@@ -433,7 +428,6 @@ describe('admin pages integration', () => {
     );
 
     expect(await screen.findByText('audit stream offline')).toBeTruthy();
-    expect(screen.getByText('Unavailable')).toBeTruthy();
   });
 
   it('keeps the roles matrix read-only when the admin cannot write roles', async () => {
@@ -586,7 +580,6 @@ describe('admin pages integration', () => {
 
     expect(screen.queryByRole('link', { name: 'Users' })).toBeFalsy();
     expect(screen.getAllByText('Missing admin users permission.').length).toBeGreaterThan(0);
-    expect(screen.getByText('Fail-closed route guard')).toBeTruthy();
 
     cleanup();
     renderAdminRouteForTest(
@@ -597,7 +590,6 @@ describe('admin pages integration', () => {
       }),
     );
     expect(screen.getByText('Tenants, memberships, and invitations')).toBeTruthy();
-    expect(screen.getByText('Tenant console runway')).toBeTruthy();
 
     cleanup();
     renderAdminRouteForTest(
@@ -618,7 +610,6 @@ describe('admin pages integration', () => {
       }),
     );
     expect(screen.getByText('Admin page not found')).toBeTruthy();
-    expect(screen.getByText('Route recovery')).toBeTruthy();
 
     cleanup();
     renderAdminRouteForTest(renderAdminRoute('/admin', { status: 'loading' }));

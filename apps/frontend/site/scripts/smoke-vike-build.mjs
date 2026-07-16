@@ -4,7 +4,7 @@ import { join, relative, resolve } from 'node:path';
 const appName = 'site-app';
 const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/site');
 const runtimePackagePath = resolve(import.meta.dirname, '../package.json');
-const expectedCopy = 'Production web experience';
+const expectedCopy = 'A dependable home for the pages people return to.';
 
 const readBuiltTextFiles = (directory) => {
   if (!existsSync(directory)) {

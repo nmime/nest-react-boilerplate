@@ -55,14 +55,8 @@ function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesP
   const unlinkProviderName = t(getUnlinkProviderName(unlinkMutation.variables, state.identities));
 
   return (
-    <UiCard className="xr-provider-card xr-surface-glow" title={t('user.settings.title')}>
-      <div className="xr-status-row">
-        <span className="xr-status-heading">{t('auth.social.stepUp.required')}</span>
-        <UiStatusPill
-          label={authStore.isAuthenticated ? 'session' : 'signed out'}
-          tone={authStore.isAuthenticated ? 'success' : 'warning'}
-        />
-      </div>
+    <UiCard className="user-settings__card" title={t('user.settings.connections.title')}>
+      <p>{t('user.settings.connections.description')}</p>
       {!authStore.isAuthenticated ? (
         <UiEmptyState description={t('user.state.missingToken')} title={t('user.profile.title')} />
       ) : null}
@@ -78,18 +72,14 @@ function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesP
           tone="warning"
         />
       ) : null}
-      <div className="xr-provider-list" data-design-marker="social-linking-v3">
-        <div className="xr-provider-list__intro">
-          <strong>Connected identity map</strong>
-          <span>Review linked providers, add a recovery path, or unlink safely.</span>
-        </div>
+      <div className="user-provider-list">
         {socialAuthProviders.map((provider) => {
           const identity = state.providers[provider];
           const providerName = t(getProviderTranslationKey(provider));
           return (
-            <section className="xr-provider-row" key={provider}>
+            <section className="user-provider-row" key={provider}>
               <div>
-                <div className="xr-provider-heading">
+                <div className="user-provider-row__heading">
                   <strong>{providerName}</strong>
                   <UiStatusPill label={identity ? 'linked' : 'not linked'} tone={identity ? 'success' : 'info'} />
                 </div>

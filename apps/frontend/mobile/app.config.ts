@@ -4,8 +4,8 @@ const defaultApiBaseUrl = 'same-origin';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Nest React Mobile',
-  slug: 'nest-react-mobile',
+  name: 'Nest React Boilerplate',
+  slug: 'nest-react-boilerplate-mobile',
   scheme: 'nestreact',
   version: '0.0.0',
   plugins: [...(config.plugins ?? []), 'expo-router'],

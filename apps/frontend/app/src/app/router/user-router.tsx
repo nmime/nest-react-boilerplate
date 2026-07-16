@@ -66,14 +66,8 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
     () => [
       { href: '/', isCurrent: route === '/', label: t('user.nav.home') },
       {
-        href: '/auth',
-        isCurrent: route === '/auth',
-        label: t('user.nav.auth'),
-        variant: 'secondary' as const,
-      },
-      {
         href: '/profile',
-        isCurrent: route === '/profile',
+        isCurrent: route === '/profile' || route === '/auth' || route === '/auth/discord/callback',
         label: t('user.nav.profile'),
         variant: 'secondary' as const,
       },

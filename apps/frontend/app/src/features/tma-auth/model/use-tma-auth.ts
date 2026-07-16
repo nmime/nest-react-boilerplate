@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { deepSnakeToCamelObjKeys, retrieveLaunchParams, useRawInitData } from '@tma.js/sdk-react';
+import { deepSnakeToCamelObjKeys, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-react';
 import { parseTmaLaunchState, type TmaLaunchIntent } from './tma-launch';
 
 interface UseTmaAuthInput {
@@ -25,11 +25,9 @@ const readBrowserStartParam = (): string | undefined => {
 };
 
 export function useTmaAuth({ error, fallbackStartParam, isVerifying, onAuthenticate, status }: UseTmaAuthInput) {
-  // The Telegram SDK hooks must run unconditionally in the same order on every
-  // render. `useLaunchParams` throws (via retrieveLaunchParams) outside the
-  // Telegram runtime, so we mirror its useMemo internals and guard the resolved
-  // value instead of guarding the hook call. `useRawInitData` already returns
-  // undefined when there is no init data, so it is safe to call directly.
+  // Telegram launch-data retrieval throws outside Telegram. Keep both reads in
+  // unconditional memo hooks, but convert that expected environment mismatch
+  // into the browser fallback state instead of tripping the app error boundary.
   const launchParams = useMemo(() => {
     try {
       return deepSnakeToCamelObjKeys(retrieveLaunchParams());
@@ -37,7 +35,13 @@ export function useTmaAuth({ error, fallbackStartParam, isVerifying, onAuthentic
       return null;
     }
   }, []);
-  const rawInitData = useRawInitData();
+  const rawInitData = useMemo(() => {
+    try {
+      return retrieveRawInitData();
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   const telegramStartParam =
     launchParams && 'tgWebAppStartParam' in launchParams ? launchParams.tgWebAppStartParam : undefined;

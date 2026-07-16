@@ -24,7 +24,7 @@ Both `createMobxQuery` and `createMobxMutation` have live call sites; there are 
 
 ## User-facing sign-out
 
-`features/logout` exposes `LogoutModel` / `useLogout` / `LogoutButton`. Sign-out is placed in the settings "Account control room" (adjacent to session/identity state) and only renders for an authenticated session. The flow: (1) call `POST /auth/logout` through the generated `authControllerLogout` wrapper while the bearer token is still attached; (2) clear `AuthShellStore` session state and the API-support auth-required flag **even if the request fails**; (3) invalidate the `/auth/me`, `/profile/me`, and `/auth/provider-identities` query keys; (4) navigate to `/auth`.
+`features/logout` exposes `LogoutModel` / `useLogout` / `LogoutButton`. Sign-out is placed with the account preferences and only renders for an authenticated session. The flow: (1) call `POST /auth/logout` through the generated `authControllerLogout` wrapper while the bearer token is still attached; (2) clear `AuthShellStore` session state and the API-support auth-required flag **even if the request fails**; (3) invalidate the `/auth/me`, `/profile/me`, and `/auth/provider-identities` query keys; (4) navigate to `/auth`.
 
 `LocaleStore` is the bridge between i18n and API requests. It persists the selected locale, drives `FrontendI18nProvider`, updates `document.documentElement.lang`, and app providers pass the active locale into `@app/frontend-api-support` so every request receives the latest `Accept-Language` value at call time. The request implementation lives in API support so generated SDK code does not depend on React UI.
 

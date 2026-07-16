@@ -13,10 +13,11 @@ export interface ProductShellAction {
 
 export interface ProductShellProps {
   appName: string;
+  brandMark?: string;
   eyebrow: string;
   title: string;
   description: string;
-  status: string;
+  status?: string;
   statusTone?: 'success' | 'info' | 'warning';
   homeHref?: string;
   actionsLabel?: string;
@@ -29,6 +30,7 @@ export interface ProductShellProps {
 
 export const ProductShell = observer(function ProductShell({
   appName,
+  brandMark,
   eyebrow,
   title,
   description,
@@ -59,6 +61,15 @@ export const ProductShell = observer(function ProductShell({
   const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
   const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
   const resolvedHomeLinkLabel = defaultLabels.homeLinkLabel;
+  const resolvedBrandMark =
+    brandMark ??
+    appName
+      .trim()
+      .split(/\s+/u)
+      .slice(0, 2)
+      .map((part) => part.slice(0, 1))
+      .join('')
+      .toLocaleUpperCase(locale);
 
   return (
     <>
@@ -75,7 +86,9 @@ export const ProductShell = observer(function ProductShell({
           <div className="xr-header__brand-group">
             {headerLeading}
             <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
-              <span className="xr-brand__mark">xR</span>
+              <span aria-hidden="true" className="xr-brand__mark">
+                {resolvedBrandMark || 'A'}
+              </span>
               <span>{appName}</span>
             </a>
           </div>
@@ -83,7 +96,7 @@ export const ProductShell = observer(function ProductShell({
             <div className="xr-header__primary-controls">
               <LanguageSwitcher />
               <ThemeSwitcher />
-              <UiStatusPill label={status} tone={statusTone} />
+              {status ? <UiStatusPill label={status} tone={statusTone} /> : null}
             </div>
             {headerTrailing}
           </div>

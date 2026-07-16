@@ -19,6 +19,7 @@ vi.mock('@tma.js/sdk-react', async () => {
       isAvailable: vi.fn(() => true),
     },
   );
+  const retrieveRawInitData = vi.fn(() => undefined);
   return {
     ...actual,
     backButton: {
@@ -30,6 +31,7 @@ vi.mock('@tma.js/sdk-react', async () => {
     },
     init: vi.fn(),
     isTMA: vi.fn(() => false),
+    retrieveRawInitData,
     miniApp: {
       bindCssVars: vi.fn(() => vi.fn()),
       isCssVarsBound: vi.fn(() => false),
@@ -56,7 +58,7 @@ vi.mock('@tma.js/sdk-react', async () => {
       mount: vi.fn(),
     },
     useLaunchParams: vi.fn(() => ({})),
-    useRawInitData: vi.fn(() => undefined),
+    useRawInitData: retrieveRawInitData,
     viewport: {
       bindCssVars: vi.fn(() => vi.fn()),
       expand: vi.fn(),
@@ -128,9 +130,25 @@ describe('social auth and TMA UI', () => {
       render(<App />);
 
       expect(await screen.findByText('Open this page inside Telegram to continue.')).toBeTruthy();
-      expect(screen.getByText('Loading Telegram Mini App…')).toBeTruthy();
+      expect(
+        screen.getByText(
+          'Telegram provides the secure launch context; the same screen remains understandable when opened in a regular browser.',
+        ),
+      ).toBeTruthy();
     },
   );
+
+  it('turns Telegram SDK launch-data errors into the browser fallback state', async () => {
+    resetPath('/tma');
+    tma.retrieveRawInitData.mockImplementationOnce(() => {
+      throw new Error('launch parameters unavailable');
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText('Open this page inside Telegram to continue.')).toBeTruthy();
+    expect(screen.queryByText('Something went wrong')).toBeFalsy();
+  });
 
   it('negotiates fullscreen colored Telegram chrome with native back and share controls', async () => {
     resetPath('/tma?startapp=profile');
@@ -152,7 +170,7 @@ describe('social auth and TMA UI', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
     expect(tma.shareURL).toHaveBeenCalledWith(
       'https://app.local.test/tma?startapp=profile',
-      'Connect the React user app to the auth and user APIs using bearer authentication.',
+      'Sign in, review your profile, and manage preferences across web and Telegram.',
     );
     act(() => {
       tma.backButton.onClick.mock.calls[0]?.[0]();
@@ -175,8 +193,8 @@ describe('social auth and TMA UI', () => {
       expect(share).toHaveBeenCalledOnce();
     });
     expect(share).toHaveBeenCalledWith({
-      text: 'Connect the React user app to the auth and user APIs using bearer authentication.',
-      title: 'User App',
+      text: 'Sign in, review your profile, and manage preferences across web and Telegram.',
+      title: 'Nest React Boilerplate',
       url: 'https://app.local.test/profile?ref=friend',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
@@ -463,7 +481,7 @@ describe('social auth and TMA UI', () => {
     const tmaFeatureSource = readFileSync(resolve(sourceRoot, 'features/tma-auth/model/use-tma-auth.ts'), 'utf8');
     const socialApiSource = readFileSync(resolve(sourceRoot, 'features/social-auth/api/social-auth-api.ts'), 'utf8');
 
-    expect(tmaFeatureSource).toContain('useRawInitData');
+    expect(tmaFeatureSource).toContain('retrieveRawInitData');
     expect(tmaFeatureSource).not.toContain('init' + 'DataUnsafe');
     expect(socialApiSource).not.toContain('init' + 'DataUnsafe');
   });

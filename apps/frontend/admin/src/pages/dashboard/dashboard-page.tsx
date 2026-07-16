@@ -52,123 +52,6 @@ const AccessSummaryCard = ({ access }: Readonly<{ access: AdminAccess }>) => {
   );
 };
 
-const DashboardCommandCenter = ({
-  access,
-  invitedUsers,
-  totalUsers,
-}: Readonly<{
-  access: AdminAccess;
-  invitedUsers?: number;
-  totalUsers?: number;
-}>) => {
-  const protectedRoutes = [
-    access.canReadDashboard,
-    access.canReadUsers,
-    access.canReadRoles,
-    access.canReadAudit,
-    access.canReadProfile,
-    access.canReadRoles,
-  ];
-  const readyRoutes = protectedRoutes.filter(Boolean).length;
-  return (
-    <UiCard className="admin-command-center" title="Operations command center">
-      <div className="admin-command-center__hero">
-        <div>
-          <p className="xr-eyebrow">Design v3 console</p>
-          <strong>Admin workspace tuned for triage, access review, and safe action.</strong>
-          <span>
-            Live widgets degrade to explicit loading, empty, and error states while RBAC keeps restricted routes out of
-            reach.
-          </span>
-        </div>
-        <div className="admin-command-center__score" aria-label="Route readiness">
-          <span>{readyRoutes}/6</span>
-          <small>routes ready</small>
-        </div>
-      </div>
-      <div className="admin-signal-grid">
-        <div className="admin-signal-card">
-          <span>Directory coverage</span>
-          <strong>{totalUsers ?? '—'}</strong>
-          <small>Total users currently visible to the admin API.</small>
-        </div>
-        <div className="admin-signal-card">
-          <span>Pending invites</span>
-          <strong>{invitedUsers ?? '—'}</strong>
-          <small>Invitation queue is called out before it becomes an access risk.</small>
-        </div>
-        <div className="admin-signal-card">
-          <span>Guardrail</span>
-          <strong>{access.canAccessAdmin ? 'closed' : 'blocked'}</strong>
-          <small>Every page still renders from explicit frontend permissions.</small>
-        </div>
-      </div>
-    </UiCard>
-  );
-};
-
-const AdminRouteReadiness = ({ access }: Readonly<{ access: AdminAccess }>) => {
-  const { t } = useI18n();
-  const routes = [
-    {
-      detail: t('admin.dashboard.card.rbac.description'),
-      isReady: access.canReadDashboard,
-      label: t('admin.action.dashboard'),
-      path: '/admin',
-    },
-    {
-      detail: t('admin.dashboard.card.visibility.description'),
-      isReady: access.canReadUsers,
-      label: t('admin.action.users'),
-      path: '/admin/users',
-    },
-    {
-      detail: t('admin.roles.title'),
-      isReady: access.canReadRoles,
-      label: t('admin.action.roles'),
-      path: '/admin/roles',
-    },
-    {
-      detail: t('admin.dashboard.summary.recentAuditDetail'),
-      isReady: access.canReadAudit,
-      label: t('admin.action.audit'),
-      path: '/admin/audit',
-    },
-    {
-      detail: t('admin.dashboard.stat.profile.detail'),
-      isReady: access.canReadProfile,
-      label: t('admin.action.profile'),
-      path: '/admin/profile',
-    },
-    {
-      detail: t('admin.tenants.description'),
-      isReady: access.canReadRoles,
-      label: t('admin.tenants.title'),
-      path: '/admin/tenants',
-    },
-  ];
-
-  return (
-    <UiCard className="admin-route-card" title={t('admin.dashboard.stat.pages.label')}>
-      <div className="admin-readiness-grid">
-        {routes.map((route) => (
-          <div className="admin-readiness-card" data-ready={route.isReady} key={route.path}>
-            <div className="admin-readiness-card__header">
-              <strong>{route.label}</strong>
-              <UiStatusTag
-                label={route.isReady ? t('admin.health.ready') : t('admin.health.unavailable')}
-                tone={route.isReady ? 'success' : 'warning'}
-              />
-            </div>
-            <code>{route.path}</code>
-            <p>{route.detail}</p>
-          </div>
-        ))}
-      </div>
-    </UiCard>
-  );
-};
-
 const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
   return (
@@ -185,9 +68,7 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
           {t('admin.dashboard.card.rbac.description')}
         </UiCard>
       </div>
-      <DashboardCommandCenter access={access} />
       <AccessSummaryCard access={access} />
-      <AdminRouteReadiness access={access} />
     </UiSection>
   );
 };
@@ -271,9 +152,9 @@ const DashboardDataPage = ({
         />
         <UiStatCard
           className="admin-stat-card"
-          label="Pending invitations"
+          label={t('admin.dashboard.summary.invitedUsers')}
           value={`${summary.data?.invitedUsers ?? '—'}`}
-          detail="Invite queue surfaced in the v3 admin console."
+          detail={t('admin.dashboard.summary.invitedUsersDetail')}
         />
       </div>
       {summary.isLoading ? <UiLoading label={t('admin.dashboard.loadingSummary')} /> : null}
@@ -288,13 +169,7 @@ const DashboardDataPage = ({
         <HealthCard label={t('admin.health.live')} query={live} />
         <HealthCard label={t('admin.health.ready')} query={ready} />
       </div>
-      <DashboardCommandCenter
-        access={access}
-        invitedUsers={summary.data?.invitedUsers}
-        totalUsers={summary.data?.totalUsers}
-      />
       <AccessSummaryCard access={access} />
-      <AdminRouteReadiness access={access} />
     </UiSection>
   );
 };

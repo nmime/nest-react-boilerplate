@@ -5,23 +5,19 @@ import { getAuthApiDocsHref } from './get-auth-api-docs-href';
 
 export interface LandingActionsState {
   actions: ProductShellAction[];
-  fallbackNotice?: string;
 }
 
-const getSafeAuthApiDocsHref = (): Pick<LandingActionsState, 'fallbackNotice'> & { href: string } => {
+const getSafeAuthApiDocsHref = (): string => {
   try {
-    return { href: getAuthApiDocsHref(getLandingFrontendEnv()) };
+    return getAuthApiDocsHref(getLandingFrontendEnv());
   } catch {
-    return {
-      fallbackNotice: 'API docs configuration is using the same-origin fallback.',
-      href: landingRoutes.authDocs,
-    };
+    return landingRoutes.authDocs;
   }
 };
 
 export const useLandingActionsState = (): LandingActionsState => {
   const { t } = useI18n();
-  const docs = getSafeAuthApiDocsHref();
+  const docsHref = getSafeAuthApiDocsHref();
 
   const actions: ProductShellAction[] = [
     { href: landingRoutes.userApp, label: t('landing.action.user') },
@@ -31,14 +27,11 @@ export const useLandingActionsState = (): LandingActionsState => {
       variant: 'secondary',
     },
     {
-      href: docs.href,
+      href: docsHref,
       label: t('landing.action.docs'),
       variant: 'secondary',
     },
   ];
 
-  return {
-    actions,
-    fallbackNotice: docs.fallbackNotice,
-  };
+  return { actions };
 };

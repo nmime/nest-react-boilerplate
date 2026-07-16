@@ -1,6 +1,6 @@
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import type { ReactNode, SubmitEvent } from 'react';
-import { UiAlert, UiButton, UiCard, UiForm, UiStatusPill, UiTextField } from '../../../shared/ui';
+import { UiButton, UiCard, UiForm, UiTextField } from '../../../shared/ui';
 import { AuthMode } from '../model';
 
 export interface AuthCardsProps {
@@ -22,13 +22,7 @@ export function AuthCards({
 }: Readonly<AuthCardsProps>) {
   return (
     <>
-      <UiCard className="xr-auth-card xr-surface-glow" title={t('user.login.title')}>
-        <div className="xr-card-stack">
-          <UiAlert className="xr-card-note" tone="info">
-            <span>{t('user.description')}</span>
-            <UiStatusPill label={t('user.form.login')} tone="success" />
-          </UiAlert>
-        </div>
+      <UiCard className="user-auth__card" title={t('user.login.title')}>
         <UiForm
           aria-busy={isLoginPending}
           className="xr-auth-form"
@@ -61,17 +55,7 @@ export function AuthCards({
         </UiForm>
       </UiCard>
       {socialAuthSlot}
-      <UiCard className="xr-auth-card xr-surface-glow" title={t('user.register.title')}>
-        <div className="xr-card-stack">
-          <UiAlert className="xr-card-note" tone="info">
-            <span>
-              {t('auth.social.createAccount.prompt', {
-                provider: t('auth.provider.telegram'),
-              })}
-            </span>
-            <UiStatusPill label={t('user.form.register')} tone="info" />
-          </UiAlert>
-        </div>
+      <UiCard className="user-auth__card" title={t('user.register.title')}>
         <UiForm
           aria-busy={isRegisterPending}
           className="xr-auth-form"

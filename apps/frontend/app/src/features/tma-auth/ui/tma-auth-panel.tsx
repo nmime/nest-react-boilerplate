@@ -1,6 +1,6 @@
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import { getErrorReason } from '../../../shared/lib';
-import { UiAlert, UiCard, UiLoading, UiStatusPill, UiToast } from '../../../shared/ui';
+import { UiAlert, UiCard, UiLoading, UiToast } from '../../../shared/ui';
 import type { TmaDeepNavigationState, TmaLaunchIntent } from '../model';
 
 interface TmaAuthPanelProps {
@@ -31,20 +31,6 @@ const getDeepNavigationMessageKey = (state: TmaDeepNavigationState): Translation
 
 const getDeepNavigationTone = (state: TmaDeepNavigationState) => (state === 'not-found' ? 'warning' : 'info');
 
-const getTmaStatusTone = (status: string) => {
-  if (status === 'success') {
-    return 'success';
-  }
-
-  if (status === 'error') {
-    return 'warning';
-  }
-
-  return 'info';
-};
-
-const getTmaIntroKey = (isLinkIntent: boolean): TranslationKey => (isLinkIntent ? 'tma.link.required' : 'tma.idle');
-
 const getTmaIdleMessageKey = (isLinkIntent: boolean): TranslationKey =>
   isLinkIntent ? 'tma.link.pending' : 'tma.idle';
 
@@ -68,25 +54,7 @@ export function TmaAuthPanel({
   const showIdleState = isTelegram && status === 'idle' && !isVerifying;
 
   return (
-    <UiCard className="xr-tma-card xr-surface-glow" title={t('tma.loading')}>
-      <div className="xr-status-row">
-        <span className="xr-status-heading">{t(getTmaIntroKey(isLinkIntent))}</span>
-        <UiStatusPill label={status} live={isVerifying ? 'polite' : 'off'} tone={getTmaStatusTone(status)} />
-      </div>
-      <div className="xr-tma-stage-grid" aria-label="Telegram verification stages">
-        <span data-active={deepNavigationState !== 'none'}>
-          <strong>1</strong>
-          <small>Deep link</small>
-        </span>
-        <span data-active={isTelegram}>
-          <strong>2</strong>
-          <small>Telegram context</small>
-        </span>
-        <span data-active={isVerifying || status === 'success'}>
-          <strong>3</strong>
-          <small>Session exchange</small>
-        </span>
-      </div>
+    <UiCard className="user-tma__card" title={t('tma.title')}>
       {!isTelegram ? <UiToast message={t('tma.unsupported')} tone="warning" /> : null}
       {deepNavigationMessageKey ? (
         <UiToast message={t(deepNavigationMessageKey)} tone={getDeepNavigationTone(deepNavigationState)} />

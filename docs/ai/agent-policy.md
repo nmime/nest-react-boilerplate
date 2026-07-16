@@ -153,6 +153,13 @@ All exceptions flow through the `@app/backend-common-exception` library.
   `@app/frontend-api-support` for browser-safe request plumbing, and
   `@app/frontend-api-client` for generated API wrappers. `@app/frontend-ui` is a
   compatibility facade only.
+- Keep checked-in frontend reference routes product-neutral. Do not invent a
+  demo brand, fake business records, or a product domain on the maintainer's
+  behalf. Do not render route inventories, API ports/service IDs, breakpoints,
+  smoke markers, design-version labels, test readiness, or deployment status in
+  landing, account, admin, site, or mobile product UI. Put that proof in tests,
+  health/dev tooling, and docs. Follow the exact extension points in
+  [Scaffolding and Extension Contract](../scaffolding-and-extension.md#reference-ui-contract).
 - True cross-runtime common libraries live under `libs/common/**`.
 - Admin feature shared code is split by runtime. Do not recreate an unsplit
   shared admin project:

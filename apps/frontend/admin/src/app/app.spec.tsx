@@ -341,9 +341,9 @@ describe('App', () => {
     expect(renderAdminMarkup(<DashboardPage access={{ ...access, roles: [], permissions: [] }} />)).toContain(
       'Роли: нет. Разрешения: нет.',
     );
-    expect(renderAdminMarkup(<DashboardPage access={deniedAccess} />)).toContain('blocked');
+    expect(renderAdminMarkup(<DashboardPage access={deniedAccess} />)).toContain('Текущий доступ');
     expect(renderAdminMarkup(<ProfilePage payload={payload} />)).toContain('Ada Admin');
-    expect(renderAdminMarkup(<ProfilePage payload={emptyProfilePayload} />)).toContain('Profile');
+    expect(renderAdminMarkup(<ProfilePage payload={emptyProfilePayload} />)).toContain('Профиль администратора');
     expect(renderAdminMarkup(<ProfilePage payload={{ profile: { email: 'fallback@example.com' } }} />)).toContain(
       'fallback@example.com',
     );

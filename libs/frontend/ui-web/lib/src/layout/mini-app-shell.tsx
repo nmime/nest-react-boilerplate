@@ -10,6 +10,7 @@ export interface MiniAppShellProps extends Omit<ProductShellProps, 'children' | 
   shareLabel?: string;
   shareText?: string;
   shareTitle?: string;
+  heroActions?: ProductShellAction[];
 }
 
 const getShareUrl = (): string => {
@@ -31,6 +32,7 @@ export function MiniAppShell({
   shareLabel = 'Share',
   shareText,
   shareTitle,
+  heroActions,
   ...productShellProps
 }: Readonly<MiniAppShellProps>) {
   const miniApp = useMiniApp();
@@ -77,10 +79,11 @@ export function MiniAppShell({
       className="xr-mini-app-shell"
       data-mini-app-environment={miniApp.environment}
       data-mini-app-fullscreen={miniApp.isFullscreen}
+      data-mini-app-path={activePath}
     >
       <ProductShell
         {...productShellProps}
-        actions={actions}
+        actions={heroActions ?? actions}
         appName={appName}
         headerLeading={backControl}
         headerTrailing={shareControl}

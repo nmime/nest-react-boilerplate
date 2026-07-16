@@ -8,30 +8,27 @@ describe('Landing app', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders generic boilerplate landing copy and preserves route links', () => {
+  it('renders neutral template copy and preserves reference links', () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('Nest React Boilerplate');
-    expect(html).toContain('Launch a full-stack Nest and React product foundation.');
-    expect(html).toContain('A launch cockpit for teams turning the boilerplate into a production product');
+    expect(html).toContain('A focused foundation for your next product.');
+    expect(html).toContain('Clear ownership from the first screen.');
     expect(html).toContain('href="/auth/docs"');
     expect(html).toContain('href="/app"');
     expect(html).toContain('href="/admin"');
   });
 
-  it('renders design v3 marketing, route readiness, and deployment sections', () => {
+  it('shows the reference surfaces without repository diagnostics', () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain('data-smoke-marker="landing-v3-overview"');
-    expect(html).toContain('Design v3');
-    expect(html).toContain('landing-value-grid');
-    expect(html).toContain('landing-stat-grid');
-    expect(html).toContain('Release gates');
-    expect(html).toContain('landing-feature-grid');
-    expect(html).toContain('Implementation path');
-    expect(html).toContain('Docs + deployment');
-    expect(html).toContain('Route readiness');
-    expect(html).toContain('Production posture');
+    expect(html).toContain('Public presence');
+    expect(html).toContain('Customer account');
+    expect(html).toContain('Admin workspace');
+    expect(html).not.toContain('Design v3');
+    expect(html).not.toContain('Route readiness');
+    expect(html).not.toContain('Release gates');
+    expect(html).not.toContain('data-smoke-marker');
   });
 
   it('uses a configured auth API docs URL when provided', () => {
@@ -51,7 +48,7 @@ describe('Landing app', () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('href="/auth/docs"');
-    expect(html).toContain('API docs configuration is using the same-origin fallback.');
+    expect(html).not.toContain('configuration');
   });
 
   it('renders the React island shell around the landing app', () => {

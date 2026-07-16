@@ -122,6 +122,37 @@ pnpm nrb setup --app mobile-app --non-interactive
 pnpm nrb setup
 ```
 
+## Reference UI contract
+
+The checked-in frontends are reference implementations, not a fictional demo
+product. They prove renderer wiring, shared UI, localization, authentication,
+protected state, and route ownership with neutral copy and empty-safe states.
+They must not invent customers, metrics, activity, revenue, tasks, or another
+business domain that a new product would have to remove.
+
+Keep developer proof out of the default product routes. Route inventories, API
+ports and service IDs, breakpoints, smoke markers, design-version labels,
+coverage, readiness checklists, package counts, and deployment instructions
+belong in tests, health/dev tooling, or documentation. They are not landing-page
+or account-dashboard content.
+
+After `pnpm nrb init`, extend the selected owner instead of creating a generic
+starter surface:
+
+- Replace public identity and messaging in `i18n/<locale>/landing/app.json`;
+  compose the public page in `apps/frontend/landing/src/pages` and `widgets`.
+- Add user product journeys under `apps/frontend/app/src/pages`, `widgets`, and
+  `features`; keep the checked-in auth, profile, preferences, and social-linking
+  flows unless the product explicitly replaces them.
+- Add admin operations to the owning admin page/feature, backed by real API
+  state and fail-closed permissions. Do not fabricate dashboard records.
+- Put reusable web primitives in `@app/frontend-ui-web`, native primitives in
+  `@app/frontend-ui-native`, and customer-visible copy in i18n catalogs.
+
+A polished reference state is concise, accessible, responsive, localized, and
+honest about missing data. It is not a repository status page and it is not a
+preselected product design.
+
 ## Existing public domain contract
 
 The checked-in `example.com` values are replaceable environment placeholders,

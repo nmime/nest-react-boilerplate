@@ -24,12 +24,7 @@ export class NotificationRepository {
     const { targetType, targetId, count } = params;
     const currentTime = format(new Date(), 'HH:mm:ss');
 
-    const values: unknown[] = [
-      targetType,
-      NotificationStatus.Pending,
-      currentTime,
-      currentTime,
-    ];
+    const values: unknown[] = [targetType, NotificationStatus.Pending, currentTime, currentTime];
     const targetClause = targetId ? 'and notification.target_id = ?' : '';
     if (targetId) {
       values.push(targetId);

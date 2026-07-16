@@ -75,7 +75,7 @@ const presetExpectations = {
     'user-app',
     'user-app-api',
   ],
-  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app-api'],
+  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app', 'user-app-api'],
 };
 
 const referenceApplications = [

@@ -13,18 +13,6 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
       eyebrow={t('admin.profile.eyebrow')}
       title={t('admin.profile.title')}
     >
-      <UiCard className="admin-command-center" title="Session control plane">
-        <div className="admin-command-center__hero">
-          <div>
-            <p className="xr-eyebrow">Signed-in operator</p>
-            <strong>{profile?.displayName ?? profile?.email ?? t('admin.profile.fallbackDisplayName')}</strong>
-            <span>
-              Profile data is displayed with explicit principal, role, and permission evidence for handoff reviews.
-            </span>
-          </div>
-          <UiStatusTag label={t('admin.health.ready')} tone="success" />
-        </div>
-      </UiCard>
       <UiCard
         className="admin-profile-card"
         title={profile?.displayName ?? profile?.email ?? t('admin.profile.fallbackDisplayName')}
@@ -70,25 +58,6 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
               {permission}
             </span>
           ))}
-        </div>
-      </UiCard>
-      <UiCard className="admin-access-card" title="Frontend guardrails">
-        <div className="admin-readiness-grid">
-          <div className="admin-readiness-card" data-ready="true">
-            <strong>Subject</strong>
-            <code>{payload.principal?.subject ?? unknown}</code>
-            <p>Used by the admin app to personalize evidence only.</p>
-          </div>
-          <div className="admin-readiness-card" data-ready="true">
-            <strong>Roles</strong>
-            <code>{join(payload.principal?.roles)}</code>
-            <p>Missing admin role keeps the console fail-closed.</p>
-          </div>
-          <div className="admin-readiness-card" data-ready="true">
-            <strong>Permissions</strong>
-            <code>{payload.principal?.permissions?.length ?? 0}</code>
-            <p>Routes and actions render only from explicit permissions.</p>
-          </div>
         </div>
       </UiCard>
     </UiSection>

@@ -3,7 +3,7 @@ import { join, relative, resolve } from 'node:path';
 
 const appName = 'landing-app';
 const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/landing');
-const expectedCopy = 'Launch a full-stack Nest and React product foundation.';
+const expectedCopy = 'A focused foundation for your next product.';
 
 const readBuiltTextFiles = (directory) => {
   const entries = readdirSync(directory, { withFileTypes: true });

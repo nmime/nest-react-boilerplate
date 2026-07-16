@@ -13,20 +13,24 @@ export interface ProductShellAction {
 
 export interface ProductShellProps {
   appName: string;
+  brandMark?: string;
   eyebrow: string;
   title: string;
   description: string;
-  status: string;
+  status?: string;
   statusTone?: 'success' | 'info' | 'warning';
   homeHref?: string;
   actionsLabel?: string;
   skipLinkLabel?: string;
   actions: ProductShellAction[];
   children: ReactNode;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode;
 }
 
 export const ProductShell = observer(function ProductShell({
   appName,
+  brandMark,
   eyebrow,
   title,
   description,
@@ -37,6 +41,8 @@ export const ProductShell = observer(function ProductShell({
   skipLinkLabel,
   actions,
   children,
+  headerLeading,
+  headerTrailing,
 }: Readonly<ProductShellProps>) {
   const { locale } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
@@ -55,6 +61,15 @@ export const ProductShell = observer(function ProductShell({
   const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
   const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
   const resolvedHomeLinkLabel = defaultLabels.homeLinkLabel;
+  const resolvedBrandMark =
+    brandMark ??
+    appName
+      .trim()
+      .split(/\s+/u)
+      .slice(0, 2)
+      .map((part) => part.slice(0, 1))
+      .join('')
+      .toLocaleUpperCase(locale);
 
   return (
     <>
@@ -68,14 +83,22 @@ export const ProductShell = observer(function ProductShell({
         data-theme-preference={uiStore?.theme ?? 'system'}
       >
         <header className="xr-header">
-          <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
-            <span className="xr-brand__mark">xR</span>
-            <span>{appName}</span>
-          </a>
+          <div className="xr-header__brand-group">
+            {headerLeading}
+            <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
+              <span aria-hidden="true" className="xr-brand__mark">
+                {resolvedBrandMark || 'A'}
+              </span>
+              <span>{appName}</span>
+            </a>
+          </div>
           <div className="xr-header__controls">
-            <LanguageSwitcher />
-            <ThemeSwitcher />
-            <UiStatusPill label={status} tone={statusTone} />
+            <div className="xr-header__primary-controls">
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              {status ? <UiStatusPill label={status} tone={statusTone} /> : null}
+            </div>
+            {headerTrailing}
           </div>
         </header>
 

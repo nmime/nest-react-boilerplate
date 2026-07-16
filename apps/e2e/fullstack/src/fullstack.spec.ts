@@ -150,14 +150,14 @@ test('health endpoints and frontends are reachable through the Docker stack', as
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Launch a full-stack Nest and React product foundation.',
+      name: 'A focused foundation for your next product.',
     }),
   ).toBeVisible();
   await gotoWithRetry(page, urls.userApp);
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Sign in, register, and load your protected profile.',
+      name: 'A clear place to manage your account.',
     }),
   ).toBeVisible();
   await gotoWithRetry(page, urls.adminApp);
@@ -201,8 +201,5 @@ test('admin API accepts bearer tokens while production admin frontend ignores UR
   await page.context().clearCookies();
   await gotoWithRetry(page, `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`);
   await expect(page).not.toHaveURL(/admin_token=|token=/u);
-  const failClosedGuard = page.getByLabel('Fail-closed route guard');
-  await expect(failClosedGuard).toBeVisible();
-  await expect(failClosedGuard.getByText('Access blocked before data load')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Access denied' })).toBeVisible();
 });

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
-import { UiAlert, UiButton, UiCard, UiStatusPill, UiToast } from '../../../shared/ui';
+import { UiButton, UiCard } from '../../../shared/ui';
 import type { SocialAuthIntent } from '../model';
 
 interface SocialAuthButtonsProps {
@@ -50,27 +50,9 @@ export function SocialAuthButtons({
   };
 
   return (
-    <UiCard
-      className="xr-social-card xr-surface-glow"
-      title={t('auth.social.createAccount.prompt', {
-        provider: t('auth.provider.telegram'),
-      })}
-    >
-      <UiAlert className="xr-card-note" tone="info">
-        <span>{t('auth.social.stepUp.required')}</span>
-        <UiStatusPill label={t('auth.social.protocol.oauth')} tone="info" />
-      </UiAlert>
-      <div className="xr-social-choice-grid" aria-label="Social auth options">
-        <span>
-          <strong>{t('auth.provider.telegram')}</strong>
-          <small>Mini App verification</small>
-        </span>
-        <span>
-          <strong>{t('auth.provider.discord')}</strong>
-          <small>OAuth redirect</small>
-        </span>
-      </div>
-      <div className="xr-social-actions">
+    <UiCard className="user-auth__card user-auth__social" title={t('user.auth.social.title')}>
+      <p>{t('user.auth.social.description')}</p>
+      <div className="user-auth__social-actions">
         <UiButton
           isLoading={isTelegramPending}
           loadingLabel={t('auth.social.status.pending', {
@@ -94,7 +76,6 @@ export function SocialAuthButtons({
           {t('auth.social.button.discord')}
         </UiButton>
       </div>
-      <UiToast message={t('auth.social.stepUp.required')} tone="info" />
     </UiCard>
   );
 }

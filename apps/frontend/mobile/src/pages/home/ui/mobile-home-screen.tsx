@@ -1,30 +1,21 @@
-import { Linking, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { designColors, designRadii, designSpacing } from '@app/frontend-ui-native';
 import { useI18n } from '@app/frontend-runtime';
 
-import { mobileCapabilityCards, mobileRuntime } from '../model/mobile-home.model';
+import { mobileCapabilityCards } from '../model/mobile-home.model';
 
 const colors = designColors.light;
 
-const openApiBaseUrl = (): string => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'same-origin';
-
 export function MobileHomeScreen() {
   const { t } = useI18n();
-  const apiBaseUrl = openApiBaseUrl();
-  const openConfiguredApi = (): void => {
-    void Linking.openURL(apiBaseUrl === 'same-origin' ? '/' : apiBaseUrl);
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.header}>
-          <View style={styles.statusRow}>
-            <Text style={styles.eyebrow}>{t('mobile.status')}</Text>
-            <Text style={styles.platforms}>{mobileRuntime.platforms.join(' / ')}</Text>
-          </View>
+          <Text style={styles.eyebrow}>{t('mobile.status')}</Text>
           <Text style={styles.title}>{t('mobile.appName')}</Text>
           <Text style={styles.subtitle}>{t('mobile.subtitle')}</Text>
         </View>
@@ -33,7 +24,6 @@ export function MobileHomeScreen() {
           <View style={styles.panelAccent} />
           <Text style={styles.panelLabel}>{t('mobile.api.label')}</Text>
           <Text style={styles.panelValue}>{t('mobile.api.value')}</Text>
-          <Text style={styles.panelHint}>{apiBaseUrl}</Text>
         </View>
 
         <View style={styles.grid}>
@@ -46,10 +36,6 @@ export function MobileHomeScreen() {
             </View>
           ))}
         </View>
-
-        <Pressable accessibilityRole="button" onPress={openConfiguredApi} style={styles.primaryAction}>
-          <Text style={styles.primaryActionText}>{t('mobile.action.openApi')}</Text>
-        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -70,27 +56,17 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: designSpacing[6],
   },
-  statusRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: designSpacing[2],
-    marginBottom: designSpacing[3],
-  },
   eyebrow: {
+    alignSelf: 'flex-start',
     borderRadius: designRadii.sm,
-    backgroundColor: '#dcfce7',
-    color: '#14532d',
+    backgroundColor: '#dbeafe',
+    color: '#1e3a8a',
     fontSize: 12,
     fontWeight: '700',
+    marginBottom: designSpacing[3],
     paddingHorizontal: designSpacing[3],
     paddingVertical: designSpacing[2],
     textTransform: 'uppercase',
-  },
-  platforms: {
-    color: colors.mutedForeground,
-    fontSize: 13,
-    fontWeight: '700',
   },
   title: {
     color: colors.foreground,
@@ -132,12 +108,6 @@ const styles = StyleSheet.create({
     color: colors.cardForeground,
     fontSize: 22,
     fontWeight: '800',
-    marginBottom: designSpacing[2],
-  },
-  panelHint: {
-    color: colors.mutedForeground,
-    fontSize: 14,
-    lineHeight: 20,
   },
   grid: {
     marginBottom: designSpacing[5],
@@ -176,17 +146,5 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     fontSize: 14,
     lineHeight: 20,
-  },
-  primaryAction: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: designRadii.sm,
-    paddingHorizontal: designSpacing[5],
-    paddingVertical: designSpacing[4],
-  },
-  primaryActionText: {
-    color: colors.primaryForeground,
-    fontSize: 16,
-    fontWeight: '800',
   },
 });

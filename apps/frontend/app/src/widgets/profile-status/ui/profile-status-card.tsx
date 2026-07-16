@@ -1,5 +1,5 @@
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
-import { UiAlert, UiCard, UiEmptyState, UiLoading, UiStatusPill, UiToast } from '../../../shared/ui';
+import { UiAlert, UiCard, UiEmptyState, UiLoading, UiToast } from '../../../shared/ui';
 import type { ProfileState } from '../../../entities/profile';
 
 export interface ProfileStatusCardProps {
@@ -7,34 +7,9 @@ export interface ProfileStatusCardProps {
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 
-const getProfileTone = (status: ProfileState['status']) => {
-  if (status === 'forbidden') {
-    return 'warning';
-  }
-
-  if (status === 'ready') {
-    return 'success';
-  }
-
-  return 'info';
-};
-
 export function ProfileStatusCard({ state, t }: Readonly<ProfileStatusCardProps>) {
   return (
-    <UiCard
-      className="xr-profile-card xr-surface-glow"
-      title={t('user.profile.title')}
-      id="profile"
-      data-design-marker="profile-status-v3"
-    >
-      <div className="xr-status-row">
-        <span className="xr-status-heading">{t('user.profile.title')}</span>
-        <UiStatusPill
-          label={state.status}
-          live={state.status === 'loading' ? 'polite' : 'off'}
-          tone={getProfileTone(state.status)}
-        />
-      </div>
+    <UiCard className="user-profile__card" title={t('user.profile.title')} id="profile">
       {state.status === 'loading' ? (
         <UiAlert className="xr-state-panel" tone="info">
           <UiLoading label={t('user.loadingProfile')} />

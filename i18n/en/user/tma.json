@@ -1,4 +1,6 @@
 {
+  "tma.title": "Telegram Mini App",
+  "tma.description": "Telegram provides the secure launch context; the same screen remains understandable when opened in a regular browser.",
   "tma.loading": "Loading Telegram Mini App…",
   "tma.idle": "Waiting for Telegram to provide signed Mini App launch data.",
   "tma.unsupported": "Open this page inside Telegram to continue.",

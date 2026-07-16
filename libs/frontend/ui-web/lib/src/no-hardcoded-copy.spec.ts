@@ -92,7 +92,6 @@ const getJsxTextValues = (line: string): string[] => {
 
 const allowedLiteralValues = new Set([
   'Promise',
-  'xR',
   'en',
   'ru',
   'GET',

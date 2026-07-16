@@ -13,6 +13,10 @@ export interface UserRouterProps {
 }
 
 type NavigateOptions = { replace?: boolean };
+const appNavigationStateKey = 'userAppNavigation';
+
+const isAppNavigationState = (state: unknown): boolean =>
+  typeof state === 'object' && state !== null && (state as Record<string, unknown>)[appNavigationStateKey] === true;
 
 const getPathname = () => globalThis.location.pathname;
 const subscribeToNavigation = (listener: () => void) => {
@@ -44,24 +48,26 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
   const navigate = useCallback((to: string, options: NavigateOptions = {}) => {
     const nextUrl = new URL(to, globalThis.location.origin);
     if (options.replace) {
-      globalThis.history.replaceState(null, '', nextUrl.pathname + nextUrl.search);
+      globalThis.history.replaceState({ [appNavigationStateKey]: true }, '', nextUrl.pathname + nextUrl.search);
     } else {
-      globalThis.history.pushState(null, '', nextUrl.pathname + nextUrl.search);
+      globalThis.history.pushState({ [appNavigationStateKey]: true }, '', nextUrl.pathname + nextUrl.search);
     }
     globalThis.dispatchEvent(new Event('popstate'));
   }, []);
+  const handleBack = useCallback(() => {
+    const historyState: unknown = globalThis.history.state;
+    if (isAppNavigationState(historyState)) {
+      globalThis.history.back();
+      return;
+    }
+    navigate('/', { replace: true });
+  }, [navigate]);
   const navActions = useMemo(
     () => [
       { href: '/', isCurrent: route === '/', label: t('user.nav.home') },
       {
-        href: '/auth',
-        isCurrent: route === '/auth',
-        label: t('user.nav.auth'),
-        variant: 'secondary' as const,
-      },
-      {
         href: '/profile',
-        isCurrent: route === '/profile',
+        isCurrent: route === '/profile' || route === '/auth' || route === '/auth/discord/callback',
         label: t('user.nav.profile'),
         variant: 'secondary' as const,
       },
@@ -159,6 +165,7 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
         actions={navActions}
         applyUserLocale={applyUserLocale}
         applyUserTheme={applyUserTheme}
+        onBack={handleBack}
       />
     );
   }
@@ -169,6 +176,7 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
       actions={navActions}
       applyUserLocale={applyUserLocale}
       applyUserTheme={applyUserTheme}
+      onBack={handleBack}
     >
       {renderRoute()}
     </UserHomePage>

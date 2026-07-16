@@ -7,6 +7,8 @@
   "admin.dashboard.summary.disabledUsersDetail": "Текущие отключенные пользователи",
   "admin.dashboard.summary.recentAudit": "Последний аудит",
   "admin.dashboard.summary.recentAuditDetail": "Последние события аудита",
+  "admin.dashboard.summary.invitedUsers": "Ожидающие приглашения",
+  "admin.dashboard.summary.invitedUsersDetail": "Пользователи, которые приглашены, но еще не присоединились",
   "admin.dashboard.loadingSummary": "Загрузка сводки панели администратора",
   "admin.dashboard.error.summaryRequestFailed": "Не удалось запросить сводку панели",
   "admin.dashboard.title": "Панель администратора",

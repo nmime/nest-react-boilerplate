@@ -36,6 +36,10 @@ config:
   redisMode: single
   redisKeyPrefix: 'nrb:'
   redisDb: ''
+  telegramBotMode: webhook
+  telegramBotWebhookUrl: https://telegram-bot-api.example.com/telegram/webhook
+  telegramMiniAppUrl: https://user-app.example.com/telegram-mini-app
+  telegramBotMenuButtonEnabled: 'true'
 
 postgresql:
   host: postgresql

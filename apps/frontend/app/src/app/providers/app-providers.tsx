@@ -16,6 +16,7 @@ import {
 } from '@app/frontend-api-support';
 import {
   FrontendI18nProvider,
+  MiniAppProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
   translate,
@@ -146,16 +147,18 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
 
 export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = {}) {
   return (
-    <FrontendStateProvider>
-      <UserAppApiClientProvider>
-        <FrontendQueryProvider>
-          <UiErrorBoundary>
-            <AuthRedirectBridge />
-            {children ?? <UserAppRouterProviders />}
-            <ApiRuntimeOverlayProvider />
-          </UiErrorBoundary>
-        </FrontendQueryProvider>
-      </UserAppApiClientProvider>
-    </FrontendStateProvider>
+    <MiniAppProvider backgroundColor="#f8fafc" bottomBarColor="#0f172a" headerColor="#2563eb">
+      <FrontendStateProvider>
+        <UserAppApiClientProvider>
+          <FrontendQueryProvider>
+            <UiErrorBoundary>
+              <AuthRedirectBridge />
+              {children ?? <UserAppRouterProviders />}
+              <ApiRuntimeOverlayProvider />
+            </UiErrorBoundary>
+          </FrontendQueryProvider>
+        </UserAppApiClientProvider>
+      </FrontendStateProvider>
+    </MiniAppProvider>
   );
 }

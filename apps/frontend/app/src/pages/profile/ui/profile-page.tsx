@@ -1,6 +1,6 @@
 import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionFlow } from '../../../features/auth';
-import { UiAlert, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
+import { UiSection } from '../../../shared/ui';
 import { ProfileStatusCard } from '../../../widgets/profile-status';
 
 interface ProfilePageProps {
@@ -25,28 +25,10 @@ export const ProfilePage = observer(function ProfilePage({
     },
   });
 
-  const isReady = authSession.profileState.status === 'ready';
-
   return (
-    <UiSection className="xr-profile-section" eyebrow={t('user.nav.profile')} title={t('user.profile.title')}>
-      <div className="xr-profile-layout" data-design-marker="profile-v3">
-        <UiCard className="xr-profile-summary xr-surface-glow" title="Account overview">
-          <div className="xr-card-stack">
-            <UiAlert className="xr-inline-alert" tone="info">
-              <strong>{t('user.profile.title')}</strong>
-              <span>{t('user.description')}</span>
-            </UiAlert>
-            <div className="xr-status-row">
-              <span className="xr-status-heading">Profile readiness</span>
-              <UiStatusPill label={authSession.profileState.status} tone={isReady ? 'success' : 'info'} />
-            </div>
-          </div>
-        </UiCard>
-        <div className="xr-stat-grid xr-stat-grid--compact">
-          <UiStatCard detail="token-aware" label="Session" value={isReady ? 'live' : 'needed'} />
-          <UiStatCard detail="locale + theme" label="Preferences" value="synced" />
-          <UiStatCard detail="Telegram / Discord" label="Identity" value="linkable" />
-        </div>
+    <UiSection className="user-profile" eyebrow={t('user.nav.profile')} title={t('user.profile.title')}>
+      <div className="user-page-stack">
+        <p className="user-page-intro">{t('user.home.profile.description')}</p>
         <ProfileStatusCard state={authSession.profileState} t={t} />
       </div>
     </UiSection>

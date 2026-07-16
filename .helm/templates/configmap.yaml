@@ -21,6 +21,10 @@ data:
   RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
   RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
   REDIS_KEY_PREFIX: {{ .Values.config.redisKeyPrefix | quote }}
+  TELEGRAM_BOT_MODE: {{ .Values.config.telegramBotMode | quote }}
+  TELEGRAM_BOT_WEBHOOK_URL: {{ .Values.config.telegramBotWebhookUrl | quote }}
+  TELEGRAM_MINI_APP_URL: {{ .Values.config.telegramMiniAppUrl | quote }}
+  TELEGRAM_BOT_MENU_BUTTON_ENABLED: {{ .Values.config.telegramBotMenuButtonEnabled | quote }}
   {{ if .Values.config.redisUrl }}
   REDIS_URL: {{ .Values.config.redisUrl | quote }}
   {{ end }}

@@ -103,22 +103,22 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Telegram
 
-| Variable                           | Required                   | Default                    | Description                                         |
-| ---------------------------------- | -------------------------- | -------------------------- | --------------------------------------------------- |
-| `TELEGRAM_BOT_TOKEN`               | **Required** (bot enabled) | `<set-telegram-bot-token>` | Bot token from BotFather                            |
-| `TELEGRAM_BOT_TOKEN_FILE`          | Optional                   | —                          | File path for bot token (Docker secret)             |
-| `TELEGRAM_BOT_USERNAME`            | Optional                   | `example_bot`              | Bot username without `@`                            |
-| `TELEGRAM_BOT_MODE`                | Optional                   | `webhook`                  | Bot mode: `webhook` or `polling`                    |
-| `TELEGRAM_BOT_WEBHOOK_SECRET`      | Optional                   | —                          | Webhook verification secret                         |
-| `TELEGRAM_BOT_WEBHOOK_SECRET_FILE` | Optional                   | —                          | File path for webhook secret (Docker secret)        |
-| `TELEGRAM_BOT_WEBHOOK_URL`         | Optional                   | —                          | Public webhook URL                                  |
-| `TELEGRAM_MINI_APP_URL`            | Optional                   | —                          | Telegram Mini App URL (must match BotFather config) |
-| `TELEGRAM_AUTH_ENABLED`            | Optional                   | `false`                    | Enable Telegram social auth                         |
-| `TELEGRAM_AUTH_BOT_USERNAME`       | Optional                   | `example_bot`              | Auth bot username                                   |
-| `TELEGRAM_AUTH_MAX_AGE_SECONDS`    | Optional                   | `86400`                    | Init-data max age                                   |
-| `TELEGRAM_AUTH_REPLAY_TTL_SECONDS` | Optional                   | `900`                      | Replay-cache TTL                                    |
-| `TELEGRAM_BOT_MENU_BUTTON_ENABLED` | Optional                   | `false`                    | Enable persistent menu button                       |
-| `TELEGRAM_LINK_TOKEN_TTL_SECONDS`  | Optional                   | `600`                      | Account-link token TTL                              |
+| Variable                           | Required                    | Default                    | Description                                         |
+| ---------------------------------- | --------------------------- | -------------------------- | --------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN`               | **Required** (bot enabled)  | `<set-telegram-bot-token>` | Bot token from BotFather                            |
+| `TELEGRAM_BOT_TOKEN_FILE`          | Optional                    | —                          | File path for bot token (Docker secret)             |
+| `TELEGRAM_BOT_USERNAME`            | Optional                    | `example_bot`              | Bot username without `@`                            |
+| `TELEGRAM_BOT_MODE`                | Optional                    | `webhook`                  | Bot mode: `webhook` or `polling`                    |
+| `TELEGRAM_BOT_WEBHOOK_SECRET`      | **Required** (webhook mode) | —                          | Webhook verification secret                         |
+| `TELEGRAM_BOT_WEBHOOK_SECRET_FILE` | Optional                    | —                          | File path for webhook secret (Docker secret)        |
+| `TELEGRAM_BOT_WEBHOOK_URL`         | **Required** (webhook mode) | —                          | Public HTTPS URL ending in `/telegram/webhook`      |
+| `TELEGRAM_MINI_APP_URL`            | Optional                    | —                          | Telegram Mini App URL (must match BotFather config) |
+| `TELEGRAM_AUTH_ENABLED`            | Optional                    | `false`                    | Enable Telegram social auth                         |
+| `TELEGRAM_AUTH_BOT_USERNAME`       | Optional                    | `example_bot`              | Auth bot username                                   |
+| `TELEGRAM_AUTH_MAX_AGE_SECONDS`    | Optional                    | `86400`                    | Init-data max age                                   |
+| `TELEGRAM_AUTH_REPLAY_TTL_SECONDS` | Optional                    | `900`                      | Replay-cache TTL                                    |
+| `TELEGRAM_BOT_MENU_BUTTON_ENABLED` | Optional                    | `true`                     | Publish commands and persistent Mini App button     |
+| `TELEGRAM_LINK_TOKEN_TTL_SECONDS`  | Optional                    | `600`                      | Account-link token TTL                              |
 
 ### Discord
 

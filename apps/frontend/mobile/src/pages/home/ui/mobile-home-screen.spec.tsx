@@ -45,34 +45,27 @@ describe('mobile home screen', () => {
   it('renders the app title', async () => {
     await renderScreen();
 
-    expect(screen.getByText('Nest React Mobile')).toBeTruthy();
+    expect(screen.getByText('Nest React Boilerplate')).toBeTruthy();
   });
 
-  it('renders the runtime status badge', async () => {
+  it('renders the neutral mobile account eyebrow', async () => {
     await renderScreen();
 
-    expect(screen.getByText('Scaffold ready')).toBeTruthy();
+    expect(screen.getByText('Mobile account')).toBeTruthy();
   });
 
   it('renders three capability cards', async () => {
     await renderScreen();
 
-    expect(screen.getByText('Expo Router')).toBeTruthy();
-    expect(screen.getByText('Shared tokens')).toBeTruthy();
-    expect(screen.getByText('Nx and export')).toBeTruthy();
+    expect(screen.getByText('Profile and preferences')).toBeTruthy();
+    expect(screen.getByText('Designed for mobile')).toBeTruthy();
+    expect(screen.getByText('Web and Telegram')).toBeTruthy();
   });
 
-  it('renders the configured API endpoint panel', async () => {
+  it('renders a product-neutral account panel', async () => {
     await renderScreen();
 
-    expect(screen.getByText('API target')).toBeTruthy();
-    expect(screen.getByText('Configured endpoint')).toBeTruthy();
-  });
-
-  it('renders a primary action button', async () => {
-    await renderScreen();
-
-    const button = screen.getByRole('button', { name: 'Open configured API' });
-    expect(button).toBeTruthy();
+    expect(screen.getByText('Your space')).toBeTruthy();
+    expect(screen.getByText('Account essentials stay close at hand.')).toBeTruthy();
   });
 });

@@ -1,7 +1,7 @@
 import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionFlow } from '../../../features/auth';
 import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
-import { UiAlert, UiCard, UiSection, UiStatCard, UiStatusPill } from '../../../shared/ui';
+import { UiSection } from '../../../shared/ui';
 import { AuthPanel } from '../../../widgets/auth-panel';
 import { ProfileStatusCard } from '../../../widgets/profile-status';
 
@@ -34,31 +34,8 @@ export const AuthPage = observer(function AuthPage({
   const socialAuth = useSocialAuth({ navigate });
 
   return (
-    <div className="xr-auth-layout" data-design-marker="auth-v3">
-      <UiSection eyebrow={t('user.nav.auth')} title="Choose a secure sign-in route">
-        <div className="xr-auth-hero-grid">
-          <UiCard className="xr-auth-spotlight xr-surface-glow" title={t('user.auth.title')}>
-            <div className="xr-card-stack">
-              <UiAlert className="xr-inline-alert" tone="info">
-                <strong>Session-first experience</strong>
-                <span>Password, Telegram Mini App, and Discord OAuth stay on preserved routes.</span>
-              </UiAlert>
-              <div className="xr-status-row">
-                <span className="xr-status-heading">Current auth state</span>
-                <UiStatusPill
-                  label={authSession.profileState.status}
-                  tone={authSession.profileState.status === 'ready' ? 'success' : 'info'}
-                />
-              </div>
-            </div>
-          </UiCard>
-          <div className="xr-stat-grid xr-stat-grid--compact">
-            <UiStatCard detail="email + password" label="Primary" value="form" />
-            <UiStatCard detail="Telegram deep link" label="Mobile" value="TMA" />
-            <UiStatCard detail="OAuth callback" label="Social" value="Discord" />
-          </div>
-        </div>
-      </UiSection>
+    <UiSection className="user-auth" eyebrow={t('user.nav.auth')} title={t('user.auth.title')}>
+      <p className="user-page-intro">{t('user.auth.description')}</p>
       <AuthPanel
         isLoginPending={authSession.isLoginPending}
         isRegisterPending={authSession.isRegisterPending}
@@ -81,6 +58,6 @@ export const AuthPage = observer(function AuthPage({
       >
         <ProfileStatusCard state={authSession.profileState} t={t} />
       </AuthPanel>
-    </div>
+    </UiSection>
   );
 });

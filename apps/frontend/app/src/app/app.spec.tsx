@@ -186,6 +186,9 @@ const expectFetchRequest = (
 };
 
 const submitLogin = (email = 'user@example.com') => {
+  if (!screen.queryByLabelText('Login email')) {
+    fireEvent.click(screen.getAllByRole('link', { name: 'Open' })[0]!);
+  }
   fireEvent.change(screen.getByLabelText('Login email'), {
     target: { value: email },
   });
@@ -211,17 +214,19 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders auth and profile copy through the shared shell', () => {
+  it('renders a neutral account home through the shared shell', () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain('User App');
-    expect(html).toContain('User design v3');
-    expect(html).toContain('Sign in, register, and load your protected profile.');
-    expect(html).toContain('Development login/register flow');
-    expect(html).toContain('Profile state');
+    expect(html).toContain('Nest React Boilerplate');
+    expect(html).toContain('A clear place to manage your account.');
+    expect(html).toContain('Account essentials');
+    expect(html).toContain('Choose how to sign in');
+    expect(html).not.toContain('design v3');
+    expect(html).not.toContain('route readiness');
+    expect(html).not.toContain('3003');
   });
 
-  it('renders a nonblank v3 marker on every preserved user route', () => {
+  it('renders every preserved user route without scaffold diagnostics', () => {
     const routes = [
       '/',
       '/auth',
@@ -239,15 +244,17 @@ describe('User app shell', () => {
       window.history.pushState({}, '', route);
       const html = renderToStaticMarkup(<App />);
 
-      expect(html).toContain('data-design-marker="user-app-frontend-design-v3"');
-      expect(html).toContain('User design v3');
-      expect(html).toContain(route);
+      expect(html).toContain('<main');
+      expect(html).toContain('xr-mini-app-bottom-bar');
+      expect(html).not.toContain('data-design-marker');
+      expect(html).not.toContain('route readiness');
+      expect(html).not.toContain('nonblank smoke');
     }
   });
 
   it('renders static markup without browser globals or usable storage', () => {
     vi.stubGlobal('window', undefined);
-    expect(renderToStaticMarkup(<App />)).toContain('User App');
+    expect(renderToStaticMarkup(<App />)).toContain('Nest React Boilerplate');
     vi.unstubAllGlobals();
     installStorage();
 
@@ -258,7 +265,7 @@ describe('User app shell', () => {
       },
     });
 
-    expect(renderToStaticMarkup(<App />)).toContain('Provide a token or use login/register.');
+    expect(renderToStaticMarkup(<App />)).toContain('Account essentials');
   });
 
   it('loads a profile after login returns a session token', async () => {
@@ -351,7 +358,7 @@ describe('User app shell', () => {
     vi.spyOn(rejectAuthResponse, 'json').mockImplementation(rejectAuthJson);
     setFetch(rejectAuthResponse);
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+    submitLogin();
 
     await waitFor(() => {
       expect(screen.getByText('Provide a token or use login/register.')).toBeTruthy();
@@ -499,6 +506,7 @@ describe('User app shell', () => {
       jsonResponse({ data: { user: { locale: 'en' } } }),
       jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
+    window.history.pushState({}, '', '/auth');
     render(<App />);
 
     fireEvent.change(screen.getByLabelText('Login email'), {
@@ -514,6 +522,7 @@ describe('User app shell', () => {
 
   it('handles register failures and empty success tokens', async () => {
     setFetch(jsonResponse({}, false, 409));
+    window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
 
     fireEvent.change(screen.getByLabelText('Register display name'), {
@@ -530,6 +539,7 @@ describe('User app shell', () => {
     unmount();
 
     setFetch(jsonResponse({ data: {} }));
+    window.history.pushState({}, '', '/auth');
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Login' }));
     await waitFor(() => {
@@ -543,6 +553,7 @@ describe('User app shell', () => {
       { rejectsWith: new Error('auth offline') },
       jsonResponse({ data: { profile: { email: 'after-auth@example.com' } } }),
     );
+    window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
     submitLogin();
     expect(await screen.findByText('Ready: after-auth@example.com')).toBeTruthy();
@@ -584,6 +595,7 @@ describe('User app shell', () => {
       jsonResponse({ data: { user: { locale: 'ru', theme: 'dark' } } }),
       jsonResponse({ data: { profile: { email: 'registered@example.com' } } }),
     );
+    window.history.pushState({}, '', '/auth');
     render(<App />);
     screen.getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u).remove();
     fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации)$/u), {
@@ -601,18 +613,18 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/link/discord');
     const { unmount } = render(<App />);
 
-    expect(await screen.findByText('Account control room')).toBeTruthy();
+    expect(await screen.findByText('Preferences')).toBeTruthy();
     unmount();
 
     window.history.pushState({}, '', '/settings/');
     const trailingSlash = render(<App />);
-    expect(await screen.findByText('Account control room')).toBeTruthy();
+    expect(await screen.findByText('Preferences')).toBeTruthy();
     trailingSlash.unmount();
 
     window.history.pushState({}, '', '/unknown');
     render(<App />);
 
-    expect(screen.getAllByText('User design v3').length).toBeGreaterThan(0);
+    expect(screen.getByText('Account essentials')).toBeTruthy();
     expect(window.location.pathname).toBe('/unknown');
   });
 

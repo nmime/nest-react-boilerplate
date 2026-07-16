@@ -1,6 +1,7 @@
 export { LanguageSwitcher, ThemeSwitcher } from '@app/frontend-ui-web';
 
 export {
+  MiniAppShell,
   ProductShell,
   UiAlert,
   UiButton,

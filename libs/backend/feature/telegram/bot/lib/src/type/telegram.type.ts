@@ -76,6 +76,7 @@ export interface TelegramBotConfig {
   appUrl?: string;
   setupMenuButton: boolean;
   webhookSecret?: string;
+  webhookUrl?: string;
   mode: 'webhook' | 'polling';
   environment: 'production' | 'development' | 'test';
   sessionTtlSeconds: number;

@@ -1,31 +1,14 @@
 import { useEffect, useMemo } from 'react';
-import {
-  backButton,
-  deepSnakeToCamelObjKeys,
-  init,
-  miniApp,
-  retrieveLaunchParams,
-  useRawInitData,
-  viewport,
-} from '@tma.js/sdk-react';
+import { deepSnakeToCamelObjKeys, retrieveLaunchParams, retrieveRawInitData } from '@tma.js/sdk-react';
 import { parseTmaLaunchState, type TmaLaunchIntent } from './tma-launch';
 
 interface UseTmaAuthInput {
   fallbackStartParam?: string;
   onAuthenticate: (input: { initData: string; intent: TmaLaunchIntent; returnUrl?: string }) => void;
-  onBack: () => void;
   status: string;
   error: unknown;
   isVerifying: boolean;
 }
-
-const safely = (effect: () => void) => {
-  try {
-    effect();
-  } catch {
-    // Telegram features are optional outside the Telegram runtime.
-  }
-};
 
 const readBrowserStartParam = (): string | undefined => {
   try {
@@ -41,19 +24,10 @@ const readBrowserStartParam = (): string | undefined => {
   }
 };
 
-export function useTmaAuth({
-  error,
-  fallbackStartParam,
-  isVerifying,
-  onAuthenticate,
-  onBack,
-  status,
-}: UseTmaAuthInput) {
-  // The Telegram SDK hooks must run unconditionally in the same order on every
-  // render. `useLaunchParams` throws (via retrieveLaunchParams) outside the
-  // Telegram runtime, so we mirror its useMemo internals and guard the resolved
-  // value instead of guarding the hook call. `useRawInitData` already returns
-  // undefined when there is no init data, so it is safe to call directly.
+export function useTmaAuth({ error, fallbackStartParam, isVerifying, onAuthenticate, status }: UseTmaAuthInput) {
+  // Telegram launch-data retrieval throws outside Telegram. Keep both reads in
+  // unconditional memo hooks, but convert that expected environment mismatch
+  // into the browser fallback state instead of tripping the app error boundary.
   const launchParams = useMemo(() => {
     try {
       return deepSnakeToCamelObjKeys(retrieveLaunchParams());
@@ -61,7 +35,13 @@ export function useTmaAuth({
       return null;
     }
   }, []);
-  const rawInitData = useRawInitData();
+  const rawInitData = useMemo(() => {
+    try {
+      return retrieveRawInitData();
+    } catch {
+      return undefined;
+    }
+  }, []);
 
   const telegramStartParam =
     launchParams && 'tgWebAppStartParam' in launchParams ? launchParams.tgWebAppStartParam : undefined;
@@ -76,46 +56,6 @@ export function useTmaAuth({
       }),
     [browserStartParam, fallbackStartParam, isTelegram, rawInitData, telegramStartParam],
   );
-
-  useEffect(() => {
-    if (!isTelegram) {
-      return;
-    }
-
-    safely(() => init());
-    safely(() => {
-      miniApp.mount();
-    });
-    safely(() => {
-      miniApp.ready();
-    });
-    safely(() => miniApp.bindCssVars());
-    safely(() => void viewport.mount());
-    safely(() => {
-      viewport.expand();
-    });
-    safely(() => viewport.bindCssVars());
-    safely(() => {
-      backButton.mount();
-    });
-    safely(() => {
-      backButton.show();
-    });
-    const cleanup = (() => {
-      try {
-        return backButton.onClick(onBack);
-      } catch {
-        return undefined;
-      }
-    })();
-
-    return () => {
-      cleanup?.();
-      safely(() => {
-        backButton.hide();
-      });
-    };
-  }, [isTelegram, onBack]);
 
   useEffect(() => {
     if (!rawInitData || status !== 'idle') {

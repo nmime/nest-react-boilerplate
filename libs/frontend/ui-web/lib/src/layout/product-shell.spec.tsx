@@ -98,4 +98,21 @@ describe('ProductShell', () => {
     expect(html).not.toContain('class="xr-actions"');
     expect(html).toContain('Reusable content');
   });
+
+  it('derives a neutral brand mark and omits an absent status', () => {
+    const html = renderToStaticMarkup(
+      <ProductShell
+        actions={[]}
+        appName="Example Product"
+        description="Shared shell description"
+        eyebrow="Shared shell"
+        title="Unified product surface"
+      >
+        <UiCard title="Child card">Reusable content</UiCard>
+      </ProductShell>,
+    );
+
+    expect(html).toContain('class="xr-brand__mark">EP</span>');
+    expect(html).not.toContain('xr-status-pill');
+  });
 });

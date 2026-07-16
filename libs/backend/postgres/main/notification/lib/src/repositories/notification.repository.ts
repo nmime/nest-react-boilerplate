@@ -24,7 +24,12 @@ export class NotificationRepository {
     const { targetType, targetId, count } = params;
     const currentTime = format(new Date(), 'HH:mm:ss');
 
-    const values: unknown[] = [targetType, NotificationStatus.Pending, currentTime];
+    const values: unknown[] = [
+      targetType,
+      NotificationStatus.Pending,
+      currentTime,
+      currentTime,
+    ];
     const targetClause = targetId ? 'and notification.target_id = ?' : '';
     if (targetId) {
       values.push(targetId);
@@ -93,7 +98,7 @@ export class NotificationRepository {
           and delivery.status = ?
           and (delivery.send_time_from is null or delivery.send_time_from <= ?)
           and (delivery.send_time_to is null or delivery.send_time_to >= ?)`,
-      [targetType, NotificationStatus.Pending, currentTime],
+      [targetType, NotificationStatus.Pending, currentTime, currentTime],
     );
 
     return results.map((result) => result.target_id);

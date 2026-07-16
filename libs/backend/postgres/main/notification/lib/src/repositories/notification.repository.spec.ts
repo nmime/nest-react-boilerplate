@@ -38,6 +38,7 @@ describe('NotificationRepository', () => {
       NotificationTargetType.User,
       NotificationStatus.Pending,
       expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/u),
+      expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/u),
       'user-1',
       10,
     ]);
@@ -58,7 +59,8 @@ describe('NotificationRepository', () => {
     expect(find).not.toHaveBeenCalled();
     const [query, values] = execute.mock.calls[0] as [string, unknown[]];
     expect(query).not.toContain('notification.target_id = ?');
-    expect(values).toHaveLength(4);
+    expect(values).toHaveLength(5);
+    expect(values[2]).toBe(values[3]);
   });
 
   it('returns distinct pending targets through a parameterized query', async () => {
@@ -74,6 +76,8 @@ describe('NotificationRepository', () => {
       NotificationTargetType.User,
       NotificationStatus.Pending,
       expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/u),
+      expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/u),
     ]);
+    expect(values[2]).toBe(values[3]);
   });
 });

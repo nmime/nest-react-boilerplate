@@ -75,7 +75,7 @@ const probes: [string, string, string, number][] = [
   ["admin frontend", url(ports.adminApp, "/"), "Admin App", 200],
   ["user frontend", url(ports.userApp, "/"), "User App", 200],
   ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate", 200],
-  ["site frontend", url(ports.siteApp, "/"), "Production web experience", 200],
+  ["site frontend", url(ports.siteApp, "/"), "A dependable home", 200],
   ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Mobile", 200],
   [
     "user proxy auth",

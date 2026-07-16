@@ -46,6 +46,7 @@ export const capabilityIds = [
   'postgres',
   'redis',
   's3',
+  'static-data',
   'nats',
   'otel',
   'swagger',

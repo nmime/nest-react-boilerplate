@@ -1,4 +1,4 @@
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 // Imported as values for `typeof` catalog shape queries; elided at runtime under
 // isolatedModules since they are only referenced in type positions here.
 import { adminPermissionCatalog, adminRoleCatalog } from '../factory/admin-permission-catalog.factory';

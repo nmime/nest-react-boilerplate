@@ -7,7 +7,7 @@ import { limit } from '@grammyjs/ratelimiter';
 import { Router } from '@grammyjs/router';
 import { autoRetry } from '@grammyjs/auto-retry';
 import { apiThrottler } from '@grammyjs/transformer-throttler';
-import { translate, type Locale, type TranslationKey } from '@app/common-i18n';
+import { translate, type Locale, type TranslationKey } from '../i18n';
 import { createTelegramApplication, resolveTelegramApplication, type TelegramBotApplicationPort } from './application';
 import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from './config';
 import { resolveTelegramIdentity } from '../identity';

@@ -1,17 +1,19 @@
 import type {
-  NotificationChannel,
   NotificationData,
+  NotificationDeliveryChannel,
   NotificationExtra,
   NotificationPriority,
   NotificationTargetType,
-} from '@app/backend-postgres-main-notification';
+} from '@app/common-notifications';
 
 export type CreateTemplateNotificationParams<T = NotificationData> = {
-  channel: NotificationChannel;
   targetType: NotificationTargetType;
   targetId: string;
   templateCode: string;
+  channels?: NotificationDeliveryChannel[];
+  inAppVisible?: boolean;
   priority?: NotificationPriority;
+  sendAfter?: Date;
   data?: T;
   extra?: NotificationExtra;
 };

@@ -45,6 +45,7 @@ x-frontend-healthcheck: &frontend-healthcheck
 
 services:
   redis:
+    profiles: [redis]
     image: redis:7.4.3-alpine
     restart: unless-stopped
     ports:
@@ -58,6 +59,7 @@ services:
       retries: 5
 
   nats:
+    profiles: [nats]
     image: nats:2.10.25-alpine
     restart: unless-stopped
     ports:
@@ -70,6 +72,7 @@ services:
       retries: 5
 
   minio:
+    profiles: [s3]
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -88,6 +91,7 @@ services:
       retries: 5
 
   postgres:
+    profiles: [postgres]
     image: postgres:17.6-alpine
     restart: unless-stopped
     environment:
@@ -105,6 +109,7 @@ services:
       retries: 20
 
   migrate:
+    profiles: [postgres]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -118,6 +123,7 @@ services:
     command: ['pnpm', 'db:migrate']
 
   admin-app-api:
+    profiles: [admin-app-api]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -140,6 +146,7 @@ services:
     healthcheck: *backend-healthcheck
 
   user-app-api:
+    profiles: [user-app-api]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -162,6 +169,7 @@ services:
     healthcheck: *backend-healthcheck
 
   auth-app-api:
+    profiles: [auth-app-api]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -183,7 +191,67 @@ services:
         protocol: tcp
     healthcheck: *backend-healthcheck
 
+  discord-app-api:
+    profiles: [discord-app-api]
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: discord-app-api
+        BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+      DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY:-}
+      DISCORD_COMMAND_REGISTRATION_ENABLED: ${DISCORD_COMMAND_REGISTRATION_ENABLED:-false}
+      DISCORD_WEB_APP_BASE_URL: ${DISCORD_WEB_APP_BASE_URL:-http://localhost:4201}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - target: 80
+        published: '${DISCORD_APP_API_PORT:-3007}'
+        protocol: tcp
+    healthcheck: *backend-healthcheck
+
+  telegram-bot-api:
+    profiles: [telegram-bot-api]
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: telegram-bot-api
+        BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_MODE: ${TELEGRAM_BOT_MODE:-polling}
+      TELEGRAM_BOT_WEBHOOK_SECRET: ${TELEGRAM_BOT_WEBHOOK_SECRET:-}
+      TELEGRAM_BOT_WEBHOOK_URL: ${TELEGRAM_BOT_WEBHOOK_URL:-http://localhost:3013/telegram/webhook}
+      TELEGRAM_MINI_APP_URL: ${TELEGRAM_MINI_APP_URL:-http://localhost:4201/telegram-mini-app}
+      TELEGRAM_BOT_MENU_BUTTON_ENABLED: ${TELEGRAM_BOT_MENU_BUTTON_ENABLED:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - target: 80
+        published: '${TELEGRAM_BOT_API_PORT:-3013}'
+        protocol: tcp
+    healthcheck: *backend-healthcheck
+
   admin-app:
+    profiles: [admin-app]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -197,6 +265,8 @@ services:
     depends_on:
       admin-app-api:
         condition: service_healthy
+      auth-app-api:
+        condition: service_healthy
     ports:
       - target: 8080
         published: '${ADMIN_APP_PORT:-4200}'
@@ -204,6 +274,7 @@ services:
     healthcheck: *frontend-healthcheck
 
   user-app:
+    profiles: [user-app]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -226,6 +297,7 @@ services:
     healthcheck: *frontend-healthcheck
 
   landing-app:
+    profiles: [landing-app]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -236,13 +308,6 @@ services:
         FRONTEND_OUTPUT: dist/apps/frontend/landing
         VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
-    depends_on:
-      auth-app-api:
-        condition: service_healthy
-      user-app-api:
-        condition: service_healthy
-      admin-app-api:
-        condition: service_healthy
     ports:
       - target: 8080
         published: '${LANDING_APP_PORT:-4202}'
@@ -250,6 +315,7 @@ services:
     healthcheck: *frontend-healthcheck
 
   site-app:
+    profiles: [site-app]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}
@@ -258,13 +324,6 @@ services:
       args:
         NX_PROJECT: site-app
     restart: unless-stopped
-    depends_on:
-      auth-app-api:
-        condition: service_healthy
-      user-app-api:
-        condition: service_healthy
-      admin-app-api:
-        condition: service_healthy
     ports:
       - target: 80
         published: '${SITE_APP_PORT:-4203}'
@@ -281,6 +340,7 @@ services:
       start_period: 20s
 
   mobile-app:
+    profiles: [mobile-app]
     build:
       context: ..
       network: ${DOCKER_BUILD_NETWORK:-default}

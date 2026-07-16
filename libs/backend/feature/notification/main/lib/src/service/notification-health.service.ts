@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  NotificationEntity,
-  NotificationStatus,
-  NotificationRepository,
-} from '@app/backend-postgres-main-notification';
+import { NotificationPersistence } from '@app/backend-feature-notification-shared';
 import { subMinutes } from 'date-fns';
 import { NotificationHealthConfigService } from '../config';
 
@@ -20,7 +16,7 @@ export class NotificationHealthService {
   private readonly logger = new Logger(NotificationHealthService.name);
 
   constructor(
-    private readonly notificationRepository: NotificationRepository,
+    private readonly notificationPersistence: NotificationPersistence,
     private readonly notificationHealthConfigService: NotificationHealthConfigService,
   ) {}
 
@@ -29,10 +25,13 @@ export class NotificationHealthService {
       const { alertIntervalMinutes, errorThreshold } = this.notificationHealthConfigService;
       const alertIntervalAgo = subMinutes(new Date(), alertIntervalMinutes);
 
-      const systemErrorNotifications = await this.getRecentSystemErrorNotifications(alertIntervalAgo, 10);
+      const systemErrorsCount = await this.notificationPersistence.countRecentDeliveryErrors({
+        fromDate: alertIntervalAgo,
+        limit: errorThreshold + 1,
+      });
 
-      if (systemErrorNotifications.length <= errorThreshold) {
-        return { healthy: true, message: 'Push notification delivery working stable' };
+      if (systemErrorsCount <= errorThreshold) {
+        return { healthy: true, message: 'Notification delivery is stable' };
       }
 
       const { responsibleTag } = this.notificationHealthConfigService;
@@ -41,7 +40,7 @@ export class NotificationHealthService {
       return {
         healthy: false,
         message: `Push notification delivery failures detected${responsibleTagSuffix}`,
-        systemErrorsCount: systemErrorNotifications.length,
+        systemErrorsCount,
         timeWindow: `${alertIntervalMinutes} minutes`,
         threshold: errorThreshold,
       };
@@ -53,13 +52,5 @@ export class NotificationHealthService {
       const { responsibleTag } = this.notificationHealthConfigService;
       return { healthy: false, message: `Failed to check push notification health (${responsibleTag})` };
     }
-  }
-
-  private async getRecentSystemErrorNotifications(fromDate: Date, limit: number): Promise<NotificationEntity[]> {
-    return this.notificationRepository.manager.find(
-      NotificationEntity,
-      { status: NotificationStatus.Error, updatedAt: { $gt: fromDate } },
-      { orderBy: { updatedAt: 'DESC' }, limit },
-    );
   }
 }

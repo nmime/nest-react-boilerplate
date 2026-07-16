@@ -252,14 +252,19 @@ export function buildConfig(
 // ---------------------------------------------------------------------------
 
 /** Format a config object as a human-readable summary for stdout. */
-export function formatConfigSummary(config: NrbConfig): string {
+export function formatConfigSummary(
+  config: NrbConfig,
+  resolvedSelection: { apps: readonly string[]; capabilities: readonly string[] } = config,
+): string {
   const lines: string[] = [];
   lines.push('Configuration:');
   if (config.preset) {
     lines.push(`  Preset: ${config.preset}`);
   }
-  lines.push(`  Apps: ${config.apps.length ? config.apps.join(', ') : '(none)'}`);
-  lines.push(`  Capabilities: ${config.capabilities.length ? config.capabilities.join(', ') : '(none)'}`);
+  lines.push(`  Apps: ${resolvedSelection.apps.length ? resolvedSelection.apps.join(', ') : '(none)'}`);
+  lines.push(
+    `  Capabilities: ${resolvedSelection.capabilities.length ? resolvedSelection.capabilities.join(', ') : '(none)'}`,
+  );
   lines.push(`  Options:`);
   lines.push(`    prune: ${config.options.prune}`);
   lines.push(`    force: ${config.options.force}`);

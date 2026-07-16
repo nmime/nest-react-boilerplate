@@ -24,7 +24,7 @@ describe('repeatable setup selection', () => {
     const config = updateSelection(existing, { addApps: ['user-app'] });
     assert.equal(config.preset, undefined);
     assert.deepEqual(config.apps, ['auth-app-api', 'landing-app', 'user-app', 'user-app-api']);
-    assert.deepEqual(config.capabilities, ['design-tokens', 'i18n', 'postgres']);
+    assert.deepEqual(config.capabilities, ['i18n', 'postgres']);
   });
 
   it('can be rerun with the same addition without changing the selection', () => {

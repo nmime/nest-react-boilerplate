@@ -1,4 +1,4 @@
-import { hasTranslationKey, interpolate, translate, translations, type TranslationKey } from '@app/common-i18n';
+import { hasTranslationKey, interpolate, translate, translations, type TranslationKey } from '@app/backend-common-i18n';
 import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
 import type { ProblemDetails } from '../type/problem-details.type';
 import { isObjectRecord } from './is-object-record.util';

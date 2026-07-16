@@ -1,32 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { NotificationTargetType } from '@app/common-notifications';
 import { NotificationStrategyResolverService } from './notification-strategy-resolver.service';
-import { NotificationTargetType } from '@app/backend-postgres-main-notification';
 
 describe(NotificationStrategyResolverService.name, () => {
-  let service: NotificationStrategyResolverService;
-  const userStrategy = { handleNotification: async () => {} } as any;
-  const telegramStrategy = { handleNotification: async () => {} } as any;
+  it('registers user and both Telegram target types', () => {
+    const user = { handleNotification: async () => ({}) } as never;
+    const telegram = { handleNotification: async () => ({}) } as never;
+    const resolver = new NotificationStrategyResolverService(user, telegram);
 
-  beforeEach(() => {
-    service = new NotificationStrategyResolverService();
-    service.register(NotificationTargetType.User, userStrategy);
-    service.register(NotificationTargetType.TelegramChat, telegramStrategy);
-  });
-
-  describe('resolve', () => {
-    it('should resolve user strategy for User target type', () => {
-      const result = service.resolve(NotificationTargetType.User);
-      expect(result).toBe(userStrategy);
-    });
-
-    it('should resolve telegram-chat strategy for TelegramChat target type', () => {
-      const result = service.resolve(NotificationTargetType.TelegramChat);
-      expect(result).toBe(telegramStrategy);
-    });
-
-    it('should return undefined for unknown target type', () => {
-      const result = service.resolve('unknown' as any);
-      expect(result).toBeUndefined();
-    });
+    expect(resolver.resolve(NotificationTargetType.User)).toBe(user);
+    expect(resolver.resolve(NotificationTargetType.TelegramChat)).toBe(telegram);
+    expect(resolver.resolve(NotificationTargetType.SystemTelegramChat)).toBe(telegram);
   });
 });

@@ -1,0 +1,20 @@
+{
+  "name": "@app/backend-feature-telegram-shared",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/telegram/shared/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:telegram"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/feature/telegram/shared/lib",
+        "main": "libs/backend/feature/telegram/shared/lib/src/index.ts",
+        "tsConfig": "libs/backend/feature/telegram/shared/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    }
+  }
+}

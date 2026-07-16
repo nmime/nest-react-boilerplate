@@ -151,8 +151,8 @@ All exceptions flow through the `@app/backend-common-exception` library.
   `@app/frontend-ui-web` for shared React DOM UI, `@app/frontend-ui-native` for
   Tamagui/native UI, `@app/frontend-runtime` for non-visual frontend runtime,
   `@app/frontend-api-support` for browser-safe request plumbing, and
-  `@app/frontend-api-client` for generated API wrappers. `@app/frontend-ui` is a
-  compatibility facade only.
+  `@app/frontend-api-client` for generated API wrappers. There is no generic
+  `@app/frontend-ui` facade.
 - Keep checked-in frontend reference routes product-neutral. Do not invent a
   demo brand, fake business records, or a product domain on the maintainer's
   behalf. Do not render route inventories, API ports/service IDs, breakpoints,

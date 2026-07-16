@@ -1,0 +1,15 @@
+<script>
+  (() => {
+    const update = () => {
+      for (const handle of document.querySelectorAll('[role="separator"][aria-label$="resize handle"]')) {
+        if (!handle.closest("main,nav,header,footer,aside,[role='main']")) {
+          handle.setAttribute('role', 'presentation');
+          handle.setAttribute('aria-hidden', 'true');
+          handle.setAttribute('tabindex', '-1');
+        }
+      }
+    };
+    document.addEventListener('DOMContentLoaded', update, { once: true });
+    new MutationObserver(update).observe(document.documentElement, { childList: true, subtree: true });
+  })();
+</script>

@@ -5,7 +5,7 @@ export {
   sharedFrontendTranslations,
   supportedLocales,
   translate,
-} from '@app/common-i18n-frontend-shared';
+} from '@app/frontend-i18n-shared';
 export type {
   FrontendTranslateOptions,
   FrontendTranslations,
@@ -13,4 +13,4 @@ export type {
   TranslateOptions,
   TranslationKey,
   TranslationParams,
-} from '@app/common-i18n-frontend-shared';
+} from '@app/frontend-i18n-shared';

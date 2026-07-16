@@ -1,0 +1,83 @@
+[
+  {
+    "sourceTag": "scope:admin",
+    "onlyDependOnLibsWithTags": [
+      "scope:admin",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:notification",
+      "scope:postgres",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:auth",
+    "onlyDependOnLibsWithTags": [
+      "scope:auth",
+      "scope:admin",
+      "scope:feature-flags",
+      "scope:notification",
+      "scope:postgres",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:user",
+    "onlyDependOnLibsWithTags": [
+      "scope:user",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:notification",
+      "scope:postgres",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:landing",
+    "onlyDependOnLibsWithTags": ["scope:landing", "scope:shared"]
+  },
+  {
+    "sourceTag": "scope:feature-flags",
+    "onlyDependOnLibsWithTags": ["scope:feature-flags", "scope:postgres", "scope:shared"]
+  },
+  {
+    "sourceTag": "scope:postgres",
+    "onlyDependOnLibsWithTags": ["scope:postgres", "scope:auth", "scope:shared"]
+  },
+  {
+    "sourceTag": "scope:notification",
+    "onlyDependOnLibsWithTags": ["scope:notification", "scope:telegram", "scope:auth", "scope:postgres", "scope:shared"]
+  },
+  {
+    "sourceTag": "scope:telegram",
+    "onlyDependOnLibsWithTags": [
+      "scope:telegram",
+      "scope:notification",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:postgres",
+      "scope:bots",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:discord",
+    "onlyDependOnLibsWithTags": [
+      "scope:discord",
+      "scope:notification",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:postgres",
+      "scope:bots",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:bots",
+    "onlyDependOnLibsWithTags": ["scope:bots", "scope:shared"]
+  },
+  {
+    "sourceTag": "scope:api-contracts",
+    "onlyDependOnLibsWithTags": ["scope:api-contracts", "scope:shared"]
+  }
+]

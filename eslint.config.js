@@ -3,6 +3,7 @@ const typescriptEslintParser = require('@typescript-eslint/parser');
 const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
 const sonarjsEslintPlugin = require('eslint-plugin-sonarjs');
 const eslintConfigPrettier = require('eslint-config-prettier');
+const nxScopeConstraints = require('./packages/tooling/config/nx-scope-constraints.json');
 
 module.exports = [
   ...nx.configs['flat/base'],
@@ -36,7 +37,7 @@ module.exports = [
         'error',
         {
           ignoredFiles: ['{projectRoot}/eslint.config.{js,cjs,mjs}'],
-          ignoredDependencies: ['@app/frontend-ui'],
+          ignoredDependencies: [],
           checkMissingDependencies: false,
         },
       ],
@@ -76,6 +77,7 @@ module.exports = [
                 'type:feature-main',
                 'type:feature-shared',
                 'type:common',
+                'type:asset',
                 'type:data-access',
                 'type:test-util',
                 'type:ui',
@@ -104,6 +106,7 @@ module.exports = [
               onlyDependOnLibsWithTags: [
                 'type:feature-shared',
                 'type:common',
+                'type:asset',
                 'type:data-access',
                 'type:test-util',
                 'type:util',
@@ -112,17 +115,17 @@ module.exports = [
             },
             {
               sourceTag: 'type:feature-shared',
-              onlyDependOnLibsWithTags: [
-                'type:feature-shared',
-                'type:common',
-                'type:data-access',
-                'type:util',
-                'type:sdk',
-              ],
+              onlyDependOnLibsWithTags: ['type:feature-shared', 'type:common', 'type:asset', 'type:util', 'type:sdk'],
             },
             {
               sourceTag: 'type:data-access',
-              onlyDependOnLibsWithTags: ['type:data-access', 'type:common', 'type:test-util', 'type:util'],
+              onlyDependOnLibsWithTags: [
+                'type:feature-shared',
+                'type:data-access',
+                'type:common',
+                'type:test-util',
+                'type:util',
+              ],
             },
             {
               sourceTag: 'type:common',
@@ -154,35 +157,11 @@ module.exports = [
               onlyDependOnLibsWithTags: ['type:sdk', 'type:common', 'type:util'],
             },
 
+            ...nxScopeConstraints,
+
             {
-              sourceTag: 'scope:admin',
-              onlyDependOnLibsWithTags: ['scope:admin', 'scope:auth', 'scope:postgres', 'scope:shared'],
-            },
-            {
-              sourceTag: 'scope:auth',
-              onlyDependOnLibsWithTags: [
-                'scope:auth',
-                'scope:admin',
-                'scope:feature-flags',
-                'scope:postgres',
-                'scope:shared',
-              ],
-            },
-            {
-              sourceTag: 'scope:user',
-              onlyDependOnLibsWithTags: ['scope:user', 'scope:auth', 'scope:postgres', 'scope:shared'],
-            },
-            {
-              sourceTag: 'scope:landing',
-              onlyDependOnLibsWithTags: ['scope:landing', 'scope:shared'],
-            },
-            {
-              sourceTag: 'scope:feature-flags',
-              onlyDependOnLibsWithTags: ['scope:feature-flags', 'scope:postgres', 'scope:shared'],
-            },
-            {
-              sourceTag: 'scope:postgres',
-              onlyDependOnLibsWithTags: ['scope:postgres', 'scope:auth', 'scope:shared'],
+              sourceTag: 'framework:neutral',
+              onlyDependOnLibsWithTags: ['framework:neutral', 'type:asset'],
             },
 
             {

@@ -1,4 +1,4 @@
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { GetCurrentUserProfileUseCase } from '../application';
 import type { UserProfile } from '../domain';

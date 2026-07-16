@@ -3,7 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/feature/notification/main/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:feature-main", "scope:shared"],
+  "tags": ["platform:backend", "type:feature-main", "scope:notification"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

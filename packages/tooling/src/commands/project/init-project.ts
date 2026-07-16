@@ -4,7 +4,7 @@
  *
  * Preserves documented flags and output contract:
  *   --dry-run, --force, --non-interactive
- *   --name, --package-name, --app-slug, --db-name, --domain, --owner
+ *   --name, --package-name, --app-slug, --db-name, --domain, --apex-app, --owner
  *   --help / -h
  *   Git dirty-tree guard (refuses unless --force)
  *   JSON output: { status, config, filesChanged, files }
@@ -47,6 +47,7 @@ interface InitProjectArgs {
   appSlug?: string;
   dbName?: string;
   domain?: string;
+  apexApp?: string;
   owner?: string;
   help?: boolean;
 }
@@ -68,6 +69,7 @@ function parseArgs(argv: string[]): InitProjectArgs {
     else if (item === "--app-slug") args.appSlug = readValue();
     else if (item === "--db-name") args.dbName = readValue();
     else if (item === "--domain") args.domain = readValue();
+    else if (item === "--apex-app") args.apexApp = readValue();
     else if (item === "--owner") args.owner = readValue();
     else if (item === "--help" || item === "-h") args.help = true;
     else if (item !== "--") throw new Error(`Unknown option: ${item}`);
@@ -100,6 +102,7 @@ interface InitConfig {
   dbName: string;
   className: string;
   domain: string;
+  apexApp: "landing-app" | "site-app";
   owner: string;
 }
 
@@ -109,6 +112,10 @@ function buildConfig(args: InitProjectArgs): InitConfig {
   const appTitle = title(args.name);
   const appSlug = args.appSlug ?? args.packageName ?? slugify(appTitle);
   const domain = normalizeDomain(args.domain);
+  const apexApp = args.apexApp ?? "landing-app";
+  if (apexApp !== "landing-app" && apexApp !== "site-app") {
+    throw new Error('--apex-app must be either "landing-app" or "site-app".');
+  }
   return {
     appTitle,
     appSlug,
@@ -116,6 +123,7 @@ function buildConfig(args: InitProjectArgs): InitConfig {
     dbName: args.dbName ?? snake(appTitle),
     className: pascal(appTitle),
     domain,
+    apexApp,
     owner: args.owner ?? "your-github-org",
   };
 }
@@ -186,17 +194,34 @@ function buildReplacements(c: InitConfig): Map<string, string> {
 function buildOperations(
   root: string,
   reps: Map<string, string>,
+  config: InitConfig,
 ): Array<{ path: string; after: string }> {
   const changes: Array<{ path: string; after: string }> = [];
   for (const absPath of walk(root)) {
     const before = readFileSync(absPath, "utf8");
     let after = before;
     for (const [from, to] of reps) after = after.split(from).join(to);
+    after = applyApexHostSelection(after, config);
     if (after !== before) {
       changes.push({ path: relative(root, absPath), after });
     }
   }
   return changes;
+}
+
+function applyApexHostSelection(content: string, config: InitConfig): string {
+  if (config.apexApp === "landing-app") return content;
+
+  const marker = "__NRB_SELECTED_SITE_APEX__";
+  const siteHostname = `site-app.${config.domain}`;
+  const landingHostname = `landing-app.${config.domain}`;
+  const escapedDomain = config.domain.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  return content
+    .split(siteHostname)
+    .join(marker)
+    .replace(new RegExp(`(?<![@\\w.-])${escapedDomain}(?![\\w.-])`, "gu"), landingHostname)
+    .split(marker)
+    .join(config.domain);
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +243,7 @@ Options:
   --app-slug <id>      Application slug (defaults to package name/title).
   --db-name <name>     PostgreSQL database name (defaults to snake_case title).
   --owner <org>        GitHub/GitLab owner replacing your-github-org.
+  --apex-app <id>      Public apex owner: landing-app (default) or site-app.
   --dry-run            Print the file plan without writing.
   --force              Allow a dirty or non-Git workspace and overwrite conflicts.
   --non-interactive    Compatibility flag; all required values must still be supplied.
@@ -249,7 +275,7 @@ Compatibility alias: pnpm init:project -- --name ... --domain ...`);
 
   const c = buildConfig(args);
   const reps = buildReplacements(c);
-  const changes = buildOperations(ROOT, reps);
+  const changes = buildOperations(ROOT, reps, c);
 
   if (!args.dryRun) {
     // Build setup operations for each change

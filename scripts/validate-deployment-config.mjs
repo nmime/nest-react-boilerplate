@@ -135,6 +135,11 @@ has(
   'backend explicitly assigns container port 80',
 );
 has(backendStage, 'EXPOSE 80', 'backend exposes the API port');
+has(
+  backendStage,
+  "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')",
+  'backend image verifies the canonical backend i18n runtime output',
+);
 const siteStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS site-runtime', 'FROM nginxinc/nginx-unprivileged');
 has(
   siteStage,
@@ -406,6 +411,19 @@ has(prodSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app production
 has(prodSiteService, 'target: site-runtime', 'site-app production build uses the Vike Docker runtime target');
 
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
+has(
+  dockerSmoke,
+  "['postgres', ...backendServices, ...frontendServices].join(',')",
+  'Docker smoke activates every dependency profile used by the tested stack',
+);
+has(dockerSmoke, 'async function buildService', 'Docker smoke retries transient image-build failures');
+const fullstackCompose = read('apps/e2e/fullstack/src/compose.ts');
+has(
+  fullstackCompose,
+  "['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(',')",
+  'Full-stack e2e activates every dependency profile used by its tested stack',
+);
+has(fullstackCompose, 'async function buildService', 'Full-stack e2e retries transient image-build failures');
 const smokeJwtSecretDefault = dockerSmoke.match(/AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
 assert.ok(smokeJwtSecretDefault, 'Docker smoke script must set an AUTH_JWT_SECRET default');
 assert.ok(

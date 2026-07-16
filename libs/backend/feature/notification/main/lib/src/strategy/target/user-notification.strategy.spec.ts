@@ -1,81 +1,32 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  NotificationChannel,
+  NotificationStatus,
+  NotificationTargetType,
+  type PendingNotificationDelivery,
+} from '@app/common-notifications';
 import { UserNotificationStrategy } from './user-notification.strategy';
-import { NotificationErrorReason, NotificationStatus } from '@app/backend-postgres-main-notification';
 
 describe(UserNotificationStrategy.name, () => {
-  let strategy: UserNotificationStrategy;
-
-  beforeEach(() => {
-    strategy = new UserNotificationStrategy();
-  });
-
-  describe('handleNotification', () => {
-    it('should set error status when message strategy is not found', async () => {
-      const mockChannelResolver = { resolve: vi.fn() };
-      const mockMessageResolver = { resolve: vi.fn(() => undefined) };
-      const mockNotification = { id: 'test-1', extra: {} };
-
-      await strategy.handleNotification({
-        notification: mockNotification as any,
-        channelStrategyResolver: mockChannelResolver as any,
-        messageStrategyResolver: mockMessageResolver as any,
-      });
-
-      expect(mockNotification.status).toBe(NotificationStatus.Error);
-      expect(mockNotification.error.reason).toBe(NotificationErrorReason.NotFoundMessageStrategy);
+  it('resolves the user before delivering and returns delivery state', async () => {
+    const pending = {
+      delivery: { id: '1', createdAt: new Date(), channel: NotificationChannel.Bot },
+      notification: {
+        id: 'notification-1',
+        targetType: NotificationTargetType.User,
+        targetId: 'user-1',
+        extra: null,
+      },
+    } as PendingNotificationDelivery;
+    const send = vi.fn().mockResolvedValue({ status: NotificationStatus.Sent });
+    const result = await new UserNotificationStrategy().handleNotification({
+      pending,
+      recipientResolver: { resolve: vi.fn().mockResolvedValue({ address: '123' }) } as never,
+      messageStrategyResolver: { resolve: vi.fn(() => ({ getMessage: () => ({ text: 'Hello' }) })) } as never,
+      channelStrategyResolver: { resolve: vi.fn(() => ({ send })) } as never,
     });
 
-    it('should set error status when message is not found', async () => {
-      const mockMessageStrategy = { getMessage: vi.fn(() => undefined) };
-      const mockChannelResolver = { resolve: vi.fn() };
-      const mockMessageResolver = { resolve: vi.fn(() => mockMessageStrategy) };
-      const mockNotification = { id: 'test-1', extra: {} };
-
-      await strategy.handleNotification({
-        notification: mockNotification as any,
-        channelStrategyResolver: mockChannelResolver as any,
-        messageStrategyResolver: mockMessageResolver as any,
-      });
-
-      expect(mockNotification.status).toBe(NotificationStatus.Error);
-      expect(mockNotification.error.reason).toBe(NotificationErrorReason.NotFoundMessage);
-    });
-
-    it('should set error status when channel strategy is not found', async () => {
-      const mockMessageStrategy = { getMessage: vi.fn(() => ({ text: 'Hello' })) };
-      const mockChannelResolver = { resolve: vi.fn(() => undefined) };
-      const mockMessageResolver = { resolve: vi.fn(() => mockMessageStrategy) };
-      const mockNotification = { id: 'test-1', extra: {}, targetId: '12345' };
-
-      await strategy.handleNotification({
-        notification: mockNotification as any,
-        channelStrategyResolver: mockChannelResolver as any,
-        messageStrategyResolver: mockMessageResolver as any,
-      });
-
-      expect(mockNotification.status).toBe(NotificationStatus.Error);
-    });
-
-    it('should send notification successfully', async () => {
-      const mockSend = vi.fn().mockResolvedValue({ status: NotificationStatus.Sent });
-      const mockMessageStrategy = { getMessage: vi.fn(() => ({ text: 'Hello' })) };
-      const mockChannelStrategy = { send: mockSend };
-      const mockChannelResolver = { resolve: vi.fn(() => mockChannelStrategy) };
-      const mockMessageResolver = { resolve: vi.fn(() => mockMessageStrategy) };
-      const mockNotification = { id: 'test-1', extra: {}, targetId: '12345' };
-
-      await strategy.handleNotification({
-        notification: mockNotification as any,
-        channelStrategyResolver: mockChannelResolver as any,
-        messageStrategyResolver: mockMessageResolver as any,
-      });
-
-      expect(mockSend).toHaveBeenCalledWith({
-        telegramId: '12345',
-        message: { text: 'Hello' },
-        extra: {},
-      });
-      expect(mockNotification.status).toBe(NotificationStatus.Sent);
-    });
+    expect(send).toHaveBeenCalledWith({ telegramId: '123', message: { text: 'Hello' }, extra: null });
+    expect(result).toMatchObject({ id: '1', status: NotificationStatus.Sent });
   });
 });

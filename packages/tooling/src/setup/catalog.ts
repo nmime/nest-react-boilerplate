@@ -40,7 +40,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     publicHostname: 'admin-app.example.com',
-    requiresCapabilities: ['authz', 'design-tokens'],
+    requiresCapabilities: ['authz'],
     requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
@@ -50,7 +50,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     publicHostname: 'user-app.example.com',
-    requiresCapabilities: ['design-tokens', 'i18n'],
+    requiresCapabilities: ['i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
@@ -81,7 +81,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'reference',
     publicHostname: 'mobile-app.example.com',
     requiresCapabilities: ['design-tokens'],
-    requiresApps: ['user-app-api'],
+    requiresApps: ['auth-app-api', 'user-app-api'],
     conflictsWithCapabilities: [],
   },
 
@@ -154,15 +154,59 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
 // ---------------------------------------------------------------------------
 
 export interface CapabilityEntry {
-  /** Stable identifier. */
   id: CapabilityId;
-  /** Short human-readable label. */
   label: string;
-  /** Other capabilities that must be enabled. */
+  activation: 'nest-module' | 'bootstrap' | 'source-library' | 'infrastructure' | 'application';
   requiresCapabilities: CapabilityId[];
-  /** Capabilities that conflict with this one. */
+  requiresApps: AppId[];
   conflictsWith: CapabilityId[];
+  ownedProjects: string[];
+  dockerServices: string[];
+  environmentVariables: string[];
+  backendWiring: BackendModuleWiring[];
 }
+
+export interface BackendModuleWiring {
+  hosts: 'selected-backend' | AppId[];
+  importName: string;
+  importPath: string;
+  moduleExpression: string;
+  additionalImports?: BackendModuleImport[];
+}
+
+export interface BackendModuleImport {
+  importName: string;
+  importPath: string;
+}
+
+export interface BackendCapabilityModuleEntry {
+  path: string;
+  className: string;
+}
+
+export const backendCapabilityModuleCatalog: Readonly<Partial<Record<AppId, Readonly<BackendCapabilityModuleEntry>>>> =
+  {
+    'admin-app-api': {
+      path: 'apps/backend/admin/admin-app-api/src/capabilities.generated.ts',
+      className: 'AdminAppApiCapabilitiesModule',
+    },
+    'user-app-api': {
+      path: 'apps/backend/user/user-app-api/src/capabilities.generated.ts',
+      className: 'UserAppApiCapabilitiesModule',
+    },
+    'auth-app-api': {
+      path: 'apps/backend/auth/auth-app-api/src/capabilities.generated.ts',
+      className: 'AuthAppApiCapabilitiesModule',
+    },
+    'discord-app-api': {
+      path: 'apps/backend/discord/discord-app-api/src/capabilities.generated.ts',
+      className: 'DiscordAppApiCapabilitiesModule',
+    },
+    'telegram-bot-api': {
+      path: 'apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts',
+      className: 'TelegramBotApiCapabilitiesModule',
+    },
+  } as const;
 
 /**
  * Full catalog of supported capabilities.
@@ -173,92 +217,273 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
   i18n: {
     id: 'i18n',
     label: 'Internationalization',
+    activation: 'source-library',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: [
+      '@app/common-i18n-runtime',
+      '@app/common-i18n-keys',
+      '@app/backend-common-i18n',
+      '@app/frontend-i18n-shared',
+      '@app/frontend-feature-admin-i18n',
+      '@app/frontend-feature-user-i18n',
+      '@app/frontend-feature-landing-i18n',
+    ],
+    dockerServices: [],
+    environmentVariables: ['APP_LOCALE', 'APP_FALLBACK_LOCALE'],
+    backendWiring: [],
   },
   analytics: {
     id: 'analytics',
     label: 'Analytics Tracking',
+    activation: 'nest-module',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-analytics'],
+    dockerServices: [],
+    environmentVariables: ['ANALYTICS_ENABLED'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'AnalyticsModule',
+        importPath: '@app/backend-common-analytics',
+        moduleExpression: 'AnalyticsModule.forRoot()',
+      },
+    ],
   },
   websockets: {
     id: 'websockets',
     label: 'WebSockets',
+    activation: 'source-library',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/common-websocket'],
+    dockerServices: [],
+    environmentVariables: ['WEBSOCKET_ALLOWED_ORIGINS'],
+    backendWiring: [],
   },
   'feature-flags': {
     id: 'feature-flags',
     label: 'Feature Flags',
-    requiresCapabilities: [],
+    activation: 'nest-module',
+    requiresCapabilities: ['postgres'],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/common-feature-flags', '@app/backend-postgres-main-feature-flags'],
+    dockerServices: ['postgres'],
+    environmentVariables: [],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'FeatureFlagsPostgresModule',
+        importPath: '@app/backend-postgres-main-feature-flags',
+        moduleExpression: 'FeatureFlagsPostgresModule',
+      },
+    ],
   },
   notifications: {
     id: 'notifications',
     label: 'Notifications',
-    requiresCapabilities: ['redis'],
+    activation: 'nest-module',
+    requiresCapabilities: ['postgres', 'telegram-bot'],
+    requiresApps: ['telegram-bot-api'],
     conflictsWith: [],
+    ownedProjects: [
+      '@app/common-notifications',
+      '@app/backend-feature-notification-shared',
+      '@app/backend-feature-notification-main',
+      '@app/backend-postgres-main-notification',
+    ],
+    dockerServices: ['postgres', 'telegram-bot-api'],
+    environmentVariables: [
+      'NOTIFICATION_DELIVERIES_PER_ITERATION',
+      'NOTIFICATION_REQUESTS_PER_SECOND',
+      'NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS',
+    ],
+    backendWiring: [
+      {
+        hosts: ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api'],
+        importName: 'NotificationMainModule',
+        importPath: '@app/backend-feature-notification-main',
+        moduleExpression: 'NotificationMainModule.forRoot({ enableWorker: false, exposeHttp: false })',
+      },
+      {
+        hosts: ['telegram-bot-api'],
+        importName: 'NotificationMainModule',
+        importPath: '@app/backend-feature-notification-main',
+        moduleExpression:
+          'NotificationMainModule.forRoot({ imports: [TelegramBotModule], enableWorker: true, exposeHttp: false })',
+        additionalImports: [
+          {
+            importName: 'TelegramBotModule',
+            importPath: '@app/backend-feature-telegram-bot',
+          },
+        ],
+      },
+    ],
   },
   'design-tokens': {
     id: 'design-tokens',
     label: 'Design Tokens',
+    activation: 'source-library',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/common-design-tokens'],
+    dockerServices: [],
+    environmentVariables: [],
+    backendWiring: [],
   },
   authz: {
     id: 'authz',
     label: 'Authorization',
+    activation: 'source-library',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/common-authz'],
+    dockerServices: [],
+    environmentVariables: [],
+    backendWiring: [],
   },
   postgres: {
     id: 'postgres',
     label: 'PostgreSQL Database',
+    activation: 'infrastructure',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-postgres-main'],
+    dockerServices: ['postgres', 'migrate'],
+    environmentVariables: ['DATABASE_URL'],
+    backendWiring: [],
   },
   redis: {
     id: 'redis',
     label: 'Redis Cache',
+    activation: 'nest-module',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-redis'],
+    dockerServices: ['redis'],
+    environmentVariables: ['REDIS_URL'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'RedisModule',
+        importPath: '@app/backend-common-redis',
+        moduleExpression: 'RedisModule.forRoot()',
+      },
+    ],
   },
   s3: {
     id: 's3',
     label: 'S3 Object Storage',
+    activation: 'nest-module',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-s3'],
+    dockerServices: ['minio'],
+    environmentVariables: ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'S3Module',
+        importPath: '@app/backend-common-s3',
+        moduleExpression: 'S3Module.forRoot()',
+      },
+    ],
+  },
+  'static-data': {
+    id: 'static-data',
+    label: 'Static Data',
+    activation: 'nest-module',
+    requiresCapabilities: [],
+    requiresApps: [],
+    conflictsWith: [],
+    ownedProjects: ['@app/backend-common-static'],
+    dockerServices: [],
+    environmentVariables: ['STATIC_DATA_ROOT'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'StaticDataModule',
+        importPath: '@app/backend-common-static',
+        moduleExpression: "StaticDataModule.forRoot({ rootDir: process.env['STATIC_DATA_ROOT'] ?? 'data' })",
+      },
+    ],
   },
   nats: {
     id: 'nats',
     label: 'NATS Messaging',
+    activation: 'nest-module',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-nats'],
+    dockerServices: ['nats'],
+    environmentVariables: ['NATS_SERVERS'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'NatsModule',
+        importPath: '@app/backend-common-nats',
+        moduleExpression: 'NatsModule.forRoot()',
+      },
+    ],
   },
   otel: {
     id: 'otel',
     label: 'OpenTelemetry Observability',
+    activation: 'bootstrap',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-otel'],
+    dockerServices: [],
+    environmentVariables: ['OTEL_ENABLED', 'OTEL_EXPORTER_OTLP_ENDPOINT'],
+    backendWiring: [],
   },
   swagger: {
     id: 'swagger',
     label: 'Swagger API Docs',
+    activation: 'bootstrap',
     requiresCapabilities: [],
+    requiresApps: [],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-common-swagger'],
+    dockerServices: [],
+    environmentVariables: ['OPENAPI_ENABLED', 'OPENAPI_PATH'],
+    backendWiring: [],
   },
   'telegram-bot': {
     id: 'telegram-bot',
     label: 'Telegram Bot Integration',
+    activation: 'application',
     requiresCapabilities: [],
+    requiresApps: ['telegram-bot-api'],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-feature-telegram-shared', '@app/backend-feature-telegram-bot'],
+    dockerServices: ['telegram-bot-api'],
+    environmentVariables: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_BOT_MODE', 'TELEGRAM_MINI_APP_URL'],
+    backendWiring: [],
   },
   'discord-bot': {
     id: 'discord-bot',
     label: 'Discord Bot Integration',
+    activation: 'application',
     requiresCapabilities: [],
+    requiresApps: ['discord-app-api'],
     conflictsWith: [],
+    ownedProjects: ['@app/backend-feature-discord-bot'],
+    dockerServices: ['discord-app-api'],
+    environmentVariables: ['DISCORD_BOT_TOKEN', 'DISCORD_APPLICATION_ID', 'DISCORD_PUBLIC_KEY'],
+    backendWiring: [],
   },
 } as const;
 
@@ -361,6 +586,16 @@ export function validateSelection(
       }
     }
 
+    for (const reqApp of cap.requiresApps) {
+      if (!appSet.has(reqApp)) {
+        issues.push({
+          type: 'missing_dependency',
+          entity: capId,
+          message: `${cap.label} requires app "${reqApp}"`,
+        });
+      }
+    }
+
     // Conflicts
     for (const conflict of cap.conflictsWith) {
       if (capSet.has(conflict)) {
@@ -419,6 +654,12 @@ export function expandDependencies(
       for (const reqCap of cap.requiresCapabilities) {
         if (!capSet.has(reqCap)) {
           capSet.add(reqCap);
+          changed = true;
+        }
+      }
+      for (const reqApp of cap.requiresApps) {
+        if (!appSet.has(reqApp)) {
+          appSet.add(reqApp);
           changed = true;
         }
       }

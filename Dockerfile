@@ -84,7 +84,7 @@ COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
 COPY --from=builder /workspace/i18n ./i18n
-RUN node -e "require('./dist/libs/common/i18n')"
+RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 USER node
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]

@@ -1,13 +1,13 @@
 # Setup and Configuration
 
-The NRB setup engine selects the applications and capabilities used by repository tooling. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source; selection is recorded in `.nrb/workspace.json` and consumed by commands such as `dev:fullstack`. No app is selected implicitly.
+The NRB setup engine selects applications and concretely activates capabilities. It produces a deterministic plan, applies it idempotently, and tracks state so repeated runs are no-ops. It never deletes application source. No app is selected implicitly.
 
 ## How it works
 
 1. **Schema** — validates your configuration against a Zod schema (`schemaVersion`, `preset`, `apps`, `capabilities`, `options`).
-2. **Catalog** — pure data that defines apps, capabilities, their dependencies, and conflicts.
-3. **Planner** — resolves presets, expands transitive dependencies, validates the selection, and produces a sorted list of file operations.
-4. **Apply** — writes `nrb.config.json`, `.nrb/summary.md`, and the runtime-consumed `.nrb/workspace.json` through a filesystem adapter with rollback on failure.
+2. **Catalog** — defines apps/domains and machine-readable capability dependencies, owned projects, Docker services, environment variables, and Nest/bootstrap activation.
+3. **Planner** — resolves presets, expands transitive dependencies, validates the selection, and generates runtime manifests plus per-backend-app module composition.
+4. **Apply** — writes `nrb.config.json`, summary/workspace/capability manifests, environment activation, and `capabilities.generated.ts` files through a filesystem adapter with rollback on failure.
 5. **State** — tracks file hashes in `.nrb/state.json` so re-runs with the same config produce zero operations.
 
 ## Interactive setup
@@ -23,7 +23,7 @@ The wizard guides you through:
 3. **Capability toggles** — enable/disable cross-cutting features.
 4. **Options** — prune stale setup-managed artifacts, force overwrites, dry-run mode.
 
-Required dependencies are auto-enabled. For example, selecting `admin-app` auto-enables `admin-app-api`, `authz`, and `design-tokens`.
+Required dependencies are auto-enabled. For example, selecting `admin-app` adds `admin-app-api`, `auth-app-api`, `authz`, and PostgreSQL; selecting notifications adds PostgreSQL plus the Telegram app/worker.
 
 On rerun, the wizard loads the resolved current selection. Press Enter to keep
 an item, answer `y` to add it, or `n` to remove it. A removal that would break
@@ -137,17 +137,18 @@ pnpm --filter @repo/tooling tooling doctor
 
 ### Checks performed
 
-| Check             | Status              | Description                                   |
-| ----------------- | ------------------- | --------------------------------------------- |
-| `node-version`    | pass/fail           | Node.js version must satisfy `>=24 <25`.      |
-| `pnpm`            | pass/fail           | pnpm must be exactly `11.11.0`.               |
-| `docker`          | pass/skip           | Docker availability (optional for E2E).       |
-| `manifests`       | pass/fail           | `package.json`, `tsconfig.base.json` present. |
-| `lock-file`       | pass/warn           | `pnpm-lock.yaml` present.                     |
-| `nx-graph`        | pass/warn           | Nx project graph resolves.                    |
-| `nrb-config`      | pass/fail/warn/skip | `nrb.config.json` validity.                   |
-| `nrb-state`       | pass/fail/warn/skip | `.nrb/state.json` consistency.                |
-| `tooling-package` | pass/fail/warn      | `@repo/tooling` bin entries.                  |
+| Check                   | Status              | Description                                                                         |
+| ----------------------- | ------------------- | ----------------------------------------------------------------------------------- |
+| `node-version`          | pass/fail           | Node.js version must satisfy `>=24 <25`.                                            |
+| `pnpm`                  | pass/fail           | pnpm must be exactly `11.11.0`.                                                     |
+| `docker`                | pass/skip           | Docker availability (optional for E2E).                                             |
+| `manifests`             | pass/fail           | `package.json`, `tsconfig.base.json` present.                                       |
+| `lock-file`             | pass/warn           | `pnpm-lock.yaml` present.                                                           |
+| `nx-graph`              | pass/warn           | Nx project graph resolves.                                                          |
+| `nrb-config`            | pass/fail/warn/skip | `nrb.config.json` validity.                                                         |
+| `nrb-state`             | pass/fail/warn/skip | `.nrb/state.json` consistency.                                                      |
+| `capability-activation` | pass/fail/skip      | Generated manifests, environment, and backend module wiring match the saved config. |
+| `tooling-package`       | pass/fail/warn      | `@repo/tooling` bin entries.                                                        |
 
 ### JSON output
 
@@ -173,7 +174,7 @@ On each run:
 
 This guarantees idempotency: running setup twice with the same config produces zero operations.
 
-The resolved `.nrb/workspace.json` groups apps by platform. `pnpm run dev:fullstack` reads it and starts only the selected deployables. Before setup it fails with an instruction to select apps; it never falls back to a hidden profile.
+The resolved `.nrb/workspace.json` groups apps by platform. `.nrb/capabilities.json` records project, service, environment, generated-file, module, and transport-import ownership. `.nrb/capabilities.env` activates Compose/bootstrap flags, and every backend app imports only its generated capability module. `pnpm run dev:fullstack` and `pnpm run docker:selected` consume the selection. The Docker launcher loads `COMPOSE_PROFILES` into the child-process environment because Compose does not activate profiles from `--env-file` alone. Doctor uses the same loading path and validates the exact selected Compose dependency graph when Docker is available. Before setup these commands fail with an instruction to select apps; they never fall back to a hidden profile.
 
 ## Recovery
 

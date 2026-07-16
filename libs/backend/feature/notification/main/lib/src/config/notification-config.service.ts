@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface NotificationSendConfig {
-  userPerIteration: number;
+  deliveriesPerIteration: number;
   requestsPerSecond: number;
   timeouts: { idleTimeout: number; afterMassSend: number };
 }
@@ -17,7 +17,7 @@ export class NotificationConfigService {
 
   get send(): NotificationSendConfig {
     return {
-      userPerIteration: this.configService.get<number>('NOTIFICATION_USER_PER_ITERATION', 50),
+      deliveriesPerIteration: this.configService.get<number>('NOTIFICATION_DELIVERIES_PER_ITERATION', 50),
       requestsPerSecond: this.configService.get<number>('NOTIFICATION_REQUESTS_PER_SECOND', 30),
       timeouts: {
         idleTimeout: this.configService.get<number>('NOTIFICATION_IDLE_TIMEOUT_MS', 10000),

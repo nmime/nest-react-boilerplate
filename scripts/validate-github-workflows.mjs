@@ -86,6 +86,8 @@ for (const required of ['pnpm run ci:pr', 'pnpm run deploy:validate']) {
   assert.ok(ci.includes(required), `ci.yml missing required gate: ${required}`);
 }
 const qualityPresets = workflows.find((workflow) => workflow.name === 'quality-presets.yml')?.text ?? '';
+const runtimeComposeProfiles =
+  'COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
 for (const [workflowName, workflowText] of [
   ['ci.yml', ci],
   ['quality-presets.yml', qualityPresets],
@@ -97,6 +99,10 @@ for (const [workflowName, workflowText] of [
   assert.ok(
     workflowText.includes('ADMIN_BOOTSTRAP_EMAILS: admin@example.com'),
     `${workflowName} runtime QA stack must seed the e2e bootstrap admin email`,
+  );
+  assert.ok(
+    workflowText.includes(runtimeComposeProfiles),
+    `${workflowName} runtime QA stack must activate every required Compose profile`,
   );
 }
 for (const required of [

@@ -1,36 +1,41 @@
 import { EntitySchema } from '@mikro-orm/core';
-import { type NotificationError, NotificationPriority, NotificationStatus, NotificationChannel } from '../../../domain';
-
-export enum NotificationDeliveryProvider {
-  Telegram = 'telegram',
-}
+import {
+  type NotificationDeliveryChannel,
+  type NotificationDeliveryProvider,
+  type NotificationError,
+  NotificationPriority,
+  NotificationStatus,
+  type NotificationTargetType,
+} from '@app/common-notifications';
 
 export interface NotificationDeliveryEntityInput {
   notificationId: string;
-  channel: NotificationChannel;
+  targetType: NotificationTargetType;
+  targetId: string;
+  channel: NotificationDeliveryChannel;
   status: NotificationStatus;
   error?: NotificationError | null;
   attempts?: number;
   provider?: NotificationDeliveryProvider | null;
   priority?: number;
-  sendTimeFrom?: string | null;
-  sendTimeTo?: string | null;
+  sendAfter?: Date;
   sentAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export class NotificationDeliveryEntity {
-  id!: number;
+  id!: string;
   notificationId!: string;
-  channel!: NotificationChannel;
+  targetType!: NotificationTargetType;
+  targetId!: string;
+  channel!: NotificationDeliveryChannel;
   status!: NotificationStatus;
   error: NotificationError | null = null;
   attempts = 0;
   provider: NotificationDeliveryProvider | null = null;
   priority: number = NotificationPriority.Default;
-  sendTimeFrom: string | null = null;
-  sendTimeTo: string | null = null;
+  sendAfter: Date = new Date();
   sentAt: Date | null = null;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
@@ -38,14 +43,15 @@ export class NotificationDeliveryEntity {
   constructor(input?: NotificationDeliveryEntityInput) {
     if (input) {
       this.notificationId = input.notificationId;
+      this.targetType = input.targetType;
+      this.targetId = input.targetId;
       this.channel = input.channel;
       this.status = input.status;
       this.error = input.error ?? null;
       this.attempts = input.attempts ?? 0;
       this.provider = input.provider ?? null;
       this.priority = input.priority ?? NotificationPriority.Default;
-      this.sendTimeFrom = input.sendTimeFrom ?? null;
-      this.sendTimeTo = input.sendTimeTo ?? null;
+      this.sendAfter = input.sendAfter ?? new Date();
       this.sentAt = input.sentAt ?? null;
       this.createdAt = input.createdAt ?? new Date();
       this.updatedAt = input.updatedAt ?? new Date();
@@ -57,18 +63,19 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
   class: NotificationDeliveryEntity,
   tableName: 'notification_deliveries',
   properties: {
-    id: { type: 'integer', primary: true, autoincrement: true },
+    id: { type: 'bigint', primary: true, autoincrement: true },
     notificationId: { type: 'uuid', fieldName: 'notification_id' },
+    targetType: { type: 'varchar', length: 32, fieldName: 'target_type' },
+    targetId: { type: 'varchar', length: 64, fieldName: 'target_id' },
     channel: { type: 'varchar', length: 32 },
     status: { type: 'varchar', length: 32 },
     error: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     attempts: { type: 'integer', default: 0 },
     provider: { type: 'varchar', length: 32, nullable: true, default: null },
     priority: { type: 'int', default: NotificationPriority.Default },
-    sendTimeFrom: { type: 'time', fieldName: 'send_time_from', nullable: true, default: null },
-    sendTimeTo: { type: 'time', fieldName: 'send_time_to', nullable: true, default: null },
+    sendAfter: { type: 'timestamptz', fieldName: 'send_after', onCreate: () => new Date() },
     sentAt: { type: 'timestamptz', fieldName: 'sent_at', nullable: true, default: null },
-    createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
+    createdAt: { type: 'timestamptz', fieldName: 'created_at', primary: true, onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
   uniques: [
@@ -79,8 +86,15 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
   ],
   indexes: [
     {
-      name: 'ix__notification_deliveries__status_send_time_from_send_time_to',
-      properties: ['status', 'sendTimeFrom', 'sendTimeTo'],
+      name: 'ix__notification_deliveries__target_type_status_send_after_target_id_priority_desc_id',
+      columns: [
+        { name: 'targetType' },
+        { name: 'status' },
+        { name: 'sendAfter' },
+        { name: 'targetId' },
+        { name: 'priority', sort: 'desc' },
+        { name: 'id' },
+      ],
     },
   ],
 });

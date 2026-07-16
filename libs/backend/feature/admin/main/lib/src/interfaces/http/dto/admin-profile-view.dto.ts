@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { supportedLocales } from '@app/common-i18n';
+import { supportedLocales } from '@app/backend-common-i18n';
 
 export class AdminProfileViewDto {
   @ApiProperty()

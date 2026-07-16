@@ -15,7 +15,6 @@ const sourceRoots = [
   'libs/frontend/api-support/lib/src',
   'libs/frontend/feature/admin/shared/lib/src',
   'libs/frontend/runtime/lib/src',
-  'libs/frontend/ui/lib/src',
   'libs/frontend/ui-native/lib/src',
   'libs/frontend/ui-web/lib/src',
 ];

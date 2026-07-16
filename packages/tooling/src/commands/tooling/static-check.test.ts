@@ -8,7 +8,6 @@ import {
   checkTranslationKeyDrift,
   checkExportedAllCapsConstantConventions,
   checkExportedSymbolTokenConventions,
-  checkFrontendUiCompatibilityFacade,
   checkForbiddenSocialAuthDependencies,
   checkForbiddenSocialAuthImports,
   checkGeneratedContractImports,
@@ -592,56 +591,6 @@ describe("static-check library source path guard", () => {
   });
 });
 
-describe("static-check frontend UI compatibility facade guard", () => {
-  it("rejects implementation files under the legacy UI facade", () => {
-    const workspaceRoot = createWorkspace();
-
-    try {
-      writeText(
-        workspaceRoot,
-        "libs/frontend/ui/lib/src/index.ts",
-        'export * from "@app/frontend-runtime";\nexport * from "@app/frontend-ui-web";\n',
-      );
-      writeText(
-        workspaceRoot,
-        "libs/frontend/ui/lib/src/component/button.tsx",
-        "export const UiButton = () => null;\n",
-      );
-
-      const failures = checkFrontendUiCompatibilityFacade(workspaceRoot);
-
-      assert.deepEqual(
-        failures.map((failure) => failure.file),
-        ["libs/frontend/ui/lib/src/component/button.tsx"],
-      );
-      assert.match(failures[0]?.stderr ?? "", /facade-only/u);
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
-  });
-
-  it("accepts the facade entrypoint and facade spec", () => {
-    const workspaceRoot = createWorkspace();
-
-    try {
-      writeText(
-        workspaceRoot,
-        "libs/frontend/ui/lib/src/index.ts",
-        'export * from "@app/frontend-runtime";\nexport * from "@app/frontend-ui-web";\n',
-      );
-      writeText(
-        workspaceRoot,
-        "libs/frontend/ui/lib/src/index.spec.ts",
-        "export const facadeSpec = true;\n",
-      );
-
-      assert.deepEqual(checkFrontendUiCompatibilityFacade(workspaceRoot), []);
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
-  });
-});
-
 describe("static-check workspace metadata guard", () => {
   it("recognizes metadata file names in Windows-style absolute paths", () => {
     assert.equal(
@@ -801,8 +750,8 @@ describe("static-check workspace metadata guard", () => {
       );
       writeText(
         workspaceRoot,
-        "libs/frontend/ui/lib/package.json",
-        JSON.stringify({ name: "@app/frontend-ui" }),
+        "libs/frontend/ui-web/lib/package.json",
+        JSON.stringify({ name: "@app/frontend-ui-web" }),
       );
 
       const failures = checkWorkspaceMetadata(workspaceRoot);

@@ -1,5 +1,5 @@
-import type { Locale } from '@app/common-i18n';
-import { normalizeStringList } from '@app/backend-common-shared';
+import type { Locale } from '@app/backend-common-i18n';
+import { normalizeStringList } from './util';
 import {
   resolveTenantId,
   AuthenticatedTheme,

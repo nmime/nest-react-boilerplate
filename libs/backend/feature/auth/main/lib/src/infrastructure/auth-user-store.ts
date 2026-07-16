@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ResultAsync, okAsync } from 'neverthrow';
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import {
   AuthenticatedTheme,
   DefaultAuthTenantId,

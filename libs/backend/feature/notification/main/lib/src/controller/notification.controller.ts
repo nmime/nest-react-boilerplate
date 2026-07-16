@@ -1,43 +1,64 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Put } from '@nestjs/common';
 import {
   CreateNotificationBatchRequestDto,
   CreateNotificationRequestDto,
   NotificationService,
-} from '@app/common-notification';
+  UpsertNotificationTemplateRequestDto,
+} from '@app/backend-feature-notification-shared';
+import type { NotificationTemplateRecord } from '@app/common-notifications';
 
 @Controller('api/v1/notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Post('template')
+  @Put('templates')
+  upsertTemplate(@Body() body: UpsertNotificationTemplateRequestDto): Promise<NotificationTemplateRecord> {
+    return this.notificationService.upsertTemplate({
+      code: body.code,
+      description: body.description,
+      channels: body.channels,
+    });
+  }
+
+  @Post()
   async createTemplateNotification(
     @Body() body: CreateNotificationRequestDto,
   ): Promise<{ id: string; templateCode: string }> {
     const notification = await this.notificationService.createTemplateNotification({
-      channel: body.channel,
       targetType: body.targetType,
       targetId: body.targetId,
       templateCode: body.templateCode,
+      channels: body.channels,
+      inAppVisible: body.inAppVisible,
       data: body.data,
+      extra: body.extra,
       priority: body.priority,
+      sendAfter: body.sendAfter ? new Date(body.sendAfter) : undefined,
     });
 
-    return { id: notification?.id ?? '', templateCode: body.templateCode };
+    return { id: notification.id, templateCode: body.templateCode };
   }
 
-  @Post('template/batch')
-  async createTemplateNotificationsBatch(@Body() body: CreateNotificationBatchRequestDto): Promise<{ count: number }> {
-    await this.notificationService.createTemplateNotificationsBatch({
-      channel: body.channel,
+  @Post('batch')
+  async createTemplateNotificationsBatch(@Body() body: CreateNotificationBatchRequestDto): Promise<{ ids: string[] }> {
+    const notifications = await this.notificationService.createTemplateNotificationsBatch({
       targetType: body.targetType,
+      channels: body.channels,
+      inAppVisible: body.inAppVisible,
+      priority: body.priority,
+      sendAfter: body.sendAfter ? new Date(body.sendAfter) : undefined,
       items: body.items.map((item) => ({
         targetId: item.targetId,
         templateCode: item.templateCode,
+        channels: item.channels,
+        inAppVisible: item.inAppVisible,
         data: item.data,
+        extra: item.extra,
         priority: item.priority,
+        sendAfter: item.sendAfter ? new Date(item.sendAfter) : undefined,
       })),
     });
 
-    return { count: body.items.length };
+    return { ids: notifications.map((notification) => notification.id) };
   }
 }

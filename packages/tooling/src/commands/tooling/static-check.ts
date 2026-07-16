@@ -178,6 +178,7 @@ export const thinLocaleCatalogFileNames = [
   "user/auth.json",
   "user/social-auth.json",
   "user/tma.json",
+  "bots/shared.json",
   "bots/telegram.json",
   "bots/discord.json",
 ] as const;
@@ -395,7 +396,6 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkExportedSymbolTokenConventions(workspaceRoot),
     ...checkLocalBarrelExportConventions(workspaceRoot),
     ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
-    ...checkFrontendUiCompatibilityFacade(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
@@ -1037,7 +1037,7 @@ export function checkDuplicatedLibrarySourceLibPaths(
       status: 1,
       stdout: "",
       stderr:
-        "Libraries must not use lib/src/lib. Keep source folders directly below src, for example libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui/lib/src/component.",
+        "Libraries must not use lib/src/lib. Keep source folders directly below src, for example libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui-web/lib/src/component.",
     });
   }
 
@@ -1057,34 +1057,12 @@ export function checkDuplicatedLibrarySourceLibPaths(
         status: 1,
         stdout: "",
         stderr:
-          "Found a lib/src/lib path. Use lib/src/<domain> paths such as libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui/lib/src/component.",
+          "Found a lib/src/lib path. Use lib/src/<domain> paths such as libs/backend/feature/auth/main/lib/src/domain or libs/frontend/ui-web/lib/src/component.",
       });
     });
   }
 
   return failures;
-}
-
-export function checkFrontendUiCompatibilityFacade(
-  workspaceRoot: string,
-): CheckFailure[] {
-  const allowedFiles = new Set([
-    "libs/frontend/ui/lib/src/index.spec.ts",
-    "libs/frontend/ui/lib/src/index.ts",
-  ]);
-
-  return collectStaleReferenceTargets(workspaceRoot)
-    .map((file) => relativeToWorkspace(workspaceRoot, file))
-    .filter((file) => file.startsWith("libs/frontend/ui/lib/src/"))
-    .filter((file) => !allowedFiles.has(file))
-    .map((file) => ({
-      command: "frontend UI compatibility facade convention",
-      file,
-      status: 1,
-      stdout: "",
-      stderr:
-        "@app/frontend-ui must stay a facade-only package. Move implementation and tests to @app/frontend-runtime or @app/frontend-ui-web.",
-    }));
 }
 
 export function checkStaleSlashStyleAliasImports(

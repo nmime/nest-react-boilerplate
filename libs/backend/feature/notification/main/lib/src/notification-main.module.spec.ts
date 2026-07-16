@@ -1,0 +1,38 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { NotificationMainModule } from './notification-main.module';
+
+const originalNodeEnvironment = process.env['NODE_ENV'];
+
+afterEach(() => {
+  process.env['NODE_ENV'] = originalNodeEnvironment;
+});
+
+describe('NotificationMainModule', () => {
+  it('keeps the reference HTTP surface disabled by default', () => {
+    process.env['NODE_ENV'] = 'development';
+
+    const definition = NotificationMainModule.forRoot();
+
+    expect(definition.controllers).toEqual([]);
+  });
+
+  it('exposes the reference HTTP surface only when explicitly enabled', () => {
+    process.env['NODE_ENV'] = 'development';
+
+    const definition = NotificationMainModule.forRoot({ exposeHttp: true });
+
+    expect(definition.controllers).toHaveLength(1);
+  });
+
+  it('imports selected worker transport modules into its own DI scope', () => {
+    process.env['NODE_ENV'] = 'development';
+    class SelectedTransportModule {}
+
+    const definition = NotificationMainModule.forRoot({
+      imports: [SelectedTransportModule],
+      enableWorker: true,
+    });
+
+    expect(definition.imports).toContain(SelectedTransportModule);
+  });
+});

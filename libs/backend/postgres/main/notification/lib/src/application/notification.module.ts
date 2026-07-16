@@ -1,16 +1,13 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
+import { NotificationPersistence } from '@app/backend-feature-notification-shared';
 import {
   NotificationDeliveryEntitySchema,
   NotificationEntitySchema,
   NotificationTemplateChannelEntitySchema,
   NotificationTemplateEntitySchema,
 } from '../infrastructure/data-access/entities';
-import {
-  NotificationDeliveryRepository,
-  NotificationRepository,
-  NotificationTemplateRepository,
-} from '../repositories';
+import { PostgresNotificationPersistence } from '../repositories';
 
 @Module({
   imports: [
@@ -21,7 +18,10 @@ import {
       NotificationDeliveryEntitySchema,
     ]),
   ],
-  providers: [NotificationRepository, NotificationTemplateRepository, NotificationDeliveryRepository],
-  exports: [MikroOrmModule, NotificationRepository, NotificationTemplateRepository, NotificationDeliveryRepository],
+  providers: [
+    PostgresNotificationPersistence,
+    { provide: NotificationPersistence, useExisting: PostgresNotificationPersistence },
+  ],
+  exports: [MikroOrmModule, NotificationPersistence],
 })
 export class NotificationPostgresModule {}

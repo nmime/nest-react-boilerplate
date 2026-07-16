@@ -13,7 +13,8 @@ export default defineConfig({
       '@app/common-feature-flags': new URL('../../../../libs/common/feature-flags/lib/src/index.ts', import.meta.url)
         .pathname,
       '@app/common-config': new URL('../../../../libs/common/config/lib/src/index.ts', import.meta.url).pathname,
-      '@app/common-i18n': new URL('../../../../libs/common/i18n/lib/src/index.ts', import.meta.url).pathname,
+      '@app/backend-common-i18n': new URL('../../../../libs/backend/common/i18n/lib/src/index.ts', import.meta.url)
+        .pathname,
       '@app/backend-common-network': new URL(
         '../../../../libs/backend/common/network/lib/src/index.ts',
         import.meta.url,
@@ -44,8 +45,6 @@ export default defineConfig({
         '../../../../libs/backend/common/validation/lib/src/index.ts',
         import.meta.url,
       ).pathname,
-      '@app/backend-common-shared': new URL('../../../../libs/backend/common/shared/lib/src/index.ts', import.meta.url)
-        .pathname,
       '@app/backend-postgres-main-feature-flags': new URL(
         '../../../../libs/backend/postgres/main/feature-flags/lib/src/index.ts',
         import.meta.url,

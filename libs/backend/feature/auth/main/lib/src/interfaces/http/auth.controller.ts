@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { supportedLocales } from '@app/common-i18n';
+import { supportedLocales } from '@app/backend-common-i18n';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {

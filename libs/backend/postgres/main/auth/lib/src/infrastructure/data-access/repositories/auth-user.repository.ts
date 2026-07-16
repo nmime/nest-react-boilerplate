@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import {
   AuthUserEntity,
   DefaultAuthTenantId,

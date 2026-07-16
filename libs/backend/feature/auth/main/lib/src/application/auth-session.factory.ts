@@ -1,4 +1,4 @@
-import type { Locale } from '@app/common-i18n';
+import type { Locale } from '@app/backend-common-i18n';
 import {
   type AuthenticatedPrincipal,
   type AuthMethodClaims,

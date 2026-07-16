@@ -1,10 +1,16 @@
-import type { NotificationEntity } from '@app/backend-postgres-main-notification';
-import type { CreateTemplateNotificationParams, CreateTemplateNotificationBatch } from './types';
+import type { NotificationRecord, NotificationTemplateRecord } from '@app/common-notifications';
+import type {
+  CreateTemplateNotificationParams,
+  CreateTemplateNotificationBatch,
+  UpsertNotificationTemplateParams,
+} from './types';
 
 export abstract class NotificationService {
-  abstract createTemplateNotification<T>(
-    params: CreateTemplateNotificationParams<T>,
-  ): Promise<NotificationEntity<T> | undefined>;
+  abstract upsertTemplate(params: UpsertNotificationTemplateParams): Promise<NotificationTemplateRecord>;
 
-  abstract createTemplateNotificationsBatch<T>(params: CreateTemplateNotificationBatch<T>): Promise<void>;
+  abstract createTemplateNotification<T>(params: CreateTemplateNotificationParams<T>): Promise<NotificationRecord<T>>;
+
+  abstract createTemplateNotificationsBatch<T>(
+    params: CreateTemplateNotificationBatch<T>,
+  ): Promise<NotificationRecord<T>[]>;
 }

@@ -23,7 +23,7 @@ For deterministic testing practices (fake timers, seed factories, quarantining),
 
 ## Design-system and frontend tooling
 
-- `pnpm run storybook` serves `@app/frontend-ui-web` stories through the compatibility Storybook config in `libs/frontend/ui/lib/.storybook`.
+- `pnpm run storybook` serves `@app/frontend-ui-web` stories from `libs/frontend/ui-web/lib/.storybook`.
 - `pnpm run storybook:build` writes the static Storybook artifact to `dist/storybook/frontend-ui`; `pnpm run test:storybook` builds/serves that config and runs `test-storybook`.
 - `pnpm run frontend:fsd:check` enforces frontend FSD layer tags, slice boundaries, and public API usage across `apps/frontend/**` and `libs/frontend/**`.
 - Frontend app e2e targets use Vite builds with `VITE_E2E_COVERAGE=true` and the `frontend-browser-e2e-coverage` smoke helper; update the app `project.json` copy assertions when shell copy changes.

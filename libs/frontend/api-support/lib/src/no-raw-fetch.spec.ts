@@ -12,7 +12,6 @@ const sourceRoots = [
   'apps/frontend/site/renderer',
   'apps/frontend/site/server',
   'apps/frontend/mobile/src',
-  'libs/frontend/ui/lib/src',
   'libs/frontend/ui-native/lib/src',
   'libs/frontend/ui-web/lib/src',
   'libs/frontend/runtime/lib/src',

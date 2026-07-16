@@ -1,7 +1,12 @@
-import { translations } from '@app/common-i18n';
 import { InteractionType } from 'discord-api-types/v10';
 import { describe, expect, it } from 'vitest';
-import { localizationsFor, resolveDiscordLocale, resolveInteractionLocale, t } from './discord-i18n';
+import {
+  discordTranslations,
+  localizationsFor,
+  resolveDiscordLocale,
+  resolveInteractionLocale,
+  t,
+} from './discord-i18n';
 
 const testValue = <T>(value: unknown): T => value as T;
 
@@ -27,7 +32,7 @@ describe('Discord i18n helpers', () => {
 
   it('omits supported locales that have no value for the key', () => {
     const key = 'discord.commands.help.label';
-    const ruCatalog = translations.ru;
+    const ruCatalog = discordTranslations.ru;
     const original = ruCatalog[key];
     delete ruCatalog[key];
     try {

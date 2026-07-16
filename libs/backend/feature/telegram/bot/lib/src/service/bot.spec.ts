@@ -396,6 +396,18 @@ describe('createTelegramBot', () => {
     ]);
   });
 
+  it('explains that the Mini App is unavailable when no safe URL is configured', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: 'https://telegram-bot.example.test/' }), {
+      fetch: fetchMock,
+    });
+
+    await bot.handleUpdate(messageUpdate('/app') as never);
+
+    expect(latestPayload(calls, 'sendMessage').text).toBe('Bot service is temporarily unavailable.');
+    expect(configuredWebAppButtons(calls)).toEqual([]);
+  });
+
   it('builds localized command menus and only advertises /app when a safe Mini App URL exists', () => {
     expect(telegramBotCommands('en', true).map(({ command }) => command)).toEqual([
       'start',
@@ -482,6 +494,32 @@ describe('createTelegramBot', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(stderrWrite).toHaveBeenCalledWith('Telegram bot menu button setup failed Error: Telegram API unavailable\n');
+    stderrWrite.mockRestore();
+  });
+
+  it('does not fail startup when localized command menu setup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.reject(new Error('command menu unavailable'))),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: 'https://frontend.example.test/telegram-mini-app',
+        setupMenuButton: true,
+      }),
+      { api: api as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(stderrWrite).toHaveBeenCalledWith(
+      'Telegram bot command menu setup failed (en) Error: command menu unavailable\n',
+    );
+    expect(stderrWrite).toHaveBeenCalledWith(
+      'Telegram bot command menu setup failed (ru) Error: command menu unavailable\n',
+    );
     stderrWrite.mockRestore();
   });
 

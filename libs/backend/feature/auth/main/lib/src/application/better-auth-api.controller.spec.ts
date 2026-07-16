@@ -118,8 +118,8 @@ describe('BetterAuthApiController', () => {
           statusCode = code;
           return mockRes;
         },
-        header: (name: string, value: string) => {
-          headers[name] = [...(headers[name] || []), value];
+        header: (name: string, value: string | string[]) => {
+          headers[name] = [...(headers[name] || []), ...(Array.isArray(value) ? value : [value])];
           return mockRes;
         },
         send: (data: unknown) => {
@@ -312,7 +312,7 @@ describe('BetterAuthApiController', () => {
 
       const req = {
         method: 'POST',
-        url: '/api/auth/telegram/web-login',
+        url: '/api/auth/telegram/tma',
         headers: { 'content-type': 'application/json' },
         body: { payload: 'bad' },
       } as any;
@@ -336,7 +336,7 @@ describe('BetterAuthApiController', () => {
       await controller.handle(req, mockRes);
       expect(mockRes.statusCode).toBe(500);
       const body = mockRes.getBody() as Record<string, unknown>;
-      expect(body.message).toBe('handler blew up');
+      expect(body.message).toBe('Internal server error');
     });
   });
 

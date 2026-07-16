@@ -40,10 +40,12 @@ ARG VITE_API_BASE_URL_MODE=same-origin
 ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
 ARG VITE_ADMIN_API_BASE_URL
+ARG VITE_TELEGRAM_AUTH_ENABLED=false
 ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
   VITE_AUTH_API_BASE_URL=${VITE_AUTH_API_BASE_URL} \
   VITE_USER_API_BASE_URL=${VITE_USER_API_BASE_URL} \
-  VITE_ADMIN_API_BASE_URL=${VITE_ADMIN_API_BASE_URL}
+  VITE_ADMIN_API_BASE_URL=${VITE_ADMIN_API_BASE_URL} \
+  VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}
 # Backend apps enable generatePackageJson + generateLockfile, so each build emits
 # a pruned package.json and pnpm-lock.yaml under its dist output describing only
 # the npm packages that app (and the workspace libs it inlines) actually imports.

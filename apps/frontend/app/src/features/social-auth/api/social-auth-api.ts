@@ -1,34 +1,38 @@
-import { authApi, throwOnOpenApiErrorData, type AuthApiClient } from '@app/frontend-api-client';
-import type { SocialAuthIntent } from '../model/types';
+import {
+  authApi,
+  establishTelegramTmaBetterAuthSession,
+  requestTelegramOidcAuthorization,
+  throwOnOpenApiErrorData,
+  type AuthApiClient,
+} from '@app/frontend-api-client';
+import type { SocialAuthRequestInput } from '../model/types';
 
 export const providerIdentitiesQueryKey = () => authApi.getAuthControllerProviderIdentitiesQueryKey();
-
-export interface SocialAuthRequestInput {
-  intent?: SocialAuthIntent;
-  linkToken?: string;
-  returnUrl?: string;
-}
 
 export type DiscordCallbackInput = authApi.DiscordCallbackQuery;
 
 export const requestDiscordAuthorization = async (authClient: AuthApiClient, input: SocialAuthRequestInput) =>
   throwOnOpenApiErrorData(authClient.api.authControllerDiscordAuthorizationRequest(input, authClient.requestOptions));
 
-export const submitTelegramWebLogin = async (
-  authClient: AuthApiClient,
-  payload: Record<string, unknown>,
-  input: SocialAuthRequestInput = {},
-) =>
-  throwOnOpenApiErrorData(
-    authClient.api.authControllerTelegramWebLogin({ ...input, payload }, authClient.requestOptions),
-  );
-
 export const submitTelegramTma = async (
   authClient: AuthApiClient,
   initData: string,
   input: SocialAuthRequestInput = {},
-) =>
-  throwOnOpenApiErrorData(authClient.api.authControllerTelegramTma({ ...input, initData }, authClient.requestOptions));
+) => {
+  await establishTelegramTmaBetterAuthSession(authClient.requestOptions, initData);
+  return throwOnOpenApiErrorData(
+    authClient.api.authControllerTelegramTma({ ...input, initData }, authClient.requestOptions),
+  );
+};
+
+export const startTelegramOidc = async (authClient: AuthApiClient, callbackURL: string) =>
+  requestTelegramOidcAuthorization(authClient.requestOptions, {
+    callbackURL,
+    errorCallbackURL: callbackURL,
+  });
+
+export const submitTelegramOidcSession = async (authClient: AuthApiClient, input: SocialAuthRequestInput = {}) =>
+  throwOnOpenApiErrorData(authClient.api.authControllerTelegramOidcSession({ ...input }, authClient.requestOptions));
 
 export const submitDiscordCallback = async (authClient: AuthApiClient, input: DiscordCallbackInput) =>
   throwOnOpenApiErrorData(authClient.api.authControllerDiscordCallback(input, authClient.requestOptions));

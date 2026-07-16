@@ -8,7 +8,7 @@ import type { ExternalIdentityRecord } from '../../infrastructure';
 
 export const DefaultLinkTokenTtlSeconds = 10 * 60;
 export const DefaultDiscordStateTtlSeconds = 10 * 60;
-export const DefaultTelegramMaxAgeSeconds = 24 * 60 * 60;
+export const DefaultTelegramMaxAgeSeconds = 5 * 60;
 export const DefaultMaxDiscordStateEntries = 10_000;
 export const ExternalAccountPasswordSeed = ['external-auth-account', 'without-local-credential'].join(':');
 export const externalAuthProviderByStorageValue = {
@@ -16,7 +16,7 @@ export const externalAuthProviderByStorageValue = {
   [AuthProvider.Discord]: AuthProvider.Discord,
 } satisfies Record<ExternalIdentityRecord['provider'], ExternalAuthProvider>;
 export const externalAuthProviderChannelByStorageValue = {
-  [AuthProviderChannel.TelegramWebLogin]: AuthProviderChannel.TelegramWebLogin,
+  [AuthProviderChannel.TelegramOidc]: AuthProviderChannel.TelegramOidc,
   [AuthProviderChannel.TelegramTma]: AuthProviderChannel.TelegramTma,
   [AuthProviderChannel.TelegramBot]: AuthProviderChannel.TelegramBot,
   [AuthProviderChannel.DiscordOauth]: AuthProviderChannel.DiscordOauth,

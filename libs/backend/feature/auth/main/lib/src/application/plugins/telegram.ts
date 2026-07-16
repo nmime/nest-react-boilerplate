@@ -1,112 +1,155 @@
 import type { BetterAuthPlugin } from 'better-auth';
-import { APIError } from 'better-auth/api';
-import { createAuthEndpoint } from 'better-auth/api';
-import { z } from 'zod';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { APIError, createAuthEndpoint } from 'better-auth/api';
+import { setSessionCookie } from 'better-auth/cookies';
 import { parse as parseTmaInitData, validate as validateTmaInitData } from '@tma.js/init-data-node';
+import { z } from 'zod';
+import { TelegramOidcProviderId, telegramSyntheticEmail } from '../telegram-oidc';
 
 export interface TelegramPluginOptions {
   botToken?: string;
   maxAgeSeconds?: number;
 }
 
+const DefaultTmaMaxAgeSeconds = 300;
+
+const optionalText = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim() ? value.trim() : null;
+
 export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthPlugin => ({
   id: 'telegram',
   init: () => {},
   endpoints: {
-    telegramWebLogin: createAuthEndpoint(
-      '/telegram/web-login',
-      {
-        method: 'POST',
-        body: z.object({
-          payload: z.record(z.string(), z.any()),
-          tenantId: z.string().optional(),
-          intent: z.string().optional(),
-          linkToken: z.string().optional(),
-          returnUrl: z.string().optional(),
-        }),
-      },
-      async (req) => {
-        const botToken = options.botToken || process.env.TELEGRAM_BOT_TOKEN;
-        if (!botToken) {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'Provider not configured' });
-        }
-        const payload = req.body.payload as Record<string, any>;
-        const { auth_date, hash, ...data } = payload;
-        const sortedKeys = Object.keys(payload)
-          .filter((k) => k !== 'hash')
-          .sort();
-        const checkString = sortedKeys.map((k) => `${k}=${payload[k]}`).join('\n');
-        const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest();
-        const calculatedHash = createHmac('sha256', secretKey).update(checkString).digest('hex');
-        if (
-          !timingSafeEqual(
-            Buffer.from(calculatedHash.slice(0, 64).padEnd(64, '\0')),
-            Buffer.from(hash.slice(0, 64).padEnd(64, '\0')),
-          )
-        ) {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'invalid_signature' });
-        }
-        if (Date.now() / 1000 - Number(auth_date) > (options.maxAgeSeconds || 86400)) {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'payload_expired' });
-        }
-        return {
-          status: 'authenticated',
-          identity: {
-            provider: 'telegram',
-            channel: 'telegram_web_login',
-            providerSubject: String(data.id),
-            displayName: [data.first_name, data.last_name].filter(Boolean).join(' '),
-            username: data.username || null,
-            avatarUrl: data.photo_url || null,
-            locale: data.language_code || null,
-            metadata: { source: 'telegram_web_login' },
-          },
-        };
-      },
-    ),
     telegramTma: createAuthEndpoint(
       '/telegram/tma',
       {
         method: 'POST',
         body: z.object({
-          initData: z.string(),
-          tenantId: z.string().optional(),
-          intent: z.string().optional(),
-          linkToken: z.string().optional(),
-          returnUrl: z.string().optional(),
+          initData: z.string().min(1),
         }),
       },
-      async (req) => {
+      async (ctx) => {
         const botToken = options.botToken || process.env.TELEGRAM_BOT_TOKEN;
         if (!botToken) {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'Provider not configured' });
+          throw APIError.fromStatus('BAD_REQUEST', { message: 'provider_not_configured' });
         }
+
         try {
-          validateTmaInitData(req.body.initData, botToken, {
-            expiresIn: options.maxAgeSeconds || 86400,
+          validateTmaInitData(ctx.body.initData, botToken, {
+            expiresIn: options.maxAgeSeconds ?? DefaultTmaMaxAgeSeconds,
           });
         } catch {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'invalid_signature' });
+          throw APIError.fromStatus('UNAUTHORIZED', { message: 'invalid_signature' });
         }
-        const initData = parseTmaInitData(req.body.initData);
+
+        const initData = parseTmaInitData(ctx.body.initData);
         if (!initData.user?.id) {
-          throw APIError.fromStatus('BAD_REQUEST', { message: 'invalid_signature' });
+          throw APIError.fromStatus('UNAUTHORIZED', { message: 'invalid_signature' });
         }
-        const u = initData.user;
-        return {
+
+        const telegramUser = initData.user;
+        const providerSubject = String(telegramUser.id);
+        const email = telegramSyntheticEmail(providerSubject);
+        const displayName =
+          [telegramUser.first_name, telegramUser.last_name].filter(Boolean).join(' ').trim() ||
+          (telegramUser.username ? `@${telegramUser.username}` : `Telegram user ${providerSubject}`);
+        const avatarUrl = optionalText(telegramUser.photo_url);
+
+        let account = await ctx.context.internalAdapter.findAccountByProviderId(
+          providerSubject,
+          TelegramOidcProviderId,
+        );
+        let user = account ? await ctx.context.internalAdapter.findUserById(account.userId) : null;
+
+        if (account && !user) {
+          throw APIError.fromStatus('INTERNAL_SERVER_ERROR', { message: 'telegram_account_user_missing' });
+        }
+
+        if (!user) {
+          const existingByEmail = await ctx.context.internalAdapter.findUserByEmail(email);
+          user = existingByEmail?.user ?? null;
+        }
+
+        if (!user) {
+          try {
+            user = await ctx.context.internalAdapter.createUser({
+              email,
+              name: displayName,
+              image: avatarUrl,
+            });
+          } catch (error) {
+            // Parallel launches can race on the synthetic email. Re-read the
+            // winner before treating the request as failed.
+            const concurrentUser = await ctx.context.internalAdapter.findUserByEmail(email);
+            if (!concurrentUser) {
+              throw error;
+            }
+            user = concurrentUser.user;
+          }
+        }
+
+        if (!account) {
+          try {
+            account = await ctx.context.internalAdapter.createAccount({
+              accountId: providerSubject,
+              providerId: TelegramOidcProviderId,
+              userId: user.id,
+            });
+          } catch (error) {
+            // The provider/account unique key is the authority during
+            // concurrent TMA launches.
+            account = await ctx.context.internalAdapter.findAccountByProviderId(
+              providerSubject,
+              TelegramOidcProviderId,
+            );
+            if (!account) {
+              throw error;
+            }
+            if (account.userId !== user.id) {
+              const accountUser = await ctx.context.internalAdapter.findUserById(account.userId);
+              if (!accountUser) {
+                throw APIError.fromStatus('INTERNAL_SERVER_ERROR', { message: 'telegram_account_user_missing' });
+              }
+              user = accountUser;
+            }
+          }
+        }
+
+        const userUpdates: Record<string, unknown> = {};
+        if (user.name !== displayName) {
+          userUpdates.name = displayName;
+        }
+        if (avatarUrl && user.image !== avatarUrl) {
+          userUpdates.image = avatarUrl;
+        }
+        if (Object.keys(userUpdates).length > 0) {
+          user = await ctx.context.internalAdapter.updateUser(user.id, userUpdates);
+        }
+
+        const session = await ctx.context.internalAdapter.createSession(user.id);
+        if (!session) {
+          throw APIError.fromStatus('INTERNAL_SERVER_ERROR', { message: 'telegram_session_creation_failed' });
+        }
+        await setSessionCookie(ctx, { session, user });
+
+        return ctx.json({
           status: 'authenticated',
+          token: session.token,
+          user,
+          session,
           identity: {
-            provider: 'telegram',
+            provider: TelegramOidcProviderId,
             channel: 'telegram_tma',
-            providerSubject: String(u.id),
-            displayName: [u.first_name, u.last_name].filter(Boolean).join(' '),
-            username: u.username || null,
-            avatarUrl: u.photo_url || null,
-            locale: u.language_code || null,
-            metadata: { source: 'telegram_tma', startParam: initData.start_param || null },
+            providerSubject,
+            displayName,
+            username: optionalText(telegramUser.username),
+            avatarUrl,
+            locale: optionalText(telegramUser.language_code),
+            metadata: {
+              source: 'telegram_tma',
+              startParam: initData.start_param ?? null,
+            },
           },
-        };
+        });
       },
     ),
     telegramBotLink: createAuthEndpoint(
@@ -122,12 +165,12 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
           avatarUrl: z.string().optional(),
         }),
       },
-      async (req) => {
-        const { providerSubject, username, displayName, locale, avatarUrl } = req.body;
-        return {
+      async (ctx) => {
+        const { providerSubject, username, displayName, locale, avatarUrl } = ctx.body;
+        return ctx.json({
           status: 'linked',
           identity: {
-            provider: 'telegram',
+            provider: TelegramOidcProviderId,
             channel: 'telegram_bot',
             providerSubject,
             displayName,
@@ -136,7 +179,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
             avatarUrl,
             metadata: { source: 'telegram_bot' },
           },
-        };
+        });
       },
     ),
   },

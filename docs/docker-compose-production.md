@@ -34,6 +34,7 @@ cp .env.production.example .env.production
 mkdir -p docker/secrets
 chmod 700 docker/secrets
 openssl rand -base64 48 > docker/secrets/auth_jwt_secret.txt
+openssl rand -base64 48 > docker/secrets/better_auth_secret.txt
 openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
 chmod 600 .env.production docker/secrets/*.txt
 ```
@@ -120,9 +121,32 @@ The scripts use published immutable images by default. Add `--build` to the
 equivalent explicit `docker compose` command only when intentionally building on
 the server from the checked-out commit. Prefer CI-built, scanned, signed images.
 
-For optional bot APIs, append `--profile discord` and/or `--profile telegram` to
-the explicit Compose command. Their secret files and provider callback setup are
-required before enabling the profile.
+For the optional Telegram bot API, append `--profile telegram` to the explicit
+Compose command. To enable Telegram OIDC/TMA on `auth-app-api`, also create
+`docker/secrets/telegram_bot_token.txt` and
+`docker/secrets/telegram_oidc_client_secret.txt`, set
+`TELEGRAM_OIDC_CLIENT_ID`, `VITE_TELEGRAM_AUTH_ENABLED=true`,
+`BETTER_AUTH_URL`, and `BETTER_AUTH_TRUSTED_ORIGINS`, then append the auth
+overlay:
+
+```bash
+docker compose --env-file .env.production \
+  -f docker/docker-compose.prod.yml \
+  -f docker/docker-compose.prod.bundled-db.yml \
+  -f docker/docker-compose.prod.telegram.yml up -d
+```
+
+Use the external database overlay in place of the bundled one when applicable.
+The default same-origin Compose topology sets
+`BETTER_AUTH_URL=https://user-app.example.com`, so Telegram's registered
+callback must be
+`https://user-app.example.com/api/auth/oauth2/callback/telegram`, with the
+initialized product domain substituted. A split-origin build instead sets both
+`BETTER_AUTH_URL` and `VITE_AUTH_API_BASE_URL` to
+`https://auth-app-api.example.com` and registers that host. Do not mix the two
+hosts inside one flow because Better Auth state/session cookies are host-scoped.
+Discord provider secrets and callback setup are likewise required before its
+profile is enabled.
 
 ## 5. Inspect health and logs
 

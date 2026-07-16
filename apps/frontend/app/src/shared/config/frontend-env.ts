@@ -7,6 +7,9 @@ export const getAuthApiBaseUrl = (): string => getRequiredApiBaseUrl(getFrontend
 
 export const getUserApiBaseUrl = (): string => getRequiredApiBaseUrl(getFrontendEnv(), 'VITE_USER_API_BASE_URL');
 
+export const isTelegramAuthEnabled = (): boolean =>
+  String(getFrontendEnv()['VITE_TELEGRAM_AUTH_ENABLED'] ?? '').toLowerCase() === 'true';
+
 const readEnvString = (key: string): string => {
   const value = getFrontendEnv()[key];
   return typeof value === 'string' ? value.trim() : '';

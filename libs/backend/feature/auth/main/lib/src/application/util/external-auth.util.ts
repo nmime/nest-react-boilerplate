@@ -3,7 +3,9 @@ import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import type { ExternalAuthProvider } from '@app/backend-feature-auth-shared';
 
 export function assertProviderEnabled(provider: ExternalAuthProvider): void {
-  const value = process.env[`AUTH_${provider.toUpperCase()}_ENABLED`];
+  const canonicalName = `AUTH_${provider.toUpperCase()}_ENABLED`;
+  const legacyName = `${provider.toUpperCase()}_AUTH_ENABLED`;
+  const value = process.env[canonicalName] ?? process.env[legacyName];
   if (value === 'false') {
     throw new ForbiddenException('provider_disabled');
   }

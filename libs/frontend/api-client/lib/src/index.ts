@@ -14,4 +14,4 @@ export * from './toast-rules';
 // Better-Auth client integrations (our additions)
 export * from './auth-client';
 export * from './telegram-client';
-export * from './use-auth-session-flow';
+export * from './better-auth-telegram';

@@ -1066,16 +1066,16 @@
         "tags": ["Auth"]
       }
     },
-    "/auth/telegram/web-login": {
+    "/auth/telegram/tma": {
       "post": {
-        "operationId": "AuthController_telegramWebLogin",
+        "operationId": "AuthController_telegramTma",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TelegramWebLoginDto"
+                "$ref": "#/components/schemas/TelegramTmaDto"
               }
             }
           }
@@ -1405,16 +1405,16 @@
         "tags": ["Auth"]
       }
     },
-    "/auth/telegram/tma": {
+    "/auth/telegram/oidc/session": {
       "post": {
-        "operationId": "AuthController_telegramTma",
+        "operationId": "AuthController_telegramOidcSession",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TelegramTmaDto"
+                "$ref": "#/components/schemas/TelegramOidcSessionDto"
               }
             }
           }
@@ -6396,7 +6396,7 @@
           },
           "authChannel": {
             "type": "string",
-            "enum": ["password", "telegram_web_login", "telegram_tma", "telegram_bot", "discord_oauth", "discord_bot"]
+            "enum": ["password", "telegram_oidc", "telegram_tma", "telegram_bot", "discord_oauth", "discord_bot"]
           },
           "authTime": {
             "type": "number"
@@ -6496,31 +6496,6 @@
         },
         "required": ["status"]
       },
-      "TelegramWebLoginDto": {
-        "type": "object",
-        "properties": {
-          "tenantId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "intent": {
-            "type": "string",
-            "enum": ["login", "link"]
-          },
-          "linkToken": {
-            "type": "string",
-            "writeOnly": true
-          },
-          "returnUrl": {
-            "type": "string"
-          },
-          "payload": {
-            "type": "object",
-            "additionalProperties": true
-          }
-        },
-        "required": ["payload"]
-      },
       "TelegramTmaDto": {
         "type": "object",
         "properties": {
@@ -6545,6 +6520,26 @@
           }
         },
         "required": ["initData"]
+      },
+      "TelegramOidcSessionDto": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "intent": {
+            "type": "string",
+            "enum": ["login", "link"]
+          },
+          "linkToken": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "returnUrl": {
+            "type": "string"
+          }
+        }
       },
       "TelegramBotLinkDto": {
         "type": "object",

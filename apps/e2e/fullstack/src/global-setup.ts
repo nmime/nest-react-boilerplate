@@ -2,7 +2,9 @@ import { buildStackImages, composeArgs, run, upStack, urls, waitForText } from '
 
 export default async function globalSetup(): Promise<void> {
   await run('docker', [...composeArgs, 'down', '--volumes', '--remove-orphans']);
-  await buildStackImages();
+  if (process.env.FULLSTACK_SKIP_BUILD !== 'true') {
+    await buildStackImages();
+  }
   await upStack();
   await waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api');
   await waitForText('user api', `${urls.userApi}/health`, 'user-app-api');

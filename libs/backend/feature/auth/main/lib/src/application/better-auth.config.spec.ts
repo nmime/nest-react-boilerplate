@@ -13,6 +13,13 @@ describe('getBetterAuthConfig', () => {
     delete process.env.BETTER_AUTH_TRUSTED_ORIGINS;
     delete process.env.REQUIRE_EMAIL_VERIFICATION;
     delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_OIDC_CLIENT_ID;
+    delete process.env.TELEGRAM_OIDC_CLIENT_SECRET;
+    delete process.env.TELEGRAM_OIDC_DISCOVERY_URL;
+    delete process.env.TELEGRAM_OIDC_ENABLED;
+    delete process.env.TELEGRAM_OIDC_ISSUER;
+    delete process.env.TELEGRAM_OIDC_JWKS_URL;
+    delete process.env.TELEGRAM_OIDC_SCOPES;
     delete process.env.DISCORD_CLIENT_ID;
     delete process.env.DISCORD_CLIENT_SECRET;
     delete process.env.DISCORD_REDIRECT_URI;
@@ -68,6 +75,40 @@ describe('getBetterAuthConfig', () => {
       telegramBotToken: '123456:ABC-DEF',
     });
     expect(auth).toBeDefined();
+  });
+
+  it('registers Telegram OIDC when numeric client credentials are complete', () => {
+    const auth = getBetterAuthConfig(null, {
+      telegramOidcClientId: '123456789',
+      telegramOidcClientSecret: 'telegram-client-secret',
+      telegramOidcEnabled: true,
+      telegramOidcScopes: ['openid', 'profile', 'telegram:bot_access'],
+    });
+
+    expect(auth).toBeDefined();
+  });
+
+  it('accepts Telegram OIDC scopes in environment-style whitespace form', () => {
+    process.env.TELEGRAM_OIDC_CLIENT_ID = '123456789';
+    process.env.TELEGRAM_OIDC_CLIENT_SECRET = 'telegram-client-secret';
+    process.env.TELEGRAM_OIDC_SCOPES = 'openid profile telegram:bot_access';
+
+    expect(getBetterAuthConfig(null)).toBeDefined();
+  });
+
+  it('fails startup for partial or invalid Telegram OIDC credentials', () => {
+    expect(() =>
+      getBetterAuthConfig(null, {
+        telegramOidcClientId: '123456789',
+        telegramOidcEnabled: true,
+      }),
+    ).toThrow('TELEGRAM_OIDC_CLIENT_ID and TELEGRAM_OIDC_CLIENT_SECRET are required');
+    expect(() =>
+      getBetterAuthConfig(null, {
+        telegramOidcClientId: 'not-numeric',
+        telegramOidcClientSecret: 'telegram-client-secret',
+      }),
+    ).toThrow('TELEGRAM_OIDC_CLIENT_ID must be the numeric client ID');
   });
 
   it('uses discord provider options', () => {

@@ -27,6 +27,7 @@ echo "==> Helm lint (default values with synthetic in-chart Secret)"
 helm lint "${CHART_DIR}" \
   --set secrets.create=true \
   --set-string secrets.authJwtSecret=ci-only-auth-jwt-secret-minimum-32-characters \
+  --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
   --set-string secrets.databaseUrl=postgres://ci:ci@postgresql:5432/ci
 
 echo "==> Helm template (default values)"
@@ -34,6 +35,7 @@ helm template "${RELEASE_NAME}" "${CHART_DIR}" \
   --namespace "${NAMESPACE}" \
   --set secrets.create=true \
   --set-string secrets.authJwtSecret=ci-only-auth-jwt-secret-minimum-32-characters \
+  --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
   --set-string secrets.databaseUrl=postgres://ci:ci@postgresql:5432/ci \
   > "${TMP_DIR}/default.yaml"
 

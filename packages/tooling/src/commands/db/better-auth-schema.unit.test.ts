@@ -27,6 +27,7 @@ describe("better-auth-schema source", () => {
   });
 
   it("adds plugin columns with IF NOT EXISTS for idempotency", () => {
+    assert.match(source, /ADD COLUMN IF NOT EXISTS "tenantId"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "status"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "roles"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "permissions"/);
@@ -57,11 +58,19 @@ describe("better-auth-schema source", () => {
   });
 
   it("creates unique indexes for session token and account provider", () => {
+    assert.match(source, /CREATE UNIQUE INDEX IF NOT EXISTS "uq__user__email"/);
     assert.match(source, /CREATE UNIQUE INDEX IF NOT EXISTS "uq__session__token"/);
     assert.match(source, /CREATE UNIQUE INDEX IF NOT EXISTS "uq__account__provider_account"/);
   });
 
+  it("includes the current Better Auth OAuth and verification columns", () => {
+    assert.match(source, /"scope" text/);
+    assert.match(source, /ADD COLUMN IF NOT EXISTS "scope"/);
+    assert.match(source, /ADD COLUMN IF NOT EXISTS "updatedAt"/);
+  });
+
   it("creates user table with plugin columns (status, roles, permissions, locale, theme)", () => {
+    assert.match(source, /"tenantId" varchar\(128\)/);
     assert.match(source, /"status" varchar\(32\)/);
     assert.match(source, /"roles" json/);
     assert.match(source, /"permissions" json/);

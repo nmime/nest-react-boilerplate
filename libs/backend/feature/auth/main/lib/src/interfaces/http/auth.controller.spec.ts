@@ -10,6 +10,7 @@ import {
   type AuthSessionView,
 } from '@app/backend-feature-auth-shared';
 import type { AuthService } from '../../application/auth.service';
+import type { BetterAuthTelegramSessionService } from '../../application/better-auth-telegram-session.service';
 import type { ExternalAuthService } from '../../application/external-auth.service';
 import { AuthController, DiscordCallbackQueryDto, SessionCookieName } from './auth.controller';
 
@@ -32,8 +33,8 @@ type ExternalAuthControllerService = Pick<
   | 'discordCallback'
   | 'listProviderIdentities'
   | 'telegramBotLink'
+  | 'telegramOidcSession'
   | 'telegramTma'
-  | 'telegramWebLogin'
   | 'unlinkProviderIdentity'
 >;
 
@@ -90,8 +91,8 @@ function createExternalAuthService(
   overrides: Partial<ExternalAuthControllerService> = {},
 ): ExternalAuthControllerService {
   const service: ExternalAuthControllerService = {
-    telegramWebLogin: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
     telegramTma: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
+    telegramOidcSession: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
     telegramBotLink: vi.fn(() => Promise.resolve({ status: 'linked', identity: { id: 'telegram-id' } })),
     createDiscordAuthorizationRequest: vi.fn(() => ({
       authorizationUrl: 'https://discord.example.test/oauth',
@@ -150,8 +151,21 @@ function createRequest(
 function toController(
   service: AuthControllerService,
   externalAuth: ExternalAuthControllerService = createExternalAuthService(),
+  betterAuthTelegramSession: Pick<BetterAuthTelegramSessionService, 'requireTelegramProfile'> = {
+    requireTelegramProfile: vi.fn(() =>
+      Promise.resolve({
+        avatarUrl: 'https://cdn.example.test/ada.png',
+        displayName: 'Ada Lovelace',
+        providerSubject: '777',
+      }),
+    ),
+  },
 ): AuthController {
-  return new AuthController(service as AuthService, externalAuth as ExternalAuthService);
+  return new AuthController(
+    service as AuthService,
+    externalAuth as ExternalAuthService,
+    betterAuthTelegramSession as BetterAuthTelegramSessionService,
+  );
 }
 
 describe('AuthController', () => {
@@ -370,24 +384,38 @@ describe('AuthController', () => {
     });
     expect(refreshFixture.session.regenerate).toHaveBeenCalledOnce();
 
-    const webFixture = createRequest(principal);
-    delete webFixture.request.user;
-    await expect(
-      controller.telegramWebLogin({ payload: { id: 1, hash: 'hash', auth_date: 1 } }, webFixture.request),
-    ).resolves.toMatchObject({ data: { status: 'authenticated' } });
-    expect(externalAuth.telegramWebLogin).toHaveBeenCalledWith(expect.objectContaining({ principal }));
-    await expect(
-      controller.telegramWebLogin({ payload: { id: 3, hash: 'hash', auth_date: 1 } }, createRequest().request),
-    ).resolves.toMatchObject({ data: { status: 'authenticated' } });
-    await expect(
-      controller.telegramWebLogin({ payload: { id: 2, hash: 'hash', auth_date: 1 } }, createRequest(principal).request),
-    ).resolves.toMatchObject({ data: { status: 'authenticated' } });
-
     const tmaFixture = createRequest();
     await expect(controller.telegramTma({ initData: 'signed-init-data' }, tmaFixture.request)).resolves.toMatchObject({
       data: { status: 'authenticated' },
     });
-    expect(externalAuth.telegramTma).toHaveBeenCalledWith(expect.objectContaining({ principal: null }));
+    expect(externalAuth.telegramTma).toHaveBeenCalledWith(
+      expect.objectContaining({ betterAuthProviderSubject: '777', principal: null }),
+    );
+
+    const oidcSession = {
+      requireTelegramProfile: vi.fn(() =>
+        Promise.resolve({
+          avatarUrl: 'https://cdn.example.test/ada.png',
+          displayName: 'Ada Lovelace',
+          providerSubject: '777',
+        }),
+      ),
+    };
+    const oidcController = toController(service, externalAuth, oidcSession);
+    const oidcFixture = createRequest();
+    oidcFixture.request.headers = { cookie: 'better-auth.session_token=signed-session' };
+    await expect(oidcController.telegramOidcSession({}, oidcFixture.request)).resolves.toMatchObject({
+      data: { status: 'authenticated' },
+    });
+    expect(oidcSession.requireTelegramProfile).toHaveBeenCalledWith(oidcFixture.request.headers);
+    expect(externalAuth.telegramOidcSession).toHaveBeenCalledWith({
+      principal: null,
+      profile: {
+        avatarUrl: 'https://cdn.example.test/ada.png',
+        displayName: 'Ada Lovelace',
+        providerSubject: '777',
+      },
+    });
 
     await expect(
       controller.telegramBotLink({

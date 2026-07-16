@@ -32,6 +32,8 @@ config:
   authJwtIssuer: https://auth-app-api.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
+  betterAuthUrl: https://user-app.example.com
+  betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
   authTokenCleanupEnabled: 'true'
   authTokenCleanupIntervalMs: '3600000'
   authTokenCleanupRunOnStart: 'true'
@@ -43,6 +45,11 @@ config:
   rateLimitMax: '100'
   redisUrl: redis://redis-master.databases.svc.cluster.local:6379/0
   redisKeyPrefix: 'nrb:'
+  authTelegramEnabled: 'false'
+  telegramTmaMaxAgeSeconds: '300'
+  telegramOidcEnabled: 'false'
+  telegramOidcClientId: ''
+  telegramOidcScopes: openid profile
 
 postgresql:
   host: postgresql-rw.databases.svc.cluster.local

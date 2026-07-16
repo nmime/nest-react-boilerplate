@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { AuthPage } from '../../pages/auth';
 import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
+import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
 import { ProfilePage } from '../../pages/profile';
 import { SettingsPage } from '../../pages/settings';
 import { TmaPage } from '../../pages/tma';
@@ -67,7 +68,11 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
       { href: '/', isCurrent: route === '/', label: t('user.nav.home') },
       {
         href: '/profile',
-        isCurrent: route === '/profile' || route === '/auth' || route === '/auth/discord/callback',
+        isCurrent:
+          route === '/profile' ||
+          route === '/auth' ||
+          route === '/auth/discord/callback' ||
+          route === '/auth/telegram/callback',
         label: t('user.nav.profile'),
         variant: 'secondary' as const,
       },
@@ -129,6 +134,10 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
   const renderRoute = () => {
     if (route === '/auth/discord/callback') {
       return <AuthDiscordCallbackPage navigate={navigate} />;
+    }
+
+    if (route === '/auth/telegram/callback') {
+      return <AuthTelegramCallbackPage navigate={navigate} />;
     }
 
     if (route === '/auth') {

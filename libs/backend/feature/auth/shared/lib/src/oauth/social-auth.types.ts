@@ -11,7 +11,7 @@ export const isAuthProvider = createIsEnum(AuthProvider);
 
 export enum AuthProviderChannel {
   Password = 'password',
-  TelegramWebLogin = 'telegram_web_login',
+  TelegramOidc = 'telegram_oidc',
   TelegramTma = 'telegram_tma',
   TelegramBot = 'telegram_bot',
   DiscordOauth = 'discord_oauth',
@@ -25,7 +25,7 @@ export const externalAuthProviders = [AuthProvider.Telegram, AuthProvider.Discor
 export type ExternalAuthProvider = (typeof externalAuthProviders)[number];
 
 export const externalAuthProviderChannels = [
-  AuthProviderChannel.TelegramWebLogin,
+  AuthProviderChannel.TelegramOidc,
   AuthProviderChannel.TelegramTma,
   AuthProviderChannel.TelegramBot,
   AuthProviderChannel.DiscordOauth,

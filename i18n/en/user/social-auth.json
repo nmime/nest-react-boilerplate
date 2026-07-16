@@ -32,5 +32,10 @@
   "auth.social.discord.callback.loading": "Waiting for Discord confirmation.",
   "auth.social.discord.callback.success": "Discord sign-in completed.",
   "auth.social.discord.callback.error": "The Discord response could not be verified.",
-  "auth.social.discord.callback.missingState": "Discord did not return the required sign-in state. Start again."
+  "auth.social.discord.callback.missingState": "Discord did not return the required sign-in state. Start again.",
+  "auth.social.telegram.callback.title": "Finishing Telegram sign-in",
+  "auth.social.telegram.callback.loading": "Verifying the Telegram session.",
+  "auth.social.telegram.callback.success": "Telegram sign-in completed.",
+  "auth.social.telegram.callback.error": "The Telegram session could not be verified.",
+  "auth.social.telegram.callback.providerError": "Telegram did not complete sign-in. Start again."
 }

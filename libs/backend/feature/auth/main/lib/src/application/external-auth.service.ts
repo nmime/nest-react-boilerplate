@@ -47,8 +47,8 @@ import type {
   ExternalAuthLoginResult,
   ExternalAuthSessionClaims,
   TelegramBotLinkInput,
+  TelegramOidcSessionInput,
   TelegramTmaInput,
-  TelegramWebLoginInput,
 } from './type/external-auth.type';
 import type { StoredDiscordState, VerifiedExternalProfile } from './type/external-auth-internal.type';
 import {
@@ -60,15 +60,12 @@ import {
   requireEnv,
 } from './util/external-auth.util';
 import { assertReturnUrlAllowed } from './util/return-url.util';
-import { verifyTelegramWebLoginPayload } from './util/telegram-signature.util';
 import { createDiscordProvider, fetchDiscordUser } from './factory/discord-provider.factory';
 import { profileToIdentityInput, toIdentityView } from './mapper/external-auth.mapper';
 
-// verifyTelegramWebLoginPayload and the external-auth I/O interfaces were
-// decomposed into role-based sibling files; they are re-exported here so the
-// application barrel stays stable.
+// External-auth I/O interfaces are decomposed into role-based sibling files;
+// they are re-exported here so the application barrel stays stable.
 export * from './type/external-auth.type';
-export * from './util/telegram-signature.util';
 
 @Injectable()
 export class ExternalAuthService {
@@ -85,20 +82,6 @@ export class ExternalAuthService {
     private readonly social: SocialAuthStore = new InMemorySocialAuthStore(),
   ) {}
 
-  async telegramWebLogin(input: TelegramWebLoginInput): Promise<ExternalAuthLoginResult> {
-    assertProviderEnabled(AuthProvider.Telegram);
-    const botToken = requireEnv('TELEGRAM_BOT_TOKEN', 'provider_not_configured');
-    const profile = verifyTelegramWebLoginPayload(input.payload, botToken);
-    return this.resolveVerifiedProfile({
-      tenantId: parseTenantId(input.tenantId),
-      intent: input.intent ?? ExternalAuthIntent.Login,
-      linkToken: input.linkToken,
-      returnUrl: input.returnUrl,
-      principal: input.principal,
-      profile,
-    });
-  }
-
   async telegramTma(input: TelegramTmaInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
     const botToken = requireEnv('TELEGRAM_BOT_TOKEN', 'provider_not_configured');
@@ -114,6 +97,10 @@ export class ExternalAuthService {
       throw new BadRequestException('invalid_signature');
     }
     const user = initData.user;
+    const providerSubject = String(user.id);
+    if (providerSubject !== input.betterAuthProviderSubject) {
+      throw new UnauthorizedException('telegram_identity_mismatch');
+    }
     const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || null;
     return this.resolveVerifiedProfile({
       tenantId: parseTenantId(input.tenantId),
@@ -124,7 +111,7 @@ export class ExternalAuthService {
       profile: {
         provider: AuthProvider.Telegram,
         channel: AuthProviderChannel.TelegramTma,
-        providerSubject: String(user.id),
+        providerSubject,
         displayName,
         username: user.username ?? null,
         avatarUrl: user.photo_url ?? null,
@@ -133,6 +120,25 @@ export class ExternalAuthService {
           source: 'telegram_tma',
           startParam: initData.start_param ?? null,
         },
+      },
+    });
+  }
+
+  async telegramOidcSession(input: TelegramOidcSessionInput): Promise<ExternalAuthLoginResult> {
+    assertProviderEnabled(AuthProvider.Telegram);
+    return this.resolveVerifiedProfile({
+      tenantId: parseTenantId(input.tenantId),
+      intent: input.intent ?? ExternalAuthIntent.Login,
+      linkToken: input.linkToken,
+      returnUrl: input.returnUrl,
+      principal: input.principal,
+      profile: {
+        provider: AuthProvider.Telegram,
+        channel: AuthProviderChannel.TelegramOidc,
+        providerSubject: input.profile.providerSubject,
+        displayName: input.profile.displayName,
+        avatarUrl: input.profile.avatarUrl,
+        metadata: { source: 'telegram_oidc' },
       },
     });
   }
@@ -366,7 +372,7 @@ export class ExternalAuthService {
       };
     }
 
-    if (process.env.EXTERNAL_AUTH_AUTO_PROVISION === 'false') {
+    if ((process.env.EXTERNAL_AUTH_AUTO_PROVISION ?? process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED) === 'false') {
       return {
         status: 'needs_link',
         code: 'needs_link',

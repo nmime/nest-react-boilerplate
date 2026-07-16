@@ -20,6 +20,16 @@ x-backend-env: &backend-env
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-nest-react-boilerplate}
   AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
   AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-better-auth-secret-change-me-32-chars}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3003}
+  BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-http://localhost:4201}
+  AUTH_TELEGRAM_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}
+  TELEGRAM_OIDC_ENABLED: ${TELEGRAM_OIDC_ENABLED:-false}
+  TELEGRAM_OIDC_CLIENT_ID: ${TELEGRAM_OIDC_CLIENT_ID:-}
+  TELEGRAM_OIDC_CLIENT_SECRET: ${TELEGRAM_OIDC_CLIENT_SECRET:-}
+  TELEGRAM_OIDC_SCOPES: ${TELEGRAM_OIDC_SCOPES:-openid profile}
   ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
   ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-false}
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
@@ -261,6 +271,7 @@ services:
         NX_PROJECT: admin-app
         FRONTEND_OUTPUT: dist/apps/frontend/admin
         VITE_API_BASE_URL_MODE: same-origin
+        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     restart: unless-stopped
     depends_on:
       admin-app-api:
@@ -284,6 +295,7 @@ services:
         NX_PROJECT: user-app
         FRONTEND_OUTPUT: dist/apps/frontend/app
         VITE_API_BASE_URL_MODE: same-origin
+        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     restart: unless-stopped
     depends_on:
       auth-app-api:

@@ -2,6 +2,7 @@ import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runt
 import { useAuthSessionFlow } from '../../../features/auth';
 import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
 import { UiSection } from '../../../shared/ui';
+import { isTelegramAuthEnabled } from '../../../shared/config';
 import { AuthPanel } from '../../../widgets/auth-panel';
 import { ProfileStatusCard } from '../../../widgets/profile-status';
 
@@ -44,12 +45,13 @@ export const AuthPage = observer(function AuthPage({
         socialAuthSlot={
           <SocialAuthButtons
             isDiscordPending={socialAuth.isDiscordPending}
-            isTelegramPending={socialAuth.isTelegramTmaPending}
+            isTelegramPending={socialAuth.isTelegramOidcPending}
+            isTelegramEnabled={isTelegramAuthEnabled()}
             onDiscord={(intent) => {
               socialAuth.continueWithDiscord({ intent });
             }}
-            onTelegramTma={() => {
-              navigate('/tma/auth', { replace: false });
+            onTelegram={(intent) => {
+              socialAuth.continueWithTelegram({ intent, returnUrl: returnUrl ?? undefined });
             }}
             t={t}
           />

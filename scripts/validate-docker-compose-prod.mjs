@@ -9,6 +9,7 @@ const has = (text, needle, label = needle) =>
 const prodCompose = read('docker/docker-compose.prod.yml');
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
+const telegramAuthCompose = read('docker/docker-compose.prod.telegram.yml');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
@@ -74,6 +75,16 @@ has(bundledDbCompose, '\n  postgres:\n', 'bundled-db overlay defines PostgreSQL'
 has(bundledDbCompose, 'postgres_password:', 'bundled-db overlay defines its password secret');
 assert.ok(!externalDbCompose.includes('\n  postgres:\n'), 'external-db overlay must not define PostgreSQL');
 has(externalDbCompose, 'database_url:', 'external-db overlay defines its URL secret');
+for (const expected of [
+  'AUTH_TELEGRAM_ENABLED:',
+  'TELEGRAM_OIDC_ENABLED:',
+  'TELEGRAM_OIDC_CLIENT_ID:',
+  'TELEGRAM_TMA_MAX_AGE_SECONDS:',
+  '- telegram_bot_token',
+  '- telegram_oidc_client_secret',
+]) {
+  has(telegramAuthCompose, expected, `Telegram auth overlay ${expected}`);
+}
 
 for (const service of [
   'migrator',
@@ -97,9 +108,11 @@ for (const service of [
 
 for (const expected of [
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
+  'BETTER_AUTH_SECRET_FILE=./secrets/better_auth_secret.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
   'DATABASE_URL_FILE=./secrets/database_url.txt',
   'TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt',
+  'TELEGRAM_OIDC_CLIENT_SECRET_FILE=./secrets/telegram_oidc_client_secret.txt',
   'TELEGRAM_BOT_WEBHOOK_SECRET_FILE=./secrets/telegram_bot_webhook_secret.txt',
   'DISCORD_BOT_TOKEN_FILE=./secrets/discord_bot_token.txt',
   'DISCORD_PUBLIC_KEY_FILE=./secrets/discord_public_key.txt',
@@ -151,6 +164,7 @@ for (const profile of ['profiles: [discord]', 'profiles: [telegram]']) {
 for (const expected of [
   'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
   'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
+  'VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}',
 ]) {
   has(prodCompose, expected, `production Compose frontend build arg ${expected}`);
 }
@@ -158,6 +172,8 @@ for (const expected of [
 for (const expected of [
   'pnpm run docker:prod:bundled-db:config',
   'pnpm run docker:prod:external-db:config',
+  'docker/docker-compose.prod.telegram.yml',
+  'user-app.example.com/api/auth/oauth2/callback/telegram',
   'node scripts/validate-docker-compose-prod.mjs',
   'latest',
   'full immutable tag',

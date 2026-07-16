@@ -472,6 +472,7 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
     'exact /profile SPA route precedes profile API prefix',
   );
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
+  has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
   for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
@@ -484,7 +485,23 @@ if (validateHelmStatic) {
   assertNginxRoutes(read('.helm/templates/configmap.yaml'), { helm: true });
 
   const helmValues = read('.helm/values.yaml');
+  const helmConfigMap = read('.helm/templates/configmap.yaml');
+  const helmSecret = read('.helm/templates/secret.yaml');
   has(helmValues, 'listenPort: 8080', 'Helm frontend listenPort default');
+  for (const expected of [
+    'BETTER_AUTH_URL:',
+    'BETTER_AUTH_TRUSTED_ORIGINS:',
+    'AUTH_TELEGRAM_ENABLED:',
+    'TELEGRAM_TMA_MAX_AGE_SECONDS:',
+    'TELEGRAM_OIDC_ENABLED:',
+    'TELEGRAM_OIDC_CLIENT_ID:',
+    'TELEGRAM_OIDC_SCOPES:',
+  ]) {
+    has(helmConfigMap, expected, `Helm Telegram/Better Auth ConfigMap ${expected}`);
+  }
+  for (const expected of ['BETTER_AUTH_SECRET:', 'TELEGRAM_BOT_TOKEN:', 'TELEGRAM_OIDC_CLIENT_SECRET:']) {
+    has(helmSecret, expected, `Helm Telegram/Better Auth Secret ${expected}`);
+  }
   for (const app of ['authAppApi', 'userAppApi', 'adminAppApi', 'siteApp']) {
     const appBlock = yamlMapEntry(helmValues, app);
     has(appBlock, 'port: 80', `${app} container port`);
@@ -517,6 +534,11 @@ if (validateHelmStatic) {
 
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
+  has(
+    releaseWorkflow,
+    "VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
+    'release user-app supports an explicit Telegram auth build flag',
+  );
   const frontendDomainAssignments = [
     ['landingApp', 'landing-app', 'example.com'],
     ['siteApp', 'site-app', 'site-app.example.com'],

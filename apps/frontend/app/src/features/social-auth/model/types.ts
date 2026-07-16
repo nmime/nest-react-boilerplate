@@ -7,6 +7,12 @@ export enum SocialAuthProvider {
 
 export type SocialAuthIntent = 'login' | 'link';
 
+export interface SocialAuthRequestInput {
+  intent?: SocialAuthIntent;
+  linkToken?: string;
+  returnUrl?: string;
+}
+
 export type ExternalAuthResult = authApi.AuthControllerTelegramTmaData;
 
 export interface ProviderIdentity {

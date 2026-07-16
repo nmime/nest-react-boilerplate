@@ -10,9 +10,11 @@ const read = (path) => readFileSync(join(rootDir, path), 'utf8');
 const basePath = 'docker/docker-compose.prod.yml';
 const bundledPath = 'docker/docker-compose.prod.bundled-db.yml';
 const externalPath = 'docker/docker-compose.prod.external-db.yml';
+const telegramPath = 'docker/docker-compose.prod.telegram.yml';
 const base = read(basePath);
 const bundled = read(bundledPath);
 const external = read(externalPath);
+const telegram = read(telegramPath);
 const secretEntrypoint = read('docker/secret-entrypoint.sh');
 const databaseConsumers = [
   'migrate',
@@ -42,6 +44,18 @@ assert.ok(bundled.includes('postgres_password:'), 'Bundled-db overlay must defin
 assert.ok(!external.includes('\n  postgres:\n'), 'External-db overlay must not define PostgreSQL.');
 assert.ok(external.includes('database_url:'), 'External-db overlay must define the database URL secret.');
 assert.ok(external.includes('DATABASE_URL_FILE'), 'External-db overlay must expose a configurable secret-file path.');
+assert.ok(telegram.includes('AUTH_TELEGRAM_ENABLED'), 'Telegram overlay must enable tenant Telegram auth.');
+assert.ok(telegram.includes('TELEGRAM_OIDC_ENABLED'), 'Telegram overlay must enable Better Auth Telegram OIDC.');
+assert.ok(telegram.includes('telegram_bot_token'), 'Telegram overlay must mount the TMA signature secret.');
+assert.ok(telegram.includes('telegram_oidc_client_secret'), 'Telegram overlay must mount the OIDC client secret.');
+assert.ok(
+  secretEntrypoint.includes('load_secret BETTER_AUTH_SECRET /run/secrets/better_auth_secret'),
+  'The production entrypoint must load the Better Auth secret.',
+);
+assert.ok(
+  secretEntrypoint.includes('load_secret TELEGRAM_OIDC_CLIENT_SECRET /run/secrets/telegram_oidc_client_secret'),
+  'The production entrypoint must load the Telegram OIDC client secret.',
+);
 for (const service of databaseConsumers) {
   assert.ok(bundled.includes(`  ${service}:`), `Bundled-db overlay must wire ${service}.`);
   assert.ok(external.includes(`  ${service}:`), `External-db overlay must wire ${service}.`);
@@ -57,23 +71,12 @@ if (!dockerAvailable) {
   process.exit(0);
 }
 
-const render = (overlayPath) => {
+const render = (overlayPath, extraOverlayPath) => {
+  const composeFiles = ['-f', basePath, '-f', overlayPath];
+  if (extraOverlayPath) composeFiles.push('-f', extraOverlayPath);
   const result = spawnSync(
     'docker',
-    [
-      'compose',
-      '-f',
-      basePath,
-      '-f',
-      overlayPath,
-      '--profile',
-      'discord',
-      '--profile',
-      'telegram',
-      'config',
-      '--format',
-      'json',
-    ],
+    ['compose', ...composeFiles, '--profile', 'discord', '--profile', 'telegram', 'config', '--format', 'json'],
     {
       cwd: rootDir,
       encoding: 'utf8',
@@ -81,6 +84,7 @@ const render = (overlayPath) => {
         ...process.env,
         CORS_ORIGINS: 'https://example.com',
         IMAGE_TAG: 'sha-0123456789abcdef0123456789abcdef01234567',
+        TELEGRAM_OIDC_CLIENT_ID: '123456789',
       },
     },
   );
@@ -96,6 +100,22 @@ const networkNames = (service) =>
   Array.isArray(service.networks) ? service.networks : Object.keys(service.networks ?? {});
 const bundledModel = render(bundledPath);
 const externalModel = render(externalPath);
+const bundledTelegramModel = render(bundledPath, telegramPath);
+const externalTelegramModel = render(externalPath, telegramPath);
+
+for (const model of [bundledTelegramModel, externalTelegramModel]) {
+  const auth = model.services['auth-app-api'];
+  assert.equal(auth.environment.AUTH_TELEGRAM_ENABLED, 'true');
+  assert.equal(auth.environment.TELEGRAM_OIDC_ENABLED, 'true');
+  assert.equal(auth.environment.TELEGRAM_OIDC_CLIENT_ID, '123456789');
+  assert.ok(secretNames(auth).includes('better_auth_secret'));
+  assert.ok(secretNames(auth).includes('telegram_bot_token'));
+  assert.ok(secretNames(auth).includes('telegram_oidc_client_secret'));
+}
+assert.ok(secretNames(bundledTelegramModel.services['auth-app-api']).includes('postgres_password'));
+assert.ok(bundledTelegramModel.services['auth-app-api'].depends_on?.postgres);
+assert.ok(secretNames(externalTelegramModel.services['auth-app-api']).includes('database_url'));
+assert.ok(!externalTelegramModel.services['auth-app-api'].depends_on?.postgres);
 
 assert.ok(bundledModel.services.postgres, 'Bundled-db render must include PostgreSQL.');
 assert.ok(!externalModel.services.postgres, 'External-db render must exclude PostgreSQL.');

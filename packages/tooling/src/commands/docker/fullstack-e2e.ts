@@ -3,7 +3,7 @@ import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 
 const generatedPortBase =
   Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? "", 10) ||
-  32_000 + (process.pid % 10_000);
+  40_000 + (process.pid % 8_000);
 const composeProjectName =
   process.env.COMPOSE_PROJECT_NAME ?? `nrbfullstack${process.pid}`;
 

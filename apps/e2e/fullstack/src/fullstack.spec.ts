@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { sign } from '@tma.js/init-data-node';
 import { composeEnv, urls } from './compose';
 
 interface HealthCheckResponse {
@@ -16,7 +17,18 @@ interface HealthResponse {
 interface SessionResponse {
   data: {
     accessToken: string;
-    user: { email: string; roles: string[]; permissions: string[] };
+    user: { email: string | null; roles: string[]; permissions: string[] };
+  };
+}
+
+interface BetterAuthSessionResponse {
+  session: { token: string };
+  user: { email: string; name: string };
+}
+
+interface ExternalAuthSessionResponse {
+  data: {
+    session: SessionResponse['data'];
   };
 }
 
@@ -185,6 +197,84 @@ test('registered users can log in through the user frontend same-origin proxies'
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
   await expect(page).not.toHaveURL(/token=/u);
+});
+
+test('Telegram TMA establishes Better Auth and application sessions through the same-origin proxy', async ({
+  request,
+}) => {
+  const telegramUserId = 9_000_000 + (Date.now() % 999_999);
+  const initData = sign(
+    {
+      query_id: `fullstack-${telegramUserId}`,
+      start_param: 'fullstack-e2e',
+      user: {
+        allows_write_to_pm: true,
+        first_name: 'Fullstack',
+        id: telegramUserId,
+        language_code: 'en',
+        last_name: 'Telegram',
+        username: `fullstack_${telegramUserId}`,
+      },
+    },
+    composeEnv.TELEGRAM_BOT_TOKEN,
+    new Date(),
+  );
+
+  const betterAuthBypassResponse = await request.post(`${urls.userApp}/auth/telegram/tma`, {
+    data: { initData },
+  });
+  expect(betterAuthBypassResponse.status()).toBe(401);
+
+  const tamperedResponse = await request.post(`${urls.userApp}/api/auth/telegram/tma`, {
+    data: { initData: initData.replace('Fullstack', 'Mallory') },
+  });
+  expect(tamperedResponse.status()).toBe(401);
+
+  const betterAuthResponse = await request.post(`${urls.userApp}/api/auth/telegram/tma`, {
+    data: { initData },
+  });
+  expect(betterAuthResponse.status()).toBe(200);
+  await expect(betterAuthResponse.json()).resolves.toMatchObject({
+    identity: {
+      channel: 'telegram_tma',
+      provider: 'telegram',
+      providerSubject: String(telegramUserId),
+    },
+    status: 'authenticated',
+  });
+
+  const betterAuthSessionResponse = await request.get(`${urls.userApp}/api/auth/get-session`);
+  expect(betterAuthSessionResponse.status()).toBe(200);
+  const betterAuthSession = (await betterAuthSessionResponse.json()) as BetterAuthSessionResponse;
+  expect(betterAuthSession).toMatchObject({
+    user: {
+      email: `telegram-${telegramUserId}@telegram.invalid`,
+      name: 'Fullstack Telegram',
+    },
+  });
+  expect(betterAuthSession.session.token).toBeTruthy();
+
+  const applicationAuthResponse = await request.post(`${urls.userApp}/auth/telegram/tma`, {
+    data: { initData },
+  });
+  expect(successfulAuthStatuses).toContain(applicationAuthResponse.status());
+  const applicationAuth = (await applicationAuthResponse.json()) as ExternalAuthSessionResponse;
+  expect(applicationAuth.data.session.user.email).toBeNull();
+  expect(applicationAuth.data.session.accessToken).toBeTruthy();
+
+  const identitiesResponse = await request.get(`${urls.userApp}/auth/provider-identities`, {
+    headers: { Authorization: bearerAuthorization(applicationAuth.data.session.accessToken) },
+  });
+  expect(identitiesResponse.status()).toBe(200);
+  await expect(identitiesResponse.json()).resolves.toMatchObject({
+    data: [
+      {
+        channel: 'telegram_tma',
+        provider: 'telegram',
+        providerSubject: String(telegramUserId),
+      },
+    ],
+  });
 });
 
 test('admin API accepts bearer tokens while production admin frontend ignores URL tokens', async ({ page }) => {

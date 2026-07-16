@@ -5,6 +5,17 @@ import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 export const multiTenantPlugin: BetterAuthPlugin = {
   id: 'multi-tenant',
   init: () => {},
+  schema: {
+    user: {
+      fields: {
+        tenantId: {
+          type: 'string',
+          defaultValue: DefaultAuthTenantId,
+          input: false,
+        },
+      },
+    },
+  },
   hooks: {
     after: [
       {

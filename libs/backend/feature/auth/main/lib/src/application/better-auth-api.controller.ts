@@ -53,13 +53,11 @@ export class BetterAuthApiController {
       // Forward status
       res.status(baResponse.status);
 
-      // Forward set-cookie headers
-      for (const setCookie of baResponse.headers.getSetCookie()) {
-        try {
-          res.header('set-cookie', setCookie);
-        } catch {
-          /* skip malformed */
-        }
+      // Forward all cookies as one Fastify header value. Repeated calls to
+      // reply.header can overwrite earlier cookies on real adapters.
+      const setCookies = baResponse.headers.getSetCookie();
+      if (setCookies.length > 0) {
+        res.header('set-cookie', setCookies);
       }
 
       // Forward other headers
@@ -101,7 +99,7 @@ export class BetterAuthApiController {
         500;
       BetterAuthApiController.log.error(`${req.method} ${req.url} error: ${err.message}`, err.stack);
       res.status(status).send({
-        message: err.message ?? 'Internal server error',
+        message: status >= 500 ? 'Internal server error' : err.message,
       });
     }
   }

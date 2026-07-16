@@ -8,7 +8,7 @@ describe('external auth mappers', () => {
       profileToIdentityInput(
         {
           provider: AuthProvider.Telegram,
-          channel: AuthProviderChannel.TelegramWebLogin,
+          channel: AuthProviderChannel.TelegramOidc,
           providerSubject: '42',
         },
         DefaultAuthTenantId,
@@ -31,7 +31,7 @@ describe('external auth mappers', () => {
         userId: 'user-id',
         provider: AuthProvider.Telegram,
         providerSubject: '42',
-        channel: AuthProviderChannel.TelegramWebLogin,
+        channel: AuthProviderChannel.TelegramOidc,
         email: null,
         emailVerified: null,
         displayName: null,
@@ -52,7 +52,7 @@ describe('external auth mappers', () => {
         userId: 'user-id',
         provider: AuthProvider.Telegram,
         providerSubject: '43',
-        channel: AuthProviderChannel.TelegramWebLogin,
+        channel: AuthProviderChannel.TelegramOidc,
         email: null,
         emailVerified: null,
         displayName: null,

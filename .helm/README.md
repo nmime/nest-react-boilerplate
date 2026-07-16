@@ -14,16 +14,22 @@ routes.
 ## Production contract
 
 - Build and publish immutable images for each service and the migrator. The release workflow pushes `sha-<git-sha>` GHCR tags, emits SBOM/provenance attestations, scans with Trivy, and signs digests with cosign keyless GitHub OIDC.
+- Telegram's user-app entry is a Vite build-time feature. Set the repository
+  Actions variable `VITE_TELEGRAM_AUTH_ENABLED=true` before publishing the
+  release image used by a Telegram-enabled Helm environment; runtime Helm
+  values cannot retrofit a disabled button into an already-built bundle.
 - Create a Kubernetes Secret outside the chart and set `secrets.existingSecret`.
-  The Secret must provide `AUTH_JWT_SECRET` and `DATABASE_URL`. When enabling an optional bot API,
+  The Secret must provide `AUTH_JWT_SECRET`, `BETTER_AUTH_SECRET`, and `DATABASE_URL`. When enabling an optional bot API,
   include its documented Telegram or Discord runtime values in the same Secret.
-  Telegram requires `TELEGRAM_BOT_TOKEN` and
-  `TELEGRAM_BOT_WEBHOOK_SECRET`; the chart ConfigMap supplies the webhook URL,
-  canonical Mini App URL, webhook mode, and enabled menu-setup defaults.
+  Telegram bot/TMA requires `TELEGRAM_BOT_TOKEN`; Telegram OIDC additionally
+  requires `TELEGRAM_OIDC_CLIENT_SECRET`; webhook mode requires
+  `TELEGRAM_BOT_WEBHOOK_SECRET`. Set the non-secret
+  `config.telegramOidcClientId`, enable flags, Better Auth public URL/trusted
+  origins, webhook URL, and canonical Mini App URL in values.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
 - APIs probe `/live` and `/ready`; product frontends are deployable by default, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.
-- Frontend nginx supports same-origin API proxying for `/auth/*`, `/profile/*`,
+- Frontend nginx supports same-origin API proxying for `/api/auth/*`, `/auth/*`, `/profile/*`,
   and `/admin/*` while serving `index.html` for HTML SPA navigations such as
   `/admin/users/:id`. Keep split-host and path-based routing choices aligned
   with `docs/frontend-deployment-topology.md`.

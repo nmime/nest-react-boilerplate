@@ -11,6 +11,8 @@ data:
   AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
   AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
   AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
+  BETTER_AUTH_URL: {{ .Values.config.betterAuthUrl | quote }}
+  BETTER_AUTH_TRUSTED_ORIGINS: {{ .Values.config.betterAuthTrustedOrigins | quote }}
   AUTH_TOKEN_CLEANUP_ENABLED: {{ .Values.config.authTokenCleanupEnabled | quote }}
   AUTH_TOKEN_CLEANUP_INTERVAL_MS: {{ .Values.config.authTokenCleanupIntervalMs | quote }}
   AUTH_TOKEN_CLEANUP_RUN_ON_START: {{ .Values.config.authTokenCleanupRunOnStart | quote }}
@@ -21,6 +23,11 @@ data:
   RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
   RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
   REDIS_KEY_PREFIX: {{ .Values.config.redisKeyPrefix | quote }}
+  AUTH_TELEGRAM_ENABLED: {{ .Values.config.authTelegramEnabled | quote }}
+  TELEGRAM_TMA_MAX_AGE_SECONDS: {{ .Values.config.telegramTmaMaxAgeSeconds | quote }}
+  TELEGRAM_OIDC_ENABLED: {{ .Values.config.telegramOidcEnabled | quote }}
+  TELEGRAM_OIDC_CLIENT_ID: {{ .Values.config.telegramOidcClientId | quote }}
+  TELEGRAM_OIDC_SCOPES: {{ .Values.config.telegramOidcScopes | quote }}
   TELEGRAM_BOT_MODE: {{ .Values.config.telegramBotMode | quote }}
   TELEGRAM_BOT_WEBHOOK_URL: {{ .Values.config.telegramBotWebhookUrl | quote }}
   TELEGRAM_MINI_APP_URL: {{ .Values.config.telegramMiniAppUrl | quote }}
@@ -149,6 +156,14 @@ data:
       }
 
       location ^~ /auth/docs {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
+      }
+
+      location ^~ /api/auth/ {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

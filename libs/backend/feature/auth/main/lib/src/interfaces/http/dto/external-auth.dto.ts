@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
   ExternalAuthIntent,
   externalAuthIntents,
@@ -30,17 +30,13 @@ export class ExternalAuthIntentDto {
   returnUrl?: string;
 }
 
-export class TelegramWebLoginDto extends ExternalAuthIntentDto {
-  @ApiProperty({ type: 'object', additionalProperties: true })
-  @IsObject()
-  payload!: Record<string, string | number | boolean | null | undefined>;
-}
-
 export class TelegramTmaDto extends ExternalAuthIntentDto {
   @ApiProperty({ writeOnly: true })
   @IsString()
   initData!: string;
 }
+
+export class TelegramOidcSessionDto extends ExternalAuthIntentDto {}
 
 export class TelegramBotLinkDto {
   @ApiPropertyOptional({ format: 'uuid' })

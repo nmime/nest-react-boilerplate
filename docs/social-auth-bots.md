@@ -1,36 +1,56 @@
 # Social auth, Telegram Mini Apps, and bots
 
-This document records the social-auth and bot integration surface for Telegram, Telegram Mini Apps (TMA), and Discord. The user frontend includes a production Mini App entry at `/telegram-mini-app` and keeps the legacy `/tma` and `/tma/auth` aliases for existing bot links.
+This document records the implemented social-auth and bot integration surface for Telegram, Telegram Mini Apps (TMA), and Discord. The user frontend includes a production Mini App entry at `/telegram-mini-app` and keeps the `/tma` and `/tma/auth` aliases for existing bot links.
 
 ## Architecture
 
-The planned architecture keeps provider verification and account linking in the auth boundary while keeping bot transports thin:
+The architecture keeps provider verification and account linking in the auth boundary while keeping bot transports thin:
 
-- `auth-app-api` owns OAuth/TMA callback verification, state validation, replay protection, account-link decisions, auto-provision policy, step-up checks, and provider-token encryption.
+- `auth-app-api` owns the Better Auth OIDC callback, signed TMA validation, account-link decisions, auto-provision policy, step-up checks, and provider-token encryption.
 - Telegram bot and Discord interaction handlers should call auth/application services through explicit internal APIs or shared ports, not by reaching into persistence models directly.
 - Frontend/TMA shells should use generated API clients once contracts exist. Avoid raw endpoint paths in feature code.
 - Provider identities should be stored separately from local credentials so unlink/last-method checks can prevent account lockout.
 - User-visible text must come from root thin i18n catalogs (`i18n/en/user/social-auth.json`, `i18n/en/bots/telegram.json`, `i18n/en/bots/discord.json`, and matching `i18n/ru/**` files) through `TranslationKey` values.
 
-## Telegram web login and Telegram Mini Apps
+## Telegram OIDC and Telegram Mini Apps
 
-Use the maintained `@tma.js` stack for future Telegram Mini App client work. Deprecated Telegram Web App helper packages are intentionally banned by static checks; extend the guard tests before changing the approved SDK policy.
+Telegram web sign-in uses Telegram's current OpenID Connect authorization-code flow through Better Auth's generic OAuth provider. The provider id is `telegram`, PKCE is mandatory, and the returned ID token is verified against Telegram's issuer, audience, expiry, allowed algorithms, and JWKS before any user or account is created. Telegram currently has no UserInfo endpoint, so verified ID-token claims are mapped to the Better Auth account. Register the callback on the same public origin used for every Better Auth browser request:
+
+```text
+# Default same-origin deployment
+https://user-app.example.com/api/auth/oauth2/callback/telegram
+
+# Split-origin deployment
+https://auth-app-api.example.com/api/auth/oauth2/callback/telegram
+```
+
+The user SPA starts the flow with `POST /api/auth/sign-in/oauth2`, returns to `/auth/telegram/callback`, and calls `POST /auth/telegram/oidc/session`. The last endpoint accepts only a valid Better Auth session that contains a numeric Telegram account id, then projects that identity into the tenant/RBAC auth model and issues the application session. Link intent data stays in `sessionStorage`; it is not placed in the provider callback URL. `BETTER_AUTH_URL`, the registered Telegram callback origin, and the frontend Better Auth base must always be the same host so the state/session cookies are present on callback.
+
+Use the maintained `@tma.js` stack for Telegram Mini App client work. Deprecated Telegram Web App helper packages are intentionally banned by static checks; extend the guard tests before changing the approved SDK policy.
 
 Recommended TMA flow:
 
 1. Load TMA launch parameters with `@tma.js` in the Mini App shell.
-2. Send Telegram init data to the auth API over HTTPS.
-3. The auth API verifies the hash with the configured bot token, checks max-age and replay cache TTL, and maps the Telegram user id to a provider identity.
+2. Send only raw Telegram `initData` to `POST /api/auth/telegram/tma` over HTTPS. Better Auth validates the signature and the five-minute `auth_date` window, creates or finds the same `providerId=telegram` account used by OIDC, creates its database session, and returns its secure session cookie.
+3. Send the same raw `initData` to `POST /auth/telegram/tma`. The tenant/RBAC auth boundary validates it independently and creates the application session.
 4. If the user is signed in, offer link/unlink with step-up when required.
 5. If the user is not signed in, apply `EXTERNAL_AUTH_AUTO_PROVISION_ENABLED` before creating a local account.
 6. Return localized states using `tma.*`, `tma.deepNavigation.*`, `deepNav.*`, and `auth.social.*` keys.
 
+The frontend never trusts `initDataUnsafe` or a client-submitted Telegram profile. A Telegram ID always maps to the synthetic Better Auth email `telegram-<id>@telegram.invalid`; email matching cannot implicitly link Telegram to a password or another provider account.
+
 Important env values:
 
-- `TELEGRAM_AUTH_ENABLED`
-- `TELEGRAM_AUTH_BOT_USERNAME`
-- `TELEGRAM_AUTH_MAX_AGE_SECONDS`
-- `TELEGRAM_AUTH_REPLAY_TTL_SECONDS`
+- `AUTH_TELEGRAM_ENABLED`
+- `TELEGRAM_TMA_MAX_AGE_SECONDS` (default `300`)
+- `TELEGRAM_OIDC_ENABLED`
+- `TELEGRAM_OIDC_CLIENT_ID`
+- `TELEGRAM_OIDC_CLIENT_SECRET` or `TELEGRAM_OIDC_CLIENT_SECRET_FILE`
+- `TELEGRAM_OIDC_SCOPES` (default `openid profile`)
+- `BETTER_AUTH_SECRET` or `BETTER_AUTH_SECRET_FILE`
+- `BETTER_AUTH_URL`
+- `BETTER_AUTH_TRUSTED_ORIGINS`
+- `VITE_TELEGRAM_AUTH_ENABLED` (build-time user-app flag)
 - `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://user-app.example.com/telegram-mini-app`)
 - `TELEGRAM_WEB_APP_URL` / `TELEGRAM_TMA_URL` (backward-compatible aliases consumed by the bot resolver)
 - `TELEGRAM_LINK_TOKEN_TTL_SECONDS`
@@ -116,8 +136,8 @@ Security checklist:
 - Never commit real Telegram bot tokens, Discord bot tokens, Discord client secrets, provider encryption keys, or webhook secrets.
 - Use secret-file variants in production examples and real deployments where supported by the runtime.
 - Keep production inline secret values commented out in `.env.production.example`.
-- Enforce replay protection for Telegram init data and one-time link tokens.
-- Enforce state TTLs for OAuth/TMA flows.
+- Keep the TMA `auth_date` window short and one-time link tokens single use.
+- Keep Better Auth's OIDC state in the database and require PKCE.
 - Prevent unlinking the final sign-in method.
 - Require step-up for sensitive account-link changes after the configured age.
 - Log provider ids with care and never log provider access tokens, bot tokens, or webhook secrets.
@@ -125,7 +145,7 @@ Security checklist:
 ## Local development
 
 1. Copy `.env.local.example` to `.env.local`.
-2. Keep provider features disabled until credentials and callback URLs are configured.
+2. Keep provider features disabled until the bot token, OIDC credentials, trusted frontend origin, and callback URL are configured.
 3. For Telegram webhook testing, use a stable HTTPS tunnel and set `TELEGRAM_BOT_WEBHOOK_URL` to the tunneled callback; otherwise use polling in local-only workers.
 4. For TMA testing, set `TELEGRAM_MINI_APP_URL` to the local frontend `/telegram-mini-app` route exposed through a Telegram-compatible HTTPS tunnel. The Telegram Open App button is hidden when the configured URL is missing or fails the frontend-URL safety checks, so users get the localized bot fallback menu instead of an unsafe API/root link.
 5. For Discord interactions, set `DISCORD_INTERACTIONS_ENDPOINT` to a public HTTPS tunnel and configure the Discord application public key.
@@ -148,7 +168,7 @@ When adding runtime features, add keys to both locale catalogs and the `Translat
 
 1. Keep docs/env/i18n/static guards current with every provider flow change.
 2. Maintain backend contracts, provider persistence, TMA verification, bot adapters, and Discord OAuth callbacks in provider-owned branches.
-3. Maintain the user frontend routes for `/telegram-mini-app`, `/tma`, `/tma/auth`, `/link/telegram`, `/link/discord`, and `/auth/discord/callback` with focused regression tests.
+3. Maintain the user frontend routes for `/telegram-mini-app`, `/tma`, `/tma/auth`, `/link/telegram`, `/link/discord`, `/auth/telegram/callback`, and `/auth/discord/callback` with focused regression tests.
 4. Run local validation, CI, staged rollout, and provider-specific smoke tests before enabling production flags.
 
 ## Mini App frontend route and API URL mode
@@ -176,7 +196,7 @@ persistent chat menu button, and in-message launch buttons automatically.
 
 The Mini App frontend can be built in either API URL mode:
 
-- Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. TMA verification posts to `/auth/telegram/tma` on the frontend origin and relies on the production proxy to route it to auth API.
+- Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. Better Auth requests use `/api/auth/*`; tenant/RBAC requests use `/auth/*`. The production proxy routes both prefixes to `auth-app-api`.
 - Split-origin mode: set explicit `VITE_AUTH_API_BASE_URL` and `VITE_USER_API_BASE_URL` origins. Production builds fail closed unless explicit API origins or same-origin mode are configured.
 
 The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read unsafe client-side Telegram launch objects or trust client-provided Telegram profile data.

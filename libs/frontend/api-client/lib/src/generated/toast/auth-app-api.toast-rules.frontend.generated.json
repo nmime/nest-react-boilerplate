@@ -1353,6 +1353,90 @@
     },
     {
       "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:400:bad-request",
+      "match": {
+        "code": "bad-request",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Bad request."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:401:unauthorized",
+      "match": {
+        "code": "unauthorized",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:403:forbidden",
+      "match": {
+        "code": "forbidden",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:409:conflict",
+      "match": {
+        "code": "conflict",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:429:rate-limited",
+      "match": {
+        "code": "rate-limited",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Rate limited."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:500:internal-server-error",
+      "match": {
+        "code": "internal-server-error",
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "title": "Auth telegram Oidc Session failed: Internal server error."
+      }
+    },
+    {
+      "display": "toast",
       "id": "auth-app-api:POST:/auth/telegram/tma:400:bad-request",
       "match": {
         "code": "bad-request",
@@ -1433,90 +1517,6 @@
       "toast": {
         "category": "error",
         "title": "Auth telegram Tma failed: Internal server error."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:400:bad-request",
-      "match": {
-        "code": "bad-request",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Bad request."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:401:unauthorized",
-      "match": {
-        "code": "unauthorized",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Unauthorized."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:403:forbidden",
-      "match": {
-        "code": "forbidden",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Forbidden."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:409:conflict",
-      "match": {
-        "code": "conflict",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Conflict."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:429:rate-limited",
-      "match": {
-        "code": "rate-limited",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 429
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Rate limited."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "auth-app-api:POST:/auth/telegram/web-login:500:internal-server-error",
-      "match": {
-        "code": "internal-server-error",
-        "endpoint": "/auth/telegram/web-login",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "title": "Auth telegram Web Login failed: Internal server error."
       }
     }
   ]

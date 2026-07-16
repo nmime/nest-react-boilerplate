@@ -4,12 +4,6 @@ export const telegramClient: BetterAuthClientPlugin = {
   id: 'telegram',
   getActions: ($fetch) => ({
     telegram: {
-      webLogin: async (data: Record<string, unknown>) => {
-        return $fetch('/telegram/web-login', {
-          method: 'POST',
-          body: data,
-        });
-      },
       tmaLogin: async (data: Record<string, unknown>) => {
         return $fetch('/telegram/tma', {
           method: 'POST',

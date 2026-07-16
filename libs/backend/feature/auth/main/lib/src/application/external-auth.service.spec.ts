@@ -1,4 +1,3 @@
-import { createHash, createHmac } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import {
@@ -76,23 +75,6 @@ const authUserRecord = (
   ...overrides,
 });
 
-function signedTelegramPayload(overrides: Record<string, string | number> = {}) {
-  const payload: Record<string, string | number> = {
-    id: 42,
-    first_name: 'Ada',
-    username: 'ada',
-    auth_date: Math.floor(Date.now() / 1000),
-    ...overrides,
-  };
-  const dataCheckString = Object.entries(payload)
-    .map(([key, value]) => `${key}=${String(value)}`)
-    .sort((left, right) => left.localeCompare(right))
-    .join('\n');
-  const secret = createHash('sha256').update(botToken, 'utf8').digest();
-  payload.hash = createHmac('sha256', secret).update(dataCheckString).digest('hex');
-  return payload;
-}
-
 function createService(social = new InMemorySocialAuthStore()) {
   const users = new InMemoryAuthUserStore();
   const auth = new AuthService(users, undefined, social);
@@ -158,7 +140,6 @@ describe('ExternalAuthService', () => {
     delete process.env.AUTH_TELEGRAM_ENABLED;
     delete process.env.AUTH_DISCORD_ENABLED;
     delete process.env.AUTH_ALLOWED_RETURN_URLS;
-    delete process.env.TELEGRAM_WEB_LOGIN_MAX_AGE_SECONDS;
     delete process.env.TELEGRAM_TMA_MAX_AGE_SECONDS;
     delete process.env.AUTH_LINK_TOKEN_TTL_SECONDS;
     delete process.env.DISCORD_OAUTH_STATE_TTL_SECONDS;
@@ -194,11 +175,15 @@ describe('ExternalAuthService', () => {
     );
   });
 
-  it('verifies Telegram Web Login, auto-provisions without fake email, and emits external JWT claims', async () => {
+  it('projects a Better Auth Telegram OIDC profile and emits external JWT claims', async () => {
     const { service } = createService();
 
-    const result = await service.telegramWebLogin({
-      payload: signedTelegramPayload(),
+    const result = await service.telegramOidcSession({
+      profile: {
+        avatarUrl: 'https://cdn.example.test/ada.png',
+        displayName: 'Ada',
+        providerSubject: '42',
+      },
     });
 
     expect(result.status).toBe('authenticated');
@@ -206,7 +191,7 @@ describe('ExternalAuthService', () => {
     expect(result.identity).toMatchObject({
       provider: 'telegram',
       providerSubject: '42',
-      channel: 'telegram_web_login',
+      channel: 'telegram_oidc',
     });
     expect(
       validateBearerAuthorization(`Bearer ${result.session?.accessToken}`, {
@@ -215,25 +200,20 @@ describe('ExternalAuthService', () => {
     ).toMatchObject({
       amr: ['telegram'],
       authProvider: 'telegram',
-      authChannel: 'telegram_web_login',
+      authChannel: 'telegram_oidc',
       externalIdentityId: result.identity?.id,
     });
   });
 
-  it('rejects invalid Telegram signatures and returns needs-link when auto provision is disabled', async () => {
+  it('returns needs-link for a verified Telegram OIDC profile when auto provision is disabled', async () => {
     const { service } = createService();
 
-    await expect(
-      service.telegramWebLogin({
-        payload: { ...signedTelegramPayload(), hash: '00' },
-      }),
-    ).rejects.toThrow('invalid_signature');
-
     process.env.EXTERNAL_AUTH_AUTO_PROVISION = 'false';
-    await expect(service.telegramWebLogin({ payload: signedTelegramPayload({ id: 43 }) })).resolves.toMatchObject({
-      status: 'needs_link',
-      code: 'needs_link',
-    });
+    await expect(
+      service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '43' },
+      }),
+    ).resolves.toMatchObject({ status: 'needs_link', code: 'needs_link' });
   });
 
   it('creates hashed one-time link tokens and links a Telegram identity', async () => {
@@ -280,72 +260,17 @@ describe('ExternalAuthService', () => {
     ).rejects.toThrow('link_token_expired');
   });
 
-  it('rejects Telegram Web Login with missing, stale, malformed, and timing-safe mismatched signatures', async () => {
-    const { service } = createService();
-
-    const staleAuthDate = Math.floor(Date.now() / 1000) - 120;
-    process.env.TELEGRAM_WEB_LOGIN_MAX_AGE_SECONDS = '60';
-
-    await expect(
-      service.telegramWebLogin({
-        payload: { id: 45, auth_date: staleAuthDate },
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: { ...signedTelegramPayload(), hash: '' },
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: signedTelegramPayload({ auth_date: staleAuthDate }),
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: signedTelegramPayload({ auth_date: 'not-a-number' }),
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: { ...signedTelegramPayload(), hash: 'a'.repeat(64) },
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: { ...signedTelegramPayload(), hash: 'aa' },
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: signedTelegramPayload({ id: '' }),
-      }),
-    ).rejects.toThrow('invalid_signature');
-    await expect(
-      service.telegramWebLogin({
-        payload: signedTelegramPayload({
-          id: 46,
-          photo_url: 'https://cdn.example.test/photo.png',
-          username: '',
-        }),
-      }),
-    ).resolves.toMatchObject({
-      identity: {
-        avatarUrl: 'https://cdn.example.test/photo.png',
-        username: null,
-      },
-    });
-  });
-
-  it('maps provider disabled and missing Telegram configuration to stable errors', async () => {
+  it('maps disabled and missing Telegram TMA configuration to stable errors', async () => {
     const { service } = createService();
 
     process.env.AUTH_TELEGRAM_ENABLED = 'false';
-    await expect(service.telegramWebLogin({ payload: signedTelegramPayload() })).rejects.toThrow('provider_disabled');
+    await expect(service.telegramTma({ betterAuthProviderSubject: '777', initData: 'signed' })).rejects.toThrow(
+      'provider_disabled',
+    );
 
     delete process.env.AUTH_TELEGRAM_ENABLED;
     delete process.env.TELEGRAM_BOT_TOKEN;
-    await expect(service.telegramWebLogin({ payload: signedTelegramPayload() })).rejects.toThrow(
+    await expect(service.telegramTma({ betterAuthProviderSubject: '777', initData: 'signed' })).rejects.toThrow(
       'provider_not_configured',
     );
   });
@@ -356,9 +281,11 @@ describe('ExternalAuthService', () => {
       throw new Error('bad init data');
     });
 
-    await expect(service.telegramTma({ initData: 'query_id=raw&user=untrusted' })).rejects.toThrow('invalid_signature');
+    await expect(
+      service.telegramTma({ betterAuthProviderSubject: '777', initData: 'query_id=raw&user=untrusted' }),
+    ).rejects.toThrow('invalid_signature');
 
-    expect(tmaMocks.validate).toHaveBeenCalledWith('query_id=raw&user=untrusted', botToken, { expiresIn: 86_400 });
+    expect(tmaMocks.validate).toHaveBeenCalledWith('query_id=raw&user=untrusted', botToken, { expiresIn: 300 });
     expect(tmaMocks.parse).not.toHaveBeenCalled();
   });
 
@@ -377,6 +304,7 @@ describe('ExternalAuthService', () => {
     });
 
     const result = await service.telegramTma({
+      betterAuthProviderSubject: '777',
       initData: 'signed-init-data',
       returnUrl: null,
     });
@@ -402,7 +330,12 @@ describe('ExternalAuthService', () => {
         id: 778,
       },
     });
-    await expect(service.telegramTma({ initData: 'signed-init-data-with-minimal-user' })).resolves.toMatchObject({
+    await expect(
+      service.telegramTma({
+        betterAuthProviderSubject: '778',
+        initData: 'signed-init-data-with-minimal-user',
+      }),
+    ).resolves.toMatchObject({
       identity: {
         avatarUrl: null,
         displayName: null,
@@ -412,11 +345,22 @@ describe('ExternalAuthService', () => {
     });
   });
 
+  it('rejects a TMA payload that does not match the Better Auth Telegram account', async () => {
+    const { service } = createService();
+    tmaMocks.parse.mockReturnValue({ user: { id: 777 } });
+
+    await expect(service.telegramTma({ betterAuthProviderSubject: '778', initData: 'signed' })).rejects.toThrow(
+      'telegram_identity_mismatch',
+    );
+  });
+
   it('rejects TMA init data without a user id', async () => {
     const { service } = createService();
     tmaMocks.parse.mockReturnValue({ user: { username: 'missing-id' } });
 
-    await expect(service.telegramTma({ initData: 'signed' })).rejects.toThrow('invalid_signature');
+    await expect(service.telegramTma({ betterAuthProviderSubject: '777', initData: 'signed' })).rejects.toThrow(
+      'invalid_signature',
+    );
   });
 
   it('stores Discord state with PKCE, validates callback state once, and rejects replay', async () => {
@@ -1015,13 +959,9 @@ describe('ExternalAuthService', () => {
       password: 'password123',
     });
 
-    const linked = await service.telegramWebLogin({
+    const linked = await service.telegramOidcSession({
       intent: ExternalAuthIntent.Link,
-      payload: signedTelegramPayload({
-        first_name: '',
-        id: 904,
-        username: 'link-user',
-      }),
+      profile: { avatarUrl: null, displayName: null, providerSubject: '904' },
       principal: {
         subject: passwordSession.user.id,
         tenantId: DefaultAuthTenantId,
@@ -1033,7 +973,7 @@ describe('ExternalAuthService', () => {
       identity: {
         displayName: null,
         providerSubject: '904',
-        username: 'link-user',
+        username: null,
       },
     });
     await expect(service.listProviderIdentities(passwordSession.user.id)).resolves.toHaveLength(1);
@@ -1046,10 +986,10 @@ describe('ExternalAuthService', () => {
       userId: passwordSession.user.id,
     });
     await expect(
-      service.telegramWebLogin({
+      service.telegramOidcSession({
         intent: ExternalAuthIntent.Link,
         linkToken: linkToken.token,
-        payload: signedTelegramPayload({ id: 905 }),
+        profile: { avatarUrl: null, displayName: null, providerSubject: '905' },
       }),
     ).resolves.toMatchObject({ status: 'linked' });
   });
@@ -1084,7 +1024,7 @@ describe('ExternalAuthService', () => {
       userId: 'linked-user-id',
       provider: AuthProvider.Telegram,
       providerSubject: '42',
-      channel: AuthProviderChannel.TelegramWebLogin,
+      channel: AuthProviderChannel.TelegramOidc,
       email: null,
       emailVerified: false,
       displayName: null,
@@ -1102,8 +1042,8 @@ describe('ExternalAuthService', () => {
         {
           findIdentity: () => errAsync({ code: 'repository_error', message: 'identity failed' }),
         },
-      ).service.telegramWebLogin({
-        payload: signedTelegramPayload({ id: 900 }),
+      ).service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '900' },
       }),
     ).rejects.toThrow('identity failed');
 
@@ -1111,7 +1051,9 @@ describe('ExternalAuthService', () => {
       createServiceWithStores(
         { findById: () => okAsync(null) },
         { findIdentity: () => okAsync(existingIdentity) },
-      ).service.telegramWebLogin({ payload: signedTelegramPayload() }),
+      ).service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '42' },
+      }),
     ).rejects.toThrow('Invalid external identity');
 
     await expect(
@@ -1124,7 +1066,9 @@ describe('ExternalAuthService', () => {
           findIdentity: () => okAsync(existingIdentity),
           upsertIdentity: () => errAsync({ code: 'repository_error', message: 'identity upsert' }),
         },
-      ).service.telegramWebLogin({ payload: signedTelegramPayload() }),
+      ).service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '42' },
+      }),
     ).rejects.toThrow('identity upsert');
 
     await expect(
@@ -1133,8 +1077,8 @@ describe('ExternalAuthService', () => {
           create: () => errAsync({ code: 'repository_error', message: 'create failed' }),
         },
         { findIdentity: () => okAsync(null) },
-      ).service.telegramWebLogin({
-        payload: signedTelegramPayload({ id: 901, username: 'only-user' }),
+      ).service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '901' },
       }),
     ).rejects.toThrow('create failed');
 
@@ -1147,12 +1091,8 @@ describe('ExternalAuthService', () => {
           findIdentity: () => okAsync(null),
           upsertIdentity: () => errAsync({ code: 'repository_error', message: 'new identity' }),
         },
-      ).service.telegramWebLogin({
-        payload: signedTelegramPayload({
-          first_name: '',
-          id: 902,
-          username: 'only-user',
-        }),
+      ).service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '902' },
       }),
     ).rejects.toThrow('new identity');
 
@@ -1162,9 +1102,9 @@ describe('ExternalAuthService', () => {
           create: () => okAsync(authUserRecord({ id: 'created-user-id' })),
         },
         new InMemorySocialAuthStore(),
-      ).service.telegramWebLogin({
+      ).service.telegramOidcSession({
         intent: ExternalAuthIntent.Link,
-        payload: signedTelegramPayload({ id: 903 }),
+        profile: { avatarUrl: null, displayName: null, providerSubject: '903' },
       }),
     ).rejects.toThrow('link_token_expired');
   });

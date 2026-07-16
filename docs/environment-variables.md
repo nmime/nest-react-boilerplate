@@ -7,7 +7,7 @@ Complete reference of all environment variables used across the monorepo. Source
 | Category          | Required vars                                                    |
 | ----------------- | ---------------------------------------------------------------- |
 | Core              | `DATABASE_URL`                                                   |
-| Auth              | `SESSION_SECRET`, `AUTH_JWT_SECRET`                              |
+| Auth              | `SESSION_SECRET`, `AUTH_JWT_SECRET`, `BETTER_AUTH_SECRET`        |
 | Telegram          | `TELEGRAM_BOT_TOKEN`                                             |
 | Discord           | `DISCORD_BOT_TOKEN`                                              |
 | External services | `SENDGRID_API_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
@@ -69,17 +69,21 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Auth and JWT
 
-| Variable                          | Required            | Default                            | Description                                    |
-| --------------------------------- | ------------------- | ---------------------------------- | ---------------------------------------------- |
-| `AUTH_JWT_SECRET`                 | **Required** (prod) | `<set-jwt-secret>`                 | JWT signing key                                |
-| `AUTH_JWT_SECRET_FILE`            | Optional            | —                                  | File path for JWT secret (Docker secret mount) |
-| `AUTH_JWT_ISSUER`                 | Optional            | `https://auth-app-api.example.com` | JWT issuer claim                               |
-| `AUTH_JWT_AUDIENCE`               | Optional            | `nest-react-boilerplate-api`       | JWT audience claim                             |
-| `AUTH_JWT_EXPIRES_IN_SECONDS`     | Optional            | `3600`                             | JWT TTL (1 hour)                               |
-| `AUTH_PERSISTENCE`                | Optional            | `postgres`                         | Auth token persistence: `postgres` or `memory` |
-| `AUTH_TOKEN_CLEANUP_ENABLED`      | Optional            | `true`                             | Enable stale token cleanup                     |
-| `AUTH_TOKEN_CLEANUP_INTERVAL_MS`  | Optional            | `3600000`                          | Cleanup interval (1 hour)                      |
-| `AUTH_TOKEN_CLEANUP_RUN_ON_START` | Optional            | `true`                             | Run cleanup on boot                            |
+| Variable                          | Required            | Default                            | Description                                                                    |
+| --------------------------------- | ------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
+| `AUTH_JWT_SECRET`                 | **Required** (prod) | `<set-jwt-secret>`                 | JWT signing key                                                                |
+| `AUTH_JWT_SECRET_FILE`            | Optional            | —                                  | File path for JWT secret (Docker secret mount)                                 |
+| `AUTH_JWT_ISSUER`                 | Optional            | `https://auth-app-api.example.com` | JWT issuer claim                                                               |
+| `AUTH_JWT_AUDIENCE`               | Optional            | `nest-react-boilerplate-api`       | JWT audience claim                                                             |
+| `AUTH_JWT_EXPIRES_IN_SECONDS`     | Optional            | `3600`                             | JWT TTL (1 hour)                                                               |
+| `AUTH_PERSISTENCE`                | Optional            | `postgres`                         | Auth token persistence: `postgres` or `memory`                                 |
+| `AUTH_TOKEN_CLEANUP_ENABLED`      | Optional            | `true`                             | Enable stale token cleanup                                                     |
+| `AUTH_TOKEN_CLEANUP_INTERVAL_MS`  | Optional            | `3600000`                          | Cleanup interval (1 hour)                                                      |
+| `AUTH_TOKEN_CLEANUP_RUN_ON_START` | Optional            | `true`                             | Run cleanup on boot                                                            |
+| `BETTER_AUTH_SECRET`              | **Required** (prod) | —                                  | Better Auth cookie/state secret (32+ chars)                                    |
+| `BETTER_AUTH_SECRET_FILE`         | Optional            | —                                  | Docker secret file for Better Auth secret                                      |
+| `BETTER_AUTH_URL`                 | **Required** (prod) | `http://localhost:3003`            | Public Better Auth origin: user app for same-origin, auth API for split-origin |
+| `BETTER_AUTH_TRUSTED_ORIGINS`     | **Required** (prod) | `BETTER_AUTH_URL`                  | Comma-separated browser origins allowed by BA                                  |
 
 ### Admin bootstrap
 
@@ -103,22 +107,26 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Telegram
 
-| Variable                           | Required                    | Default                    | Description                                         |
-| ---------------------------------- | --------------------------- | -------------------------- | --------------------------------------------------- |
-| `TELEGRAM_BOT_TOKEN`               | **Required** (bot enabled)  | `<set-telegram-bot-token>` | Bot token from BotFather                            |
-| `TELEGRAM_BOT_TOKEN_FILE`          | Optional                    | —                          | File path for bot token (Docker secret)             |
-| `TELEGRAM_BOT_USERNAME`            | Optional                    | `example_bot`              | Bot username without `@`                            |
-| `TELEGRAM_BOT_MODE`                | Optional                    | `webhook`                  | Bot mode: `webhook` or `polling`                    |
-| `TELEGRAM_BOT_WEBHOOK_SECRET`      | **Required** (webhook mode) | —                          | Webhook verification secret                         |
-| `TELEGRAM_BOT_WEBHOOK_SECRET_FILE` | Optional                    | —                          | File path for webhook secret (Docker secret)        |
-| `TELEGRAM_BOT_WEBHOOK_URL`         | **Required** (webhook mode) | —                          | Public HTTPS URL ending in `/telegram/webhook`      |
-| `TELEGRAM_MINI_APP_URL`            | Optional                    | —                          | Telegram Mini App URL (must match BotFather config) |
-| `TELEGRAM_AUTH_ENABLED`            | Optional                    | `false`                    | Enable Telegram social auth                         |
-| `TELEGRAM_AUTH_BOT_USERNAME`       | Optional                    | `example_bot`              | Auth bot username                                   |
-| `TELEGRAM_AUTH_MAX_AGE_SECONDS`    | Optional                    | `86400`                    | Init-data max age                                   |
-| `TELEGRAM_AUTH_REPLAY_TTL_SECONDS` | Optional                    | `900`                      | Replay-cache TTL                                    |
-| `TELEGRAM_BOT_MENU_BUTTON_ENABLED` | Optional                    | `true`                     | Publish commands and persistent Mini App button     |
-| `TELEGRAM_LINK_TOKEN_TTL_SECONDS`  | Optional                    | `600`                      | Account-link token TTL                              |
+| Variable                           | Required                       | Default                    | Description                                                     |
+| ---------------------------------- | ------------------------------ | -------------------------- | --------------------------------------------------------------- |
+| `AUTH_TELEGRAM_ENABLED`            | Optional                       | `false`                    | Enable tenant/RBAC Telegram auth projection                     |
+| `TELEGRAM_BOT_TOKEN`               | **Required** (TMA/bot enabled) | `<set-telegram-bot-token>` | Bot token used for signed TMA validation and bot runtime        |
+| `TELEGRAM_BOT_TOKEN_FILE`          | Optional                       | —                          | File path for bot token (Docker secret)                         |
+| `TELEGRAM_BOT_USERNAME`            | Optional                       | `example_bot`              | Bot username without `@`                                        |
+| `TELEGRAM_BOT_MODE`                | Optional                       | `webhook`                  | Bot mode: `webhook` or `polling`                                |
+| `TELEGRAM_BOT_WEBHOOK_SECRET`      | **Required** (webhook mode)    | —                          | Webhook verification secret                                     |
+| `TELEGRAM_BOT_WEBHOOK_SECRET_FILE` | Optional                       | —                          | File path for webhook secret (Docker secret)                    |
+| `TELEGRAM_BOT_WEBHOOK_URL`         | **Required** (webhook mode)    | —                          | Public HTTPS URL ending in `/telegram/webhook`                  |
+| `TELEGRAM_MINI_APP_URL`            | Optional                       | —                          | Telegram Mini App URL (must match BotFather config)             |
+| `TELEGRAM_TMA_MAX_AGE_SECONDS`     | Optional                       | `300`                      | Maximum signed TMA `auth_date` age                              |
+| `TELEGRAM_OIDC_ENABLED`            | Optional                       | `false`                    | Enable Telegram OIDC in Better Auth                             |
+| `TELEGRAM_OIDC_CLIENT_ID`          | **Required** (OIDC enabled)    | —                          | Numeric client ID issued by Telegram                            |
+| `TELEGRAM_OIDC_CLIENT_SECRET`      | **Required** (OIDC enabled)    | —                          | Telegram OIDC client secret                                     |
+| `TELEGRAM_OIDC_CLIENT_SECRET_FILE` | Optional                       | —                          | Docker secret file for the OIDC client secret                   |
+| `TELEGRAM_OIDC_SCOPES`             | Optional                       | `openid profile`           | Space/comma-normalized scopes passed to Telegram                |
+| `TELEGRAM_BOT_MENU_BUTTON_ENABLED` | Optional                       | `true`                     | Publish commands and persistent Mini App button                 |
+| `TELEGRAM_LINK_TOKEN_TTL_SECONDS`  | Optional                       | `600`                      | Account-link token TTL                                          |
+| `VITE_TELEGRAM_AUTH_ENABLED`       | Optional (frontend build)      | `false`                    | Include the Telegram OIDC sign-in entry in the built `user-app` |
 
 ### Discord
 

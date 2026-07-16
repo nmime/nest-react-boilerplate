@@ -32,5 +32,10 @@
   "auth.social.discord.callback.loading": "Ожидаем подтверждение от Discord.",
   "auth.social.discord.callback.success": "Вход через Discord завершен.",
   "auth.social.discord.callback.error": "Ответ Discord не удалось проверить.",
-  "auth.social.discord.callback.missingState": "Discord не вернул обязательное состояние входа. Начните заново."
+  "auth.social.discord.callback.missingState": "Discord не вернул обязательное состояние входа. Начните заново.",
+  "auth.social.telegram.callback.title": "Завершаем вход через Telegram",
+  "auth.social.telegram.callback.loading": "Проверяем сессию Telegram.",
+  "auth.social.telegram.callback.success": "Вход через Telegram завершен.",
+  "auth.social.telegram.callback.error": "Не удалось проверить сессию Telegram.",
+  "auth.social.telegram.callback.providerError": "Telegram не завершил вход. Начните заново."
 }

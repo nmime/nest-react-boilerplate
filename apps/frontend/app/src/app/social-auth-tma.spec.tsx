@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
@@ -106,6 +107,7 @@ describe('social auth and TMA UI', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth-api');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api');
+    vi.stubEnv('VITE_TELEGRAM_AUTH_ENABLED', 'true');
     vi.stubEnv('VITE_API_BASE_URL_MODE', undefined);
     tma.useLaunchParams.mockReturnValue({});
     tma.useRawInitData.mockReturnValue(undefined);
@@ -217,7 +219,7 @@ describe('social auth and TMA UI', () => {
     expect(fetchMock.mock.calls).toHaveLength(1);
     const input = fetchMock.mock.calls[0]?.[0];
     const url = input instanceof Request ? input.url : String(input);
-    expect(new URL(url, window.location.origin).pathname).toBe('/auth/telegram/tma');
+    expect(new URL(url, window.location.origin).pathname).toBe('/api/auth/telegram/tma');
     expect(new URL(url, window.location.origin).pathname).not.toBe('/');
   });
 
@@ -225,7 +227,16 @@ describe('social auth and TMA UI', () => {
     resetPath('/tma/auth');
     tma.useRawInitData.mockReturnValue('query_id=raw&hash=bad');
     tma.useLaunchParams.mockReturnValue({ tgWebAppStartParam: 'settings' });
-    const fetchMock = setFetch(jsonResponse({}, false, 401));
+    const fetchMock = setFetch(
+      jsonResponse({
+        identity: { channel: 'telegram_tma', provider: 'telegram', providerSubject: '42' },
+        session: {},
+        status: 'authenticated',
+        token: 'better-auth-session',
+        user: {},
+      }),
+      jsonResponse({}, false, 401),
+    );
 
     render(<App />);
 
@@ -241,7 +252,16 @@ describe('social auth and TMA UI', () => {
   it('submits Telegram Mini App auth through the documented /telegram-mini-app route', async () => {
     resetPath('/telegram-mini-app');
     tma.useRawInitData.mockReturnValue('query_id=raw&hash=route');
-    const fetchMock = setFetch(jsonResponse({}, false, 409));
+    const fetchMock = setFetch(
+      jsonResponse({
+        identity: { channel: 'telegram_tma', provider: 'telegram', providerSubject: '42' },
+        session: {},
+        status: 'authenticated',
+        token: 'better-auth-session',
+        user: {},
+      }),
+      jsonResponse({}, false, 409),
+    );
 
     render(<App />);
 
@@ -274,6 +294,13 @@ describe('social auth and TMA UI', () => {
     tma.useLaunchParams.mockReturnValue({ tgWebAppStartParam: 'profile' });
     const fetchMock = setFetch(
       jsonResponse({
+        identity: { channel: 'telegram_tma', provider: 'telegram', providerSubject: '42' },
+        session: {},
+        status: 'authenticated',
+        token: 'better-auth-session',
+        user: {},
+      }),
+      jsonResponse({
         data: {
           session: {
             accessToken: 'tma-session',
@@ -300,9 +327,10 @@ describe('social auth and TMA UI', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/profile');
     });
-    const tmaCall = fetchMock.mock.calls.find(([input]) =>
-      (input instanceof Request ? input.url : String(input)).includes('/auth/telegram/tma'),
-    );
+    const tmaCall = fetchMock.mock.calls.find(([input]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return new URL(url, window.location.origin).pathname === '/auth/telegram/tma';
+    });
     const tmaRequest = tmaCall?.[0] as Request | undefined;
     const requestText = (await tmaRequest?.clone().text()) ?? '{}';
     const body = JSON.parse(requestText) as Record<string, unknown>;
@@ -320,14 +348,24 @@ describe('social auth and TMA UI', () => {
   it('starts Telegram link flow from /link/telegram instead of generic settings', async () => {
     resetPath('/link/telegram');
     tma.useRawInitData.mockReturnValue('query_id=raw&hash=link');
-    const fetchMock = setFetch(jsonResponse({}, false, 409));
+    const fetchMock = setFetch(
+      jsonResponse({
+        identity: { channel: 'telegram_tma', provider: 'telegram', providerSubject: '42' },
+        session: {},
+        status: 'authenticated',
+        token: 'better-auth-session',
+        user: {},
+      }),
+      jsonResponse({}, false, 409),
+    );
 
     render(<App />);
 
     expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
-    const tmaCall = fetchMock.mock.calls.find(([input]) =>
-      (input instanceof Request ? input.url : String(input)).includes('/auth/telegram/tma'),
-    );
+    const tmaCall = fetchMock.mock.calls.find(([input]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return new URL(url, window.location.origin).pathname === '/auth/telegram/tma';
+    });
     const tmaRequest = tmaCall?.[0] as Request | undefined;
     const requestText = (await tmaRequest?.clone().text()) ?? '{}';
     const body = JSON.parse(requestText) as Record<string, unknown>;
@@ -341,14 +379,24 @@ describe('social auth and TMA UI', () => {
   it('parses TMA startapp link_telegram as a link intent', async () => {
     resetPath('/tma?startapp=link_telegram');
     tma.useRawInitData.mockReturnValue('query_id=raw&hash=startapp');
-    const fetchMock = setFetch(jsonResponse({}, false, 409));
+    const fetchMock = setFetch(
+      jsonResponse({
+        identity: { channel: 'telegram_tma', provider: 'telegram', providerSubject: '42' },
+        session: {},
+        status: 'authenticated',
+        token: 'better-auth-session',
+        user: {},
+      }),
+      jsonResponse({}, false, 409),
+    );
 
     render(<App />);
 
     expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
-    const tmaCall = fetchMock.mock.calls.find(([input]) =>
-      (input instanceof Request ? input.url : String(input)).includes('/auth/telegram/tma'),
-    );
+    const tmaCall = fetchMock.mock.calls.find(([input]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return new URL(url, window.location.origin).pathname === '/auth/telegram/tma';
+    });
     const tmaRequest = tmaCall?.[0] as Request | undefined;
     const requestText = (await tmaRequest?.clone().text()) ?? '{}';
     const body = JSON.parse(requestText) as Record<string, unknown>;
@@ -420,6 +468,65 @@ describe('social auth and TMA UI', () => {
     expect(await screen.findByText('Discord did not return the required sign-in state. Start again.')).toBeTruthy();
   });
 
+  it('projects a completed Better Auth Telegram OIDC session through the SPA callback', async () => {
+    resetPath('/auth/telegram/callback');
+    sessionStorage.setItem('telegramOidcAuthState', JSON.stringify({ intent: 'login', returnUrl: '/profile' }));
+    const fetchMock = setFetch(
+      jsonResponse({
+        data: {
+          session: {
+            accessToken: 'telegram-oidc-session',
+            expiresIn: 3600,
+            tokenType: 'Bearer',
+            user: {
+              email: null,
+              id: 'user-id',
+              permissions: [],
+              roles: [],
+              tenantId: 'tenant-id',
+              theme: 'system',
+            },
+          },
+          status: 'authenticated',
+        },
+      }),
+      jsonResponse({ data: { user: { locale: 'en' } } }),
+      jsonResponse({ data: { profile: { email: null } } }),
+    );
+
+    render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/profile');
+    });
+    const projectionCalls = fetchMock.mock.calls.filter(([input]) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return new URL(url, window.location.origin).pathname === '/auth/telegram/oidc/session';
+    });
+    expect(projectionCalls).toHaveLength(1);
+    const projectionCall = projectionCalls[0];
+    const request = projectionCall?.[0] as Request;
+    expect(request.credentials).toBe('include');
+    expect(JSON.parse(await request.clone().text())).toEqual({ intent: 'login', returnUrl: '/profile' });
+    expect(sessionStorage.getItem('telegramOidcAuthState')).toBeNull();
+  });
+
+  it('does not project a Telegram OIDC callback that contains a provider error', async () => {
+    resetPath('/auth/telegram/callback?error=access_denied');
+    sessionStorage.setItem('telegramOidcAuthState', JSON.stringify({ intent: 'login', returnUrl: '/profile' }));
+    const fetchMock = setFetch();
+
+    render(<App />);
+
+    expect(await screen.findByText('Telegram did not complete sign-in. Start again.')).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('telegramOidcAuthState')).toBeNull();
+  });
+
   it('social auth buttons call wrapper-backed redirect logic', async () => {
     resetPath('/auth');
 
@@ -464,17 +571,25 @@ describe('social auth and TMA UI', () => {
     pending.resolve(jsonResponse({ data: {} }));
   });
 
-  it('routes Telegram social entry to the outside-Telegram fallback', async () => {
+  it('starts Telegram OIDC from the social entry instead of routing to TMA', async () => {
     resetPath('/auth');
     tma.useRawInitData.mockReturnValue(undefined);
+    const fetchMock = setFetch(jsonResponse({ redirect: false, url: '' }));
 
     render(<App />);
     fireEvent.click(await screen.findByRole('button', { name: 'Continue with Telegram' }));
 
     await waitFor(() => {
-      expect(window.location.pathname).toBe('/tma/auth');
+      expect(fetchMock).toHaveBeenCalledOnce();
     });
-    expect(await screen.findByText('Open this page inside Telegram to continue.')).toBeTruthy();
+    const request = fetchMock.mock.calls[0]?.[0] as Request;
+    expect(new URL(request.url).pathname).toBe('/api/auth/sign-in/oauth2');
+    expect(JSON.parse(await request.clone().text())).toMatchObject({
+      callbackURL: 'https://app.local.test/auth/telegram/callback',
+      disableRedirect: true,
+      providerId: 'telegram',
+    });
+    expect(window.location.pathname).toBe('/auth');
   });
 
   it('production TMA auth code only reads raw Telegram init data', () => {

@@ -16,7 +16,7 @@ const stableHash = (value: string): number =>
   [...value].reduce((hash, char) => (hash * 33 + char.charCodeAt(0)) >>> 0, 5381);
 const fallbackRunId = stableHash(process.cwd()).toString(36);
 const generatedPortBase =
-  Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? '', 10) || 32_000 + (stableHash(process.cwd()) % 8_000);
+  Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? '', 10) || 40_000 + (stableHash(process.cwd()) % 8_000);
 const pickPort = (envName: string, offset: number): string =>
   process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
@@ -64,6 +64,13 @@ export const composeEnv = {
   AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET ?? 'fullstack-e2e-jwt-secret-change-me',
   AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? 'nest-react-boilerplate',
   AUTH_JWT_AUDIENCE: process.env.AUTH_JWT_AUDIENCE ?? 'nest-react-boilerplate-api',
+  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
+  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? url(ports.userApp),
+  BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? url(ports.userApp),
+  AUTH_TELEGRAM_ENABLED: process.env.AUTH_TELEGRAM_ENABLED ?? 'true',
+  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN ?? '123456789:test-bot-token',
+  TELEGRAM_TMA_MAX_AGE_SECONDS: process.env.TELEGRAM_TMA_MAX_AGE_SECONDS ?? '300',
+  VITE_TELEGRAM_AUTH_ENABLED: process.env.VITE_TELEGRAM_AUTH_ENABLED ?? 'true',
   ADMIN_BOOTSTRAP_EMAILS: process.env.ADMIN_BOOTSTRAP_EMAILS ?? 'admin@example.com',
   ADMIN_BOOTSTRAP_ENABLED: process.env.ADMIN_BOOTSTRAP_ENABLED ?? 'true',
 };

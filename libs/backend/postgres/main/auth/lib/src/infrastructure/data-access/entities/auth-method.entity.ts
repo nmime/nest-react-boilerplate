@@ -65,7 +65,7 @@ export const AuthMethodEntitySchema = new EntitySchema<AuthMethodEntity>({
   checks: [
     {
       name: 'ck__auth_methods__method',
-      expression: `"method" in ('password', 'telegram_web_login', 'telegram_tma', 'telegram_bot', 'discord_oauth', 'discord_bot')`,
+      expression: `"method" in ('password', 'telegram_oidc', 'telegram_tma', 'telegram_bot', 'discord_oauth', 'discord_bot')`,
     },
   ],
 });

@@ -6,16 +6,18 @@ import type { SocialAuthIntent } from '../model';
 interface SocialAuthButtonsProps {
   isDiscordPending: boolean;
   isTelegramPending: boolean;
+  isTelegramEnabled: boolean;
   onDiscord: (intent: SocialAuthIntent) => void;
-  onTelegramTma: (intent: SocialAuthIntent) => void;
+  onTelegram: (intent: SocialAuthIntent) => void;
   t: (key: TranslationKey, params?: TranslationParams) => string;
 }
 
 export function SocialAuthButtons({
   isDiscordPending,
   isTelegramPending,
+  isTelegramEnabled,
   onDiscord,
-  onTelegramTma,
+  onTelegram,
   t,
 }: Readonly<SocialAuthButtonsProps>) {
   const telegramClickGuard = useRef(false);
@@ -38,7 +40,7 @@ export function SocialAuthButtons({
       return;
     }
     telegramClickGuard.current = true;
-    onTelegramTma('login');
+    onTelegram('login');
   };
 
   const handleDiscord = () => {
@@ -53,17 +55,19 @@ export function SocialAuthButtons({
     <UiCard className="user-auth__card user-auth__social" title={t('user.auth.social.title')}>
       <p>{t('user.auth.social.description')}</p>
       <div className="user-auth__social-actions">
-        <UiButton
-          isLoading={isTelegramPending}
-          loadingLabel={t('auth.social.status.pending', {
-            provider: t('auth.provider.telegram'),
-          })}
-          onClick={handleTelegramTma}
-          type="button"
-          variant="secondary"
-        >
-          {t('auth.social.button.telegram')}
-        </UiButton>
+        {isTelegramEnabled ? (
+          <UiButton
+            isLoading={isTelegramPending}
+            loadingLabel={t('auth.social.status.pending', {
+              provider: t('auth.provider.telegram'),
+            })}
+            onClick={handleTelegramTma}
+            type="button"
+            variant="secondary"
+          >
+            {t('auth.social.button.telegram')}
+          </UiButton>
+        ) : null}
         <UiButton
           isLoading={isDiscordPending}
           loadingLabel={t('auth.social.status.pending', {

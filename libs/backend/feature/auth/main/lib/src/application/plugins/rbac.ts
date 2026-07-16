@@ -68,8 +68,8 @@ export const rbacPlugin: BetterAuthPlugin = {
       if (!session) {
         throw new Error('Unauthorized');
       }
-      // Roles and permissions are stored as JSON columns on the Better-Auth user
-      // table (schema: better_auth_users.roles/better_auth_permissions).
+      // Roles and permissions are stored as JSON columns on Better Auth's
+      // quoted `user` table by the idempotent schema migrator.
       // The internal adapter reads them directly from the persisted row.
       const userRecord = await req.context.internalAdapter.findUserById(session.user.id);
       return {

@@ -116,22 +116,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/auth/telegram/web-login': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['AuthController_telegramWebLogin'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/auth/telegram/tma': {
     parameters: {
       query?: never;
@@ -142,6 +126,22 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['AuthController_telegramTma'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/telegram/oidc/session': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AuthController_telegramOidcSession'];
     delete?: never;
     options?: never;
     head?: never;
@@ -405,8 +405,7 @@ export interface components {
       /** @enum {string} */
       authProvider?: 'password' | 'telegram' | 'discord';
       /** @enum {string} */
-      authChannel?:
-        'password' | 'telegram_web_login' | 'telegram_tma' | 'telegram_bot' | 'discord_oauth' | 'discord_bot';
+      authChannel?: 'password' | 'telegram_oidc' | 'telegram_tma' | 'telegram_bot' | 'discord_oauth' | 'discord_bot';
       authTime?: number;
       /** Format: uuid */
       externalIdentityId?: string;
@@ -451,17 +450,6 @@ export interface components {
       };
       returnUrl?: string;
     };
-    TelegramWebLoginDto: {
-      /** Format: uuid */
-      tenantId?: string;
-      /** @enum {string} */
-      intent?: 'login' | 'link';
-      linkToken?: string;
-      returnUrl?: string;
-      payload: {
-        [key: string]: unknown;
-      };
-    };
     TelegramTmaDto: {
       /** Format: uuid */
       tenantId?: string;
@@ -470,6 +458,14 @@ export interface components {
       linkToken?: string;
       returnUrl?: string;
       initData: string;
+    };
+    TelegramOidcSessionDto: {
+      /** Format: uuid */
+      tenantId?: string;
+      /** @enum {string} */
+      intent?: 'login' | 'link';
+      linkToken?: string;
+      returnUrl?: string;
     };
     TelegramBotLinkDto: {
       /** Format: uuid */
@@ -570,8 +566,8 @@ export type RegisterDto = components['schemas']['RegisterDto'];
 export type LoginDto = components['schemas']['LoginDto'];
 export type RefreshTokenDto = components['schemas']['RefreshTokenDto'];
 export type ExternalAuthResultDto = components['schemas']['ExternalAuthResultDto'];
-export type TelegramWebLoginDto = components['schemas']['TelegramWebLoginDto'];
 export type TelegramTmaDto = components['schemas']['TelegramTmaDto'];
+export type TelegramOidcSessionDto = components['schemas']['TelegramOidcSessionDto'];
 export type TelegramBotLinkDto = components['schemas']['TelegramBotLinkDto'];
 export type Object = components['schemas']['Object'];
 export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
@@ -1435,7 +1431,7 @@ export interface operations {
       };
     };
   };
-  AuthController_telegramWebLogin: {
+  AuthController_telegramTma: {
     parameters: {
       query?: never;
       header?: never;
@@ -1444,7 +1440,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['TelegramWebLoginDto'];
+        'application/json': components['schemas']['TelegramTmaDto'];
       };
     };
     responses: {
@@ -1695,7 +1691,7 @@ export interface operations {
       };
     };
   };
-  AuthController_telegramTma: {
+  AuthController_telegramOidcSession: {
     parameters: {
       query?: never;
       header?: never;
@@ -1704,7 +1700,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['TelegramTmaDto'];
+        'application/json': components['schemas']['TelegramOidcSessionDto'];
       };
     };
     responses: {

@@ -6,6 +6,13 @@ and the Expo mobile web export. Choose one mode
 per environment and keep build-time variables, nginx config, Vike server
 routing, ingress paths, and public DNS/CORS values aligned.
 
+Better Auth has an additional cookie-host invariant. In same-origin mode set
+`BETTER_AUTH_URL` to the public `user-app` origin and register provider callbacks
+under that origin's `/api/auth/*` proxy. In split-origin mode set both
+`BETTER_AUTH_URL` and `VITE_AUTH_API_BASE_URL` to the public `auth-app-api`
+origin. Never start on one of those hosts and receive/project the session on the
+other.
+
 ## Public domain contract
 
 The Helm defaults assign one unique split-host domain to every production
@@ -66,14 +73,15 @@ Docker/Compose uses `docker/nginx-fullstack.conf`. Helm uses the chart-rendered
 frontend nginx ConfigMap. Both keep browser-facing API roots empty and proxy the
 API prefixes server-side:
 
-- `/auth/*` -> auth API, with `/auth/docs` kept as an API/docs route.
+- `/api/auth/*` -> Better Auth endpoints on the auth API.
+- `/auth/*` -> tenant/RBAC auth API, with `/auth/docs` kept as an API/docs route.
 - `/profile/*` -> user API.
 - `/admin/*` -> admin API, with `/admin/docs` kept as an API/docs route.
 
 Static frontend navigations are detected as `GET`/`HEAD` requests with
 `Accept: text/html`. Those requests fall back to `index.html`, so reloads work
 for landing `/`, current user SPA routes such as `/auth`,
-`/auth/discord/callback`, `/profile`, `/settings`, `/tma`,
+`/auth/telegram/callback`, `/auth/discord/callback`, `/profile`, `/settings`, `/tma`,
 `/telegram-mini-app`, `/link/telegram`, and `/app`, plus admin routes such as
 `/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:id`,
 `/admin/roles`, `/admin/audit`, `/admin/profile`, `/admin/tenants`, and unknown
@@ -125,7 +133,7 @@ same-origin nginx/ingress proxy for `/auth/*`, `/profile/*`, and `/admin/*`.
 Production frontend builds still fail closed for ambiguous configured states:
 
 - Same-origin mode: set `VITE_API_BASE_URL_MODE=same-origin` and deploy an nginx
-  or ingress API proxy for `/auth/*`, `/profile/*`, and `/admin/*`.
+  or ingress API proxy for `/api/auth/*`, `/auth/*`, `/profile/*`, and `/admin/*`.
 - Explicit-origin mode: set all of `VITE_AUTH_API_BASE_URL`,
   `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` to browser-reachable
   origins.

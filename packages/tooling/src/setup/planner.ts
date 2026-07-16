@@ -180,6 +180,9 @@ export function generateComposeEnvironment(summary: PlanSummary): { path: string
     `COMPOSE_PROFILES=${[...profiles].sort().join(',')}`,
     `OTEL_ENABLED=${summary.capabilities.includes('otel') ? 'true' : 'false'}`,
     `OPENAPI_ENABLED=${summary.capabilities.includes('swagger') ? 'true' : 'false'}`,
+    `AUTH_TELEGRAM_ENABLED=${summary.capabilities.includes('telegram-bot') ? 'true' : 'false'}`,
+    `TELEGRAM_OIDC_ENABLED=${summary.capabilities.includes('telegram-bot') ? 'true' : 'false'}`,
+    `VITE_TELEGRAM_AUTH_ENABLED=${summary.capabilities.includes('telegram-bot') ? 'true' : 'false'}`,
   ];
   return { path: '.nrb/capabilities.env', content: `${lines.join('\n')}\n` };
 }

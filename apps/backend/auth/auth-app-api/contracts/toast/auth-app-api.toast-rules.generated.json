@@ -18,6 +18,237 @@
   },
   "rules": [
     {
+      "id": "auth-app-api:DELETE:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_delete",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_200",
+        "fallbackVariant": null,
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-delete.delete.200",
+          "default": "Better Auth Api handle delete completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_get",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-get.get.200",
+          "default": "Better Auth Api handle get completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:HEAD:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "HEAD",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_head",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "HEAD_200",
+        "fallbackVariant": null,
+        "networkVariant": "HEAD_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-head.head.200",
+          "default": "Better Auth Api handle head completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "OPTIONS",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_options",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "OPTIONS_200",
+        "fallbackVariant": null,
+        "networkVariant": "OPTIONS_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-options.options.200",
+          "default": "Better Auth Api handle options completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:PATCH:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_patch",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-patch.patch.200",
+          "default": "Better Auth Api handle patch completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_post",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-post.post.200",
+          "default": "Better Auth Api handle post completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:PUT:/api/auth/{path}:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PUT",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_put",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_200",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-put.put.200",
+          "default": "Better Auth Api handle put completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
       "id": "auth-app-api:POST:/auth/discord/authorization-request:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -3714,6 +3945,237 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.200",
+          "default": "Auth telegram Oidc Session completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:400:bad-request",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": "bad-request",
+      "match": {
+        "variant": "POST_400_bad-request",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.400.bad-request",
+          "default": "Auth telegram Oidc Session failed: Bad request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:401:unauthorized",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": "unauthorized",
+      "match": {
+        "variant": "POST_401_unauthorized",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.401.unauthorized",
+          "default": "Auth telegram Oidc Session failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:403:forbidden",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": "forbidden",
+      "match": {
+        "variant": "POST_403_forbidden",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.403.forbidden",
+          "default": "Auth telegram Oidc Session failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:409:conflict",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": "conflict",
+      "match": {
+        "variant": "POST_409_conflict",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.409.conflict",
+          "default": "Auth telegram Oidc Session failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:429:rate-limited",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": "rate-limited",
+      "match": {
+        "variant": "POST_429_rate-limited",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.429.rate-limited",
+          "default": "Auth telegram Oidc Session failed: Rate limited."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:500:internal-server-error",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": "internal-server-error",
+      "match": {
+        "variant": "POST_500_internal-server-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.500.internal-server-error",
+          "default": "Auth telegram Oidc Session failed: Internal server error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/telegram/tma:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -3933,237 +4395,6 @@
         "text": {
           "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.500.internal-server-error",
           "default": "Auth telegram Tma failed: Internal server error."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:200",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "POST_200",
-        "fallbackVariant": null,
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.200",
-          "default": "Auth telegram Web Login completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:400:bad-request",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 400,
-      "errorCode": "bad-request",
-      "match": {
-        "variant": "POST_400_bad-request",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.400.bad-request",
-          "default": "Auth telegram Web Login failed: Bad request."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:401:unauthorized",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 401,
-      "errorCode": "unauthorized",
-      "match": {
-        "variant": "POST_401_unauthorized",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.401.unauthorized",
-          "default": "Auth telegram Web Login failed: Unauthorized."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:403:forbidden",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 403,
-      "errorCode": "forbidden",
-      "match": {
-        "variant": "POST_403_forbidden",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.403.forbidden",
-          "default": "Auth telegram Web Login failed: Forbidden."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:409:conflict",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 409,
-      "errorCode": "conflict",
-      "match": {
-        "variant": "POST_409_conflict",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.409.conflict",
-          "default": "Auth telegram Web Login failed: Conflict."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:429:rate-limited",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 429,
-      "errorCode": "rate-limited",
-      "match": {
-        "variant": "POST_429_rate-limited",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.429.rate-limited",
-          "default": "Auth telegram Web Login failed: Rate limited."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "auth-app-api:POST:/auth/telegram/web-login:500:internal-server-error",
-      "endpoint": {
-        "app": "auth-app-api",
-        "method": "POST",
-        "path": "/auth/telegram/web-login",
-        "operationId": "AuthController_telegramWebLogin",
-        "tags": ["Auth"]
-      },
-      "status": 500,
-      "errorCode": "internal-server-error",
-      "match": {
-        "variant": "POST_500_internal-server-error",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramweblogin.post.500.internal-server-error",
-          "default": "Auth telegram Web Login failed: Internal server error."
         },
         "icon": "alert-circle",
         "color": "red",

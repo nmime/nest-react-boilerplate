@@ -14,22 +14,27 @@ export interface ExternalAuthSessionClaims {
   externalIdentityId?: string;
 }
 
-export interface TelegramWebLoginInput {
-  tenantId?: string | null;
-  intent?: ExternalAuthIntent;
-  linkToken?: string | null;
-  returnUrl?: string | null;
-  payload: Record<string, string | number | boolean | null | undefined>;
-  principal?: { subject: string; tenantId: string } | null;
-}
-
 export interface TelegramTmaInput {
+  betterAuthProviderSubject: string;
   tenantId?: string | null;
   intent?: ExternalAuthIntent;
   initData: string;
   linkToken?: string | null;
   returnUrl?: string | null;
   principal?: { subject: string; tenantId: string } | null;
+}
+
+export interface TelegramOidcSessionInput {
+  tenantId?: string | null;
+  intent?: ExternalAuthIntent;
+  linkToken?: string | null;
+  returnUrl?: string | null;
+  principal?: { subject: string; tenantId: string } | null;
+  profile: {
+    providerSubject: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  };
 }
 
 export interface TelegramBotLinkInput {

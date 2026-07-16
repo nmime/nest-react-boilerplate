@@ -9,8 +9,8 @@ import {
   authControllerProviderIdentities,
   authControllerRegister,
   authControllerTelegramBotLink,
+  authControllerTelegramOidcSession,
   authControllerTelegramTma,
-  authControllerTelegramWebLogin,
   authControllerUnlinkProviderIdentity,
   authControllerUpdateLocale,
   authControllerUpdatePreferences,
@@ -20,8 +20,8 @@ import {
   getAuthControllerMeQueryKey,
   getAuthControllerProviderIdentitiesQueryKey,
   getAuthControllerTelegramBotLinkMutationKey,
+  getAuthControllerTelegramOidcSessionMutationKey,
   getAuthControllerTelegramTmaMutationKey,
-  getAuthControllerTelegramWebLoginMutationKey,
   getAuthControllerUnlinkProviderIdentityMutationKey,
   getAuthControllerUpdatePreferencesMutationKey,
   type AuthControllerCreateLinkTokenData,
@@ -32,8 +32,8 @@ import {
   type AuthControllerRegisterData,
   type AuthControllerRegisterError,
   type AuthControllerTelegramBotLinkData,
+  type AuthControllerTelegramOidcSessionData,
   type AuthControllerTelegramTmaData,
-  type AuthControllerTelegramWebLoginData,
   type AuthControllerUnlinkProviderIdentityData,
   type AuthControllerUpdateLocaleData,
   type AuthControllerUpdatePreferencesData,
@@ -97,7 +97,7 @@ const externalAuthResult: ExternalAuthResultDto = {
   },
   session: {
     ...session,
-    authChannel: 'telegram_web_login',
+    authChannel: 'telegram_oidc',
     authProvider: 'telegram',
     user: { ...session.user, email: null },
   },
@@ -301,27 +301,19 @@ describe('generated api clients', () => {
   });
 
   it('serializes social auth wrappers and preserves nullable social response email types', async () => {
-    const webLoginBody = {
-      intent: 'login',
-      payload: {
-        auth_date: 1,
-        hash: 'telegram-hash',
-        id: 123,
-      },
-      returnUrl: '/after-login',
-    } as const;
-    const webLoginFetch = mockFetch({ data: externalAuthResult });
+    const oidcSessionBody = { intent: 'login', returnUrl: '/after-login' } as const;
+    const oidcSessionFetch = mockFetch({ data: externalAuthResult });
     await expect(
       throwOnOpenApiErrorData(
-        authControllerTelegramWebLogin(webLoginBody, {
-          fetchImpl: webLoginFetch,
+        authControllerTelegramOidcSession(oidcSessionBody, {
+          fetchImpl: oidcSessionFetch,
         }),
       ),
     ).resolves.toEqual(externalAuthResult);
-    const webLoginRequest = firstRequest(webLoginFetch);
-    expect(webLoginRequest.method).toBe('POST');
-    expect(webLoginRequest.url).toBe(`${globalThis.location.origin}/auth/telegram/web-login`);
-    await expect(webLoginRequest.clone().json()).resolves.toEqual(webLoginBody);
+    const oidcSessionRequest = firstRequest(oidcSessionFetch);
+    expect(oidcSessionRequest.method).toBe('POST');
+    expect(oidcSessionRequest.url).toBe(`${globalThis.location.origin}/auth/telegram/oidc/session`);
+    await expect(oidcSessionRequest.clone().json()).resolves.toEqual(oidcSessionBody);
 
     const tmaBody = { initData: 'query_id=abc&hash=telegram-hash' };
     const tmaFetch = mockFetch({ data: externalAuthResult });
@@ -461,7 +453,7 @@ describe('generated api clients', () => {
     expect(getAuthControllerLocalesQueryKey()).toEqual(['get', '/auth/locales']);
     expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual(['patch', '/auth/me/preferences']);
     expect(getAuthControllerProviderIdentitiesQueryKey()).toEqual(['get', '/auth/provider-identities']);
-    expect(getAuthControllerTelegramWebLoginMutationKey()).toEqual(['post', '/auth/telegram/web-login']);
+    expect(getAuthControllerTelegramOidcSessionMutationKey()).toEqual(['post', '/auth/telegram/oidc/session']);
     expect(getAuthControllerTelegramTmaMutationKey()).toEqual(['post', '/auth/telegram/tma']);
     expect(getAuthControllerTelegramBotLinkMutationKey()).toEqual(['post', '/auth/telegram/bot-link']);
     expect(getAuthControllerDiscordAuthorizationRequestMutationKey()).toEqual([
@@ -501,7 +493,7 @@ describe('generated api clients', () => {
     expectTypeOf<AuthControllerRegisterData>().toEqualTypeOf<AuthSessionViewDto>();
     expectTypeOf<AuthControllerUpdateLocaleData>().toEqualTypeOf<AuthSessionViewDto['user']>();
     expectTypeOf<AuthControllerUpdatePreferencesData>().toEqualTypeOf<AuthSessionViewDto['user']>();
-    expectTypeOf<AuthControllerTelegramWebLoginData>().toEqualTypeOf<ExternalAuthResultDto>();
+    expectTypeOf<AuthControllerTelegramOidcSessionData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramTmaData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramBotLinkData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerDiscordAuthorizationRequestData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();

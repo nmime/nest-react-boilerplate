@@ -4,7 +4,12 @@ import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
 import { AuthController } from './interfaces/http';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
-import { AuthService, EffectivePermissionService, ExternalAuthService } from './application';
+import {
+  AuthService,
+  BetterAuthTelegramSessionService,
+  EffectivePermissionService,
+  ExternalAuthService,
+} from './application';
 import {
   AuthRoleStoreInjectToken,
   AuthUserStoreInjectToken,
@@ -78,6 +83,7 @@ export class AuthMainModule {
       providers: [
         AuthService,
         ExternalAuthService,
+        BetterAuthTelegramSessionService,
         EffectivePermissionService,
         useMemory
           ? {
@@ -116,7 +122,7 @@ export class AuthMainModule {
               useClass: PostgresSocialAuthStore,
             },
       ],
-      exports: [AuthService, ExternalAuthService, EffectivePermissionService],
+      exports: [AuthService, ExternalAuthService, BetterAuthTelegramSessionService, EffectivePermissionService],
     };
   }
 }

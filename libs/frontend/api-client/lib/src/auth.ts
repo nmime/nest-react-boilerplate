@@ -20,8 +20,8 @@ const authUpdateLocalePath = '/auth/me/locale';
 const authUpdatePreferencesPath = '/auth/me/preferences';
 const authLocalesPath = '/auth/locales';
 const authLogoutPath = '/auth/logout';
-const authTelegramWebLoginPath = '/auth/telegram/web-login';
 const authTelegramTmaPath = '/auth/telegram/tma';
+const authTelegramOidcSessionPath = '/auth/telegram/oidc/session';
 const authTelegramBotLinkPath = '/auth/telegram/bot-link';
 const authDiscordAuthorizationRequestPath = '/auth/discord/authorization-request';
 const authDiscordCallbackPath = '/auth/discord/callback';
@@ -44,8 +44,8 @@ export type UpdatePreferencesDto = components['schemas']['UpdatePreferencesDto']
 export type SupportedLocalesPayloadDto = components['schemas']['SupportedLocalesPayloadDto'];
 export type LogoutPayloadDto = components['schemas']['LogoutPayloadDto'];
 export type ExternalAuthResultDto = components['schemas']['ExternalAuthResultDto'];
-export type TelegramWebLoginDto = components['schemas']['TelegramWebLoginDto'];
 export type TelegramTmaDto = components['schemas']['TelegramTmaDto'];
+export type TelegramOidcSessionDto = components['schemas']['TelegramOidcSessionDto'];
 export type TelegramBotLinkDto = components['schemas']['TelegramBotLinkDto'];
 export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
 export type LinkTokenDto = components['schemas']['LinkTokenDto'];
@@ -108,15 +108,6 @@ export type AuthControllerLogoutResponse = OpenApiData<typeof authControllerLogo
 export type AuthControllerLogoutData = EnvelopeData<AuthControllerLogoutResponse>;
 export type AuthControllerLogoutError = OpenApiError<typeof authControllerLogout>;
 
-export const authControllerTelegramWebLogin = (body: TelegramWebLoginDto, options?: ApiClientRequestOptions) =>
-  client.POST(authTelegramWebLoginPath, {
-    ...toOpenApiFetchOptions(options),
-    body,
-  });
-export type AuthControllerTelegramWebLoginResponse = OpenApiData<typeof authControllerTelegramWebLogin>;
-export type AuthControllerTelegramWebLoginData = EnvelopeData<AuthControllerTelegramWebLoginResponse>;
-export type AuthControllerTelegramWebLoginError = OpenApiError<typeof authControllerTelegramWebLogin>;
-
 export const authControllerTelegramTma = (body: TelegramTmaDto, options?: ApiClientRequestOptions) =>
   client.POST(authTelegramTmaPath, {
     ...toOpenApiFetchOptions(options),
@@ -125,6 +116,15 @@ export const authControllerTelegramTma = (body: TelegramTmaDto, options?: ApiCli
 export type AuthControllerTelegramTmaResponse = OpenApiData<typeof authControllerTelegramTma>;
 export type AuthControllerTelegramTmaData = EnvelopeData<AuthControllerTelegramTmaResponse>;
 export type AuthControllerTelegramTmaError = OpenApiError<typeof authControllerTelegramTma>;
+
+export const authControllerTelegramOidcSession = (body: TelegramOidcSessionDto, options?: ApiClientRequestOptions) =>
+  client.POST(authTelegramOidcSessionPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AuthControllerTelegramOidcSessionResponse = OpenApiData<typeof authControllerTelegramOidcSession>;
+export type AuthControllerTelegramOidcSessionData = EnvelopeData<AuthControllerTelegramOidcSessionResponse>;
+export type AuthControllerTelegramOidcSessionError = OpenApiError<typeof authControllerTelegramOidcSession>;
 
 export const authControllerTelegramBotLink = (body: TelegramBotLinkDto, options?: ApiClientRequestOptions) =>
   client.POST(authTelegramBotLinkPath, {
@@ -203,8 +203,8 @@ export const getAuthControllerLocalesQueryOptions = (
     AuthControllerLocalesError
   >;
 export const getAuthControllerUpdatePreferencesMutationKey = () => ['patch', authUpdatePreferencesPath] as const;
-export const getAuthControllerTelegramWebLoginMutationKey = () => ['post', authTelegramWebLoginPath] as const;
 export const getAuthControllerTelegramTmaMutationKey = () => ['post', authTelegramTmaPath] as const;
+export const getAuthControllerTelegramOidcSessionMutationKey = () => ['post', authTelegramOidcSessionPath] as const;
 export const getAuthControllerTelegramBotLinkMutationKey = () => ['post', authTelegramBotLinkPath] as const;
 export const getAuthControllerDiscordAuthorizationRequestMutationKey = () =>
   ['post', authDiscordAuthorizationRequestPath] as const;
@@ -314,21 +314,6 @@ export const useAuthControllerLogoutMutation = <TContext = unknown>({
     ...options,
   });
 
-export const useAuthControllerTelegramWebLoginMutation = <TContext = unknown>({
-  request,
-  ...options
-}: MutationConfig<
-  AuthControllerTelegramWebLoginData,
-  AuthControllerTelegramWebLoginError,
-  TelegramWebLoginDto,
-  TContext
-> = {}) =>
-  useMutation({
-    mutationKey: getAuthControllerTelegramWebLoginMutationKey(),
-    mutationFn: (body) => throwOnOpenApiErrorData(authControllerTelegramWebLogin(body, request)),
-    ...options,
-  });
-
 export const useAuthControllerTelegramTmaMutation = <TContext = unknown>({
   request,
   ...options
@@ -336,6 +321,21 @@ export const useAuthControllerTelegramTmaMutation = <TContext = unknown>({
   useMutation({
     mutationKey: getAuthControllerTelegramTmaMutationKey(),
     mutationFn: (body) => throwOnOpenApiErrorData(authControllerTelegramTma(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerTelegramOidcSessionMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerTelegramOidcSessionData,
+  AuthControllerTelegramOidcSessionError,
+  TelegramOidcSessionDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerTelegramOidcSessionMutationKey(),
+    mutationFn: (body) => throwOnOpenApiErrorData(authControllerTelegramOidcSession(body, request)),
     ...options,
   });
 

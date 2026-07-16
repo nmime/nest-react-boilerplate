@@ -12,7 +12,12 @@ import {
   type AuthenticatedResponse,
   type AuthSessionView,
 } from '@app/backend-feature-auth-shared';
-import { AuthService, ExternalAuthService, type ExternalAuthLoginResult } from '../../application';
+import {
+  AuthService,
+  BetterAuthTelegramSessionService,
+  ExternalAuthService,
+  type ExternalAuthLoginResult,
+} from '../../application';
 import {
   DiscordAuthorizationRequestDto,
   DiscordCallbackQueryDto,
@@ -21,8 +26,8 @@ import {
   RefreshTokenDto,
   RegisterDto,
   TelegramBotLinkDto,
+  TelegramOidcSessionDto,
   TelegramTmaDto,
-  TelegramWebLoginDto,
   UpdateLocaleDto,
   UpdatePreferencesDto,
   UserActionTokenRequestDto,
@@ -65,6 +70,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly externalAuth: ExternalAuthService,
+    private readonly betterAuthTelegramSession: BetterAuthTelegramSessionService,
   ) {}
 
   @Post('register')
@@ -97,29 +103,33 @@ export class AuthController {
     return createOkResponse(session);
   }
 
-  @Post('telegram/web-login')
-  @ApiOkDataResponse(ExternalAuthResultDto)
-  async telegramWebLogin(
-    @Body() input: TelegramWebLoginDto,
-    @Req() request: AuthenticatedRequest,
-  ): Promise<OkResponse<ExternalAuthLoginResult>> {
-    const result = await this.externalAuth.telegramWebLogin({
-      ...input,
-      principal: request.user ?? request.auth ?? null,
-    });
-    await establishExternalSessionIfPresent(request, result);
-    return createOkResponse(result);
-  }
-
   @Post('telegram/tma')
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramTma(
     @Body() input: TelegramTmaDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const betterAuthProfile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
     const result = await this.externalAuth.telegramTma({
       ...input,
+      betterAuthProviderSubject: betterAuthProfile.providerSubject,
       principal: request.user ?? request.auth ?? null,
+    });
+    await establishExternalSessionIfPresent(request, result);
+    return createOkResponse(result);
+  }
+
+  @Post('telegram/oidc/session')
+  @ApiOkDataResponse(ExternalAuthResultDto)
+  async telegramOidcSession(
+    @Body() input: TelegramOidcSessionDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const profile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
+    const result = await this.externalAuth.telegramOidcSession({
+      ...input,
+      principal: request.user ?? request.auth ?? null,
+      profile,
     });
     await establishExternalSessionIfPresent(request, result);
     return createOkResponse(result);

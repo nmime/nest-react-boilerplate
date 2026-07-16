@@ -6,12 +6,14 @@ import { profileQueryKey } from '../../../entities/profile';
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,
+  startTelegramOidc,
   submitDiscordCallback,
+  submitTelegramOidcSession,
   submitTelegramTma,
-  submitTelegramWebLogin,
-  type SocialAuthRequestInput,
 } from '../api';
 import { getReturnUrlFromExternalAuthResult, getSessionFromExternalAuthResult } from './session';
+import { saveTelegramOidcState } from './telegram-oidc-state';
+import type { SocialAuthRequestInput } from './types';
 
 export interface SocialAuthNavigateOptions {
   replace?: boolean;
@@ -87,13 +89,22 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
     retry: false,
   });
 
-  const telegramWebLoginMutation = useMutation({
-    mutationFn: (input: SocialAuthRequestInput & { payload: Record<string, unknown> }) =>
-      submitTelegramWebLogin(authClient, input.payload, {
-        intent: input.intent,
-        linkToken: input.linkToken,
-        returnUrl: input.returnUrl,
-      }),
+  const telegramOidcMutation = useMutation({
+    mutationFn: async (input: SocialAuthRequestInput) => {
+      saveTelegramOidcState(input);
+      const callbackURL = new URL('/auth/telegram/callback', globalThis.location.origin).toString();
+      return startTelegramOidc(authClient, callbackURL);
+    },
+    onSuccess: (payload) => {
+      if (payload.url) {
+        globalThis.location.assign(payload.url);
+      }
+    },
+    retry: false,
+  });
+
+  const telegramOidcCallbackMutation = useMutation({
+    mutationFn: (input: SocialAuthRequestInput) => submitTelegramOidcSession(authClient, input),
     onSuccess: finishExternalAuth,
     retry: false,
   });
@@ -118,7 +129,8 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
   return {
     authenticateTelegramTma: telegramTmaMutation.mutate,
     authenticateTelegramTmaAsync: telegramTmaMutation.mutateAsync,
-    authenticateTelegramWebLogin: telegramWebLoginMutation.mutate,
+    continueWithTelegram: telegramOidcMutation.mutate,
+    completeTelegramOidc: telegramOidcCallbackMutation.mutate,
     continueWithDiscord: discordMutation.mutate,
     completeDiscordCallback: discordCallbackMutation.mutate,
     discordCallbackError: discordCallbackMutation.error,
@@ -127,9 +139,13 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
     isDiscordCallbackPending: discordCallbackMutation.isPending,
     isDiscordPending: discordMutation.isPending,
     isTelegramTmaPending: telegramTmaMutation.isPending,
-    isTelegramWebLoginPending: telegramWebLoginMutation.isPending,
+    isTelegramOidcPending: telegramOidcMutation.isPending,
+    isTelegramOidcCallbackPending: telegramOidcCallbackMutation.isPending,
     telegramTmaError: telegramTmaMutation.error,
     telegramTmaStatus: telegramTmaMutation.status,
-    telegramWebLoginStatus: telegramWebLoginMutation.status,
+    telegramOidcError: telegramOidcMutation.error,
+    telegramOidcStatus: telegramOidcMutation.status,
+    telegramOidcCallbackError: telegramOidcCallbackMutation.error,
+    telegramOidcCallbackStatus: telegramOidcCallbackMutation.status,
   };
 }

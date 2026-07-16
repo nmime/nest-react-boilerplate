@@ -393,8 +393,14 @@ describe('catalog — validateSelection', () => {
     );
   });
 
-  it('no issues for telegram-bot-api with telegram-bot capability', () => {
-    assert.deepEqual(validateSelection(['telegram-bot-api'], ['telegram-bot', 'postgres']), []);
+  it('has no issues when the complete Telegram auth and bot surface is selected', () => {
+    assert.deepEqual(
+      validateSelection(
+        ['auth-app-api', 'telegram-bot-api', 'user-app', 'user-app-api'],
+        ['i18n', 'postgres', 'telegram-bot'],
+      ),
+      [],
+    );
   });
 });
 

@@ -52,6 +52,7 @@ export async function applyBetterAuthSchema(
     // Plugin-added columns on user table
     const userColumns = await getColumns(client, "user");
     const pluginColumns = [
+      { name: "tenantId", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "tenantId" varchar(128) NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'` },
       { name: "status", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "status" varchar(32) NOT NULL DEFAULT 'active'` },
       { name: "roles", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roles" json NOT NULL DEFAULT '[]'` },
       { name: "permissions", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "permissions" json NOT NULL DEFAULT '[]'` },
@@ -66,6 +67,10 @@ export async function applyBetterAuthSchema(
         result.skipped.push(`user.${col.name}`);
       }
     }
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "uq__user__email"
+        ON "user" (lower("email"))
+    `);
 
     // ─── session ────────────────────────────────────────────────────
     if (existingTables.has("session")) {
@@ -83,12 +88,16 @@ export async function applyBetterAuthSchema(
           "userAgent" varchar(512)
         )
       `);
-      await client.query(`
-        CREATE UNIQUE INDEX IF NOT EXISTS "uq__session__token"
-          ON "session" ("token")
-      `);
       result.created.push("session");
     }
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "uq__session__token"
+        ON "session" ("token")
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS "ix__session__userId"
+        ON "session" ("userId")
+    `);
 
     // ─── account ────────────────────────────────────────────────────
     if (existingTables.has("account")) {
@@ -105,16 +114,30 @@ export async function applyBetterAuthSchema(
           "idToken" text,
           "accessTokenExpiresAt" timestamptz,
           "refreshTokenExpiresAt" timestamptz,
+          "scope" text,
           "password" varchar(255),
           "createdAt" timestamptz NOT NULL DEFAULT now(),
           "updatedAt" timestamptz NOT NULL DEFAULT now()
         )
       `);
-      await client.query(`
-        CREATE UNIQUE INDEX IF NOT EXISTS "uq__account__provider_account"
-          ON "account" ("providerId", "accountId")
-      `);
       result.created.push("account");
+    }
+
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS "uq__account__provider_account"
+        ON "account" ("providerId", "accountId")
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS "ix__account__userId"
+        ON "account" ("userId")
+    `);
+
+    const accountColumns = await getColumns(client, "account");
+    if (!accountColumns.has("scope")) {
+      await client.query(`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "scope" text`);
+      result.created.push("account.scope");
+    } else if (existingTables.has("account")) {
+      result.skipped.push("account.scope");
     }
 
     // ─── verification ──────────────────────────────────────────────
@@ -127,10 +150,25 @@ export async function applyBetterAuthSchema(
           "identifier" varchar(256) NOT NULL,
           "value" text NOT NULL,
           "expiresAt" timestamptz NOT NULL,
-          "createdAt" timestamptz NOT NULL DEFAULT now()
+          "createdAt" timestamptz NOT NULL DEFAULT now(),
+          "updatedAt" timestamptz NOT NULL DEFAULT now()
         )
       `);
       result.created.push("verification");
+    }
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS "ix__verification__identifier"
+        ON "verification" ("identifier")
+    `);
+
+    const verificationColumns = await getColumns(client, "verification");
+    if (!verificationColumns.has("updatedAt")) {
+      await client.query(
+        `ALTER TABLE "verification" ADD COLUMN IF NOT EXISTS "updatedAt" timestamptz NOT NULL DEFAULT now()`,
+      );
+      result.created.push("verification.updatedAt");
+    } else if (existingTables.has("verification")) {
+      result.skipped.push("verification.updatedAt");
     }
 
     await client.query("COMMIT");

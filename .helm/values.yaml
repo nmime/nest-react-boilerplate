@@ -11,7 +11,10 @@ secrets:
   existingSecret: ''
   create: false
   authJwtSecret: ''
+  betterAuthSecret: ''
   databaseUrl: ''
+  telegramBotToken: ''
+  telegramOidcClientSecret: ''
 
 config:
   nodeEnv: production
@@ -19,6 +22,8 @@ config:
   authJwtIssuer: https://auth-app-api.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
+  betterAuthUrl: https://user-app.example.com
+  betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
   # Expired persisted refresh/action token cleanup. Intervals below 60000ms are
   # clamped by the service to avoid tight cleanup loops from configuration typos.
   authTokenCleanupEnabled: 'true'
@@ -36,6 +41,11 @@ config:
   redisMode: single
   redisKeyPrefix: 'nrb:'
   redisDb: ''
+  authTelegramEnabled: 'false'
+  telegramTmaMaxAgeSeconds: '300'
+  telegramOidcEnabled: 'false'
+  telegramOidcClientId: ''
+  telegramOidcScopes: openid profile
   telegramBotMode: webhook
   telegramBotWebhookUrl: https://telegram-bot-api.example.com/telegram/webhook
   telegramMiniAppUrl: https://user-app.example.com/telegram-mini-app

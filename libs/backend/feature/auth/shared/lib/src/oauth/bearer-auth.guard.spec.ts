@@ -154,7 +154,7 @@ describe('BearerAuthGuard', () => {
     const tenantClaim = '33333333-3333-4333-8333-333333333333';
     const token = signToken({
       amr: ['pwd', 'otp'],
-      auth_channel: 'telegram_web_login',
+      auth_channel: 'telegram_oidc',
       auth_provider: 'telegram',
       auth_time: 1_699_000_000,
       external_identity_id: 'ext-123',
@@ -168,7 +168,7 @@ describe('BearerAuthGuard', () => {
 
     expect(principal).toMatchObject({
       amr: ['pwd', 'otp'],
-      authChannel: 'telegram_web_login',
+      authChannel: 'telegram_oidc',
       authProvider: 'telegram',
       authTime: 1_699_000_000,
       externalIdentityId: 'ext-123',

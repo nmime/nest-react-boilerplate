@@ -43,9 +43,16 @@ Validation steps:
 Provide secrets through the secret manager and non-secrets through the test ticket:
 
 - Telegram bot token secret key name: `<SECRET_KEY_TELEGRAM_BOT_TOKEN>`
+- Telegram OIDC numeric client ID: `<telegram-oidc-client-id>`
+- Telegram OIDC client secret key name: `<SECRET_KEY_TELEGRAM_OIDC_CLIENT_SECRET>`
+- Better Auth secret key name: `<SECRET_KEY_BETTER_AUTH_SECRET>`
+- Better Auth public URL: `<https://user-app.example.test>` for same-origin proxy mode, or `<https://auth-app-api.example.test>` for split-origin mode
+- Better Auth trusted origins: `<https://user-app.example.test>`
+- Registered Telegram OIDC callback: `<BETTER_AUTH_URL/api/auth/oauth2/callback/telegram>`
 - Bot username: `<bot_username>`
 - Mini App/Web App URL: `<https://frontend.example.test/telegram-mini-app>`
-- Frontend API mode: `VITE_API_BASE_URL_MODE=same-origin` when the frontend proxy serves `/auth/telegram/tma`, or explicit `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` origins for split-origin deployments.
+- Frontend API mode: `VITE_API_BASE_URL_MODE=same-origin` when the frontend proxy serves both `/api/auth/*` and `/auth/*`, or explicit `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` origins for split-origin deployments.
+- Frontend Telegram build flag: `VITE_TELEGRAM_AUTH_ENABLED=true`
 - Allowed Mini App/Web App domain: `<frontend.example.test>`
 - Webhook secret secret key name: `<SECRET_KEY_TELEGRAM_WEBHOOK_SECRET>`
 - Webhook URL: `<https://telegram-api.example.test/telegram/webhook>`
@@ -60,9 +67,11 @@ Provide secrets through the secret manager and non-secrets through the test tick
 Validation steps:
 
 1. Confirm Telegram webhook registration targets the stated webhook URL and uses the configured webhook secret.
-2. Launch TMA using the stated method and verify auth succeeds only with valid signed init data.
-3. Exercise `/start`, `/link`, successful account linking, expired payload, duplicate payload, and wrong-user payload handling.
-4. Confirm logs redact bot token, webhook secret, init data, provider token values, and link payload secrets.
+2. Complete Telegram OIDC from the user app and verify the Better Auth `telegram` account and tenant/RBAC provider identity use the same numeric Telegram subject.
+3. Reject a callback with invalid issuer, audience, expiry, state, or ID-token signature.
+4. Launch TMA using the stated method and verify both the Better Auth session and application session are created only from valid raw signed init data.
+5. Exercise `/start`, `/link`, successful account linking, expired payload, duplicate payload, and wrong-user payload handling.
+6. Confirm logs redact bot token, OIDC secret/code/tokens, webhook secret, init data, provider token values, and link payload secrets.
 
 ## Discord inputs
 
@@ -99,7 +108,7 @@ Provide:
   - `<https://frontend.example.test/link/telegram>`
   - `<https://frontend.example.test/link/discord>`
 - External auth policy flags:
-  - Telegram Web Login enabled: `<true|false>`
+  - Telegram OIDC enabled: `<true|false>`
   - Telegram TMA enabled: `<true|false>`
   - Telegram bot link enabled: `<true|false>`
   - Discord OAuth enabled: `<true|false>`
@@ -132,8 +141,8 @@ Provide:
 Acceptance checklist:
 
 - Email/password baseline login, profile load, settings load, logout, and re-login pass.
-- Telegram Web Login creates or signs into the expected account and stores one provider identity.
-- Telegram TMA login succeeds from the Mini App and does not trust unsigned or tampered client data.
+- Telegram OIDC creates or signs into the expected Better Auth account, verifies the signed ID token, and projects one tenant/RBAC provider identity.
+- Telegram TMA login succeeds from the Mini App, creates the same Better Auth provider/account identity, and does not trust unsigned or tampered client data.
 - Telegram bot `/start` and `/link` complete linking for the intended user and reject expired, used, or wrong-user payloads.
 - Discord OAuth creates or signs into the expected account and stores one provider identity.
 - Discord `/account link` and status commands complete linking and show current status for the intended user.

@@ -6,7 +6,7 @@ export const externalAuthProviders = ['telegram', 'discord'] as const;
 export type ExternalAuthProvider = (typeof externalAuthProviders)[number];
 
 export const externalAuthProviderChannels = [
-  'telegram_web_login',
+  'telegram_oidc',
   'telegram_tma',
   'telegram_bot',
   'discord_oauth',
@@ -118,7 +118,7 @@ export const ExternalIdentityEntitySchema = new EntitySchema<ExternalIdentityEnt
     },
     {
       name: 'ck__auth_external_identities__channel',
-      expression: `"channel" in ('telegram_web_login', 'telegram_tma', 'telegram_bot', 'discord_oauth', 'discord_bot')`,
+      expression: `"channel" in ('telegram_oidc', 'telegram_tma', 'telegram_bot', 'discord_oauth', 'discord_bot')`,
     },
   ],
 });

@@ -179,7 +179,7 @@ test('registered users can log in through the user frontend same-origin proxies'
   expect(profile.status).toBe(200);
   expect(await profile.text()).toContain(email);
 
-  await gotoWithRetry(page, urls.userApp);
+  await gotoWithRetry(page, `${urls.userApp}/auth`);
   await page.getByLabel('Login email').fill(email);
   await page.getByLabel('Login password').fill(authPassword);
   await page.getByRole('button', { name: 'Login' }).click();

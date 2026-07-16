@@ -70,6 +70,15 @@ has(
 );
 const nginxFullstack = read('docker/nginx-fullstack.conf');
 const nginxSpa = read('docker/nginx-spa.conf');
+const ciWorkflow = read('.github/workflows/ci.yml');
+const runtimeOpsJob = section(ciWorkflow, '  ops-gates:', '  fullstack-e2e:');
+for (const expected of [
+  "AUTH_TELEGRAM_ENABLED: 'true'",
+  "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
+  "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
+]) {
+  has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);
+}
 const assertNginxHardening = (text, label) => {
   for (const required of [
     'add_header X-Content-Type-Options "nosniff" always;',

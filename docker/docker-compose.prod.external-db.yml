@@ -1,0 +1,26 @@
+# Production database overlay: PostgreSQL is managed outside this Compose project.
+# DATABASE_URL is mounted as a Docker secret and is never committed or interpolated
+# into the Compose model. Use only with docker/docker-compose.prod.yml.
+
+services:
+  migrate:
+    secrets: [database_url]
+
+  admin-app-api:
+    secrets: [database_url]
+
+  user-app-api:
+    secrets: [database_url]
+
+  auth-app-api:
+    secrets: [database_url]
+
+  discord-app-api:
+    secrets: [database_url]
+
+  telegram-bot-api:
+    secrets: [database_url]
+
+secrets:
+  database_url:
+    file: ${DATABASE_URL_FILE:-./secrets/database_url.txt}

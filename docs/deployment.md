@@ -1,53 +1,49 @@
-# Deployment and local stack readiness
+# Deployment modes
 
-Deployment is intentionally split into optional, composable modes. Use the mode
-that matches the target environment; do not treat Helm or Kubernetes as a global
-requirement for this repository.
+The repository ships four independently selectable production paths. Run
+`pnpm nrb init` before any path so names, domains, registries, and Git sources
+belong to the generated product.
 
-| Mode               | Use when                                                              | No-deploy validation                                                            | Extra prerequisites                                                              |
-| ------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Docker/Compose     | Local full-stack checks or one-server production                      | `pnpm run deploy:validate:docker`                                               | Docker Engine with the Compose plugin for actual runs                            |
-| PM2                | A Node process manager deployment outside this repo's default configs | `pnpm run deploy:validate:pm2`                                                  | Optional `ecosystem.config.{js,cjs,mjs}`; validation is a no-op until one exists |
-| Helm               | Direct Kubernetes release from the app chart                          | `pnpm run deploy:validate:helm` or `REQUIRE_HELM=true pnpm run deploy:validate` | Install Helm 3 for strict render/lint validation and actual Helm deployment      |
-| Helm + GitOps/Argo | ArgoCD applies the app chart from Git                                 | `pnpm run deploy:validate:gitops` plus Helm validation when rendering charts    | ArgoCD and cluster platform services supplied by the platform repo               |
+| Mode                         | Entrypoint                                                            | Database                                                    | Validation                        |
+| ---------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------- |
+| Compose + bundled PostgreSQL | production base + `docker-compose.prod.bundled-db.yml`                | PostgreSQL service and volume inside the Compose project    | `pnpm run deploy:validate:docker` |
+| Compose + external DB        | production base + `docker-compose.prod.external-db.yml`               | Secret-file URL to operator/cloud PostgreSQL; no Compose DB | `pnpm run deploy:validate:docker` |
+| Direct Kubernetes            | `.helm/` + `.helm/values-production.yaml`                             | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:helm`   |
+| Kubernetes GitOps            | Helm chart through `deploy/argocd/` or `deploy/flux/`                 | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:gitops` |
+| PM2                          | Product-owned `ecosystem.config.*` when a project explicitly adds one | Product/platform-owned                                      | `pnpm run deploy:validate:pm2`    |
 
-`pnpm run deploy:validate` is a generic no-deploy bundle. It runs static
-Docker/Compose checks, GitOps checks when the ArgoCD manifest exists, PM2 checks
-when an ecosystem config exists, and Helm static checks. If Helm is not installed,
-the generic command skips Helm render validation with a clear message. Strict Helm
-rendering runs only for `pnpm run deploy:validate:helm`,
-`node scripts/deploy-validate.mjs --mode=helm`, or
-`REQUIRE_HELM=true pnpm run deploy:validate`.
+The generic `pnpm run deploy:validate` command runs all static contracts,
+renders both production Compose topologies when Docker Compose is available,
+validates Argo CD and Flux manifests, and renders the Helm chart when Helm is
+available. CI requires the relevant CLIs, so optional local skips cannot hide a
+broken deployment artifact.
 
-All validation commands in this section are preflight checks only. They do not
-start containers, apply Kubernetes manifests, sync ArgoCD, push images, or deploy
-traffic.
+These validation commands do not start containers, mutate a cluster, push an
+image, or sync a controller.
 
-## Deployment mode decision tree
+## Decision flow
 
 ```mermaid
 flowchart TD
-  start([Choose deployment target]) --> single{Single Docker host or VPS?}
-  single -- Yes --> compose[Docker/Compose mode<br/>Validate: pnpm run deploy:validate:docker]
-  single -- No --> nodehost{Existing Node host with PM2 standard?}
-  nodehost -- Yes --> pm2[PM2 mode<br/>Validate: pnpm run deploy:validate:pm2]
-  nodehost -- No --> k8s{Kubernetes target?}
-  k8s -- No --> stop[Add a product-owned runbook before deploying]
-  k8s -- Yes --> gitops{ArgoCD/GitOps owns reconciliation?}
-  gitops -- Yes --> argo[Helm + GitOps/Argo mode<br/>Validate: pnpm run deploy:validate:gitops<br/>plus Helm rendering when charts change]
-  gitops -- No --> helm[Direct Helm mode<br/>Validate: pnpm run deploy:validate:helm]
-  compose --> backup[Take PostgreSQL backup before migrations]
-  pm2 --> backup
-  argo --> backup
-  helm --> backup
-  backup --> smoke[Run /ready, logs, and rollback smoke checks]
+  start([Choose runtime]) --> host{Single Docker host?}
+  host -- Yes --> db{Database inside the Compose project?}
+  db -- Yes --> bundled[Compose bundled-db overlay]
+  db -- No --> external[Compose external-db overlay and DATABASE_URL secret]
+  host -- No --> k8s{Kubernetes?}
+  k8s -- No --> pm2[Add and own a PM2/runtime runbook]
+  k8s -- Yes --> controller{GitOps controller owns reconciliation?}
+  controller -- No --> helm[Direct Helm upgrade/install]
+  controller -- Yes --> gitops[Argo CD or Flux]
+  bundled --> verify[Migration, readiness, logs, backup, rollback]
+  external --> verify
+  pm2 --> verify
+  helm --> verify
+  gitops --> verify
 ```
 
-The decision is per environment. A repository can keep all validation commands
-green while only one or two modes are used in production. Install Helm only
-for the Helm branches of the tree.
+## Local development
 
-## Local development flow
+Local development is separate from production Compose:
 
 ```bash
 cp .env.example .env
@@ -56,140 +52,74 @@ pnpm run db:migrate
 pnpm run dev:fullstack
 ```
 
-`dev:fullstack` starts the root Postgres compose service, runs
-`pnpm run db:migrate` through the MikroORM Migrator, and runs the three core
-backend APIs plus the admin/user Vite SPAs and Astro landing app with local API
-base URL defaults. Run `pnpm exec nx serve site-app` separately when validating
-the Vike SSR site.
+`docker/docker-compose.yml` uses profiles selected by `pnpm nrb setup`; the
+production base/overlays do not participate in that selection.
 
-## Database migrations and reset
+## Compose production
 
-```bash
-pnpm run db:migrate
-pnpm run db:reset
-```
-
-`db:migrate` reads `DATABASE_URL` or constructs a local URL from `POSTGRES_*`
-defaults, initializes MikroORM with the auth entity plus migration class list,
-and runs `orm.migrator.up()`. Applied migrations are tracked in
-`mikro_orm_migrations`; the command is idempotent and no runtime path uses raw
-SQL files or a `psql` loop.
-
-`db:reset` refuses non-local or non-dev-looking database names, then uses
-MikroORM schema tooling to drop app tables and `mikro_orm_migrations` before
-rerunning the same MikroORM migrator.
-
-## Docker fullstack
-
-Docker validation scripts build Compose services serially and default
-`COMPOSE_PARALLEL_LIMIT=1`, `COMPOSE_BAKE=false`, `NX_DAEMON=false`, and
-`NX_PARALLEL=1` so image builds stay reliable on modest-memory CI and VPS hosts.
-Override these only on larger builders.
-
-```bash
-pnpm run docker:fullstack
-pnpm run test:docker-smoke
-pnpm run docker:down
-```
-
-`docker/docker-compose.yml` includes Redis, NATS, and MinIO health checks alongside Postgres, a Node-based
-migration service that runs `pnpm db:migrate`, backend `/health` checks for the
-local development stack, the Vike `site-app` `/ready` check, frontend
-`/nginx-health` checks, restart policies, and healthy dependency ordering. It
-builds the admin/user Vite apps, Astro landing app, Vike SSR
-site, and Expo mobile web export. Production Compose uses API and site `/ready`; Helm uses API
-and site `/live` plus `/ready`. Static frontend containers use nginx same-origin
-API proxying:
-
-- `/auth/*` -> `auth-app-api:80`
-- `/profile/*` -> `user-app-api:80`
-- `/admin/*` -> `admin-app-api:80`
-
-HTML navigations under those prefixes fall back to the SPA while non-HTML API
-requests continue to proxy to the backend, so admin/user deep-link reloads do
-not steal generated-client API routes. See
-[frontend-deployment-topology.md](frontend-deployment-topology.md) for the
-same-origin and split-host contracts. This lets Docker browser calls use empty
-Vite API base URLs without localhost hacks. Production Compose uses the same
-default unless `.env.production` opts into standalone split-origin SPA builds with
-`FRONTEND_NGINX_CONFIG=docker/nginx-spa.conf` plus a non-`same-origin`
-`VITE_API_BASE_URL_MODE` value and explicit `VITE_*_API_BASE_URL` origins.
-Production secrets should be supplied from a secret manager; repository values
-are placeholders only.
-
-## Docker Compose production readiness
-
-The single-server production stack is documented in
-[docker-compose-production.md](docker-compose-production.md). Before starting it,
-copy `.env.production.example`, replace `IMAGE_TAG=sha-000000000000` with the
-immutable `sha-<git-sha>` image tag you built, create the Docker secret files
-with `chmod 600`, and run:
+The production base is intentionally incomplete without one database overlay.
+This prevents an operator from accidentally believing an external database mode
+is active while every API still depends on a local `postgres` service.
 
 ```bash
 pnpm run deploy:validate:docker
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml config
-node scripts/validate-docker-compose-prod.mjs
+
+# Bundled PostgreSQL
+pnpm run docker:prod:bundled-db:config
+pnpm run docker:prod:bundled-db:up
+
+# External PostgreSQL
+pnpm run docker:prod:external-db:config
+pnpm run docker:prod:external-db:up
 ```
 
-The validation commands above do not deploy. Actual Compose deployment requires
-Docker and explicit `docker compose ... up -d` commands from
-[docker-compose-production.md](docker-compose-production.md).
+Both modes mount credentials from files under `docker/secrets/`; production
+database credentials are never interpolated into the Compose model. See
+[docker-compose-production.md](docker-compose-production.md) for setup,
+verification, backup, rollback, and shutdown commands.
 
-Do not use `latest`, `main`, `dev`, or other mutable image tags for production
-Compose. If your release process pins by image digest instead, put those digest
-references in a release-specific compose override and record the digest with the
-source Git SHA. The repository examples intentionally contain placeholder
-domains, registry names, and non-production secrets only.
+## Direct Kubernetes
 
-Rollback for Compose is image based: record the current immutable image tag or
-digest, take a database backup before migrations, restore the previous tag in
-`.env.production`, and run the Compose update command. Restore the database only
-when the migration is not backward compatible; otherwise roll forward with a
-corrective migration.
-
-## PM2 readiness
-
-PM2 is an optional process-manager mode, not a built-in production default. This
-repository currently has no `ecosystem.config.{js,cjs,mjs}` file, so:
-
-```bash
-pnpm run deploy:validate:pm2
-```
-
-prints a skip/no-op message and exits successfully. Add an ecosystem config only
-when a product deployment actually uses PM2, keep production secrets in the
-runtime environment rather than committed files, and then use the same command as
-the static preflight for that config. PM2 rollback is the operator's process
-manager rollback: keep the previous release directory or image tag available,
-restore the previous environment, restart from the previous ecosystem config, and
-handle database compatibility the same way as other modes.
-
-## Helm and GitOps readiness
-
-The `.helm/` chart is application-owned and optional. Install Helm only when
-you choose Helm mode, run strict Helm validation, or perform an actual Helm
-release:
+The app-owned chart deploys applications, migration hooks, Services, probes,
+ingress, and optional app-level monitoring resources. It references, but does
+not provision, production secrets or stateful platform services.
 
 ```bash
 pnpm run deploy:validate:helm
-REQUIRE_HELM=true pnpm run deploy:validate
+helm upgrade --install nest-react-boilerplate .helm \
+  -f .helm/values.yaml \
+  -f .helm/values-production.yaml \
+  --namespace nest-react-boilerplate \
+  --create-namespace --atomic --wait --timeout 10m
 ```
 
-`deploy/argocd/application.yaml` is an optional ArgoCD starting point for the
-Helm + GitOps mode:
+The complete runbook is [deploy/kubernetes/README.md](../deploy/kubernetes/README.md).
+
+## Kubernetes with GitOps
+
+Argo CD and Flux consume the same chart and production values:
 
 ```bash
 pnpm run deploy:validate:gitops
+
+# Choose one controller, never both for the same release.
+kubectl apply -k deploy/argocd
+# or
+kubectl apply -k deploy/flux
 ```
 
-The app repository owns app images, the chart, values, migration job, services,
-probes, and app ingress shape. The platform repository, such as
-`nmime/ansible-k8s-full-setup`, owns cluster provisioning, ArgoCD, External
-Secrets/Vault, ingress controllers, DNS/TLS, databases, observability, and
-backups. Keep cluster addresses, secret backends, and platform dependencies out
-of app values except for references such as `secrets.existingSecret`.
+The manual promotion workflow verifies all release images at one full Git SHA,
+updates production values on a topic branch, and opens a pull request. After
+merge, the selected controller reconciles. It does not write directly to `main`.
+See [GITOPS.md](../GITOPS.md).
 
-Helm rollback uses `helm history` and `helm rollback` for direct releases. GitOps
-rollback reverts the Git commit, image digest, or immutable tag watched by ArgoCD
-and lets Argo reconcile it. For both modes, confirm migration compatibility and
-restore database backups only when required.
+## Release invariants for every mode
+
+- Use only reviewed full-SHA tags (`sha-<40-character-git-sha>`) or digests.
+- Create high-entropy secrets outside Git and keep secret files mode `0600`.
+- Run the migration step once and require completion before API rollout.
+- Use `/live` for liveness, `/ready` for dependency/migration readiness, and
+  `/nginx-health` for static frontend containers.
+- Verify backups before schema changes and document whether rollback is safe.
+- Keep the selected apex (`landing-app` or `site-app`) on the base domain and
+  every other public app/API on its exact `<app-id>.<base-domain>` host.

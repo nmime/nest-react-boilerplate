@@ -53,7 +53,7 @@ jobs:
 
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v3.15.4
+          version: v4.2.2
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -65,6 +65,8 @@ jobs:
         run: pnpm run deploy:validate
         env:
           REQUIRE_HELM: 'true'
+          REQUIRE_DOCKER_COMPOSE: 'true'
+          REQUIRE_KUBECTL: 'true'
 
   fast-check:
     name: Fast PR gate (ci:pr)
@@ -309,7 +311,7 @@ jobs:
     name: Docker smoke stack
     runs-on: ubuntu-22.04
     needs: quality
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -329,6 +331,9 @@ jobs:
 
       - name: Docker smoke
         run: pnpm run test:docker-smoke
+
+      - name: Production Compose database modes
+        run: pnpm run test:compose-deployment-modes
 
   security-native:
     name: Native security gates

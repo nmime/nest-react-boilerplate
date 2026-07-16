@@ -10,9 +10,18 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 if ! command -v helm >/dev/null 2>&1; then
-  echo "helm is required. Install Helm 3 or run in CI where azure/setup-helm is used." >&2
+  echo "helm is required. Install Helm 4 or run in CI where azure/setup-helm is used." >&2
   exit 127
 fi
+
+HELM_VERSION_OUTPUT="$(helm version --short)"
+HELM_MAJOR="${HELM_VERSION_OUTPUT#v}"
+HELM_MAJOR="${HELM_MAJOR%%.*}"
+if [[ ! "${HELM_MAJOR}" =~ ^[0-9]+$ ]] || (( HELM_MAJOR < 4 )); then
+  echo "Helm 4 or newer is required; found ${HELM_VERSION_OUTPUT}." >&2
+  exit 1
+fi
+echo "==> ${HELM_VERSION_OUTPUT}"
 
 echo "==> Helm lint (default values with synthetic in-chart Secret)"
 helm lint "${CHART_DIR}" \

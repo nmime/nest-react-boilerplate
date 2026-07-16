@@ -1,0 +1,68 @@
+# Production database overlay: PostgreSQL runs inside this Compose project.
+# Use only with docker/docker-compose.prod.yml.
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
+      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [database]
+    secrets: [postgres_password]
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U $${POSTGRES_USER:-nest_react_boilerplate} -d $${POSTGRES_DB:-nest_react_boilerplate}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  migrate:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  admin-app-api:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  user-app-api:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-app-api:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  discord-app-api:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  telegram-bot-api:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+
+secrets:
+  postgres_password:
+    file: ${POSTGRES_PASSWORD_FILE:-./secrets/postgres_password.txt}

@@ -37,6 +37,13 @@ function createFixture(): string {
   );
   writeFileSync(join(root, ".env.example"), "PUBLIC_URL=https://user-app.example.com\n");
   writeFileSync(join(root, ".env.production.example"), "PUBLIC_URL=https://example.com\n");
+  writeFileSync(
+    join(root, "deployment.txt"),
+    [
+      "https://github.com/your-github-org/nest-react-boilerplate.git",
+      "ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api",
+    ].join("\n") + "\n",
+  );
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
@@ -136,6 +143,13 @@ describe("project init", () => {
       assert.equal(
         readFileSync(join(root, ".env.production.example"), "utf8"),
         "PUBLIC_URL=https://acme.example\n",
+      );
+      assert.equal(
+        readFileSync(join(root, "deployment.txt"), "utf8"),
+        [
+          "https://github.com/acme-org/acme-app.git",
+          "ghcr.io/acme-org/acme-app/auth-app-api",
+        ].join("\n") + "\n",
       );
       assert.equal(
         readFileSync(join(root, ".env"), "utf8"),

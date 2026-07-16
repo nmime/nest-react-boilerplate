@@ -7,6 +7,8 @@ const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected Docker Compose production config: ${label}`);
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
+const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
@@ -65,8 +67,13 @@ assert.ok(
 );
 assert.ok(
   !/^DATABASE_URL=postgres:\/\/.*@localhost:/m.test(productionEnvExample),
-  'production env example must not set DATABASE_URL to localhost; leave it blank so Compose builds the in-network URL from secrets.',
+  'production env example must not set DATABASE_URL to localhost; Compose reads database credentials from secret files.',
 );
+assert.ok(!prodCompose.includes('\n  postgres:\n'), 'production Compose base must not choose a PostgreSQL topology');
+has(bundledDbCompose, '\n  postgres:\n', 'bundled-db overlay defines PostgreSQL');
+has(bundledDbCompose, 'postgres_password:', 'bundled-db overlay defines its password secret');
+assert.ok(!externalDbCompose.includes('\n  postgres:\n'), 'external-db overlay must not define PostgreSQL');
+has(externalDbCompose, 'database_url:', 'external-db overlay defines its URL secret');
 
 for (const service of [
   'migrator',
@@ -91,6 +98,7 @@ for (const service of [
 for (const expected of [
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
+  'DATABASE_URL_FILE=./secrets/database_url.txt',
   'TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt',
   'TELEGRAM_BOT_WEBHOOK_SECRET_FILE=./secrets/telegram_bot_webhook_secret.txt',
   'DISCORD_BOT_TOKEN_FILE=./secrets/discord_bot_token.txt',
@@ -148,16 +156,19 @@ for (const expected of [
 }
 
 for (const expected of [
-  'docker compose --env-file .env.production -f docker/docker-compose.prod.yml config',
+  'pnpm run docker:prod:bundled-db:config',
+  'pnpm run docker:prod:external-db:config',
   'node scripts/validate-docker-compose-prod.mjs',
   'latest',
-  'sha-<git-sha>',
+  'full immutable tag',
   'chmod 600',
 ]) {
   has(composeDocs, expected, `Docker Compose production docs ${expected}`);
 }
 
-has(deploymentDocs, 'Docker Compose production readiness', 'deployment docs production Compose readiness section');
+has(deploymentDocs, '## Compose production', 'deployment docs production Compose section');
+has(deploymentDocs, 'docker:prod:bundled-db:config', 'deployment docs bundled-db entrypoint');
+has(deploymentDocs, 'docker:prod:external-db:config', 'deployment docs external-db entrypoint');
 has(securityPolicy, 'security@example.com', 'security contact placeholder');
 has(securityPolicy, 'within 3 business days', 'security acknowledgement SLA');
 has(securityPolicy, 'within 5 business days', 'security triage SLA');

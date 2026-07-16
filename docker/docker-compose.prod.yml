@@ -34,7 +34,6 @@ x-backend-env: &backend-env
   POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_SSL_REJECT_UNAUTHORIZED:-true}
   POSTGRES_SYNCHRONIZE: 'false'
   POSTGRES_LOGGING: ${POSTGRES_LOGGING:-false}
-  DATABASE_URL: ${DATABASE_URL:-}
   OTEL_ENABLED: ${OTEL_ENABLED:-true}
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
   OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
@@ -47,21 +46,11 @@ x-backend-command: &backend-command
   - sh
   - -ec
   - |
-    export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)"
-    export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
-    if [ -f /run/secrets/telegram_bot_token ]; then
-      export TELEGRAM_BOT_TOKEN="$$(cat /run/secrets/telegram_bot_token)"
-    fi
-    if [ -f /run/secrets/telegram_bot_webhook_secret ]; then
-      export TELEGRAM_BOT_WEBHOOK_SECRET="$$(cat /run/secrets/telegram_bot_webhook_secret)"
-    fi
-    if [ -f /run/secrets/discord_bot_token ]; then
-      export DISCORD_BOT_TOKEN="$$(cat /run/secrets/discord_bot_token)"
-    fi
-    if [ -f /run/secrets/discord_public_key ]; then
-      export DISCORD_PUBLIC_KEY="$$(cat /run/secrets/discord_public_key)"
-    fi
     if [ -z "$${DATABASE_URL:-}" ]; then
+      if [ -z "$${POSTGRES_PASSWORD:-}" ]; then
+        echo "DATABASE_URL is unavailable: select the bundled-db or external-db Compose overlay" >&2
+        exit 1
+      fi
       DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
       export DATABASE_URL
     fi
@@ -71,9 +60,11 @@ x-migrate-command: &migrate-command
   - sh
   - -ec
   - |
-    export AUTH_JWT_SECRET="$$(cat /run/secrets/auth_jwt_secret)"
-    export POSTGRES_PASSWORD="$$(cat /run/secrets/postgres_password)"
     if [ -z "$${DATABASE_URL:-}" ]; then
+      if [ -z "$${POSTGRES_PASSWORD:-}" ]; then
+        echo "DATABASE_URL is unavailable: select the bundled-db or external-db Compose overlay" >&2
+        exit 1
+      fi
       DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
       export DATABASE_URL
     fi
@@ -100,12 +91,10 @@ x-frontend-healthcheck: &frontend-healthcheck
 x-backend-service: &backend-service
   restart: unless-stopped
   networks: [app, database]
-  secrets: [auth_jwt_secret, postgres_password]
+  secrets: [auth_jwt_secret]
   environment: *backend-env
   command: *backend-command
   depends_on:
-    postgres:
-      condition: service_healthy
     redis:
       condition: service_healthy
     migrate:
@@ -129,28 +118,6 @@ x-site-healthcheck: &site-healthcheck
   start_period: 30s
 
 services:
-  postgres:
-    image: postgres:17.6-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
-      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks: [database]
-    secrets: [postgres_password]
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -U $${POSTGRES_USER:-nest_react_boilerplate} -d $${POSTGRES_DB:-nest_react_boilerplate}',
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-
   redis:
     image: redis:7.4.3-alpine
     restart: unless-stopped
@@ -172,13 +139,10 @@ services:
       dockerfile: Dockerfile
       target: migrator
     restart: 'no'
-    networks: [database]
-    secrets: [auth_jwt_secret, postgres_password]
+    networks: [app, database]
+    secrets: [auth_jwt_secret]
     environment: *backend-env
     command: *migrate-command
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   admin-app-api:
     <<: *backend-service
@@ -247,7 +211,7 @@ services:
       DISCORD_REGISTRATION_GUILD_ID: ${DISCORD_REGISTRATION_GUILD_ID:-}
       DISCORD_WEB_APP_BASE_URL: ${DISCORD_WEB_APP_BASE_URL:-https://user-app.example.com}
       DISCORD_DEFAULT_TENANT_ID: ${DISCORD_DEFAULT_TENANT_ID:-}
-    secrets: [auth_jwt_secret, postgres_password, discord_bot_token, discord_public_key]
+    secrets: [auth_jwt_secret, discord_bot_token, discord_public_key]
     ports:
       - target: 80
         published: '${DISCORD_APP_API_PORT:-3007}'
@@ -274,7 +238,7 @@ services:
       TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
       TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
-    secrets: [auth_jwt_secret, postgres_password, telegram_bot_token, telegram_bot_webhook_secret]
+    secrets: [auth_jwt_secret, telegram_bot_token, telegram_bot_webhook_secret]
     ports:
       - target: 80
         published: '${TELEGRAM_BOT_API_PORT:-3013}'
@@ -523,7 +487,6 @@ networks:
     internal: true
 
 volumes:
-  postgres-data:
   redis-data:
   prometheus-data:
   grafana-data:
@@ -532,8 +495,6 @@ volumes:
 secrets:
   auth_jwt_secret:
     file: ${AUTH_JWT_SECRET_FILE:-./secrets/auth_jwt_secret.txt}
-  postgres_password:
-    file: ${POSTGRES_PASSWORD_FILE:-./secrets/postgres_password.txt}
   grafana_admin_password:
     file: ${GRAFANA_ADMIN_PASSWORD_FILE:-./secrets/grafana_admin_password.txt}
   telegram_bot_token:

@@ -1,7 +1,7 @@
 # Production readiness checklist
 
 Use this checklist before the selected deployment mode. Docker/Compose, PM2,
-Helm, and Helm + GitOps/Argo are optional modes; Helm is not a global
+Helm, and Helm with Argo CD or Flux are optional modes; Helm is not a global
 prerequisite unless the selected path renders or deploys the Helm chart.
 
 ## Build and release
@@ -12,14 +12,15 @@ prerequisite unless the selected path renders or deploys the Helm chart.
       SHA or digest.
 - [ ] `pnpm run deploy:validate` succeeds as a no-deploy generic preflight. If
       Helm is not installed, it clearly skips Helm render validation.
-- [ ] For Compose deployments, `pnpm run deploy:validate:docker` and
-      `docker compose -f docker/docker-compose.prod.yml config` succeed for the
-      final `.env.production`.
+- [ ] For Compose deployments, `pnpm run deploy:validate:docker` succeeds, then
+      the selected `docker:prod:bundled-db:config` or
+      `docker:prod:external-db:config` command succeeds for `.env.production`.
 - [ ] For PM2 deployments, `pnpm run deploy:validate:pm2` validates the product
       `ecosystem.config.{js,cjs,mjs}`; when no ecosystem config exists, the
       command is an expected no-op skip.
-- [ ] For GitOps deployments, `pnpm run deploy:validate:gitops` validates the
-      optional ArgoCD manifest.
+- [ ] For GitOps deployments, `pnpm run deploy:validate:gitops` renders the
+      chart and both Argo CD and Flux entrypoints; exactly one controller owns
+      the target release.
 - [ ] For Helm deployments, `pnpm run deploy:validate:helm` or
       `REQUIRE_HELM=true pnpm run deploy:validate` succeeds for the target image
       tags.

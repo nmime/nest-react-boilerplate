@@ -1,27 +1,107 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const manifestPath = new URL('../deploy/argocd/application.yaml', import.meta.url);
-assert.ok(
-  existsSync(manifestPath),
-  'GitOps/Argo validation requires deploy/argocd/application.yaml when gitops mode is selected.',
+const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (path) => {
+  const absolutePath = join(rootDir, path);
+  assert.ok(existsSync(absolutePath), `Missing GitOps file: ${path}`);
+  return readFileSync(absolutePath, 'utf8');
+};
+const has = (text, needle, label = needle) =>
+  assert.ok(text.includes(needle), `Missing expected GitOps config: ${label}`);
+
+const argo = read('deploy/argocd/application.yaml');
+const argoKustomization = read('deploy/argocd/kustomization.yaml');
+const fluxSource = read('deploy/flux/source.yaml');
+const fluxRelease = read('deploy/flux/release.yaml');
+const fluxKustomization = read('deploy/flux/kustomization.yaml');
+const releaseWorkflow = read('.github/workflows/release-images.yml');
+const promotionWorkflow = read('.github/workflows/deploy.yml');
+const tagUpdater = read('scripts/update-deploy-tags.py');
+
+for (const expected of [
+  'apiVersion: argoproj.io/v1alpha1',
+  'kind: Application',
+  'namespace: argocd',
+  'path: .helm',
+  'targetRevision: main',
+  'CreateNamespace=true',
+  'prune: true',
+  'selfHeal: true',
+]) {
+  has(argo, expected, `Argo CD ${expected}`);
+}
+has(argoKustomization, '- application.yaml', 'Argo CD kustomization resource');
+
+for (const expected of [
+  'apiVersion: source.toolkit.fluxcd.io/v1',
+  'kind: GitRepository',
+  'namespace: flux-system',
+  'branch: main',
+]) {
+  has(fluxSource, expected, `Flux source ${expected}`);
+}
+for (const expected of [
+  'apiVersion: helm.toolkit.fluxcd.io/v2',
+  'kind: HelmRelease',
+  'namespace: flux-system',
+  'targetNamespace: nest-react-boilerplate',
+  'chart: ./.helm',
+  'kind: GitRepository',
+  'values.yaml',
+  'values-production.yaml',
+  'createNamespace: true',
+  'strategy: rollback',
+]) {
+  has(fluxRelease, expected, `Flux release ${expected}`);
+}
+for (const resource of ['source.yaml', 'release.yaml']) {
+  has(fluxKustomization, `- ${resource}`, `Flux kustomization includes ${resource}`);
+}
+
+const argoRepo = argo.match(/repoURL:\s*(\S+)/u)?.[1];
+const fluxRepo = fluxSource.match(/url:\s*(\S+)/u)?.[1];
+assert.ok(argoRepo, 'Argo CD source must declare repoURL.');
+assert.equal(fluxRepo, argoRepo, 'Argo CD and Flux must reconcile the same repository.');
+assert.match(
+  argoRepo,
+  /^https:\/\/github\.com\/your-github-org\/nest-react-boilerplate\.git$/u,
+  'Template GitOps repository must be owned by init-project replacements.',
 );
+assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not use an example owner.');
 
-const manifest = readFileSync(manifestPath, 'utf8');
-const has = (needle, label = needle) =>
-  assert.ok(manifest.includes(needle), `Missing expected GitOps config: ${label}`);
+has(releaseWorkflow, 'sha-${{ github.sha }}', 'release images use the full GitHub SHA');
+has(promotionWorkflow, '^[0-9a-f]{40}$', 'promotion accepts only a full 40-character SHA');
+has(promotionWorkflow, 'docker manifest inspect', 'promotion verifies published images');
+has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
+assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
+assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
+has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', sha)", 'tag updater requires the release workflow full SHA');
 
-has('apiVersion: argoproj.io/v1alpha1', 'Argo CD Application apiVersion');
-has('kind: Application', 'Argo CD Application kind');
-has('namespace: argocd', 'Argo CD namespace');
-has('path: .helm', 'GitOps source points at the Helm chart');
-has('targetRevision:', 'GitOps source declares a target revision');
-has('destination:', 'GitOps destination block');
-has('syncPolicy:', 'GitOps sync policy block');
-assert.ok(
-  !/repoURL:\s*["']?https:\/\/github\.com\/example\//u.test(manifest),
-  'GitOps Application repoURL must not use the example placeholder repository.',
-);
+const kubectlAvailable = spawnSync('kubectl', ['version', '--client'], { cwd: rootDir, stdio: 'ignore' }).status === 0;
+if (!kubectlAvailable) {
+  if (process.env.REQUIRE_KUBECTL === 'true') {
+    console.error('kubectl is required for GitOps kustomize validation but is unavailable.');
+    process.exit(127);
+  }
+  console.log('gitops static assertions passed; kubectl kustomize skipped because kubectl is unavailable');
+  process.exit(0);
+}
 
-console.log('gitops static assertions passed');
+for (const directory of ['deploy/argocd', 'deploy/flux']) {
+  const result = spawnSync('kubectl', ['kustomize', directory], {
+    cwd: rootDir,
+    encoding: 'utf8',
+  });
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr);
+    process.exit(result.status ?? 1);
+  }
+  assert.ok(result.stdout.trim(), `${directory} must render at least one GitOps resource.`);
+}
+
+console.log(JSON.stringify({ status: 'ok', controllers: ['argocd', 'flux'] }));

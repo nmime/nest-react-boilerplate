@@ -1,252 +1,144 @@
-# GitOps Deployment Guide
+# GitOps deployment
 
-This document describes the GitOps deployment pipeline for the Nest React Boilerplate project.
+This repository supports both Argo CD and Flux. Each controller reconciles the
+same application-owned Helm chart and production values:
 
-## Architecture Overview
+- chart: `.helm/`
+- release values: `.helm/values-production.yaml`
+- Argo CD entrypoint: `deploy/argocd/`
+- Flux entrypoint: `deploy/flux/`
 
-```
-┌─────────────┐     ┌──────────────┐     ┌────────────────────┐     ┌─────────────────┐
-│  Code Push  │ ──► │  CI (Gate)   │ ──► │  Deploy Workflow   │ ──► │  ArgoCD Sync    │
-│  to main    │     │  ci.yml      │     │  deploy.yml        │     │  (automatic)    │
-└─────────────┘     └──────────────┘     └────────────────────┘     └────────┬────────┘
-                                                                              │
-                                                                    ┌─────────▼────────┐
-                                                                    │  Kubernetes      │
-                                                                    │  Cluster         │
-                                                                    └─────────────────┘
-```
+Run `pnpm nrb init --name ... --domain ... --owner ...` before configuring a
+cluster. Initialization replaces the template repository owner, product slug,
+namespace, registry path, and all public domains in these files. A manifest that
+still contains `your-github-org`, `example.com`, or
+`sha-REPLACE_WITH_RELEASE_GIT_SHA` is intentionally not deployable.
 
-## The Pipeline
+## Ownership boundary
 
-### 1. Code Change (Developer)
+The application repository owns image references, Helm templates, application
+configuration, migration hooks, Services, probes, ingress routes, and Secret
+references. A platform/config repository should own cluster creation, controller
+installation, controller RBAC/projects, secret backends, ingress controllers,
+DNS/TLS issuers, databases, observability infrastructure, and disaster recovery.
 
-A developer opens a PR against `main`. The PR can modify application code in `apps/`,
-Helm chart files in `.helm/`, the `Dockerfile`, or `pnpm-lock.yaml`.
+For a simple single-cluster setup, the manifests in this repository can be
+applied directly. Larger installations should copy or reference them from the
+platform repository and pin the application source to a reviewed branch, tag, or
+commit according to the promotion policy.
 
-### 2. CI Gate (`.github/workflows/ci.yml`)
+## Release and promotion flow
 
-On PR and push to `main`, the CI workflow runs:
-
-- Linting, type-checking, and tests
-- Helm chart rendering validation
-- Security scanning (CodeQL, scorecards)
-- Dependency review on PRs
-
-**The pipeline will not deploy if CI fails.** The deploy workflow is triggered via
-`workflow_run` listening for CI completion with success status. If CI fails, the deploy
-workflow is never triggered — it only runs when the CI workflow completes successfully
-on the `main` branch.
-
-### 3. Image Build (`.github/workflows/release-images.yml`)
-
-On tags (`v*`) and GitHub releases, the release workflow:
-
-- Builds all 9 container images (migrator, 3 APIs, 5 frontends)
-- Runs Trivy security scans
-- Signs images with cosign (SLSA provenance)
-- Pushes images to `ghcr.io/nmime/nest-react-boilerplate/*`
-
-### 4. Deploy Workflow (`.github/workflows/deploy.yml`)
-
-On successful CI completion on `main` (or manual trigger via `workflow_dispatch`):
-
-1. **Check out the repo** with a deploy token (`GH_DEPLOY_TOKEN`)
-2. **Determine the git SHA** (from the CI workflow's head SHA by default, or a manual override via `workflow_dispatch`)
-3. **Update image tags** in `deploy/k8s/values.yaml` via `scripts/update-deploy-tags.py`
-   - Every `tag: "sha-xxxxxxx"` line is updated to the current commit short SHA
-4. **Validate** the Helm chart renders correctly with the updated values
-5. **Commit and push** the updated `deploy/k8s/values.yaml` back to `main`
-6. **ArgoCD auto-syncs** because `targetRevision: main` and `automated.selfHeal: true`
-
-### 5. ArgoCD Sync (Automatic)
-
-ArgoCD watches `main` branch of the repo. When `deploy/k8s/values.yaml` changes:
-
-- ArgoCD detects drift between the cluster state and the desired state
-- It automatically reconciles: updating Deployments, which triggers rolling restarts
-- New pods pull the updated image tags from GHCR
-
-## File Structure
-
-```
-.
-├── .helm/                          # Helm chart (source of truth for templates)
-│   ├── Chart.yaml
-│   ├── values.yaml                 # Default values
-│   ├── values-production.yaml      # Production overrides (base config)
-│   └── templates/                  # K8s manifests
-├── deploy/
-│   ├── k8s/
-│   │   ├── argocd-application.yaml # ArgoCD Application resource (install this)
-│   │   └── values.yaml             # LIVE values — updated by deploy workflow
-│   └── argocd/
-│       └── application.yaml        # Legacy/example (may be removed)
-├── scripts/
-│   └── update-deploy-tags.py       # Updates image tags in deploy/k8s/values.yaml
-├── .github/workflows/
-│   ├── ci.yml                      # CI gate
-│   ├── deploy.yml                  # GitOps deploy (updates values.yaml, gated on CI)
-│   ├── release-images.yml          # Build & push images on tags/releases
-│   └── argo-sync.yml              # Manual ArgoCD sync trigger
-└── GITOPS.md                       # This file
+```mermaid
+flowchart LR
+  merge[Merge application code] --> tag[Create reviewed release tag]
+  tag --> images[Release images workflow builds, scans, signs, and publishes all images]
+  images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
+  promote --> verify[Verify all 11 immutable sha-SHA images and render Helm]
+  verify --> pr[Open a promotion pull request updating values-production.yaml]
+  pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
 ```
 
-## Setting Up ArgoCD on Your Cluster
+The promotion workflow is manual by design. It:
 
-### Prerequisites
+1. accepts only a full 40-character commit SHA already contained in `main`;
+2. verifies every migrator, API, bot API, and frontend image exists in GHCR;
+3. updates every Helm image to the exact `sha-<40-character-sha>` tag;
+4. renders the chart and validates both GitOps controller manifests;
+5. pushes a topic branch and opens a pull request.
 
-- A Kubernetes cluster with ArgoCD installed
-- Application images require Node.js `>=24 <25` runtime; all Docker images are built from the repository's configured Node version
-- Redis v6 (`@redis/client`) is used for caching and rate limiting (previously `ioredis`; migrated to the official `@redis/client` package)
-- The `argocd` namespace exists with ArgoCD running
-- An `imagePullSecret` named `ghcr-credentials` in the target namespace for pulling from GHCR
+It never commits directly to `main`, never shortens the image tag, and never
+creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
+contents, pull-request, and package read access before using the workflow.
 
-### Install the ArgoCD Application
+## Common prerequisites
 
-Apply the ArgoCD Application resource to your cluster:
+- a Kubernetes cluster compatible with the selected Helm version;
+- immutable images published by `.github/workflows/release-images.yml`;
+- a target namespace Secret named by `secrets.existingSecret` containing at
+  least `AUTH_JWT_SECRET` and `DATABASE_URL`;
+- `ghcr-credentials` in the target namespace when images are private;
+- reachable PostgreSQL and Redis services;
+- ingress, DNS, and TLS configured for every enabled application domain.
+
+The current manifests use the stable APIs documented by each controller:
+`argoproj.io/v1alpha1` Application, `source.toolkit.fluxcd.io/v1`
+GitRepository, and `helm.toolkit.fluxcd.io/v2` HelmRelease.
+
+## Validate before applying
 
 ```bash
-kubectl apply -f deploy/k8s/argocd-application.yaml
+pnpm run deploy:validate:gitops
+kubectl kustomize deploy/argocd >/dev/null
+kubectl kustomize deploy/flux >/dev/null
 ```
 
-This creates an ArgoCD Application that:
+`deploy:validate:gitops` performs strict Helm lint/render validation, checks the
+Argo CD and Flux contracts, and renders both Kustomize entrypoints. It does not
+contact or mutate a cluster.
 
-- Points to the repo's `.helm/` directory as a Helm chart source
-- Uses `deploy/k8s/values.yaml` as an overlay values file
-- Auto-syncs on changes with prune and self-heal enabled
-- Creates the `nest-react-boilerplate` namespace if it doesn't exist
+## Argo CD
 
-### Verify the Application
+Install and configure Argo CD through the platform layer, then apply the
+application:
 
 ```bash
-# Check application status
+kubectl apply -k deploy/argocd
 argocd app get nest-react-boilerplate
-
-# Watch sync status
-argocd app wait nest-react-boilerplate --health
-
-# View the sync history
-argocd app history nest-react-boilerplate
+argocd app wait nest-react-boilerplate --health --timeout 600
 ```
 
-## Required Secrets
+The Application tracks `main`, enables prune and self-heal, creates the target
+namespace, and retries transient sync failures. For a private Git repository,
+configure repository credentials in Argo CD; do not add credentials to this
+manifest.
 
-### GitHub Repository Secrets
+The optional `.github/workflows/argo-sync.yml` is a manual operational shortcut.
+It uses a version-pinned, checksum-verified Argo CD CLI and requires
+`ARGOCD_SERVER` plus `ARGOCD_AUTH_TOKEN` repository secrets.
 
-| Secret              | Purpose                                                            | Required For    |
-| ------------------- | ------------------------------------------------------------------ | --------------- |
-| `GH_DEPLOY_TOKEN`   | PAT with repo write access for the deploy workflow to push changes | `deploy.yml`    |
-| `ARGOCD_SERVER`     | ArgoCD server URL (e.g., `https://argocd.example.com`)             | `argo-sync.yml` |
-| `ARGOCD_AUTH_TOKEN` | ArgoCD auth token for CLI authentication                           | `argo-sync.yml` |
+## Flux
 
-### Kubernetes Secrets
-
-| Secret                                       | Purpose                                            |
-| -------------------------------------------- | -------------------------------------------------- |
-| `ghcr-credentials`                           | Docker pull secret for `ghcr.io`                   |
-| `nest-react-boilerplate-production-secrets`  | App secrets (JWT keys, DB passwords, etc.)         |
-| `nest-react-boilerplate-tls`                 | TLS certificate (auto-provisioned by cert-manager) |
-| `nest-react-boilerplate-backup-object-store` | S3/Object store credentials for backups            |
-| `nest-react-boilerplate-backup-encryption`   | Age encryption recipient for backups               |
-
-### Creating the GHCR Pull Secret
+Install Flux through the platform layer, then apply the source and release:
 
 ```bash
-kubectl create secret docker-registry ghcr-credentials \
-  --namespace nest-react-boilerplate \
-  --docker-server=ghcr.io \
-  --docker-username=<GITHUB_USERNAME> \
-  --docker-password=<GITHUB_TOKEN> \
-  --docker-email=<EMAIL>
+kubectl apply -k deploy/flux
+flux get sources git -n flux-system
+flux get helmreleases -n flux-system
+flux reconcile helmrelease nest-react-boilerplate -n flux-system --with-source
 ```
 
-## Manual Operations
+The GitRepository tracks `main`. The HelmRelease reads `.helm/`, merges
+`values.yaml` with `values-production.yaml`, creates the application namespace,
+waits up to ten minutes, retries failed installs/upgrades, and rolls back failed
+upgrades. For a private repository, add a same-namespace `secretRef` through the
+platform overlay instead of committing credentials.
 
-### Manual Deploy (Specific Commit)
+## Secrets and image pulls
+
+The chart consumes an existing Secret through `secrets.existingSecret`; it does
+not own production secret values. Provision that Secret with External Secrets,
+Vault, SOPS, Sealed Secrets, or the platform's equivalent. The Secret must exist
+before the migration hook and application pods run.
+
+Production values reference `ghcr-credentials`. Create it through the platform
+secret flow, or remove the pull-secret reference when every image is public.
+
+## Verification and rollback
+
+After reconciliation:
 
 ```bash
-# Trigger the deploy workflow with a specific SHA
-# Go to: Actions > Deploy to cluster > Run workflow
-# Enter the git SHA in the input field
+kubectl get pods,job,svc,ingress -n nest-react-boilerplate
+kubectl rollout status deployment/nest-react-boilerplate-auth-app-api -n nest-react-boilerplate
+curl -fsS https://auth-app-api.example.com/ready
 ```
 
-### Force ArgoCD Sync
+Rollback is Git-driven: revert the promotion pull request or promote a previous
+verified image SHA, merge the change, and let the controller reconcile. Database
+schema changes must remain backward-compatible across the rollback window. When
+they are not, restore a verified backup or roll forward with a corrective
+migration before returning application traffic.
 
-```bash
-# Via the argo-sync.yml workflow
-# Go to: Actions > Sync ArgoCD > Run workflow
-# Choose "Force sync" if the cluster state diverged
-
-# Or via argocd CLI:
-argocd app sync nest-react-boilerplate --force --grpc-web
-```
-
-### Rollback to Previous Version
-
-```bash
-# Option 1: ArgoCD rollback (reverts to previous sync)
-argocd app rollback nest-react-boilerplate <revision-number> --grpc-web
-
-# Option 2: Revert the deploy commit in git
-git revert HEAD --no-edit
-git push origin main
-
-# Option 3: Manually edit deploy/k8s/values.yaml to the previous tag
-# Then commit and push — ArgoCD will auto-sync
-```
-
-### Emergency: Disable Auto-Sync
-
-```bash
-# Patch the ArgoCD application to disable auto-sync
-kubectl patch application nest-react-boilerplate -n argocd \
-  --type merge \
-  --patch '{"spec":{"syncPolicy":{"automated":null}}}'
-
-# Re-enable when ready
-kubectl apply -f deploy/k8s/argocd-application.yaml
-```
-
-## Customizing Domains and Hosts
-
-Edit `deploy/k8s/values.yaml` under the `ingress` section:
-
-```yaml
-ingress:
-  tls:
-    - secretName: nest-react-boilerplate-tls
-      hosts:
-        - mydomain.com
-        - site.mydomain.com
-        - app.mydomain.com
-        - mobile.mydomain.com
-        - admin.mydomain.com
-        - auth.mydomain.com
-```
-
-Update `config.corsOrigins` to match your frontend domains:
-
-```yaml
-config:
-  corsOrigins: https://admin.mydomain.com,https://app.mydomain.com,...
-  authJwtIssuer: https://auth.mydomain.com
-```
-
-After making changes, commit and push to `main`. The deploy workflow will run
-after CI passes, updating the image tags and triggering ArgoCD to sync.
-
-## Infrastructure services
-
-The application depends on the following infrastructure services, which should be
-available in the Kubernetes cluster (managed by the platform repository):
-
-| Service      | Purpose                                  | Helm values key                                |
-| ------------ | ---------------------------------------- | ---------------------------------------------- |
-| PostgreSQL   | Primary datastore                        | `config.databaseUrl` or `POSTGRES_*` env vars  |
-| Redis v6     | Caching, rate limiting, sessions         | `config.redisUrl` or `REDIS_*` env vars        |
-| NATS         | Event streaming, inter-service messaging | `config.natsServers` or `NATS_SERVERS` env var |
-| Object Store | Backups, file storage                    | Configured per-environment in secrets          |
-
-The Redis migration from `ioredis` to `@redis/client` (v6) is transparent at the
-configuration level — `REDIS_URL` and `REDIS_MODE` environment variables remain
-the same. The application supports standalone, cluster, and Sentinel modes.
+Do not use the controller's imperative rollback as the lasting state; record the
+same rollback in Git so reconciliation does not reapply the failed version.

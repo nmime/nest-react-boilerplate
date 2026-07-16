@@ -1,235 +1,210 @@
-# One-server Docker Compose production deployment
+# Production deployment with Docker Compose
 
-Use this path for a small single VPS deployment where one command should build
-or pull the production images, run database migrations, and start all app
-services behind a local reverse proxy.
+Docker Compose is the supported single-host production path. It has one common
+application file and exactly one required database overlay:
 
-The Kubernetes/Helm path remains preferred for HA production. Compose is for one
-server, one Docker host, and one PostgreSQL volume.
+| Mode                        | Files                                                             | PostgreSQL ownership                                  |
+| --------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| Bundled PostgreSQL          | `docker-compose.prod.yml` + `docker-compose.prod.bundled-db.yml`  | Compose service and persistent `postgres-data` volume |
+| External/managed PostgreSQL | `docker-compose.prod.yml` + `docker-compose.prod.external-db.yml` | Operator/cloud provider; no Compose DB service/volume |
 
-## 1. Prepare the server
+Do not run `docker/docker-compose.prod.yml` alone. The base file deliberately
+does not choose a database topology. Both overlays run the same migration
+container before APIs and keep all application image/build contracts identical.
+
+Kubernetes/Helm remains the preferred HA path. Compose is for one Docker host;
+the bundled database mode is not an HA database architecture.
+
+## 1. Initialize and prepare the host
+
+Initialize a fresh template before deploying so registry names, domains, and
+database names belong to the product:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y git docker.io docker-compose-plugin
-sudo usermod -aG docker "$USER"
+corepack enable
+pnpm install --frozen-lockfile
+pnpm nrb init --name "Acme" --domain acme.example --owner acme-org
 ```
 
-Clone the repository, then create local config and secret files:
+Install a current Docker Engine with the Compose plugin, then create local
+configuration and secret directories:
 
 ```bash
-git clone https://github.com/nmime/nest-react-boilerplate.git
-cd nest-react-boilerplate
 cp .env.production.example .env.production
-sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=sha-$(git rev-parse --short=12 HEAD)/" .env.production
 mkdir -p docker/secrets
+chmod 700 docker/secrets
 openssl rand -base64 48 > docker/secrets/auth_jwt_secret.txt
-openssl rand -base64 32 > docker/secrets/postgres_password.txt
+openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
 chmod 600 .env.production docker/secrets/*.txt
 ```
 
-Edit `.env.production` for real domains, CORS origins, image registry/tag, OAuth
-settings, frontend routing mode, and host ports. Do not commit `.env.production`
-or `docker/secrets/`.
-The example `IMAGE_TAG=sha-000000000000` is deliberately non-production; replace
-it with the exact `sha-<git-sha>` tag you built, or pin images by digest in a
-release-specific compose override. Never deploy `latest`, `main`, `dev`, or
-other mutable tags.
+Edit `.env.production` for real domains, CORS origins, frontend routing, registry,
+ports, and optional integrations. Replace `IMAGE_TAG=sha-000000000000` with the
+full immutable tag produced by the release workflow:
 
-## 2. Validate the compose file
+```text
+IMAGE_TAG=sha-0123456789abcdef0123456789abcdef01234567
+```
+
+Never deploy `latest`, `main`, `dev`, `prod`, or another mutable tag.
+
+## 2. Choose exactly one database mode
+
+### Bundled PostgreSQL
+
+Create the password file used by both the PostgreSQL container and application
+migration/API containers:
 
 ```bash
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml config
+openssl rand -base64 32 > docker/secrets/postgres_password.txt
+chmod 600 docker/secrets/postgres_password.txt
+pnpm run docker:prod:bundled-db:config
+```
+
+The rendered model must contain `postgres`, `postgres-data`, and
+`postgres_password`. PostgreSQL is reachable only on the internal Compose
+database network and is not published to the host.
+
+The production migrator and API image entrypoint reads root-owned `0600` secret
+files before immediately dropping to the unprivileged `node` user. Application
+and migration processes never run as root, including on native Linux hosts.
+
+### External or managed PostgreSQL
+
+Write the complete TLS-enabled connection URL to a Docker secret file. Do not put
+credentials in `.env.production`, Compose YAML, command history, or Git:
+
+```bash
+install -m 600 /dev/null docker/secrets/database_url.txt
+# Edit docker/secrets/database_url.txt with your secret manager or editor.
+pnpm run docker:prod:external-db:config
+```
+
+The file contains one connection URL, for example the provider-issued
+`postgresql://...` value. Percent-encode special characters in user/password
+segments and enable certificate verification according to the provider contract.
+
+The rendered external model contains no `postgres` service, no `postgres-data`
+volume, and no `postgres_password` secret. Only the `database_url` secret is
+mounted into migrations and APIs. The migration service uses the egress-capable
+application network so it can reach the managed endpoint.
+
+## 3. Validate both topology contracts
+
+Run the repository preflight even if only one mode will be deployed:
+
+```bash
+pnpm run deploy:validate:docker
 node scripts/validate-docker-compose-prod.mjs
+node scripts/validate-compose-modes.mjs
 ```
 
-This verifies interpolation, required values, networks, volumes, health checks,
-and secret file paths without starting containers. Compose fails fast when
-`IMAGE_TAG` is unset, and the Node validation checks `.env.production` when that
-file exists so `IMAGE_TAG` fails if it is unset, mutable, or still the
-placeholder value.
+CI renders both merged Compose models and asserts that their service, volume,
+secret, dependency, and network contracts differ exactly as documented.
 
-## 3. Start or update with one command
+## 4. Start or update
 
-Build locally from the checked-out commit:
+Bundled database:
 
 ```bash
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml up -d --build
+pnpm run docker:prod:bundled-db:up
 ```
 
-Or pull already-published images by removing `--build`:
+External database:
 
 ```bash
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml pull
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml up -d
+pnpm run docker:prod:external-db:up
 ```
 
-The `migrate` service waits for PostgreSQL health, reads the same secrets, and
-runs `pnpm db:migrate` before the API services are allowed to start. Frontend
-images default to `VITE_API_BASE_URL_MODE=same-origin` with
-`FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf`, so browser API calls route
-through the colocated nginx container to Compose service DNS names
-(`auth-app-api`, `user-app-api`, and `admin-app-api`) instead of exposing Docker
-DNS or container ports to the browser. The same stack also runs the Vike
-`site-app` Node server and the Expo `mobile-app` web export. Nginx treats
-`GET`/`HEAD` requests with `Accept: text/html` as SPA navigations, so reloads of
-user/admin/mobile deep links serve `index.html`; generated-client API calls keep
-proxying because they request JSON.
+The scripts use published immutable images by default. Add `--build` to the
+equivalent explicit `docker compose` command only when intentionally building on
+the server from the checked-out commit. Prefer CI-built, scanned, signed images.
 
-## 4. Health checks and logs
+For optional bot APIs, append `--profile discord` and/or `--profile telegram` to
+the explicit Compose command. Their secret files and provider callback setup are
+required before enabling the profile.
+
+## 5. Inspect health and logs
+
+Use the same two files as the selected mode. Bundled example:
 
 ```bash
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml ps
-curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port auth-app-api 80)/ready"
-curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port user-app-api 80)/ready"
-curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port admin-app-api 80)/ready"
-curl -fsS "http://$(docker compose --env-file .env.production -f docker/docker-compose.prod.yml port site-app 80)/ready"
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml logs -f --tail=100
+docker compose --env-file .env.production \
+  -f docker/docker-compose.prod.yml \
+  -f docker/docker-compose.prod.bundled-db.yml ps
+docker compose --env-file .env.production \
+  -f docker/docker-compose.prod.yml \
+  -f docker/docker-compose.prod.bundled-db.yml logs --tail=100 migrate auth-app-api user-app-api admin-app-api
 ```
 
-The backend Compose healthcheck and the manual API probes above intentionally
-use `/ready`, which is implemented by each API and performs a PostgreSQL
-readiness check when MikroORM is registered. `/health` and `/live` remain
-liveness-only checks and should not replace production dependency readiness.
+For external mode, replace the bundled overlay with
+`docker/docker-compose.prod.external-db.yml`.
 
-App services publish explicit loopback-only host ports by default. Put Caddy,
-nginx, Traefik, or your cloud load balancer in front for public TLS and routing,
-and confirm the assigned ports with `docker compose port <service> <port>`.
+Production API and Vike site health checks use `/ready`; static frontends use
+`/nginx-health`. `/ready` fails closed when required dependencies or migrations
+are unavailable. App ports bind to loopback by default; terminate public TLS at
+Caddy, nginx, Traefik, or a cloud load balancer.
 
-## 5. TLS and reverse proxy
+Default domain routing after initialization is:
 
-Terminate TLS at the host reverse proxy and proxy to loopback ports discovered
-from Compose:
+- apex -> selected `landing-app` or `site-app`;
+- every other frontend -> `<app-id>.<base-domain>`;
+- every API -> `<api-id>.<base-domain>`;
+- optional bot webhook APIs -> their exact app-id domains when enabled.
 
-- `https://example.com` -> `docker compose ... port landing-app 8080`
-- `https://site-app.example.com` -> `docker compose ... port site-app 80`
-- `https://admin-app.example.com` -> `docker compose ... port admin-app 8080`
-- `https://user-app.example.com` -> `docker compose ... port user-app 8080`
-- `https://mobile-app.example.com` -> `docker compose ... port mobile-app 8080`
-- `https://auth-app-api.example.com` -> `docker compose ... port auth-app-api 80`
-- `https://user-app-api.example.com` -> `docker compose ... port user-app-api 80`
-- `https://admin-app-api.example.com` -> `docker compose ... port admin-app-api 80`
+Keep `CORS_ORIGINS`, provider callback URLs, certificates, and reverse-proxy
+routes aligned with those product-owned hostnames.
 
-The bot webhook APIs are also opt-in because they require provider credentials
-and callback registration:
+## 6. Backups
 
-- `https://discord-app-api.example.com` -> `docker compose --profile discord ... port discord-app-api 80`
-- `https://telegram-bot-api.example.com` -> `docker compose --profile telegram ... port telegram-bot-api 80`
-
-Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
-build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to
-`docker/nginx-spa.conf`, set `VITE_API_BASE_URL_MODE` to a non-`same-origin`
-value such as `split-origin`, and provide absolute
-`VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and
-`VITE_ADMIN_API_BASE_URL` values; keep the standalone SPA CSP connection
-allow-list aligned with those explicit API origins. See
-[frontend-deployment-topology.md](frontend-deployment-topology.md) for the full
-mode matrix. Keep OpenAPI off or protect it behind SSO/VPN/edge auth.
-
-## 6. Backup and restore
-
-The bundled PostgreSQL data lives in the `postgres-data` volume. Take backups
-with database-native tools from the running PostgreSQL container:
+For bundled mode, dump from the Compose PostgreSQL service to a host-owned path:
 
 ```bash
 mkdir -p backups
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml exec -T postgres \
+docker compose --env-file .env.production \
+  -f docker/docker-compose.prod.yml \
+  -f docker/docker-compose.prod.bundled-db.yml exec -T postgres \
   sh -ec 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
   > backups/postgres.dump
 ```
 
-Validate a dump before relying on it:
-
-```bash
-cat backups/postgres.dump | docker compose --env-file .env.production -f docker/docker-compose.prod.yml exec -T postgres \
-  pg_restore --list >/dev/null
-```
-
-Restore only after testing on a clone and stopping application writes:
-
-```bash
-cat backups/postgres.dump | docker compose --env-file .env.production -f docker/docker-compose.prod.yml exec -T postgres \
-  sh -ec 'pg_restore --clean --if-exists --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-```
+Validate restore procedures on an isolated copy before relying on a dump. For
+external mode, use provider-native automated backups/PITR and a separately tested
+restore runbook. The application Compose project intentionally does not pretend
+to own a managed database's lifecycle.
 
 ## 7. Rollback
 
-1. Record the current Git SHA, immutable `IMAGE_TAG`, or pinned digest before every update.
-2. Take a database backup before migrations.
-3. Change `IMAGE_TAG` in `.env.production` back to the previous immutable tag.
-4. Run `docker compose --env-file .env.production -f docker/docker-compose.prod.yml up -d`.
-5. If the migration is not backward-compatible, restore the database backup or
-   roll forward with a corrective migration.
+1. Record the current Git SHA and immutable image tag before every update.
+2. Take or verify a database backup before migrations.
+3. Change `IMAGE_TAG` back to a previously verified full SHA tag.
+4. Run the selected mode's `:up` script.
+5. Restore the database only when a migration is not backward-compatible;
+   otherwise roll forward with a corrective migration.
 
 ## 8. Shutdown
 
+Bundled mode:
+
 ```bash
-docker compose --env-file .env.production -f docker/docker-compose.prod.yml down
+pnpm run docker:prod:bundled-db:down
 ```
 
-The command keeps the PostgreSQL volume. Add `-v` only when intentionally wiping
-data after a verified backup.
+External mode:
 
-## 9. Observability (OTel, Prometheus, Alertmanager, Grafana)
+```bash
+pnpm run docker:prod:external-db:down
+```
 
-The production Compose stack ships a full observability pipeline. All four
-observability services are started alongside application services:
+Bundled shutdown keeps `postgres-data`. Never add `-v` unless intentionally
+destroying local state after verifying a backup. External shutdown never acts on
+the managed database.
 
-| Service          | Port                                        | Purpose                                                                                                   |
-| ---------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `otel-collector` | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus) | Receives OTLP traces/metrics/logs from all backend APIs; exposes Prometheus-compatible metrics on `:9464` |
-| `prometheus`     | 9090                                        | Scrapes the OTel collector, itself, Alertmanager, and Grafana; evaluates alert rules                      |
-| `alertmanager`   | 9093                                        | Routes alerts to webhooks/email; supports critical/warning receivers                                      |
-| `grafana`        | 3000                                        | Pre-provisioned with a Prometheus datasource and a production dashboard                                   |
+## 9. Observability
 
-### How backend APIs send telemetry
-
-Each NestJS backend API (auth, user, admin) initializes the OpenTelemetry SDK
-at startup via `bootstrap()`. The production compose sets `OTEL_ENABLED=true`
-and `OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318` on every backend
-service. Auto-instrumentation covers HTTP, Fastify, PostgreSQL, and Redis
-without any application code changes.
-
-### Enabling/disabling observability
-
-- To **disable** OTel export for all backends, override in `.env.production`:
-  ```bash
-  OTEL_ENABLED=false
-  ```
-- To **change** the collector endpoint (e.g. send to a remote APM):
-  ```bash
-  OTEL_EXPORTER_OTLP_ENDPOINT=https://your-apm.example.com/v1
-  OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>
-  ```
-
-### Alert rules
-
-Prometheus evaluates rules from `docker/prometheus/alert-rules.yml`. Default
-alerts cover:
-
-- Any service (collector, Prometheus, Grafana) going down for 2+ minutes (critical)
-- API 5xx error rate > 5% for 5 minutes (warning)
-- API p95 latency > 1s / p99 latency > 5s (warning / critical)
-- Backend process memory > 85% of 512 MB (warning)
-- Backend process CPU > 80% (warning)
-- OTel collector memory > 80% of 1 GB (warning)
-
-### Alertmanager routing
-
-Edit `docker/alertmanager/alertmanager.yml` or override via environment
-variables to route alerts to your Slack webhook, PagerDuty, email, or any HTTP
-endpoint. The default config defines `critical-alerts` (repeat every 1h) and
-`warning-alerts` (repeat every 4h) receivers with webhook hooks.
-
-### Grafana dashboard
-
-A production dashboard (`docker/grafana/dashboards/nest-react-boilerplate.json`)
-is auto-provisioned on first start. It covers:
-
-- Service uptime status panel
-- Request rate, p95/p99 latency, and error rate per service
-- Process memory and CPU per service
-- OTel collector throughput (batch send rate, accepted spans)
-
-Access Grafana at `http://localhost:3000` (login with `admin` and the password
-from `docker/secrets/grafana_admin_password.txt`).
+The base production model includes OpenTelemetry Collector, Prometheus,
+Alertmanager, and Grafana. Backends export OTLP to the colocated collector by
+default. Their host ports are loopback-only. Configure Grafana through
+`grafana_admin_password`, route Alertmanager to real receivers, protect operator
+surfaces behind SSO/VPN, and move durable telemetry to platform-managed storage
+when single-host retention is insufficient.

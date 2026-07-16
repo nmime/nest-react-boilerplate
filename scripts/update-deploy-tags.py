@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Update image tags in .helm/values-production.yaml to the given git short SHA.
+"""Update image tags in .helm/values-production.yaml to a full release Git SHA.
 
 Usage:
-    python3 scripts/update-deploy-tags.py <short_sha> [--dry-run]
+    python3 scripts/update-deploy-tags.py <full_sha> [--dry-run]
 
 Example:
-    python3 scripts/update-deploy-tags.py a1b2c3d
-    # Sets all image tags to "sha-a1b2c3d"
+    python3 scripts/update-deploy-tags.py 0123456789abcdef0123456789abcdef01234567
 """
 import re
 import sys
@@ -15,17 +14,17 @@ from pathlib import Path
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] in ('-h', '--help'):
-        print(f"Usage: {sys.argv[0]} <git-short-sha> [--dry-run]")
+        print(f"Usage: {sys.argv[0]} <full-git-sha> [--dry-run]")
         print("  Updates all image tags in .helm/values-production.yaml")
         sys.exit(1)
 
     sha = sys.argv[1]
     dry_run = '--dry-run' in sys.argv
 
-    # Validate SHA format (hex, 7-40 chars)
-    if not re.match(r'^[0-9a-fA-F]{7,40}$', sha):
+    # Release images are published as sha-<full 40-character github.sha>.
+    if not re.fullmatch(r'[0-9a-fA-F]{40}', sha):
         print(
-            f"ERROR: Invalid git SHA '{sha}'. Expected 7-40 hex characters.",
+            f"ERROR: Invalid git SHA '{sha}'. Expected exactly 40 hex characters.",
             file=sys.stderr,
         )
         sys.exit(1)

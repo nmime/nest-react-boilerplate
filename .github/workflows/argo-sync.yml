@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
 
+env:
+  ARGOCD_VERSION: v3.4.2
+
 jobs:
   sync:
     name: Sync ArgoCD Application
@@ -21,9 +24,10 @@ jobs:
     steps:
       - name: Install argocd CLI
         run: |
-          curl -sSL -o /usr/local/bin/argocd \
-            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x /usr/local/bin/argocd
+          curl -fsSLO "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64"
+          curl -fsSLO "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/cli_checksums.txt"
+          grep 'argocd-linux-amd64$' cli_checksums.txt | sha256sum --check --strict
+          install -m 0755 argocd-linux-amd64 /usr/local/bin/argocd
 
       - name: Sync application
         env:

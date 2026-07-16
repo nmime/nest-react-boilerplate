@@ -1,11 +1,10 @@
-# nest-react-boilerplate ArgoCD Application
+# nest-react-boilerplate Argo CD Application
 #
-# Deploy to any cluster with ArgoCD installed:
+# Run `pnpm nrb init` before using this file so the repository, owner, domains,
+# release name, and namespace belong to the generated product.
 #
 #   kubectl apply -f deploy/argocd/application.yaml -n argocd
 #
-# ansible-k8s-full-setup provisions ArgoCD with open source repos enabled
-# (sourceRepos defaults to ["*"]). No ansible-k8s-specific config needed.
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -17,17 +16,13 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/nmime/nest-react-boilerplate.git
+    repoURL: https://github.com/your-github-org/nest-react-boilerplate.git
     targetRevision: main
     path: .helm
     helm:
       valueFiles:
         - values.yaml
         - values-production.yaml
-      parameters:
-        - name: "imagePullSecrets[0].name"
-          value: "ghcr-credentials"
-          forceString: true
   destination:
     server: https://kubernetes.default.svc
     namespace: nest-react-boilerplate
@@ -38,3 +33,10 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10

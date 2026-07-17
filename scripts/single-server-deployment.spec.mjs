@@ -127,6 +127,18 @@ test('requests apex and wildcard SANs only in DNS wildcard certificate mode', (c
   assert.deepEqual(certificateDomains(configuration), ['product.example', '*.product.example']);
 });
 
+test('uses a wildcard certificate for exact per-app hosts without accepting arbitrary wildcard hosts', (context) => {
+  const { configuration, cleanup } = fixture({ certificateMode: 'dns-wildcard', profiles: 'telegram,discord' });
+  context.after(cleanup);
+  const nginx = renderNginx(configuration, 'https');
+  assert.deepEqual(certificateDomains(configuration), ['product.example', '*.product.example']);
+  assert.ok(configuration.publicHosts.includes('auth-app-api.product.example'));
+  assert.ok(configuration.publicHosts.includes('telegram-bot-api.product.example'));
+  assert.match(nginx, /server_name auth-app-api\.product\.example;/u);
+  assert.doesNotMatch(nginx, /server_name \*\.product\.example;/u);
+  assert.match(nginx, /ssl_reject_handshake on;/u);
+});
+
 test('rejects a Compose-owned edge and unsupported public modes', (context) => {
   const first = fixture();
   context.after(first.cleanup);

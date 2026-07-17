@@ -11,6 +11,7 @@ const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
 const edgeCompose = read('docker/docker-compose.prod.edge.yml');
 const providedTlsCompose = read('docker/docker-compose.prod.edge-provided-tls.yml');
+const secretEntrypoint = read('docker/secret-entrypoint.sh');
 const telegramAuthCompose = read('docker/docker-compose.prod.telegram.yml');
 const discordAuthCompose = read('docker/docker-compose.prod.discord.yml');
 const singleDomainCaddyfile = read('docker/caddy/Caddyfile.single-domain');
@@ -66,6 +67,16 @@ assert.ok(
   'production Compose must not inline database passwords',
 );
 has(prodCompose, 'TRUST_PROXY: ${TRUST_PROXY:-true}', 'reverse-proxy trust reaches backend containers');
+has(prodCompose, 'auth_provider_token_encryption_key:', 'provider-token encryption Docker secret');
+has(prodCompose, 'redis_password:', 'Redis authentication Docker secret');
+has(prodCompose, 'requirepass %s', 'Redis requires its generated password');
+for (const expected of [
+  'load_secret SESSION_SECRET /run/secrets/session_secret',
+  'load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key',
+  'load_secret REDIS_PASSWORD /run/secrets/redis_password',
+]) {
+  has(secretEntrypoint, expected, `secret entrypoint ${expected}`);
+}
 assert.ok(
   !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
   'production env example must not include inline AUTH_JWT_SECRET',
@@ -150,8 +161,12 @@ for (const service of [
 }
 
 for (const expected of [
+  'SESSION_SECRET_FILE=./secrets/session_secret.txt',
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'BETTER_AUTH_SECRET_FILE=./secrets/better_auth_secret.txt',
+  'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
+  'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED=true',
+  'REDIS_PASSWORD_FILE=./secrets/redis_password.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
   'DATABASE_URL_FILE=./secrets/database_url.txt',
   'TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt',

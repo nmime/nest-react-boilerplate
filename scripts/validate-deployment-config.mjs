@@ -245,6 +245,13 @@ has(
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'production env example reads JWT secret from a Docker secret file',
 );
+for (const expected of [
+  'SESSION_SECRET_FILE=./secrets/session_secret.txt',
+  'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
+  'REDIS_PASSWORD_FILE=./secrets/redis_password.txt',
+]) {
+  has(productionEnvExample, expected, `production env example reads ${expected} from a Docker secret file`);
+}
 assert.ok(
   !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
   'Production env example must not provide an inline JWT secret placeholder.',

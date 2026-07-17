@@ -59,13 +59,14 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Session and cookies
 
-| Variable                         | Required            | Default          | Description                        |
-| -------------------------------- | ------------------- | ---------------- | ---------------------------------- |
-| `SESSION_SECRET`                 | **Required** (prod) | —                | Secret for signing session cookies |
-| `SESSION_COOKIE_NAME`            | Optional            | `__Host-nrb.sid` | Session cookie name                |
-| `SESSION_COOKIE_SECURE`          | Optional            | `true`           | HTTPS-only cookie flag             |
-| `SESSION_COOKIE_SAME_SITE`       | Optional            | `lax`            | SameSite cookie attribute          |
-| `SESSION_COOKIE_MAX_AGE_SECONDS` | Optional            | `604800`         | Cookie max age (7 days)            |
+| Variable                         | Required            | Default          | Description                           |
+| -------------------------------- | ------------------- | ---------------- | ------------------------------------- |
+| `SESSION_SECRET`                 | **Required** (prod) | —                | Secret for signing session cookies    |
+| `SESSION_SECRET_FILE`            | Optional            | —                | Docker secret file for session secret |
+| `SESSION_COOKIE_NAME`            | Optional            | `__Host-nrb.sid` | Session cookie name                   |
+| `SESSION_COOKIE_SECURE`          | Optional            | `true`           | HTTPS-only cookie flag                |
+| `SESSION_COOKIE_SAME_SITE`       | Optional            | `lax`            | SameSite cookie attribute             |
+| `SESSION_COOKIE_MAX_AGE_SECONDS` | Optional            | `604800`         | Cookie max age (7 days)               |
 
 ### Auth and JWT
 
@@ -95,15 +96,16 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### External auth policy
 
-| Variable                                  | Required | Default                    | Description                                  |
-| ----------------------------------------- | -------- | -------------------------- | -------------------------------------------- |
-| `EXTERNAL_AUTH_AUTO_PROVISION_ENABLED`    | Optional | `false`                    | Auto-create accounts on social login         |
-| `EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS`   | Optional | `900`                      | Max age for step-up confirmation             |
-| `EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS`    | Optional | `600`                      | Link-token lifetime                          |
-| `EXTERNAL_AUTH_STATE_TTL_SECONDS`         | Optional | `600`                      | OAuth/TMA state lifetime                     |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY`      | Optional | `<set-32-byte-base64-key>` | Key for encrypting provider tokens at rest   |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE` | Optional | —                          | File path for encryption key (Docker secret) |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`   | Optional | `primary`                  | Key identifier for rotation                  |
+| Variable                                  | Required | Default                    | Description                                         |
+| ----------------------------------------- | -------- | -------------------------- | --------------------------------------------------- |
+| `EXTERNAL_AUTH_AUTO_PROVISION_ENABLED`    | Optional | `false`                    | Auto-create accounts on social login                |
+| `EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS`   | Optional | `900`                      | Max age for step-up confirmation                    |
+| `EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS`    | Optional | `600`                      | Link-token lifetime                                 |
+| `EXTERNAL_AUTH_STATE_TTL_SECONDS`         | Optional | `600`                      | OAuth/TMA state lifetime                            |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY`      | Optional | `<set-32-byte-base64-key>` | Key for encrypting provider tokens at rest          |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE` | Optional | —                          | File path for encryption key (Docker secret)        |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`  | Optional | `false`                    | Enable AES-GCM encryption of stored provider tokens |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`   | Optional | `primary`                  | Key identifier for rotation                         |
 
 ### Telegram
 
@@ -191,11 +193,14 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Redis
 
-| Variable      | Required                     | Default  | Description                           |
-| ------------- | ---------------------------- | -------- | ------------------------------------- |
-| `REDIS_HOSTS` | **Required** (Redis enabled) | —        | Redis host(s)                         |
-| `REDIS_PORT`  | Optional                     | `6379`   | Redis port                            |
-| `REDIS_MODE`  | Optional                     | `single` | Mode: `single`, `sentinel`, `cluster` |
+| Variable              | Required                     | Default  | Description                           |
+| --------------------- | ---------------------------- | -------- | ------------------------------------- |
+| `REDIS_URL`           | **Required** (Redis enabled) | —        | Redis connection URL                  |
+| `REDIS_HOSTS`         | **Required** (Redis enabled) | —        | Redis host(s)                         |
+| `REDIS_PORT`          | Optional                     | `6379`   | Redis port                            |
+| `REDIS_MODE`          | Optional                     | `single` | Mode: `single`, `sentinel`, `cluster` |
+| `REDIS_PASSWORD`      | Optional                     | —        | Redis authentication password         |
+| `REDIS_PASSWORD_FILE` | Optional                     | —        | Docker secret file for Redis password |
 
 ### PostgreSQL (Docker/Compose)
 

@@ -14,6 +14,9 @@ export function createEnvProviderTokenCrypto(): ProviderTokenCrypto | null {
   }
   return new NodeAesGcmProviderTokenCrypto(() => ({
     key,
-    keyId: process.env.AUTH_PROVIDER_TOKEN_KEY_ID?.trim() || 'env',
+    keyId:
+      process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID?.trim() ||
+      process.env.AUTH_PROVIDER_TOKEN_KEY_ID?.trim() ||
+      'env',
   }));
 }

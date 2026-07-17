@@ -75,6 +75,10 @@ for (const requirement of [
   'check_compose_health',
   'current-image-tag',
   'previous-image-tag',
+  'configure_secret SESSION_SECRET_FILE session_secret.txt hex',
+  'configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32',
+  'configure_secret REDIS_PASSWORD_FILE redis_password.txt hex',
+  'configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex',
 ]) {
   assert.ok(controller.includes(requirement), `controller missing safety contract: ${requirement}`);
 }

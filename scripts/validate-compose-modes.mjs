@@ -34,6 +34,16 @@ assert.ok(
   secretEntrypoint.includes('load_secret POSTGRES_PASSWORD /run/secrets/postgres_password'),
   'The production entrypoint must load the bundled PostgreSQL secret.',
 );
+for (const [variable, path] of [
+  ['SESSION_SECRET', 'session_secret'],
+  ['AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY', 'auth_provider_token_encryption_key'],
+  ['REDIS_PASSWORD', 'redis_password'],
+]) {
+  assert.ok(
+    secretEntrypoint.includes(`load_secret ${variable} /run/secrets/${path}`),
+    `The production entrypoint must load ${variable}.`,
+  );
+}
 assert.ok(
   secretEntrypoint.includes('exec su-exec node "$@"'),
   'The production entrypoint must drop privileges before running application commands.',
@@ -167,6 +177,21 @@ assert.ok(!externalTelegramModel.services['auth-app-api'].depends_on?.postgres);
 
 assert.ok(bundledModel.services.postgres, 'Bundled-db render must include PostgreSQL.');
 assert.ok(!externalModel.services.postgres, 'External-db render must exclude PostgreSQL.');
+assert.ok(bundledModel.secrets.session_secret, 'Production render must include the generated session secret.');
+assert.ok(
+  bundledModel.secrets.auth_provider_token_encryption_key,
+  'Production render must include provider encryption.',
+);
+assert.ok(bundledModel.secrets.redis_password, 'Production render must include Redis authentication.');
+assert.ok(secretNames(bundledModel.services.redis).includes('redis_password'));
+assert.match(bundledModel.services.redis.command.join('\n'), /requirepass/u);
+for (const service of ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api', 'telegram-bot-api']) {
+  assert.ok(
+    secretNames(bundledModel.services[service]).includes('redis_password'),
+    `${service} must mount redis_password.`,
+  );
+}
+assert.ok(secretNames(bundledModel.services['auth-app-api']).includes('auth_provider_token_encryption_key'));
 assert.ok(bundledModel.volumes['postgres-data'], 'Bundled-db render must include the PostgreSQL volume.');
 assert.ok(!externalModel.volumes['postgres-data'], 'External-db render must exclude the PostgreSQL volume.');
 assert.ok(bundledModel.secrets.postgres_password, 'Bundled-db render must include postgres_password.');

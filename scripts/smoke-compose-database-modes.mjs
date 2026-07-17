@@ -22,6 +22,10 @@ const externalProject = `nrbexternal${suffix}`;
 const externalContainer = `nrb-external-postgres-${suffix}`;
 const tempDir = mkdtempSync(join(tmpdir(), 'nrb-compose-modes-'));
 const authSecretPath = join(tempDir, 'auth_jwt_secret.txt');
+const sessionSecretPath = join(tempDir, 'session_secret.txt');
+const betterAuthSecretPath = join(tempDir, 'better_auth_secret.txt');
+const authProviderEncryptionKeyPath = join(tempDir, 'auth_provider_token_encryption_key.txt');
+const redisPasswordPath = join(tempDir, 'redis_password.txt');
 const postgresPasswordPath = join(tempDir, 'postgres_password.txt');
 const databaseUrlPath = join(tempDir, 'database_url.txt');
 const grafanaPasswordPath = join(tempDir, 'grafana_admin_password.txt');
@@ -38,6 +42,10 @@ externalDatabaseUrl.pathname = databaseName;
 
 for (const [path, value] of [
   [authSecretPath, runtimeSecret()],
+  [sessionSecretPath, runtimeSecret()],
+  [betterAuthSecretPath, runtimeSecret()],
+  [authProviderEncryptionKeyPath, randomBytes(32).toString('base64')],
+  [redisPasswordPath, runtimeSecret()],
   [postgresPasswordPath, databasePassword],
   [databaseUrlPath, externalDatabaseUrl.toString()],
   [grafanaPasswordPath, runtimeSecret()],
@@ -51,6 +59,10 @@ const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-
 const commonEnv = {
   ...process.env,
   AUTH_JWT_SECRET_FILE: authSecretPath,
+  SESSION_SECRET_FILE: sessionSecretPath,
+  BETTER_AUTH_SECRET_FILE: betterAuthSecretPath,
+  AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: authProviderEncryptionKeyPath,
+  REDIS_PASSWORD_FILE: redisPasswordPath,
   POSTGRES_PASSWORD_FILE: postgresPasswordPath,
   DATABASE_URL_FILE: databaseUrlPath,
   GRAFANA_ADMIN_PASSWORD_FILE: grafanaPasswordPath,

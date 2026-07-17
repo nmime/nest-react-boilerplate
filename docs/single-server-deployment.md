@@ -112,13 +112,21 @@ issuer, OAuth callbacks, Discord interactions, Telegram webhook, and Telegram
 Mini App URL from that public mode. Do not duplicate or hand-maintain a second
 URL map in Nginx.
 
-Core secret files are generated once, owned by root, and converged to mode
-`0640` for the deployment user's protected primary group. This gives the
-unprivileged Compose process read access without making secrets world-readable.
-Optional Telegram and Discord files are created empty; enabling a profile fails
-validation until its real provider values are installed. For external PostgreSQL,
-`DATABASE_URL_FILE` must contain the provider URL. The controller never prints
-secret contents.
+Every secret that can be created locally is generated independently with
+OpenSSL: session and JWT signing secrets, Better Auth state/cookie material,
+the 32-byte provider-token encryption key, Redis and bundled PostgreSQL
+passwords, the Grafana administrator password, and the Telegram webhook
+verification secret. They are created once, never overwritten on reruns, owned
+by root, and converged to mode `0640` for the deployment user's protected
+primary group. This gives the unprivileged Compose process read access without
+making secrets world-readable.
+
+Credentials issued by another system cannot be generated locally. Protected
+empty files are created for the external database URL, Telegram bot/OIDC
+credentials, and Discord bot/OAuth/public-key values; enabling the relevant
+mode or profile fails validation until the operator installs the real values.
+The same external-input boundary applies to registry login and Certbot DNS
+provider credentials. The controller never prints secret contents.
 
 Authenticate the deployment user to a private registry once, using a
 least-privilege pull token supplied without putting it in shell history:
@@ -236,6 +244,8 @@ operator-managed Docker installation is preserved. Official `docker-ce`
 packages are upgraded to the current stable apt candidate on later runs. Node
 is downloaded for x64/arm64 from `nodejs.org`, checked against the release
 SHA-256 manifest, and installed only when the configured exact version differs.
+`init`, `apply`, `deploy`, `update`, and `rollback` also converge any newly
+introduced machine-generatable secret without rotating an existing file.
 
 For an application update, first verify the CI-built immutable image set and a
 current database backup, then run:

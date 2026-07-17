@@ -112,6 +112,7 @@ describe('PostgresSocialAuthStore', () => {
   afterEach(() => {
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY;
+    delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID;
     delete process.env.AUTH_PROVIDER_TOKEN_KEY_ID;
     vi.clearAllMocks();
   });
@@ -286,6 +287,7 @@ describe('PostgresSocialAuthStore env-derived crypto', () => {
   afterEach(() => {
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY;
+    delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID;
     delete process.env.AUTH_PROVIDER_TOKEN_KEY_ID;
   });
 
@@ -324,7 +326,7 @@ describe('PostgresSocialAuthStore env-derived crypto', () => {
   it('builds an AES-GCM crypto from a hex key and honors a configured key id', async () => {
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY = '0'.repeat(64);
-    process.env.AUTH_PROVIDER_TOKEN_KEY_ID = 'primary';
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID = 'primary';
     const { repositories, store } = createStore();
 
     expect((await persist(store))._unsafeUnwrap()).toBe(true);

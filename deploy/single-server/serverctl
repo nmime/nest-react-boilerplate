@@ -204,19 +204,61 @@ create_secret() {
   local path="$1" generator="$2"
   if [[ -e "${path}" ]]; then
     require_protected_regular_file "${path}" 'secret'
-    chmod 600 "${path}"
-    return
+    if [[ "${generator}" == 'empty' || -s "${path}" ]]; then
+      return
+    fi
   fi
-  local temporary
+  local temporary replacing=false
+  [[ ! -e "${path}" ]] || replacing=true
   temporary="$(mktemp "${path}.XXXXXX")"
   case "${generator}" in
     hex) openssl rand -hex 32 >"${temporary}" ;;
+    base64-32) openssl rand -base64 32 | tr -d '\n' >"${temporary}"; printf '\n' >>"${temporary}" ;;
     base64) openssl rand -base64 48 | tr -d '\n' >"${temporary}"; printf '\n' >>"${temporary}" ;;
     empty) : >"${temporary}" ;;
     *) die "unknown secret generator: ${generator}" ;;
   esac
-  chmod 600 "${temporary}"
+  if [[ "${replacing}" == 'true' ]]; then
+    chmod --reference="${path}" "${temporary}"
+    chown --reference="${path}" "${temporary}"
+  else
+    chmod 600 "${temporary}"
+  fi
   mv "${temporary}" "${path}"
+}
+
+configure_secret() {
+  local key="$1" filename="$2" generator="$3" configured path
+  configured="$(environment_value "${key}")"
+  path="${CONFIG_ROOT}/secrets/${filename}"
+  case "${configured}" in
+    ''|./secrets/*) upsert_environment_value "${PRODUCTION_ENV}" "${key}" "${path}" ;;
+    /*) path="${configured}" ;;
+    *) die "${key} must be an absolute path or a template ./secrets path" ;;
+  esac
+  create_secret "${path}" "${generator}"
+}
+
+ensure_secret_material() {
+  require_command openssl
+  configure_secret SESSION_SECRET_FILE session_secret.txt hex
+  configure_secret AUTH_JWT_SECRET_FILE auth_jwt_secret.txt hex
+  configure_secret BETTER_AUTH_SECRET_FILE better_auth_secret.txt base64
+  configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32
+  configure_secret REDIS_PASSWORD_FILE redis_password.txt hex
+  configure_secret GRAFANA_ADMIN_PASSWORD_FILE grafana_admin_password.txt base64
+  configure_secret POSTGRES_PASSWORD_FILE postgres_password.txt base64
+
+  # These values are issued by an external system and cannot be fabricated.
+  # Empty protected files make the required operator inputs explicit and allow
+  # profile validation to fail before Compose starts.
+  configure_secret DATABASE_URL_FILE database_url.txt empty
+  configure_secret TELEGRAM_BOT_TOKEN_FILE telegram_bot_token.txt empty
+  configure_secret TELEGRAM_OIDC_CLIENT_SECRET_FILE telegram_oidc_client_secret.txt empty
+  configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex
+  configure_secret DISCORD_BOT_TOKEN_FILE discord_bot_token.txt empty
+  configure_secret DISCORD_CLIENT_SECRET_FILE discord_client_secret.txt empty
+  configure_secret DISCORD_PUBLIC_KEY_FILE discord_public_key.txt empty
 }
 
 initialize() {
@@ -249,31 +291,8 @@ initialize() {
     log "kept existing ${PRODUCTION_ENV}"
   fi
 
-  local secrets="${CONFIG_ROOT}/secrets"
-  create_secret "${secrets}/auth_jwt_secret.txt" hex
-  create_secret "${secrets}/better_auth_secret.txt" base64
-  create_secret "${secrets}/grafana_admin_password.txt" base64
-  create_secret "${secrets}/postgres_password.txt" base64
-  create_secret "${secrets}/database_url.txt" empty
-  create_secret "${secrets}/telegram_bot_token.txt" empty
-  create_secret "${secrets}/telegram_oidc_client_secret.txt" empty
-  create_secret "${secrets}/telegram_bot_webhook_secret.txt" empty
-  create_secret "${secrets}/discord_bot_token.txt" empty
-  create_secret "${secrets}/discord_client_secret.txt" empty
-  create_secret "${secrets}/discord_public_key.txt" empty
-
-  upsert_environment_value "${PRODUCTION_ENV}" AUTH_JWT_SECRET_FILE "${secrets}/auth_jwt_secret.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" BETTER_AUTH_SECRET_FILE "${secrets}/better_auth_secret.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" GRAFANA_ADMIN_PASSWORD_FILE "${secrets}/grafana_admin_password.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" POSTGRES_PASSWORD_FILE "${secrets}/postgres_password.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" DATABASE_URL_FILE "${secrets}/database_url.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_BOT_TOKEN_FILE "${secrets}/telegram_bot_token.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_OIDC_CLIENT_SECRET_FILE "${secrets}/telegram_oidc_client_secret.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_BOT_WEBHOOK_SECRET_FILE "${secrets}/telegram_bot_webhook_secret.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_BOT_TOKEN_FILE "${secrets}/discord_bot_token.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_CLIENT_SECRET_FILE "${secrets}/discord_client_secret.txt"
-  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_PUBLIC_KEY_FILE "${secrets}/discord_public_key.txt"
-  chmod 600 "${SERVER_ENV}" "${PRODUCTION_ENV}" "${secrets}"/*
+  ensure_secret_material
+  chmod 600 "${SERVER_ENV}" "${PRODUCTION_ENV}" "${CONFIG_ROOT}/secrets"/*
   DEPLOY_USER="$(environment_value DEPLOY_USER "${SERVER_ENV}")"
   if [[ "${DEPLOY_USER}" =~ ^[a-z_][a-z0-9_-]*$ ]] && id "${DEPLOY_USER}" >/dev/null 2>&1; then
     prepare_runtime_permissions
@@ -456,6 +475,32 @@ validate_secret_file() {
   run_as_deploy test -r "${path}" || die "${key} must be readable by ${DEPLOY_USER} through its protected group"
 }
 
+validate_secret_minimum_length() {
+  local key="$1" minimum="$2" path length
+  path="$(environment_value "${key}")"
+  length="$(tr -d '\r\n' <"${path}" | wc -c)"
+  ((length >= minimum)) || die "${key} must contain at least ${minimum} characters"
+}
+
+validate_generated_secret_contracts() {
+  local encryption_key webhook_secret
+  validate_secret_minimum_length SESSION_SECRET_FILE 32
+  validate_secret_minimum_length AUTH_JWT_SECRET_FILE 32
+  validate_secret_minimum_length BETTER_AUTH_SECRET_FILE 32
+  validate_secret_minimum_length REDIS_PASSWORD_FILE 32
+  validate_secret_minimum_length GRAFANA_ADMIN_PASSWORD_FILE 32
+  encryption_key="$(environment_value AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE)"
+  if ! grep -Eq '^[A-Fa-f0-9]{64}$' "${encryption_key}"; then
+    [[ "$(openssl base64 -d -A <"${encryption_key}" | wc -c)" -eq 32 ]] || \
+      die 'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE must contain 32-byte base64 or 64-character hex material'
+  fi
+  grep -Eq '^[^[:space:]]{32,256}$' "$(environment_value REDIS_PASSWORD_FILE)" || \
+    die 'REDIS_PASSWORD_FILE must contain one non-whitespace password of 32 through 256 characters'
+  webhook_secret="$(environment_value TELEGRAM_BOT_WEBHOOK_SECRET_FILE)"
+  grep -Eq '^[A-Za-z0-9_-]{32,256}$' "${webhook_secret}" || \
+    die 'TELEGRAM_BOT_WEBHOOK_SECRET_FILE must contain 32 through 256 allowed token characters'
+}
+
 validate_configuration() {
   require_app_checkout
   [[ -f "${PRODUCTION_ENV}" ]] || die "missing ${PRODUCTION_ENV}; run init first"
@@ -481,10 +526,17 @@ validate_configuration() {
   [[ "$(environment_value VITE_API_BASE_URL_MODE)" == 'same-origin' ]] || die 'VITE_API_BASE_URL_MODE must be same-origin'
 
   validate_secret_file AUTH_JWT_SECRET_FILE
+  validate_secret_file SESSION_SECRET_FILE
   validate_secret_file BETTER_AUTH_SECRET_FILE
+  validate_secret_file AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE
+  validate_secret_file REDIS_PASSWORD_FILE
   validate_secret_file GRAFANA_ADMIN_PASSWORD_FILE
+  validate_generated_secret_contracts
+  [[ "$(environment_value AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED)" == 'true' ]] || \
+    die 'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED must be true for the single-server production deployment'
   if [[ "${database_mode}" == 'bundled-db' ]]; then
     validate_secret_file POSTGRES_PASSWORD_FILE
+    validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
   elif [[ "${database_mode}" == 'external-db' ]]; then
     validate_secret_file DATABASE_URL_FILE
   else
@@ -660,6 +712,8 @@ record_successful_tag() {
 deploy() {
   require_root
   load_server_environment
+  ensure_secret_material
+  prepare_runtime_permissions
   validate_configuration
   if certificate_covers_domains; then render_nginx https; else render_nginx http; fi
   install_compose_unit

@@ -32,12 +32,7 @@ export function createTypecheckProject(projectFile: string, workspaceRoot: strin
     return {};
   }
 
-  const commands = configs.map((config) => {
-    const moduleOptions = config.endsWith('tsconfig.spec.json')
-      ? ' --module esnext --moduleResolution bundler --allowImportingTsExtensions true'
-      : '';
-    return `node node_modules/typescript/bin/tsc --noEmit --composite false --declaration false --project ${config} --rootDir .${moduleOptions}`;
-  });
+  const command = `node packages/tooling/src/plugins/typecheck-tsconfig.mjs ${configs.join(' ')}`;
 
   return {
     projects: {
@@ -46,9 +41,14 @@ export function createTypecheckProject(projectFile: string, workspaceRoot: strin
           typecheck: {
             executor: 'nx:run-commands',
             cache: true,
-            inputs: ['default', '^production', { externalDependencies: ['typescript'] }],
+            inputs: [
+              'default',
+              '^production',
+              '{workspaceRoot}/packages/tooling/src/plugins/typecheck-tsconfig.mjs',
+              { externalDependencies: ['typescript'] },
+            ],
             options: {
-              command: commands.join(' && '),
+              command,
             },
             metadata: {
               technologies: ['typescript'],

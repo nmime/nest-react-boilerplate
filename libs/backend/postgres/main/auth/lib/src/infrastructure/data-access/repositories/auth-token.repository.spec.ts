@@ -7,7 +7,7 @@ import { AuthTokenRepository } from './auth-token.repository';
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
   const flush = vi.fn(() => Promise.resolve());
-  const findOne = vi.fn(() => Promise.resolve(null));
+  const findOne = vi.fn<(...args: unknown[]) => Promise<unknown>>(() => Promise.resolve(null));
   const nativeDelete = vi.fn(() => Promise.resolve(0));
   const nativeUpdate = vi.fn(() => Promise.resolve(0));
   const transactional = vi.fn((callback: (em: EntityManager) => unknown) => Promise.resolve(callback(entityManager)));

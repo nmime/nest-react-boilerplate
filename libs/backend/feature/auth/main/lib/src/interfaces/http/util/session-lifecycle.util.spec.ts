@@ -35,14 +35,14 @@ describe('session lifecycle utilities', () => {
     delete process.env[SessionCookieName];
     const clearCookie = vi.fn();
     const request = {
-      auth: { subject: 'user-id', tenantId: 'tenant-id' },
+      auth: { subject: 'user-id', tenantId: 'tenant-id', roles: [], permissions: [] },
       res: { clearCookie },
       session: {
         destroy: vi.fn((callback: (error?: unknown) => void) => {
           callback();
         }),
       },
-      user: { subject: 'user-id', tenantId: 'tenant-id' },
+      user: { subject: 'user-id', tenantId: 'tenant-id', roles: [], permissions: [] },
     };
 
     await clearRequestSession(request);
@@ -52,12 +52,11 @@ describe('session lifecycle utilities', () => {
 
     expect(
       principalFromUserView(
-        { subject: 'old-id', tenantId: 'old-tenant' },
+        { subject: 'old-id', tenantId: 'old-tenant', roles: [], permissions: [] },
         {
           id: 'user-id',
           tenantId: 'tenant-id',
           email: null,
-          displayName: null,
           locale: 'uz' as never,
           theme: AuthenticatedTheme.System,
           roles: [],

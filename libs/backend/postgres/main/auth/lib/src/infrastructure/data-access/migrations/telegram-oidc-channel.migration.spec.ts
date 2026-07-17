@@ -12,7 +12,7 @@ function collectSql(migration: { addSql(sql: string): void }, run: () => void): 
 
 describe('Telegram OIDC auth-channel migration', () => {
   it('adds telegram_oidc to external identities and auth methods', () => {
-    const migration = new Migration20260716120000AddTelegramOidcChannel();
+    const migration = new Migration20260716120000AddTelegramOidcChannel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.up();
     });
@@ -24,7 +24,7 @@ describe('Telegram OIDC auth-channel migration', () => {
   });
 
   it('restores both previous constraints on rollback', () => {
-    const migration = new Migration20260716120000AddTelegramOidcChannel();
+    const migration = new Migration20260716120000AddTelegramOidcChannel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.down();
     });

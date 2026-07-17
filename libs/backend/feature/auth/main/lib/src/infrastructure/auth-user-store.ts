@@ -132,9 +132,13 @@ export class PostgresAuthUserStore implements AuthUserStore {
   }
 
   findByEmail(
-    email: string,
+    email: string | null | undefined,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    if (!email) {
+      return okAsync(null);
+    }
+
     return this.repository
       .findByEmail(email, tenantId)
       .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));

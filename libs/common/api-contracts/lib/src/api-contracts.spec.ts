@@ -8,6 +8,6 @@ describe('api contract aliases', () => {
       data: { tokenType: 'Bearer' },
     };
 
-    expect(envelope.data.tokenType).toBe('Bearer');
+    expect(envelope.data?.tokenType).toBe('Bearer');
   });
 });

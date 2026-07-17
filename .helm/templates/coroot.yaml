@@ -66,8 +66,10 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "boilerplate.labels" . | nindent 8 }}
         app.kubernetes.io/name: coroot
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     spec:
       serviceAccountName: coroot
       {{- with .Values.coroot.podSecurityContext }}

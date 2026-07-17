@@ -14,6 +14,10 @@ const botInfo = {
   supports_inline_queries: false,
   can_connect_to_business: false,
   has_main_web_app: false,
+  has_topics_enabled: false,
+  allows_users_to_create_topics: false,
+  can_manage_bots: false,
+  supports_join_request_queries: false,
 } as const;
 
 function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
@@ -75,7 +79,7 @@ function messageUpdate(text: string, languageCode = 'en') {
             {
               type: 'bot_command',
               offset: 0,
-              length: text.split(' ')[0].length,
+              length: text.split(' ')[0]?.length ?? 0,
             },
           ]
         : undefined,
@@ -135,7 +139,7 @@ function apiMock(
   } = {},
 ) {
   const calls: Array<{ method: string; payload: Record<string, unknown> }> = [];
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url = resolveRequestUrl(input);
     const method = url.split('/').at(-1) ?? 'unknown';
     const body = init?.body ?? (input instanceof Request ? input.body : undefined);
@@ -217,7 +221,7 @@ function callbackDataFor(payload: Record<string, unknown>, text: string): string
   return callbackData;
 }
 
-function resolveRequestUrl(input: RequestInfo | URL): string {
+function resolveRequestUrl(input: Parameters<typeof fetch>[0]): string {
   if (typeof input === 'string') {
     return input;
   }
@@ -428,7 +432,9 @@ describe('createTelegramBot', () => {
     const api = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
-      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn<
+        (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
+      >(() => Promise.resolve(true)),
     };
 
     createTelegramBot(
@@ -458,7 +464,9 @@ describe('createTelegramBot', () => {
     const unsafeApi = {
       config: { use: vi.fn() },
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
-      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn<
+        (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
+      >(() => Promise.resolve(true)),
     };
     createTelegramBot(
       config({

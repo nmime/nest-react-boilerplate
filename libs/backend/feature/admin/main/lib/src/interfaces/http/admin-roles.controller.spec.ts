@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { okAsync } from 'neverthrow';
+import { okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
@@ -33,6 +33,9 @@ const adminRole = {
   isSystem: true,
 };
 
+type TestRole = typeof adminRole & { key: string };
+type TestResult<T> = ResultAsync<T, { code: string; message: string }>;
+
 const createUser = () => ({
   id: 'user-id',
   tenantId,
@@ -61,10 +64,10 @@ const createController = () => {
         },
       ]),
     ),
-    findByKey: vi.fn(() => okAsync(null)),
-    findById: vi.fn(() => okAsync(adminRole)),
+    findByKey: vi.fn((): TestResult<TestRole | null> => okAsync(null)),
+    findById: vi.fn((): TestResult<TestRole | null> => okAsync(adminRole)),
     findByKeys: vi.fn(() => okAsync([{ ...adminRole, key: UserRole }, adminRole])),
-    createRole: vi.fn(() =>
+    createRole: vi.fn((): TestResult<TestRole> =>
       okAsync({
         ...adminRole,
         id: 'role-new',
@@ -72,17 +75,25 @@ const createController = () => {
         isSystem: false,
       }),
     ),
-    updateRole: vi.fn(() => okAsync(adminRole)),
-    setRolePermissions: vi.fn(() => okAsync({ role: { ...adminRole, id: 'role-new' }, permissionKeys: [] })),
+    updateRole: vi.fn((): TestResult<TestRole | null> => okAsync(adminRole)),
+    setRolePermissions: vi.fn((): TestResult<{ role: TestRole; permissionKeys: string[] } | null> =>
+      okAsync({ role: { ...adminRole, id: 'role-new' }, permissionKeys: [] }),
+    ),
   };
   const adminUserMutations = {
-    mutateUserRolesWithAudit: vi.fn(() =>
-      okAsync({
-        before: createUser(),
-        after: createUser(),
-        auditLog: {},
-        outboxEvent: {},
-      }),
+    mutateUserRolesWithAudit: vi.fn(
+      (): TestResult<{
+        before: ReturnType<typeof createUser>;
+        after: ReturnType<typeof createUser>;
+        auditLog: Record<string, unknown>;
+        outboxEvent: Record<string, unknown>;
+      } | null> =>
+        okAsync({
+          before: createUser(),
+          after: createUser(),
+          auditLog: {},
+          outboxEvent: {},
+        }),
     ),
   };
 

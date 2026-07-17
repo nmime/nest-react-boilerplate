@@ -35,7 +35,7 @@ export interface AuthenticatedPrincipal {
 }
 
 type SessionCallback = (error?: unknown) => void;
-type SessionLifecycleMethod = ((callback: SessionCallback) => void) & (() => Promise<void>);
+type SessionLifecycleMethod = (() => Promise<void> | void) | ((callback: SessionCallback) => void);
 
 export interface AuthenticatedSession {
   user?: AuthenticatedPrincipal;

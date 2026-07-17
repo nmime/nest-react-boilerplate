@@ -153,7 +153,11 @@ describe('admin-app-api health e2e', () => {
 
       expect(response.statusCode).toBe(503);
       expect(JSON.stringify(body)).not.toContain('super-secret');
-      const errorPayload = body.response?.data ?? body.data ?? body.response ?? body;
+      const errorPayload = body.response?.data ??
+        body.data ?? {
+          app: body.app,
+          dependencies: body.dependencies,
+        };
       expect(errorPayload.app).toBe('admin-app-api');
       expect(errorPayload.dependencies).toEqual(
         expect.arrayContaining([

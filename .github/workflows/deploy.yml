@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  HELM_VERSION: v4.2.2
+  HELM_VERSION: v4.2.3
 
 jobs:
   promote:

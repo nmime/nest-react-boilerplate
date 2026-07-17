@@ -11,6 +11,7 @@ import {
   type AuthenticatedRequest,
   type AuthenticatedResponse,
   type AuthSessionView,
+  type ExternalAuthIdentityView,
 } from '@app/backend-feature-auth-shared';
 import {
   AuthService,
@@ -35,11 +36,14 @@ import {
 import {
   AuthenticatedUserViewDto,
   AuthSessionViewDto,
+  DiscordAuthorizationRequestResultDto,
   ExternalAuthResultDto,
   LinkTokenResultDto,
   LogoutPayloadDto,
   MePayloadDto,
+  ProviderIdentitiesPayloadDto,
   SupportedLocalesPayloadDto,
+  UnlinkProviderIdentityPayloadDto,
   UserActionTokenPayloadDto,
 } from './dto/auth-response.swagger';
 import type { LogoutPayload, MePayload, SupportedLocalesPayload, UserActionTokenPayload } from './type/auth-http.type';
@@ -142,7 +146,7 @@ export class AuthController {
   }
 
   @Post('discord/authorization-request')
-  @ApiOkDataResponse(Object)
+  @ApiOkDataResponse(DiscordAuthorizationRequestResultDto)
   discordAuthorizationRequest(
     @Body() input: DiscordAuthorizationRequestDto,
     @Req() request: AuthenticatedRequest,
@@ -175,16 +179,20 @@ export class AuthController {
   }
 
   @Get('provider-identities')
-  @ApiOkDataResponse(Object)
+  @ApiOkDataResponse(ProviderIdentitiesPayloadDto)
   @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
-  async providerIdentities(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<unknown>> {
-    return createOkResponse(await this.externalAuth.listProviderIdentities(principal.subject, principal.tenantId));
+  async providerIdentities(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<OkResponse<{ items: ExternalAuthIdentityView[] }>> {
+    const items = await this.externalAuth.listProviderIdentities(principal.subject, principal.tenantId);
+
+    return createOkResponse({ items });
   }
 
   @Delete('provider-identities/:identityId')
-  @ApiOkDataResponse(Object)
+  @ApiOkDataResponse(UnlinkProviderIdentityPayloadDto)
   @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())

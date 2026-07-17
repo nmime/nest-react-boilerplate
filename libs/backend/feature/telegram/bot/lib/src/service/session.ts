@@ -46,7 +46,7 @@ export interface GrammyRatelimiterRedisClient {
 }
 
 export function toRatelimiterRedisClient(
-  redis: RedisClientLike | null | undefined,
+  redis: Pick<RedisClientLike, 'expire' | 'incr'> | null | undefined,
 ): GrammyRatelimiterRedisClient | undefined {
   if (!redis) {
     return undefined;

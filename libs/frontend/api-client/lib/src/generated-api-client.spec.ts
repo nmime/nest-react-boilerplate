@@ -38,6 +38,7 @@ import {
   type AuthControllerUpdateLocaleData,
   type AuthControllerUpdatePreferencesData,
   type AuthSessionViewDto,
+  type DiscordAuthorizationRequestResultDto,
   type ExternalAuthResultDto,
   type LinkTokenResultDto,
   type LoginDto,
@@ -45,6 +46,7 @@ import {
   type RegisterDto,
   type UpdateLocaleDto,
   type UpdatePreferencesDto,
+  type UnlinkProviderIdentityPayloadDto,
   useAuthControllerLoginMutation,
   useAuthControllerRegisterMutation,
   useAuthControllerUpdateLocaleMutation,
@@ -86,15 +88,27 @@ const session: AuthSessionViewDto = {
     id: 'user-1',
     permissions: ['profile:read'],
     roles: ['user'],
+    tenantId: '00000000-0000-4000-8000-000000000001',
+    theme: 'system',
   },
 };
 
+const telegramIdentity: ProviderIdentitiesPayloadDto['items'][number] = {
+  avatarUrl: null,
+  channel: 'telegram_oidc',
+  displayName: null,
+  email: null,
+  emailVerified: null,
+  id: 'identity-1',
+  lastAuthenticatedAt: null,
+  linkedAt: '2025-01-01T00:00:00.000Z',
+  provider: 'telegram',
+  providerSubject: 'telegram-user-1',
+  username: null,
+};
+
 const externalAuthResult: ExternalAuthResultDto = {
-  identity: {
-    email: null,
-    provider: 'telegram',
-    providerSubject: 'telegram-user-1',
-  },
+  identity: telegramIdentity,
   session: {
     ...session,
     authChannel: 'telegram_oidc',
@@ -105,14 +119,7 @@ const externalAuthResult: ExternalAuthResultDto = {
 };
 
 const providerIdentities: ProviderIdentitiesPayloadDto = {
-  items: [
-    {
-      email: null,
-      id: 'identity-1',
-      provider: 'telegram',
-      providerSubject: 'telegram-user-1',
-    },
-  ],
+  items: [telegramIdentity],
 };
 
 const linkTokenResult: LinkTokenResultDto = {
@@ -131,7 +138,11 @@ const mockFetch = (body: unknown, status = 200): FetchMock =>
 
 const firstRequest = (fetchImpl: FetchMock): Request => {
   expect(fetchImpl).toHaveBeenCalledTimes(1);
-  return fetchImpl.mock.calls[0][0] as Request;
+  const request = fetchImpl.mock.calls[0]?.[0];
+  if (request === undefined) {
+    throw new Error('expected a captured request');
+  }
+  return request as Request;
 };
 
 describe('generated api clients', () => {
@@ -225,6 +236,7 @@ describe('generated api clients', () => {
 
   it('throws ApiClientError with status, typed body, response, and useful message', async () => {
     const problem = {
+      code: 'auth.weak_password',
       detail: 'Use a stronger password',
       status: 400,
       title: 'Bad Request',
@@ -496,9 +508,9 @@ describe('generated api clients', () => {
     expectTypeOf<AuthControllerTelegramOidcSessionData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramTmaData>().toEqualTypeOf<ExternalAuthResultDto>();
     expectTypeOf<AuthControllerTelegramBotLinkData>().toEqualTypeOf<ExternalAuthResultDto>();
-    expectTypeOf<AuthControllerDiscordAuthorizationRequestData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
+    expectTypeOf<AuthControllerDiscordAuthorizationRequestData>().toEqualTypeOf<DiscordAuthorizationRequestResultDto>();
     expectTypeOf<AuthControllerProviderIdentitiesData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
-    expectTypeOf<AuthControllerUnlinkProviderIdentityData>().toEqualTypeOf<ProviderIdentitiesPayloadDto>();
+    expectTypeOf<AuthControllerUnlinkProviderIdentityData>().toEqualTypeOf<UnlinkProviderIdentityPayloadDto>();
     expectTypeOf<AuthControllerCreateLinkTokenData>().toEqualTypeOf<LinkTokenResultDto>();
     expectTypeOf<Parameters<LoginOnError>[0]>().toEqualTypeOf<ApiClientError<AuthControllerLoginError>>();
     expectTypeOf<Parameters<LoginOnError>[1]>().toEqualTypeOf<LoginDto>();

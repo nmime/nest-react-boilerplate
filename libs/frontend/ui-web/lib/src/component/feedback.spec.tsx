@@ -39,7 +39,7 @@ describe('UiErrorBoundary', () => {
     expect(onError).toHaveBeenCalledOnce();
     const [error, errorInfo] = onError.mock.calls[0] ?? [];
     expect(error).toEqual(expect.objectContaining({ message: 'Child render failed' }));
-    expect(errorInfo.componentStack).toEqual(expect.any(String));
+    expect(errorInfo?.componentStack).toEqual(expect.any(String));
   });
 
   it('supports custom fallbacks and reset-key recovery', async () => {

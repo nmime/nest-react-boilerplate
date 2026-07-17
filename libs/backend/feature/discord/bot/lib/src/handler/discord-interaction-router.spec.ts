@@ -82,10 +82,12 @@ const context = (overrides: Record<string, unknown> = {}) => ({
   webAppBaseUrl: 'https://app.example.test',
   ...overrides,
 });
-const text = (response: APIInteractionResponse) => (response.data as { content?: string } | undefined)?.content ?? '';
+const responseData = (response: APIInteractionResponse): unknown => ('data' in response ? response.data : undefined);
+const text = (response: APIInteractionResponse) =>
+  (responseData(response) as { content?: string } | undefined)?.content ?? '';
 const buttons = (response: APIInteractionResponse) =>
-  ((response.data as { components?: Array<{ components: unknown[] }> } | undefined)?.components?.[0]?.components ??
-    []) as Array<{
+  ((responseData(response) as { components?: Array<{ components: unknown[] }> } | undefined)?.components?.[0]
+    ?.components ?? []) as Array<{
     custom_id?: string;
     label?: string;
     style?: ButtonStyle;
@@ -93,11 +95,11 @@ const buttons = (response: APIInteractionResponse) =>
   }>;
 const expectEphemeral = (response: APIInteractionResponse) => {
   expect(response.type).toBe(InteractionResponseType.ChannelMessageWithSource);
-  expect((response.data as { flags?: number } | undefined)?.flags).toBe(MessageFlags.Ephemeral);
+  expect((responseData(response) as { flags?: number } | undefined)?.flags).toBe(MessageFlags.Ephemeral);
 };
 const expectUpdate = (response: APIInteractionResponse) => {
   expect(response.type).toBe(InteractionResponseType.UpdateMessage);
-  expect((response.data as { flags?: number } | undefined)?.flags).toBeUndefined();
+  expect((responseData(response) as { flags?: number } | undefined)?.flags).toBeUndefined();
 };
 
 function validComponentId(

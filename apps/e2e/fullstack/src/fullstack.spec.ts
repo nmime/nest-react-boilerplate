@@ -267,13 +267,15 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
   });
   expect(identitiesResponse.status()).toBe(200);
   await expect(identitiesResponse.json()).resolves.toMatchObject({
-    data: [
-      {
-        channel: 'telegram_tma',
-        provider: 'telegram',
-        providerSubject: String(telegramUserId),
-      },
-    ],
+    data: {
+      items: [
+        {
+          channel: 'telegram_tma',
+          provider: 'telegram',
+          providerSubject: String(telegramUserId),
+        },
+      ],
+    },
   });
 });
 

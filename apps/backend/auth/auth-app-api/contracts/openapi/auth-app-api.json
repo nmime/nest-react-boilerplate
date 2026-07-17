@@ -2107,7 +2107,7 @@
                   "required": ["data"],
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Object"
+                      "$ref": "#/components/schemas/DiscordAuthorizationRequestResultDto"
                     }
                   }
                 }
@@ -2791,7 +2791,7 @@
                   "required": ["data"],
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Object"
+                      "$ref": "#/components/schemas/ProviderIdentitiesPayloadDto"
                     }
                   }
                 }
@@ -3140,7 +3140,7 @@
                   "required": ["data"],
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Object"
+                      "$ref": "#/components/schemas/UnlinkProviderIdentityPayloadDto"
                     }
                   }
                 }
@@ -6327,7 +6327,8 @@
           },
           "email": {
             "type": "string",
-            "format": "email"
+            "format": "email",
+            "nullable": true
           },
           "displayName": {
             "type": "string"
@@ -6355,7 +6356,8 @@
           "avatarUrl": {
             "type": "string",
             "format": "uri",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "nullable": true
           },
           "avatarStatus": {
             "type": "string",
@@ -6470,6 +6472,68 @@
         },
         "required": ["refreshToken"]
       },
+      "ExternalAuthIdentityDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["telegram", "discord"]
+          },
+          "providerSubject": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": ["password", "telegram_oidc", "telegram_tma", "telegram_bot", "discord_oauth", "discord_bot"]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "linkedAt": {
+            "type": "string"
+          },
+          "lastAuthenticatedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "providerSubject",
+          "channel",
+          "email",
+          "emailVerified",
+          "displayName",
+          "username",
+          "avatarUrl",
+          "linkedAt",
+          "lastAuthenticatedAt"
+        ]
+      },
       "ExternalAuthResultDto": {
         "type": "object",
         "properties": {
@@ -6487,8 +6551,7 @@
             "$ref": "#/components/schemas/AuthSessionViewDto"
           },
           "identity": {
-            "type": "object",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/ExternalAuthIdentityDto"
           },
           "returnUrl": {
             "type": "string"
@@ -6570,9 +6633,18 @@
         },
         "required": ["linkToken", "providerSubject"]
       },
-      "Object": {
+      "DiscordAuthorizationRequestResultDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "stateExpiresAt": {
+            "type": "string"
+          }
+        },
+        "required": ["authorizationUrl", "stateExpiresAt"]
       },
       "DiscordAuthorizationRequestDto": {
         "type": "object",
@@ -6593,6 +6665,27 @@
             "type": "string"
           }
         }
+      },
+      "ProviderIdentitiesPayloadDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalAuthIdentityDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "UnlinkProviderIdentityPayloadDto": {
+        "type": "object",
+        "properties": {
+          "unlinked": {
+            "type": "boolean"
+          }
+        },
+        "required": ["unlinked"]
       },
       "LinkTokenResultDto": {
         "type": "object",

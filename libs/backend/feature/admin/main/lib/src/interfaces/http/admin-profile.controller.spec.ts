@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { DefaultAuthTenantId, Language, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { AdminProfileReadPermission } from '@app/backend-feature-admin-shared';
 import { GetAdminProfileUseCase } from '../../application/admin-profile.use-case';
 import {
@@ -13,10 +13,11 @@ describe('AdminProfileController', () => {
   it('returns principal and normalized admin profile', () => {
     const principal: AuthenticatedPrincipal = {
       subject: 'admin-id',
+      tenantId: DefaultAuthTenantId,
       email: 'admin@example.com',
       displayName: 'Ada Admin',
       avatarUrl: 'https://cdn.example.test/admin.png',
-      locale: 'ru',
+      locale: Language.Ru,
       roles: ['admin', 'admin'],
       permissions: [AdminProfileReadPermission, 'profile:read'],
     };

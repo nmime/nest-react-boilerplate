@@ -15,7 +15,7 @@ function collectSql(migration: { addSql(sql: string): void; up(): void }) {
 
 describe('admin audit/outbox migrations', () => {
   it('creates the admin audit log schema with tenant indexes', () => {
-    const sql = collectSql(new Migration20260605143000CreateAdminAuditLogs());
+    const sql = collectSql(new Migration20260605143000CreateAdminAuditLogs(undefined as never, undefined as never));
 
     expect(sql).toContain('create table if not exists "admin_audit_logs"');
     expect(sql).toContain('"before" jsonb not null');
@@ -25,7 +25,9 @@ describe('admin audit/outbox migrations', () => {
   });
 
   it('creates transactional outbox schema and deterministic audit ordering index', () => {
-    const sql = collectSql(new Migration20260606120000CreateTransactionalOutboxEvents());
+    const sql = collectSql(
+      new Migration20260606120000CreateTransactionalOutboxEvents(undefined as never, undefined as never),
+    );
 
     expect(sql).toContain('create table if not exists "transactional_outbox_events"');
     expect(sql).toContain('"status" varchar(32) not null default \'pending\'');

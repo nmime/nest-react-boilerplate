@@ -228,7 +228,7 @@ void test(
       flushGeneratedFiles(tree);
       linkInstalledDependencies();
       runNxTargets('build,test', projectNames);
-      runNxTargets('typecheck', ['nrb-canary-vite', 'nrb-canary-vike', 'nrb-canary-expo']);
+      runNxTargets('typecheck', projectNames);
     } finally {
       cleanupGeneratedFiles();
     }

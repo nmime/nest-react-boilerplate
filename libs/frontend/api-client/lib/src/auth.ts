@@ -47,11 +47,12 @@ export type ExternalAuthResultDto = components['schemas']['ExternalAuthResultDto
 export type TelegramTmaDto = components['schemas']['TelegramTmaDto'];
 export type TelegramOidcSessionDto = components['schemas']['TelegramOidcSessionDto'];
 export type TelegramBotLinkDto = components['schemas']['TelegramBotLinkDto'];
+export type DiscordAuthorizationRequestResultDto = components['schemas']['DiscordAuthorizationRequestResultDto'];
 export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
 export type LinkTokenDto = components['schemas']['LinkTokenDto'];
 export type LinkTokenResultDto = components['schemas']['LinkTokenResultDto'];
-export type ProviderIdentitiesPayloadDto = components['schemas']['Object'];
-export type UnlinkProviderIdentityPayloadDto = components['schemas']['Object'];
+export type ProviderIdentitiesPayloadDto = components['schemas']['ProviderIdentitiesPayloadDto'];
+export type UnlinkProviderIdentityPayloadDto = components['schemas']['UnlinkProviderIdentityPayloadDto'];
 export type DiscordCallbackQuery = NonNullable<paths[typeof authDiscordCallbackPath]['get']['parameters']['query']>;
 
 export const authControllerRegister = (body: RegisterDto, options?: ApiClientRequestOptions) =>

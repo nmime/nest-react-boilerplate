@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
   };
   const helmetMiddleware = vi.fn();
   const localeMiddleware = vi.fn();
-  const poolQuery = vi.fn(() => Promise.resolve({ rows: [] }));
+  const poolQuery = vi.fn<(...args: unknown[]) => Promise<{ rows: unknown[] }>>(() => Promise.resolve({ rows: [] }));
   const redisClient = {
     incrementWithWindow: vi.fn(),
     ping: vi.fn(() => Promise.resolve('PONG')),

@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import { AuthUserEntity, AuthUserEntitySchema, DefaultAuthTenantId } from './auth-user.entity';
 
+const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
+
 describe('AuthUserEntity', () => {
   it('constructs from explicit input', () => {
     expect(
@@ -84,8 +86,8 @@ describe('AuthUserEntity', () => {
   it('defines timestamp lifecycle hooks', () => {
     AuthUserEntitySchema.init();
 
-    expect(AuthUserEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(AuthUserEntitySchema.meta.properties.updatedAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(AuthUserEntitySchema.meta.properties.updatedAt.onUpdate?.()).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthUserEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthUserEntitySchema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthUserEntitySchema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
   });
 });

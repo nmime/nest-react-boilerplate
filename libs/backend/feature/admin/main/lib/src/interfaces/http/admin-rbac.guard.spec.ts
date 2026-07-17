@@ -24,12 +24,12 @@ function createContext(
   handler: () => undefined = () => undefined,
   controller: new () => unknown = class AdminTestController {},
 ): ExecutionContext {
-  const context: ExecutionContext = {
+  const context = {
     getClass: () => controller,
     getHandler: () => handler,
     switchToHttp: () => ({ getRequest: () => request }),
   };
-  return context;
+  return context as unknown as ExecutionContext;
 }
 
 function createPrincipal(partial: Partial<AuthenticatedPrincipal>): AuthenticatedPrincipal {

@@ -42,6 +42,6 @@ describe('component test setup helpers', () => {
 
     const logger = createTestLogger('SpecContext');
     expect(logger).toBeDefined();
-    expect(logger.getTimestamp()).toEqual(expect.any(String));
+    expect(logger.warn).toEqual(expect.any(Function));
   });
 });

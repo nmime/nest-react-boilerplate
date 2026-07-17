@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { openApiContractByName } from "./contracts-manifest.ts";
@@ -31,6 +31,32 @@ function parseArgs(argv: string[]) {
   return args;
 }
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function signalChild(child: ChildProcess, signal: NodeJS.Signals): void {
+  try {
+    if (process.platform !== "win32" && child.pid) {
+      process.kill(-child.pid, signal);
+      return;
+    }
+
+    child.kill(signal);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+  }
+}
+
+async function stopChild(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+
+  signalChild(child, "SIGTERM");
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    await wait(100);
+  }
+
+  signalChild(child, "SIGKILL");
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -48,13 +74,14 @@ async function main() {
     AUTH_OAUTH_ENABLED: "false",
     PORT: args.port,
   };
-  const command = ["pnpm", "exec", "nx", "serve", args.app];
+  const command = ["pnpm", "exec", "nx", "serve", args.app, "--skip-nx-cache"];
   const url = `http://127.0.0.1:${args.port}/docs/openapi.json`;
   if (args.dryRun) {
     console.log(JSON.stringify({ status: "dry-run", command, url, output: args.output }, null, 2));
     return;
   }
   const child = spawn(command[0], command.slice(1), {
+    detached: process.platform !== "win32",
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -85,7 +112,7 @@ async function main() {
     writeFileSync(args.output, `${JSON.stringify(JSON.parse(body), null, 2)}\n`);
     console.log(JSON.stringify({ status: "exported", app: args.app, output: args.output }));
   } finally {
-    child.kill("SIGTERM");
+    await stopChild(child);
   }
 }
 main().catch((error) => {

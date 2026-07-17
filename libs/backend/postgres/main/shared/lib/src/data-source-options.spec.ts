@@ -141,7 +141,7 @@ describe('Postgres MikroORM options', () => {
     expect(() => readPort('70000')).toThrow('Invalid POSTGRES_PORT: 70000');
     expect(() => readPort('5432abc')).toThrow('Invalid POSTGRES_PORT: 5432abc');
     expect(() => readPort('not-a-number')).toThrow('Invalid POSTGRES_PORT: not-a-number');
-    expect(readSslRejectUnauthorized({ POSTGRES_SSL: 'true' })).toBe(true);
+    expect(readSslRejectUnauthorized({ POSTGRES_SSL_REJECT_UNAUTHORIZED: 'true' })).toBe(true);
     expect(
       createPostgresEnvironment({
         POSTGRES_PORT: '15432',

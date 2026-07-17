@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { StartedTestContainer } from 'testcontainers';
 
 type FakeStartedContainer = {
   getHost: () => string;
@@ -151,7 +152,7 @@ describe('service container helpers', () => {
     const stop = vi.fn(() => Promise.resolve());
     const startedContainer: Pick<FakeStartedContainer, 'stop'> = { stop };
     await stopGenericServiceContainer({
-      container: startedContainer,
+      container: startedContainer as unknown as StartedTestContainer,
       host: '127.0.0.1',
       port: 1234,
       url: 'tcp://127.0.0.1:1234',

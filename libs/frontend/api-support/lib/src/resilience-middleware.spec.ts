@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import type { MergedOptions } from 'openapi-fetch';
 
 import { FrontendErrorKey } from './error-normalization';
 import { createApiResilienceMiddleware } from './resilience-middleware';
 import { createApiRuntimeEventHub } from './runtime-events';
 import { ApiToastRuntime, parseApiToastRules } from './toast-runtime';
+
+const middlewareOptions = {
+  baseUrl: '',
+  bodySerializer: (body: unknown) => JSON.stringify(body),
+  fetch: globalThis.fetch,
+  parseAs: 'json',
+  pathSerializer: (pathname: string) => pathname,
+  querySerializer: () => '',
+} satisfies MergedOptions;
 
 const invokeOnResponse = async (
   middleware: ReturnType<typeof createApiResilienceMiddleware>,
@@ -12,7 +22,8 @@ const invokeOnResponse = async (
 ): Promise<Response | undefined> =>
   (await middleware.onResponse?.({
     id: 'test',
-    options: {},
+    options: middlewareOptions,
+    params: {},
     request,
     response,
     schemaPath: '/profile',

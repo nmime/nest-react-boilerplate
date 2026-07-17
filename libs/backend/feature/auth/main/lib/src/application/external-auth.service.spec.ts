@@ -728,15 +728,11 @@ describe('ExternalAuthService', () => {
       userId: passwordSession.user.id,
     });
 
-    expect(social.createdLinkTokenHashes[0]).toHaveLength(64);
-    expect(social.createdLinkTokenHashes[0]).not.toBe(expiring.token);
+    const createdTokenHash = social.createdLinkTokenHashes[0] ?? '';
+    expect(createdTokenHash).toHaveLength(64);
+    expect(createdTokenHash).not.toBe(expiring.token);
     await expect(
-      social.consumeLinkToken(
-        social.createdLinkTokenHashes[0],
-        ExternalAuthIntent.Login,
-        DefaultAuthTenantId,
-        new Date(),
-      ),
+      social.consumeLinkToken(createdTokenHash, ExternalAuthIntent.Login, DefaultAuthTenantId, new Date()),
     ).resolves.toMatchObject({ value: null });
 
     vi.setSystemTime(new Date('2026-06-14T12:00:02.000Z'));
@@ -1132,6 +1128,12 @@ describe('ExternalAuthService', () => {
         status: 'active',
         tenantId: DefaultAuthTenantId,
         theme: AuthenticatedTheme.System,
+        displayName: null,
+        locale: null,
+        lastLoginAt: null,
+        avatarUrl: null,
+        avatarHash: null,
+        avatarStatus: 'none',
       },
       {
         amr: ['telegram'],

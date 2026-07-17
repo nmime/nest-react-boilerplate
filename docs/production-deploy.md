@@ -71,8 +71,11 @@ external proxy. See the Compose runbook for automatic and provided TLS modes.
 
 ## Direct Helm
 
-The current supported Helm line is Helm 4; CI pins `v4.2.2`. Match the Helm
-support policy to the target Kubernetes version. Provision the app Secret,
+The current supported Helm line is Helm 4; CI pins `v4.2.3`. Match the Helm
+support policy to the target Kubernetes version. `pnpm run helm:validate`
+downloads the pinned kubeconform `v0.8.0` binary into the ignored local tool
+cache when it is not already installed, verifies the official archive checksum,
+and performs strict Kubernetes schema validation. Provision the app Secret,
 registry pull Secret, PostgreSQL, Redis, ingress, DNS, TLS, and backups before
 installing the chart.
 

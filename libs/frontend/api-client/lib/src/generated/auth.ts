@@ -381,7 +381,7 @@ export interface components {
       /** Format: uuid */
       tenantId: string;
       /** Format: email */
-      email: string;
+      email: string | null;
       displayName?: string;
       /** @enum {string} */
       locale?: 'en' | 'ru';
@@ -390,7 +390,7 @@ export interface components {
       roles: string[];
       permissions: string[];
       /** Format: uri */
-      avatarUrl?: string;
+      avatarUrl?: string | null;
       /** @enum {string} */
       avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
     };
@@ -439,15 +439,31 @@ export interface components {
       tenantId?: string;
       refreshToken: string;
     };
+    ExternalAuthIdentityDto: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      provider: 'telegram' | 'discord';
+      providerSubject: string;
+      /** @enum {string} */
+      channel: 'password' | 'telegram_oidc' | 'telegram_tma' | 'telegram_bot' | 'discord_oauth' | 'discord_bot';
+      /** Format: email */
+      email: string | null;
+      emailVerified: boolean | null;
+      displayName: string | null;
+      username: string | null;
+      /** Format: uri */
+      avatarUrl: string | null;
+      linkedAt: string;
+      lastAuthenticatedAt: string | null;
+    };
     ExternalAuthResultDto: {
       /** @enum {string} */
       status: 'authenticated' | 'linked' | 'needs_link' | 'conflict';
       code?: string;
       message?: string;
       session?: components['schemas']['AuthSessionViewDto'];
-      identity?: {
-        [key: string]: unknown;
-      };
+      identity?: components['schemas']['ExternalAuthIdentityDto'];
       returnUrl?: string;
     };
     TelegramTmaDto: {
@@ -477,7 +493,11 @@ export interface components {
       locale?: string;
       avatarUrl?: string;
     };
-    Object: Record<string, never>;
+    DiscordAuthorizationRequestResultDto: {
+      /** Format: uri */
+      authorizationUrl: string;
+      stateExpiresAt: string;
+    };
     DiscordAuthorizationRequestDto: {
       /** Format: uuid */
       tenantId?: string;
@@ -485,6 +505,12 @@ export interface components {
       intent?: 'login' | 'link';
       linkToken?: string;
       returnUrl?: string;
+    };
+    ProviderIdentitiesPayloadDto: {
+      items: components['schemas']['ExternalAuthIdentityDto'][];
+    };
+    UnlinkProviderIdentityPayloadDto: {
+      unlinked: boolean;
     };
     LinkTokenResultDto: {
       token: string;
@@ -565,12 +591,15 @@ export type AuthSessionViewDto = components['schemas']['AuthSessionViewDto'];
 export type RegisterDto = components['schemas']['RegisterDto'];
 export type LoginDto = components['schemas']['LoginDto'];
 export type RefreshTokenDto = components['schemas']['RefreshTokenDto'];
+export type ExternalAuthIdentityDto = components['schemas']['ExternalAuthIdentityDto'];
 export type ExternalAuthResultDto = components['schemas']['ExternalAuthResultDto'];
 export type TelegramTmaDto = components['schemas']['TelegramTmaDto'];
 export type TelegramOidcSessionDto = components['schemas']['TelegramOidcSessionDto'];
 export type TelegramBotLinkDto = components['schemas']['TelegramBotLinkDto'];
-export type Object = components['schemas']['Object'];
+export type DiscordAuthorizationRequestResultDto = components['schemas']['DiscordAuthorizationRequestResultDto'];
 export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
+export type ProviderIdentitiesPayloadDto = components['schemas']['ProviderIdentitiesPayloadDto'];
+export type UnlinkProviderIdentityPayloadDto = components['schemas']['UnlinkProviderIdentityPayloadDto'];
 export type LinkTokenResultDto = components['schemas']['LinkTokenResultDto'];
 export type LinkTokenDto = components['schemas']['LinkTokenDto'];
 export type UserActionTokenPayloadDto = components['schemas']['UserActionTokenPayloadDto'];
@@ -2231,7 +2260,7 @@ export interface operations {
         };
         content: {
           'application/json': {
-            data: components['schemas']['Object'];
+            data: components['schemas']['DiscordAuthorizationRequestResultDto'];
           };
         };
       };
@@ -2747,7 +2776,7 @@ export interface operations {
         };
         content: {
           'application/json': {
-            data: components['schemas']['Object'];
+            data: components['schemas']['ProviderIdentitiesPayloadDto'];
           };
         };
       };
@@ -3005,7 +3034,7 @@ export interface operations {
         };
         content: {
           'application/json': {
-            data: components['schemas']['Object'];
+            data: components['schemas']['UnlinkProviderIdentityPayloadDto'];
           };
         };
       };

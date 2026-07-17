@@ -27,7 +27,7 @@ export async function callSessionMethod(request: AuthenticatedRequest, method: S
 
   if (handler.length > 0) {
     await new Promise<void>((resolve, reject) => {
-      (handler as (callback: (error?: unknown) => void) => void).call(request.session, (error?: unknown) => {
+      void handler.call(request.session, (error?: unknown) => {
         if (error) {
           reject(error instanceof Error ? error : new Error('Session lifecycle method failed.'));
           return;

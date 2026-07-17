@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import { FeatureFlagEntity } from './infrastructure/data-access/entities';
@@ -43,6 +44,7 @@ describe('PostgresFeatureFlagProvider', () => {
   });
 
   it('returns the fallback when the persisted value type does not match', async () => {
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     const repository = createRepositoryMock({
       'rollout.percent': new FeatureFlagEntity({
         key: 'rollout.percent',
@@ -51,8 +53,15 @@ describe('PostgresFeatureFlagProvider', () => {
     });
     const provider = new PostgresFeatureFlagProvider(repository);
 
-    await expect(provider.getValue('rollout.percent', 'default')).resolves.toBe('default');
-    await expect(provider.getValue('rollout.percent', 0)).resolves.toBe(25);
+    try {
+      await expect(provider.getValue('rollout.percent', 'default')).resolves.toBe('default');
+      await expect(provider.getValue('rollout.percent', 0)).resolves.toBe(25);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Feature flag "rollout.percent" is a number but the fallback is a string; using fallback.',
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('returns DB snapshots', async () => {

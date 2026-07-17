@@ -1,13 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AuthenticatedTheme,
+  AuthProvider,
+  AuthProviderChannel,
   DefaultAuthTenantId,
+  ExternalAuthIntent,
   Language,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
   type AuthenticatedSession,
   type AuthSessionView,
+  type ExternalAuthIdentityView,
 } from '@app/backend-feature-auth-shared';
 import type { AuthService } from '../../application/auth.service';
 import type { BetterAuthTelegramSessionService } from '../../application/better-auth-telegram-session.service';
@@ -46,7 +50,20 @@ interface RequestFixture {
   session: Required<Pick<AuthenticatedSession, 'destroy' | 'regenerate' | 'save'>> & Pick<AuthenticatedSession, 'user'>;
 }
 
-const sessionView: AuthSessionView = {
+function createSessionLifecycle(): RequestFixture['session']['destroy'] {
+  const lifecycle = vi.fn((callback?: (error?: unknown) => void): Promise<void> | void => {
+    if (callback) {
+      callback();
+      return;
+    }
+
+    return Promise.resolve();
+  });
+
+  return lifecycle as unknown as RequestFixture['session']['destroy'];
+}
+
+const sessionView = {
   user: {
     id: 'user-id',
     tenantId: DefaultAuthTenantId,
@@ -60,7 +77,21 @@ const sessionView: AuthSessionView = {
   accessToken: 'access-token',
   tokenType: 'Bearer',
   expiresIn: 3600,
-};
+} satisfies AuthSessionView;
+
+const externalIdentity = {
+  avatarUrl: null,
+  channel: AuthProviderChannel.TelegramOidc,
+  displayName: 'Ada Lovelace',
+  email: null,
+  emailVerified: null,
+  id: 'identity-id',
+  lastAuthenticatedAt: null,
+  linkedAt: '2026-07-05T00:00:00.000Z',
+  provider: AuthProvider.Telegram,
+  providerSubject: '777',
+  username: 'ada',
+} satisfies ExternalAuthIdentityView;
 
 function createService(
   overrides: Partial<{
@@ -91,22 +122,22 @@ function createExternalAuthService(
   overrides: Partial<ExternalAuthControllerService> = {},
 ): ExternalAuthControllerService {
   const service: ExternalAuthControllerService = {
-    telegramTma: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
-    telegramOidcSession: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
-    telegramBotLink: vi.fn(() => Promise.resolve({ status: 'linked', identity: { id: 'telegram-id' } })),
+    telegramTma: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
+    telegramOidcSession: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
+    telegramBotLink: vi.fn(() => Promise.resolve({ status: 'linked' as const, identity: externalIdentity })),
     createDiscordAuthorizationRequest: vi.fn(() => ({
       authorizationUrl: 'https://discord.example.test/oauth',
       stateExpiresAt: '2026-07-05T00:00:00.000Z',
     })),
-    discordCallback: vi.fn(() => Promise.resolve({ status: 'authenticated', session: sessionView })),
-    listProviderIdentities: vi.fn(() => Promise.resolve([{ id: 'identity-id' }])),
+    discordCallback: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
+    listProviderIdentities: vi.fn(() => Promise.resolve([externalIdentity])),
     unlinkProviderIdentity: vi.fn(() => Promise.resolve({ unlinked: true })),
     createLinkToken: vi.fn(() =>
       Promise.resolve({
         token: 'link-token',
         expiresAt: '2026-07-05T00:00:00.000Z',
-        provider: 'telegram',
-        intent: 'link',
+        provider: AuthProvider.Telegram as AuthProvider.Telegram,
+        intent: ExternalAuthIntent.Link as ExternalAuthIntent.Link,
       }),
     ),
     ...overrides,
@@ -120,15 +151,9 @@ function createRequest(
 ): RequestFixture {
   const session: RequestFixture['session'] = {
     ...(principal ? { user: principal } : {}),
-    regenerate: vi.fn((callback: (error?: unknown) => void) => {
-      callback();
-    }),
-    save: vi.fn((callback: (error?: unknown) => void) => {
-      callback();
-    }),
-    destroy: vi.fn((callback: (error?: unknown) => void) => {
-      callback();
-    }),
+    regenerate: createSessionLifecycle(),
+    save: createSessionLifecycle(),
+    destroy: createSessionLifecycle(),
   };
   const reply: AuthenticatedResponse = { clearCookie: vi.fn() };
   const rawResponse: AuthenticatedResponse = { clearCookie: vi.fn() };
@@ -254,7 +279,7 @@ describe('AuthController', () => {
     const updatedUser = {
       ...sessionView.user,
       displayName: 'Ada Byron',
-      locale: Language.En,
+      locale: 'en' as const,
       theme: AuthenticatedTheme.Light,
     };
     const service = createService({
@@ -305,7 +330,7 @@ describe('AuthController', () => {
   it('updates locale and persists the refreshed principal', async () => {
     const updatedUser = {
       ...sessionView.user,
-      locale: Language.Ru,
+      locale: 'ru' as const,
     };
     const service = createService({
       updateUserPreferences: vi.fn(() => Promise.resolve(updatedUser)),
@@ -340,7 +365,7 @@ describe('AuthController', () => {
     const withoutReturnUrl = { status: 'authenticated' };
     const discordCallback = vi.fn().mockResolvedValueOnce(withReturnUrl).mockResolvedValueOnce(withoutReturnUrl);
     const externalAuth = { discordCallback } as unknown as ExternalAuthService;
-    const controller = new AuthController(createService() as AuthService, externalAuth);
+    const controller = toController(createService(), externalAuth as ExternalAuthControllerService);
     const query: DiscordCallbackQueryDto = {
       code: 'oauth-code',
       state: 'oauth-state',
@@ -449,15 +474,14 @@ describe('AuthController', () => {
     });
 
     await expect(controller.providerIdentities(principal)).resolves.toEqual({
-      data: [{ id: 'identity-id' }],
+      data: { items: [externalIdentity] },
     });
     await expect(controller.unlinkProviderIdentity(principal, 'identity-id')).resolves.toEqual({
       data: { unlinked: true },
     });
     await expect(
       controller.createLinkToken(principal, {
-        provider: 'telegram',
-        tenantId: null,
+        provider: AuthProvider.Telegram,
       }),
     ).resolves.toMatchObject({ data: { token: 'link-token' } });
     expect(externalAuth.createLinkToken).toHaveBeenCalledWith(

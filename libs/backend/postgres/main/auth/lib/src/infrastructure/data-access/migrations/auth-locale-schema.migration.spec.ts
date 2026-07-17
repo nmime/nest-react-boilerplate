@@ -15,7 +15,9 @@ function collectSql(migration: { addSql(sql: string): void; up(): void }) {
 
 describe('auth locale schema migration', () => {
   it('replaces stale auth user locale constraints with en/ru', () => {
-    const sql = collectSql(new Migration20260607080000AlignAuthUserLocaleConstraint());
+    const sql = collectSql(
+      new Migration20260607080000AlignAuthUserLocaleConstraint(undefined as never, undefined as never),
+    );
 
     expect(sql).toContain('drop constraint if exists "auth_users_locale_check"');
     expect(sql).toContain('drop constraint if exists "ck__auth_users__locale"');

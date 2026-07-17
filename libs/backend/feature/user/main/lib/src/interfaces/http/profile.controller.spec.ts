@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { Language, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { GetCurrentUserProfileUseCase } from '@app/backend-feature-user-shared';
 import { ProfileController } from './profile.controller';
 
@@ -7,9 +7,10 @@ describe('User ProfileController', () => {
   it('returns principal and profile', () => {
     const principal: AuthenticatedPrincipal = {
       subject: 'user-id',
+      tenantId: 'tenant-1',
       email: 'user@example.com',
       displayName: 'User Name',
-      locale: 'ru',
+      locale: Language.Ru,
       roles: ['user'],
       permissions: ['profile:read'],
     };

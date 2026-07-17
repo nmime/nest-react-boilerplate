@@ -102,10 +102,10 @@ git diff --check
 ```
 
 `scaffold:verify` generates all six application renderer/process variants plus
-backend, frontend, and common libraries in the live workspace. It builds/tests
-all nine projects through Nx, typechecks the applicable frontends, then removes
-the canary roots. Generator unit and setup e2e tests cover name/path rules,
-schema validation, dependency expansion, conflicts, rollback, and idempotency.
+backend, frontend, and common libraries in the live workspace. It builds, tests,
+and typechecks all nine projects through Nx, then removes the canary roots.
+Generator unit and setup e2e tests cover name/path rules, schema validation,
+dependency expansion, conflicts, rollback, and idempotency.
 
 ## Extending generators
 

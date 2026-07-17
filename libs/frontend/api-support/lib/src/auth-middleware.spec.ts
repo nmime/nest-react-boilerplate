@@ -1,7 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { MergedOptions } from 'openapi-fetch';
 
 import { createAuthRefreshFetch, createAuthRefreshMiddleware } from './auth-middleware';
 import { createApiRuntimeEventHub } from './runtime-events';
+
+const middlewareOptions = {
+  baseUrl: '',
+  bodySerializer: (body: unknown) => JSON.stringify(body),
+  fetch: globalThis.fetch,
+  parseAs: 'json',
+  pathSerializer: (pathname: string) => pathname,
+  querySerializer: () => '',
+} satisfies MergedOptions;
 
 const invokeOnRequest = async (
   middleware: ReturnType<typeof createAuthRefreshMiddleware>,
@@ -9,7 +19,8 @@ const invokeOnRequest = async (
 ): Promise<Request> =>
   (await middleware.onRequest?.({
     id: 'test',
-    options: {},
+    options: middlewareOptions,
+    params: {},
     request,
     schemaPath: '/profile',
   })) as Request;
@@ -21,7 +32,8 @@ const invokeOnResponse = async (
 ): Promise<Response | undefined> =>
   (await middleware.onResponse?.({
     id: 'test',
-    options: {},
+    options: middlewareOptions,
+    params: {},
     request,
     response,
     schemaPath: '/profile',

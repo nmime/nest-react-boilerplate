@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { MergedOptions } from 'openapi-fetch';
 
 import { createAuthRefreshFetch, createAuthRefreshMiddleware } from './auth-middleware';
 import { FrontendErrorKey } from './error-normalization';
@@ -6,6 +7,15 @@ import { createApiResilienceMiddleware } from './resilience-middleware';
 import { createApiRuntimeFetch } from './runtime-fetch';
 import { createApiRuntimeEventHub } from './runtime-events';
 import { ApiToastRuntime, parseApiToastRules, resolveApiToastRule } from './toast-runtime';
+
+const middlewareOptions = {
+  baseUrl: '',
+  bodySerializer: (body: unknown) => JSON.stringify(body),
+  fetch: globalThis.fetch,
+  parseAs: 'json',
+  pathSerializer: (pathname: string) => pathname,
+  querySerializer: () => '',
+} satisfies MergedOptions;
 
 const invokeOnRequest = async (
   middleware: ReturnType<typeof createAuthRefreshMiddleware>,
@@ -18,7 +28,8 @@ const invokeOnRequest = async (
 
   return (await handler({
     id: 'test',
-    options: {},
+    options: middlewareOptions,
+    params: {},
     request,
     schemaPath: '/profile',
   })) as Request;
@@ -36,7 +47,8 @@ const invokeOnResponse = async (
 
   return (await handler({
     id: 'test',
-    options: {},
+    options: middlewareOptions,
+    params: {},
     request,
     response,
     schemaPath: '/profile',
@@ -120,7 +132,8 @@ describe('API resilience middleware', () => {
         middleware.onError?.({
           error: new TypeError('Failed to fetch'),
           id: 'test',
-          options: {},
+          options: middlewareOptions,
+          params: {},
           request,
           schemaPath: '/profile',
         }),
@@ -227,14 +240,16 @@ describe('auth refresh middleware', () => {
     const responses = await Promise.all([
       middleware.onResponse?.({
         id: 'a',
-        options: {},
+        options: middlewareOptions,
+        params: {},
         request: requestA,
         response: new Response(null, { status: 401 }),
         schemaPath: '/a',
       }),
       middleware.onResponse?.({
         id: 'b',
-        options: {},
+        options: middlewareOptions,
+        params: {},
         request: requestB,
         response: new Response(null, { status: 401 }),
         schemaPath: '/b',
@@ -270,7 +285,8 @@ describe('auth refresh middleware', () => {
 
     await middleware.onResponse?.({
       id: 'auth',
-      options: {},
+      options: middlewareOptions,
+      params: {},
       request,
       response,
       schemaPath: '/profile',

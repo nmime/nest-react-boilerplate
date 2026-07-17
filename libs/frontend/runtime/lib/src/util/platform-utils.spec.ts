@@ -95,6 +95,16 @@ describe('frontend platform utilities', () => {
   it('detects Telegram mini app environments without requiring TMA globals', () => {
     expect(isTmaApp({ VITE_TMA_APP: 'true' })).toBe(true);
     expect(isTmaApp({})).toBe(false);
+
+    try {
+      vi.stubGlobal('window', { Telegram: { WebApp: {} } });
+      expect(isTmaApp({})).toBe(true);
+
+      vi.stubGlobal('window', undefined);
+      expect(isTmaApp({})).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('transforms seconds to countdown strings', () => {

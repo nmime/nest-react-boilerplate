@@ -55,6 +55,21 @@ function readSessionId(cookieHeader: string | string[] | undefined): string | un
     ?.slice('nrb.sid='.length);
 }
 
+function createSessionLifecycle(operation: () => void): NonNullable<AuthenticatedSession['destroy']> {
+  function lifecycle(callback: (error?: unknown) => void): void;
+  function lifecycle(): Promise<void>;
+  function lifecycle(callback?: (error?: unknown) => void): void | Promise<void> {
+    operation();
+    if (callback) {
+      callback();
+      return;
+    }
+    return Promise.resolve();
+  }
+
+  return lifecycle;
+}
+
 function installInMemorySession(app: NestFastifyApplication): void {
   const sessions = new Map<string, AuthenticatedPrincipal>();
   const fastify = app.getHttpAdapter().getInstance() as {
@@ -72,25 +87,22 @@ function installInMemorySession(app: NestFastifyApplication): void {
     let sessionId = readSessionId(request.headers.cookie);
     const session: AuthenticatedSession = {
       ...(sessionId && sessions.has(sessionId) ? { user: sessions.get(sessionId) } : {}),
-      destroy: (callback?: (error?: unknown) => void) => {
+      destroy: createSessionLifecycle(() => {
         if (sessionId) {
           sessions.delete(sessionId);
         }
         delete session.user;
         reply.header('set-cookie', 'nrb.sid=; Path=/; Max-Age=0; HttpOnly');
-        callback?.();
-      },
-      regenerate: (callback?: (error?: unknown) => void) => {
+      }),
+      regenerate: createSessionLifecycle(() => {
         sessionId = randomUUID();
-        callback?.();
-      },
-      save: (callback?: (error?: unknown) => void) => {
+      }),
+      save: createSessionLifecycle(() => {
         if (sessionId && session.user) {
           sessions.set(sessionId, session.user);
           reply.header('set-cookie', `nrb.sid=${sessionId}; Path=/; HttpOnly`);
         }
-        callback?.();
-      },
+      }),
     };
 
     (request as { session?: AuthenticatedSession }).session = session;
@@ -98,19 +110,19 @@ function installInMemorySession(app: NestFastifyApplication): void {
   });
 }
 
-function sessionCookieHeader(response: { headers: Record<string, string | string[] | undefined> }): string {
+function sessionCookieHeader(response: Pick<InjectResponse, 'headers'>): string {
   const setCookie = response.headers['set-cookie'];
   let cookies: string[] = [];
 
   if (Array.isArray(setCookie)) {
     cookies = setCookie;
-  } else if (setCookie) {
+  } else if (typeof setCookie === 'string') {
     cookies = [setCookie];
   }
 
   return cookies
     .map((cookie) => cookie.split(';')[0])
-    .filter((cookie) => cookie.length > 0)
+    .filter((cookie): cookie is string => cookie !== undefined && cookie.length > 0)
     .join('; ');
 }
 

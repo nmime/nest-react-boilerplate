@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { BaseWebsocketClient, InMemoryWebsocketAdapter } from './index';
 
 class TestWebsocketClient<TMessage> extends BaseWebsocketClient<TMessage> {
-  readonly close = vi.fn();
-  readonly send = vi.fn();
+  override readonly close = vi.fn();
+  override readonly send = vi.fn();
 }
 
 describe('shared websocket contracts', () => {

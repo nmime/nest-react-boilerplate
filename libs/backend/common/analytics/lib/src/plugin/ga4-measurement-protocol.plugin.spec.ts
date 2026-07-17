@@ -68,8 +68,8 @@ describe('createGa4MeasurementProtocolPlugin', () => {
         },
       ],
     });
-    expect(body.events[0].params).not.toHaveProperty('context');
-    expect(body.events[0].params).not.toHaveProperty('omitted');
+    expect(body.events[0]?.params).not.toHaveProperty('context');
+    expect(body.events[0]?.params).not.toHaveProperty('omitted');
   });
 
   it('normalizes Date, bigint, and unserializable param values', async () => {

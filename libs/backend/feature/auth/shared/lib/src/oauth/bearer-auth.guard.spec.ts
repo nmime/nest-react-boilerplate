@@ -39,7 +39,7 @@ function createContext(
   handler: () => undefined = () => undefined,
   controller: new () => unknown = class TestController {},
 ): ExecutionContext {
-  const context: ExecutionContext = {
+  const context = {
     getArgByIndex: () => request,
     getArgs: () => [request],
     getClass: () => controller,
@@ -56,7 +56,7 @@ function createContext(
       getPattern: () => undefined,
     }),
   };
-  return context;
+  return context as unknown as ExecutionContext;
 }
 
 describe('BearerAuthGuard', () => {
@@ -95,7 +95,6 @@ describe('BearerAuthGuard', () => {
       permissions: ['admin:read', 'profile:read', 'payments:read'],
       roles: ['admin'],
       subject: 'user-id',
-      tenantId: DefaultAuthTenantId,
       tenantId: DefaultAuthTenantId,
       tokenId: 'token-id',
     });

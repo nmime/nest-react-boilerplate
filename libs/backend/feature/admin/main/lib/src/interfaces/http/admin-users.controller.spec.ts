@@ -1,5 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { errAsync, okAsync } from 'neverthrow';
+import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
@@ -53,6 +53,9 @@ type TestAuthUser = Pick<
   | 'locale'
   | 'theme'
   | 'lastLoginAt'
+  | 'avatarUrl'
+  | 'avatarHash'
+  | 'avatarStatus'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -97,6 +100,9 @@ const createUser = (partial: Partial<TestAuthUser> = {}): TestAuthUser => ({
   locale: 'en',
   theme: 'system',
   lastLoginAt: new Date(0),
+  avatarUrl: '',
+  avatarHash: '',
+  avatarStatus: 'none',
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   ...partial,
@@ -154,11 +160,13 @@ const createMutationResult = (
   return { before, after, auditLog, outboxEvent };
 };
 
+type TestResult<T> = ResultAsync<T, { code: string; message: string }>;
+
 const createController = () => {
   const users = {
-    listUsers: vi.fn(() => okAsync([createUser()])),
+    listUsers: vi.fn((): TestResult<TestAuthUser[]> => okAsync([createUser()])),
     countUsers: vi.fn(() => okAsync(1)),
-    findById: vi.fn(() => okAsync(createUser())),
+    findById: vi.fn((): TestResult<TestAuthUser | null> => okAsync(createUser())),
     setAccessPolicy: vi.fn(() => okAsync(createUser({ status: 'disabled' }))),
   };
   const auditLogs = {
@@ -167,7 +175,9 @@ const createController = () => {
     count: vi.fn(() => okAsync(1)),
   };
   const adminUserMutations = {
-    mutateAccessPolicyWithAudit: vi.fn(() => okAsync(createMutationResult())),
+    mutateAccessPolicyWithAudit: vi.fn<(input: unknown) => TestResult<AdminUserMutationResult | null>>(() =>
+      okAsync(createMutationResult()),
+    ),
   };
 
   return {
@@ -290,7 +300,7 @@ describe('AdminUsersController', () => {
         },
       }),
     );
-    expect(JSON.stringify(adminUserMutations.mutateAccessPolicyWithAudit.mock.calls[0][0])).not.toContain(
+    expect(JSON.stringify(adminUserMutations.mutateAccessPolicyWithAudit.mock.calls[0]?.[0])).not.toContain(
       'redacted-hash',
     );
     expect(users.setAccessPolicy).not.toHaveBeenCalled();

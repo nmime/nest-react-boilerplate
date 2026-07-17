@@ -11,7 +11,7 @@ export interface AuthPrincipalPayload {
 export interface AuthUserPayload {
   id?: string;
   subject?: string;
-  email?: string;
+  email?: string | null;
   locale?: Locale;
   theme?: UiTheme;
 }

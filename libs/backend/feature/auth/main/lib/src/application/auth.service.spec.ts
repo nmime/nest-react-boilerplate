@@ -7,7 +7,7 @@ import {
   createDefaultAccessPolicy,
   validateBearerAuthorization,
 } from '@app/backend-feature-auth-shared';
-import type { AuthTokenStore, AuthUserStore } from '../infrastructure';
+import type { AuthTokenStore, AuthUserRecord, AuthUserStore } from '../infrastructure';
 import { InMemoryAuthUserStore } from '../infrastructure/auth-user-store';
 import { InMemoryAuthRoleStore } from '../infrastructure/auth-role-store';
 import { InMemoryAuthTokenStore } from '../infrastructure/auth-token-store';
@@ -20,21 +20,7 @@ const authorizationScheme = 'Bearer';
 
 const bearerAuthorization = (token: string): string => [authorizationScheme, token].join(' ');
 
-const createUserRecord = (
-  overrides: Partial<{
-    displayName: string | null;
-    email: string;
-    id: string;
-    lastLoginAt: Date | null;
-    locale: null | 'en' | 'ru';
-    passwordHash: string;
-    permissions: string[];
-    roles: string[];
-    status: 'active' | 'disabled' | 'invited';
-    tenantId: string;
-    theme: AuthenticatedTheme;
-  }> = {},
-) => ({
+const createUserRecord = (overrides: Partial<AuthUserRecord> = {}): AuthUserRecord => ({
   id: 'user-id',
   tenantId: DefaultAuthTenantId,
   email: 'user@example.com',
@@ -46,6 +32,9 @@ const createUserRecord = (
   theme: AuthenticatedTheme.System,
   status: 'active' as const,
   lastLoginAt: null,
+  avatarUrl: null,
+  avatarHash: null,
+  avatarStatus: 'none',
   ...overrides,
 });
 
@@ -250,6 +239,7 @@ describe('AuthService', () => {
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
+      syncProviderAvatar: () => okAsync(null),
     };
     const serviceWithFindFailure = new AuthService(failingStore);
     await expect(
@@ -305,19 +295,11 @@ describe('AuthService', () => {
     ).rejects.toThrow('User is not active');
 
     const activeHash = hashPassword('password123', 'active-salt');
-    const activeRecord = {
+    const activeRecord = createUserRecord({
       id: 'active-id',
-      tenantId: DefaultAuthTenantId,
       email: 'active@example.com',
-      displayName: null,
       passwordHash: activeHash,
-      roles: ['user'],
-      permissions: ['profile:read'],
-      locale: null,
-      theme: AuthenticatedTheme.System,
-      status: 'active' as const,
-      lastLoginAt: null,
-    };
+    });
     const fallbackLogin = await new AuthService({
       findByEmail: () => okAsync(activeRecord),
       create: () => okAsync(activeRecord),
@@ -326,6 +308,7 @@ describe('AuthService', () => {
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
+      syncProviderAvatar: () => okAsync(null),
     }).login({ email: 'active@example.com', password: 'password123' });
     expect(fallbackLogin.user.id).toBe('active-id');
   });
@@ -343,19 +326,7 @@ describe('AuthService', () => {
     expect(token.split('.')).toHaveLength(3);
 
     const service = new AuthService(new InMemoryAuthUserStore());
-    const baseUser = {
-      id: 'id',
-      tenantId: DefaultAuthTenantId,
-      email: 'user@example.com',
-      displayName: null,
-      passwordHash: 'hash',
-      roles: [],
-      permissions: [],
-      locale: null,
-      theme: AuthenticatedTheme.System,
-      status: 'active' as const,
-      lastLoginAt: null,
-    };
+    const baseUser = createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] });
     expect(
       service.createSession(baseUser, {
         AUTH_JWT_SECRET: testJwtSecretValue,
@@ -364,19 +335,7 @@ describe('AuthService', () => {
     ).toBe(60);
 
     const session = service.createSession(
-      {
-        id: 'id',
-        tenantId: DefaultAuthTenantId,
-        email: 'user@example.com',
-        displayName: null,
-        passwordHash: 'hash',
-        roles: [],
-        permissions: [],
-        locale: null,
-        theme: AuthenticatedTheme.System,
-        status: 'active',
-        lastLoginAt: null,
-      },
+      createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] }),
       {
         AUTH_JWT_SECRET: testJwtSecretValue,
         AUTH_JWT_EXPIRES_IN_SECONDS: 'bad',
@@ -384,25 +343,10 @@ describe('AuthService', () => {
     );
     expect(session.expiresIn).toBe(3600);
     expect(
-      service.createSession(
-        {
-          id: 'id',
-          tenantId: DefaultAuthTenantId,
-          email: 'user@example.com',
-          displayName: null,
-          passwordHash: 'hash',
-          roles: [],
-          permissions: [],
-          locale: null,
-          theme: AuthenticatedTheme.System,
-          status: 'active',
-          lastLoginAt: null,
-        },
-        {
-          AUTH_JWT_SECRET: testJwtSecretValue,
-          AUTH_JWT_EXPIRES_IN_SECONDS: '0',
-        },
-      ).expiresIn,
+      service.createSession(createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] }), {
+        AUTH_JWT_SECRET: testJwtSecretValue,
+        AUTH_JWT_EXPIRES_IN_SECONDS: '0',
+      }).expiresIn,
     ).toBe(3600);
   });
 
@@ -558,10 +502,10 @@ describe('AuthService', () => {
       }),
     ).resolves.toBeNull();
     const verificationToken = await actionService.issueEmailVerificationToken({
-      email: activeRecord.email,
+      email: 'active@example.com',
     });
     const resetToken = await actionService.issuePasswordResetToken({
-      email: activeRecord.email,
+      email: 'active@example.com',
     });
     expect(verificationToken).toEqual(expect.any(String));
     expect(resetToken).toEqual(expect.any(String));
@@ -570,7 +514,7 @@ describe('AuthService', () => {
     };
     await expect(
       new AuthService(users as never, issueFailureTokens as AuthTokenStore).issuePasswordResetToken({
-        email: activeRecord.email,
+        email: 'active@example.com',
       }),
     ).resolves.toBeNull();
     await expect(actionService.consumeUserActionToken(verificationToken ?? '', 'email_verification')).resolves.toBe(
@@ -661,7 +605,7 @@ describe('AuthService', () => {
     expect(() =>
       service.createSession({
         ...createUserRecord(),
-        get id() {
+        get id(): string {
           throw new Error('unexpected user shape');
         },
       }),

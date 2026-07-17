@@ -14,7 +14,9 @@ function collectSql(migration: { addSql(sql: string): void; up(): void }) {
 
 describe('social auth data model migration', () => {
   it('makes user email nullable and adds partial uniqueness for non-null normalized email', () => {
-    const sql = collectSql(new Migration20260614120000CreateSocialAuthDataModel());
+    const sql = collectSql(
+      new Migration20260614120000CreateSocialAuthDataModel(undefined as never, undefined as never),
+    );
 
     expect(sql).toContain('alter table "auth_users" alter column "email" drop not null');
     expect(sql).toContain('drop constraint if exists "uq__auth_users__tenant_id_email"');
@@ -24,7 +26,9 @@ describe('social auth data model migration', () => {
   });
 
   it('creates external identities, auth methods, link tokens, and provider tokens', () => {
-    const sql = collectSql(new Migration20260614120000CreateSocialAuthDataModel());
+    const sql = collectSql(
+      new Migration20260614120000CreateSocialAuthDataModel(undefined as never, undefined as never),
+    );
 
     expect(sql).toContain('create table if not exists "auth_external_identities"');
     expect(sql).toContain("\"provider\" in ('telegram', 'discord')");
@@ -43,7 +47,9 @@ describe('social auth data model migration', () => {
   });
 
   it('uses migration freshness-compliant names for expression and partial indexes', () => {
-    const sql = collectSql(new Migration20260614120000CreateSocialAuthDataModel());
+    const sql = collectSql(
+      new Migration20260614120000CreateSocialAuthDataModel(undefined as never, undefined as never),
+    );
 
     expect(sql).toContain('"uq__auth_users__tenant_id_lower_email"');
     expect(sql).toContain('"ix__auth_methods__tenant_id_auth_user_id_last_used_at_desc"');

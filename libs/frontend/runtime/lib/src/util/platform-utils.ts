@@ -110,12 +110,20 @@ export interface TmaEnvironment {
   VITE_TMA_APP?: string;
 }
 
+interface TelegramHostWindow {
+  Telegram?: {
+    WebApp?: unknown;
+  };
+}
+
 export function isTmaApp(environment: TmaEnvironment = {}): boolean {
   if (environment.VITE_TMA_APP === 'true') {
     return true;
   }
 
-  return Boolean(typeof window !== 'undefined' && window.Telegram?.WebApp !== undefined);
+  const hostWindow = typeof window === 'undefined' ? undefined : (window as unknown as TelegramHostWindow);
+
+  return hostWindow?.Telegram?.WebApp !== undefined;
 }
 
 const padTimeUnit = (value: number): string => String(value).padStart(2, '0');

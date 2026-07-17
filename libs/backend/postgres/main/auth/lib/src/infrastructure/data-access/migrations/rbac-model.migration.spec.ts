@@ -16,7 +16,7 @@ function collectSql(migration: { addSql(sql: string): void }, run: () => void): 
 
 describe('RBAC model migration', () => {
   it('creates the four normalized RBAC tables with deterministic constraints', () => {
-    const migration = new Migration20260704120000CreateRbacModel();
+    const migration = new Migration20260704120000CreateRbacModel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.up();
     });
@@ -42,7 +42,7 @@ describe('RBAC model migration', () => {
   });
 
   it('seeds the permission catalog and system roles from @app/common-authz', () => {
-    const migration = new Migration20260704120000CreateRbacModel();
+    const migration = new Migration20260704120000CreateRbacModel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.up();
     });
@@ -62,7 +62,7 @@ describe('RBAC model migration', () => {
   });
 
   it('seeds role grants from the default matrix and backfills user roles', () => {
-    const migration = new Migration20260704120000CreateRbacModel();
+    const migration = new Migration20260704120000CreateRbacModel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.up();
     });
@@ -79,7 +79,7 @@ describe('RBAC model migration', () => {
   });
 
   it('drops every RBAC table in reverse dependency order on rollback', () => {
-    const migration = new Migration20260704120000CreateRbacModel();
+    const migration = new Migration20260704120000CreateRbacModel(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.down();
     });

@@ -12,8 +12,8 @@ Use this policy to keep dependency updates low-risk and reproducible.
 | React      | 19.2.7  | All frontend apps and libs                                                      |
 | Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
 | Vitest     | 4.1.10  | All workspace consumers                                                         |
-| Vite       | 8.1.4   | All workspace consumers                                                         |
-| Astro      | 7.0.9   | Landing app and generated Astro applications                                    |
+| Vite       | 8.1.5   | All workspace consumers                                                         |
+| Astro      | 7.1.0   | Landing app and generated Astro applications                                    |
 | Expo SDK   | 57.0.x  | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
 
 ## Package updates
@@ -39,12 +39,13 @@ All 15 workspace manifests must use the same version for shared direct dependenc
 
 ## Deferred major updates
 
-| Package         | Current | Latest | Blocker                                                           | Revisit trigger                                      |
-| --------------- | ------- | ------ | ----------------------------------------------------------------- | ---------------------------------------------------- |
-| TypeScript      | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs                 | First NestJS/Nx release with TS 7 peer ranges        |
-| Babel           | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)           | Expo SDK release declaring Babel 8 compatibility     |
-| @fastify/static | 9.3.0   | 10.x   | NestJS 11 platform and Swagger peer ranges accept only 8.x or 9.x | NestJS releases with @fastify/static 10 peer support |
-| @types/node     | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major        | Runtime upgrade to Node 26                           |
+| Package               | Current | Latest | Blocker                                                           | Revisit trigger                                      |
+| --------------------- | ------- | ------ | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| TypeScript            | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs                 | First NestJS/Nx release with TS 7 peer ranges        |
+| Babel                 | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)           | Expo SDK release declaring Babel 8 compatibility     |
+| @fastify/static       | 9.3.0   | 10.x   | NestJS 11 platform and Swagger peer ranges accept only 8.x or 9.x | NestJS releases with @fastify/static 10 peer support |
+| @types/node           | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major        | Runtime upgrade to Node 26                           |
+| react-native-worklets | 0.10.2  | 0.11.x | Expo SDK 57 accepts only `^0.7.4` through `^0.10.0`               | Expo peer range includes 0.11.x                      |
 
 ## Build scripts
 
@@ -81,11 +82,11 @@ All service images use explicit, immutable tags — never `latest` or floating m
 | NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
 | MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
-## Audit results (2026-07-15)
+## Audit results (2026-07-17)
 
 - **Production audit**: 0 vulnerabilities (exit 0)
 - **Development audit**: 0 vulnerabilities (exit 0)
 - **Peer dependencies**: 0 issues (`pnpm peers check`, exit 0)
 - **Frozen lockfile install**: exit 0
-- **Registry drift**: only the four incompatible majors listed above remain intentionally deferred
+- **Registry drift**: only the five incompatible releases listed above remain intentionally deferred
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)

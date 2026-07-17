@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { Language } from '@app/backend-feature-auth-shared';
 import {
   createUserProfile,
   GetCurrentUserProfileUseCase,
@@ -31,9 +32,10 @@ describe('user shared', () => {
   it('uses the application use case to expose the current profile', () => {
     const principal = {
       subject: 'user-id',
+      tenantId: 'tenant-1',
       email: 'user@example.com',
       displayName: 'User',
-      locale: 'ru',
+      locale: Language.Ru,
       roles: ['user'],
       permissions: [UserProfileReadPermission],
     };
@@ -55,9 +57,10 @@ describe('user shared', () => {
     expect(
       toUserProfileView({
         subject: 'user-id',
+        tenantId: 'tenant-1',
         email: 'user@example.com',
         displayName: 'User',
-        locale: 'ru',
+        locale: Language.Ru,
         roles: ['user', 'user'],
         permissions: [UserProfileReadPermission],
       }),
@@ -74,6 +77,7 @@ describe('user shared', () => {
   it('presents current profile payloads for interfaces', () => {
     const principal = {
       subject: 'user-id',
+      tenantId: 'tenant-1',
       email: 'user@example.com',
       roles: ['user'],
       permissions: [UserProfileReadPermission],

@@ -183,7 +183,7 @@ describe('UiStore', () => {
     expect(nextSubscription).toBeDefined();
     expect(nextSubscription).not.toBe(firstSubscription);
 
-    nextSubscription.setMatches(false);
+    nextSubscription?.setMatches(false);
 
     expect(store.resolvedTheme).toBe('light');
     expect(document.documentElement.dataset['theme']).toBe('light');

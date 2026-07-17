@@ -164,7 +164,10 @@ if (!runRuntimeSmoke) {
       try {
         const payload = new TextEncoder().encode('hello object store');
         await expect(store.putBlob({ name: 'readme.txt' }, payload)).resolves.toMatchObject({ name: 'readme.txt' });
-        expect(Buffer.from(await store.getBlob('readme.txt'))).toEqual(Buffer.from(payload));
+        const storedPayload = await store.getBlob('readme.txt');
+
+        expect(storedPayload).not.toBeNull();
+        expect(Buffer.from(storedPayload ?? new Uint8Array())).toEqual(Buffer.from(payload));
         await expect(store.delete('readme.txt')).resolves.toMatchObject({
           success: true,
         });

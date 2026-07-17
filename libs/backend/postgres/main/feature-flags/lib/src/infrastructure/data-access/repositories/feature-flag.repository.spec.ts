@@ -60,13 +60,13 @@ describe('FeatureFlagRepository', () => {
     const { persist, flush, entityManager } = createEntityManagerMock();
     const repository = new FeatureFlagRepository(entityManager);
 
-    const flag = await repository
+    const flag = (await repository
       .upsert({
         tenantId: '00000000-0000-4000-8000-000000000001',
         key: 'billing.portal',
         value: true,
       })
-      .then((value) => value._unsafeUnwrap());
+      .then((value) => value._unsafeUnwrap())) as FeatureFlagEntity;
 
     expect(flag.tenantId).toBe('00000000-0000-4000-8000-000000000001');
     expect(persist).toHaveBeenCalledWith(flag);
@@ -83,9 +83,9 @@ describe('FeatureFlagRepository', () => {
     findOne.mockResolvedValue(existing);
     const repository = new FeatureFlagRepository(entityManager);
 
-    const flag = await repository
+    const flag = (await repository
       .upsert({ key: 'billing.portal', value: 'on', enabled: false })
-      .then((value) => value._unsafeUnwrap());
+      .then((value) => value._unsafeUnwrap())) as FeatureFlagEntity;
 
     expect(flag).toBe(existing);
     expect(flag.value).toBe('on');
@@ -105,7 +105,9 @@ describe('FeatureFlagRepository', () => {
     findOne.mockResolvedValue(existing);
     const repository = new FeatureFlagRepository(entityManager);
 
-    const flag = await repository.upsert({ key: 'billing.portal', value: 'on' }).then((value) => value._unsafeUnwrap());
+    const flag = (await repository
+      .upsert({ key: 'billing.portal', value: 'on' })
+      .then((value) => value._unsafeUnwrap())) as FeatureFlagEntity;
 
     expect(flag).toBe(existing);
     expect(flag.value).toBe('on');

@@ -20,6 +20,9 @@ const baseUser = (partial: Partial<AuthUserEntity> = {}): AuthUserEntity => ({
   locale: 'en',
   theme: 'system',
   lastLoginAt: new Date('2026-01-04T00:00:00.000Z'),
+  avatarUrl: '',
+  avatarHash: '',
+  avatarStatus: 'none',
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   ...partial,
@@ -85,10 +88,13 @@ describe('toAdminRoleView', () => {
     const entry: AuthRoleWithPermissions = {
       role: {
         id: 'role-admin',
+        tenantId: 'tenant-1',
         key: 'admin',
         label: 'Administrator',
         description: '',
         isSystem: true,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
       },
       permissionKeys: [AdminUsersReadPermission, UserProfileReadPermission],
     };
@@ -107,10 +113,12 @@ describe('toAdminRoleView', () => {
 describe('toPermissionView', () => {
   it('projects the catalog fields of a permission entity', () => {
     const entity: AuthPermissionEntity = {
+      id: 'permission-id',
       key: AdminUsersReadPermission,
       resource: 'admin.users',
       action: 'read',
       description: 'Read admin users',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
     };
 
     expect(toPermissionView(entity)).toEqual({

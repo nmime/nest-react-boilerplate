@@ -66,6 +66,21 @@
       ],
       "outputs": ["{workspaceRoot}/coverage/apps/frontend/landing"]
     },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/landing",
+        "command": "node_modules/.bin/astro check"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["astro", "@astrojs/check", "typescript"]
+        }
+      ]
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "cache": false,

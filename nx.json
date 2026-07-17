@@ -34,6 +34,9 @@
       }
     },
     {
+      "plugin": "./packages/tooling/src/plugins/typescript-typecheck.ts"
+    },
+    {
       "plugin": "@nx/vite/plugin",
       "options": {
         "buildTargetName": "build",

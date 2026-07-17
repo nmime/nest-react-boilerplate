@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
 import { FeatureFlagEntity, FeatureFlagEntitySchema } from './feature-flag.entity';
 
+const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
+
 describe('FeatureFlagEntity', () => {
   it('defaults feature flags to the shared tenant and enabled DB-backed values', () => {
     const entity = new FeatureFlagEntity({
@@ -71,8 +73,8 @@ describe('FeatureFlagEntity', () => {
   it('defines timestamp lifecycle hooks', () => {
     FeatureFlagEntitySchema.init();
 
-    expect(FeatureFlagEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(FeatureFlagEntitySchema.meta.properties.updatedAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(FeatureFlagEntitySchema.meta.properties.updatedAt.onUpdate?.()).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(FeatureFlagEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(FeatureFlagEntitySchema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(FeatureFlagEntitySchema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
   });
 });

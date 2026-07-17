@@ -44,9 +44,9 @@ spec:
       ports:
         - port: http
           protocol: TCP
----
 {{- range $name, $app := .Values.apps }}
 {{- if $app.enabled }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

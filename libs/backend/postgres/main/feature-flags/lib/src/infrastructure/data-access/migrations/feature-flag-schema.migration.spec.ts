@@ -4,7 +4,7 @@ import { featureFlagMigrationOptions, featureFlagMigrations } from './index';
 
 describe('feature flag migrations', () => {
   it('creates a tenant-scoped persistent feature_flags table', () => {
-    const migration = new Migration20260609100000CreateFeatureFlags();
+    const migration = new Migration20260609100000CreateFeatureFlags(undefined as never, undefined as never);
     const sql: string[] = [];
     migration.addSql = (query: string) => {
       sql.push(query);

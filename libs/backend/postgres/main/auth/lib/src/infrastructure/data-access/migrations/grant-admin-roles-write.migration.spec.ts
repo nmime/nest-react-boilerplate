@@ -17,7 +17,7 @@ function collectSql(migration: { addSql(sql: string): void }, run: () => void): 
 
 describe('Grant admin roles:write migration', () => {
   it('idempotently grants admin -> admin:roles:write from the shared catalog', () => {
-    const migration = new Migration20260704130000GrantAdminRolesWrite();
+    const migration = new Migration20260704130000GrantAdminRolesWrite(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.up();
     });
@@ -29,7 +29,7 @@ describe('Grant admin roles:write migration', () => {
   });
 
   it('removes exactly the admin -> admin:roles:write grant on rollback', () => {
-    const migration = new Migration20260704130000GrantAdminRolesWrite();
+    const migration = new Migration20260704130000GrantAdminRolesWrite(undefined as never, undefined as never);
     const sql = collectSql(migration, () => {
       migration.down();
     });

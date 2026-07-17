@@ -218,10 +218,9 @@ describe('RedisHealthIndicator', () => {
       secretPair('password', 'super-secret'),
       secretPair('token', 'abc'),
     ].join(' ');
-    const redis = {
-      ...new InMemoryRedisClient(),
+    const redis = Object.assign(new InMemoryRedisClient(), {
       ping: vi.fn(() => Promise.reject(new Error(unsafeMessage))),
-    };
+    });
     const health = new RedisHealthIndicator(redis);
 
     await expect(health.check()).resolves.toEqual({
@@ -240,11 +239,10 @@ describe('RedisHealthIndicator', () => {
   });
 
   it('reports non-Error rejections without a type field', async () => {
-    const redis = {
-      ...new InMemoryRedisClient(),
+    const redis = Object.assign(new InMemoryRedisClient(), {
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- deliberately rejecting with a non-Error to exercise the non-Error handling path
       ping: vi.fn(() => Promise.reject('redis://user:pw@redis:6379 down')),
-    };
+    });
     const health = new RedisHealthIndicator(redis);
 
     await expect(health.check()).resolves.toEqual({

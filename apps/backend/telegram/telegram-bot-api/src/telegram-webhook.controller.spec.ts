@@ -19,7 +19,7 @@ const testValue = <T>(value: unknown): T => value as T;
 
 function instance() {
   const init = vi.fn(() => Promise.resolve(undefined));
-  const handleUpdate = vi.fn(() => Promise.resolve(undefined));
+  const handleUpdate = vi.fn<(update: unknown) => Promise<void>>(() => Promise.resolve());
   const setWebhook = vi.fn(() => Promise.resolve(true as const));
   const telegram: TelegramBotInstance = {
     config: {
@@ -80,7 +80,7 @@ function messageUpdate() {
 
 function apiMock() {
   const calls: Array<{ method: string; payload: Record<string, unknown> }> = [];
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
     const url = resolveRequestUrl(input);
     const method = url.split('/').at(-1) ?? 'unknown';
     const body = init?.body ?? (input instanceof Request ? input.body : undefined);
@@ -98,7 +98,7 @@ function apiMock() {
   return { calls, fetchMock: fetchMock as typeof fetch };
 }
 
-function resolveRequestUrl(input: RequestInfo | URL): string {
+function resolveRequestUrl(input: Parameters<typeof fetch>[0]): string {
   if (typeof input === 'string') {
     return input;
   }

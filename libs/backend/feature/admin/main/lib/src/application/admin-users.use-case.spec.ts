@@ -1,4 +1,4 @@
-import { okAsync } from 'neverthrow';
+import { okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { UserProfileReadPermission } from '@app/common-authz';
@@ -31,9 +31,11 @@ const createUser = () => ({
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
 });
 
+type TestResult<T> = ResultAsync<T, { code: string; message: string }>;
+
 const createDeps = () => {
   const users = {
-    findById: vi.fn(() => okAsync(createUser())),
+    findById: vi.fn((): TestResult<ReturnType<typeof createUser> | null> => okAsync(createUser())),
     listUsers: vi.fn(() => okAsync([createUser()])),
     countUsers: vi.fn(() => okAsync(1)),
   };
@@ -42,7 +44,10 @@ const createDeps = () => {
     count: vi.fn(() => okAsync(0)),
   };
   const adminUserMutations = {
-    mutateAccessPolicyWithAudit: vi.fn(() => okAsync({ before: createUser(), after: createUser() })),
+    mutateAccessPolicyWithAudit: vi.fn(
+      (): TestResult<{ before: ReturnType<typeof createUser>; after: ReturnType<typeof createUser> } | null> =>
+        okAsync({ before: createUser(), after: createUser() }),
+    ),
   };
 
   return {

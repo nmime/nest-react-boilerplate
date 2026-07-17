@@ -21,15 +21,16 @@ describe('TelegramBotApiModule', () => {
     process.env.TELEGRAM_BOT_MODE = 'webhook';
 
     try {
-      moduleRef = await Test.createTestingModule({
+      const compiledModule = await Test.createTestingModule({
         imports: [TelegramBotApiModule.register()],
       }).compile();
+      moduleRef = compiledModule;
 
-      expect(moduleRef.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
-      expect(moduleRef.get(HealthService).appName).toBe('telegram-bot-api');
-      expect(moduleRef.get(TelegramWebhookController)).toBeInstanceOf(TelegramWebhookController);
+      expect(compiledModule.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
+      expect(compiledModule.get(HealthService).appName).toBe('telegram-bot-api');
+      expect(compiledModule.get(TelegramWebhookController)).toBeInstanceOf(TelegramWebhookController);
       // Polling service should NOT be registered in webhook mode
-      expect(() => moduleRef.get(TelegramPollingService)).toThrow();
+      expect(() => compiledModule.get(TelegramPollingService)).toThrow();
     } finally {
       restoreEnv('TELEGRAM_BOT_TOKEN', previousToken);
       restoreEnv('TELEGRAM_BOT_WEBHOOK_SECRET', previousWebhookSecret);
@@ -53,15 +54,16 @@ describe('TelegramBotApiModule', () => {
     process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED = 'false';
 
     try {
-      moduleRef = await Test.createTestingModule({
+      const compiledModule = await Test.createTestingModule({
         imports: [TelegramBotApiModule.register()],
       }).compile();
+      moduleRef = compiledModule;
 
-      expect(moduleRef.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
-      expect(moduleRef.get(HealthService).appName).toBe('telegram-bot-api');
-      expect(moduleRef.get(TelegramPollingService)).toBeInstanceOf(TelegramPollingService);
+      expect(compiledModule.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
+      expect(compiledModule.get(HealthService).appName).toBe('telegram-bot-api');
+      expect(compiledModule.get(TelegramPollingService)).toBeInstanceOf(TelegramPollingService);
       // Webhook controller should NOT be registered in polling mode
-      expect(() => moduleRef.get(TelegramWebhookController)).toThrow();
+      expect(() => compiledModule.get(TelegramWebhookController)).toThrow();
     } finally {
       restoreEnv('TELEGRAM_BOT_TOKEN', previousToken);
       restoreEnv('TELEGRAM_BOT_WEBHOOK_SECRET', previousWebhookSecret);

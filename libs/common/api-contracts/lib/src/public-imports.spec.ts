@@ -7,7 +7,14 @@ describe('public api-contracts import surface', () => {
       accessToken: 'access-token',
       expiresIn: 3600,
       tokenType: 'Bearer',
-      user: { email: 'ada@example.com', id: 'user-1' },
+      user: {
+        email: 'ada@example.com',
+        id: 'user-1',
+        permissions: [],
+        roles: ['user'],
+        tenantId: 'tenant-1',
+        theme: 'system',
+      },
     } satisfies Partial<AuthApiSchemas['AuthSessionViewDto']>;
     const profile = {} satisfies Partial<UserApiSchemas['ProfilePayloadDto']>;
     const admin = {} satisfies Partial<AdminApiSchemas['AdminProfilePayloadDto']>;

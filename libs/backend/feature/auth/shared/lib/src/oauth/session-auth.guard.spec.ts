@@ -32,7 +32,7 @@ function signBearerToken(secret: string): string {
 }
 
 const createContext = (request: AuthenticatedRequest, handler: () => undefined = () => undefined): ExecutionContext => {
-  const context: ExecutionContext = {
+  const context = {
     getArgByIndex: () => request,
     getArgs: () => [request],
     getClass: () => class TestController {},
@@ -49,12 +49,12 @@ const createContext = (request: AuthenticatedRequest, handler: () => undefined =
       getPattern: () => undefined,
     }),
   };
-  return context;
+  return context as unknown as ExecutionContext;
 };
 
 describe('SessionAuthGuard', () => {
   it('accepts a persisted session principal', () => {
-    const request = { session: {} } satisfies AuthenticatedRequest;
+    const request: AuthenticatedRequest = { session: {} };
     setSessionPrincipal(request, principal);
 
     expect(new SessionAuthGuard().canActivate(createContext(request))).toBe(true);
@@ -76,9 +76,9 @@ describe('SessionAuthGuard', () => {
       ).toString('base64url'),
     ];
     const signature = createHmac('sha256', process.env.AUTH_JWT_SECRET).update(token.join('.')).digest('base64url');
-    const request = {
+    const request: AuthenticatedRequest = {
       headers: { authorization: `Bearer ${token.join('.')}.${signature}` },
-    } satisfies AuthenticatedRequest;
+    };
 
     expect(new SessionAuthGuard().canActivate(createContext(request))).toBe(true);
     expect(request.user).toMatchObject({ subject: principal.subject });
@@ -111,7 +111,7 @@ describe('SessionAuthGuard', () => {
 
 describe('session principal lifecycle helpers', () => {
   it('sets request principal fields even without a server-side session', () => {
-    const request = {} satisfies AuthenticatedRequest;
+    const request: AuthenticatedRequest = {};
 
     setSessionPrincipal(request, principal);
 

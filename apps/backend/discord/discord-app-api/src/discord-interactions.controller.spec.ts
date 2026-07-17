@@ -42,7 +42,7 @@ async function controller(
 const toControllerRequest = (
   request: Record<string, unknown>,
 ): Parameters<DiscordInteractionsController['interactions']>[0] =>
-  request as Parameters<DiscordInteractionsController['interactions']>[0];
+  request as unknown as Parameters<DiscordInteractionsController['interactions']>[0];
 
 const toInteractionBody = (
   body: Record<string, unknown>,

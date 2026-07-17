@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { errAsync, okAsync } from 'neverthrow';
+import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import {
   AuthProvider,
   AuthProviderChannel,
@@ -57,7 +57,7 @@ const linkTokenEntity = {
 function createRepositories() {
   return {
     identities: {
-      findByProviderSubject: vi.fn(() => okAsync(identityEntity)),
+      findByProviderSubject: vi.fn((): ResultAsync<ExternalIdentityRecord | null, never> => okAsync(identityEntity)),
       findByUser: vi.fn(() => okAsync([identityEntity])),
       upsertIdentity: vi.fn(() => okAsync(identityEntity)),
       deleteById: vi.fn(() => okAsync(true)),
@@ -69,18 +69,19 @@ function createRepositories() {
     },
     linkTokens: {
       createToken: vi.fn(() => okAsync(linkTokenEntity)),
-      consumeToken: vi.fn(() => okAsync(linkTokenEntity)),
+      consumeToken: vi.fn((): ResultAsync<typeof linkTokenEntity | null, never> => okAsync(linkTokenEntity)),
       revokeToken: vi.fn(() => okAsync(true)),
     },
     providerTokens: {
       persistEncryptedToken: vi.fn(() => okAsync({ id: 'token-id' })),
-      listRedactedByExternalIdentity: vi.fn(() =>
-        okAsync([
-          { id: 'token-1', revokedAt: null },
-          { id: 'token-2', revokedAt: new Date() },
-        ]),
+      listRedactedByExternalIdentity: vi.fn(
+        (): ResultAsync<Array<{ id: string; revokedAt: Date | null }>, { code: string; message: string }> =>
+          okAsync([
+            { id: 'token-1', revokedAt: null },
+            { id: 'token-2', revokedAt: new Date() },
+          ]),
       ),
-      revokeToken: vi.fn(() => okAsync(true)),
+      revokeToken: vi.fn((): ResultAsync<boolean, { code: string; message: string }> => okAsync(true)),
     },
   };
 }
@@ -259,7 +260,7 @@ describe('PostgresSocialAuthStore', () => {
         Promise.reject('boom'),
     };
     repositories.providerTokens.revokeToken.mockReturnValueOnce(
-      nonErrorRejection as ReturnType<typeof repositories.providerTokens.revokeToken>,
+      nonErrorRejection as unknown as ReturnType<typeof repositories.providerTokens.revokeToken>,
     );
 
     expect((await store.revokeProviderTokens('identity-id', tenantId))._unsafeUnwrapErr()).toEqual({
@@ -274,7 +275,7 @@ describe('PostgresSocialAuthStore', () => {
       match: () => Promise.reject(new Error('revoke exploded')),
     };
     repositories.providerTokens.revokeToken.mockReturnValueOnce(
-      errorRejection as ReturnType<typeof repositories.providerTokens.revokeToken>,
+      errorRejection as unknown as ReturnType<typeof repositories.providerTokens.revokeToken>,
     );
     expect((await store.revokeProviderTokens('identity-id', tenantId))._unsafeUnwrapErr()).toEqual({
       code: 'repository_error',

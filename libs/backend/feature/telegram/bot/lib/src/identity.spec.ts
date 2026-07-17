@@ -3,7 +3,7 @@ import { resolveTelegramIdentity } from './identity';
 
 describe('Telegram bot identity', () => {
   it('returns null when an update has no Telegram sender', () => {
-    expect(resolveTelegramIdentity({})).toBeNull();
+    expect(resolveTelegramIdentity({ from: undefined })).toBeNull();
   });
 
   it('normalizes sender fields into a stable auth identity', () => {

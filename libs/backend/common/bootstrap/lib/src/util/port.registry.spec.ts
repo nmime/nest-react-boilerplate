@@ -61,7 +61,7 @@ describe('port registry — explicit, collision-free assignments', () => {
     const infraSet = new Set(Object.values(infrastructurePorts));
 
     const overlap = [...serviceSet].filter((p) => infraSet.has(p));
-    expect(overlap).toEqual([], `Service ports overlap with infrastructure ports: ${overlap.join(', ')}`);
+    expect(overlap, `Service ports overlap with infrastructure ports: ${overlap.join(', ')}`).toEqual([]);
   });
 
   it('has expected minimum number of registered services', () => {

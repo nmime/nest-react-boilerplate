@@ -17,8 +17,8 @@ import { ExternalIdentityRepository } from './external-identity.repository';
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
   const flush = vi.fn(() => Promise.resolve());
-  const findOne = vi.fn(() => Promise.resolve(null));
-  const find = vi.fn(() => Promise.resolve([]));
+  const findOne = vi.fn<(...args: unknown[]) => Promise<unknown>>(() => Promise.resolve(null));
+  const find = vi.fn<(...args: unknown[]) => Promise<unknown[]>>(() => Promise.resolve([]));
   const count = vi.fn(() => Promise.resolve(0));
   const transactional = vi.fn((callback: (em: EntityManager) => unknown) => Promise.resolve(callback(entityManager)));
   const entityManager = {

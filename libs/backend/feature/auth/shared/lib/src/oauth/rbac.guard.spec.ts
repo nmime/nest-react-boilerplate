@@ -28,7 +28,7 @@ function createContext(
       getPattern: () => undefined,
     }),
   };
-  return context as ExecutionContext;
+  return context as unknown as ExecutionContext;
 }
 
 function createPrincipal(partial: Partial<AuthenticatedPrincipal>): AuthenticatedPrincipal {

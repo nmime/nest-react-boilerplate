@@ -122,7 +122,7 @@ async function fetchOpenApi({
     DATABASE_URL: "",
     PORT: String(port),
   };
-  const command = ["pnpm", "exec", "nx", "serve", app];
+  const command = ["pnpm", "exec", "nx", "serve", app, "--skip-nx-cache"];
   const readyAttempts = readPositiveIntegerEnv("OPENAPI_READY_ATTEMPTS", 240);
   const child = spawn(command[0], command.slice(1), {
     detached: process.platform !== "win32",

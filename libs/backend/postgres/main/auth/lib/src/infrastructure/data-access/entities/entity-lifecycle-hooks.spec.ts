@@ -28,6 +28,8 @@ import {
   TransactionalOutboxEventEntitySchema,
 } from './index';
 
+const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
+
 describe('entity timestamp lifecycle hooks', () => {
   it('drives created-only hooks for join, catalog, and log entities', () => {
     AdminAuditLogEntitySchema.init();
@@ -36,11 +38,13 @@ describe('entity timestamp lifecycle hooks', () => {
     AuthUserRoleEntitySchema.init();
     TransactionalOutboxEventEntitySchema.init();
 
-    expect(AdminAuditLogEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(AuthPermissionEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(AuthRolePermissionEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(AuthUserRoleEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-    expect(TransactionalOutboxEventEntitySchema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AdminAuditLogEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthPermissionEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthRolePermissionEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(AuthUserRoleEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+    expect(invokeLifecycleHook(TransactionalOutboxEventEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(
+      Date,
+    );
   });
 
   it('drives tenant lifecycle create/update hooks', () => {
@@ -49,9 +53,9 @@ describe('entity timestamp lifecycle hooks', () => {
     AuthTenantInvitationEntitySchema.init();
 
     for (const schema of [AuthTenantEntitySchema, AuthTenantMembershipEntitySchema, AuthTenantInvitationEntitySchema]) {
-      expect(schema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onUpdate?.()).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
     }
   });
 
@@ -67,9 +71,9 @@ describe('entity timestamp lifecycle hooks', () => {
       AuthLinkTokenEntitySchema,
       AuthProviderTokenEntitySchema,
     ]) {
-      expect(schema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onUpdate?.()).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
     }
   });
 
@@ -79,9 +83,9 @@ describe('entity timestamp lifecycle hooks', () => {
     AuthRoleEntitySchema.init();
 
     for (const schema of [ExternalIdentityEntitySchema, AuthMethodEntitySchema, AuthRoleEntitySchema]) {
-      expect(schema.meta.properties.createdAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onCreate?.()).toBeInstanceOf(Date);
-      expect(schema.meta.properties.updatedAt.onUpdate?.()).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
     }
   });
 });

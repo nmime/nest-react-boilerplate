@@ -23,7 +23,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
   PNPM_VERSION: 11.11.0
-  HELM_VERSION: v4.2.2
+  HELM_VERSION: v4.2.3
 
 jobs:
   helm-render:

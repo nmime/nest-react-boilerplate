@@ -6,7 +6,7 @@ interface ApiPropertyMetadata {
   type?: () => unknown;
 }
 
-const propertyMetadata = (target: Record<string, unknown>, propertyKey: string): ApiPropertyMetadata =>
+const propertyMetadata = (target: Record<never, never>, propertyKey: string): ApiPropertyMetadata =>
   Reflect.getMetadata(DECORATORS.API_MODEL_PROPERTIES, target, propertyKey) as ApiPropertyMetadata;
 
 describe('ProfilePayloadDto', () => {

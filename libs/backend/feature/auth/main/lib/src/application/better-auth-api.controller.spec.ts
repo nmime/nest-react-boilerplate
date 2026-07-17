@@ -6,15 +6,16 @@ const BETTER_AUTH_TOKEN = 'BetterAuthInstanceToken';
 
 describe('BetterAuthApiController', () => {
   let controller: BetterAuthApiController;
-  let mockHandler: ReturnType<typeof vi.fn>;
+  type AuthHandler = (request: Request) => Promise<Response>;
+  let mockHandler: ReturnType<typeof vi.fn<AuthHandler>>;
 
-  const createMockAuth = (handlerFn: () => Response) => ({
+  const createMockAuth = (handlerFn: AuthHandler) => ({
     handler: handlerFn,
     api: {},
   });
 
   beforeEach(async () => {
-    mockHandler = vi.fn();
+    mockHandler = vi.fn<AuthHandler>();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BetterAuthApiController],
       providers: [
@@ -272,8 +273,8 @@ describe('BetterAuthApiController', () => {
       } as any;
 
       await controller.handle(req, mockRes);
-      const callArgs = mockHandler.mock.calls[0][0];
-      expect(callArgs.url).toContain('/api/auth/sign-up/email');
+      const callArgs = mockHandler.mock.calls[0]?.[0];
+      expect(callArgs?.url).toContain('/api/auth/sign-up/email');
     });
 
     it('builds GET request without body', async () => {
@@ -291,9 +292,9 @@ describe('BetterAuthApiController', () => {
       } as any;
 
       await controller.handle(req, mockRes);
-      const callArgs = mockHandler.mock.calls[0][0];
-      expect(callArgs.method).toBe('GET');
-      expect(callArgs.body).toBeNull();
+      const callArgs = mockHandler.mock.calls[0]?.[0];
+      expect(callArgs?.method).toBe('GET');
+      expect(callArgs?.body).toBeNull();
     });
 
     it('handles telegram endpoint and returns validation error', async () => {

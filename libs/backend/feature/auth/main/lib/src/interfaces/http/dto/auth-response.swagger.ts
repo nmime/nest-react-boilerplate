@@ -55,8 +55,8 @@ export class AuthenticatedUserViewDto {
   @ApiProperty({ format: 'uuid' })
   tenantId!: string;
 
-  @ApiProperty({ format: 'email' })
-  email!: string;
+  @ApiProperty({ format: 'email', nullable: true, type: String })
+  email!: string | null;
 
   @ApiPropertyOptional()
   displayName?: string;
@@ -73,8 +73,8 @@ export class AuthenticatedUserViewDto {
   @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
 
-  @ApiPropertyOptional({ format: 'uri', maxLength: 2048 })
-  avatarUrl?: string;
+  @ApiPropertyOptional({ format: 'uri', maxLength: 2048, nullable: true, type: String })
+  avatarUrl?: string | null;
 
   @ApiPropertyOptional({
     enum: ['none', 'provider', 'manual', 'deleted'],
@@ -114,6 +114,41 @@ export class AuthSessionViewDto {
   externalIdentityId?: string;
 }
 
+export class ExternalAuthIdentityDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ enum: externalAuthProviders })
+  provider!: string;
+
+  @ApiProperty()
+  providerSubject!: string;
+
+  @ApiProperty({ enum: authProviderChannels })
+  channel!: string;
+
+  @ApiProperty({ format: 'email', nullable: true, type: String })
+  email!: string | null;
+
+  @ApiProperty({ nullable: true, type: Boolean })
+  emailVerified!: boolean | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  displayName!: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  username!: string | null;
+
+  @ApiProperty({ format: 'uri', nullable: true, type: String })
+  avatarUrl!: string | null;
+
+  @ApiProperty()
+  linkedAt!: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  lastAuthenticatedAt!: string | null;
+}
+
 export class ExternalAuthResultDto {
   @ApiProperty({ enum: ['authenticated', 'linked', 'needs_link', 'conflict'] })
   status!: string;
@@ -127,11 +162,29 @@ export class ExternalAuthResultDto {
   @ApiPropertyOptional({ type: () => AuthSessionViewDto })
   session?: AuthSessionViewDto;
 
-  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
-  identity?: unknown;
+  @ApiPropertyOptional({ type: () => ExternalAuthIdentityDto })
+  identity?: ExternalAuthIdentityDto;
 
   @ApiPropertyOptional()
   returnUrl?: string;
+}
+
+export class DiscordAuthorizationRequestResultDto {
+  @ApiProperty({ format: 'uri' })
+  authorizationUrl!: string;
+
+  @ApiProperty()
+  stateExpiresAt!: string;
+}
+
+export class ProviderIdentitiesPayloadDto {
+  @ApiProperty({ isArray: true, type: () => ExternalAuthIdentityDto })
+  items!: ExternalAuthIdentityDto[];
+}
+
+export class UnlinkProviderIdentityPayloadDto {
+  @ApiProperty()
+  unlinked!: boolean;
 }
 
 export class LinkTokenResultDto {

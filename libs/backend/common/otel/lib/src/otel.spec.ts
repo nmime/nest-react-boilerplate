@@ -259,7 +259,7 @@ describe('OpenTelemetryTracer', () => {
     const startSpan = vi.fn(() => fakeSpan);
     const tracer = new OpenTelemetryTracer({
       startSpan,
-    } as unknown as Parameters<typeof OpenTelemetryTracer>[0]);
+    } as unknown as ConstructorParameters<typeof OpenTelemetryTracer>[0]);
 
     const span = tracer.startSpan('op');
     expect(startSpan).toHaveBeenCalledWith('op', { attributes: {} });
@@ -288,7 +288,7 @@ describe('OpenTelemetryTracer', () => {
   it('ignores spans created by an alternate tracer implementation', () => {
     const tracer = new OpenTelemetryTracer({
       startSpan: vi.fn(),
-    } as unknown as Parameters<typeof OpenTelemetryTracer>[0]);
+    } as unknown as ConstructorParameters<typeof OpenTelemetryTracer>[0]);
     const foreignSpan: TraceSpan = {
       name: 'foreign',
       attributes: {},

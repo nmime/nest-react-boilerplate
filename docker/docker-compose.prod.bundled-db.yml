@@ -5,6 +5,11 @@ services:
   postgres:
     image: postgres:17.6-alpine
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
+        max-file: '${DOCKER_LOG_MAX_FILES:-5}'
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
       POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}

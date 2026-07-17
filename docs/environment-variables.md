@@ -240,28 +240,31 @@ Complete reference of all environment variables used across the monorepo. Source
 
 ### Docker / Images
 
-| Variable         | Required | Default                                          | Description        |
-| ---------------- | -------- | ------------------------------------------------ | ------------------ |
-| `IMAGE_REGISTRY` | Optional | `ghcr.io/your-github-org/nest-react-boilerplate` | Container registry |
-| `IMAGE_TAG`      | Optional | `sha-000000000000`                               | Image tag          |
+| Variable               | Required | Default                                          | Description                                         |
+| ---------------------- | -------- | ------------------------------------------------ | --------------------------------------------------- |
+| `IMAGE_REGISTRY`       | Optional | `ghcr.io/your-github-org/nest-react-boilerplate` | Container registry                                  |
+| `IMAGE_TAG`            | Optional | `sha-000000000000`                               | Image tag                                           |
+| `DOCKER_LOG_MAX_SIZE`  | Optional | `10m`                                            | Maximum rotated json-file log segment per container |
+| `DOCKER_LOG_MAX_FILES` | Optional | `5`                                              | Retained json-file log segments per container       |
 
 ### Production Compose topology
 
-| Variable                            | Required     | Default             | Description                                                        |
-| ----------------------------------- | ------------ | ------------------- | ------------------------------------------------------------------ |
-| `PUBLIC_DOMAIN`                     | Compose      | `example.com`       | Product base domain without scheme, port, path, or wildcard        |
-| `PRIMARY_APP`                       | Compose      | `landing-app`       | Apex owner: `landing-app` or `site-app`                            |
-| `COMPOSE_DATABASE_MODE`             | Compose      | `bundled-db`        | `bundled-db` or `external-db`                                      |
-| `COMPOSE_DOMAIN_MODE`               | Compose      | `per-app-domains`   | `single-domain`, `per-app-domains`, or `external-proxy`            |
-| `COMPOSE_TLS_MODE`                  | Compose      | `automatic`         | `automatic`, `provided`, or `external`, constrained by domain mode |
-| `COMPOSE_PROFILES`                  | Optional     | —                   | Comma-separated `telegram` and/or `discord` profiles               |
-| `EDGE_BIND_ADDRESS`                 | Optional     | `0.0.0.0`           | Host address for the Compose-owned Caddy listener                  |
-| `EDGE_HTTP_PORT`                    | Optional     | `80`                | Published Caddy HTTP port                                          |
-| `EDGE_HTTPS_PORT`                   | Optional     | `443`               | Published Caddy HTTPS TCP/UDP port                                 |
-| `EDGE_TLS_CERT_FILE`                | Provided TLS | `./secrets/tls.crt` | PEM chain path, relative to `docker/`                              |
-| `EDGE_TLS_KEY_FILE`                 | Provided TLS | `./secrets/tls.key` | Unencrypted PEM key path, relative to `docker/`                    |
-| `CORS_EXTRA_ORIGINS`                | Optional     | —                   | Origins appended to the mode-derived CORS list                     |
-| `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS` | Optional     | —                   | Origins appended to the mode-derived Better Auth list              |
+| Variable                            | Required      | Default             | Description                                                        |
+| ----------------------------------- | ------------- | ------------------- | ------------------------------------------------------------------ |
+| `PUBLIC_DOMAIN`                     | Compose       | `example.com`       | Product base domain without scheme, port, path, or wildcard        |
+| `PRIMARY_APP`                       | Compose       | `landing-app`       | Apex owner: `landing-app` or `site-app`                            |
+| `COMPOSE_DATABASE_MODE`             | Compose       | `bundled-db`        | `bundled-db` or `external-db`                                      |
+| `COMPOSE_DOMAIN_MODE`               | Compose       | `per-app-domains`   | `single-domain`, `per-app-domains`, or `external-proxy`            |
+| `EXTERNAL_PROXY_PUBLIC_MODE`        | External edge | `per-app-domains`   | External proxy layout: `single-domain` or `per-app-domains`        |
+| `COMPOSE_TLS_MODE`                  | Compose       | `automatic`         | `automatic`, `provided`, or `external`, constrained by domain mode |
+| `COMPOSE_PROFILES`                  | Optional      | —                   | Comma-separated `telegram` and/or `discord` profiles               |
+| `EDGE_BIND_ADDRESS`                 | Optional      | `0.0.0.0`           | Host address for the Compose-owned Caddy listener                  |
+| `EDGE_HTTP_PORT`                    | Optional      | `80`                | Published Caddy HTTP port                                          |
+| `EDGE_HTTPS_PORT`                   | Optional      | `443`               | Published Caddy HTTPS TCP/UDP port                                 |
+| `EDGE_TLS_CERT_FILE`                | Provided TLS  | `./secrets/tls.crt` | PEM chain path, relative to `docker/`                              |
+| `EDGE_TLS_KEY_FILE`                 | Provided TLS  | `./secrets/tls.key` | Unencrypted PEM key path, relative to `docker/`                    |
+| `CORS_EXTRA_ORIGINS`                | Optional      | —                   | Origins appended to the mode-derived CORS list                     |
+| `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS` | Optional      | —                   | Origins appended to the mode-derived Better Auth list              |
 
 App hostnames are not free-form variables. The production wrapper derives them
 from app IDs and `PUBLIC_DOMAIN`, preserving the repository's public-domain

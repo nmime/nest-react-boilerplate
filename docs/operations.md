@@ -67,6 +67,7 @@ push images, or restart PM2 processes.
 - Overview and mode matrix: [deployment.md](deployment.md)
 - Production mode guide: [production-deploy.md](production-deploy.md)
 - Single-server Docker Compose: [docker-compose-production.md](docker-compose-production.md)
+- Turnkey Ubuntu/Debian host lifecycle: [single-server-deployment.md](single-server-deployment.md)
 - Direct Kubernetes/Helm: [deploy/kubernetes/README.md](../deploy/kubernetes/README.md)
 - Argo CD and Flux GitOps: [GITOPS.md](../GITOPS.md)
 - Preflight checklist: [production-readiness.md](production-readiness.md)

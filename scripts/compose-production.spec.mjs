@@ -85,12 +85,42 @@ test('builds one-host and external-proxy variants without incompatible overlays'
 
   const external = buildComposeInvocation(
     ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
-    {},
+    { EXTERNAL_PROXY_PUBLIC_MODE: '' },
   );
   assert.ok(!external.files.includes('docker/docker-compose.prod.edge.yml'));
   assert.equal(
     external.env.CORS_ORIGINS,
     'https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com',
+  );
+});
+
+test('derives external host-proxy runtime URLs from its declared public topology', () => {
+  const single = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
+    { EXTERNAL_PROXY_PUBLIC_MODE: 'single-domain' },
+  );
+  assert.equal(single.publicDomainMode, 'single-domain');
+  assert.equal(single.env.AUTH_JWT_ISSUER, 'https://example.com');
+  assert.equal(single.env.BETTER_AUTH_URL, 'https://example.com');
+  assert.equal(single.env.CORS_ORIGINS, 'https://example.com');
+  assert.equal(single.env.TELEGRAM_MINI_APP_URL, 'https://example.com/telegram-mini-app');
+
+  const perApp = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
+    { EXTERNAL_PROXY_PUBLIC_MODE: 'per-app-domains' },
+  );
+  assert.equal(perApp.publicDomainMode, 'per-app-domains');
+  assert.equal(perApp.env.AUTH_JWT_ISSUER, 'https://auth-app-api.example.com');
+  assert.equal(perApp.env.BETTER_AUTH_URL, 'https://user-app.example.com');
+  assert.match(perApp.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
+
+  assert.throws(
+    () =>
+      buildComposeInvocation(
+        ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
+        { EXTERNAL_PROXY_PUBLIC_MODE: 'wildcard' },
+      ),
+    /EXTERNAL_PROXY_PUBLIC_MODE/u,
   );
 });
 

@@ -82,6 +82,9 @@ These public root scripts are part of the supported DX/CI contract even when the
 | `pnpm run docker:prod:down` | `node scripts/compose-production.mjs down` | Stops the same selected topology without deleting volumes. |
 | `pnpm run deploy:validate` | `node scripts/deploy-validate.mjs` | No-deploy validation bundle. Renders both Compose database topologies when Docker Compose is available, validates Argo CD and Flux, and renders Helm when available. CI can require every CLI with `REQUIRE_*` flags. |
 | `pnpm run deploy:validate:docker` | `node scripts/deploy-validate.mjs --mode=docker` | No-deploy validation of database, one-domain, per-app/wildcard-DNS, external-proxy, TLS, and optional-profile Compose contracts. |
+| `pnpm run test:single-server-deployment` | `node --test scripts/single-server-deployment.spec.mjs` | Tests exact hosts, one-domain/per-app Nginx, same-origin routes, TLS, profiles, and wildcard SANs. |
+| `pnpm run server:validate` | `node scripts/validate-single-server-deployment.mjs` | Static no-root validation of the bootstrap/controller, runtime pins, examples, renderer, and runbook. |
+| `pnpm run server:render-nginx -- --server-env <path> --production-env <path>` | single-server renderer | Renders host Nginx for review; the root controller installs it atomically after `nginx -t`. |
 | `pnpm run docker:prod:bundled-db:config` | merged production base + bundled-db `docker compose ... config` | Renders the single-host stack with a Compose-owned PostgreSQL service and volume. |
 | `pnpm run docker:prod:external-db:config` | merged production base + external-db `docker compose ... config` | Renders the single-host stack without PostgreSQL and mounts `DATABASE_URL` as a Docker secret. |
 | `pnpm run deploy:validate:pm2` | `node scripts/deploy-validate.mjs --mode=pm2` | No-deploy PM2 validation. If no `ecosystem.config.{js,cjs,mjs}` exists, this optional mode reports a skip/no-op and exits successfully. |

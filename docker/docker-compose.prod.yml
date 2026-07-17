@@ -1,8 +1,15 @@
 name: nest-react-boilerplate
 
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
+    max-file: '${DOCKER_LOG_MAX_FILES:-5}'
+
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 80
+  TRUST_PROXY: ${TRUST_PROXY:-true}
   CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
   AUTH_PERSISTENCE: postgres
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth-app-api.example.com}
@@ -97,6 +104,7 @@ x-frontend-healthcheck: &frontend-healthcheck
 
 x-backend-service: &backend-service
   restart: unless-stopped
+  logging: *default-logging
   networks: [app, database]
   secrets: [auth_jwt_secret, better_auth_secret]
   environment: *backend-env
@@ -110,6 +118,7 @@ x-backend-service: &backend-service
 
 x-frontend-service: &frontend-service
   restart: unless-stopped
+  logging: *default-logging
   networks: [app]
   healthcheck: *frontend-healthcheck
 
@@ -128,6 +137,7 @@ services:
   redis:
     image: redis:7.4.3-alpine
     restart: unless-stopped
+    logging: *default-logging
     command: ['redis-server', '--appendonly', 'yes']
     volumes:
       - redis-data:/data
@@ -141,6 +151,7 @@ services:
 
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    logging: *default-logging
     build:
       context: ..
       dockerfile: Dockerfile
@@ -334,6 +345,7 @@ services:
 
   site-app:
     restart: unless-stopped
+    logging: *default-logging
     networks: [app]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     build:
@@ -408,6 +420,7 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+    logging: *default-logging
     networks: [app]
 
   # Observability: Prometheus
@@ -433,6 +446,7 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+    logging: *default-logging
     networks: [app]
     depends_on:
       alertmanager:
@@ -458,6 +472,7 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+    logging: *default-logging
     networks: [app]
 
   # Observability: Grafana
@@ -484,6 +499,7 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+    logging: *default-logging
     networks: [app]
     secrets: [grafana_admin_password]
     depends_on:

@@ -24,6 +24,7 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 | Cross-runtime common libraries | `libs/common/**`                                                                       | [Architecture](../architecture.md), package-level project configs                                                                                                   |
 | Repository tooling             | `packages/tooling/**`                                                                  | [Command matrix](../command-matrix.md), [Local verification](../local-verification.md)                                                                              |
 | Compose production topology    | `docker/docker-compose.prod*.yml`, `docker/caddy/**`, `scripts/compose-production.mjs` | [Compose production](../docker-compose-production.md), [Deployment](../deployment.md), [Frontend deployment topology](../frontend-deployment-topology.md)           |
+| Single-server host lifecycle   | `deploy/single-server/**`, `scripts/single-server-deployment.mjs`                      | [Single-server deployment](../single-server-deployment.md), [Compose production](../docker-compose-production.md)                                                   |
 | Operations and runbooks        | `docs/operations/**`, `docs/runbooks/**`, `docs/operations.md`                         | [Operations](../operations.md), [Runbooks](../runbooks/README.md), [Production deploy](../production-deploy.md), [Production readiness](../production-readiness.md) |
 
 ## Backend cross-cutting concerns

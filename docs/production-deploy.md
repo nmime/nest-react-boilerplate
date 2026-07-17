@@ -10,6 +10,8 @@ Use the canonical runbooks:
 - mode matrix and invariants: [deployment.md](deployment.md)
 - Compose with bundled or external PostgreSQL:
   [docker-compose-production.md](docker-compose-production.md)
+- idempotent host Nginx + Certbot deployment:
+  [single-server-deployment.md](single-server-deployment.md)
 - direct Kubernetes/Helm: [deploy/kubernetes/README.md](../deploy/kubernetes/README.md)
 - Argo CD and Flux GitOps: [GITOPS.md](../GITOPS.md)
 - environment keys: [environment-variables.md](environment-variables.md)

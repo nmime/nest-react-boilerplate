@@ -207,6 +207,7 @@ CI is extra evidence; local validation remains required for code changes.
 - [API contracts](docs/api-contracts.md), [API conventions](docs/api-conventions.md), and [API lifecycle policy](docs/api-lifecycle-policy.md) — OpenAPI generation, error responses, health, and compatibility rules.
 - [Database migrations](docs/database-migrations.md) — MikroORM standards and review checklist.
 - [Operations](docs/operations.md), [Production deploy](docs/production-deploy.md), [Deployment](docs/deployment.md), and [Production readiness](docs/production-readiness.md) — release, runtime, and runbook guidance.
+- [Single-server deployment](docs/single-server-deployment.md) — rerunnable Ubuntu/Debian bootstrap, host Nginx/Certbot, immutable updates, and rollback boundaries.
 - [Dependency management](docs/dependency-management.md) and [Branch protection](docs/branch-protection.md) — supply-chain and repository governance.
 
 ## Contributor and agent policy

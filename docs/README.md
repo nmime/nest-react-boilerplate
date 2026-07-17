@@ -113,6 +113,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Notifications](notifications.md)
 - [API Toast Configuration](api-toast-config.md)
 - [Docker Compose Production](docker-compose-production.md)
+- [Idempotent Single-Server Deployment](single-server-deployment.md)
 - [Production Hardening](production-hardening.md)
 - [Agent Skills](agent-skills.md)
 - [Billing Admin Roadmap](billing-admin-roadmap.md)

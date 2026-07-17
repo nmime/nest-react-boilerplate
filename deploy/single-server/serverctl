@@ -1,0 +1,818 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+IFS=$'\n\t'
+umask 027
+
+readonly CONTROLLER_NAME='nrb-server'
+readonly DEFAULT_CONFIG_ROOT='/etc/nest-react-boilerplate'
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+readonly SCRIPT_PATH
+SCRIPT_DIR="$(cd -- "$(dirname -- "${SCRIPT_PATH}")" && pwd -P)"
+readonly SCRIPT_DIR
+SOURCE_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd -P)"
+readonly SOURCE_ROOT
+
+CONFIG_ROOT="${NRB_CONFIG_ROOT:-${DEFAULT_CONFIG_ROOT}}"
+SERVER_ENV="${CONFIG_ROOT}/server.env"
+PRODUCTION_ENV="${CONFIG_ROOT}/.env.production"
+COMMAND="${1:-help}"
+shift || true
+
+SYSTEM_UPDATE=false
+ASSUME_YES=false
+IMAGE_TAG_OVERRIDE=''
+LOG_SERVICE=''
+
+log() { printf '[%s] %s\n' "${CONTROLLER_NAME}" "$*" >&2; }
+die() { log "ERROR: $*"; exit 1; }
+
+usage() {
+  cat <<'USAGE'
+Usage: sudo nrb-server <command> [options]
+
+Commands:
+  init                 Create protected configuration and core secrets once.
+  provision            Idempotently install/upgrade host prerequisites.
+  apply                Provision, validate, deploy, obtain TLS, and verify.
+  deploy               Validate and converge Compose, TLS, and Nginx.
+  update               Fast-forward code and deploy an optional immutable tag.
+  rollback             Deploy the previously successful immutable image tag.
+  renew                Renew due certificates and reload Nginx.
+  doctor               Validate configuration, DNS, services, TLS, and binds.
+  status               Show runtime versions, units, containers, and TLS dates.
+  logs [service]       Follow production Compose logs (optionally one service).
+
+Options:
+  --image-tag sha-...  Immutable image tag for update.
+  --system             Also rerun provision during update.
+  --yes                Confirm the database-compatible rollback warning.
+
+Environment:
+  NRB_CONFIG_ROOT      Override /etc/nest-react-boilerplate.
+USAGE
+}
+
+while (($#)); do
+  case "$1" in
+    --image-tag)
+      (($# >= 2)) || die '--image-tag requires a value'
+      IMAGE_TAG_OVERRIDE="$2"
+      shift 2
+      ;;
+    --image-tag=*) IMAGE_TAG_OVERRIDE="${1#*=}"; shift ;;
+    --system) SYSTEM_UPDATE=true; shift ;;
+    --yes) ASSUME_YES=true; shift ;;
+    --*) die "unknown option: $1" ;;
+    *)
+      [[ "${COMMAND}" == 'logs' && -z "${LOG_SERVICE}" ]] || die "unexpected argument: $1"
+      LOG_SERVICE="$1"
+      shift
+      ;;
+  esac
+done
+
+require_root() {
+  [[ "${EUID}" -eq 0 ]] || die 'this command must run as root (use sudo)'
+}
+
+require_command() { command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"; }
+
+validate_absolute_path() {
+  local name="$1" value="$2"
+  [[ "${value}" =~ ^/[A-Za-z0-9._/-]+$ ]] || die "${name} must be an absolute path without spaces: ${value}"
+}
+
+validate_dedicated_path() {
+  local name="$1" value="$2"
+  validate_absolute_path "${name}" "${value}"
+  case "${value}" in
+    /|/bin|/etc|/home|/opt|/root|/srv|/usr|/var|/var/lib)
+      die "${name} must be a dedicated subdirectory, not ${value}"
+      ;;
+  esac
+}
+
+require_protected_regular_file() {
+  local path="$1" label="$2" mode owner
+  [[ -f "${path}" && ! -L "${path}" ]] || die "${label} must be a regular non-symlink file: ${path}"
+  owner="$(stat -c '%U' "${path}")"
+  [[ "${owner}" == 'root' ]] || die "${label} must be owned by root (got ${owner})"
+  mode="$(stat -c '%a' "${path}")"
+  (( (8#${mode} & 0022) == 0 )) || die "${label} must not be writable by group or other users (got ${mode})"
+}
+
+environment_value() {
+  local key="$1" file="${2:-${PRODUCTION_ENV}}"
+  awk -v key="${key}" '
+    $0 ~ "^[[:space:]]*" key "=" {
+      sub("^[[:space:]]*" key "=", "");
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "");
+      gsub(/^\047|\047$/, "");
+      gsub(/^\042|\042$/, "");
+      print;
+      exit;
+    }
+  ' "${file}"
+}
+
+load_server_environment() {
+  [[ -f "${SERVER_ENV}" ]] || die "missing ${SERVER_ENV}; run '${CONTROLLER_NAME} init' first"
+  require_protected_regular_file "${SERVER_ENV}" 'server environment'
+
+  NODE_VERSION="$(environment_value NODE_VERSION "${SERVER_ENV}")"
+  PNPM_VERSION="$(environment_value PNPM_VERSION "${SERVER_ENV}")"
+  COREPACK_VERSION="$(environment_value COREPACK_VERSION "${SERVER_ENV}")"
+  DEPLOY_USER="$(environment_value DEPLOY_USER "${SERVER_ENV}")"
+  APP_ROOT="$(environment_value APP_ROOT "${SERVER_ENV}")"
+  STATE_ROOT="$(environment_value STATE_ROOT "${SERVER_ENV}")"
+  REPOSITORY_URL="$(environment_value REPOSITORY_URL "${SERVER_ENV}")"
+  REPOSITORY_BRANCH="$(environment_value REPOSITORY_BRANCH "${SERVER_ENV}")"
+  CERTIFICATE_MODE="$(environment_value CERTIFICATE_MODE "${SERVER_ENV}")"
+  CERTIFICATE_NAME="$(environment_value CERTIFICATE_NAME "${SERVER_ENV}")"
+  CERTBOT_EMAIL="$(environment_value CERTBOT_EMAIL "${SERVER_ENV}")"
+  CERTBOT_DNS_PLUGIN="$(environment_value CERTBOT_DNS_PLUGIN "${SERVER_ENV}")"
+  CERTBOT_DNS_PACKAGE="$(environment_value CERTBOT_DNS_PACKAGE "${SERVER_ENV}")"
+  CERTBOT_DNS_CREDENTIALS="$(environment_value CERTBOT_DNS_CREDENTIALS "${SERVER_ENV}")"
+  CERTBOT_DNS_PROPAGATION_SECONDS="$(environment_value CERTBOT_DNS_PROPAGATION_SECONDS "${SERVER_ENV}")"
+  ENABLE_UFW="$(environment_value ENABLE_UFW "${SERVER_ENV}")"
+  SSH_PORT="$(environment_value SSH_PORT "${SERVER_ENV}")"
+  ENABLE_UNATTENDED_UPGRADES="$(environment_value ENABLE_UNATTENDED_UPGRADES "${SERVER_ENV}")"
+  HEALTHCHECK_RETRIES="$(environment_value HEALTHCHECK_RETRIES "${SERVER_ENV}")"
+  HEALTHCHECK_INTERVAL_SECONDS="$(environment_value HEALTHCHECK_INTERVAL_SECONDS "${SERVER_ENV}")"
+
+  : "${NODE_VERSION:?NODE_VERSION is required in ${SERVER_ENV}}"
+  : "${PNPM_VERSION:?PNPM_VERSION is required in ${SERVER_ENV}}"
+  : "${DEPLOY_USER:?DEPLOY_USER is required in ${SERVER_ENV}}"
+  : "${APP_ROOT:?APP_ROOT is required in ${SERVER_ENV}}"
+  : "${CONFIG_ROOT:=${DEFAULT_CONFIG_ROOT}}"
+  : "${STATE_ROOT:?STATE_ROOT is required in ${SERVER_ENV}}"
+  : "${REPOSITORY_URL:?REPOSITORY_URL is required in ${SERVER_ENV}}"
+  : "${REPOSITORY_BRANCH:=main}"
+  : "${COREPACK_VERSION:=0.35.0}"
+  : "${ENABLE_UFW:=false}"
+  : "${ENABLE_UNATTENDED_UPGRADES:=true}"
+  : "${SSH_PORT:=22}"
+  : "${HEALTHCHECK_RETRIES:=30}"
+  : "${HEALTHCHECK_INTERVAL_SECONDS:=2}"
+
+  validate_dedicated_path APP_ROOT "${APP_ROOT}"
+  validate_dedicated_path CONFIG_ROOT "${CONFIG_ROOT}"
+  validate_dedicated_path STATE_ROOT "${STATE_ROOT}"
+  [[ "${DEPLOY_USER}" =~ ^[a-z_][a-z0-9_-]*$ ]] || die 'DEPLOY_USER is invalid'
+  [[ "${NODE_VERSION}" =~ ^24\.[0-9]+\.[0-9]+$ ]] || die 'NODE_VERSION must be an exact Node.js 24 release'
+  [[ "${PNPM_VERSION}" =~ ^11\.[0-9]+\.[0-9]+$ ]] || die 'PNPM_VERSION must be an exact pnpm 11 release'
+  [[ "${COREPACK_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'COREPACK_VERSION must be exact'
+  [[ "${REPOSITORY_BRANCH}" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || die 'REPOSITORY_BRANCH is invalid'
+  [[ "${ENABLE_UFW}" == 'true' || "${ENABLE_UFW}" == 'false' ]] || die 'ENABLE_UFW must be true or false'
+  [[ "${ENABLE_UNATTENDED_UPGRADES}" == 'true' || "${ENABLE_UNATTENDED_UPGRADES}" == 'false' ]] || die 'ENABLE_UNATTENDED_UPGRADES must be true or false'
+  [[ "${SSH_PORT}" =~ ^[0-9]+$ && "${SSH_PORT}" -ge 1 && "${SSH_PORT}" -le 65535 ]] || die 'SSH_PORT must be from 1 through 65535'
+  [[ "${HEALTHCHECK_RETRIES}" =~ ^[1-9][0-9]*$ ]] || die 'HEALTHCHECK_RETRIES must be positive'
+  [[ "${HEALTHCHECK_INTERVAL_SECONDS}" =~ ^[1-9][0-9]*$ ]] || die 'HEALTHCHECK_INTERVAL_SECONDS must be positive'
+}
+
+with_lock() {
+  mkdir -p /run/lock
+  exec 9>/run/lock/nest-react-boilerplate.lock
+  flock -n 9 || die 'another nest-react-boilerplate server operation is running'
+}
+
+run_as_deploy() {
+  local home
+  home="$(getent passwd "${DEPLOY_USER}" | cut -d: -f6)"
+  validate_absolute_path DEPLOY_USER_HOME "${home}"
+  runuser -u "${DEPLOY_USER}" -- env -i \
+    HOME="${home}" USER="${DEPLOY_USER}" LOGNAME="${DEPLOY_USER}" \
+    PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
+    "$@"
+}
+
+upsert_environment_value() {
+  local file="$1" key="$2" value="$3" temporary
+  temporary="$(mktemp "${file}.XXXXXX")"
+  awk -v key="${key}" -v value="${value}" '
+    BEGIN { found = 0 }
+    $0 ~ "^[[:space:]]*" key "=" { print key "=" value; found = 1; next }
+    { print }
+    END { if (!found) print key "=" value }
+  ' "${file}" >"${temporary}"
+  chmod --reference="${file}" "${temporary}"
+  chown --reference="${file}" "${temporary}"
+  mv -f "${temporary}" "${file}"
+}
+
+create_secret() {
+  local path="$1" generator="$2"
+  if [[ -e "${path}" ]]; then
+    require_protected_regular_file "${path}" 'secret'
+    chmod 600 "${path}"
+    return
+  fi
+  local temporary
+  temporary="$(mktemp "${path}.XXXXXX")"
+  case "${generator}" in
+    hex) openssl rand -hex 32 >"${temporary}" ;;
+    base64) openssl rand -base64 48 | tr -d '\n' >"${temporary}"; printf '\n' >>"${temporary}" ;;
+    empty) : >"${temporary}" ;;
+    *) die "unknown secret generator: ${generator}" ;;
+  esac
+  chmod 600 "${temporary}"
+  mv "${temporary}" "${path}"
+}
+
+initialize() {
+  require_root
+  require_command openssl
+  validate_dedicated_path CONFIG_ROOT "${CONFIG_ROOT}"
+  [[ ! -L "${CONFIG_ROOT}" ]] || die "CONFIG_ROOT must not be a symbolic link: ${CONFIG_ROOT}"
+  mkdir -p "${CONFIG_ROOT}/secrets"
+  [[ ! -L "${CONFIG_ROOT}/secrets" ]] || die "secrets directory must not be a symbolic link: ${CONFIG_ROOT}/secrets"
+  chmod 700 "${CONFIG_ROOT}" "${CONFIG_ROOT}/secrets"
+
+  if [[ ! -e "${SERVER_ENV}" ]]; then
+    install -m 600 "${SOURCE_ROOT}/deploy/single-server/server.env.example" "${SERVER_ENV}"
+    log "created ${SERVER_ENV}"
+  else
+    require_protected_regular_file "${SERVER_ENV}" 'server environment'
+    log "kept existing ${SERVER_ENV}"
+  fi
+
+  if [[ ! -e "${PRODUCTION_ENV}" ]]; then
+    install -m 600 "${SOURCE_ROOT}/.env.production.example" "${PRODUCTION_ENV}"
+    upsert_environment_value "${PRODUCTION_ENV}" COMPOSE_DOMAIN_MODE external-proxy
+    upsert_environment_value "${PRODUCTION_ENV}" COMPOSE_TLS_MODE external
+    upsert_environment_value "${PRODUCTION_ENV}" EXTERNAL_PROXY_PUBLIC_MODE per-app-domains
+    upsert_environment_value "${PRODUCTION_ENV}" TRUST_PROXY true
+    upsert_environment_value "${PRODUCTION_ENV}" VITE_API_BASE_URL_MODE same-origin
+    log "created ${PRODUCTION_ENV}"
+  else
+    require_protected_regular_file "${PRODUCTION_ENV}" 'production environment'
+    log "kept existing ${PRODUCTION_ENV}"
+  fi
+
+  local secrets="${CONFIG_ROOT}/secrets"
+  create_secret "${secrets}/auth_jwt_secret.txt" hex
+  create_secret "${secrets}/better_auth_secret.txt" base64
+  create_secret "${secrets}/grafana_admin_password.txt" base64
+  create_secret "${secrets}/postgres_password.txt" base64
+  create_secret "${secrets}/database_url.txt" empty
+  create_secret "${secrets}/telegram_bot_token.txt" empty
+  create_secret "${secrets}/telegram_oidc_client_secret.txt" empty
+  create_secret "${secrets}/telegram_bot_webhook_secret.txt" empty
+  create_secret "${secrets}/discord_bot_token.txt" empty
+  create_secret "${secrets}/discord_client_secret.txt" empty
+  create_secret "${secrets}/discord_public_key.txt" empty
+
+  upsert_environment_value "${PRODUCTION_ENV}" AUTH_JWT_SECRET_FILE "${secrets}/auth_jwt_secret.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" BETTER_AUTH_SECRET_FILE "${secrets}/better_auth_secret.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" GRAFANA_ADMIN_PASSWORD_FILE "${secrets}/grafana_admin_password.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" POSTGRES_PASSWORD_FILE "${secrets}/postgres_password.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" DATABASE_URL_FILE "${secrets}/database_url.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_BOT_TOKEN_FILE "${secrets}/telegram_bot_token.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_OIDC_CLIENT_SECRET_FILE "${secrets}/telegram_oidc_client_secret.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" TELEGRAM_BOT_WEBHOOK_SECRET_FILE "${secrets}/telegram_bot_webhook_secret.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_BOT_TOKEN_FILE "${secrets}/discord_bot_token.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_CLIENT_SECRET_FILE "${secrets}/discord_client_secret.txt"
+  upsert_environment_value "${PRODUCTION_ENV}" DISCORD_PUBLIC_KEY_FILE "${secrets}/discord_public_key.txt"
+  chmod 600 "${SERVER_ENV}" "${PRODUCTION_ENV}" "${secrets}"/*
+  DEPLOY_USER="$(environment_value DEPLOY_USER "${SERVER_ENV}")"
+  if [[ "${DEPLOY_USER}" =~ ^[a-z_][a-z0-9_-]*$ ]] && id "${DEPLOY_USER}" >/dev/null 2>&1; then
+    prepare_runtime_permissions
+  fi
+  log 'initialization complete; edit server.env and .env.production before apply'
+}
+
+apt_install() {
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@"
+}
+
+install_docker() {
+  if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    log "Docker already installed: $(docker --version)"
+    if dpkg-query -W -f='${Status}' docker-ce 2>/dev/null | grep -q 'install ok installed'; then
+      apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    fi
+    return
+  fi
+
+  # Add Docker's official apt repository only when Docker is absent. Existing
+  # operator-managed installations are preserved instead of being replaced.
+  local architecture distribution codename repository
+  architecture="$(dpkg --print-architecture)"
+  # shellcheck disable=SC1091
+  source /etc/os-release
+  distribution="${ID}"
+  codename="${VERSION_CODENAME}"
+  [[ "${distribution}" == 'ubuntu' || "${distribution}" == 'debian' ]] || die 'Docker bootstrap supports Ubuntu and Debian'
+  repository="https://download.docker.com/linux/${distribution}"
+  install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL "${repository}/gpg" -o /etc/apt/keyrings/docker.asc
+  chmod a+r /etc/apt/keyrings/docker.asc
+  printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] %s %s stable\n' \
+    "${architecture}" "${repository}" "${codename}" >/etc/apt/sources.list.d/docker.list
+  apt-get update
+  apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  systemctl enable --now docker
+}
+
+install_node() {
+  local expected="v${NODE_VERSION}"
+  if command -v node >/dev/null 2>&1 && [[ "$(node --version)" == "${expected}" ]]; then
+    log "Node.js already installed: ${expected}"
+  else
+    local machine node_arch archive work destination
+    machine="$(uname -m)"
+    case "${machine}" in
+      x86_64) node_arch='x64' ;;
+      aarch64|arm64) node_arch='arm64' ;;
+      *) die "unsupported Node.js architecture: ${machine}" ;;
+    esac
+    archive="node-v${NODE_VERSION}-linux-${node_arch}.tar.xz"
+    work="$(mktemp -d)"
+    trap 'rm -rf "${work:-}"' RETURN
+    curl -fsSLo "${work}/${archive}" "https://nodejs.org/dist/v${NODE_VERSION}/${archive}"
+    curl -fsSLo "${work}/SHASUMS256.txt" "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt"
+    (cd "${work}" && grep "  ${archive}\$" SHASUMS256.txt | sha256sum --check --strict -)
+    destination="/usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-${node_arch}"
+    install -d /usr/local/lib/nodejs
+    rm -rf "${destination}.new"
+    mkdir "${destination}.new"
+    tar -xJf "${work}/${archive}" --strip-components=1 -C "${destination}.new"
+    rm -rf "${destination}"
+    mv "${destination}.new" "${destination}"
+    for executable in node npm npx; do
+      ln -sfn "${destination}/bin/${executable}" "/usr/local/bin/${executable}"
+    done
+    trap - RETURN
+    rm -rf "${work}"
+    log "installed Node.js ${expected} from the checksummed official binary"
+  fi
+
+  if ! command -v corepack >/dev/null 2>&1 || [[ "$(corepack --version)" != "${COREPACK_VERSION}" ]]; then
+    npm_config_prefix=/usr/local npm install --global "corepack@${COREPACK_VERSION}"
+  fi
+  corepack install --global "pnpm@${PNPM_VERSION}"
+  corepack enable --install-directory /usr/local/bin pnpm
+  [[ "$(pnpm --version)" == "${PNPM_VERSION}" ]] || die 'pnpm activation failed'
+}
+
+install_firewall() {
+  [[ "${ENABLE_UFW}" == 'true' ]] || return
+  apt_install ufw
+  ufw allow "${SSH_PORT}/tcp"
+  ufw allow 80/tcp
+  ufw allow 443/tcp
+  ufw --force enable
+}
+
+install_renewal_hook() {
+  install -d -m 755 /etc/letsencrypt/renewal-hooks/deploy
+  cat >/etc/letsencrypt/renewal-hooks/deploy/nrb-nginx-reload <<'HOOK'
+#!/bin/sh
+set -eu
+nginx -t
+systemctl reload nginx
+HOOK
+  chmod 755 /etc/letsencrypt/renewal-hooks/deploy/nrb-nginx-reload
+}
+
+install_controller_wrapper() {
+  cat >/usr/local/sbin/nrb-server <<WRAPPER
+#!/bin/sh
+exec env NRB_CONFIG_ROOT=${CONFIG_ROOT} ${APP_ROOT}/deploy/single-server/serverctl "\$@"
+WRAPPER
+  chmod 755 /usr/local/sbin/nrb-server
+}
+
+prepare_runtime_permissions() {
+  local deploy_group secret
+  id "${DEPLOY_USER}" >/dev/null 2>&1 || die "deployment user ${DEPLOY_USER} is missing; run provision first"
+  deploy_group="$(id -gn "${DEPLOY_USER}")"
+  install -d -o root -g "${deploy_group}" -m 0750 "${CONFIG_ROOT}" "${CONFIG_ROOT}/secrets"
+  chown root:root "${SERVER_ENV}"
+  chmod 600 "${SERVER_ENV}"
+  require_protected_regular_file "${PRODUCTION_ENV}" 'production environment'
+  chown root:"${deploy_group}" "${PRODUCTION_ENV}"
+  chmod 640 "${PRODUCTION_ENV}"
+  for secret in "${CONFIG_ROOT}/secrets"/*; do
+    [[ -e "${secret}" ]] || continue
+    require_protected_regular_file "${secret}" 'secret'
+    chown root:"${deploy_group}" "${secret}"
+    chmod 640 "${secret}"
+  done
+}
+
+provision() {
+  require_root
+  load_server_environment
+  # shellcheck disable=SC1091
+  source /etc/os-release
+  [[ "${ID}" == 'ubuntu' || "${ID}" == 'debian' ]] || die 'single-server provisioning supports Ubuntu and Debian'
+  apt-get update
+  apt_install ca-certificates certbot curl dnsutils git gnupg jq nginx openssl rsync xz-utils
+  if [[ "${ENABLE_UNATTENDED_UPGRADES}" == 'true' ]]; then
+    apt_install unattended-upgrades
+    systemctl enable --now unattended-upgrades
+  fi
+  install_docker
+  install_node
+
+  if ! id "${DEPLOY_USER}" >/dev/null 2>&1; then
+    useradd --create-home --shell /bin/bash "${DEPLOY_USER}"
+  fi
+  usermod -aG docker "${DEPLOY_USER}"
+  install -d -o "${DEPLOY_USER}" -g "${DEPLOY_USER}" -m 0750 "${APP_ROOT}"
+  chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${APP_ROOT}"
+  install -d -o root -g root -m 0700 "${STATE_ROOT}"
+  prepare_runtime_permissions
+  install -d -o www-data -g www-data -m 0755 /var/www/certbot
+  rm -f /etc/nginx/sites-enabled/default
+  install_renewal_hook
+  systemctl enable --now docker nginx certbot.timer
+  install_firewall
+  install_controller_wrapper
+
+  if [[ "${CERTIFICATE_MODE:-}" == 'dns-wildcard' ]]; then
+    [[ "${CERTBOT_DNS_PACKAGE:-}" =~ ^[a-z0-9][a-z0-9+.-]*$ ]] || die 'CERTBOT_DNS_PACKAGE is invalid'
+    apt_install "${CERTBOT_DNS_PACKAGE}"
+  fi
+  log 'host provisioning converged successfully'
+}
+
+require_app_checkout() {
+  [[ -d "${APP_ROOT}/.git" ]] || die "application checkout missing at ${APP_ROOT}; run bootstrap.sh or clone the repository"
+  [[ -f "${APP_ROOT}/scripts/single-server-deployment.mjs" ]] || die 'checkout does not contain single-server deployment tooling'
+}
+
+validate_secret_file() {
+  local key="$1" path mode owner
+  path="$(environment_value "${key}")"
+  [[ "${path}" == /* ]] || die "${key} must be an absolute path"
+  [[ -s "${path}" ]] || die "${key} is missing or empty: ${path}"
+  [[ ! -L "${path}" ]] || die "${key} must not be a symbolic link"
+  mode="$(stat -c '%a' "${path}")"
+  owner="$(stat -c '%U' "${path}")"
+  [[ "${owner}" == 'root' ]] || die "${key} must be owned by root (got ${owner})"
+  [[ "${mode}" == '640' || "${mode}" == '440' ]] || die "${key} must have mode 640 or 440 (got ${mode})"
+  run_as_deploy test -r "${path}" || die "${key} must be readable by ${DEPLOY_USER} through its protected group"
+}
+
+validate_configuration() {
+  require_app_checkout
+  [[ -f "${PRODUCTION_ENV}" ]] || die "missing ${PRODUCTION_ENV}; run init first"
+  prepare_runtime_permissions
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" validate \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+
+  local image_tag image_registry database_mode configured_profiles public_domain
+  image_tag="$(environment_value IMAGE_TAG)"
+  image_registry="$(environment_value IMAGE_REGISTRY)"
+  database_mode="$(environment_value COMPOSE_DATABASE_MODE)"
+  configured_profiles=",$(environment_value COMPOSE_PROFILES),"
+  public_domain="$(environment_value PUBLIC_DOMAIN)"
+  [[ "${image_tag}" =~ ^sha-[0-9a-f]{7,64}$ ]] || die 'IMAGE_TAG must be an immutable sha-<git-sha> tag'
+  [[ "${image_tag}" != 'sha-000000000000' ]] || die 'replace the placeholder IMAGE_TAG with a released immutable image tag'
+  [[ -n "${image_registry}" && "${image_registry}" != *your-github-org* ]] || die 'set IMAGE_REGISTRY to the real image repository'
+  [[ "${public_domain}" != 'example.com' ]] || die 'replace the placeholder PUBLIC_DOMAIN before deployment'
+  [[ "${CERTIFICATE_NAME:-}" != 'example.com' ]] || die 'replace the placeholder CERTIFICATE_NAME before deployment'
+  if [[ "${CERTIFICATE_MODE}" != 'existing' ]]; then
+    [[ "${CERTBOT_EMAIL}" != *@example.com ]] || die 'replace the placeholder CERTBOT_EMAIL before deployment'
+  fi
+  [[ "$(environment_value TRUST_PROXY)" == 'true' ]] || die 'TRUST_PROXY must be true behind host Nginx'
+  [[ "$(environment_value VITE_API_BASE_URL_MODE)" == 'same-origin' ]] || die 'VITE_API_BASE_URL_MODE must be same-origin'
+
+  validate_secret_file AUTH_JWT_SECRET_FILE
+  validate_secret_file BETTER_AUTH_SECRET_FILE
+  validate_secret_file GRAFANA_ADMIN_PASSWORD_FILE
+  if [[ "${database_mode}" == 'bundled-db' ]]; then
+    validate_secret_file POSTGRES_PASSWORD_FILE
+  elif [[ "${database_mode}" == 'external-db' ]]; then
+    validate_secret_file DATABASE_URL_FILE
+  else
+    die 'COMPOSE_DATABASE_MODE must be bundled-db or external-db'
+  fi
+  if [[ "${configured_profiles}" == *,telegram,* ]]; then
+    validate_secret_file TELEGRAM_BOT_TOKEN_FILE
+    validate_secret_file TELEGRAM_OIDC_CLIENT_SECRET_FILE
+    validate_secret_file TELEGRAM_BOT_WEBHOOK_SECRET_FILE
+    [[ "$(environment_value TELEGRAM_BOT_USERNAME)" != 'example_bot' ]] || die 'set TELEGRAM_BOT_USERNAME for the telegram profile'
+    [[ "$(environment_value TELEGRAM_OIDC_CLIENT_ID)" != '123456789' ]] || die 'set TELEGRAM_OIDC_CLIENT_ID for the telegram profile'
+  fi
+  if [[ "${configured_profiles}" == *,discord,* ]]; then
+    validate_secret_file DISCORD_BOT_TOKEN_FILE
+    validate_secret_file DISCORD_CLIENT_SECRET_FILE
+    validate_secret_file DISCORD_PUBLIC_KEY_FILE
+    [[ "$(environment_value DISCORD_CLIENT_ID)" != example-* ]] || die 'set DISCORD_CLIENT_ID for the discord profile'
+    [[ "$(environment_value DISCORD_APPLICATION_ID)" != example-* ]] || die 'set DISCORD_APPLICATION_ID for the discord profile'
+  fi
+
+  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" config \
+    --env-file "${PRODUCTION_ENV}" --dry-run >/dev/null
+}
+
+render_nginx() {
+  local phase="$1" destination='/etc/nginx/conf.d/nest-react-boilerplate.conf' temporary backup=''
+  temporary="$(mktemp /etc/nginx/conf.d/nest-react-boilerplate.conf.XXXXXX)"
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" render-nginx \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}" \
+    --phase "${phase}" --output "${temporary}"
+  if [[ -f "${destination}" ]]; then
+    backup="$(mktemp /etc/nginx/conf.d/nest-react-boilerplate.backup.XXXXXX)"
+    cp -a "${destination}" "${backup}"
+  fi
+  chmod 644 "${temporary}"
+  mv -f "${temporary}" "${destination}"
+  if ! nginx -t; then
+    if [[ -n "${backup}" ]]; then mv -f "${backup}" "${destination}"; else rm -f "${destination}"; fi
+    nginx -t || true
+    die 'generated Nginx configuration failed validation; previous configuration restored'
+  fi
+  [[ -z "${backup}" ]] || rm -f "${backup}"
+  systemctl reload nginx
+}
+
+certificate_domains() {
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" certificate-domains \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+}
+
+public_hosts() {
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" hosts \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+}
+
+certificate_covers_domains() {
+  local certificate="/etc/letsencrypt/live/${CERTIFICATE_NAME}/fullchain.pem" required
+  [[ -f "${certificate}" ]] || return 1
+  openssl x509 -checkend 604800 -noout -in "${certificate}" >/dev/null || return 1
+  while IFS= read -r required; do
+    openssl x509 -in "${certificate}" -noout -checkhost "${required}" >/dev/null || return 1
+  done < <(public_hosts)
+  if [[ "${CERTIFICATE_MODE}" == 'dns-wildcard' ]]; then
+    openssl x509 -in "${certificate}" -noout -checkhost "nrb-wildcard-check.$(environment_value PUBLIC_DOMAIN)" >/dev/null || return 1
+  fi
+}
+
+ensure_dns_resolves() {
+  local host failed=false
+  while IFS= read -r host; do
+    if ! getent ahosts "${host}" >/dev/null 2>&1; then
+      log "DNS does not resolve: ${host}"
+      failed=true
+    fi
+  done < <(public_hosts)
+  [[ "${failed}" == 'false' ]] || die 'create the documented apex/exact/wildcard DNS records before certificate issuance'
+}
+
+ensure_certificate() {
+  mapfile -t domains < <(certificate_domains)
+  ((${#domains[@]} > 0)) || die 'no certificate domains were derived'
+  if certificate_covers_domains; then
+    log "certificate ${CERTIFICATE_NAME} already covers every host and is valid for at least seven days"
+    return
+  fi
+  [[ "${CERTIFICATE_MODE}" != 'existing' ]] || die 'the existing certificate is missing, expiring, or does not cover every required domain'
+  ensure_dns_resolves
+
+  local domain_args=() domain
+  for domain in "${domains[@]}"; do domain_args+=(-d "${domain}"); done
+  if [[ "${CERTIFICATE_MODE}" == 'exact-hosts' ]]; then
+    certbot certonly --non-interactive --agree-tos --email "${CERTBOT_EMAIL}" \
+      --cert-name "${CERTIFICATE_NAME}" --webroot -w /var/www/certbot \
+      --keep-until-expiring --renew-with-new-domains "${domain_args[@]}"
+  else
+    [[ "${CERTBOT_DNS_PLUGIN}" =~ ^[a-z0-9-]+$ ]] || die 'CERTBOT_DNS_PLUGIN is invalid'
+    [[ -s "${CERTBOT_DNS_CREDENTIALS}" ]] || die 'CERTBOT_DNS_CREDENTIALS is missing or empty'
+    require_protected_regular_file "${CERTBOT_DNS_CREDENTIALS}" 'Certbot DNS credentials'
+    chmod 600 "${CERTBOT_DNS_CREDENTIALS}"
+    local credential_flag="--dns-${CERTBOT_DNS_PLUGIN}-credentials"
+    local propagation_flag="--dns-${CERTBOT_DNS_PLUGIN}-propagation-seconds"
+    certbot certonly --non-interactive --agree-tos --email "${CERTBOT_EMAIL}" \
+      --cert-name "${CERTIFICATE_NAME}" --authenticator "dns-${CERTBOT_DNS_PLUGIN}" \
+      "${credential_flag}" "${CERTBOT_DNS_CREDENTIALS}" \
+      "${propagation_flag}" "${CERTBOT_DNS_PROPAGATION_SECONDS:-60}" \
+      --keep-until-expiring --renew-with-new-domains "${domain_args[@]}"
+  fi
+  certificate_covers_domains || die 'Certbot returned without a valid certificate covering every required domain'
+}
+
+install_compose_unit() {
+  local deploy_group deploy_home
+  deploy_group="$(id -gn "${DEPLOY_USER}")"
+  deploy_home="$(getent passwd "${DEPLOY_USER}" | cut -d: -f6)"
+  validate_absolute_path DEPLOY_USER_HOME "${deploy_home}"
+  cat >/etc/systemd/system/nest-react-boilerplate.service <<UNIT
+[Unit]
+Description=Nest React Boilerplate production Compose application
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=${DEPLOY_USER}
+Group=${deploy_group}
+SupplementaryGroups=docker
+WorkingDirectory=${APP_ROOT}
+Environment="HOME=${deploy_home}"
+ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  systemctl daemon-reload
+  systemctl enable nest-react-boilerplate.service
+}
+
+wait_for_https() {
+  local host attempt
+  while IFS= read -r host; do
+    for ((attempt = 1; attempt <= HEALTHCHECK_RETRIES; attempt += 1)); do
+      if curl --fail --silent --show-error --max-time 10 \
+        --resolve "${host}:443:127.0.0.1" "https://${host}/_infra/health" | grep -qx ok; then
+        break
+      fi
+      if ((attempt == HEALTHCHECK_RETRIES)); then die "HTTPS health check failed for ${host}"; fi
+      sleep "${HEALTHCHECK_INTERVAL_SECONDS}"
+    done
+  done < <(public_hosts)
+}
+
+write_state_value() {
+  local path="$1" value="$2" temporary
+  temporary="$(mktemp "${path}.XXXXXX")"
+  printf '%s\n' "${value}" >"${temporary}"
+  chmod 600 "${temporary}"
+  mv -f "${temporary}" "${path}"
+}
+
+record_successful_tag() {
+  local tag previous=''
+  tag="$(environment_value IMAGE_TAG)"
+  [[ ! -f "${STATE_ROOT}/current-image-tag" ]] || previous="$(<"${STATE_ROOT}/current-image-tag")"
+  if [[ -n "${previous}" && "${previous}" != "${tag}" ]]; then
+    write_state_value "${STATE_ROOT}/previous-image-tag" "${previous}"
+  fi
+  write_state_value "${STATE_ROOT}/current-image-tag" "${tag}"
+}
+
+deploy() {
+  require_root
+  load_server_environment
+  validate_configuration
+  if certificate_covers_domains; then render_nginx https; else render_nginx http; fi
+  install_compose_unit
+  systemctl restart nest-react-boilerplate.service
+  ensure_certificate
+  render_nginx https
+  wait_for_https
+  record_successful_tag
+  log "deployment healthy: $(environment_value IMAGE_TAG)"
+}
+
+update_checkout() {
+  require_app_checkout
+  local dirty
+  dirty="$(run_as_deploy git -C "${APP_ROOT}" status --porcelain)"
+  [[ -z "${dirty}" ]] || die "${APP_ROOT} has uncommitted changes; refusing to overwrite them"
+  run_as_deploy git -C "${APP_ROOT}" fetch --prune origin
+  run_as_deploy git -C "${APP_ROOT}" checkout "${REPOSITORY_BRANCH}"
+  run_as_deploy git -C "${APP_ROOT}" merge --ff-only "origin/${REPOSITORY_BRANCH}"
+  run_as_deploy /usr/local/bin/pnpm --dir "${APP_ROOT}" install --frozen-lockfile
+}
+
+set_image_tag() {
+  local next="$1" current
+  [[ "${next}" =~ ^sha-[0-9a-f]{7,64}$ ]] || die '--image-tag must be an immutable sha-<git-sha> tag'
+  current="$(environment_value IMAGE_TAG)"
+  if [[ "${current}" != "${next}" ]]; then
+    upsert_environment_value "${PRODUCTION_ENV}" IMAGE_TAG "${next}"
+  fi
+}
+
+update_application() {
+  require_root
+  load_server_environment
+  [[ "${SYSTEM_UPDATE}" == 'false' ]] || provision
+  update_checkout
+  [[ -z "${IMAGE_TAG_OVERRIDE}" ]] || set_image_tag "${IMAGE_TAG_OVERRIDE}"
+  deploy
+}
+
+rollback_application() {
+  require_root
+  load_server_environment
+  [[ "${ASSUME_YES}" == 'true' ]] || die 'rollback requires --yes: images roll back, but database migrations are not reversed and must be backward-compatible'
+  [[ -f "${STATE_ROOT}/current-image-tag" ]] || die 'no successful image tag is recorded'
+  local selected last_successful target
+  selected="$(environment_value IMAGE_TAG)"
+  last_successful="$(<"${STATE_ROOT}/current-image-tag")"
+  if [[ "${selected}" != "${last_successful}" ]]; then
+    target="${last_successful}"
+  else
+    [[ -f "${STATE_ROOT}/previous-image-tag" ]] || die 'no previous successful image tag is recorded'
+    target="$(<"${STATE_ROOT}/previous-image-tag")"
+  fi
+  set_image_tag "${target}"
+  deploy
+}
+
+renew_certificates() {
+  require_root
+  load_server_environment
+  [[ "${CERTIFICATE_MODE}" != 'existing' ]] || die 'CERTIFICATE_MODE=existing is renewed by the external certificate owner'
+  certbot renew --cert-name "${CERTIFICATE_NAME}" --deploy-hook /etc/letsencrypt/renewal-hooks/deploy/nrb-nginx-reload
+  certificate_covers_domains || die 'renewed certificate is invalid, expiring, or missing required domains'
+}
+
+check_loopback_bindings() {
+  local entries=(ADMIN_APP_API_PORT:3001 USER_APP_API_PORT:3002 AUTH_APP_API_PORT:3003 ADMIN_APP_PORT:4200 USER_APP_PORT:4201 LANDING_APP_PORT:4202 SITE_APP_PORT:4203 MOBILE_APP_PORT:4300 GRAFANA_PORT:3000 OTEL_COLLECTOR_GRPC_PORT:4317 OTEL_COLLECTOR_HTTP_PORT:4318 OTEL_PROMETHEUS_PORT:9464 PROMETHEUS_PORT:9090 ALERTMANAGER_PORT:9093)
+  local configured_profiles entry key fallback port addresses
+  configured_profiles=",$(environment_value COMPOSE_PROFILES),"
+  [[ "${configured_profiles}" != *,discord,* ]] || entries+=(DISCORD_APP_API_PORT:3007)
+  [[ "${configured_profiles}" != *,telegram,* ]] || entries+=(TELEGRAM_BOT_API_PORT:3013)
+  for entry in "${entries[@]}"; do
+    key="${entry%%:*}"
+    fallback="${entry##*:}"
+    port="$(environment_value "${key}")"
+    port="${port:-${fallback}}"
+    addresses="$(ss -H -ltn "sport = :${port}" | awk '{print $4}')"
+    [[ -n "${addresses}" ]] || die "expected application port ${port} is not listening"
+    if grep -Evq '^(127\.0\.0\.1|\[::1\]):' <<<"${addresses}"; then
+      die "application port ${port} is listening beyond loopback"
+    fi
+  done
+}
+
+check_compose_health() {
+  local state
+  state="$(run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps \
+    --env-file "${PRODUCTION_ENV}" --all --format json)"
+  jq -s -e '
+    flatten
+    | length > 0
+    and all(.[];
+      if .Service == "migrate"
+      then .State == "exited" and .ExitCode == 0
+      else .State == "running" and ((.Health // "") != "unhealthy")
+      end
+    )
+  ' <<<"${state}" >/dev/null || die 'one or more production Compose services are stopped or unhealthy'
+}
+
+doctor() {
+  require_root
+  load_server_environment
+  validate_configuration
+  require_command docker
+  require_command nginx
+  require_command certbot
+  docker info >/dev/null
+  docker compose version >/dev/null
+  nginx -t
+  ensure_dns_resolves
+  certificate_covers_domains || die 'certificate is missing, expiring within seven days, or lacks a required SAN'
+  check_compose_health
+  check_loopback_bindings
+  systemctl is-active --quiet docker nginx certbot.timer nest-react-boilerplate
+  wait_for_https
+  log 'doctor passed: configuration, DNS, certificate, services, loopback binds, and HTTPS are healthy'
+}
+
+status() {
+  require_root
+  load_server_environment
+  printf 'Node.js: %s\n' "$(node --version 2>/dev/null || printf missing)"
+  printf 'pnpm: %s\n' "$(pnpm --version 2>/dev/null || printf missing)"
+  printf 'Docker: %s\n' "$(docker --version 2>/dev/null || printf missing)"
+  printf 'Compose: %s\n' "$(docker compose version --short 2>/dev/null || printf missing)"
+  printf 'Image tag: %s\n' "$(environment_value IMAGE_TAG)"
+  systemctl --no-pager --full status docker nginx certbot.timer nest-react-boilerplate.service || true
+  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps --env-file "${PRODUCTION_ENV}" || true
+  local certificate="/etc/letsencrypt/live/${CERTIFICATE_NAME}/fullchain.pem"
+  [[ ! -f "${certificate}" ]] || openssl x509 -in "${certificate}" -noout -subject -issuer -dates
+}
+
+logs() {
+  require_root
+  load_server_environment
+  local arguments=(logs --env-file "${PRODUCTION_ENV}" --tail=200 --follow)
+  [[ -z "${LOG_SERVICE}" ]] || arguments+=("${LOG_SERVICE}")
+  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" "${arguments[@]}"
+}
+
+case "${COMMAND}" in
+  init) require_root; with_lock; initialize ;;
+  provision) require_root; with_lock; provision ;;
+  apply) require_root; with_lock; provision; deploy ;;
+  deploy) require_root; with_lock; deploy ;;
+  update) require_root; with_lock; update_application ;;
+  rollback) require_root; with_lock; rollback_application ;;
+  renew) require_root; with_lock; renew_certificates ;;
+  doctor) doctor ;;
+  status) status ;;
+  logs) logs ;;
+  help|-h|--help) usage ;;
+  *) usage >&2; die "unknown command: ${COMMAND}" ;;
+esac

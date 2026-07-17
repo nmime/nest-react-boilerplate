@@ -6,8 +6,8 @@ belong to the generated product.
 
 | Mode                         | Entrypoint                                                            | Database                                                    | Validation                        |
 | ---------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------- |
-| Compose + bundled PostgreSQL | production wrapper + bundled DB and selected domain/TLS overlays      | PostgreSQL service and volume inside the Compose project    | `pnpm run deploy:validate:docker` |
-| Compose + external DB        | production wrapper + external DB and selected domain/TLS overlays     | Secret-file URL to operator/cloud PostgreSQL; no Compose DB | `pnpm run deploy:validate:docker` |
+| Compose + bundled PostgreSQL | production wrapper + bundled DB and Compose Caddy or host Nginx edge  | PostgreSQL service and volume inside the Compose project    | `pnpm run deploy:validate:docker` |
+| Compose + external DB        | production wrapper + external DB and Compose Caddy or host Nginx edge | Secret-file URL to operator/cloud PostgreSQL; no Compose DB | `pnpm run deploy:validate:docker` |
 | Direct Kubernetes            | `.helm/` + `.helm/values-production.yaml`                             | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:helm`   |
 | Kubernetes GitOps            | Helm chart through `deploy/argocd/` or `deploy/flux/`                 | Platform-managed PostgreSQL and Redis                       | `pnpm run deploy:validate:gitops` |
 | PM2                          | Product-owned `ecosystem.config.*` when a project explicitly adds one | Product/platform-owned                                      | `pnpm run deploy:validate:pm2`    |
@@ -81,6 +81,13 @@ database credentials and TLS private keys are never interpolated into the
 Compose model. See
 [docker-compose-production.md](docker-compose-production.md) for setup,
 verification, backup, rollback, and shutdown commands.
+
+For an empty Ubuntu/Debian server, use the supported idempotent host Nginx +
+Certbot lifecycle in
+[single-server-deployment.md](single-server-deployment.md). It installs Node.js
+24, the repository-pinned pnpm, Docker Engine/Compose, Nginx, Certbot, systemd
+startup, exact-host or DNS-wildcard certificates, immutable-tag updates,
+health checks, and guarded rollback without exposing app ports.
 
 ## Direct Kubernetes
 

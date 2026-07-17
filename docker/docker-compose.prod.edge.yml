@@ -5,6 +5,11 @@ services:
   edge:
     image: caddy:2.11.4-alpine
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
+        max-file: '${DOCKER_LOG_MAX_FILES:-5}'
     command:
       - caddy
       - run

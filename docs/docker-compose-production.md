@@ -123,7 +123,9 @@ The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
 `BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot
 web-app URLs from this mapping. Add exceptional origins through
 `CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
-requires the operator to set the complete values explicitly.
+can derive the same contract when `EXTERNAL_PROXY_PUBLIC_MODE` is set to
+`single-domain` or `per-app-domains`; without it, compatibility mode requires
+the operator to set the complete values explicitly.
 
 ### DNS choices
 
@@ -165,10 +167,14 @@ For an existing reverse proxy:
 ```dotenv
 COMPOSE_DOMAIN_MODE=external-proxy
 COMPOSE_TLS_MODE=external
+EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains
 ```
 
 In external-proxy mode, route only to the documented loopback ports and keep
 API/navigation matching equivalent to `docker/nginx-fullstack.conf`.
+For the supported turnkey host Nginx + Certbot implementation, use
+[single-server-deployment.md](single-server-deployment.md) instead of creating a
+second hand-maintained proxy map.
 
 ### Operator-provided or wildcard certificate
 
@@ -338,6 +344,9 @@ Rollback procedure:
 The Caddy container uses a read-only root filesystem, drops all capabilities
 except low-port binding, prevents privilege escalation, and persists only its
 data/config volumes. Never publish application loopback ports as a shortcut.
+Every production service uses bounded `json-file` rotation; tune
+`DOCKER_LOG_MAX_SIZE` and `DOCKER_LOG_MAX_FILES` for host capacity instead of
+allowing container logs to consume the disk.
 
 The base model includes OpenTelemetry Collector, Prometheus, Alertmanager, and
 Grafana on loopback-only host ports. Protect operator surfaces behind SSO/VPN,

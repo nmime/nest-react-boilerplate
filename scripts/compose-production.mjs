@@ -9,6 +9,7 @@ const defaultEnvFile = '.env.production';
 const actions = new Set(['config', 'down', 'logs', 'ps', 'pull', 'up']);
 const databaseModes = new Set(['bundled-db', 'external-db']);
 const domainModes = new Set(['external-proxy', 'single-domain', 'per-app-domains']);
+const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
 const tlsModes = new Set(['automatic', 'provided', 'external']);
 const supportedProfiles = new Set(['discord', 'telegram']);
 const primaryUpstreams = {
@@ -194,6 +195,11 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   const baseDomain = validateBaseDomain(effectiveEnvironment.PUBLIC_DOMAIN ?? '');
   const primaryApp = effectiveEnvironment.PRIMARY_APP ?? '';
   const domains = derivePublicDomains(baseDomain, primaryApp);
+  const configuredExternalPublicMode = effectiveEnvironment.EXTERNAL_PROXY_PUBLIC_MODE?.trim();
+  if (configuredExternalPublicMode && !publicDomainModes.has(configuredExternalPublicMode)) {
+    fail('EXTERNAL_PROXY_PUBLIC_MODE must be either "single-domain" or "per-app-domains".');
+  }
+  const publicDomainMode = domainMode === 'external-proxy' ? configuredExternalPublicMode : domainMode;
   const frontendOrigins = [
     'LANDING_APP_DOMAIN',
     'SITE_APP_DOMAIN',
@@ -201,34 +207,34 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     'ADMIN_APP_DOMAIN',
     'MOBILE_APP_DOMAIN',
   ].map((key) => `https://${domains[key]}`);
-  const exposedOrigins = domainMode === 'single-domain' ? [`https://${baseDomain}`] : frontendOrigins;
+  const exposedOrigins = publicDomainMode === 'single-domain' ? [`https://${baseDomain}`] : frontendOrigins;
   const extraCorsOrigins = splitList(effectiveEnvironment.CORS_EXTRA_ORIGINS);
   const extraTrustedOrigins = splitList(effectiveEnvironment.BETTER_AUTH_EXTRA_TRUSTED_ORIGINS);
   const authOrigin =
-    domainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.AUTH_APP_API_DOMAIN}`;
+    publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.AUTH_APP_API_DOMAIN}`;
   const runtimeDefaults =
-    domainMode === 'external-proxy'
+    domainMode === 'external-proxy' && !publicDomainMode
       ? {}
       : {
           AUTH_JWT_ISSUER: authOrigin,
           AUTH_OAUTH_REDIRECT_URI: `${authOrigin}/oauth/callback`,
           BETTER_AUTH_TRUSTED_ORIGINS: unique([...exposedOrigins, ...extraTrustedOrigins]).join(','),
           BETTER_AUTH_URL:
-            domainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
+            publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
           CORS_ORIGINS: unique([...exposedOrigins, ...extraCorsOrigins]).join(','),
           DISCORD_WEB_APP_BASE_URL:
-            domainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
+            publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
           DISCORD_INTERACTIONS_ENDPOINT:
-            domainMode === 'single-domain'
+            publicDomainMode === 'single-domain'
               ? `https://${baseDomain}/discord/interactions`
               : `https://${domains.DISCORD_APP_API_DOMAIN}/discord/interactions`,
           DISCORD_REDIRECT_URI: `${authOrigin}/auth/discord/callback`,
           TELEGRAM_BOT_WEBHOOK_URL:
-            domainMode === 'single-domain'
+            publicDomainMode === 'single-domain'
               ? `https://${baseDomain}/telegram/webhook`
               : `https://${domains.TELEGRAM_BOT_API_DOMAIN}/telegram/webhook`,
           TELEGRAM_MINI_APP_URL:
-            domainMode === 'single-domain'
+            publicDomainMode === 'single-domain'
               ? `https://${baseDomain}/telegram-mini-app`
               : `https://${domains.USER_APP_DOMAIN}/telegram-mini-app`,
         };
@@ -248,6 +254,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     COMPOSE_DATABASE_MODE: databaseMode,
     COMPOSE_DOMAIN_MODE: domainMode,
     COMPOSE_TLS_MODE: tlsMode,
+    ...(domainMode === 'external-proxy' && publicDomainMode ? { EXTERNAL_PROXY_PUBLIC_MODE: publicDomainMode } : {}),
     EDGE_OPTIONAL_ROUTES: profiles.length === 0 ? 'default' : profiles.join('-'),
     PRIMARY_APP: primaryApp,
     PRIMARY_APP_UPSTREAM: primaryUpstreams[primaryApp],
@@ -256,7 +263,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   for (const [key, value] of Object.entries(fileEnvironment)) {
     if (!Object.hasOwn(composeEnvironment, key)) composeEnvironment[key] = value;
   }
-  if (domainMode === 'external-proxy') {
+  if (domainMode === 'external-proxy' && !publicDomainMode) {
     for (const required of ['CORS_ORIGINS', 'AUTH_JWT_ISSUER', 'BETTER_AUTH_URL', 'BETTER_AUTH_TRUSTED_ORIGINS']) {
       composeEnvironment[required] = valueOrDefault(effectiveEnvironment, required, '');
       if (!composeEnvironment[required]) fail(`${required} is required in external-proxy mode.`);
@@ -284,6 +291,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     files,
     profiles,
     publicDomain: baseDomain,
+    publicDomainMode,
     tlsMode,
   };
 }
@@ -301,6 +309,7 @@ function main() {
             domainMode: invocation.domainMode,
             profiles: invocation.profiles,
             publicDomain: invocation.publicDomain,
+            publicDomainMode: invocation.publicDomainMode,
             tlsMode: invocation.tlsMode,
           },
           null,

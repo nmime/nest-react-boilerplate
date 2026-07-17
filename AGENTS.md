@@ -126,6 +126,7 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - Architecture: [docs/architecture.md](docs/architecture.md)
 - Commands: [docs/command-matrix.md](docs/command-matrix.md)
 - Local verification: [docs/local-verification.md](docs/local-verification.md)
+- Single-server operations: [docs/single-server-deployment.md](docs/single-server-deployment.md)
 - Testing: [docs/testing.md](docs/testing.md)
 
 ## Validation

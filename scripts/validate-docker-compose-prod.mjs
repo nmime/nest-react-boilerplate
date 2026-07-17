@@ -24,6 +24,7 @@ const securityPolicy = read('SECURITY.md');
 
 const unsafeTags = new Set(['latest', 'main', 'master', 'dev', 'prod', 'production']);
 const placeholderTag = 'sha-000000000000';
+const externalProxyModeContract = ['EXTERNAL_PROXY_PUBLIC_MODE', 'per-app-domains'].join('=');
 
 const tagFromEnvExample = productionEnvExample.match(/^IMAGE_TAG=(?<tag>.+)$/m)?.groups?.tag.trim();
 assert.ok(tagFromEnvExample, '.env.production.example must define IMAGE_TAG');
@@ -64,6 +65,7 @@ assert.ok(
   !prodCompose.includes('POSTGRES_PASSWORD: ${POSTGRES_PASSWORD'),
   'production Compose must not inline database passwords',
 );
+has(prodCompose, 'TRUST_PROXY: ${TRUST_PROXY:-true}', 'reverse-proxy trust reaches backend containers');
 assert.ok(
   !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
   'production env example must not include inline AUTH_JWT_SECRET',
@@ -88,6 +90,17 @@ has(edgeCompose, "published: '${EDGE_HTTPS_PORT:-443}'", 'configurable edge HTTP
 has(edgeCompose, 'protocol: udp', 'HTTP/3 UDP listener');
 has(edgeCompose, 'cap_drop: [ALL]', 'edge drops capabilities');
 has(edgeCompose, 'no-new-privileges:true', 'edge disallows privilege escalation');
+has(prodCompose, 'x-default-logging: &default-logging', 'bounded default service logging');
+has(prodCompose, "max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'", 'bounded Docker log size');
+has(prodCompose, "max-file: '${DOCKER_LOG_MAX_FILES:-5}'", 'bounded Docker log retention');
+has(prodCompose, 'migrate:\n    image:', 'migration service is declared');
+assert.match(
+  prodCompose,
+  /migrate:\n(?:.*\n){1,3}\s+logging: \*default-logging/u,
+  'migration service logs must be bounded',
+);
+has(bundledDbCompose, 'DOCKER_LOG_MAX_SIZE', 'bundled PostgreSQL log rotation');
+has(edgeCompose, 'DOCKER_LOG_MAX_SIZE', 'Compose edge log rotation');
 has(providedTlsCompose, 'EDGE_TLS_CERT_FILE', 'provided TLS certificate mount');
 has(providedTlsCompose, 'EDGE_TLS_KEY_FILE', 'provided TLS key mount');
 has(singleDomainCaddyfile, '{$PUBLIC_DOMAIN}', 'single-domain public hostname');
@@ -152,7 +165,9 @@ for (const expected of [
   'PRIMARY_APP=landing-app',
   'COMPOSE_DATABASE_MODE=bundled-db',
   'COMPOSE_DOMAIN_MODE=per-app-domains',
+  externalProxyModeContract,
   'COMPOSE_TLS_MODE=automatic',
+  'TRUST_PROXY=true',
   'EDGE_BIND_ADDRESS=0.0.0.0',
   'EDGE_HTTP_PORT=80',
   'EDGE_HTTPS_PORT=443',

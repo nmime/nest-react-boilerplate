@@ -1,19 +1,8 @@
 # @app/backend-common-static
 
-Path: `libs/backend/common/static/lib`
-Nx project: `@app/backend-common-static`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:infrastructure-adapter`
-
 ## Purpose
 
 Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
 
 ## Commands
 

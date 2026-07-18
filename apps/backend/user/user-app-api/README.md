@@ -1,11 +1,5 @@
 # user-app-api
 
-Path: `apps/backend/user/user-app-api`
-Nx project: `user-app-api`
-Package: `user-app-api`
-Runtime: NestJS API on Fastify
-Default local port: `3002`
-
 ## Ownership
 
 This service composes the user-facing API runtime, shared health controller, and

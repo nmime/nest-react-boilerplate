@@ -1,11 +1,5 @@
 # mobile-app
 
-Path: `apps/frontend/mobile`
-Nx project: `mobile-app`
-Package: `mobile-app`
-Runtime: Expo Router + React Native
-Local URL: `http://localhost:4300` for Expo web
-
 ## Ownership
 
 This app owns the Expo Router entrypoint, native app config, Metro/Babel config,

@@ -8,6 +8,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Launching a New Project](new-project.md) — rename, initialize, and harden the boilerplate for your product.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — end-to-end guide for shipping a vertical slice.
 - [Scaffolding and Extension Contract](scaffolding-and-extension.md) — canonical fresh-clone, app/library/feature, domain, and production-registration lifecycle.
+- [Project Catalog](project-catalog.md) — generated application IDs, Nx roots, runtimes, selection dependencies, and template hostnames.
 
 ## Setup and configuration
 
@@ -105,6 +106,8 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Reference
 
+- [Project Catalog](project-catalog.md)
+- [Service Port Registry](PORTS.md)
 - [Command Matrix](command-matrix.md) — supported local and CI commands.
 - [Feature Flags](feature-flags.md)
 - [i18n](i18n.md)
@@ -116,3 +119,22 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Production Hardening](production-hardening.md)
 - [Agent Skills](agent-skills.md)
 - [Billing Admin Roadmap](billing-admin-roadmap.md)
+
+## Documentation authority
+
+Reference facts have one owner. Topic guides link to that owner instead of
+copying project, hostname, port, command, or environment tables:
+
+| Fact                                                                          | Canonical owner                                                             |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Application ID, Nx root, runtime, class, hostname, and selection dependencies | [Project Catalog](project-catalog.md)                                       |
+| Library identity, tags, targets, and source root                              | The library's `project.json`; inspect with `pnpm exec nx show project <id>` |
+| Public TypeScript aliases                                                     | `tsconfig.base.json`                                                        |
+| Local and staging ports                                                       | [Service Port Registry](PORTS.md)                                           |
+| Public root commands                                                          | [Command Matrix](command-matrix.md) and `package.json`                      |
+| Environment variables                                                         | [Environment Variables](environment-variables.md) and `.env.example`        |
+| Project-specific behavior                                                     | The nearest project `README.md` and `AGENTS.md`                             |
+
+`docs/project-catalog.md` is generated. Change the setup catalog or Nx project
+configuration, run `pnpm run docs:catalog`, and let `pnpm run docs:check` prove
+that the rendered catalog and all local links remain current.

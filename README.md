@@ -68,6 +68,7 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Getting started       | [Quick Start](docs/quick-start.md)                                                                                                                                                      |
 | Scaffold and extend   | [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)                                                                                                                 |
+| Projects and paths    | [Project Catalog](docs/project-catalog.md)                                                                                                                                              |
 | Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                                                                                |
 | System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                                                                                        |
 | Environment config    | [Environment Variables](docs/environment-variables.md)                                                                                                                                  |
@@ -113,36 +114,28 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 ## Repository map
 
-| Path                                          | Purpose                                                                     |
-| --------------------------------------------- | --------------------------------------------------------------------------- |
-| `apps/frontend/admin`                         | Admin React app shell.                                                      |
-| `apps/frontend/app`                           | Authenticated user React application.                                       |
-| `apps/frontend/landing`                       | Public Astro landing app with React islands.                                |
-| `apps/frontend/site`                          | Vike SSR product/user site.                                                 |
-| `apps/frontend/mobile`                        | Expo/React Native mobile app.                                               |
-| `apps/e2e/fullstack`                          | Full-stack Playwright/e2e verification project.                             |
-| `apps/backend/admin/admin-app-api`            | Admin NestJS API.                                                           |
-| `apps/backend/user/user-app-api`              | User NestJS API.                                                            |
-| `apps/backend/auth/auth-app-api`              | Auth NestJS API.                                                            |
-| `apps/backend/discord/discord-app-api`        | Discord interaction/OAuth integration API.                                  |
-| `apps/backend/telegram/telegram-bot-api`      | Telegram bot webhook/API surface.                                           |
-| `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                |
-| `libs/frontend/ui-web`                        | Shared React DOM UI primitives.                                             |
-| `libs/frontend/ui-native`                     | Shared Tamagui/native UI facade for Expo/React Native.                      |
-| `libs/frontend/runtime`                       | Non-visual frontend runtime for i18n, query, shell state, and theme.        |
-| `libs/frontend/api-support`                   | Browser-safe API environment, request, and error plumbing.                  |
-| `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                     |
-| `libs/backend/common`                         | Backend bootstrap, health, exception, validation, and response foundations. |
-| `libs/backend/feature/<scope>/<layer>/lib`    | Backend feature modules, bot libraries, and feature-owned persistence.      |
-| `libs/backend/postgres/main/shared/lib`       | Shared PostgreSQL configuration and MikroORM infrastructure.                |
-| `libs/common/api-contracts/lib/src/generated` | Shared generated contract review types.                                     |
-| `libs/**/lib`                                 | Nx library project roots, each with local README and AGENTS files.          |
-| `packages/tooling`                            | Repository automation used by local checks and CI.                          |
-| `docs/architecture`                           | Focused architecture deep dives and boundary docs.                          |
-| `docs/adr`                                    | Architecture decision records and template.                                 |
-| `docs/runbooks`                               | Operational runbook index and templates.                                    |
-| `docs/ai`                                     | Agent policy, retrieval, context packing, and workflow docs.                |
-| `docs`                                        | Architecture, API, testing, operations, deployment, and workflow guides.    |
+| Path                                          | Purpose                                                                                         |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `apps/frontend/**`                            | Selectable browser and mobile applications; see the [project catalog](docs/project-catalog.md). |
+| `apps/backend/<scope>/**`                     | Selectable APIs and workers; see the [project catalog](docs/project-catalog.md).                |
+| `apps/e2e/**`                                 | Cross-application end-to-end projects.                                                          |
+| `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                                    |
+| `libs/frontend/ui-web`                        | Shared React DOM UI primitives.                                                                 |
+| `libs/frontend/ui-native`                     | Shared Tamagui/native UI facade for Expo/React Native.                                          |
+| `libs/frontend/runtime`                       | Non-visual frontend runtime for i18n, query, shell state, and theme.                            |
+| `libs/frontend/api-support`                   | Browser-safe API environment, request, and error plumbing.                                      |
+| `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                                         |
+| `libs/backend/common`                         | Backend bootstrap, health, exception, validation, and response foundations.                     |
+| `libs/backend/feature/<scope>/<layer>/lib`    | Backend feature modules, bot libraries, and feature-owned persistence.                          |
+| `libs/backend/postgres/main/shared/lib`       | Shared PostgreSQL configuration and MikroORM infrastructure.                                    |
+| `libs/common/api-contracts/lib/src/generated` | Shared generated contract review types.                                                         |
+| `libs/**/lib`                                 | Nx library project roots, each with local README and AGENTS files.                              |
+| `packages/tooling`                            | Repository automation used by local checks and CI.                                              |
+| `docs/architecture`                           | Focused architecture deep dives and boundary docs.                                              |
+| `docs/adr`                                    | Architecture decision records and template.                                                     |
+| `docs/runbooks`                               | Operational runbook index and templates.                                                        |
+| `docs/ai`                                     | Agent policy, retrieval, context packing, and workflow docs.                                    |
+| `docs`                                        | Architecture, API, testing, operations, deployment, and workflow guides.                        |
 
 ## Quickstart
 
@@ -163,7 +156,7 @@ pnpm run dev
 Core local services:
 
 - Monorepo start: `pnpm nrb setup` selects the frontend/backend applications this product needs. `pnpm run dev` (or `pnpm run dev:fullstack`) then starts only the applications recorded in `.nrb/workspace.json`; it refuses to invent a pre-setup default. Rerun setup or use `pnpm nrb setup --app <id>` to add another application later. Use `pnpm run dev:all` only when intentionally running every serve target.
-- Frontends: `admin-app` and `user-app` use Vite, `landing-app` uses Astro, `site-app` uses Vike, and `mobile-app` uses Expo/React Native. Local ports are `4200` admin, `4201` user, `4202` landing, `4203` site, and `4300` mobile.
+- Applications: use the [Project Catalog](docs/project-catalog.md) for stable IDs, runtimes, roots, dependencies, and template hostnames; use the [Service Port Registry](docs/PORTS.md) for local endpoints.
 - APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
 - OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
 

@@ -132,6 +132,8 @@ describe('application generator', () => {
       assert.match(readme, /billing-api:build/);
       assert.match(readme, /setup catalog/);
       assert.match(readme, /onboarding:verify/);
+      assert.doesNotMatch(readme, /Generated .* at `apps\//);
+      assert.doesNotMatch(readme, /^Nx tags:/m);
     });
 
     it('creates an application-context worker without HTTP bootstrap', async () => {

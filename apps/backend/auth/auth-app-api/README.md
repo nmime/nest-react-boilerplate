@@ -1,11 +1,5 @@
 # auth-app-api
 
-Path: `apps/backend/auth/auth-app-api`
-Nx project: `auth-app-api`
-Package: `auth-app-api`
-Runtime: NestJS API on Fastify
-Default local port: `3003`
-
 ## Ownership
 
 This service composes the auth/session API runtime, shared health controller,

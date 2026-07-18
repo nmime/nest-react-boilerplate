@@ -156,18 +156,10 @@ origin. Other frontend containers remain private.
 
 Set `EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains`. The exact public contract is:
 
-| Deployable         | Host                           |
-| ------------------ | ------------------------------ |
-| selected apex app  | `example.com`                  |
-| other landing/site | `<app-id>.example.com`         |
-| `user-app`         | `user-app.example.com`         |
-| `admin-app`        | `admin-app.example.com`        |
-| `mobile-app`       | `mobile-app.example.com`       |
-| `auth-app-api`     | `auth-app-api.example.com`     |
-| `user-app-api`     | `user-app-api.example.com`     |
-| `admin-app-api`    | `admin-app-api.example.com`    |
-| optional Discord   | `discord-app-api.example.com`  |
-| optional Telegram  | `telegram-bot-api.example.com` |
+The selected landing/site application owns the apex. Every other enabled
+deployable uses the exact mapping in the
+[Project Catalog](project-catalog.md), with the configured base domain
+substituted for `example.com`.
 
 Create all exact A/AAAA records, or create apex A/AAAA plus
 `*.example.com` pointing to the same server. Wildcard DNS is only a DNS

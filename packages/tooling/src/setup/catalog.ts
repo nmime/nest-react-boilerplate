@@ -17,6 +17,8 @@ export interface AppEntry {
   platform: 'frontend' | 'backend' | 'e2e';
   /** Whether this is a reference product surface or an optional integration. */
   classification: 'reference' | 'optional';
+  /** Human-facing runtime summary used by setup and generated reference docs. */
+  runtime: string;
   /** Canonical template hostname; non-deployable projects use null. */
   publicHostname: string | null;
   /** Capabilities that this app REQUIRES when present. */
@@ -39,6 +41,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Admin Dashboard',
     platform: 'frontend',
     classification: 'reference',
+    runtime: 'React + Vite SPA',
     publicHostname: 'admin-app.example.com',
     requiresCapabilities: ['authz'],
     requiresApps: ['admin-app-api', 'auth-app-api'],
@@ -49,6 +52,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'User Application',
     platform: 'frontend',
     classification: 'reference',
+    runtime: 'React + Vite SPA',
     publicHostname: 'user-app.example.com',
     requiresCapabilities: ['i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
@@ -59,6 +63,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Landing Page',
     platform: 'frontend',
     classification: 'reference',
+    runtime: 'Astro + React islands',
     publicHostname: 'example.com',
     requiresCapabilities: [],
     requiresApps: [],
@@ -69,6 +74,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Marketing Site',
     platform: 'frontend',
     classification: 'reference',
+    runtime: 'Vike + React SSR',
     publicHostname: 'site-app.example.com',
     requiresCapabilities: [],
     requiresApps: [],
@@ -79,6 +85,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Mobile App',
     platform: 'frontend',
     classification: 'reference',
+    runtime: 'Expo + React Native',
     publicHostname: 'mobile-app.example.com',
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['auth-app-api', 'user-app-api'],
@@ -91,6 +98,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Admin API',
     platform: 'backend',
     classification: 'reference',
+    runtime: 'NestJS + Fastify API',
     publicHostname: 'admin-app-api.example.com',
     requiresCapabilities: ['postgres', 'authz'],
     requiresApps: [],
@@ -101,6 +109,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'User API',
     platform: 'backend',
     classification: 'reference',
+    runtime: 'NestJS + Fastify API',
     publicHostname: 'user-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
@@ -111,6 +120,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Auth API',
     platform: 'backend',
     classification: 'reference',
+    runtime: 'NestJS + Fastify API',
     publicHostname: 'auth-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
@@ -121,6 +131,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Discord Bot API',
     platform: 'backend',
     classification: 'optional',
+    runtime: 'NestJS + Fastify integration API',
     publicHostname: 'discord-app-api.example.com',
     requiresCapabilities: ['discord-bot', 'postgres'],
     requiresApps: [],
@@ -131,6 +142,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Telegram Bot API',
     platform: 'backend',
     classification: 'optional',
+    runtime: 'NestJS + Fastify bot API',
     publicHostname: 'telegram-bot-api.example.com',
     requiresCapabilities: ['telegram-bot', 'postgres'],
     requiresApps: [],
@@ -142,6 +154,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     label: 'Fullstack E2E Tests',
     platform: 'e2e',
     classification: 'reference',
+    runtime: 'Playwright full-stack tests',
     publicHostname: null,
     requiresCapabilities: [],
     requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],

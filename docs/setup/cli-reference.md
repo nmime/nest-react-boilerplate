@@ -91,7 +91,7 @@ pnpm nrb setup --replace --app landing-app --non-interactive
 | `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                          |
 | `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                 |
 | `--replace`                | boolean | Start from an empty selection before applying explicit additions.               |
-| `--list`                   | boolean | Show all available entries with current selection markers.                      |
+| `--list`                   | boolean | Show available entries with selection markers, runtime, and template hostname.  |
 | `--dry-run`                | boolean | Show plan without modifying files.                                              |
 | `--prune`                  | boolean | Remove stale files previously managed by setup.                                 |
 | `--force`                  | boolean | Overwrite existing setup-managed files without refusing.                        |

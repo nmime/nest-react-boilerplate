@@ -1,20 +1,8 @@
 # @app/backend-common-component-test
 
-Path: `libs/backend/common/component-test/lib`
-Nx project: `@app/backend-common-component-test`
-Project type: `library`
-Tags: `platform:backend`, `type:test-util`, `scope:shared`, `boundary:test-util`
-
 ## Purpose
 
 Backend test utility library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Use this only from tests or test support targets. Do not import test utilities into production runtime code.
-- Respect the declared scope tag: `shared`.
 
 ## Commands
 

@@ -20,21 +20,10 @@ every production frontend and enabled public API. Replace `example.com` in
 environment-owned values, preserve the one-host-per-app mapping, and include
 every browser origin in CORS, Better Auth trusted origins, and TLS:
 
-| Frontend app  | Default host             | Kubernetes service |
-| ------------- | ------------------------ | ------------------ |
-| `landing-app` | `example.com`            | `landing-app`      |
-| `site-app`    | `site-app.example.com`   | `site-app`         |
-| `user-app`    | `user-app.example.com`   | `user-app`         |
-| `admin-app`   | `admin-app.example.com`  | `admin-app`        |
-| `mobile-app`  | `mobile-app.example.com` | `mobile-app`       |
-
-| Backend app        | Default host                   | Exposure |
-| ------------------ | ------------------------------ | -------- |
-| `auth-app-api`     | `auth-app-api.example.com`     | enabled  |
-| `user-app-api`     | `user-app-api.example.com`     | enabled  |
-| `admin-app-api`    | `admin-app-api.example.com`    | enabled  |
-| `discord-app-api`  | `discord-app-api.example.com`  | opt-in   |
-| `telegram-bot-api` | `telegram-bot-api.example.com` | opt-in   |
+The generated [Project Catalog](project-catalog.md) is the hostname registry.
+Each enabled host routes to the identically named Kubernetes/Compose service.
+Reference frontends and core APIs are enabled by their selection; Discord and
+Telegram APIs remain opt-in integrations.
 
 The Discord and Telegram APIs are disabled until their provider credentials,
 callback registration, ingress route, DNS, and TLS host are configured together.
@@ -43,7 +32,7 @@ service, or TLS assignment is missing. DNS records and certificates remain
 environment/platform responsibilities; the app chart owns the ingress contract
 they target.
 
-Compose derives this exact table from `PUBLIC_DOMAIN` and `PRIMARY_APP`; only
+Compose derives the catalog mapping from `PUBLIC_DOMAIN` and `PRIMARY_APP`; only
 `landing-app` or `site-app` may own the apex. A wildcard DNS record may point
 all subdomains to the Compose host, but Caddy still matches only these exact app
 IDs. `single-domain` is a separate reduced publishing mode: it exposes the

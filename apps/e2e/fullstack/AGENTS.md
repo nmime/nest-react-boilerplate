@@ -3,10 +3,6 @@
 Follow the root [AGENTS.md](../../../AGENTS.md) and detailed [AI agent policy](../../../docs/ai/agent-policy.md) first.
 Also follow [apps/e2e/AGENTS.md](../AGENTS.md).
 
-This is the local policy adapter for `fullstack-e2e` at `apps/e2e/fullstack`.
-Project type: `application`.
-Tags: `platform:e2e`, `type:e2e`, `scope:fullstack`.
-
 ## Local Rules
 
 - Keep app entrypoints, renderer/service composition, and app-local configuration in this project.

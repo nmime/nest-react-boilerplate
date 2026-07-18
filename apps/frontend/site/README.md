@@ -1,11 +1,5 @@
 # site-app
 
-Path: `apps/frontend/site`
-Nx project: `site-app`
-Package: `site-app`
-Runtime: Vike + React SSR
-Local URL: `http://localhost:4203`
-
 ## Ownership
 
 This app owns the SSR site renderer, Vike pages/config, and production server

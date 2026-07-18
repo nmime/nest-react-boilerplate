@@ -6,13 +6,10 @@ API/state/UI logic in the appropriate frontend library or lower FSD layer.
 
 ## 1. Choose the owning app
 
-| App           | Path                    | Renderer          | Role                    |
-| ------------- | ----------------------- | ----------------- | ----------------------- |
-| `admin-app`   | `apps/frontend/admin`   | React + Vite      | Admin/RBAC flow         |
-| `user-app`    | `apps/frontend/app`     | React + Vite      | Authenticated user flow |
-| `landing-app` | `apps/frontend/landing` | Astro             | Public marketing pages  |
-| `site-app`    | `apps/frontend/site`    | Vike + React SSR  | SSR product/site routes |
-| `mobile-app`  | `apps/frontend/mobile`  | Expo/React Native | Mobile screens          |
+Choose the product surface and renderer from the
+[Project Catalog](../project-catalog.md). If the behavior belongs to an
+existing app, extend that owner in place; do not create an adjacent app merely
+to avoid understanding its route structure.
 
 ## 2. Generate a vertical page boundary
 

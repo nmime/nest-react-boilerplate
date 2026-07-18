@@ -19,6 +19,7 @@ const ignoredDirectories = new Set([
 ]);
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
 const pnpmRunPattern = /\bpnpm\s+run\s+([@A-Za-z0-9_.:-]+)/gu;
+const duplicatedProjectMetadataPattern = /^(?:Path|Nx project|Package|Project type|Tags):\s+/gmu;
 
 export function collectTrackedMarkdown(workspaceRoot) {
   try {
@@ -45,6 +46,32 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
 
   for (const filePath of markdownFiles) {
     const content = readFileSync(filePath, 'utf8');
+    const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
+
+    if (/^(?:apps|libs)\/.+\/(?:AGENTS|README)\.md$/u.test(workspacePath)) {
+      for (const match of content.matchAll(duplicatedProjectMetadataPattern)) {
+        failures.push(
+          formatFailure(
+            workspaceRoot,
+            filePath,
+            lineNumber(content, match.index ?? 0),
+            'duplicated project metadata; use project.json and docs/project-catalog.md',
+          ),
+        );
+      }
+    }
+
+    const duplicatedHeadingIndex = content.indexOf('## Project names and paths');
+    if (duplicatedHeadingIndex !== -1) {
+      failures.push(
+        formatFailure(
+          workspaceRoot,
+          filePath,
+          lineNumber(content, duplicatedHeadingIndex),
+          'duplicated project map; link to docs/project-catalog.md',
+        ),
+      );
+    }
 
     for (const match of content.matchAll(markdownLinkPattern)) {
       const rawHref = normalizeMarkdownHref(match[1] ?? '');

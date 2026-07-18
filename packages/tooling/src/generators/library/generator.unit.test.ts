@@ -124,6 +124,22 @@ describe('library generator', () => {
       assert.equal(config.includes('../coverage/'), false);
     });
 
+    it('keeps local docs focused on purpose, policy, and commands', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+
+      await libraryGenerator(tree, { name: 'shared-utils', kind: 'backend', skipFormat: true });
+
+      const root = 'libs/backend/common/shared-utils/lib';
+      const readme = tree.read(`${root}/README.md`, 'utf8')!;
+      const agentPolicy = tree.read(`${root}/AGENTS.md`, 'utf8')!;
+      assert.doesNotMatch(readme, /^(?:Path|Nx project|Project type|Tags):/m);
+      assert.doesNotMatch(readme, /^## Ownership$/m);
+      assert.match(readme, /^## Purpose$/m);
+      assert.match(agentPolicy, /^## Local Rules$/m);
+      assert.doesNotMatch(agentPolicy, /This is the local policy adapter|^Project type:|^Tags:/m);
+    });
+
     it('rejects custom roots and tags that bypass ownership boundaries', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');

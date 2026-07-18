@@ -470,6 +470,7 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     label: app.label,
     platform: app.platform,
     classification: app.classification,
+    runtime: app.runtime,
     hostname: app.publicHostname,
     selected: selectedApps.has(app.id),
   }));
@@ -510,7 +511,9 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     process.stdout.write(`\n${group.label}:\n`);
     for (const app of applications.filter(group.matches)) {
       const hostname = app.hostname ? ` — ${app.hostname}` : "";
-      process.stdout.write(`  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label}${hostname}\n`);
+      process.stdout.write(
+        `  ${app.selected ? "[x]" : "[ ]"} ${app.id} — ${app.label} — ${app.runtime}${hostname}\n`,
+      );
     }
   }
   process.stdout.write("\ncapabilities:\n");

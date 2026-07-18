@@ -3,10 +3,6 @@
 Follow the root [AGENTS.md](../../../../AGENTS.md) and detailed [AI agent policy](../../../../docs/ai/agent-policy.md) first.
 Also follow [libs/common/AGENTS.md](../../AGENTS.md).
 
-This is the local policy adapter for `@app/common-websocket` at `libs/common/websocket/lib`.
-Project type: `library`.
-Tags: `platform:shared`, `type:common`, `scope:shared`, `boundary:websocket`, `framework:neutral`.
-
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
@@ -14,4 +10,4 @@ Tags: `platform:shared`, `type:common`, `scope:shared`, `boundary:websocket`, `f
 - Respect the declared scope tag: `shared`.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.

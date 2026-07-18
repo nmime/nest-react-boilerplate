@@ -165,10 +165,10 @@ falling back to example domains.
 | `COMPOSE_TLS_MODE`           | `automatic`, `provided`, or `external`, constrained by the domain mode. |
 | `COMPOSE_PROFILES`           | Optional comma-separated `telegram` and/or `discord`.                   |
 
-Per-app mode derives hostnames from app IDs. For example,
-`auth-app-api` becomes `auth-app-api.example.com`; the chosen `PRIMARY_APP`
-receives `example.com`. Single-domain mode publishes the selected surfaces
-through the apex edge routes. See
+Per-app mode derives the exact app-ID hostnames in the
+[Project Catalog](project-catalog.md); the chosen `PRIMARY_APP` receives the
+apex. Single-domain mode publishes the selected surfaces through the apex edge
+routes. See
 [Docker Compose Production](docker-compose-production.md) and
 [Single-server Deployment](single-server-deployment.md).
 

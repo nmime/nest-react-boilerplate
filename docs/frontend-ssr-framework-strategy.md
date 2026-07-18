@@ -8,13 +8,16 @@ Date: 2026-07-02.
 
 Use two SSR-capable web app targets with different ownership boundaries:
 
-- `landing-app` at `apps/frontend/landing`: Astro with React islands.
-- `site-app` at `apps/frontend/site`: Vike with React SSR for a distinct
+- `landing-app`: Astro with React islands.
+- `site-app`: Vike with React SSR for a distinct
   product/site surface when SSR is required.
-- `user-app` at `apps/frontend/app`: Vite with React for the authenticated
+- `user-app`: Vite with React for the authenticated
   user application.
-- `admin-app` at `apps/frontend/admin`: keep the existing Vite React SPA unless
+- `admin-app`: keep the existing Vite React SPA unless
   admin SEO, first-load SSR, or server auth gates become product requirements.
+
+The [Project Catalog](project-catalog.md) owns their exact Nx roots and runtime
+summary; this decision record owns why each renderer was chosen.
 
 This resolves the framework choice as Astro for landing, Vike for a distinct
 SSR product/site surface, and Vite for the authenticated user and admin

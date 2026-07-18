@@ -108,7 +108,9 @@ Example:
 ## Frontend changes
 
 - Reuse `@app/frontend-ui-web` primitives for shared React DOM layout and components. Storybook configuration and stories are owned directly by `libs/frontend/ui-web/lib`; there is no generic UI compatibility facade.
-- Use `@app/frontend-ui-native` for Expo/React Native UI. Keep `mobile-app` app wiring under `apps/frontend/mobile`, and use `EXPO_PUBLIC_*` variables for mobile-safe public runtime configuration.
+- Use `@app/frontend-ui-native` for Expo/React Native UI. Keep mobile wiring in
+  the owner listed by the [Project Catalog](docs/project-catalog.md), and use
+  `EXPO_PUBLIC_*` variables for mobile-safe public runtime configuration.
 - Follow [frontend state architecture](docs/frontend-state.md) for TanStack Query, MobX shell state, theme/i18n ownership, raw-fetch limits, and copy rules.
 - Keep static smoke checks, Storybook stories, and user-visible copy assertions in sync when frontend shells change.
 - Keep browser-facing API base URLs documented with the matching `VITE_*` variable.

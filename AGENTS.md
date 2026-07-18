@@ -124,6 +124,7 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - Full agent policy: [docs/ai/agent-policy.md](docs/ai/agent-policy.md)
 - Retrieval map: [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
+- Project catalog: [docs/project-catalog.md](docs/project-catalog.md)
 - Commands: [docs/command-matrix.md](docs/command-matrix.md)
 - Local verification: [docs/local-verification.md](docs/local-verification.md)
 - Single-server operations: [docs/single-server-deployment.md](docs/single-server-deployment.md)

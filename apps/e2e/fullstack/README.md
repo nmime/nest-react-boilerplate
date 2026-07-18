@@ -1,19 +1,10 @@
 # fullstack-e2e
 
-Path: `apps/e2e/fullstack`
-Nx project: `fullstack-e2e`
-Project type: `application`
-Tags: `platform:e2e`, `type:e2e`, `scope:fullstack`
-
-## Purpose
-
-End-to-end app project for the fullstack scope.
-
 ## Ownership
 
-- Keep app entrypoints, renderer/service composition, and app-local configuration in this project.
-- Move reusable behavior into the owning `libs/**` project instead of sharing through another app.
-- Keep this project focused on cross-app smoke and full-stack verification, not reusable product logic.
+This project owns cross-app smoke and full-stack verification. Keep reusable
+fixtures and product behavior in their owning libraries rather than sharing
+them through this test application.
 
 ## Commands
 

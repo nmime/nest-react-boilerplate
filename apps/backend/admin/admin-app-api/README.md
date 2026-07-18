@@ -1,11 +1,5 @@
 # admin-app-api
 
-Path: `apps/backend/admin/admin-app-api`
-Nx project: `admin-app-api`
-Package: `admin-app-api`
-Runtime: NestJS API on Fastify
-Default local port: `3001`
-
 ## Ownership
 
 This service composes the admin API runtime, shared health controller, and

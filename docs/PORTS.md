@@ -4,20 +4,23 @@ Every runnable service in this repository MUST have an explicitly assigned port.
 There is no runtime auto-discovery, no implicit framework/default port fallback,
 and no random free-port allocation.
 
+Application identity, runtime, root, and hostname belong to the
+[Project Catalog](project-catalog.md); this file owns only port assignments.
+
 ## Port Matrix
 
-| Service          | Port | Role                       |
-| ---------------- | ---- | -------------------------- |
-| Admin API        | 3001 | Backend API (admin)        |
-| User API         | 3002 | Backend API (user)         |
-| Auth API         | 3003 | Backend API (auth)         |
-| Discord Bot API  | 3007 | Backend API (Discord bot)  |
-| Telegram Bot API | 3013 | Backend API (Telegram bot) |
-| Admin App        | 4200 | Frontend (admin panel)     |
-| User App         | 4201 | Frontend (user dashboard)  |
-| Landing App      | 4202 | Frontend (landing page)    |
-| Site App         | 4203 | Frontend (Vike SSR site)   |
-| Mobile App       | 4300 | Frontend (Expo mobile/web) |
+| Service            | Port | Role                       |
+| ------------------ | ---- | -------------------------- |
+| `admin-app-api`    | 3001 | Backend API (admin)        |
+| `user-app-api`     | 3002 | Backend API (user)         |
+| `auth-app-api`     | 3003 | Backend API (auth)         |
+| `discord-app-api`  | 3007 | Backend API (Discord bot)  |
+| `telegram-bot-api` | 3013 | Backend API (Telegram bot) |
+| `admin-app`        | 4200 | Frontend (admin panel)     |
+| `user-app`         | 4201 | Frontend (user dashboard)  |
+| `landing-app`      | 4202 | Frontend (landing page)    |
+| `site-app`         | 4203 | Frontend (Vike SSR site)   |
+| `mobile-app`       | 4300 | Frontend (Expo mobile/web) |
 
 ## Infrastructure Services
 
@@ -47,18 +50,18 @@ and no random free-port allocation.
 
 Staging services use port offset +100 from production defaults:
 
-| Service          | Staging Port | Production Port | Role                       |
-| ---------------- | ------------ | --------------- | -------------------------- |
-| Admin API        | 3101         | 3001            | Backend API (admin)        |
-| User API         | 3102         | 3002            | Backend API (user)         |
-| Auth API         | 3103         | 3003            | Backend API (auth)         |
-| Discord Bot API  | 3107         | 3007            | Backend API (Discord bot)  |
-| Telegram Bot API | 3113         | 3013            | Backend API (Telegram bot) |
-| Admin App        | 4300         | 4200            | Frontend (admin panel)     |
-| User App         | 4301         | 4201            | Frontend (user dashboard)  |
-| Landing App      | 4302         | 4202            | Frontend (landing page)    |
-| Site App         | 4303         | 4203            | Frontend (Vike SSR site)   |
-| Mobile App       | 4400         | 4300            | Frontend (Expo mobile/web) |
+| Service            | Staging Port | Production Port | Role                       |
+| ------------------ | ------------ | --------------- | -------------------------- |
+| `admin-app-api`    | 3101         | 3001            | Backend API (admin)        |
+| `user-app-api`     | 3102         | 3002            | Backend API (user)         |
+| `auth-app-api`     | 3103         | 3003            | Backend API (auth)         |
+| `discord-app-api`  | 3107         | 3007            | Backend API (Discord bot)  |
+| `telegram-bot-api` | 3113         | 3013            | Backend API (Telegram bot) |
+| `admin-app`        | 4300         | 4200            | Frontend (admin panel)     |
+| `user-app`         | 4301         | 4201            | Frontend (user dashboard)  |
+| `landing-app`      | 4302         | 4202            | Frontend (landing page)    |
+| `site-app`         | 4303         | 4203            | Frontend (Vike SSR site)   |
+| `mobile-app`       | 4400         | 4300            | Frontend (Expo mobile/web) |
 
 Configure via `PORT` env var per service, or use `.env.staging` which sets the
 staging-specific `*_APP_API_PORT` / `*_APP_PORT` values.

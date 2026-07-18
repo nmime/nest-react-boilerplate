@@ -415,7 +415,7 @@ Follow the root [AGENTS.md](${d}AGENTS.md), the [backend app rules](${d}apps/bac
     `${dir}/README.md`,
     `# ${names.title}
 
-Generated ${renderer} backend application at \`${dir}\`.
+${renderer} backend application scaffold.
 
 ## Verification
 
@@ -433,9 +433,8 @@ membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify
 fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
 for local Compose, Docker/Helm, ingress, DNS, TLS, and observability before
-calling the service production-ready.
-
-Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+calling the service production-ready. Keep Nx identity and tags in
+\`project.json\`; do not copy them into this README.
 `,
   );
 }
@@ -793,13 +792,7 @@ function runtimePackage(
   }
 }
 
-function writeFrontendPolicy(
-  tree: Tree,
-  names: ReturnType<typeof generateNames>,
-  dir: string,
-  renderer: string,
-  tags: string[],
-): void {
+function writeFrontendPolicy(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, renderer: string): void {
   const d = dots(dir);
   tree.write(
     `${dir}/AGENTS.md`,
@@ -818,7 +811,7 @@ Follow the root [AGENTS.md](${d}AGENTS.md) and [frontend app rules](${d}apps/fro
     `${dir}/README.md`,
     `# ${names.title}
 
-Generated ${renderer} frontend application at \`${dir}\`.
+${renderer} frontend application scaffold.
 
 ## Verification
 
@@ -836,9 +829,8 @@ membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify
 fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
 for local Compose, Docker/Helm, ingress, DNS, TLS, API routing, and observability
-before calling the application production-ready.
-
-Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+before calling the application production-ready. Keep Nx identity and tags in
+\`project.json\`; do not copy them into this README.
 `,
   );
 }
@@ -972,7 +964,7 @@ const title = "${names.title}";
 `,
   );
   tree.write(`${dir}/src/env.d.ts`, '/// <reference types="astro/client" />\n');
-  writeFrontendPolicy(tree, names, dir, 'Astro', tags);
+  writeFrontendPolicy(tree, names, dir, 'Astro');
 }
 
 function createVikeFrontendApp(
@@ -1052,7 +1044,7 @@ export default defineConfig({
 }
 `,
   );
-  writeFrontendPolicy(tree, names, dir, 'Vike SSR', tags);
+  writeFrontendPolicy(tree, names, dir, 'Vike SSR');
 }
 
 function createExpoFrontendApp(
@@ -1146,7 +1138,7 @@ export default function HomeScreen() {
 }
 `,
   );
-  writeFrontendPolicy(tree, names, dir, 'Expo/React Native', tags);
+  writeFrontendPolicy(tree, names, dir, 'Expo/React Native');
 }
 
 function createFrontendApp(
@@ -1160,7 +1152,7 @@ function createFrontendApp(
   switch (renderer) {
     case 'vite':
       createViteFrontendApp(tree, names, dir, tags, port);
-      writeFrontendPolicy(tree, names, dir, 'Vite/React', tags);
+      writeFrontendPolicy(tree, names, dir, 'Vite/React');
       break;
     case 'astro':
       createAstroFrontendApp(tree, names, dir, tags, port);

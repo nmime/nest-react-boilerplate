@@ -47,6 +47,20 @@ test('reports missing files, anchors, and root scripts with source locations', (
   assert.match(result.failures.join('\n'), /README\.md:3: unknown root script/);
 });
 
+test('rejects copied project metadata and duplicate project-map headings', () => {
+  write('apps/frontend/demo/README.md', '# demo\n\nPath: `apps/frontend/demo`\nNx project: `demo`\n');
+  write('docs/guide.md', '# Guide\n\n## Project names and paths\n');
+
+  const result = validateWorkspace({
+    workspaceRoot,
+    markdownFiles: [resolve(workspaceRoot, 'apps/frontend/demo/README.md'), resolve(workspaceRoot, 'docs/guide.md')],
+  });
+
+  assert.equal(result.failures.length, 3);
+  assert.match(result.failures.join('\n'), /duplicated project metadata/);
+  assert.match(result.failures.join('\n'), /duplicated project map/);
+});
+
 function write(path, content) {
   const file = resolve(workspaceRoot, path);
   mkdirSync(dirname(file), { recursive: true });

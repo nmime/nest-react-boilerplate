@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend shared UI library for the shared scope.
+Provides shared React DOM primitives, forms, feedback, admin tables, product
+and Mini App shells, and styling utilities for every web renderer.
 
 ## Commands
 

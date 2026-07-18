@@ -136,8 +136,10 @@ describe('library generator', () => {
       assert.doesNotMatch(readme, /^(?:Path|Nx project|Project type|Tags):/m);
       assert.doesNotMatch(readme, /^## Ownership$/m);
       assert.match(readme, /^## Purpose$/m);
+      assert.match(readme, /owns the public common boundary/);
       assert.match(agentPolicy, /^## Local Rules$/m);
       assert.doesNotMatch(agentPolicy, /This is the local policy adapter|^Project type:|^Tags:/m);
+      assert.doesNotMatch(agentPolicy, /Respect the declared scope tag:/);
     });
 
     it('rejects custom roots and tags that bypass ownership boundaries', async () => {
@@ -240,6 +242,34 @@ describe('library generator', () => {
   });
 
   describe('semantic layouts and aliases', () => {
+    it('uses a concrete public description and rejects vague provided descriptions', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+
+      await libraryGenerator(tree, {
+        name: 'money-format',
+        kind: 'common',
+        type: 'util',
+        description: 'Normalizes monetary values and exposes formatting helpers to API and browser consumers.',
+        skipFormat: true,
+      });
+      assert.match(
+        tree.read('libs/common/money-format/lib/README.md', 'utf8')!,
+        /Normalizes monetary values and exposes formatting helpers/,
+      );
+      await assert.rejects(
+        () =>
+          libraryGenerator(tree, {
+            name: 'vague',
+            kind: 'common',
+            type: 'util',
+            description: 'Utility library.',
+            skipFormat: true,
+          }),
+        /single concrete sentence/,
+      );
+    });
+
     it('creates backend feature and data-access libraries in canonical roots', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');
@@ -258,15 +288,27 @@ describe('library generator', () => {
         scope: 'billing',
         skipFormat: true,
       });
+      await libraryGenerator(tree, {
+        name: 'billing-shared',
+        kind: 'frontend',
+        type: 'feature-shared',
+        scope: 'billing',
+        description: 'Provides frontend-safe billing contracts to pages, features, and application shells.',
+        skipFormat: true,
+      });
 
       assert.ok(tree.exists('libs/backend/feature/billing/main/lib/project.json'));
       assert.ok(tree.exists('libs/backend/postgres/main/billing/lib/project.json'));
+      assert.ok(tree.exists('libs/frontend/feature/billing/shared/lib/project.json'));
       const tsconfig = JSON.parse(tree.read('tsconfig.base.json', 'utf8')!);
       assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-feature-billing-main'], [
         'libs/backend/feature/billing/main/lib/src/index.ts',
       ]);
       assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-postgres-main-billing'], [
         'libs/backend/postgres/main/billing/lib/src/index.ts',
+      ]);
+      assert.deepEqual(tsconfig.compilerOptions.paths['@app/frontend-feature-billing-shared'], [
+        'libs/frontend/feature/billing/shared/lib/src/index.ts',
       ]);
     });
 

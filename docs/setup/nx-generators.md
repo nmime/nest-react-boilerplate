@@ -9,7 +9,7 @@ application generators are not the canonical scaffold path.
 
 ```bash
 pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> --dry-run
-pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --scope <scope> --dry-run
+pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --scope <scope> --description "<concrete responsibility>" --dry-run
 pnpm nrb add feature <name> --api-app <api> --frontend-app <frontend> --dry-run
 ```
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the api-contracts scope.
+Exposes generated contract-review types derived from backend OpenAPI documents
+so producers and consumers can share stable API shapes without runtime coupling.
 
 ## Commands
 

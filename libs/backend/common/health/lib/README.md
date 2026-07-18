@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Owns the standard health, liveness, readiness, and private health endpoints,
+indicator contracts, response mapping, sanitization, and shutdown support.
 
 ## Commands
 

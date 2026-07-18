@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-main library for the admin scope.
+Composes protected admin profile, dashboard, user, audit, and role-management
+HTTP controllers with fail-closed RBAC guards and application services.
 
 ## Commands
 

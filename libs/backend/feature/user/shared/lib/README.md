@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-shared library for the user scope.
+Defines user profile and permission contracts, the current-profile use case,
+normalization helpers, and presenter shapes shared across user APIs.
 
 ## Commands
 

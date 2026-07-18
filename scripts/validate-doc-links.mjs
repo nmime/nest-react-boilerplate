@@ -19,7 +19,12 @@ const ignoredDirectories = new Set([
 ]);
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
 const pnpmRunPattern = /\bpnpm\s+run\s+([@A-Za-z0-9_.:-]+)/gu;
-const duplicatedProjectMetadataPattern = /^(?:Path|Nx project|Package|Project type|Tags):\s+/gmu;
+const duplicatedProjectMetadataPattern =
+  /^\s{0,3}(?:(?:[-*+]|>)\s+)?(?:\*\*|__)?(?:Path|Nx\s+project|Package|Project\s+type|Tags|Runtime|Local\s+URL|(?:(?:Default|Staging)\s+)?(?:Local\s+)?Ports?)(?:\*\*|__)?\s*:\s*(?:\*\*|__)?\s+\S/iu;
+const duplicatedProjectMapHeadingPattern = /^\s{0,3}#{1,6}\s+Project\s+names?\s+and\s+paths?\s*#*\s*$/iu;
+const duplicatedScopeValuePattern = /\bRespect the declared scope tag\s*:/iu;
+const genericLibraryPurposePattern =
+  /^(?:(?:Backend common|Backend test utility|Backend feature-(?:main|shared)|Backend PostgreSQL\/data-access|Frontend shared|Frontend shared UI|Frontend SDK\/client|Frontend feature-shared|Cross-runtime framework-neutral) library for the [a-z0-9-]+ scope\.|[A-Z][A-Za-z0-9 /-]+ library\.)(?:\s|$)/iu;
 
 export function collectTrackedMarkdown(workspaceRoot) {
   try {
@@ -48,29 +53,38 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
     const content = readFileSync(filePath, 'utf8');
     const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
 
-    if (/^(?:apps|libs)\/.+\/(?:AGENTS|README)\.md$/u.test(workspacePath)) {
-      for (const match of content.matchAll(duplicatedProjectMetadataPattern)) {
+    const isLeafProjectDoc = /^(?:apps|libs)\/.+\/(?:AGENTS|README)\.md$/u.test(workspacePath);
+    const isRootChangelog = workspacePath === 'CHANGELOG.md';
+    forEachMarkdownLineOutsideFences(content, (line, lineNumber) => {
+      if (isLeafProjectDoc && duplicatedProjectMetadataPattern.test(line)) {
         failures.push(
           formatFailure(
             workspaceRoot,
             filePath,
-            lineNumber(content, match.index ?? 0),
-            'duplicated project metadata; use project.json and docs/project-catalog.md',
+            lineNumber,
+            'duplicated project metadata; use project.json, docs/project-catalog.md, or docs/PORTS.md',
           ),
         );
       }
-    }
+      if (isLeafProjectDoc && duplicatedScopeValuePattern.test(line)) {
+        failures.push(
+          formatFailure(
+            workspaceRoot,
+            filePath,
+            lineNumber,
+            'duplicated scope value; refer to the tags declared in project.json',
+          ),
+        );
+      }
+      if (!isRootChangelog && duplicatedProjectMapHeadingPattern.test(line)) {
+        failures.push(
+          formatFailure(workspaceRoot, filePath, lineNumber, 'duplicated project map; link to docs/project-catalog.md'),
+        );
+      }
+    });
 
-    const duplicatedHeadingIndex = content.indexOf('## Project names and paths');
-    if (duplicatedHeadingIndex !== -1) {
-      failures.push(
-        formatFailure(
-          workspaceRoot,
-          filePath,
-          lineNumber(content, duplicatedHeadingIndex),
-          'duplicated project map; link to docs/project-catalog.md',
-        ),
-      );
+    if (/^libs\/.+\/lib\/README\.md$/u.test(workspacePath)) {
+      validateLibraryReadme({ content, failures, filePath, workspaceRoot });
     }
 
     for (const match of content.matchAll(markdownLinkPattern)) {
@@ -128,6 +142,47 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
   }
 
   return { counts, failures };
+}
+
+function validateLibraryReadme({ content, failures, filePath, workspaceRoot }) {
+  const lines = [];
+  forEachMarkdownLineOutsideFences(content, (line, lineNumber) => lines.push({ line, lineNumber }));
+  const purposeHeadingIndex = lines.findIndex(({ line }) => /^\s{0,3}##\s+Purpose\s*#*\s*$/iu.test(line));
+  if (purposeHeadingIndex === -1) {
+    failures.push(formatFailure(workspaceRoot, filePath, 1, 'library README must include a concrete Purpose section'));
+    return;
+  }
+
+  const purposeLines = [];
+  for (const item of lines.slice(purposeHeadingIndex + 1)) {
+    if (/^\s{0,3}#{1,6}\s+/u.test(item.line)) break;
+    if (item.line.trim()) purposeLines.push(item);
+  }
+  const purpose = purposeLines.map(({ line }) => line.trim()).join(' ');
+  const purposeLine = purposeLines[0]?.lineNumber ?? lines[purposeHeadingIndex].lineNumber;
+  if (purpose.length < 40 || genericLibraryPurposePattern.test(purpose)) {
+    failures.push(
+      formatFailure(
+        workspaceRoot,
+        filePath,
+        purposeLine,
+        'library purpose must describe concrete responsibilities, public API, or intended consumers',
+      ),
+    );
+  }
+}
+
+function forEachMarkdownLineOutsideFences(content, callback) {
+  let fence = null;
+  for (const [index, line] of content.split(/\r?\n/u).entries()) {
+    const marker = line.match(/^\s{0,3}(`{3,}|~{3,})/u)?.[1];
+    if (marker) {
+      if (!fence) fence = { character: marker[0], length: marker.length };
+      else if (marker[0] === fence.character && marker.length >= fence.length) fence = null;
+      continue;
+    }
+    if (!fence) callback(line, index + 1);
+  }
 }
 
 function collectMarkdownRecursively(workspaceRoot) {

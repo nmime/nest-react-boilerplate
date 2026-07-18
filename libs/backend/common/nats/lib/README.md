@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Backend common library for the shared scope. Provides a production-ready
-NATS client wrapper with JetStream, KV store, Object Store, and Service
-registration support.
+Provides a production-ready NATS client wrapper with JetStream, key-value,
+Object Store, service registration, health checks, configuration, and Nest
+injection helpers.
 
 ## Environment Variables
 

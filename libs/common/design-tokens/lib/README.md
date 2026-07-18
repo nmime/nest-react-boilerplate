@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Defines renderer-neutral color, spacing, radius, typography, and theme tokens
+consumed by the web CSS and native Tamagui facades.
 
 ## Commands
 

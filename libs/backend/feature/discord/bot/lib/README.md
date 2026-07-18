@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-main library for the discord scope.
+Implements Discord signature verification, command registration, interaction
+routing, navigation state, localized menus, and external-account linking.
 
 ## Commands
 

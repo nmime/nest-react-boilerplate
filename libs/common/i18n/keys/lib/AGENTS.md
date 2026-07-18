@@ -7,7 +7,7 @@ Also follow [libs/common/AGENTS.md](../../../AGENTS.md).
 
 - Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
 - Keep this library framework-neutral so it can be used by both backend and frontend runtimes.
-- Respect the declared scope tag: `shared`.
+- Respect the scope and boundary tags declared in `project.json`; do not copy their values into local instructions.
 - Keep this file short; put setup details and command lists in the local README.
 
 See [README.md](./README.md) for the library purpose and verification commands.

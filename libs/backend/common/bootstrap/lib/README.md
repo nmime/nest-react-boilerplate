@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Bootstraps NestJS/Fastify APIs with request context, logging, security headers,
+CORS, rate limiting, validation, response mapping, health, and Swagger wiring.
 
 ## Commands
 

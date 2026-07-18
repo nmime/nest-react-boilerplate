@@ -5,5 +5,5 @@ Follow [frontend app rules](../AGENTS.md) and the root
 
 This app owns the Expo/React Native shell. Use `@app/frontend-ui-native` for
 shared native UI, keep web-only DOM components out of native screens, and keep
-Expo CLI commands on port `4300` unless the command matrix is updated. See
-[README.md](README.md) for commands and ownership.
+Expo CLI commands aligned with the [service port registry](../../../docs/PORTS.md).
+See [README.md](README.md) for commands and ownership.

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Centralizes Swagger/OpenAPI document setup, bearer security, operation
+decorators, schema helpers, and standard Problem Details responses.
 
 ## Commands
 

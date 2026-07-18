@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend shared library for the shared scope.
+Owns browser-safe API requests, auth and resilience middleware, environment
+resolution, error normalization, toast events, and the approved raw-fetch boundary.
 
 ## Commands
 

@@ -242,12 +242,13 @@ Use [Adding a New Service](usage/adding-a-new-service.md) for backend details.
 
 ## Add a library
 
-Libraries must have one runtime owner and a stable public alias:
+Libraries must have one runtime owner, a stable public alias, and a concrete
+responsibility that is written into the generated local README:
 
 ```bash
-pnpm nrb add lib money --kind common --type util --scope shared --dry-run
-pnpm nrb add lib billing --kind backend --type feature-main --scope billing --dry-run
-pnpm nrb add lib billing-ui --kind frontend --type ui --scope billing --dry-run
+pnpm nrb add lib money --kind common --type util --scope shared --description "Normalizes monetary values for API and browser consumers." --dry-run
+pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs." --dry-run
+pnpm nrb add lib billing-ui --kind frontend --type ui --scope billing --description "Provides billing presentation primitives to the user and admin frontends." --dry-run
 ```
 
 Supported roles are `common`, `util`, `ui`, `sdk`, `feature-main`,

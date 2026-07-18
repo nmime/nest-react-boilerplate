@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Configures the OpenTelemetry SDK and exposes real or no-op tracers, span
+helpers, environment parsing, and safe attribute normalization.
 
 ## Commands
 

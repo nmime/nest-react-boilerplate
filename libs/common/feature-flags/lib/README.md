@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Defines feature-flag keys, values, evaluation context, and provider contracts
+with static and environment-backed implementations.
 
 ## Commands
 

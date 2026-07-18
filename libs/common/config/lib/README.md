@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Provides the Joi-backed `createConfig` accessor for typed environment
+configuration without coupling consumers to Nest application composition.
 
 ## Commands
 

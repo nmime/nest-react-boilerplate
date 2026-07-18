@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Creates the structured Pino logger and canonical correlation fields consumed by
+backend bootstrap, request logging, services, and operational telemetry.
 
 ## Commands
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-main library for the auth scope.
+Owns registration, login, session lifecycle, current-user, logout, and external
+authentication orchestration behind the auth Nest module and HTTP controller.
 
 ## Commands
 

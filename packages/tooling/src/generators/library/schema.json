@@ -31,6 +31,13 @@
       "description": "Owning product/domain scope; defaults to the first name segment",
       "x-priority": "optional"
     },
+    "description": {
+      "type": "string",
+      "description": "Concrete responsibility, public API, or intended consumers for the local README",
+      "minLength": 40,
+      "x-prompt": "What concrete responsibility does this library own?",
+      "x-priority": "important"
+    },
     "fsdLayer": {
       "type": "string",
       "description": "Feature-Sliced Design layer for frontend libraries",
@@ -45,5 +52,5 @@
       "x-priority": "optional"
     }
   },
-  "required": ["name", "kind", "type"]
+  "required": ["name", "kind", "type", "description"]
 }

@@ -3,7 +3,7 @@
  *
  * Usage:
  *   pnpm nrb add app <name> --kind <kind> --renderer <renderer>
- *   pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope>
+ *   pnpm nrb add lib <name> --kind <kind> --type <type> --description <purpose> --scope <scope>
  *   pnpm nrb add feature <name> --api-app <name> --frontend-app <name>
  *
  * All branches call a mockable Nx generator runner (for testability).
@@ -30,6 +30,7 @@ interface AddArgs {
   port?: number;
   libraryType?: string;
   scope?: string;
+  description?: string;
   /** Extra arguments forwarded to the underlying generator. */
   extra: string[];
 }
@@ -119,6 +120,14 @@ export function parseAddArgs(argv: string[]): AddArgs {
       result.scope = arg.slice("--scope=".length);
       continue;
     }
+    if (arg === "--description") {
+      result.description = argv[++i];
+      continue;
+    }
+    if (arg.startsWith("--description=")) {
+      result.description = arg.slice("--description=".length);
+      continue;
+    }
 
     // First positional that is a known kind
     if (!result.kind && (arg === "app" || arg === "lib" || arg === "feature")) {
@@ -203,6 +212,13 @@ export async function runAddCommand(
     return 1;
   }
 
+  if (args.kind === "lib" && !args.description?.trim()) {
+    process.stderr.write(
+      "Error: add lib requires --description with its concrete responsibility, public API, or intended consumers.\n",
+    );
+    return 1;
+  }
+
   if (args.kind === "feature" && (!args.apiApp || !args.frontendApp)) {
     process.stderr.write(
       "Error: add feature requires explicit --api-app and --frontend-app owners; this monorepo has no default application.\n",
@@ -258,6 +274,7 @@ function runAddWithNx(
   if (args.port !== undefined) genArgs.push(`--port=${args.port}`);
   if (args.libraryType) genArgs.push(`--type=${args.libraryType}`);
   if (args.scope) genArgs.push(`--scope=${args.scope}`);
+  if (args.description) genArgs.push(`--description=${args.description}`);
   for (const e of args.extra) genArgs.push(e);
 
   const kindLabel = args.kind!;
@@ -312,13 +329,14 @@ Options:
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
                         feature-shared, data-access, test-util, or asset).
   --scope <scope>       Nx ownership scope tag for a library.
+  --description <text>  Required concrete library responsibility for its README.
   --help, -h            Show this help message.
   ...                   Additional arguments forwarded to the Nx generator.
 
 Examples:
   pnpm nrb add app payments-api --kind backend --renderer nest-api
   pnpm nrb add app portal --kind frontend --renderer vite
-  pnpm nrb add lib currency --kind common --type util --scope shared
+  pnpm nrb add lib currency --kind common --type util --scope shared --description "Normalizes currency amounts for API and browser consumers."
   pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app
   pnpm nrb add feature billing --api-app admin-app-api --frontend-app admin-app --dry-run\n`);
 }

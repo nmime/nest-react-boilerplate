@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Normalizes roles and permissions and exposes the permission catalog and role
+matrix used by backend authorization and frontend access-policy checks.
 
 ## Commands
 

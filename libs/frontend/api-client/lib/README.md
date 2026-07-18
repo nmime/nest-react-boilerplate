@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend SDK/client library for the shared scope.
+Wraps generated admin, auth, and user clients with typed service registries,
+Better Auth and Telegram helpers, and frontend toast-rule integration.
 
 ## Commands
 

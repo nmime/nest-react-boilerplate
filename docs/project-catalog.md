@@ -51,13 +51,16 @@ Do not maintain an exhaustive library table in Markdown. Library identity is
 owned by its `project.json`, while public TypeScript aliases are owned by
 `tsconfig.base.json`. The stable placement rules are:
 
-| Boundary             | Project-root convention                    |
-| -------------------- | ------------------------------------------ |
-| Backend common       | `libs/backend/common/<name>/lib`           |
-| Backend feature      | `libs/backend/feature/<scope>/<layer>/lib` |
-| Backend PostgreSQL   | `libs/backend/postgres/main/<scope>/lib`   |
-| Frontend             | `libs/frontend/<scope-or-name>/lib`        |
-| Cross-runtime common | `libs/common/<scope-or-name>/lib`          |
+| Boundary             | Project-root convention                                |
+| -------------------- | ------------------------------------------------------ |
+| Backend common       | `libs/backend/common/<name>/lib`                       |
+| Backend feature      | `libs/backend/feature/<scope>/<layer>/lib`             |
+| Backend PostgreSQL   | `libs/backend/postgres/main/<scope>/lib`               |
+| Frontend shared      | `libs/frontend/<name>/lib`                             |
+| Frontend scoped      | `libs/frontend/<scope>/<name>/lib`                     |
+| Frontend feature     | `libs/frontend/feature/<scope>/<layer-or-purpose>/lib` |
+| Cross-runtime common | `libs/common/<name>/lib`                               |
+| Cross-runtime scoped | `libs/common/<scope>/<name>/lib`                       |
 
 Use the live graph instead of copying project metadata into another document:
 

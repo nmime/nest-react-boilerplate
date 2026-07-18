@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend PostgreSQL/data-access library for the feature-flags scope.
+Implements the shared feature-flag provider against MikroORM/PostgreSQL and
+exports the persistence module, entity, repository, and migrations.
 
 ## Commands
 

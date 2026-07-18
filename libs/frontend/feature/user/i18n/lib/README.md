@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend feature-shared library for the user scope.
+Loads and exposes typed user locale catalogs for authenticated pages, features,
+and widgets without coupling translations to the user application entrypoint.
 
 ## Commands
 

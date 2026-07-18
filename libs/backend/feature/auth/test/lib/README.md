@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend test utility library for the auth scope.
+Owns PostgreSQL-backed auth repository and end-to-end component specifications,
+keeping database integration coverage outside the production auth API surface.
 
 ## Commands
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Provides Redis configuration, Nest injection, cache and rate-limit services,
+Redlock coordination, health checks, and an in-memory test client.
 
 ## Commands
 

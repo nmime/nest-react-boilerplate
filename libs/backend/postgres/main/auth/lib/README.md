@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend PostgreSQL/data-access library for the auth scope.
+Owns MikroORM entities, migrations, repositories, token encryption and cleanup,
+tenant/RBAC persistence, social identities, and the transactional outbox for auth.
 
 ## Commands
 

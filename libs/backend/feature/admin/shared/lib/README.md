@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-shared library for the admin scope.
+Defines the backend admin permission catalog, role matrix, CASL abilities,
+principal claims, and access-policy helpers shared by admin services and guards.
 
 ## Commands
 

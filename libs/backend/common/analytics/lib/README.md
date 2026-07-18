@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Routes typed analytics events through configurable GA4, PostHog, Umami,
+logger, or no-op providers behind one Nest module and service boundary.
 
 ## Commands
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Extracts trustworthy client IP addresses and classifies private-network
+addresses for health guards and other backend network-boundary checks.
 
 ## Commands
 

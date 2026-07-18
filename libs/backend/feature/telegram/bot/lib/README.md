@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-main library for the telegram scope.
+Implements the grammY bot runtime, localized menus, session and navigation
+state, Mini App launch actions, identity resolution, and account linking.
 
 ## Commands
 

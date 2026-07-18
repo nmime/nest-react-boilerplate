@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-shared library for the auth scope.
+Defines session and principal contracts, access-policy defaults, bearer guards,
+RBAC decorators, tenant context, and OAuth/OIDC provider flows.
 
 ## Commands
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Builds the shared Nest validation pipe and converts DTO validation failures
+into typed RFC 9457 errors with JSON Pointer field details.
 
 ## Commands
 

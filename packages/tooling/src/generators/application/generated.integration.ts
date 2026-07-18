@@ -195,6 +195,7 @@ void test(
       kind: 'backend',
       type: 'util',
       scope: 'nrb',
+      description: 'Provides backend canary helpers used to verify generated Node library contracts.',
       skipFormat: true,
     });
     await libraryGenerator(tree, {
@@ -202,6 +203,7 @@ void test(
       kind: 'frontend',
       type: 'ui',
       scope: 'nrb',
+      description: 'Provides a frontend canary component used to verify generated React library contracts.',
       skipFormat: true,
     });
     await libraryGenerator(tree, {
@@ -209,6 +211,7 @@ void test(
       kind: 'common',
       type: 'util',
       scope: 'nrb',
+      description: 'Provides shared canary utilities used to verify cross-runtime library contracts.',
       skipFormat: true,
     });
 

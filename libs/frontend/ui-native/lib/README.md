@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend shared UI library for the shared scope.
+Provides the Tamagui configuration, design-token themes, provider exports, and
+native UI foundation consumed by Expo applications.
 
 ## Commands
 

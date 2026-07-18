@@ -23,7 +23,7 @@ const ignoredDirectories = new Set([
   'tmp',
 ]);
 
-export function collectApplicationRoots(root) {
+function collectProjectRoots(root, directory, projectType) {
   const projects = new Map();
 
   function visit(directory) {
@@ -36,17 +36,42 @@ export function collectApplicationRoots(root) {
       if (entry.name !== 'project.json') continue;
 
       const project = JSON.parse(readFileSync(path, 'utf8'));
-      if (project.projectType !== 'application' || typeof project.name !== 'string') continue;
-      if (projects.has(project.name)) throw new Error(`Duplicate Nx application name: ${project.name}`);
+      if (project.projectType !== projectType || typeof project.name !== 'string') continue;
+      if (projects.has(project.name)) throw new Error(`Duplicate Nx ${projectType} name: ${project.name}`);
       projects.set(project.name, relative(root, dirname(path)).replaceAll('\\', '/'));
     }
   }
 
-  visit(resolve(root, 'apps'));
+  visit(resolve(root, directory));
   return projects;
 }
 
-export function renderProjectCatalog(catalog, projectRoots) {
+export function collectApplicationRoots(root) {
+  return collectProjectRoots(root, 'apps', 'application');
+}
+
+export function collectLibraryRoots(root) {
+  return collectProjectRoots(root, 'libs', 'library');
+}
+
+const libraryRootConventions = [
+  /^libs\/backend\/common\/[^/]+\/lib$/u,
+  /^libs\/backend\/feature\/[^/]+\/[^/]+\/lib$/u,
+  /^libs\/backend\/postgres\/main\/[^/]+\/lib$/u,
+  /^libs\/frontend\/[^/]+\/lib$/u,
+  /^libs\/frontend\/(?!feature\/)[^/]+\/[^/]+\/lib$/u,
+  /^libs\/frontend\/feature\/[^/]+\/[^/]+\/lib$/u,
+  /^libs\/common\/[^/]+\/lib$/u,
+  /^libs\/common\/[^/]+\/[^/]+\/lib$/u,
+];
+
+export function validateLibraryRoots(projectRoots) {
+  return [...projectRoots]
+    .filter(([, root]) => !libraryRootConventions.some((convention) => convention.test(root)))
+    .map(([name, root]) => `${name}: ${root}`);
+}
+
+export function renderProjectCatalog(catalog, projectRoots, libraryRoots) {
   const entries = Object.values(catalog);
   const catalogIds = new Set(entries.map((entry) => entry.id));
 
@@ -58,6 +83,12 @@ export function renderProjectCatalog(catalog, projectRoots) {
   for (const projectName of projectRoots.keys()) {
     if (!catalogIds.has(projectName)) {
       throw new Error(`Nx application is missing from the setup catalog: ${projectName}`);
+    }
+  }
+  if (libraryRoots) {
+    const invalidLibraryRoots = validateLibraryRoots(libraryRoots);
+    if (invalidLibraryRoots.length > 0) {
+      throw new Error(`Nx libraries use non-canonical roots:\n${invalidLibraryRoots.join('\n')}`);
     }
   }
 
@@ -118,8 +149,11 @@ export function renderProjectCatalog(catalog, projectRoots) {
     '| Backend common | `libs/backend/common/<name>/lib` |',
     '| Backend feature | `libs/backend/feature/<scope>/<layer>/lib` |',
     '| Backend PostgreSQL | `libs/backend/postgres/main/<scope>/lib` |',
-    '| Frontend | `libs/frontend/<scope-or-name>/lib` |',
-    '| Cross-runtime common | `libs/common/<scope-or-name>/lib` |',
+    '| Frontend shared | `libs/frontend/<name>/lib` |',
+    '| Frontend scoped | `libs/frontend/<scope>/<name>/lib` |',
+    '| Frontend feature | `libs/frontend/feature/<scope>/<layer-or-purpose>/lib` |',
+    '| Cross-runtime common | `libs/common/<name>/lib` |',
+    '| Cross-runtime scoped | `libs/common/<scope>/<name>/lib` |',
     '',
     'Use the live graph instead of copying project metadata into another document:',
     '',
@@ -157,7 +191,14 @@ export function findCopiedCatalogRows(root, catalog, projectRoots, markdownFiles
       const projectRoot = `\`${projectRoots.get(entry.id)}\``;
       const hostname = entry.publicHostname ? `\`${entry.publicHostname}\`` : null;
       for (const [index, line] of lines.entries()) {
-        if (line.includes(id) && (line.includes(projectRoot) || (hostname && line.includes(hostname)))) {
+        const cells = markdownTableCells(line);
+        const copiedTableRow =
+          cells.includes(entry.id) &&
+          (cells.includes(projectRoots.get(entry.id)) ||
+            (entry.publicHostname && cells.includes(entry.publicHostname)));
+        const copiedInlineMapping =
+          line.includes(id) && (line.includes(projectRoot) || (hostname && line.includes(hostname)));
+        if (copiedTableRow || copiedInlineMapping) {
           failures.push(
             `${relative(root, filePath).replaceAll('\\', '/')}:${index + 1}: copied project catalog row for ${entry.id}`,
           );
@@ -166,6 +207,58 @@ export function findCopiedCatalogRows(root, catalog, projectRoots, markdownFiles
     }
   }
   return failures;
+}
+
+function markdownTableCells(line) {
+  const cells = [];
+  let cell = '';
+  let separators = 0;
+  let escaped = false;
+
+  for (const character of line) {
+    if (escaped) {
+      cell += character;
+      escaped = false;
+    } else if (character === '\\') {
+      cell += character;
+      escaped = true;
+    } else if (character === '|') {
+      cells.push(normalizeMarkdownCell(cell));
+      cell = '';
+      separators += 1;
+    } else {
+      cell += character;
+    }
+  }
+  if (separators === 0) return [];
+  cells.push(normalizeMarkdownCell(cell));
+  return cells.filter(Boolean);
+}
+
+function normalizeMarkdownCell(value) {
+  return stripInlineHtml(value)
+    .replace(/!?(?:\[([^\]]*)\])\([^)]*\)/gu, '$1')
+    .replace(/[`*_~]/gu, '')
+    .trim();
+}
+
+function stripInlineHtml(value) {
+  let result = '';
+  let insideTag = false;
+
+  for (const character of value) {
+    if (character === '<') {
+      insideTag = true;
+      continue;
+    }
+    if (character === '>' && insideTag) {
+      insideTag = false;
+      continue;
+    }
+    if (!insideTag) result += character;
+  }
+
+  return result;
 }
 
 function collectMarkdownFiles(root) {
@@ -188,7 +281,8 @@ function capitalize(value) {
 
 async function main() {
   const projectRoots = collectApplicationRoots(workspaceRoot);
-  const rendered = await format(renderProjectCatalog(appCatalog, projectRoots), {
+  const libraryRoots = collectLibraryRoots(workspaceRoot);
+  const rendered = await format(renderProjectCatalog(appCatalog, projectRoots, libraryRoots), {
     filepath: catalogPath,
   });
   if (process.argv.includes('--check')) {

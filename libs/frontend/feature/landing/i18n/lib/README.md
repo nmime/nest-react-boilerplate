@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend feature-shared library for the landing scope.
+Loads and exposes typed landing locale catalogs for Astro pages and React
+islands without coupling translations to the landing application entrypoint.
 
 ## Commands
 

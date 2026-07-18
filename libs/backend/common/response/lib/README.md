@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Maps successful values and `neverthrow` results into the API response envelope,
+and transforms HTTP or websocket failures into safe Problem Details payloads.
 
 ## Commands
 

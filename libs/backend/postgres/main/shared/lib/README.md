@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend PostgreSQL/data-access library for the postgres scope.
+Provides shared MikroORM/PostgreSQL configuration, root module composition,
+transactions, dependency health adapters, and migration-readiness indicators.
 
 ## Commands
 

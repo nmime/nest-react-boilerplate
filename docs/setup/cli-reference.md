@@ -122,7 +122,7 @@ Add an app, library, or feature to the workspace.
 
 ```bash
 pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--port <port>] [--dry-run]
-pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> [--scope <scope>]
+pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --description <purpose> [--scope <scope>]
 pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run]
 ```
 
@@ -134,6 +134,7 @@ pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dr
 | `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port. |
 | `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.           |
 | `--scope <scope>`       | string  | Owning domain scope for a library.                                 |
+| `--description <text>`  | string  | Required concrete library responsibility written to its README.    |
 | `--api-app <name>`      | string  | Required API application that owns a feature.                      |
 | `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                |
 | `--help`, `-h`          | boolean | Show usage.                                                        |
@@ -144,7 +145,7 @@ Examples:
 ```bash
 pnpm nrb add app billing-api --kind backend --renderer nest-api -- --port=3200
 pnpm nrb add app docs --kind frontend --renderer astro
-pnpm nrb add lib billing --kind backend --type feature-main --scope billing
+pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs."
 pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
 ```
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Exports the generated `TranslationKey` union used to type locale lookups across
+backend, frontend, and bot translation catalogs.
 
 ## Commands
 

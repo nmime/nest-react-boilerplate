@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, test } from 'node:test';
-import { collectApplicationRoots, findCopiedCatalogRows, renderProjectCatalog } from './generate-project-catalog.mjs';
+import {
+  collectApplicationRoots,
+  collectLibraryRoots,
+  findCopiedCatalogRows,
+  renderProjectCatalog,
+  validateLibraryRoots,
+} from './generate-project-catalog.mjs';
 
 const temporaryRoots = [];
 
@@ -64,6 +70,9 @@ test('rejects copied application path or hostname rows outside the catalog', () 
     [
       '| `demo-app` | `apps/frontend/demo` |',
       '`demo-app` is published at `demo-app.example.com`.',
+      '| demo-app | apps/frontend/demo |',
+      '| **demo-app** | [demo-app.example.com](https://demo-app.example.com) |',
+      '| <strong>demo-app</strong> | <code>apps/frontend/demo</code> |',
       '`demo-app` owns routing behavior without repeating identity metadata.',
     ].join('\n'),
   );
@@ -83,7 +92,34 @@ test('rejects copied application path or hostname rows outside the catalog', () 
     changelog,
   ]);
 
-  assert.equal(failures.length, 2);
+  assert.equal(failures.length, 5);
   assert.match(failures.join('\n'), /guide\.md:1/);
   assert.match(failures.join('\n'), /guide\.md:2/);
+  assert.match(failures.join('\n'), /guide\.md:3/);
+  assert.match(failures.join('\n'), /guide\.md:4/);
+  assert.match(failures.join('\n'), /guide\.md:5/);
+});
+
+test('accepts every live library root and rejects layouts outside the repository contract', () => {
+  const workspaceRoot = resolve(import.meta.dirname, '..');
+  const libraryRoots = collectLibraryRoots(workspaceRoot);
+  assert.deepEqual(validateLibraryRoots(libraryRoots), []);
+  for (const root of libraryRoots.values()) {
+    assert.equal(existsSync(resolve(workspaceRoot, root, 'README.md')), true, `${root} is missing README.md`);
+    assert.equal(existsSync(resolve(workspaceRoot, root, 'AGENTS.md')), true, `${root} is missing AGENTS.md`);
+  }
+  assert.deepEqual(
+    validateLibraryRoots(
+      new Map([
+        ['@app/backend-invalid', 'libs/backend/invalid/lib'],
+        ['@app/frontend-too-deep', 'libs/frontend/feature/demo/shared/extra/lib'],
+        ['@app/common-too-deep', 'libs/common/i18n/runtime/extra/lib'],
+      ]),
+    ),
+    [
+      '@app/backend-invalid: libs/backend/invalid/lib',
+      '@app/frontend-too-deep: libs/frontend/feature/demo/shared/extra/lib',
+      '@app/common-too-deep: libs/common/i18n/runtime/extra/lib',
+    ],
+  );
 });

@@ -19,7 +19,7 @@ Use this workflow when creating an application, library, or vertical product fea
    `--dry-run` and inspect every path before writing.
 4. Use one canonical command:
    - Application: `pnpm nrb add app <name> --kind <kind> --renderer <renderer> --dry-run`
-   - Library: `pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope> --dry-run`
+   - Library: `pnpm nrb add lib <name> --kind <kind> --type <type> --scope <scope> --description "<concrete responsibility>" --dry-run`
    - Feature: `pnpm nrb add feature <name> --api-app <api> --frontend-app <frontend> --dry-run`
 5. Run without `--dry-run` only after the selected roots and ownership are correct.
 6. When an app or library adds a package manifest, run `pnpm install` to update the lockfile and workspace links, then prove `pnpm install --frozen-lockfile`; never hand-edit `pnpm-lock.yaml`.

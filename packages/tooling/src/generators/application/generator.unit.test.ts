@@ -127,7 +127,9 @@ describe('application generator', () => {
       assert.match(main, /process\.env\.PORT \?\? 3210/);
       assert.match(module, /BaseHealthController/);
       assert.ok(tree.exists('apps/backend/billing/billing-api/src/health.config.ts'));
-      assert.match(tree.read('apps/backend/billing/billing-api/AGENTS.md', 'utf8')!, /libs\/backend/);
+      const agentPolicy = tree.read('apps/backend/billing/billing-api/AGENTS.md', 'utf8')!;
+      assert.match(agentPolicy, /libs\/backend/);
+      assert.doesNotMatch(agentPolicy, /- Runtime:/);
       const readme = tree.read('apps/backend/billing/billing-api/README.md', 'utf8')!;
       assert.match(readme, /billing-api:build/);
       assert.match(readme, /setup catalog/);
@@ -357,6 +359,7 @@ describe('application generator', () => {
       const nativePackage = JSON.parse(tree.read('apps/frontend/native/package.json', 'utf8')!);
       assert.equal(nativePackage.main, 'expo-router/entry');
       assert.equal(nativePackage.devDependencies['@babel/core'], '7.29.7');
+      assert.doesNotMatch(tree.read('apps/frontend/native/AGENTS.md', 'utf8')!, /- Runtime:/);
     });
 
     it('rejects a renderer from the wrong platform', async () => {

@@ -8,7 +8,7 @@ Also follow [libs/backend/AGENTS.md](../../../AGENTS.md).
 - Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
 - Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
 - Use this only from tests or test support targets. Do not import test utilities into production runtime code.
-- Respect the declared scope tag: `shared`.
+- Respect the scope and boundary tags declared in `project.json`; do not copy their values into local instructions.
 - Keep this file short; put setup details and command lists in the local README.
 
 See [README.md](./README.md) for the library purpose and verification commands.

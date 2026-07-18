@@ -68,7 +68,9 @@ adding or registering a deployable.
 Library projects:
 
 - Every `libs/**/lib/project.json` root has a local `README.md` and `AGENTS.md`
-  for nearest ownership, tags, and supported Nx targets.
+  for concrete purpose, local policy, public-boundary guidance, and high-signal
+  commands. Its `project.json` remains authoritative for identity, tags, and
+  supported Nx targets.
 
 ## Generated and review-only surfaces
 

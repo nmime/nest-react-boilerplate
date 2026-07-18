@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Defines provider-neutral websocket clients, adapters, broadcast operations, and
+connection contracts shared by transports and application consumers.
 
 ## Commands
 

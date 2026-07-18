@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Defines the RFC 9457 exception factory, domain exception classes, Problem
+Details schemas, localization, and safe conversion utilities for backend APIs.
 
 ## Commands
 

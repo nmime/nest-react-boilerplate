@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend feature-shared library for the admin scope.
+Defines frontend-safe admin access-policy contracts and normalization used to
+gate admin navigation and product surfaces without importing backend code.
 
 ## Commands
 

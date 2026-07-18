@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Provides platform-neutral locale normalization, catalog merging, fallback
+resolution, parameter interpolation, and typed translation helpers.
 
 ## Commands
 

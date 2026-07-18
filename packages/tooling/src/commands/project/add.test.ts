@@ -26,9 +26,15 @@ describe("parseAddArgs", () => {
   });
 
   it("parses lib kind", () => {
-    const args = parseAddArgs(["lib", "shared-utils"]);
+    const args = parseAddArgs([
+      "lib",
+      "shared-utils",
+      "--description",
+      "Shared utilities for backend consumers and job workers.",
+    ]);
     assert.equal(args.kind, "lib");
     assert.equal(args.name, "shared-utils");
+    assert.equal(args.description, "Shared utilities for backend consumers and job workers.");
   });
 
   it("parses feature kind with --api-app", () => {
@@ -119,11 +125,40 @@ describe("runAddCommand", () => {
     };
 
     const status = await runAddCommand(
-      makeContext(["lib", "shared-utils", "--kind", "common", "--type", "util"]),
+      makeContext([
+        "lib",
+        "shared-utils",
+        "--kind",
+        "common",
+        "--type",
+        "util",
+        "--description",
+        "Provides shared utilities to backend and browser consumers.",
+      ]),
       runner,
     );
     assert.equal(status, 0);
     assert.equal(capturedCg, "@repo/tooling:library");
+  });
+
+  it("passes the library description to Nx", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext([
+        "lib",
+        "money",
+        "--kind=common",
+        "--type=util",
+        "--description=Normalizes monetary values for API and browser consumers.",
+      ]),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--description=Normalizes monetary values for API and browser consumers."));
   });
 
   it("dispatches feature to @repo/tooling:feature", async () => {
@@ -260,6 +295,14 @@ describe("runAddCommand", () => {
     );
   });
 
+  it("requires a concrete description for every library", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(makeContext(["lib", "money", "--kind", "common", "--type", "util"]), runner),
+      1,
+    );
+  });
+
   it("refuses force-overwriting every ownership kind", async () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     assert.equal(
@@ -279,7 +322,17 @@ describe("runAddCommand", () => {
     );
     assert.equal(
       await runAddCommand(
-        makeContext(["lib", "money", "--kind", "common", "--type", "util", "--force"]),
+        makeContext([
+          "lib",
+          "money",
+          "--kind",
+          "common",
+          "--type",
+          "util",
+          "--description",
+          "Normalizes monetary values for API and browser consumers.",
+          "--force",
+        ]),
         runner,
       ),
       1,
@@ -291,7 +344,18 @@ describe("runAddCommand", () => {
     const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
     assert.equal(
       await runAddCommand(
-        makeContext(["lib", "money", "--kind", "common", "--type", "util", "--port", "4210"]),
+        makeContext([
+          "lib",
+          "money",
+          "--kind",
+          "common",
+          "--type",
+          "util",
+          "--description",
+          "Normalizes monetary values for API and browser consumers.",
+          "--port",
+          "4210",
+        ]),
         runner,
       ),
       1,

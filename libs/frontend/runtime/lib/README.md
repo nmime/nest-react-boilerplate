@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend shared library for the shared scope.
+Composes frontend i18n, query, MobX state, Mini App integration, theme and locale
+state, platform hooks, and runtime providers for application shells.
 
 ## Commands
 

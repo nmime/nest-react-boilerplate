@@ -8,4 +8,6 @@ Repository libraries live under `libs/**/lib` and are Nx project roots. Platform
 - [Frontend libraries](frontend/README.md)
 - [Common libraries](common/README.md)
 
-Each library project root has a local `README.md` and `AGENTS.md` describing ownership, tags, and supported Nx targets.
+Each library project root has a local `README.md` and `AGENTS.md` describing its
+concrete purpose, public boundary, local policy, and high-signal commands.
+The owning `project.json` remains authoritative for identity, tags, and targets.

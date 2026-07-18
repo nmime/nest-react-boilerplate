@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend feature-main library for the user scope.
+Exposes the authenticated profile HTTP controller and composes the user feature
+module from shared profile contracts and persistence-backed providers.
 
 ## Commands
 

@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Frontend feature-shared library for the admin scope.
+Loads and exposes typed admin locale catalogs for admin pages, features, and
+widgets without coupling translations to an application entrypoint.
 
 ## Commands
 

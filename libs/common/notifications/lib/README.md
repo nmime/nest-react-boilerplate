@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
+Defines notification events, templates, delivery and channel content, provider
+ports, and error contracts shared by backend implementations and clients.
 
 ## Commands
 

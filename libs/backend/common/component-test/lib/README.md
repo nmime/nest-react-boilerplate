@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend test utility library for the shared scope.
+Provides component-test lifecycle helpers and reusable PostgreSQL, Redis, NATS,
+MinIO, MySQL, and generic Testcontainers without starting them in unit tests.
 
 ## Commands
 

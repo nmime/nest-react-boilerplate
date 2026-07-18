@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Backend common library for the shared scope.
+Loads configured static JSON data through a Nest module and exposes a single
+service boundary for backend consumers that need source-controlled datasets.
 
 ## Commands
 

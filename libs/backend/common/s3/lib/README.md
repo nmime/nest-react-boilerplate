@@ -1,10 +1,5 @@
 # @app/backend-common-s3
 
-Path: `libs/backend/common/s3/lib`
-Nx project: `@app/backend-common-s3`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:infrastructure-adapter`
-
 ## Purpose
 
 AWS SDK v3-backed object-storage boundary for AWS S3 and S3-compatible
@@ -25,12 +20,6 @@ default; an operation can explicitly choose another product-owned bucket.
 | `S3_BUCKET`                       | Product's default bucket name.                                   |
 | `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Optional static credential pair; configure both or neither.      |
 | `S3_FORCE_PATH_STYLE`             | Enables path-style addressing for providers such as local MinIO. |
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
 
 ## Commands
 

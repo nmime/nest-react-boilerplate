@@ -311,9 +311,6 @@ module.exports = [
 
 Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
 
-This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
-Project type: \`library\`.
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
@@ -321,7 +318,7 @@ Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 - Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.
 `,
   );
 
@@ -330,20 +327,9 @@ See [README.md](./README.md) for project commands and ownership notes.
     `${dir}/README.md`,
     `# ${projectName}
 
-Path: \`${dir}\`
-Nx project: \`${projectName}\`
-Project type: \`library\`
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
-
 ## Purpose
 
 ${names.title} library.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
-- Do not import frontend libraries from backend code.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
 
 ## Commands
 
@@ -565,16 +551,13 @@ module.exports = [
 
 Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
 
-This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
-Project type: \`library\`.
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
 - Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.
 `,
   );
 
@@ -583,19 +566,9 @@ See [README.md](./README.md) for project commands and ownership notes.
     `${dir}/README.md`,
     `# ${projectName}
 
-Path: \`${dir}\`
-Nx project: \`${projectName}\`
-Project type: \`library\`
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
-
 ## Purpose
 
 ${names.title} library.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
 
 ## Commands
 

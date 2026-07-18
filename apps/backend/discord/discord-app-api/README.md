@@ -1,11 +1,5 @@
 # discord-app-api
 
-Path: `apps/backend/discord/discord-app-api`
-Nx project: `discord-app-api`
-Package: `discord-app-api`
-Runtime: NestJS API on Fastify
-Default local port: `3007`
-
 ## Ownership
 
 This service composes Discord interaction and external-auth integration wiring.

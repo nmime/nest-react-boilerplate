@@ -234,7 +234,7 @@ shared/public APIs.
 
 - Always run formatting or at least whitespace checks for edited Markdown/docs:
   - `pnpm exec prettier --check <files>` when dependencies are available.
-  - `pnpm run docs:check` for tracked Markdown targets, anchors, and root script references.
+  - `pnpm run docs:check` for project-catalog parity, duplicate project metadata, tracked Markdown targets, anchors, and root script references.
   - grep gates for stale RFC/problem/exception-library wording when touching
     API, architecture, or AI guidance docs.
   - `git diff --check` for every change.

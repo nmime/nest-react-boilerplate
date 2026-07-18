@@ -1,11 +1,5 @@
 # telegram-bot-api
 
-Path: `apps/backend/telegram/telegram-bot-api`
-Nx project: `telegram-bot-api`
-Package: `telegram-bot-api`
-Runtime: NestJS API on Fastify
-Default local port: `3013`
-
 ## Ownership
 
 This service composes the Telegram webhook/API runtime and shared health

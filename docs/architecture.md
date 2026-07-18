@@ -4,14 +4,10 @@ This repository is an Nx monorepo with flat deployable applications and small sh
 
 ## Frontend apps
 
-- `admin-app` in `apps/frontend/admin`
-- `user-app` in `apps/frontend/app`
-- `landing-app` in `apps/frontend/landing`
-- `site-app` in `apps/frontend/site`
-- `mobile-app` in `apps/frontend/mobile`
-
 No deployable is the monorepo default. Every frontend has a distinct product
 or runtime role, and the fullstack core profile selects them together.
+Use the generated [Project Catalog](project-catalog.md) for exact application
+IDs, Nx roots, runtimes, dependencies, and template hostnames.
 The frontend runtime is split by deployment shape. `landing-app` is the
 Astro + React islands marketing surface, `site-app` is the Vike + React SSR
 product/user site scaffold, `admin-app` remains a Vite React SPA, and
@@ -25,12 +21,6 @@ and browser-safe request primitives from `libs/frontend/api-support`
 secondary TS path aliases that point at the same source root.
 
 ## Backend apps
-
-- `admin-app-api` in `apps/backend/admin/admin-app-api`
-- `user-app-api` in `apps/backend/user/user-app-api`
-- `auth-app-api` in `apps/backend/auth/auth-app-api`
-- `discord-app-api` in `apps/backend/discord/discord-app-api`
-- `telegram-bot-api` in `apps/backend/telegram/telegram-bot-api`
 
 Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend-common-health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
 

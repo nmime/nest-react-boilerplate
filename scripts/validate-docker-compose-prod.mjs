@@ -20,6 +20,7 @@ const composeWrapper = read('scripts/compose-production.mjs');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
+const projectCatalogDocs = read('docs/project-catalog.md');
 const deploymentDocs = read('docs/deployment.md');
 const securityPolicy = read('SECURITY.md');
 
@@ -249,7 +250,6 @@ for (const expected of [
   'COMPOSE_DOMAIN_MODE=per-app-domains',
   'COMPOSE_DOMAIN_MODE=external-proxy',
   'COMPOSE_TLS_MODE=provided',
-  'auth-app-api.example.com',
   'wildcard DNS',
   'docker/docker-compose.prod.telegram.yml',
   'docker/docker-compose.prod.discord.yml',
@@ -261,6 +261,9 @@ for (const expected of [
 ]) {
   has(composeDocs, expected, `Docker Compose production docs ${expected}`);
 }
+
+has(composeDocs, '[Project Catalog](project-catalog.md)', 'Docker Compose production project catalog link');
+has(projectCatalogDocs, 'auth-app-api.example.com', 'project catalog auth API template hostname');
 
 has(deploymentDocs, '## Compose production', 'deployment docs production Compose section');
 has(deploymentDocs, 'docker:prod:config', 'deployment docs production Compose entrypoint');

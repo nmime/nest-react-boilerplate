@@ -3,10 +3,6 @@
 Follow the root [AGENTS.md](../../../../../../AGENTS.md) and detailed [AI agent policy](../../../../../../docs/ai/agent-policy.md) first.
 Also follow [libs/backend/AGENTS.md](../../../../AGENTS.md).
 
-This is the local policy adapter for `@app/backend-feature-discord-bot` at `libs/backend/feature/discord/bot/lib`.
-Project type: `library`.
-Tags: `platform:backend`, `type:feature-main`, `scope:discord`.
-
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
@@ -15,4 +11,4 @@ Tags: `platform:backend`, `type:feature-main`, `scope:discord`.
 - Respect the declared scope tag: `discord`.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.

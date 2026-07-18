@@ -1,11 +1,5 @@
 # landing-app
 
-Path: `apps/frontend/landing`
-Nx project: `landing-app`
-Package: `landing-app`
-Runtime: Astro + React islands
-Local URL: `http://localhost:4202`
-
 ## Ownership
 
 This app owns the public landing renderer, Astro config, content shell, and

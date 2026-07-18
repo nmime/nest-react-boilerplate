@@ -1,10 +1,5 @@
 # @app/backend-common-nats
 
-Path: `libs/backend/common/nats/lib`
-Nx project: `@app/backend-common-nats`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:infrastructure-adapter`
-
 ## Purpose
 
 Backend common library for the shared scope. Provides a production-ready

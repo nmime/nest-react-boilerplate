@@ -1,11 +1,5 @@
 # user-app
 
-Path: `apps/frontend/app`
-Nx project: `user-app`
-Package: `user-app`
-Runtime: React + Vite user SPA
-Local URL: `http://localhost:4201`
-
 ## Ownership
 
 This app owns the current authenticated user SPA shell. Keep reusable user

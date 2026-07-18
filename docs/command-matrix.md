@@ -54,7 +54,7 @@ Use this matrix as the supported DX contract for local development and CI. Prefe
 | OpenTelemetry tests          | `pnpm run test:otel`                                                                                                                                                                    | Telemetry instrumentation changes         | Runs telemetry-specific tests.                                                                              |
 | World-class QA gate          | `pnpm run test:world-class` / `pnpm run quality:world-class`                                                                                                                            | Release-risk or scheduled QA sweeps       | Runs the high-signal QA gate; local missing-runtime gates report partial, CI missing-runtime gates fail unless explicitly allowed. |
 | Tooling static check | `pnpm run tooling:static-check` | Tooling/CI PRs | Syntax-checks tooling modules, typechecks `@repo/tooling`, import-smokes safe CLIs, verifies package script references, and runs FSD self/workspace checks. |
-| Documentation check | `pnpm run docs:check` | Documentation, commands, or structure changes | Tests the validator, then checks every tracked Markdown file for local targets, heading anchors, and root `pnpm run` script references. |
+| Documentation check | `pnpm run docs:check` | Documentation, commands, or structure changes | Checks generated project-catalog parity, duplicate project metadata, local targets, heading anchors, and root `pnpm run` script references. |
 | Frontend FSD check | `pnpm run frontend:fsd:check` | Frontend architecture PRs | Enforces FSD layer/slice boundaries, frontend project tags, and public APIs. |
 | Library config check | `pnpm run lib:configs:check` | Library split/config changes | Requires library config and library Storybook config files to live inside each library `lib/` folder and rejects legacy auth OAuth placement. |
 | Project initialization       | `pnpm nrb init --name <title> --domain <base> --owner <org>`                                                                                                                            | New product setup                         | Replaces product identity and every example frontend/API domain; dry-run first.                             |
@@ -75,7 +75,8 @@ These public root scripts are part of the supported DX/CI contract even when the
 | Script | Actual command | Notes |
 | ------ | -------------- | ----- |
 | `pnpm run format:changed` | `pnpm --filter @repo/tooling tooling tooling changed-format-check` | Runs the tooling changed-file Prettier check against `origin/main...HEAD` by default; pass `--base`/`--head` through the tooling command for another range. |
-| `pnpm run docs:check` | `node --test scripts/validate-doc-links.spec.mjs && node scripts/validate-doc-links.mjs` | Validates all tracked Markdown, including root and dot-directory guidance, without network access. |
+| `pnpm run docs:catalog` | `node scripts/generate-project-catalog.mjs` | Regenerates the canonical app catalog from setup metadata and Nx `project.json` roots. |
+| `pnpm run docs:check` | catalog parity check + documentation validator tests + tracked Markdown validation | Rejects a stale project catalog, copied leaf-project metadata, duplicate project-map sections, missing local targets/anchors, and unknown root scripts without network access. |
 | `pnpm run images:webp` | `pnpm --filter @repo/tooling tooling images webp` | Converts PNG/JPG/JPEG assets to WebP side-by-side by default; pass inputs and options after `--`. |
 | `pnpm run images:webp:check` | `pnpm --filter @repo/tooling tooling images webp --dry-run` | Non-mutating image conversion preview for local and PR checks. |
 | `pnpm run docker:prod:config:check` | `node scripts/validate-docker-compose-prod.mjs` | Static production Compose config validation only; it does not start containers. |
@@ -117,34 +118,18 @@ pnpm run check:fast
 
 Add targeted checks from the table above for migrations, dependency changes, cross-app behavior, Docker/deployment work, or release-risk changes.
 
-## Planned frontend migration checks
+## Project target discovery
 
-These target checks apply after the corresponding migration scaffold lands.
+Use the [Project Catalog](project-catalog.md) for selectable application IDs and
+roots. For applications and libraries, inspect the live Nx contract instead of
+maintaining another command table:
 
-| Target | Validation commands | Notes |
-| ------ | ------------------- | ----- |
-| Astro landing `landing-app` | `pnpm exec nx build landing-app`; `pnpm exec nx run landing-app:e2e`; `pnpm run frontend:fsd:check` | Final landing target remains `landing-app` at `apps/frontend/landing`. |
-| Vike site `site-app` | `pnpm exec nx build site-app`; `pnpm exec nx run site-app:e2e`; `pnpm run typecheck`; `pnpm run frontend:fsd:check` | Core SSR product/site target at `apps/frontend/site`; keep its ownership distinct from `user-app`. |
-| Expo mobile `mobile-app` | `pnpm exec nx build mobile-app`; `pnpm exec nx run mobile-app:test`; `pnpm exec nx run mobile-app:export`; `pnpm run frontend:fsd:check` | Expo/React Native app target at `apps/frontend/mobile`; Android/iOS runs require local native toolchains. |
-| shadcn web UI `@app/frontend-ui-web` | `pnpm exec nx run @app/frontend-ui-web:build`; `pnpm exec nx run @app/frontend-ui-web:test`; `pnpm run storybook:build`; `pnpm run test:storybook`; `pnpm run frontend:fsd:check` | React DOM UI target for Astro, Vike, and Vite web apps. Storybook is owned here. |
-| Tamagui native UI `@app/frontend-ui-native` | `pnpm exec nx run @app/frontend-ui-native:build`; `pnpm run frontend:fsd:check` | Shared native UI facade consumed by `mobile-app` and future Expo/React Native surfaces. |
+```bash
+pnpm exec nx show projects
+pnpm exec nx show project <id>
+```
 
-## Project names and paths
-
-| Project                 | Path                         | Purpose                                         |
-| ----------------------- | ---------------------------- | ----------------------------------------------- |
-| `landing-app`           | `apps/frontend/landing`      | Final Astro marketing/landing app; keeps the current landing project name. |
-| `site-app`              | `apps/frontend/site`         | Vike SSR product/site application.                |
-| `user-app`              | `apps/frontend/app`          | Vite authenticated user application.              |
-| `admin-app`             | `apps/frontend/admin`        | Admin React app.                                |
-| `mobile-app`            | `apps/frontend/mobile`       | Expo/React Native mobile app.                  |
-| `auth-app-api`          | `apps/backend/auth/auth-app-api`  | Auth/session API.                               |
-| `user-app-api`          | `apps/backend/user/user-app-api`  | User-facing API.                                |
-| `admin-app-api` | `apps/backend/admin/admin-app-api` | Admin-facing API.                               |
-| `@app/frontend-ui-web`  | `libs/frontend/ui-web/lib`   | Final shadcn/Radix/Tailwind web UI target for Astro, Vike, and admin web. |
-| `@app/frontend-ui-native` | `libs/frontend/ui-native/lib` | Final Tamagui native UI target for Expo/React Native. |
-| `@app/frontend-runtime` | `libs/frontend/runtime/lib` | Non-visual frontend runtime helpers for i18n, query, shell state, locale, and platform guards. |
-| `@app/common-design-tokens` | `libs/common/design-tokens/lib` | Shared renderer-neutral design tokens for web CSS variables and native Tamagui config. |
+The nearest project README lists its high-signal verification commands.
 
 ## Tooling policy
 

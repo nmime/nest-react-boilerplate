@@ -1,19 +1,8 @@
 # @app/backend-common-swagger
 
-Path: `libs/backend/common/swagger/lib`
-Nx project: `@app/backend-common-swagger`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:interface-helper`
-
 ## Purpose
 
 Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
 
 ## Commands
 

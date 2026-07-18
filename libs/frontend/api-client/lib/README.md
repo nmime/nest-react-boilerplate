@@ -1,19 +1,8 @@
 # @app/frontend-api-client
 
-Path: `libs/frontend/api-client/lib`
-Nx project: `@app/frontend-api-client`
-Project type: `library`
-Tags: `platform:frontend`, `type:sdk`, `scope:shared`, `fsd:layer:shared`
-
 ## Purpose
 
 Frontend SDK/client library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import backend libraries from frontend code. Respect FSD tags and use frontend platform dependencies from `libs/frontend/package.json`.
-- Respect the declared scope tag: `shared`.
 
 ## Commands
 

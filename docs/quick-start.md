@@ -155,13 +155,9 @@ pnpm exec nx serve admin-app-api
 
 ### Local port contract
 
-| App         | Port | Framework         |
-| ----------- | ---- | ----------------- |
-| admin-app   | 4200 | React + Vite      |
-| user-app    | 4201 | React + Vite      |
-| landing-app | 4202 | Astro             |
-| site-app    | 4203 | Vike + React      |
-| mobile-app  | 4300 | Expo/React Native |
+Use the [Project Catalog](project-catalog.md) for application identities and
+runtimes, and the [Service Port Registry](PORTS.md) for the authoritative local
+and staging ports.
 
 Start Vike: `pnpm exec nx serve site-app`. Start Expo: `pnpm exec nx serve mobile-app`.
 
@@ -177,7 +173,7 @@ Every NestJS API exposes these health/readiness endpoints:
 Example:
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3003/health
 ```
 
 ## 8. Verify everything works

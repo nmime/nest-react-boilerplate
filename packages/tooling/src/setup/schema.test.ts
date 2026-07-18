@@ -178,6 +178,7 @@ describe('catalog — appCatalog', () => {
     for (const id of appIds) {
       assert.ok(appCatalog[id], `Missing: ${id}`);
       assert.equal(appCatalog[id].id, id);
+      assert.ok(appCatalog[id].runtime.trim().length > 0, `Missing runtime: ${id}`);
     }
   });
 

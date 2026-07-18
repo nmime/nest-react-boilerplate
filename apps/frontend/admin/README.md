@@ -1,11 +1,5 @@
 # admin-app
 
-Path: `apps/frontend/admin`
-Nx project: `admin-app`
-Package: `admin-app`
-Runtime: React + Vite admin SPA
-Local URL: `http://localhost:4200`
-
 ## Ownership
 
 This app owns admin route shell, bootstrapping, and app-local Vite/test config.

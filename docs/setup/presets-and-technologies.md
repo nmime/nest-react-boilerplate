@@ -4,21 +4,10 @@ The monorepo has no default application. Presets are exact shortcuts; the saved 
 
 ## Applications
 
-| ID                 | Classification                     | Canonical hostname             | Required selection                              |
-| ------------------ | ---------------------------------- | ------------------------------ | ----------------------------------------------- |
-| `admin-app`        | required/reference                 | `admin-app.example.com`        | `admin-app-api`, `auth-app-api`, `authz`        |
-| `user-app`         | required/reference                 | `user-app.example.com`         | `user-app-api`, `auth-app-api`, `i18n`          |
-| `landing-app`      | required/reference                 | `example.com`                  | none                                            |
-| `site-app`         | required/reference                 | `site-app.example.com`         | none                                            |
-| `mobile-app`       | required/reference                 | `mobile-app.example.com`       | `auth-app-api`, `user-app-api`, `design-tokens` |
-| `admin-app-api`    | required/reference                 | `admin-app-api.example.com`    | `postgres`, `authz`                             |
-| `user-app-api`     | required/reference                 | `user-app-api.example.com`     | `postgres`                                      |
-| `auth-app-api`     | required/reference                 | `auth-app-api.example.com`     | `postgres`                                      |
-| `telegram-bot-api` | optional                           | `telegram-bot-api.example.com` | `telegram-bot`, `postgres`                      |
-| `discord-app-api`  | optional                           | `discord-app-api.example.com`  | `discord-bot`, `postgres`                       |
-| `fullstack-e2e`    | required/reference, not deployable | none                           | complete admin/auth/user/landing stack          |
-
-`landing-app` owns the apex in the template. During product initialization, choose either landing or site for the real apex and update the other to its app-ID subdomain. Every other deployable keeps `<app-id>.<base-domain>`; an app called `auth-app-api` therefore maps to `auth-app-api.example.com`, never an invented starter hostname.
+The generated [Project Catalog](../project-catalog.md) owns the complete app
+matrix: exact IDs, Nx roots, runtimes, reference/optional classification,
+template hostnames, and dependency closure. This guide owns only preset and
+capability behavior.
 
 ## Presets
 

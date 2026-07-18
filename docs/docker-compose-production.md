@@ -99,25 +99,14 @@ COMPOSE_DOMAIN_MODE=per-app-domains
 ```
 
 Do not include a scheme, port, path, or `*.` wildcard in `PUBLIC_DOMAIN`. The
-wrapper validates it and derives the full mapping:
+wrapper validates it and derives the complete mapping documented in the
+[Project Catalog](project-catalog.md). Optional bot hosts are included only
+when their application profiles are enabled.
 
-| Deployable         | `PRIMARY_APP=landing-app`                   |
-| ------------------ | ------------------------------------------- |
-| `landing-app`      | `example.com`                               |
-| `site-app`         | `site-app.example.com`                      |
-| `user-app`         | `user-app.example.com`                      |
-| `admin-app`        | `admin-app.example.com`                     |
-| `mobile-app`       | `mobile-app.example.com`                    |
-| `auth-app-api`     | `auth-app-api.example.com`                  |
-| `user-app-api`     | `user-app-api.example.com`                  |
-| `admin-app-api`    | `admin-app-api.example.com`                 |
-| `telegram-bot-api` | `telegram-bot-api.example.com` when enabled |
-| `discord-app-api`  | `discord-app-api.example.com` when enabled  |
-
-With `PRIMARY_APP=site-app`, `site-app` owns `example.com` and landing moves to
-`landing-app.example.com`; API hostnames do not change. In particular, an app
-called `auth-app-api` is always `auth-app-api.example.com`, never a starter or
-generic hostname.
+With `PRIMARY_APP=site-app`, the site owns the apex and landing moves to its
+app-ID subdomain; API hostnames do not change. In particular, an app called
+`auth-app-api` always keeps its exact app ID in the hostname, never a starter or
+generic name.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
 `BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot

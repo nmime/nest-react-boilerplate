@@ -1,379 +1,188 @@
-# Environment Variables Reference
+# Environment Configuration Guide
 
-Complete reference of all environment variables used across the monorepo. Source of truth: `.env.example`.
+This guide explains the supported configuration contracts and where to find
+their complete templates. It is intentionally not a duplicated catalogue of
+every test, CI, generator, or deployment variable.
 
-## Quick lookup
+## Sources of truth
 
-| Category          | Required vars                                                    |
-| ----------------- | ---------------------------------------------------------------- |
-| Core              | `DATABASE_URL`                                                   |
-| Auth              | `SESSION_SECRET`, `AUTH_JWT_SECRET`, `BETTER_AUTH_SECRET`        |
-| Telegram          | `TELEGRAM_BOT_TOKEN`                                             |
-| Discord           | `DISCORD_BOT_TOKEN`                                              |
-| External services | `SENDGRID_API_KEY`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
-| Observability     | none (all optional)                                              |
+Use the template that matches the runtime you are configuring:
 
-## Full variable catalogue
+| File                                      | Purpose                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| `.env.example`                            | Canonical local application and infrastructure settings.               |
+| `.env.local.example`                      | Local override template; active keys stay aligned with `.env.example`. |
+| `.env.test.example`                       | Deterministic test settings.                                           |
+| `.env.staging.example`                    | Staging-oriented example values.                                       |
+| `.env.production.example`                 | Production Compose, domains, secret-file paths, and safe placeholders. |
+| `deploy/single-server/server.env.example` | Host bootstrap, Nginx, Certbot, and certificate-mode settings.         |
 
-### Core runtime
+The example files are the exhaustive operator-facing inventory. Runtime Joi
+schemas and the production deployment validators enforce the values consumed by
+code. When adding a setting, update its owning schema, relevant templates,
+Compose/Helm wiring, tests, and documentation together.
 
-| Variable                       | Required     | Default                  | Description                                                        |
-| ------------------------------ | ------------ | ------------------------ | ------------------------------------------------------------------ |
-| `NODE_ENV`                     | Optional     | `production`             | Runtime mode: `development`, `test`, `production`                  |
-| `PORT`                         | Optional     | —                        | Global HTTP port (service-specific ports preferred)                |
-| `CONTAINER`                    | Optional     | —                        | Container identifier for distributed tracing                       |
-| `DATABASE_URL`                 | **Required** | —                        | PostgreSQL connection string (`postgres://user:pass@host:5432/db`) |
-| `APP_NAME`                     | Optional     | `nest-react-boilerplate` | Application name used in logs and health                           |
-| `CI`                           | Optional     | `false`                  | Set to `true` in CI environments                                   |
-| `GRACEFUL_SHUTDOWN`            | Optional     | `true`                   | Enable graceful shutdown signal handling                           |
-| `HOST`                         | Optional     | `0.0.0.0`                | Bind address for HTTP servers                                      |
-| `KUBERNETES_SERVICE_HOST`      | Optional     | —                        | K8s service host (auto-set in cluster)                             |
-| `LOG_LEVEL`                    | Optional     | `info`                   | Log level: `debug`, `info`, `warn`, `error`                        |
-| `LOG_FORMAT` / `LOGGER_FORMAT` | Optional     | `json`                   | Log output format: `json` or `pretty`                              |
-| `TRUST_PROXY`                  | Optional     | `false`                  | Trust reverse-proxy headers (`X-Forwarded-For`)                    |
+Never commit a populated `.env` file or real secret material.
 
-### Service ports
+## Setup-generated selection
 
-| Variable                | Default | Description               |
-| ----------------------- | ------- | ------------------------- |
-| `ADMIN_APP_API_PORT`    | `3001`  | Admin API port            |
-| `ADMIN_APP_PORT`        | `4200`  | Admin frontend dev port   |
-| `USER_APP_API_PORT`     | `3002`  | User API port             |
-| `USER_APP_PORT`         | `4201`  | User frontend dev port    |
-| `AUTH_APP_API_PORT`     | `3003`  | Auth API port             |
-| `DISCORD_APP_API_PORT`  | `3007`  | Discord API port          |
-| `TELEGRAM_BOT_API_PORT` | `3013`  | Telegram webhook API port |
-| `LANDING_APP_PORT`      | `4202`  | Landing page dev port     |
-| `SITE_APP_PORT`         | `4203`  | Site (Vike SSR) dev port  |
-| `MOBILE_APP_PORT`       | `4300`  | Mobile (Expo) dev port    |
+`pnpm nrb setup` records selected apps and capabilities in `.nrb`. It also
+generates `.nrb/capabilities.env` for Compose/bootstrap activation. Rerunning
+setup is the supported way to add another app or capability; it preserves prior
+selections and does not invent a default application.
 
-### CORS and origins
-
-| Variable                 | Required | Default     | Description                                         |
-| ------------------------ | -------- | ----------- | --------------------------------------------------- |
-| `CORS_ORIGINS`           | Optional | —           | Comma-separated list of allowed CORS origins        |
-| `USER_APP_URL`           | Optional | —           | User app URL for redirects and link generation      |
-| `FULLSTACK_BASE_URL`     | Optional | —           | Base URL for fullstack e2e tests                    |
-| `FULLSTACK_HOST`         | Optional | `127.0.0.1` | Host for fullstack e2e tests                        |
-| `VITE_API_BASE_URL_MODE` | Optional | —           | Frontend API mode: `same-origin`, `explicit`, `env` |
-
-### Session and cookies
-
-| Variable                         | Required            | Default          | Description                           |
-| -------------------------------- | ------------------- | ---------------- | ------------------------------------- |
-| `SESSION_SECRET`                 | **Required** (prod) | —                | Secret for signing session cookies    |
-| `SESSION_SECRET_FILE`            | Optional            | —                | Docker secret file for session secret |
-| `SESSION_COOKIE_NAME`            | Optional            | `__Host-nrb.sid` | Session cookie name                   |
-| `SESSION_COOKIE_SECURE`          | Optional            | `true`           | HTTPS-only cookie flag                |
-| `SESSION_COOKIE_SAME_SITE`       | Optional            | `lax`            | SameSite cookie attribute             |
-| `SESSION_COOKIE_MAX_AGE_SECONDS` | Optional            | `604800`         | Cookie max age (7 days)               |
-
-### Auth and JWT
-
-| Variable                          | Required            | Default                            | Description                                                                    |
-| --------------------------------- | ------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
-| `AUTH_JWT_SECRET`                 | **Required** (prod) | `<set-jwt-secret>`                 | JWT signing key                                                                |
-| `AUTH_JWT_SECRET_FILE`            | Optional            | —                                  | File path for JWT secret (Docker secret mount)                                 |
-| `AUTH_JWT_ISSUER`                 | Optional            | `https://auth-app-api.example.com` | JWT issuer claim                                                               |
-| `AUTH_JWT_AUDIENCE`               | Optional            | `nest-react-boilerplate-api`       | JWT audience claim                                                             |
-| `AUTH_JWT_EXPIRES_IN_SECONDS`     | Optional            | `3600`                             | JWT TTL (1 hour)                                                               |
-| `AUTH_PERSISTENCE`                | Optional            | `postgres`                         | Auth token persistence: `postgres` or `memory`                                 |
-| `AUTH_TOKEN_CLEANUP_ENABLED`      | Optional            | `true`                             | Enable stale token cleanup                                                     |
-| `AUTH_TOKEN_CLEANUP_INTERVAL_MS`  | Optional            | `3600000`                          | Cleanup interval (1 hour)                                                      |
-| `AUTH_TOKEN_CLEANUP_RUN_ON_START` | Optional            | `true`                             | Run cleanup on boot                                                            |
-| `BETTER_AUTH_SECRET`              | **Required** (prod) | —                                  | Better Auth cookie/state secret (32+ chars)                                    |
-| `BETTER_AUTH_SECRET_FILE`         | Optional            | —                                  | Docker secret file for Better Auth secret                                      |
-| `BETTER_AUTH_URL`                 | **Required** (prod) | `http://localhost:3003`            | Public Better Auth origin: user app for same-origin, auth API for split-origin |
-| `BETTER_AUTH_TRUSTED_ORIGINS`     | **Required** (prod) | `BETTER_AUTH_URL`                  | Comma-separated browser origins allowed by BA                                  |
-
-### Admin bootstrap
-
-| Variable                     | Required | Default | Description                     |
-| ---------------------------- | -------- | ------- | ------------------------------- |
-| `ADMIN_BOOTSTRAP_ENABLED`    | Optional | `false` | Enable admin user bootstrapping |
-| `ADMIN_BOOTSTRAP_EMAILS`     | Optional | —       | Comma-separated admin emails    |
-| `ADMIN_BOOTSTRAP_TENANT_IDS` | Optional | —       | Comma-separated tenant IDs      |
-
-### External auth policy
-
-| Variable                                  | Required | Default                    | Description                                         |
-| ----------------------------------------- | -------- | -------------------------- | --------------------------------------------------- |
-| `EXTERNAL_AUTH_AUTO_PROVISION_ENABLED`    | Optional | `false`                    | Auto-create accounts on social login                |
-| `EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS`   | Optional | `900`                      | Max age for step-up confirmation                    |
-| `EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS`    | Optional | `600`                      | Link-token lifetime                                 |
-| `EXTERNAL_AUTH_STATE_TTL_SECONDS`         | Optional | `600`                      | OAuth/TMA state lifetime                            |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY`      | Optional | `<set-32-byte-base64-key>` | Key for encrypting provider tokens at rest          |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE` | Optional | —                          | File path for encryption key (Docker secret)        |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`  | Optional | `false`                    | Enable AES-GCM encryption of stored provider tokens |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`   | Optional | `primary`                  | Key identifier for rotation                         |
-
-### Telegram
-
-| Variable                           | Required                       | Default                    | Description                                                     |
-| ---------------------------------- | ------------------------------ | -------------------------- | --------------------------------------------------------------- |
-| `AUTH_TELEGRAM_ENABLED`            | Optional                       | `false`                    | Enable tenant/RBAC Telegram auth projection                     |
-| `TELEGRAM_BOT_TOKEN`               | **Required** (TMA/bot enabled) | `<set-telegram-bot-token>` | Bot token used for signed TMA validation and bot runtime        |
-| `TELEGRAM_BOT_TOKEN_FILE`          | Optional                       | —                          | File path for bot token (Docker secret)                         |
-| `TELEGRAM_BOT_USERNAME`            | Optional                       | `example_bot`              | Bot username without `@`                                        |
-| `TELEGRAM_BOT_MODE`                | Optional                       | `webhook`                  | Bot mode: `webhook` or `polling`                                |
-| `TELEGRAM_BOT_WEBHOOK_SECRET`      | **Required** (webhook mode)    | —                          | Webhook verification secret                                     |
-| `TELEGRAM_BOT_WEBHOOK_SECRET_FILE` | Optional                       | —                          | File path for webhook secret (Docker secret)                    |
-| `TELEGRAM_BOT_WEBHOOK_URL`         | **Required** (webhook mode)    | —                          | Public HTTPS URL ending in `/telegram/webhook`                  |
-| `TELEGRAM_MINI_APP_URL`            | Optional                       | —                          | Telegram Mini App URL (must match BotFather config)             |
-| `TELEGRAM_TMA_MAX_AGE_SECONDS`     | Optional                       | `300`                      | Maximum signed TMA `auth_date` age                              |
-| `TELEGRAM_OIDC_ENABLED`            | Optional                       | `false`                    | Enable Telegram OIDC in Better Auth                             |
-| `TELEGRAM_OIDC_CLIENT_ID`          | **Required** (OIDC enabled)    | —                          | Numeric client ID issued by Telegram                            |
-| `TELEGRAM_OIDC_CLIENT_SECRET`      | **Required** (OIDC enabled)    | —                          | Telegram OIDC client secret                                     |
-| `TELEGRAM_OIDC_CLIENT_SECRET_FILE` | Optional                       | —                          | Docker secret file for the OIDC client secret                   |
-| `TELEGRAM_OIDC_SCOPES`             | Optional                       | `openid profile`           | Space/comma-normalized scopes passed to Telegram                |
-| `TELEGRAM_BOT_MENU_BUTTON_ENABLED` | Optional                       | `true`                     | Publish commands and persistent Mini App button                 |
-| `TELEGRAM_LINK_TOKEN_TTL_SECONDS`  | Optional                       | `600`                      | Account-link token TTL                                          |
-| `VITE_TELEGRAM_AUTH_ENABLED`       | Optional (frontend build)      | `false`                    | Include the Telegram OIDC sign-in entry in the built `user-app` |
-
-### Discord
-
-| Variable                                 | Required                   | Default                          | Description                                 |
-| ---------------------------------------- | -------------------------- | -------------------------------- | ------------------------------------------- |
-| `DISCORD_BOT_TOKEN`                      | **Required** (bot enabled) | `<set-discord-bot-token>`        | Bot token from Discord Developer Portal     |
-| `DISCORD_BOT_TOKEN_FILE`                 | Optional                   | —                                | File path for bot token (Docker secret)     |
-| `DISCORD_CLIENT_ID`                      | **Required** (OAuth)       | `example-discord-client-id`      | Application client ID                       |
-| `DISCORD_APPLICATION_ID`                 | **Required** (bot enabled) | `example-discord-application-id` | Interactions application ID                 |
-| `DISCORD_CLIENT_SECRET`                  | **Required** (OAuth)       | `<set-discord-client-secret>`    | Application client secret                   |
-| `DISCORD_CLIENT_SECRET_FILE`             | Optional                   | —                                | File path for client secret (Docker secret) |
-| `DISCORD_PUBLIC_KEY`                     | Optional                   | `<set-discord-public-key>`       | Interactions public key                     |
-| `DISCORD_PUBLIC_KEY_FILE`                | Optional                   | —                                | File path for public key (Docker secret)    |
-| `DISCORD_REDIRECT_URI`                   | Optional                   | —                                | OAuth callback URI                          |
-| `DISCORD_SCOPES`                         | Optional                   | `identify email guilds.join`     | OAuth scopes                                |
-| `DISCORD_AUTH_ENABLED`                   | Optional                   | `false`                          | Enable Discord social auth                  |
-| `DISCORD_INTERACTIONS_ENDPOINT`          | Optional                   | —                                | Public interactions endpoint URL            |
-| `DISCORD_INTERACTIONS_STATE_TTL_SECONDS` | Optional                   | `600`                            | Interactions state TTL                      |
-| `DISCORD_COMMAND_REGISTRATION_ENABLED`   | Optional                   | `false`                          | Enable slash command registration           |
-
-### OAuth
-
-| Variable                   | Required                     | Default                     | Description                   |
-| -------------------------- | ---------------------------- | --------------------------- | ----------------------------- |
-| `AUTH_OAUTH_ENABLED`       | Optional                     | `false`                     | Enable generic OAuth provider |
-| `AUTH_OAUTH_CLIENT_ID`     | Optional                     | `example-client-id`         | OAuth client ID               |
-| `AUTH_OAUTH_CLIENT_SECRET` | **Required** (OAuth enabled) | `<set-oauth-client-secret>` | OAuth client secret           |
-| `AUTH_OAUTH_SCOPES`        | Optional                     | `openid profile email`      | OAuth scopes                  |
-
-### Email (SendGrid)
-
-| Variable              | Required                     | Default | Description                  |
-| --------------------- | ---------------------------- | ------- | ---------------------------- |
-| `SENDGRID_API_KEY`    | **Required** (email enabled) | —       | SendGrid API key             |
-| `SENDGRID_FROM_EMAIL` | Optional                     | —       | Default sender email address |
-| `SENDGRID_FROM_NAME`  | Optional                     | —       | Default sender name          |
-
-### Analytics (PostHog)
-
-| Variable                 | Required | Default                   | Description             |
-| ------------------------ | -------- | ------------------------- | ----------------------- |
-| `POSTHOG_API_KEY`        | Optional | —                         | PostHog project API key |
-| `ANALYTICS_POSTHOG_HOST` | Optional | `https://app.posthog.com` | PostHog host URL        |
-
-### Object storage (S3 / MinIO)
-
-| Variable                                  | Required                  | Default      | Description                      |
-| ----------------------------------------- | ------------------------- | ------------ | -------------------------------- |
-| `AWS_ACCESS_KEY_ID` / `S3_ACCESS_KEY`     | **Required** (S3 enabled) | `minioadmin` | S3 access key                    |
-| `AWS_SECRET_ACCESS_KEY` / `S3_SECRET_KEY` | **Required** (S3 enabled) | `minioadmin` | S3 secret key                    |
-| `S3_BUCKET`                               | **Required** (S3 enabled) | —            | S3 bucket name                   |
-| `S3_ENDPOINT`                             | Optional                  | —            | Custom S3 endpoint (MinIO, etc.) |
-| `S3_REGION`                               | Optional                  | —            | S3 region                        |
-
-### Rate limiting
-
-| Variable             | Required | Default | Description                           |
-| -------------------- | -------- | ------- | ------------------------------------- |
-| `RATE_LIMIT_ENABLED` | Optional | `true`  | Enable rate limiting                  |
-| `RATE_LIMIT_MAX`     | Optional | `100`   | Max requests per window               |
-| `RATE_LIMIT_STORE`   | Optional | `redis` | Rate limit store: `redis` or `memory` |
-
-### Redis
-
-| Variable              | Required                     | Default  | Description                           |
-| --------------------- | ---------------------------- | -------- | ------------------------------------- |
-| `REDIS_URL`           | **Required** (Redis enabled) | —        | Redis connection URL                  |
-| `REDIS_HOSTS`         | **Required** (Redis enabled) | —        | Redis host(s)                         |
-| `REDIS_PORT`          | Optional                     | `6379`   | Redis port                            |
-| `REDIS_MODE`          | Optional                     | `single` | Mode: `single`, `sentinel`, `cluster` |
-| `REDIS_PASSWORD`      | Optional                     | —        | Redis authentication password         |
-| `REDIS_PASSWORD_FILE` | Optional                     | —        | Docker secret file for Redis password |
-
-### PostgreSQL (Docker/Compose)
-
-| Variable                 | Required | Default                                                             | Description                               |
-| ------------------------ | -------- | ------------------------------------------------------------------- | ----------------------------------------- |
-| `CONTAINER_DATABASE_URL` | Optional | `postgres://postgres:postgres@postgres:5432/nest_react_boilerplate` | DB URL for Compose                        |
-| `POSTGRES_DB`            | Optional | `nest_react_boilerplate`                                            | Database name                             |
-| `POSTGRES_PASSWORD_FILE` | Optional | —                                                                   | File path for DB password (Docker secret) |
-
-### NATS
-
-| Variable                      | Required                    | Default                      | Description            |
-| ----------------------------- | --------------------------- | ---------------------------- | ---------------------- |
-| `NATS_URL` / `NATS_SERVERS`   | **Required** (NATS enabled) | —                            | NATS server URL(s)     |
-| `NATS_USER`                   | Optional                    | —                            | NATS username          |
-| `NATS_PASS`                   | Optional                    | —                            | NATS password          |
-| `NATS_NAME`                   | Optional                    | `nest-react-boilerplate-api` | Client name for NATS   |
-| `NATS_RECONNECT`              | Optional                    | `true`                       | Enable auto-reconnect  |
-| `NATS_MAX_RECONNECT_ATTEMPTS` | Optional                    | `10`                         | Max reconnect attempts |
-| `NATS_RECONNECT_TIME_WAIT_MS` | Optional                    | `2000`                       | Reconnect wait (ms)    |
-| `NATS_PING_INTERVAL_MS`       | Optional                    | `120000`                     | Ping interval (ms)     |
-| `NATS_DRAIN_TIMEOUT_MS`       | Optional                    | `5000`                       | Drain timeout (ms)     |
-
-### OpenTelemetry / Observability
-
-| Variable                              | Required                    | Default                      | Description                 |
-| ------------------------------------- | --------------------------- | ---------------------------- | --------------------------- |
-| `OTEL_ENABLED`                        | Optional                    | `false`                      | Enable OpenTelemetry SDK    |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`         | **Required** (OTEL enabled) | `http://otel-collector:4318` | OTLP collector endpoint     |
-| `OTEL_EXPORTER_OTLP_HEADERS`          | Optional                    | —                            | OTLP auth headers           |
-| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | Optional                    | —                            | Traces-specific endpoint    |
-| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | Optional                    | —                            | Metrics-specific endpoint   |
-| `OTEL_METRIC_EXPORT_INTERVAL`         | Optional                    | `60000`                      | Metric export interval (ms) |
-
-### OpenAPI
-
-| Variable              | Required | Default | Description                    |
-| --------------------- | -------- | ------- | ------------------------------ |
-| `OPENAPI_ENABLED`     | Optional | —       | Enable OpenAPI spec generation |
-| `OPENAPI_PATH`        | Optional | —       | Path to write OpenAPI JSON     |
-| `OPENAPI_DESCRIPTION` | Optional | —       | API description for spec       |
-
-### Docker / Images
-
-| Variable               | Required | Default                                          | Description                                         |
-| ---------------------- | -------- | ------------------------------------------------ | --------------------------------------------------- |
-| `IMAGE_REGISTRY`       | Optional | `ghcr.io/your-github-org/nest-react-boilerplate` | Container registry                                  |
-| `IMAGE_TAG`            | Optional | `sha-000000000000`                               | Image tag                                           |
-| `DOCKER_LOG_MAX_SIZE`  | Optional | `10m`                                            | Maximum rotated json-file log segment per container |
-| `DOCKER_LOG_MAX_FILES` | Optional | `5`                                              | Retained json-file log segments per container       |
-
-### Production Compose topology
-
-| Variable                            | Required      | Default             | Description                                                        |
-| ----------------------------------- | ------------- | ------------------- | ------------------------------------------------------------------ |
-| `PUBLIC_DOMAIN`                     | Compose       | `example.com`       | Product base domain without scheme, port, path, or wildcard        |
-| `PRIMARY_APP`                       | Compose       | `landing-app`       | Apex owner: `landing-app` or `site-app`                            |
-| `COMPOSE_DATABASE_MODE`             | Compose       | `bundled-db`        | `bundled-db` or `external-db`                                      |
-| `COMPOSE_DOMAIN_MODE`               | Compose       | `per-app-domains`   | `single-domain`, `per-app-domains`, or `external-proxy`            |
-| `EXTERNAL_PROXY_PUBLIC_MODE`        | External edge | `per-app-domains`   | External proxy layout: `single-domain` or `per-app-domains`        |
-| `COMPOSE_TLS_MODE`                  | Compose       | `automatic`         | `automatic`, `provided`, or `external`, constrained by domain mode |
-| `COMPOSE_PROFILES`                  | Optional      | —                   | Comma-separated `telegram` and/or `discord` profiles               |
-| `EDGE_BIND_ADDRESS`                 | Optional      | `0.0.0.0`           | Host address for the Compose-owned Caddy listener                  |
-| `EDGE_HTTP_PORT`                    | Optional      | `80`                | Published Caddy HTTP port                                          |
-| `EDGE_HTTPS_PORT`                   | Optional      | `443`               | Published Caddy HTTPS TCP/UDP port                                 |
-| `EDGE_TLS_CERT_FILE`                | Provided TLS  | `./secrets/tls.crt` | PEM chain path, relative to `docker/`                              |
-| `EDGE_TLS_KEY_FILE`                 | Provided TLS  | `./secrets/tls.key` | Unencrypted PEM key path, relative to `docker/`                    |
-| `CORS_EXTRA_ORIGINS`                | Optional      | —                   | Origins appended to the mode-derived CORS list                     |
-| `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS` | Optional      | —                   | Origins appended to the mode-derived Better Auth list              |
-
-App hostnames are not free-form variables. The production wrapper derives them
-from app IDs and `PUBLIC_DOMAIN`, preserving the repository's public-domain
-contract. See [docker-compose-production.md](docker-compose-production.md).
-
----
-
-## Per-environment examples
-
-### Local development
-
-```env
-NODE_ENV=development
-LOG_LEVEL=debug
-LOG_FORMAT=pretty
-GRACEFUL_SHUTDOWN=true
-
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/nest_react_boilerplate
-SESSION_SECRET=dev-session-secret-do-not-use-in-prod
-AUTH_JWT_SECRET=dev-jwt-secret-do-not-use-in-prod
-
-ADMIN_BOOTSTRAP_ENABLED=true
-ADMIN_BOOTSTRAP_EMAILS=dev@example.com
-
-TELEGRAM_BOT_TOKEN=your-dev-bot-token
-TELEGRAM_BOT_MODE=polling
-
-DISCORD_BOT_TOKEN=your-dev-bot-token
-
-OPENAPI_ENABLED=true
-OTEL_ENABLED=false
+```bash
+pnpm nrb setup
+pnpm nrb setup --app user-app --app auth-app-api
+pnpm nrb doctor
 ```
 
-### Staging
+Application configuration still comes from the environment templates. Selection
+metadata determines what is started; it does not contain production secrets.
 
-```env
-NODE_ENV=production
-LOG_LEVEL=info
-LOG_FORMAT=json
-GRACEFUL_SHUTDOWN=true
-TRUST_PROXY=true
+## Core runtime
 
-DATABASE_URL_FILE=/run/secrets/database_url
-SESSION_SECRET=<generated-256-bit-hex>
-AUTH_JWT_SECRET_FILE=/run/secrets/auth_jwt_secret
+| Variable          | When required          | Purpose                                                                                 |
+| ----------------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| `NODE_ENV`        | Always                 | Selects development, test, or production behavior.                                      |
+| `HOST` / `PORT`   | Optional               | HTTP bind address and service port.                                                     |
+| `DATABASE_URL`    | PostgreSQL-backed APIs | PostgreSQL connection URL.                                                              |
+| `CORS_ORIGINS`    | Production APIs        | Comma-separated browser origins. Wildcards are not accepted by the production contract. |
+| `TRUST_PROXY`     | Behind a trusted proxy | Enables forwarded client/protocol handling.                                             |
+| `LOG_LEVEL`       | Optional               | Runtime log threshold.                                                                  |
+| `OPENAPI_ENABLED` | Optional               | Enables the API's OpenAPI route/export behavior; production defaults to disabled.       |
+| `OPENAPI_PATH`    | Optional               | Service-local OpenAPI path.                                                             |
 
-ADMIN_BOOTSTRAP_ENABLED=false
+Local Compose provides `CONTAINER_DATABASE_URL`; production Compose derives or
+loads `DATABASE_URL` from the selected bundled/external database overlay.
 
-CORS_ORIGINS=https://admin-app.staging.example.com,https://user-app.staging.example.com
+## Auth and sessions
 
-TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
-TELEGRAM_BOT_MODE=webhook
-TELEGRAM_BOT_WEBHOOK_URL=https://telegram-bot-api.staging.example.com/telegram/webhook
+| Variable                      | When required                    | Purpose                                                                    |
+| ----------------------------- | -------------------------------- | -------------------------------------------------------------------------- |
+| `AUTH_JWT_SECRET`             | Production auth/API verification | JWT signing key.                                                           |
+| `SESSION_SECRET`              | Production browser sessions      | Session signing key.                                                       |
+| `BETTER_AUTH_SECRET`          | Better Auth                      | Better Auth cookie/state secret.                                           |
+| `BETTER_AUTH_URL`             | Better Auth                      | Public Better Auth origin.                                                 |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | Browser auth                     | Comma-separated origins accepted by Better Auth.                           |
+| `AUTH_JWT_ISSUER`             | Optional                         | JWT issuer. Defaults to the auth API domain contract.                      |
+| `AUTH_JWT_AUDIENCE`           | Optional                         | JWT audience used by protected APIs.                                       |
+| `AUTH_PERSISTENCE`            | Optional                         | `postgres` for the real persistence path; memory is test/development only. |
 
-DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token
+Production Compose mounts `AUTH_JWT_SECRET_FILE`, `SESSION_SECRET_FILE`, and
+`BETTER_AUTH_SECRET_FILE`; `docker/secret-entrypoint.sh` loads them into the
+canonical runtime variables before Node starts. The single-server bootstrap
+generates these secrets on first initialization and preserves them on reruns.
 
-OTEL_ENABLED=true
-OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+## Telegram and Discord
 
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_STORE=redis
-REDIS_HOSTS=redis:6379
+Telegram auth and bot execution are separate switches:
+
+| Variable                                                   | Purpose                                       |
+| ---------------------------------------------------------- | --------------------------------------------- |
+| `AUTH_TELEGRAM_ENABLED`                                    | Enables Telegram identity projection in auth. |
+| `TELEGRAM_OIDC_ENABLED`                                    | Enables the Telegram OIDC provider flow.      |
+| `TELEGRAM_OIDC_CLIENT_ID` / `TELEGRAM_OIDC_CLIENT_SECRET`  | Telegram OIDC credentials.                    |
+| `TELEGRAM_BOT_TOKEN`                                       | Validates signed TMA data and runs the bot.   |
+| `TELEGRAM_BOT_MODE`                                        | `webhook` or `polling`.                       |
+| `TELEGRAM_BOT_WEBHOOK_URL` / `TELEGRAM_BOT_WEBHOOK_SECRET` | Public webhook registration and verification. |
+| `TELEGRAM_MINI_APP_URL`                                    | URL opened by bot menu/app buttons.           |
+| `TELEGRAM_TMA_MAX_AGE_SECONDS`                             | Maximum accepted TMA authorization age.       |
+
+Discord uses `DISCORD_AUTH_ENABLED`, `DISCORD_APPLICATION_ID`,
+`DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, and
+`DISCORD_REDIRECT_URI`. Enable the `telegram` or `discord` Compose profile only
+when its app was selected and provider-issued credentials are populated.
+
+The server bootstrap creates protected empty files for provider-issued secrets;
+it cannot fabricate valid Telegram or Discord credentials.
+
+## Object storage (S3 / MinIO)
+
+Selecting the `s3` capability wires `S3Module.forRoot()` into selected backend
+apps. The default adapter is the AWS SDK v3 client and works with AWS S3 or an
+S3-compatible endpoint such as MinIO.
+
+| Variable                          | Required for use                          | Default                                       |
+| --------------------------------- | ----------------------------------------- | --------------------------------------------- |
+| `S3_BUCKET`                       | Unless every operation supplies a bucket  | Local example: `nest-react-boilerplate`       |
+| `S3_REGION`                       | Yes                                       | `us-east-1`                                   |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Together when static credentials are used | Local MinIO values in local templates         |
+| `S3_ENDPOINT`                     | For MinIO/custom endpoints                | AWS SDK endpoint resolution when empty        |
+| `S3_FORCE_PATH_STYLE`             | Usually for MinIO                         | `true` locally, `false` in production example |
+
+Start local MinIO with the `s3` profile. The configured bucket must exist before
+product code writes objects. Production credentials are provider-issued and are
+therefore not generated by the server bootstrap.
+
+## Analytics
+
+Analytics is disabled unless explicitly selected and configured. The PostHog
+provider uses `ANALYTICS_POSTHOG_API_KEY` and
+`ANALYTICS_POSTHOG_HOST`; `ANALYTICS_PROVIDER` or
+`ANALYTICS_PROVIDERS` selects the active provider set. Do not use the obsolete
+unprefixed PostHog key.
+
+The repository does not bundle SendGrid or another email-delivery SDK. Better
+Auth lifecycle hooks are the extension point; add the provider, schema,
+templates, deployment secrets, and tests as one product-owned integration.
+
+## OpenTelemetry and Prometheus
+
+| Variable                              | Purpose                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `OTEL_ENABLED`                        | Enables the application OpenTelemetry SDK.                              |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`         | Base collector URL for traces and metrics.                              |
+| `OTEL_EXPORTER_OTLP_HEADERS`          | Optional inline OTLP headers supplied by the deployment secret manager. |
+| `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | Optional trace-specific endpoint.                                       |
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | Optional metric-specific endpoint.                                      |
+| `OTEL_METRIC_EXPORT_INTERVAL`         | Metric export interval in milliseconds.                                 |
+
+Applications export OTLP. They do not expose per-service `/metrics` endpoints.
+The collector exposes Prometheus format on port `9464`; see
+[Monitoring and Alerting](monitoring.md).
+
+## Frontend API routing
+
+Production frontends use `VITE_API_BASE_URL_MODE`:
+
+- `same-origin` uses the edge proxy routes and is the production default.
+- `explicit` requires the relevant `VITE_AUTH_API_BASE_URL`,
+  `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` values.
+
+The production build rejects missing explicit origins rather than silently
+falling back to example domains.
+
+## Production domains and Compose topology
+
+| Variable                     | Supported values                                                        |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.  |
+| `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                      |
+| `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                          |
+| `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                |
+| `EXTERNAL_PROXY_PUBLIC_MODE` | `single-domain` or `per-app-domains` for host Nginx.                    |
+| `COMPOSE_TLS_MODE`           | `automatic`, `provided`, or `external`, constrained by the domain mode. |
+| `COMPOSE_PROFILES`           | Optional comma-separated `telegram` and/or `discord`.                   |
+
+Per-app mode derives hostnames from app IDs. For example,
+`auth-app-api` becomes `auth-app-api.example.com`; the chosen `PRIMARY_APP`
+receives `example.com`. Single-domain mode publishes the selected surfaces
+through the apex edge routes. See
+[Docker Compose Production](docker-compose-production.md) and
+[Single-server Deployment](single-server-deployment.md).
+
+## Safe initialization
+
+```bash
+cp .env.local.example .env.local
+pnpm nrb setup
+pnpm nrb doctor
 ```
 
-### Production
-
-```env
-NODE_ENV=production
-LOG_LEVEL=warn
-LOG_FORMAT=json
-GRACEFUL_SHUTDOWN=true
-TRUST_PROXY=true
-CONTAINER=prod-cluster-1
-
-DATABASE_URL_FILE=/run/secrets/database_url
-SESSION_SECRET_FILE=/run/secrets/session_secret
-AUTH_JWT_SECRET_FILE=/run/secrets/auth_jwt_secret
-
-ADMIN_BOOTSTRAP_ENABLED=false
-
-CORS_ORIGINS=https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
-
-TELEGRAM_BOT_TOKEN_FILE=/run/secrets/telegram_bot_token
-TELEGRAM_BOT_MODE=webhook
-TELEGRAM_BOT_WEBHOOK_SECRET_FILE=/run/secrets/telegram_webhook_secret
-TELEGRAM_BOT_WEBHOOK_URL=https://telegram-bot-api.example.com/telegram/webhook
-TELEGRAM_MINI_APP_URL=https://user-app.example.com/telegram-mini-app
-
-DISCORD_BOT_TOKEN_FILE=/run/secrets/discord_bot_token
-DISCORD_CLIENT_SECRET_FILE=/run/secrets/discord_client_secret
-
-SENDGRID_API_KEY_FILE=/run/secrets/sendgrid_api_key
-
-S3_ACCESS_KEY_FILE=/run/secrets/s3_access_key
-S3_SECRET_KEY_FILE=/run/secrets/s3_secret_key
-S3_BUCKET=prod-nrb-assets
-
-OTEL_ENABLED=true
-OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
-OTEL_EXPORTER_OTLP_HEADERS_FILE=/run/secrets/otel_headers
-
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_MAX=100
-RATE_LIMIT_STORE=redis
-REDIS_HOSTS=redis-sentinel:26379
-REDIS_MODE=sentinel
-```
+For production Compose, copy `.env.production.example` to an untracked file and
+replace every selected provider placeholder through your secret manager. For a
+single server, use `deploy/single-server/bootstrap.sh`; its rerunnable
+controller generates locally generatable secrets, installs/pins Node and pnpm,
+configures Nginx/Certbot, validates the rendered topology, and leaves
+provider-issued credentials for the operator.

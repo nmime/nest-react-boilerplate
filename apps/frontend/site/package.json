@@ -9,8 +9,8 @@
     "fastify": "5.10.0",
     "mobx": "6.16.1",
     "mobx-react-lite": "4.1.1",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "vike": "0.4.260",
     "vike-react": "0.6.25"
   },

@@ -45,7 +45,7 @@ Capabilities are executable selections, not labels. Each catalog entry declares 
 | `authz`         | source library                  | Enables shared authorization contracts/policies.                                                                              |
 | `postgres`      | infrastructure                  | Enables `postgres` and `migrate` Compose services and `DATABASE_URL`.                                                         |
 | `redis`         | Nest module + infrastructure    | Wires `RedisModule.forRoot()` and the Redis Compose service.                                                                  |
-| `s3`            | Nest module + infrastructure    | Wires `S3Module.forRoot()` and MinIO.                                                                                         |
+| `s3`            | Nest module + infrastructure    | Wires the AWS SDK v3-backed `S3Module.forRoot()` and local MinIO profile; the configured bucket must already exist.           |
 | `static-data`   | Nest module                     | Wires filesystem static-data access.                                                                                          |
 | `nats`          | Nest module + infrastructure    | Wires `NatsModule.forRoot()` and NATS.                                                                                        |
 | `otel`          | bootstrap                       | Enables OpenTelemetry bootstrap environment.                                                                                  |

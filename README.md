@@ -14,7 +14,7 @@ flowchart TB
     Mobile["mobile-app Expo + React Native"]
   end
   subgraph Frontend["libs/frontend/**"]
-    UI["ui-web + compatibility UI facade"]
+    UI["ui-web React DOM primitives"]
     NativeUI["ui-native Tamagui facade"]
     Runtime["frontend runtime + api-support"]
     Client["typed API clients"]
@@ -82,21 +82,21 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 
 ## Integrations
 
-| Integration     | Status           | Notes                                                                                   |
-| --------------- | ---------------- | --------------------------------------------------------------------------------------- |
-| PostgreSQL      | ✅ Wired         | Primary database via MikroORM; migrations committed                                     |
-| Redis           | ✅ Wired         | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`)       |
-| NATS            | ✅ Wired         | Async messaging backbone for bot workers and event-driven features                      |
-| Telegram        | ✅ Wired         | OIDC via Better Auth, signed TMA sessions, bot webhook/polling, and Open App menus      |
-| Discord Bot     | ✅ Wired         | Slash commands, interactions endpoint, OAuth 2.0 social auth                            |
-| S3 / MinIO      | ✅ Wired         | Object storage; uses `@aws-sdk/client-s3`, MinIO in local Compose                       |
-| SendGrid        | 📋 Contract-only | Email service SDK wired; requires `SENDGRID_API_KEY` to activate                        |
-| PostHog         | 📋 Contract-only | Analytics client configured; requires `POSTHOG_API_KEY` to activate                     |
-| OpenTelemetry   | ✅ Wired         | OTLP exporter for traces, metrics, logs; disabled by default (`OTEL_ENABLED=false`)     |
-| Prometheus      | ✅ Wired         | Each backend exposes `/metrics`; see [Monitoring](docs/monitoring.md) for scrape config |
-| OAuth (generic) | ✅ Wired         | Better Auth generic OIDC foundation; Telegram is the signed-token reference provider    |
+| Integration     | Status       | Notes                                                                                                         |
+| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL      | ✅ Wired     | Primary database via MikroORM; migrations committed                                                           |
+| Redis           | ✅ Wired     | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`)                             |
+| NATS            | ✅ Wired     | Async messaging backbone for bot workers and event-driven features                                            |
+| Telegram        | ✅ Wired     | OIDC via Better Auth, signed TMA sessions, bot webhook/polling, and Open App menus                            |
+| Discord Bot     | ✅ Wired     | Slash commands, interactions endpoint, OAuth 2.0 social auth                                                  |
+| S3 / MinIO      | ✅ Wired     | AWS SDK v3 adapter, injectable test adapter, canonical S3 environment contract, and local MinIO profile       |
+| Email provider  | ➕ Extension | Better Auth lifecycle hooks are available; choose and wire the product's provider (SendGrid is not bundled)   |
+| PostHog         | ✅ Wired     | Analytics provider uses `ANALYTICS_POSTHOG_API_KEY`; analytics stays disabled until explicitly configured     |
+| OpenTelemetry   | ✅ Wired     | OTLP exporter for traces and metrics; disabled by default (`OTEL_ENABLED=false`)                              |
+| Prometheus      | ✅ Wired     | The OTel collector exposes `:9464/metrics`; APIs export metrics to it over OTLP when observability is enabled |
+| OAuth (generic) | ✅ Wired     | Better Auth generic OIDC foundation; Telegram is the signed-token reference provider                          |
 
-**Wired** = runtime code exists and is exercised by tests. **Contract-only** = env vars and config slots exist; activate by providing credentials and flipping the feature flag.
+**Wired** means runtime code exists and is exercised by tests. **Extension** means the repository provides the ownership point but intentionally does not pretend a vendor integration exists.
 
 ## Tech stack
 
@@ -129,7 +129,6 @@ Start here when evaluating the repo, then use the linked deep dives for architec
 | `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                |
 | `libs/frontend/ui-web`                        | Shared React DOM UI primitives.                                             |
 | `libs/frontend/ui-native`                     | Shared Tamagui/native UI facade for Expo/React Native.                      |
-| `libs/frontend/ui`                            | Compatibility facade and Storybook configuration.                           |
 | `libs/frontend/runtime`                       | Non-visual frontend runtime for i18n, query, shell state, and theme.        |
 | `libs/frontend/api-support`                   | Browser-safe API environment, request, and error plumbing.                  |
 | `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                     |
@@ -183,7 +182,7 @@ Use targeted gates for the surface you changed:
 | Change area                   | Commands                                                                                     |
 | ----------------------------- | -------------------------------------------------------------------------------------------- |
 | Tooling or repository scripts | `pnpm run tooling:static-check`                                                              |
-| Formatting-only/docs          | `pnpm run format:changed`, Markdown link check for touched files, `git diff --check`         |
+| Formatting-only/docs          | `pnpm run docs:check`, `pnpm run format:changed`, `git diff --check`                         |
 | Frontend boundaries           | `pnpm run frontend:fsd:check` plus relevant app tests/builds                                 |
 | API shape                     | `pnpm run api:contracts:check`, `pnpm run api:clients:check`, `pnpm run api:openapi:lint`    |
 | Database migrations           | `pnpm run db:migrations:check`; add rollback checks when Docker/Testcontainers are available |

@@ -48,4 +48,4 @@ These gaps outweigh its raw speed advantage for our project size and structure.
 
 - [Nx Documentation](https://nx.dev/)
 - [Turborepo Documentation](https://turbo.build/)
-- [Nx vs Turborepo comparison](https://nx.dev/learn/why-nx)
+- [Nx vs. Turborepo comparison](https://nx.dev/docs/guides/comparisons/nx-vs-turborepo)

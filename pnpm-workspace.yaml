@@ -52,11 +52,11 @@ overrides:
   'webpack-dev-server@<5.2.5': '5.2.5'
   'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
 
-# react-native-worklets 0.10.2 imports these Babel packages from its compiled
+# react-native-worklets 0.10.0 imports these Babel packages from its compiled
 # plugin without declaring them. Keep the fix scoped to that exact release so
 # pnpm's isolated linker produces a reproducible mobile export.
 packageExtensions:
-  'react-native-worklets@0.10.2':
+  'react-native-worklets@0.10.0':
     dependencies:
       '@babel/generator': '7.29.7'
       '@babel/traverse': '7.29.7'
@@ -82,6 +82,17 @@ verifyDepsBeforeRun: false
 
 minimumReleaseAgeExclude:
   # Explicitly reviewed latest-release set requested for this scaffold refresh.
+  - '@expo/cli@57.0.9'
+  - '@expo/metro-config@57.0.6'
+  - '@expo/metro-runtime@57.0.6'
+  - '@expo/prebuild-config@57.0.8'
+  - '@expo/ui@57.0.7'
+  - 'expo-asset@57.0.6'
+  - 'expo-constants@57.0.6'
+  - 'expo-modules-autolinking@57.0.8'
+  - 'expo-modules-core@57.0.6'
+  - 'expo-router@57.0.7'
+  - 'expo@57.0.7'
   - '@astrojs/markdown-satteri@0.3.4'
   - '@astrojs/mdx@7.0.3'
   - '@nx/devkit@23.1.0'

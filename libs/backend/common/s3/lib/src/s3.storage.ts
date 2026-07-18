@@ -5,7 +5,13 @@ export interface ObjectStorageObject {
   body: Uint8Array;
   contentType?: string;
   metadata?: Record<string, string>;
-  updatedAt: Date;
+  updatedAt?: Date;
+}
+
+export interface ObjectStorageObjectSummary {
+  key: string;
+  updatedAt?: Date;
+  size?: number;
 }
 
 export interface PutObjectParams {
@@ -25,7 +31,7 @@ export interface ObjectStorageClient {
   putObject(params: PutObjectParams): Promise<void>;
   getObject(params: GetObjectParams): Promise<ObjectStorageObject | null>;
   deleteObject(params: GetObjectParams): Promise<void>;
-  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObject[]>;
+  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObjectSummary[]>;
 }
 
 export class InMemoryObjectStorageClient implements ObjectStorageClient {
@@ -51,12 +57,16 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
     return Promise.resolve();
   }
 
-  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObject[]> {
+  listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObjectSummary[]> {
     const prefix = `${params.bucket}/`;
     return Promise.resolve(
       [...this.objects.entries()]
         .filter(([id, object]) => id.startsWith(prefix) && (!params.prefix || object.key.startsWith(params.prefix)))
-        .map(([, object]) => object),
+        .map(([, object]) => ({
+          key: object.key,
+          updatedAt: object.updatedAt,
+          size: object.body.byteLength,
+        })),
     );
   }
 

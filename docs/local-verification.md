@@ -12,6 +12,7 @@ pnpm run onboarding:verify
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
 pnpm run tooling:static-check
+pnpm run docs:check
 pnpm run check
 node scripts/validate-deployment-config.mjs
 node scripts/validate-helm-rate-limit-config.mjs
@@ -49,6 +50,7 @@ For documentation-only ops/QA/deployment changes, the focused parity slice is:
 CI=true pnpm install --frozen-lockfile
 pnpm run ci:workflows:check
 pnpm run tooling:static-check
+pnpm run docs:check
 pnpm run deploy:validate
 pnpm run test:security:secrets
 pnpm run format:changed

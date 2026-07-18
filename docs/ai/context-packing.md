@@ -81,7 +81,7 @@ Tool-specific files must be adapters, not forks of policy:
 For AI guidance changes, run:
 
 - Markdown formatting for touched files
-- local Markdown link check when available
+- `pnpm run docs:check`
 - `git diff --check`
 - static denylist checks for stale versions, generated-path mistakes, duplicate policy, and magic completion markers
 

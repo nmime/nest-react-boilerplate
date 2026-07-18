@@ -82,7 +82,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [RPO/RTO](operations/rpo-rto.md)
 - [Dependency Triage](operations/dependency-triage.md)
 - [Execution Policy](operations/execution-policy.md)
-- [Backend Reliability Backlog](operations/backend-reliability-backlog.md)
 
 ### Runbooks
 

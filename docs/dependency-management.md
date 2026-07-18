@@ -9,7 +9,7 @@ Use this policy to keep dependency updates low-risk and reproducible.
 | Node.js    | 24.18.0 | Current Node 24 LTS baseline; engines accept `>=24 <25`                         |
 | pnpm       | 11.11.0 | Workspace packageManager field; Docker aligned                                  |
 | TypeScript | 6.0.3   | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
-| React      | 19.2.7  | All frontend apps and libs                                                      |
+| React      | 19.2.3  | All frontend apps and libs; matches the Expo 57 supported runtime               |
 | Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
 | Vitest     | 4.1.10  | All workspace consumers                                                         |
 | Vite       | 8.1.5   | All workspace consumers                                                         |
@@ -26,7 +26,7 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 ## Version alignment rules
 
-All 15 workspace manifests must use the same version for shared direct dependencies unless a documented constraint requires otherwise. Drift is caught by the drift-check script and must be resolved before merging.
+All workspace manifests must use the same version for shared direct dependencies unless a documented constraint requires otherwise. Drift is caught by the drift-check script and must be resolved before merging.
 
 ### pnpm workspace overrides
 
@@ -39,13 +39,18 @@ All 15 workspace manifests must use the same version for shared direct dependenc
 
 ## Deferred major updates
 
-| Package               | Current | Latest | Blocker                                                           | Revisit trigger                                      |
-| --------------------- | ------- | ------ | ----------------------------------------------------------------- | ---------------------------------------------------- |
-| TypeScript            | 6.0.3   | 7.x    | NestJS 11.x and Nx 23 target ts 6.x compiler APIs                 | First NestJS/Nx release with TS 7 peer ranges        |
-| Babel                 | 7.29.x  | 8.x    | Expo SDK 57 requires Babel 7 (`babel-preset-expo` peer)           | Expo SDK release declaring Babel 8 compatibility     |
-| @fastify/static       | 9.3.0   | 10.x   | NestJS 11 platform and Swagger peer ranges accept only 8.x or 9.x | NestJS releases with @fastify/static 10 peer support |
-| @types/node           | 24.13.3 | 26.x   | Node 24 runtime — type definitions match the runtime major        | Runtime upgrade to Node 26                           |
-| react-native-worklets | 0.10.2  | 0.11.x | Expo SDK 57 accepts only `^0.7.4` through `^0.10.0`               | Expo peer range includes 0.11.x                      |
+| Package               | Current | Latest | Blocker                                                     | Revisit trigger                                      |
+| --------------------- | ------- | ------ | ----------------------------------------------------------- | ---------------------------------------------------- |
+| TypeScript            | 6.0.3   | 7.x    | typescript-eslint 8.64 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range     |
+| Babel                 | 7.29.x  | 8.x    | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges      |
+| @fastify/static       | 9.3.0   | 10.x   | NestJS 11 platform and Swagger accept only 8.x or 9.x       | NestJS releases with @fastify/static 10 peer support |
+| @types/node           | 24.13.3 | 26.x   | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                           |
+| React / React DOM     | 19.2.3  | 19.2.7 | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch         |
+| gesture-handler       | 2.32.0  | 3.0.2  | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                     |
+| reanimated            | 4.5.0   | 4.5.2  | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch         |
+| safe-area-context     | 5.7.0   | 5.8.0  | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x                   |
+| react-native-screens  | 4.25.2  | 4.26.2 | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x                  |
+| react-native-worklets | 0.10.0  | 0.11.x | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x                  |
 
 ## Build scripts
 
@@ -82,11 +87,11 @@ All service images use explicit, immutable tags — never `latest` or floating m
 | NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
 | MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
-## Audit results (2026-07-17)
+## Audit results (2026-07-18)
 
 - **Production audit**: 0 vulnerabilities (exit 0)
 - **Development audit**: 0 vulnerabilities (exit 0)
 - **Peer dependencies**: 0 issues (`pnpm peers check`, exit 0)
 - **Frozen lockfile install**: exit 0
-- **Registry drift**: only the five incompatible releases listed above remain intentionally deferred
+- **Registry drift**: only the incompatible major/runtime releases listed above remain intentionally deferred
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)

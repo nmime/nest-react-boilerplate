@@ -34,6 +34,12 @@ x-backend-env: &backend-env
   ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-false}
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
   OPENAPI_PATH: ${OPENAPI_PATH:-docs}
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+  S3_BUCKET: ${S3_BUCKET:-nest-react-boilerplate}
+  S3_REGION: ${S3_REGION:-us-east-1}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+  S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
 
 x-backend-healthcheck: &backend-healthcheck
   test:

@@ -259,6 +259,23 @@ const staleReferencePatterns: StaleReferencePattern[] = [
     label: "retired backend dist path",
     pattern: /(^|[^A-Za-z0-9_/.-])dist\/backend(?:\/|$)/u,
   },
+  {
+    label: "retired frontend UI compatibility facade path",
+    pattern: /libs\/frontend\/ui(?=\/|`|\s|$)/u,
+  },
+  {
+    label: "retired API contract layout helper path",
+    pattern: /packages\/tooling\/src\/commands\/api\/contract-layout\.ts/u,
+  },
+  {
+    label: "retired common i18n locale path",
+    pattern: /libs\/common\/i18n\/lib\/src\/locales\.ts/u,
+  },
+  {
+    label: "unsupported environment variable name",
+    pattern:
+      /\b(?:AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|MINIO_BUCKET|MINIO_ENDPOINT|OTEL_EXPORTER_OTLP_HEADERS_FILE|POSTHOG_API_KEY|S3_ACCESS_KEY_FILE|S3_SECRET_KEY_FILE|SENDGRID_API_KEY|SENDGRID_API_KEY_FILE|SENDGRID_FROM_EMAIL|SENDGRID_FROM_NAME)\b/u,
+  },
   { label: "retired problem wrapper", pattern: /\bApiProblemExceptions\b/u },
   {
     label: "retired problem validation wrapper",

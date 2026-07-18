@@ -795,6 +795,35 @@ describe("static-check stale admin API name guard", () => {
   });
 });
 
+describe("static-check retired documentation contract guard", () => {
+  it("rejects deleted paths and unsupported environment names", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const retiredUiPath = ["libs/frontend", "ui"].join("/");
+      const retiredContractPath = [
+        "packages/tooling/src/commands/api",
+        "contract-layout.ts",
+      ].join("/");
+      const retiredEnvironmentName = ["POSTHOG", "API", "KEY"].join("_");
+      writeText(
+        workspaceRoot,
+        "docs/stale-contracts.md",
+        `${retiredUiPath}\n${retiredContractPath}\n${retiredEnvironmentName}\n`,
+      );
+
+      const failures = checkStaleReferences(workspaceRoot);
+
+      assert.equal(failures.length, 3);
+      assert.match(failures[0].stderr, /frontend UI compatibility facade/);
+      assert.match(failures[1].stderr, /API contract layout helper/);
+      assert.match(failures[2].stderr, /unsupported environment variable name/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
 describe("static-check Node version guard", () => {
   it("rejects an old NODE_VERSION assignment", () => {
     const workspaceRoot = createWorkspace();

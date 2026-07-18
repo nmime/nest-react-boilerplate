@@ -4,8 +4,8 @@
   "private": true,
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@nx/react": "23.1.0",

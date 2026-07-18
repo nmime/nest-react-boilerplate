@@ -162,7 +162,7 @@ Use stable key prefixes by surface:
 - `bot.menu.*`, `bot.route.*`, `bot.error.*`, and `bot.message.*` for Telegram bot copy.
 - `discord.commands.*`, `discord.components.*`, and `discord.messages.*` for Discord slash-command and component copy.
 
-When adding runtime features, add keys to both locale catalogs and the `TranslationKey` union in `libs/common/i18n/lib/src/locales.ts`, then update focused i18n tests. Keep web social-auth/TMA copy under `i18n/<locale>/user/**`; keep Telegram bot and Discord interaction copy under `i18n/<locale>/bots/**` so frontend app bundles stay bot-copy free.
+When adding runtime features, add keys to both locale catalogs and the `TranslationKey` union in `libs/common/i18n/keys/lib/src/index.ts`, then update focused i18n tests. Supported locales are owned by `libs/common/i18n/runtime/lib/src/runtime.ts`. Keep web social-auth/TMA copy under `i18n/<locale>/user/**`; keep Telegram bot and Discord interaction copy under `i18n/<locale>/bots/**` so frontend app bundles stay bot-copy free.
 
 ## Rollout plan
 

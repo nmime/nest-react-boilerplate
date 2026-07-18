@@ -389,7 +389,14 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     conflictsWith: [],
     ownedProjects: ['@app/backend-common-s3'],
     dockerServices: ['minio'],
-    environmentVariables: ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'],
+    environmentVariables: [
+      'S3_ENDPOINT',
+      'S3_BUCKET',
+      'S3_REGION',
+      'S3_ACCESS_KEY',
+      'S3_SECRET_KEY',
+      'S3_FORCE_PATH_STYLE',
+    ],
     backendWiring: [
       {
         hosts: 'selected-backend',

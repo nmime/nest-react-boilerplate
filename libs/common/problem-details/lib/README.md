@@ -10,6 +10,10 @@ status, safe default detail, resolution guidance, and documented extension
 members. `pnpm nrb init` replaces `example.com` with the product root domain.
 Both apex-capable frontends render this registry at `/problems`.
 
+Frontend response-presentation overrides use the shared `toast`/`silent` and
+severity vocabularies, but are keyed by generated API response rule IDs. Problem
+identity, status, safe detail, extensions, and resolution remain registry-owned.
+
 ## Commands
 
 ```bash

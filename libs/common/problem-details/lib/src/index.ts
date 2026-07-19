@@ -12,6 +12,12 @@ export interface ProblemTypeExtensionDefinition {
   readonly description: string;
 }
 
+export const ProblemPresentationDisplays = ['toast', 'silent'] as const;
+export type ProblemPresentationDisplay = (typeof ProblemPresentationDisplays)[number];
+
+export const ProblemPresentationSeverities = ['error', 'warning', 'info', 'success'] as const;
+export type ProblemPresentationSeverity = (typeof ProblemPresentationSeverities)[number];
+
 export interface ProblemTypeDefinition {
   readonly code: string;
   readonly title: string;
@@ -119,6 +125,25 @@ export const ProblemTypeDefinitions = [
 ] as const satisfies readonly ProblemTypeDefinition[];
 
 export type ProblemTypeCode = (typeof ProblemTypeDefinitions)[number]['code'];
+
+export interface ProblemPresentationOverride {
+  readonly comment?: string;
+  readonly display: ProblemPresentationDisplay;
+  readonly messageEn?: string;
+  readonly messageRu?: string;
+  readonly revision: number;
+  readonly ruleId: string;
+  readonly severity: ProblemPresentationSeverity;
+  readonly updatedAt?: string;
+}
+
+export function isProblemPresentationDisplay(value: string): value is ProblemPresentationDisplay {
+  return ProblemPresentationDisplays.includes(value as ProblemPresentationDisplay);
+}
+
+export function isProblemPresentationSeverity(value: string): value is ProblemPresentationSeverity {
+  return ProblemPresentationSeverities.includes(value as ProblemPresentationSeverity);
+}
 
 export function isProblemCode(value: string): boolean {
   return value.length <= 64 && ProblemCodePattern.test(value);

@@ -17,6 +17,7 @@ import {
   AuthUserRoleEntitySchema,
   AuthUserTokenEntitySchema,
   ExternalIdentityEntitySchema,
+  ProblemPresentationEntitySchema,
   TransactionalOutboxEventEntitySchema,
 } from './infrastructure/data-access/entities';
 import {
@@ -30,6 +31,7 @@ import {
   AuthUserRepository,
   AuthUserRoleRepository,
   ExternalIdentityRepository,
+  ProblemPresentationRepository,
 } from './infrastructure/data-access/repositories';
 
 @Module({
@@ -51,6 +53,7 @@ import {
       AuthPermissionEntitySchema,
       AuthRolePermissionEntitySchema,
       AuthUserRoleEntitySchema,
+      ProblemPresentationEntitySchema,
     ]),
   ],
   providers: [
@@ -65,6 +68,7 @@ import {
     AdminUserMutationRepository,
     AuthRoleRepository,
     AuthUserRoleRepository,
+    ProblemPresentationRepository,
   ],
   exports: [
     MikroOrmModule,
@@ -79,6 +83,7 @@ import {
     AdminUserMutationRepository,
     AuthRoleRepository,
     AuthUserRoleRepository,
+    ProblemPresentationRepository,
   ],
 })
 export class AuthPostgresModule {}

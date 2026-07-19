@@ -28,7 +28,7 @@ import {
 import { UiApiRuntimeOverlay } from '@app/frontend-ui-web';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { useUserPreferenceControls } from '../../features/preferences';
-import { getAuthApiBaseUrl, getUserApiBaseUrl } from '../../shared/config';
+import { getAuthApiBaseUrl, getFrontendEnv, getUserApiBaseUrl } from '../../shared/config';
 import { UiErrorBoundary } from '../../shared/ui';
 import { AuthRedirectBridge } from './auth-redirect-bridge';
 import { UserRouter } from '../router/user-router';
@@ -80,6 +80,7 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
         user: getUserApiBaseUrl(),
       }}
       fetchImpl={runtimeFetch}
+      loadProblemPresentationOverrides={getFrontendEnv()['MODE'] !== 'test'}
     >
       {children}
     </ApiClientProvider>

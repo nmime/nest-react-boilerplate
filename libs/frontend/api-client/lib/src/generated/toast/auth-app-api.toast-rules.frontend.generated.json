@@ -8,6 +8,578 @@
   },
   "rules": [
     {
+      "display": "silent",
+      "id": "auth-app-api:DELETE:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "DELETE",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_delete",
+        "path": "/api/auth/{path}",
+        "method": "DELETE",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle delete completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "DELETE",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_delete",
+        "path": "/api/auth/{path}",
+        "method": "DELETE",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle delete failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "DELETE",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_delete",
+        "path": "/api/auth/{path}",
+        "method": "DELETE",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle delete could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_get",
+        "path": "/api/auth/{path}",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle get completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_get",
+        "path": "/api/auth/{path}",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle get failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_get",
+        "path": "/api/auth/{path}",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle get could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:HEAD:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "HEAD",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_head",
+        "path": "/api/auth/{path}",
+        "method": "HEAD",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle head completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:HEAD:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "HEAD",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_head",
+        "path": "/api/auth/{path}",
+        "method": "HEAD",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle head failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:HEAD:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "HEAD",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_head",
+        "path": "/api/auth/{path}",
+        "method": "HEAD",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle head could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_options",
+        "path": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle options completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_options",
+        "path": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle options failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_options",
+        "path": "/api/auth/{path}",
+        "method": "OPTIONS",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle options could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_patch",
+        "path": "/api/auth/{path}",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle patch completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_patch",
+        "path": "/api/auth/{path}",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle patch failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_patch",
+        "path": "/api/auth/{path}",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle patch could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_post",
+        "path": "/api/auth/{path}",
+        "method": "POST",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle post completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_post",
+        "path": "/api/auth/{path}",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle post failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_post",
+        "path": "/api/auth/{path}",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle post could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PUT:/api/auth/{path}:200",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_put",
+        "path": "/api/auth/{path}",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Better Auth Api handle put completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PUT:/api/auth/{path}:ERR",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_put",
+        "path": "/api/auth/{path}",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle put failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PUT:/api/auth/{path}:NET",
+      "match": {
+        "endpoint": "/api/auth/{path}",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BetterAuthApiController_handle_put",
+        "path": "/api/auth/{path}",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["BetterAuthApi"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Better Auth Api handle put could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:200",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth discord Authorization Request completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
       "display": "toast",
       "id": "auth-app-api:POST:/auth/discord/authorization-request:400",
       "match": {
@@ -19,6 +591,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -33,6 +617,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth discord Authorization Request failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -47,6 +643,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -61,6 +669,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -75,6 +695,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -89,6 +721,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:ERR",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:NET",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "path": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Authorization Request could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/discord/callback:200",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth discord Callback completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -103,6 +825,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -117,6 +851,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth discord Callback failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -131,6 +877,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -145,6 +903,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -159,6 +929,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -173,6 +955,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:ERR",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:NET",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_discordCallback",
+        "path": "/auth/discord/callback",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth discord Callback could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/email-verification-token:200",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth request Email Verification completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -187,6 +1059,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -201,6 +1085,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth request Email Verification failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -215,6 +1111,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -229,6 +1137,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -243,6 +1163,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -257,6 +1189,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:ERR",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:NET",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestEmailVerification",
+        "path": "/auth/email-verification-token",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Email Verification could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/link-tokens:200",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth create Link Token completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -271,6 +1293,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -285,6 +1319,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth create Link Token failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -299,6 +1345,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -313,6 +1371,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -327,6 +1397,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -341,6 +1423,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:ERR",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:NET",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_createLinkToken",
+        "path": "/auth/link-tokens",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth create Link Token could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/locales:200",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth locales completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -355,6 +1527,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -369,6 +1553,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth locales failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -383,6 +1579,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -397,6 +1605,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -411,6 +1631,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -425,6 +1657,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:ERR",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:NET",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_locales",
+        "path": "/auth/locales",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth locales could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/login:200",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth login completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -439,6 +1761,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -453,6 +1787,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth login failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -467,6 +1813,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -481,6 +1839,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -495,6 +1865,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -509,6 +1891,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:ERR",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:NET",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_login",
+        "path": "/auth/login",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth login could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/logout:200",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth logout completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -523,6 +1995,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -537,6 +2021,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth logout failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -551,6 +2047,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -565,6 +2073,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -579,6 +2099,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -593,6 +2125,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:ERR",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:NET",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_logout",
+        "path": "/auth/logout",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth logout could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/me:200",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth me completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -607,6 +2229,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -621,6 +2255,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth me failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -635,6 +2281,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -649,6 +2307,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -663,6 +2333,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -677,6 +2359,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:ERR",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:NET",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_me",
+        "path": "/auth/me",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth me could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/locale:200",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth update Locale completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -691,6 +2463,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -705,6 +2489,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth update Locale failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -719,6 +2515,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -733,6 +2541,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -747,6 +2567,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -761,6 +2593,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:ERR",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:NET",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updateLocale",
+        "path": "/auth/me/locale",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Locale could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:200",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth update Preferences completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -775,6 +2697,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -789,6 +2723,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth update Preferences failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -803,6 +2749,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -817,6 +2775,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -831,6 +2801,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -845,6 +2827,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:ERR",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:NET",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_updatePreferences",
+        "path": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth update Preferences could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/password-reset-token:200",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth request Password Reset completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -859,6 +2931,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -873,6 +2957,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth request Password Reset failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -887,6 +2983,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -901,6 +3009,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -915,6 +3035,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -929,6 +3061,252 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:ERR",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:NET",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_requestPasswordReset",
+        "path": "/auth/password-reset-token",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth request Password Reset could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/problem-presentations:200",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 200,
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Problem Presentations list completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/problem-presentations:401",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 401,
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Problem Presentations list failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:429",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 429,
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Problem Presentations list failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:500",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 500,
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Problem Presentations list failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:ERR",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Problem Presentations list failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:NET",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "ProblemPresentationsController_list",
+        "path": "/auth/problem-presentations",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["ProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Problem Presentations list could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/provider-identities:200",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth provider Identities completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -943,6 +3321,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -957,6 +3347,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth provider Identities failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -971,6 +3373,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -985,6 +3399,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -999,6 +3425,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1013,6 +3451,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:ERR",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:NET",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_providerIdentities",
+        "path": "/auth/provider-identities",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth provider Identities could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:200",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth unlink Provider Identity completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1027,6 +3555,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1041,6 +3581,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth unlink Provider Identity failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1056,6 +3608,44 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": "step-up-required",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Step up required.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Step up Authentication Required.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1071,6 +3661,44 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": "last-auth-method-unlink-forbidden",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Last auth method unlink forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Last Authentication Method Cannot Be Unlinked.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1085,6 +3713,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1099,6 +3739,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:ERR",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:NET",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "path": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth unlink Provider Identity could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/refresh:200",
+      "match": {
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth refresh completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1113,6 +3843,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1127,6 +3869,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth refresh failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1141,6 +3895,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1155,6 +3921,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1169,6 +3947,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1183,6 +3973,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:ERR",
+      "match": {
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/refresh:NET",
+      "match": {
+        "endpoint": "/auth/refresh",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_refresh",
+        "path": "/auth/refresh",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth refresh could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/register:200",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth register completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1197,6 +4077,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1211,6 +4103,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth register failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1225,6 +4129,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1239,6 +4155,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1253,6 +4181,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1267,6 +4207,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:ERR",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:NET",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_register",
+        "path": "/auth/register",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth register could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:200",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Bot Link completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1281,6 +4311,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1295,6 +4337,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Bot Link failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1309,6 +4363,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1323,6 +4389,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1337,6 +4415,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1351,6 +4441,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:NET",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramBotLink",
+        "path": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Bot Link could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:200",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Oidc Session completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1365,6 +4545,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1379,6 +4571,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Oidc Session failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1393,6 +4597,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1407,6 +4623,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1421,6 +4649,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1435,6 +4675,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:NET",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramOidcSession",
+        "path": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Oidc Session could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/tma:200",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 200,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Tma completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -1449,6 +4779,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 400,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1463,6 +4805,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 401,
+        "tags": ["Auth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Auth telegram Tma failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1477,6 +4831,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 403,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1491,6 +4857,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 409,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1505,6 +4883,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 429,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1519,6 +4909,382 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 500,
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:NET",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "AuthController_telegramTma",
+        "path": "/auth/telegram/tma",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Auth telegram Tma could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/health:200",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health:ERR",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health:NET",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/health/private:200",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Private Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health/private:ERR",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health/private:NET",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/live:200",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Liveness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/live:ERR",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/live:NET",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/ready:200",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Readiness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/ready:ERR",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/ready:NET",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "auth-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness could not reach the service.",
+        "defaultSeverity": "warning"
       }
     }
   ]

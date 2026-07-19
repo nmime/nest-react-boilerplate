@@ -12,6 +12,12 @@ validation messages. Toast rules can match either `type` or `code`; never match
 localized text. Compose defaults with `createDefaultApiToastRules()` at request
 time so a live locale change also updates fallback toast copy.
 
+Generated endpoint, method, status, problem-code, `ERR`, and `NET` rules run
+before broad runtime fallbacks. The API client provider loads tenant overrides
+from the authenticated auth API and passes them to
+`configureProblemPresentationOverrides`; invalid or unavailable overrides fail
+closed to the checked-in generated defaults.
+
 ## Commands
 
 ```bash

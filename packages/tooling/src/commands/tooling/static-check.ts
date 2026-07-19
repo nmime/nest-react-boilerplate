@@ -172,6 +172,7 @@ export const thinLocaleCatalogFileNames = [
   "admin/users.json",
   "admin/audit.json",
   "admin/roles.json",
+  "admin/problem-presentations.json",
   "user/shell.json",
   "user/site.json",
   "user/mobile.json",

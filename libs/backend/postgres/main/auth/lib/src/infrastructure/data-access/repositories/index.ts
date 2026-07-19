@@ -17,3 +17,5 @@ export * from './auth-provider-token.repository';
 export * from './auth-role.repository';
 
 export * from './auth-user-role.repository';
+
+export * from './problem-presentation.repository';

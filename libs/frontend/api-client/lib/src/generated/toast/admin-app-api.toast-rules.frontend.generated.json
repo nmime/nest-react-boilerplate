@@ -8,6 +8,32 @@
   },
   "rules": [
     {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/audit:200",
+      "match": {
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users list Audit completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
       "display": "toast",
       "id": "admin-app-api:GET:/admin/audit:400",
       "match": {
@@ -19,6 +45,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -33,6 +71,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users list Audit failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -47,6 +97,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -61,6 +123,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -75,6 +149,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -89,6 +175,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:ERR",
+      "match": {
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/audit:NET",
+      "match": {
+        "endpoint": "/admin/audit",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listAudit",
+        "path": "/admin/audit",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Audit could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:200",
+      "match": {
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users dashboard Summary completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -103,6 +279,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -117,6 +305,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users dashboard Summary failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -131,6 +331,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -145,6 +357,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -159,6 +383,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -173,6 +409,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:ERR",
+      "match": {
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:NET",
+      "match": {
+        "endpoint": "/admin/dashboard/summary",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_dashboardSummary",
+        "path": "/admin/dashboard/summary",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users dashboard Summary could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/profile/me:200",
+      "match": {
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Profile me completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -187,6 +513,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -201,6 +539,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Profile me failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -215,6 +565,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -229,6 +591,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -243,6 +617,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:ERR",
+      "match": {
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/profile/me:NET",
+      "match": {
+        "endpoint": "/admin/profile/me",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProfileController_me",
+        "path": "/admin/profile/me",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminProfile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Profile me could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/roles:200",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles list Roles completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -257,6 +721,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -271,6 +747,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles list Roles failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -285,6 +773,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -299,6 +799,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -313,6 +825,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -327,6 +851,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -341,6 +877,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:ERR",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/roles:NET",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_listRoles",
+        "path": "/admin/roles",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles list Roles could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/roles:200",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 200,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles create Role completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -355,6 +981,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 400,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -369,6 +1007,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 401,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles create Role failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -383,6 +1033,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 403,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -397,6 +1059,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 404,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -411,6 +1085,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 409,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -425,6 +1111,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 429,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -439,6 +1137,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": 500,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:ERR",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/roles:NET",
+      "match": {
+        "endpoint": "/admin/roles",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_createRole",
+        "path": "/admin/roles",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles create Role could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:200",
+      "match": {
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles update Role completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -453,6 +1241,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -467,6 +1267,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles update Role failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -481,6 +1293,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -495,6 +1319,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -509,6 +1345,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -523,6 +1371,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -537,6 +1397,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:ERR",
+      "match": {
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:NET",
+      "match": {
+        "endpoint": "/admin/roles/{id}",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_updateRole",
+        "path": "/admin/roles/{id}",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles update Role could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:200",
+      "match": {
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles set Role Permissions completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -551,6 +1501,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -565,6 +1527,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -579,6 +1553,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -593,6 +1579,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -607,6 +1605,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -621,6 +1631,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -635,6 +1657,876 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:ERR",
+      "match": {
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:NET",
+      "match": {
+        "endpoint": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_setRolePermissions",
+        "path": "/admin/roles/{id}/permissions",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles set Role Permissions could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:200",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations list completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:400",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:401",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations list failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:403",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:404",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:409",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:429",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:500",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:ERR",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:NET",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_list",
+        "path": "/admin/settings/problem-presentations",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations list could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:200",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations update completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:400",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:401",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations update failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:403",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:404",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:409",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:429",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:500",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:ERR",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:NET",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_update",
+        "path": "/admin/settings/problem-presentations",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations update could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:200",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations reset completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:400",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:401",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Problem Presentations reset failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:403",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:404",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:409",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:429",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:500",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:ERR",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:NET",
+      "match": {
+        "endpoint": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminProblemPresentationsController_reset",
+        "path": "/admin/settings/problem-presentations/reset",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminProblemPresentations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Problem Presentations reset could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/users:200",
+      "match": {
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users list Users completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -649,6 +2541,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -663,6 +2567,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users list Users failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -677,6 +2593,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -691,6 +2619,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -705,6 +2645,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -719,6 +2671,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:ERR",
+      "match": {
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users:NET",
+      "match": {
+        "endpoint": "/admin/users",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_listUsers",
+        "path": "/admin/users",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users list Users could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/users/{id}:200",
+      "match": {
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users get User completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -733,6 +2775,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -747,6 +2801,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users get User failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -761,6 +2827,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -775,6 +2853,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -789,6 +2879,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -803,6 +2905,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:ERR",
+      "match": {
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/users/{id}:NET",
+      "match": {
+        "endpoint": "/admin/users/{id}",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_getUser",
+        "path": "/admin/users/{id}",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users get User could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:200",
+      "match": {
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users update User Access Policy completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -817,6 +3009,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -831,6 +3035,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users update User Access Policy failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -845,6 +3061,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -859,6 +3087,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -873,6 +3113,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -887,6 +3139,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:ERR",
+      "match": {
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:NET",
+      "match": {
+        "endpoint": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "path": "/admin/users/{id}/access-policy",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Access Policy could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:200",
+      "match": {
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles assign User Roles completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -901,6 +3243,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -915,6 +3269,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Roles assign User Roles failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -929,6 +3295,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -943,6 +3321,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -957,6 +3347,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Conflict.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -971,6 +3373,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -985,6 +3399,96 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:ERR",
+      "match": {
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:NET",
+      "match": {
+        "endpoint": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminRolesController_assignUserRoles",
+        "path": "/admin/users/{id}/roles",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminRoles"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Roles assign User Roles could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:200",
+      "match": {
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users update User Status completed successfully.",
+        "defaultSeverity": "success"
       }
     },
     {
@@ -999,6 +3503,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1013,6 +3529,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Users update User Status failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1027,6 +3555,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1041,6 +3581,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed: Not Found.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1055,6 +3607,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -1069,6 +3633,382 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:ERR",
+      "match": {
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:NET",
+      "match": {
+        "endpoint": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminUsersController_updateUserStatus",
+        "path": "/admin/users/{id}/status",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["AdminUsers"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Users update User Status could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/health:200",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/health:ERR",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/health:NET",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/health/private:200",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Private Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/health/private:ERR",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/health/private:NET",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/live:200",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Liveness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/live:ERR",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/live:NET",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/ready:200",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Readiness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/ready:ERR",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/ready:NET",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness could not reach the service.",
+        "defaultSeverity": "warning"
       }
     }
   ]

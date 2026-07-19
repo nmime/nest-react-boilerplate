@@ -249,6 +249,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/audit:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.err",
+          "default": "Admin Users list Audit failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/audit:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/audit",
+        "operationId": "AdminUsersController_listAudit",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.net",
+          "default": "Admin Users list Audit could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/admin/dashboard/summary:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -480,6 +546,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.err",
+          "default": "Admin Users dashboard Summary failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/dashboard/summary:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/dashboard/summary",
+        "operationId": "AdminUsersController_dashboardSummary",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.net",
+          "default": "Admin Users dashboard Summary could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/admin/profile/me:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -670,6 +802,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.err",
+          "default": "Admin Profile me failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/profile/me:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/profile/me",
+        "operationId": "AdminProfileController_me",
+        "tags": ["AdminProfile"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.net",
+          "default": "Admin Profile me could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -942,6 +1140,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/roles:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminRolesController_listRoles",
+        "tags": ["AdminRoles"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.err",
+          "default": "Admin Roles list Roles failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/roles:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/roles",
+        "operationId": "AdminRolesController_listRoles",
+        "tags": ["AdminRoles"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.net",
+          "default": "Admin Roles list Roles could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:POST:/admin/roles:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -1198,6 +1462,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/admin/roles:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/admin/roles",
+        "operationId": "AdminRolesController_createRole",
+        "tags": ["AdminRoles"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.err",
+          "default": "Admin Roles create Role failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/admin/roles:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/admin/roles",
+        "operationId": "AdminRolesController_createRole",
+        "tags": ["AdminRoles"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.net",
+          "default": "Admin Roles create Role could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -1470,6 +1800,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/roles/{id}",
+        "operationId": "AdminRolesController_updateRole",
+        "tags": ["AdminRoles"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.err",
+          "default": "Admin Roles update Role failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/roles/{id}",
+        "operationId": "AdminRolesController_updateRole",
+        "tags": ["AdminRoles"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.net",
+          "default": "Admin Roles update Role could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -1734,6 +2130,1062 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/roles/{id}/permissions",
+        "operationId": "AdminRolesController_setRolePermissions",
+        "tags": ["AdminRoles"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_ERR",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.err",
+          "default": "Admin Roles set Role Permissions failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/roles/{id}/permissions",
+        "operationId": "AdminRolesController_setRolePermissions",
+        "tags": ["AdminRoles"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.net",
+          "default": "Admin Roles set Role Permissions could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.200",
+          "default": "Admin Problem Presentations list completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.400",
+          "default": "Admin Problem Presentations list failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.401",
+          "default": "Admin Problem Presentations list failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.403",
+          "default": "Admin Problem Presentations list failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.404",
+          "default": "Admin Problem Presentations list failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.409",
+          "default": "Admin Problem Presentations list failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:429",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_429",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.429",
+          "default": "Admin Problem Presentations list failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.500",
+          "default": "Admin Problem Presentations list failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.err",
+          "default": "Admin Problem Presentations list failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/settings/problem-presentations:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_list",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-list.get.net",
+          "default": "Admin Problem Presentations list could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_200",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.200",
+          "default": "Admin Problem Presentations update completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_400",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.400",
+          "default": "Admin Problem Presentations update failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_401",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.401",
+          "default": "Admin Problem Presentations update failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_403",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.403",
+          "default": "Admin Problem Presentations update failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_404",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.404",
+          "default": "Admin Problem Presentations update failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_409",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.409",
+          "default": "Admin Problem Presentations update failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:429",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_429",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.429",
+          "default": "Admin Problem Presentations update failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_500",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.500",
+          "default": "Admin Problem Presentations update failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_ERR",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.err",
+          "default": "Admin Problem Presentations update failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations",
+        "operationId": "AdminProblemPresentationsController_update",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-update.put.net",
+          "default": "Admin Problem Presentations update could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_200",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.200",
+          "default": "Admin Problem Presentations reset completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_400",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.400",
+          "default": "Admin Problem Presentations reset failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_401",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.401",
+          "default": "Admin Problem Presentations reset failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_403",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.403",
+          "default": "Admin Problem Presentations reset failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_404",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.404",
+          "default": "Admin Problem Presentations reset failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_409",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.409",
+          "default": "Admin Problem Presentations reset failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:429",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_429",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.429",
+          "default": "Admin Problem Presentations reset failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_500",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.500",
+          "default": "Admin Problem Presentations reset failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_ERR",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.err",
+          "default": "Admin Problem Presentations reset failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/settings/problem-presentations/reset:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/settings/problem-presentations/reset",
+        "operationId": "AdminProblemPresentationsController_reset",
+        "tags": ["AdminProblemPresentations"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminproblempresentationscontroller-reset.put.net",
+          "default": "Admin Problem Presentations reset could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/admin/users:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -1957,6 +3409,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.err",
+          "default": "Admin Users list Users failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users",
+        "operationId": "AdminUsersController_listUsers",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.net",
+          "default": "Admin Users list Users could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -2196,6 +3714,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/users/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.err",
+          "default": "Admin Users get User failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/users/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/users/{id}",
+        "operationId": "AdminUsersController_getUser",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.net",
+          "default": "Admin Users get User could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -2419,6 +4003,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.err",
+          "default": "Admin Users update User Access Policy failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/access-policy",
+        "operationId": "AdminUsersController_updateUserAccessPolicy",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.net",
+          "default": "Admin Users update User Access Policy could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -2691,6 +4341,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/users/{id}/roles",
+        "operationId": "AdminRolesController_assignUserRoles",
+        "tags": ["AdminRoles"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_ERR",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.err",
+          "default": "Admin Roles assign User Roles failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PUT",
+        "path": "/admin/users/{id}/roles",
+        "operationId": "AdminRolesController_assignUserRoles",
+        "tags": ["AdminRoles"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.net",
+          "default": "Admin Roles assign User Roles could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:PATCH:/admin/users/{id}/status:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -2922,6 +4638,72 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.err",
+          "default": "Admin Users update User Status failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/users/{id}/status",
+        "operationId": "AdminUsersController_updateUserStatus",
+        "tags": ["AdminUsers"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.net",
+          "default": "Admin Users update User Status could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/health:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -2953,6 +4735,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/health:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-gethealth.get.err",
+          "default": "Base Health get Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/health:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-gethealth.get.net",
+          "default": "Base Health get Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "admin-app-api:GET:/health/private:200",
@@ -2988,6 +4836,72 @@
       "enabled": false
     },
     {
+      "id": "admin-app-api:GET:/health/private:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getprivatehealth.get.err",
+          "default": "Base Health get Private Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/health/private:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getprivatehealth.get.net",
+          "default": "Base Health get Private Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/live:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -3021,6 +4935,72 @@
       "enabled": false
     },
     {
+      "id": "admin-app-api:GET:/live:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getliveness.get.err",
+          "default": "Base Health get Liveness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/live:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getliveness.get.net",
+          "default": "Base Health get Liveness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/ready:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -3052,6 +5032,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/ready:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getreadiness.get.err",
+          "default": "Base Health get Readiness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/ready:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.basehealthcontroller-getreadiness.get.net",
+          "default": "Base Health get Readiness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     }
   ]
 }

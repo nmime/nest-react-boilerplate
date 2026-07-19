@@ -1,4 +1,9 @@
 import { hasFrontendTranslationKey, translate, type TranslationKey } from '@app/frontend-i18n-shared';
+import {
+  isProblemPresentationDisplay,
+  isProblemPresentationSeverity,
+  type ProblemPresentationOverride,
+} from '@app/common-problem-details';
 import { getApiLocale } from './api-locale';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
@@ -34,6 +39,8 @@ export interface ApiToastRule {
 }
 
 export type ApiToastRulesSource = readonly ApiToastRule[] | (() => readonly ApiToastRule[]);
+
+const problemPresentationOverrides = new Map<ProblemPresentationOverride['ruleId'], ProblemPresentationOverride>();
 
 export interface ApiToastContext {
   code?: string;
@@ -108,8 +115,75 @@ export const createDefaultApiToastRules = (): ApiToastRule[] => [
   },
 ];
 
-export const resolveApiToastRules = (source?: ApiToastRulesSource): readonly ApiToastRule[] =>
-  typeof source === 'function' ? source() : (source ?? createDefaultApiToastRules());
+const parseProblemPresentationOverride = (item: unknown): ProblemPresentationOverride | undefined => {
+  if (!isRecord(item)) {
+    return undefined;
+  }
+  const ruleId = readOptionalString(item.ruleId);
+  const display = readOptionalString(item.display);
+  const severity = readOptionalString(item.severity);
+  if (!ruleId || !display || !severity) {
+    return undefined;
+  }
+  if (!isProblemPresentationDisplay(display) || !isProblemPresentationSeverity(severity)) {
+    return undefined;
+  }
+
+  const messageEn = readOptionalString(item.messageEn);
+  const messageRu = readOptionalString(item.messageRu);
+  const updatedAt = readOptionalString(item.updatedAt);
+  return {
+    display,
+    ...(messageEn ? { messageEn } : {}),
+    ...(messageRu ? { messageRu } : {}),
+    revision: typeof item.revision === 'number' && item.revision >= 0 ? item.revision : 0,
+    ruleId,
+    severity,
+    ...(updatedAt ? { updatedAt } : {}),
+  };
+};
+
+export const configureProblemPresentationOverrides = (value: unknown): void => {
+  problemPresentationOverrides.clear();
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  for (const item of value) {
+    const override = parseProblemPresentationOverride(item);
+    if (override) {
+      problemPresentationOverrides.set(override.ruleId, override);
+    }
+  }
+};
+
+const localizedOverrideMessage = (override: ProblemPresentationOverride): string | undefined =>
+  getApiLocale() === 'ru' ? (override.messageRu ?? override.messageEn) : (override.messageEn ?? override.messageRu);
+
+export const applyProblemPresentationOverrides = (rules: readonly ApiToastRule[]): ApiToastRule[] =>
+  rules.map((rule) => {
+    const override = problemPresentationOverrides.get(rule.id);
+    if (!override) {
+      return rule;
+    }
+
+    const message = localizedOverrideMessage(override);
+    return {
+      ...rule,
+      display: override.display,
+      id: `${rule.id}:override:${override.revision}`,
+      toast: {
+        ...rule.toast,
+        category: override.severity,
+        ...(message ? { message, messageSource: undefined } : {}),
+      },
+    };
+  });
+
+export const resolveApiToastRules = (source?: ApiToastRulesSource): readonly ApiToastRule[] => {
+  const sourceRules = typeof source === 'function' ? source() : (source ?? createDefaultApiToastRules());
+  return applyProblemPresentationOverrides(sourceRules);
+};
 
 const normalizeMethod = (method?: string): string | undefined => method?.toUpperCase();
 const matchesOptional = <T>(expected: T | undefined, actual: T | undefined): boolean =>

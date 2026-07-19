@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { configureProblemPresentationOverrides } from '@app/frontend-api-support';
 
 import * as adminApi from './admin';
 import * as authApi from './auth';
@@ -30,6 +31,14 @@ export interface ApiClientRegistry {
 }
 
 const normalizeAuthToken = (authToken?: string | null): string | undefined => authToken?.trim() || undefined;
+
+const readProblemPresentationItems = (value: unknown): unknown => {
+  if (!value || typeof value !== 'object') {
+    return undefined;
+  }
+  const envelope = 'data' in value ? value.data : value;
+  return envelope && typeof envelope === 'object' && 'items' in envelope ? envelope.items : undefined;
+};
 
 const buildServiceRequestOptions = (
   service: ApiServiceName,
@@ -78,9 +87,14 @@ export const useApiClientRegistry = (): ApiClientRegistry => {
 
 export interface ApiClientProviderProps extends ApiClientRuntimeConfig {
   children: ReactNode;
+  loadProblemPresentationOverrides?: boolean;
 }
 
-export const ApiClientProvider = ({ children, ...config }: ApiClientProviderProps) => {
+export const ApiClientProvider = ({
+  children,
+  loadProblemPresentationOverrides = false,
+  ...config
+}: ApiClientProviderProps) => {
   const registry = useMemo(
     () => createApiClientRegistry(config),
     [
@@ -92,6 +106,31 @@ export const ApiClientProvider = ({ children, ...config }: ApiClientProviderProp
       config.headers,
     ],
   );
+
+  useEffect(() => {
+    let active = true;
+    configureProblemPresentationOverrides([]);
+
+    if (!loadProblemPresentationOverrides || !registry.auth.requestOptions.authToken) {
+      return () => {
+        active = false;
+      };
+    }
+
+    void authApi
+      .authControllerProblemPresentations(registry.auth.requestOptions)
+      .then((result) => {
+        const items = readProblemPresentationItems(result.data);
+        if (active && items) {
+          configureProblemPresentationOverrides(items);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [loadProblemPresentationOverrides, registry]);
 
   return <ApiClientRegistryProvider registry={registry}>{children}</ApiClientRegistryProvider>;
 };

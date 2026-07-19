@@ -51,6 +51,72 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:GET:/health:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-gethealth.get.err",
+          "default": "Base Health get Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/health:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-gethealth.get.net",
+          "default": "Base Health get Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/health/private:200",
       "endpoint": {
         "app": "user-app-api",
@@ -84,6 +150,72 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:GET:/health/private:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getprivatehealth.get.err",
+          "default": "Base Health get Private Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/health/private:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getprivatehealth.get.net",
+          "default": "Base Health get Private Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/live:200",
       "endpoint": {
         "app": "user-app-api",
@@ -115,6 +247,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/live:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getliveness.get.err",
+          "default": "Base Health get Liveness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/live:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getliveness.get.net",
+          "default": "Base Health get Liveness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:GET:/profile/me:200",
@@ -315,6 +513,72 @@
       "enabled": true
     },
     {
+      "id": "user-app-api:GET:/profile/me:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.err",
+          "default": "Profile me failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/profile/me:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/profile/me",
+        "operationId": "ProfileController_me",
+        "tags": ["Profile"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.profilecontroller-me.get.net",
+          "default": "Profile me could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/ready:200",
       "endpoint": {
         "app": "user-app-api",
@@ -346,6 +610,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/ready:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getreadiness.get.err",
+          "default": "Base Health get Readiness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/ready:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.basehealthcontroller-getreadiness.get.net",
+          "default": "Base Health get Readiness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     }
   ]
 }

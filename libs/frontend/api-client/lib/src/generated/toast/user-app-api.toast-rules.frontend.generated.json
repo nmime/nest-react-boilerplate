@@ -8,6 +8,266 @@
   },
   "rules": [
     {
+      "display": "silent",
+      "id": "user-app-api:GET:/health:200",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/health:ERR",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/health:NET",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getHealth",
+        "path": "/health",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/health/private:200",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Private Health completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/health/private:ERR",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/health/private:NET",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "path": "/health/private",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Private Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/live:200",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Liveness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/live:ERR",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/live:NET",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getLiveness",
+        "path": "/live",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Liveness could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/profile/me:200",
+      "match": {
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 200,
+        "tags": ["Profile"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Profile me completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
       "display": "toast",
       "id": "user-app-api:GET:/profile/me:400",
       "match": {
@@ -19,6 +279,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 400,
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me failed: Bad Request.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -33,6 +305,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 401,
+        "tags": ["Profile"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Profile me failed: Unauthorized.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -47,6 +331,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 403,
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me failed: Forbidden.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -61,6 +357,18 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 429,
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me failed: Too Many Requests.",
+        "defaultSeverity": "error"
       }
     },
     {
@@ -75,6 +383,148 @@
         "category": "error",
         "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": 500,
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:ERR",
+      "match": {
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/profile/me:NET",
+      "match": {
+        "endpoint": "/profile/me",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "ProfileController_me",
+        "path": "/profile/me",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["Profile"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Profile me could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/ready:200",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": 200,
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Base Health get Readiness completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/ready:ERR",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/ready:NET",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "BaseHealthController_getReadiness",
+        "path": "/ready",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Base Health get Readiness could not reach the service.",
+        "defaultSeverity": "warning"
       }
     }
   ]

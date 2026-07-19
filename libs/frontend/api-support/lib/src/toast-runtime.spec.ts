@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { configureApiLocale } from './api-locale';
 import {
   ApiToastRuntime,
+  applyProblemPresentationOverrides,
+  configureProblemPresentationOverrides,
   createDefaultApiToastRules,
   parseApiToastRules,
   resolveApiToastRule,
@@ -195,9 +197,50 @@ describe('resolveApiToastRule', () => {
 });
 
 describe('resolveApiToastRules', () => {
+  afterEach(() => {
+    configureProblemPresentationOverrides([]);
+  });
+
   it('resolves lazy rule sources', () => {
     const rules = createDefaultApiToastRules();
-    expect(resolveApiToastRules(() => rules)).toBe(rules);
+    expect(resolveApiToastRules(() => rules)).toEqual(rules);
+  });
+
+  it('applies validated endpoint-response overrides and localized copy', () => {
+    configureApiLocale({ locale: 'ru' });
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
+        display: 'silent',
+        messageEn: 'Conflict',
+        messageRu: 'Конфликт',
+        revision: 4,
+        severity: 'info',
+        updatedAt: '2026-07-19T12:00:00.000Z',
+      },
+      { ruleId: 'bad-display', display: 'modal', revision: 2, severity: 'error' },
+    ]);
+
+    const source = [
+      {
+        display: 'toast',
+        id: 'user-app-api:PATCH:/profile:409:resource-conflict',
+        match: { code: 'resource-conflict', endpoint: '/profile', method: 'PATCH', status: 409 },
+        toast: { category: 'warning', messageSource: 'problem', title: 'Request failed' },
+      },
+    ] satisfies ApiToastRule[];
+    const [overridden] = applyProblemPresentationOverrides(source);
+
+    expect(overridden).toMatchObject({
+      display: 'silent',
+      id: 'user-app-api:PATCH:/profile:409:resource-conflict:override:4',
+      toast: { category: 'info', message: 'Конфликт' },
+    });
+    expect(
+      resolveApiToastRule({ code: 'resource-conflict', endpoint: '/profile', method: 'PATCH', status: 409 }, [
+        overridden!,
+      ]),
+    ).toBe(overridden);
   });
 });
 

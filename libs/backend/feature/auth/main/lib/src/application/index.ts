@@ -3,6 +3,7 @@ export * from './auth.service';
 export * from './effective-permission.service';
 export * from './external-auth.service';
 export * from './external-auth.exception';
+export * from './problem-presentation-reader';
 
 // Better-Auth integration
 export * from './better-auth';

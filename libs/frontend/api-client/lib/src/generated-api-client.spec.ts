@@ -7,6 +7,7 @@ import {
   authControllerLogin,
   authControllerMe,
   authControllerProviderIdentities,
+  authControllerProblemPresentations,
   authControllerRegister,
   authControllerTelegramBotLink,
   authControllerTelegramOidcSession,
@@ -19,6 +20,7 @@ import {
   getAuthControllerLocalesQueryKey,
   getAuthControllerMeQueryKey,
   getAuthControllerProviderIdentitiesQueryKey,
+  getAuthControllerProblemPresentationsQueryKey,
   getAuthControllerTelegramBotLinkMutationKey,
   getAuthControllerTelegramOidcSessionMutationKey,
   getAuthControllerTelegramTmaMutationKey,
@@ -53,11 +55,15 @@ import {
   useAuthControllerUpdatePreferencesMutation,
 } from './auth';
 import {
+  adminProblemPresentationsControllerList,
+  adminProblemPresentationsControllerReset,
+  adminProblemPresentationsControllerUpdate,
   adminProfileControllerMe,
   adminUsersControllerListUsers,
   adminUsersControllerUpdateUserAccessPolicy,
   adminUsersControllerUpdateUserStatus,
   getAdminUsersControllerListUsersQueryKey,
+  getAdminProblemPresentationsControllerListQueryKey,
   getAdminUsersControllerUpdateUserAccessPolicyMutationKey,
   getAdminUsersControllerUpdateUserStatusMutationKey,
   type UpdateAdminUserAccessPolicyDto,
@@ -466,11 +472,59 @@ describe('generated api clients', () => {
     await expect(policyRequest.clone().json()).resolves.toEqual(policyBody);
   });
 
+  it('loads and mutates typed problem presentation rules', async () => {
+    const runtimeItems = [
+      {
+        display: 'silent' as const,
+        messageEn: 'Conflict',
+        messageRu: 'Конфликт',
+        revision: 3,
+        ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
+        severity: 'info' as const,
+        updatedAt: '2026-07-19T12:00:00.000Z',
+      },
+    ];
+    const authFetch = mockFetch({ data: { items: runtimeItems } });
+    await expect(
+      throwOnOpenApiErrorData(authControllerProblemPresentations({ fetchImpl: authFetch })),
+    ).resolves.toEqual({ items: runtimeItems });
+    expect(firstRequest(authFetch).url).toBe(`${globalThis.location.origin}/auth/problem-presentations`);
+
+    const catalogFetch = mockFetch({ data: { items: [] } });
+    await adminProblemPresentationsControllerList({ fetchImpl: catalogFetch });
+    expect(firstRequest(catalogFetch).url).toBe(`${globalThis.location.origin}/admin/settings/problem-presentations`);
+
+    const updateBody = {
+      comment: 'Handled by the form',
+      display: 'silent' as const,
+      expectedRevision: 3,
+      messageEn: 'Conflict',
+      messageRu: 'Конфликт',
+      ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
+      severity: 'warning' as const,
+    };
+    const updateFetch = mockFetch({ data: {} });
+    await adminProblemPresentationsControllerUpdate(updateBody, { fetchImpl: updateFetch });
+    const updateRequest = firstRequest(updateFetch);
+    expect(updateRequest.method).toBe('PUT');
+    expect(updateRequest.url).toBe(`${globalThis.location.origin}/admin/settings/problem-presentations`);
+    await expect(updateRequest.clone().json()).resolves.toEqual(updateBody);
+
+    const resetFetch = mockFetch({ data: {} });
+    const resetBody = { expectedRevision: 4, ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict' };
+    await adminProblemPresentationsControllerReset(resetBody, { fetchImpl: resetFetch });
+    const resetRequest = firstRequest(resetFetch);
+    expect(resetRequest.method).toBe('PUT');
+    expect(resetRequest.url).toBe(`${globalThis.location.origin}/admin/settings/problem-presentations/reset`);
+    await expect(resetRequest.clone().json()).resolves.toEqual(resetBody);
+  });
+
   it('exposes stable GET query keys', () => {
     expect(getAuthControllerMeQueryKey()).toEqual(['get', '/auth/me']);
     expect(getAuthControllerLocalesQueryKey()).toEqual(['get', '/auth/locales']);
     expect(getAuthControllerUpdatePreferencesMutationKey()).toEqual(['patch', '/auth/me/preferences']);
     expect(getAuthControllerProviderIdentitiesQueryKey()).toEqual(['get', '/auth/provider-identities']);
+    expect(getAuthControllerProblemPresentationsQueryKey()).toEqual(['get', '/auth/problem-presentations']);
     expect(getAuthControllerTelegramOidcSessionMutationKey()).toEqual(['post', '/auth/telegram/oidc/session']);
     expect(getAuthControllerTelegramTmaMutationKey()).toEqual(['post', '/auth/telegram/tma']);
     expect(getAuthControllerTelegramBotLinkMutationKey()).toEqual(['post', '/auth/telegram/bot-link']);
@@ -487,6 +541,10 @@ describe('generated api clients', () => {
       'get',
       '/admin/users',
       { status: 'active' },
+    ]);
+    expect(getAdminProblemPresentationsControllerListQueryKey()).toEqual([
+      'get',
+      '/admin/settings/problem-presentations',
     ]);
     expect(getAdminUsersControllerUpdateUserStatusMutationKey()).toEqual(['patch', '/admin/users/{id}/status']);
     expect(getAdminUsersControllerUpdateUserAccessPolicyMutationKey()).toEqual([

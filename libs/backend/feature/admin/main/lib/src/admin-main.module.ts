@@ -6,13 +6,29 @@ import {
   AuthPostgresModule,
   AuthRoleRepository,
   AuthUserRepository,
+  ProblemPresentationRepository,
 } from '@app/backend-postgres-main-auth';
-import { GetAdminProfileUseCase, AdminRolesUseCase, AdminUsersUseCase } from './application';
-import { AdminProfileController, AdminRolesController, AdminUsersController } from './interfaces/http';
+import {
+  GetAdminProfileUseCase,
+  AdminRolesUseCase,
+  AdminUsersUseCase,
+  ProblemPresentationsUseCase,
+} from './application';
+import {
+  AdminProblemPresentationsController,
+  AdminProfileController,
+  AdminRolesController,
+  AdminUsersController,
+} from './interfaces/http';
 
 @Module({
   imports: [PostgresMainModule.forRoot(), AuthPostgresModule],
-  controllers: [AdminProfileController, AdminRolesController, AdminUsersController],
+  controllers: [
+    AdminProfileController,
+    AdminRolesController,
+    AdminUsersController,
+    AdminProblemPresentationsController,
+  ],
   providers: [
     GetAdminProfileUseCase,
     {
@@ -29,6 +45,11 @@ import { AdminProfileController, AdminRolesController, AdminUsersController } fr
       inject: [AuthRoleRepository, AdminUserMutationRepository],
       useFactory: (roles: AuthRoleRepository, adminUserMutations: AdminUserMutationRepository) =>
         new AdminRolesUseCase(roles, adminUserMutations),
+    },
+    {
+      provide: ProblemPresentationsUseCase,
+      inject: [ProblemPresentationRepository],
+      useFactory: (presentations: ProblemPresentationRepository) => new ProblemPresentationsUseCase(presentations),
     },
   ],
 })

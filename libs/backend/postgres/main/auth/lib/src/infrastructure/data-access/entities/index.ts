@@ -23,3 +23,5 @@ export * from './auth-permission.entity';
 export * from './auth-role-permission.entity';
 
 export * from './auth-user-role.entity';
+
+export * from './problem-presentation.entity';

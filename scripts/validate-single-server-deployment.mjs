@@ -38,6 +38,9 @@ for (const contract of [
   'COMPOSE_TLS_MODE=external',
   externalProxyModeContract,
   'VITE_API_BASE_URL_MODE=same-origin',
+  'VITE_AUTH_API_BASE_URL=',
+  'VITE_USER_API_BASE_URL=',
+  'VITE_ADMIN_API_BASE_URL=',
 ]) {
   assert.ok(productionExample.includes(contract), `host production example missing ${contract}`);
 }
@@ -71,6 +74,7 @@ for (const requirement of [
   '--renew-with-new-domains',
   '--resolve "${host}:443:127.0.0.1"',
   'prepare_runtime_permissions',
+  'must be empty in same-origin mode',
   'openssl x509 -in "${certificate}" -noout -checkhost',
   'check_compose_health',
   'current-image-tag',

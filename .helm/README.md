@@ -25,7 +25,7 @@ routes.
   requires `TELEGRAM_OIDC_CLIENT_SECRET`; webhook mode requires
   `TELEGRAM_BOT_WEBHOOK_SECRET`. Set the non-secret
   `config.telegramOidcClientId`, enable flags, Better Auth public URL/trusted
-  origins, webhook URL, and canonical Mini App URL in values.
+  origins, `config.authAllowedReturnUrls`, webhook URL, and canonical Mini App URL in values.
 - Keep `POSTGRES_SYNCHRONIZE=false`; the Helm pre-install/pre-upgrade hook runs
   `pnpm db:migrate` when `migrations.enabled=true`.
 - APIs probe `/live` and `/ready`; product frontends are deployable by default, and nginx frontends probe `/nginx-health` from the Helm-rendered nginx ConfigMap. All deployments include `startupProbe` alongside liveness/readiness probes.

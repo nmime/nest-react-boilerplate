@@ -472,6 +472,10 @@ export interface components {
       /** @enum {string} */
       intent?: 'login' | 'link';
       linkToken?: string;
+      /**
+       * Format: uri
+       * @description Absolute allowlisted HTTP(S) post-authentication return URL.
+       */
       returnUrl?: string;
       initData: string;
     };
@@ -481,6 +485,10 @@ export interface components {
       /** @enum {string} */
       intent?: 'login' | 'link';
       linkToken?: string;
+      /**
+       * Format: uri
+       * @description Absolute allowlisted HTTP(S) post-authentication return URL.
+       */
       returnUrl?: string;
     };
     TelegramBotLinkDto: {
@@ -504,6 +512,10 @@ export interface components {
       /** @enum {string} */
       intent?: 'login' | 'link';
       linkToken?: string;
+      /**
+       * Format: uri
+       * @description Absolute allowlisted HTTP(S) post-authentication return URL.
+       */
       returnUrl?: string;
     };
     ProviderIdentitiesPayloadDto: {
@@ -527,6 +539,10 @@ export interface components {
       provider: 'telegram' | 'discord';
       /** @enum {string} */
       intent?: 'login' | 'link';
+      /**
+       * Format: uri
+       * @description Absolute allowlisted HTTP(S) post-authentication return URL.
+       */
       returnUrl?: string;
     };
     UserActionTokenPayloadDto: {

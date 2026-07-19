@@ -40,6 +40,7 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 - [ ] `NODE_ENV=production`, `POSTGRES_SYNCHRONIZE=false`, and
       `OPENAPI_ENABLED=false` unless explicitly protected.
 - [ ] `CORS_ORIGINS` is a comma-separated allow-list of real HTTPS origins.
+- [ ] `AUTH_ALLOWED_RETURN_URLS` contains only the real absolute HTTPS frontend origins and is present in the auth runtime.
 - [ ] `PUBLIC_DOMAIN`, `PRIMARY_APP`, DNS, Caddy/external-proxy routes, Better
       Auth URLs, JWT issuer, and TLS SANs describe the same app-ID host map.
 - [ ] `AUTH_JWT_SECRET` is generated with high entropy and stored in Docker

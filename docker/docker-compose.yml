@@ -23,6 +23,7 @@ x-backend-env: &backend-env
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-better-auth-secret-change-me-32-chars}
   BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3003}
   BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-http://localhost:4201}
+  AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:-http://localhost:4200,http://localhost:4201,http://localhost:4202,http://localhost:4203,http://localhost:4204,http://localhost:4300}
   AUTH_TELEGRAM_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
   TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}

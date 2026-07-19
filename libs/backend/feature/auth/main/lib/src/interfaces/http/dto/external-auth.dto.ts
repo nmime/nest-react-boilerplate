@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
 import {
   ExternalAuthIntent,
   externalAuthIntents,
@@ -24,9 +24,9 @@ export class ExternalAuthIntentDto {
   @IsString()
   linkToken?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Absolute allowlisted HTTP(S) post-authentication return URL.', format: 'uri' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
   returnUrl?: string;
 }
 
@@ -90,9 +90,9 @@ export class LinkTokenDto {
   @IsIn(externalAuthIntents)
   intent?: ExternalAuthIntent;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'Absolute allowlisted HTTP(S) post-authentication return URL.', format: 'uri' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
   returnUrl?: string;
 }
 

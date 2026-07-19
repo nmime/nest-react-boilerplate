@@ -65,6 +65,7 @@ loads `DATABASE_URL` from the selected bundled/external database overlay.
 | `BETTER_AUTH_SECRET`          | Better Auth                      | Better Auth cookie/state secret.                                           |
 | `BETTER_AUTH_URL`             | Better Auth                      | Public Better Auth origin.                                                 |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Browser auth                     | Comma-separated origins accepted by Better Auth.                           |
+| `AUTH_ALLOWED_RETURN_URLS`    | External browser auth            | Comma-separated absolute frontend origins accepted as post-auth returns.   |
 | `AUTH_JWT_ISSUER`             | Optional                         | JWT issuer. Defaults to the auth API domain contract.                      |
 | `AUTH_JWT_AUDIENCE`           | Optional                         | JWT audience used by protected APIs.                                       |
 | `AUTH_PERSISTENCE`            | Optional                         | `postgres` for the real persistence path; memory is test/development only. |

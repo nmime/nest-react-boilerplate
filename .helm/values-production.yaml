@@ -34,6 +34,7 @@ config:
   authJwtExpiresInSeconds: '3600'
   betterAuthUrl: https://user-app.example.com
   betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
+  authAllowedReturnUrls: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
   authTokenCleanupEnabled: 'true'
   authTokenCleanupIntervalMs: '3600000'
   authTokenCleanupRunOnStart: 'true'

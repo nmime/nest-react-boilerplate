@@ -55,6 +55,10 @@ test('builds the per-app automatic HTTPS topology from the production example', 
   assert.equal(invocation.env.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
   assert.equal(invocation.env.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
   assert.equal(invocation.env.BETTER_AUTH_URL, 'https://user-app.example.com');
+  assert.equal(
+    invocation.env.AUTH_ALLOWED_RETURN_URLS,
+    'https://example.com,https://site-app.example.com,https://user-app.example.com,https://admin-app.example.com,https://mobile-app.example.com',
+  );
   assert.match(invocation.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
 });
 
@@ -74,6 +78,7 @@ test('builds one-host and external-proxy variants without incompatible overlays'
   assert.ok(single.files.includes('docker/docker-compose.prod.edge-provided-tls.yml'));
   assert.equal(single.env.CORS_ORIGINS, 'https://example.com');
   assert.equal(single.env.BETTER_AUTH_URL, 'https://example.com');
+  assert.equal(single.env.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
 
   const siteApex = buildComposeInvocation(
     ['config', '--env-file=.env.production.example', '--domains=single-domain', '--tls=automatic'],
@@ -91,6 +96,41 @@ test('builds one-host and external-proxy variants without incompatible overlays'
   assert.equal(
     external.env.CORS_ORIGINS,
     'https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com',
+  );
+});
+
+test('keeps same-origin builds free of stale API domains and validates explicit split-origin builds', () => {
+  const sameOrigin = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example', '--domains=single-domain', '--tls=automatic'],
+    {
+      VITE_ADMIN_API_BASE_URL: 'https://legacy-admin.example.test',
+      VITE_AUTH_API_BASE_URL: 'https://legacy-auth.example.test',
+      VITE_USER_API_BASE_URL: 'https://legacy-user.example.test',
+    },
+  );
+  assert.equal(sameOrigin.env.VITE_API_BASE_URL_MODE, 'same-origin');
+  assert.equal(sameOrigin.env.VITE_AUTH_API_BASE_URL, '');
+  assert.equal(sameOrigin.env.VITE_USER_API_BASE_URL, '');
+  assert.equal(sameOrigin.env.VITE_ADMIN_API_BASE_URL, '');
+
+  const splitOrigin = buildComposeInvocation(['config', '--env-file=.env.production.example'], {
+    FRONTEND_NGINX_CONFIG: 'docker/nginx-spa.conf',
+    VITE_ADMIN_API_BASE_URL: 'https://admin-api.product.example/',
+    VITE_API_BASE_URL_MODE: 'split-origin',
+    VITE_AUTH_API_BASE_URL: 'https://auth-api.product.example/',
+    VITE_USER_API_BASE_URL: 'https://user-api.product.example/',
+  });
+  assert.equal(splitOrigin.env.FRONTEND_NGINX_CONFIG, 'docker/nginx-spa.conf');
+  assert.equal(splitOrigin.env.VITE_AUTH_API_BASE_URL, 'https://auth-api.product.example');
+
+  assert.throws(
+    () =>
+      buildComposeInvocation(['config', '--env-file=.env.production.example'], {
+        FRONTEND_NGINX_CONFIG: 'docker/nginx-spa.conf',
+        VITE_API_BASE_URL_MODE: 'split-origin',
+        VITE_AUTH_API_BASE_URL: 'https://auth-api.product.example/path',
+      }),
+    /VITE_AUTH_API_BASE_URL|VITE_USER_API_BASE_URL/u,
   );
 });
 

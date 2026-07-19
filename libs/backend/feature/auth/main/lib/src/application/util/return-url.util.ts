@@ -30,7 +30,12 @@ export function isReturnUrlAllowed(returnUrl: string, allowed: string[]): boolea
 
   return allowed.some((entry) => {
     const allowedUrl = parseAbsoluteUrl(entry);
-    if (!allowedUrl || !AllowedReturnUrlProtocols.has(allowedUrl.protocol)) {
+    if (
+      !allowedUrl ||
+      !AllowedReturnUrlProtocols.has(allowedUrl.protocol) ||
+      allowedUrl.username !== '' ||
+      allowedUrl.password !== ''
+    ) {
       return false;
     }
     if (target.protocol !== allowedUrl.protocol) {
@@ -39,8 +44,7 @@ export function isReturnUrlAllowed(returnUrl: string, allowed: string[]): boolea
     if (normalizeReturnUrlHost(target) !== normalizeReturnUrlHost(allowedUrl)) {
       return false;
     }
-    // Only pin the port when the allowlist entry specifies a non-default one.
-    if (allowedUrl.port !== '' && target.port !== allowedUrl.port) {
+    if (target.port !== allowedUrl.port) {
       return false;
     }
     return isPathWithinBoundary(target.pathname, allowedUrl.pathname);

@@ -60,6 +60,7 @@ assert.ok(telegram.includes('telegram_bot_token'), 'Telegram overlay must mount 
 assert.ok(telegram.includes('telegram_oidc_client_secret'), 'Telegram overlay must mount the OIDC client secret.');
 assert.ok(discord.includes('DISCORD_AUTH_ENABLED'), 'Discord overlay must enable Discord auth.');
 assert.ok(discord.includes('discord_client_secret'), 'Discord overlay must mount the OAuth client secret.');
+assert.ok(base.includes('AUTH_ALLOWED_RETURN_URLS'), 'Production services must receive the auth return URL allowlist.');
 assert.ok(edge.includes('caddy:2.11.4-alpine'), 'The public edge image must be pinned.');
 assert.ok(edge.includes('cap_drop: [ALL]'), 'The public edge must drop ambient Linux capabilities.');
 assert.ok(edge.includes('no-new-privileges:true'), 'The public edge must prevent privilege escalation.');
@@ -242,6 +243,7 @@ assert.equal(singleEdge.command[3], '/etc/caddy/Caddyfile.single-domain');
 assert.equal(singleEdge.environment.PUBLIC_DOMAIN, 'example.com');
 assert.equal(singleEdge.environment.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.CORS_ORIGINS, 'https://example.com');
+assert.equal(singleDomainModel.services['auth-app-api'].environment.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
 assert.deepEqual(
   singleEdge.ports.map(({ host_ip: hostIp, protocol, published, target }) => ({ hostIp, protocol, published, target })),
   [

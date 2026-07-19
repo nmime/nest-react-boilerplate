@@ -491,6 +491,7 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     ownedProjects: ['@app/backend-feature-telegram-shared', '@app/backend-feature-telegram-bot'],
     dockerServices: ['telegram-bot-api'],
     environmentVariables: [
+      'AUTH_ALLOWED_RETURN_URLS',
       'AUTH_TELEGRAM_ENABLED',
       'BETTER_AUTH_SECRET',
       'BETTER_AUTH_URL',

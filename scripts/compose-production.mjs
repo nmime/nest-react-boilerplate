@@ -10,6 +10,8 @@ const actions = new Set(['config', 'down', 'logs', 'ps', 'pull', 'up']);
 const databaseModes = new Set(['bundled-db', 'external-db']);
 const domainModes = new Set(['external-proxy', 'single-domain', 'per-app-domains']);
 const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
+const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
+const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
 const supportedProfiles = new Set(['discord', 'telegram']);
 const primaryUpstreams = {
@@ -154,6 +156,26 @@ const valueOrDefault = (environment, key, fallback) => {
   return value ? value : fallback;
 };
 
+const requireAbsoluteHttpOrigin = (value, name) => {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    fail(`${name} must be an absolute HTTP(S) origin.`);
+  }
+  if (
+    !['http:', 'https:'].includes(url.protocol) ||
+    url.username !== '' ||
+    url.password !== '' ||
+    url.pathname !== '/' ||
+    url.search !== '' ||
+    url.hash !== ''
+  ) {
+    fail(`${name} must be an absolute HTTP(S) origin without credentials, a path, query, or fragment.`);
+  }
+  return url.origin;
+};
+
 export function buildComposeInvocation(argv, processEnvironment = process.env) {
   const options = parseArguments(argv);
   const envPath = resolve(rootDir, options.envFile);
@@ -173,6 +195,36 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     'COMPOSE_DOMAIN_MODE',
   );
   const tlsMode = requireMode(options.tlsMode ?? effectiveEnvironment.COMPOSE_TLS_MODE, tlsModes, 'COMPOSE_TLS_MODE');
+  const frontendApiBaseUrlMode = requireMode(
+    valueOrDefault(effectiveEnvironment, 'VITE_API_BASE_URL_MODE', 'same-origin').toLowerCase(),
+    frontendApiBaseUrlModes,
+    'VITE_API_BASE_URL_MODE',
+  );
+  const expectedFrontendNginxConfig =
+    frontendApiBaseUrlMode === 'same-origin' ? 'docker/nginx-fullstack.conf' : 'docker/nginx-spa.conf';
+  const frontendNginxConfig = valueOrDefault(
+    effectiveEnvironment,
+    'FRONTEND_NGINX_CONFIG',
+    expectedFrontendNginxConfig,
+  );
+  if (frontendNginxConfig !== expectedFrontendNginxConfig) {
+    fail(
+      `FRONTEND_NGINX_CONFIG must be ${expectedFrontendNginxConfig} when VITE_API_BASE_URL_MODE=${frontendApiBaseUrlMode}.`,
+    );
+  }
+  const frontendBuildEnvironment = {
+    FRONTEND_NGINX_CONFIG: frontendNginxConfig,
+    VITE_API_BASE_URL_MODE: frontendApiBaseUrlMode,
+    ...(frontendApiBaseUrlMode === 'same-origin'
+      ? Object.fromEntries(frontendApiBaseUrlKeys.map((key) => [key, '']))
+      : Object.fromEntries(
+          frontendApiBaseUrlKeys.map((key) => {
+            const value = valueOrDefault(effectiveEnvironment, key, '');
+            if (!value) fail(`${key} is required when VITE_API_BASE_URL_MODE=split-origin.`);
+            return [key, requireAbsoluteHttpOrigin(value, key)];
+          }),
+        )),
+  };
   if (domainMode === 'external-proxy' && tlsMode !== 'external') {
     fail('COMPOSE_TLS_MODE must be "external" when COMPOSE_DOMAIN_MODE is "external-proxy".');
   }
@@ -217,6 +269,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
       ? {}
       : {
           AUTH_JWT_ISSUER: authOrigin,
+          AUTH_ALLOWED_RETURN_URLS: unique(exposedOrigins).join(','),
           AUTH_OAUTH_REDIRECT_URI: `${authOrigin}/oauth/callback`,
           BETTER_AUTH_TRUSTED_ORIGINS: unique([...exposedOrigins, ...extraTrustedOrigins]).join(','),
           BETTER_AUTH_URL:
@@ -243,6 +296,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     ...processEnvironment,
     ...domains,
     ...runtimeDefaults,
+    ...frontendBuildEnvironment,
     ...(profiles.includes('telegram')
       ? {
           AUTH_TELEGRAM_ENABLED: 'true',
@@ -264,7 +318,13 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     if (!Object.hasOwn(composeEnvironment, key)) composeEnvironment[key] = value;
   }
   if (domainMode === 'external-proxy' && !publicDomainMode) {
-    for (const required of ['CORS_ORIGINS', 'AUTH_JWT_ISSUER', 'BETTER_AUTH_URL', 'BETTER_AUTH_TRUSTED_ORIGINS']) {
+    for (const required of [
+      'AUTH_ALLOWED_RETURN_URLS',
+      'CORS_ORIGINS',
+      'AUTH_JWT_ISSUER',
+      'BETTER_AUTH_URL',
+      'BETTER_AUTH_TRUSTED_ORIGINS',
+    ]) {
       composeEnvironment[required] = valueOrDefault(effectiveEnvironment, required, '');
       if (!composeEnvironment[required]) fail(`${required} is required in external-proxy mode.`);
     }

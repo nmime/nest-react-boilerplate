@@ -50,6 +50,7 @@ Important env values:
 - `BETTER_AUTH_SECRET` or `BETTER_AUTH_SECRET_FILE`
 - `BETTER_AUTH_URL`
 - `BETTER_AUTH_TRUSTED_ORIGINS`
+- `AUTH_ALLOWED_RETURN_URLS` (absolute frontend origins; relative values are rejected)
 - `VITE_TELEGRAM_AUTH_ENABLED` (build-time user-app flag)
 - `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://user-app.example.com/telegram-mini-app`)
 - `TELEGRAM_WEB_APP_URL` / `TELEGRAM_TMA_URL` (backward-compatible aliases consumed by the bot resolver)
@@ -196,7 +197,7 @@ persistent chat menu button, and in-message launch buttons automatically.
 
 The Mini App frontend can be built in either API URL mode:
 
-- Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` empty. Better Auth requests use `/api/auth/*`; tenant/RBAC requests use `/auth/*`. The production proxy routes both prefixes to `auth-app-api`.
+- Same-origin reverse-proxy mode: set `VITE_API_BASE_URL_MODE=same-origin` and leave `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` / `VITE_ADMIN_API_BASE_URL` empty. Better Auth requests use `/api/auth/*`; tenant/RBAC requests use `/auth/*`. The production proxy routes both prefixes to `auth-app-api`. Social-auth requests send an absolute URL on that same origin, and the frontend converts a validated same-origin response back to a router path.
 - Split-origin mode: set explicit `VITE_AUTH_API_BASE_URL` and `VITE_USER_API_BASE_URL` origins. Production builds fail closed unless explicit API origins or same-origin mode are configured.
 
 The TMA login/link flow submits raw Telegram `initData` to the backend for validation. It intentionally does not read unsafe client-side Telegram launch objects or trust client-provided Telegram profile data.

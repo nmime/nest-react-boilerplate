@@ -51,23 +51,32 @@ export const applyDefaultFrontendBuildApiBaseUrlMode = (
   mode: string,
 ): boolean => {
   const defaultMode = getDefaultFrontendBuildApiBaseUrlMode(env, command, mode);
-  if (!defaultMode) {
-    return false;
+  if (defaultMode) {
+    env['VITE_API_BASE_URL_MODE'] = defaultMode;
   }
 
-  env['VITE_API_BASE_URL_MODE'] = defaultMode;
-  return true;
+  if (isExplicitSameOriginApiMode(env)) {
+    for (const key of frontendApiBaseUrlKeys) {
+      delete env[key];
+    }
+  }
+
+  return defaultMode !== undefined;
 };
 
 export const normalizeApiBaseUrl = (value: string): string => value.trim().replace(/\/$/u, '');
 
 export const getApiBaseUrl = (env: FrontendEnv, key: FrontendApiBaseUrlKey): string => {
+  if (isExplicitSameOriginApiMode(env)) {
+    return '';
+  }
+
   const configuredValue = normalizeApiBaseUrl(getEnvString(env, key));
   if (configuredValue) {
     return configuredValue;
   }
 
-  if (isNonProductionFrontendEnv(env) || isExplicitSameOriginApiMode(env)) {
+  if (isNonProductionFrontendEnv(env)) {
     return '';
   }
 

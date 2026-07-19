@@ -3,6 +3,7 @@ import { authApi, useAuthApiClient } from '@app/frontend-api-client';
 import { clearApiAuthRequired } from '@app/frontend-api-support';
 import { useAuthShellStore } from '@app/frontend-runtime';
 import { profileQueryKey } from '../../../entities/profile';
+import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from '../../../shared/lib';
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,
@@ -23,17 +24,10 @@ export interface UseSocialAuthInput {
   navigate?: (to: string, options?: SocialAuthNavigateOptions) => void;
 }
 
-const safeReturnPath = (returnUrl?: string | null): string | null => {
-  if (!returnUrl) {
-    return null;
-  }
-
-  if (returnUrl.startsWith('/') && !returnUrl.startsWith('//')) {
-    return returnUrl;
-  }
-
-  return null;
-};
+const withAbsoluteReturnUrl = (input: SocialAuthRequestInput): SocialAuthRequestInput => ({
+  ...input,
+  returnUrl: toAbsoluteSameOriginReturnUrl(input.returnUrl),
+});
 
 const readRedirectUrl = (payload: unknown): string | null => {
   if (!payload || typeof payload !== 'object') {
@@ -64,7 +58,7 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
       });
     }
 
-    const returnUrl = safeReturnPath(getReturnUrlFromExternalAuthResult(result));
+    const returnUrl = toSameOriginReturnPath(getReturnUrlFromExternalAuthResult(result));
     if (returnUrl) {
       navigate?.(returnUrl, { replace: true });
       return;
@@ -80,11 +74,15 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
 
   const telegramTmaMutation = useMutation({
     mutationFn: (input: SocialAuthRequestInput & { initData: string }) =>
-      submitTelegramTma(authClient, input.initData, {
-        intent: input.intent,
-        linkToken: input.linkToken,
-        returnUrl: input.returnUrl,
-      }),
+      submitTelegramTma(
+        authClient,
+        input.initData,
+        withAbsoluteReturnUrl({
+          intent: input.intent,
+          linkToken: input.linkToken,
+          returnUrl: input.returnUrl,
+        }),
+      ),
     onSuccess: finishExternalAuth,
     retry: false,
   });
@@ -104,13 +102,14 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
   });
 
   const telegramOidcCallbackMutation = useMutation({
-    mutationFn: (input: SocialAuthRequestInput) => submitTelegramOidcSession(authClient, input),
+    mutationFn: (input: SocialAuthRequestInput) => submitTelegramOidcSession(authClient, withAbsoluteReturnUrl(input)),
     onSuccess: finishExternalAuth,
     retry: false,
   });
 
   const discordMutation = useMutation({
-    mutationFn: (input: SocialAuthRequestInput) => requestDiscordAuthorization(authClient, input),
+    mutationFn: (input: SocialAuthRequestInput) =>
+      requestDiscordAuthorization(authClient, withAbsoluteReturnUrl(input)),
     onSuccess: (payload) => {
       const redirectUrl = readRedirectUrl(payload);
       if (redirectUrl) {

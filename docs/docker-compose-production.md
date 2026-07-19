@@ -109,7 +109,7 @@ app-ID subdomain; API hostnames do not change. In particular, an app called
 generic name.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
-`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot
+`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot
 web-app URLs from this mapping. Add exceptional origins through
 `CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
 can derive the same contract when `EXTERNAL_PROXY_PUBLIC_MODE` is set to

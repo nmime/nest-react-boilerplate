@@ -68,6 +68,11 @@ assert.ok(
   'production Compose must not inline database passwords',
 );
 has(prodCompose, 'TRUST_PROXY: ${TRUST_PROXY:-true}', 'reverse-proxy trust reaches backend containers');
+has(
+  prodCompose,
+  'AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}',
+  'auth return URL allowlist reaches backend containers',
+);
 has(prodCompose, 'auth_provider_token_encryption_key:', 'provider-token encryption Docker secret');
 has(prodCompose, 'redis_password:', 'Redis authentication Docker secret');
 has(prodCompose, 'requirepass %s', 'Redis requires its generated password');
@@ -192,10 +197,22 @@ for (const expected of [
   'SITE_APP_PORT=',
   'MOBILE_APP_PORT=',
   'VITE_API_BASE_URL_MODE=same-origin',
+  'VITE_AUTH_API_BASE_URL=',
+  'VITE_USER_API_BASE_URL=',
+  'VITE_ADMIN_API_BASE_URL=',
   'FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf',
+  'AUTH_ALLOWED_RETURN_URLS=',
   'Never use latest/main/dev/prod-style mutable tags',
 ]) {
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
+}
+
+for (const key of ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL']) {
+  assert.match(
+    productionEnvExample,
+    new RegExp(`^${key}=$`, 'mu'),
+    `.env.production.example must actively clear same-origin ${key}`,
+  );
 }
 
 // Frontend host ports are explicit collision-free defaults; backend API ports use 3001-3003.

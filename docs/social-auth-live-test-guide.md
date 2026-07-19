@@ -101,7 +101,7 @@ Provide:
 
 - Provider token encryption key secret key name: `<SECRET_KEY_PROVIDER_TOKEN_ENCRYPTION_KEY>`
 - Provider token encryption key ID: `<provider-token-key-id>`
-- Allowed return URLs:
+- `AUTH_ALLOWED_RETURN_URLS` (comma-separated absolute origins; paths below are representative checks):
   - `<https://frontend.example.test/auth/callback>`
   - `<https://frontend.example.test/profile>`
   - `<https://frontend.example.test/settings>`

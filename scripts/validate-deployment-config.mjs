@@ -263,6 +263,14 @@ has(
   'VITE_API_BASE_URL_MODE=same-origin',
   'production env example defaults to same-origin frontend API routing',
 );
+for (const key of ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL']) {
+  assert.match(
+    productionEnvExample,
+    new RegExp(`^${key}=$`, 'mu'),
+    `production env example actively clears same-origin ${key}`,
+  );
+}
+has(productionEnvExample, 'AUTH_ALLOWED_RETURN_URLS=', 'production env example defines the auth return URL allowlist');
 has(
   productionEnvExample,
   'FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf',
@@ -324,6 +332,11 @@ has(
 );
 has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'production Compose points APIs at Redis');
 has(prodBackendEnv, 'REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}', 'production Compose sets Redis key prefix');
+has(
+  prodBackendEnv,
+  'AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}',
+  'production Compose passes the auth return URL allowlist to backend containers',
+);
 const prodBackendService = section(prodCompose, 'x-backend-service:', '\nx-frontend-service:');
 has(prodBackendService, 'redis:', 'production backend services depend on Redis');
 has(prodBackendService, 'condition: service_healthy', 'production backend services wait for healthy dependencies');
@@ -507,6 +520,7 @@ if (validateHelmStatic) {
   for (const expected of [
     'BETTER_AUTH_URL:',
     'BETTER_AUTH_TRUSTED_ORIGINS:',
+    'AUTH_ALLOWED_RETURN_URLS:',
     'AUTH_TELEGRAM_ENABLED:',
     'TELEGRAM_TMA_MAX_AGE_SECONDS:',
     'TELEGRAM_OIDC_ENABLED:',

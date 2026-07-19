@@ -524,6 +524,11 @@ validate_configuration() {
   fi
   [[ "$(environment_value TRUST_PROXY)" == 'true' ]] || die 'TRUST_PROXY must be true behind host Nginx'
   [[ "$(environment_value VITE_API_BASE_URL_MODE)" == 'same-origin' ]] || die 'VITE_API_BASE_URL_MODE must be same-origin'
+  local frontend_api_base_url
+  for frontend_api_base_url in VITE_AUTH_API_BASE_URL VITE_USER_API_BASE_URL VITE_ADMIN_API_BASE_URL; do
+    [[ -z "$(environment_value "${frontend_api_base_url}")" ]] || \
+      die "${frontend_api_base_url} must be empty in same-origin mode"
+  done
 
   validate_secret_file AUTH_JWT_SECRET_FILE
   validate_secret_file SESSION_SECRET_FILE

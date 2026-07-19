@@ -13,6 +13,7 @@ data:
   AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
   BETTER_AUTH_URL: {{ .Values.config.betterAuthUrl | quote }}
   BETTER_AUTH_TRUSTED_ORIGINS: {{ .Values.config.betterAuthTrustedOrigins | quote }}
+  AUTH_ALLOWED_RETURN_URLS: {{ .Values.config.authAllowedReturnUrls | quote }}
   AUTH_TOKEN_CLEANUP_ENABLED: {{ .Values.config.authTokenCleanupEnabled | quote }}
   AUTH_TOKEN_CLEANUP_INTERVAL_MS: {{ .Values.config.authTokenCleanupIntervalMs | quote }}
   AUTH_TOKEN_CLEANUP_RUN_ON_START: {{ .Values.config.authTokenCleanupRunOnStart | quote }}

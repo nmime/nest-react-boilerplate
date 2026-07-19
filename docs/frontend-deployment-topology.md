@@ -67,6 +67,10 @@ VITE_API_BASE_URL_MODE=same-origin pnpm exec nx build admin-app
 EXPO_PUBLIC_API_BASE_URL=/ pnpm exec nx run mobile-app:export
 ```
 
+Leave all `VITE_*_API_BASE_URL` values empty in this mode. Frontend build setup
+removes stale explicit origins when `same-origin` is selected, and the production
+Compose wrapper also clears them before passing build arguments to Docker.
+
 Docker/Compose uses `docker/nginx-fullstack.conf`, with the Compose Caddy edge
 enforcing the same API matching before the request reaches a frontend. Helm
 uses the chart-rendered frontend nginx ConfigMap. Both keep browser-facing API

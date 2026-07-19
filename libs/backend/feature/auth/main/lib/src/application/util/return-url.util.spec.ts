@@ -28,8 +28,12 @@ describe('return URL utilities', () => {
     expect(isReturnUrlAllowed('https://app.example.test:445/app/next', ['https://app.example.test:444/app'])).toBe(
       false,
     );
+    expect(isReturnUrlAllowed('https://app.example.test:444/app', ['https://app.example.test/app'])).toBe(false);
     expect(isReturnUrlAllowed('http://app.example.test/app/next', ['https://app.example.test/app'])).toBe(false);
     expect(isReturnUrlAllowed('https://app.example.test/app', ['not a url'])).toBe(false);
+    expect(isReturnUrlAllowed('https://app.example.test/app', ['https://user:password@app.example.test/app'])).toBe(
+      false,
+    );
     expect(isPathWithinBoundary('/app', '/app/')).toBe(true);
   });
 });

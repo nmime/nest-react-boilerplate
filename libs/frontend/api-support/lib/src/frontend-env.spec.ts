@@ -19,6 +19,18 @@ describe('frontend environment API URL resolution', () => {
     expect(getApiBaseUrl(productionEnv({ VITE_API_BASE_URL_MODE: 'same-origin' }), 'VITE_AUTH_API_BASE_URL')).toBe('');
   });
 
+  it('lets same-origin mode override stale explicit API origins', () => {
+    expect(
+      getApiBaseUrl(
+        productionEnv({
+          VITE_API_BASE_URL_MODE: 'same-origin',
+          VITE_AUTH_API_BASE_URL: 'https://legacy-auth.example.test',
+        }),
+        'VITE_AUTH_API_BASE_URL',
+      ),
+    ).toBe('');
+  });
+
   it('normalizes explicit API origins for split-origin frontend builds', () => {
     expect(
       getApiBaseUrl(
@@ -56,6 +68,18 @@ describe('frontend build API URL mode defaults', () => {
 
     expect(applyDefaultFrontendBuildApiBaseUrlMode(env, 'build', 'production')).toBe(false);
     expect(env['VITE_API_BASE_URL_MODE']).toBe('split-origin');
+  });
+
+  it('removes stale explicit origins from same-origin production builds', () => {
+    const env: FrontendBuildEnv = {
+      VITE_API_BASE_URL_MODE: 'same-origin',
+      VITE_AUTH_API_BASE_URL: 'https://legacy-auth.example.test',
+      VITE_USER_API_BASE_URL: 'https://legacy-user.example.test',
+      VITE_ADMIN_API_BASE_URL: 'https://legacy-admin.example.test',
+    };
+
+    expect(applyDefaultFrontendBuildApiBaseUrlMode(env, 'build', 'production')).toBe(false);
+    expect(env).toEqual({ VITE_API_BASE_URL_MODE: 'same-origin' });
   });
 
   it('preserves explicit API origins and lets them satisfy production builds', () => {

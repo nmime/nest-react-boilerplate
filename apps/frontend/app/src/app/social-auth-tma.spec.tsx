@@ -289,7 +289,7 @@ describe('social auth and TMA UI', () => {
   });
 
   it('submits raw TMA initData to backend, stores session, and navigates', async () => {
-    resetPath('/tma/auth');
+    resetPath('/tma/auth?startapp=profile');
     tma.useRawInitData.mockReturnValue('query_id=raw&hash=hash');
     tma.useLaunchParams.mockReturnValue({ tgWebAppStartParam: 'profile' });
     const fetchMock = setFetch(
@@ -302,6 +302,7 @@ describe('social auth and TMA UI', () => {
       }),
       jsonResponse({
         data: {
+          returnUrl: `${window.location.origin}/profile?from=tma`,
           session: {
             accessToken: 'tma-session',
             expiresIn: 3600,
@@ -326,6 +327,7 @@ describe('social auth and TMA UI', () => {
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/profile');
+      expect(window.location.search).toBe('?from=tma');
     });
     const tmaCall = fetchMock.mock.calls.find(([input]) => {
       const url = input instanceof Request ? input.url : String(input);
@@ -334,7 +336,10 @@ describe('social auth and TMA UI', () => {
     const tmaRequest = tmaCall?.[0] as Request | undefined;
     const requestText = (await tmaRequest?.clone().text()) ?? '{}';
     const body = JSON.parse(requestText) as Record<string, unknown>;
-    expect(body).toMatchObject({ initData: 'query_id=raw&hash=hash' });
+    expect(body).toMatchObject({
+      initData: 'query_id=raw&hash=hash',
+      returnUrl: `${window.location.origin}/profile`,
+    });
     expect(Object.hasOwn(body, 'init' + 'DataUnsafe')).toBe(false);
     await waitFor(() => {
       expect(
@@ -372,7 +377,7 @@ describe('social auth and TMA UI', () => {
     expect(body).toMatchObject({
       initData: 'query_id=raw&hash=link',
       intent: 'link',
-      returnUrl: '/settings',
+      returnUrl: `${window.location.origin}/settings`,
     });
   });
 
@@ -400,7 +405,7 @@ describe('social auth and TMA UI', () => {
     const tmaRequest = tmaCall?.[0] as Request | undefined;
     const requestText = (await tmaRequest?.clone().text()) ?? '{}';
     const body = JSON.parse(requestText) as Record<string, unknown>;
-    expect(body).toMatchObject({ intent: 'link', returnUrl: '/settings' });
+    expect(body).toMatchObject({ intent: 'link', returnUrl: `${window.location.origin}/settings` });
   });
 
   it('renders TMA deep navigation not-found state', async () => {
@@ -511,7 +516,10 @@ describe('social auth and TMA UI', () => {
     const projectionCall = projectionCalls[0];
     const request = projectionCall?.[0] as Request;
     expect(request.credentials).toBe('include');
-    expect(JSON.parse(await request.clone().text())).toEqual({ intent: 'login', returnUrl: '/profile' });
+    expect(JSON.parse(await request.clone().text())).toEqual({
+      intent: 'login',
+      returnUrl: `${window.location.origin}/profile`,
+    });
     expect(sessionStorage.getItem('telegramOidcAuthState')).toBeNull();
   });
 

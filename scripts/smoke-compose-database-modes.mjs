@@ -67,6 +67,7 @@ const commonEnv = {
   DATABASE_URL_FILE: databaseUrlPath,
   GRAFANA_ADMIN_PASSWORD_FILE: grafanaPasswordPath,
   CORS_ORIGINS: 'https://example.com',
+  AUTH_ALLOWED_RETURN_URLS: 'https://example.com',
   IMAGE_REGISTRY: `nrb-deployment-smoke-${suffix}`,
   IMAGE_TAG: 'sha-0123456789abcdef0123456789abcdef01234567',
   POSTGRES_USER: databaseUser,

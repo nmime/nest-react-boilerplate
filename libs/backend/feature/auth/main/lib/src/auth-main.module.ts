@@ -1,7 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
-import { AuthController } from './interfaces/http';
+import { AuthController, ProblemPresentationsController } from './interfaces/http';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
 import {
@@ -9,6 +9,9 @@ import {
   BetterAuthTelegramSessionService,
   EffectivePermissionService,
   ExternalAuthService,
+  InMemoryProblemPresentationReader,
+  PostgresProblemPresentationReader,
+  ProblemPresentationReaderProvider,
 } from './application';
 import {
   AuthRoleStoreInjectToken,
@@ -79,12 +82,21 @@ export class AuthMainModule {
         BetterAuthModule.forRoot(),
         ...(useMemory ? [] : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule]),
       ],
-      controllers: [AuthController, BetterAuthApiController],
+      controllers: [AuthController, BetterAuthApiController, ProblemPresentationsController],
       providers: [
         AuthService,
         ExternalAuthService,
         BetterAuthTelegramSessionService,
         EffectivePermissionService,
+        useMemory
+          ? {
+              provide: ProblemPresentationReaderProvider,
+              useClass: InMemoryProblemPresentationReader,
+            }
+          : {
+              provide: ProblemPresentationReaderProvider,
+              useClass: PostgresProblemPresentationReader,
+            },
         useMemory
           ? {
               provide: AuthRoleStoreInjectToken,

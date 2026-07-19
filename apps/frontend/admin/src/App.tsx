@@ -38,6 +38,7 @@ import {
   getBrowserPath,
   getConfiguredAdminApiBaseUrl,
   getConfiguredAuthApiBaseUrl,
+  getFrontendEnv,
   type AuthMePayload,
 } from './features/admin-auth';
 import { getPayloadTheme } from './features/admin-preferences';
@@ -46,6 +47,7 @@ import { DashboardPage } from './pages/dashboard';
 import { ForbiddenPage } from './pages/forbidden';
 import { NotFoundPage } from './pages/not-found';
 import { ProfilePage } from './pages/profile';
+import { ProblemPresentationsPage } from './pages/problem-presentations';
 import { RolesPage } from './pages/roles';
 import { TenantRoadmapPage } from './pages/tenants';
 import { UsersPage } from './pages/users';
@@ -103,6 +105,13 @@ function renderReadyAdminRoute(
       <ProfilePage payload={state.payload} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.profileMissing')} />
+    );
+  }
+  if (routePath === '/settings/errors') {
+    return state.access.canReadSettings ? (
+      <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
     );
   }
   if (routePath === '/tenants') {
@@ -344,6 +353,7 @@ const AdminApiClientProvider = ({
         user: '',
       }}
       fetchImpl={runtimeFetch}
+      loadProblemPresentationOverrides={getFrontendEnv()['MODE'] !== 'test'}
     >
       {children}
     </ApiClientProvider>

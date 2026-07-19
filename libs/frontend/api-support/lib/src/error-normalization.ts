@@ -126,9 +126,9 @@ export const extractValidation = (body: unknown): NormalizedValidationIssue[] =>
   return [];
 };
 
-const statusKind = (status: number | null, body: unknown): NormalizedApiErrorKind => {
+const statusKind = (status: number | null, body: unknown, error: unknown): NormalizedApiErrorKind => {
   if (status === null) {
-    return 'network';
+    return error === undefined || isNetworkFailure(error) ? 'network' : 'unknown';
   }
 
   if (status === 401 || status === 403) {
@@ -170,14 +170,13 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
   }
 
   if (status === null) {
-    /* v8 ignore next -- statusKind() always yields "network" for a null status, so fallbackKind is never non-network here; the "network.error" arm is unreachable */
     return fallbackKind === 'network' ? 'network.offline' : 'network.error';
   }
 
   return `http.${status}`;
 };
 
-const extractMessage = (status: number | null, body: unknown): string => {
+const extractMessage = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
     const registeredCode = problemCodeFromType(stringFrom(body['type']));
     if (registeredCode) {
@@ -196,7 +195,9 @@ const extractMessage = (status: number | null, body: unknown): string => {
   }
 
   if (status === null) {
-    return translate('errors.api.networkFailed', { locale: getApiLocale() });
+    return fallbackKind === 'network'
+      ? translate('errors.api.networkFailed', { locale: getApiLocale() })
+      : translate('errors.api.requestFailed', { locale: getApiLocale(), params: { status: 'ERR' } });
   }
 
   return translate('errors.api.requestFailed', {
@@ -205,11 +206,17 @@ const extractMessage = (status: number | null, body: unknown): string => {
   });
 };
 
-export const normalizeApiError = ({ body, endpoint, method, response }: NormalizeApiErrorInput): NormalizedApiError => {
+export const normalizeApiError = ({
+  body,
+  endpoint,
+  error,
+  method,
+  response,
+}: NormalizeApiErrorInput): NormalizedApiError => {
   const status = response?.status ?? null;
-  const kind = statusKind(status, body);
+  const kind = statusKind(status, body, error);
   const code = extractCode(status, body, kind);
-  const message = extractMessage(status, body);
+  const message = extractMessage(status, body, kind);
   const normalizedMethod = method?.toUpperCase();
   const type = isRecord(body) ? stringFrom(body['type']) : undefined;
   const id = [normalizedMethod, endpoint, status ?? 'network', code].filter(Boolean).join(':');

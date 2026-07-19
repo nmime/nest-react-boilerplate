@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminApi } from '@app/frontend-api-client';
+import { apiToastRuntime } from '@app/frontend-api-support';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import { createAdminAccess } from '../entities/admin-session';
@@ -20,6 +21,8 @@ const adminAccess = createAdminAccess({
     'admin:users:access-policy:update',
     'admin:roles:read',
     'admin:audit:read',
+    'admin:settings:read',
+    'admin:settings:update',
   ],
 });
 
@@ -428,6 +431,83 @@ describe('admin pages integration', () => {
     );
 
     expect(await screen.findByText('Audit log request failed')).toBeTruthy();
+  });
+
+  it('lists, previews, updates, and resets problem presentation overrides', async () => {
+    const problem = {
+      ruleId: 'admin-app-api:GET:/admin/roles:409',
+      comment: 'Handled by a form',
+      display: 'toast' as const,
+      messageEn: 'Roles conflict',
+      messageRu: 'Конфликт ролей',
+      revision: 3,
+      severity: 'warning' as const,
+      updatedAt: '2026-07-19T12:00:00.000Z',
+    };
+    vi.spyOn(adminApi, 'adminProblemPresentationsControllerList').mockResolvedValue({
+      data: { data: { items: [problem] } },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    const updateSpy = vi.spyOn(adminApi, 'adminProblemPresentationsControllerUpdate').mockResolvedValue({
+      data: { data: problem },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    const resetSpy = vi.spyOn(adminApi, 'adminProblemPresentationsControllerReset').mockResolvedValue({
+      data: { data: { ruleId: problem.ruleId } },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    const toastSpy = vi.spyOn(apiToastRuntime, 'show');
+
+    renderAdminRouteForTest(
+      <AdminLayout access={adminAccess} currentPath="/admin/settings/errors">
+        {renderAdminRoute('/admin/settings/errors', {
+          status: 'ready',
+          payload,
+          access: adminAccess,
+        })}
+      </AdminLayout>,
+    );
+
+    await screen.findAllByText('API response presentation rules');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search API responses' }), {
+      target: { value: problem.ruleId },
+    });
+    expect(await screen.findByText('/admin/roles')).toBeTruthy();
+    expect(screen.getByText('Frontend reliability')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Preview toast' }));
+    expect(toastSpy).toHaveBeenCalledWith({
+      category: 'warning',
+      message: problem.messageEn,
+      title: 'GET /admin/roles',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const editDialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(editDialog).getByRole('button', { name: 'Save rule' }));
+    await waitFor(() => {
+      expect(updateSpy).toHaveBeenCalledWith(
+        {
+          comment: 'Handled by a form',
+          display: 'toast',
+          expectedRevision: 3,
+          messageEn: 'Roles conflict',
+          messageRu: 'Конфликт ролей',
+          ruleId: problem.ruleId,
+          severity: 'warning',
+        },
+        undefined,
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    const resetDialog = screen.getByRole('alertdialog');
+    fireEvent.click(within(resetDialog).getByRole('button', { name: 'Reset' }));
+    await waitFor(() => {
+      expect(resetSpy).toHaveBeenCalledWith({ expectedRevision: 3, ruleId: problem.ruleId }, undefined);
+    });
   });
 
   it('keeps the roles matrix read-only when the admin cannot write roles', async () => {

@@ -28,6 +28,7 @@ const authDiscordCallbackPath = '/auth/discord/callback';
 const authProviderIdentitiesPath = '/auth/provider-identities';
 const authProviderIdentityPath = '/auth/provider-identities/{identityId}';
 const authLinkTokensPath = '/auth/link-tokens';
+const authProblemPresentationsPath = '/auth/problem-presentations';
 
 export const client = createClient<paths>();
 export const query = createQueryClient(client);
@@ -53,6 +54,8 @@ export type LinkTokenDto = components['schemas']['LinkTokenDto'];
 export type LinkTokenResultDto = components['schemas']['LinkTokenResultDto'];
 export type ProviderIdentitiesPayloadDto = components['schemas']['ProviderIdentitiesPayloadDto'];
 export type UnlinkProviderIdentityPayloadDto = components['schemas']['UnlinkProviderIdentityPayloadDto'];
+export type ProblemPresentationRuntimeViewDto = components['schemas']['ProblemPresentationRuntimeViewDto'];
+export type ProblemPresentationRuntimePayloadDto = components['schemas']['ProblemPresentationRuntimePayloadDto'];
 export type DiscordCallbackQuery = NonNullable<paths[typeof authDiscordCallbackPath]['get']['parameters']['query']>;
 
 export const authControllerRegister = (body: RegisterDto, options?: ApiClientRequestOptions) =>
@@ -185,7 +188,14 @@ export type AuthControllerCreateLinkTokenResponse = OpenApiData<typeof authContr
 export type AuthControllerCreateLinkTokenData = EnvelopeData<AuthControllerCreateLinkTokenResponse>;
 export type AuthControllerCreateLinkTokenError = OpenApiError<typeof authControllerCreateLinkToken>;
 
+export const authControllerProblemPresentations = (options?: ApiClientRequestOptions) =>
+  client.GET(authProblemPresentationsPath, toOpenApiFetchOptions(options));
+export type AuthControllerProblemPresentationsResponse = OpenApiData<typeof authControllerProblemPresentations>;
+export type AuthControllerProblemPresentationsData = EnvelopeData<AuthControllerProblemPresentationsResponse>;
+export type AuthControllerProblemPresentationsError = OpenApiError<typeof authControllerProblemPresentations>;
+
 export const getAuthControllerMeQueryKey = () => ['get', authMePath] as const;
+export const getAuthControllerProblemPresentationsQueryKey = () => ['get', authProblemPresentationsPath] as const;
 export const getAuthControllerProviderIdentitiesQueryKey = () => ['get', authProviderIdentitiesPath] as const;
 export const getAuthControllerMeQueryOptions = (
   options?: ApiClientRequestOptions,

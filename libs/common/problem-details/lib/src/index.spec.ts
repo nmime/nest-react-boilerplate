@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   getProblemTypeDefinition,
+  isProblemPresentationDisplay,
+  isProblemPresentationSeverity,
   isProblemCode,
   isRequestId,
   isUriReference,
@@ -34,6 +36,15 @@ describe('RFC 9457 problem details contract', () => {
       expect(getProblemTypeDefinition(definition.code)).toEqual(definition);
       expect(problemCodeFromType(problemTypeForCode(definition.code))).toBe(definition.code);
     }
+  });
+
+  it('validates the frontend presentation vocabulary', () => {
+    expect(isProblemPresentationDisplay('toast')).toBe(true);
+    expect(isProblemPresentationDisplay('silent')).toBe(true);
+    expect(isProblemPresentationDisplay('modal')).toBe(false);
+    expect(isProblemPresentationSeverity('error')).toBe(true);
+    expect(isProblemPresentationSeverity('success')).toBe(true);
+    expect(isProblemPresentationSeverity('critical')).toBe(false);
   });
 
   it('does not invent a custom code for about:blank or unknown types', () => {

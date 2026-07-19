@@ -200,6 +200,51 @@
   justify-content: flex-end;
 }
 
+.admin-table-toolbar--leading {
+  justify-content: flex-start;
+}
+
+.admin-page-description {
+  color: var(--xr-color-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.admin-problem-cell,
+.admin-problem-presentation,
+.admin-problem-source {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.admin-problem-cell {
+  max-width: 34rem;
+}
+
+.admin-problem-cell strong {
+  color: var(--xr-color-text);
+  font-family: var(--xr-font-mono, monospace);
+}
+
+.admin-problem-cell small,
+.admin-problem-presentation small,
+.admin-problem-source small {
+  color: var(--xr-color-muted);
+  line-height: 1.45;
+}
+
+.admin-row-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.admin-problem-editor {
+  display: grid;
+  gap: 1rem;
+}
+
 .admin-command-center .xr-card__body {
   display: grid;
   gap: 1rem;

@@ -51,6 +51,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:DELETE:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_delete",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_ERR",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-delete.delete.err",
+          "default": "Better Auth Api handle delete failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_delete",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_NET",
+        "fallbackVariant": null,
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-delete.delete.net",
+          "default": "Better Auth Api handle delete could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:GET:/api/auth/{path}:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -82,6 +148,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_get",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-get.get.err",
+          "default": "Better Auth Api handle get failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_get",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-get.get.net",
+          "default": "Better Auth Api handle get could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "auth-app-api:HEAD:/api/auth/{path}:200",
@@ -117,6 +249,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:HEAD:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "HEAD",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_head",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "HEAD_ERR",
+        "fallbackVariant": "HEAD_ERR",
+        "networkVariant": "HEAD_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-head.head.err",
+          "default": "Better Auth Api handle head failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:HEAD:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "HEAD",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_head",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "HEAD_NET",
+        "fallbackVariant": null,
+        "networkVariant": "HEAD_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-head.head.net",
+          "default": "Better Auth Api handle head could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:OPTIONS:/api/auth/{path}:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -148,6 +346,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "OPTIONS",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_options",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "OPTIONS_ERR",
+        "fallbackVariant": "OPTIONS_ERR",
+        "networkVariant": "OPTIONS_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-options.options.err",
+          "default": "Better Auth Api handle options failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:OPTIONS:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "OPTIONS",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_options",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "OPTIONS_NET",
+        "fallbackVariant": null,
+        "networkVariant": "OPTIONS_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-options.options.net",
+          "default": "Better Auth Api handle options could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "auth-app-api:PATCH:/api/auth/{path}:200",
@@ -183,6 +447,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:PATCH:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_patch",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-patch.patch.err",
+          "default": "Better Auth Api handle patch failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_patch",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-patch.patch.net",
+          "default": "Better Auth Api handle patch could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/api/auth/{path}:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -216,6 +546,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:POST:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_post",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-post.post.err",
+          "default": "Better Auth Api handle post failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_post",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-post.post.net",
+          "default": "Better Auth Api handle post could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:PUT:/api/auth/{path}:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -247,6 +643,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "auth-app-api:PUT:/api/auth/{path}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PUT",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_put",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_ERR",
+        "fallbackVariant": "PUT_ERR",
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-put.put.err",
+          "default": "Better Auth Api handle put failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PUT:/api/auth/{path}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PUT",
+        "path": "/api/auth/{path}",
+        "operationId": "BetterAuthApiController_handle_put",
+        "tags": ["BetterAuthApi"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PUT_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PUT_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.betterauthapicontroller-handle-put.put.net",
+          "default": "Better Auth Api handle put could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "auth-app-api:POST:/auth/discord/authorization-request:200",
@@ -472,6 +934,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.err",
+          "default": "Auth discord Authorization Request failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/discord/authorization-request",
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.net",
+          "default": "Auth discord Authorization Request could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -711,6 +1239,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:GET:/auth/discord/callback:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.err",
+          "default": "Auth discord Callback failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/discord/callback:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/discord/callback",
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.net",
+          "default": "Auth discord Callback could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/email-verification-token:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -934,6 +1528,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.err",
+          "default": "Auth request Email Verification failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification-token:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification-token",
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.net",
+          "default": "Auth request Email Verification could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -1173,6 +1833,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/link-tokens:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.err",
+          "default": "Auth create Link Token failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/link-tokens:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/link-tokens",
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.net",
+          "default": "Auth create Link Token could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:GET:/auth/locales:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -1396,6 +2122,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.err",
+          "default": "Auth locales failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/locales:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/locales",
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.net",
+          "default": "Auth locales could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -1635,6 +2427,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/login:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.err",
+          "default": "Auth login failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/login:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/login",
+        "operationId": "AuthController_login",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-login.post.net",
+          "default": "Auth login could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/logout:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -1858,6 +2716,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.err",
+          "default": "Auth logout failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/logout:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/logout",
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.net",
+          "default": "Auth logout could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -2097,6 +3021,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:GET:/auth/me:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.err",
+          "default": "Auth me failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/me:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/me",
+        "operationId": "AuthController_me",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-me.get.net",
+          "default": "Auth me could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:PATCH:/auth/me/locale:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -2320,6 +3310,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.err",
+          "default": "Auth update Locale failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/locale:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/locale",
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.net",
+          "default": "Auth update Locale could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -2559,6 +3615,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.err",
+          "default": "Auth update Preferences failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:PATCH:/auth/me/preferences:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "PATCH",
+        "path": "/auth/me/preferences",
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.net",
+          "default": "Auth update Preferences could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/password-reset-token:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -2782,6 +3904,270 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.err",
+          "default": "Auth request Password Reset failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset-token:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset-token",
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.net",
+          "default": "Auth request Password Reset could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.200",
+          "default": "Problem Presentations list completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:401",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.401",
+          "default": "Problem Presentations list failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:429",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_429",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.429",
+          "default": "Problem Presentations list failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:500",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.500",
+          "default": "Problem Presentations list failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.err",
+          "default": "Problem Presentations list failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/problem-presentations:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/problem-presentations",
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.problempresentationscontroller-list.get.net",
+          "default": "Problem Presentations list could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -3021,6 +4407,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:GET:/auth/provider-identities:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.err",
+          "default": "Auth provider Identities failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/auth/provider-identities:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/auth/provider-identities",
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.net",
+          "default": "Auth provider Identities could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -3153,6 +4605,39 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_403",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.403",
+          "default": "Auth unlink Provider Identity failed: Step up Authentication Required."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:last-auth-method-unlink-forbidden",
       "endpoint": {
         "app": "auth-app-api",
@@ -3174,6 +4659,39 @@
         "text": {
           "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.409.last-auth-method-unlink-forbidden",
           "default": "Auth unlink Provider Identity failed: Last auth method unlink forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_409",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.409",
+          "default": "Auth unlink Provider Identity failed: Last Authentication Method Cannot Be Unlinked."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3244,6 +4762,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_ERR",
+        "fallbackVariant": "DELETE_ERR",
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.err",
+          "default": "Auth unlink Provider Identity failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "DELETE",
+        "path": "/auth/provider-identities/{identityId}",
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "DELETE_NET",
+        "fallbackVariant": null,
+        "networkVariant": "DELETE_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.net",
+          "default": "Auth unlink Provider Identity could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -3483,6 +5067,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/refresh:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.err",
+          "default": "Auth refresh failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/refresh:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/refresh",
+        "operationId": "AuthController_refresh",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.net",
+          "default": "Auth refresh could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/register:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -3706,6 +5356,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.err",
+          "default": "Auth register failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/register:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/register",
+        "operationId": "AuthController_register",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-register.post.net",
+          "default": "Auth register could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -3945,6 +5661,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.err",
+          "default": "Auth telegram Bot Link failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/bot-link",
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.net",
+          "default": "Auth telegram Bot Link could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/telegram/oidc/session:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -4168,6 +5950,72 @@
         "icon": "alert-circle",
         "color": "red",
         "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.err",
+          "default": "Auth telegram Oidc Session failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/oidc/session",
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.net",
+          "default": "Auth telegram Oidc Session could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
         "options": {
           "dismissible": true,
           "position": "top-right"
@@ -4407,6 +6255,72 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/telegram/tma:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.err",
+          "default": "Auth telegram Tma failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/telegram/tma:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/telegram/tma",
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.net",
+          "default": "Auth telegram Tma could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:GET:/health:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -4438,6 +6352,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/health:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-gethealth.get.err",
+          "default": "Base Health get Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/health:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health",
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-gethealth.get.net",
+          "default": "Base Health get Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "auth-app-api:GET:/health/private:200",
@@ -4473,6 +6453,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:GET:/health/private:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getprivatehealth.get.err",
+          "default": "Base Health get Private Health failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/health/private:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/health/private",
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getprivatehealth.get.net",
+          "default": "Base Health get Private Health could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:GET:/live:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -4506,6 +6552,72 @@
       "enabled": false
     },
     {
+      "id": "auth-app-api:GET:/live:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getliveness.get.err",
+          "default": "Base Health get Liveness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/live:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/live",
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getliveness.get.net",
+          "default": "Base Health get Liveness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:GET:/ready:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -4537,6 +6649,72 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "auth-app-api:GET:/ready:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getreadiness.get.err",
+          "default": "Base Health get Readiness failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:GET:/ready:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "GET",
+        "path": "/ready",
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.basehealthcontroller-getreadiness.get.net",
+          "default": "Base Health get Readiness could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     }
   ]
 }

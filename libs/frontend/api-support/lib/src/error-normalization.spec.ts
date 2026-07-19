@@ -42,6 +42,22 @@ describe('normalizeApiError', () => {
     expect(error.id).toBe('GET:/profile:network:network.offline');
   });
 
+  it('separates unexpected request errors from NET transport failures', () => {
+    const error = normalizeApiError({
+      endpoint: '/profile',
+      error: new Error('unexpected client hook failure'),
+      method: 'patch',
+    });
+
+    expect(error).toMatchObject({
+      code: 'network.error',
+      kind: 'unknown',
+      message: 'Request failed with ERR.',
+      method: 'PATCH',
+      status: null,
+    });
+  });
+
   it('classifies 401 and 403 responses as auth errors', () => {
     expect(normalizeApiError({ response: { status: 401, statusText: '' } }).kind).toBe('auth');
     expect(normalizeApiError({ response: { status: 403, statusText: '' } }).kind).toBe('auth');

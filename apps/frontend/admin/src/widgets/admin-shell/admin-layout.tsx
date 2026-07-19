@@ -58,6 +58,15 @@ export const AdminLayout = observer(function AdminLayout({
       variant: 'secondary',
     });
   }
+  if (access?.canReadSettings) {
+    navItems.push({
+      href: '/admin/settings/errors',
+      isCurrent: path === '/settings/errors',
+      label: t('admin.action.problemPresentations'),
+      detail: t('admin.problemPresentations.description'),
+      variant: 'secondary',
+    });
+  }
   if (access?.canReadRoles) {
     navItems.push({
       href: '/admin/tenants',

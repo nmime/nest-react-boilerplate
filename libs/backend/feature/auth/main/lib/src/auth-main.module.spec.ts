@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AuthMainModule, AuthPersistenceMode } from './auth-main.module';
 import { AuthController } from './interfaces/http/auth.controller';
+import { ProblemPresentationsController } from './interfaces/http/problem-presentations.controller';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
 import { AuthService } from './application/auth.service';
@@ -21,7 +22,7 @@ describe('AuthMainModule', () => {
     const memoryModule = AuthMainModule.forRoot(AuthPersistenceMode.Memory);
     const postgresModule = AuthMainModule.forRoot(AuthPersistenceMode.Postgres);
 
-    expect(memoryModule.controllers).toEqual([AuthController, BetterAuthApiController]);
+    expect(memoryModule.controllers).toEqual([AuthController, BetterAuthApiController, ProblemPresentationsController]);
     expect(memoryModule.providers).toContain(AuthService);
     expect(memoryModule.providers).toContainEqual({
       provide: AuthUserStoreInjectToken,

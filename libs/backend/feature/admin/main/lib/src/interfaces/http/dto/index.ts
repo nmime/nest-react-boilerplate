@@ -8,6 +8,8 @@ export * from './admin-audit-log-view.dto';
 export * from './admin-audit-log-list-payload.dto';
 export * from './admin-dashboard-summary.dto';
 export * from './create-admin-role.dto';
+export * from './admin-problem-presentation.dto';
+export * from './update-admin-problem-presentation.dto';
 export * from './update-admin-role.dto';
 export * from './set-admin-role-permissions.dto';
 export * from './assign-admin-user-roles.dto';

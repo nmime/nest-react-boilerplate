@@ -1,4 +1,4 @@
-import { render, renderHook, screen } from '@testing-library/react';
+import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ApiClientProvider,
@@ -58,7 +58,26 @@ describe('api client registry', () => {
     expect(registry.admin.requestOptions.baseUrl).toBe('https://admin.example.test');
   });
 
-  it('provides generated clients through React context', () => {
+  it('provides generated clients through React context and loads problem presentation overrides', async () => {
+    const fetchImpl = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
+                  display: 'silent',
+                  revision: 2,
+                  severity: 'info',
+                },
+              ],
+            },
+          }),
+          { headers: { 'content-type': 'application/json' }, status: 200 },
+        ),
+      ),
+    );
     render(
       <ApiClientProvider
         authToken=" bearer-token "
@@ -67,6 +86,8 @@ describe('api client registry', () => {
           auth: '/auth-api',
           user: '/user-api',
         }}
+        fetchImpl={fetchImpl}
+        loadProblemPresentationOverrides
       >
         <Probe />
       </ApiClientProvider>,
@@ -79,6 +100,12 @@ describe('api client registry', () => {
         authToken: 'bearer-token',
         userBaseUrl: '/user-api',
       }),
+    );
+    await waitFor(() => {
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+    });
+    expect((fetchImpl.mock.calls[0]?.[0] as Request).url).toBe(
+      `${globalThis.location.origin}/auth-api/auth/problem-presentations`,
     );
   });
 

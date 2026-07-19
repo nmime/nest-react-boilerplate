@@ -26,6 +26,8 @@ const adminRolePermissionsPath = '/admin/roles/{id}/permissions';
 const adminUserRolesPath = '/admin/users/{id}/roles';
 const adminAuditPath = '/admin/audit';
 const adminDashboardSummaryPath = '/admin/dashboard/summary';
+const adminProblemPresentationsPath = '/admin/settings/problem-presentations';
+const adminProblemPresentationResetPath = '/admin/settings/problem-presentations/reset';
 
 export const client = createClient<paths>();
 export const query = createQueryClient(client);
@@ -46,6 +48,10 @@ export type AssignAdminUserRolesDto = components['schemas']['AssignAdminUserRole
 export type AdminAuditLogViewDto = components['schemas']['AdminAuditLogViewDto'];
 export type AdminAuditLogListPayloadDto = components['schemas']['AdminAuditLogListPayloadDto'];
 export type AdminDashboardSummaryDto = components['schemas']['AdminDashboardSummaryDto'];
+export type AdminProblemPresentationViewDto = components['schemas']['AdminProblemPresentationViewDto'];
+export type AdminProblemPresentationCatalogDto = components['schemas']['AdminProblemPresentationCatalogDto'];
+export type UpdateAdminProblemPresentationDto = components['schemas']['UpdateAdminProblemPresentationDto'];
+export type ResetAdminProblemPresentationDto = components['schemas']['ResetAdminProblemPresentationDto'];
 
 export const adminHealthControllerHealth = (options?: ApiClientRequestOptions) =>
   client.GET(adminHealthPath, toOpenApiFetchOptions(options));
@@ -185,6 +191,48 @@ export type AdminUsersControllerDashboardSummaryResponse = OpenApiData<typeof ad
 export type AdminUsersControllerDashboardSummaryData = EnvelopeData<AdminUsersControllerDashboardSummaryResponse>;
 export type AdminUsersControllerDashboardSummaryError = OpenApiError<typeof adminUsersControllerDashboardSummary>;
 
+export const adminProblemPresentationsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(adminProblemPresentationsPath, toOpenApiFetchOptions(options));
+export type AdminProblemPresentationsControllerListResponse = OpenApiData<
+  typeof adminProblemPresentationsControllerList
+>;
+export type AdminProblemPresentationsControllerListData = EnvelopeData<AdminProblemPresentationsControllerListResponse>;
+export type AdminProblemPresentationsControllerListError = OpenApiError<typeof adminProblemPresentationsControllerList>;
+
+export const adminProblemPresentationsControllerUpdate = (
+  body: UpdateAdminProblemPresentationDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminProblemPresentationsPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminProblemPresentationsControllerUpdateResponse = OpenApiData<
+  typeof adminProblemPresentationsControllerUpdate
+>;
+export type AdminProblemPresentationsControllerUpdateData =
+  EnvelopeData<AdminProblemPresentationsControllerUpdateResponse>;
+export type AdminProblemPresentationsControllerUpdateError = OpenApiError<
+  typeof adminProblemPresentationsControllerUpdate
+>;
+
+export const adminProblemPresentationsControllerReset = (
+  body: ResetAdminProblemPresentationDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminProblemPresentationResetPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminProblemPresentationsControllerResetResponse = OpenApiData<
+  typeof adminProblemPresentationsControllerReset
+>;
+export type AdminProblemPresentationsControllerResetData =
+  EnvelopeData<AdminProblemPresentationsControllerResetResponse>;
+export type AdminProblemPresentationsControllerResetError = OpenApiError<
+  typeof adminProblemPresentationsControllerReset
+>;
+
 export const getAdminProfileControllerMeQueryKey = () => ['get', adminProfileMePath] as const;
 export const getAdminUsersControllerListUsersQueryKey = (params: AdminUsersListQuery = {}) =>
   ['get', adminUsersPath, params] as const;
@@ -193,6 +241,7 @@ export const getAdminUsersControllerRolesQueryKey = () => ['get', adminRolesPath
 export const getAdminUsersControllerListAuditQueryKey = (params: AdminAuditListQuery = {}) =>
   ['get', adminAuditPath, params] as const;
 export const getAdminUsersControllerDashboardSummaryQueryKey = () => ['get', adminDashboardSummaryPath] as const;
+export const getAdminProblemPresentationsControllerListQueryKey = () => ['get', adminProblemPresentationsPath] as const;
 export const getAdminUsersControllerUpdateUserStatusMutationKey = () => ['patch', adminUserStatusPath] as const;
 export const getAdminUsersControllerUpdateUserAccessPolicyMutationKey = () =>
   ['patch', adminUserAccessPolicyPath] as const;
@@ -200,6 +249,10 @@ export const getAdminRolesControllerCreateRoleMutationKey = () => ['post', admin
 export const getAdminRolesControllerUpdateRoleMutationKey = () => ['patch', adminRolePath] as const;
 export const getAdminRolesControllerSetRolePermissionsMutationKey = () => ['put', adminRolePermissionsPath] as const;
 export const getAdminRolesControllerAssignUserRolesMutationKey = () => ['put', adminUserRolesPath] as const;
+export const getAdminProblemPresentationsControllerUpdateMutationKey = () =>
+  ['put', adminProblemPresentationsPath] as const;
+export const getAdminProblemPresentationsControllerResetMutationKey = () =>
+  ['put', adminProblemPresentationResetPath] as const;
 
 export const getAdminProfileControllerMeQueryOptions = (
   options?: ApiClientRequestOptions,

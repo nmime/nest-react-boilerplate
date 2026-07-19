@@ -78,21 +78,27 @@ describe("api toast config tooling", () => {
         [
           ["POST", "/auth/login", 200, null, "success"],
           ["POST", "/auth/login", 400, "bad-request", "error"],
+          ["POST", "/auth/login", 400, null, "error"],
           ["POST", "/auth/login", 401, null, "error"],
           ["POST", "/auth/login", 409, "email-taken", "error"],
           ["POST", "/auth/login", 409, "username-taken", "error"],
+          ["POST", "/auth/login", 409, null, "error"],
+          ["POST", "/auth/login", "ERR", null, "error"],
+          ["POST", "/auth/login", "NET", null, "warning"],
         ],
       );
       assert.equal(rules[1].display.mode, "toast");
-      assert.equal(rules[2].display.mode, "silent");
+      assert.equal(rules.find((rule) => rule.status === 401)?.display.mode, "silent");
       assert.equal(rules[1].match.fallbackVariant, "POST_ERR");
       assert.equal(rules[1].enabled, true);
       const frontend = buildFrontendToastConfig(contract, rules);
       assert.deepEqual(frontend.rules[0]?.toast, {
-        category: "error",
+        category: "success",
         messageSource: "problem",
         titleKey: "ui.runtime.requestFailed.title",
       });
+      assert.equal(frontend.rules[0]?.display, "silent");
+      assert.equal(frontend.rules.at(-1)?.match.kind, "network");
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }
@@ -107,11 +113,13 @@ describe("api toast config tooling", () => {
 
       let result = checkToastConfigs({ workspaceRoot, contracts });
       assert.deepEqual(result.errors, []);
-      assert.equal(result.rules, 5);
+      assert.equal(result.rules, 9);
 
       const configPath = join(workspaceRoot, generated[0].path);
       const config = JSON.parse(readFileSync(configPath, "utf8"));
-      config.rules.pop();
+      config.rules = config.rules.filter(
+        (rule: { id?: string }) => rule.id !== "auth-app-api:POST:/auth/login:409:username-taken",
+      );
       config.rules.push({ ...config.rules[0], id: "stale", endpoint: { ...config.rules[0].endpoint, path: "/stale" } });
       writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 

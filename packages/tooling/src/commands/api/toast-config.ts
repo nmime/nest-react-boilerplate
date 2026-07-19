@@ -161,14 +161,16 @@ export function buildFrontendToastConfig(contract: DiscoveredContract, rules: To
       openapi: contract.relativePath,
       app: contract.app,
     },
-    rules: rules.filter((rule) => rule.enabled).map((rule) => ({
-      display: rule.display.mode,
+    rules: rules.map((rule) => ({
+      display: rule.enabled ? rule.display.mode : "silent",
       id: rule.id,
       match: {
         ...(rule.errorCode ? { code: rule.errorCode } : {}),
         endpoint: rule.endpoint.path,
         method: rule.endpoint.method,
         ...(typeof rule.status === "number" ? { status: rule.status } : {}),
+        ...(rule.status === "ERR" ? { kind: "unknown" } : {}),
+        ...(rule.status === "NET" ? { kind: "network" } : {}),
       },
       toast: {
         category: rule.display.category,
@@ -177,6 +179,18 @@ export function buildFrontendToastConfig(contract: DiscoveredContract, rules: To
           typeof rule.status === "number" && rule.status >= 500
             ? "ui.runtime.serverUnavailable.title"
             : "ui.runtime.requestFailed.title",
+      },
+      catalog: {
+        app: rule.endpoint.app,
+        errorCode: rule.errorCode,
+        operationId: rule.endpoint.operationId,
+        path: rule.endpoint.path,
+        method: rule.endpoint.method,
+        status: rule.status,
+        tags: rule.endpoint.tags,
+        defaultDisplay: rule.enabled ? rule.display.mode : "silent",
+        defaultMessage: rule.display.text.default,
+        defaultSeverity: rule.display.category,
       },
     })),
   };
@@ -264,9 +278,67 @@ export function collectToastRules(doc: OpenApiDocument, app: string): ToastRule[
         const codes = responseErrorCodes(doc, response, status);
         for (const errorCode of codes) rules.push(buildRule({ app, path, method, operation, status, response, errorCode }));
       }
+      rules.push(buildTransportRule({ app, path, method, operation, status: "ERR" }));
+      rules.push(buildTransportRule({ app, path, method, operation, status: "NET" }));
     }
   }
   return rules;
+}
+
+function buildTransportRule({
+  app,
+  path,
+  method,
+  operation,
+  status,
+}: {
+  app: string;
+  path: string;
+  method: string;
+  operation: OpenApiOperation;
+  status: "ERR" | "NET";
+}): ToastRule {
+  const upperMethod = method.toUpperCase();
+  const category: ToastCategory = status === "NET" ? "warning" : "error";
+  const meta = categoryMeta[category];
+  const operationLabel = humanize(operation.operationId ?? `${method} ${path}`);
+
+  return {
+    id: `${app}:${upperMethod}:${path}:${status}`,
+    endpoint: {
+      app,
+      method: upperMethod,
+      path,
+      operationId: operation.operationId ?? null,
+      tags: Array.isArray(operation.tags) ? operation.tags : [],
+    },
+    status,
+    errorCode: null,
+    match: {
+      variant: `${upperMethod}_${status}`,
+      fallbackVariant: status === "ERR" ? `${upperMethod}_ERR` : null,
+      networkVariant: `${upperMethod}_NET`,
+    },
+    display: {
+      mode: "toast",
+      category,
+      text: {
+        key: ["api", "toast", app, slug(operation.operationId ?? path), method, status].map(slug).join("."),
+        default:
+          status === "NET"
+            ? `${operationLabel} could not reach the service.`
+            : `${operationLabel} failed before an HTTP response was available.`,
+      },
+      icon: meta.icon,
+      color: meta.color,
+      durationMs: meta.durationMs,
+      options: {
+        dismissible: true,
+        position: "top-right",
+      },
+    },
+    enabled: true,
+  };
 }
 
 function buildRule({ app, path, method, operation, status, response, errorCode }: { app: string; path: string; method: string; operation: OpenApiOperation; status: string; response: OpenApiResponse; errorCode: string | null }): ToastRule {
@@ -321,7 +393,7 @@ function responseErrorCodes(doc: OpenApiDocument, response: OpenApiResponse, sta
 
   const codes = new Set<string>();
   for (const media of Object.values(response?.content ?? {})) collectCodeValues(doc, media?.schema, codes);
-  return codes.size > 0 ? [...codes].sort() : [null];
+  return codes.size > 0 ? [...[...codes].sort(), null] : [null];
 }
 
 function collectCodeValues(doc: OpenApiDocument, schema: OpenApiSchema | undefined, codes: Set<string>, seen: Set<string> = new Set()): void {
@@ -375,7 +447,9 @@ function validateRuleShape(rule: unknown): string[] {
   if (typeof endpoint?.app !== "string") errors.push(`${prefix}: endpoint.app must be a string`);
   if (typeof endpoint?.method !== "string" || endpoint.method !== endpoint.method.toUpperCase()) errors.push(`${prefix}: endpoint.method must be uppercase`);
   if (typeof endpoint?.path !== "string" || !endpoint.path.startsWith("/")) errors.push(`${prefix}: endpoint.path must start with /`);
-  if (!(typeof record.status === "number" || record.status === "default")) errors.push(`${prefix}: status must be a number or default`);
+  if (!(typeof record.status === "number" || record.status === "default" || record.status === "ERR" || record.status === "NET")) {
+    errors.push(`${prefix}: status must be a number, default, ERR, or NET`);
+  }
   if (!(record.errorCode === null || typeof record.errorCode === "string")) errors.push(`${prefix}: errorCode must be null or string`);
   if (!match || typeof match.variant !== "string") errors.push(`${prefix}: match.variant must be a string`);
   if (!display) errors.push(`${prefix}: display must be an object`);

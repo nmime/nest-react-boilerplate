@@ -42,6 +42,14 @@ describe('frontend environment API URL resolution', () => {
     ).toBe('https://auth.example.test');
   });
 
+  it.each([
+    { DEV: true, MODE: 'production' },
+    { DEV: false, MODE: 'development' },
+    { DEV: false, MODE: 'test' },
+  ])('uses same-origin API roots in non-production environments: %o', (env) => {
+    expect(getApiBaseUrl(env, 'VITE_AUTH_API_BASE_URL')).toBe('');
+  });
+
   it('fails closed for production without explicit origins or same-origin mode', () => {
     expect(() => getApiBaseUrl(productionEnv(), 'VITE_AUTH_API_BASE_URL')).toThrow(
       /VITE_AUTH_API_BASE_URL is required/u,

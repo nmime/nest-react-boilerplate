@@ -422,6 +422,15 @@ describe('App', () => {
     ).toContain('Missing admin audit permission.');
     expect(
       renderAdminMarkup(
+        renderAdminRoute('/settings/errors', {
+          status: 'ready',
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain('Missing admin settings permission.');
+    expect(
+      renderAdminMarkup(
         renderAdminRoute('/tenants', {
           status: 'ready',
           payload,

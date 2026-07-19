@@ -75,7 +75,7 @@ const mergeCatalog = (overrides: readonly OverrideRow[]): PresentationRow[] => {
   const deleted = overrides
     .filter((override) => !generatedRuleIds.has(override.ruleId))
     .map((override): PresentationRow => ({
-      app: override.ruleId.split(':')[0] ?? '—',
+      app: /^([^:]+)/u.exec(override.ruleId)?.[1] ?? '—',
       catalogState: 'deleted',
       comment: override.comment,
       defaultDisplay: 'silent',
@@ -232,25 +232,25 @@ export const ProblemPresentationsPage = ({
         <UiStatCard
           className="admin-stat-card"
           label={t('admin.problemPresentations.summary.total')}
-          value={`${items.length || '—'}`}
+          value={`${items.length}`}
           detail={t('admin.problemPresentations.summary.responses')}
         />
         <UiStatCard
           className="admin-stat-card"
           label={t('admin.problemPresentations.summary.toast')}
-          value={`${items.filter((item) => item.display === 'toast').length || '—'}`}
+          value={`${items.filter((item) => item.display === 'toast').length}`}
           detail={t('admin.problemPresentations.display.toast')}
         />
         <UiStatCard
           className="admin-stat-card"
           label={t('admin.problemPresentations.summary.silent')}
-          value={`${items.filter((item) => item.display === 'silent').length || '—'}`}
+          value={`${items.filter((item) => item.display === 'silent').length}`}
           detail={t('admin.problemPresentations.display.silent')}
         />
         <UiStatCard
           className="admin-stat-card"
           label={t('admin.problemPresentations.summary.overridden')}
-          value={`${overrides.length || '—'}`}
+          value={`${overrides.length}`}
           detail={t('admin.problemPresentations.source.override')}
         />
       </div>
@@ -395,10 +395,8 @@ export const ProblemPresentationsPage = ({
       {editTarget ? (
         <UiConfirmDialog
           open
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditTarget(undefined);
-            }
+          onOpenChange={() => {
+            setEditTarget(undefined);
           }}
           title={t('admin.problemPresentations.dialog.title', { code: `${editTarget.method} ${editTarget.path}` })}
           description={t('admin.problemPresentations.dialog.description')}
@@ -463,10 +461,8 @@ export const ProblemPresentationsPage = ({
       {resetTarget ? (
         <UiConfirmDialog
           open
-          onOpenChange={(open) => {
-            if (!open) {
-              setResetTarget(undefined);
-            }
+          onOpenChange={() => {
+            setResetTarget(undefined);
           }}
           title={t('admin.problemPresentations.dialog.resetTitle', {
             code: `${resetTarget.method} ${resetTarget.path}`,

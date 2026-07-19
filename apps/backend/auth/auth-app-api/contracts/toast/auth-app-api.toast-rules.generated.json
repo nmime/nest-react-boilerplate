@@ -282,7 +282,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:400:bad-request",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -291,9 +291,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -301,8 +301,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.400.bad-request",
-          "default": "Auth discord Authorization Request failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.400",
+          "default": "Auth discord Authorization Request failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -315,7 +315,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -324,17 +324,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.401",
           "default": "Auth discord Authorization Request failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -348,7 +348,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:403:forbidden",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -357,9 +357,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -367,7 +367,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.403",
           "default": "Auth discord Authorization Request failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -381,7 +381,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:409:conflict",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -390,9 +390,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -400,7 +400,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.409",
           "default": "Auth discord Authorization Request failed: Conflict."
         },
         "icon": "alert-circle",
@@ -414,7 +414,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -423,9 +423,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -433,8 +433,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.429.rate-limited",
-          "default": "Auth discord Authorization Request failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.429",
+          "default": "Auth discord Authorization Request failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -447,7 +447,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/discord/authorization-request:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -456,9 +456,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -466,8 +466,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.500.internal-server-error",
-          "default": "Auth discord Authorization Request failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-discordauthorizationrequest.post.500",
+          "default": "Auth discord Authorization Request failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -513,7 +513,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:400:bad-request",
+      "id": "auth-app-api:GET:/auth/discord/callback:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -522,9 +522,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -532,8 +532,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.400.bad-request",
-          "default": "Auth discord Callback failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.400",
+          "default": "Auth discord Callback failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -546,7 +546,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:401:unauthorized",
+      "id": "auth-app-api:GET:/auth/discord/callback:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -555,17 +555,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.401",
           "default": "Auth discord Callback failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -579,7 +579,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:403:forbidden",
+      "id": "auth-app-api:GET:/auth/discord/callback:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -588,9 +588,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -598,7 +598,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.403",
           "default": "Auth discord Callback failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -612,7 +612,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:409:conflict",
+      "id": "auth-app-api:GET:/auth/discord/callback:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -621,9 +621,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "GET_409_conflict",
+        "variant": "GET_409",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -631,7 +631,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.409",
           "default": "Auth discord Callback failed: Conflict."
         },
         "icon": "alert-circle",
@@ -645,7 +645,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:429:rate-limited",
+      "id": "auth-app-api:GET:/auth/discord/callback:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -654,9 +654,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -664,8 +664,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.429.rate-limited",
-          "default": "Auth discord Callback failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.429",
+          "default": "Auth discord Callback failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -678,7 +678,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/discord/callback:500:internal-server-error",
+      "id": "auth-app-api:GET:/auth/discord/callback:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -687,9 +687,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -697,8 +697,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.500.internal-server-error",
-          "default": "Auth discord Callback failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-discordcallback.get.500",
+          "default": "Auth discord Callback failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -744,7 +744,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:400:bad-request",
+      "id": "auth-app-api:POST:/auth/email-verification-token:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -753,9 +753,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -763,8 +763,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.400.bad-request",
-          "default": "Auth request Email Verification failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.400",
+          "default": "Auth request Email Verification failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -777,7 +777,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/email-verification-token:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -786,17 +786,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.401",
           "default": "Auth request Email Verification failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -810,7 +810,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:403:forbidden",
+      "id": "auth-app-api:POST:/auth/email-verification-token:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -819,9 +819,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -829,7 +829,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.403",
           "default": "Auth request Email Verification failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -843,7 +843,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:409:conflict",
+      "id": "auth-app-api:POST:/auth/email-verification-token:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -852,9 +852,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -862,7 +862,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.409",
           "default": "Auth request Email Verification failed: Conflict."
         },
         "icon": "alert-circle",
@@ -876,7 +876,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/email-verification-token:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -885,9 +885,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -895,8 +895,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.429.rate-limited",
-          "default": "Auth request Email Verification failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.429",
+          "default": "Auth request Email Verification failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -909,7 +909,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/email-verification-token:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/email-verification-token:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -918,9 +918,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -928,8 +928,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.500.internal-server-error",
-          "default": "Auth request Email Verification failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-requestemailverification.post.500",
+          "default": "Auth request Email Verification failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -975,7 +975,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:400:bad-request",
+      "id": "auth-app-api:POST:/auth/link-tokens:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -984,9 +984,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -994,8 +994,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.400.bad-request",
-          "default": "Auth create Link Token failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.400",
+          "default": "Auth create Link Token failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1008,7 +1008,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/link-tokens:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1017,17 +1017,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.401",
           "default": "Auth create Link Token failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1041,7 +1041,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:403:forbidden",
+      "id": "auth-app-api:POST:/auth/link-tokens:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1050,9 +1050,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1060,7 +1060,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.403",
           "default": "Auth create Link Token failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1074,7 +1074,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:409:conflict",
+      "id": "auth-app-api:POST:/auth/link-tokens:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1083,9 +1083,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1093,7 +1093,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.409",
           "default": "Auth create Link Token failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1107,7 +1107,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/link-tokens:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1116,9 +1116,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1126,8 +1126,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.429.rate-limited",
-          "default": "Auth create Link Token failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.429",
+          "default": "Auth create Link Token failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1140,7 +1140,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/link-tokens:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/link-tokens:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1149,9 +1149,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1159,8 +1159,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.500.internal-server-error",
-          "default": "Auth create Link Token failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-createlinktoken.post.500",
+          "default": "Auth create Link Token failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1206,7 +1206,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:400:bad-request",
+      "id": "auth-app-api:GET:/auth/locales:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1215,9 +1215,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1225,8 +1225,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.400.bad-request",
-          "default": "Auth locales failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.400",
+          "default": "Auth locales failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1239,7 +1239,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:401:unauthorized",
+      "id": "auth-app-api:GET:/auth/locales:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1248,17 +1248,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.401",
           "default": "Auth locales failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1272,7 +1272,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:403:forbidden",
+      "id": "auth-app-api:GET:/auth/locales:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1281,9 +1281,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1291,7 +1291,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.403",
           "default": "Auth locales failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1305,7 +1305,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:409:conflict",
+      "id": "auth-app-api:GET:/auth/locales:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1314,9 +1314,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "GET_409_conflict",
+        "variant": "GET_409",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1324,7 +1324,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.409",
           "default": "Auth locales failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1338,7 +1338,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:429:rate-limited",
+      "id": "auth-app-api:GET:/auth/locales:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1347,9 +1347,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1357,8 +1357,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.429.rate-limited",
-          "default": "Auth locales failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.429",
+          "default": "Auth locales failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1371,7 +1371,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/locales:500:internal-server-error",
+      "id": "auth-app-api:GET:/auth/locales:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1380,9 +1380,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1390,8 +1390,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-locales.get.500.internal-server-error",
-          "default": "Auth locales failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-locales.get.500",
+          "default": "Auth locales failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1437,7 +1437,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/login:400:bad-request",
+      "id": "auth-app-api:POST:/auth/login:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1446,9 +1446,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1456,8 +1456,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.400.bad-request",
-          "default": "Auth login failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-login.post.400",
+          "default": "Auth login failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1470,7 +1470,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/login:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/login:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1479,17 +1479,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-login.post.401",
           "default": "Auth login failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1503,7 +1503,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/login:403:forbidden",
+      "id": "auth-app-api:POST:/auth/login:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1512,9 +1512,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1522,7 +1522,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-login.post.403",
           "default": "Auth login failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1536,7 +1536,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/login:409:conflict",
+      "id": "auth-app-api:POST:/auth/login:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1545,9 +1545,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1555,7 +1555,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-login.post.409",
           "default": "Auth login failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1569,7 +1569,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/login:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/login:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1578,9 +1578,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1588,8 +1588,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.429.rate-limited",
-          "default": "Auth login failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-login.post.429",
+          "default": "Auth login failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1602,7 +1602,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/login:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/login:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1611,9 +1611,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1621,8 +1621,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-login.post.500.internal-server-error",
-          "default": "Auth login failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-login.post.500",
+          "default": "Auth login failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1668,7 +1668,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:400:bad-request",
+      "id": "auth-app-api:POST:/auth/logout:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1677,9 +1677,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1687,8 +1687,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.400.bad-request",
-          "default": "Auth logout failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.400",
+          "default": "Auth logout failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1701,7 +1701,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/logout:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1710,17 +1710,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.401",
           "default": "Auth logout failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1734,7 +1734,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:403:forbidden",
+      "id": "auth-app-api:POST:/auth/logout:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1743,9 +1743,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1753,7 +1753,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.403",
           "default": "Auth logout failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1767,7 +1767,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:409:conflict",
+      "id": "auth-app-api:POST:/auth/logout:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1776,9 +1776,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1786,7 +1786,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.409",
           "default": "Auth logout failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1800,7 +1800,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/logout:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1809,9 +1809,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1819,8 +1819,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.429.rate-limited",
-          "default": "Auth logout failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.429",
+          "default": "Auth logout failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1833,7 +1833,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/logout:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/logout:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -1842,9 +1842,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1852,8 +1852,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-logout.post.500.internal-server-error",
-          "default": "Auth logout failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-logout.post.500",
+          "default": "Auth logout failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1899,7 +1899,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:GET:/auth/me:400:bad-request",
+      "id": "auth-app-api:GET:/auth/me:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1908,9 +1908,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1918,8 +1918,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.400.bad-request",
-          "default": "Auth me failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-me.get.400",
+          "default": "Auth me failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1932,7 +1932,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/me:401:unauthorized",
+      "id": "auth-app-api:GET:/auth/me:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1941,17 +1941,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-me.get.401",
           "default": "Auth me failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1965,7 +1965,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/me:403:forbidden",
+      "id": "auth-app-api:GET:/auth/me:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -1974,9 +1974,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1984,7 +1984,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-me.get.403",
           "default": "Auth me failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1998,7 +1998,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/me:409:conflict",
+      "id": "auth-app-api:GET:/auth/me:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2007,9 +2007,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "GET_409_conflict",
+        "variant": "GET_409",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2017,7 +2017,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-me.get.409",
           "default": "Auth me failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2031,7 +2031,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/me:429:rate-limited",
+      "id": "auth-app-api:GET:/auth/me:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2040,9 +2040,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2050,8 +2050,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.429.rate-limited",
-          "default": "Auth me failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-me.get.429",
+          "default": "Auth me failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2064,7 +2064,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/me:500:internal-server-error",
+      "id": "auth-app-api:GET:/auth/me:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2073,9 +2073,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2083,8 +2083,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-me.get.500.internal-server-error",
-          "default": "Auth me failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-me.get.500",
+          "default": "Auth me failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2130,7 +2130,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:400:bad-request",
+      "id": "auth-app-api:PATCH:/auth/me/locale:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2139,9 +2139,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_400_bad-request",
+        "variant": "PATCH_400",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2149,8 +2149,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.400.bad-request",
-          "default": "Auth update Locale failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.400",
+          "default": "Auth update Locale failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2163,7 +2163,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:401:unauthorized",
+      "id": "auth-app-api:PATCH:/auth/me/locale:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2172,17 +2172,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_401_unauthorized",
+        "variant": "PATCH_401",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.401",
           "default": "Auth update Locale failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2196,7 +2196,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:403:forbidden",
+      "id": "auth-app-api:PATCH:/auth/me/locale:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2205,9 +2205,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_403_forbidden",
+        "variant": "PATCH_403",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2215,7 +2215,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.403",
           "default": "Auth update Locale failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2229,7 +2229,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:409:conflict",
+      "id": "auth-app-api:PATCH:/auth/me/locale:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2238,9 +2238,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_409_conflict",
+        "variant": "PATCH_409",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2248,7 +2248,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.409",
           "default": "Auth update Locale failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2262,7 +2262,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:429:rate-limited",
+      "id": "auth-app-api:PATCH:/auth/me/locale:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2271,9 +2271,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_429_rate-limited",
+        "variant": "PATCH_429",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2281,8 +2281,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.429.rate-limited",
-          "default": "Auth update Locale failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.429",
+          "default": "Auth update Locale failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2295,7 +2295,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/locale:500:internal-server-error",
+      "id": "auth-app-api:PATCH:/auth/me/locale:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2304,9 +2304,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_500_internal-server-error",
+        "variant": "PATCH_500",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2314,8 +2314,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.500.internal-server-error",
-          "default": "Auth update Locale failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-updatelocale.patch.500",
+          "default": "Auth update Locale failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2361,7 +2361,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:400:bad-request",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2370,9 +2370,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_400_bad-request",
+        "variant": "PATCH_400",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2380,8 +2380,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.400.bad-request",
-          "default": "Auth update Preferences failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.400",
+          "default": "Auth update Preferences failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2394,7 +2394,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:401:unauthorized",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2403,17 +2403,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_401_unauthorized",
+        "variant": "PATCH_401",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.401",
           "default": "Auth update Preferences failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2427,7 +2427,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:403:forbidden",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2436,9 +2436,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_403_forbidden",
+        "variant": "PATCH_403",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2446,7 +2446,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.403",
           "default": "Auth update Preferences failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2460,7 +2460,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:409:conflict",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2469,9 +2469,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_409_conflict",
+        "variant": "PATCH_409",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2479,7 +2479,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.409",
           "default": "Auth update Preferences failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2493,7 +2493,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:429:rate-limited",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2502,9 +2502,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_429_rate-limited",
+        "variant": "PATCH_429",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2512,8 +2512,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.429.rate-limited",
-          "default": "Auth update Preferences failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.429",
+          "default": "Auth update Preferences failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2526,7 +2526,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:PATCH:/auth/me/preferences:500:internal-server-error",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "PATCH",
@@ -2535,9 +2535,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_500_internal-server-error",
+        "variant": "PATCH_500",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2545,8 +2545,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.500.internal-server-error",
-          "default": "Auth update Preferences failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-updatepreferences.patch.500",
+          "default": "Auth update Preferences failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2592,7 +2592,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:400:bad-request",
+      "id": "auth-app-api:POST:/auth/password-reset-token:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2601,9 +2601,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -2611,8 +2611,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.400.bad-request",
-          "default": "Auth request Password Reset failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.400",
+          "default": "Auth request Password Reset failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2625,7 +2625,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/password-reset-token:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2634,17 +2634,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.401",
           "default": "Auth request Password Reset failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2658,7 +2658,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:403:forbidden",
+      "id": "auth-app-api:POST:/auth/password-reset-token:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2667,9 +2667,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -2677,7 +2677,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.403",
           "default": "Auth request Password Reset failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2691,7 +2691,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:409:conflict",
+      "id": "auth-app-api:POST:/auth/password-reset-token:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2700,9 +2700,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -2710,7 +2710,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.409",
           "default": "Auth request Password Reset failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2724,7 +2724,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/password-reset-token:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2733,9 +2733,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -2743,8 +2743,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.429.rate-limited",
-          "default": "Auth request Password Reset failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.429",
+          "default": "Auth request Password Reset failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2757,7 +2757,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/password-reset-token:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/password-reset-token:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -2766,9 +2766,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -2776,8 +2776,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.500.internal-server-error",
-          "default": "Auth request Password Reset failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.500",
+          "default": "Auth request Password Reset failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2823,7 +2823,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:400:bad-request",
+      "id": "auth-app-api:GET:/auth/provider-identities:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2832,9 +2832,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2842,8 +2842,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.400.bad-request",
-          "default": "Auth provider Identities failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.400",
+          "default": "Auth provider Identities failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2856,7 +2856,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:401:unauthorized",
+      "id": "auth-app-api:GET:/auth/provider-identities:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2865,17 +2865,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.401",
           "default": "Auth provider Identities failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2889,7 +2889,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:403:forbidden",
+      "id": "auth-app-api:GET:/auth/provider-identities:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2898,9 +2898,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2908,7 +2908,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.403",
           "default": "Auth provider Identities failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2922,7 +2922,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:409:conflict",
+      "id": "auth-app-api:GET:/auth/provider-identities:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2931,9 +2931,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "GET_409_conflict",
+        "variant": "GET_409",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2941,7 +2941,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.409",
           "default": "Auth provider Identities failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2955,7 +2955,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:429:rate-limited",
+      "id": "auth-app-api:GET:/auth/provider-identities:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2964,9 +2964,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2974,8 +2974,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.429.rate-limited",
-          "default": "Auth provider Identities failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.429",
+          "default": "Auth provider Identities failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2988,7 +2988,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:GET:/auth/provider-identities:500:internal-server-error",
+      "id": "auth-app-api:GET:/auth/provider-identities:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "GET",
@@ -2997,9 +2997,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -3007,8 +3007,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.500.internal-server-error",
-          "default": "Auth provider Identities failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-provideridentities.get.500",
+          "default": "Auth provider Identities failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3054,7 +3054,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:400:bad-request",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3063,9 +3063,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "DELETE_400_bad-request",
+        "variant": "DELETE_400",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
@@ -3073,8 +3073,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.400.bad-request",
-          "default": "Auth unlink Provider Identity failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.400",
+          "default": "Auth unlink Provider Identity failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3087,7 +3087,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:401:unauthorized",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3096,17 +3096,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "DELETE_401_unauthorized",
+        "variant": "DELETE_401",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.401",
           "default": "Auth unlink Provider Identity failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -3120,7 +3120,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403:forbidden",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403:step-up-required",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3129,9 +3129,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": "step-up-required",
       "match": {
-        "variant": "DELETE_403_forbidden",
+        "variant": "DELETE_403_step-up-required",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
@@ -3139,8 +3139,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.403.forbidden",
-          "default": "Auth unlink Provider Identity failed: Forbidden."
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.403.step-up-required",
+          "default": "Auth unlink Provider Identity failed: Step up required."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3153,7 +3153,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:conflict",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:last-auth-method-unlink-forbidden",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3162,9 +3162,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": "last-auth-method-unlink-forbidden",
       "match": {
-        "variant": "DELETE_409_conflict",
+        "variant": "DELETE_409_last-auth-method-unlink-forbidden",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
@@ -3172,8 +3172,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.409.conflict",
-          "default": "Auth unlink Provider Identity failed: Conflict."
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.409.last-auth-method-unlink-forbidden",
+          "default": "Auth unlink Provider Identity failed: Last auth method unlink forbidden."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3186,7 +3186,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:429:rate-limited",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3195,9 +3195,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "DELETE_429_rate-limited",
+        "variant": "DELETE_429",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
@@ -3205,8 +3205,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.429.rate-limited",
-          "default": "Auth unlink Provider Identity failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.429",
+          "default": "Auth unlink Provider Identity failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3219,7 +3219,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:500:internal-server-error",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "DELETE",
@@ -3228,9 +3228,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "DELETE_500_internal-server-error",
+        "variant": "DELETE_500",
         "fallbackVariant": "DELETE_ERR",
         "networkVariant": "DELETE_NET"
       },
@@ -3238,8 +3238,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.500.internal-server-error",
-          "default": "Auth unlink Provider Identity failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-unlinkprovideridentity.delete.500",
+          "default": "Auth unlink Provider Identity failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3285,7 +3285,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:400:bad-request",
+      "id": "auth-app-api:POST:/auth/refresh:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3294,9 +3294,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3304,8 +3304,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.400.bad-request",
-          "default": "Auth refresh failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.400",
+          "default": "Auth refresh failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3318,7 +3318,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/refresh:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3327,17 +3327,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.401",
           "default": "Auth refresh failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -3351,7 +3351,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:403:forbidden",
+      "id": "auth-app-api:POST:/auth/refresh:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3360,9 +3360,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3370,7 +3370,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.403",
           "default": "Auth refresh failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -3384,7 +3384,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:409:conflict",
+      "id": "auth-app-api:POST:/auth/refresh:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3393,9 +3393,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3403,7 +3403,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.409",
           "default": "Auth refresh failed: Conflict."
         },
         "icon": "alert-circle",
@@ -3417,7 +3417,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/refresh:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3426,9 +3426,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3436,8 +3436,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.429.rate-limited",
-          "default": "Auth refresh failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.429",
+          "default": "Auth refresh failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3450,7 +3450,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/refresh:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/refresh:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3459,9 +3459,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3469,8 +3469,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-refresh.post.500.internal-server-error",
-          "default": "Auth refresh failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-refresh.post.500",
+          "default": "Auth refresh failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3516,7 +3516,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/register:400:bad-request",
+      "id": "auth-app-api:POST:/auth/register:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3525,9 +3525,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3535,8 +3535,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.400.bad-request",
-          "default": "Auth register failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-register.post.400",
+          "default": "Auth register failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3549,7 +3549,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/register:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/register:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3558,17 +3558,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-register.post.401",
           "default": "Auth register failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -3582,7 +3582,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/register:403:forbidden",
+      "id": "auth-app-api:POST:/auth/register:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3591,9 +3591,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3601,7 +3601,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-register.post.403",
           "default": "Auth register failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -3615,7 +3615,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/register:409:conflict",
+      "id": "auth-app-api:POST:/auth/register:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3624,9 +3624,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3634,7 +3634,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-register.post.409",
           "default": "Auth register failed: Conflict."
         },
         "icon": "alert-circle",
@@ -3648,7 +3648,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/register:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/register:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3657,9 +3657,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3667,8 +3667,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.429.rate-limited",
-          "default": "Auth register failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-register.post.429",
+          "default": "Auth register failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3681,7 +3681,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/register:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/register:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3690,9 +3690,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3700,8 +3700,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-register.post.500.internal-server-error",
-          "default": "Auth register failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-register.post.500",
+          "default": "Auth register failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3747,7 +3747,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:400:bad-request",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3756,9 +3756,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3766,8 +3766,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.400.bad-request",
-          "default": "Auth telegram Bot Link failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.400",
+          "default": "Auth telegram Bot Link failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3780,7 +3780,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3789,17 +3789,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.401",
           "default": "Auth telegram Bot Link failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -3813,7 +3813,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:403:forbidden",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3822,9 +3822,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3832,7 +3832,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.403",
           "default": "Auth telegram Bot Link failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -3846,7 +3846,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:409:conflict",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3855,9 +3855,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3865,7 +3865,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.409",
           "default": "Auth telegram Bot Link failed: Conflict."
         },
         "icon": "alert-circle",
@@ -3879,7 +3879,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3888,9 +3888,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3898,8 +3898,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.429.rate-limited",
-          "default": "Auth telegram Bot Link failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.429",
+          "default": "Auth telegram Bot Link failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3912,7 +3912,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/bot-link:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3921,9 +3921,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3931,8 +3931,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.500.internal-server-error",
-          "default": "Auth telegram Bot Link failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-telegrambotlink.post.500",
+          "default": "Auth telegram Bot Link failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -3978,7 +3978,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:400:bad-request",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -3987,9 +3987,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -3997,8 +3997,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.400.bad-request",
-          "default": "Auth telegram Oidc Session failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.400",
+          "default": "Auth telegram Oidc Session failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -4011,7 +4011,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4020,17 +4020,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.401",
           "default": "Auth telegram Oidc Session failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -4044,7 +4044,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:403:forbidden",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4053,9 +4053,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4063,7 +4063,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.403",
           "default": "Auth telegram Oidc Session failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -4077,7 +4077,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:409:conflict",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4086,9 +4086,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4096,7 +4096,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.409",
           "default": "Auth telegram Oidc Session failed: Conflict."
         },
         "icon": "alert-circle",
@@ -4110,7 +4110,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4119,9 +4119,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4129,8 +4129,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.429.rate-limited",
-          "default": "Auth telegram Oidc Session failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.429",
+          "default": "Auth telegram Oidc Session failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -4143,7 +4143,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/oidc/session:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4152,9 +4152,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4162,8 +4162,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.500.internal-server-error",
-          "default": "Auth telegram Oidc Session failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-telegramoidcsession.post.500",
+          "default": "Auth telegram Oidc Session failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -4209,7 +4209,7 @@
       "enabled": false
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:400:bad-request",
+      "id": "auth-app-api:POST:/auth/telegram/tma:400",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4218,9 +4218,9 @@
         "tags": ["Auth"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4228,8 +4228,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.400.bad-request",
-          "default": "Auth telegram Tma failed: Bad request."
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.400",
+          "default": "Auth telegram Tma failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -4242,7 +4242,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:401:unauthorized",
+      "id": "auth-app-api:POST:/auth/telegram/tma:401",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4251,17 +4251,17 @@
         "tags": ["Auth"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.401.unauthorized",
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.401",
           "default": "Auth telegram Tma failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -4275,7 +4275,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:403:forbidden",
+      "id": "auth-app-api:POST:/auth/telegram/tma:403",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4284,9 +4284,9 @@
         "tags": ["Auth"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4294,7 +4294,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.403.forbidden",
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.403",
           "default": "Auth telegram Tma failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -4308,7 +4308,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:409:conflict",
+      "id": "auth-app-api:POST:/auth/telegram/tma:409",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4317,9 +4317,9 @@
         "tags": ["Auth"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4327,7 +4327,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.409.conflict",
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.409",
           "default": "Auth telegram Tma failed: Conflict."
         },
         "icon": "alert-circle",
@@ -4341,7 +4341,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:429:rate-limited",
+      "id": "auth-app-api:POST:/auth/telegram/tma:429",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4350,9 +4350,9 @@
         "tags": ["Auth"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4360,8 +4360,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.429.rate-limited",
-          "default": "Auth telegram Tma failed: Rate limited."
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.429",
+          "default": "Auth telegram Tma failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -4374,7 +4374,7 @@
       "enabled": true
     },
     {
-      "id": "auth-app-api:POST:/auth/telegram/tma:500:internal-server-error",
+      "id": "auth-app-api:POST:/auth/telegram/tma:500",
       "endpoint": {
         "app": "auth-app-api",
         "method": "POST",
@@ -4383,9 +4383,9 @@
         "tags": ["Auth"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -4393,8 +4393,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.500.internal-server-error",
-          "default": "Auth telegram Tma failed: Internal server error."
+          "key": "api.toast.auth-app-api.authcontroller-telegramtma.post.500",
+          "default": "Auth telegram Tma failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",

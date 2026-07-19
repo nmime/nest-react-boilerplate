@@ -20,7 +20,9 @@ describe('shared helpers', () => {
     expect(errorText('plain string', 'admin.users.error.requestFailed', fallbackTranslate)).toBe(
       'Users request failed',
     );
-    expect(errorText(new Error('boom'), 'admin.users.error.requestFailed', fallbackTranslate)).toBe('boom');
+    expect(errorText(new Error('boom'), 'admin.users.error.requestFailed', fallbackTranslate)).toBe(
+      'Users request failed',
+    );
   });
 
   it('joins string lists and falls back to an em dash for empty/absent lists', () => {

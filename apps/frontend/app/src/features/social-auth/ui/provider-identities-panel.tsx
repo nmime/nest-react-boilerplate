@@ -1,4 +1,5 @@
 import { observer, useAuthShellStore, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
+import { getNormalizedApiError } from '@app/frontend-api-support';
 import { getErrorReason } from '../../../shared/lib';
 import { UiButton, UiCard, UiEmptyState, UiLoading, UiStatusPill, UiToast } from '../../../shared/ui';
 import {
@@ -34,14 +35,13 @@ const getUnlinkProviderName = (identityId: string | undefined, identities: Provi
 };
 
 const getUnlinkErrorKey = (error: unknown): TranslationKey => {
-  if (error && typeof error === 'object' && 'status' in error) {
-    if (error.status === 409) {
-      return 'auth.social.lastMethod.blocked';
-    }
+  const code = getNormalizedApiError(error)?.code;
+  if (code === 'last-auth-method-unlink-forbidden') {
+    return 'auth.social.lastMethod.blocked';
+  }
 
-    if (error.status === 403) {
-      return 'auth.social.stepUp.required';
-    }
+  if (code === 'step-up-required') {
+    return 'auth.social.stepUp.required';
   }
 
   return 'auth.social.unlink.error';

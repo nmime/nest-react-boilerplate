@@ -231,7 +231,7 @@ describe('admin users page interactions', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Update status' }));
 
-    expect(await screen.findByText('status backend rejected')).toBeTruthy();
+    expect(await screen.findByText('Status update failed')).toBeTruthy();
   });
 
   it('cancels the status dialog without mutating', async () => {
@@ -342,7 +342,7 @@ describe('admin users page interactions', () => {
     fireEvent.change(within(dialog).getByLabelText('Access policy audit reason'), { target: { value: 'reason' } });
     fireEvent.click(screen.getByRole('button', { name: 'Update access policy' }));
 
-    expect(await screen.findByText('policy backend rejected')).toBeTruthy();
+    expect(await screen.findByText('Access policy update failed')).toBeTruthy();
   });
 
   it('validates reason and role selection before updating an access policy', async () => {
@@ -404,7 +404,7 @@ describe('admin users page interactions', () => {
     // Keep the pre-selected role and submit.
     fireEvent.click(await screen.findByRole('button', { name: 'Assign roles' }));
 
-    expect(await screen.findByText('assignment backend rejected')).toBeTruthy();
+    expect(await screen.findByText('Role assignment failed')).toBeTruthy();
   });
 
   it('renders users with empty access lists and a disabled status action', async () => {
@@ -453,6 +453,6 @@ describe('admin users page interactions', () => {
 
     renderUsersPage();
 
-    expect(await screen.findByText('directory offline')).toBeTruthy();
+    expect(await screen.findByText('Users request failed')).toBeTruthy();
   });
 });

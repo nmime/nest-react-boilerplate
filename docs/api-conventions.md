@@ -81,7 +81,7 @@ Probe policy:
 
 Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Generic HTTP errors use `about:blank`; documented product problem types use stable `https://<root-domain>/problems#<code>` identities from `@app/common-problem-details`, and `/problems` resolves to their human-readable registry. The HTTP and body statuses always match. `instance` is an absolute opaque occurrence URI, not a request path. Validation responses use the `errors[]` extension with `{ detail, pointer }`, where `pointer` is a JSON Pointer URI fragment such as `#/profile/email`.
 
-Only human-readable `title`, `detail`, and validation issue `detail` values are localized. `type`, the documented `code` extension, `status`, `instance`, and validation pointers remain machine-stable. Frontend normalization keeps the canonical URI in `type` and the short switch-friendly alias in `code`; generic `about:blank` responses receive a local `http.<status>` code. Never branch on translated text.
+Only human-readable `title`, `detail`, and validation issue `detail` values are localized. `type`, the documented `code` extension, `status`, `instance`, and validation pointers remain machine-stable. Frontend normalization keeps the canonical URI in `type` and the short switch-friendly alias in `code`; generic `about:blank` responses receive a local `http.<status>` code. UI code reads display text only from a normalized `ApiClientError.problem` or enriched `_frontendError`; arbitrary `Error.message` and unnormalized object fields are not user-facing. Never branch on translated text or status alone when a product problem code distinguishes the case.
 
 ## Contracts and generated clients
 

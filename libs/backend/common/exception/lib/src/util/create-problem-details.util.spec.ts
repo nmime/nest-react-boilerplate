@@ -30,6 +30,12 @@ describe('createProblemDetails', () => {
     });
   });
 
+  it('omits extension members whose value is undefined', () => {
+    expect(
+      createProblemDetails({ title: 'Conflict', status: 409, extensions: { code: undefined } }),
+    ).not.toHaveProperty('code');
+  });
+
   it('rejects malformed standard members and extension collisions', () => {
     expect(() => createProblemDetails({ title: '', status: 400 })).toThrow(TypeError);
     expect(() => createProblemDetails({ title: 'Bad', status: 99 })).toThrow(RangeError);

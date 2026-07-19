@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { configureApiLocale } from './api-locale';
-import { ApiToastRuntime, createDefaultApiToastRules, parseApiToastRules, resolveApiToastRule } from './toast-runtime';
+import {
+  ApiToastRuntime,
+  createDefaultApiToastRules,
+  parseApiToastRules,
+  resolveApiToastRule,
+  resolveApiToastRules,
+  type ApiToastRule,
+} from './toast-runtime';
 
 describe('parseApiToastRules', () => {
   it('returns nothing for non-array input', () => {
@@ -21,6 +28,11 @@ describe('parseApiToastRules', () => {
           id: 'bad-category',
           match: {},
           toast: { category: 'nope', title: 'T' },
+        },
+        {
+          id: 'bad-title-key',
+          match: {},
+          toast: { category: 'error', titleKey: 'not.a.translation.key' },
         },
       ]),
     ).toEqual([]);
@@ -75,6 +87,28 @@ describe('parseApiToastRules', () => {
     expect(rules[2]?.match).toEqual({ status: 404 });
     expect(rules[3]?.match).toEqual({});
   });
+
+  it('resolves generated translation keys and normalized problem messages at display time', () => {
+    const runtime = new ApiToastRuntime({ clock: () => 1 });
+    const rules = parseApiToastRules([
+      {
+        display: 'toast',
+        id: 'generated-error',
+        match: { status: 409 },
+        toast: {
+          category: 'error',
+          messageSource: 'problem',
+          titleKey: 'ui.runtime.requestFailed.title',
+        },
+      },
+    ]);
+
+    configureApiLocale({ locale: 'ru' });
+    expect(runtime.showForApiResult({ message: 'Локализованная причина', status: 409 }, rules)).toMatchObject({
+      message: 'Локализованная причина',
+      title: 'Запрос не выполнен',
+    });
+  });
 });
 
 describe('resolveApiToastRule', () => {
@@ -86,7 +120,7 @@ describe('resolveApiToastRule', () => {
     },
     {
       id: 'endpoint-rule',
-      match: { endpoint: '/profile' },
+      match: { endpoint: '/profiles/{profileId}' },
       toast: { category: 'info', title: 'Endpoint' },
     },
     {
@@ -131,9 +165,11 @@ describe('resolveApiToastRule', () => {
     expect(resolveApiToastRule({ method: 'post' }, rules)).toMatchObject({
       id: 'method-rule',
     });
-    expect(resolveApiToastRule({ endpoint: '/profile' }, rules)).toMatchObject({
+    expect(resolveApiToastRule({ endpoint: '/profiles/profile-1' }, rules)).toMatchObject({
       id: 'endpoint-rule',
     });
+    expect(resolveApiToastRule({ endpoint: '/profiles' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ endpoint: '/profiles/' }, rules)).toBeNull();
     expect(resolveApiToastRule({ code: 'billing.declined' }, rules)).toMatchObject({ id: 'code-rule' });
     expect(resolveApiToastRule({ type: 'https://example.com/problems#resource-conflict' }, rules)).toMatchObject({
       id: 'type-rule',
@@ -155,6 +191,13 @@ describe('resolveApiToastRule', () => {
     expect(resolveApiToastRule({}, rangeOnly)).toBeNull();
     expect(resolveApiToastRule({ status: 404 }, rangeOnly)).toBeNull();
     expect(resolveApiToastRule({ status: 600 }, rangeOnly)).toBeNull();
+  });
+});
+
+describe('resolveApiToastRules', () => {
+  it('resolves lazy rule sources', () => {
+    const rules = createDefaultApiToastRules();
+    expect(resolveApiToastRules(() => rules)).toBe(rules);
   });
 });
 
@@ -200,5 +243,17 @@ describe('ApiToastRuntime defaults', () => {
 
     expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
     expect(runtime.visible).toHaveLength(0);
+  });
+
+  it('fails closed when a manually supplied rule has no title source', () => {
+    const runtime = new ApiToastRuntime();
+    const rule = {
+      display: 'toast',
+      id: 'missing-title',
+      match: { status: 500 },
+      toast: { category: 'error' },
+    } as ApiToastRule;
+
+    expect(runtime.showForApiResult({ status: 500 }, [rule])).toBeNull();
   });
 });

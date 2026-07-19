@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { collectFiles, commandExists, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
+import { isAllowedSecretScanValue, secretValueEntropy } from "./secret-scan-policy.ts";
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -19,21 +20,6 @@ const patterns = [
   { id: "jwt-like-token", severity: "high", regex: /\beyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g },
   { id: "database-url-credential", severity: "high", regex: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^\s:@]+:([^\s@]{12,})@/gi },
 ];
-
-function entropy(value: string) {
-  const counts = new Map();
-  for (const char of value) counts.set(char, (counts.get(char) ?? 0) + 1);
-  return [...counts.values()].reduce((sum, count) => {
-    const p = count / value.length;
-    return sum - p * Math.log2(p);
-  }, 0);
-}
-function allowed(value: string, rel = "") {
-  if (/example|sample|fixture|test|dummy|changeme|placeholder|process\.env/i.test(value)) return true;
-  if (rel.endsWith("env-loader.ts") && /postgres/i.test(value)) return true;
-  if (rel === "scripts/validate-deployment-config.mjs" && value.startsWith("SITE_DIST_ROOT=/workspace/")) return true;
-  return false;
-}
 
 if (engine === "gitleaks" && !dryRun) {
   if (commandExists("gitleaks")) {
@@ -55,13 +41,13 @@ if (engine !== "gitleaks" || findings.length === 0) {
     for (const pattern of patterns) for (const match of text.matchAll(pattern.regex)) {
       const value = match[1] ?? match[0];
       const rawValue = match[0];
-      if (allowed(value, rel) || allowed(rawValue, rel)) continue;
+      if (isAllowedSecretScanValue(value, rel) || isAllowedSecretScanValue(rawValue, rel)) continue;
       const line = text.slice(0, match.index).split("\n").length;
       findings.push({ file: rel, line, rule: pattern.id, severity: pattern.severity });
     }
     for (const match of text.matchAll(/["']([A-Za-z0-9+/=_-]{40,})["']/g)) {
       const value = match[1];
-      if (allowed(value, rel) || entropy(value) < 4.4) continue;
+      if (isAllowedSecretScanValue(value, rel) || secretValueEntropy(value) < 4.4) continue;
       const line = text.slice(0, match.index).split("\n").length;
       findings.push({ file: rel, line, rule: "high-entropy-string", severity: "medium" });
     }

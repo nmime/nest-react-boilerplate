@@ -3004,7 +3004,7 @@ export interface operations {
           };
         };
       };
-      /** @description Forbidden */
+      /** @description Step-up Authentication Required */
       403: {
         headers: {
           [name: string]: unknown;
@@ -3014,13 +3014,13 @@ export interface operations {
             /**
              * Format: uri-reference
              * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
+             * @example https://example.com/problems#step-up-required
              * @enum {string}
              */
-            type: 'about:blank';
+            type: 'https://example.com/problems#step-up-required';
             /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
+             * @description A short human-readable summary of the problem type, localized according to content negotiation.
+             * @example Step-up Authentication Required
              */
             title: string;
             /**
@@ -3029,19 +3029,28 @@ export interface operations {
              * @enum {integer}
              */
             status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
+            /**
+             * @description A human-readable explanation specific to this occurrence.
+             * @example Recent authentication is required to perform this security-sensitive action.
+             */
+            detail: string;
             /**
              * Format: uri-reference
              * @description A URI reference identifying this specific occurrence.
              */
             instance?: string;
+            /**
+             * @description Stable short alias for the problem type URI.
+             * @example step-up-required
+             * @enum {string}
+             */
+            code: 'step-up-required';
           } & {
             [key: string]: unknown;
           };
         };
       };
-      /** @description Conflict */
+      /** @description Last Authentication Method Cannot Be Unlinked */
       409: {
         headers: {
           [name: string]: unknown;
@@ -3051,13 +3060,13 @@ export interface operations {
             /**
              * Format: uri-reference
              * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
+             * @example https://example.com/problems#last-auth-method-unlink-forbidden
              * @enum {string}
              */
-            type: 'about:blank';
+            type: 'https://example.com/problems#last-auth-method-unlink-forbidden';
             /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
+             * @description A short human-readable summary of the problem type, localized according to content negotiation.
+             * @example Last Authentication Method Cannot Be Unlinked
              */
             title: string;
             /**
@@ -3066,13 +3075,22 @@ export interface operations {
              * @enum {integer}
              */
             status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
+            /**
+             * @description A human-readable explanation specific to this occurrence.
+             * @example The last usable authentication method cannot be unlinked from the account.
+             */
+            detail: string;
             /**
              * Format: uri-reference
              * @description A URI reference identifying this specific occurrence.
              */
             instance?: string;
+            /**
+             * @description Stable short alias for the problem type URI.
+             * @example last-auth-method-unlink-forbidden
+             * @enum {string}
+             */
+            code: 'last-auth-method-unlink-forbidden';
           } & {
             [key: string]: unknown;
           };

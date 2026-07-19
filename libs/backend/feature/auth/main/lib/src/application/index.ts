@@ -2,6 +2,7 @@ export * from './auth-session.factory';
 export * from './auth.service';
 export * from './effective-permission.service';
 export * from './external-auth.service';
+export * from './external-auth.exception';
 
 // Better-Auth integration
 export * from './better-auth';

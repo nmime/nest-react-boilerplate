@@ -21,6 +21,16 @@ afterEach(() => {
 describe('createApiRuntimeFetch success path', () => {
   it('passes 2xx responses through and shows a matching success toast', async () => {
     const eventHub = createApiRuntimeEventHub();
+    eventHub.emit({
+      type: 'server-error',
+      error: {
+        code: 'http.503',
+        id: 'GET:/profile:503:http.503',
+        kind: 'server',
+        message: 'Down',
+        status: 503,
+      },
+    });
     const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
     const rules = parseApiToastRules([
       {
@@ -42,6 +52,7 @@ describe('createApiRuntimeFetch success path', () => {
 
     expect(response.status).toBe(200);
     expect(eventHub.getState().status).toBe('online');
+    expect(eventHub.getState().lastError).toBeNull();
     expect(toastRuntime.visible.at(-1)).toMatchObject({
       category: 'success',
       title: 'Saved',

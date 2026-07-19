@@ -2820,24 +2820,24 @@
             }
           },
           "403": {
-            "description": "Forbidden",
+            "description": "Step-up Authentication Required",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "detail", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
                       "format": "uri-reference",
-                      "example": "about:blank",
+                      "example": "https://example.com/problems#step-up-required",
                       "description": "A URI reference identifying the problem type; defaults to about:blank when omitted.",
-                      "enum": ["about:blank"]
+                      "enum": ["https://example.com/problems#step-up-required"]
                     },
                     "title": {
                       "type": "string",
-                      "description": "A short human-readable summary of the problem type.",
-                      "example": "Forbidden"
+                      "description": "A short human-readable summary of the problem type, localized according to content negotiation.",
+                      "example": "Step-up Authentication Required"
                     },
                     "status": {
                       "type": "integer",
@@ -2849,12 +2849,19 @@
                     },
                     "detail": {
                       "type": "string",
-                      "description": "A human-readable explanation specific to this occurrence."
+                      "description": "A human-readable explanation specific to this occurrence.",
+                      "example": "Recent authentication is required to perform this security-sensitive action."
                     },
                     "instance": {
                       "type": "string",
                       "format": "uri-reference",
                       "description": "A URI reference identifying this specific occurrence."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": ["step-up-required"],
+                      "example": "step-up-required",
+                      "description": "Stable short alias for the problem type URI."
                     }
                   },
                   "additionalProperties": true
@@ -2863,24 +2870,24 @@
             }
           },
           "409": {
-            "description": "Conflict",
+            "description": "Last Authentication Method Cannot Be Unlinked",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "type": "object",
-                  "required": ["type", "title", "status"],
+                  "required": ["type", "title", "status", "detail", "code"],
                   "properties": {
                     "type": {
                       "type": "string",
                       "format": "uri-reference",
-                      "example": "about:blank",
+                      "example": "https://example.com/problems#last-auth-method-unlink-forbidden",
                       "description": "A URI reference identifying the problem type; defaults to about:blank when omitted.",
-                      "enum": ["about:blank"]
+                      "enum": ["https://example.com/problems#last-auth-method-unlink-forbidden"]
                     },
                     "title": {
                       "type": "string",
-                      "description": "A short human-readable summary of the problem type.",
-                      "example": "Conflict"
+                      "description": "A short human-readable summary of the problem type, localized according to content negotiation.",
+                      "example": "Last Authentication Method Cannot Be Unlinked"
                     },
                     "status": {
                       "type": "integer",
@@ -2892,12 +2899,19 @@
                     },
                     "detail": {
                       "type": "string",
-                      "description": "A human-readable explanation specific to this occurrence."
+                      "description": "A human-readable explanation specific to this occurrence.",
+                      "example": "The last usable authentication method cannot be unlinked from the account."
                     },
                     "instance": {
                       "type": "string",
                       "format": "uri-reference",
                       "description": "A URI reference identifying this specific occurrence."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": ["last-auth-method-unlink-forbidden"],
+                      "example": "last-auth-method-unlink-forbidden",
+                      "description": "Stable short alias for the problem type URI."
                     }
                   },
                   "additionalProperties": true

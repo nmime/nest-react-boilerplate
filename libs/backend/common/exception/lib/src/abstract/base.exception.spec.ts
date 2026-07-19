@@ -40,6 +40,11 @@ describe('BaseException / Exception factory', () => {
       title: 'Bad Request',
       status: 400,
     });
+
+    const DefaultClientException = Exception({ name: 'DefaultClientException', kind: 'client' });
+    const DefaultServerException = Exception({ name: 'DefaultServerException', kind: 'server' });
+    expect(new DefaultClientException().getStatus()).toBe(400);
+    expect(new DefaultServerException().getResponse()).toMatchObject({ status: 500, type: 'about:blank' });
   });
 
   it('publishes the resolved immutable definition', () => {
@@ -78,5 +83,8 @@ describe('BaseException / Exception factory', () => {
       problemType: 'resource-conflict',
     });
     expect(() => new ConflictException({ extensions: { secret: 'nope' } })).toThrow('does not declare extension');
+
+    const AboutBlankException = Exception({ name: 'AboutBlankException', kind: 'client' });
+    expect(() => new AboutBlankException({ extensions: { secret: 'nope' } })).toThrow('about:blank');
   });
 });

@@ -153,6 +153,12 @@ async function fetchOpenApi({
         // Retry until the app has finished booting.
       }
 
+      if (child.exitCode !== null || child.signalCode !== null) {
+        throw new Error(
+          `${app} exited before its OpenAPI endpoint became ready (exitCode=${String(child.exitCode)}, signal=${String(child.signalCode)}). Logs:\n${logs.slice(-4000)}`,
+        );
+      }
+
       await wait(1000);
     }
 

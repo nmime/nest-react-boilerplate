@@ -1,5 +1,5 @@
-import { problemCodeFromType } from '@app/common-problem-details';
-import { translate } from '@app/frontend-i18n-shared';
+import { problemCodeFromType, type ProblemTypeCode } from '@app/common-problem-details';
+import { translate, type TranslationKey } from '@app/frontend-i18n-shared';
 import { getApiLocale } from './api-locale';
 
 export type NormalizedApiErrorKind = 'auth' | 'client' | 'network' | 'server' | 'unknown' | 'validation';
@@ -37,6 +37,43 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 
 const stringFrom = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+
+const problemDetailTranslationKeys = {
+  'client-data-validation': 'errors.client-data-validation.detail',
+  'last-auth-method-unlink-forbidden': 'errors.last-auth-method-unlink-forbidden.detail',
+  'rate-limited': 'errors.rate-limited.detail',
+  'resource-conflict': 'errors.resource-conflict.detail',
+  'resource-not-found': 'errors.resource-not-found.detail',
+  'step-up-required': 'errors.step-up-required.detail',
+} as const satisfies Record<ProblemTypeCode, TranslationKey>;
+
+const isNormalizedApiError = (value: unknown): value is NormalizedApiError =>
+  isRecord(value) &&
+  Boolean(stringFrom(value['code'])) &&
+  Boolean(stringFrom(value['id'])) &&
+  Boolean(stringFrom(value['kind'])) &&
+  Boolean(stringFrom(value['message'])) &&
+  (value['status'] === null || typeof value['status'] === 'number') &&
+  Array.isArray(value['validation']);
+
+export const getNormalizedApiError = (value: unknown): NormalizedApiError | undefined => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  if (isNormalizedApiError(value['problem'])) {
+    return value['problem'];
+  }
+
+  if (isNormalizedApiError(value[FrontendErrorKey])) {
+    return value[FrontendErrorKey];
+  }
+
+  return undefined;
+};
+
+export const getApiErrorDisplayMessage = (value: unknown, fallback: string): string =>
+  getNormalizedApiError(value)?.message ?? fallback;
 
 const validationFromArray = (items: unknown[]): NormalizedValidationIssue[] =>
   items.flatMap((item) => {
@@ -142,6 +179,11 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
 
 const extractMessage = (status: number | null, body: unknown): string => {
   if (isRecord(body)) {
+    const registeredCode = problemCodeFromType(stringFrom(body['type']));
+    if (registeredCode) {
+      return translate(problemDetailTranslationKeys[registeredCode], { locale: getApiLocale() });
+    }
+
     const message =
       stringFrom(body['detail']) ??
       stringFrom(body['message']) ??

@@ -1,4 +1,4 @@
-import { translate } from '@app/frontend-i18n-shared';
+import { hasFrontendTranslationKey, translate, type TranslationKey } from '@app/frontend-i18n-shared';
 import { getApiLocale } from './api-locale';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
@@ -27,7 +27,9 @@ export interface ApiToastRule {
   toast: {
     category: ApiToastCategory;
     message?: string;
-    title: string;
+    messageSource?: 'problem';
+    title?: string;
+    titleKey?: TranslationKey;
   };
 }
 
@@ -37,6 +39,7 @@ export interface ApiToastContext {
   code?: string;
   endpoint?: string;
   kind?: string;
+  message?: string;
   method?: string;
   status?: number | null;
   type?: string;
@@ -112,6 +115,25 @@ const normalizeMethod = (method?: string): string | undefined => method?.toUpper
 const matchesOptional = <T>(expected: T | undefined, actual: T | undefined): boolean =>
   expected === undefined || expected === actual;
 
+const matchesEndpoint = (expected: string | undefined, actual: string | undefined): boolean => {
+  if (expected === undefined) {
+    return true;
+  }
+  if (actual === undefined) {
+    return false;
+  }
+
+  const expectedSegments = expected.split('/');
+  const actualSegments = actual.split('/');
+  return (
+    expectedSegments.length === actualSegments.length &&
+    expectedSegments.every(
+      (segment, index) =>
+        (/^\{[^/{}]+\}$/u.test(segment) && Boolean(actualSegments[index])) || segment === actualSegments[index],
+    )
+  );
+};
+
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object';
 
 const isUnknownArray = (value: unknown): value is readonly unknown[] => Array.isArray(value);
@@ -168,7 +190,7 @@ const matchesRule = (rule: ApiToastRule, context: ApiToastContext): boolean => {
 
   if (
     !matchesOptional(normalizeMethod(rule.match.method), method) ||
-    !matchesOptional(rule.match.endpoint, context.endpoint) ||
+    !matchesEndpoint(rule.match.endpoint, context.endpoint) ||
     !matchesOptional(rule.match.kind, context.kind) ||
     !matchesOptional(rule.match.code, context.code) ||
     !matchesOptional(rule.match.type, context.type) ||
@@ -203,13 +225,16 @@ export const parseApiToastRules = (value: unknown): ApiToastRule[] => {
 
     const id = readOptionalString(rule.id);
     const title = readOptionalString(rule.toast.title);
+    const titleKey = readOptionalString(rule.toast.titleKey);
+    const normalizedTitleKey = titleKey && hasFrontendTranslationKey(titleKey) ? titleKey : undefined;
     const category = rule.toast.category;
-    if (!id || !title || !isApiToastCategory(category)) {
+    if (!id || (!title && !normalizedTitleKey) || !isApiToastCategory(category)) {
       return [];
     }
 
     const display = isApiToastDisplay(rule.display) ? rule.display : undefined;
     const message = readOptionalString(rule.toast.message);
+    const messageSource = rule.toast.messageSource === 'problem' ? 'problem' : undefined;
 
     return [
       {
@@ -219,7 +244,9 @@ export const parseApiToastRules = (value: unknown): ApiToastRule[] => {
         toast: {
           category,
           message,
+          messageSource,
           title,
+          titleKey: normalizedTitleKey,
         },
       },
     ];
@@ -299,11 +326,16 @@ export class ApiToastRuntime {
       return null;
     }
 
+    const title = rule.toast.titleKey ? translate(rule.toast.titleKey, { locale: getApiLocale() }) : rule.toast.title;
+    if (!title) {
+      return null;
+    }
+
     return this.show({
       category: rule.toast.category,
       dedupeKey: rule.id,
-      message: rule.toast.message,
-      title: rule.toast.title,
+      message: rule.toast.messageSource === 'problem' ? context.message : rule.toast.message,
+      title,
     });
   }
 }

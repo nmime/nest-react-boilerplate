@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
   ApiClientProvider,
@@ -35,9 +35,7 @@ import { UserRouter } from '../router/user-router';
 
 const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactNode }>) => {
   const { locale } = useI18n();
-  useEffect(() => {
-    configureApiLocale({ locale });
-  }, [locale]);
+  configureApiLocale({ locale });
 
   return <>{children}</>;
 };

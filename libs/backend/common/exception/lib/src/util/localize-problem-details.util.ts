@@ -1,4 +1,5 @@
 import { problemCodeFromType } from '@app/common-problem-details';
+import type { TranslationKey } from '@app/common-i18n-keys';
 import {
   fallbackLocale,
   hasTranslationKey,
@@ -30,7 +31,7 @@ function translateValidationIssue(detail: string, pointer: string, locale: strin
       translationKey.startsWith('validation.constraints.') && interpolate(englishMessage, { property }) === detail,
   )?.[0];
 
-  return key && hasTranslationKey(key) ? translate(key, { locale, params: { property } }) : detail;
+  return key ? translate(key as TranslationKey, { locale, params: { property } }) : detail;
 }
 
 function localizeValidationIssues(value: unknown, locale: string | undefined): unknown {

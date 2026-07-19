@@ -1,5 +1,4 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { translate } from '@app/frontend-i18n-shared';
 import { getApiLocale } from './api-locale';
 import { normalizeApiError, type NormalizedApiError } from './error-normalization';
 
@@ -132,18 +131,7 @@ const parseBody = async (response: Response): Promise<unknown> => {
 };
 
 export const getApiErrorMessage = (status: number, body: unknown): string => {
-  if (body && typeof body === 'object') {
-    const record = body as Record<string, unknown>;
-    const message = record['detail'] ?? record['message'] ?? record['title'] ?? record['error'];
-    if (typeof message === 'string' && message.trim().length > 0) {
-      return message;
-    }
-  }
-
-  return translate('errors.api.requestFailed', {
-    locale: getApiLocale(),
-    params: { status },
-  });
+  return normalizeApiError({ body, response: { status, statusText: '' } }).message;
 };
 
 export async function apiRequest(input: string | URL, options: ApiFetchOptions = {}): Promise<Response> {

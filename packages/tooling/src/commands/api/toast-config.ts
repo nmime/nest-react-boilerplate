@@ -29,7 +29,7 @@ interface ToastRule {
   errorCode: string | null;
   match: { variant: string; fallbackVariant: string | null; networkVariant: string };
   display: {
-    mode: "toast";
+    mode: "silent" | "toast";
     category: ToastCategory;
     text: { key: string; default: string };
     icon: string;
@@ -172,7 +172,11 @@ export function buildFrontendToastConfig(contract: DiscoveredContract, rules: To
       },
       toast: {
         category: rule.display.category,
-        title: rule.display.text.default,
+        messageSource: "problem",
+        titleKey:
+          typeof rule.status === "number" && rule.status >= 500
+            ? "ui.runtime.serverUnavailable.title"
+            : "ui.runtime.requestFailed.title",
       },
     })),
   };
@@ -293,7 +297,7 @@ function buildRule({ app, path, method, operation, status, response, errorCode }
       networkVariant: `${upperMethod}_NET`,
     },
     display: {
-      mode: "toast",
+      mode: numericStatus === 401 ? "silent" : "toast",
       category,
       text: {
         key: keyParts.map(slug).join("."),

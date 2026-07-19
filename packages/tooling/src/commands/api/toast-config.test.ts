@@ -3,7 +3,13 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
-import { checkToastConfigs, collectToastRules, discoverOpenApiContracts, generateToastConfigs } from "./toast-config.ts";
+import {
+  buildFrontendToastConfig,
+  checkToastConfigs,
+  collectToastRules,
+  discoverOpenApiContracts,
+  generateToastConfigs,
+} from "./toast-config.ts";
 
 const openApi = {
   openapi: "3.0.0",
@@ -23,6 +29,14 @@ const openApi = {
                   type: "object",
                   properties: { code: { type: "string", example: "bad-request" } },
                 },
+              },
+            },
+          },
+          "401": {
+            description: "Unauthorized",
+            content: {
+              "application/problem+json": {
+                schema: { type: "object" },
               },
             },
           },
@@ -53,8 +67,10 @@ describe("api toast config tooling", () => {
     const workspaceRoot = makeWorkspace();
     try {
       const contracts = discoverOpenApiContracts(workspaceRoot);
+      const contract = contracts[0];
+      assert.ok(contract);
       assert.equal(contracts.length, 1);
-      assert.equal(contracts[0].relativePath, "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json");
+      assert.equal(contract.relativePath, "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json");
 
       const rules = collectToastRules(openApi, "auth-app-api");
       assert.deepEqual(
@@ -62,13 +78,21 @@ describe("api toast config tooling", () => {
         [
           ["POST", "/auth/login", 200, null, "success"],
           ["POST", "/auth/login", 400, "bad-request", "error"],
+          ["POST", "/auth/login", 401, null, "error"],
           ["POST", "/auth/login", 409, "email-taken", "error"],
           ["POST", "/auth/login", 409, "username-taken", "error"],
         ],
       );
       assert.equal(rules[1].display.mode, "toast");
+      assert.equal(rules[2].display.mode, "silent");
       assert.equal(rules[1].match.fallbackVariant, "POST_ERR");
       assert.equal(rules[1].enabled, true);
+      const frontend = buildFrontendToastConfig(contract, rules);
+      assert.deepEqual(frontend.rules[0]?.toast, {
+        category: "error",
+        messageSource: "problem",
+        titleKey: "ui.runtime.requestFailed.title",
+      });
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }
@@ -83,7 +107,7 @@ describe("api toast config tooling", () => {
 
       let result = checkToastConfigs({ workspaceRoot, contracts });
       assert.deepEqual(result.errors, []);
-      assert.equal(result.rules, 4);
+      assert.equal(result.rules, 5);
 
       const configPath = join(workspaceRoot, generated[0].path);
       const config = JSON.parse(readFileSync(configPath, "utf8"));

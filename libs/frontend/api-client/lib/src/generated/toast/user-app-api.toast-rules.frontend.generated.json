@@ -9,72 +9,72 @@
   "rules": [
     {
       "display": "toast",
-      "id": "user-app-api:GET:/profile/me:400:bad-request",
+      "id": "user-app-api:GET:/profile/me:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/profile/me",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Profile me failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "user-app-api:GET:/profile/me:401:unauthorized",
+      "display": "silent",
+      "id": "user-app-api:GET:/profile/me:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/profile/me",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Profile me failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "user-app-api:GET:/profile/me:403:forbidden",
+      "id": "user-app-api:GET:/profile/me:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/profile/me",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Profile me failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "user-app-api:GET:/profile/me:429:rate-limited",
+      "id": "user-app-api:GET:/profile/me:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/profile/me",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Profile me failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "user-app-api:GET:/profile/me:500:internal-server-error",
+      "id": "user-app-api:GET:/profile/me:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/profile/me",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Profile me failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     }
   ]

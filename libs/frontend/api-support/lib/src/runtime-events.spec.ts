@@ -76,6 +76,21 @@ describe('createApiRuntimeEventHub', () => {
     });
   });
 
+  it('clears stale connectivity errors after a successful request without clearing auth state', () => {
+    const hub = createApiRuntimeEventHub();
+    hub.emit({ type: 'server-error', error: snapshot() });
+    hub.emit({ type: 'auth-required', reason: 'retry-rejected', redirectTo: '/auth' });
+
+    hub.emit({ type: 'request-succeeded' });
+
+    expect(hub.getState()).toEqual({
+      authRequired: true,
+      lastError: null,
+      redirectTo: '/auth',
+      status: 'online',
+    });
+  });
+
   it('notifies subscribers until they unsubscribe and resets to the initial state', () => {
     const hub = createApiRuntimeEventHub();
     const listener = vi.fn();

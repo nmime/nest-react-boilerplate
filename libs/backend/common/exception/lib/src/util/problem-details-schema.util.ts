@@ -1,3 +1,4 @@
+import { getProblemTypeDefinition, problemTypeForCode, type ProblemTypeCode } from '@app/common-problem-details';
 import type { OpenApiSchemaObject } from '../type/open-api-schema.type';
 import { mapHttpStatusToProblemTitle } from './map-http-status-to-problem-title.util';
 
@@ -59,6 +60,55 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
         enum: [status],
         example: status,
       },
+    },
+    additionalProperties: true,
+  };
+}
+
+/** The exact response profile for a registered problem type. */
+export function getRegisteredProblemDetailsSchema(code: ProblemTypeCode): OpenApiSchemaObject {
+  const definition = getProblemTypeDefinition(code);
+  if (!definition) {
+    throw new TypeError(`Unknown registered problem type: ${JSON.stringify(code)}`);
+  }
+
+  const extensionProperties = Object.fromEntries(
+    definition.extensions
+      .filter(({ name }) => name !== 'code')
+      .map(({ description, name }) => [name, { description } satisfies OpenApiSchemaObject]),
+  );
+
+  return {
+    type: 'object',
+    required: ['type', 'title', 'status', 'detail', 'code'],
+    properties: {
+      ...standardProblemProperties,
+      type: {
+        ...standardProblemProperties.type,
+        enum: [problemTypeForCode(code)],
+        example: problemTypeForCode(code),
+      },
+      title: {
+        ...standardProblemProperties.title,
+        example: definition.title,
+        description: 'A short human-readable summary of the problem type, localized according to content negotiation.',
+      },
+      status: {
+        ...standardProblemProperties.status,
+        enum: [definition.status],
+        example: definition.status,
+      },
+      detail: {
+        ...standardProblemProperties.detail,
+        example: definition.detail,
+      },
+      code: {
+        type: 'string',
+        enum: [code],
+        example: code,
+        description: 'Stable short alias for the problem type URI.',
+      },
+      ...extensionProperties,
     },
     additionalProperties: true,
   };

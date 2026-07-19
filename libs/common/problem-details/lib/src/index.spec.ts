@@ -55,6 +55,7 @@ describe('RFC 9457 problem details contract', () => {
     expect(() => problemInstanceForRequestId('request id')).toThrow(TypeError);
     expect(() => problemInstanceForRequestId('a'.repeat(129))).toThrow(TypeError);
     expect(isRequestId('request-123')).toBe(true);
+    expect(isRequestId('')).toBe(false);
     expect(isRequestId('request id')).toBe(false);
   });
 
@@ -67,10 +68,15 @@ describe('RFC 9457 problem details contract', () => {
     expect(isUriReference(value)).toBe(true);
   });
 
-  it.each(['', 'not a uri', '%', '%ZZ', 'https://example.com/problems\nsecret', 'https://example.com/проблема'])(
-    'rejects invalid URI reference %j',
-    (value) => {
-      expect(isUriReference(value)).toBe(false);
-    },
-  );
+  it.each([
+    '',
+    'not a uri',
+    '%',
+    '%ZZ',
+    'https://[',
+    'https://example.com/problems\nsecret',
+    'https://example.com/проблема',
+  ])('rejects invalid URI reference %j', (value) => {
+    expect(isUriReference(value)).toBe(false);
+  });
 });

@@ -66,6 +66,7 @@ export const createApiRuntimeFetch =
       const response = await baseFetch(request);
 
       if (response.status < 400) {
+        eventHub.emit({ type: 'request-succeeded' });
         toastRuntime.showForApiResult(
           {
             endpoint: requestEndpoint(request),

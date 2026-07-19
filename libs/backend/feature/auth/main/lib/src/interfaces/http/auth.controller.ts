@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { supportedLocales } from '@app/backend-common-i18n';
-import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
+import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {
   CurrentUser,
@@ -193,6 +193,7 @@ export class AuthController {
 
   @Delete('provider-identities/:identityId')
   @ApiOkDataResponse(UnlinkProviderIdentityPayloadDto)
+  @ApiProblemTypes('step-up-required', 'last-auth-method-unlink-forbidden')
   @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())

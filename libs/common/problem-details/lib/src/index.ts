@@ -90,6 +90,32 @@ export const ProblemTypeDefinitions = [
       },
     ],
   },
+  {
+    code: 'step-up-required',
+    title: 'Step-up Authentication Required',
+    status: 403,
+    detail: 'Recent authentication is required to perform this security-sensitive action.',
+    resolution: 'Authenticate again with an accepted method, then retry the action.',
+    extensions: [
+      {
+        name: 'code',
+        description: 'Stable short alias for the problem type URI.',
+      },
+    ],
+  },
+  {
+    code: 'last-auth-method-unlink-forbidden',
+    title: 'Last Authentication Method Cannot Be Unlinked',
+    status: 409,
+    detail: 'The last usable authentication method cannot be unlinked from the account.',
+    resolution: 'Link another authentication method before unlinking this one.',
+    extensions: [
+      {
+        name: 'code',
+        description: 'Stable short alias for the problem type URI.',
+      },
+    ],
+  },
 ] as const satisfies readonly ProblemTypeDefinition[];
 
 export type ProblemTypeCode = (typeof ProblemTypeDefinitions)[number]['code'];

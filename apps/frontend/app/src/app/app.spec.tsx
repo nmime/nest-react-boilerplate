@@ -558,7 +558,7 @@ describe('User app shell', () => {
     });
   });
 
-  it('continues after auth/me failures and uses object error details', async () => {
+  it('continues after auth/me failures and hides unnormalized object error details', async () => {
     setFetch(
       jsonResponse({ data: { accessToken: 'retry-token' } }),
       { rejectsWith: new Error('auth offline') },
@@ -575,7 +575,7 @@ describe('User app shell', () => {
     });
     render(<App />);
     submitLogin();
-    expect(await screen.findByText('Forbidden: Object detail')).toBeTruthy();
+    expect(await screen.findByText('Forbidden: Profile request failed.')).toBeTruthy();
   });
 
   it('applies profile locales and auth success locale/theme payloads', async () => {

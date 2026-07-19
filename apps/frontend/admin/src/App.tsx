@@ -4,6 +4,7 @@ import {
   configureApiLocale,
   createDefaultApiToastRules,
   createApiRuntimeFetch,
+  getApiErrorDisplayMessage,
   useApiRuntimeOverlayModel,
 } from '@app/frontend-api-support';
 import {
@@ -160,7 +161,7 @@ export const getProfileState = (
   if (error) {
     return {
       status: 'forbidden',
-      reason: error instanceof Error ? error.message : profileRequestFailedMessage,
+      reason: getApiErrorDisplayMessage(error, profileRequestFailedMessage),
     };
   }
 
@@ -176,10 +177,7 @@ export const getProfileState = (
 
 const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactElement }>) => {
   const { locale } = useI18n();
-
-  useEffect(() => {
-    configureApiLocale({ locale });
-  }, [locale]);
+  configureApiLocale({ locale });
 
   return children;
 };

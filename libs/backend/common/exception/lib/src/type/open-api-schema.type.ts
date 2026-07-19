@@ -9,5 +9,6 @@ export interface OpenApiSchemaObject {
   required?: string[];
   properties?: Record<string, OpenApiSchemaObject>;
   items?: OpenApiSchemaObject;
+  oneOf?: OpenApiSchemaObject[];
   additionalProperties?: boolean | OpenApiSchemaObject;
 }

@@ -1,47 +1,36 @@
-import { hasTranslationKey, interpolate, translate, translations, type TranslationKey } from '@app/backend-common-i18n';
-import { problemTypeForCode } from '../const/problem-type-base-url.const';
-import type { ProblemDetails } from '../type/problem-details.type';
+import { problemCodeFromType } from '@app/common-problem-details';
+import {
+  fallbackLocale,
+  hasTranslationKey,
+  interpolate,
+  normalizeLocale,
+  translate,
+  translations,
+} from '@app/backend-common-i18n';
+import type { ProblemDetailsResponse } from '../type/problem-details.type';
 import { isObjectRecord } from './is-object-record.util';
 import { problemCodeForStatus } from './problem-code-for-status.util';
 
-const invalidCredentialsMessage = `Invalid email or ${'pass'}${'word'}.`;
-
-const messageKeyMap: Partial<Record<string, TranslationKey>> = {
-  'AUTH_JWT_SECRET is not configured.': 'errors.auth.jwtSecretMissing',
-  'Authenticated principal is missing.': 'errors.auth.principalMissing',
-  'Email is already registered.': 'errors.auth.emailRegistered',
-  'Invalid JWT signature.': 'errors.auth.invalidSignature',
-  [invalidCredentialsMessage]: 'errors.auth.invalidCredentials',
-  'JWT alg none is not allowed.': 'errors.auth.algNone',
-  'JWT audience mismatch.': 'errors.auth.audienceMismatch',
-  'JWT is expired.': 'errors.auth.expired',
-  'JWT is not active yet.': 'errors.auth.notActive',
-  'JWT issuer mismatch.': 'errors.auth.issuerMismatch',
-  'JWT subject is required.': 'errors.auth.subjectRequired',
-  'Malformed JWT.': 'errors.auth.malformedJwt',
-  'Missing bearer token.': 'errors.auth.missingBearer',
-  'Required permission is missing.': 'errors.rbac.permissionMissing',
-  'Required role is missing.': 'errors.rbac.roleMissing',
-  'Unsupported JWT algorithm.': 'errors.auth.unsupportedAlgorithm',
-  'User is not active.': 'errors.auth.userInactive',
-};
-
-const detailKeyForProblem = (problem: ProblemDetails, code: string): TranslationKey | undefined => {
-  if (typeof problem.detail === 'string' && messageKeyMap[problem.detail]) {
-    return messageKeyMap[problem.detail];
+function propertyFromPointer(pointer: string): string {
+  if (!pointer.startsWith('#/')) {
+    return 'value';
   }
 
-  const key = `errors.${code}.detail`;
-  return hasTranslationKey(key) ? key : undefined;
-};
+  return pointer
+    .slice(2)
+    .split('/')
+    .map((segment) => segment.replace(/~1/gu, '/').replace(/~0/gu, '~'))
+    .join('.');
+}
 
-function translateValidationIssueText(message: string, property: string, locale: string | undefined): string {
+function translateValidationIssue(detail: string, pointer: string, locale: string | undefined): string {
+  const property = propertyFromPointer(pointer);
   const key = Object.entries(translations.en).find(
     ([translationKey, englishMessage]) =>
-      translationKey.startsWith('validation.constraints.') && interpolate(englishMessage, { property }) === message,
+      translationKey.startsWith('validation.constraints.') && interpolate(englishMessage, { property }) === detail,
   )?.[0];
 
-  return key && hasTranslationKey(key) ? translate(key, { locale, params: { property } }) : message;
+  return key && hasTranslationKey(key) ? translate(key, { locale, params: { property } }) : detail;
 }
 
 function localizeValidationIssues(value: unknown, locale: string | undefined): unknown {
@@ -49,48 +38,43 @@ function localizeValidationIssues(value: unknown, locale: string | undefined): u
     return value;
   }
 
-  return (value as unknown[]).map((issue): unknown => {
-    if (!isObjectRecord(issue) || !isObjectRecord(issue.constraints)) {
+  return value.map((issue): unknown => {
+    if (!isObjectRecord(issue) || typeof issue.detail !== 'string' || typeof issue.pointer !== 'string') {
       return issue;
     }
 
-    const property = typeof issue.property === 'string' ? issue.property : 'value';
-    const constraints = Object.fromEntries(
-      Object.entries(issue.constraints).map(([name, message]) => {
-        const key = `validation.constraints.${name}`;
-        return [name, hasTranslationKey(key) ? translate(key, { locale, params: { property } }) : message];
-      }),
-    );
-
     return {
-      ...issue,
-      constraints,
-      ...(typeof issue.message === 'string'
-        ? {
-            message: translateValidationIssueText(issue.message, property, locale),
-          }
-        : {}),
-      ...(typeof issue.detail === 'string'
-        ? {
-            detail: translateValidationIssueText(issue.detail, property, locale),
-          }
-        : {}),
+      detail: translateValidationIssue(issue.detail, issue.pointer, locale),
+      pointer: issue.pointer,
     };
   });
 }
 
-export function localizeProblemDetails(problem: ProblemDetails, locale?: string): ProblemDetails {
-  const code = typeof problem.code === 'string' ? problem.code : problemCodeForStatus(problem.status);
-  const detailKey = detailKeyForProblem(problem, code);
-  const defaultDetail = detailKey ? translate(detailKey, { locale: 'en' }) : undefined;
-  const localizedDetail = detailKey && locale ? translate(detailKey, { locale }) : undefined;
+function translationCodeForProblem(problem: ProblemDetailsResponse): string {
+  return problemCodeFromType(problem.type) ?? problemCodeForStatus(problem.status);
+}
+
+export function resolveProblemContentLanguage(problem: ProblemDetailsResponse, requestedLocale?: string): string {
+  const titleKey = `errors.${translationCodeForProblem(problem)}.title`;
+  const locale = normalizeLocale(requestedLocale) ?? fallbackLocale;
+  return Object.hasOwn(translations[locale], titleKey) ? locale : fallbackLocale;
+}
+
+/** Localize the standard RFC members while preserving the problem type URI. */
+export function localizeProblemDetails(problem: ProblemDetailsResponse, locale?: string): ProblemDetailsResponse {
+  const customCode = problemCodeFromType(problem.type);
+  const translationCode = translationCodeForProblem(problem);
+  const titleKey = `errors.${translationCode}.title`;
+  const detailKey = `errors.${translationCode}.detail`;
+  const members: ProblemDetailsResponse = { ...problem };
+  delete members.code;
+  const translatedDetail = hasTranslationKey(detailKey) ? translate(detailKey, { locale }) : problem.detail;
 
   return {
-    ...problem,
-    code,
-    type: problem.type === 'about:blank' ? problemTypeForCode(code) : problem.type,
-    ...(defaultDetail ? { detail: defaultDetail } : {}),
-    ...(localizedDetail && localizedDetail !== defaultDetail ? { localizedDetail } : {}),
+    ...members,
+    title: hasTranslationKey(titleKey) ? translate(titleKey, { locale }) : problem.title,
+    ...(translatedDetail ? { detail: translatedDetail } : {}),
+    ...(customCode ? { code: customCode } : {}),
     ...('errors' in problem ? { errors: localizeValidationIssues(problem.errors, locale) } : {}),
   };
 }

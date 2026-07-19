@@ -15,13 +15,20 @@ import {
   type RedisConnectionConfig,
   type RedisHost,
 } from '@app/backend-common-redis';
-import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
-import { problemTypeForCode } from '@app/backend-common-exception';
+import { ExceptionsFilter, ExceptionsResponseTransformer, mergeVaryHeader } from '@app/backend-common-response';
+import {
+  createProblemDetails,
+  localizeProblemDetails,
+  resolveProblemContentLanguage,
+  type ProblemDetailsResponse,
+} from '@app/backend-common-exception';
 import { ClsInterceptor } from './cls.interceptor';
-import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/backend-common-i18n';
+import { createRequestLocaleMiddleware, resolveLocaleFromRequest } from '@app/backend-common-i18n';
 import { setupSwagger } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';
+import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
+import { problemInstanceForRequestId, problemTypeForCode } from '@app/common-problem-details';
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -783,31 +790,17 @@ function buildRateLimitKey(appName: string, request: RequestLike): string {
   return `rate-limit:${sanitizeRateLimitKeyPart(appName)}:ip:${sanitizeRateLimitKeyPart(client)}`;
 }
 
-function writeProblemResponse(
-  response: ResponseLike,
-  status: number,
-  body: {
-    code: string;
-    detail: string;
-    title: string;
-    type: string;
-  },
-  locale?: string,
-): void {
-  response.statusCode = status;
+function writeProblemResponse(response: ResponseLike, body: ProblemDetailsResponse, locale?: string): void {
+  response.statusCode = body.status;
   response.setHeader('content-type', 'application/problem+json; charset=utf-8');
-  if (locale) {
-    response.setHeader('content-language', locale);
-  }
-  response.end?.(
-    JSON.stringify({
-      type: body.type,
-      title: body.title,
-      status,
-      detail: body.detail,
-      code: body.code,
-    }),
-  );
+  response.setHeader('vary', mergeVaryHeader(response.getHeader?.('vary')));
+  response.setHeader('content-language', resolveProblemContentLanguage(body, locale));
+  response.end?.(JSON.stringify(body));
+}
+
+function problemInstanceFromRequest(request: RequestLike): string | undefined {
+  const requestId = requestContext.getRequestId() ?? normalizeRequestId(request.headers?.['x-request-id']);
+  return requestId ? problemInstanceForRequestId(requestId) : undefined;
 }
 
 function handleRateLimitHit(
@@ -828,13 +821,17 @@ function handleRateLimitHit(
     const locale = resolveLocaleFromRequest(request);
     writeProblemResponse(
       response,
-      429,
-      {
-        type: problemTypeForCode('rate-limited'),
-        title: translate('errors.rate-limited.title', { locale }),
-        detail: translate('errors.rate-limited.detail', { locale }),
-        code: 'rate-limited',
-      },
+      localizeProblemDetails(
+        createProblemDetails({
+          type: problemTypeForCode('rate-limited'),
+          title: 'Too Many Requests',
+          status: 429,
+          detail: 'Too many requests were received in the current rate-limit window.',
+          instance: problemInstanceFromRequest(request),
+          extensions: { code: 'rate-limited' },
+        }),
+        locale,
+      ),
       locale,
     );
     return;
@@ -843,19 +840,27 @@ function handleRateLimitHit(
   next();
 }
 
-function handleRateLimitStoreError(error: unknown, response: ResponseLike): void {
+function handleRateLimitStoreError(error: unknown, request: RequestLike, response: ResponseLike): void {
   process.stderr.write(
     `${JSON.stringify({
       event: 'rate_limit_store_error',
       message: error instanceof Error ? error.message : String(error),
     })}\n`,
   );
-  writeProblemResponse(response, 503, {
-    type: problemTypeForCode('rate-limit-unavailable'),
-    title: 'Service Unavailable',
-    detail: 'Rate limit storage is unavailable.',
-    code: 'rate-limit-unavailable',
-  });
+  const locale = resolveLocaleFromRequest(request);
+  writeProblemResponse(
+    response,
+    localizeProblemDetails(
+      createProblemDetails({
+        type: 'about:blank',
+        title: 'Service Unavailable',
+        status: 503,
+        instance: problemInstanceFromRequest(request),
+      }),
+      locale,
+    ),
+    locale,
+  );
 }
 
 function createRateLimitMiddleware(
@@ -872,7 +877,7 @@ function createRateLimitMiddleware(
           handleRateLimitHit(resolvedHit, rateLimit, request, response, next);
         })
         .catch((error: unknown) => {
-          handleRateLimitStoreError(error, response);
+          handleRateLimitStoreError(error, request, response);
         });
       return;
     }

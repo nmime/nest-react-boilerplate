@@ -7,18 +7,15 @@ const ClientDataValidationProblemCode = 'client-data-validation' as const;
 const ClientDataValidationProblemType = problemTypeForCode(ClientDataValidationProblemCode);
 
 export interface ValidationExceptionIssue {
-  property: string;
-  constraints: Record<string, string>;
-  message?: string;
-  detail?: string;
-  pointer?: string;
+  detail: string;
+  pointer: string;
 }
 
 export interface ValidationExceptionBody {
   type: typeof ClientDataValidationProblemType;
-  title: 'Client data validation failed';
+  title: 'Client Data Validation Failed';
   status: 400;
-  detail: string;
+  detail: 'One or more request members are invalid.';
   code: typeof ClientDataValidationProblemCode;
   errors: ValidationExceptionIssue[];
 }
@@ -28,7 +25,7 @@ function getValidationPropertyPath(error: ValidationError, parentPath?: string):
 }
 
 function toJsonPointer(propertyPath: string): string {
-  return `/${propertyPath
+  return `#/${propertyPath
     .split('.')
     .map((segment) => segment.replace(/~/gu, '~0').replace(/\//gu, '~1'))
     .join('/')}`;
@@ -39,12 +36,8 @@ function getFirstConstraintMessage(constraints: Record<string, string>): string 
 }
 
 function createValidationIssue(property: string, constraints: Record<string, string>): ValidationExceptionIssue {
-  const message = getFirstConstraintMessage(constraints);
-
   return {
-    property,
-    constraints,
-    ...(message ? { message, detail: message } : {}),
+    detail: getFirstConstraintMessage(constraints) ?? `${property} is invalid`,
     pointer: toJsonPointer(property),
   };
 }
@@ -74,9 +67,9 @@ function flattenValidationIssues(errors: ValidationError[], parentPath?: string)
 export function createValidationExceptionBody(errors: ValidationError[]): ValidationExceptionBody {
   return {
     type: ClientDataValidationProblemType,
-    title: 'Client data validation failed',
+    title: 'Client Data Validation Failed',
     status: 400,
-    detail: 'Request client data validation failed.',
+    detail: 'One or more request members are invalid.',
     code: ClientDataValidationProblemCode,
     errors: flattenValidationIssues(errors),
   };

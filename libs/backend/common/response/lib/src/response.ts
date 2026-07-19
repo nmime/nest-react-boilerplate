@@ -1,19 +1,12 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import type { Result } from 'neverthrow';
-import {
-  BaseException,
-  createProblemDetails,
-  localizeProblemDetails,
-  mapHttpStatusToProblemTitle,
-  toProblemDetails,
-  type ProblemDetails,
-} from '@app/backend-common-exception';
+import { BaseException, toProblemDetails, type ProblemDetailsResponse } from '@app/backend-common-exception';
 
 export interface OkResponse<T> {
   data: T;
 }
 
-export type ProblemResponse = ProblemDetails;
+export type ProblemResponse = ProblemDetailsResponse;
 
 export type ApiResponse<T> = OkResponse<T> | ProblemResponse;
 
@@ -21,13 +14,8 @@ export function createOkResponse<T>(data: T): OkResponse<T> {
   return { data };
 }
 
-export function createProblemResponse(code: string, status = HttpStatus.BAD_REQUEST): ProblemResponse {
-  return createProblemDetails({
-    code,
-    detail: mapHttpStatusToProblemTitle(status),
-    status,
-    title: mapHttpStatusToProblemTitle(status),
-  });
+export function createProblemResponse(status = HttpStatus.BAD_REQUEST): ProblemResponse {
+  return toProblemDetails(new HttpException('', status));
 }
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -63,29 +51,8 @@ export function mapResultToResponse<
     return toProblemDetails(error, undefined, locale);
   }
 
-  if (error instanceof Error) {
-    // NEVER expose Error.message — use static generic
-    return localizeProblemDetails(
-      createProblemDetails({
-        code: 'bad_request',
-        detail: 'Bad Request',
-        status: HttpStatus.BAD_REQUEST,
-        title: 'Bad Request',
-      }),
-      locale,
-    );
-  }
-
-  // Plain object with code/message — never expose message
-  return localizeProblemDetails(
-    createProblemDetails({
-      code: error.code,
-      detail: mapHttpStatusToProblemTitle(HttpStatus.BAD_REQUEST),
-      status: HttpStatus.BAD_REQUEST,
-      title: mapHttpStatusToProblemTitle(HttpStatus.BAD_REQUEST),
-    }),
-    locale,
-  );
+  // Error messages and structurally similar plain objects are untrusted.
+  return toProblemDetails(error, undefined, locale);
 }
 
 export const mapValueToApiResponse = <T>(value: T): T | ApiResponse<unknown> => {

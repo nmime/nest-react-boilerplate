@@ -142,9 +142,15 @@ describe('common swagger', () => {
     class PayloadDto {}
 
     expect(problemDetailsOpenApiSchema).toMatchObject({
-      required: ['type', 'title', 'status', 'code'],
+      additionalProperties: true,
+      properties: {
+        instance: { format: 'uri-reference', type: 'string' },
+        status: { maximum: 599, minimum: 100, type: 'integer' },
+        type: { format: 'uri-reference', type: 'string' },
+      },
       type: 'object',
     });
+    expect(problemDetailsOpenApiSchema).not.toHaveProperty('required');
     expect(okResponseOpenApiSchema(PayloadDto)).toEqual({
       type: 'object',
       required: ['data'],

@@ -3,99 +3,80 @@ import { describe, expect, it } from 'vitest';
 import { Exception, getExceptionDefinition } from './base.exception';
 
 describe('BaseException / Exception factory', () => {
-  it('creates coded problem details via the Exception factory', () => {
+  it('resolves custom type identity from the shared registry and exposes only explicit extensions', () => {
     const cause = new Error('root cause');
-    const DomainConflictException = Exception({
-      name: 'DomainConflictException',
+    const ResourceConflictException = Exception({
+      name: 'ResourceConflictException',
       kind: 'client',
-      problemType: 'domain-conflict',
-      title: 'Conflict',
-      detail: 'Already exists',
-      status: HttpStatus.CONFLICT,
+      problemType: 'resource-conflict',
     });
-
-    const exception = new DomainConflictException({
+    const exception = new ResourceConflictException({
       cause,
-      data: { resource: 'user' },
+      extensions: { resourceType: 'user' },
+      meta: { databaseKey: 'secret' },
     });
 
-    expect(exception).toMatchObject({
-      cause,
-      code: 'domain-conflict',
-      detail: 'Already exists',
-      name: 'DomainConflictException',
-      status: HttpStatus.CONFLICT,
-      title: 'Conflict',
-      type: 'https://example.com/problems/domain-conflict',
+    expect(exception.toProblemDetails()).toEqual({
+      type: 'https://example.com/problems#resource-conflict',
+      title: 'Resource Conflict',
+      status: 409,
+      detail: 'The request conflicts with the current state of the resource.',
+      resourceType: 'user',
+      code: 'resource-conflict',
     });
-    expect(exception.data).toEqual({ resource: 'user' });
-
-    const pd = exception.toProblemDetails();
-    expect(pd).toEqual({
-      type: 'https://example.com/problems/domain-conflict',
-      title: 'Conflict',
-      status: HttpStatus.CONFLICT,
-      detail: 'Already exists',
-      code: 'domain-conflict',
-      info: { resource: 'user' },
-    });
+    expect(exception.cause).toBe(cause);
+    expect(exception.toProblemDetails()).not.toHaveProperty('meta');
   });
 
-  it('omits info when data is empty', () => {
-    const BadRequestEx = Exception({
+  it('uses about:blank and status semantics when no custom type is declared', () => {
+    const BadRequestException = Exception({
       name: 'BadRequestException',
       kind: 'client',
-      problemType: 'bad-request',
-      title: 'Bad Request',
-      detail: 'The request was invalid',
       status: HttpStatus.BAD_REQUEST,
     });
 
-    const exception = new BadRequestEx({});
-    expect(exception.toProblemDetails()).not.toHaveProperty('info');
+    expect(new BadRequestException().toProblemDetails()).toEqual({
+      type: 'about:blank',
+      title: 'Bad Request',
+      status: 400,
+    });
   });
 
-  it('getExceptionDefinition reads static definition from factory-created class', () => {
+  it('publishes the resolved immutable definition', () => {
     const TestException = Exception({
       name: 'TestException',
-      kind: 'server' as const,
-      problemType: 'test_error',
-      title: 'Test Error',
-      detail: 'A test error occurred',
+      kind: 'server',
       status: 500,
     });
 
-    const def = getExceptionDefinition(TestException);
-    expect(def).toEqual({
+    expect(getExceptionDefinition(TestException)).toEqual({
       name: 'TestException',
       kind: 'server',
-      problemType: 'test_error',
-      title: 'Test Error',
-      detail: 'A test error occurred',
+      type: 'about:blank',
+      title: 'Internal Server Error',
+      defaultDetail: undefined,
       status: 500,
+      problemType: undefined,
+      extensionsType: undefined,
     });
   });
 
-  it('defaults status based on kind when not provided', () => {
-    const ClientEx = Exception({
-      name: 'ClientEx',
+  it('rejects undocumented custom types, status drift, and kind/status mismatches', () => {
+    expect(() => Exception({ name: 'Unknown', kind: 'client', problemType: 'unknown' as 'resource-conflict' })).toThrow(
+      'not documented',
+    );
+    expect(() => Exception({ name: 'Drift', kind: 'client', problemType: 'resource-conflict', status: 400 })).toThrow(
+      'must use status 409',
+    );
+    expect(() => Exception({ name: 'WrongKind', kind: 'client', status: 500 })).toThrow('between 400 and 499');
+  });
+
+  it('rejects undeclared public extension members', () => {
+    const ConflictException = Exception({
+      name: 'ConflictException',
       kind: 'client',
-      problemType: 'client_error',
-      title: 'Client Error',
-      detail: 'Client-side error',
+      problemType: 'resource-conflict',
     });
-    const ServerEx = Exception({
-      name: 'ServerEx',
-      kind: 'server',
-      problemType: 'server_error',
-      title: 'Server Error',
-      detail: 'Server-side error',
-    });
-
-    const ce = new ClientEx();
-    const se = new ServerEx();
-
-    expect(ce.status).toBe(HttpStatus.BAD_REQUEST);
-    expect(se.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(() => new ConflictException({ extensions: { secret: 'nope' } })).toThrow('does not declare extension');
   });
 });

@@ -1,0 +1,74 @@
+---
+import {
+  ProblemTypeDefinitions,
+  ProblemTypeDocumentationUrl,
+  problemTypeForCode,
+} from "@app/common-problem-details";
+
+const title = "API problem types";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <meta
+      name="description"
+      content="Machine-readable definitions for this product's RFC 9457 API problem types."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { color: #172033; background: #f6f8fb; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; }
+      main { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 72px; }
+      h1 { margin: 8px 0 16px; font-size: clamp(2.25rem, 7vw, 4rem); line-height: 1; }
+      .kicker { color: #175cd3; font-size: .8rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .intro { max-width: 720px; color: #475467; font-size: 1.05rem; line-height: 1.65; }
+      section { padding: 24px; margin-top: 18px; border: 1px solid #dce3ec; border-radius: 14px; background: white; }
+      h2 { margin: 0 0 8px; }
+      code { overflow-wrap: anywhere; color: #175cd3; }
+      dl { display: grid; grid-template-columns: 8rem 1fr; gap: 8px 16px; margin: 18px 0 0; }
+      dt { color: #667085; font-weight: 700; }
+      dd { margin: 0; line-height: 1.5; }
+      ul { margin: 8px 0 0; padding-left: 20px; }
+      @media (max-width: 560px) { dl { grid-template-columns: 1fr; gap: 4px; } dd + dt { margin-top: 8px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="kicker">RFC 9457 registry</p>
+      <h1>API problem types</h1>
+      <p class="intro">
+        This document is the human-readable target for problem type URIs rooted at
+        <code>{ProblemTypeDocumentationUrl}</code>. The fragment identifies the stable type; an
+        <code>instance</code> identifies one occurrence.
+      </p>
+
+      <section id="about-blank">
+        <h2><code>about:blank</code></h2>
+        <p>Generic HTTP errors use the status phrase as their title and do not define custom semantics.</p>
+      </section>
+
+      {ProblemTypeDefinitions.map((problem) => (
+        <section id={problem.code}>
+          <h2>{problem.title}</h2>
+          <code>{problemTypeForCode(problem.code)}</code>
+          <dl>
+            <dt>Status</dt><dd>{problem.status}</dd>
+            <dt>Meaning</dt><dd>{problem.detail}</dd>
+            <dt>Resolution</dt><dd>{problem.resolution}</dd>
+            <dt>Extensions</dt>
+            <dd>
+              <ul>
+                {problem.extensions.map((extension) => (
+                  <li><code>{extension.name}</code> — {extension.description}</li>
+                ))}
+              </ul>
+            </dd>
+          </dl>
+        </section>
+      ))}
+    </main>
+  </body>
+</html>

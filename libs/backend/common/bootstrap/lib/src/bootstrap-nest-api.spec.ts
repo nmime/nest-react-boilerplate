@@ -44,6 +44,11 @@ const mocks = vi.hoisted(() => {
     helmet: vi.fn(() => helmetMiddleware),
     helmetMiddleware,
     localeMiddleware,
+    mergeVaryHeader: vi.fn((currentValue: unknown) =>
+      typeof currentValue === 'string' && currentValue.length > 0
+        ? `${currentValue}, Accept-Language, X-Locale, X-Language, Cookie`
+        : 'Accept-Language, X-Locale, X-Language, Cookie',
+    ),
     nestCreate: vi.fn(() => Promise.resolve(app)),
     poolQuery,
     Pool: vi.fn(function PoolMock() {
@@ -100,13 +105,22 @@ vi.mock('@app/backend-common-redis', () => ({
 
 vi.mock('@app/backend-common-i18n', () => ({
   createRequestLocaleMiddleware: mocks.createRequestLocaleMiddleware,
+  fallbackLocale: 'en',
+  hasTranslationKey: (key: string) => key.startsWith('errors.rate-limited.'),
+  interpolate: (value: string) => value,
+  normalizeLocale: (value: string | undefined) => (value === 'en' || value === 'ru' ? value : undefined),
   resolveLocaleFromRequest: mocks.resolveLocaleFromRequest,
   translate: mocks.translate,
+  translations: {
+    en: { 'errors.rate-limited.title': 'Too Many Requests' },
+    ru: { 'errors.rate-limited.title': 'Слишком много запросов' },
+  },
 }));
 
 vi.mock('@app/backend-common-response', () => ({
   ExceptionsFilter: mocks.exceptionsFilter,
   ExceptionsResponseTransformer: mocks.exceptionsResponseTransformer,
+  mergeVaryHeader: mocks.mergeVaryHeader,
 }));
 
 vi.mock('@app/backend-common-swagger', () => ({
@@ -749,7 +763,7 @@ describe('bootstrapNestApi', () => {
       rateLimitMiddleware({ ip: 'redis-client' }, failureResponse, next);
       await flushAsyncMiddleware();
       expect(failureResponse.statusCode).toBe(503);
-      expect(failureResponse.end).toHaveBeenCalledWith(expect.stringContaining('rate-limit-unavailable'));
+      expect(failureResponse.end).toHaveBeenCalledWith(expect.stringContaining('"type":"about:blank"'));
       expect(stderrWrite).toHaveBeenCalledWith(expect.stringContaining('redis unavailable'));
 
       const errorFailureResponse = createResponse();

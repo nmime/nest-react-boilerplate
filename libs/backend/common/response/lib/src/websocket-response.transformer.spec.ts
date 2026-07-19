@@ -37,10 +37,7 @@ describe('WebSocketResponseTransformer', () => {
     const InsufficientFundsException = Exception({
       name: 'InsufficientFundsException',
       kind: ExceptionKind.Client,
-      problemType: 'insufficient-funds',
-      title: 'Insufficient Funds',
-      detail: 'Not enough balance',
-      status: HttpStatus.CONFLICT,
+      problemType: 'resource-conflict',
     });
 
     const response = await intercept(contextWithData({ id: 'req-3' }), {
@@ -49,8 +46,8 @@ describe('WebSocketResponseTransformer', () => {
 
     expect(response.id).toBe('req-3');
     expect(response.error).toMatchObject({
-      code: 'insufficient-funds',
-      message: 'Not enough balance',
+      code: 'https://example.com/problems#resource-conflict',
+      message: 'The request conflicts with the current state of the resource.',
     });
     expect(response.error?.data).toMatchObject({ status: 409 });
   });
@@ -62,7 +59,7 @@ describe('WebSocketResponseTransformer', () => {
 
     expect(response.id).toBe('req-http');
     expect(response.error).toMatchObject({
-      code: 'not-found',
+      code: 'http.404',
       message: 'The requested resource was not found.',
     });
     expect(response.error?.data).toMatchObject({ status: 404 });
@@ -73,7 +70,7 @@ describe('WebSocketResponseTransformer', () => {
       handle: () => throwError(() => new HttpException('', HttpStatus.BAD_GATEWAY)),
     });
 
-    expect(response.error?.code).toBe('bad-gateway');
+    expect(response.error?.code).toBe('http.502');
     expect(response.error?.message).toBe('Bad Gateway');
   });
 

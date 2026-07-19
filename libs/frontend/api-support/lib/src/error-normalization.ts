@@ -15,6 +15,7 @@ export interface NormalizedApiError {
   message: string;
   method?: string;
   status: number | null;
+  type?: string;
   validation: NormalizedValidationIssue[];
 }
 
@@ -51,7 +52,7 @@ const validationFromArray = (items: unknown[]): NormalizedValidationIssue[] =>
 
     return [
       {
-        field: stringFrom(item['field']) ?? stringFrom(item['property']),
+        field: fieldFromPointer(item['pointer']) ?? stringFrom(item['field']) ?? stringFrom(item['property']),
         message,
       },
     ];
@@ -110,8 +111,12 @@ const statusKind = (status: number | null, body: unknown): NormalizedApiErrorKin
 
 const extractCode = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
-    const code =
-      stringFrom(body['code']) ?? stringFrom(body['errorCode']) ?? stringFrom(body['name']) ?? stringFrom(body['type']);
+    const type = stringFrom(body['type']);
+    if (type && type !== 'about:blank') {
+      return type;
+    }
+
+    const code = stringFrom(body['code']) ?? stringFrom(body['errorCode']) ?? stringFrom(body['name']);
 
     if (code) {
       return code;
@@ -129,7 +134,6 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
 const extractMessage = (status: number | null, body: unknown, error: unknown, statusText?: string): string => {
   if (isRecord(body)) {
     const message =
-      stringFrom(body['localizedDetail']) ??
       stringFrom(body['detail']) ??
       stringFrom(body['message']) ??
       stringFrom(body['title']) ??
@@ -163,6 +167,7 @@ export const normalizeApiError = ({
   const code = extractCode(status, body, kind);
   const message = extractMessage(status, body, error, response?.statusText);
   const normalizedMethod = method?.toUpperCase();
+  const type = isRecord(body) ? stringFrom(body['type']) : undefined;
   const id = [normalizedMethod, endpoint, status ?? 'network', code].filter(Boolean).join(':');
 
   return {
@@ -175,6 +180,7 @@ export const normalizeApiError = ({
     message,
     method: normalizedMethod,
     status,
+    type,
     validation: extractValidation(body),
   };
 };
@@ -207,4 +213,16 @@ export const enrichJsonResponse = async (response: Response, error: NormalizedAp
     status: response.status,
     statusText: response.statusText,
   });
+};
+const fieldFromPointer = (value: unknown): string | undefined => {
+  const pointer = stringFrom(value);
+  if (!pointer?.startsWith('#/')) {
+    return undefined;
+  }
+
+  return pointer
+    .slice(2)
+    .split('/')
+    .map((segment) => segment.replace(/~1/gu, '/').replace(/~0/gu, '~'))
+    .join('.');
 };

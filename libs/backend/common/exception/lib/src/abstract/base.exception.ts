@@ -1,9 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
-import type { ExceptionDefinition } from '../type/exception-definition.type';
+import { getProblemTypeDefinition, problemTypeForCode } from '@app/common-problem-details';
+import type { ExceptionDefinition, ResolvedExceptionDefinition } from '../type/exception-definition.type';
 import type { ExceptionKind } from '../type/exception-kind.type';
-import type { ProblemDetails } from '../type/problem-details.type';
-import { problemTypeForCode } from '../const/problem-type-base-url.const';
+import type { ProblemDetailsResponse } from '../type/problem-details.type';
 import { createProblemDetails } from '../util/create-problem-details.util';
+import { mapHttpStatusToProblemTitle } from '../util/map-http-status-to-problem-title.util';
 
 export * from '../type/exception-kind.type';
 
@@ -19,16 +20,16 @@ interface ExceptionConstructor {
 /**
  * Read the static ExceptionDefinition from a factory-created class.
  */
-export function getExceptionDefinition(constructor: ExceptionConstructor): ExceptionDefinition | undefined {
-  return (constructor as unknown as Record<symbol, ExceptionDefinition>)[exceptionDefinitionKey];
+export function getExceptionDefinition(constructor: ExceptionConstructor): ResolvedExceptionDefinition | undefined {
+  return (constructor as unknown as Record<symbol, ResolvedExceptionDefinition>)[exceptionDefinitionKey];
 }
 
 /**
  * Runtime instance options — what varies per throw.
  */
 export interface ExceptionInstanceOptions {
-  /** Typed public data — mapped to `info` in response */
-  data?: Record<string, unknown>;
+  /** Explicit public RFC 9457 extension members. */
+  extensions?: Record<string, unknown>;
   /** Private diagnostics — NEVER returned to client. Used for logging. */
   meta?: Record<string, unknown>;
   /** Original error — NEVER returned to client. */
@@ -39,13 +40,38 @@ export interface ExceptionInstanceOptions {
  * Exception class factory — creates an exception class with static
  * RFC 9457 problem details.
  *
- * Static fields (type, title, detail, status) are set once at definition time.
- * Dynamic fields (data → info, instance) are set at throw time or HTTP boundary.
+ * Type, title, and status come from the registered problem definition or the
+ * RFC-defined about:blank semantics. Occurrence identifiers are added only at
+ * the HTTP boundary; extensions are explicitly public.
  */
 export function Exception(def: ExceptionDefinition) {
-  const { name, kind, problemType, title, detail, status, dataType } = def;
-  const resolvedStatus = status ?? (kind === 'client' ? HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR);
-  const typeUri = problemTypeForCode(problemType);
+  const { name, kind, problemType, status, extensionsType } = def;
+  const registeredProblem = problemType ? getProblemTypeDefinition(problemType) : undefined;
+  if (problemType && !registeredProblem) {
+    throw new TypeError(`Problem type ${JSON.stringify(problemType)} is not documented in the shared registry.`);
+  }
+
+  if (registeredProblem && status !== undefined && status !== registeredProblem.status) {
+    throw new TypeError(`Problem type ${JSON.stringify(problemType)} must use status ${registeredProblem.status}.`);
+  }
+
+  const resolvedStatus =
+    registeredProblem?.status ??
+    status ??
+    (kind === 'client' ? HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR);
+  const minimumStatus = kind === 'client' ? 400 : 500;
+  const maximumStatus = kind === 'client' ? 499 : 599;
+  if (!Number.isInteger(resolvedStatus) || resolvedStatus < minimumStatus || resolvedStatus > maximumStatus) {
+    throw new RangeError(`${kind} exception status must be between ${minimumStatus} and ${maximumStatus}.`);
+  }
+
+  const typeUri = registeredProblem ? problemTypeForCode(registeredProblem.code) : 'about:blank';
+  const resolvedTitle = registeredProblem?.title ?? mapHttpStatusToProblemTitle(resolvedStatus);
+  const defaultDetail = registeredProblem?.detail;
+  const allowedExtensions = new Set(
+    registeredProblem?.extensions.map(({ name: extensionName }) => extensionName).filter((name) => name !== 'code') ??
+      [],
+  );
 
   class ExceptionClass extends BaseException {
     /** Exception kind: client (4xx) or server (5xx) */
@@ -55,19 +81,19 @@ export function Exception(def: ExceptionDefinition) {
     override readonly type: string = typeUri;
 
     /** Static title — same for all instances */
-    override readonly title: string = title;
+    override readonly title: string = resolvedTitle;
 
-    /** Static detail — same for all instances, no runtime values */
-    override readonly detail: string = detail;
+    /** Safe default occurrence detail from the documented problem type. */
+    override readonly defaultDetail: string | undefined = defaultDetail;
 
     /** Static HTTP status */
     override readonly status: number = resolvedStatus;
 
     /** Static code (machine-readable problem type) */
-    override readonly code: string = problemType;
+    override readonly code: string | undefined = registeredProblem?.code;
 
-    /** Runtime public context — mapped to `info` in response */
-    override readonly data: Record<string, unknown> = {};
+    /** Explicit public problem-type extension members. */
+    override readonly extensions: Record<string, unknown> = {};
 
     /** Runtime private diagnostics — never exposed */
     override readonly meta: Record<string, unknown> = {};
@@ -76,11 +102,18 @@ export function Exception(def: ExceptionDefinition) {
     override readonly cause?: Error;
 
     constructor(opts?: ExceptionInstanceOptions) {
-      super(detail, opts?.cause);
+      super(defaultDetail ?? resolvedTitle, opts?.cause);
       Object.defineProperty(this, 'name', { value: name, writable: false, enumerable: false, configurable: true });
 
-      if (opts?.data) {
-        this.data = { ...opts.data };
+      if (opts?.extensions) {
+        for (const extensionName of Object.keys(opts.extensions)) {
+          if (!allowedExtensions.has(extensionName)) {
+            throw new TypeError(
+              `Problem type ${JSON.stringify(problemType ?? 'about:blank')} does not declare extension ${JSON.stringify(extensionName)}.`,
+            );
+          }
+        }
+        this.extensions = { ...opts.extensions };
       }
       if (opts?.meta) {
         this.meta = { ...opts.meta };
@@ -90,49 +123,27 @@ export function Exception(def: ExceptionDefinition) {
       }
     }
 
-    /**
-     * Convert to ProblemDetails (RFC 9457).
-     * Static fields from definition, instance from HTTP boundary.
-     * meta and cause are NEVER serialized.
-     */
-    override toProblemDetails(instance?: string): ProblemDetails {
-      const pd = createProblemDetails({
-        type: this.type,
-        title: this.title,
-        status: this.status,
-        detail: this.detail,
-        code: this.code,
-        instance,
-      });
-
-      // Map typed data to info
-      if (Object.keys(this.data).length > 0) {
-        (pd as Record<string, unknown>).info = { ...this.data };
-      }
-
-      return pd;
-    }
-
     /** NestJS HttpException compatibility */
     getStatus(): number {
       return this.status;
     }
 
     /** NestJS HttpException compatibility — returns full problem details response body */
-    getResponse(): ProblemDetails {
+    getResponse(): ProblemDetailsResponse {
       return this.toProblemDetails();
     }
   }
 
   // Store definition on the class for runtime introspection
-  (ExceptionClass as unknown as Record<symbol, ExceptionDefinition>)[exceptionDefinitionKey] = {
+  (ExceptionClass as unknown as Record<symbol, ResolvedExceptionDefinition>)[exceptionDefinitionKey] = {
     name,
     kind,
     problemType,
-    title,
-    detail,
+    type: typeUri,
+    title: resolvedTitle,
+    defaultDetail,
     status: resolvedStatus,
-    dataType,
+    extensionsType,
   };
 
   return ExceptionClass;
@@ -149,15 +160,15 @@ export abstract class BaseException extends Error {
   abstract readonly type: string;
   /** Static title */
   abstract readonly title: string;
-  /** Static detail */
-  abstract readonly detail: string;
+  /** Safe default occurrence detail, if the problem type defines one. */
+  abstract readonly defaultDetail?: string;
   /** Static HTTP status */
   abstract readonly status: number;
   /** Static code */
-  abstract readonly code: string;
+  abstract readonly code?: string;
 
-  /** Runtime public context */
-  abstract readonly data: Record<string, unknown>;
+  /** Explicit public problem-type extension members. */
+  abstract readonly extensions: Record<string, unknown>;
   /** Runtime private diagnostics */
   abstract readonly meta: Record<string, unknown>;
   /** Original error */
@@ -168,14 +179,17 @@ export abstract class BaseException extends Error {
     this.name = new.target.name;
   }
 
-  toProblemDetails(_instance?: string): ProblemDetails {
-    return {
+  toProblemDetails(instance?: string): ProblemDetailsResponse {
+    return createProblemDetails({
       type: this.type,
       title: this.title,
       status: this.status,
-      detail: this.detail,
-      code: this.code,
-      instance: _instance,
-    };
+      detail: this.defaultDetail,
+      instance,
+      extensions: {
+        ...this.extensions,
+        ...(this.code ? { code: this.code } : {}),
+      },
+    });
   }
 }

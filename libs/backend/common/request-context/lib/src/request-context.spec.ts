@@ -25,7 +25,10 @@ describe('requestContext', () => {
 
   it('normalizes scalar and array request-id headers', () => {
     expect(normalizeRequestId(['  first  ', 'second'])).toBe('first');
-    expect(normalizeRequestId('a'.repeat(300))).toHaveLength(256);
+    expect(normalizeRequestId('a'.repeat(128))).toHaveLength(128);
+    expect(normalizeRequestId('a'.repeat(129))).toBeUndefined();
+    expect(normalizeRequestId('invalid request id')).toBeUndefined();
+    expect(normalizeRequestId('request\nsmuggled-header')).toBeUndefined();
     expect(normalizeRequestId('   ')).toBeUndefined();
   });
 });

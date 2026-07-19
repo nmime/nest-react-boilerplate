@@ -24,24 +24,20 @@ When adding or changing error handling in backend code:
      `ConflictException` (409), `BadRequestException` (400), `InternalException` (500).
 3. **Use the `Exception` class factory** for domain-specific errors that don't have a pre-built class:
    ```ts
-   import { HttpStatus } from '@nestjs/common';
    import { Exception, ExceptionKind } from '@app/backend-common-exception';
 
    export class PaymentFailedException extends Exception({
      name: 'PaymentFailedError',
      kind: ExceptionKind.Client,
-     problemType: 'payment_failed',
-     title: 'Payment Failed',
-     detail: 'The payment gateway returned an error.',
-     status: HttpStatus.BAD_REQUEST,
+     problemType: 'payment-failed',
    }) {}
 
    throw new PaymentFailedException({ meta: { provider: 'example' } });
    ```
-4. **Do not create** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these types
+4. Add `payment-failed` to `ProblemTypeDefinitions` in `@app/common-problem-details` first. The registry owns the custom URI, title, status, safe default detail, resolution, and allowed public extensions. Use `about:blank` instead when only HTTP status semantics are needed.
+5. **Do not create** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these types
    do not exist in the codebase.
-5. Verify error responses serialize to RFC 9457 `application/problem+json` by checking existing tests
-   in the affected project.
+6. Verify the HTTP/body status invariant, resolved `/problems#<code>` identity, occurrence URI, localization headers, redaction, and `application/problem+json` media type.
 
 ## Request context (CLS) workflows
 

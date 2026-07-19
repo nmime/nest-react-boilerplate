@@ -79,7 +79,7 @@ Probe policy:
 
 `libs/backend/common/exception/lib` is the singular exception foundation. Its public alias is `@app/backend-common-exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/backend-common-exception`. Do not add an alternate exception library alias or path.
 
-Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Product problem types use stable, product-owned HTTPS identifiers under `https://<root-domain>/problems/<code>` via the shared `ProblemDetails`/`BaseException` path; repository and package names never appear in the wire identifier. Validation responses use the `errors[]` extension; each issue carries a field `detail` and JSON Pointer `pointer` when available. Human-readable `title`/`detail` localization supports `en` and `ru` with fallback `en`; client logic should rely on stable status/code/type data rather than localized text.
+Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Generic HTTP errors use `about:blank`; documented product problem types use stable `https://<root-domain>/problems#<code>` identities from `@app/common-problem-details`, and `/problems` resolves to their human-readable registry. The HTTP and body statuses always match. `instance` is an absolute opaque occurrence URI, not a request path. Validation responses use the `errors[]` extension with `{ detail, pointer }`, where `pointer` is a JSON Pointer URI fragment such as `#/profile/email`. Localization replaces standard human-readable members and sets `Content-Language`; client logic uses `type` first, then status or the documented `code` alias.
 
 ## Contracts and generated clients
 

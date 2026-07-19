@@ -24,15 +24,24 @@ const readBuiltTextFiles = (directory) => {
 };
 
 const indexPath = join(distRoot, 'index.html');
+const problemRegistryPath = join(distRoot, 'problems', 'index.html');
 
 if (!existsSync(indexPath) || !statSync(indexPath).isFile()) {
   throw new Error(`[${appName}] missing built index.html at ${indexPath}`);
+}
+
+if (!existsSync(problemRegistryPath) || !statSync(problemRegistryPath).isFile()) {
+  throw new Error(`[${appName}] missing problem registry at ${problemRegistryPath}`);
 }
 
 const searchable = readBuiltTextFiles(distRoot).join('\n');
 
 if (!searchable.includes(expectedCopy)) {
   throw new Error(`[${appName}] expected landing copy not found in Astro build.`);
+}
+
+if (!searchable.includes('https://example.com/problems#client-data-validation')) {
+  throw new Error(`[${appName}] RFC 9457 problem registry is missing from the Astro build.`);
 }
 
 console.log(

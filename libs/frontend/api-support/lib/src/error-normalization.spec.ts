@@ -68,7 +68,20 @@ describe('normalizeApiError', () => {
     expect(normalizeApiError({ response: { status: 302, statusText: '' } }).kind).toBe('unknown');
   });
 
-  it('prefers explicit body codes over the http status code', () => {
+  it('uses a custom RFC problem type as the primary machine identifier', () => {
+    expect(
+      normalizeApiError({
+        body: {
+          type: 'https://example.com/problems#resource-conflict',
+          code: 'resource-conflict',
+        },
+        response: { status: 409, statusText: '' },
+      }),
+    ).toMatchObject({
+      code: 'https://example.com/problems#resource-conflict',
+      type: 'https://example.com/problems#resource-conflict',
+    });
+
     expect(
       normalizeApiError({
         body: { code: 'billing.declined' },
@@ -89,7 +102,7 @@ describe('normalizeApiError', () => {
   it('derives a human message from body fields, error, or status text', () => {
     expect(
       normalizeApiError({
-        body: { localizedDetail: 'Локализовано', detail: 'ignored' },
+        body: { detail: 'Локализовано' },
         response: { status: 400, statusText: 'Bad' },
       }).message,
     ).toBe('Локализовано');

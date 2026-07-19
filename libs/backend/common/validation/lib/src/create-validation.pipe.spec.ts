@@ -41,26 +41,23 @@ describe('createValidationPipe', () => {
         }),
       ]),
     ).toEqual({
-      type: 'https://example.com/problems/client-data-validation',
-      title: 'Client data validation failed',
+      type: 'https://example.com/problems#client-data-validation',
+      title: 'Client Data Validation Failed',
       status: 400,
       code: 'client-data-validation',
-      detail: 'Request client data validation failed.',
+      detail: 'One or more request members are invalid.',
       errors: [
         {
-          property: 'name',
-          constraints: { isString: 'name must be a string' },
-          message: 'name must be a string',
           detail: 'name must be a string',
-          pointer: '/name',
+          pointer: '#/name',
         },
       ],
     });
   });
 
-  it('uses empty constraints when class-validator provides none', () => {
+  it('uses a safe fallback detail when class-validator provides no constraint message', () => {
     expect(createValidationExceptionBody([makeError('nested')])).toMatchObject({
-      errors: [{ property: 'nested', constraints: {}, pointer: '/nested' }],
+      errors: [{ detail: 'nested is invalid', pointer: '#/nested' }],
     });
   });
 
@@ -91,16 +88,12 @@ describe('createValidationPipe', () => {
     ).toMatchObject({
       errors: [
         {
-          property: 'profile.displayName',
-          constraints: { isString: 'displayName must be a string' },
-          message: 'displayName must be a string',
-          pointer: '/profile/displayName',
+          detail: 'displayName must be a string',
+          pointer: '#/profile/displayName',
         },
         {
-          property: 'profile.addresses.0.city',
-          constraints: { isString: 'city must be a string' },
-          message: 'city must be a string',
-          pointer: '/profile/addresses/0/city',
+          detail: 'city must be a string',
+          pointer: '#/profile/addresses/0/city',
         },
       ],
     });
@@ -120,20 +113,17 @@ describe('createValidationPipe', () => {
     ).toMatchObject({
       errors: [
         {
-          property: 'profile/primary.tilde~field',
-          pointer: '/profile~1primary/tilde~0field',
+          pointer: '#/profile~1primary/tilde~0field',
         },
       ],
     });
   });
 
-  it('creates typed exceptions with static definition and info', () => {
+  it('creates typed exceptions with registered identity and an errors extension', () => {
     const exception = new ClientDataValidationException([
       {
-        property: 'age',
-        constraints: { isInt: 'age must be an integer number' },
-        message: 'age must be an integer number',
-        pointer: '/age',
+        detail: 'age must be an integer number',
+        pointer: '#/age',
       },
     ]);
 
@@ -141,23 +131,13 @@ describe('createValidationPipe', () => {
     const response = exception.getResponse();
 
     // Static fields from RFC 9457 definition
-    expect(response.type).toBe('https://example.com/problems/client_data_validation');
+    expect(response.type).toBe('https://example.com/problems#client-data-validation');
     expect(response.title).toBe('Client Data Validation Failed');
-    expect(response.detail).toBe('The provided data failed validation');
+    expect(response.detail).toBe('One or more request members are invalid.');
     expect(response.status).toBe(HttpStatus.BAD_REQUEST);
-    expect(response.code).toBe('client_data_validation');
+    expect(response.code).toBe('client-data-validation');
 
-    // Dynamic data is in `info`
-    expect((response as Record<string, unknown>).info).toEqual({
-      errors: [
-        {
-          property: 'age',
-          constraints: { isInt: 'age must be an integer number' },
-          message: 'age must be an integer number',
-          pointer: '/age',
-        },
-      ],
-    });
+    expect(response.errors).toEqual([{ detail: 'age must be an integer number', pointer: '#/age' }]);
   });
 
   it('throws typed exceptions from the pipe exception factory', async () => {
@@ -180,21 +160,12 @@ describe('createValidationPipe', () => {
     } catch (error) {
       const response = (error as ClientDataValidationException).getResponse();
       expect(response).toMatchObject({
-        code: 'client_data_validation',
+        code: 'client-data-validation',
         status: HttpStatus.BAD_REQUEST,
         title: 'Client Data Validation Failed',
-        type: 'https://example.com/problems/client_data_validation',
+        type: 'https://example.com/problems#client-data-validation',
       });
-      expect((response as Record<string, unknown>).info).toMatchObject({
-        errors: [
-          {
-            constraints: { isString: 'name must be a string' },
-            message: 'name must be a string',
-            pointer: '/name',
-            property: 'name',
-          },
-        ],
-      });
+      expect(response.errors).toEqual([{ detail: 'name must be a string', pointer: '#/name' }]);
     }
   });
 });

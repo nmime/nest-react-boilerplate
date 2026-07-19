@@ -6,8 +6,8 @@ describe('problem type namespace', () => {
     const repositoryIdentity = ['nest', 'react', 'boilerplate'].join('-');
 
     expect(ProblemTypeBaseUrl).toBe('https://example.com/problems');
-    expect(problemTypeForCode('not-found')).toBe('https://example.com/problems/not-found');
-    expect(problemTypeForCode('not-found')).not.toContain(repositoryIdentity);
+    expect(problemTypeForCode('resource-not-found')).toBe('https://example.com/problems#resource-not-found');
+    expect(problemTypeForCode('resource-not-found')).not.toContain(repositoryIdentity);
   });
 
   it.each(['', 'not a uri', '/not-found', 'NotFound', 'not.found'])('rejects invalid problem code %j', (code) => {

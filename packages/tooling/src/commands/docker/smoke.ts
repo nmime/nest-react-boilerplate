@@ -84,13 +84,13 @@ const probes: [string, string, string, number][] = [
   [
     "user proxy auth",
     url(ports.userApp, "/auth/me"),
-    "https://example.com/problems/unauthorized",
+    '"type":"about:blank"',
     401,
   ],
   [
     "admin proxy",
     url(ports.adminApp, "/admin/profile/me"),
-    "https://example.com/problems/unauthorized",
+    '"type":"about:blank"',
     401,
   ],
 ];

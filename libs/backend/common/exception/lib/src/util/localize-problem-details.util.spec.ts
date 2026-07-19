@@ -1,96 +1,45 @@
-import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import { localizeProblemDetails } from './localize-problem-details.util';
+import { localizeProblemDetails, resolveProblemContentLanguage } from './localize-problem-details.util';
 
 describe('localizeProblemDetails', () => {
-  it('localizes validation issues and preserves unmapped problem fields', () => {
+  it('localizes standard members and validation details without changing identity', () => {
     expect(
       localizeProblemDetails(
         {
-          type: 'about:blank',
-          title: 'Bad Request',
-          status: HttpStatus.BAD_REQUEST,
-          errors: [
-            {
-              property: 'email',
-              detail: 'email must be an email address',
-              message: 'email must be an email address',
-              constraints: {
-                isEmail: 'email must be an email address',
-                custom: 'custom',
-              },
-            },
-            { constraints: { minLength: 'short' } },
-            'plain',
-          ],
+          type: 'https://example.com/problems#client-data-validation',
+          title: 'Client Data Validation Failed',
+          status: 400,
+          detail: 'One or more request members are invalid.',
+          code: 'spoofed',
+          errors: [{ detail: 'email must be an email address', pointer: '#/email' }],
         },
         'ru',
       ),
-    ).toMatchObject({
-      code: 'bad-request',
-      errors: [
-        {
-          property: 'email',
-          constraints: {
-            isEmail: 'Поле email должно быть действительным email-адресом',
-            custom: 'custom',
-          },
-          detail: 'Поле email должно быть действительным email-адресом',
-          message: 'Поле email должно быть действительным email-адресом',
-        },
-        { constraints: { minLength: 'Поле value слишком короткое' } },
-        'plain',
-      ],
-      type: 'https://example.com/problems/bad-request',
-    });
-    expect(
-      localizeProblemDetails({
-        type: 'urn:custom',
-        title: 'Custom',
-        status: 499,
-        code: 'unmapped',
-        detail: 'No translation',
-        errors: 'raw',
-      }),
     ).toEqual({
-      type: 'urn:custom',
-      title: 'Custom',
-      status: 499,
-      code: 'unmapped',
-      detail: 'No translation',
-      errors: 'raw',
+      type: 'https://example.com/problems#client-data-validation',
+      title: 'Ошибка валидации данных клиента',
+      status: 400,
+      detail: 'Одно или несколько полей запроса недействительны.',
+      code: 'client-data-validation',
+      errors: [{ detail: 'Поле email должно быть действительным email-адресом', pointer: '#/email' }],
     });
   });
 
-  it('leaves validation text untouched when it matches no constraint template', () => {
+  it('keeps about:blank and strips an untrusted code extension', () => {
     expect(
-      localizeProblemDetails(
-        {
-          type: 'about:blank',
-          title: 'Bad Request',
-          status: HttpStatus.BAD_REQUEST,
-          errors: [
-            {
-              property: 'custom',
-              message: 'totally-unmatched-validation-message',
-              detail: 'another-unmatched-message',
-              constraints: {
-                unknownRule: 'totally-unmatched-validation-message',
-              },
-            },
-          ],
-        },
-        'ru',
-      ),
-    ).toMatchObject({
-      errors: [
-        {
-          property: 'custom',
-          message: 'totally-unmatched-validation-message',
-          detail: 'another-unmatched-message',
-          constraints: { unknownRule: 'totally-unmatched-validation-message' },
-        },
-      ],
+      localizeProblemDetails({ type: 'about:blank', title: 'Bad Request', status: 400, code: 'spoofed' }, 'ru'),
+    ).toEqual({
+      type: 'about:blank',
+      title: 'Некорректный запрос',
+      status: 400,
+      detail: 'Запрос не может быть обработан.',
     });
+  });
+
+  it('reports the fallback language when the requested locale has no translation', () => {
+    const problem = { type: 'about:blank', title: 'Service Unavailable', status: 503 };
+    expect(resolveProblemContentLanguage(problem, 'ru')).toBe('en');
+    expect(resolveProblemContentLanguage({ ...problem, status: 400 }, 'ru')).toBe('ru');
+    expect(resolveProblemContentLanguage({ ...problem, status: 400 }, 'fr')).toBe('en');
   });
 });

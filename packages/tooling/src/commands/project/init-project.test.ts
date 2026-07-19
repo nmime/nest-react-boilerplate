@@ -49,7 +49,7 @@ function createFixture(): string {
   );
   writeFileSync(
     join(root, "problem-type.txt"),
-    "https://example.com/problems/not-found\n",
+    "https://example.com/problems#resource-not-found\n",
   );
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
@@ -160,7 +160,7 @@ describe("project init", () => {
       );
       assert.equal(
         readFileSync(join(root, "problem-type.txt"), "utf8"),
-        "https://acme.example/problems/not-found\n",
+        "https://acme.example/problems#resource-not-found\n",
         "Problem types must use the configured product domain without repository identity.",
       );
       assert.equal(

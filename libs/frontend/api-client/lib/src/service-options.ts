@@ -1,4 +1,10 @@
-import { buildApiHeaders, getApiErrorMessage, type ApiFetchOptions } from '@app/frontend-api-support';
+import {
+  buildApiHeaders,
+  getApiErrorMessage,
+  normalizeApiError,
+  type ApiFetchOptions,
+  type NormalizedApiError,
+} from '@app/frontend-api-support';
 
 export type ApiClientRequestOptions = Omit<ApiFetchOptions, 'body' | 'fetchImpl' | 'json' | 'method' | 'parseAs'> & {
   fetchImpl?: typeof fetch;
@@ -47,6 +53,10 @@ export type OpenApiError<T> = NonNullable<Extract<AwaitedFunctionReturn<T>, { er
 export type EnvelopeData<T> = T extends { data: infer TData } ? NonNullable<TData> : NonNullable<T>;
 
 export class ApiClientError<TError = unknown> extends Error {
+  readonly code: string;
+  readonly problem: NormalizedApiError;
+  readonly type: string | undefined;
+
   constructor(
     readonly status: number,
     readonly body: TError | undefined,
@@ -54,6 +64,9 @@ export class ApiClientError<TError = unknown> extends Error {
   ) {
     super(getApiErrorMessage(status, body));
     this.name = 'ApiClientError';
+    this.problem = normalizeApiError({ body, response });
+    this.code = this.problem.code;
+    this.type = this.problem.type;
   }
 }
 

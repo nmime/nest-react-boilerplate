@@ -1,3 +1,3 @@
-import { ApiExceptions } from '@app/backend-common-exception';
+import { ApiExceptions, ApiProblemTypes } from '@app/backend-common-exception';
 
-export { ApiExceptions };
+export { ApiExceptions, ApiProblemTypes };

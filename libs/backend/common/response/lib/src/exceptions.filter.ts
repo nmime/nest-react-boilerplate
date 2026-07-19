@@ -1,16 +1,23 @@
 import { ArgumentsHost, Catch, HttpStatus, Logger } from '@nestjs/common';
 import type { ExceptionFilter } from '@nestjs/common';
-import { toProblemDetails, type ProblemDetails } from '@app/backend-common-exception';
+import {
+  resolveProblemContentLanguage,
+  toProblemDetails,
+  type ProblemDetailsResponse,
+} from '@app/backend-common-exception';
 import { type LocaleRequestSource, resolveLocaleFromRequest } from '@app/backend-common-i18n';
 import { formatProblemDescriptor } from './problem-descriptor.util';
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
+import { problemInstanceForRequestId } from '@app/common-problem-details';
+import { mergeVaryHeader } from './vary-header.util';
 
 interface ProblemHttpResponse {
   status: (code: number) => ProblemHttpResponse;
   type: (contentType: string) => ProblemHttpResponse;
   header?: (name: string, value: string) => ProblemHttpResponse;
-  json?: (body: ProblemDetails) => unknown;
-  send?: (body: ProblemDetails) => unknown;
+  getHeader?: (name: string) => unknown;
+  json?: (body: ProblemDetailsResponse) => unknown;
+  send?: (body: ProblemDetailsResponse) => unknown;
 }
 
 interface RequestWithId {
@@ -34,13 +41,17 @@ export class ExceptionsFilter implements ExceptionFilter {
       normalizeRequestId(request.id);
 
     // Build problem details — static fields from exception, instance from boundary
-    const problem = toProblemDetails(exception, requestId ? `/${requestId}` : undefined, locale);
+    const problem = toProblemDetails(exception, requestId ? problemInstanceForRequestId(requestId) : undefined, locale);
 
     this.logProblem(problem, exception);
 
     const problemResponse = response.status(problem.status).type('application/problem+json');
 
-    problemResponse.header?.('content-language', locale);
+    problemResponse.header?.('content-language', resolveProblemContentLanguage(problem, locale));
+    problemResponse.header?.('vary', mergeVaryHeader(problemResponse.getHeader?.('vary')));
+    if (problem.status === Number(HttpStatus.UNAUTHORIZED)) {
+      problemResponse.header?.('www-authenticate', 'Bearer');
+    }
     if (requestId) {
       problemResponse.header?.('x-request-id', requestId);
     }
@@ -52,7 +63,7 @@ export class ExceptionsFilter implements ExceptionFilter {
     }
   }
 
-  private logProblem(problem: ProblemDetails, exception: unknown): void {
+  private logProblem(problem: ProblemDetailsResponse, exception: unknown): void {
     const descriptor = formatProblemDescriptor(problem);
 
     const serverErrorThreshold: number = HttpStatus.INTERNAL_SERVER_ERROR;

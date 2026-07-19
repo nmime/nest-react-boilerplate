@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { ApiToastRuntime, parseApiToastRules, resolveApiToastRule } from './toast-runtime';
+import { configureApiLocale } from './api-locale';
+import {
+  ApiToastRuntime,
+  createDefaultApiToastRules,
+  parseApiToastRules,
+  resolveApiToastRule,
+  resolveApiToastRules,
+  type ApiToastRule,
+} from './toast-runtime';
 
 describe('parseApiToastRules', () => {
   it('returns nothing for non-array input', () => {
@@ -21,6 +29,11 @@ describe('parseApiToastRules', () => {
           match: {},
           toast: { category: 'nope', title: 'T' },
         },
+        {
+          id: 'bad-title-key',
+          match: {},
+          toast: { category: 'error', titleKey: 'not.a.translation.key' },
+        },
       ]),
     ).toEqual([]);
   });
@@ -34,6 +47,7 @@ describe('parseApiToastRules', () => {
           code: 'billing.declined',
           kind: 'network',
           statusRange: [500, 599],
+          type: 'https://example.com/problems#resource-conflict',
         },
         toast: { category: 'error', message: 'Declined', title: 'Payment' },
       },
@@ -62,6 +76,7 @@ describe('parseApiToastRules', () => {
         code: 'billing.declined',
         kind: 'network',
         statusRange: [500, 599],
+        type: 'https://example.com/problems#resource-conflict',
       },
       toast: { category: 'error', message: 'Declined', title: 'Payment' },
     });
@@ -71,6 +86,28 @@ describe('parseApiToastRules', () => {
     // statusRange entries that are not both numbers are discarded.
     expect(rules[2]?.match).toEqual({ status: 404 });
     expect(rules[3]?.match).toEqual({});
+  });
+
+  it('resolves generated translation keys and normalized problem messages at display time', () => {
+    const runtime = new ApiToastRuntime({ clock: () => 1 });
+    const rules = parseApiToastRules([
+      {
+        display: 'toast',
+        id: 'generated-error',
+        match: { status: 409 },
+        toast: {
+          category: 'error',
+          messageSource: 'problem',
+          titleKey: 'ui.runtime.requestFailed.title',
+        },
+      },
+    ]);
+
+    configureApiLocale({ locale: 'ru' });
+    expect(runtime.showForApiResult({ message: 'Локализованная причина', status: 409 }, rules)).toMatchObject({
+      message: 'Локализованная причина',
+      title: 'Запрос не выполнен',
+    });
   });
 });
 
@@ -83,13 +120,18 @@ describe('resolveApiToastRule', () => {
     },
     {
       id: 'endpoint-rule',
-      match: { endpoint: '/profile' },
+      match: { endpoint: '/profiles/{profileId}' },
       toast: { category: 'info', title: 'Endpoint' },
     },
     {
       id: 'code-rule',
       match: { code: 'billing.declined' },
       toast: { category: 'error', title: 'Code' },
+    },
+    {
+      id: 'type-rule',
+      match: { type: 'https://example.com/problems#resource-conflict' },
+      toast: { category: 'error', title: 'Type' },
     },
     {
       id: 'status-rule',
@@ -108,13 +150,14 @@ describe('resolveApiToastRule', () => {
   });
 
   it('skips rules whose method, endpoint, code, or status differ', () => {
-    const statusRule = rules[3];
+    const statusRule = rules[4];
     if (!statusRule) {
       throw new Error('Expected status rule fixture.');
     }
 
     expect(resolveApiToastRule({ method: 'GET', endpoint: '/other' }, rules)).toBeNull();
     expect(resolveApiToastRule({ code: 'other.code' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ type: 'https://example.com/problems#other' }, rules)).toBeNull();
     expect(resolveApiToastRule({ status: 500 }, [statusRule])).toBeNull();
   });
 
@@ -122,10 +165,15 @@ describe('resolveApiToastRule', () => {
     expect(resolveApiToastRule({ method: 'post' }, rules)).toMatchObject({
       id: 'method-rule',
     });
-    expect(resolveApiToastRule({ endpoint: '/profile' }, rules)).toMatchObject({
+    expect(resolveApiToastRule({ endpoint: '/profiles/profile-1' }, rules)).toMatchObject({
       id: 'endpoint-rule',
     });
+    expect(resolveApiToastRule({ endpoint: '/profiles' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ endpoint: '/profiles/' }, rules)).toBeNull();
     expect(resolveApiToastRule({ code: 'billing.declined' }, rules)).toMatchObject({ id: 'code-rule' });
+    expect(resolveApiToastRule({ type: 'https://example.com/problems#resource-conflict' }, rules)).toMatchObject({
+      id: 'type-rule',
+    });
     expect(resolveApiToastRule({ status: 404 }, rules)).toMatchObject({
       id: 'status-rule',
     });
@@ -135,7 +183,7 @@ describe('resolveApiToastRule', () => {
   });
 
   it('rejects a status-range rule when the status is missing or out of range', () => {
-    const rangeRule = rules[4];
+    const rangeRule = rules[5];
     if (!rangeRule) {
       throw new Error('Expected range rule fixture.');
     }
@@ -146,7 +194,25 @@ describe('resolveApiToastRule', () => {
   });
 });
 
+describe('resolveApiToastRules', () => {
+  it('resolves lazy rule sources', () => {
+    const rules = createDefaultApiToastRules();
+    expect(resolveApiToastRules(() => rules)).toBe(rules);
+  });
+});
+
 describe('ApiToastRuntime defaults', () => {
+  it('resolves default toast copy from the current frontend locale', () => {
+    configureApiLocale({ locale: 'ru' });
+
+    expect(createDefaultApiToastRules()[0]?.toast).toEqual({
+      category: 'warning',
+      message:
+        'Подключитесь к сети, чтобы продолжить. Экран остаётся на текущем маршруте и безопасно повторяет запрос.',
+      title: 'Нет подключения',
+    });
+  });
+
   it('uses a monotonic default id generator and dismisses by id', () => {
     const runtime = new ApiToastRuntime();
 
@@ -177,5 +243,17 @@ describe('ApiToastRuntime defaults', () => {
 
     expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
     expect(runtime.visible).toHaveLength(0);
+  });
+
+  it('fails closed when a manually supplied rule has no title source', () => {
+    const runtime = new ApiToastRuntime();
+    const rule = {
+      display: 'toast',
+      id: 'missing-title',
+      match: { status: 500 },
+      toast: { category: 'error' },
+    } as ApiToastRule;
+
+    expect(runtime.showForApiResult({ status: 500 }, [rule])).toBeNull();
   });
 });

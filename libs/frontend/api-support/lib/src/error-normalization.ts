@@ -1,3 +1,7 @@
+import { problemCodeFromType, type ProblemTypeCode } from '@app/common-problem-details';
+import { translate, type TranslationKey } from '@app/frontend-i18n-shared';
+import { getApiLocale } from './api-locale';
+
 export type NormalizedApiErrorKind = 'auth' | 'client' | 'network' | 'server' | 'unknown' | 'validation';
 
 export interface NormalizedValidationIssue {
@@ -15,6 +19,7 @@ export interface NormalizedApiError {
   message: string;
   method?: string;
   status: number | null;
+  type?: string;
   validation: NormalizedValidationIssue[];
 }
 
@@ -32,6 +37,43 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 
 const stringFrom = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+
+const problemDetailTranslationKeys = {
+  'client-data-validation': 'errors.client-data-validation.detail',
+  'last-auth-method-unlink-forbidden': 'errors.last-auth-method-unlink-forbidden.detail',
+  'rate-limited': 'errors.rate-limited.detail',
+  'resource-conflict': 'errors.resource-conflict.detail',
+  'resource-not-found': 'errors.resource-not-found.detail',
+  'step-up-required': 'errors.step-up-required.detail',
+} as const satisfies Record<ProblemTypeCode, TranslationKey>;
+
+const isNormalizedApiError = (value: unknown): value is NormalizedApiError =>
+  isRecord(value) &&
+  Boolean(stringFrom(value['code'])) &&
+  Boolean(stringFrom(value['id'])) &&
+  Boolean(stringFrom(value['kind'])) &&
+  Boolean(stringFrom(value['message'])) &&
+  (value['status'] === null || typeof value['status'] === 'number') &&
+  Array.isArray(value['validation']);
+
+export const getNormalizedApiError = (value: unknown): NormalizedApiError | undefined => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  if (isNormalizedApiError(value['problem'])) {
+    return value['problem'];
+  }
+
+  if (isNormalizedApiError(value[FrontendErrorKey])) {
+    return value[FrontendErrorKey];
+  }
+
+  return undefined;
+};
+
+export const getApiErrorDisplayMessage = (value: unknown, fallback: string): string =>
+  getNormalizedApiError(value)?.message ?? fallback;
 
 const validationFromArray = (items: unknown[]): NormalizedValidationIssue[] =>
   items.flatMap((item) => {
@@ -51,7 +93,7 @@ const validationFromArray = (items: unknown[]): NormalizedValidationIssue[] =>
 
     return [
       {
-        field: stringFrom(item['field']) ?? stringFrom(item['property']),
+        field: fieldFromPointer(item['pointer']) ?? stringFrom(item['field']) ?? stringFrom(item['property']),
         message,
       },
     ];
@@ -110,11 +152,20 @@ const statusKind = (status: number | null, body: unknown): NormalizedApiErrorKin
 
 const extractCode = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
-    const code =
-      stringFrom(body['code']) ?? stringFrom(body['errorCode']) ?? stringFrom(body['name']) ?? stringFrom(body['type']);
+    const type = stringFrom(body['type']);
+    const registeredCode = problemCodeFromType(type);
+    if (registeredCode) {
+      return registeredCode;
+    }
+
+    const code = stringFrom(body['code']) ?? stringFrom(body['errorCode']) ?? stringFrom(body['name']);
 
     if (code) {
       return code;
+    }
+
+    if (type && type !== 'about:blank') {
+      return type;
     }
   }
 
@@ -126,10 +177,14 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
   return `http.${status}`;
 };
 
-const extractMessage = (status: number | null, body: unknown, error: unknown, statusText?: string): string => {
+const extractMessage = (status: number | null, body: unknown): string => {
   if (isRecord(body)) {
+    const registeredCode = problemCodeFromType(stringFrom(body['type']));
+    if (registeredCode) {
+      return translate(problemDetailTranslationKeys[registeredCode], { locale: getApiLocale() });
+    }
+
     const message =
-      stringFrom(body['localizedDetail']) ??
       stringFrom(body['detail']) ??
       stringFrom(body['message']) ??
       stringFrom(body['title']) ??
@@ -140,29 +195,23 @@ const extractMessage = (status: number | null, body: unknown, error: unknown, st
     }
   }
 
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
   if (status === null) {
-    return 'Network connection failed.';
+    return translate('errors.api.networkFailed', { locale: getApiLocale() });
   }
 
-  return statusText?.trim() || `Request failed with status ${status}.`;
+  return translate('errors.api.requestFailed', {
+    locale: getApiLocale(),
+    params: { status },
+  });
 };
 
-export const normalizeApiError = ({
-  body,
-  endpoint,
-  error,
-  method,
-  response,
-}: NormalizeApiErrorInput): NormalizedApiError => {
+export const normalizeApiError = ({ body, endpoint, method, response }: NormalizeApiErrorInput): NormalizedApiError => {
   const status = response?.status ?? null;
   const kind = statusKind(status, body);
   const code = extractCode(status, body, kind);
-  const message = extractMessage(status, body, error, response?.statusText);
+  const message = extractMessage(status, body);
   const normalizedMethod = method?.toUpperCase();
+  const type = isRecord(body) ? stringFrom(body['type']) : undefined;
   const id = [normalizedMethod, endpoint, status ?? 'network', code].filter(Boolean).join(':');
 
   return {
@@ -175,6 +224,7 @@ export const normalizeApiError = ({
     message,
     method: normalizedMethod,
     status,
+    type,
     validation: extractValidation(body),
   };
 };
@@ -207,4 +257,16 @@ export const enrichJsonResponse = async (response: Response, error: NormalizedAp
     status: response.status,
     statusText: response.statusText,
   });
+};
+const fieldFromPointer = (value: unknown): string | undefined => {
+  const pointer = stringFrom(value);
+  if (!pointer?.startsWith('#/')) {
+    return undefined;
+  }
+
+  return pointer
+    .slice(2)
+    .split('/')
+    .map((segment) => segment.replace(/~1/gu, '/').replace(/~0/gu, '~'))
+    .join('.');
 };

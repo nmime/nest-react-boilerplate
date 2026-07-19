@@ -5,6 +5,13 @@
 Owns browser-safe API requests, auth and resilience middleware, environment
 resolution, error normalization, toast events, and the approved raw-fetch boundary.
 
+API requests carry the current `Accept-Language`. Problem responses retain the
+canonical RFC 9457 identity in `type`, expose a short stable `code` for frontend
+branching, and keep translated user-facing copy in `title`, `detail`, and
+validation messages. Toast rules can match either `type` or `code`; never match
+localized text. Compose defaults with `createDefaultApiToastRules()` at request
+time so a live locale change also updates fallback toast copy.
+
 ## Commands
 
 ```bash

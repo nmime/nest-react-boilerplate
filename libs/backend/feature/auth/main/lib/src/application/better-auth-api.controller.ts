@@ -1,7 +1,8 @@
 import { BetterAuthInstanceToken, getBaseUrl } from './better-auth.module';
-import { Controller, Inject, Req, Res, All, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Inject, Req, Res, All, HttpCode, HttpException, Logger } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
+import { BaseException, InternalException } from '@app/backend-common-exception';
 
 @Controller('api/auth')
 export class BetterAuthApiController {
@@ -13,8 +14,7 @@ export class BetterAuthApiController {
   async handle(@Req() req: FastifyRequest, @Res({ passthrough: true }) res: FastifyReply) {
     const handler = this.auth.handler;
     if (!handler) {
-      res.status(500).send({ message: 'Better-Auth handler not available' });
-      return;
+      throw new InternalException({ reason: 'better_auth_handler_unavailable' });
     }
 
     try {
@@ -49,6 +49,10 @@ export class BetterAuthApiController {
       });
 
       const baResponse = await handler(baRequest);
+
+      if (baResponse.status >= 400) {
+        throw new HttpException('', baResponse.status);
+      }
 
       // Forward status
       res.status(baResponse.status);
@@ -93,14 +97,21 @@ export class BetterAuthApiController {
       }
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
-      const status =
-        (error as { status?: number; statusCode?: number })?.status ??
-        (error as { status?: number; statusCode?: number })?.statusCode ??
-        500;
+
+      if (error instanceof BaseException || error instanceof HttpException) {
+        throw error;
+      }
+
       BetterAuthApiController.log.error(`${req.method} ${req.url} error: ${err.message}`, err.stack);
-      res.status(status).send({
-        message: status >= 500 ? 'Internal server error' : err.message,
-      });
+
+      const candidateStatus =
+        (error as { status?: unknown; statusCode?: unknown })?.status ??
+        (error as { status?: unknown; statusCode?: unknown })?.statusCode;
+      if (Number.isInteger(candidateStatus) && Number(candidateStatus) >= 400 && Number(candidateStatus) <= 599) {
+        throw new HttpException('', Number(candidateStatus), { cause: err });
+      }
+
+      throw new InternalException({ source: 'better-auth' }, err);
     }
   }
 

@@ -1,9 +1,10 @@
 # API toast configuration
 
-The boilerplate ships tooling for API response toast configuration without adding a separate hosted admin app. The tooling reads the app-local OpenAPI contracts in `apps/backend/*/*-app-api/contracts/openapi/**` and writes app-local JSON artifacts beside them:
+The boilerplate ships tooling for API response toast configuration without adding a separate hosted admin app. The tooling reads the app-local OpenAPI contracts in `apps/backend/*/*-app-api/contracts/openapi/**` and writes both the backend contract and its frontend runtime projection:
 
 ```text
-backend/<app>-app-api/contracts/toast/<app>-app-api.toast-rules.generated.json
+apps/backend/<scope>/<app>-app-api/contracts/toast/<app>-app-api.toast-rules.generated.json
+libs/frontend/api-client/lib/src/generated/toast/<app>-app-api.toast-rules.frontend.generated.json
 ```
 
 ## Generate
@@ -19,7 +20,7 @@ Each generated rule contains:
 - runtime match variants such as `POST_200`, `POST_400_bad-request`, `POST_ERR`, and `POST_NET`;
 - toast display contract: mode (`toast`, with `modal`, `custom`, and `silent` listed as supported runtime extension modes), category (`success`, `error`, `warning`, `info`), text key/default text, icon, color, duration, options, and an `enabled` flag.
 
-Success rules are scaffolded disabled by default so product teams can opt in to success toasts. Error rules are enabled by default.
+Success rules are generated disabled so product teams can opt in deliberately. Error rules are enabled; generic `401` rules are `silent` because the authentication overlay owns that flow. The frontend projection contains translation keys rather than generated English prose and uses the normalized problem message as its optional toast message.
 
 ## Check
 
@@ -34,8 +35,8 @@ The checker validates that generated JSON is aligned with the current OpenAPI co
 - rule shape includes category, text key/default text, icon/color metadata, duration/options, display mode, and enabled flag;
 - each JSON artifact points back to its owning app-local OpenAPI contract.
 
-## Optional editor UI
+## Runtime ownership
 
-A hosted editor is optional and should be same-app/admin tooling if needed. The recommended flow is to edit the generated JSON through an internal admin page or repository-backed form that reads/writes these artifacts, then run `pnpm run api:toast-config:check` before merging. Do not introduce a fake standalone app just to host this editor; the JSON files are the source of truth consumed by runtime code.
+Generated JSON is read-only. Change the owning controller/OpenAPI response or the generator, regenerate, and commit the synchronized artifacts. Endpoint-specific product overrides belong in application-owned `ApiToastRule` sources; do not hand-edit generated files or add a standalone editor app.
 
-Runtime code can import or bundle the JSON artifacts directly, or a future frontend build step can copy them into a shared frontend artifact. The matching contract mirrors the generated `match.variant` fields: exact endpoint/method/status/errorCode first, status-only success matches next, then method-level error/network fallbacks.
+`@app/frontend-api-client` imports the frontend projections directly. Rules match method, status, stable problem `code`, and endpoint. OpenAPI path parameters such as `/users/{userId}` match the concrete request path without treating arbitrary strings as regular expressions. The runtime resolves `titleKey` against the current locale at display time and only reads `messageSource: "problem"` from a normalized API error.

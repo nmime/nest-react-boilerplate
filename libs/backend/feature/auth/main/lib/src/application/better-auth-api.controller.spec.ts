@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
+import { InternalException } from '@app/backend-common-exception';
 import { BetterAuthApiController } from './better-auth-api.controller';
 
 const BETTER_AUTH_TOKEN = 'BetterAuthInstanceToken';
@@ -247,14 +248,14 @@ describe('BetterAuthApiController', () => {
       expect(mockRes.getBody()).toBeNull();
     });
 
-    it('returns 500 when handler is missing', async () => {
+    it('throws a safe typed 500 when handler is missing', async () => {
       (controller as any).auth = {};
 
       const req = { method: 'GET', url: '/api/auth/get-session' } as any;
       const res = createMockRes();
 
-      await controller.handle(req, res);
-      expect(res.statusCode).toBe(500);
+      await expect(controller.handle(req, res)).rejects.toBeInstanceOf(InternalException);
+      expect(res.getBody()).toBeUndefined();
     });
 
     it('builds correct URL with /api/auth prefix preserved', async () => {
@@ -297,7 +298,7 @@ describe('BetterAuthApiController', () => {
       expect(callArgs?.body).toBeNull();
     });
 
-    it('handles telegram endpoint and returns validation error', async () => {
+    it('routes upstream client errors through the global problem filter', async () => {
       mockHandler.mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -318,14 +319,11 @@ describe('BetterAuthApiController', () => {
         body: { payload: 'bad' },
       } as any;
 
-      await controller.handle(req, mockRes);
-      expect(mockRes.statusCode).toBe(400);
-      const body = mockRes.getBody() as Record<string, unknown>;
-      expect(body.message).toBe('validation failed');
-      expect(body.code).toBe('VALIDATION_ERROR');
+      await expect(controller.handle(req, mockRes)).rejects.toMatchObject({ status: 400 });
+      expect(mockRes.getBody()).toBeUndefined();
     });
 
-    it('forwards handler error as 500', async () => {
+    it('converts unexpected handler errors to a safe typed 500', async () => {
       mockHandler.mockRejectedValue(new Error('handler blew up'));
 
       const req = {
@@ -334,10 +332,8 @@ describe('BetterAuthApiController', () => {
         headers: {},
       } as any;
 
-      await controller.handle(req, mockRes);
-      expect(mockRes.statusCode).toBe(500);
-      const body = mockRes.getBody() as Record<string, unknown>;
-      expect(body.message).toBe('Internal server error');
+      await expect(controller.handle(req, mockRes)).rejects.toBeInstanceOf(InternalException);
+      expect(mockRes.getBody()).toBeUndefined();
     });
   });
 

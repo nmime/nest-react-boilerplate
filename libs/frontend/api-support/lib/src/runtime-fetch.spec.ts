@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FrontendErrorKey } from './error-normalization';
+import { configureApiLocale } from './api-locale';
 import { apiRuntimeEvents, createApiRuntimeEventHub } from './runtime-events';
 import { createApiRuntimeFetch, emitBrowserOfflineEvent } from './runtime-fetch';
 import { ApiToastRuntime, parseApiToastRules } from './toast-runtime';
@@ -14,11 +15,22 @@ const jsonResponse = (body: unknown, status: number, statusText = ''): Response 
 
 afterEach(() => {
   apiRuntimeEvents.reset();
+  configureApiLocale({ locale: 'en' });
 });
 
 describe('createApiRuntimeFetch success path', () => {
   it('passes 2xx responses through and shows a matching success toast', async () => {
     const eventHub = createApiRuntimeEventHub();
+    eventHub.emit({
+      type: 'server-error',
+      error: {
+        code: 'http.503',
+        id: 'GET:/profile:503:http.503',
+        kind: 'server',
+        message: 'Down',
+        status: 503,
+      },
+    });
     const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
     const rules = parseApiToastRules([
       {
@@ -40,6 +52,7 @@ describe('createApiRuntimeFetch success path', () => {
 
     expect(response.status).toBe(200);
     expect(eventHub.getState().status).toBe('online');
+    expect(eventHub.getState().lastError).toBeNull();
     expect(toastRuntime.visible.at(-1)).toMatchObject({
       category: 'success',
       title: 'Saved',
@@ -53,7 +66,17 @@ describe('createApiRuntimeFetch error paths', () => {
     const events: string[] = [];
     eventHub.subscribe((event) => events.push(event.type));
     const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
-    const baseFetch = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: 'Down' }, 503, 'Unavailable'));
+    const baseFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse(
+        {
+          code: 'service-unavailable',
+          detail: 'Down',
+          type: 'https://errors.example.test/service-unavailable',
+        },
+        503,
+        'Unavailable',
+      ),
+    );
     const runtimeFetch = createApiRuntimeFetch({
       baseFetch,
       eventHub,
@@ -66,9 +89,11 @@ describe('createApiRuntimeFetch error paths', () => {
     expect(events).toContain('server-error');
     expect(eventHub.getState().status).toBe('server-error');
     expect(body[FrontendErrorKey]).toMatchObject({
+      code: 'service-unavailable',
       kind: 'server',
       message: 'Down',
       status: 503,
+      type: 'https://errors.example.test/service-unavailable',
     });
   });
 
@@ -122,6 +147,7 @@ describe('createApiRuntimeFetch error paths', () => {
 describe('emitBrowserOfflineEvent', () => {
   it('marks the provided hub offline with a navigator offline snapshot', () => {
     const eventHub = createApiRuntimeEventHub();
+    configureApiLocale({ locale: 'ru' });
 
     emitBrowserOfflineEvent(eventHub);
 
@@ -129,6 +155,7 @@ describe('emitBrowserOfflineEvent', () => {
     expect(eventHub.getState().lastError).toMatchObject({
       code: 'network.offline',
       kind: 'network',
+      message: 'Ошибка сетевого подключения.',
       status: null,
     });
   });

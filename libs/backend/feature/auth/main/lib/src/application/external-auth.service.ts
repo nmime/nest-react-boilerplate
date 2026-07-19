@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Inject,
   Injectable,
   Optional,
@@ -62,6 +61,7 @@ import {
 import { assertReturnUrlAllowed } from './util/return-url.util';
 import { createDiscordProvider, fetchDiscordUser } from './factory/discord-provider.factory';
 import { profileToIdentityInput, toIdentityView } from './mapper/external-auth.mapper';
+import { LastAuthMethodUnlinkForbiddenException, StepUpRequiredException } from './external-auth.exception';
 
 // External-auth I/O interfaces are decomposed into role-based sibling files;
 // they are re-exported here so the application barrel stays stable.
@@ -214,14 +214,14 @@ export class ExternalAuthService {
   ): Promise<{ unlinked: boolean }> {
     const tenantId = parseTenantId(principal.tenantId);
     if (!isRecentAuthTime(principal.authTime)) {
-      throw new ForbiddenException('step_up_required');
+      throw new StepUpRequiredException();
     }
     const count = await this.social.countMethods(principal.subject, tenantId);
     if (count.isErr()) {
       throw new ConflictException(count.error.message);
     }
     if (count.value <= 1) {
-      throw new ForbiddenException('last_method_unlink_forbidden');
+      throw new LastAuthMethodUnlinkForbiddenException();
     }
     await this.social.revokeProviderTokens(identityId, tenantId);
     const deleted = await this.social.deleteIdentity(identityId, principal.subject, tenantId);

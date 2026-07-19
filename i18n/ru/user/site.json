@@ -19,5 +19,14 @@
   "site.route.admin.label": "Администрирование",
   "site.route.admin.detail": "Защищенные операции и история аудита.",
   "site.route.docs.label": "Публичный лендинг",
-  "site.route.docs.detail": "Основное знакомство с продуктом."
+  "site.route.docs.detail": "Основное знакомство с продуктом.",
+  "site.problems.kicker": "Реестр RFC 9457",
+  "site.problems.title": "Типы проблем API",
+  "site.problems.intro": "Этот документ является человекочитаемым назначением для URI типов проблем с корнем",
+  "site.problems.instanceDetail": "Фрагмент определяет стабильный тип, а URI instance — конкретный случай.",
+  "site.problems.aboutBlank": "Общие HTTP-ошибки используют фразу статуса как заголовок и не задают пользовательскую семантику.",
+  "site.problems.status": "Статус",
+  "site.problems.meaning": "Значение",
+  "site.problems.resolution": "Решение",
+  "site.problems.extensions": "Расширения"
 }

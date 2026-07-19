@@ -246,10 +246,16 @@ describe('generated api clients', () => {
 
     await expect(throwOnOpenApiError(Promise.resolve({ error: problem, response } as const))).rejects.toMatchObject({
       body: problem,
+      code: 'auth.weak_password',
       message: 'Use a stronger password',
       name: 'ApiClientError',
+      problem: {
+        code: 'auth.weak_password',
+        type: 'about:blank',
+      },
       response,
       status: 400,
+      type: 'about:blank',
     });
 
     try {

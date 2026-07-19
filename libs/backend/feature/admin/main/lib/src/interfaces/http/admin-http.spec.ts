@@ -70,10 +70,10 @@ describe('requestContextFromRequest', () => {
     });
   });
 
-  it('caps very long header values at 256 characters', () => {
+  it('rejects request IDs that exceed the shared safe length', () => {
     const context = requestContextFromRequest(requestWith('a'.repeat(300)));
 
-    expect(context.requestId).toHaveLength(256);
+    expect(context).toEqual({});
   });
 
   it('omits the request id for whitespace-only header values', () => {

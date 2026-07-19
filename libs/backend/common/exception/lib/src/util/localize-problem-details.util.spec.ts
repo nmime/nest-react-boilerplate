@@ -1,96 +1,103 @@
-import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import { localizeProblemDetails } from './localize-problem-details.util';
+import { localizeProblemDetails, resolveProblemContentLanguage } from './localize-problem-details.util';
 
 describe('localizeProblemDetails', () => {
-  it('localizes validation issues and preserves unmapped problem fields', () => {
+  it('localizes standard members and validation details without changing identity', () => {
     expect(
       localizeProblemDetails(
         {
-          type: 'about:blank',
-          title: 'Bad Request',
-          status: HttpStatus.BAD_REQUEST,
-          errors: [
-            {
-              property: 'email',
-              detail: 'email must be an email address',
-              message: 'email must be an email address',
-              constraints: {
-                isEmail: 'email must be an email address',
-                custom: 'custom',
-              },
-            },
-            { constraints: { minLength: 'short' } },
-            'plain',
-          ],
+          type: 'https://example.com/problems#client-data-validation',
+          title: 'Client Data Validation Failed',
+          status: 400,
+          detail: 'One or more request members are invalid.',
+          code: 'spoofed',
+          errors: [{ detail: 'email must be an email address', pointer: '#/email' }],
         },
         'ru',
       ),
-    ).toMatchObject({
-      code: 'bad-request',
-      errors: [
-        {
-          property: 'email',
-          constraints: {
-            isEmail: 'Поле email должно быть действительным email-адресом',
-            custom: 'custom',
-          },
-          detail: 'Поле email должно быть действительным email-адресом',
-          message: 'Поле email должно быть действительным email-адресом',
-        },
-        { constraints: { minLength: 'Поле value слишком короткое' } },
-        'plain',
-      ],
-      type: 'https://example.com/problems/bad-request',
-    });
-    expect(
-      localizeProblemDetails({
-        type: 'urn:custom',
-        title: 'Custom',
-        status: 499,
-        code: 'unmapped',
-        detail: 'No translation',
-        errors: 'raw',
-      }),
     ).toEqual({
-      type: 'urn:custom',
-      title: 'Custom',
-      status: 499,
-      code: 'unmapped',
-      detail: 'No translation',
-      errors: 'raw',
+      type: 'https://example.com/problems#client-data-validation',
+      title: 'Ошибка валидации данных клиента',
+      status: 400,
+      detail: 'Одно или несколько полей запроса недействительны.',
+      code: 'client-data-validation',
+      errors: [{ detail: 'Поле email должно быть действительным email-адресом', pointer: '#/email' }],
     });
   });
 
-  it('leaves validation text untouched when it matches no constraint template', () => {
+  it('keeps malformed validation extensions intact and falls back for unknown translations', () => {
     expect(
       localizeProblemDetails(
         {
-          type: 'about:blank',
-          title: 'Bad Request',
-          status: HttpStatus.BAD_REQUEST,
+          type: 'https://errors.example.test/problems#teapot',
+          title: 'Teapot',
+          status: 418,
+          detail: 'Stay calm.',
           errors: [
-            {
-              property: 'custom',
-              message: 'totally-unmatched-validation-message',
-              detail: 'another-unmatched-message',
-              constraints: {
-                unknownRule: 'totally-unmatched-validation-message',
-              },
-            },
+            null,
+            { detail: 42, pointer: '#/count' },
+            { detail: 'count must be a string', pointer: 42 },
+            { detail: 'Untranslated validation message', pointer: '#/count' },
+            { detail: 'value must be a string', pointer: 'count' },
           ],
         },
         'ru',
       ),
-    ).toMatchObject({
+    ).toEqual({
+      type: 'https://errors.example.test/problems#teapot',
+      title: 'Teapot',
+      status: 418,
+      detail: 'Stay calm.',
       errors: [
-        {
-          property: 'custom',
-          message: 'totally-unmatched-validation-message',
-          detail: 'another-unmatched-message',
-          constraints: { unknownRule: 'totally-unmatched-validation-message' },
-        },
+        null,
+        { detail: 42, pointer: '#/count' },
+        { detail: 'count must be a string', pointer: 42 },
+        { detail: 'Untranslated validation message', pointer: '#/count' },
+        { detail: 'Поле value должно быть строкой', pointer: 'count' },
       ],
     });
+
+    expect(
+      localizeProblemDetails({
+        type: 'https://errors.example.test/problems#teapot',
+        title: 'Teapot',
+        status: 418,
+        errors: { detail: 'not-an-array' },
+      }),
+    ).toMatchObject({ errors: { detail: 'not-an-array' } });
+  });
+
+  it('keeps about:blank and strips an untrusted code extension', () => {
+    expect(
+      localizeProblemDetails({ type: 'about:blank', title: 'Bad Request', status: 400, code: 'spoofed' }, 'ru'),
+    ).toEqual({
+      type: 'about:blank',
+      title: 'Некорректный запрос',
+      status: 400,
+      detail: 'Запрос не может быть обработан.',
+    });
+  });
+
+  it('localizes registered authentication problems and reports the translated content language', () => {
+    const problem = {
+      type: 'https://example.com/problems#step-up-required',
+      title: 'Step-up Authentication Required',
+      status: 403,
+      detail: 'Recent authentication is required to perform this security-sensitive action.',
+    };
+
+    expect(localizeProblemDetails(problem, 'ru')).toMatchObject({
+      code: 'step-up-required',
+      title: 'Требуется повторная аутентификация',
+      detail: 'Войдите снова перед выполнением этого действия, связанного с безопасностью.',
+    });
+    expect(resolveProblemContentLanguage(problem, 'ru')).toBe('ru');
+  });
+
+  it('reports the fallback language when the requested locale has no translation', () => {
+    const problem = { type: 'about:blank', title: 'Service Unavailable', status: 503 };
+    expect(resolveProblemContentLanguage(problem, 'ru')).toBe('en');
+    expect(resolveProblemContentLanguage({ ...problem, status: 400 }, 'ru')).toBe('ru');
+    expect(resolveProblemContentLanguage({ ...problem, status: 400 }, 'fr')).toBe('en');
   });
 });

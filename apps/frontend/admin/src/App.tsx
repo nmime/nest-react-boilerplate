@@ -2,8 +2,9 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   configureApiLocale,
+  createDefaultApiToastRules,
   createApiRuntimeFetch,
-  defaultApiToastRules,
+  getApiErrorDisplayMessage,
   useApiRuntimeOverlayModel,
 } from '@app/frontend-api-support';
 import {
@@ -160,7 +161,7 @@ export const getProfileState = (
   if (error) {
     return {
       status: 'forbidden',
-      reason: error instanceof Error ? error.message : profileRequestFailedMessage,
+      reason: getApiErrorDisplayMessage(error, profileRequestFailedMessage),
     };
   }
 
@@ -176,10 +177,7 @@ export const getProfileState = (
 
 const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactElement }>) => {
   const { locale } = useI18n();
-
-  useEffect(() => {
-    configureApiLocale({ locale });
-  }, [locale]);
+  configureApiLocale({ locale });
 
   return children;
 };
@@ -332,7 +330,7 @@ const AdminApiClientProvider = ({
     () =>
       createApiRuntimeFetch({
         redirectTo: '/admin',
-        toastRules: [...adminApiToastRules, ...authApiToastRules, ...defaultApiToastRules],
+        toastRules: () => [...adminApiToastRules, ...authApiToastRules, ...createDefaultApiToastRules()],
       }),
     [],
   );

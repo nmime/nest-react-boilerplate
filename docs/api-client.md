@@ -31,6 +31,6 @@ When backend routes, DTOs, response wrappers, auth metadata, or error decorators
 ## Runtime responsibilities
 
 - `@app/frontend-api-client` owns app-facing service names, endpoint wrapper functions, React Query helpers, and typed error aliases.
-- `@app/frontend-api-support` owns base URL resolution, bearer-token access, `Accept-Language`, response parsing, and raw `fetch` containment.
+- `@app/frontend-api-support` owns base URL resolution, bearer-token access, `Accept-Language`, localized fallbacks, RFC 9457 identity normalization, response parsing, and raw `fetch` containment. Normalized errors keep the canonical problem URI in `type` and expose a stable short `code` for UI routing and toast rules.
 - Generated frontend artifacts live in `libs/frontend/api-client/lib/src/generated/**`; matching shared contract review types live in `libs/common/api-contracts/lib/src/generated/**`.
 - Frontend apps should not spell backend endpoint path strings; update wrappers when a new route is consumed.

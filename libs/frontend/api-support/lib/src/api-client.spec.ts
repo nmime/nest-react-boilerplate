@@ -5,6 +5,7 @@ import {
   apiRequest,
   buildApiHeaders,
   configureApiLocale,
+  getApiLocale,
   resolveApiUrl,
   setApiLocale,
 } from './api-client';
@@ -27,6 +28,21 @@ const getCapturedRequest = (fetchImpl: ReturnType<typeof vi.fn<typeof fetch>>, i
   fetchImpl.mock.calls[index]?.[1] as CapturedRequestInit;
 
 describe('frontend API client', () => {
+  it('resolves the ambient locale with and without a browser document', () => {
+    const originalDocumentLocale = document.documentElement.lang;
+    setApiLocale('ru');
+    configureApiLocale({});
+    vi.stubGlobal('document', undefined);
+    expect(getApiLocale()).toBe('ru');
+
+    vi.unstubAllGlobals();
+    document.documentElement.lang = 'unsupported';
+    expect(getApiLocale()).toBe('ru');
+    document.documentElement.lang = 'en';
+    expect(getApiLocale()).toBe('en');
+    document.documentElement.lang = originalDocumentLocale;
+  });
+
   it('injects Accept-Language into every request and updates with the locale getter', async () => {
     let locale: 'en' | 'ru' = 'en';
     configureApiLocale({ getLocale: () => locale });
@@ -95,14 +111,43 @@ describe('frontend API client', () => {
   });
 
   it('parses problem responses into ApiError', async () => {
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(jsonResponse({ detail: 'Forbidden profile' }, false, 403));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse(
+        {
+          code: 'resource-conflict',
+          detail: 'Conflicting profile',
+          type: 'https://example.com/problems#resource-conflict',
+        },
+        false,
+        409,
+      ),
+    );
 
     await expect(apiFetch('/profile', { fetchImpl })).rejects.toMatchObject({
-      body: { detail: 'Forbidden profile' },
-      message: 'Forbidden profile',
-      status: 403,
+      body: {
+        code: 'resource-conflict',
+        detail: 'Conflicting profile',
+        type: 'https://example.com/problems#resource-conflict',
+      },
+      code: 'resource-conflict',
+      message: 'The request conflicts with the current state of the resource.',
+      problem: {
+        body: {
+          code: 'resource-conflict',
+          detail: 'Conflicting profile',
+          type: 'https://example.com/problems#resource-conflict',
+        },
+        code: 'resource-conflict',
+        detail: 'Conflicting profile',
+        id: '409:resource-conflict',
+        kind: 'client',
+        message: 'The request conflicts with the current state of the resource.',
+        status: 409,
+        type: 'https://example.com/problems#resource-conflict',
+        validation: [],
+      },
+      status: 409,
+      type: 'https://example.com/problems#resource-conflict',
     } satisfies Partial<ApiError>);
   });
 

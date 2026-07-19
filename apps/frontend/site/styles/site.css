@@ -201,6 +201,65 @@ a {
   transform: translateY(-2px);
 }
 
+.problem-registry {
+  width: min(880px, calc(100% - 48px));
+  padding: 56px 0 72px;
+  margin: 0 auto;
+}
+
+.problem-registry h1 {
+  margin: 8px 0 16px;
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  line-height: 1;
+}
+
+.problem-registry-intro {
+  max-width: 720px;
+  color: #475467;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.problem-card {
+  padding: 24px;
+  margin-top: 18px;
+  border: 1px solid #dce3ec;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.problem-card h2 {
+  margin: 0 0 8px;
+}
+
+.problem-card code,
+.problem-registry-intro code {
+  overflow-wrap: anywhere;
+  color: #175cd3;
+}
+
+.problem-card dl {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 8px 16px;
+  margin: 18px 0 0;
+}
+
+.problem-card dt {
+  color: #667085;
+  font-weight: 700;
+}
+
+.problem-card dd {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.problem-card ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
 @media (max-width: 640px) {
   .site-nav {
     padding: 0 20px;
@@ -232,5 +291,19 @@ a {
 
   .site-status strong {
     font-size: 1.85rem;
+  }
+
+  .problem-registry {
+    width: min(100% - 32px, 880px);
+    padding: 36px 0 48px;
+  }
+
+  .problem-card dl {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .problem-card dd + dt {
+    margin-top: 8px;
   }
 }

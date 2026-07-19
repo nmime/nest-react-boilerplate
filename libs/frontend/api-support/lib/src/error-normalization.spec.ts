@@ -1,13 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { configureApiLocale } from './api-locale';
 import {
   FrontendErrorKey,
   enrichJsonResponse,
   extractValidation,
+  getApiErrorDisplayMessage,
+  getNormalizedApiError,
   isNetworkFailure,
   normalizeApiError,
   readJsonBody,
 } from './error-normalization';
+
+beforeEach(() => {
+  configureApiLocale({ locale: 'en' });
+});
 
 const jsonResponse = (body: unknown, init: ResponseInit & { contentType?: string } = {}): Response => {
   const { contentType = 'application/json', ...responseInit } = init;
@@ -28,7 +35,7 @@ describe('normalizeApiError', () => {
     expect(error).toMatchObject({
       code: 'network.offline',
       kind: 'network',
-      message: 'Failed to fetch',
+      message: 'Network connection failed.',
       method: 'GET',
       status: null,
     });
@@ -68,7 +75,27 @@ describe('normalizeApiError', () => {
     expect(normalizeApiError({ response: { status: 302, statusText: '' } }).kind).toBe('unknown');
   });
 
-  it('prefers explicit body codes over the http status code', () => {
+  it('keeps the RFC type URI and exposes its stable short code separately', () => {
+    expect(
+      normalizeApiError({
+        body: {
+          type: 'https://example.com/problems#resource-conflict',
+          code: 'spoofed',
+        },
+        response: { status: 409, statusText: '' },
+      }),
+    ).toMatchObject({
+      code: 'resource-conflict',
+      type: 'https://example.com/problems#resource-conflict',
+    });
+
+    expect(
+      normalizeApiError({
+        body: { type: 'https://example.com/problems#resource-not-found' },
+        response: { status: 404, statusText: '' },
+      }).code,
+    ).toBe('resource-not-found');
+
     expect(
       normalizeApiError({
         body: { code: 'billing.declined' },
@@ -84,12 +111,40 @@ describe('normalizeApiError', () => {
     ).toBe('rate.limited');
 
     expect(normalizeApiError({ response: { status: 404, statusText: '' } }).code).toBe('http.404');
-  });
-
-  it('derives a human message from body fields, error, or status text', () => {
     expect(
       normalizeApiError({
-        body: { localizedDetail: 'Локализовано', detail: 'ignored' },
+        body: { type: 'https://errors.example.test/problems#unknown' },
+        response: { status: 418, statusText: '' },
+      }).code,
+    ).toBe('https://errors.example.test/problems#unknown');
+    expect(
+      normalizeApiError({
+        body: { type: 'about:blank' },
+        response: { status: 418, statusText: '' },
+      }).code,
+    ).toBe('http.418');
+  });
+
+  it('translates registered problem details locally instead of trusting server prose', () => {
+    const body = {
+      type: 'https://example.com/problems#step-up-required',
+      detail: 'Server-side English copy',
+    };
+
+    expect(normalizeApiError({ body, response: { status: 403, statusText: '' } }).message).toBe(
+      'Authenticate again before performing this security-sensitive action.',
+    );
+
+    configureApiLocale({ locale: 'ru' });
+    expect(normalizeApiError({ body, response: { status: 403, statusText: '' } }).message).toBe(
+      'Войдите снова перед выполнением этого действия, связанного с безопасностью.',
+    );
+  });
+
+  it('uses localized body text and localized safe fallbacks', () => {
+    expect(
+      normalizeApiError({
+        body: { detail: 'Локализовано' },
         response: { status: 400, statusText: 'Bad' },
       }).message,
     ).toBe('Локализовано');
@@ -99,19 +154,21 @@ describe('normalizeApiError', () => {
         error: new Error('boom'),
         response: { status: 500, statusText: '' },
       }).message,
-    ).toBe('boom');
+    ).toBe('Request failed with 500.');
 
     expect(
       normalizeApiError({
         response: { status: 500, statusText: 'Server Error' },
       }).message,
-    ).toBe('Server Error');
+    ).toBe('Request failed with 500.');
 
+    expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe('Request failed with 500.');
+
+    configureApiLocale({ locale: 'ru' });
     expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe(
-      'Request failed with status 500.',
+      'Запрос не удался со статусом 500.',
     );
-
-    expect(normalizeApiError({}).message).toBe('Network connection failed.');
+    expect(normalizeApiError({}).message).toBe('Ошибка сетевого подключения.');
   });
 
   it('surfaces a body detail field when present', () => {
@@ -131,6 +188,26 @@ describe('normalizeApiError', () => {
   });
 });
 
+describe('normalized API error display', () => {
+  const problem = normalizeApiError({
+    body: { detail: 'Safe public detail' },
+    response: { status: 409, statusText: '' },
+  });
+
+  it('reads only normalized client and enriched-response errors', () => {
+    expect(getNormalizedApiError({ problem })).toBe(problem);
+    expect(getNormalizedApiError({ [FrontendErrorKey]: problem })).toBe(problem);
+    expect(getApiErrorDisplayMessage({ problem }, 'Fallback')).toBe('Safe public detail');
+  });
+
+  it('rejects arbitrary exception messages and malformed normalized shapes', () => {
+    expect(getNormalizedApiError('not-an-error')).toBeUndefined();
+    expect(getNormalizedApiError(new Error('secret database message'))).toBeUndefined();
+    expect(getNormalizedApiError({ problem: { code: 'bad', message: 'partial' } })).toBeUndefined();
+    expect(getApiErrorDisplayMessage(new Error('secret database message'), 'Fallback')).toBe('Fallback');
+  });
+});
+
 describe('extractValidation', () => {
   it('returns nothing for non-record bodies', () => {
     expect(extractValidation('nope')).toEqual([]);
@@ -145,6 +222,7 @@ describe('extractValidation', () => {
           { message: 'Bad email', field: 'email' },
           { detail: 'Bad name', property: 'name' },
           { error: 'Bad phone' },
+          { message: 'Nested pointer', pointer: '#/profile/~0secret/~1path' },
           { nothing: 'useful' },
           42,
         ],
@@ -154,6 +232,7 @@ describe('extractValidation', () => {
       { field: 'email', message: 'Bad email' },
       { field: 'name', message: 'Bad name' },
       { message: 'Bad phone' },
+      { field: 'profile.~secret./path', message: 'Nested pointer' },
     ]);
   });
 

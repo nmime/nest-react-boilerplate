@@ -48,7 +48,6 @@ describe('UseTransformer', () => {
     expect(response.statusCode).toBe(400);
     expect(response.headers['content-type']).toContain('application/problem+json');
     expect(response.json()).toMatchObject({
-      code: 'bad-request',
       status: 400,
       title: 'Bad Request',
     });

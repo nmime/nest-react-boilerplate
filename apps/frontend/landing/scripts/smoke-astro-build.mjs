@@ -5,6 +5,28 @@ const appName = 'landing-app';
 const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/landing');
 const expectedCopy = 'A focused foundation for your next product.';
 
+const containsExactUrl = (contents, expectedValue) => {
+  const expected = new URL(expectedValue);
+  const candidates = contents.match(/https:\/\/[^"'`<>\s\\]+/gu) ?? [];
+
+  return candidates.some((candidate) => {
+    try {
+      const parsed = new URL(candidate);
+      return (
+        parsed.protocol === expected.protocol &&
+        parsed.username === expected.username &&
+        parsed.password === expected.password &&
+        parsed.host === expected.host &&
+        parsed.pathname === expected.pathname &&
+        parsed.search === expected.search &&
+        parsed.hash === expected.hash
+      );
+    } catch {
+      return false;
+    }
+  });
+};
+
 const readBuiltTextFiles = (directory) => {
   const entries = readdirSync(directory, { withFileTypes: true });
 
@@ -24,15 +46,24 @@ const readBuiltTextFiles = (directory) => {
 };
 
 const indexPath = join(distRoot, 'index.html');
+const problemRegistryPath = join(distRoot, 'problems', 'index.html');
 
 if (!existsSync(indexPath) || !statSync(indexPath).isFile()) {
   throw new Error(`[${appName}] missing built index.html at ${indexPath}`);
+}
+
+if (!existsSync(problemRegistryPath) || !statSync(problemRegistryPath).isFile()) {
+  throw new Error(`[${appName}] missing problem registry at ${problemRegistryPath}`);
 }
 
 const searchable = readBuiltTextFiles(distRoot).join('\n');
 
 if (!searchable.includes(expectedCopy)) {
   throw new Error(`[${appName}] expected landing copy not found in Astro build.`);
+}
+
+if (!containsExactUrl(searchable, 'https://example.com/problems#client-data-validation')) {
+  throw new Error(`[${appName}] RFC 9457 problem registry is missing from the Astro build.`);
 }
 
 console.log(

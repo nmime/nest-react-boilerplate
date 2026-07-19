@@ -4,6 +4,10 @@
 
 Defines the RFC 9457 exception factory, domain exception classes, Problem
 Details schemas, localization, and safe conversion utilities for backend APIs.
+Custom identities are defined once in `@app/common-problem-details`; this
+library resolves that registry and owns HTTP serialization. Generic status-only
+errors use `about:blank`. Arbitrary `HttpException` response bodies and messages
+are never trusted as Problem Details.
 
 ## Commands
 

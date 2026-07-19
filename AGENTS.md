@@ -104,13 +104,14 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - **Exception factory** creates typed exceptions at class definition time:
 
   ```ts
-  Exception({ name, kind, problemType, title, detail, status, dataType });
+  Exception({ name, kind, problemType, status, extensionsType });
   ```
 
-- Static properties (`type`, `title`, `detail`, `status`) are fixed at class
-  creation — never mutable at runtime.
+- Custom `problemType` values must exist in `@app/common-problem-details`; the
+  registry owns their URI, title, status, safe default detail, documentation,
+  and allowed extensions. Omit `problemType` for generic `about:blank` errors.
 - Runtime context (passed to the constructor) carries only:
-  - `data?` — optional payload surfaced as `info` in the response
+  - `extensions?` — explicit problem-type-specific public members
   - `meta?` — private diagnostics for logging/telemetry only
   - `cause?` — underlying error for stack traces
 - **Domain exceptions**: `ResourceNotFoundException`, `UnauthorizedException`,
@@ -118,9 +119,12 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
   `InternalException`.
 - **Validation**: `ClientDataValidationException` with typed `ValidationErrorInfo`.
 - Problem `type` values use `problemTypeForCode()` and the product-owned
-  `https://<root-domain>/problems/<code>` namespace. Never place repository,
+  `https://<root-domain>/problems#<code>` namespace. Never place repository,
   package, template, or runtime host names in public problem identifiers.
 - Response content type is always `application/problem+json`.
+- The body `status` always equals the HTTP status. `instance` is an absolute,
+  opaque occurrence URI derived from the validated request ID. Localization
+  changes standard `title`/`detail` members and sets `Content-Language`.
 
 ## Read Next
 

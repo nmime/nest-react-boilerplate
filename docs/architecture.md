@@ -55,23 +55,22 @@ const userId = requestContext.get('userId'); // read from context
 
 All HTTP errors are **RFC 9457 Problem Details** with `Content-Type: application/problem+json`.
 
-**Exception factory** — static definitions at class creation time:
+**Exception factory** — registered definitions resolved at class creation time:
 
 ```typescript
 const NotFoundException = Exception({
   name: 'NotFoundException',
   kind: ExceptionKind.Client,
-  problemType: 'not_found',
-  title: 'Not Found',
-  detail: 'The requested resource was not found',
-  status: 404,
+  problemType: 'resource-not-found',
 });
 ```
 
-- **Static fields** (`type`, `title`, `detail`, `status`) are class-level constants — never mutable at runtime
-- **Runtime context** only accepts: `{ data? → info in response, meta? (private diagnostics), cause? }`
+- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The root app serves it at `/problems`.
+- **Generic HTTP errors**: omit `problemType`; they serialize with `type: "about:blank"` and status-defined semantics.
+- **Runtime context** only accepts `{ extensions? (explicitly public), meta? (private diagnostics), cause? }`.
+- **Occurrence identity**: the HTTP boundary derives an absolute opaque `instance` URI from a validated request ID; request paths are never used as occurrence identifiers.
 - **Domain exceptions:** `ResourceNotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `BadRequestException`, `InternalException`, `ClientDataValidationException`
-- **Security:** `HttpException.message` is **never** serialized; unknown errors map to static generic messages
+- **Security and correctness:** `HttpException.message` and arbitrary response bodies are never serialized, unknown errors map to a generic 500, and body/HTTP status cannot diverge.
 
 ## Shared libraries
 
@@ -79,17 +78,18 @@ The `libs/common` namespace is intentionally small after the frontend/backend sp
 
 Current `libs/common` placement decisions:
 
-| Project                                                   | Decision    | Why it remains or moves                                                                                                                                                                                                                                              |
-| --------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `libs/common/api-contracts` (`@app/common-api-contracts`) | Keep common | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`. |
-| `libs/common/config` (`@app/common-config`)               | Keep common | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                   |
-| `libs/common/i18n/{runtime,keys}`                         | Keep common | Platform-neutral locale parsing, merge/fallback/interpolation mechanics and generated translation-key types. Backend/frontend/bot catalogs live under their owning runtime scopes.                                                                                   |
-| `libs/common/notifications` (`@app/common-notifications`) | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. PostgreSQL and transport implementations stay backend-owned.                                                                                               |
-| `libs/common/websocket` (`@app/common-websocket`)         | Keep common | Provider-neutral websocket/broadcast contracts with no browser, Nest, or backend-only dependency; the project is tagged `platform:shared`.                                                                                                                           |
-| `libs/common/feature-flags` (`@app/common-feature-flags`) | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.           |
+| Project                                                       | Decision    | Why it remains or moves                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/common/api-contracts` (`@app/common-api-contracts`)     | Keep common | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`. |
+| `libs/common/config` (`@app/common-config`)                   | Keep common | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                   |
+| `libs/common/i18n/{runtime,keys}`                             | Keep common | Platform-neutral locale parsing, merge/fallback/interpolation mechanics and generated translation-key types. Backend/frontend/bot catalogs live under their owning runtime scopes.                                                                                   |
+| `libs/common/notifications` (`@app/common-notifications`)     | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. PostgreSQL and transport implementations stay backend-owned.                                                                                               |
+| `libs/common/problem-details` (`@app/common-problem-details`) | Keep common | Framework-neutral custom problem type identities and documentation metadata consumed by backend producers and both apex-capable documentation pages.                                                                                                                 |
+| `libs/common/websocket` (`@app/common-websocket`)             | Keep common | Provider-neutral websocket/broadcast contracts with no browser, Nest, or backend-only dependency; the project is tagged `platform:shared`.                                                                                                                           |
+| `libs/common/feature-flags` (`@app/common-feature-flags`)     | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.           |
 
 - `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: CLS request context (`ClsInterceptor`), raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
-- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory (static `type`/`title`/`detail`/`status`), domain exception classes, and `toProblemDetails` utility. Runtime context limited to `{ data?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
+- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory, domain exception classes, localization, safe conversion, and OpenAPI schemas. Custom metadata comes from `@app/common-problem-details`; runtime context is limited to `{ extensions?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
 - `libs/backend/common/health/lib` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
 - `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
@@ -164,7 +164,7 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 ## i18n and Problem Details
 
-Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves RFC 9457 wire terms and stable, product-owned `https://<root-domain>/problems/<code>` identifiers; clients key logic off status/code/type rather than localized text.
+Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves stable, product-owned `https://<root-domain>/problems#<code>` identifiers and localizes the standard `title` and `detail` members. Clients use the problem `type` as the primary identifier, then status or the documented `code` alias; they never branch on localized text.
 
 ## Planned testing layers
 

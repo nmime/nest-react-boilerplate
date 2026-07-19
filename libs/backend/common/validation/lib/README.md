@@ -4,6 +4,8 @@
 
 Builds the shared Nest validation pipe and converts DTO validation failures
 into typed RFC 9457 errors with JSON Pointer field details.
+The `client-data-validation` type exposes only `errors[]` entries shaped as
+`{ detail, pointer }`; pointers are URI fragments such as `#/profile/email`.
 
 ## Commands
 

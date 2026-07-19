@@ -150,7 +150,7 @@
       "enabled": false
     },
     {
-      "id": "user-app-api:GET:/profile/me:400:bad-request",
+      "id": "user-app-api:GET:/profile/me:400",
       "endpoint": {
         "app": "user-app-api",
         "method": "GET",
@@ -159,9 +159,9 @@
         "tags": ["Profile"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -169,8 +169,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.user-app-api.profilecontroller-me.get.400.bad-request",
-          "default": "Profile me failed: Bad request."
+          "key": "api.toast.user-app-api.profilecontroller-me.get.400",
+          "default": "Profile me failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -183,7 +183,7 @@
       "enabled": true
     },
     {
-      "id": "user-app-api:GET:/profile/me:401:unauthorized",
+      "id": "user-app-api:GET:/profile/me:401",
       "endpoint": {
         "app": "user-app-api",
         "method": "GET",
@@ -192,17 +192,17 @@
         "tags": ["Profile"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.user-app-api.profilecontroller-me.get.401.unauthorized",
+          "key": "api.toast.user-app-api.profilecontroller-me.get.401",
           "default": "Profile me failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -216,7 +216,7 @@
       "enabled": true
     },
     {
-      "id": "user-app-api:GET:/profile/me:403:forbidden",
+      "id": "user-app-api:GET:/profile/me:403",
       "endpoint": {
         "app": "user-app-api",
         "method": "GET",
@@ -225,9 +225,9 @@
         "tags": ["Profile"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -235,7 +235,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.user-app-api.profilecontroller-me.get.403.forbidden",
+          "key": "api.toast.user-app-api.profilecontroller-me.get.403",
           "default": "Profile me failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -249,7 +249,7 @@
       "enabled": true
     },
     {
-      "id": "user-app-api:GET:/profile/me:429:rate-limited",
+      "id": "user-app-api:GET:/profile/me:429",
       "endpoint": {
         "app": "user-app-api",
         "method": "GET",
@@ -258,9 +258,9 @@
         "tags": ["Profile"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -268,8 +268,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.user-app-api.profilecontroller-me.get.429.rate-limited",
-          "default": "Profile me failed: Rate limited."
+          "key": "api.toast.user-app-api.profilecontroller-me.get.429",
+          "default": "Profile me failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -282,7 +282,7 @@
       "enabled": true
     },
     {
-      "id": "user-app-api:GET:/profile/me:500:internal-server-error",
+      "id": "user-app-api:GET:/profile/me:500",
       "endpoint": {
         "app": "user-app-api",
         "method": "GET",
@@ -291,9 +291,9 @@
         "tags": ["Profile"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -301,8 +301,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.user-app-api.profilecontroller-me.get.500.internal-server-error",
-          "default": "Profile me failed: Internal server error."
+          "key": "api.toast.user-app-api.profilecontroller-me.get.500",
+          "default": "Profile me failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",

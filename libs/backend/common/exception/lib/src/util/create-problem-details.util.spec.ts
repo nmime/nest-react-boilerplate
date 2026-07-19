@@ -1,89 +1,48 @@
-import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { createProblemDetails } from './create-problem-details.util';
 
-describe('createProblemDetails (RFC 9457)', () => {
-  it('creates problem details with required static fields', () => {
+describe('createProblemDetails', () => {
+  it('creates the strict emitted profile and preserves absolute or relative URI references', () => {
     expect(
       createProblemDetails({
         title: 'Forbidden',
         detail: 'Missing role',
         status: 403,
-        instance: 'https://errors.example.test/problem-instances/admin-profile-me',
-        type: 'https://errors.example.test/problems/forbidden',
+        instance: '/problem-instances/request-1',
+        type: 'https://errors.example.test/problems#forbidden',
+        extensions: { code: 'forbidden-example' },
       }),
     ).toEqual({
-      type: 'https://errors.example.test/problems/forbidden',
+      type: 'https://errors.example.test/problems#forbidden',
       title: 'Forbidden',
       status: 403,
       detail: 'Missing role',
-      instance: 'https://errors.example.test/problem-instances/admin-profile-me',
+      instance: '/problem-instances/request-1',
+      code: 'forbidden-example',
     });
   });
 
-  it('defaults type to about:blank when no code provided', () => {
-    expect(createProblemDetails({ title: 'Bad', detail: 'Bad request', status: 400 })).toEqual({
+  it('defaults the type to about:blank and permits detail to be absent', () => {
+    expect(createProblemDetails({ title: 'Bad Request', status: 400 })).toEqual({
       type: 'about:blank',
-      title: 'Bad',
-      detail: 'Bad request',
+      title: 'Bad Request',
       status: 400,
     });
   });
 
-  it('defaults type to the product-owned HTTPS namespace when code is provided', () => {
+  it('omits extension members whose value is undefined', () => {
     expect(
-      createProblemDetails({
-        title: 'Conflict',
-        detail: 'Resource conflict',
-        status: 409,
-        code: 'conflict',
-      }),
-    ).toEqual({
-      type: 'https://example.com/problems/conflict',
-      title: 'Conflict',
-      status: 409,
-      detail: 'Resource conflict',
-      code: 'conflict',
-    });
+      createProblemDetails({ title: 'Conflict', status: 409, extensions: { code: undefined } }),
+    ).not.toHaveProperty('code');
   });
 
-  it('omits raw request paths from problem instance', () => {
-    expect(
-      createProblemDetails({
-        title: 'Not Found',
-        detail: 'Resource not found',
-        status: HttpStatus.NOT_FOUND,
-        instance: '/',
-      }),
-    ).not.toHaveProperty('instance');
-
-    expect(
-      createProblemDetails({
-        title: 'Not Found',
-        detail: 'Resource not found',
-        status: HttpStatus.NOT_FOUND,
-        instance: '/missing',
-      }),
-    ).not.toHaveProperty('instance');
-  });
-
-  it('keeps non-path instances', () => {
-    expect(
-      createProblemDetails({
-        title: 'Conflict',
-        detail: 'Conflict occurred',
-        status: 409,
-        instance: 'https://errors.example.test/problem-instances/canonical',
-      }),
-    ).toHaveProperty('instance', 'https://errors.example.test/problem-instances/canonical');
-  });
-
-  it('detail is always present in output', () => {
-    const result = createProblemDetails({
-      title: 'Test',
-      detail: 'Test detail',
-      status: 400,
-    });
-    expect(result.detail).toBe('Test detail');
+  it('rejects malformed standard members and extension collisions', () => {
+    expect(() => createProblemDetails({ title: '', status: 400 })).toThrow(TypeError);
+    expect(() => createProblemDetails({ title: 'Bad', status: 99 })).toThrow(RangeError);
+    expect(() => createProblemDetails({ title: 'Bad', status: 400, type: 'not a uri' })).toThrow(TypeError);
+    expect(() => createProblemDetails({ title: 'Bad', status: 400, extensions: { status: 500 } })).toThrow(TypeError);
+    expect(() => createProblemDetails({ title: 'Bad', status: 400, extensions: { 'bad-name': true } })).toThrow(
+      TypeError,
+    );
   });
 });

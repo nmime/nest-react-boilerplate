@@ -3,10 +3,7 @@ import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { lastValueFrom, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
 
-// The real `toProblemDetails` always assigns a `code` (via localizeProblemDetails
-// -> problemCodeForStatus), so the transformer's `problem.code ?? "request-failed"`
-// safety net is only reachable when the descriptor is missing a code entirely.
-// Mock the descriptor to force that defensive branch.
+// Mock a minimal about:blank descriptor to verify transport fallback semantics.
 vi.mock('@app/backend-common-exception', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/backend-common-exception')>();
   return {
@@ -27,7 +24,7 @@ const contextWithData = (data: unknown): ExecutionContext =>
   }) as unknown as ExecutionContext;
 
 describe('WebSocketResponseTransformer codeless-problem fallback', () => {
-  it('uses request-failed and the title when the problem lacks a code and detail', async () => {
+  it('uses the HTTP status identifier and title when detail is absent', async () => {
     const next: CallHandler = {
       handle: () => throwError(() => new HttpException('boom', HttpStatus.BAD_GATEWAY)),
     };
@@ -37,7 +34,7 @@ describe('WebSocketResponseTransformer codeless-problem fallback', () => {
     );
 
     expect(response.error).toEqual({
-      code: 'request-failed',
+      code: 'http.502',
       message: 'Upstream unavailable',
       data: {
         status: HttpStatus.BAD_GATEWAY,

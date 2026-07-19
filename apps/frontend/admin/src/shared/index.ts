@@ -1,4 +1,5 @@
 import { translate, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
+import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import type { adminApi } from '@app/frontend-api-client';
 import type { AdminAccessPolicy } from '@app/frontend-feature-admin-shared';
@@ -50,7 +51,7 @@ export const paramsFromPath = (path: string): URLSearchParams =>
   new URLSearchParams(path.includes('?') ? path.slice(path.indexOf('?')) : '');
 
 export const errorText = (error: unknown, fallbackKey: TranslationKey, t: Translate) =>
-  error instanceof Error ? error.message : t(fallbackKey);
+  getApiErrorDisplayMessage(error, t(fallbackKey));
 
 export const totalPages = (total = 0, limit = pageSize): number => Math.max(1, Math.ceil(total / limit));
 

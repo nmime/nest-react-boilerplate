@@ -9,1066 +9,1066 @@
   "rules": [
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:400:bad-request",
+      "id": "admin-app-api:GET:/admin/audit:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/audit:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:403:forbidden",
+      "id": "admin-app-api:GET:/admin/audit:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:404:not-found",
+      "id": "admin-app-api:GET:/admin/audit:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/audit:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/audit:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/audit:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/audit",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Audit failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:400:bad-request",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:403:forbidden",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:404:not-found",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/dashboard/summary:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/dashboard/summary",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users dashboard Summary failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/profile/me:400:bad-request",
+      "id": "admin-app-api:GET:/admin/profile/me:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/profile/me",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Profile me failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/profile/me:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/profile/me:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/profile/me",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Profile me failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/profile/me:403:forbidden",
+      "id": "admin-app-api:GET:/admin/profile/me:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/profile/me",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Profile me failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/profile/me:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/profile/me:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/profile/me",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Profile me failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/profile/me:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/profile/me:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/profile/me",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Profile me failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:400:bad-request",
+      "id": "admin-app-api:GET:/admin/roles:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/roles:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:403:forbidden",
+      "id": "admin-app-api:GET:/admin/roles:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:404:not-found",
+      "id": "admin-app-api:GET:/admin/roles:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:409:conflict",
+      "id": "admin-app-api:GET:/admin/roles:409",
       "match": {
-        "code": "conflict",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 409
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Conflict."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/roles:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/roles:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/roles:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/roles",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles list Roles failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:400:bad-request",
+      "id": "admin-app-api:POST:/admin/roles:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/roles:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:403:forbidden",
+      "id": "admin-app-api:POST:/admin/roles:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:404:not-found",
+      "id": "admin-app-api:POST:/admin/roles:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:409:conflict",
+      "id": "admin-app-api:POST:/admin/roles:409",
       "match": {
-        "code": "conflict",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 409
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Conflict."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:429:rate-limited",
+      "id": "admin-app-api:POST:/admin/roles:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/roles:500:internal-server-error",
+      "id": "admin-app-api:POST:/admin/roles:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/roles",
         "method": "POST",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles create Role failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:409:conflict",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:409",
       "match": {
-        "code": "conflict",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 409
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Conflict."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/roles/{id}",
         "method": "PATCH",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles update Role failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:400:bad-request",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:403:forbidden",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:404:not-found",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:409:conflict",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:409",
       "match": {
-        "code": "conflict",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 409
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Conflict."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:429:rate-limited",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:500:internal-server-error",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/roles/{id}/permissions",
         "method": "PUT",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles set Role Permissions failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:400:bad-request",
+      "id": "admin-app-api:GET:/admin/users:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/users:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:403:forbidden",
+      "id": "admin-app-api:GET:/admin/users:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:404:not-found",
+      "id": "admin-app-api:GET:/admin/users:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/users:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/users:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/users",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users list Users failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:400:bad-request",
+      "id": "admin-app-api:GET:/admin/users/{id}:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/users/{id}:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:403:forbidden",
+      "id": "admin-app-api:GET:/admin/users/{id}:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:404:not-found",
+      "id": "admin-app-api:GET:/admin/users/{id}:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/users/{id}:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/users/{id}:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/users/{id}:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/users/{id}",
         "method": "GET",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users get User failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/users/{id}/access-policy",
         "method": "PATCH",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Access Policy failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:400:bad-request",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:403:forbidden",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:404:not-found",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:409:conflict",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:409",
       "match": {
-        "code": "conflict",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 409
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Conflict."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:429:rate-limited",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:500:internal-server-error",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/users/{id}/roles",
         "method": "PUT",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Roles assign User Roles failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400",
       "match": {
-        "code": "bad-request",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 400
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Bad request."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401:unauthorized",
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401",
       "match": {
-        "code": "unauthorized",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 401
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Unauthorized."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403",
       "match": {
-        "code": "forbidden",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 403
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Forbidden."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404",
       "match": {
-        "code": "not-found",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 404
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Not found."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429",
       "match": {
-        "code": "rate-limited",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 429
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Rate limited."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
       }
     },
     {
       "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500",
       "match": {
-        "code": "internal-server-error",
         "endpoint": "/admin/users/{id}/status",
         "method": "PATCH",
         "status": 500
       },
       "toast": {
         "category": "error",
-        "title": "Admin Users update User Status failed: Internal server error."
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
       }
     }
   ]

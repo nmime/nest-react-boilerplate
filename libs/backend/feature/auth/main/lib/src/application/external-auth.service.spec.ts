@@ -817,7 +817,7 @@ describe('ExternalAuthService', () => {
         subject: first.user.id,
         tenantId: DefaultAuthTenantId,
       }),
-    ).rejects.toThrow('step_up_required');
+    ).rejects.toMatchObject({ code: 'step-up-required', status: 403 });
 
     await expect(
       service.unlinkProviderIdentity(linked._unsafeUnwrap().id, {
@@ -825,7 +825,7 @@ describe('ExternalAuthService', () => {
         subject: first.user.id,
         tenantId: DefaultAuthTenantId,
       }),
-    ).rejects.toThrow('last_method_unlink_forbidden');
+    ).rejects.toMatchObject({ code: 'last-auth-method-unlink-forbidden', status: 409 });
 
     await social.upsertMethod({
       amr: ['pwd'],

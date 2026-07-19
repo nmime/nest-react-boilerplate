@@ -1,4 +1,4 @@
-import { BadRequestException, HttpStatus, Logger } from '@nestjs/common';
+import { BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { err, ok } from 'neverthrow';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
@@ -34,45 +34,39 @@ describe('exceptions response mapper', () => {
   });
 
   it('creates RFC 9457 problem details without message parameter', () => {
-    expect(createProblemResponse('bad-request')).toMatchObject({
-      code: 'bad-request',
-      detail: 'Bad Request',
+    expect(createProblemResponse()).toMatchObject({
+      detail: 'The request could not be processed.',
       status: 400,
       title: 'Bad Request',
-      type: 'https://example.com/problems/bad-request',
+      type: 'about:blank',
     });
   });
 
   it('maps neverthrow results to API responses', () => {
     expect(mapResultToResponse(ok('ready'))).toEqual({ data: 'ready' });
     expect(mapResultToResponse(err({ code: 'disabled', message: 'OAuth disabled' }))).toMatchObject({
-      code: 'disabled',
-      detail: 'Bad Request',
-      status: 400,
-      title: 'Bad Request',
+      detail: 'An unexpected error occurred.',
+      status: 500,
+      title: 'Internal Server Error',
     });
 
     const ConflictException = Exception({
       name: 'ConflictException',
       kind: ExceptionKind.Client,
-      problemType: 'conflict',
-      title: 'Conflict',
-      detail: 'Resource conflict',
-      status: HttpStatus.CONFLICT,
+      problemType: 'resource-conflict',
     });
-    expect(mapResultToResponse(err(new ConflictException({ data: { resource: 'user' } })))).toMatchObject({
-      code: 'conflict',
+    expect(mapResultToResponse(err(new ConflictException({ extensions: { resourceType: 'user' } })))).toMatchObject({
+      code: 'resource-conflict',
       status: 409,
-      title: 'Conflict',
+      title: 'Resource Conflict',
     });
 
     // Error.message is NEVER exposed — static generic
     expect(mapResultToResponse(err(new Error('Boom')))).toMatchObject({
-      code: 'bad_request',
-      detail: 'Bad Request',
-      status: 400,
-      title: 'Bad Request',
-      type: 'https://example.com/problems/bad_request',
+      detail: 'An unexpected error occurred.',
+      status: 500,
+      title: 'Internal Server Error',
+      type: 'about:blank',
     });
   });
 
@@ -119,7 +113,6 @@ describe('exceptions response mapper', () => {
       const badRequestBody: unknown = json.mock.calls[0]?.[0];
       expect(badRequestBody).not.toHaveProperty('instance');
       expect(badRequestBody).toMatchObject({
-        code: 'bad-request',
         status: 400,
         title: 'Bad Request',
       });
@@ -252,6 +245,34 @@ describe('exceptions response mapper', () => {
       new ExceptionsFilter().catch(new BadRequestException('test'), host as never);
 
       expect(header).toHaveBeenCalledWith('x-request-id', 'test-req-123');
+      expect(header).toHaveBeenCalledWith('vary', 'Accept-Language, X-Locale, X-Language, Cookie');
+      expect(json.mock.calls[0]?.[0]).toMatchObject({
+        instance: 'https://example.com/problem-instances/test-req-123',
+        status: 400,
+        type: 'about:blank',
+      });
+    } finally {
+      restoreLogger();
+    }
+  });
+
+  it('adds the Bearer challenge required by 401 responses', () => {
+    const restoreLogger = muteExceptionLogger();
+    const json = vi.fn();
+    const header = vi.fn(() => ({ json }));
+    const type = vi.fn(() => ({ header, json }));
+    const status = vi.fn(() => ({ type }));
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ headers: {} }),
+        getResponse: () => ({ status }),
+      }),
+    };
+
+    try {
+      new ExceptionsFilter().catch(new UnauthorizedException('secret'), host as never);
+      expect(header).toHaveBeenCalledWith('www-authenticate', 'Bearer');
+      expect(json.mock.calls[0]?.[0]).toMatchObject({ status: 401, type: 'about:blank' });
     } finally {
       restoreLogger();
     }

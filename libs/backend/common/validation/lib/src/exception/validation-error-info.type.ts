@@ -1,16 +1,13 @@
 /**
- * Typed validation error info — exposed in response `info.errors`.
+ * Public validation issue in the problem type's `errors` extension.
  */
 export interface ValidationErrorInfo {
-  property: string;
-  constraints: Record<string, string>;
-  message?: string;
-  detail?: string;
-  pointer?: string;
+  detail: string;
+  pointer: string;
 }
 
 /**
- * Aggregate validation error info — what goes into `info` for validation failures.
+ * Aggregate validation extension.
  */
 export interface ClientDataValidationInfo {
   errors: ValidationErrorInfo[];

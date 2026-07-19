@@ -31,6 +31,17 @@ const invokeOnResponse = async (
 
 describe('createApiResilienceMiddleware onResponse', () => {
   it('shows a success toast for <400 responses and passes them through untouched', async () => {
+    const eventHub = createApiRuntimeEventHub();
+    eventHub.emit({
+      type: 'network-offline',
+      error: {
+        code: 'network.offline',
+        id: 'GET:/profile:network:network.offline',
+        kind: 'network',
+        message: 'Offline',
+        status: null,
+      },
+    });
     const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
     const rules = parseApiToastRules([
       {
@@ -41,7 +52,7 @@ describe('createApiResilienceMiddleware onResponse', () => {
       },
     ]);
     const middleware = createApiResilienceMiddleware({
-      eventHub: createApiRuntimeEventHub(),
+      eventHub,
       toastRules: rules,
       toastRuntime,
     });
@@ -54,6 +65,7 @@ describe('createApiResilienceMiddleware onResponse', () => {
     const result = await invokeOnResponse(middleware, request, new Response(null, { status: 200 }));
 
     expect(result).toBeUndefined();
+    expect(eventHub.getState()).toMatchObject({ lastError: null, status: 'online' });
     expect(toastRuntime.visible.at(-1)).toMatchObject({
       category: 'success',
       title: 'Profile saved',

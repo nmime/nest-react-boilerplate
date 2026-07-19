@@ -19,5 +19,14 @@
   "site.route.admin.label": "Administration",
   "site.route.admin.detail": "Protected operations and audit history.",
   "site.route.docs.label": "Public landing",
-  "site.route.docs.detail": "The primary introduction to the product."
+  "site.route.docs.detail": "The primary introduction to the product.",
+  "site.problems.kicker": "RFC 9457 registry",
+  "site.problems.title": "API problem types",
+  "site.problems.intro": "This document is the human-readable target for problem type URIs rooted at",
+  "site.problems.instanceDetail": "The fragment identifies the stable type; an instance URI identifies one occurrence.",
+  "site.problems.aboutBlank": "Generic HTTP errors use the status phrase as their title and do not define custom semantics.",
+  "site.problems.status": "Status",
+  "site.problems.meaning": "Meaning",
+  "site.problems.resolution": "Resolution",
+  "site.problems.extensions": "Extensions"
 }

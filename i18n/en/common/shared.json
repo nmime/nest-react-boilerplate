@@ -20,6 +20,7 @@
   "ui.runtime.offline.description": "Reconnect to continue. This screen stays on the current route and retries safely.",
   "ui.runtime.serverUnavailable.title": "Service temporarily unavailable",
   "ui.runtime.serverUnavailable.description": "The API is not responding right now. You can retry without leaving this page.",
+  "ui.runtime.requestFailed.title": "Request failed",
   "ui.runtime.notifications.label": "API notifications",
   "ui.runtime.retry": "Retry",
   "ui.runtime.dismissToast": "Dismiss"

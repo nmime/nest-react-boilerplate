@@ -39,13 +39,15 @@ export class WebSocketResponseTransformer implements NestInterceptor {
 
   private handleError(context: ExecutionContext, error: unknown): WebSocketResponse {
     const problem = toProblemDetails(error);
+    let code = 'internal-error';
+    if (error instanceof BaseException || error instanceof HttpException) {
+      code = problem.type === 'about:blank' ? `http.${problem.status}` : problem.type;
+    }
+
     return {
       id: this.getRequestId(context),
       error: {
-        code:
-          error instanceof BaseException || error instanceof HttpException
-            ? (problem.code ?? 'request-failed')
-            : 'internal-error',
+        code,
         message: problem.detail ?? problem.title,
         data: problem,
       },

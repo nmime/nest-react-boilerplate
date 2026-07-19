@@ -47,7 +47,11 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 ### Exception System (RFC 9457)
 
 - All exceptions use `@app/backend-common-exception` — do not invent new exception bases.
-- Factory: `Exception({ name, kind, problemType, title, detail, status })`.
+- Factory: `Exception({ name, kind, problemType?, status?, extensionsType? })`.
+- Registry: `@app/common-problem-details` owns every custom type's identity,
+  title, status, safe default detail, resolution guidance, and extensions.
+- Generic status-only failures use `about:blank`; the HTTP filter owns absolute
+  occurrence `instance` values and guarantees body/HTTP status equality.
 - Domain classes: `ResourceNotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `BadRequestException`, `InternalException`.
 - Wire format: RFC 9457 `application/problem+json`.
 - **Do not reference** `AppHttpException`, `BaseExceptionInput`, or `ProblemDetailsInput` — these do not exist.

@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
+import { isRequestId } from '@app/common-problem-details';
 
 interface RequestContextData {
   requestId: string;
@@ -11,12 +12,12 @@ const storage = new AsyncLocalStorage<RequestContextData>();
 export function normalizeRequestId(value: string | string[] | undefined): string | undefined {
   const candidate = Array.isArray(value) ? value[0] : value;
   const normalized = candidate?.trim();
-  return normalized ? normalized.slice(0, 256) : undefined;
+  return normalized && isRequestId(normalized) ? normalized : undefined;
 }
 
 export const requestContext = {
   run<T>(fn: () => T, existingId?: string): T {
-    return storage.run({ requestId: existingId ?? randomUUID() }, fn);
+    return storage.run({ requestId: normalizeRequestId(existingId) ?? randomUUID() }, fn);
   },
 
   getRequestId(): string | undefined {

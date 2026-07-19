@@ -196,7 +196,7 @@ describe('admin roles page management', () => {
     const dialog = await screen.findByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Edit role' }));
 
-    expect(await screen.findByText('role update backend rejected')).toBeTruthy();
+    expect(await screen.findByText('Role update failed')).toBeTruthy();
   });
 
   it('creates a role with a key, label, and description', async () => {
@@ -266,7 +266,7 @@ describe('admin roles page management', () => {
     });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create role' }));
 
-    expect(await screen.findByText('role creation backend rejected')).toBeTruthy();
+    expect(await screen.findByText('Role creation failed')).toBeTruthy();
   });
 
   it('renders the roles catalog error state', async () => {
@@ -278,6 +278,6 @@ describe('admin roles page management', () => {
       </AdminTestProviders>,
     );
 
-    expect(await screen.findByText('roles catalog offline')).toBeTruthy();
+    expect(await screen.findByText('Roles catalog request failed')).toBeTruthy();
   });
 });

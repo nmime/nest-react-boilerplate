@@ -106,7 +106,7 @@ describe('API resilience middleware', () => {
     expect(eventHub.getState()).toMatchObject({ status: 'offline' });
     expect(toastRuntime.visible.at(-1)).toMatchObject({
       category: 'warning',
-      title: 'Connection lost',
+      title: 'You are offline',
     });
   });
 
@@ -143,7 +143,7 @@ describe('API resilience middleware', () => {
     expect(eventHub.getState()).toMatchObject({ status: 'offline' });
     expect(toastRuntime.visible[0]).toMatchObject({
       category: 'warning',
-      title: 'Connection lost',
+      title: 'You are offline',
     });
 
     const response = new Response(JSON.stringify({ code: 'boom', detail: 'Database down' }), {

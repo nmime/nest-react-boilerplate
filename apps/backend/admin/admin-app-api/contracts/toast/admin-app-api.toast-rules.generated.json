@@ -51,7 +51,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:400:bad-request",
+      "id": "admin-app-api:GET:/admin/audit:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -60,9 +60,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -70,8 +70,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.400.bad-request",
-          "default": "Admin Users list Audit failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.400",
+          "default": "Admin Users list Audit failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -84,7 +84,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/audit:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -93,17 +93,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.401",
           "default": "Admin Users list Audit failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -117,7 +117,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:403:forbidden",
+      "id": "admin-app-api:GET:/admin/audit:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -126,9 +126,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -136,7 +136,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.403",
           "default": "Admin Users list Audit failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -150,7 +150,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:404:not-found",
+      "id": "admin-app-api:GET:/admin/audit:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -159,9 +159,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "GET_404_not-found",
+        "variant": "GET_404",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -169,8 +169,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.404.not-found",
-          "default": "Admin Users list Audit failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.404",
+          "default": "Admin Users list Audit failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -183,7 +183,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/audit:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -192,9 +192,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -202,8 +202,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.429.rate-limited",
-          "default": "Admin Users list Audit failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.429",
+          "default": "Admin Users list Audit failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -216,7 +216,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/audit:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/audit:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -225,9 +225,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -235,8 +235,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.500.internal-server-error",
-          "default": "Admin Users list Audit failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listaudit.get.500",
+          "default": "Admin Users list Audit failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -282,7 +282,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:400:bad-request",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -291,9 +291,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -301,8 +301,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.400.bad-request",
-          "default": "Admin Users dashboard Summary failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.400",
+          "default": "Admin Users dashboard Summary failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -315,7 +315,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -324,17 +324,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.401",
           "default": "Admin Users dashboard Summary failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -348,7 +348,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:403:forbidden",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -357,9 +357,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -367,7 +367,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.403",
           "default": "Admin Users dashboard Summary failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -381,7 +381,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:404:not-found",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -390,9 +390,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "GET_404_not-found",
+        "variant": "GET_404",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -400,8 +400,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.404.not-found",
-          "default": "Admin Users dashboard Summary failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.404",
+          "default": "Admin Users dashboard Summary failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -414,7 +414,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -423,9 +423,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -433,8 +433,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.429.rate-limited",
-          "default": "Admin Users dashboard Summary failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.429",
+          "default": "Admin Users dashboard Summary failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -447,7 +447,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/dashboard/summary:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/dashboard/summary:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -456,9 +456,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -466,8 +466,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.500.internal-server-error",
-          "default": "Admin Users dashboard Summary failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-dashboardsummary.get.500",
+          "default": "Admin Users dashboard Summary failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -513,7 +513,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/profile/me:400:bad-request",
+      "id": "admin-app-api:GET:/admin/profile/me:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -522,9 +522,9 @@
         "tags": ["AdminProfile"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -532,8 +532,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.400.bad-request",
-          "default": "Admin Profile me failed: Bad request."
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.400",
+          "default": "Admin Profile me failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -546,7 +546,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/profile/me:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/profile/me:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -555,17 +555,17 @@
         "tags": ["AdminProfile"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.401",
           "default": "Admin Profile me failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -579,7 +579,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/profile/me:403:forbidden",
+      "id": "admin-app-api:GET:/admin/profile/me:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -588,9 +588,9 @@
         "tags": ["AdminProfile"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -598,7 +598,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.403",
           "default": "Admin Profile me failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -612,7 +612,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/profile/me:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/profile/me:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -621,9 +621,9 @@
         "tags": ["AdminProfile"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -631,8 +631,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.429.rate-limited",
-          "default": "Admin Profile me failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.429",
+          "default": "Admin Profile me failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -645,7 +645,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/profile/me:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/profile/me:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -654,9 +654,9 @@
         "tags": ["AdminProfile"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -664,8 +664,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.500.internal-server-error",
-          "default": "Admin Profile me failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminprofilecontroller-me.get.500",
+          "default": "Admin Profile me failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -711,7 +711,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:400:bad-request",
+      "id": "admin-app-api:GET:/admin/roles:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -720,9 +720,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -730,8 +730,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.400.bad-request",
-          "default": "Admin Roles list Roles failed: Bad request."
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.400",
+          "default": "Admin Roles list Roles failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -744,7 +744,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/roles:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -753,17 +753,17 @@
         "tags": ["AdminRoles"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.401",
           "default": "Admin Roles list Roles failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -777,7 +777,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:403:forbidden",
+      "id": "admin-app-api:GET:/admin/roles:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -786,9 +786,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -796,7 +796,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.403",
           "default": "Admin Roles list Roles failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -810,7 +810,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:404:not-found",
+      "id": "admin-app-api:GET:/admin/roles:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -819,9 +819,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "GET_404_not-found",
+        "variant": "GET_404",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -829,8 +829,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.404.not-found",
-          "default": "Admin Roles list Roles failed: Not found."
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.404",
+          "default": "Admin Roles list Roles failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -843,7 +843,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:409:conflict",
+      "id": "admin-app-api:GET:/admin/roles:409",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -852,9 +852,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "GET_409_conflict",
+        "variant": "GET_409",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -862,7 +862,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.409.conflict",
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.409",
           "default": "Admin Roles list Roles failed: Conflict."
         },
         "icon": "alert-circle",
@@ -876,7 +876,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/roles:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -885,9 +885,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -895,8 +895,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.429.rate-limited",
-          "default": "Admin Roles list Roles failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.429",
+          "default": "Admin Roles list Roles failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -909,7 +909,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/roles:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/roles:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -918,9 +918,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -928,8 +928,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.500.internal-server-error",
-          "default": "Admin Roles list Roles failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminrolescontroller-listroles.get.500",
+          "default": "Admin Roles list Roles failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -975,7 +975,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:400:bad-request",
+      "id": "admin-app-api:POST:/admin/roles:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -984,9 +984,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "POST_400_bad-request",
+        "variant": "POST_400",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -994,8 +994,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.400.bad-request",
-          "default": "Admin Roles create Role failed: Bad request."
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.400",
+          "default": "Admin Roles create Role failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1008,7 +1008,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:401:unauthorized",
+      "id": "admin-app-api:POST:/admin/roles:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1017,17 +1017,17 @@
         "tags": ["AdminRoles"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "POST_401_unauthorized",
+        "variant": "POST_401",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.401",
           "default": "Admin Roles create Role failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1041,7 +1041,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:403:forbidden",
+      "id": "admin-app-api:POST:/admin/roles:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1050,9 +1050,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "POST_403_forbidden",
+        "variant": "POST_403",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1060,7 +1060,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.403.forbidden",
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.403",
           "default": "Admin Roles create Role failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1074,7 +1074,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:404:not-found",
+      "id": "admin-app-api:POST:/admin/roles:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1083,9 +1083,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "POST_404_not-found",
+        "variant": "POST_404",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1093,8 +1093,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.404.not-found",
-          "default": "Admin Roles create Role failed: Not found."
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.404",
+          "default": "Admin Roles create Role failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1107,7 +1107,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:409:conflict",
+      "id": "admin-app-api:POST:/admin/roles:409",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1116,9 +1116,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "POST_409_conflict",
+        "variant": "POST_409",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1126,7 +1126,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.409.conflict",
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.409",
           "default": "Admin Roles create Role failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1140,7 +1140,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:429:rate-limited",
+      "id": "admin-app-api:POST:/admin/roles:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1149,9 +1149,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "POST_429_rate-limited",
+        "variant": "POST_429",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1159,8 +1159,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.429.rate-limited",
-          "default": "Admin Roles create Role failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.429",
+          "default": "Admin Roles create Role failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1173,7 +1173,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:POST:/admin/roles:500:internal-server-error",
+      "id": "admin-app-api:POST:/admin/roles:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "POST",
@@ -1182,9 +1182,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "POST_500_internal-server-error",
+        "variant": "POST_500",
         "fallbackVariant": "POST_ERR",
         "networkVariant": "POST_NET"
       },
@@ -1192,8 +1192,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.500.internal-server-error",
-          "default": "Admin Roles create Role failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminrolescontroller-createrole.post.500",
+          "default": "Admin Roles create Role failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1239,7 +1239,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1248,9 +1248,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_400_bad-request",
+        "variant": "PATCH_400",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1258,8 +1258,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.400.bad-request",
-          "default": "Admin Roles update Role failed: Bad request."
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.400",
+          "default": "Admin Roles update Role failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1272,7 +1272,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:401:unauthorized",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1281,17 +1281,17 @@
         "tags": ["AdminRoles"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_401_unauthorized",
+        "variant": "PATCH_401",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.401",
           "default": "Admin Roles update Role failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1305,7 +1305,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1314,9 +1314,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_403_forbidden",
+        "variant": "PATCH_403",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1324,7 +1324,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.403.forbidden",
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.403",
           "default": "Admin Roles update Role failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1338,7 +1338,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1347,9 +1347,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_404_not-found",
+        "variant": "PATCH_404",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1357,8 +1357,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.404.not-found",
-          "default": "Admin Roles update Role failed: Not found."
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.404",
+          "default": "Admin Roles update Role failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1371,7 +1371,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:409:conflict",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:409",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1380,9 +1380,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_409_conflict",
+        "variant": "PATCH_409",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1390,7 +1390,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.409.conflict",
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.409",
           "default": "Admin Roles update Role failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1404,7 +1404,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1413,9 +1413,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_429_rate-limited",
+        "variant": "PATCH_429",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1423,8 +1423,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.429.rate-limited",
-          "default": "Admin Roles update Role failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.429",
+          "default": "Admin Roles update Role failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1437,7 +1437,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/roles/{id}:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/roles/{id}:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -1446,9 +1446,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_500_internal-server-error",
+        "variant": "PATCH_500",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -1456,8 +1456,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.500.internal-server-error",
-          "default": "Admin Roles update Role failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminrolescontroller-updaterole.patch.500",
+          "default": "Admin Roles update Role failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1503,7 +1503,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:400:bad-request",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1512,9 +1512,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_400_bad-request",
+        "variant": "PUT_400",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1522,8 +1522,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.400.bad-request",
-          "default": "Admin Roles set Role Permissions failed: Bad request."
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.400",
+          "default": "Admin Roles set Role Permissions failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1536,7 +1536,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:401:unauthorized",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1545,17 +1545,17 @@
         "tags": ["AdminRoles"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_401_unauthorized",
+        "variant": "PUT_401",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.401",
           "default": "Admin Roles set Role Permissions failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1569,7 +1569,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:403:forbidden",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1578,9 +1578,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_403_forbidden",
+        "variant": "PUT_403",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1588,7 +1588,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.403.forbidden",
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.403",
           "default": "Admin Roles set Role Permissions failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1602,7 +1602,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:404:not-found",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1611,9 +1611,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_404_not-found",
+        "variant": "PUT_404",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1621,8 +1621,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.404.not-found",
-          "default": "Admin Roles set Role Permissions failed: Not found."
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.404",
+          "default": "Admin Roles set Role Permissions failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1635,7 +1635,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:409:conflict",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:409",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1644,9 +1644,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_409_conflict",
+        "variant": "PUT_409",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1654,7 +1654,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.409.conflict",
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.409",
           "default": "Admin Roles set Role Permissions failed: Conflict."
         },
         "icon": "alert-circle",
@@ -1668,7 +1668,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:429:rate-limited",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1677,9 +1677,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_429_rate-limited",
+        "variant": "PUT_429",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1687,8 +1687,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.429.rate-limited",
-          "default": "Admin Roles set Role Permissions failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.429",
+          "default": "Admin Roles set Role Permissions failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1701,7 +1701,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:500:internal-server-error",
+      "id": "admin-app-api:PUT:/admin/roles/{id}/permissions:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -1710,9 +1710,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_500_internal-server-error",
+        "variant": "PUT_500",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -1720,8 +1720,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.500.internal-server-error",
-          "default": "Admin Roles set Role Permissions failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminrolescontroller-setrolepermissions.put.500",
+          "default": "Admin Roles set Role Permissions failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1767,7 +1767,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/users:400:bad-request",
+      "id": "admin-app-api:GET:/admin/users:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1776,9 +1776,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1786,8 +1786,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.400.bad-request",
-          "default": "Admin Users list Users failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.400",
+          "default": "Admin Users list Users failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1800,7 +1800,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/users:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1809,17 +1809,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.401",
           "default": "Admin Users list Users failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -1833,7 +1833,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users:403:forbidden",
+      "id": "admin-app-api:GET:/admin/users:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1842,9 +1842,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1852,7 +1852,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.403",
           "default": "Admin Users list Users failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -1866,7 +1866,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users:404:not-found",
+      "id": "admin-app-api:GET:/admin/users:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1875,9 +1875,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "GET_404_not-found",
+        "variant": "GET_404",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1885,8 +1885,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.404.not-found",
-          "default": "Admin Users list Users failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.404",
+          "default": "Admin Users list Users failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1899,7 +1899,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/users:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1908,9 +1908,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1918,8 +1918,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.429.rate-limited",
-          "default": "Admin Users list Users failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.429",
+          "default": "Admin Users list Users failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1932,7 +1932,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/users:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -1941,9 +1941,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -1951,8 +1951,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.500.internal-server-error",
-          "default": "Admin Users list Users failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-listusers.get.500",
+          "default": "Admin Users list Users failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -1998,7 +1998,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:400:bad-request",
+      "id": "admin-app-api:GET:/admin/users/{id}:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2007,9 +2007,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "GET_400_bad-request",
+        "variant": "GET_400",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2017,8 +2017,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.400.bad-request",
-          "default": "Admin Users get User failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.400",
+          "default": "Admin Users get User failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2031,7 +2031,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:401:unauthorized",
+      "id": "admin-app-api:GET:/admin/users/{id}:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2040,17 +2040,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "GET_401_unauthorized",
+        "variant": "GET_401",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.401",
           "default": "Admin Users get User failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2064,7 +2064,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:403:forbidden",
+      "id": "admin-app-api:GET:/admin/users/{id}:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2073,9 +2073,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "GET_403_forbidden",
+        "variant": "GET_403",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2083,7 +2083,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.403",
           "default": "Admin Users get User failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2097,7 +2097,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:404:not-found",
+      "id": "admin-app-api:GET:/admin/users/{id}:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2106,9 +2106,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "GET_404_not-found",
+        "variant": "GET_404",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2116,8 +2116,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.404.not-found",
-          "default": "Admin Users get User failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.404",
+          "default": "Admin Users get User failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2130,7 +2130,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:429:rate-limited",
+      "id": "admin-app-api:GET:/admin/users/{id}:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2139,9 +2139,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "GET_429_rate-limited",
+        "variant": "GET_429",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2149,8 +2149,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.429.rate-limited",
-          "default": "Admin Users get User failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.429",
+          "default": "Admin Users get User failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2163,7 +2163,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:GET:/admin/users/{id}:500:internal-server-error",
+      "id": "admin-app-api:GET:/admin/users/{id}:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "GET",
@@ -2172,9 +2172,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "GET_500_internal-server-error",
+        "variant": "GET_500",
         "fallbackVariant": "GET_ERR",
         "networkVariant": "GET_NET"
       },
@@ -2182,8 +2182,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.500.internal-server-error",
-          "default": "Admin Users get User failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-getuser.get.500",
+          "default": "Admin Users get User failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2229,7 +2229,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2238,9 +2238,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_400_bad-request",
+        "variant": "PATCH_400",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2248,8 +2248,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.400.bad-request",
-          "default": "Admin Users update User Access Policy failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.400",
+          "default": "Admin Users update User Access Policy failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2262,7 +2262,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401:unauthorized",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2271,17 +2271,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_401_unauthorized",
+        "variant": "PATCH_401",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.401",
           "default": "Admin Users update User Access Policy failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2295,7 +2295,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2304,9 +2304,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_403_forbidden",
+        "variant": "PATCH_403",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2314,7 +2314,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.403",
           "default": "Admin Users update User Access Policy failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2328,7 +2328,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2337,9 +2337,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_404_not-found",
+        "variant": "PATCH_404",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2347,8 +2347,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.404.not-found",
-          "default": "Admin Users update User Access Policy failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.404",
+          "default": "Admin Users update User Access Policy failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2361,7 +2361,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2370,9 +2370,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_429_rate-limited",
+        "variant": "PATCH_429",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2380,8 +2380,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.429.rate-limited",
-          "default": "Admin Users update User Access Policy failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.429",
+          "default": "Admin Users update User Access Policy failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2394,7 +2394,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/access-policy:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2403,9 +2403,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_500_internal-server-error",
+        "variant": "PATCH_500",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2413,8 +2413,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.500.internal-server-error",
-          "default": "Admin Users update User Access Policy failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuseraccesspolicy.patch.500",
+          "default": "Admin Users update User Access Policy failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2460,7 +2460,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:400:bad-request",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2469,9 +2469,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_400_bad-request",
+        "variant": "PUT_400",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2479,8 +2479,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.400.bad-request",
-          "default": "Admin Roles assign User Roles failed: Bad request."
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.400",
+          "default": "Admin Roles assign User Roles failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2493,7 +2493,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:401:unauthorized",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2502,17 +2502,17 @@
         "tags": ["AdminRoles"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_401_unauthorized",
+        "variant": "PUT_401",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.401",
           "default": "Admin Roles assign User Roles failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2526,7 +2526,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:403:forbidden",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2535,9 +2535,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_403_forbidden",
+        "variant": "PUT_403",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2545,7 +2545,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.403.forbidden",
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.403",
           "default": "Admin Roles assign User Roles failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2559,7 +2559,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:404:not-found",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2568,9 +2568,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_404_not-found",
+        "variant": "PUT_404",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2578,8 +2578,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.404.not-found",
-          "default": "Admin Roles assign User Roles failed: Not found."
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.404",
+          "default": "Admin Roles assign User Roles failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2592,7 +2592,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:409:conflict",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:409",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2601,9 +2601,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 409,
-      "errorCode": "conflict",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_409_conflict",
+        "variant": "PUT_409",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2611,7 +2611,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.409.conflict",
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.409",
           "default": "Admin Roles assign User Roles failed: Conflict."
         },
         "icon": "alert-circle",
@@ -2625,7 +2625,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:429:rate-limited",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2634,9 +2634,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_429_rate-limited",
+        "variant": "PUT_429",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2644,8 +2644,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.429.rate-limited",
-          "default": "Admin Roles assign User Roles failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.429",
+          "default": "Admin Roles assign User Roles failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2658,7 +2658,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PUT:/admin/users/{id}/roles:500:internal-server-error",
+      "id": "admin-app-api:PUT:/admin/users/{id}/roles:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PUT",
@@ -2667,9 +2667,9 @@
         "tags": ["AdminRoles"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PUT_500_internal-server-error",
+        "variant": "PUT_500",
         "fallbackVariant": "PUT_ERR",
         "networkVariant": "PUT_NET"
       },
@@ -2677,8 +2677,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.500.internal-server-error",
-          "default": "Admin Roles assign User Roles failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminrolescontroller-assignuserroles.put.500",
+          "default": "Admin Roles assign User Roles failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2724,7 +2724,7 @@
       "enabled": false
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400:bad-request",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:400",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2733,9 +2733,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 400,
-      "errorCode": "bad-request",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_400_bad-request",
+        "variant": "PATCH_400",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2743,8 +2743,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.400.bad-request",
-          "default": "Admin Users update User Status failed: Bad request."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.400",
+          "default": "Admin Users update User Status failed: Bad Request."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2757,7 +2757,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401:unauthorized",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:401",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2766,17 +2766,17 @@
         "tags": ["AdminUsers"]
       },
       "status": 401,
-      "errorCode": "unauthorized",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_401_unauthorized",
+        "variant": "PATCH_401",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
       "display": {
-        "mode": "toast",
+        "mode": "silent",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.401.unauthorized",
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.401",
           "default": "Admin Users update User Status failed: Unauthorized."
         },
         "icon": "alert-circle",
@@ -2790,7 +2790,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403:forbidden",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:403",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2799,9 +2799,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 403,
-      "errorCode": "forbidden",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_403_forbidden",
+        "variant": "PATCH_403",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2809,7 +2809,7 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.403.forbidden",
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.403",
           "default": "Admin Users update User Status failed: Forbidden."
         },
         "icon": "alert-circle",
@@ -2823,7 +2823,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404:not-found",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:404",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2832,9 +2832,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 404,
-      "errorCode": "not-found",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_404_not-found",
+        "variant": "PATCH_404",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2842,8 +2842,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.404.not-found",
-          "default": "Admin Users update User Status failed: Not found."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.404",
+          "default": "Admin Users update User Status failed: Not Found."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2856,7 +2856,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429:rate-limited",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:429",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2865,9 +2865,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 429,
-      "errorCode": "rate-limited",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_429_rate-limited",
+        "variant": "PATCH_429",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2875,8 +2875,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.429.rate-limited",
-          "default": "Admin Users update User Status failed: Rate limited."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.429",
+          "default": "Admin Users update User Status failed: Too Many Requests."
         },
         "icon": "alert-circle",
         "color": "red",
@@ -2889,7 +2889,7 @@
       "enabled": true
     },
     {
-      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500:internal-server-error",
+      "id": "admin-app-api:PATCH:/admin/users/{id}/status:500",
       "endpoint": {
         "app": "admin-app-api",
         "method": "PATCH",
@@ -2898,9 +2898,9 @@
         "tags": ["AdminUsers"]
       },
       "status": 500,
-      "errorCode": "internal-server-error",
+      "errorCode": null,
       "match": {
-        "variant": "PATCH_500_internal-server-error",
+        "variant": "PATCH_500",
         "fallbackVariant": "PATCH_ERR",
         "networkVariant": "PATCH_NET"
       },
@@ -2908,8 +2908,8 @@
         "mode": "toast",
         "category": "error",
         "text": {
-          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.500.internal-server-error",
-          "default": "Admin Users update User Status failed: Internal server error."
+          "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.500",
+          "default": "Admin Users update User Status failed: Internal Server Error."
         },
         "icon": "alert-circle",
         "color": "red",

@@ -6,6 +6,28 @@ const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/si
 const runtimePackagePath = resolve(import.meta.dirname, '../package.json');
 const expectedCopy = 'A dependable home for the pages people return to.';
 
+const containsExactUrl = (contents, expectedValue) => {
+  const expected = new URL(expectedValue);
+  const candidates = contents.match(/https:\/\/[^"'`<>\s\\]+/gu) ?? [];
+
+  return candidates.some((candidate) => {
+    try {
+      const parsed = new URL(candidate);
+      return (
+        parsed.protocol === expected.protocol &&
+        parsed.username === expected.username &&
+        parsed.password === expected.password &&
+        parsed.host === expected.host &&
+        parsed.pathname === expected.pathname &&
+        parsed.search === expected.search &&
+        parsed.hash === expected.hash
+      );
+    } catch {
+      return false;
+    }
+  });
+};
+
 const readBuiltTextFiles = (directory) => {
   if (!existsSync(directory)) {
     return [];
@@ -34,6 +56,10 @@ const searchable = readBuiltTextFiles(distRoot).join('\n');
 
 if (!searchable.includes(expectedCopy)) {
   throw new Error(`[${appName}] expected Vike site copy not found in build.`);
+}
+
+if (!containsExactUrl(searchable, 'https://example.com/problems') || !searchable.includes('client-data-validation')) {
+  throw new Error(`[${appName}] RFC 9457 problem registry is missing from the Vike build.`);
 }
 
 const serverEntry = join(distRoot, 'server/index.js');

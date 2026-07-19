@@ -1,0 +1,36 @@
+{
+  "name": "@app/common-problem-details",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/common/problem-details/lib/src",
+  "projectType": "library",
+  "tags": ["platform:shared", "type:common", "scope:shared", "framework:neutral"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/common/problem-details/lib",
+        "main": "libs/common/problem-details/lib/src/index.ts",
+        "tsConfig": "libs/common/problem-details/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/common/problem-details/lib",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/common/problem-details/lib"]
+    }
+  }
+}

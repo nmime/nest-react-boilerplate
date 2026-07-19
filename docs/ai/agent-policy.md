@@ -88,14 +88,17 @@ All exceptions flow through the `@app/backend-common-exception` library.
   export class MyCustomException extends Exception({
     name: 'MyCustomError',
     kind: ExceptionKind.Client,
-    problemType: 'my_custom_error',
-    title: 'My Custom Error',
-    detail: 'What went wrong and why.',
-    status: 400,
+    problemType: 'my-custom-error',
   }) {}
 
   throw new MyCustomException({ meta: { operation: 'example' } });
   ```
+
+  `my-custom-error` must first be added to `ProblemTypeDefinitions` in
+  `@app/common-problem-details`, including its title, status, safe default
+  detail, resolution guidance, and public extensions. If the error has no
+  semantics beyond its HTTP status, omit `problemType` and provide `status`;
+  the response then uses RFC-defined `about:blank` semantics.
 
 - **Domain exception classes** (pre-configured for common HTTP error codes):
 
@@ -122,8 +125,18 @@ All exceptions flow through the `@app/backend-common-exception` library.
   and `pointer`).
 - **Problem identity**: Build problem `type` values with
   `problemTypeForCode()`. `pnpm nrb init` replaces the reserved `example.com`
-  base with the configured product domain. Never use a repository, package,
-  template, or request host name as problem identity.
+  base with the configured product domain. Custom identifiers use
+  `https://<root-domain>/problems#<code>`; `/problems` is the resolvable HTML
+  registry in both apex-capable apps. Never use a repository, package,
+  template, request host, or undeclared free-form value as problem identity.
+- **Occurrence and status invariants**: The filter derives `instance` from the
+  validated request ID as an absolute opaque URI. The body `status` always
+  equals the HTTP response status.
+- **Public versus private context**: only `extensions` is public. `meta`,
+  `cause`, stack traces, `HttpException.message`, and arbitrary
+  `HttpException.getResponse()` bodies never enter the wire response.
+- **Localization**: localize the standard `title` and `detail` members and set
+  `Content-Language`; do not add a parallel localized-detail member.
 
 - **Anti-patterns — these do not exist in the codebase**:
   - There is **no** `AppHttpException` class. Do not import or reference it.

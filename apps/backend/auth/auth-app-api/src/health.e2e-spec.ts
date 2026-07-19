@@ -153,37 +153,37 @@ describe('auth-app-api e2e', () => {
     delete process.env.AUTH_JWT_SECRET;
   }, 30_000);
 
-  it('GET / returns standardized problem details without raw path instance', async () => {
+  it('GET / returns localized RFC 9457 problem details with an occurrence URI', async () => {
     const enResponse = await app.inject({
       method: 'GET',
       url: '/',
-      headers: { 'accept-language': 'en' },
+      headers: { 'accept-language': 'en', 'x-request-id': 'not-found-en' },
     });
     const ruResponse = await app.inject({
       method: 'GET',
       url: '/',
-      headers: { 'accept-language': 'ru' },
+      headers: { 'accept-language': 'ru', 'x-request-id': 'not-found-ru' },
     });
     const enBody = enResponse.json<Record<string, unknown>>();
     const ruBody = ruResponse.json<Record<string, unknown>>();
 
     expect(enResponse.statusCode).toBe(404);
     expect(ruResponse.statusCode).toBe(404);
-    expect(enBody).not.toHaveProperty('instance');
-    expect(ruBody).not.toHaveProperty('instance');
+    expect(enResponse.headers['content-type']).toContain('application/problem+json');
+    expect(enResponse.headers['content-language']).toBe('en');
+    expect(ruResponse.headers['content-language']).toBe('ru');
     expect(enBody).toMatchObject({
-      code: 'not-found',
       detail: 'The requested resource was not found.',
+      instance: 'https://example.com/problem-instances/not-found-en',
       status: 404,
       title: 'Not Found',
-      type: 'https://example.com/problems/not-found',
+      type: 'about:blank',
     });
     expect(ruBody).toMatchObject({
-      code: enBody.code,
-      detail: enBody.detail,
-      localizedDetail: 'Запрашиваемый ресурс не найден.',
+      detail: 'Запрашиваемый ресурс не найден.',
+      instance: 'https://example.com/problem-instances/not-found-ru',
       status: enBody.status,
-      title: enBody.title,
+      title: 'Не найдено',
       type: enBody.type,
     });
   });

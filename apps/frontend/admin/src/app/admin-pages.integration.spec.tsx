@@ -224,7 +224,7 @@ describe('admin pages integration', () => {
       }),
     );
 
-    expect(await screen.findByText('summary offline')).toBeTruthy();
+    expect(await screen.findAllByText('Dashboard summary request failed')).not.toHaveLength(0);
     await waitFor(() => {
       expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(3);
     });
@@ -427,7 +427,7 @@ describe('admin pages integration', () => {
       }),
     );
 
-    expect(await screen.findByText('audit stream offline')).toBeTruthy();
+    expect(await screen.findByText('Audit log request failed')).toBeTruthy();
   });
 
   it('keeps the roles matrix read-only when the admin cannot write roles', async () => {
@@ -564,7 +564,7 @@ describe('admin pages integration', () => {
       }),
     );
 
-    expect(await screen.findByText('Cannot strip admin core permissions')).toBeTruthy();
+    expect(await screen.findByText('Role permissions update failed')).toBeTruthy();
   });
 
   it('covers profile, forbidden/loading/error/not-found, tenant roadmap and CASL hidden nav', () => {

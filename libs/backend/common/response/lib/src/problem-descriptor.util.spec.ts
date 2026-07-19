@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { ProblemDetails } from '@app/backend-common-exception';
+import type { ProblemDetailsResponse } from '@app/backend-common-exception';
 import { formatProblemDescriptor } from './problem-descriptor.util';
 
-const problem = (overrides: Partial<ProblemDetails>): ProblemDetails => ({
+const problem = (overrides: Partial<ProblemDetailsResponse>): ProblemDetailsResponse => ({
   status: 500,
   title: 'Internal Server Error',
   type: 'about:blank',

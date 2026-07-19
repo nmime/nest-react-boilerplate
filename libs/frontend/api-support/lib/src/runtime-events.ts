@@ -2,6 +2,9 @@ export type ApiRuntimeStatus = 'online' | 'offline' | 'server-error';
 
 export type ApiRuntimeEvent =
   | {
+      type: 'request-succeeded';
+    }
+  | {
       type: 'network-offline';
       error: NormalizedApiErrorSnapshot;
     }
@@ -28,6 +31,7 @@ export interface NormalizedApiErrorSnapshot {
   message: string;
   method?: string;
   status: number | null;
+  type?: string;
 }
 
 export interface ApiRuntimeToastSnapshot {
@@ -66,6 +70,10 @@ export const createApiRuntimeEventHub = (): ApiRuntimeEventHub => {
   let state = initialState();
 
   const emit = (event: ApiRuntimeEvent): void => {
+    if (event.type === 'request-succeeded') {
+      state = { ...state, lastError: null, status: 'online' };
+    }
+
     if (event.type === 'network-offline') {
       state = { ...state, lastError: event.error, status: 'offline' };
     }

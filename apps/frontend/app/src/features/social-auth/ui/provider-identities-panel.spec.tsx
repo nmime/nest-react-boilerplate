@@ -100,7 +100,19 @@ describe('ProviderIdentitiesPanel', () => {
           },
         }),
       )
-      .mockResolvedValueOnce(jsonResponse({ code: 'last_method', detail: 'last method' }, false, 409));
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            code: 'last-auth-method-unlink-forbidden',
+            detail: 'The last usable authentication method cannot be unlinked from the account.',
+            status: 409,
+            title: 'Last Authentication Method Cannot Be Unlinked',
+            type: 'https://example.com/problems#last-auth-method-unlink-forbidden',
+          },
+          false,
+          409,
+        ),
+      );
 
     renderPanel(fetchMock);
 
@@ -164,7 +176,19 @@ describe('ProviderIdentitiesPanel', () => {
           },
         }),
       )
-      .mockResolvedValueOnce(jsonResponse({}, false, 403));
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            code: 'step-up-required',
+            detail: 'Recent authentication is required to perform this security-sensitive action.',
+            status: 403,
+            title: 'Step-up Authentication Required',
+            type: 'https://example.com/problems#step-up-required',
+          },
+          false,
+          403,
+        ),
+      );
 
     renderPanel(fetchMock);
 

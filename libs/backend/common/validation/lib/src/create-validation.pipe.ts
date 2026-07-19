@@ -1,6 +1,10 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
+import { problemTypeForCode } from '@app/backend-common-exception';
 import { ClientDataValidationException } from './exception';
+
+const ClientDataValidationProblemCode = 'client-data-validation' as const;
+const ClientDataValidationProblemType = problemTypeForCode(ClientDataValidationProblemCode);
 
 export interface ValidationExceptionIssue {
   property: string;
@@ -11,11 +15,11 @@ export interface ValidationExceptionIssue {
 }
 
 export interface ValidationExceptionBody {
-  type: 'urn:problem:nest-react-boilerplate:client-data-validation';
+  type: typeof ClientDataValidationProblemType;
   title: 'Client data validation failed';
   status: 400;
   detail: string;
-  code: 'client-data-validation';
+  code: typeof ClientDataValidationProblemCode;
   errors: ValidationExceptionIssue[];
 }
 
@@ -69,11 +73,11 @@ function flattenValidationIssues(errors: ValidationError[], parentPath?: string)
 
 export function createValidationExceptionBody(errors: ValidationError[]): ValidationExceptionBody {
   return {
-    type: 'urn:problem:nest-react-boilerplate:client-data-validation',
+    type: ClientDataValidationProblemType,
     title: 'Client data validation failed',
     status: 400,
     detail: 'Request client data validation failed.',
-    code: 'client-data-validation',
+    code: ClientDataValidationProblemCode,
     errors: flattenValidationIssues(errors),
   };
 }

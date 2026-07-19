@@ -16,6 +16,7 @@ import {
   type RedisHost,
 } from '@app/backend-common-redis';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
+import { problemTypeForCode } from '@app/backend-common-exception';
 import { ClsInterceptor } from './cls.interceptor';
 import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/backend-common-i18n';
 import { setupSwagger } from '@app/backend-common-swagger';
@@ -829,7 +830,7 @@ function handleRateLimitHit(
       response,
       429,
       {
-        type: 'urn:problem:nest-react-boilerplate:rate-limited',
+        type: problemTypeForCode('rate-limited'),
         title: translate('errors.rate-limited.title', { locale }),
         detail: translate('errors.rate-limited.detail', { locale }),
         code: 'rate-limited',
@@ -850,7 +851,7 @@ function handleRateLimitStoreError(error: unknown, response: ResponseLike): void
     })}\n`,
   );
   writeProblemResponse(response, 503, {
-    type: 'urn:problem:nest-react-boilerplate:rate-limit-unavailable',
+    type: problemTypeForCode('rate-limit-unavailable'),
     title: 'Service Unavailable',
     detail: 'Rate limit storage is unavailable.',
     code: 'rate-limit-unavailable',

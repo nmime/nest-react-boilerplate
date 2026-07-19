@@ -120,6 +120,10 @@ All exceptions flow through the `@app/backend-common-exception` library.
   (`application/problem+json`) with standard fields: `type`, `title`, `status`,
   `detail`, `instance`, and optional validation `errors[]` (each with `detail`
   and `pointer`).
+- **Problem identity**: Build problem `type` values with
+  `problemTypeForCode()`. `pnpm nrb init` replaces the reserved `example.com`
+  base with the configured product domain. Never use a repository, package,
+  template, or request host name as problem identity.
 
 - **Anti-patterns — these do not exist in the codebase**:
   - There is **no** `AppHttpException` class. Do not import or reference it.
@@ -180,7 +184,7 @@ All exceptions flow through the `@app/backend-common-exception` library.
   `@app/backend-common-exception`. Do not introduce or document an `exceptions`
   alias/path.
 - RFC 9457 Problem Details wire terms are intentional and allowed:
-  `ProblemDetails`, `application/problem+json`, `urn:problem:*`, `type`,
+  `ProblemDetails`, `application/problem+json`, product-owned HTTPS problem type URIs, `type`,
   `title`, `status`, `detail`, `instance`, and validation `errors[]` entries
   with `detail`/`pointer`. Do not add project-owned problem wrapper layers when
   the existing exception, validation, and response libraries cover the need.

@@ -256,7 +256,7 @@ describe('AuthOAuthService', () => {
     expect(handled.isErr()).toBe(true);
     expect(handled._unsafeUnwrapErr()).toEqual({
       code: 'provider_error',
-      message: 'OAuth callback exchange is not configured for this boilerplate.',
+      message: 'OAuth callback exchange is not configured.',
     });
     expect(replay.isErr()).toBe(true);
     expect(replay._unsafeUnwrapErr().code).toBe('invalid_state');

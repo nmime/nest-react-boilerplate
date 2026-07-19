@@ -176,7 +176,7 @@ export class AuthOAuthService {
 
     return errAsync({
       code: 'provider_error',
-      message: 'OAuth callback exchange is not configured for this boilerplate.',
+      message: 'OAuth callback exchange is not configured.',
     });
   }
 

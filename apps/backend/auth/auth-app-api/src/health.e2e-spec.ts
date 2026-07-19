@@ -176,7 +176,7 @@ describe('auth-app-api e2e', () => {
       detail: 'The requested resource was not found.',
       status: 404,
       title: 'Not Found',
-      type: 'urn:problem:nest-react-boilerplate:not-found',
+      type: 'https://example.com/problems/not-found',
     });
     expect(ruBody).toMatchObject({
       code: enBody.code,

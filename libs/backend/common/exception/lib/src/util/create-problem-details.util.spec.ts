@@ -9,15 +9,15 @@ describe('createProblemDetails (RFC 9457)', () => {
         title: 'Forbidden',
         detail: 'Missing role',
         status: 403,
-        instance: 'urn:problem-instance:test:admin-profile-me',
-        type: 'urn:problem:test:forbidden',
+        instance: 'https://errors.example.test/problem-instances/admin-profile-me',
+        type: 'https://errors.example.test/problems/forbidden',
       }),
     ).toEqual({
-      type: 'urn:problem:test:forbidden',
+      type: 'https://errors.example.test/problems/forbidden',
       title: 'Forbidden',
       status: 403,
       detail: 'Missing role',
-      instance: 'urn:problem-instance:test:admin-profile-me',
+      instance: 'https://errors.example.test/problem-instances/admin-profile-me',
     });
   });
 
@@ -30,7 +30,7 @@ describe('createProblemDetails (RFC 9457)', () => {
     });
   });
 
-  it('defaults type to urn:problem:... when code provided', () => {
+  it('defaults type to the product-owned HTTPS namespace when code is provided', () => {
     expect(
       createProblemDetails({
         title: 'Conflict',
@@ -39,7 +39,7 @@ describe('createProblemDetails (RFC 9457)', () => {
         code: 'conflict',
       }),
     ).toEqual({
-      type: 'urn:problem:nest-react-boilerplate:conflict',
+      type: 'https://example.com/problems/conflict',
       title: 'Conflict',
       status: 409,
       detail: 'Resource conflict',
@@ -73,9 +73,9 @@ describe('createProblemDetails (RFC 9457)', () => {
         title: 'Conflict',
         detail: 'Conflict occurred',
         status: 409,
-        instance: 'urn:problem-instance:test:canonical',
+        instance: 'https://errors.example.test/problem-instances/canonical',
       }),
-    ).toHaveProperty('instance', 'urn:problem-instance:test:canonical');
+    ).toHaveProperty('instance', 'https://errors.example.test/problem-instances/canonical');
   });
 
   it('detail is always present in output', () => {

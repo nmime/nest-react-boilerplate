@@ -90,7 +90,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -169,7 +169,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -214,7 +214,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -259,7 +259,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -304,7 +304,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -349,7 +349,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -429,7 +429,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -508,7 +508,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -553,7 +553,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -598,7 +598,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -643,7 +643,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -688,7 +688,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -768,7 +768,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -847,7 +847,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -892,7 +892,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -937,7 +937,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -982,7 +982,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1027,7 +1027,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1107,7 +1107,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1186,7 +1186,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1231,7 +1231,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1276,7 +1276,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1321,7 +1321,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1366,7 +1366,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1446,7 +1446,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1525,7 +1525,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1570,7 +1570,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1615,7 +1615,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1660,7 +1660,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1705,7 +1705,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1785,7 +1785,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1864,7 +1864,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1909,7 +1909,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1954,7 +1954,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -1999,7 +1999,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2044,7 +2044,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2124,7 +2124,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2203,7 +2203,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2248,7 +2248,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2293,7 +2293,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2338,7 +2338,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2383,7 +2383,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2479,7 +2479,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2558,7 +2558,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2603,7 +2603,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2648,7 +2648,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2693,7 +2693,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2738,7 +2738,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2808,7 +2808,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2887,7 +2887,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2932,7 +2932,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -2977,7 +2977,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3022,7 +3022,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3067,7 +3067,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3157,7 +3157,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3236,7 +3236,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3281,7 +3281,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3326,7 +3326,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3371,7 +3371,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3416,7 +3416,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3507,7 +3507,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3586,7 +3586,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3631,7 +3631,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3676,7 +3676,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3721,7 +3721,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3766,7 +3766,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3857,7 +3857,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3936,7 +3936,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -3981,7 +3981,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4026,7 +4026,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4071,7 +4071,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4116,7 +4116,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4196,7 +4196,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4275,7 +4275,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4320,7 +4320,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4365,7 +4365,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4410,7 +4410,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4455,7 +4455,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4525,7 +4525,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4604,7 +4604,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4649,7 +4649,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4694,7 +4694,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4739,7 +4739,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4784,7 +4784,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4875,7 +4875,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4954,7 +4954,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -4999,7 +4999,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5044,7 +5044,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5089,7 +5089,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5134,7 +5134,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5225,7 +5225,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5304,7 +5304,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5349,7 +5349,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5394,7 +5394,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5439,7 +5439,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5484,7 +5484,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5565,7 +5565,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5644,7 +5644,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5689,7 +5689,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5734,7 +5734,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5779,7 +5779,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5824,7 +5824,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5894,7 +5894,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:bad-request",
+                      "example": "https://example.com/problems/bad-request",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -5973,7 +5973,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:unauthorized",
+                      "example": "https://example.com/problems/unauthorized",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -6018,7 +6018,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:forbidden",
+                      "example": "https://example.com/problems/forbidden",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -6063,7 +6063,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:conflict",
+                      "example": "https://example.com/problems/conflict",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -6108,7 +6108,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:rate-limited",
+                      "example": "https://example.com/problems/rate-limited",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {
@@ -6153,7 +6153,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "example": "urn:problem:nest-react-boilerplate:internal-server-error",
+                      "example": "https://example.com/problems/internal-server-error",
                       "description": "A URI reference that identifies the problem type."
                     },
                     "title": {

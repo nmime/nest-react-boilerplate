@@ -311,6 +311,10 @@ const staleReferencePatterns: StaleReferencePattern[] = [
   },
   { label: "retired Problem Details RFC", pattern: /\bRFC\s?7807\b/iu },
   {
+    label: "invalid Problem Details URN namespace",
+    pattern: /\burn:problem:/iu,
+  },
+  {
     label: "retired duplicated admin API project name",
     pattern: /\bbackend-admin-app-api\b/u,
   },

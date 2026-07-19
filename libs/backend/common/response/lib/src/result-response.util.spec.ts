@@ -39,7 +39,7 @@ describe('exceptions response mapper', () => {
       detail: 'Bad Request',
       status: 400,
       title: 'Bad Request',
-      type: 'urn:problem:nest-react-boilerplate:bad-request',
+      type: 'https://example.com/problems/bad-request',
     });
   });
 
@@ -72,7 +72,7 @@ describe('exceptions response mapper', () => {
       detail: 'Bad Request',
       status: 400,
       title: 'Bad Request',
-      type: 'urn:problem:nest-react-boilerplate:bad_request',
+      type: 'https://example.com/problems/bad_request',
     });
   });
 

@@ -84,13 +84,13 @@ const probes: [string, string, string, number][] = [
   [
     "user proxy auth",
     url(ports.userApp, "/auth/me"),
-    "urn:problem:nest-react-boilerplate:unauthorized",
+    "https://example.com/problems/unauthorized",
     401,
   ],
   [
     "admin proxy",
     url(ports.adminApp, "/admin/profile/me"),
-    "urn:problem:nest-react-boilerplate:unauthorized",
+    "https://example.com/problems/unauthorized",
     401,
   ],
 ];

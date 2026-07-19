@@ -47,6 +47,10 @@ function createFixture(): string {
       "ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api",
     ].join("\n") + "\n",
   );
+  writeFileSync(
+    join(root, "problem-type.txt"),
+    "https://example.com/problems/not-found\n",
+  );
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
@@ -153,6 +157,11 @@ describe("project init", () => {
           "https://github.com/acme-org/acme-app.git",
           "ghcr.io/acme-org/acme-app/auth-app-api",
         ].join("\n") + "\n",
+      );
+      assert.equal(
+        readFileSync(join(root, "problem-type.txt"), "utf8"),
+        "https://acme.example/problems/not-found\n",
+        "Problem types must use the configured product domain without repository identity.",
       );
       assert.equal(
         readFileSync(join(root, ".env"), "utf8"),

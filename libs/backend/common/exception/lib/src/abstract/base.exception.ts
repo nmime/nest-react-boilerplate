@@ -2,7 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import type { ExceptionDefinition } from '../type/exception-definition.type';
 import type { ExceptionKind } from '../type/exception-kind.type';
 import type { ProblemDetails } from '../type/problem-details.type';
-import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
+import { problemTypeForCode } from '../const/problem-type-base-url.const';
 import { createProblemDetails } from '../util/create-problem-details.util';
 
 export * from '../type/exception-kind.type';
@@ -45,7 +45,7 @@ export interface ExceptionInstanceOptions {
 export function Exception(def: ExceptionDefinition) {
   const { name, kind, problemType, title, detail, status, dataType } = def;
   const resolvedStatus = status ?? (kind === 'client' ? HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR);
-  const typeUri = `${ProblemTypeBaseUrl}:${problemType}`;
+  const typeUri = problemTypeForCode(problemType);
 
   class ExceptionClass extends BaseException {
     /** Exception kind: client (4xx) or server (5xx) */

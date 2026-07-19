@@ -17,7 +17,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     expect(toProblemDetails(badRequest)).toEqual({
       code: 'bad-request',
       detail: 'The request could not be processed.',
-      type: 'urn:problem:nest-react-boilerplate:bad-request',
+      type: 'https://example.com/problems/bad-request',
       title: 'Bad Request',
       status: 400,
     });
@@ -25,7 +25,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     expect(toProblemDetails(rawHttp)).toEqual({
       code: 'i-am-a-teapot',
       detail: 'I Am A Teapot',
-      type: 'urn:problem:nest-react-boilerplate:i-am-a-teapot',
+      type: 'https://example.com/problems/i-am-a-teapot',
       title: 'I Am A Teapot',
       status: 418,
     });
@@ -34,7 +34,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     expect(toProblemDetails('boom')).toEqual({
       code: 'internal_server_error',
       detail: 'An unexpected error occurred',
-      type: 'urn:problem:nest-react-boilerplate:internal_server_error',
+      type: 'https://example.com/problems/internal_server_error',
       title: 'Internal Server Error',
       status: 500,
     });
@@ -54,7 +54,7 @@ describe('getProblemStatus / toProblemDetails', () => {
     expect(getProblemStatus(ex)).toBe(HttpStatus.FORBIDDEN);
 
     const problem = toProblemDetails(ex, '/req-123');
-    expect(problem.type).toBe('urn:problem:nest-react-boilerplate:test_forbidden');
+    expect(problem.type).toBe('https://example.com/problems/test_forbidden');
     expect(problem.title).toBe('Forbidden');
     expect(problem.detail).toBe('You do not have permission');
     expect(problem.status).toBe(HttpStatus.FORBIDDEN);

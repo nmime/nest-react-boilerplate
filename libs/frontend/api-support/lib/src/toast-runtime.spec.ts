@@ -242,6 +242,55 @@ describe('resolveApiToastRules', () => {
       ]),
     ).toBe(overridden);
   });
+
+  it('ignores malformed overrides and uses safe locale and revision fallbacks', () => {
+    const source = [
+      {
+        display: 'toast',
+        id: 'fallback-copy',
+        match: { status: 409 },
+        toast: { category: 'warning', messageSource: 'problem', title: 'Request failed' },
+      },
+    ] satisfies ApiToastRule[];
+
+    configureProblemPresentationOverrides(undefined);
+    expect(applyProblemPresentationOverrides(source)).toEqual(source);
+
+    configureProblemPresentationOverrides([
+      null,
+      {},
+      { ruleId: 'missing-display' },
+      { ruleId: 'missing-severity', display: 'toast' },
+      { ruleId: 'bad-display', display: 'unknown', severity: 'error' },
+      { ruleId: 'bad-severity', display: 'toast', severity: 'unknown' },
+      {
+        ruleId: 'fallback-copy',
+        display: 'toast',
+        severity: 'info',
+        revision: -1,
+        messageEn: 'English fallback',
+      },
+    ]);
+
+    configureApiLocale({ locale: 'ru' });
+    expect(applyProblemPresentationOverrides(source)[0]).toMatchObject({
+      id: 'fallback-copy:override:0',
+      toast: { category: 'info', message: 'English fallback' },
+    });
+
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'fallback-copy',
+        display: 'toast',
+        severity: 'warning',
+      },
+    ]);
+    configureApiLocale({ locale: 'en' });
+    expect(applyProblemPresentationOverrides(source)[0]).toMatchObject({
+      id: 'fallback-copy:override:0',
+      toast: { category: 'warning', messageSource: 'problem' },
+    });
+  });
 });
 
 describe('ApiToastRuntime defaults', () => {

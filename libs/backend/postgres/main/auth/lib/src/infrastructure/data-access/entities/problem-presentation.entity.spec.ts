@@ -39,4 +39,27 @@ describe('ProblemPresentationEntity', () => {
       ]),
     );
   });
+
+  it('supports ORM hydration and timestamp lifecycle callbacks', () => {
+    const entity = new ProblemPresentationEntity();
+
+    expect(entity).toMatchObject({
+      tenantId: DefaultAuthTenantId,
+      comment: '',
+      messageEn: '',
+      messageRu: '',
+      revision: 1,
+    });
+
+    ProblemPresentationEntitySchema.init();
+    const createdAt = ProblemPresentationEntitySchema.meta.properties.createdAt;
+    const updatedAt = ProblemPresentationEntitySchema.meta.properties.updatedAt;
+    const createdAtOnCreate = createdAt.onCreate as NonNullable<typeof createdAt.onCreate>;
+    const updatedAtOnCreate = updatedAt.onCreate as NonNullable<typeof updatedAt.onCreate>;
+    const updatedAtOnUpdate = updatedAt.onUpdate as NonNullable<typeof updatedAt.onUpdate>;
+
+    expect(createdAtOnCreate(entity, undefined as never)).toBeInstanceOf(Date);
+    expect(updatedAtOnCreate(entity, undefined as never)).toBeInstanceOf(Date);
+    expect(updatedAtOnUpdate(entity, undefined as never)).toBeInstanceOf(Date);
+  });
 });

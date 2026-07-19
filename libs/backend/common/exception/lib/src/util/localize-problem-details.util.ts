@@ -1,5 +1,5 @@
 import { hasTranslationKey, interpolate, translate, translations, type TranslationKey } from '@app/backend-common-i18n';
-import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
+import { problemTypeForCode } from '../const/problem-type-base-url.const';
 import type { ProblemDetails } from '../type/problem-details.type';
 import { isObjectRecord } from './is-object-record.util';
 import { problemCodeForStatus } from './problem-code-for-status.util';
@@ -88,7 +88,7 @@ export function localizeProblemDetails(problem: ProblemDetails, locale?: string)
   return {
     ...problem,
     code,
-    type: problem.type === 'about:blank' ? `${ProblemTypeBaseUrl}:${code}` : problem.type,
+    type: problem.type === 'about:blank' ? problemTypeForCode(code) : problem.type,
     ...(defaultDetail ? { detail: defaultDetail } : {}),
     ...(localizedDetail && localizedDetail !== defaultDetail ? { localizedDetail } : {}),
     ...('errors' in problem ? { errors: localizeValidationIssues(problem.errors, locale) } : {}),

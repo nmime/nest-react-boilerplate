@@ -41,7 +41,7 @@ describe('createValidationPipe', () => {
         }),
       ]),
     ).toEqual({
-      type: 'urn:problem:nest-react-boilerplate:client-data-validation',
+      type: 'https://example.com/problems/client-data-validation',
       title: 'Client data validation failed',
       status: 400,
       code: 'client-data-validation',
@@ -141,7 +141,7 @@ describe('createValidationPipe', () => {
     const response = exception.getResponse();
 
     // Static fields from RFC 9457 definition
-    expect(response.type).toBe('urn:problem:nest-react-boilerplate:client_data_validation');
+    expect(response.type).toBe('https://example.com/problems/client_data_validation');
     expect(response.title).toBe('Client Data Validation Failed');
     expect(response.detail).toBe('The provided data failed validation');
     expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -183,7 +183,7 @@ describe('createValidationPipe', () => {
         code: 'client_data_validation',
         status: HttpStatus.BAD_REQUEST,
         title: 'Client Data Validation Failed',
-        type: 'urn:problem:nest-react-boilerplate:client_data_validation',
+        type: 'https://example.com/problems/client_data_validation',
       });
       expect((response as Record<string, unknown>).info).toMatchObject({
         errors: [

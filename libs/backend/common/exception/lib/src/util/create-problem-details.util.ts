@@ -1,4 +1,4 @@
-import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
+import { problemTypeForCode } from '../const/problem-type-base-url.const';
 import type { ProblemDetails } from '../type/problem-details.type';
 
 interface ProblemDetailsOptions {
@@ -15,7 +15,7 @@ export const createProblemDetails = ({
   status,
   code,
   detail,
-  type = code ? `${ProblemTypeBaseUrl}:${code}` : 'about:blank',
+  type = code ? problemTypeForCode(code) : 'about:blank',
   instance,
 }: ProblemDetailsOptions): ProblemDetails => {
   const normalizedInstance = instance?.trim();

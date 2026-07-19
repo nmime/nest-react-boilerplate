@@ -164,7 +164,7 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 ## i18n and Problem Details
 
-Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves RFC 9457 wire terms and stable `urn:problem:*` values; clients key logic off status/code/type rather than localized text.
+Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves RFC 9457 wire terms and stable, product-owned `https://<root-domain>/problems/<code>` identifiers; clients key logic off status/code/type rather than localized text.
 
 ## Planned testing layers
 

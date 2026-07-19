@@ -26,13 +26,13 @@ describe('BaseException / Exception factory', () => {
       name: 'DomainConflictException',
       status: HttpStatus.CONFLICT,
       title: 'Conflict',
-      type: 'urn:problem:nest-react-boilerplate:domain-conflict',
+      type: 'https://example.com/problems/domain-conflict',
     });
     expect(exception.data).toEqual({ resource: 'user' });
 
     const pd = exception.toProblemDetails();
     expect(pd).toEqual({
-      type: 'urn:problem:nest-react-boilerplate:domain-conflict',
+      type: 'https://example.com/problems/domain-conflict',
       title: 'Conflict',
       status: HttpStatus.CONFLICT,
       detail: 'Already exists',

@@ -713,7 +713,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -767,7 +767,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -803,7 +803,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -839,7 +839,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -875,7 +875,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -911,7 +911,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -973,7 +973,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -1027,7 +1027,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -1063,7 +1063,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -1099,7 +1099,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -1135,7 +1135,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -1171,7 +1171,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -1233,7 +1233,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -1287,7 +1287,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -1323,7 +1323,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -1359,7 +1359,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -1395,7 +1395,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -1431,7 +1431,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -1493,7 +1493,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -1547,7 +1547,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -1583,7 +1583,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -1619,7 +1619,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -1655,7 +1655,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -1691,7 +1691,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -1753,7 +1753,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -1807,7 +1807,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -1843,7 +1843,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -1879,7 +1879,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -1915,7 +1915,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -1951,7 +1951,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -2013,7 +2013,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -2067,7 +2067,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -2103,7 +2103,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -2139,7 +2139,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -2175,7 +2175,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -2211,7 +2211,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -2273,7 +2273,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -2327,7 +2327,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -2363,7 +2363,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -2399,7 +2399,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -2435,7 +2435,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -2471,7 +2471,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -2533,7 +2533,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -2587,7 +2587,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -2623,7 +2623,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -2659,7 +2659,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -2695,7 +2695,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -2731,7 +2731,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -2789,7 +2789,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -2843,7 +2843,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -2879,7 +2879,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -2915,7 +2915,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -2951,7 +2951,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -2987,7 +2987,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -3047,7 +3047,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -3101,7 +3101,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -3137,7 +3137,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -3173,7 +3173,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -3209,7 +3209,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -3245,7 +3245,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -3307,7 +3307,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -3361,7 +3361,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -3397,7 +3397,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -3433,7 +3433,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -3469,7 +3469,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -3505,7 +3505,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -3567,7 +3567,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -3621,7 +3621,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -3657,7 +3657,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -3693,7 +3693,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -3729,7 +3729,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -3765,7 +3765,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -3827,7 +3827,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -3881,7 +3881,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -3917,7 +3917,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -3953,7 +3953,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -3989,7 +3989,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -4025,7 +4025,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -4083,7 +4083,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -4137,7 +4137,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -4173,7 +4173,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -4209,7 +4209,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -4245,7 +4245,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -4281,7 +4281,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -4343,7 +4343,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -4397,7 +4397,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -4433,7 +4433,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -4469,7 +4469,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -4505,7 +4505,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -4541,7 +4541,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -4603,7 +4603,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -4657,7 +4657,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -4693,7 +4693,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -4729,7 +4729,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -4765,7 +4765,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -4801,7 +4801,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -4859,7 +4859,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -4913,7 +4913,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -4949,7 +4949,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -4985,7 +4985,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -5021,7 +5021,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -5057,7 +5057,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**
@@ -5115,7 +5115,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:bad-request
+             * @example https://example.com/problems/bad-request
              */
             type: string;
             /**
@@ -5169,7 +5169,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:unauthorized
+             * @example https://example.com/problems/unauthorized
              */
             type: string;
             /**
@@ -5205,7 +5205,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:forbidden
+             * @example https://example.com/problems/forbidden
              */
             type: string;
             /**
@@ -5241,7 +5241,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:conflict
+             * @example https://example.com/problems/conflict
              */
             type: string;
             /**
@@ -5277,7 +5277,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:rate-limited
+             * @example https://example.com/problems/rate-limited
              */
             type: string;
             /**
@@ -5313,7 +5313,7 @@ export interface operations {
           'application/problem+json': {
             /**
              * @description A URI reference that identifies the problem type.
-             * @example urn:problem:nest-react-boilerplate:internal-server-error
+             * @example https://example.com/problems/internal-server-error
              */
             type: string;
             /**

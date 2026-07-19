@@ -33,3 +33,5 @@ and [AI agent policy](../../docs/ai/agent-policy.md).
   `ConflictException`, `BadRequestException`, `InternalException`.
 - Every exception returns `application/problem+json` per RFC 9457. Never
   expose `HttpException.message` to clients.
+- Build public problem identifiers with `problemTypeForCode()`; repository and
+  package names are never part of the wire-level `type` URI.

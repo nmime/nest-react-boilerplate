@@ -824,6 +824,24 @@ describe("static-check retired documentation contract guard", () => {
   });
 });
 
+describe("static-check Problem Details namespace guard", () => {
+  it("rejects the unregistered problem URN namespace", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const invalidProblemType = ["urn", "problem", "example", "not-found"].join(":");
+      writeText(workspaceRoot, "docs/problem-details.md", `${invalidProblemType}\n`);
+
+      const failures = checkStaleReferences(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.match(failures[0].stderr, /invalid Problem Details URN namespace/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
 describe("static-check Node version guard", () => {
   it("rejects an old NODE_VERSION assignment", () => {
     const workspaceRoot = createWorkspace();

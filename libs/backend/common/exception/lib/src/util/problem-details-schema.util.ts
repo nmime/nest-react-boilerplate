@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { ProblemTypeBaseUrl } from '../const/problem-type-base-url.const';
+import { problemTypeForCode } from '../const/problem-type-base-url.const';
 import type { OpenApiSchemaObject } from '../type/open-api-schema.type';
 import { mapHttpStatusToProblemTitle } from './map-http-status-to-problem-title.util';
 import { problemCodeForStatus } from './problem-code-for-status.util';
@@ -48,7 +48,7 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
   const properties: Record<string, OpenApiSchemaObject> = {
     type: {
       type: 'string',
-      example: `${ProblemTypeBaseUrl}:${code}`,
+      example: problemTypeForCode(code),
       description: 'A URI reference that identifies the problem type.',
     },
     title: {

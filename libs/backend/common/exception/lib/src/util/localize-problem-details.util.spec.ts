@@ -41,7 +41,7 @@ describe('localizeProblemDetails', () => {
         { constraints: { minLength: 'Поле value слишком короткое' } },
         'plain',
       ],
-      type: 'urn:problem:nest-react-boilerplate:bad-request',
+      type: 'https://example.com/problems/bad-request',
     });
     expect(
       localizeProblemDetails({

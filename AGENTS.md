@@ -117,6 +117,9 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
   `ForbiddenException`, `ConflictException`, `BadRequestException`,
   `InternalException`.
 - **Validation**: `ClientDataValidationException` with typed `ValidationErrorInfo`.
+- Problem `type` values use `problemTypeForCode()` and the product-owned
+  `https://<root-domain>/problems/<code>` namespace. Never place repository,
+  package, template, or runtime host names in public problem identifiers.
 - Response content type is always `application/problem+json`.
 
 ## Read Next

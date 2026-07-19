@@ -2,11 +2,11 @@ import type { Middleware } from 'openapi-fetch';
 
 import { enrichJsonResponse, normalizeApiError, readJsonBody, type NormalizedApiError } from './error-normalization';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
-import { apiToastRuntime, defaultApiToastRules, type ApiToastRule, type ApiToastRuntime } from './toast-runtime';
+import { apiToastRuntime, resolveApiToastRules, type ApiToastRulesSource, type ApiToastRuntime } from './toast-runtime';
 
 export interface ApiResilienceMiddlewareOptions {
   eventHub?: ApiRuntimeEventHub;
-  toastRules?: readonly ApiToastRule[];
+  toastRules?: ApiToastRulesSource;
   toastRuntime?: ApiToastRuntime;
 }
 
@@ -26,11 +26,12 @@ const snapshotError = (error: NormalizedApiError) => ({
   message: error.message,
   method: error.method,
   status: error.status,
+  type: error.type,
 });
 
 export const createApiResilienceMiddleware = ({
   eventHub = apiRuntimeEvents,
-  toastRules = defaultApiToastRules,
+  toastRules,
   toastRuntime = apiToastRuntime,
 }: ApiResilienceMiddlewareOptions = {}): Middleware => ({
   async onResponse({ request, response }) {
@@ -41,7 +42,7 @@ export const createApiResilienceMiddleware = ({
           method: request.method,
           status: response.status,
         },
-        toastRules,
+        resolveApiToastRules(toastRules),
       );
 
       return undefined;
@@ -59,7 +60,7 @@ export const createApiResilienceMiddleware = ({
       eventHub.emit({ type: 'server-error', error: snapshotError(normalized) });
     }
 
-    toastRuntime.showForApiResult(normalized, toastRules);
+    toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
 
     return enrichJsonResponse(response, normalized);
   },
@@ -74,7 +75,7 @@ export const createApiResilienceMiddleware = ({
       type: 'network-offline',
       error: snapshotError(normalized),
     });
-    toastRuntime.showForApiResult(normalized, toastRules);
+    toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
 
     throw error;
   },

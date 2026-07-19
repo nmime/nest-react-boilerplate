@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { configureApiLocale } from './api-locale';
 import {
   FrontendErrorKey,
   enrichJsonResponse,
@@ -8,6 +9,10 @@ import {
   normalizeApiError,
   readJsonBody,
 } from './error-normalization';
+
+beforeEach(() => {
+  configureApiLocale({ locale: 'en' });
+});
 
 const jsonResponse = (body: unknown, init: ResponseInit & { contentType?: string } = {}): Response => {
   const { contentType = 'application/json', ...responseInit } = init;
@@ -28,7 +33,7 @@ describe('normalizeApiError', () => {
     expect(error).toMatchObject({
       code: 'network.offline',
       kind: 'network',
-      message: 'Failed to fetch',
+      message: 'Network connection failed.',
       method: 'GET',
       status: null,
     });
@@ -68,19 +73,26 @@ describe('normalizeApiError', () => {
     expect(normalizeApiError({ response: { status: 302, statusText: '' } }).kind).toBe('unknown');
   });
 
-  it('uses a custom RFC problem type as the primary machine identifier', () => {
+  it('keeps the RFC type URI and exposes its stable short code separately', () => {
     expect(
       normalizeApiError({
         body: {
           type: 'https://example.com/problems#resource-conflict',
-          code: 'resource-conflict',
+          code: 'spoofed',
         },
         response: { status: 409, statusText: '' },
       }),
     ).toMatchObject({
-      code: 'https://example.com/problems#resource-conflict',
+      code: 'resource-conflict',
       type: 'https://example.com/problems#resource-conflict',
     });
+
+    expect(
+      normalizeApiError({
+        body: { type: 'https://example.com/problems#resource-not-found' },
+        response: { status: 404, statusText: '' },
+      }).code,
+    ).toBe('resource-not-found');
 
     expect(
       normalizeApiError({
@@ -99,7 +111,7 @@ describe('normalizeApiError', () => {
     expect(normalizeApiError({ response: { status: 404, statusText: '' } }).code).toBe('http.404');
   });
 
-  it('derives a human message from body fields, error, or status text', () => {
+  it('uses localized body text and localized safe fallbacks', () => {
     expect(
       normalizeApiError({
         body: { detail: 'Локализовано' },
@@ -112,19 +124,21 @@ describe('normalizeApiError', () => {
         error: new Error('boom'),
         response: { status: 500, statusText: '' },
       }).message,
-    ).toBe('boom');
+    ).toBe('Request failed with 500.');
 
     expect(
       normalizeApiError({
         response: { status: 500, statusText: 'Server Error' },
       }).message,
-    ).toBe('Server Error');
+    ).toBe('Request failed with 500.');
 
+    expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe('Request failed with 500.');
+
+    configureApiLocale({ locale: 'ru' });
     expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe(
-      'Request failed with status 500.',
+      'Запрос не удался со статусом 500.',
     );
-
-    expect(normalizeApiError({}).message).toBe('Network connection failed.');
+    expect(normalizeApiError({}).message).toBe('Ошибка сетевого подключения.');
   });
 
   it('surfaces a body detail field when present', () => {

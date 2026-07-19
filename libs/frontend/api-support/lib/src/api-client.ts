@@ -1,38 +1,15 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { fallbackLocale, translate, type Locale } from '@app/frontend-i18n-shared';
+import { translate } from '@app/frontend-i18n-shared';
+import { getApiLocale } from './api-locale';
+import { normalizeApiError, type NormalizedApiError } from './error-normalization';
 
-let currentApiLocale: Locale = fallbackLocale;
-
-const resolveAmbientApiLocale = (): Locale => {
-  if (typeof document === 'undefined') {
-    return currentApiLocale;
-  }
-
-  const documentLocale = document.documentElement.lang;
-  return documentLocale === 'en' || documentLocale === 'ru' ? documentLocale : currentApiLocale;
-};
-
-let apiLocaleGetter: () => Locale = resolveAmbientApiLocale;
-
-export interface ConfigureApiLocaleOptions {
-  getLocale?: () => Locale;
-  locale?: Locale;
-}
-
-export const setApiLocale = (locale: Locale): void => {
-  currentApiLocale = locale;
-};
-
-export const configureApiLocale = ({ getLocale, locale }: ConfigureApiLocaleOptions): void => {
-  if (locale) {
-    setApiLocale(locale);
-  }
-  apiLocaleGetter = getLocale ?? resolveAmbientApiLocale;
-};
-
-export const getApiLocale = (): Locale => apiLocaleGetter();
+export * from './api-locale';
 
 export class ApiError extends Error {
+  readonly code: string;
+  readonly problem: NormalizedApiError;
+  readonly type: string | undefined;
+
   constructor(
     message: string,
     readonly status: number,
@@ -40,6 +17,9 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
+    this.problem = normalizeApiError({ body, response: { status, statusText: '' } });
+    this.code = this.problem.code;
+    this.type = this.problem.type;
   }
 }
 

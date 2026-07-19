@@ -21,6 +21,7 @@
   "errors.validation-error.title": "Ошибка валидации",
   "errors.validation-error.detail": "Валидация запроса не удалась.",
   "errors.api.requestFailed": "Запрос не удался со статусом {{status}}.",
+  "errors.api.networkFailed": "Ошибка сетевого подключения.",
   "errors.auth.jwtSecretMissing": "Секретный ключ подписи JWT не настроен.",
   "errors.auth.missingBearer": "Отсутствует токен авторизации.",
   "errors.auth.malformedJwt": "Неверный формат JWT.",

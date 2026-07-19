@@ -95,14 +95,43 @@ describe('frontend API client', () => {
   });
 
   it('parses problem responses into ApiError', async () => {
-    const fetchImpl = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(jsonResponse({ detail: 'Forbidden profile' }, false, 403));
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse(
+        {
+          code: 'resource-conflict',
+          detail: 'Conflicting profile',
+          type: 'https://example.com/problems#resource-conflict',
+        },
+        false,
+        409,
+      ),
+    );
 
     await expect(apiFetch('/profile', { fetchImpl })).rejects.toMatchObject({
-      body: { detail: 'Forbidden profile' },
-      message: 'Forbidden profile',
-      status: 403,
+      body: {
+        code: 'resource-conflict',
+        detail: 'Conflicting profile',
+        type: 'https://example.com/problems#resource-conflict',
+      },
+      code: 'resource-conflict',
+      message: 'Conflicting profile',
+      problem: {
+        body: {
+          code: 'resource-conflict',
+          detail: 'Conflicting profile',
+          type: 'https://example.com/problems#resource-conflict',
+        },
+        code: 'resource-conflict',
+        detail: 'Conflicting profile',
+        id: '409:resource-conflict',
+        kind: 'client',
+        message: 'Conflicting profile',
+        status: 409,
+        type: 'https://example.com/problems#resource-conflict',
+        validation: [],
+      },
+      status: 409,
+      type: 'https://example.com/problems#resource-conflict',
     } satisfies Partial<ApiError>);
   });
 

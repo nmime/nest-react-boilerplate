@@ -9,9 +9,9 @@ import {
 } from '@app/frontend-api-client';
 import {
   configureApiLocale,
+  createDefaultApiToastRules,
   createApiRuntimeFetch,
   createAuthRefreshFetch,
-  defaultApiToastRules,
   useApiRuntimeOverlayModel,
 } from '@app/frontend-api-support';
 import {
@@ -68,7 +68,7 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
           },
         }),
         redirectTo: '/auth',
-        toastRules: [...authApiToastRules, ...userApiToastRules, ...defaultApiToastRules],
+        toastRules: () => [...authApiToastRules, ...userApiToastRules, ...createDefaultApiToastRules()],
       }),
     [authStore],
   );

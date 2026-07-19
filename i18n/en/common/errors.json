@@ -21,6 +21,7 @@
   "errors.validation-error.title": "Validation failed",
   "errors.validation-error.detail": "Request validation failed.",
   "errors.api.requestFailed": "Request failed with {{status}}.",
+  "errors.api.networkFailed": "Network connection failed.",
   "errors.auth.jwtSecretMissing": "Authentication signing secret is not configured.",
   "errors.auth.missingBearer": "Missing bearer token.",
   "errors.auth.malformedJwt": "Malformed JWT.",

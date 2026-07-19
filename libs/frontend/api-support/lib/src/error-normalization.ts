@@ -1,3 +1,7 @@
+import { problemCodeFromType } from '@app/common-problem-details';
+import { translate } from '@app/frontend-i18n-shared';
+import { getApiLocale } from './api-locale';
+
 export type NormalizedApiErrorKind = 'auth' | 'client' | 'network' | 'server' | 'unknown' | 'validation';
 
 export interface NormalizedValidationIssue {
@@ -112,14 +116,19 @@ const statusKind = (status: number | null, body: unknown): NormalizedApiErrorKin
 const extractCode = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
     const type = stringFrom(body['type']);
-    if (type && type !== 'about:blank') {
-      return type;
+    const registeredCode = problemCodeFromType(type);
+    if (registeredCode) {
+      return registeredCode;
     }
 
     const code = stringFrom(body['code']) ?? stringFrom(body['errorCode']) ?? stringFrom(body['name']);
 
     if (code) {
       return code;
+    }
+
+    if (type && type !== 'about:blank') {
+      return type;
     }
   }
 
@@ -131,7 +140,7 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
   return `http.${status}`;
 };
 
-const extractMessage = (status: number | null, body: unknown, error: unknown, statusText?: string): string => {
+const extractMessage = (status: number | null, body: unknown): string => {
   if (isRecord(body)) {
     const message =
       stringFrom(body['detail']) ??
@@ -144,28 +153,21 @@ const extractMessage = (status: number | null, body: unknown, error: unknown, st
     }
   }
 
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
   if (status === null) {
-    return 'Network connection failed.';
+    return translate('errors.api.networkFailed', { locale: getApiLocale() });
   }
 
-  return statusText?.trim() || `Request failed with status ${status}.`;
+  return translate('errors.api.requestFailed', {
+    locale: getApiLocale(),
+    params: { status },
+  });
 };
 
-export const normalizeApiError = ({
-  body,
-  endpoint,
-  error,
-  method,
-  response,
-}: NormalizeApiErrorInput): NormalizedApiError => {
+export const normalizeApiError = ({ body, endpoint, method, response }: NormalizeApiErrorInput): NormalizedApiError => {
   const status = response?.status ?? null;
   const kind = statusKind(status, body);
   const code = extractCode(status, body, kind);
-  const message = extractMessage(status, body, error, response?.statusText);
+  const message = extractMessage(status, body);
   const normalizedMethod = method?.toUpperCase();
   const type = isRecord(body) ? stringFrom(body['type']) : undefined;
   const id = [normalizedMethod, endpoint, status ?? 'network', code].filter(Boolean).join(':');

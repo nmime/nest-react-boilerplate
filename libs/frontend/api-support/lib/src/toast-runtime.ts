@@ -1,3 +1,5 @@
+import { translate } from '@app/frontend-i18n-shared';
+import { getApiLocale } from './api-locale';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
 export type ApiToastCategory = 'error' | 'info' | 'success' | 'warning';
@@ -15,6 +17,7 @@ export interface ApiToastRuleMatch {
   method?: string;
   status?: number;
   statusRange?: [number, number];
+  type?: string;
 }
 
 export interface ApiToastRule {
@@ -28,12 +31,15 @@ export interface ApiToastRule {
   };
 }
 
+export type ApiToastRulesSource = readonly ApiToastRule[] | (() => readonly ApiToastRule[]);
+
 export interface ApiToastContext {
   code?: string;
   endpoint?: string;
   kind?: string;
   method?: string;
   status?: number | null;
+  type?: string;
 }
 
 export interface ApiToast {
@@ -67,15 +73,15 @@ const ApiToastDisplays: readonly ApiToastDisplay[] = ['custom', 'modal', 'silent
 const ApiToastCategoryValues: ReadonlySet<string> = new Set(ApiToastCategories);
 const ApiToastDisplayValues: ReadonlySet<string> = new Set(ApiToastDisplays);
 
-export const defaultApiToastRules: ApiToastRule[] = [
+export const createDefaultApiToastRules = (): ApiToastRule[] => [
   {
     display: 'toast',
     id: 'api.network.offline',
     match: { kind: 'network' },
     toast: {
       category: 'warning',
-      title: 'Connection lost',
-      message: 'Check your internet connection and try again.',
+      title: translate('ui.runtime.offline.title', { locale: getApiLocale() }),
+      message: translate('ui.runtime.offline.description', { locale: getApiLocale() }),
     },
   },
   {
@@ -84,19 +90,27 @@ export const defaultApiToastRules: ApiToastRule[] = [
     match: { statusRange: [500, 599] },
     toast: {
       category: 'error',
-      title: 'Service is temporarily unavailable',
-      message: 'Please try again in a moment.',
+      title: translate('ui.runtime.serverUnavailable.title', { locale: getApiLocale() }),
+      message: translate('ui.runtime.serverUnavailable.description', { locale: getApiLocale() }),
     },
   },
   {
     display: 'silent',
     id: 'api.auth.unauthorized',
     match: { status: 401 },
-    toast: { category: 'info', title: 'Authentication required' },
+    toast: {
+      category: 'info',
+      title: translate('ui.runtime.authRequired.title', { locale: getApiLocale() }),
+    },
   },
 ];
 
+export const resolveApiToastRules = (source?: ApiToastRulesSource): readonly ApiToastRule[] =>
+  typeof source === 'function' ? source() : (source ?? createDefaultApiToastRules());
+
 const normalizeMethod = (method?: string): string | undefined => method?.toUpperCase();
+const matchesOptional = <T>(expected: T | undefined, actual: T | undefined): boolean =>
+  expected === undefined || expected === actual;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object';
 
@@ -117,6 +131,7 @@ const readToastRuleMatch = (value: Record<string, unknown>): ApiToastRuleMatch =
   const endpoint = readOptionalString(value.endpoint);
   const kind = readOptionalString(value.kind);
   const method = readOptionalString(value.method);
+  const type = readOptionalString(value.type);
 
   if (code) {
     match.code = code;
@@ -129,6 +144,9 @@ const readToastRuleMatch = (value: Record<string, unknown>): ApiToastRuleMatch =
   }
   if (method) {
     match.method = method;
+  }
+  if (type) {
+    match.type = type;
   }
   if (typeof value.status === 'number') {
     match.status = value.status;
@@ -148,23 +166,14 @@ const matchesRule = (rule: ApiToastRule, context: ApiToastContext): boolean => {
   const status = context.status ?? undefined;
   const method = normalizeMethod(context.method);
 
-  if (rule.match.method && normalizeMethod(rule.match.method) !== method) {
-    return false;
-  }
-
-  if (rule.match.endpoint && rule.match.endpoint !== context.endpoint) {
-    return false;
-  }
-
-  if (rule.match.kind && rule.match.kind !== context.kind) {
-    return false;
-  }
-
-  if (rule.match.code && rule.match.code !== context.code) {
-    return false;
-  }
-
-  if (rule.match.status !== undefined && rule.match.status !== status) {
+  if (
+    !matchesOptional(normalizeMethod(rule.match.method), method) ||
+    !matchesOptional(rule.match.endpoint, context.endpoint) ||
+    !matchesOptional(rule.match.kind, context.kind) ||
+    !matchesOptional(rule.match.code, context.code) ||
+    !matchesOptional(rule.match.type, context.type) ||
+    !matchesOptional(rule.match.status, status)
+  ) {
     return false;
   }
 
@@ -219,7 +228,7 @@ export const parseApiToastRules = (value: unknown): ApiToastRule[] => {
 
 export const resolveApiToastRule = (
   context: ApiToastContext,
-  rules: readonly ApiToastRule[] = defaultApiToastRules,
+  rules: readonly ApiToastRule[] = createDefaultApiToastRules(),
 ): ApiToastRule | null => rules.find((rule) => matchesRule(rule, context)) ?? null;
 
 export class ApiToastRuntime {
@@ -280,7 +289,10 @@ export class ApiToastRuntime {
     return toast;
   }
 
-  showForApiResult(context: ApiToastContext, rules: readonly ApiToastRule[] = defaultApiToastRules): ApiToast | null {
+  showForApiResult(
+    context: ApiToastContext,
+    rules: readonly ApiToastRule[] = createDefaultApiToastRules(),
+  ): ApiToast | null {
     const rule = resolveApiToastRule(context, rules);
 
     if (!rule || rule.display === 'silent' || rule.display === 'modal') {

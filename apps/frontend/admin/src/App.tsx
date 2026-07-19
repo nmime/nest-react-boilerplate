@@ -2,8 +2,8 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   configureApiLocale,
+  createDefaultApiToastRules,
   createApiRuntimeFetch,
-  defaultApiToastRules,
   useApiRuntimeOverlayModel,
 } from '@app/frontend-api-support';
 import {
@@ -332,7 +332,7 @@ const AdminApiClientProvider = ({
     () =>
       createApiRuntimeFetch({
         redirectTo: '/admin',
-        toastRules: [...adminApiToastRules, ...authApiToastRules, ...defaultApiToastRules],
+        toastRules: () => [...adminApiToastRules, ...authApiToastRules, ...createDefaultApiToastRules()],
       }),
     [],
   );

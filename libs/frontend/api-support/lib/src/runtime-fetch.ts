@@ -1,13 +1,15 @@
+import { translate } from '@app/frontend-i18n-shared';
+import { getApiLocale } from './api-locale';
 import { enrichJsonResponse, normalizeApiError, readJsonBody, type NormalizedApiError } from './error-normalization';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
-import { apiToastRuntime, defaultApiToastRules, type ApiToastRule, type ApiToastRuntime } from './toast-runtime';
+import { apiToastRuntime, resolveApiToastRules, type ApiToastRulesSource, type ApiToastRuntime } from './toast-runtime';
 
 export interface ApiRuntimeFetchOptions {
   baseFetch?: typeof fetch;
   emitMissingTokenAuthRequired?: boolean;
   eventHub?: ApiRuntimeEventHub;
   redirectTo?: string;
-  toastRules?: readonly ApiToastRule[];
+  toastRules?: ApiToastRulesSource;
   toastRuntime?: ApiToastRuntime;
 }
 
@@ -28,6 +30,7 @@ const snapshotError = (error: NormalizedApiError) => ({
   message: error.message,
   method: error.method,
   status: error.status,
+  type: error.type,
 });
 
 const hasAuthorization = (request: Request): boolean => Boolean(request.headers.get('Authorization')?.trim());
@@ -41,7 +44,7 @@ export const emitBrowserOfflineEvent = (eventHub: ApiRuntimeEventHub = apiRuntim
       code: 'network.offline',
       id: 'browser:navigator:offline:network.offline',
       kind: 'network',
-      message: 'Network connection is offline.',
+      message: translate('errors.api.networkFailed', { locale: getApiLocale() }),
       status: null,
     },
   });
@@ -53,7 +56,7 @@ export const createApiRuntimeFetch =
     emitMissingTokenAuthRequired = false,
     eventHub = apiRuntimeEvents,
     redirectTo = '/auth',
-    toastRules = defaultApiToastRules,
+    toastRules,
     toastRuntime = apiToastRuntime,
   }: ApiRuntimeFetchOptions = {}): typeof fetch =>
   async (input, init) => {
@@ -69,7 +72,7 @@ export const createApiRuntimeFetch =
             method: request.method,
             status: response.status,
           },
-          toastRules,
+          resolveApiToastRules(toastRules),
         );
 
         return response;
@@ -100,7 +103,7 @@ export const createApiRuntimeFetch =
         });
       }
 
-      toastRuntime.showForApiResult(normalized, toastRules);
+      toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
 
       return enrichJsonResponse(response, normalized);
     } catch (error) {
@@ -114,7 +117,7 @@ export const createApiRuntimeFetch =
         type: 'network-offline',
         error: snapshotError(normalized),
       });
-      toastRuntime.showForApiResult(normalized, toastRules);
+      toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
 
       throw error;
     }

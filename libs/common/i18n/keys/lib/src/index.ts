@@ -292,6 +292,7 @@ export type TranslationKey =
   | 'errors.validation-error.title'
   | 'errors.validation-error.detail'
   | 'errors.api.requestFailed'
+  | 'errors.api.networkFailed'
   | 'errors.auth.jwtSecretMissing'
   | 'errors.auth.missingBearer'
   | 'errors.auth.malformedJwt'

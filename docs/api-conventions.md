@@ -79,7 +79,9 @@ Probe policy:
 
 `libs/backend/common/exception/lib` is the singular exception foundation. Its public alias is `@app/backend-common-exception`, its path is `libs/backend/common/exception/lib`, and its Nx project name is `@app/backend-common-exception`. Do not add an alternate exception library alias or path.
 
-Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Generic HTTP errors use `about:blank`; documented product problem types use stable `https://<root-domain>/problems#<code>` identities from `@app/common-problem-details`, and `/problems` resolves to their human-readable registry. The HTTP and body statuses always match. `instance` is an absolute opaque occurrence URI, not a request path. Validation responses use the `errors[]` extension with `{ detail, pointer }`, where `pointer` is a JSON Pointer URI fragment such as `#/profile/email`. Localization replaces standard human-readable members and sets `Content-Language`; client logic uses `type` first, then status or the documented `code` alias.
+Problem Details responses preserve RFC 9457 wire fields: `type`, `title`, `status`, `detail`, and `instance`. Generic HTTP errors use `about:blank`; documented product problem types use stable `https://<root-domain>/problems#<code>` identities from `@app/common-problem-details`, and `/problems` resolves to their human-readable registry. The HTTP and body statuses always match. `instance` is an absolute opaque occurrence URI, not a request path. Validation responses use the `errors[]` extension with `{ detail, pointer }`, where `pointer` is a JSON Pointer URI fragment such as `#/profile/email`.
+
+Only human-readable `title`, `detail`, and validation issue `detail` values are localized. `type`, the documented `code` extension, `status`, `instance`, and validation pointers remain machine-stable. Frontend normalization keeps the canonical URI in `type` and the short switch-friendly alias in `code`; generic `about:blank` responses receive a local `http.<status>` code. Never branch on translated text.
 
 ## Contracts and generated clients
 

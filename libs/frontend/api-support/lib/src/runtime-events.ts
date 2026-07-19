@@ -28,6 +28,7 @@ export interface NormalizedApiErrorSnapshot {
   message: string;
   method?: string;
   status: number | null;
+  type?: string;
 }
 
 export interface ApiRuntimeToastSnapshot {

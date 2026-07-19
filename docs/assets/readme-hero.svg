@@ -1,0 +1,152 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1440"
+  height="480"
+  viewBox="0 0 1440 480"
+  role="img"
+  aria-labelledby="title description"
+>
+  <title id="title">Nest React Boilerplate</title>
+  <desc id="description">A colorful banner for the production-grade Nx, React, Expo, and NestJS monorepo.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1440" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07111F" />
+      <stop offset="0.5" stop-color="#101A35" />
+      <stop offset="1" stop-color="#071827" />
+    </linearGradient>
+    <linearGradient id="border" x1="70" y1="32" x2="1370" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8" />
+      <stop offset="0.48" stop-color="#A78BFA" />
+      <stop offset="1" stop-color="#34D399" />
+    </linearGradient>
+    <linearGradient id="wordmark" x1="244" y1="130" x2="920" y2="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0F2FE" />
+      <stop offset="0.52" stop-color="#DDD6FE" />
+      <stop offset="1" stop-color="#A7F3D0" />
+    </linearGradient>
+    <linearGradient id="mark" x1="68" y1="122" x2="214" y2="324" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8" />
+      <stop offset="0.5" stop-color="#8B5CF6" />
+      <stop offset="1" stop-color="#10B981" />
+    </linearGradient>
+    <radialGradient
+      id="blueGlow"
+      cx="0"
+      cy="0"
+      r="1"
+      gradientTransform="translate(1240 62) rotate(132) scale(420 290)"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#0EA5E9" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#0EA5E9" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient
+      id="violetGlow"
+      cx="0"
+      cy="0"
+      r="1"
+      gradientTransform="translate(450 520) rotate(-72) scale(360 560)"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#8B5CF6" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#94A3B8" fill-opacity="0.15" />
+    </pattern>
+  </defs>
+
+  <rect width="1440" height="480" rx="34" fill="url(#background)" />
+  <rect width="1440" height="480" rx="34" fill="url(#blueGlow)" />
+  <rect width="1440" height="480" rx="34" fill="url(#violetGlow)" />
+  <rect width="1440" height="480" rx="34" fill="url(#dots)" />
+  <rect
+    x="1.5"
+    y="1.5"
+    width="1437"
+    height="477"
+    rx="32.5"
+    fill="none"
+    stroke="url(#border)"
+    stroke-opacity="0.64"
+    stroke-width="3"
+  />
+
+  <g>
+    <rect x="72" y="122" width="148" height="218" rx="42" fill="#0F172A" stroke="url(#mark)" stroke-width="4" />
+    <path
+      d="M112 286V176L180 286V176"
+      fill="none"
+      stroke="url(#mark)"
+      stroke-width="15"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle cx="112" cy="176" r="8" fill="#38BDF8" />
+    <circle cx="180" cy="176" r="8" fill="#A78BFA" />
+    <circle cx="112" cy="286" r="8" fill="#34D399" />
+    <circle cx="180" cy="286" r="8" fill="#F472B6" />
+  </g>
+
+  <text
+    x="270"
+    y="178"
+    fill="#7DD3FC"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="26"
+    font-weight="700"
+    letter-spacing="8"
+  >
+    NEST · REACT · NX
+  </text>
+  <text
+    x="266"
+    y="263"
+    fill="url(#wordmark)"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="78"
+    font-weight="800"
+    letter-spacing="-2"
+  >
+    BOILERPLATE
+  </text>
+  <text
+    x="270"
+    y="313"
+    fill="#CBD5E1"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="24"
+    font-weight="500"
+  >
+    Production-shaped. Product-neutral. Explicit by design.
+  </text>
+
+  <g
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    font-size="18"
+    font-weight="700"
+  >
+    <rect x="270" y="354" width="126" height="46" rx="23" fill="#082F49" stroke="#38BDF8" stroke-opacity="0.65" />
+    <text x="301" y="384" fill="#BAE6FD">React</text>
+    <rect x="412" y="354" width="130" height="46" rx="23" fill="#2E1065" stroke="#A78BFA" stroke-opacity="0.65" />
+    <text x="444" y="384" fill="#DDD6FE">NestJS</text>
+    <rect x="558" y="354" width="112" height="46" rx="23" fill="#052E2B" stroke="#34D399" stroke-opacity="0.65" />
+    <text x="594" y="384" fill="#A7F3D0">Expo</text>
+    <rect x="686" y="354" width="142" height="46" rx="23" fill="#172554" stroke="#60A5FA" stroke-opacity="0.65" />
+    <text x="721" y="384" fill="#BFDBFE">OpenAPI</text>
+    <rect x="844" y="354" width="142" height="46" rx="23" fill="#3B132A" stroke="#F472B6" stroke-opacity="0.65" />
+    <text x="875" y="384" fill="#FBCFE8">Postgres</text>
+  </g>
+
+  <g opacity="0.9">
+    <path d="M1116 158L1196 112L1276 158V250L1196 296L1116 250V158Z" fill="#0F172A" stroke="#38BDF8" stroke-width="3" />
+    <path d="M1196 112V204M1116 158L1196 204L1276 158M1196 204V296" fill="none" stroke="#A78BFA" stroke-width="3" />
+    <circle cx="1196" cy="112" r="12" fill="#38BDF8" />
+    <circle cx="1116" cy="158" r="12" fill="#A78BFA" />
+    <circle cx="1276" cy="158" r="12" fill="#34D399" />
+    <circle cx="1196" cy="204" r="15" fill="#F8FAFC" />
+    <circle cx="1116" cy="250" r="12" fill="#F472B6" />
+    <circle cx="1276" cy="250" r="12" fill="#FBBF24" />
+    <circle cx="1196" cy="296" r="12" fill="#60A5FA" />
+  </g>
+</svg>

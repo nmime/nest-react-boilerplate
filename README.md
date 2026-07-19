@@ -1,216 +1,320 @@
-# Nest React Boilerplate
+<a id="readme-top"></a>
 
-A production-oriented Nx monorepo starter for teams building React frontends, Expo mobile apps, and NestJS services on PostgreSQL. It packages Vite SPAs, an Astro landing app, a Vike SSR site, an Expo/React Native mobile app, NestJS API and worker services, shared platform libraries, OpenAPI-driven clients, database migrations, Docker Compose stacks, and GitHub Actions quality gates.
+<div align="center">
+  <img src="docs/assets/readme-hero.svg" width="100%" alt="Nest React Boilerplate — production-grade Nx, React, Expo, and NestJS monorepo" />
 
-## System at a glance
+  <h1>Nest React Boilerplate</h1>
 
-```mermaid
-flowchart TB
-  subgraph Product["Product surfaces"]
-    Admin["admin-app React + Vite"]
-    User["user-app React + Vite"]
-    Landing["landing-app Astro + React islands"]
-    Site["site-app Vike + React SSR"]
-    Mobile["mobile-app Expo + React Native"]
-  end
-  subgraph Frontend["libs/frontend/**"]
-    UI["ui-web React DOM primitives"]
-    NativeUI["ui-native Tamagui facade"]
-    Runtime["frontend runtime + api-support"]
-    Client["typed API clients"]
-  end
-  subgraph Services["Backend services"]
-    AdminApi["admin-app-api NestJS"]
-    UserApi["user-app-api NestJS"]
-    AuthApi["auth-app-api NestJS"]
-    DiscordApi["discord-app-api NestJS"]
-    TelegramApi["telegram-bot-api NestJS"]
-  end
-  subgraph Backend["libs/backend/**"]
-    Bootstrap["bootstrap + health"]
-    Exception["singular exception foundation"]
-    Features["feature modules"]
-    Postgres["PostgreSQL libraries + MikroORM migrations"]
-  end
-  Data[(PostgreSQL)]
-  Ops["Docker, GitHub Actions, Helm, operations docs"]
+  <p>
+    <strong>A production-shaped Nx foundation for web, mobile, APIs, workers, and integrations.</strong>
+    <br />
+    Select only the product surfaces you need, keep runtime ownership explicit, and ship through one typed platform.
+  </p>
 
-  Admin --> UI
-  User --> UI
-  Landing --> UI
-  Site --> UI
-  Mobile --> NativeUI
-  NativeUI --> Runtime
-  UI --> Runtime
-  UI --> Client
-  Client --> Runtime
-  Client --> AdminApi
-  Client --> UserApi
-  Client --> AuthApi
-  AdminApi --> Bootstrap
-  UserApi --> Bootstrap
-  AuthApi --> Bootstrap
-  DiscordApi --> Bootstrap
-  TelegramApi --> Bootstrap
-  Bootstrap --> Exception
-  Bootstrap --> Features
-  Features --> Postgres
-  Postgres --> Data
-  Ops -. "validates and packages" .-> Product
-  Ops -. "deploys" .-> Services
+  <p>
+    <a href="https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/nmime/nest-react-boilerplate/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=22c55e" /></a>
+    <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
+    <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+    <img alt="pnpm 11.11.0" src="https://img.shields.io/badge/pnpm-11.11.0-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
+    <img alt="Bun 1.3.14 optional runtime" src="https://img.shields.io/badge/Bun_1.3.14-optional_runtime-FBF0DF?style=for-the-badge&logo=bun&logoColor=black" />
+    <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
+    <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
+  </p>
+
+  <p>
+    <a href="#quick-start">Quick start</a> ·
+    <a href="#bun-runtime-compatibility">Bun runtime</a> ·
+    <a href="#choose-your-product-surfaces">Applications</a> ·
+    <a href="#architecture">Architecture</a> ·
+    <a href="#quality-by-default">Quality</a> ·
+    <a href="#documentation">Documentation</a>
+  </p>
+</div>
+
+> [!IMPORTANT]
+> **Node.js 24 and pnpm 11.11.0 are the canonical install, coverage, CI, and deployment toolchain.** Bun 1.3.14 is a verified optional runtime for selected Nx builds, servers, and tests. See [Bun runtime compatibility](#bun-runtime-compatibility) for the exact supported boundary.
+
+## Why this foundation
+
+This repository is more than a framework starter. It is an executable platform contract for teams that want frontend, backend, mobile, API, data, testing, and delivery decisions to agree from the first commit.
+
+|                                                                                                                                         |                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **🧩 Explicit product selection**<br />Choose applications with `pnpm nrb setup`; the repo never invents a default deployable.          | **⚡ Multi-renderer frontend**<br />React + Vite SPAs, Astro islands, Vike SSR, Expo/React Native, Tamagui, and Storybook.             |
+| **🛡️ Production NestJS backend**<br />Fastify, PostgreSQL + MikroORM, Redis, NATS, request CLS, health probes, and graceful operations. | **📜 Contract-first APIs**<br />OpenAPI producers, generated TypeScript clients, typed React Query helpers, and RFC 9457 errors.       |
+| **🧪 Quality as code**<br />ESLint, Prettier, Vitest, Playwright, component tests, coverage gates, contract checks, and security scans. | **🚀 Multiple delivery paths**<br />Docker Compose, multi-stage images, Kubernetes/Helm, GitHub Actions, and single-server operations. |
+
+### Design principles
+
+- **Product-neutral reference UI** — useful application shells without fake business data or a demo brand.
+- **Ownership before convenience** — every deployable, feature, library, route, contract, and migration has an explicit home.
+- **Generated contracts stay reviewable** — controllers and DTOs own API truth; committed outputs make drift visible.
+- **Secure defaults** — conservative CORS, disabled production OpenAPI, explicit API origins, secret scanning, and no accidental bootstrap paths.
+- **Local proof first** — CI is additional evidence, not a substitute for focused local verification.
+
+## Choose your product surfaces
+
+There is no default application. Setup records an explicit selection in `.nrb/workspace.json`, and you can rerun it whenever the product grows.
+
+| Surface              | Included choices                                                                 |
+| -------------------- | -------------------------------------------------------------------------------- |
+| **Web applications** | Admin and user React + Vite SPAs, an Astro landing app, and a Vike SSR site      |
+| **Mobile**           | Expo + React Native with shared native UI and authentication dependencies        |
+| **Core APIs**        | Separate NestJS + Fastify services for admin, user, and authentication ownership |
+| **Integrations**     | Optional Discord interaction API and Telegram bot API                            |
+| **End to end**       | A Playwright full-stack project tied to the selected core applications           |
+
+Use the generated [Project Catalog](docs/project-catalog.md) for stable application IDs, Nx roots, selection dependencies, runtimes, and template hostnames.
+
+```bash
+# Interactive product selection
+pnpm nrb setup
+
+# Add one application explicitly later
+pnpm nrb setup --app landing-app
+
+# Inspect the live Nx graph
+pnpm exec nx show projects
 ```
 
-Start here when evaluating the repo, then use the linked deep dives for architecture, API lifecycle, local verification, and operations.
+## Quick start
 
-## Quick links
+### Prerequisites
 
-| Topic                 | Doc                                                                                                                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Getting started       | [Quick Start](docs/quick-start.md)                                                                                                                                                      |
-| Scaffold and extend   | [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md)                                                                                                                 |
-| Projects and paths    | [Project Catalog](docs/project-catalog.md)                                                                                                                                              |
-| Command reference     | [Command Matrix](docs/command-matrix.md)                                                                                                                                                |
-| System architecture   | [Architecture](docs/architecture.md) · [Deep dives](docs/architecture/README.md)                                                                                                        |
-| Environment config    | [Environment Variables](docs/environment-variables.md)                                                                                                                                  |
-| Monitoring & alerting | [Monitoring](docs/monitoring.md)                                                                                                                                                        |
-| Supply chain & SLSA   | [Supply Chain Security](docs/supply-chain.md)                                                                                                                                           |
-| API contracts         | [API Contracts](docs/api-contracts.md) · [Lifecycle](docs/api-lifecycle-policy.md)                                                                                                      |
-| Database              | [Migrations](docs/database-migrations.md)                                                                                                                                               |
-| Deployment            | [Production Deploy](docs/production-deploy.md) · [Compose domains/TLS](docs/docker-compose-production.md) · [Helm](.helm/README.md) · [Multi-platform CI](docs/deployment-platforms.md) |
-| Testing               | [Testing](docs/testing.md)                                                                                                                                                              |
-| Operations            | [Runbooks](docs/runbooks/README.md)                                                                                                                                                     |
-| ADRs                  | [Architecture Decision Records](docs/adr/README.md)                                                                                                                                     |
+| Requirement | Supported version or role                                          |
+| ----------- | ------------------------------------------------------------------ |
+| Node.js     | `>=24 <25` — pinned by `.nvmrc`                                    |
+| pnpm        | `11.11.0` through Corepack                                         |
+| Docker      | Local PostgreSQL and broader Compose profiles                      |
+| Bun         | Optional `1.3.14` runtime probe; not the canonical package manager |
 
-## Integrations
-
-| Integration     | Status       | Notes                                                                                                         |
-| --------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| PostgreSQL      | ✅ Wired     | Primary database via MikroORM; migrations committed                                                           |
-| Redis           | ✅ Wired     | Session storage, rate-limit backend (configurable: `single`/`sentinel`/`cluster`)                             |
-| NATS            | ✅ Wired     | Async messaging backbone for bot workers and event-driven features                                            |
-| Telegram        | ✅ Wired     | OIDC via Better Auth, signed TMA sessions, bot webhook/polling, and Open App menus                            |
-| Discord Bot     | ✅ Wired     | Slash commands, interactions endpoint, OAuth 2.0 social auth                                                  |
-| S3 / MinIO      | ✅ Wired     | AWS SDK v3 adapter, injectable test adapter, canonical S3 environment contract, and local MinIO profile       |
-| Email provider  | ➕ Extension | Better Auth lifecycle hooks are available; choose and wire the product's provider (SendGrid is not bundled)   |
-| PostHog         | ✅ Wired     | Analytics provider uses `ANALYTICS_POSTHOG_API_KEY`; analytics stays disabled until explicitly configured     |
-| OpenTelemetry   | ✅ Wired     | OTLP exporter for traces and metrics; disabled by default (`OTEL_ENABLED=false`)                              |
-| Prometheus      | ✅ Wired     | The OTel collector exposes `:9464/metrics`; APIs export metrics to it over OTLP when observability is enabled |
-| OAuth (generic) | ✅ Wired     | Better Auth generic OIDC foundation; Telegram is the signed-token reference provider                          |
-
-**Wired** means runtime code exists and is exercised by tests. **Extension** means the repository provides the ownership point but intentionally does not pretend a vendor integration exists.
-
-## Tech stack
-
-| Area           | Choices                                                                                      |
-| -------------- | -------------------------------------------------------------------------------------------- |
-| Workspace      | Nx, pnpm `11.11.0`, Node.js `>=24 <25`, TypeScript                                           |
-| Frontend       | React, Vite SPAs, Astro, Vike SSR, Expo/React Native, Tamagui, shared UI, Storybook          |
-| Backend        | NestJS on Fastify, CLS request context, Helmet, validation pipes, health/readiness endpoints |
-| Error handling | RFC 9457 (`application/problem+json`), static exception definitions, zero message leakage    |
-| Persistence    | PostgreSQL, MikroORM, explicit migrations, `neverthrow` repository results                   |
-| API contracts  | Nest Swagger/OpenAPI JSON, `openapi-typescript`, `openapi-fetch`, typed React Query helpers  |
-| Quality        | ESLint, Prettier, Vitest, Playwright, Storybook tests, repo tooling checks, GitHub Actions   |
-| Delivery       | Docker Compose, Dockerfiles, Kubernetes/Helm guidance, production runbooks                   |
-
-## Repository map
-
-| Path                                          | Purpose                                                                                         |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `apps/frontend/**`                            | Selectable browser and mobile applications; see the [project catalog](docs/project-catalog.md). |
-| `apps/backend/<scope>/**`                     | Selectable APIs and workers; see the [project catalog](docs/project-catalog.md).                |
-| `apps/e2e/**`                                 | Cross-application end-to-end projects.                                                          |
-| `apps/backend/*/*-app-api/contracts/openapi`  | Committed OpenAPI producer output for review and generation.                                    |
-| `libs/frontend/ui-web`                        | Shared React DOM UI primitives.                                                                 |
-| `libs/frontend/ui-native`                     | Shared Tamagui/native UI facade for Expo/React Native.                                          |
-| `libs/frontend/runtime`                       | Non-visual frontend runtime for i18n, query, shell state, and theme.                            |
-| `libs/frontend/api-support`                   | Browser-safe API environment, request, and error plumbing.                                      |
-| `libs/frontend/api-client`                    | Generated frontend clients plus typed service wrappers.                                         |
-| `libs/backend/common`                         | Backend bootstrap, health, exception, validation, and response foundations.                     |
-| `libs/backend/feature/<scope>/<layer>/lib`    | Backend feature modules, bot libraries, and feature-owned persistence.                          |
-| `libs/backend/postgres/main/shared/lib`       | Shared PostgreSQL configuration and MikroORM infrastructure.                                    |
-| `libs/common/api-contracts/lib/src/generated` | Shared generated contract review types.                                                         |
-| `libs/**/lib`                                 | Nx library project roots, each with local README and AGENTS files.                              |
-| `packages/tooling`                            | Repository automation used by local checks and CI.                                              |
-| `docs/architecture`                           | Focused architecture deep dives and boundary docs.                                              |
-| `docs/adr`                                    | Architecture decision records and template.                                                     |
-| `docs/runbooks`                               | Operational runbook index and templates.                                                        |
-| `docs/ai`                                     | Agent policy, retrieval, context packing, and workflow docs.                                    |
-| `docs`                                        | Architecture, API, testing, operations, deployment, and workflow guides.                        |
-
-## Quickstart
-
-For a complete setup guide, see [Quick Start](docs/quick-start.md).
+### Start the selected stack
 
 ```bash
 nvm use
 corepack enable
 corepack prepare pnpm@11.11.0 --activate
 pnpm install --frozen-lockfile
+
 pnpm nrb setup
 cp .env.example .env
+
 pnpm run dev:db
 pnpm run db:migrate
 pnpm run dev
 ```
 
-Core local services:
+`pnpm run dev` starts only the applications recorded by setup. It refuses to silently fall back to every application. Use `pnpm run dev:all` only when you intentionally want every serve target.
 
-- Monorepo start: `pnpm nrb setup` selects the frontend/backend applications this product needs. `pnpm run dev` (or `pnpm run dev:fullstack`) then starts only the applications recorded in `.nrb/workspace.json`; it refuses to invent a pre-setup default. Rerun setup or use `pnpm nrb setup --app <id>` to add another application later. Use `pnpm run dev:all` only when intentionally running every serve target.
-- Applications: use the [Project Catalog](docs/project-catalog.md) for stable IDs, runtimes, roots, dependencies, and template hostnames; use the [Service Port Registry](docs/PORTS.md) for local endpoints.
-- APIs: `admin-app-api`, `user-app-api`, and `auth-app-api` expose `/health`, `/health/private`, `/live`, and `/ready`.
-- OpenAPI: set `OPENAPI_ENABLED=true` locally and use each API's `OPENAPI_PATH`.
+For noninteractive setup, capability selection, app additions, and troubleshooting, continue with the [Quick Start](docs/quick-start.md) and [Setup and Configuration](docs/setup/configuration.md).
 
-For configuration (interactive/noninteractive), setup health checks, and adding apps/libraries/features, see the [Documentation Index](docs/README.md).
+## Bun runtime compatibility
 
-## Quality gates
+<div align="center">
+  <img alt="Bun runtime verified" src="https://img.shields.io/badge/runtime-verified-10B981?style=flat-square" />
+  <img alt="Bun package manager experimental" src="https://img.shields.io/badge/package_manager-experimental-F59E0B?style=flat-square" />
+  <img alt="Bun production deployment not certified" src="https://img.shields.io/badge/production_deployment-not_certified-EF4444?style=flat-square" />
+</div>
 
-Run the fast local gate before opening a PR:
+Bun 1.3.14 successfully ran representative Nx graphs, Vite and Vike builds, an Expo web export, selected NestJS builds and HTTP runtimes, and selected Vitest suites in an isolated compatibility audit.
+
+Use `--bun` deliberately. Plain `bun run nx ...` follows Nx's Node shebang and can accidentally test Node instead of Bun.
 
 ```bash
-pnpm run check:fast
+# Keep dependency installation canonical and reproducible.
+pnpm install --frozen-lockfile
+
+# Force Nx itself to execute under Bun.
+NX_DAEMON=false bun run --bun nx show projects
+bun run --bun nx run admin-app:build
+bun run --bun nx run site-app:build
 ```
 
-Use targeted gates for the surface you changed:
+> [!CAUTION]
+> Do not replace `pnpm install`, disable coverage, or switch production images to Bun based on these probes. Bun's V8 coverage path, Nx deployment lockfile generation, Node-specific repository tooling, runtime reporting, OpenTelemetry certification, and production pruning still require dedicated implementation.
 
-| Change area                   | Commands                                                                                     |
-| ----------------------------- | -------------------------------------------------------------------------------------------- |
-| Tooling or repository scripts | `pnpm run tooling:static-check`                                                              |
-| Formatting-only/docs          | `pnpm run docs:check`, `pnpm run format:changed`, `git diff --check`                         |
-| Frontend boundaries           | `pnpm run frontend:fsd:check` plus relevant app tests/builds                                 |
-| API shape                     | `pnpm run api:contracts:check`, `pnpm run api:clients:check`, `pnpm run api:openapi:lint`    |
-| Database migrations           | `pnpm run db:migrations:check`; add rollback checks when Docker/Testcontainers are available |
-| Runtime TypeScript            | `pnpm run lint`, `pnpm run typecheck`, focused `pnpm run test`/Nx project tests              |
-| Release-risk or cross-cutting | `pnpm run check`                                                                             |
+| Capability                                   | Current position                              |
+| -------------------------------------------- | --------------------------------------------- |
+| Nx graph and representative builds under Bun | ✅ Verified                                   |
+| Selected Vike and NestJS runtime smoke tests | ✅ Verified                                   |
+| Selected Vitest suites                       | ✅ Verified                                   |
+| Canonical dependency resolution and lockfile | 🟠 pnpm remains required                      |
+| Normal coverage gate                         | 🔴 Blocked by missing inspector coverage APIs |
+| Production images and observability          | 🔴 Not certified                              |
 
-CI is extra evidence; local validation remains required for code changes.
+Read the evidence, commands, limitations, and phased adoption plan in [Bun Runtime Research](docs/bun-runtime-research.md).
 
-## Documentation index
+## Architecture
 
-- [Architecture](docs/architecture.md) and [architecture deep dives](docs/architecture/README.md) — app/library split, runtime boundaries, data flow, naming, and DDD boundaries.
-- [Scaffolding and Extension Contract](docs/scaffolding-and-extension.md) — fresh-clone initialization, required/optional surfaces, generators, domains, and deployable completion criteria.
-- [Architecture decision records](docs/adr/README.md) — durable architecture decisions and ADR template.
-- [Runbooks](docs/runbooks/README.md) — operational runbook index and service incident template.
-- [AI agent policy](docs/ai/agent-policy.md), [repo map](docs/ai/repo-map.md), [retrieval policy](docs/ai/retrieval-policy.md), [context packing](docs/ai/context-packing.md), and [agent workflows](docs/ai/agent-workflows.md) — how repository context is organized for coding agents.
-- Every Nx app, library, and package project root has a local `README.md` and `AGENTS.md`; use those files for nearest ownership and command notes before editing that project.
-- [Technology choices](docs/technology-choices.md) — framework and platform decisions.
-- [Command matrix](docs/command-matrix.md) — supported local and CI commands.
-- [Local verification](docs/local-verification.md) — reproducible workstation checks.
-- [Testing](docs/testing.md) and [Modern QA](docs/testing/modern-qa.md) — unit, component, e2e, Storybook, and coverage strategy.
-- [API contracts](docs/api-contracts.md), [API conventions](docs/api-conventions.md), and [API lifecycle policy](docs/api-lifecycle-policy.md) — OpenAPI generation, error responses, health, and compatibility rules.
-- [Database migrations](docs/database-migrations.md) — MikroORM standards and review checklist.
-- [Operations](docs/operations.md), [Production deploy](docs/production-deploy.md), [Deployment](docs/deployment.md), and [Production readiness](docs/production-readiness.md) — release, runtime, and runbook guidance.
-- [Single-server deployment](docs/single-server-deployment.md) — rerunnable Ubuntu/Debian bootstrap, host Nginx/Certbot, immutable updates, and rollback boundaries.
-- [Dependency management](docs/dependency-management.md) and [Branch protection](docs/branch-protection.md) — supply-chain and repository governance.
+```mermaid
+flowchart LR
+  Setup["NRB setup<br/>explicit selection"] --> Products
 
-## Contributor and agent policy
+  subgraph Products["Product surfaces"]
+    Web["React + Vite<br/>Astro · Vike"]
+    Mobile["Expo +<br/>React Native"]
+    Integrations["Discord ·<br/>Telegram"]
+  end
 
-- Human and AI contributors must follow [CONTRIBUTING.md](CONTRIBUTING.md).
-- AI coding agents must follow [AGENTS.md](AGENTS.md) and the detailed [AI agent policy](docs/ai/agent-policy.md); deeper context lives under [docs/ai](docs/ai/repo-map.md), and tool-specific instruction files only redirect to the canonical policy.
-- Author-sensitive work must use raw git with the configured author/committer, not GitHub web merge/squash flows.
-- Never expose secrets, commit real environment values, or add generated artifacts unless the task explicitly includes regeneration.
+  subgraph Platform["Shared platform"]
+    Frontend["Frontend UI · runtime<br/>API support · clients"]
+    Common["Common contracts<br/>problem details · i18n"]
+    Backend["Backend bootstrap · health<br/>features · persistence"]
+  end
 
-## Security baseline
+  subgraph Services["NestJS + Fastify"]
+    Admin["Admin API"]
+    User["User API"]
+    Auth["Auth API"]
+  end
 
-Security defaults are intentionally conservative: production CORS has no wildcard, admin bootstrap is disabled unless explicitly enabled, OpenAPI is disabled in production examples, production frontend builds require explicit API origins or `VITE_API_BASE_URL_MODE=same-origin`, URL bearer-token bootstrap is ignored outside development/test modes, and OAuth is disabled until provider-specific product code is configured.
+  Data[("PostgreSQL · Redis · NATS")]
+  Delivery["Tests · Docker · Helm · CI"]
 
-See [SECURITY.md](SECURITY.md) for reporting expectations and baseline controls.
+  Web --> Frontend
+  Mobile --> Frontend
+  Integrations --> Backend
+  Frontend --> Common
+  Frontend --> Admin
+  Frontend --> User
+  Frontend --> Auth
+  Common --> Backend
+  Admin --> Backend
+  User --> Backend
+  Auth --> Backend
+  Backend --> Data
+  Delivery -. "validates" .-> Products
+  Delivery -. "packages and operates" .-> Services
+
+  classDef setup fill:#082f49,stroke:#38bdf8,color:#e0f2fe,stroke-width:2px;
+  classDef product fill:#2e1065,stroke:#a78bfa,color:#f5f3ff,stroke-width:2px;
+  classDef platform fill:#052e2b,stroke:#34d399,color:#ecfdf5,stroke-width:2px;
+  classDef service fill:#172554,stroke:#60a5fa,color:#eff6ff,stroke-width:2px;
+  classDef data fill:#3b132a,stroke:#f472b6,color:#fdf2f8,stroke-width:2px;
+  classDef delivery fill:#422006,stroke:#fbbf24,color:#fffbeb,stroke-width:2px;
+
+  class Setup setup;
+  class Web,Mobile,Integrations product;
+  class Frontend,Common,Backend platform;
+  class Admin,User,Auth service;
+  class Data data;
+  class Delivery delivery;
+```
+
+### Platform stack
+
+| Layer            | Technology and responsibility                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------------- |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.11.0, Node.js 24, optional Bun runtime probes                             |
+| 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
+| 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
+| 🩷 **Data**      | PostgreSQL, MikroORM, explicit migrations, Redis, NATS, S3/MinIO adapters                            |
+| 🟨 **Contracts** | OpenAPI, generated clients, RFC 9457 Problem Details, typed public extensions                        |
+| 🟧 **Delivery**  | Docker Compose, Dockerfiles, Kubernetes/Helm, GitHub Actions, release and operations runbooks        |
+
+Explore the full boundary model in [Architecture](docs/architecture.md) and the focused [Architecture Deep Dives](docs/architecture/README.md).
+
+## Integrations
+
+| Integration    | Status             | What is included                                                                       |
+| -------------- | ------------------ | -------------------------------------------------------------------------------------- |
+| PostgreSQL     | 🟢 Wired           | MikroORM configuration, feature-owned entities, and committed migrations               |
+| Redis          | 🟢 Wired           | Session and rate-limit infrastructure with single, sentinel, and cluster modes         |
+| NATS           | 🟢 Wired           | Messaging backbone for workers and event-driven features                               |
+| Telegram       | 🟢 Wired           | Better Auth OIDC, signed TMA sessions, webhook/polling bot runtime, and Open App menus |
+| Discord        | 🟢 Wired           | Slash commands, interactions endpoint, and OAuth 2.0 social authentication             |
+| S3 / MinIO     | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local MinIO profile                   |
+| PostHog        | 🟢 Wired           | Disabled-by-default analytics provider with an explicit API-key contract               |
+| OpenTelemetry  | 🟢 Wired on Node   | OTLP traces and metrics with a Prometheus-exporting collector path                     |
+| Email provider | 🟡 Extension point | Better Auth lifecycle ownership is ready; the product chooses its vendor               |
+
+**Wired** means runtime code exists and is exercised by tests. **Extension point** means the repository provides ownership without pretending a vendor integration is bundled.
+
+## Quality by default
+
+The repository treats formatting, architecture boundaries, generated contracts, migrations, coverage, security, and deployment configuration as executable checks.
+
+```bash
+# Fast local aggregate for normal changes
+pnpm run check:fast
+
+# Full non-runtime aggregate for cross-cutting changes
+pnpm run check
+```
+
+| Change area             | Focused proof                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| Documentation           | `pnpm run docs:check` · `pnpm run format:changed` · `git diff --check`                      |
+| Repository tooling      | `pnpm run tooling:static-check`                                                             |
+| Frontend boundaries     | `pnpm run frontend:fsd:check` plus owning app tests/builds                                  |
+| API contracts           | `pnpm run api:contracts:check` · `pnpm run api:clients:check` · `pnpm run api:openapi:lint` |
+| Database changes        | `pnpm run db:migrations:check` plus rollback proof when Docker is available                 |
+| Runtime code            | `pnpm run lint` · `pnpm run typecheck` · focused Nx/Vitest tests                            |
+| Security-sensitive work | `pnpm run test:security:secrets` plus targeted SAST/security checks                         |
+
+Testing spans unit and integration suites, Storybook interaction and visual checks, Playwright browser flows, Testcontainers-backed component tests, OpenAPI consumer/fuzz checks, property tests, and coverage thresholds. See [Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and [Local Verification](docs/local-verification.md).
+
+## Repository layout
+
+```text
+apps/
+├── frontend/                 # Vite, Astro, Vike, and Expo deployables
+├── backend/<scope>/          # NestJS APIs, bots, workers, and schedulers
+└── e2e/                      # Cross-application Playwright projects
+
+libs/
+├── frontend/                 # UI, runtime, API support, clients, and frontend features
+├── backend/                  # Bootstrap, health, features, and PostgreSQL infrastructure
+└── common/                   # Cross-runtime contracts, i18n, notifications, and problem details
+
+packages/tooling/             # NRB setup, generators, checks, and repository automation
+docs/                         # Architecture, workflows, testing, deployment, and runbooks
+deploy/                       # Single-server lifecycle automation
+docker/                       # Production Compose topology and supporting configuration
+.helm/                        # Kubernetes chart and deployment values
+```
+
+Public TypeScript aliases in `tsconfig.base.json` are stable API. Every project root carries its nearest `README.md` and `AGENTS.md`; use those before changing project-owned behavior.
+
+## Delivery paths
+
+| Target                      | Start here                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Local dependencies          | [Quick Start](docs/quick-start.md) and the root Docker Compose stack                                    |
+| Production Compose          | [Docker Compose Production](docs/docker-compose-production.md)                                          |
+| Kubernetes / Helm           | [Production Deploy](docs/production-deploy.md) and [.helm/README.md](.helm/README.md)                   |
+| Single Ubuntu/Debian server | [Idempotent Single-Server Deployment](docs/single-server-deployment.md)                                 |
+| Release and hardening       | [Release Hardening](docs/release-hardening.md) and [Production Readiness](docs/production-readiness.md) |
+| Operations                  | [Operations Guide](docs/operations.md) and [Runbooks](docs/runbooks/README.md)                          |
+
+## Documentation
+
+| Goal                          | Canonical guide                                                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Understand every application  | [Project Catalog](docs/project-catalog.md)                                                                         |
+| Configure or extend setup     | [Setup and Configuration](docs/setup/configuration.md) · [Scaffolding Contract](docs/scaffolding-and-extension.md) |
+| Find a supported command      | [Command Matrix](docs/command-matrix.md)                                                                           |
+| Understand system boundaries  | [Architecture](docs/architecture.md) · [Deep Dives](docs/architecture/README.md)                                   |
+| Work with APIs and clients    | [API Contracts](docs/api-contracts.md) · [API Lifecycle](docs/api-lifecycle-policy.md)                             |
+| Add or review migrations      | [Database Migrations](docs/database-migrations.md)                                                                 |
+| Configure environment values  | [Environment Variables](docs/environment-variables.md)                                                             |
+| Verify the repository locally | [Local Verification](docs/local-verification.md)                                                                   |
+| Evaluate Bun adoption         | [Bun Runtime Research](docs/bun-runtime-research.md)                                                               |
+| Browse everything             | [Documentation Index](docs/README.md)                                                                              |
+
+## Security and contribution
+
+Production examples avoid wildcard CORS, disable admin bootstrap and OpenAPI unless explicitly enabled, require deliberate frontend API origins, ignore URL bearer-token bootstrap outside development/test, and keep OAuth providers disabled until the owning product configures them.
+
+- Report security issues and review the baseline in [SECURITY.md](SECURITY.md).
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.
+- AI contributors must follow [AGENTS.md](AGENTS.md) and the canonical [AI Agent Policy](docs/ai/agent-policy.md).
+- Never commit real environment values, credentials, secret material, local volumes, or generated output without its owning source change.
+
+## License
+
+Released under the [MIT License](LICENSE). Built and maintained by [nmime](https://github.com/nmime).
+
+<div align="right">
+  <a href="#readme-top">Back to top ↑</a>
+</div>

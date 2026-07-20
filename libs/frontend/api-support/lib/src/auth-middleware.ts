@@ -113,6 +113,12 @@ export const createAuthRefreshMiddleware = ({
 
       return request;
     },
+    onError({ id }) {
+      // `onResponse` never runs when the transport rejects. Release the
+      // pre-fetch body clone on that path as well so repeated offline failures
+      // cannot retain request bodies for the lifetime of the client.
+      retryableRequests.delete(id);
+    },
     async onResponse({ id, request, response }) {
       if (response.status !== 401 || !shouldHandle401(request)) {
         retryableRequests.delete(id);

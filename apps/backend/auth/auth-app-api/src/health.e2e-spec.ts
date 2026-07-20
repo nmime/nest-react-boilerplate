@@ -212,9 +212,7 @@ describe('auth-app-api e2e', () => {
     });
   });
 
-  // TODO: Re-enable once Better-Auth is wired to the full auth stack.
-  // The mock BetterAuthInstanceToken cannot register real users.
-  it.skip('supports session-only and bearer-only callers for auth self endpoints', async () => {
+  it('supports session-only and bearer-only callers for auth self endpoints', async () => {
     const password = `e2e-${Date.now().toString(36)}-secret`;
     const register = await app.inject({
       method: 'POST',

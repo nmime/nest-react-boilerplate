@@ -2,29 +2,28 @@
 
 Supply-chain posture, SLSA alignment, SBOM generation, and dependency management for the Nest React Boilerplate platform.
 
-## SLSA 3 status
+## Checked-in provenance and supply-chain posture
 
-[SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. Here is where this repository stands:
+[SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. The table below reports only controls visible in this repository. It does not claim a SLSA level or infer GitHub organization and repository settings that are configured outside Git.
 
-| SLSA 3 Requirement              | Status         | Details                                                                                                                                                                                     |
-| ------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Build authenticity**          | ✅ Implemented | Builds run in GitHub Actions with pinned action SHAs, frozen lockfile (`--frozen-lockfile`), and pinned runner images (`ubuntu-22.04`).                                                     |
-| **Build provenance**            | ✅ Implemented | `docker/build-push-action` emits `provenance: mode=max` (SLSA 1 provenance via in-toto attestation) for every image.                                                                        |
-| **Build reproducibility**       | ⚠️ Partial     | Dockerfile is multi-stage with explicit base images, but `pnpm install` is not fully deterministic (network fetches). Recommend: pnpm cachedir volume + `--frozen-lockfile` (already done). |
-| **Source integrity**            | ✅ Implemented | Source is hosted on GitHub with branch protection. PRs require reviews and pass CI gates.                                                                                                   |
-| **Dependency review**           | ✅ Implemented | `dependency-review.yml` runs `pnpm audit` on every PR. Workspace overrides pin vulnerable transitive versions.                                                                              |
-| **SBOM generation**             | ✅ Implemented | `anchore/sbom-action` generates SPDX JSON for every container image in the release workflow.                                                                                                |
-| **Vulnerability scanning**      | ✅ Implemented | Trivy scans images for CRITICAL/HIGH vulnerabilities; fails the build on findings. CodeQL scans source on every PR.                                                                         |
-| **Image signing**               | ✅ Implemented | `sigstore/cosign-installer` + keyless signing via GitHub OIDC on every release image.                                                                                                       |
-| **SLSA provenance attestation** | ⚠️ Partial     | Docker Buildx `provenance: mode=max` emits SLSA 1 provenance. Full SLSA 3 requires a hermetic build with `slsa-framework/slsa-github-generator`.                                            |
-| **Workflow protection**         | ⚠️ Partial     | Workflows use `permissions: contents: read` (least privilege), but workflow edits are not protected by additional approval gates.                                                           |
+| Control                      | Checked-in status | Evidence or remaining boundary                                                                                                                                                              |
+| ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Build inputs**             | Implemented       | CI uses a frozen pnpm lockfile, pinned action SHAs, and explicit Node/pnpm versions. Most jobs use `ubuntu-22.04`; the Gitleaks and release-note jobs still use `ubuntu-latest`.            |
+| **Build provenance**         | Implemented       | `release-images.yml` enables Docker Buildx `provenance: mode=max` and addresses every published image by digest after the build.                                                            |
+| **Build isolation**          | Partial           | Release builds run in GitHub-hosted jobs, but dependency installation and base-image resolution can use the network. The repository does not claim a hermetic build.                        |
+| **Source integrity**         | External setting  | Branch protection, required reviews, tag protection, and rulesets are GitHub settings. Maintainers must verify them in repository settings; checked-in workflow files cannot prove them.    |
+| **Dependency audit**         | Implemented       | `dependency-review.yml` installs the frozen lockfile and runs `pnpm run audit:ci` for production dependencies at the moderate severity threshold.                                           |
+| **SBOM generation**          | Implemented       | Docker Buildx embeds SBOM metadata and `anchore/sbom-action` uploads a separate SPDX JSON artifact for each release image.                                                                  |
+| **Vulnerability scanning**   | Implemented       | Trivy scans every release image for CRITICAL/HIGH OS and library findings with `exit-code: '1'`; CodeQL and native secret/SAST gates run separately.                                        |
+| **Image signing**            | Implemented       | `sigstore/cosign-installer` signs each release image digest through GitHub OIDC.                                                                                                            |
+| **Workflow least privilege** | Partial           | Workflows declare scoped permissions and actions are SHA-pinned. Release publishing grants package, identity-token, security-event, and attestation permissions; host approval is external. |
 
-### What's missing for full SLSA 3
+### Host and build controls still to verify or add
 
-1. **Hermetic build environment** — Replace `pnpm install` with a build that uses a local content-addressable store (pnpm's `--dir` cache mount) to eliminate network fetches during CI.
-2. **SLSA 3 provenance generator** — Swap `docker/build-push-action` provenance for `slsa-framework/slsa-github-generator` which emits SLSA 3 provenance attestations.
-3. **Workflow pinning** — Add `workflow_approvals` for changes to `.github/workflows/` (GitHub Enterprise feature) or use `protect-me` bot.
-4. **Branch protection on release tags** — Enforce that only trusted CI creates version tags (tag protection rules).
+1. **Verify host rules** — confirm branch protection/rulesets, required reviews and checks, environment approvals, and release-tag restrictions in GitHub.
+2. **Choose a target SLSA level** — assess the release workflow against the current SLSA specification and record evidence before claiming conformance.
+3. **Reduce mutable build inputs** — pin runner images where practical and use immutable base-image digests if the product's release policy requires them.
+4. **Add hermetic controls if required** — prefetch and verify dependencies/base images, then prevent network access during the actual build step.
 
 ## SBOM generation
 
@@ -34,7 +33,7 @@ Install [Syft](https://github.com/anchore/syft) and run against your built image
 
 ```bash
 # Against a local Docker image
-syft ghcr.io/your-org/nest-react-boilerplate/admin-app-api:sha-$(git rev-parse HEAD) \
+syft ghcr.io/nmime/nest-react-boilerplate/admin-app-api:sha-$(git rev-parse HEAD) \
   --output spdx-json > sbom-admin-app-api.spdx.json
 
 # Against a directory (source SBOM)
@@ -68,10 +67,14 @@ For compliance, push SBOMs to your artifact registry:
 aws s3 cp sbom-admin-app-api.spdx.json \
   s3://sbom-bucket/nest-react-boilerplate/admin-app-api/$(git rev-parse HEAD).spdx.json
 
-# Or push to Sigstore's Fulcio/Rekor for public attestation
-cosign attach sbom --sbom sbom-admin-app-api.spdx.json \
-  ghcr.io/your-org/nest-react-boilerplate/admin-app-api@sha256:<digest>
+# Or upload to the product's registry/compliance store using its documented
+# OCI-artifact or signed-attestation policy.
 ```
+
+Do not describe a raw SBOM attachment as a transparency-log attestation. If the
+product requires signed SBOM attestations, pin a current cosign release and add
+the matching `attest`/`verify-attestation` commands plus policy tests as one
+change.
 
 ## pnpm supply-chain quarantine
 
@@ -84,7 +87,10 @@ cosign attach sbom --sbom sbom-admin-app-api.spdx.json \
 minimumReleaseAge: 1440
 ```
 
-This prevents "0-day" malicious packages from being installed. If a critical security patch was just published, override it by either lowering `minimumReleaseAge` in `pnpm-workspace.yaml` or adding the specific `pkg@version` to the `minimumReleaseAgeExclude` list:
+This delays newly published versions and reduces immediate exposure to a
+compromised release; it is not a substitute for audit and review. If a critical
+security patch was just published, prefer adding the reviewed `pkg@version` to
+`minimumReleaseAgeExclude` instead of weakening the repository-wide delay:
 
 ```yaml
 minimumReleaseAgeExclude:
@@ -151,27 +157,15 @@ Already implemented in `release-images.yml`. To verify images locally:
 
 ```bash
 # Verify a signed image
-cosign verify --yes \
-  --certificate-identity-regexp='.*' \
+cosign verify \
+  --certificate-identity-regexp='^https://github\.com/nmime/nest-react-boilerplate/\.github/workflows/release-images\.yml@refs/(tags/v.*|heads/main)$' \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-  ghcr.io/your-org/nest-react-boilerplate/admin-app-api@sha256:<digest>
-
-# Verify with keyless (default for GitHub OIDC)
-cosign verify ghcr.io/your-org/nest-react-boilerplate/admin-app-api:sha-$(git rev-parse HEAD)
+  ghcr.io/nmime/nest-react-boilerplate/admin-app-api@sha256:<digest>
 ```
 
-### SLSA provenance in release workflow
+### Provenance evolution
 
-To move from SLSA 1 to SLSA 3 provenance, replace the build-push step with the SLSA framework generator:
-
-```yaml
-- name: Build and publish (SLSA 3)
-  uses: slsa-framework/slsa-github-generator/.github/workflows/builder_go_slsa3.yml@v2.0.0
-  with:
-    base64-provenance: build_and_publish.slsa.provenance
-    upload-assets: false
-    # Or use the Docker-specific builder
-```
+The current release workflow emits BuildKit max-mode provenance. If the project adopts a formal SLSA target, select a supported generator for the repository's artifact type and validate the resulting attestation against that target. Do not copy a language-specific reusable workflow without first confirming that it supports this multi-image Docker build.
 
 ### Additional hardening
 

@@ -47,13 +47,18 @@ audit mutation semantics are owned separately from tenant lifecycle scaffolding.
 
 ## Token foundations
 
-The auth feature includes an injectable token store interface plus an in-memory implementation for tests/templates:
+The auth feature includes an injectable token-store interface with both
+in-memory and PostgreSQL implementations:
 
 - refresh-token issue, rotate, replay denial, and revocation hooks;
 - email verification token issue/consume hooks;
 - password reset token issue/consume hooks.
 
-Postgres tables are migrated for durable storage (`auth_refresh_tokens`, `auth_user_tokens`) so projects can add a repository-backed token store without changing API/service call sites.
+`AUTH_PERSISTENCE=postgres` binds `PostgresAuthTokenStore` to the migrated
+`auth_refresh_tokens` and `auth_user_tokens` tables. Production rejects the
+in-memory mode; it remains available for tests and local development without a
+database. Refresh rotation/replay handling and user-action token consumption are
+therefore durable in the production configuration rather than extension stubs.
 
 `AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to remove expired refresh and user-action tokens. It runs hourly and once on startup by default. Runtime overrides:
 

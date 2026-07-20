@@ -38,10 +38,13 @@ This is the **Docker-internal** hostname. When running outside of Docker (e.g., 
 
 ### Environment Variables
 
-| Variable                      | Value                 | Description                          |
-| ----------------------------- | --------------------- | ------------------------------------ |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://tempo:4317`   | OTLP gRPC endpoint (Docker-internal) |
-| `OTEL_SERVICE_NAME`           | _(your service name)_ | Name shown in Grafana Tempo          |
+| Variable                      | Value               | Description                          |
+| ----------------------------- | ------------------- | ------------------------------------ |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://tempo:4317` | OTLP gRPC endpoint (Docker-internal) |
+
+Service names are code-owned bootstrap identities, not an
+`OTEL_SERVICE_NAME` environment override. This prevents one shared environment
+value from collapsing distinct app telemetry into the same service.
 
 ### Example (NestJS with the OTel lib)
 

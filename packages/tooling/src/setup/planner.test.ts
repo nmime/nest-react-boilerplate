@@ -362,9 +362,17 @@ describe('state — migrateState', () => {
   });
 
   it('passes through v1 state', () => {
-    const v1 = { version: 1, configHash: 'abc', files: { 'x.txt': 'h1' }, digest: 'd1' };
+    const v1 = buildState(hashString('config'), { 'x.txt': hashString('content') });
     const result = migrateState(v1);
     assert.deepEqual(result, v1);
+  });
+
+  it('rejects malformed or tampered v1 state', () => {
+    const valid = buildState(hashString('config'), { 'x.txt': hashString('content') });
+
+    assert.deepEqual(migrateState({ ...valid, configHash: 'not-a-hash' }), emptyState);
+    assert.deepEqual(migrateState({ ...valid, files: { '../outside': hashString('content') } }), emptyState);
+    assert.deepEqual(migrateState({ ...valid, digest: hashString('tampered') }), emptyState);
   });
 
   it('returns empty for future version (safety)', () => {

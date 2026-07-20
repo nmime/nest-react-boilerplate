@@ -4,6 +4,8 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { ClsInterceptor } from '@app/backend-common-bootstrap';
+import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { AdminAppApiModule } from './admin-app-api.module';
 
@@ -144,6 +146,10 @@ describe('admin-app-api health e2e', () => {
     const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
 
     try {
+      // Mirror the production bootstrap boundary: readiness failures must keep
+      // their health envelope even with the global RFC 9457 filter installed.
+      failingApp.useGlobalInterceptors(new ClsInterceptor(), new ExceptionsResponseTransformer());
+      failingApp.useGlobalFilters(new ExceptionsFilter());
       await failingApp.init();
       const response = await failingApp.inject({
         method: 'GET',
@@ -152,14 +158,13 @@ describe('admin-app-api health e2e', () => {
       const body = parseHealthEnvelope(response);
 
       expect(response.statusCode).toBe(503);
+      expect(response.headers['content-type']).toContain('application/json');
+      expect(response.headers['content-type']).not.toContain('application/problem+json');
       expect(JSON.stringify(body)).not.toContain('super-secret');
-      const errorPayload = body.response?.data ??
-        body.data ?? {
-          app: body.app,
-          dependencies: body.dependencies,
-        };
-      expect(errorPayload.app).toBe('admin-app-api');
-      expect(errorPayload.dependencies).toEqual(
+      const errorPayload = body.data;
+      expect(body.response).toBeUndefined();
+      expect(errorPayload?.app).toBe('admin-app-api');
+      expect(errorPayload?.dependencies).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             name: 'postgres',

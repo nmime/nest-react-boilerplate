@@ -273,7 +273,8 @@ for (const expected of [
   'user-app.example.com/api/auth/oauth2/callback/telegram',
   'pnpm run docker:prod:config:check',
   'latest',
-  'full immutable tag',
+  'Protect that tag from mutation',
+  'override when immutable identity is required',
   'chmod 600',
 ]) {
   has(composeDocs, expected, `Docker Compose production docs ${expected}`);
@@ -286,7 +287,11 @@ has(deploymentDocs, '## Compose production', 'deployment docs production Compose
 has(deploymentDocs, 'docker:prod:config', 'deployment docs production Compose entrypoint');
 has(deploymentDocs, 'single-domain', 'deployment docs single-domain topology');
 has(deploymentDocs, 'per-app-domains', 'deployment docs per-app topology');
-has(securityPolicy, 'security@example.com', 'security contact placeholder');
+has(
+  securityPolicy,
+  'https://github.com/nmime/nest-react-boilerplate/security/advisories/new',
+  'canonical private security reporting channel',
+);
 has(securityPolicy, 'within 3 business days', 'security acknowledgement SLA');
 has(securityPolicy, 'within 5 business days', 'security triage SLA');
 

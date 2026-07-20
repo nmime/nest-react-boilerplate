@@ -1,4 +1,3 @@
-import { ServiceUnavailableException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { BaseHealthController } from './base-health.controller';
 import { HealthService } from './health.service';
@@ -24,7 +23,7 @@ describe('BaseHealthController', () => {
     });
   });
 
-  it('throws HTTP 503 semantics for readiness mandatory failures', async () => {
+  it('returns the failed readiness envelope for the health interceptor to map to HTTP 503', async () => {
     const controller = new BaseHealthController(
       new HealthService({
         appName: 'api',
@@ -37,7 +36,13 @@ describe('BaseHealthController', () => {
       }),
     );
 
-    await expect(controller.getReadiness()).rejects.toBeInstanceOf(ServiceUnavailableException);
+    await expect(controller.getReadiness()).resolves.toMatchObject({
+      data: {
+        app: 'api',
+        status: 'error',
+        dependencies: [expect.objectContaining({ name: 'postgres', status: 'error' })],
+      },
+    });
   });
 
   it('allows readiness success for skipped optional indicators', async () => {

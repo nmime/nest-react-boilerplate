@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { validate } from 'class-validator';
 import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
@@ -21,6 +22,7 @@ import type {
 } from '@app/backend-postgres-main-auth';
 import { AdminUsersUseCase } from '../../application/admin-users.use-case';
 import { AdminUsersController } from './admin-users.controller';
+import { UpdateAdminUserAccessPolicyDto, UpdateAdminUserStatusDto } from './dto';
 
 const tenantId = '00000000-0000-0000-0000-000000000000';
 
@@ -191,6 +193,25 @@ const createController = () => {
 };
 
 describe('AdminUsersController', () => {
+  it('requires a bounded non-whitespace audit reason for sensitive mutations', async () => {
+    const statusInput = Object.assign(new UpdateAdminUserStatusDto(), {
+      status: 'disabled',
+      reason: '   ',
+    });
+    const accessInput = Object.assign(new UpdateAdminUserAccessPolicyDto(), {
+      roles: ['user'],
+      permissions: [UserProfileReadPermission],
+      reason: 'x'.repeat(501),
+    });
+
+    await expect(validate(statusInput)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: 'reason' })]),
+    );
+    await expect(validate(accessInput)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: 'reason' })]),
+    );
+  });
+
   it('lists users with a defensive allowlisted filter', async () => {
     const { controller, users } = createController();
 
@@ -243,7 +264,7 @@ describe('AdminUsersController', () => {
       controller.updateUserStatus(
         principal,
         'user-id',
-        { status: 'disabled' },
+        { status: 'disabled', reason: ' Policy violation ' },
         { headers: { 'x-request-id': 'req-1' } },
       ),
     ).resolves.toMatchObject({ data: { status: 'disabled' } });
@@ -255,7 +276,7 @@ describe('AdminUsersController', () => {
       policy: { status: 'disabled' },
       audit: {
         actorUserId: 'actor-id',
-        metadata: { requestId: 'req-1' },
+        metadata: { requestId: 'req-1', reason: 'Policy violation' },
       },
     });
     expect(users.setAccessPolicy).not.toHaveBeenCalled();
@@ -287,6 +308,7 @@ describe('AdminUsersController', () => {
         {
           roles: ['user', AdminRole],
           permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+          reason: 'Elevated support access',
         },
         { headers: {} },
       ),
@@ -297,6 +319,10 @@ describe('AdminUsersController', () => {
         policy: {
           roles: ['user', AdminRole],
           permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+        },
+        audit: {
+          actorUserId: 'actor-id',
+          metadata: { reason: 'Elevated support access' },
         },
       }),
     );
@@ -310,7 +336,7 @@ describe('AdminUsersController', () => {
       controller.updateUserAccessPolicy(
         principal,
         'user-id',
-        { roles: ['owner'], permissions: ['*'] },
+        { roles: ['owner'], permissions: ['*'], reason: 'Invalid policy test' },
         { headers: {} },
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -326,7 +352,12 @@ describe('AdminUsersController', () => {
     );
 
     await expect(
-      controller.updateUserStatus(principal, principal.subject, { status: 'disabled' }, { headers: {} }),
+      controller.updateUserStatus(
+        principal,
+        principal.subject,
+        { status: 'disabled', reason: 'Self lockout test' },
+        { headers: {} },
+      ),
     ).rejects.toThrow('own active admin write access');
 
     adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
@@ -336,7 +367,12 @@ describe('AdminUsersController', () => {
       }),
     );
     await expect(
-      controller.updateUserStatus(principal, 'other-admin', { status: 'disabled' }, { headers: {} }),
+      controller.updateUserStatus(
+        principal,
+        'other-admin',
+        { status: 'disabled', reason: 'Last admin test' },
+        { headers: {} },
+      ),
     ).rejects.toThrow('At least one active administrator');
 
     adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(okAsync(createMutationResult()));
@@ -344,7 +380,7 @@ describe('AdminUsersController', () => {
       controller.updateUserAccessPolicy(
         principal,
         'other-admin',
-        { roles: ['user'], permissions: [UserProfileReadPermission] },
+        { roles: ['user'], permissions: [UserProfileReadPermission], reason: 'Reduce access' },
         { headers: {} },
       ),
     ).resolves.toMatchObject({ data: { status: 'disabled' } });

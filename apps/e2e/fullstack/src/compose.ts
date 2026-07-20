@@ -89,7 +89,8 @@ const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices]
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', env: composeEnv });
-    child.on('exit', (code) => {
+    child.once('error', reject);
+    child.once('close', (code) => {
       if (code === 0) {
         resolve();
       } else {
@@ -142,14 +143,16 @@ export async function waitForText(label: string, url: string, contains: string):
   while (Date.now() - started < 180_000) {
     try {
       // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
       const text = await response.text();
-      if (text.includes(contains)) {
+      if (response.ok && text.includes(contains)) {
         writeStdoutLine(`${label}: ok (${response.status})`);
         return;
       }
-      lastError = `${response.status} missing expected text`;
+      lastError = response.ok
+        ? `${response.status} missing expected text`
+        : `${response.status} ${response.statusText || 'request failed'}`;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }

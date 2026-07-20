@@ -5435,9 +5435,14 @@
           "status": {
             "type": "string",
             "enum": ["active", "disabled", "invited"]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
           }
         },
-        "required": ["status"]
+        "required": ["status", "reason"]
       },
       "UpdateAdminUserAccessPolicyDto": {
         "type": "object",
@@ -5469,9 +5474,14 @@
                 "admin:manage:all"
               ]
             }
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
           }
         },
-        "required": ["roles", "permissions"]
+        "required": ["roles", "permissions", "reason"]
       },
       "AdminAuditLogViewDto": {
         "type": "object",

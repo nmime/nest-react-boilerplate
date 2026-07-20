@@ -42,6 +42,7 @@ function setSystemTheme(matches: boolean) {
 
 describe('frontend auth and locale state', () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     document.cookie = 'locale=; path=/; max-age=0';
     document.cookie = 'lang=; path=/; max-age=0';
     document.documentElement.lang = '';
@@ -108,6 +109,12 @@ describe('frontend auth and locale state', () => {
     document.cookie = 'locale=; path=/; max-age=0';
     document.cookie = 'lang=; path=/; max-age=0';
     expect(detectBrowserLocale()).toBe('ru');
+  });
+
+  it('falls back safely when a native host exposes window without browser APIs', () => {
+    vi.stubGlobal('window', {});
+
+    expect(detectBrowserLocale()).toBe('en');
   });
 
   it('coordinates root store bearer token, locale, and theme state', () => {

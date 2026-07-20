@@ -53,12 +53,12 @@ Important env values:
 - `AUTH_ALLOWED_RETURN_URLS` (absolute frontend origins; relative values are rejected)
 - `VITE_TELEGRAM_AUTH_ENABLED` (build-time user-app flag)
 - `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://user-app.example.com/telegram-mini-app`)
-- `TELEGRAM_WEB_APP_URL` / `TELEGRAM_TMA_URL` (backward-compatible aliases consumed by the bot resolver)
 - `TELEGRAM_LINK_TOKEN_TTL_SECONDS`
 
 ## Telegram bots with grammY
 
-Use grammY for future Telegram bot handlers and plugins. Keep bot code transport-focused:
+The Telegram bot handlers and plugins use grammY. Keep new bot code
+transport-focused:
 
 - Use webhook mode in production when a public HTTPS endpoint is available.
 - Use polling/worker mode only for local development or controlled worker deployments where webhooks are not available.

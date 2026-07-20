@@ -1,6 +1,6 @@
 {
   "admin.dashboard.summary.totalUsers": "Total users",
-  "admin.dashboard.summary.totalUsersDetail": "From /admin/dashboard/summary",
+  "admin.dashboard.summary.totalUsersDetail": "All accounts currently visible to you",
   "admin.dashboard.summary.activeUsers": "Active users",
   "admin.dashboard.summary.activeUsersDetail": "Current active users",
   "admin.dashboard.summary.disabledUsers": "Disabled users",
@@ -15,14 +15,10 @@
   "admin.dashboard.description": "Your administrative access is active.",
   "admin.dashboard.eyebrow": "Dashboard",
   "admin.dashboard.card.visibility.title": "Operational visibility",
-  "admin.dashboard.card.visibility.description": "Review protected admin resources through TanStack Query and the shared API client.",
-  "admin.dashboard.card.rbac.title": "Fail-closed RBAC",
-  "admin.dashboard.card.rbac.description": "Dashboard access is granted only when the bearer token carries the admin role and dashboard permission.",
+  "admin.dashboard.card.visibility.description": "Review the users, roles, and audit events available to your account.",
+  "admin.dashboard.card.rbac.title": "Role-based access",
+  "admin.dashboard.card.rbac.description": "Your assigned roles and permissions determine which administrative actions are available.",
   "admin.dashboard.card.access.title": "Current access",
   "admin.dashboard.accessSummary": "Roles: {{roles}}. Permissions: {{permissions}}.",
-  "admin.dashboard.access.none": "none",
-  "admin.dashboard.stat.profile.label": "Profile",
-  "admin.dashboard.stat.profile.detail": "Fetched from /admin/profile/me",
-  "admin.dashboard.stat.pages.label": "Pages",
-  "admin.dashboard.stat.pages.detail": "Admin shell routes"
+  "admin.dashboard.access.none": "none"
 }

@@ -5,12 +5,12 @@ See [architecture docs](../architecture.md) for module boundaries and [API conve
 
 ## Endpoints
 
-| Endpoint              | Method | Auth       | Purpose                                                                                                |
-| --------------------- | ------ | ---------- | ------------------------------------------------------------------------------------------------------ |
-| `GET /live`           | GET    | None       | Process liveness — always returns 200 if the process is running.                                       |
-| `GET /health`         | GET    | None       | General health with indicator details (safe subset).                                                   |
-| `GET /ready`          | GET    | None       | Dependency readiness — returns 503 when required dependencies are down.                                |
-| `GET /health/private` | GET    | Private IP | Full health details including unsanitized indicator details; guarded by private-network IP allow-list. |
+| Endpoint              | Method | Auth       | Purpose                                                                                      |
+| --------------------- | ------ | ---------- | -------------------------------------------------------------------------------------------- |
+| `GET /live`           | GET    | None       | Process liveness — always returns 200 if the process is running.                             |
+| `GET /health`         | GET    | None       | General health with indicator details (safe subset).                                         |
+| `GET /ready`          | GET    | None       | Dependency readiness — returns 503 when required dependencies are down.                      |
+| `GET /health/private` | GET    | Private IP | Full health envelope guarded by the private-network IP allow-list. Details remain sanitized. |
 
 ## Expected response shapes
 
@@ -61,8 +61,8 @@ When any required indicator fails, `/ready` returns **HTTP 503** with the failur
 1. **Check which indicator failed** — inspect the `checks` array for `status: "error"` with `required: true`.
 2. **Common indicators and fixes:**
    - `postgres` — database connection refused or authentication failed. Check `DATABASE_URL`, network, and Postgres logs. See [dependency readiness triage](dependency-triage.md).
-   - `redis` — Redis connection refused. Check `REDIS_URL` or `CACHE_REDIS_HOST`/`CACHE_REDIS_PORT`. See [dependency readiness triage](dependency-triage.md).
-   - `nats` — NATS connection refused. Check `NATS_URL` or `NATS_HOST`/`NATS_PORT`. See [dependency readiness triage](dependency-triage.md).
+   - `redis` — Redis connection refused. Check `REDIS_URL` or `REDIS_HOSTS`. See [dependency readiness triage](dependency-triage.md).
+   - `nats` — NATS connection refused. Check `NATS_SERVERS`. See [dependency readiness triage](dependency-triage.md).
 3. **Verify from inside the container** (if accessible):
    ```bash
    curl -s "http://localhost:${PORT:-80}/ready" | jq .

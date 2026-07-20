@@ -16,7 +16,9 @@ export function MobileHomeScreen() {
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.header}>
           <Text style={styles.eyebrow}>{t('mobile.status')}</Text>
-          <Text style={styles.title}>{t('mobile.appName')}</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            {t('mobile.appName')}
+          </Text>
           <Text style={styles.subtitle}>{t('mobile.subtitle')}</Text>
         </View>
 

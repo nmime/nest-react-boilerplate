@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import {
@@ -114,7 +117,7 @@ describe('PostgresSocialAuthStore', () => {
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID;
-    delete process.env.AUTH_PROVIDER_TOKEN_KEY_ID;
+    delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE;
     vi.clearAllMocks();
   });
 
@@ -289,7 +292,7 @@ describe('PostgresSocialAuthStore env-derived crypto', () => {
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY;
     delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID;
-    delete process.env.AUTH_PROVIDER_TOKEN_KEY_ID;
+    delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE;
   });
 
   async function persist(store: PostgresSocialAuthStore) {
@@ -309,19 +312,15 @@ describe('PostgresSocialAuthStore env-derived crypto', () => {
     expect(repositories.providerTokens.persistEncryptedToken).not.toHaveBeenCalled();
   });
 
-  it('disables encryption when no key is present', async () => {
+  it('fails startup when encryption is enabled without key material', () => {
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
-    const { repositories, store } = createStore();
-    expect((await persist(store))._unsafeUnwrap()).toBe(false);
-    expect(repositories.providerTokens.persistEncryptedToken).not.toHaveBeenCalled();
+    expect(() => createStore()).toThrow('requires AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY');
   });
 
-  it('disables encryption when the key is not 32 bytes', async () => {
+  it('fails startup when encryption key material is not 32 bytes', () => {
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY = 'abcd';
-    const { repositories, store } = createStore();
-    expect((await persist(store))._unsafeUnwrap()).toBe(false);
-    expect(repositories.providerTokens.persistEncryptedToken).not.toHaveBeenCalled();
+    expect(() => createStore()).toThrow('must decode to exactly 32 bytes');
   });
 
   it('builds an AES-GCM crypto from a hex key and honors a configured key id', async () => {
@@ -345,6 +344,30 @@ describe('PostgresSocialAuthStore env-derived crypto', () => {
     expect(repositories.providerTokens.persistEncryptedToken).toHaveBeenCalledWith(
       expect.objectContaining({ keyId: 'env' }),
     );
+  });
+
+  it('loads mounted encryption key material from the canonical key-file setting', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'nrb-provider-key-'));
+    const keyFile = join(directory, 'provider-token-key');
+    writeFileSync(keyFile, `${'1'.repeat(64)}\n`, { mode: 0o600 });
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE = keyFile;
+
+    try {
+      const { repositories, store } = createStore();
+      expect((await persist(store))._unsafeUnwrap()).toBe(true);
+      expect(repositories.providerTokens.persistEncryptedToken).toHaveBeenCalledOnce();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects ambiguous inline and file-backed key material', () => {
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY = '0'.repeat(64);
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE = '/not/read/when/ambiguous';
+
+    expect(() => createStore()).toThrow('Configure only one');
   });
 });
 

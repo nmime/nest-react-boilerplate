@@ -1,9 +1,3 @@
-export const mobileRuntime = {
-  platforms: ['ios', 'android', 'web'],
-  nativeUiPackage: '@app/frontend-ui-native',
-  apiBaseUrlEnv: 'EXPO_PUBLIC_API_BASE_URL',
-} as const;
-
 export const mobileCapabilityCards = [
   {
     labelKey: 'mobile.card.account.label',

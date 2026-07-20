@@ -53,8 +53,20 @@ export function detectBrowserLocale(): Locale {
     return fallbackLocale;
   }
 
-  const url = new URL(window.location.href);
-  const queryLocale = url.searchParams.get('lang') ?? url.searchParams.get('locale');
+  let queryLocale: string | null = null;
+  const browserWindow = window as Partial<Window>;
+  const href = browserWindow.location?.href;
+  if (typeof href === 'string') {
+    try {
+      const url = new URL(href);
+      queryLocale = url.searchParams.get('lang') ?? url.searchParams.get('locale');
+    } catch {
+      // Non-browser hosts can expose a partial location object. Fall through
+      // to persisted or navigator locale hints instead of failing startup.
+    }
+  }
+
+  const browserNavigator = browserWindow.navigator as Partial<Navigator> | undefined;
 
   return resolveLocale(
     queryLocale,
@@ -63,8 +75,8 @@ export function detectBrowserLocale(): Locale {
     readCookie('lang'),
     // `navigator.languages` is typed as always present but is undefined in
     // older browsers and when tests stub a partial navigator.
-    (window.navigator.languages as readonly string[] | undefined)?.join(','),
-    window.navigator.language,
+    browserNavigator?.languages?.join(','),
+    browserNavigator?.language,
   );
 }
 

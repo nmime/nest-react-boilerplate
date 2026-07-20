@@ -136,16 +136,16 @@ describe('ExternalAuthService', () => {
     process.env.DISCORD_CLIENT_ID = 'discord-client-id';
     process.env.DISCORD_CLIENT_SECRET = 'discord-client-secret';
     process.env.DISCORD_REDIRECT_URI = 'https://auth.example.test/callback';
-    delete process.env.EXTERNAL_AUTH_AUTO_PROVISION;
+    process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED = 'true';
     delete process.env.AUTH_TELEGRAM_ENABLED;
     delete process.env.AUTH_DISCORD_ENABLED;
     delete process.env.AUTH_ALLOWED_RETURN_URLS;
     delete process.env.TELEGRAM_TMA_MAX_AGE_SECONDS;
-    delete process.env.AUTH_LINK_TOKEN_TTL_SECONDS;
+    delete process.env.EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS;
     delete process.env.DISCORD_OAUTH_STATE_TTL_SECONDS;
     delete process.env.DISCORD_OAUTH_STATE_MAX_ENTRIES;
-    delete process.env.DISCORD_TOKEN_STORAGE_ENABLED;
-    delete process.env.DISCORD_OAUTH_SCOPES;
+    delete process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED;
+    delete process.env.DISCORD_SCOPES;
     tmaMocks.parse.mockReset();
     tmaMocks.validate.mockReset();
     arcticMocks.authorizationUrl.mockReset();
@@ -208,10 +208,21 @@ describe('ExternalAuthService', () => {
   it('returns needs-link for a verified Telegram OIDC profile when auto provision is disabled', async () => {
     const { service } = createService();
 
-    process.env.EXTERNAL_AUTH_AUTO_PROVISION = 'false';
+    process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED = 'false';
     await expect(
       service.telegramOidcSession({
         profile: { avatarUrl: null, displayName: null, providerSubject: '43' },
+      }),
+    ).resolves.toMatchObject({ status: 'needs_link', code: 'needs_link' });
+  });
+
+  it('keeps external account auto-provisioning disabled when the canonical opt-in is absent', async () => {
+    const { service } = createService();
+    delete process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED;
+
+    await expect(
+      service.telegramOidcSession({
+        profile: { avatarUrl: null, displayName: null, providerSubject: '44' },
       }),
     ).resolves.toMatchObject({ status: 'needs_link', code: 'needs_link' });
   });
@@ -653,7 +664,7 @@ describe('ExternalAuthService', () => {
 
     arcticMocks.generateState.mockReturnValueOnce('discord-state-2');
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(discordTokens({ scopes: ['identify', 'email'] }));
-    process.env.DISCORD_TOKEN_STORAGE_ENABLED = 'true';
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
     service.createDiscordAuthorizationRequest({});
     const enabled = await service.discordCallback({
       code: 'callback-code',
@@ -682,8 +693,8 @@ describe('ExternalAuthService', () => {
     const social = new CapturingSocialAuthStore();
     const { service } = createService(social);
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(discordTokens({ refreshValue: null }));
-    process.env.DISCORD_TOKEN_STORAGE_ENABLED = 'true';
-    process.env.DISCORD_OAUTH_SCOPES = 'identify,email';
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
+    process.env.DISCORD_SCOPES = 'identify,email';
 
     service.createDiscordAuthorizationRequest({});
     await service.discordCallback({
@@ -702,13 +713,32 @@ describe('ExternalAuthService', () => {
     const { service: serviceWithoutConfiguredScopes } = createService(withoutConfiguredScopes);
     arcticMocks.generateState.mockReturnValueOnce('discord-state-without-scopes');
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(discordTokens({ refreshValue: null }));
-    delete process.env.DISCORD_OAUTH_SCOPES;
+    delete process.env.DISCORD_SCOPES;
     serviceWithoutConfiguredScopes.createDiscordAuthorizationRequest({});
     await serviceWithoutConfiguredScopes.discordCallback({
       code: 'callback-code',
       state: 'discord-state-without-scopes',
     });
     expect(withoutConfiguredScopes.persistedProviderTokens[0]?.scopes).toEqual([]);
+  });
+
+  it('fails the callback when explicitly enabled provider-token storage cannot persist', async () => {
+    process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
+
+    await Promise.all(
+      [okAsync(false), errAsync({ code: 'repository_error' as const, message: 'down' })].map(
+        async (persistenceResult) => {
+          const social = new CapturingSocialAuthStore();
+          vi.spyOn(social, 'persistProviderToken').mockReturnValue(persistenceResult);
+          const { service } = createService(social);
+          service.createDiscordAuthorizationRequest({});
+
+          await expect(service.discordCallback({ code: 'callback-code', state: 'discord-state' })).rejects.toThrow(
+            'Provider token storage is unavailable.',
+          );
+        },
+      ),
+    );
   });
 
   it('enforces link token TTL, purpose, revoke, replay, and hash-only persistence', async () => {
@@ -719,7 +749,7 @@ describe('ExternalAuthService', () => {
       password: 'password123',
     });
 
-    process.env.AUTH_LINK_TOKEN_TTL_SECONDS = '1';
+    process.env.EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS = '1';
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-14T12:00:00.000Z'));
     const expiring = await service.createLinkToken({

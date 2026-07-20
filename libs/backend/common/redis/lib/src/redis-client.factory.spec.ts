@@ -303,6 +303,33 @@ describe('RedisClientAdapter', () => {
     expect(closedClient.close).not.toHaveBeenCalled();
   });
 
+  it('waits for an in-flight lazy connection before closing', async () => {
+    let open = false;
+    let resolveConnect: () => void = () => undefined;
+    const client = fakeNativeClient({
+      connect: vi.fn(
+        () =>
+          new Promise<undefined>((resolve) => {
+            resolveConnect = () => {
+              open = true;
+              resolve(undefined);
+            };
+          }),
+      ),
+    });
+    Object.defineProperty(client, 'isOpen', { get: () => open });
+    const adapter = new RedisClientAdapter(client, {});
+
+    const operation = adapter.get('key');
+    const closing = adapter.close();
+    expect(client.close).not.toHaveBeenCalled();
+
+    resolveConnect();
+    await operation;
+    await expect(closing).resolves.toBe('closed');
+    expect(client.close).toHaveBeenCalledOnce();
+  });
+
   it('delegates destroy() to the native client', async () => {
     const client = fakeNativeClient();
     const adapter = new RedisClientAdapter(client, {});

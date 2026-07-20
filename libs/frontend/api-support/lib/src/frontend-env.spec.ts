@@ -43,6 +43,23 @@ describe('frontend environment API URL resolution', () => {
   });
 
   it.each([
+    'javascript:alert(1)',
+    'https://user:secret@auth.example.test',
+    'https://auth.example.test/api',
+    'https://auth.example.test?tenant=one',
+    'https://auth.example.test/#fragment',
+  ])('rejects unsafe or non-origin API base URLs: %s', (value) => {
+    expect(() =>
+      getApiBaseUrl(
+        productionEnv({
+          VITE_AUTH_API_BASE_URL: value,
+        }),
+        'VITE_AUTH_API_BASE_URL',
+      ),
+    ).toThrow(/absolute HTTP\(S\) origin/u);
+  });
+
+  it.each([
     { DEV: true, MODE: 'production' },
     { DEV: false, MODE: 'development' },
     { DEV: false, MODE: 'test' },
@@ -102,6 +119,18 @@ describe('frontend build API URL mode defaults', () => {
     expect(() => {
       assertRequiredFrontendBuildApiBaseUrls(env, 'build', 'production');
     }).not.toThrow();
+  });
+
+  it('rejects invalid origins during the production build assertion', () => {
+    const env: FrontendBuildEnv = {
+      VITE_AUTH_API_BASE_URL: 'https://auth-app-api.example.com/path',
+      VITE_USER_API_BASE_URL: 'https://user-app-api.example.com',
+      VITE_ADMIN_API_BASE_URL: 'https://admin-app-api.example.com',
+    };
+
+    expect(() => {
+      assertRequiredFrontendBuildApiBaseUrls(env, 'build', 'production');
+    }).toThrow(/VITE_AUTH_API_BASE_URL must be an absolute HTTP\(S\) origin/u);
   });
 
   it('skips production API URL assertions for non-production build targets', () => {

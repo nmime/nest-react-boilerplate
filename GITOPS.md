@@ -32,9 +32,9 @@ commit according to the promotion policy.
 ```mermaid
 flowchart LR
   merge[Merge application code] --> tag[Create reviewed release tag]
-  tag --> images[Release images workflow builds, scans, signs, and publishes all images]
+  tag --> images[Release workflow builds, scans, signs, and publishes every release-owned image]
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
-  promote --> verify[Verify all 11 immutable sha-SHA images and render Helm]
+  promote --> verify[Verify every release-owned full-SHA image and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
   pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
 ```
@@ -54,7 +54,9 @@ contents, pull-request, and package read access before using the workflow.
 ## Common prerequisites
 
 - a Kubernetes cluster compatible with the selected Helm version;
-- immutable images published by `.github/workflows/release-images.yml`;
+- release images published under full-SHA tags by
+  `.github/workflows/release-images.yml` (use digests when immutable identity is
+  required);
 - a target namespace Secret named by `secrets.existingSecret` containing at
   least `AUTH_JWT_SECRET` and `DATABASE_URL`;
 - `ghcr-credentials` in the target namespace when images are private;

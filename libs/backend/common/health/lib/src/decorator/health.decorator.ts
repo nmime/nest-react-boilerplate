@@ -1,5 +1,7 @@
-import { SetMetadata } from '@nestjs/common';
+import { applyDecorators, SetMetadata, UseInterceptors } from '@nestjs/common';
+import { HealthTransformInterceptor } from '../interceptor';
 
 export const HealthRouteMetadataKey = 'app:health-route';
 
-export const Health = (): MethodDecorator => SetMetadata(HealthRouteMetadataKey, true);
+export const Health = (): MethodDecorator =>
+  applyDecorators(SetMetadata(HealthRouteMetadataKey, true), UseInterceptors(HealthTransformInterceptor));

@@ -126,16 +126,6 @@
   line-height: 1.45;
 }
 
-.admin-sidebar__footnote {
-  background: color-mix(in srgb, var(--xr-color-primary) 8%, transparent);
-  border: 1px dashed color-mix(in srgb, var(--xr-color-primary) 35%, transparent);
-  border-radius: var(--xr-radius-md);
-  color: var(--xr-color-muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  padding: 0.75rem;
-}
-
 .admin-main-panel {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 18rem),
@@ -147,43 +137,13 @@
   padding: clamp(1rem, 2vw, 1.5rem);
 }
 
-.admin-command-bar,
-.admin-command-center,
-.admin-filter-summary,
 .admin-table-toolbar,
-.admin-detail-metrics,
-.admin-roadmap-lane,
-.admin-route-link {
+.admin-detail-metrics {
   background:
     linear-gradient(135deg, rgba(88, 213, 255, 0.11), transparent 52%),
     color-mix(in srgb, var(--xr-card-background) 88%, transparent);
 }
 
-.admin-command-bar {
-  align-items: center;
-  border: 1px solid var(--xr-color-border);
-  border-radius: var(--xr-radius-lg);
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  padding: clamp(0.9rem, 2vw, 1.15rem);
-}
-
-.admin-command-bar h2,
-.admin-command-center strong {
-  color: var(--xr-color-text);
-}
-
-.admin-command-bar h2 {
-  font-size: clamp(1.25rem, 3vw, 1.8rem);
-  margin: 0.1rem 0;
-}
-
-.admin-command-bar span,
-.admin-command-center span,
-.admin-command-center small,
-.admin-filter-summary small,
 .admin-user-cell small,
 .admin-user-detail__identity small,
 .admin-user-detail__status-stack span,
@@ -191,7 +151,6 @@
   color: var(--xr-color-muted);
 }
 
-.admin-command-bar__signals,
 .admin-table-toolbar {
   align-items: center;
   display: flex;
@@ -422,15 +381,6 @@
   border-color: color-mix(in srgb, var(--xr-color-success) 30%, transparent);
 }
 
-.admin-filter-summary {
-  border: 1px solid var(--xr-color-border);
-  border-radius: var(--xr-radius-md);
-  display: grid;
-  gap: 0.25rem;
-  padding: 0.75rem;
-}
-
-.admin-filter-summary span,
 .admin-table-toolbar span {
   color: var(--xr-color-text);
   font-weight: 800;
@@ -526,8 +476,6 @@
     grid-template-columns: 1fr;
   }
 
-  .admin-command-bar,
-  .admin-command-center__hero,
   .admin-user-detail__header {
     align-items: stretch;
     flex-direction: column;

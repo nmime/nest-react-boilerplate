@@ -167,26 +167,40 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves stable, product-owned `https://<root-domain>/problems#<code>` identifiers and localizes the standard `title` and `detail` members. Clients use the problem `type` as the primary identifier, then status or the documented `code` alias; they never branch on localized text.
 
-## Planned testing layers
+## Testing layers
 
-- Unit tests stay under the `test` target and continue to use Vitest coverage with 100% thresholds for testable source.
+- Unit tests stay under the `test` target and use the shared Vitest coverage
+  contract. New projects start at 100%; existing projects may carry explicit
+  negative uncovered-item budgets that must only move toward zero.
 - Component tests run under separate `component-test` targets and use Testcontainers for real service dependencies. They require Docker and are intentionally separate from unit tests so normal `test` targets do not start containers.
 - `@app/backend-common-component-test` provides shared PostgreSQL container helpers for DB-backed component tests.
 - Backend e2e tests should exercise Nest apps through HTTP with `supertest`; DB-backed e2e/component tests should use Testcontainers and isolated fixtures.
-- Frontend e2e already runs Vite SPA browser coverage smokes for `admin-app` and `user-app` (Playwright + `vite-plugin-istanbul`, gated by `VITE_E2E_COVERAGE=true`), alongside static build smokes for `landing-app` (Astro) and `site-app` (Vike). Browser-level coverage for the Astro and Vike shapes still requires framework-specific instrumentation and will be introduced separately rather than hidden behind their existing static smoke targets.
+- Frontend e2e runs instrumented Playwright browser coverage smokes for the two
+  Vite SPAs (`admin-app` and `user-app`). `landing-app`, `site-app`, and
+  `mobile-app` use renderer-specific Astro build, Vike SSR build, and Expo web
+  export smokes; those targets do not publish equivalent browser coverage.
 
 ## E2E coverage
 
-Backend e2e tests run as explicit Nx `e2e` targets for each Nest API app. They use Nest testing modules plus `supertest` for real HTTP requests and write V8 coverage reports under `coverage/e2e/apps/backend/*`. Unit coverage gates remain separate and still enforce 100% on testable source.
+Backend e2e tests run as explicit Nx `e2e` targets for the admin, user, and
+auth APIs. They use Nest testing modules plus `supertest` for real HTTP requests
+and write V8 coverage reports under `coverage/e2e/apps/backend/*`. The Discord
+and Telegram API projects currently have unit/test targets but no Nx `e2e`
+target. Unit coverage gates remain separate and enforce each project's
+configured percentage or uncovered-item budget.
 
 Frontend e2e tests cover the active frontend shapes: Vite SPA browser smokes
 for `admin-app` and `user-app`, an Astro static build smoke for `landing-app`,
-and a Vike SSR build smoke for `site-app`. `VITE_E2E_COVERAGE=true` enables
-`vite-plugin-istanbul` for the Vite browser smokes; Astro and Vike coverage will
-need framework-specific instrumentation before they can publish equivalent
-browser coverage reports.
+the Vike SSR build smoke for `site-app`, and an Expo web-export smoke for
+`mobile-app`. `VITE_E2E_COVERAGE=true` enables `vite-plugin-istanbul` only for
+the Vite browser smokes; the other renderer smokes prove their build/export
+contracts without claiming browser coverage.
 
-Use `pnpm run test:e2e:coverage` to run all backend and frontend e2e coverage targets. Playwright Chromium must be installed first with `pnpm exec playwright install chromium` locally, or `pnpm exec playwright install --with-deps chromium` on GitHub Actions.
+Use `pnpm run test:e2e:coverage` to run the selected API e2e suites, the two
+instrumented Vite browser suites, and the three renderer-specific smoke targets.
+Playwright Chromium must be installed first with
+`pnpm exec playwright install chromium` locally, or
+`pnpm exec playwright install --with-deps chromium` on GitHub Actions.
 
 ## Deployable outputs
 

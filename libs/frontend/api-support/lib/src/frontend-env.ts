@@ -66,6 +66,29 @@ export const applyDefaultFrontendBuildApiBaseUrlMode = (
 
 export const normalizeApiBaseUrl = (value: string): string => value.trim().replace(/\/$/u, '');
 
+const requireAbsoluteHttpOrigin = (value: string, key: FrontendApiBaseUrlKey): string => {
+  const normalized = value.trim();
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new Error(`${key} must be an absolute HTTP(S) origin.`);
+  }
+
+  if (
+    (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+    url.username !== '' ||
+    url.password !== '' ||
+    url.pathname !== '/' ||
+    url.search !== '' ||
+    url.hash !== ''
+  ) {
+    throw new Error(`${key} must be an absolute HTTP(S) origin without credentials, a path, query, or fragment.`);
+  }
+
+  return url.origin;
+};
+
 export const getApiBaseUrl = (env: FrontendEnv, key: FrontendApiBaseUrlKey): string => {
   if (isExplicitSameOriginApiMode(env)) {
     return '';
@@ -73,7 +96,7 @@ export const getApiBaseUrl = (env: FrontendEnv, key: FrontendApiBaseUrlKey): str
 
   const configuredValue = normalizeApiBaseUrl(getEnvString(env, key));
   if (configuredValue) {
-    return configuredValue;
+    return requireAbsoluteHttpOrigin(configuredValue, key);
   }
 
   if (isNonProductionFrontendEnv(env)) {
@@ -103,6 +126,10 @@ export const assertRequiredFrontendApiBaseUrls = (
       `Missing required production frontend API base URL env var(s): ${missing.join(', ')}. ` +
         `Set explicit API origins or set VITE_API_BASE_URL_MODE=${sameOriginApiMode} to opt into a same-origin API proxy.`,
     );
+  }
+
+  for (const key of keys) {
+    requireAbsoluteHttpOrigin(getEnvString(env, key), key);
   }
 };
 

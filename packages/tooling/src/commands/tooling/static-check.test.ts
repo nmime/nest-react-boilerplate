@@ -7,6 +7,7 @@ import {
   checkCommandImportSmoke,
   checkTranslationKeyDrift,
   checkExportedAllCapsConstantConventions,
+  checkEnvExampleConsistency,
   checkExportedSymbolTokenConventions,
   checkForbiddenSocialAuthDependencies,
   checkForbiddenSocialAuthImports,
@@ -22,6 +23,26 @@ import {
   isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
 } from "./static-check.ts";
+
+describe("static-check environment examples", () => {
+  it("checks duplicate keys in every environment profile", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(workspaceRoot, ".env.example", "APP_NAME=example\n");
+      writeText(workspaceRoot, ".env.local.example", "APP_NAME=example\n");
+      writeText(workspaceRoot, ".env.staging.example", "PORT=3000\nPORT=3100\n");
+
+      const failures = checkEnvExampleConsistency(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0].file, "./.env.staging.example");
+      assert.match(failures[0].stderr, /Duplicate env key: PORT/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
 
 function createWorkspace(): string {
   return mkdtempSync(join(tmpdir(), "static-check-generated-imports-"));

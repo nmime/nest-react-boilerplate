@@ -79,9 +79,9 @@ describe('AdminUsersUseCase', () => {
     const { adminUserMutations, useCase } = createDeps();
     adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(okAsync(null));
 
-    await expect(useCase.updateUserStatus(principal, 'missing', { status: 'disabled' }, context)).rejects.toThrow(
-      /was not found/,
-    );
+    await expect(
+      useCase.updateUserStatus(principal, 'missing', { status: 'disabled', reason: 'Disable account' }, context),
+    ).rejects.toThrow(/was not found/);
   });
 
   it('throws not_found when an access-policy mutation resolves to no record', async () => {
@@ -92,7 +92,7 @@ describe('AdminUsersUseCase', () => {
       useCase.updateUserAccessPolicy(
         principal,
         'missing',
-        { roles: ['user'], permissions: [UserProfileReadPermission] },
+        { roles: ['user'], permissions: [UserProfileReadPermission], reason: 'Reset access' },
         context,
       ),
     ).rejects.toThrow(/was not found/);

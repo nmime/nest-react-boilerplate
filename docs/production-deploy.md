@@ -1,7 +1,9 @@
 # Production deployment
 
-Production starts from one reviewed Git commit and immutable images tagged
-`sha-<full-40-character-git-sha>` or pinned by digest. The repository supports
+Production starts from one reviewed Git commit and images published under
+`sha-<full-40-character-git-sha>` tags or pinned by digest. A digest is the
+immutable artifact identity; a SHA-shaped registry tag still requires
+repository policy that prevents mutation. The repository supports
 single-host Compose, direct Helm, and Helm through Argo CD or Flux. PM2 remains
 an opt-in extension only when a product adds and owns an ecosystem config.
 
@@ -22,7 +24,7 @@ Use the canonical runbooks:
 ```mermaid
 flowchart LR
   commit[Reviewed Git SHA] --> release[Release images workflow]
-  release --> verify[SBOM, scan, signature, immutable full-SHA tags]
+  release --> verify[SBOM, scan, signature, full-SHA tags and digests]
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
@@ -98,7 +100,8 @@ kubectl apply -k deploy/flux
 ```
 
 Run the manual **Promote GitOps release** workflow with the exact source SHA
-after release images exist. It verifies all 11 images and opens a promotion PR.
+after release images exist. It verifies every release-owned image declared by
+the promotion workflow and opens a promotion PR.
 Only a reviewed merge changes the desired production version.
 
 ## Backup, verification, and rollback
@@ -107,7 +110,7 @@ Before migrations, verify a recoverable database backup. After rollout, check
 migration completion, workload rollout status, `/ready`, logs, ingress/TLS, and
 the public domain map.
 
-Compose rollback restores the previous immutable `IMAGE_TAG` and reruns the
+Compose rollback restores the previous verified `IMAGE_TAG` or digest and reruns the
 selected mode. Direct Helm uses `helm history` and `helm rollback`. GitOps
 reverts or supersedes the promotion commit and lets the controller reconcile.
 Database restoration is required only when the schema is incompatible with the

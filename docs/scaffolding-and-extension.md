@@ -190,8 +190,8 @@ pnpm nrb add app customer-portal --kind frontend --renderer vite --dry-run
 pnpm nrb add app billing-app-api \
   --kind backend \
   --renderer nest-api \
-  --dry-run \
-  -- --port=3200
+  --port 3200 \
+  --dry-run
 ```
 
 Run the same command without `--dry-run`, then:

@@ -4,6 +4,19 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
 import { BaseException, InternalException } from '@app/backend-common-exception';
 
+const UnsafeForwardedResponseHeaders = new Set([
+  'connection',
+  'content-encoding',
+  'content-length',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+]);
+
 @Controller('api/auth')
 export class BetterAuthApiController {
   private static readonly log = new Logger(BetterAuthApiController.name);
@@ -66,7 +79,7 @@ export class BetterAuthApiController {
 
       // Forward other headers
       for (const [key, value] of baResponse.headers.entries()) {
-        if (key.toLowerCase() !== 'set-cookie') {
+        if (key.toLowerCase() !== 'set-cookie' && !UnsafeForwardedResponseHeaders.has(key.toLowerCase())) {
           try {
             res.header(key, value);
           } catch {

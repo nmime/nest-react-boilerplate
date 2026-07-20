@@ -24,8 +24,13 @@ export function hashOpaqueToken(token: string): string {
 }
 
 export function readPositiveInt(value: string | undefined, fallback: number): number {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+  const normalized = value?.trim();
+  if (!normalized || !/^\d+$/u.test(normalized)) {
+    return fallback;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 export function readList(value: string | undefined): string[] | null {
@@ -38,9 +43,10 @@ export function readList(value: string | undefined): string[] | null {
 }
 
 export function isRecentAuthTime(authTime: number | undefined): boolean {
-  if (!authTime) {
+  if (typeof authTime !== 'number' || !Number.isSafeInteger(authTime) || authTime <= 0) {
     return false;
   }
-  const maxAge = readPositiveInt(process.env.AUTH_STEP_UP_MAX_AGE_SECONDS, 15 * 60);
-  return Math.floor(Date.now() / 1000) - authTime <= maxAge;
+  const maxAge = readPositiveInt(process.env.EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS, 15 * 60);
+  const age = Math.floor(Date.now() / 1000) - authTime;
+  return age >= 0 && age <= maxAge;
 }

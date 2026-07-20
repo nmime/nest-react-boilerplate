@@ -143,7 +143,7 @@ pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dr
 Examples:
 
 ```bash
-pnpm nrb add app billing-api --kind backend --renderer nest-api -- --port=3200
+pnpm nrb add app billing-api --kind backend --renderer nest-api --port 3200
 pnpm nrb add app docs --kind frontend --renderer astro
 pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs."
 pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
@@ -195,10 +195,11 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 
 ## Docker commands
 
-| Command                | Description                      |
-| ---------------------- | -------------------------------- |
-| `docker:smoke`         | Run Docker smoke checks.         |
-| `docker:fullstack-e2e` | Run Docker fullstack e2e checks. |
+| Command                | Description                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| `docker:selected`      | Run Compose for the setup-generated app/capability selection. |
+| `docker:smoke`         | Run Docker smoke checks.                                      |
+| `docker:fullstack-e2e` | Run Docker fullstack e2e checks.                              |
 
 ## Project commands
 

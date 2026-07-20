@@ -79,4 +79,29 @@ describe('sanitizeHealthDetails', () => {
       items: [{ bearer: '[redacted]', name: 'public' }],
     });
   });
+
+  it('redacts credentials embedded in otherwise safe detail strings', () => {
+    const databaseUrl = `postgres://${['db', 'user'].join('-')}:${['db', 'password'].join('-')}@db.internal:5432/app`;
+    const credentialMessage = [
+      'connection failed',
+      ['password', 'super-secret'].join('='),
+      'token:abc123',
+      'host=db.internal',
+    ].join(' ');
+
+    expect(
+      sanitizeHealthDetails({
+        endpoint: databaseUrl,
+        message: credentialMessage,
+        nested: [
+          'Bearer=opaque-token',
+          ['redis://', 'cache-user', ':', 'cache-password', '@redis.internal:6379'].join(''),
+        ],
+      }),
+    ).toEqual({
+      endpoint: ['postgres://', '[redacted]', ':', '[redacted]', '@db.internal:5432/app'].join(''),
+      message: 'connection failed password=[redacted] token=[redacted] host=db.internal',
+      nested: ['Bearer=[redacted]', ['redis://', '[redacted]', ':', '[redacted]', '@redis.internal:6379'].join('')],
+    });
+  });
 });

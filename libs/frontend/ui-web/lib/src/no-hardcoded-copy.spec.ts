@@ -17,31 +17,7 @@ const sourceRoots = [
 const allowedExtensions = new Set(['.ts', '.tsx']);
 const ignoredSuffixes = ['.spec.ts', '.spec.tsx', '.test.ts', '.test.tsx', '.stories.ts', '.stories.tsx'];
 const ignoredDirectories = new Set(['.git', '.nx', 'coverage', 'dist', 'node_modules']);
-const ignoredFiles = new Set([
-  'apps/frontend/app/src/app/router/user-router.tsx',
-  'apps/frontend/app/src/features/social-auth/ui/provider-identities-panel.tsx',
-  'apps/frontend/app/src/features/social-auth/ui/social-auth-buttons.tsx',
-  'apps/frontend/app/src/features/tma-auth/ui/tma-auth-panel.tsx',
-  'apps/frontend/app/src/pages/auth/ui/auth-page.tsx',
-  'apps/frontend/app/src/pages/auth-discord-callback/ui/auth-discord-callback-page.tsx',
-  'apps/frontend/app/src/pages/profile/ui/profile-page.tsx',
-  'apps/frontend/app/src/pages/settings/ui/settings-page.tsx',
-  'apps/frontend/app/src/pages/tma/ui/tma-page.tsx',
-  'apps/frontend/app/src/pages/user-home/ui/user-home-page.tsx',
-  'apps/frontend/admin/src/entities/admin-user/ui/user-detail-card.tsx',
-  'apps/frontend/admin/src/pages/audit/audit-page.tsx',
-  'apps/frontend/admin/src/pages/dashboard/dashboard-page.tsx',
-  'apps/frontend/admin/src/pages/forbidden/forbidden-page.tsx',
-  'apps/frontend/admin/src/pages/not-found/not-found-page.tsx',
-  'apps/frontend/admin/src/pages/profile/profile-page.tsx',
-  'apps/frontend/admin/src/pages/roles/roles-page.tsx',
-  'apps/frontend/admin/src/pages/tenants/tenant-roadmap-page.tsx',
-  'apps/frontend/admin/src/pages/users/users-page.tsx',
-  'apps/frontend/admin/src/widgets/admin-shell/admin-layout.tsx',
-  'apps/frontend/landing/src/widgets/product-overview/ui/product-overview.tsx',
-  'libs/frontend/ui-web/lib/src/component/alert.tsx',
-  'libs/frontend/ui-web/lib/src/no-hardcoded-copy.spec.ts',
-]);
+const ignoredFiles = new Set(['libs/frontend/ui-web/lib/src/no-hardcoded-copy.spec.ts']);
 const userFacingNames = [
   'aria-label',
   'placeholder',
@@ -142,6 +118,7 @@ const isLikelyNonCopyLiteral = (value: string): boolean => {
   return (
     normalized.length === 0 ||
     allowedLiteralValues.has(normalized) ||
+    /^&\s+[A-Za-z_$][\w$]*(?:<.*>)?$/u.test(normalized) ||
     /^>*\([A-Za-z_$][\w$]*:\s*[A-Za-z_$][\w$.]*$/u.test(normalized) ||
     /^[a-z0-9@:_./#?=&${}()[\]-]+$/u.test(normalized) ||
     /^[A-Z0-9_]+$/u.test(normalized)

@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { updateUserAccessPolicy } from '../../features/user-access-management';
-import { toUserListParams } from '../../features/user-filtering';
+import {
+  parseAdminUserRoleFilter,
+  parseAdminUserPermissionFilter,
+  parseAdminUsersPage,
+  parseAdminUserStatusFilter,
+  toUserListParams,
+} from '../../features/user-filtering';
 import { updateUserStatus } from '../../features/user-status-management';
 import { assignUserRoles } from '../../features/user-role-assignment';
 import {
@@ -11,6 +17,7 @@ import {
   AdminProfileReadPermission,
   AdminRole,
   AdminRolesReadPermission,
+  AdminRolesWritePermission,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
   AdminUsersAccessPolicyUpdatePermission,
@@ -33,7 +40,6 @@ import {
   UiPagination,
   UiSection,
   UiSelect,
-  UiStatCard,
   UiStatusTag,
   UiTextarea,
 } from '@app/frontend-ui-web';
@@ -67,6 +73,7 @@ const policyPermissionValues = [
   AdminUsersStatusUpdatePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminRolesReadPermission,
+  AdminRolesWritePermission,
   AdminAuditReadPermission,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
@@ -91,10 +98,10 @@ export const UsersPage = ({
   const qc = useQueryClient();
   const initial = paramsFromPath(currentPath);
   const [search, setSearch] = useState(initial.get('search') ?? '');
-  const [status, setStatus] = useState(initial.get('status') ?? 'all');
-  const [role, setRole] = useState(initial.get('role') ?? 'all');
-  const [permission, setPermission] = useState(initial.get('permission') ?? 'all');
-  const [page, setPage] = useState(Number(initial.get('page') ?? '1'));
+  const [status, setStatus] = useState(parseAdminUserStatusFilter(initial.get('status')));
+  const [role, setRole] = useState(parseAdminUserRoleFilter(initial.get('role')));
+  const [permission, setPermission] = useState(parseAdminUserPermissionFilter(initial.get('permission')));
+  const [page, setPage] = useState(parseAdminUsersPage(initial.get('page')));
   const [selected, setSelected] = useState(routeUserId(currentPath));
   const [notice, setNotice] = useState<{
     tone: 'success' | 'warning';
@@ -150,8 +157,8 @@ export const UsersPage = ({
     ]);
   };
   const statusMutation = useMutation({
-    mutationFn: ({ id, nextStatus }: { id: string; nextStatus: UserStatus }) =>
-      updateUserStatus(id, nextStatus, requestOptions),
+    mutationFn: ({ id, nextStatus, reason: auditReason }: { id: string; nextStatus: UserStatus; reason: string }) =>
+      updateUserStatus(id, nextStatus, auditReason, requestOptions),
     onSuccess: async () => {
       setNotice({
         tone: 'success',
@@ -171,22 +178,24 @@ export const UsersPage = ({
       id,
       roles,
       permissions,
+      reason: auditReason,
       status: nextStatus,
       currentStatus,
     }: {
       id: string;
       roles: ('user' | 'admin')[];
       permissions: adminApi.UpdateAdminUserAccessPolicyDto['permissions'];
+      reason: string;
       status?: UserStatus;
       currentStatus?: UserStatus;
     }) => {
       if (nextStatus && nextStatus !== currentStatus) {
-        return updateUserStatus(id, nextStatus, requestOptions).then(() =>
-          updateUserAccessPolicy(id, { roles, permissions }, requestOptions),
+        return updateUserStatus(id, nextStatus, auditReason, requestOptions).then(() =>
+          updateUserAccessPolicy(id, { roles, permissions, reason: auditReason }, requestOptions),
         );
       }
 
-      return updateUserAccessPolicy(id, { roles, permissions }, requestOptions);
+      return updateUserAccessPolicy(id, { roles, permissions, reason: auditReason }, requestOptions);
     },
     onSuccess: async () => {
       setNotice({
@@ -236,44 +245,12 @@ export const UsersPage = ({
     { label: t('admin.status.disabled'), value: 'disabled' },
     { label: t('admin.status.invited'), value: 'invited' },
   ];
-  const selectedRow = rows.find((row) => row.id === selected);
-  const activeRowCount = rows.filter((row) => row.status === 'active').length;
-  const disabledRowCount = rows.filter((row) => row.status === 'disabled').length;
-  const activeFilterCount = [search.trim(), status !== 'all', role !== 'all', permission !== 'all'].filter(
-    Boolean,
-  ).length;
-  let directoryTone: 'info' | 'success' | 'warning' = 'success';
-  if (users.isLoading) {
-    directoryTone = 'info';
-  } else if (users.error) {
-    directoryTone = 'warning';
-  }
   return (
     <UiSection
       className="admin-page admin-users-page"
       eyebrow={t('admin.users.eyebrow')}
       title={t('admin.users.title')}
     >
-      <div className="admin-users-command admin-stat-grid xr-stat-grid">
-        <UiStatCard
-          className="admin-stat-card"
-          label="Visible users"
-          value={`${users.data?.total ?? rows.length}`}
-          detail={`${activeRowCount} active · ${disabledRowCount} disabled on this page`}
-        />
-        <UiStatCard
-          className="admin-stat-card"
-          label="Selected identity"
-          value={selectedRow?.email ?? selected ?? 'None'}
-          detail="Detail panel stays docked for quick access review."
-        />
-        <UiStatCard
-          className="admin-stat-card"
-          label="Filter stack"
-          value={`${activeFilterCount}`}
-          detail="Search, status, role, and permission filters update together."
-        />
-      </div>
       <UiCard className="admin-filter-card" title={t('admin.users.searchLabel')}>
         <AdminSearchFilterToolbar
           searchLabel={t('admin.users.searchLabel')}
@@ -291,7 +268,7 @@ export const UsersPage = ({
             label={t('admin.users.filter.status')}
             value={status}
             onValueChange={(v) => {
-              setStatus(v);
+              setStatus(parseAdminUserStatusFilter(v));
               setPage(1);
             }}
             options={[{ label: t('admin.users.filter.allStatuses'), value: 'all' }, ...statusOptions]}
@@ -300,7 +277,7 @@ export const UsersPage = ({
             label={t('admin.users.filter.role')}
             value={role}
             onValueChange={(v) => {
-              setRole(v);
+              setRole(parseAdminUserRoleFilter(v));
               setPage(1);
             }}
             options={roleOptions}
@@ -309,33 +286,17 @@ export const UsersPage = ({
             label={t('admin.users.filter.permission')}
             value={permission}
             onValueChange={(v) => {
-              setPermission(v);
+              setPermission(parseAdminUserPermissionFilter(v));
               setPage(1);
             }}
             options={permissionOptions}
           />
         </AdminSearchFilterToolbar>
-        <div className="admin-filter-summary" aria-live="polite">
-          <span>{activeFilterCount ? 'Focused directory view' : 'Full directory view'}</span>
-          <small>
-            {search.trim() ? `Search “${search.trim()}” · ` : ''}
-            {status !== 'all' ? `${status} status · ` : ''}
-            {role !== 'all' ? `${role} role · ` : ''}
-            {permission !== 'all' ? `${permission} permission` : 'All access policies'}
-          </small>
-        </div>
       </UiCard>
       {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
       <div className="admin-users-split">
         <div className="admin-users-table-panel">
-          <UiCard className="admin-table-card" title="User directory">
-            <div className="admin-table-toolbar">
-              <span>Policy-aware records</span>
-              <UiStatusTag
-                label={users.isLoading ? t('admin.state.loading') : 'Directory ready'}
-                tone={directoryTone}
-              />
-            </div>
+          <UiCard className="admin-table-card" title={t('admin.users.title')}>
             <UiDataTable<UserRow>
               rows={rows}
               rowKey={(row) => row.id}
@@ -462,6 +423,7 @@ export const UsersPage = ({
             statusMutation.mutate({
               id: statusTarget.id,
               nextStatus: statusTarget.nextStatus,
+              reason: reason.trim(),
             });
             setStatusTarget(undefined);
           }}
@@ -509,6 +471,7 @@ export const UsersPage = ({
               status: policyStatus,
               roles: [...policyRoles].filter(isPolicyRole),
               permissions: [...policyPermissions].filter(isPolicyPermission),
+              reason: reason.trim(),
             });
             setPolicyTarget(undefined);
             setPolicyStatus('active');

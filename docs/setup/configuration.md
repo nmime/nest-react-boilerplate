@@ -199,19 +199,22 @@ application stack with staging-specific secrets, databases, and domain names.
 
 2. **Fill in staging-specific values** in `.env.staging`:
    - `DATABASE_URL` — point to the staging database instance.
-   - `SESSION_SECRET` and `JWT_SECRET` — use unique secrets (never reuse production values).
+   - `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and `AUTH_JWT_SECRET` — use unique secrets (never reuse production values).
    - Domain names — change all `example.com` references to `staging.example.com`.
    - Bot tokens — use staging/test bot credentials if available.
 
-3. **Set env vars before starting services:**
+3. **Review the explicit `COMPOSE_PROFILES` list** in `.env.staging`. Remove
+   services that staging does not need, then start the profile-gated topology:
 
    ```bash
-   # Load staging env into the compose environment
-   export $(grep -v '^#' .env.staging | xargs)
-
-   # Or pass explicitly to docker compose
-   docker compose --env-file .env.staging up -d
+   COMPOSE_PROFILES="$(grep '^COMPOSE_PROFILES=' .env.staging | cut -d= -f2-)" \
+     docker compose --env-file .env.staging \
+       -f docker/docker-compose.yml up -d --build
    ```
+
+   Do not source the whole file into a shell: secret values can contain shell
+   metacharacters. `--env-file` supplies interpolation values, while the
+   explicit process-level `COMPOSE_PROFILES` activates the selected profiles.
 
 4. **Staging port offsets:** staging services use ports offset by +100 from
    production defaults to avoid collisions. See [PORTS.md](../PORTS.md#staging).
@@ -236,7 +239,9 @@ path. Deployment runs from the manual `deploy` workflow
 
 ```bash
 # Using docker compose
-NODE_ENV=staging docker compose --profile staging -f docker/docker-compose.yml up -d
+COMPOSE_PROFILES="$(grep '^COMPOSE_PROFILES=' .env.staging | cut -d= -f2-)" \
+  docker compose --env-file .env.staging \
+    -f docker/docker-compose.yml up -d --build
 
 # Using Helm (against a staging cluster).
 # The repo ships only values-production.yaml; supply your own staging

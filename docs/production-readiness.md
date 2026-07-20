@@ -8,8 +8,9 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 
 - [ ] CI passes `pnpm run check` or the equivalent format, lint, typecheck, and
       test commands for the release branch.
-- [ ] Images are built from a clean lockfile and tagged immutably with the Git
-      SHA or digest.
+- [ ] Images are built from a clean lockfile, published under full Git-SHA tags,
+      and recorded by digest; registry policy prevents tag mutation where tags
+      are used for deployment.
 - [ ] `pnpm run deploy:validate` succeeds as a no-deploy generic preflight. If
       Helm is not installed, it clearly skips Helm render validation.
 - [ ] For Compose deployments, `pnpm run deploy:validate:docker` succeeds, then

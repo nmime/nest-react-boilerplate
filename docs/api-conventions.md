@@ -63,7 +63,8 @@ Probe policy:
 
 - Helmet security middleware
 - raw request-body capture for webhook/signature use cases
-- cookie parsing from `COOKIE_SECRET`
+- cookie parsing signed with `SESSION_SECRET`, falling back to
+  `AUTH_JWT_SECRET`; production requires at least one 32-character secret
 - deny-all `robots.txt` responses
 - extended query parsing and trust-proxy configuration
 - request IDs and structured completion logs
@@ -94,7 +95,11 @@ OpenAPI JSON is committed under `apps/backend/*/*-app-api/contracts/openapi/*.js
 
 ## OAuth foundation
 
-`libs/backend/feature/auth/shared/lib` OAuth support is disabled by default. It can build local authorization URLs from explicit configuration, but callback exchange is intentionally left for product-specific provider wiring.
+`libs/backend/feature/auth/shared/lib` contains a disabled-by-default generic
+OAuth helper. The implemented Telegram OIDC and Discord OAuth exchanges live in
+the auth main feature and remain gated by their provider environment switches.
+New providers must add their own callback/exchange implementation rather than
+treating the shared URL builder as a complete flow.
 
 ## Auth endpoints
 

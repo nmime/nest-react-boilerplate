@@ -6,10 +6,12 @@ export default async function globalSetup(): Promise<void> {
     await buildStackImages();
   }
   await upStack();
-  await waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api');
-  await waitForText('user api', `${urls.userApi}/health`, 'user-app-api');
-  await waitForText('admin api', `${urls.adminApi}/health`, 'admin-app-api');
-  await waitForText('user app', `${urls.userApp}/`, 'User App');
-  await waitForText('admin app', `${urls.adminApp}/`, 'Admin App');
-  await waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate');
+  await Promise.all([
+    waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api'),
+    waitForText('user api', `${urls.userApi}/health`, 'user-app-api'),
+    waitForText('admin api', `${urls.adminApi}/health`, 'admin-app-api'),
+    waitForText('user app', `${urls.userApp}/`, 'User App'),
+    waitForText('admin app', `${urls.adminApp}/`, 'Admin App'),
+    waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate'),
+  ]);
 }

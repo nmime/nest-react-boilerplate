@@ -40,7 +40,9 @@ Both signals use the OTLP protocol. Endpoint resolution appends `/v1/traces` or 
 ## Prometheus and Sentry
 
 - **Prometheus scraping** is not built into the OTel SDK layer. The Helm chart optionally provisions a `ServiceMonitor` for Prometheus Operator integration — see [observability DR runbook](observability-dr.md).
-- **Sentry integration** is not currently implemented. This is backlog.
+- **Sentry integration** is not provided by this repository. Add it as a
+  product-owned integration with its own environment, privacy, source-map, and
+  verification contract if a product chooses Sentry.
 
 ## Local development
 

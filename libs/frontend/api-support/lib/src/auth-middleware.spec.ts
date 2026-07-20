@@ -39,6 +39,21 @@ const invokeOnResponse = async (
     schemaPath: '/profile',
   })) as Response | undefined;
 
+const invokeOnError = async (
+  middleware: ReturnType<typeof createAuthRefreshMiddleware>,
+  request: Request,
+  error: unknown,
+): Promise<void> => {
+  await middleware.onError?.({
+    error,
+    id: 'test',
+    options: middlewareOptions,
+    params: {},
+    request,
+    schemaPath: '/profile',
+  });
+};
+
 const jsonResponse = (body: unknown, status: number): Response =>
   new Response(JSON.stringify(body), {
     headers: { 'content-type': 'application/json' },
@@ -169,6 +184,26 @@ describe('createAuthRefreshMiddleware onResponse', () => {
     expect(clearAuth).not.toHaveBeenCalled();
     expect((fetchImpl.mock.calls[0]?.[0] as Request).headers.get('Authorization')).toBe('Bearer fresh');
     expect(retriedBody).toBe(JSON.stringify({ name: 'Ada' }));
+  });
+
+  it('releases a request body snapshot when the transport fails', async () => {
+    const middleware = createAuthRefreshMiddleware({
+      clearAuth: vi.fn(),
+      getAccessToken: () => 'expired',
+      refreshAccessToken: () => Promise.resolve('fresh'),
+    });
+    const request = new Request('https://api.example.test/profile', {
+      body: JSON.stringify({ name: 'Ada' }),
+      method: 'POST',
+    });
+
+    await invokeOnRequest(middleware, request);
+    await request.arrayBuffer();
+    await invokeOnError(middleware, request, new TypeError('offline'));
+
+    await expect(invokeOnResponse(middleware, request, new Response(null, { status: 401 }))).rejects.toThrow(
+      /unusable|body/u,
+    );
   });
 
   it('clears auth and emits when the retried request is rejected again', async () => {

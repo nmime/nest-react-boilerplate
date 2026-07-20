@@ -29,10 +29,8 @@ describe('mobile app layout', () => {
 
   it('renders the root layout structure', async () => {
     const Layout = (await import('./app/_layout')).default;
-    render(<Layout />);
+    const view = render(<Layout />);
 
-    // The layout is a wrapper – the fact it renders without error is the
-    // success condition (Stack renders as null in tests).
-    expect(true).toBe(true);
+    expect(view.container).toBeTruthy();
   });
 });

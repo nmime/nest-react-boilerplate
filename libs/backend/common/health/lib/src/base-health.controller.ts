@@ -1,8 +1,7 @@
-import { Controller, Get, ServiceUnavailableException, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { Health } from './decorator';
 import { HealthPrivateNetworkIpGuard } from './guard';
 import { HealthService } from './health.service';
-import { hasRequiredReadinessFailure } from './util/health-status.util';
 import type { HealthResponse, HealthResponseDto } from './dto';
 
 /* v8 ignore start -- the method decorators (@Get/@Health/@UseGuards) make esbuild emit the full __decorateClass helper whose `kind > 1` accessor/parameter slot is unreachable: this controller only uses class- and method-kind decorators. */
@@ -32,13 +31,7 @@ export class BaseHealthController {
 
   @Get('ready')
   @Health()
-  async getReadiness(): Promise<HealthResponseDto> {
-    const response = await this.healthService.checkReadiness();
-
-    if (hasRequiredReadinessFailure(response)) {
-      throw new ServiceUnavailableException(response);
-    }
-
-    return response;
+  getReadiness(): Promise<HealthResponseDto> {
+    return this.healthService.checkReadiness();
   }
 }

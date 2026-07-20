@@ -43,7 +43,7 @@ describe('Telegram bot config', () => {
       resolveTelegramBotConfig({
         TELEGRAM_BOT_TOKEN: ' test-token ',
         VITEST: 'true',
-        FRONTEND_URL: 'https://app.example.test/telegram-mini-app',
+        TELEGRAM_MINI_APP_URL: 'https://app.example.test/telegram-mini-app',
         TELEGRAM_BOT_WEBHOOK_SECRET: ' webhook-secret ',
         TELEGRAM_BOT_WEBHOOK_URL: 'https://telegram-bot-api.example.test/telegram/webhook',
         TELEGRAM_BOT_SESSION_TTL_SECONDS: '120',
@@ -75,25 +75,25 @@ describe('Telegram bot config', () => {
     });
   });
 
-  it('only exposes safe frontend or TMA URLs to Telegram app buttons', () => {
+  it('only exposes a safe canonical mini-app URL to Telegram app buttons', () => {
     expect(
       resolveSafeTelegramAppUrl({
         TELEGRAM_MINI_APP_URL: 'https://mini.example.test/telegram-mini-app',
-        TELEGRAM_WEB_APP_URL: 'https://app.example.test/telegram-mini-app',
-        FRONTEND_URL: 'https://fallback.example.test/app',
       }),
     ).toBe('https://mini.example.test/telegram-mini-app');
 
     expect(
       resolveSafeTelegramAppUrl({
-        APP_URL: `https://${'telegram-bot'}.n0xeid.xyz/`,
+        TELEGRAM_WEB_APP_URL: 'https://legacy.example.test/telegram-mini-app',
+        TELEGRAM_TMA_URL: 'https://legacy.example.test/telegram-mini-app',
+        TMA_URL: 'https://legacy.example.test/telegram-mini-app',
         FRONTEND_URL: 'https://frontend.example.test/app',
       }),
-    ).toBe('https://frontend.example.test/app');
+    ).toBeUndefined();
 
     expect(
       resolveSafeTelegramAppUrl({
-        FRONTEND_URL: 'https://frontend.example.test/app/',
+        TELEGRAM_MINI_APP_URL: 'https://frontend.example.test/app/',
       }),
     ).toBe('https://frontend.example.test/app/');
 
@@ -107,7 +107,7 @@ describe('Telegram bot config', () => {
       'https://frontend.example.test/',
       'not-a-url',
     ]) {
-      expect(resolveSafeTelegramAppUrl({ FRONTEND_URL: unsafe })).toBeUndefined();
+      expect(resolveSafeTelegramAppUrl({ TELEGRAM_MINI_APP_URL: unsafe })).toBeUndefined();
     }
   });
 

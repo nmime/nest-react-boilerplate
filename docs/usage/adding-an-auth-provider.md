@@ -119,7 +119,8 @@ Before production, review:
 - **Rate limits**: per-provider and per-endpoint.
 - **Audit events**: login, logout, registration, password change.
 
-See [Auth Production Roadmap](../auth-production-roadmap.md) for the full checklist.
+See [Auth Production Gap Register](../auth-production-roadmap.md) for the full
+checklist.
 
 ## 8. Frontend integration
 
@@ -184,6 +185,7 @@ pnpm run check:fast
 
 ## Next steps
 
-- [Auth Production Roadmap](../auth-production-roadmap.md) — full production checklist.
+- [Auth Production Gap Register](../auth-production-roadmap.md) — implemented
+  foundation and remaining production checklist.
 - [Auth Tenant Hardening](../auth-tenant-hardening.md) — multi-tenant security.
 - [Social Auth and Bots](../social-auth-bots.md) — bot platform authentication patterns.

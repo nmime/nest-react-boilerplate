@@ -30,6 +30,16 @@ const OfflineProbe = () => {
   return null;
 };
 
+const UnauthorizedProbe = () => {
+  const adminClient = useAdminApiClient();
+
+  useEffect(() => {
+    void adminClient.requestOptions.fetchImpl?.('https://api.example.test/admin/profile/me');
+  }, [adminClient.requestOptions]);
+
+  return null;
+};
+
 describe('admin app API client provider wiring', () => {
   afterEach(() => {
     cleanup();
@@ -61,5 +71,24 @@ describe('admin app API client provider wiring', () => {
 
     expect(await screen.findAllByText('You are offline')).not.toHaveLength(0);
     expect(screen.getAllByText(/stays on the current route/i)).not.toHaveLength(0);
+  });
+
+  it('prompts for authentication when an httpOnly cookie session expires', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ status: 401, title: 'Unauthorized', type: 'about:blank' }), {
+            headers: { 'content-type': 'application/problem+json' },
+            status: 401,
+          }),
+        ),
+      ),
+    );
+
+    render(<App testChild={<UnauthorizedProbe />} />);
+
+    expect(await screen.findByRole('dialog', { name: 'Authentication required' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Continue to sign in' }).getAttribute('href')).toBe('/admin');
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Avatar, computeInitials, UiAvatar } from './avatar';
 
 describe('computeInitials', () => {
@@ -50,6 +50,16 @@ describe('Avatar (rendering)', () => {
     render(<Avatar src="https://example.com/a.png" name="Bob" alt="Bob's avatar" />);
     const img = screen.getByRole('img', { name: "Bob's avatar" });
     expect(img).toBeTruthy();
+  });
+
+  it('keeps empty-alt avatars decorative in both image and fallback states', () => {
+    const { container, rerender } = render(<Avatar alt="" src="https://example.com/a.png" name="Alice" />);
+    expect(container.querySelector('img')?.getAttribute('alt')).toBe('');
+    expect(within(container).queryByRole('img')).toBeNull();
+
+    rerender(<Avatar alt="" name="Alice" />);
+    expect(container.querySelector('[data-avatar-initials]')?.getAttribute('aria-hidden')).toBe('true');
+    expect(within(container).queryByRole('img')).toBeNull();
   });
 
   it('renders with ? fallback for empty name', () => {

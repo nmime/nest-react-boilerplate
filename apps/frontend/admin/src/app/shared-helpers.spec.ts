@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAdminAccess, normalizeClaimList } from '../entities/admin-session';
 import { getBrowserPath, stripSensitiveBrowserTokenParams } from '../features/admin-auth';
-import { toUserListParams } from '../features/user-filtering';
+import {
+  parseAdminUserRoleFilter,
+  parseAdminUserPermissionFilter,
+  parseAdminUsersPage,
+  parseAdminUserStatusFilter,
+  toUserListParams,
+} from '../features/user-filtering';
 import {
   errorText,
   fallbackTranslate,
@@ -103,6 +109,36 @@ describe('shared helpers', () => {
       role: 'admin',
       permission: 'admin:users:read',
     });
+
+    expect(
+      toUserListParams({
+        page: Number.NaN,
+        permission: 'not-a-permission',
+        role: 'owner',
+        search: '',
+        status: 'deleted',
+      }),
+    ).toEqual({
+      limit: pageSize,
+      offset: 0,
+      search: undefined,
+      status: undefined,
+      role: undefined,
+      permission: undefined,
+    });
+  });
+
+  it('normalizes malformed user directory filters from the browser URL', () => {
+    expect(parseAdminUsersPage('3')).toBe(3);
+    expect(parseAdminUsersPage('0')).toBe(1);
+    expect(parseAdminUsersPage('1.5')).toBe(1);
+    expect(parseAdminUsersPage('not-a-page')).toBe(1);
+    expect(parseAdminUserStatusFilter('disabled')).toBe('disabled');
+    expect(parseAdminUserStatusFilter('deleted')).toBe('all');
+    expect(parseAdminUserRoleFilter('admin')).toBe('admin');
+    expect(parseAdminUserRoleFilter('owner')).toBe('all');
+    expect(parseAdminUserPermissionFilter('admin:roles:write')).toBe('admin:roles:write');
+    expect(parseAdminUserPermissionFilter('admin:users:delete')).toBe('all');
   });
 });
 

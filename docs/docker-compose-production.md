@@ -82,8 +82,9 @@ openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
 chmod 600 .env.production docker/secrets/*.txt
 ```
 
-Replace `IMAGE_TAG=sha-000000000000` with the full immutable tag produced by the
-release workflow:
+Replace `IMAGE_TAG=sha-000000000000` with the full-SHA tag produced by the
+release workflow. Protect that tag from mutation or use the documented digest
+override when immutable identity is required:
 
 ```text
 IMAGE_TAG=sha-0123456789abcdef0123456789abcdef01234567
@@ -295,7 +296,7 @@ pnpm run docker:prod:ps
 pnpm run docker:prod:logs -- --tail=100 migrate edge auth-app-api user-app-api admin-app-api
 ```
 
-Update by changing only to another verified immutable `IMAGE_TAG`, rendering the
+Update by changing only to another verified full-SHA `IMAGE_TAG`, rendering the
 model again, and rerunning `pnpm run docker:prod:up`.
 
 Stop containers while preserving all volumes:

@@ -86,7 +86,7 @@ export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRou
         href: '/tma',
         isCurrent:
           route === '/tma' || route === '/tma/auth' || route === '/telegram-mini-app' || linkRoute === '/link/telegram',
-        label: 'Telegram',
+        label: t('auth.provider.telegram'),
         variant: 'secondary' as const,
       },
     ],

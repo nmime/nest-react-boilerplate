@@ -176,7 +176,7 @@ describe('admin users page interactions', () => {
         undefined,
       );
     });
-    expect(screen.getByText('Focused directory view')).toBeTruthy();
+    expect(screen.getAllByText('Users').length).toBeGreaterThan(0);
   });
 
   it('requires a reason before requesting a status change and then submits it', async () => {
@@ -194,7 +194,7 @@ describe('admin users page interactions', () => {
       throw new Error('Expected user email to render.');
     }
     fireEvent.click(emailCell);
-    expect(await screen.findByText('Access policy snapshot')).toBeTruthy();
+    expect(await screen.findByText('Current access')).toBeTruthy();
 
     openActionsMenu();
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Change status' }));
@@ -206,14 +206,14 @@ describe('admin users page interactions', () => {
     openActionsMenu();
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Change status' }));
     fireEvent.change(screen.getByLabelText('Status update audit reason'), {
-      target: { value: 'policy violation' },
+      target: { value: '  policy violation  ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Update status' }));
 
     await waitFor(() => {
-      expect(statusSpy).toHaveBeenCalledWith('user-1', { status: 'disabled' }, undefined);
+      expect(statusSpy).toHaveBeenCalledWith('user-1', { reason: 'policy violation', status: 'disabled' }, undefined);
     });
-    expect(await screen.findByText('Status update requested and current entities will refetch.')).toBeTruthy();
+    expect(await screen.findByText('User status updated.')).toBeTruthy();
   });
 
   it('surfaces a backend rejection of a status change', async () => {
@@ -283,18 +283,18 @@ describe('admin users page interactions', () => {
       fireEvent.click(activeOption);
     }
     fireEvent.change(within(dialog).getByLabelText('Access policy audit reason'), {
-      target: { value: 'elevating access' },
+      target: { value: '  elevating access  ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Update access policy' }));
 
     await waitFor(() => {
       expect(accessSpy).toHaveBeenCalledWith(
         'user-1',
-        { roles: ['admin'], permissions: ['admin:users:read'] },
+        { roles: ['admin'], permissions: ['admin:users:read'], reason: 'elevating access' },
         undefined,
       );
     });
-    expect(await screen.findByText('Access policy update requested and current entities will refetch.')).toBeTruthy();
+    expect(await screen.findByText('Access policy updated.')).toBeTruthy();
   });
 
   it('updates status before access policy when the policy dialog status changes', async () => {
@@ -321,8 +321,16 @@ describe('admin users page interactions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update access policy' }));
 
     await waitFor(() => {
-      expect(statusSpy).toHaveBeenCalledWith('user-1', { status: 'disabled' }, undefined);
-      expect(accessSpy).toHaveBeenCalledWith('user-1', { roles: ['user'], permissions: ['profile:read'] }, undefined);
+      expect(statusSpy).toHaveBeenCalledWith(
+        'user-1',
+        { reason: 'sync policy and lifecycle', status: 'disabled' },
+        undefined,
+      );
+      expect(accessSpy).toHaveBeenCalledWith(
+        'user-1',
+        { roles: ['user'], permissions: ['profile:read'], reason: 'sync policy and lifecycle' },
+        undefined,
+      );
     });
   });
 
@@ -416,7 +424,7 @@ describe('admin users page interactions', () => {
 
     renderUsersPage('/admin/users/user-2');
     expect((await screen.findAllByText('disabled@example.com')).length).toBeGreaterThan(0);
-    expect(screen.getByText('Access policy snapshot')).toBeTruthy();
+    expect(screen.getByText('Current access')).toBeTruthy();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
 
     openActionsMenu();

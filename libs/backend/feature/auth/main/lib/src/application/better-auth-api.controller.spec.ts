@@ -229,6 +229,27 @@ describe('BetterAuthApiController', () => {
       expect(mockRes.headers['set-cookie'][0]).toContain('session=abc123');
     });
 
+    it('does not forward transport or stale representation headers', async () => {
+      mockHandler.mockResolvedValue(
+        new Response(JSON.stringify({ operationId: 'signOut', success: true, context: {} }), {
+          status: 200,
+          headers: {
+            connection: 'keep-alive',
+            'content-length': '9999',
+            'content-type': 'application/json',
+            'x-auth-version': '1',
+          },
+        }),
+      );
+
+      await controller.handle({ method: 'POST', url: '/api/auth/sign-out', headers: {} } as any, mockRes);
+
+      expect(mockRes.headers.connection).toBeUndefined();
+      expect(mockRes.headers['content-length']).toBeUndefined();
+      expect(mockRes.headers['x-auth-version']).toEqual(['1']);
+      expect(mockRes.getBody()).toEqual({ success: true });
+    });
+
     it('handles null response for get-session without auth', async () => {
       mockHandler.mockResolvedValue(
         new Response('null', {

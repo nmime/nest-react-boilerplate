@@ -6,7 +6,7 @@
  *   - pnpm availability and version
  *   - Docker availability (optional)
  *   - Manifest files (package.json, tsconfig.base.json)
- *   - pnpm-lock.yaml freshness
+ *   - pnpm-lock.yaml presence
  *   - Nx project graph (optional)
  *   - NRB config validity
  *   - NRB state consistency
@@ -21,7 +21,7 @@ import { delimiter, join } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { CommandContext } from "../../cli.js";
 import { safeParseNrbConfig, schemaVersion } from "../../setup/schema.js";
-import { configHash, migrateState, emptyState } from "../../setup/state.js";
+import { configHash, migrateState, emptyState, hashString } from "../../setup/state.js";
 import {
   generateBackendCapabilityModule,
   generateCapabilitiesManifest,
@@ -202,7 +202,7 @@ function checkNrbConfig(workspaceRoot: string): DoctorCheck {
   }
 }
 
-function checkNrbState(workspaceRoot: string): DoctorCheck {
+export function checkNrbState(workspaceRoot: string): DoctorCheck {
   const statePath = join(workspaceRoot, ".nrb", "state.json");
   if (!existsSync(statePath)) {
     return { name: "nrb-state", status: "skip", message: ".nrb/state.json not found — no setup state" };
@@ -212,6 +212,19 @@ function checkNrbState(workspaceRoot: string): DoctorCheck {
     const state = migrateState(raw);
     if (state === emptyState) {
       return { name: "nrb-state", status: "warn", message: "State file is empty or invalid — may need re-setup" };
+    }
+    const driftedFiles = Object.entries(state.files)
+      .filter(([relativePath, expectedHash]) => {
+        const trackedPath = join(workspaceRoot, relativePath);
+        return !existsSync(trackedPath) || hashString(readFileSync(trackedPath, "utf8")) !== expectedHash;
+      })
+      .map(([relativePath]) => relativePath);
+    if (driftedFiles.length > 0) {
+      return {
+        name: "nrb-state",
+        status: "fail",
+        message: `Generated setup files drifted: ${driftedFiles.join(", ")} — rerun setup`,
+      };
     }
     const fileCount = Object.keys(state.files).length;
     return { name: "nrb-state", status: "pass", message: `.nrb/state.json valid (${fileCount} tracked files)` };

@@ -61,17 +61,27 @@ interface InitialsFallbackProps {
   readonly initials: string;
   readonly name: string;
   readonly size: number;
-  readonly ariaLabel: string;
+  readonly ariaLabel?: string;
+  readonly decorative: boolean;
   readonly sizeClass?: string;
   readonly className: string;
 }
 
-function InitialsFallback({ initials, name, size, ariaLabel, sizeClass, className }: InitialsFallbackProps) {
+function InitialsFallback({
+  ariaLabel,
+  className,
+  decorative,
+  initials,
+  name,
+  size,
+  sizeClass,
+}: InitialsFallbackProps) {
   const sizeModifier = sizeClass ? `avatar--${sizeClass}` : '';
   return (
     <span
-      role="img"
+      aria-hidden={decorative || undefined}
       aria-label={ariaLabel}
+      role={decorative ? undefined : 'img'}
       className={`avatar avatar--initials ${sizeModifier} ${className}`}
       data-avatar-initials
       style={{
@@ -98,7 +108,8 @@ function InitialsFallback({ initials, name, size, ariaLabel, sizeClass, classNam
 
 export const Avatar: FC<AvatarProps> = ({ src, name = '', size = 40, alt, className = '' }) => {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const ariaLabel = alt ?? `Avatar for ${name}`;
+  const decorative = alt === '';
+  const ariaLabel = decorative ? undefined : (alt ?? `Avatar for ${name}`);
   const sizeClass = Object.entries(AvatarSizes).find(([, value]) => Number(value) === size)?.[0];
 
   if (!src || failedSrc === src) {
@@ -108,6 +119,7 @@ export const Avatar: FC<AvatarProps> = ({ src, name = '', size = 40, alt, classN
         name={name}
         size={size}
         ariaLabel={ariaLabel}
+        decorative={decorative}
         sizeClass={sizeClass}
         className={className}
       />
@@ -118,7 +130,7 @@ export const Avatar: FC<AvatarProps> = ({ src, name = '', size = 40, alt, classN
   return (
     <img
       src={src}
-      alt={ariaLabel}
+      alt={ariaLabel ?? ''}
       width={size}
       height={size}
       className={`avatar avatar--img ${sizeModifier} ${className}`}

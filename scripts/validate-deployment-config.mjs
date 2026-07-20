@@ -195,6 +195,18 @@ has(
   'AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}',
   'dev Compose uses an intentionally short dev JWT default',
 );
+has(devBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'dev Compose passes the Redis service URL');
+has(devBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}', 'dev Compose passes the NATS service URL');
+has(
+  devBackendEnv,
+  'OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}',
+  'dev Compose passes the OTLP collector endpoint',
+);
+has(
+  devBackendEnv,
+  'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED:-false}',
+  'dev Compose keeps provider token storage opt-in',
+);
 const jwtSecretDefault = devBackendEnv.match(/AUTH_JWT_SECRET:\s*\$\{AUTH_JWT_SECRET:-([^}]+)\}/)?.[1];
 assert.ok(jwtSecretDefault, 'Missing local Docker AUTH_JWT_SECRET default');
 assert.ok(
@@ -332,6 +344,12 @@ has(
 );
 has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'production Compose points APIs at Redis');
 has(prodBackendEnv, 'REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}', 'production Compose sets Redis key prefix');
+has(prodBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-}', 'production Compose passes an explicit external NATS endpoint');
+has(
+  prodBackendEnv,
+  'POSTGRES_POOL_IDLE_TIMEOUT_MS: ${POSTGRES_POOL_IDLE_TIMEOUT_MS:-30000}',
+  'production Compose exposes the validated PostgreSQL pool timeout',
+);
 has(
   prodBackendEnv,
   'AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}',
@@ -363,13 +381,28 @@ has(
 has(sharedHealthController, "@Get('ready')", 'shared health controller exposes /ready');
 has(
   sharedHealthController,
-  'await this.healthService.checkReadiness();',
+  'return this.healthService.checkReadiness();',
   'shared /ready endpoint evaluates readiness checks',
 );
+
+const healthDecorator = read('libs/backend/common/health/lib/src/decorator/health.decorator.ts');
 has(
-  sharedHealthController,
-  'ServiceUnavailableException',
-  'shared /ready endpoint fails closed when required dependencies are unavailable',
+  healthDecorator,
+  'UseInterceptors(HealthTransformInterceptor)',
+  'shared health routes install the response-status interceptor',
+);
+const healthTransformInterceptor = read(
+  'libs/backend/common/health/lib/src/interceptor/health-transform.interceptor.ts',
+);
+has(
+  healthTransformInterceptor,
+  'response.status(HealthHttpStatus[readHealthStatus(value)]);',
+  'shared /ready endpoint preserves the health envelope while setting the fail-closed HTTP status',
+);
+assert.ok(
+  !sharedHealthController.includes('ServiceUnavailableException') &&
+    !healthTransformInterceptor.includes('ServiceUnavailableException'),
+  'Shared /ready must not discard dependency details through the global Problem Details filter.',
 );
 
 for (const { app, healthProvider, modulePath, configPath, localControllerPath } of [

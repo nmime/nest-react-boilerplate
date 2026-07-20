@@ -107,7 +107,8 @@ Helm with Argo CD or Flux is selected per environment. Helm is required only for
 strict Helm render/lint validation and actual Helm releases, not for generic
 deployment validation.
 
-1. Build immutable images from a clean lockfile.
+1. Build images from a clean lockfile, record their digests, and publish the
+   full-SHA tags expected by the selected deployment path.
 2. Inject secrets via Docker secret files, runtime environment variables,
    Kubernetes Secrets, External Secrets/Vault, or another secret manager; do not
    commit production secret values.

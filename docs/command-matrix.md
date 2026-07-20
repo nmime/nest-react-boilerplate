@@ -136,6 +136,9 @@ The nearest project README lists its high-signal verification commands.
 ## Tooling policy
 
 - Add new local automation under `packages/tooling/src` and expose it through `packages/tooling/bin/repo-tooling.mjs` plus a root package script when it is part of the public DX.
-- Do not add root-level `tools/` or `scripts/` compatibility wrappers; they were removed in favor of the workspace tooling package.
+- Do not add a root-level `tools/` directory or compatibility wrappers under
+  `scripts/`. The existing `scripts/` directory owns root validators and
+  deployment/orchestration entrypoints named by `package.json`; new reusable
+  repository automation belongs in the workspace tooling package.
 - Keep public commands on the root `package.json` scripts; direct `packages/tooling/bin/repo-tooling.mjs ...` calls are implementation details unless this matrix documents otherwise.
 - If a command appears in docs, it must appear here or in `packages/tooling/README.md`.

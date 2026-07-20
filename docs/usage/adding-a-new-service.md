@@ -20,13 +20,13 @@ The first name segment is the backend scope. For example,
 pnpm nrb add app billing-app-api \
   --kind backend \
   --renderer nest-api \
-  --dry-run \
-  -- --port=3200
+  --port 3200 \
+  --dry-run
 
 pnpm nrb add app billing-app-api \
   --kind backend \
   --renderer nest-api \
-  -- --port=3200
+  --port 3200
 ```
 
 For a worker:

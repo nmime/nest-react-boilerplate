@@ -22,6 +22,9 @@ describe('InMemoryAuthTokenStore', () => {
     await expect(store.findRefreshToken(issued.value.token, tenantB)).resolves.toMatchObject({
       value: null,
     });
+    await expect(store.findRefreshToken(issued.value.token)).resolves.toMatchObject({
+      value: null,
+    });
 
     const rotated = await store.rotateRefreshToken(issued.value.token, tenantA);
     expect(rotated.isOk()).toBe(true);
@@ -34,7 +37,7 @@ describe('InMemoryAuthTokenStore', () => {
       value: null,
     });
     await expect(store.revokeRefreshToken(rotated.value.token, tenantA)).resolves.toMatchObject({
-      value: true,
+      value: false,
     });
     await expect(store.revokeRefreshToken('missing-token', tenantA)).resolves.toMatchObject({
       value: false,
@@ -60,6 +63,9 @@ describe('InMemoryAuthTokenStore', () => {
       store.consumeUserActionToken(issued.value.token, 'email_verification', tenantA),
     ).resolves.toMatchObject({ value: null });
     await expect(store.consumeUserActionToken(issued.value.token, 'password_reset', tenantB)).resolves.toMatchObject({
+      value: null,
+    });
+    await expect(store.consumeUserActionToken(issued.value.token, 'password_reset')).resolves.toMatchObject({
       value: null,
     });
     await expect(store.consumeUserActionToken('missing-token', 'password_reset', tenantA)).resolves.toMatchObject({

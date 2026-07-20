@@ -164,7 +164,7 @@ describe('admin roles page management', () => {
         undefined,
       );
     });
-    expect(await screen.findByText('Role update requested and the catalog will refetch.')).toBeTruthy();
+    expect(await screen.findByText('Role updated.')).toBeTruthy();
   });
 
   it('cancels the edit dialog without updating', async () => {

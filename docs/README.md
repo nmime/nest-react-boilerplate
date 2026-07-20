@@ -93,7 +93,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Security and auth
 
 - [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
-- [Auth Production Roadmap](auth-production-roadmap.md)
+- [Auth Production Gap Register](auth-production-roadmap.md)
 - [Auth Tenant Hardening](auth-tenant-hardening.md)
 - [Social Auth and Bots](social-auth-bots.md)
 
@@ -119,7 +119,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Idempotent Single-Server Deployment](single-server-deployment.md)
 - [Production Hardening](production-hardening.md)
 - [Agent Skills](agent-skills.md)
-- [Billing Admin Roadmap](billing-admin-roadmap.md)
+- [Billing Extension and Admin Capability Status](billing-admin-roadmap.md)
 
 ## Documentation authority
 

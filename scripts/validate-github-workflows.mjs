@@ -55,6 +55,28 @@ for (const required of [
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing provider-isolated release contract: ${required}`);
 }
+for (const forbidden of [
+  'gitleaks:latest',
+  '|| true',
+  'allow_failure: true',
+  'mcr.microsoft.com/playwright:v1.54.2',
+  '\n  image: docker:27-dind',
+]) {
+  assert.ok(!gitlabCi.includes(forbidden), `.gitlab-ci.yml contains a fail-open or stale CI contract: ${forbidden}`);
+}
+for (const required of [
+  'gitleaks:',
+  'zricethezav/gitleaks:v8.28.0',
+  'node:24.18.0-alpine',
+  'mcr.microsoft.com/playwright:v1.61.1-noble',
+  'docker:27.5.1-dind',
+  'postgres:17.6-alpine',
+  'docker-cli-compose',
+  'DOCKER_HOST: tcp://docker:2375',
+  "DOCKER_TLS_CERTDIR: ''",
+]) {
+  assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing pinned CI contract: ${required}`);
+}
 
 const { buildReleaseConfig } = await import('../release.config.mjs');
 const pluginNames = (config) => config.plugins.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin));
@@ -63,6 +85,18 @@ const gitlabReleaseConfig = buildReleaseConfig({
   RELEASE_PROVIDER: 'gitlab',
   CI_REPOSITORY_URL: 'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
 });
+const configuredReleasePlugins = new Set([...pluginNames(githubReleaseConfig), ...pluginNames(gitlabReleaseConfig)]);
+const declaredDependencies = {
+  ...packageJson.dependencies,
+  ...packageJson.devDependencies,
+};
+for (const plugin of configuredReleasePlugins) {
+  assert.ok(
+    declaredDependencies[plugin],
+    `release.config.mjs plugin must be a direct dependency under pnpm: ${plugin}`,
+  );
+  await import(plugin);
+}
 assert.deepEqual(
   pluginNames(githubReleaseConfig).filter(
     (plugin) => plugin === '@semantic-release/github' || plugin === '@semantic-release/gitlab',

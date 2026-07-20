@@ -1,5 +1,4 @@
 import { betterAuth } from 'better-auth';
-import { Logger } from '@nestjs/common';
 import type { BetterAuthOptions, Auth } from 'better-auth';
 import { genericOAuth } from 'better-auth/plugins';
 import { multiTenantPlugin } from './plugins/multi-tenant';
@@ -49,9 +48,10 @@ export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOpti
       minPasswordLength: 8,
       maxPasswordLength: 128,
       requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      sendResetPassword: async ({ user, url }: { user: { email?: string }; url: string }) => {
-        // In production, wire to an email service (e.g., Resend, SendGrid).
-        new Logger('better-auth').log(`password reset for ${user?.email ?? 'unknown'}: ${url}`);
+      sendResetPassword: async () => {
+        // Fail closed until the product wires an email transport. Logging the
+        // Better-Auth reset URL would disclose the bearer reset token.
+        throw new Error('Password reset delivery is not configured.');
       },
     },
 
@@ -106,8 +106,13 @@ function readBoolean(value: string | undefined): boolean | undefined {
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {
-  const parsed = Number.parseInt(value ?? '', 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+  const normalized = value?.trim();
+  if (!normalized || !/^\d+$/u.test(normalized)) {
+    return fallback;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function readList(value: string | undefined): string[] | undefined {

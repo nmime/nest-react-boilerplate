@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
-import { observer, useI18n, useOptionalRootStore } from '@app/frontend-runtime';
-import { ProductShell, UiStatusTag, type ProductShellAction } from '@app/frontend-ui-web';
+import { observer, useI18n } from '@app/frontend-runtime';
+import { ProductShell, type ProductShellAction } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import { normalizeAdminPath } from '../../shared';
 
@@ -18,7 +18,6 @@ export const AdminLayout = observer(function AdminLayout({
   children: ReactNode;
   currentPath?: string;
 }>) {
-  const currentBreakpoint = useOptionalRootStore()?.app.currentBreakpoint ?? 'desktop';
   const { t } = useI18n();
   const path = normalizeAdminPath(currentPath);
   const navItems: AdminNavItem[] = [];
@@ -67,43 +66,16 @@ export const AdminLayout = observer(function AdminLayout({
       variant: 'secondary',
     });
   }
-  if (access?.canReadRoles) {
-    navItems.push({
-      href: '/admin/tenants',
-      isCurrent: path === '/tenants',
-      label: t('admin.tenants.title'),
-      detail: t('admin.tenants.description'),
-      variant: 'secondary',
-    });
-  }
   if (access?.canReadProfile ?? true) {
     navItems.push({
       href: '/admin/profile',
       isCurrent: path === '/profile',
       label: t('admin.action.profile'),
-      detail: t('admin.dashboard.stat.profile.detail'),
+      detail: t('admin.profile.description'),
       variant: 'secondary',
     });
   }
   const currentItem = navItems.find((item) => item.isCurrent);
-  const routeSignals = [
-    {
-      label: 'RBAC fail-closed',
-      tone: access?.canAccessAdmin === false ? 'warning' : 'success',
-    },
-    {
-      label: `${navItems.length} scoped routes`,
-      tone: 'info',
-    },
-    {
-      label: currentItem?.label ?? t('admin.notFound.title'),
-      tone: currentItem ? 'success' : 'warning',
-    },
-  ] satisfies Array<{
-    label: string;
-    tone: 'info' | 'success' | 'warning';
-  }>;
-
   return (
     <ProductShell
       actions={navItems.map((item) => ({
@@ -116,17 +88,14 @@ export const AdminLayout = observer(function AdminLayout({
       description={t('admin.description')}
       homeHref="/admin"
       eyebrow={t('admin.eyebrow')}
-      status={`${t('admin.status')} · ${currentBreakpoint}`}
-      statusTone="warning"
       title={t('admin.title')}
     >
-      <div className="admin-shell" data-responsive-breakpoint={currentBreakpoint}>
+      <div className="admin-shell">
         <aside className="admin-sidebar" aria-label={t('admin.appName')}>
           <div className="admin-sidebar__card">
             <p className="xr-eyebrow">{t('admin.eyebrow')}</p>
             <strong>{t('admin.title')}</strong>
             <span>{t('admin.description')}</span>
-            <UiStatusTag label={t('admin.status')} tone="warning" />
           </div>
           <nav className="admin-sidebar__nav" aria-label={t('admin.appName')}>
             {navItems.map((item, index) => (
@@ -144,25 +113,8 @@ export const AdminLayout = observer(function AdminLayout({
               </a>
             ))}
           </nav>
-          <div className="admin-sidebar__footnote">
-            Permission-scoped navigation hides unavailable routes before render.
-          </div>
         </aside>
         <section aria-label={currentItem?.label ?? t('admin.title')} className="admin-main-panel">
-          <div className="admin-command-bar" data-design-version="admin-frontend-v3">
-            <div>
-              <p className="xr-eyebrow">Admin console v3</p>
-              <h2>{currentItem?.label ?? t('admin.notFound.title')}</h2>
-              <span>
-                Product-ops workspace with guarded routing, quick context, and nonblank empty/error/loading states.
-              </span>
-            </div>
-            <div className="admin-command-bar__signals">
-              {routeSignals.map((signal) => (
-                <UiStatusTag key={signal.label} label={signal.label} tone={signal.tone} />
-              ))}
-            </div>
-          </div>
           {children}
         </section>
       </div>

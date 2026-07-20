@@ -66,8 +66,10 @@ Staging services use port offset +100 from production defaults:
 Configure via `PORT` env var per service, or use `.env.staging` which sets the
 staging-specific `*_APP_API_PORT` / `*_APP_PORT` values.
 
-Infrastructure services (PostgreSQL, Redis, NATS, MinIO) use the same ports in
-staging; isolate them via separate Docker networks or Kubernetes namespaces.
+The staging template also offsets PostgreSQL, Redis, NATS client, and NATS
+monitor host ports. MinIO keeps its standard host ports. A separate Compose
+project/network or Kubernetes namespace is still required when environments
+share a host or cluster.
 
 ## Rules
 

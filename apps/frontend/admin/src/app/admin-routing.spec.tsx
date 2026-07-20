@@ -96,7 +96,7 @@ describe('admin route base handling', () => {
     expect(html).toContain('data-current="true"');
   });
 
-  it('keeps user and tenant routes explicit and fail-closed', () => {
+  it('keeps user routes explicit and rejects unimplemented tenant routes', () => {
     const fullAccess = createAdminAccess({
       subject: 'admin-id',
       roles: ['admin'],
@@ -120,7 +120,7 @@ describe('admin route base handling', () => {
           access,
         }),
       ),
-    ).toContain('Missing admin roles permission');
+    ).toContain('Admin page not found');
     expect(
       renderAdminMarkup(
         renderAdminRoute('/admin/tenants', {
@@ -129,7 +129,7 @@ describe('admin route base handling', () => {
           access: fullAccess,
         }),
       ),
-    ).toContain('Tenant administration roadmap');
+    ).toContain('Admin page not found');
   });
 });
 

@@ -37,6 +37,7 @@ describe('UiApiRuntimeOverlay', () => {
 
     render(
       <UiApiRuntimeOverlay
+        copy={{ dismissLabel: 'Close notification' }}
         onDismissToast={onDismissToast}
         status="offline"
         toasts={[
@@ -53,9 +54,9 @@ describe('UiApiRuntimeOverlay', () => {
       screen.getByText('You are offline. We will keep this route mounted while the connection recovers.'),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss Saved' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close notification Saved' }));
     expect(onDismissToast).toHaveBeenCalledWith('s');
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss Failed' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close notification Failed' }));
     expect(onDismissToast).toHaveBeenLastCalledWith('e');
   });
 

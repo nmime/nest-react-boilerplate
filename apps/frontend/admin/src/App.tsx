@@ -49,7 +49,6 @@ import { NotFoundPage } from './pages/not-found';
 import { ProfilePage } from './pages/profile';
 import { ProblemPresentationsPage } from './pages/problem-presentations';
 import { RolesPage } from './pages/roles';
-import { TenantRoadmapPage } from './pages/tenants';
 import { UsersPage } from './pages/users';
 import { fallbackTranslate, isUsersRoute, normalizeAdminPath, type AdminProfileState, type Translate } from './shared';
 import { AdminLayout } from './widgets/admin-shell';
@@ -112,13 +111,6 @@ function renderReadyAdminRoute(
       <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
-    );
-  }
-  if (routePath === '/tenants') {
-    return state.access.canReadRoles ? (
-      <TenantRoadmapPage />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
     );
   }
   return <NotFoundPage />;
@@ -338,6 +330,7 @@ const AdminApiClientProvider = ({
   const runtimeFetch = useMemo(
     () =>
       createApiRuntimeFetch({
+        emitMissingTokenAuthRequired: true,
         redirectTo: '/admin',
         toastRules: () => [...adminApiToastRules, ...authApiToastRules, ...createDefaultApiToastRules()],
       }),

@@ -177,7 +177,7 @@ export class ExternalAuthService {
     assertReturnUrlAllowed(input.returnUrl);
     const token = randomBytes(32).toString('base64url');
     const expiresAt = new Date(
-      Date.now() + readPositiveInt(process.env.AUTH_LINK_TOKEN_TTL_SECONDS, DefaultLinkTokenTtlSeconds) * 1000,
+      Date.now() + readPositiveInt(process.env.EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS, DefaultLinkTokenTtlSeconds) * 1000,
     );
     const created = await this.social.createLinkToken({
       tenantId,
@@ -277,7 +277,7 @@ export class ExternalAuthService {
       userId: input.principal?.subject,
       expiresAt,
     });
-    const scopes = readList(process.env.DISCORD_OAUTH_SCOPES) ?? ['identify', 'email'];
+    const scopes = readList(process.env.DISCORD_SCOPES) ?? ['identify', 'email'];
     const authorizationUrl = provider.createAuthorizationURL(state, codeVerifier, scopes);
     return {
       authorizationUrl: authorizationUrl.toString(),
@@ -396,7 +396,7 @@ export class ExternalAuthService {
       };
     }
 
-    if ((process.env.EXTERNAL_AUTH_AUTO_PROVISION ?? process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED) === 'false') {
+    if (process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED !== 'true') {
       return {
         status: 'needs_link',
         code: 'needs_link',
@@ -546,11 +546,11 @@ export class ExternalAuthService {
     externalIdentityId: string,
     tokens?: OAuth2Tokens,
   ): Promise<void> {
-    if (!tokens || process.env.DISCORD_TOKEN_STORAGE_ENABLED !== 'true') {
+    if (!tokens || process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED !== 'true') {
       return;
     }
-    const scopes = tokens.hasScopes() ? tokens.scopes() : (readList(process.env.DISCORD_OAUTH_SCOPES) ?? []);
-    await this.social.persistProviderToken({
+    const scopes = tokens.hasScopes() ? tokens.scopes() : (readList(process.env.DISCORD_SCOPES) ?? []);
+    await this.persistProviderTokenOrThrow({
       tenantId,
       userId,
       externalIdentityId,
@@ -561,7 +561,7 @@ export class ExternalAuthService {
       expiresAt: tokens.accessTokenExpiresAt(),
     });
     if (tokens.hasRefreshToken()) {
-      await this.social.persistProviderToken({
+      await this.persistProviderTokenOrThrow({
         tenantId,
         userId,
         externalIdentityId,
@@ -571,6 +571,15 @@ export class ExternalAuthService {
         scopes,
         expiresAt: null,
       });
+    }
+  }
+
+  private async persistProviderTokenOrThrow(
+    input: Parameters<SocialAuthStore['persistProviderToken']>[0],
+  ): Promise<void> {
+    const persisted = await this.social.persistProviderToken(input);
+    if (persisted.isErr() || !persisted.value) {
+      throw new ConflictException('Provider token storage is unavailable.');
     }
   }
 

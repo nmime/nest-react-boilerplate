@@ -437,7 +437,7 @@ describe('App', () => {
           access: deniedAccess,
         }),
       ),
-    ).toContain('Missing admin roles permission.');
+    ).toContain('Страница администратора не найдена');
     expect(renderAdminMarkup(renderAdminRoute('/nope', { status: 'ready', payload, access }))).toContain(
       'Страница администратора не найдена',
     );

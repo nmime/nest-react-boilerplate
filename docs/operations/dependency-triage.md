@@ -5,11 +5,11 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 ## Dependency matrix
 
-| Dependency | Env vars                              | Indicator name | Required by default |
-| ---------- | ------------------------------------- | -------------- | ------------------- |
-| Postgres   | `DATABASE_URL`                        | `postgres`     | Yes                 |
-| Redis      | `REDIS_URL` or `CACHE_REDIS_*`        | `redis`        | Yes (if registered) |
-| NATS       | `NATS_URL` or `NATS_HOST`/`NATS_PORT` | `nats`         | Yes (if registered) |
+| Dependency | Env vars                     | Indicator name | Core API readiness policy                      |
+| ---------- | ---------------------------- | -------------- | ---------------------------------------------- |
+| Postgres   | `DATABASE_URL`               | `postgres`     | Required when PostgreSQL persistence is active |
+| Redis      | `REDIS_URL` or `REDIS_HOSTS` | `redis`        | Optional/degraded when registered              |
+| NATS       | `NATS_SERVERS`               | `nats`         | Optional/degraded when registered              |
 
 ## Postgres connection failure
 
@@ -30,7 +30,8 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 **Symptoms:** `redis` indicator reports `error`.
 
-1. Verify `REDIS_URL` (or `CACHE_REDIS_HOST`/`CACHE_REDIS_PORT`) points to a running Redis instance.
+1. Verify `REDIS_URL` or the cluster/sentinel `REDIS_HOSTS` list points to a
+   running Redis deployment.
 2. Check Redis is accepting connections:
    ```bash
    redis-cli -h <host> -p <port> ping
@@ -42,7 +43,7 @@ See [health checks runbook](health-checks.md) for endpoint details.
 
 **Symptoms:** `nats` indicator reports `error`.
 
-1. Verify `NATS_URL` (or `NATS_HOST`/`NATS_PORT`) is set.
+1. Verify `NATS_SERVERS` contains the reachable NATS server URL(s).
 2. Check NATS server is running and accepting connections.
 3. If using authentication, verify credentials in the URL.
 4. NATS is used for inter-service events; verify the `nats-server` container/pod is healthy.
@@ -54,7 +55,8 @@ See [health checks runbook](health-checks.md) for endpoint details.
    curl -s -w '\n%{http_code}' "http://localhost:${PORT:-80}/ready"
    ```
 2. **Check app startup logs** — indicators fail at bootstrap if dependencies are unreachable.
-3. **Use `/health/private`** (from a private-network IP) for unsanitized details:
+3. **Use `/health/private`** (from a private-network IP) for the full envelope.
+   Indicator details remain sanitized on every health route:
    ```bash
    curl -s "http://localhost:${PORT:-80}/health/private" | jq '.data.checks'
    ```

@@ -458,7 +458,7 @@ describe('generated api clients', () => {
     expect(listUrl.searchParams.get('search')).toBe('ada');
     expect(listUrl.searchParams.get('status')).toBe('active');
 
-    const statusBody: UpdateAdminUserStatusDto = { status: 'disabled' };
+    const statusBody: UpdateAdminUserStatusDto = { reason: 'policy violation', status: 'disabled' };
     const statusFetch = mockFetch({ data: { id: 'user-id' } });
     await adminUsersControllerUpdateUserStatus('user-id', statusBody, {
       fetchImpl: statusFetch,
@@ -470,6 +470,7 @@ describe('generated api clients', () => {
 
     const policyBody: UpdateAdminUserAccessPolicyDto = {
       permissions: ['profile:read', 'admin:users:read'],
+      reason: 'elevating access',
       roles: ['user', 'admin'],
     };
     const policyFetch = mockFetch({ data: { id: 'user-id' } });

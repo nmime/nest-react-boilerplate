@@ -1,22 +1,26 @@
-# DDD and Clean Architecture foundation
+# DDD and Clean Architecture boundaries
 
-This repository is moving toward domain-driven design (DDD) with Clean Architecture boundaries. This document defines the target dependency rules for new vertical slices and for future migrations of existing features. It is intentionally policy-only for this foundation slice; existing feature and domain source code remains unchanged.
+This repository applies domain-driven design and Clean Architecture boundaries
+incrementally. Auth and admin already use `domain`, `application`,
+`infrastructure`, and `interfaces` folders where those roles are real; shared
+backend projects also carry enforced `boundary:*` tags. This document defines
+the dependency contract for new work and the remaining migration direction. It
+does not claim that every existing feature has been split into four projects.
 
 ## Dependency direction
 
 Dependencies must point inward toward the domain model:
 
 ```text
-apps / composition root
-  -> interfaces / presentation
-    -> infrastructure
-      -> application
-        -> domain
+interfaces / presentation ---> application ---> domain
+infrastructure / adapters ---> application-owned ports
+infrastructure / adapters ---------------------> domain
+apps / composition roots wire the outer layers
 ```
 
 The domain layer does not depend on any outer layer. Application code depends on the domain and on ports it owns or explicitly declares. Infrastructure and presentation adapt external systems to those ports. Nest modules and deployable apps are composition roots that wire concrete implementations.
 
-## Target layers
+## Layer contracts
 
 ### Domain
 
@@ -86,15 +90,33 @@ Shared code is allowed only when it has a stable cross-context purpose:
 
 Avoid placing business rules in shared libraries merely to make imports convenient. If a rule belongs to one bounded context, keep it in that context and expose it through a port, use case, or contract.
 
-## Migration plan
+## Incremental adoption
 
-1. Establish the naming policy and additive canonical TypeScript aliases while preserving existing aliases for compatibility.
-2. For each bounded context, identify current modules, contracts, persistence adapters, and presentation adapters.
-3. Introduce layer folders/projects for `domain`, `application`, `infrastructure`, and `interfaces` only when changing that context for feature work or a dedicated migration.
-4. Move dependencies inward one use case at a time, adding regression tests around the migrated behavior.
-5. Update imports to canonical aliases after the destination layer is stable.
-6. Remove temporary compatibility aliases only after all imports and generator templates have been migrated and validated.
+1. For each bounded context, identify current modules, contracts, persistence
+   adapters, and presentation adapters.
+2. Introduce a layer folder or project only when it owns real behavior; do not
+   create empty architecture shells.
+3. Move dependencies inward one use case at a time, adding regression tests
+   around the migrated behavior.
+4. Prefer application/domain-owned ports when changing code that currently
+   injects a concrete persistence adapter.
+5. Keep canonical aliases, Nx tags, ESLint constraints, generator templates,
+   and local README/AGENTS guidance aligned with the resulting boundary.
 
-## Foundation-slice non-goals
+## Current adoption status
 
-This foundation slice does not move code between layers, change application behavior, alter deployable apps, or remove legacy aliases. It only documents the target architecture and adds safe alias compatibility for future slices.
+- Auth main has domain, application, infrastructure, and HTTP-interface folders;
+  its PostgreSQL implementation remains in the feature-owned data-access
+  project.
+- Admin main separates domain, application, and HTTP interfaces, while its
+  persistence implementations live in the auth PostgreSQL project.
+- User main keeps thin HTTP composition while reusable user domain/application
+  contracts live in user shared.
+- Backend common libraries use `boundary:backend-kernel`,
+  `boundary:infrastructure-adapter`, `boundary:interface-helper`, and
+  `boundary:test-util` tags enforced by `eslint.config.js`.
+
+Some existing application services still consume concrete repository classes
+through composition-time injection. Treat that as an incremental migration
+boundary, not evidence that interface code may bypass use cases or that domain
+code may import infrastructure.

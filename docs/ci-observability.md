@@ -43,8 +43,8 @@ flowchart TD
   start --> fast
   fast --> nonruntime
   fast --> quality
-  fast --> browser
-  fast --> docker
+  quality --> browser
+  quality --> docker
   fast --> security
   docker --> ops
   docker --> fullstack
@@ -66,7 +66,7 @@ release branch or a consolidator PR:
 
 | Surface                         | Workflow/job                                                    | Command or provider                                        | Evidence                                                                   |
 | ------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Supported lockfile audit        | `dependency-review.yml` / `Supported lockfile audit`            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile` | Step summary and `supported-lockfile-audit-summary` artifact               |
+| Supported lockfile audit        | `dependency-review.yml` / `Supported lockfile audit`            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile` | Step summary and `dependency-review-summary` artifact                      |
 | Secret scan                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:secrets`                           | Security test artifacts under `test-results/security-secrets/**`           |
 | Native SAST                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:sast`                              | Same security job artifacts                                                |
 | Onboarding/scaffold contract    | `ci.yml` / `Non-runtime validation gates`                       | `pnpm run onboarding:verify`                               | Exact preset closures plus generated app/library builds and tests          |

@@ -4,7 +4,7 @@ import { isRequestId } from '@app/common-problem-details';
 
 interface RequestContextData {
   requestId: string;
-  [key: string]: unknown;
+  values: Map<string, unknown>;
 }
 
 const storage = new AsyncLocalStorage<RequestContextData>();
@@ -17,7 +17,7 @@ export function normalizeRequestId(value: string | string[] | undefined): string
 
 export const requestContext = {
   run<T>(fn: () => T, existingId?: string): T {
-    return storage.run({ requestId: normalizeRequestId(existingId) ?? randomUUID() }, fn);
+    return storage.run({ requestId: normalizeRequestId(existingId) ?? randomUUID(), values: new Map() }, fn);
   },
 
   getRequestId(): string | undefined {
@@ -25,13 +25,13 @@ export const requestContext = {
   },
 
   get<T = unknown>(key: string): T | undefined {
-    return storage.getStore()?.[key] as T | undefined;
+    return storage.getStore()?.values.get(key) as T | undefined;
   },
 
   set(key: string, value: unknown): void {
     const store = storage.getStore();
     if (store) {
-      store[key] = value;
+      store.values.set(key, value);
     }
   },
 

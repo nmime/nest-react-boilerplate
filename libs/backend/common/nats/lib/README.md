@@ -8,21 +8,20 @@ injection helpers.
 
 ## Environment Variables
 
-| Variable                      | Required | Description                                                                  |
-| ----------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `NATS_SERVERS`                | Yes      | Comma-separated NATS server URLs (e.g. `nats://nats:4222,nats://nats2:4222`) |
-| `NATS_NAME`                   | No       | Client name for server-side identification                                   |
-| `NATS_USER`                   | No       | Username for NATS authentication (use with NATS_PASS)                        |
-| `NATS_PASS`                   | No       | Password for NATS authentication (use with NATS_USER)                        |
-| `NATS_TOKEN`                  | No       | Token-based authentication (mutually exclusive with USER/PASS)               |
-| `NATS_TIMEOUT_MS`             | No       | Connection timeout in milliseconds                                           |
-| `NATS_RECONNECT`              | No       | Enable auto-reconnect (default: true)                                        |
-| `NATS_MAX_RECONNECT_ATTEMPTS` | No       | Maximum reconnect attempts before giving up                                  |
-| `NATS_RECONNECT_TIME_WAIT_MS` | No       | Delay between reconnect attempts                                             |
-| `NATS_WAIT_ON_FIRST_CONNECT`  | No       | Block until first connection is established                                  |
-| `NATS_PING_INTERVAL_MS`       | No       | Interval for ping/pong keepalive                                             |
-| `NATS_DRAIN_TIMEOUT_MS`       | No       | Timeout for graceful drain on shutdown (default: 5000)                       |
-| `NATS_JETSTREAM_BUCKET`       | No       | Default JetStream bucket/durable name prefix                                 |
+| Variable                      | Required | Description                                                             |
+| ----------------------------- | -------- | ----------------------------------------------------------------------- |
+| `NATS_SERVERS`                | No       | Comma-separated NATS server URLs; an empty list disables the connection |
+| `NATS_NAME`                   | No       | Client name for server-side identification                              |
+| `NATS_USER`                   | No       | Username for NATS authentication (use with NATS_PASS)                   |
+| `NATS_PASS`                   | No       | Password for NATS authentication (use with NATS_USER)                   |
+| `NATS_TOKEN`                  | No       | Token-based authentication (mutually exclusive with USER/PASS)          |
+| `NATS_TIMEOUT_MS`             | No       | Connection timeout in milliseconds                                      |
+| `NATS_RECONNECT`              | No       | Enable auto-reconnect (default: true)                                   |
+| `NATS_MAX_RECONNECT_ATTEMPTS` | No       | Maximum reconnect attempts before giving up                             |
+| `NATS_RECONNECT_TIME_WAIT_MS` | No       | Delay between reconnect attempts                                        |
+| `NATS_WAIT_ON_FIRST_CONNECT`  | No       | Block until first connection is established                             |
+| `NATS_PING_INTERVAL_MS`       | No       | Interval for ping/pong keepalive                                        |
+| `NATS_DRAIN_TIMEOUT_MS`       | No       | Timeout for graceful drain on shutdown (default: 5000)                  |
 
 ## Quick Start
 
@@ -133,7 +132,6 @@ Authentication modes (mutually exclusive):
 
 1. **Token**: Set `NATS_TOKEN`
 2. **User/Pass**: Set both `NATS_USER` and `NATS_PASS`
-3. **NKey**: Configure via the underlying NATS client options
 
 If no servers are configured, the module registers a `null` connection
 and all services check `isEnabled` before operating.

@@ -22,7 +22,7 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
             src={profile?.avatarUrl ?? null}
             name={profile?.displayName ?? profile?.email ?? 'U'}
             size={40}
-            alt={`Avatar for ${profile?.displayName ?? profile?.email}`}
+            alt=""
           />
           <UiStatusTag label={t('admin.health.ready')} tone="success" />
         </div>

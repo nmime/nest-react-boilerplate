@@ -45,7 +45,7 @@ describe('mobile home screen', () => {
   it('renders the app title', async () => {
     await renderScreen();
 
-    expect(screen.getByText('Nest React Boilerplate')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nest React Boilerplate' })).toBeTruthy();
   });
 
   it('renders the neutral mobile account eyebrow', async () => {

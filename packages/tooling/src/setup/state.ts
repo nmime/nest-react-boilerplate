@@ -72,6 +72,45 @@ export const emptyState: SetupState = {
   digest: '',
 };
 
+const sha256Pattern = /^[a-f0-9]{64}$/u;
+
+/**
+ * Validate persisted setup state before it is trusted by the planner or doctor.
+ * State is intentionally strict: malformed paths/hashes or a mismatched digest
+ * mean the workspace must be replanned from an empty state.
+ */
+export function isValidSetupState(raw: unknown): raw is SetupState {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return false;
+  }
+
+  const state = raw as Record<string, unknown>;
+  if (state.version !== 1 || typeof state.configHash !== 'string' || !sha256Pattern.test(state.configHash)) {
+    return false;
+  }
+  if (typeof state.digest !== 'string' || !sha256Pattern.test(state.digest)) {
+    return false;
+  }
+  if (typeof state.files !== 'object' || state.files === null || Array.isArray(state.files)) {
+    return false;
+  }
+
+  const files = state.files as Record<string, unknown>;
+  for (const [path, contentHash] of Object.entries(files)) {
+    if (
+      path.length === 0 ||
+      path.startsWith('/') ||
+      path.split('/').includes('..') ||
+      typeof contentHash !== 'string' ||
+      !sha256Pattern.test(contentHash)
+    ) {
+      return false;
+    }
+  }
+
+  return state.digest === computeStateDigest(files as Record<string, string>);
+}
+
 // ---------------------------------------------------------------------------
 // State computation
 // ---------------------------------------------------------------------------
@@ -190,7 +229,7 @@ export function migrateState(raw: unknown): SetupState {
     return emptyState;
   }
   if (version === 1) {
-    return obj as unknown as SetupState;
+    return isValidSetupState(raw) ? raw : emptyState;
   }
   // Future versions: for now, treat as empty to force re-plan
   return emptyState;

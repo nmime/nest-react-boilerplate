@@ -22,7 +22,8 @@ All Nest APIs expose:
 - `GET /health` for general health with indicator details;
 - `GET /ready` for dependency readiness — returns HTTP 503 when required
   dependencies are unavailable;
-- `GET /health/private` (private-network only) for unsanitized indicator details.
+- `GET /health/private` (private-network only) for the full health envelope;
+  indicator details remain sanitized.
 
 Request logs are JSON lines with app name, method, path, status, duration, and
 request id. Use `LOG_LEVEL=debug` locally, `info` in production, and route logs
@@ -85,12 +86,12 @@ REQUIRE_HELM=true pnpm run deploy:validate
 
 Rollback summary:
 
-- Compose: restore the previous immutable `IMAGE_TAG` or digest override and run
+- Compose: restore the previous verified `IMAGE_TAG` or digest override and run
   the documented Compose update command.
 - PM2: restart from the previous release directory, ecosystem config, and runtime
   environment when a product-owned PM2 config exists.
 - Helm: use `helm history` and `helm rollback` for direct releases.
-- GitOps: revert the promotion commit, image digest, or immutable tag and let
+- GitOps: revert the promotion commit, image digest, or verified full-SHA tag and let
   the selected Argo CD or Flux controller reconcile.
 
 For every mode, take a database backup before migrations and decide whether the

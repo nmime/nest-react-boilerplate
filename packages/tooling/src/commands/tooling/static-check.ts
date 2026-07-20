@@ -275,7 +275,7 @@ const staleReferencePatterns: StaleReferencePattern[] = [
   {
     label: "unsupported environment variable name",
     pattern:
-      /\b(?:AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|MINIO_BUCKET|MINIO_ENDPOINT|OTEL_EXPORTER_OTLP_HEADERS_FILE|POSTHOG_API_KEY|S3_ACCESS_KEY_FILE|S3_SECRET_KEY_FILE|SENDGRID_API_KEY|SENDGRID_API_KEY_FILE|SENDGRID_FROM_EMAIL|SENDGRID_FROM_NAME)\b/u,
+      /\b(?:AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|DISCORD_BOT_USERNAME|MINIO_BUCKET|MINIO_ENDPOINT|NATS_URL|OTEL_ENDPOINT|OTEL_EXPORTER_OTLP_HEADERS_FILE|POSTHOG_API_KEY|S3_ACCESS_KEY_FILE|S3_SECRET_KEY_FILE|SENDGRID_API_KEY|SENDGRID_API_KEY_FILE|SENDGRID_FROM_EMAIL|SENDGRID_FROM_NAME|TELEGRAM_BOT_WORKER_PORT)\b/u,
   },
   { label: "retired problem wrapper", pattern: /\bApiProblemExceptions\b/u },
   {
@@ -1580,17 +1580,23 @@ function collectPackageManifests(workspaceRoot: string): string[] {
   );
 }
 
-function checkEnvExampleConsistency(workspaceRoot: string): CheckFailure[] {
+export function checkEnvExampleConsistency(workspaceRoot: string): CheckFailure[] {
   const envKeys = readEnvExampleKeys(resolve(workspaceRoot, "./.env.example"));
   const localEnvKeys = readEnvExampleKeys(resolve(workspaceRoot, "./.env.local.example"));
   const failures: CheckFailure[] = [];
 
-  for (const duplicate of duplicateEnvKeys(envKeys)) {
-    failures.push(envExampleFailure("./.env.example", `Duplicate env key: ${duplicate}.`));
-  }
-
-  for (const duplicate of duplicateEnvKeys(localEnvKeys)) {
-    failures.push(envExampleFailure("./.env.local.example", `Duplicate env key: ${duplicate}.`));
+  for (const file of [
+    "./.env.example",
+    "./.env.local.example",
+    "./.env.production.example",
+    "./.env.staging.example",
+    "./.env.test.example",
+  ]) {
+    const absolutePath = resolve(workspaceRoot, file);
+    if (!existsSync(absolutePath)) continue;
+    for (const duplicate of duplicateEnvKeys(readEnvExampleKeys(absolutePath))) {
+      failures.push(envExampleFailure(file, `Duplicate env key: ${duplicate}.`));
+    }
   }
 
   const maxLength = Math.max(envKeys.length, localEnvKeys.length);

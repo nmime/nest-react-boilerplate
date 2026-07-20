@@ -9,7 +9,7 @@ HTTPS.
 The controller is rerunnable. Existing configuration and secrets are never
 overwritten, already-correct Node.js and Docker installations are retained, apt
 packages are converged, certificates are reused while valid, code updates are
-fast-forward-only, and Compose converges to the selected immutable image tag.
+fast-forward-only, and Compose converges to the selected verified full-SHA image tag.
 
 Use Kubernetes/Helm instead when the product needs multiple application nodes,
 HA databases, rolling traffic across hosts, or GitOps reconciliation. This
@@ -23,7 +23,8 @@ Prerequisites:
 - root/sudo access;
 - TCP 22 (or the configured SSH port), 80, and 443 reachable;
 - DNS prepared as described below;
-- an immutable `sha-<git-sha>` image set in the configured registry.
+- a `sha-<full-git-sha>` image set in the configured registry, with recorded
+  digests or registry immutability policy where immutable identity is required.
 
 Run from a checked-out repository:
 
@@ -104,7 +105,7 @@ VITE_API_BASE_URL_MODE=same-origin
 
 Choose either `single-domain` or `per-app-domains` for
 `EXTERNAL_PROXY_PUBLIC_MODE`. Choose `landing-app` or `site-app` for
-`PRIMARY_APP`. Set the real `PUBLIC_DOMAIN`, registry, immutable image tag,
+`PRIMARY_APP`. Set the real `PUBLIC_DOMAIN`, registry, verified full-SHA image tag,
 database mode, and optional profiles.
 
 The Compose wrapper derives CORS, Better Auth trusted origins/base URL, JWT
@@ -239,7 +240,7 @@ SHA-256 manifest, and installed only when the configured exact version differs.
 `init`, `apply`, `deploy`, `update`, and `rollback` also converge any newly
 introduced machine-generatable secret without rotating an existing file.
 
-For an application update, first verify the CI-built immutable image set and a
+For an application update, first verify the CI-built full-SHA image set and a
 current database backup, then run:
 
 ```bash
@@ -293,7 +294,7 @@ Agents extending this template must preserve these boundaries:
 - keep all container ports loopback-only when host Nginx owns the edge;
 - do not hand-edit `/etc/nginx/conf.d/nest-react-boilerplate.conf`; change and
   test the renderer;
-- never replace immutable tags with `latest`, expose secrets in environment
+- never replace full-SHA tags with `latest`, expose secrets in environment
   output, bypass `nginx -t`, or make Git updates non-fast-forward;
 - run `pnpm run test:single-server-deployment`, `pnpm run server:validate`, and
   `pnpm run deploy:validate:docker` after deployment-tool changes.

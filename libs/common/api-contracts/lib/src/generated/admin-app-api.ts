@@ -421,6 +421,7 @@ export interface components {
     UpdateAdminUserStatusDto: {
       /** @enum {string} */
       status: 'active' | 'disabled' | 'invited';
+      reason: string;
     };
     UpdateAdminUserAccessPolicyDto: {
       roles: ('user' | 'admin')[];
@@ -439,6 +440,7 @@ export interface components {
         | 'admin:settings:update'
         | 'admin:manage:all'
       )[];
+      reason: string;
     };
     AdminAuditLogViewDto: {
       /** Format: uuid */

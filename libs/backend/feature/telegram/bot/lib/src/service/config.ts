@@ -32,11 +32,9 @@ export function resolveTelegramBotConfig(env: NodeJS.ProcessEnv = process.env): 
 }
 
 export function resolveSafeTelegramAppUrl(env: NodeJS.ProcessEnv = process.env): string | undefined {
-  for (const key of ['TELEGRAM_MINI_APP_URL', 'TELEGRAM_WEB_APP_URL', 'TELEGRAM_TMA_URL', 'TMA_URL', 'FRONTEND_URL']) {
-    const value = env[key]?.trim();
-    if (value && isSafeTelegramAppUrl(value)) {
-      return value;
-    }
+  const value = env.TELEGRAM_MINI_APP_URL?.trim();
+  if (value && isSafeTelegramAppUrl(value)) {
+    return value;
   }
 
   return undefined;

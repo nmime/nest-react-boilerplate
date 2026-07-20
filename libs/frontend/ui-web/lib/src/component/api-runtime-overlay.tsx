@@ -106,7 +106,7 @@ export const UiApiRuntimeOverlay = ({
             <UiToast message={toastMessage(toast)} tone={toastTone(toast.category)} />
             {onDismissToast ? (
               <UiButton
-                aria-label={`Dismiss ${toast.title}`}
+                aria-label={`${overlayCopy.dismissLabel} ${toast.title}`}
                 onClick={() => {
                   onDismissToast(toast.id);
                 }}

@@ -45,8 +45,16 @@ function getViewportWidth(): number {
     return breakpointPixels.desktop;
   }
 
-  return window.innerWidth;
+  // React Native exposes a `window` global without the browser viewport API.
+  // Treat that runtime as mobile instead of passing `undefined` through the
+  // breakpoint comparisons or trying to attach DOM listeners.
+  return typeof window.innerWidth === 'number' ? window.innerWidth : breakpointPixels.mobile;
 }
+
+const canListenToViewport = (): boolean =>
+  typeof window !== 'undefined' &&
+  typeof window.addEventListener === 'function' &&
+  typeof window.removeEventListener === 'function';
 
 function createBreakpointHelper(current: AppBreakpoint): BreakpointHelper {
   const currentRank = getBreakpointRank(current);
@@ -102,13 +110,13 @@ export class AppStore {
   }
 
   dispose(): void {
-    if (typeof window !== 'undefined') {
+    if (canListenToViewport()) {
       window.removeEventListener('resize', this.resizeListener);
     }
   }
 
   private subscribeToViewport(): void {
-    if (typeof window !== 'undefined') {
+    if (canListenToViewport()) {
       window.addEventListener('resize', this.resizeListener, { passive: true });
     }
   }

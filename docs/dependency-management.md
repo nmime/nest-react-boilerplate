@@ -77,11 +77,16 @@ Unexpected new package build scripts should be treated as a supply-chain review 
 
 - Pull requests run Dependency Review and fail on moderate-or-higher vulnerable dependency additions.
 - Mainline/release workflows run CodeQL, `pnpm audit`, container SBOM generation, Trivy scanning, and keyless image signing.
-- Production image tags should be immutable (`sha-<git sha>` or digest) and tied back to the release commit.
+- Production releases should record the image digest and may also use the
+  commit-addressed `sha-<git-sha>` tag. Protect tags from mutation; the digest,
+  not the tag's spelling, is the immutable artifact identity.
 
 ## Docker image pinning
 
-All service images use explicit, immutable tags — never `latest` or floating major-only tags:
+Bundled service images use explicit version tags rather than `latest` or
+floating major-only tags. These tags improve reviewability but are still
+registry-mutable; pin digests as well if the product requires immutable base
+image resolution.
 
 | Service    | Pinned tag                     | Source                   |
 | ---------- | ------------------------------ | ------------------------ |

@@ -77,7 +77,7 @@ export class AdminUsersUseCase {
       policy: { status: input.status },
       audit: {
         actorUserId: principal.subject,
-        metadata: { ...context },
+        metadata: { ...context, reason: input.reason.trim() },
       },
     });
     const result = unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
@@ -107,7 +107,7 @@ export class AdminUsersUseCase {
       },
       audit: {
         actorUserId: principal.subject,
-        metadata: { ...context },
+        metadata: { ...context, reason: input.reason.trim() },
       },
     });
     const result = unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);

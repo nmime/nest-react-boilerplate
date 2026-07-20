@@ -279,12 +279,10 @@ describe('admin pages integration', () => {
     );
 
     expect(await screen.findByText('user@example.com')).toBeTruthy();
-    expect(screen.getByText('Visible users')).toBeTruthy();
-    expect(screen.getByText('User directory')).toBeTruthy();
-    expect(screen.getByText('Focused directory view')).toBeTruthy();
+    expect(screen.getAllByText('Users').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByText('user@example.com'));
     expect(await screen.findByText('profile:read')).toBeTruthy();
-    expect(screen.getByText('Access policy snapshot')).toBeTruthy();
+    expect(screen.getByText('Current access')).toBeTruthy();
 
     await waitFor(() => {
       expect(listSpy).toHaveBeenCalledWith(
@@ -647,7 +645,7 @@ describe('admin pages integration', () => {
     expect(await screen.findByText('Role permissions update failed')).toBeTruthy();
   });
 
-  it('covers profile, forbidden/loading/error/not-found, tenant roadmap and CASL hidden nav', () => {
+  it('covers profile, forbidden/loading/error/not-found and CASL hidden nav', () => {
     renderAdminRouteForTest(
       <AdminLayout access={restrictedAccess} currentPath="/admin/users">
         {renderAdminRoute('/admin/users', {
@@ -660,16 +658,6 @@ describe('admin pages integration', () => {
 
     expect(screen.queryByRole('link', { name: 'Users' })).toBeFalsy();
     expect(screen.getAllByText('Missing admin users permission.').length).toBeGreaterThan(0);
-
-    cleanup();
-    renderAdminRouteForTest(
-      renderAdminRoute('/admin/tenants', {
-        status: 'ready',
-        payload,
-        access: adminAccess,
-      }),
-    );
-    expect(screen.getByText('Tenants, memberships, and invitations')).toBeTruthy();
 
     cleanup();
     renderAdminRouteForTest(
@@ -696,7 +684,7 @@ describe('admin pages integration', () => {
     expect(screen.getAllByText('Loading admin profile...').length).toBeGreaterThan(0);
   });
 
-  it('falls back to the desktop breakpoint when no state provider is mounted', () => {
+  it('renders without a state provider', () => {
     render(
       <FrontendI18nProvider translations={adminFrontendTranslations}>
         <AdminLayout currentPath="/admin">
@@ -706,6 +694,5 @@ describe('admin pages integration', () => {
     );
 
     expect(screen.getByText('content without app store')).toBeTruthy();
-    expect(screen.getByText('RBAC protected · desktop')).toBeTruthy();
   });
 });

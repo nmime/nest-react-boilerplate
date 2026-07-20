@@ -78,4 +78,39 @@ describe('InMemoryObjectStorageClient', () => {
 
     expect(objects.map((object) => object.key).sort((a, b) => a.localeCompare(b))).toEqual(['img/a.png', 'img/b.png']);
   });
+
+  it('keeps bucket and key boundaries distinct', async () => {
+    const client = new InMemoryObjectStorageClient();
+    await client.putObject({ bucket: 'tenant', key: 'nested/object', body: 'first' });
+    await client.putObject({ bucket: 'tenant/nested', key: 'object', body: 'second' });
+
+    const first = await client.getObject({ bucket: 'tenant', key: 'nested/object' });
+    const second = await client.getObject({ bucket: 'tenant/nested', key: 'object' });
+
+    expect(Buffer.from(first?.body ?? new Uint8Array()).toString()).toBe('first');
+    expect(Buffer.from(second?.body ?? new Uint8Array()).toString()).toBe('second');
+  });
+
+  it('does not expose mutable references to stored bodies or metadata', async () => {
+    const client = new InMemoryObjectStorageClient();
+    const body = new Uint8Array([1, 2, 3]);
+    const metadata = { owner: 'original' };
+    await client.putObject({ bucket: 'media', key: 'blob.bin', body, metadata });
+    body[0] = 9;
+    metadata.owner = 'mutated-input';
+
+    const firstRead = await client.getObject({ bucket: 'media', key: 'blob.bin' });
+    if (!firstRead) {
+      throw new Error('Expected stored object.');
+    }
+    firstRead.body[1] = 9;
+    if (firstRead.metadata) {
+      firstRead.metadata.owner = 'mutated-output';
+    }
+
+    await expect(client.getObject({ bucket: 'media', key: 'blob.bin' })).resolves.toMatchObject({
+      body: new Uint8Array([1, 2, 3]),
+      metadata: { owner: 'original' },
+    });
+  });
 });

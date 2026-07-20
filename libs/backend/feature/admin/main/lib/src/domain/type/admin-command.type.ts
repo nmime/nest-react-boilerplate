@@ -2,11 +2,13 @@ import type { AdminUserStatus } from './admin-user.type';
 
 export interface UpdateAdminUserStatusCommand {
   readonly status: AdminUserStatus;
+  readonly reason: string;
 }
 
 export interface UpdateAdminUserAccessPolicyCommand {
   readonly roles: string[];
   readonly permissions: string[];
+  readonly reason: string;
 }
 
 export interface AssignAdminUserRolesCommand {

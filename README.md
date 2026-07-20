@@ -234,7 +234,9 @@ docker/                       # Production Compose topology and supporting confi
 .helm/                        # Kubernetes chart and deployment values
 ```
 
-Public TypeScript aliases in `tsconfig.base.json` are stable API. Every project root carries its nearest `README.md` and `AGENTS.md`; use those before changing project-owned behavior.
+Public TypeScript aliases in `tsconfig.base.json` are stable API. Every project
+root carries its nearest `README.md` and `AGENTS.md`; use those before changing
+project-owned behavior.
 
 ## Delivery paths
 

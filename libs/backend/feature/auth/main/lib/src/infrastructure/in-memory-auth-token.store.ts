@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { okAsync, ResultAsync } from 'neverthrow';
+import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import type {
   AuthTokenStore,
   AuthTokenStoreError,
@@ -40,6 +41,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
   rotateRefreshToken(token: string, tenantId?: string): ResultAsync<IssuedRefreshToken | null, AuthTokenStoreError> {
     const record = this.getUsableRefreshToken(token, tenantId);
     if (!record) {
+      this.revokeReusedTokenFamily(token, tenantId);
       return okAsync(null);
     }
 
@@ -91,12 +93,13 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     const tokenHash = hashOpaqueToken(token);
     const record = this.userTokensByHash.get(tokenHash) ?? null;
+    const resolvedTenantId = tenantId ?? DefaultAuthTenantId;
     if (
       !record ||
       record.purpose !== purpose ||
       record.consumedAt ||
       record.expiresAt <= new Date() ||
-      (tenantId && record.tenantId !== tenantId)
+      record.tenantId !== resolvedTenantId
     ) {
       return okAsync(null);
     }
@@ -126,10 +129,26 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
   private getUsableRefreshToken(token: string, tenantId?: string): RefreshTokenRecord | null {
     const tokenHash = hashOpaqueToken(token);
     const record = this.refreshTokensByHash.get(tokenHash) ?? null;
-    if (!record || record.revokedAt || record.expiresAt <= new Date() || (tenantId && record.tenantId !== tenantId)) {
+    const resolvedTenantId = tenantId ?? DefaultAuthTenantId;
+    if (!record || record.revokedAt || record.expiresAt <= new Date() || record.tenantId !== resolvedTenantId) {
       return null;
     }
 
     return record;
+  }
+
+  private revokeReusedTokenFamily(token: string, tenantId?: string): void {
+    const replayed = this.refreshTokensByHash.get(hashOpaqueToken(token));
+    const resolvedTenantId = tenantId ?? DefaultAuthTenantId;
+    if (!replayed?.revokedAt || replayed.tenantId !== resolvedTenantId) {
+      return;
+    }
+
+    const revokedAt = new Date();
+    for (const record of this.refreshTokensByHash.values()) {
+      if (record.tenantId === resolvedTenantId && record.familyId === replayed.familyId && !record.revokedAt) {
+        record.revokedAt = revokedAt;
+      }
+    }
   }
 }

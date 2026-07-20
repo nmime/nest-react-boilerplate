@@ -4,4 +4,11 @@ export const updateUserAccessPolicy = (
   id: string,
   payload: adminApi.UpdateAdminUserAccessPolicyDto,
   requestOptions?: ApiClientRequestOptions,
-) => throwOnOpenApiErrorData(adminApi.adminUsersControllerUpdateUserAccessPolicy(id, payload, requestOptions));
+) =>
+  throwOnOpenApiErrorData(
+    adminApi.adminUsersControllerUpdateUserAccessPolicy(
+      id,
+      { ...payload, reason: payload.reason.trim() },
+      requestOptions,
+    ),
+  );

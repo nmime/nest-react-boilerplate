@@ -86,7 +86,7 @@ For an empty Ubuntu/Debian server, use the supported idempotent host Nginx +
 Certbot lifecycle in
 [single-server-deployment.md](single-server-deployment.md). It installs Node.js
 24, the repository-pinned pnpm, Docker Engine/Compose, Nginx, Certbot, systemd
-startup, exact-host or DNS-wildcard certificates, immutable-tag updates,
+startup, exact-host or DNS-wildcard certificates, verified full-SHA image updates,
 health checks, and guarded rollback without exposing app ports.
 
 ## Direct Kubernetes

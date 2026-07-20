@@ -10,15 +10,16 @@ Please report suspected vulnerabilities privately. Do not open public issues for
 
 ### GitHub
 
-Report via [GitHub Security Advisories](https://github.com/nmime/nest-react-boilerplate/security/advisories/new) or contact security@example.com.
+Report through [GitHub Security Advisories](https://github.com/nmime/nest-react-boilerplate/security/advisories/new). This is the canonical private intake channel for this repository.
 
 ### GitLab
 
-Report via the **Vulnerability Report** option in the repository's **Issues** page, or contact security@example.com.
+If you are using a GitLab mirror, contact that mirror's owner privately or use a
+private vulnerability-report feature that its maintainers have explicitly
+enabled. Do not post an exploitable finding in a public issue.
 
-### Bitbucket
-
-Report via private message to the repository owner, or contact security@example.com.
+Projects created from this boilerplate must configure and document their own
+monitored security contact before launch; the template does not invent a mailbox.
 
 ### Response targets
 
@@ -28,13 +29,14 @@ Report via private message to the repository owner, or contact security@example.
 
 ## Automated security scans
 
-This repository includes automated security scanning for all supported platforms:
+This repository includes the following checked-in security jobs. A job being
+present does not prove that a hosting project has enabled required pipelines,
+protected branches, or merge blocking.
 
-| Platform  | Secret detection | Dependency audit      | SAST   | Container scanning      |
-| --------- | ---------------- | --------------------- | ------ | ----------------------- |
-| GitHub    | Gitleaks         | Dependabot + audit:ci | CodeQL | Docker build validation |
-| GitLab    | Secret Detection | Dependency Scanning   | SAST   | Container Scanning      |
-| Bitbucket | Gitleaks         | audit:ci              | —      | Docker build validation |
+| Platform | Checked-in coverage                                                                                                         | Enforcement notes                                                                                                                           |
+| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub   | Gitleaks, native secret/SAST tests, CodeQL, `audit:ci`, Dependabot, and release-image Trivy scanning                        | CI, CodeQL, dependency audit, and Trivy commands are blocking; repository rules still determine whether merges require them.                |
+| GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration. |
 
 ## Secured components
 

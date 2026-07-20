@@ -42,14 +42,15 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
       key: params.key,
       body: typeof params.body === 'string' ? Buffer.from(params.body) : new Uint8Array(params.body),
       contentType: params.contentType,
-      metadata: params.metadata,
+      metadata: params.metadata ? { ...params.metadata } : undefined,
       updatedAt: new Date(),
     });
     return Promise.resolve();
   }
 
   getObject(params: GetObjectParams): Promise<ObjectStorageObject | null> {
-    return Promise.resolve(this.objects.get(this.createId(params.bucket, params.key)) ?? null);
+    const object = this.objects.get(this.createId(params.bucket, params.key));
+    return Promise.resolve(object ? this.cloneObject(object) : null);
   }
 
   deleteObject(params: GetObjectParams): Promise<void> {
@@ -58,10 +59,12 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
   }
 
   listObjects(params: { bucket: string; prefix?: string }): Promise<ObjectStorageObjectSummary[]> {
-    const prefix = `${params.bucket}/`;
+    const bucketPrefix = this.createBucketPrefix(params.bucket);
     return Promise.resolve(
       [...this.objects.entries()]
-        .filter(([id, object]) => id.startsWith(prefix) && (!params.prefix || object.key.startsWith(params.prefix)))
+        .filter(
+          ([id, object]) => id.startsWith(bucketPrefix) && (!params.prefix || object.key.startsWith(params.prefix)),
+        )
         .map(([, object]) => ({
           key: object.key,
           updatedAt: object.updatedAt,
@@ -71,6 +74,19 @@ export class InMemoryObjectStorageClient implements ObjectStorageClient {
   }
 
   private createId(bucket: string, key: string): string {
-    return `${bucket}/${key}`;
+    return `${this.createBucketPrefix(bucket)}${key}`;
+  }
+
+  private createBucketPrefix(bucket: string): string {
+    return `${bucket.length}:${bucket}:`;
+  }
+
+  private cloneObject(object: ObjectStorageObject): ObjectStorageObject {
+    return {
+      ...object,
+      body: new Uint8Array(object.body),
+      metadata: object.metadata ? { ...object.metadata } : undefined,
+      updatedAt: object.updatedAt ? new Date(object.updatedAt) : undefined,
+    };
   }
 }

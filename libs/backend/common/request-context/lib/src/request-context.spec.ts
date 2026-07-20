@@ -23,6 +23,19 @@ describe('requestContext', () => {
     }, 'request-123');
   });
 
+  it('keeps arbitrary context keys isolated from request-id state and object prototypes', () => {
+    requestContext.run(() => {
+      const requestId = requestContext.getRequestId();
+      requestContext.set('requestId', 123);
+      requestContext.set('__proto__', { polluted: true });
+
+      expect(requestContext.getRequestId()).toBe(requestId);
+      expect(requestContext.get('requestId')).toBe(123);
+      expect(requestContext.get('__proto__')).toEqual({ polluted: true });
+      expect(({} as { polluted?: boolean }).polluted).toBeUndefined();
+    }, 'request-123');
+  });
+
   it('normalizes scalar and array request-id headers', () => {
     expect(normalizeRequestId(['  first  ', 'second'])).toBe('first');
     expect(normalizeRequestId('a'.repeat(128))).toHaveLength(128);

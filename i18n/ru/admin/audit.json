@@ -1,9 +1,9 @@
 {
-  "admin.audit.eyebrow": "Реальные события аудита администратора",
+  "admin.audit.eyebrow": "Административная активность",
   "admin.audit.title": "Журнал аудита",
   "admin.audit.loading": "Загрузка событий аудита",
   "admin.audit.emptyEyebrow": "Событий аудита нет",
-  "admin.audit.emptyTitle": "Клиентские фиктивные данные не показываются; таблица отображает только реальные результаты /admin/audit.",
+  "admin.audit.emptyTitle": "Административные изменения появятся здесь после выполнения.",
   "admin.audit.error.requestFailed": "Не удалось запросить журнал аудита",
   "admin.audit.column.action": "Действие",
   "admin.audit.column.resource": "Ресурс",

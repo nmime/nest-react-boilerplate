@@ -181,7 +181,7 @@ git stash pop
 
 # Option 2: commit changes first
 git add .
-git commit -m "WIP: save current state"
+git commit -m "chore: save current state"
 pnpm nrb setup
 
 # Option 3: force overwrite

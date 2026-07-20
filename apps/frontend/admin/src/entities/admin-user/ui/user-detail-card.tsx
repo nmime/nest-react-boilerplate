@@ -35,15 +35,15 @@ export const UserDetailCard = ({
     <div className="admin-user-detail">
       <div className="admin-user-detail__header">
         <div className="admin-user-detail__identity">
-          <UiAvatar src={detail.data.avatarUrl ?? null} name={userName} size={32} alt={`Avatar for ${userName}`} />
+          <UiAvatar src={detail.data.avatarUrl ?? null} name={userName} size={32} alt="" />
           <span>
             <strong>{detail.data.email}</strong>
-            <small>Tenant {detail.data.tenantId}</small>
+            <small>{t('admin.users.detail.tenant', { tenantId: detail.data.tenantId })}</small>
           </span>
         </div>
         <div className="admin-user-detail__status-stack">
           <UiStatusTag label={t(statusLabelKey[detail.data.status])} tone={statusTone[detail.data.status]} />
-          <span>Access policy snapshot</span>
+          <span>{t('admin.dashboard.card.access.title')}</span>
         </div>
       </div>
       <div className="admin-detail-metrics">

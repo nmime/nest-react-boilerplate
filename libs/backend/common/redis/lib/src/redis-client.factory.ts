@@ -141,6 +141,10 @@ export class RedisClientAdapter implements RedisClientLike {
   }
 
   async close(): Promise<unknown> {
+    // Shutdown can race the first lazy operation. Wait for that connection
+    // attempt to settle before checking isOpen, otherwise close() can return
+    // while the native client becomes open immediately afterwards.
+    await this.connectPromise?.catch(() => undefined);
     if (!this.client.isOpen) {
       return undefined;
     }

@@ -58,17 +58,20 @@ loads `DATABASE_URL` from the selected bundled/external database overlay.
 
 ## Auth and sessions
 
-| Variable                      | When required                    | Purpose                                                                    |
-| ----------------------------- | -------------------------------- | -------------------------------------------------------------------------- |
-| `AUTH_JWT_SECRET`             | Production auth/API verification | JWT signing key.                                                           |
-| `SESSION_SECRET`              | Production browser sessions      | Session signing key.                                                       |
-| `BETTER_AUTH_SECRET`          | Better Auth                      | Better Auth cookie/state secret.                                           |
-| `BETTER_AUTH_URL`             | Better Auth                      | Public Better Auth origin.                                                 |
-| `BETTER_AUTH_TRUSTED_ORIGINS` | Browser auth                     | Comma-separated origins accepted by Better Auth.                           |
-| `AUTH_ALLOWED_RETURN_URLS`    | External browser auth            | Comma-separated absolute frontend origins accepted as post-auth returns.   |
-| `AUTH_JWT_ISSUER`             | Optional                         | JWT issuer. Defaults to the auth API domain contract.                      |
-| `AUTH_JWT_AUDIENCE`           | Optional                         | JWT audience used by protected APIs.                                       |
-| `AUTH_PERSISTENCE`            | Optional                         | `postgres` for the real persistence path; memory is test/development only. |
+| Variable                                       | When required                             | Purpose                                                                                 |
+| ---------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------- |
+| `AUTH_JWT_SECRET`                              | Production auth/API verification          | JWT signing key.                                                                        |
+| `SESSION_SECRET`                               | Production browser sessions               | Session signing key.                                                                    |
+| `BETTER_AUTH_SECRET`                           | Better Auth                               | Better Auth cookie/state secret.                                                        |
+| `BETTER_AUTH_URL`                              | Better Auth                               | Public Better Auth origin.                                                              |
+| `BETTER_AUTH_TRUSTED_ORIGINS`                  | Browser auth                              | Comma-separated origins accepted by Better Auth.                                        |
+| `AUTH_ALLOWED_RETURN_URLS`                     | External browser auth                     | Comma-separated absolute frontend origins accepted as post-auth returns.                |
+| `AUTH_JWT_ISSUER`                              | Optional                                  | JWT issuer. Defaults to the auth API domain contract.                                   |
+| `AUTH_JWT_AUDIENCE`                            | Optional                                  | JWT audience used by protected APIs.                                                    |
+| `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` for the real persistence path; memory is test/development only.              |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`       | Social provider token storage             | Must be `true` outside local/test when provider access or refresh tokens are persisted. |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY` / `_FILE` | When provider-token encryption is enabled | 32-byte base64 key supplied inline or through the deployment secret-file path.          |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`        | Optional                                  | Key identifier stored with encrypted provider-token records to support rotation.        |
 
 Production Compose mounts `AUTH_JWT_SECRET_FILE`, `SESSION_SECRET_FILE`, and
 `BETTER_AUTH_SECRET_FILE`; `docker/secret-entrypoint.sh` loads them into the
@@ -79,16 +82,17 @@ generates these secrets on first initialization and preserves them on reruns.
 
 Telegram auth and bot execution are separate switches:
 
-| Variable                                                   | Purpose                                       |
-| ---------------------------------------------------------- | --------------------------------------------- |
-| `AUTH_TELEGRAM_ENABLED`                                    | Enables Telegram identity projection in auth. |
-| `TELEGRAM_OIDC_ENABLED`                                    | Enables the Telegram OIDC provider flow.      |
-| `TELEGRAM_OIDC_CLIENT_ID` / `TELEGRAM_OIDC_CLIENT_SECRET`  | Telegram OIDC credentials.                    |
-| `TELEGRAM_BOT_TOKEN`                                       | Validates signed TMA data and runs the bot.   |
-| `TELEGRAM_BOT_MODE`                                        | `webhook` or `polling`.                       |
-| `TELEGRAM_BOT_WEBHOOK_URL` / `TELEGRAM_BOT_WEBHOOK_SECRET` | Public webhook registration and verification. |
-| `TELEGRAM_MINI_APP_URL`                                    | URL opened by bot menu/app buttons.           |
-| `TELEGRAM_TMA_MAX_AGE_SECONDS`                             | Maximum accepted TMA authorization age.       |
+| Variable                                                                          | Purpose                                                                                 |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `AUTH_TELEGRAM_ENABLED`                                                           | Enables Telegram identity projection in auth.                                           |
+| `TELEGRAM_OIDC_ENABLED`                                                           | Enables the Telegram OIDC provider flow.                                                |
+| `TELEGRAM_OIDC_CLIENT_ID` / `TELEGRAM_OIDC_CLIENT_SECRET`                         | Telegram OIDC credentials.                                                              |
+| `TELEGRAM_OIDC_DISCOVERY_URL` / `TELEGRAM_OIDC_ISSUER` / `TELEGRAM_OIDC_JWKS_URL` | Advanced endpoint/issuer overrides; leave empty to use the provider discovery defaults. |
+| `TELEGRAM_BOT_TOKEN`                                                              | Validates signed TMA data and runs the bot.                                             |
+| `TELEGRAM_BOT_MODE`                                                               | `webhook` or `polling`.                                                                 |
+| `TELEGRAM_BOT_WEBHOOK_URL` / `TELEGRAM_BOT_WEBHOOK_SECRET`                        | Public webhook registration and verification.                                           |
+| `TELEGRAM_MINI_APP_URL`                                                           | URL opened by bot menu/app buttons.                                                     |
+| `TELEGRAM_TMA_MAX_AGE_SECONDS`                                                    | Maximum accepted TMA authorization age.                                                 |
 
 Discord uses `DISCORD_AUTH_ENABLED`, `DISCORD_APPLICATION_ID`,
 `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, and
@@ -97,6 +101,22 @@ when its app was selected and provider-issued credentials are populated.
 
 The server bootstrap creates protected empty files for provider-issued secrets;
 it cannot fabricate valid Telegram or Discord credentials.
+
+## PostgreSQL, Redis, NATS, and static data
+
+| Variable                                  | Purpose                                                                                                     |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_POOL_MIN` / `POSTGRES_POOL_MAX` | MikroORM connection-pool bounds. `POSTGRES_POOL_MIN` may be zero; `POSTGRES_POOL_MAX` must be at least one. |
+| `POSTGRES_POOL_IDLE_TIMEOUT_MS`           | Idle PostgreSQL connection lifetime in milliseconds.                                                        |
+| `REDIS_URL` / `REDIS_HOSTS`               | Single-node URL and/or the comma-separated endpoints used by cluster/sentinel modes.                        |
+| `REDIS_LAZY_CONNECT`                      | Defers the initial Redis connection until first use; defaults to `true`.                                    |
+| `NATS_SERVERS`                            | Comma-separated NATS server URLs. Empty disables the optional NATS integration.                             |
+| `NATS_TOKEN`                              | Optional token authentication; mutually exclusive with `NATS_USER`/`NATS_PASS`.                             |
+| `STATIC_DATA_ROOT`                        | Root directory used by the backend static-data provider; defaults to `data` in the environment templates.   |
+
+See [NATS foundation](nats.md) and the environment templates for the remaining
+timeouts, reconnect settings, Redis topology options, and service-specific
+ports.
 
 ## Object storage (S3 / MinIO)
 
@@ -134,9 +154,11 @@ templates, deployment secrets, and tests as one product-owned integration.
 | ------------------------------------- | ----------------------------------------------------------------------- |
 | `OTEL_ENABLED`                        | Enables the application OpenTelemetry SDK.                              |
 | `OTEL_EXPORTER_OTLP_ENDPOINT`         | Base collector URL for traces and metrics.                              |
-| `OTEL_EXPORTER_OTLP_HEADERS`          | Optional inline OTLP headers supplied by the deployment secret manager. |
+| `OTEL_EXPORTER_OTLP_HEADERS`          | Optional shared OTLP headers supplied by the deployment secret manager. |
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | Optional trace-specific endpoint.                                       |
+| `OTEL_EXPORTER_OTLP_TRACES_HEADERS`   | Optional trace-specific headers that override shared keys.              |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | Optional metric-specific endpoint.                                      |
+| `OTEL_EXPORTER_OTLP_METRICS_HEADERS`  | Optional metric-specific headers that override shared keys.             |
 | `OTEL_METRIC_EXPORT_INTERVAL`         | Metric export interval in milliseconds.                                 |
 
 Applications export OTLP. They do not expose per-service `/metrics` endpoints.
@@ -156,15 +178,15 @@ falling back to example domains.
 
 ## Production domains and Compose topology
 
-| Variable                     | Supported values                                                        |
-| ---------------------------- | ----------------------------------------------------------------------- |
-| `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.  |
-| `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                      |
-| `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                          |
-| `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                |
-| `EXTERNAL_PROXY_PUBLIC_MODE` | `single-domain` or `per-app-domains` for host Nginx.                    |
-| `COMPOSE_TLS_MODE`           | `automatic`, `provided`, or `external`, constrained by the domain mode. |
-| `COMPOSE_PROFILES`           | Optional comma-separated `telegram` and/or `discord`.                   |
+| Variable                     | Supported values                                                                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.                                                                 |
+| `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                                                                                     |
+| `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                                                                                         |
+| `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                                                                               |
+| `EXTERNAL_PROXY_PUBLIC_MODE` | `single-domain` or `per-app-domains` for host Nginx.                                                                                   |
+| `COMPOSE_TLS_MODE`           | `automatic`, `provided`, or `external`, constrained by the domain mode.                                                                |
+| `COMPOSE_PROFILES`           | Explicit comma-separated service/profile IDs for the local Compose topology; production accepts only its documented provider profiles. |
 
 Per-app mode derives the exact app-ID hostnames in the
 [Project Catalog](project-catalog.md); the chosen `PRIMARY_APP` receives the

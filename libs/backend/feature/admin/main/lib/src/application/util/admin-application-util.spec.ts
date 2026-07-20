@@ -101,25 +101,30 @@ describe('requireAllowedPolicy', () => {
       requireAllowedPolicy({
         roles: ['user'],
         permissions: [UserProfileReadPermission],
+        reason: 'Test policy update',
       });
     }).not.toThrow();
   });
 
   it('rejects roles outside the admin catalog', () => {
     expect(() => {
-      requireAllowedPolicy({ roles: ['owner'], permissions: [] });
+      requireAllowedPolicy({ roles: ['owner'], permissions: [], reason: 'Test policy update' });
     }).toThrow(/outside the admin catalog/);
   });
 
   it('rejects permissions outside the admin catalog', () => {
     expect(() => {
-      requireAllowedPolicy({ roles: [], permissions: ['*'] });
+      requireAllowedPolicy({ roles: [], permissions: ['*'], reason: 'Test policy update' });
     }).toThrow(/outside the admin catalog/);
   });
 
   it('rejects the break-glass admin:manage:all permission even though it is in the catalog', () => {
     expect(() => {
-      requireAllowedPolicy({ roles: ['admin'], permissions: [AdminManageAllPermission] });
+      requireAllowedPolicy({
+        roles: ['admin'],
+        permissions: [AdminManageAllPermission],
+        reason: 'Test policy update',
+      });
     }).toThrow(/break-glass/);
   });
 });

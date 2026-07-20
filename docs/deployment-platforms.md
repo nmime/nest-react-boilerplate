@@ -1,18 +1,18 @@
 # Deployment Platform Support
 
-This boilerplate supports deployment from GitHub, GitLab, or Bitbucket.
+This boilerplate supports deployment from GitHub or GitLab.
 
 ## CI/CD comparison
 
-| Feature            | GitHub                           | GitLab                           | Bitbucket                 |
-| ------------------ | -------------------------------- | -------------------------------- | ------------------------- |
-| CI config          | .github/workflows/               | .gitlab-ci.yml                   | bitbucket-pipelines.yml   |
-| MR/PR templates    | .github/PULL_REQUEST_TEMPLATE.md | .gitlab/merge_request_templates/ | bitbucket (partial)       |
-| Issue templates    | .github/ISSUE_TEMPLATE/          | .gitlab/issue_templates/         | ❌                        |
-| Dependabot         | ✅                               | ❌ (use GitLab Dep Scanning)     | ❌                        |
-| GitOps promotion   | Manual promotion PR workflow     | Product-owned pipeline/PR        | Product-owned pipeline/PR |
-| Releases           | Native GitHub Actions            | Native GitLab CI                 | Manual                    |
-| Container registry | GHCR                             | GitLab Container Registry        | Bitbucket (no native)     |
+| Feature            | GitHub                             | GitLab                             |
+| ------------------ | ---------------------------------- | ---------------------------------- |
+| CI config          | `.github/workflows/`               | `.gitlab-ci.yml`                   |
+| MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md` | `.gitlab/merge_request_templates/` |
+| Issue templates    | `.github/ISSUE_TEMPLATE/`          | `.gitlab/issue_templates/`         |
+| Dependency updates | Dependabot                         | GitLab Dependency Scanning         |
+| GitOps promotion   | Manual promotion PR workflow       | Product-owned pipeline/MR          |
+| Releases           | Native GitHub Actions              | Native GitLab CI                   |
+| Container registry | GHCR                               | GitLab Container Registry          |
 
 ## Helm values
 
@@ -20,15 +20,14 @@ Helm charts in `.helm/` are platform-agnostic. They reference container images b
 
 - GitHub: `ghcr.io/your-github-org/nest-react-boilerplate/${service}`
 - GitLab: `registry.gitlab.com/${CI_PROJECT_PATH}/${service}`
-- Bitbucket: Use Docker Hub or a third-party registry
 
 ## GitOps reconciliation
 
 The promotion workflow (`.github/workflows/deploy.yml`) is GitHub-specific and
 opens a reviewed image-tag PR. Argo CD and Flux manifests are provider-agnostic.
-For GitLab or Bitbucket:
+For GitLab:
 
-1. Build and verify all immutable release images.
+1. Build and verify all release image digests and their full-SHA tags.
 2. Update every image tag in `.helm/values-production.yaml` on a topic branch.
 3. Run `pnpm run deploy:validate:gitops` and merge through normal review.
 4. Let Argo CD or Flux reconcile the same chart and values.

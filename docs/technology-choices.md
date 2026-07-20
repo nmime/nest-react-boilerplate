@@ -6,7 +6,11 @@ Nx 23 provides project graph awareness, cached targets, module-boundary enforcem
 
 ## React, Vite, and Vitest
 
-The frontend apps use React 19 with Vite 8 for local development and production static builds. Vitest 4 powers unit and component tests. Coverage uses `@vitest/coverage-v8` with 100% thresholds for the repository's own testable source.
+The React SPAs use Vite 8; the other frontend renderers are Astro, Vike, and
+Expo. Vitest 4 powers unit and component tests. Coverage uses
+`@vitest/coverage-v8`: new projects default to 100%, while documented legacy
+negative thresholds are maximum uncovered-item budgets and may only move toward
+zero.
 
 ## NestJS 11
 

@@ -32,9 +32,10 @@ commit according to the promotion policy.
 ```mermaid
 flowchart LR
   merge[Merge application code] --> tag[Create reviewed release tag]
-  tag --> images[Release workflow builds, scans, signs, and publishes every release-owned image]
+  tag --> plan[Release workflow derives affected images from Nx and migration paths]
+  plan --> images[Build, scan, sign, and publish only selected immutable images]
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
-  promote --> verify[Verify every release-owned full-SHA image and render Helm]
+  promote --> verify[Resolve selected full-SHA images to immutable digests and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
   pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
 ```
@@ -42,21 +43,32 @@ flowchart LR
 The promotion workflow is manual by design. It:
 
 1. accepts only a full 40-character commit SHA already contained in `main`;
-2. verifies every migrator, API, bot API, and frontend image exists in GHCR;
-3. updates every Helm image to the exact `sha-<40-character-sha>` tag;
-4. renders the chart and validates both GitOps controller manifests;
-5. pushes a topic branch and opens a pull request.
+2. resolves only images published for that SHA and verifies their immutable
+   digests in GHCR;
+3. updates those Helm image references to the exact `sha-<40-character-sha>`
+   tag plus digest, leaving unaffected workloads on their previously promoted
+   digest;
+4. requires the first promotion to provide every release-owned image, so no
+   template placeholder can reach a cluster;
+5. renders the chart and validates both GitOps controller manifests;
+6. pushes a topic branch and opens a pull request.
 
 It never commits directly to `main`, never shortens the image tag, and never
 creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
 contents, pull-request, and package read access before using the workflow.
 
+The release planner uses Nx's affected graph for application images and a
+separate migration-path rule for the migration image. A full build remains the
+safe default for the first promotion, Dockerfile/workspace changes, or an
+explicit `force_full` dispatch; otherwise the workflow primes one shared
+BuildKit dependency cache and builds only the selected image targets.
+
 ## Common prerequisites
 
 - a Kubernetes cluster compatible with the selected Helm version;
 - release images published under full-SHA tags by
-  `.github/workflows/release-images.yml` (use digests when immutable identity is
-  required);
+  `.github/workflows/release-images.yml`; promotion pins selected workloads to
+  their registry digest automatically;
 - a target namespace Secret named by `secrets.existingSecret` containing at
   least `AUTH_JWT_SECRET` and `DATABASE_URL`;
 - `ghcr-credentials` in the target namespace when images are private;

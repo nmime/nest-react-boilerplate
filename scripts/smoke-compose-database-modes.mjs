@@ -54,8 +54,11 @@ for (const [path, value] of [
 }
 
 const baseFiles = ['-f', 'docker/docker-compose.prod.yml'];
-const bundledFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.bundled-db.yml'];
-const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-db.yml'];
+// This smoke test intentionally builds the migration image from source. Normal
+// production invocations use the image-only base through compose-production.
+const sourceBuildFiles = ['-f', 'docker/docker-compose.prod.build.yml'];
+const bundledFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.bundled-db.yml', ...sourceBuildFiles];
+const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-db.yml', ...sourceBuildFiles];
 const commonEnv = {
   ...process.env,
   AUTH_JWT_SECRET_FILE: authSecretPath,

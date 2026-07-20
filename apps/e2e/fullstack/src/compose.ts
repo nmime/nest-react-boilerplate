@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 
-export const composeArgs = ['compose', '-f', 'docker/docker-compose.yml'];
+const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? '2';
+export const composeArgs = ['compose', '--parallel', composeParallelLimit, '-f', 'docker/docker-compose.yml'];
 export const stackServices = [
   'migrate',
   'admin-app-api',
@@ -51,7 +52,10 @@ export const composeEnv = {
   ADMIN_APP_PORT: ports.adminApp,
   USER_APP_PORT: ports.userApp,
   LANDING_APP_PORT: ports.landingApp,
-  COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? '1',
+  // Cap parallel targets rather than serializing the full stack. Docker shares
+  // the dependency layers across this one invocation, so two builders is a
+  // useful default without exhausting a typical CI runner.
+  COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? 'false',
   DATABASE_URL: process.env.DOCKER_DATABASE_URL ?? 'postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? '1',
@@ -116,19 +120,16 @@ export async function upStack(): Promise<void> {
 
 export async function buildStackImages(): Promise<void> {
   writeStdoutLine(`fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`);
-  for (const service of stackServices) {
-    // eslint-disable-next-line no-await-in-loop -- sequential builds share the Docker layer cache
-    await buildService(service);
-  }
+  await buildServices(stackServices);
 }
 
-async function buildService(service: string): Promise<void> {
-  const args = [...composeArgs, 'build', service];
+async function buildServices(services: string[]): Promise<void> {
+  const args = [...composeArgs, 'build', ...services];
   try {
     await run('docker', args);
   } catch (error) {
     writeStderrLine(
-      `docker compose build ${service} reported a transient failure; retrying once: ${
+      `docker compose parallel build reported a transient failure; retrying once: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );

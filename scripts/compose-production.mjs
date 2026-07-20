@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const defaultEnvFile = '.env.production';
-const actions = new Set(['config', 'down', 'logs', 'ps', 'pull', 'up']);
+const actions = new Set(['build', 'config', 'down', 'logs', 'ps', 'pull', 'up']);
 const databaseModes = new Set(['bundled-db', 'external-db']);
 const domainModes = new Set(['external-proxy', 'single-domain', 'per-app-domains']);
 const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
@@ -96,6 +96,7 @@ function parseArguments(argv) {
     dryRun: false,
     envFile: defaultEnvFile,
     profiles: [],
+    sourceBuild: action === 'build',
     tlsMode: undefined,
     composeArguments: [],
   };
@@ -140,7 +141,20 @@ function parseArguments(argv) {
       options.dryRun = true;
       continue;
     }
+    if (item === '--source-build') {
+      options.sourceBuild = true;
+      continue;
+    }
     options.composeArguments.push(item);
+  }
+  if (options.sourceBuild && !new Set(['build', 'config', 'up']).has(action)) {
+    fail('--source-build is only valid with build, config, or up.');
+  }
+  if (options.sourceBuild && action === 'up' && options.composeArguments.includes('--no-build')) {
+    fail('--source-build and --no-build cannot be used together.');
+  }
+  if (!options.sourceBuild && action === 'up' && options.composeArguments.includes('--build')) {
+    fail('Use --source-build instead of passing --build to a production image deployment.');
   }
   return options;
 }
@@ -294,6 +308,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
 
   const composeEnvironment = {
     ...processEnvironment,
+    DOCKER_BUILDKIT: '1',
     ...domains,
     ...runtimeDefaults,
     ...frontendBuildEnvironment,
@@ -335,11 +350,17 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');
   if (tlsMode === 'provided') files.push('docker/docker-compose.prod.edge-provided-tls.yml');
+  if (options.sourceBuild) files.push('docker/docker-compose.prod.build.yml');
 
   const composeArgs = ['compose', '--env-file', options.envFile];
   for (const file of files) composeArgs.push('-f', file);
   for (const profile of profiles) composeArgs.push('--profile', profile);
-  composeArgs.push(options.action, ...options.composeArguments);
+  composeArgs.push(options.action);
+  if (options.action === 'up') {
+    if (options.sourceBuild) composeArgs.push('--build');
+    else if (!options.composeArguments.includes('--no-build')) composeArgs.push('--no-build');
+  }
+  composeArgs.push(...options.composeArguments);
 
   return {
     action: options.action,
@@ -352,6 +373,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     profiles,
     publicDomain: baseDomain,
     publicDomainMode,
+    sourceBuild: options.sourceBuild,
     tlsMode,
   };
 }
@@ -370,6 +392,7 @@ function main() {
             profiles: invocation.profiles,
             publicDomain: invocation.publicDomain,
             publicDomainMode: invocation.publicDomainMode,
+            sourceBuild: invocation.sourceBuild,
             tlsMode: invocation.tlsMode,
           },
           null,

@@ -4,16 +4,20 @@ on:
   push:
     tags:
       - 'v*'
-  release:
-    types: [published]
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: 'Optional full SHA of the last deployed/released baseline'
+        required: false
+        type: string
+      force_full:
+        description: 'Build every release image instead of using the affected-image plan'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
-  packages: write
-  id-token: write
-  security-events: write
-  attestations: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,6 +34,8 @@ jobs:
     name: Helm render gate
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Validate deployment config
@@ -42,85 +48,103 @@ jobs:
       - name: Validate Helm chart
         run: bash scripts/validate-helm.sh
 
+  image-plan:
+    name: Select affected release images
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      base: ${{ steps.plan.outputs.base }}
+      has_images: ${{ steps.plan.outputs.has_images }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      reason: ${{ steps.plan.outputs.reason }}
+      selected_images: ${{ steps.plan.outputs.selected_images }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependency metadata for Nx impact analysis
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Verify Docker dependency manifests
+        run: pnpm run docker:manifests:check
+
+      - name: Build the affected-image plan
+        id: plan
+        env:
+          INPUT_BASE_SHA: ${{ inputs.base_sha || '' }}
+          INPUT_FORCE_FULL: ${{ inputs.force_full || false }}
+        run: |
+          args=(--head "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT")
+          if [ -n "$INPUT_BASE_SHA" ]; then args+=(--base "$INPUT_BASE_SHA"); fi
+          if [ "$INPUT_FORCE_FULL" = 'true' ]; then args+=(--force-full); fi
+          node scripts/release-image-plan.mjs "${args[@]}"
+
+      - name: Write image-plan summary
+        env:
+          BASE: ${{ steps.plan.outputs.base }}
+          REASON: ${{ steps.plan.outputs.reason }}
+          SELECTED_IMAGES: ${{ steps.plan.outputs.selected_images }}
+        run: |
+          {
+            echo '## Release image plan'
+            echo
+            echo "- Baseline: ${BASE:-none (full release)}"
+            echo "- Reason: $REASON"
+            echo "- Images: ${SELECTED_IMAGES:-none}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  workspace-cache:
+    name: Prime shared Docker workspace cache
+    runs-on: ubuntu-22.04
+    needs: image-plan
+    if: needs.image-plan.outputs.has_images == 'true'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Export shared dependency cache
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile
+          target: workspace
+          outputs: type=cacheonly
+          cache-from: type=gha,scope=release-workspace
+          cache-to: type=gha,mode=max,scope=release-workspace
+
   build-scan-sign:
     name: Build, scan, and sign ${{ matrix.name }}
     runs-on: ubuntu-22.04
-    needs: helm-render
+    needs: [helm-render, image-plan, workspace-cache]
+    if: needs.image-plan.outputs.has_images == 'true'
     timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+      attestations: write
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: migrator
-            target: migrator
-            build-args: |
-              PNPM_VERSION=11.11.0
-          - name: admin-app-api
-            target: backend
-            build-args: |
-              NX_PROJECT=admin-app-api
-              BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
-              PNPM_VERSION=11.11.0
-          - name: user-app-api
-            target: backend
-            build-args: |
-              NX_PROJECT=user-app-api
-              BUILD_OUTPUT=dist/apps/backend/user/user-app-api
-              PNPM_VERSION=11.11.0
-          - name: auth-app-api
-            target: backend
-            build-args: |
-              NX_PROJECT=auth-app-api
-              BUILD_OUTPUT=dist/apps/backend/auth/auth-app-api
-              PNPM_VERSION=11.11.0
-          - name: discord-app-api
-            target: backend
-            build-args: |
-              NX_PROJECT=discord-app-api
-              BUILD_OUTPUT=dist/apps/backend/discord/discord-app-api
-              PNPM_VERSION=11.11.0
-          - name: telegram-bot-api
-            target: backend
-            build-args: |
-              NX_PROJECT=telegram-bot-api
-              BUILD_OUTPUT=dist/apps/backend/telegram/telegram-bot-api
-              PNPM_VERSION=11.11.0
-          - name: admin-app
-            target: frontend
-            build-args: |
-              NX_PROJECT=admin-app
-              FRONTEND_OUTPUT=dist/apps/frontend/admin
-              VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.11.0
-          - name: user-app
-            target: frontend
-            build-args: |
-              NX_PROJECT=user-app
-              FRONTEND_OUTPUT=dist/apps/frontend/app
-              VITE_API_BASE_URL_MODE=same-origin
-              VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}
-              PNPM_VERSION=11.11.0
-          - name: landing-app
-            target: frontend
-            build-args: |
-              NX_PROJECT=landing-app
-              FRONTEND_OUTPUT=dist/apps/frontend/landing
-              VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.11.0
-          - name: site-app
-            target: site
-            build-args: |
-              NX_PROJECT=site-app
-              VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.11.0
-          - name: mobile-app
-            target: frontend
-            build-args: |
-              NX_PROJECT=mobile-app
-              NX_TARGET=export
-              FRONTEND_OUTPUT=dist/apps/frontend/mobile
-              VITE_API_BASE_URL_MODE=same-origin
-              PNPM_VERSION=11.11.0
+      matrix: ${{ fromJSON(needs.image-plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -144,7 +168,13 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          build-args: ${{ matrix.build-args }}
+          cache-from: |
+            type=gha,scope=release-workspace
+            type=gha,scope=release-${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=release-${{ matrix.name }}
+          build-args: |
+            ${{ matrix.buildArgs }}
+            VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}
           tags: |
             ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:sha-${{ github.sha }}
           labels: |
@@ -189,5 +219,4 @@ jobs:
       - name: Cosign keyless sign image digest (GitHub OIDC)
         env:
           IMAGE_REF: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
-        run: |
-          cosign sign --yes "${IMAGE_REF}"
+        run: cosign sign --yes "$IMAGE_REF"

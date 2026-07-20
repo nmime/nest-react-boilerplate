@@ -69,21 +69,36 @@ jobs:
             exit 1
           fi
 
-      - name: Verify every release image exists
+      - name: Collect candidate release image digests
+        id: candidate-images
         env:
           DEPLOY_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           IMAGE_TAG: ${{ steps.revision.outputs.tag }}
+          RELEASE_SHA: ${{ steps.revision.outputs.sha }}
         run: |
+          set -euo pipefail
           printf '%s' "$DEPLOY_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
-          for image in \
-            migrator \
-            admin-app-api user-app-api auth-app-api discord-app-api telegram-bot-api \
-            admin-app user-app landing-app site-app mobile-app; do
-            docker manifest inspect "ghcr.io/${{ github.repository }}/$image:$IMAGE_TAG" >/dev/null
+          mapfile -t images < <(node scripts/release-image-plan.mjs --names)
+          updates=()
+          promoted=()
+          for image in "${images[@]}"; do
+            reference="ghcr.io/${{ github.repository }}/$image:$IMAGE_TAG"
+            if digest="$(docker manifest inspect --verbose "$reference" 2>/dev/null | jq -r '.Descriptor.digest // empty')"; then
+              if [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+                updates+=(--image "$image=$digest")
+                promoted+=("$image")
+                continue
+              fi
+            fi
+            echo "Release image not present for this SHA; retaining the currently promoted $image digest"
           done
-
-      - name: Update immutable image tags
-        run: python3 scripts/update-deploy-tags.py "${{ steps.revision.outputs.sha }}"
+          if [ "${#updates[@]}" -eq 0 ]; then
+            echo "::error::No release images were found for $IMAGE_TAG"
+            exit 1
+          fi
+          python3 scripts/update-deploy-tags.py "$RELEASE_SHA" "${updates[@]}"
+          (IFS=,; echo "images=${promoted[*]}") >> "$GITHUB_OUTPUT"
+          echo "count=${#promoted[@]}" >> "$GITHUB_OUTPUT"
 
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
@@ -103,17 +118,18 @@ jobs:
         env:
           BRANCH: ${{ steps.revision.outputs.branch }}
           IMAGE_TAG: ${{ steps.revision.outputs.tag }}
+          PROMOTED_IMAGES: ${{ steps.candidate-images.outputs.images }}
         run: |
           if git diff --quiet -- .helm/values-production.yaml; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Production values already use $IMAGE_TAG"
+            echo "Production values already use the candidate digests for $IMAGE_TAG"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -C "$BRANCH"
           git add .helm/values-production.yaml
-          git commit -m "deploy: promote $IMAGE_TAG"
+          git commit -m "deploy: promote $IMAGE_TAG (${PROMOTED_IMAGES})"
           git push --force-with-lease origin "HEAD:$BRANCH"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
@@ -123,6 +139,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
           BRANCH: ${{ steps.revision.outputs.branch }}
           IMAGE_TAG: ${{ steps.revision.outputs.tag }}
+          PROMOTED_IMAGES: ${{ steps.candidate-images.outputs.images }}
         run: |
           PR_URL=$(gh pr list --base main --head "$BRANCH" --state open --json url --jq '.[0].url // empty')
           if [ -z "$PR_URL" ]; then
@@ -130,6 +147,6 @@ jobs:
               --base main \
               --head "$BRANCH" \
               --title "deploy: promote $IMAGE_TAG" \
-              --body "Promotes every application and migration image to the verified immutable tag \`$IMAGE_TAG\`. Merge this PR to let Argo CD or Flux reconcile the release.")
+              --body "Promotes the verified immutable digests for \`$PROMOTED_IMAGES\` from \`$IMAGE_TAG\`. Unchanged workloads retain their currently deployed digests. Merge this PR to let Argo CD or Flux reconcile the release.")
           fi
           echo "Promotion PR: $PR_URL" >> "$GITHUB_STEP_SUMMARY"

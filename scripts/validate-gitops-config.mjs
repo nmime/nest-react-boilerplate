@@ -22,6 +22,7 @@ const fluxKustomization = read('deploy/flux/kustomization.yaml');
 const releaseWorkflow = read('.github/workflows/release-images.yml');
 const promotionWorkflow = read('.github/workflows/deploy.yml');
 const tagUpdater = read('scripts/update-deploy-tags.py');
+const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
 for (const expected of [
   'apiVersion: argoproj.io/v1alpha1',
@@ -75,12 +76,30 @@ assert.match(
 assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not use an example owner.');
 
 has(releaseWorkflow, 'sha-${{ github.sha }}', 'release images use the full GitHub SHA');
+has(releaseWorkflow, 'image-plan', 'release workflow builds only selected images');
+has(releaseWorkflow, 'node-version-file: .nvmrc', 'release image planner uses the repository Node version');
+has(releaseWorkflow, 'workspace-cache', 'release workflow primes shared Docker dependency cache');
+has(releaseWorkflow, 'scope=release-workspace', 'release workflow shares dependency cache across image targets');
+has(releaseWorkflow, 'cache-to: type=gha,mode=max,scope=release-', 'release workflow exports BuildKit cache');
+assert.ok(
+  !releaseWorkflow.includes('types: [published]'),
+  'release image workflow must not duplicate tag builds on release publication',
+);
 has(promotionWorkflow, '^[0-9a-f]{40}$', 'promotion accepts only a full 40-character SHA');
-has(promotionWorkflow, 'docker manifest inspect', 'promotion verifies published images');
+has(promotionWorkflow, 'docker manifest inspect --verbose', 'promotion verifies candidate image digests');
+has(promotionWorkflow, 'release-image-plan.mjs --names', 'promotion uses the canonical release-image inventory');
+has(promotionWorkflow, 'retaining the currently promoted', 'promotion leaves unaffected workload digests untouched');
 has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
 assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
 assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
-has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', sha)", 'tag updater requires the release workflow full SHA');
+has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
+has(tagUpdater, "'sha256:[0-9a-fA-F]{64}'", 'tag updater requires immutable image digests');
+has(
+  tagUpdater,
+  'the first promotion must supply every release image digest',
+  'tag updater protects initial promotion completeness',
+);
+has(releaseImagePlan, 'selectReleaseImages', 'release inventory has testable affected-image selection');
 
 const kubectlAvailable = spawnSync('kubectl', ['version', '--client'], { cwd: rootDir, stdio: 'ignore' }).status === 0;
 if (!kubectlAvailable) {

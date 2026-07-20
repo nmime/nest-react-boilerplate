@@ -249,8 +249,9 @@ sudo nrb-server update --image-tag sha-0123456789abcdef0123456789abcdef01234567
 
 Add `--system` to converge OS/runtime packages in the same maintenance window.
 The update aborts on a dirty checkout, fetches and prunes the configured remote,
-checks out the configured branch, permits only a fast-forward, runs
-`pnpm install --frozen-lockfile`, records the previous tag, and deploys. It does
+checks out the configured branch, permits only a fast-forward, pulls the pinned
+immutable images, records the previous tag, and deploys with `--no-build`. It
+does not run `pnpm install` or compile the workspace on the server, and it does
 not guess an image tag from `main`: a release/docs commit may not have produced
 images.
 

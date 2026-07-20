@@ -283,6 +283,16 @@ The validator also checks the explicit auth overlays
 
 ## 7. Start, inspect, update, and stop
 
+Production Compose is image-only by default. The wrapper pulls the immutable
+`IMAGE_TAG` selected in `.env.production` and starts it with `--no-build`; a
+host update therefore does not compile the Nx workspace or require a local
+dependency installation. Pull first when the host has not yet fetched the
+release:
+
+```bash
+pnpm run docker:prod:pull
+```
+
 Start the selected topology:
 
 ```bash
@@ -296,8 +306,28 @@ pnpm run docker:prod:ps
 pnpm run docker:prod:logs -- --tail=100 migrate edge auth-app-api user-app-api admin-app-api
 ```
 
-Update by changing only to another verified full-SHA `IMAGE_TAG`, rendering the
-model again, and rerunning `pnpm run docker:prod:up`.
+Update by changing only to another verified full-SHA `IMAGE_TAG`, pulling the
+release, rendering the model again, and rerunning `pnpm run docker:prod:up`.
+
+An explicit local source build remains available for development, break-glass
+recovery, or validating a checkout before publishing images. It is never part
+of the normal deployment path:
+
+```bash
+pnpm run docker:prod:build
+# Equivalent: pnpm run docker:prod:up -- --source-build
+```
+
+The Docker dependency layer is keyed by the lockfile, root manifest, and the
+generated `docker/workspace-manifests/` package-manifest tree. Source-only
+changes therefore reuse dependency installation across image targets. Do not
+edit that generated tree; update it after adding or changing a workspace
+`package.json` and let CI enforce it:
+
+```bash
+pnpm run docker:manifests:sync
+pnpm run docker:manifests:check
+```
 
 Stop containers while preserving all volumes:
 

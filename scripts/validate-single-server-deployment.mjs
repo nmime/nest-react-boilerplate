@@ -70,6 +70,8 @@ for (const requirement of [
   'certbot.timer',
   'nginx -t',
   'merge --ff-only',
+  'compose-production.mjs pull',
+  '--no-build',
   '--wait-timeout=300',
   '--renew-with-new-domains',
   '--resolve "${host}:443:127.0.0.1"',
@@ -89,6 +91,11 @@ for (const requirement of [
 assert.ok(bootstrap.includes('status --porcelain'));
 assert.ok(bootstrap.includes('merge --ff-only'));
 assert.ok(!controller.includes('source "${SERVER_ENV}"'));
+assert.ok(
+  !controller.includes('/usr/local/bin/pnpm --dir "${APP_ROOT}" install --frozen-lockfile'),
+  'single-server updates must not reinstall the workspace dependency graph',
+);
+assert.ok(docs.includes('does not run `pnpm install`'));
 assert.ok(renderer.includes("'single-domain', 'per-app-domains'"));
 assert.ok(renderer.includes('127.0.0.1'));
 assert.ok(renderer.includes('ssl_reject_handshake on'));

@@ -14,18 +14,20 @@ RUN apk add --no-cache libc6-compat libcap python3 make g++ \
   && setcap 'cap_net_bind_service=+ep' "$(which node)" \
   && npm install -g pnpm@${PNPM_VERSION}
 
-# Dependency layer keyed only on the lockfile: pnpm fetch needs no package.json
-# manifests, so new workspace projects never require Dockerfile changes.
+# The fetched store is keyed only on the lockfile. The generated manifest tree
+# lets the install layer remain independent from workspace source changes.
 COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm fetch
 COPY package.json nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
+COPY docker/workspace-manifests/ ./
+RUN pnpm install --frozen-lockfile --offline \
+  && chown -R node:node /workspace
+
 COPY config ./config
 COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
 COPY i18n ./i18n
-RUN pnpm install --frozen-lockfile --offline \
-  && chown -R node:node /workspace
 
 FROM workspace AS migrator
 RUN apk add --no-cache su-exec
@@ -49,7 +51,10 @@ ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
 # Backend apps enable generatePackageJson + generateLockfile, so each build emits
 # a pruned package.json and pnpm-lock.yaml under its dist output describing only
 # the npm packages that app (and the workspace libs it inlines) actually imports.
-RUN test -n "${NX_PROJECT}" \
+# Reuse Nx task outputs while BuildKit builds several application targets. The
+# cache mount never enters a runtime image and is safe to discard at any time.
+RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
+  test -n "${NX_PROJECT}" \
   && pnpm exec nx run "${NX_PROJECT}:${NX_TARGET}"
 
 # Per-app production dependencies. Installing from the app's generated

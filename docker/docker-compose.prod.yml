@@ -186,10 +186,6 @@ services:
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     logging: *default-logging
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: migrator
     restart: 'no'
     networks: [app, database]
     secrets: [auth_jwt_secret]
@@ -199,13 +195,6 @@ services:
   admin-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: admin-app-api
-        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     ports:
       - target: 80
         published: '${ADMIN_APP_API_PORT:-3001}'
@@ -215,13 +204,6 @@ services:
   user-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: user-app-api
-        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     ports:
       - target: 80
         published: '${USER_APP_API_PORT:-3002}'
@@ -231,13 +213,6 @@ services:
   auth-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: auth-app-api
-        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     secrets:
       - auth_jwt_secret
       - session_secret
@@ -254,13 +229,6 @@ services:
     <<: *backend-service
     profiles: [discord]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/discord-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: discord-app-api
-        BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
     environment:
       <<: *backend-env
       DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
@@ -280,13 +248,6 @@ services:
     <<: *backend-service
     profiles: [telegram]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/telegram-bot-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: telegram-bot-api
-        BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
     environment:
       <<: *backend-env
       TELEGRAM_BOT_MODE: ${TELEGRAM_BOT_MODE:-webhook}
@@ -306,19 +267,6 @@ services:
   admin-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: admin-app
-        FRONTEND_OUTPUT: dist/apps/frontend/admin
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
-        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     depends_on:
       admin-app-api:
         condition: service_healthy
@@ -331,19 +279,6 @@ services:
   user-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: user-app
-        FRONTEND_OUTPUT: dist/apps/frontend/app
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
-        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -358,18 +293,6 @@ services:
   landing-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: landing-app
-        FRONTEND_OUTPUT: dist/apps/frontend/landing
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -388,12 +311,6 @@ services:
     logging: *default-logging
     networks: [app]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: site-runtime
-      args:
-        NX_PROJECT: site-app
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -411,19 +328,6 @@ services:
   mobile-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/mobile-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: mobile-app
-        NX_TARGET: export
-        FRONTEND_OUTPUT: dist/apps/frontend/mobile
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy

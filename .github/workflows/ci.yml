@@ -19,6 +19,7 @@ concurrency:
 env:
   CI: 'true'
   NX_DAEMON: 'false'
+  NX_CACHE_DIRECTORY: .nx/cache
   NODE_VERSION_FILE: .nvmrc
   BUN_VERSION_FILE: .bun-version
   PNPM_VERSION: 11.11.0
@@ -91,6 +92,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: fast
+
       - name: Run fast aggregate
         run: pnpm run ci:pr
 
@@ -134,6 +140,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: non-runtime
 
       - name: Verify fresh onboarding and application scaffolds
         run: pnpm run onboarding:verify
@@ -216,6 +227,11 @@ jobs:
       - name: Install canonical dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: bun
+
       - name: Run Bun compatibility contract
         run: pnpm run bun:check
 
@@ -246,12 +262,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore Nx computation cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: ./.github/actions/nx-cache
         with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-
+          scope: quality
 
       - name: Changed-file format check
         run: pnpm run format:changed
@@ -318,6 +331,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: e2e
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium

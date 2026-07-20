@@ -7,6 +7,7 @@ const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected Docker Compose production config: ${label}`);
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
 const edgeCompose = read('docker/docker-compose.prod.edge.yml');
@@ -20,6 +21,7 @@ const composeWrapper = read('scripts/compose-production.mjs');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
+const composeModeSmoke = read('scripts/smoke-compose-database-modes.mjs');
 const projectCatalogDocs = read('docs/project-catalog.md');
 const deploymentDocs = read('docs/deployment.md');
 const securityPolicy = read('SECURITY.md');
@@ -164,7 +166,10 @@ for (const service of [
     `/${service}:${'${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}'}`,
     `${service} requires IMAGE_TAG instead of defaulting to latest`,
   );
+  const buildService = service === 'migrator' ? 'migrate' : service;
+  has(prodBuildCompose, `  ${buildService}:\n    build:`, `${service} has an explicit source-build overlay`);
 }
+assert.ok(!prodCompose.includes('\n    build:'), 'production Compose base must be image-only');
 
 for (const expected of [
   'SESSION_SECRET_FILE=./secrets/session_secret.txt',
@@ -255,11 +260,22 @@ for (const expected of [
   'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
   'VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}',
 ]) {
-  has(prodCompose, expected, `production Compose frontend build arg ${expected}`);
+  has(prodBuildCompose, expected, `production Compose source-build frontend arg ${expected}`);
 }
+has(composeWrapper, "'docker/docker-compose.prod.build.yml'", 'production wrapper source-build overlay');
+has(composeWrapper, "composeArgs.push('--no-build')", 'production wrapper defaults up to no-build');
+has(composeWrapper, "composeArgs.push('--build')", 'production wrapper explicitly builds only on source-build');
+has(composeWrapper, "DOCKER_BUILDKIT: '1'", 'source-build wrapper enables BuildKit');
+has(
+  composeModeSmoke,
+  "'docker/docker-compose.prod.build.yml'",
+  'production migration smoke explicitly opts into source builds',
+);
 
 for (const expected of [
   'pnpm run docker:prod:config',
+  'pnpm run docker:prod:pull',
+  'pnpm run docker:prod:build',
   'pnpm run docker:prod:up',
   'pnpm run docker:prod:bundled-db:config',
   'pnpm run docker:prod:external-db:config',
@@ -272,10 +288,13 @@ for (const expected of [
   'docker/docker-compose.prod.discord.yml',
   'user-app.example.com/api/auth/oauth2/callback/telegram',
   'pnpm run docker:prod:config:check',
+  'pnpm run docker:manifests:check',
+  'docker/workspace-manifests/',
   'latest',
   'Protect that tag from mutation',
   'override when immutable identity is required',
   'chmod 600',
+  'image-only by default',
 ]) {
   has(composeDocs, expected, `Docker Compose production docs ${expected}`);
 }

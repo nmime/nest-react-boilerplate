@@ -40,6 +40,26 @@ const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.me
 const scripts = packageJson.scripts ?? {};
 const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
+const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
+const nxCacheDocs = readFileSync(new URL('../docs/ci-cache.md', import.meta.url), 'utf8');
+assert.ok(
+  nxCacheAction.includes('actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'),
+  'Nx cache composite action must pin actions/cache to a full commit SHA',
+);
+assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
+assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
+assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
+for (const scope of ['fast', 'non-runtime', 'bun', 'quality', 'e2e']) {
+  assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
+}
+assert.ok(
+  nxCacheDocs.includes('GitHub Actions cache service'),
+  'CI cache documentation must explain the remote backend',
+);
+assert.ok(
+  nxCacheDocs.includes('Do not add `.env*`'),
+  'CI cache documentation must prohibit secret-bearing cache paths',
+);
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
 assert.ok(
   !workflows.some((workflow) => workflow.name === 'release-gitlab.yml'),

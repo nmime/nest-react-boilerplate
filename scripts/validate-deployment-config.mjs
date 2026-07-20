@@ -52,10 +52,43 @@ const yamlMapEntry = (text, key, indent = 2) => {
 };
 
 const dockerfile = read('Dockerfile');
+const dockerManifestSync = read('scripts/sync-docker-workspace-manifests.mjs');
 const rootPackageJson = JSON.parse(read('package.json'));
 const pinnedPnpm = rootPackageJson.packageManager?.split('@')[1];
 assert.ok(pinnedPnpm, 'package.json packageManager must pin a pnpm version');
 has(dockerfile, `ARG PNPM_VERSION=${pinnedPnpm}`, `Dockerfile pnpm version must match packageManager (${pinnedPnpm})`);
+has(
+  dockerfile,
+  'COPY docker/workspace-manifests/ ./',
+  'Docker dependency layer uses generated workspace package manifests',
+);
+has(
+  dockerfile,
+  '--mount=type=cache,target=/workspace/.nx/cache,sharing=locked',
+  'Docker builder shares Nx task cache through a disposable BuildKit mount',
+);
+before(
+  dockerfile,
+  'COPY docker/workspace-manifests/ ./',
+  'RUN pnpm install --frozen-lockfile --offline',
+  'Docker copies dependency manifests before installing workspace dependencies',
+);
+before(
+  dockerfile,
+  'RUN pnpm install --frozen-lockfile --offline',
+  'COPY apps ./apps',
+  'Docker copies application source only after the dependency layer is cached',
+);
+has(
+  dockerManifestSync,
+  "sourceRoots = ['apps', 'libs', 'packages']",
+  'manifest sync covers every workspace ownership root',
+);
+has(
+  dockerManifestSync,
+  'Docker workspace manifests are out of date',
+  'manifest sync fails CI when generated inputs are stale',
+);
 has(dockerfile, 'FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend', 'unprivileged frontend base image');
 has(dockerfile, 'ARG NX_TARGET=build', 'Dockerfile builder supports non-build frontend targets such as mobile export');
 has(
@@ -308,6 +341,10 @@ has(devSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app uses its ex
 has(devSiteService, 'target: site-runtime', 'site-app uses the Vike Docker runtime target');
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
+assert.ok(!prodCompose.includes('\n    build:'), 'Production Compose base must only reference published images.');
+has(prodBuildCompose, '  admin-app-api:\n    build:', 'production source-build overlay defines backend images');
+has(prodBuildCompose, '  mobile-app:\n    build:', 'production source-build overlay defines frontend images');
 for (const [service, variable, port, profile] of [
   ['discord-app-api', 'DISCORD_APP_API_PORT', 3007, 'discord'],
   ['telegram-bot-api', 'TELEGRAM_BOT_API_PORT', 3013, 'telegram'],
@@ -325,14 +362,14 @@ assert.ok(
 );
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
 has(
-  prodCompose,
+  prodBuildCompose,
   'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
-  'production Compose passes selectable frontend nginx config',
+  'production source-build overlay passes selectable frontend nginx config',
 );
 has(
-  prodCompose,
+  prodBuildCompose,
   'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
-  'production Compose defaults frontend builds to same-origin API routing',
+  'production source-build overlay defaults frontend builds to same-origin API routing',
 );
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
@@ -483,7 +520,8 @@ for (const [service, variable, port] of [
 const prodSiteService = section(prodCompose, '  site-app:', '\n\n  mobile-app:');
 has(prodSiteService, 'target: 80', 'site-app production target port 80');
 has(prodSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app production uses explicit host port 4203');
-has(prodSiteService, 'target: site-runtime', 'site-app production build uses the Vike Docker runtime target');
+const prodSiteBuild = section(prodBuildCompose, '  site-app:', '\n\n  mobile-app:');
+has(prodSiteBuild, 'target: site-runtime', 'site-app production source-build uses the Vike Docker runtime target');
 
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
 has(
@@ -491,14 +529,18 @@ has(
   "['postgres', ...backendServices, ...frontendServices].join(',')",
   'Docker smoke activates every dependency profile used by the tested stack',
 );
-has(dockerSmoke, 'async function buildService', 'Docker smoke retries transient image-build failures');
+has(dockerSmoke, 'async function buildServices', 'Docker smoke retries transient image-build failures');
+has(dockerSmoke, '"--parallel",', 'Docker smoke batches image builds through Compose parallel mode');
+has(dockerSmoke, 'const composeParallelLimit', 'Docker smoke caps Compose build concurrency');
 const fullstackCompose = read('apps/e2e/fullstack/src/compose.ts');
 has(
   fullstackCompose,
   "['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(',')",
   'Full-stack e2e activates every dependency profile used by its tested stack',
 );
-has(fullstackCompose, 'async function buildService', 'Full-stack e2e retries transient image-build failures');
+has(fullstackCompose, 'async function buildServices', 'Full-stack e2e retries transient image-build failures');
+has(fullstackCompose, "'compose', '--parallel'", 'Full-stack e2e batches image builds through Compose parallel mode');
+has(fullstackCompose, 'const composeParallelLimit', 'Full-stack e2e caps Compose build concurrency');
 const smokeJwtSecretDefault = dockerSmoke.match(/AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
 assert.ok(smokeJwtSecretDefault, 'Docker smoke script must set an AUTH_JWT_SECRET default');
 assert.ok(
@@ -597,6 +639,7 @@ if (validateHelmStatic) {
 
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
+  const releaseImagePlan = read('scripts/release-image-plan.mjs');
   has(
     releaseWorkflow,
     "VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
@@ -625,9 +668,22 @@ if (validateHelmStatic) {
     'Every public app contract must have a unique default domain.',
   );
   for (const [app, service] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
-    has(releaseWorkflow, `- name: ${service}`, `${app} immutable release image`);
-    has(releaseWorkflow, `NX_PROJECT=${service}`, `${app} release workflow Nx project`);
+    has(releaseImagePlan, `'${service}'`, `${app} immutable release image plan entry`);
+    has(releaseImagePlan, `NX_PROJECT=${service}`, `${app} release image plan Nx project`);
   }
+  has(releaseImagePlan, "'site-runtime'", 'release image plan uses the actual Vike runtime Docker target');
+  has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
+  has(releaseWorkflow, 'workspace-cache', 'release workflow primes a shared dependency cache before matrix builds');
+  has(
+    releaseWorkflow,
+    'scope=release-workspace',
+    'release workflow shares Docker dependency cache across image targets',
+  );
+  has(
+    releaseWorkflow,
+    'cache-to: type=gha,mode=max,scope=release-',
+    'release workflow persists BuildKit cache per image',
+  );
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
     const expectedHost = service === 'landing-app' ? 'example.com' : `${service}.example.com`;
     assert.equal(host, expectedHost, `${service} default domain must match the public domain contract`);

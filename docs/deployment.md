@@ -119,9 +119,11 @@ kubectl apply -k deploy/argocd
 kubectl apply -k deploy/flux
 ```
 
-The manual promotion workflow verifies all release images at one full Git SHA,
-updates production values on a topic branch, and opens a pull request. After
-merge, the selected controller reconciles. It does not write directly to `main`.
+The manual promotion workflow resolves the images published for one full Git
+SHA, pins only those workloads to their immutable digests in production values,
+and opens a topic-branch pull request. Unchanged workloads keep their currently
+promoted digest. After merge, the selected controller reconciles. It does not
+write directly to `main`.
 See [GITOPS.md](../GITOPS.md).
 
 ## Release invariants for every mode

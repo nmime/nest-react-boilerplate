@@ -672,7 +672,8 @@ Group=${deploy_group}
 SupplementaryGroups=docker
 WorkingDirectory=${APP_ROOT}
 Environment="HOME=${deploy_home}"
-ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300
+ExecStartPre=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs pull --env-file=${PRODUCTION_ENV}
+ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300 --no-build
 TimeoutStartSec=600
 
 [Install]
@@ -738,7 +739,9 @@ update_checkout() {
   run_as_deploy git -C "${APP_ROOT}" fetch --prune origin
   run_as_deploy git -C "${APP_ROOT}" checkout "${REPOSITORY_BRANCH}"
   run_as_deploy git -C "${APP_ROOT}" merge --ff-only "origin/${REPOSITORY_BRANCH}"
-  run_as_deploy /usr/local/bin/pnpm --dir "${APP_ROOT}" install --frozen-lockfile
+  # The deployment controller uses Node built-ins only. Runtime images are
+  # prebuilt and pulled by the systemd unit, so an application update never
+  # recompiles the workspace or reinstalls its dependency graph on the host.
 }
 
 set_image_tag() {

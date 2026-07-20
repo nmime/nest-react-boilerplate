@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 
-const compose = ["compose", "-f", "docker/docker-compose.yml"];
+const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? "2";
+const compose = [
+  "compose",
+  "--parallel",
+  composeParallelLimit,
+  "-f",
+  "docker/docker-compose.yml",
+];
 const backendServices = [
   "admin-app-api",
   "user-app-api",
@@ -59,7 +66,9 @@ const env = {
   COMPOSE_PROFILES:
     process.env.COMPOSE_PROFILES ??
     ['postgres', ...backendServices, ...frontendServices].join(','),
-  COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? "1",
+  // Keep memory bounded while allowing independent image targets to share the
+  // BuildKit dependency layers during a single Compose invocation.
+  COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
   NX_DAEMON: "false",
@@ -133,13 +142,13 @@ async function composeUpServices(label: string, services: string[]): Promise<voi
   }
 }
 
-async function buildService(service: string): Promise<void> {
-  const args = [...compose, 'build', service];
+async function buildServices(services: string[]): Promise<void> {
+  const args = [...compose, 'build', ...services];
   try {
     await run('docker', args, { stdio: 'inherit', env });
   } catch (error) {
     console.warn(
-      `docker compose build ${service} reported a transient failure; retrying once: ${
+      `docker compose parallel build reported a transient failure; retrying once: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
@@ -191,9 +200,7 @@ try {
   console.log(
     `docker smoke project=${env.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
   );
-  for (const service of stackServices) {
-    await buildService(service);
-  }
+  await buildServices(stackServices);
   await composeUp();
   const backendProbeCount = backendServices.length;
   for (const probe of probes.slice(0, backendProbeCount)) await waitForProbe(probe);

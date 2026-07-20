@@ -1,0 +1,31 @@
+{
+  "name": "site-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@fastify/static": "9.3.0",
+    "@tanstack/react-query": "5.101.2",
+    "fastify": "5.10.0",
+    "mobx": "6.16.1",
+    "mobx-react-lite": "4.1.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "vike": "0.4.260",
+    "vike-react": "0.6.25"
+  },
+  "devDependencies": {
+    "@nx/vite": "23.1.0",
+    "@testing-library/react": "^16.3.2",
+    "@vitejs/plugin-react": "6.0.3",
+    "happy-dom": "20.10.6",
+    "typescript": "6.0.3",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "nmime",
+    "url": "https://github.com/nmime"
+  }
+}

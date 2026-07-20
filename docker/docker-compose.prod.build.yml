@@ -1,0 +1,121 @@
+# Source-build overlay for an operator who explicitly needs to build from this
+# checkout. Normal production deployments use immutable registry images and do
+# not load this file.
+services:
+  migrate:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: migrator
+
+  admin-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
+
+  user-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
+
+  auth-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
+
+  discord-app-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: discord-app-api
+        BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
+
+  telegram-bot-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: telegram-bot-api
+        BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
+
+  admin-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: admin-app
+        FRONTEND_OUTPUT: dist/apps/frontend/admin
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
+        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
+
+  user-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: user-app
+        FRONTEND_OUTPUT: dist/apps/frontend/app
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
+        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
+
+  landing-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: landing-app
+        FRONTEND_OUTPUT: dist/apps/frontend/landing
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
+
+  site-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: site-runtime
+      args:
+        NX_PROJECT: site-app
+
+  mobile-app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: mobile-app
+        NX_TARGET: export
+        FRONTEND_OUTPUT: dist/apps/frontend/mobile
+        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
+        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
+        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
+        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
+        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}

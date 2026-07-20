@@ -215,3 +215,30 @@ test('rejects TLS ownership mismatches', () => {
     /per-app-domains/u,
   );
 });
+
+test('uses immutable images by default and enables source builds only explicitly', () => {
+  const imageOnly = buildComposeInvocation(['up', '--env-file=.env.production.example', '-d'], {});
+  assert.equal(imageOnly.sourceBuild, false);
+  assert.ok(!imageOnly.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(imageOnly.args.includes('--no-build'));
+  assert.equal(imageOnly.env.DOCKER_BUILDKIT, '1');
+
+  const build = buildComposeInvocation(['build', '--env-file=.env.production.example'], {});
+  assert.equal(build.sourceBuild, true);
+  assert.ok(build.files.includes('docker/docker-compose.prod.build.yml'));
+
+  const sourceUp = buildComposeInvocation(['up', '--env-file=.env.production.example', '--source-build'], {});
+  assert.equal(sourceUp.sourceBuild, true);
+  assert.ok(sourceUp.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(sourceUp.args.includes('--build'));
+  assert.ok(!sourceUp.args.includes('--no-build'));
+
+  assert.throws(
+    () => buildComposeInvocation(['up', '--env-file=.env.production.example', '--source-build', '--no-build'], {}),
+    /cannot be used together/u,
+  );
+  assert.throws(
+    () => buildComposeInvocation(['up', '--env-file=.env.production.example', '--build'], {}),
+    /--source-build/u,
+  );
+});

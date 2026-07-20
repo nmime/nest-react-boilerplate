@@ -45,6 +45,10 @@ const commandExists = (command) =>
 const hasAny = (paths) => paths.some((path) => existsSync(join(rootDir, path)));
 
 const validateDocker = () => {
+  run('Docker workspace dependency manifests', process.execPath, [
+    'scripts/sync-docker-workspace-manifests.mjs',
+    '--check',
+  ]);
   run('Docker/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=docker']);
   run('Docker Compose production wrapper tests', process.execPath, ['--test', 'scripts/compose-production.spec.mjs']);
   run('Single-server deployment tests', process.execPath, ['--test', 'scripts/single-server-deployment.spec.mjs']);
@@ -89,6 +93,8 @@ const validateGitOps = () => {
     console.log('GitOps validation skipped: no Argo CD or Flux manifests are present.');
     return;
   }
+  run('Affected release-image plan tests', process.execPath, ['--test', 'scripts/release-image-plan.spec.mjs']);
+  run('Selective GitOps image-promotion tests', process.execPath, ['--test', 'scripts/update-deploy-tags.spec.mjs']);
   run('GitOps/Argo CD and Flux config', process.execPath, ['scripts/validate-gitops-config.mjs']);
 };
 

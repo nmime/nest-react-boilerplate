@@ -117,7 +117,7 @@ USER node
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
-FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
+FROM nginxinc/nginx-unprivileged:1.31.3-alpine AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root

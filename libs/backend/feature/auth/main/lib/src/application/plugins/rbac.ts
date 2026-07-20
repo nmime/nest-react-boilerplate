@@ -1,6 +1,6 @@
 import type { BetterAuthPlugin } from 'better-auth';
 import { createAuthEndpoint, getSessionFromCtx } from 'better-auth/api';
-import { z } from 'zod';
+import * as z from 'zod';
 
 /** User updates that better-auth's internalAdapter.updateUser accepts. */
 type UserUpdateFields = Record<string, string>;

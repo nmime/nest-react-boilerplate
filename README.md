@@ -16,23 +16,19 @@
     <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
     <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
     <img alt="pnpm 11.11.0" src="https://img.shields.io/badge/pnpm-11.11.0-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
-    <img alt="Bun 1.3.14 optional runtime" src="https://img.shields.io/badge/Bun_1.3.14-optional_runtime-FBF0DF?style=for-the-badge&logo=bun&logoColor=black" />
+    <img alt="Bun 1.3.14 supported runtime" src="https://img.shields.io/badge/Bun_1.3.14-supported_runtime-FBF0DF?style=for-the-badge&logo=bun&logoColor=black" />
     <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
     <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
   </p>
 
   <p>
     <a href="#quick-start">Quick start</a> ·
-    <a href="#bun-runtime-compatibility">Bun runtime</a> ·
     <a href="#choose-your-product-surfaces">Applications</a> ·
     <a href="#architecture">Architecture</a> ·
     <a href="#quality-by-default">Quality</a> ·
     <a href="#documentation">Documentation</a>
   </p>
 </div>
-
-> [!IMPORTANT]
-> **Node.js 24 and pnpm 11.11.0 are the canonical install, coverage, CI, and deployment toolchain.** Bun 1.3.14 is a verified optional runtime for selected Nx builds, servers, and tests. See [Bun runtime compatibility](#bun-runtime-compatibility) for the exact supported boundary.
 
 ## Why this foundation
 
@@ -81,12 +77,12 @@ pnpm exec nx show projects
 
 ### Prerequisites
 
-| Requirement | Supported version or role                                          |
-| ----------- | ------------------------------------------------------------------ |
-| Node.js     | `>=24 <25` — pinned by `.nvmrc`                                    |
-| pnpm        | `11.11.0` through Corepack                                         |
-| Docker      | Local PostgreSQL and broader Compose profiles                      |
-| Bun         | Optional `1.3.14` runtime probe; not the canonical package manager |
+| Requirement | Supported version or role                     |
+| ----------- | --------------------------------------------- |
+| Node.js     | `>=24 <25` — pinned by `.nvmrc`               |
+| pnpm        | `11.11.0` through Corepack                    |
+| Docker      | Local PostgreSQL and broader Compose profiles |
+| Bun         | `1.3.14` — supported alternative runtime      |
 
 ### Start the selected stack
 
@@ -107,42 +103,6 @@ pnpm run dev
 `pnpm run dev` starts only the applications recorded by setup. It refuses to silently fall back to every application. Use `pnpm run dev:all` only when you intentionally want every serve target.
 
 For noninteractive setup, capability selection, app additions, and troubleshooting, continue with the [Quick Start](docs/quick-start.md) and [Setup and Configuration](docs/setup/configuration.md).
-
-## Bun runtime compatibility
-
-<div align="center">
-  <img alt="Bun runtime verified" src="https://img.shields.io/badge/runtime-verified-10B981?style=flat-square" />
-  <img alt="Bun package manager experimental" src="https://img.shields.io/badge/package_manager-experimental-F59E0B?style=flat-square" />
-  <img alt="Bun production deployment not certified" src="https://img.shields.io/badge/production_deployment-not_certified-EF4444?style=flat-square" />
-</div>
-
-Bun 1.3.14 successfully ran representative Nx graphs, Vite and Vike builds, an Expo web export, selected NestJS builds and HTTP runtimes, and selected Vitest suites in an isolated compatibility audit.
-
-Use `--bun` deliberately. Plain `bun run nx ...` follows Nx's Node shebang and can accidentally test Node instead of Bun.
-
-```bash
-# Keep dependency installation canonical and reproducible.
-pnpm install --frozen-lockfile
-
-# Force Nx itself to execute under Bun.
-NX_DAEMON=false bun run --bun nx show projects
-bun run --bun nx run admin-app:build
-bun run --bun nx run site-app:build
-```
-
-> [!CAUTION]
-> Do not replace `pnpm install`, disable coverage, or switch production images to Bun based on these probes. Bun's V8 coverage path, Nx deployment lockfile generation, Node-specific repository tooling, runtime reporting, OpenTelemetry certification, and production pruning still require dedicated implementation.
-
-| Capability                                   | Current position                              |
-| -------------------------------------------- | --------------------------------------------- |
-| Nx graph and representative builds under Bun | ✅ Verified                                   |
-| Selected Vike and NestJS runtime smoke tests | ✅ Verified                                   |
-| Selected Vitest suites                       | ✅ Verified                                   |
-| Canonical dependency resolution and lockfile | 🟠 pnpm remains required                      |
-| Normal coverage gate                         | 🔴 Blocked by missing inspector coverage APIs |
-| Production images and observability          | 🔴 Not certified                              |
-
-Read the evidence, commands, limitations, and phased adoption plan in [Bun Runtime Research](docs/bun-runtime-research.md).
 
 ## Architecture
 
@@ -205,7 +165,7 @@ flowchart LR
 
 | Layer            | Technology and responsibility                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.11.0, Node.js 24, optional Bun runtime probes                             |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.11.0, Node.js 24, and Bun 1.3.14 runtime support                          |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
 | 🩷 **Data**      | PostgreSQL, MikroORM, explicit migrations, Redis, NATS, S3/MinIO adapters                            |
@@ -299,7 +259,6 @@ Public TypeScript aliases in `tsconfig.base.json` are stable API. Every project 
 | Add or review migrations      | [Database Migrations](docs/database-migrations.md)                                                                 |
 | Configure environment values  | [Environment Variables](docs/environment-variables.md)                                                             |
 | Verify the repository locally | [Local Verification](docs/local-verification.md)                                                                   |
-| Evaluate Bun adoption         | [Bun Runtime Research](docs/bun-runtime-research.md)                                                               |
 | Browse everything             | [Documentation Index](docs/README.md)                                                                              |
 
 ## Security and contribution

@@ -2,7 +2,7 @@
  * Doctor command — health checks for the workspace.
  *
  * Checks:
- *   - Node.js version
+ *   - JavaScript runtime version (Node.js or Bun)
  *   - pnpm availability and version
  *   - Docker availability (optional)
  *   - Manifest files (package.json, tsconfig.base.json)
@@ -17,7 +17,7 @@
  *   repo-tooling project doctor --json
  */
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { execFileSync } from "node:child_process";
 import type { CommandContext } from "../../cli.js";
 import { safeParseNrbConfig, schemaVersion } from "../../setup/schema.js";
@@ -30,6 +30,7 @@ import {
 } from "../../setup/planner.js";
 import { backendCapabilityModuleCatalog } from "../../setup/catalog.js";
 import { parseGeneratedEnvironment } from "../../setup/environment.js";
+import { detectJavaScriptRuntime, type JavaScriptRuntimeInfo } from "../../runtime/environment.js";
 
 // ---------------------------------------------------------------------------
 // Check types
@@ -49,12 +50,32 @@ export function checkNodeVersion(version = process.version): DoctorCheck {
   const major = parseInt(version.slice(1).split(".")[0], 10);
   if (!Number.isInteger(major) || major !== 24) {
     return {
-      name: "node-version",
+      name: "runtime-version",
       status: "fail",
       message: `Node.js ${version} — repository requires >=24 <25`,
     };
   }
-  return { name: "node-version", status: "pass", message: `Node.js ${version}` };
+  return { name: "runtime-version", status: "pass", message: `Node.js ${version}` };
+}
+
+export function checkBunVersion(version: string, expectedVersion = "1.3.14"): DoctorCheck {
+  if (version !== expectedVersion) {
+    return {
+      name: "runtime-version",
+      status: "fail",
+      message: `Bun ${version} — repository requires exactly ${expectedVersion}`,
+    };
+  }
+  return { name: "runtime-version", status: "pass", message: `Bun ${version}` };
+}
+
+export function checkJavaScriptRuntime(
+  runtime: JavaScriptRuntimeInfo = detectJavaScriptRuntime(),
+  expectedBunVersion = "1.3.14",
+): DoctorCheck {
+  return runtime.name === "bun"
+    ? checkBunVersion(runtime.version, expectedBunVersion)
+    : checkNodeVersion(`v${runtime.version}`);
 }
 
 export function checkPnpmVersion(version: string): DoctorCheck {
@@ -68,9 +89,10 @@ export function checkPnpmVersion(version: string): DoctorCheck {
   return { name: "pnpm", status: "pass", message: `pnpm ${version}` };
 }
 
-function checkPnpm(): DoctorCheck {
+function checkPnpm(runtime: JavaScriptRuntimeInfo = detectJavaScriptRuntime()): DoctorCheck {
   try {
-    const output = execFileSync("pnpm", ["--version"], { encoding: "utf8", timeout: 10000 });
+    const invocation = pnpmVersionInvocation(runtime);
+    const output = execFileSync(invocation.command, invocation.args, { encoding: "utf8", timeout: 10000 });
     return checkPnpmVersion(output.trim());
   } catch {
     return {
@@ -79,6 +101,40 @@ function checkPnpm(): DoctorCheck {
       message: "pnpm not found — install pnpm 11.11.0 through Corepack",
     };
   }
+}
+
+function pnpmVersionInvocation(runtime: JavaScriptRuntimeInfo): { command: string; args: string[] } {
+  if (runtime.name !== "bun" || process.platform === "win32") {
+    return { command: "pnpm", args: ["--version"] };
+  }
+
+  const nodeExecutable = executableCandidates("node").find((candidate) => {
+    try {
+      return /^v24\./u.test(
+        execFileSync(candidate, ["--version"], {
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+          timeout: 5000,
+        }).trim(),
+      );
+    } catch {
+      return false;
+    }
+  });
+  const pnpmExecutable = executableCandidates("pnpm")[0];
+
+  return nodeExecutable && pnpmExecutable
+    ? { command: nodeExecutable, args: [pnpmExecutable, "--version"] }
+    : { command: "pnpm", args: ["--version"] };
+}
+
+function executableCandidates(command: string): string[] {
+  const executableNames = process.platform === "win32" ? [`${command}.cmd`, `${command}.exe`, command] : [command];
+  return (process.env.PATH ?? "")
+    .split(delimiter)
+    .filter(Boolean)
+    .flatMap((directory) => executableNames.map((name) => join(directory, name)))
+    .filter((candidate) => existsSync(candidate));
 }
 
 function checkDocker(): DoctorCheck {
@@ -288,9 +344,10 @@ export async function runDoctorCommand(
   const { workspaceRoot } = context;
   const jsonOutput = context.argv.includes("--json");
 
+  const runtime = detectJavaScriptRuntime();
   const checks: DoctorCheck[] = [
-    checkNodeVersion(),
-    checkPnpm(),
+    checkJavaScriptRuntime(runtime, readPinnedBunVersion(workspaceRoot)),
+    checkPnpm(runtime),
     checkDocker(),
     checkManifests(workspaceRoot),
     checkLockFile(workspaceRoot),
@@ -342,6 +399,11 @@ export async function runDoctorCommand(
   );
 
   return summary.fail > 0 ? 1 : 0;
+}
+
+function readPinnedBunVersion(workspaceRoot: string): string {
+  const path = join(workspaceRoot, ".bun-version");
+  return existsSync(path) ? readFileSync(path, "utf8").trim() : "1.3.14";
 }
 
 /** Entry point for CLI registration. */

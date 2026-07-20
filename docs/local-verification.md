@@ -44,6 +44,17 @@ without adding deployed-service prerequisites to that job.
 
 ## Current CI/local parity gates
 
+The supported alternative-runtime lane is reproducible locally with the exact
+Bun version in `.bun-version`:
+
+```bash
+pnpm run bun:check
+```
+
+This runs the Nx graph, representative Vite/Vike/Expo/Nest builds, selected
+unit and API end-to-end tests, and live Vike/Nest HTTP smokes under Bun. The
+canonical Node coverage and pnpm lockfile gates remain separate and mandatory.
+
 For documentation-only ops/QA/deployment changes, the focused parity slice is:
 
 ```bash

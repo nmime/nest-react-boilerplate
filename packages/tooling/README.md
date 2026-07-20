@@ -13,6 +13,7 @@ pnpm --filter @repo/tooling tooling qa mutation --dry-run
 pnpm --filter @repo/tooling tooling images webp --dry-run
 pnpm --filter @repo/tooling tooling tooling static-check
 pnpm --filter @repo/tooling tooling db migrations rollback-check
+pnpm run bun:check
 ```
 
 New commands should be implemented under `packages/tooling/src/commands` and registered in `packages/tooling/src/cli.ts`. Product-facing command names should also be listed in `docs/command-matrix.md`. The package uses `jiti` so command implementations stay in TypeScript without a build step for local workspace usage.
@@ -44,4 +45,4 @@ All QA presets are designed to be useful locally without depending on GitHub Act
 - `pnpm run deploy:validate` is the no-deploy validation bundle for production Docker Compose plus optional Helm, GitOps/Argo, and PM2 modes. Local runs do not require Helm globally: Helm rendering is skipped when Helm is unavailable unless `pnpm run deploy:validate:helm`, `--mode=helm`, or `REQUIRE_HELM=true` is used.
 - `pnpm run branch:cleanup:check` previews merged-branch cleanup. `pnpm run branch:cleanup -- --apply` is required to delete local merged branches; remote deletion additionally requires `--remote`. Protected branches (`main`, `master`, `develop`, `release/*`, `hotfix/*`, production/staging names, and `origin/HEAD`) are never candidates.
 
-Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.11.0 for local parity with CI.
+Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.11.0 for the canonical toolchain. Bun 1.3.14 is pinned through `.bun-version`; `pnpm run bun:check` runs its supported alternative-runtime contract locally and in CI.

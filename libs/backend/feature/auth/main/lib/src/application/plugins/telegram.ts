@@ -2,7 +2,7 @@ import type { BetterAuthPlugin } from 'better-auth';
 import { APIError, createAuthEndpoint } from 'better-auth/api';
 import { setSessionCookie } from 'better-auth/cookies';
 import { parse as parseTmaInitData, validate as validateTmaInitData } from '@tma.js/init-data-node';
-import { z } from 'zod';
+import * as z from 'zod';
 import { TelegramOidcProviderId, telegramSyntheticEmail } from '../telegram-oidc';
 
 export interface TelegramPluginOptions {

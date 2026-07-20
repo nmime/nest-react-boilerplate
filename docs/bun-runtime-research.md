@@ -1,19 +1,26 @@
-# Bun runtime research
+# Bun runtime support
 
 - Research date: 2026-07-19
+- Implementation verified: 2026-07-20
 - Repository baseline: `f130b2df052f0a91ec6a4cfbd224350e36d46175`
 - Tested Bun: `1.3.14+0d9b296af` (latest stable on the research date)
 
 ## Decision
 
-The repository can run representative frontend, SSR, mobile-export, and NestJS
-workloads on Bun 1.3.14 today. It is not ready to replace Node.js and pnpm as a
-supported production toolchain with only a version-pin or script change.
+The repository supports Bun 1.3.14 as an alternative JavaScript runtime for a
+tested compatibility contract. Node.js 24 and pnpm 11.11.0 remain the canonical
+dependency-resolution, coverage, CI baseline, and deployment toolchain.
 
-Adopt Bun in phases. First add a tested, opt-in Bun runtime lane while keeping
-Node.js 24 and pnpm canonical for dependency resolution, coverage, CI, and
-deployment. Move the package manager and production images only after the
-tooling, lockfile, observability, and deployment blockers below are resolved.
+The supported lane is pinned in `.bun-version` and runs locally and in CI with:
+
+```bash
+pnpm run bun:check
+```
+
+It verifies the Nx graph, a Vite build, a Vike SSR build and production runtime,
+an Expo web export, a NestJS build and HTTP runtime, selected unit tests, and an
+API end-to-end suite. The Nest readiness probe also verifies that runtime health
+reports Bun rather than Bun's Node-compatibility version.
 
 This distinction matters because `bun run nx ...` normally honors Nx's
 `#!/usr/bin/env node` shebang. Use `bun run --bun nx ...` when the intent is to
@@ -46,31 +53,33 @@ the existing Node.js workflow with Bun.
 
 ## Empirical compatibility matrix
 
-All probes ran in the isolated `codex/latest-bun-research` worktree from the
-baseline above. The Bun binary was the official macOS arm64 1.3.14 release; the
-machine's installed Bun 1.2.21 was not upgraded.
+The original research probes ran in the isolated `codex/latest-bun-research`
+worktree from the baseline above. Implemented Phase 0 surfaces were reverified
+through `pnpm run bun:check` on the implementation date. The Bun binary was the
+official macOS arm64 1.3.14 release; the machine's installed Bun 1.2.21 was not
+upgraded.
 
-| Surface                           | Result                       | Evidence and limitation                                                                                                                                                                                         |
-| --------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bun lock migration                | Pass with required follow-up | `bun install --lockfile-only` migrated the pnpm graph to a 927 KiB `bun.lock` and copied workspace paths plus overrides into root `package.json`. It did not make Bun canonical or remove pnpm-only policy.     |
-| Frozen Bun install                | Pass                         | A warm `bun ci` checked 2,700 installs across 2,978 packages in 615 ms. `@swc/core` and then `nx` appeared as blocked lifecycle scripts; both need explicit trust.                                              |
-| Nx project graph under Bun        | Pass                         | `NX_DAEMON=false bun run --bun nx show projects` resolved the complete graph. `bun run --bun nx report` reported Bun 1.3.14 and Node-compatibility value 24.3.0.                                                |
-| Nest API build under Bun          | Pass with deployment warning | `bun run --bun nx run admin-app-api:build --skip-nx-cache` built the API and its 28 dependencies. Nx warned: `Bun lockfile generation is unsupported`; the per-app pruned deployment lockfile was not produced. |
-| Vite admin build under Bun        | Pass                         | `bun run --bun nx run admin-app:build --skip-nx-cache` completed.                                                                                                                                               |
-| Vike SSR build under Bun          | Pass                         | `bun run --bun nx run site-app:build --skip-nx-cache` completed.                                                                                                                                                |
-| Expo web export under Bun         | Pass                         | `bun run --bun nx run mobile-app:export --skip-nx-cache` exported the mobile web bundle.                                                                                                                        |
-| Vike development server under Bun | Pass                         | `bun run --bun nx run site-app:serve` served the application on `localhost:4203`; HTTP `/` returned 200.                                                                                                        |
-| Vike production runtime on Bun    | Pass                         | The built `dist/apps/frontend/site/server/index.js` ran directly with Bun; `/` and `/problems` returned 200.                                                                                                    |
-| Nest production artifact on Bun   | Pass for local smoke         | The built admin API ran directly with Bun using development in-memory auth. Nest initialized, and `/live` plus `/ready` returned 200. This was not a production dependency/telemetry certification.             |
-| Backend unit tests on Bun         | Pass                         | Direct Bun execution of Vitest passed 36 bootstrap tests, 39 exception tests, and 6 admin API tests.                                                                                                            |
-| Backend E2E on Bun                | Runtime pass, coverage fail  | The three admin API E2E tests passed when V8 coverage was disabled. The normal config failed before tests with `Coverage APIs are not supported` from `node:inspector`.                                         |
-| Repository doctor on Bun          | Misleading pass              | The doctor called Bun's Node compatibility value `Node.js v24.3.0`, required pnpm 11.11.0, and checked only `pnpm-lock.yaml`. Runtime/package-manager detection is not Bun-aware.                               |
-| Tooling static check on Bun       | Fail by hang                 | Direct Bun execution hung when the checker spawned `process.execPath --check ...`. The tooling also relies on Node's `--test`, `--import`, and `--test-isolation` flags.                                        |
-| Runtime health details            | Incorrect                    | A Nest process running on Bun reported `runtime: "node"`; the indicator is hardcoded. Bun recommends detection through `process.versions.bun`.                                                                  |
+| Surface                           | Result                       | Evidence and limitation                                                                                                                                                                                        |
+| --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bun lock migration                | Pass with required follow-up | `bun install --lockfile-only` migrated the pnpm graph to a 927 KiB `bun.lock` and copied workspace paths plus overrides into root `package.json`. It did not make Bun canonical or remove pnpm-only policy.    |
+| Frozen Bun install                | Pass                         | A warm `bun ci` checked 2,700 installs across 2,978 packages in 615 ms. `@swc/core` and then `nx` appeared as blocked lifecycle scripts; both need explicit trust.                                             |
+| Nx project graph under Bun        | Pass                         | `NX_DAEMON=false bun run --bun nx show projects` resolved the complete graph. `bun run --bun nx report` reported Bun 1.3.14 and Node-compatibility value 24.3.0.                                               |
+| Nest API build under Bun          | Pass with deployment warning | `bun run --bun nx run auth-app-api:build --skip-nx-cache` built the API and its 27 dependencies. Nx warned: `Bun lockfile generation is unsupported`; the per-app pruned deployment lockfile was not produced. |
+| Vite admin build under Bun        | Pass                         | `bun run --bun nx run admin-app:build --skip-nx-cache` completed.                                                                                                                                              |
+| Vike SSR build under Bun          | Pass                         | `bun run --bun nx run site-app:build --skip-nx-cache` completed.                                                                                                                                               |
+| Expo web export under Bun         | Pass                         | `bun run --bun nx run mobile-app:export --skip-nx-cache` exported the mobile web bundle.                                                                                                                       |
+| Vike development server under Bun | Pass                         | `bun run --bun nx run site-app:serve` served the application on `localhost:4203`; HTTP `/` returned 200.                                                                                                       |
+| Vike production runtime on Bun    | Pass                         | The built `dist/apps/frontend/site/server/index.js` ran directly with Bun; `/health`, `/`, and `/problems` returned 200.                                                                                       |
+| Nest production artifact on Bun   | Pass for local smoke         | The built auth API ran directly with Bun using development in-memory auth. `/live` and `/ready` returned 200, and readiness identified Bun. This is not production dependency/telemetry certification.         |
+| Backend unit tests on Bun         | Pass                         | The supported lane passed 43 bootstrap, 39 exception, 48 health, and 8 auth API tests; one intentionally environment-gated auth test was skipped.                                                              |
+| Backend E2E on Bun                | Runtime pass, coverage fail  | Three auth API E2E tests passed and one environment-gated test skipped when V8 coverage was disabled. The normal config still requires Node's inspector-backed coverage APIs.                                  |
+| Repository doctor on Bun          | Pass                         | The doctor reports Bun 1.3.14 instead of its Node compatibility value and verifies canonical pnpm through Node so Bun's shebang override cannot produce a false failure.                                       |
+| Tooling static check on Bun       | Outside supported contract   | The checker relies on Node's `--check`, `--test`, `--import`, and `--test-isolation` flags. It remains in the mandatory Node lane rather than weakening those checks for Bun.                                  |
+| Runtime health details            | Pass                         | Runtime health detects `process.versions.bun`; the Bun HTTP smoke requires the Nest readiness response to report `runtime: "bun"`.                                                                             |
 
-The forced-Bun builds emitted a large stack trace for every `NO_COLOR` versus
-`FORCE_COLOR` warning. It did not fail the builds, but must be fixed before this
-becomes a usable default developer path.
+The initial forced-Bun probes emitted repeated `NO_COLOR` versus `FORCE_COLOR`
+warnings. The supported command removes both conflicting variables from child
+processes, so the compatibility lane remains readable locally and in CI.
 
 ## Why a direct replacement is unsafe
 
@@ -162,18 +171,18 @@ support remains partial; passing a few HTTP requests is not sufficient proof.
 
 ## Recommended rollout
 
-### Phase 0: non-canonical Bun runtime lane
+### Phase 0: supported alternative Bun runtime lane — implemented
 
-Keep Node 24 and pnpm 11.11.0 canonical. Add:
+Node 24 and pnpm 11.11.0 remain canonical. The repository now includes:
 
-- exact Bun 1.3.14 pin and an installation note;
-- `bun run --bun nx ...` convenience commands that do not claim package-manager
-  migration;
-- a Bun compatibility smoke job for the Nx graph, one Nest build/runtime, one
-  Vite build, Vike build/runtime, Expo web export, and selected unit/E2E tests
-  without replacing the mandatory Node coverage job;
-- correct runtime reporting via `process.versions.bun`;
-- a Bun-aware doctor that clearly distinguishes runtime from package manager.
+- the exact Bun 1.3.14 pin in `.bun-version`;
+- the stable `pnpm run bun:check` command, which forces Nx and child JavaScript
+  tools to execute under Bun;
+- a CI compatibility job for the Nx graph, Nest build/runtime, Vite build,
+  Vike build/runtime, Expo web export, and selected unit/E2E tests without
+  replacing the mandatory Node coverage job;
+- correct health reporting via `process.versions.bun`;
+- a Bun-aware doctor that distinguishes Bun from its Node compatibility value.
 
 Acceptance: the optional lane is reproducible and green, while all existing
 Node/pnpm checks and deployment artifacts remain unchanged.
@@ -208,10 +217,10 @@ setup, Docker builders, and single-server installation. Remove the pnpm lock and
 policy only when Bun is the sole canonical package manager and every generator,
 doctor, validator, CI workflow, deployment mode, and recovery runbook agrees.
 
-## Suggested first implementation slice
+## Current implementation boundary
 
-The first pull request should stop after Phase 0. It is small enough to review,
-provides continuous compatibility evidence, and does not weaken the current
-reproducibility or coverage guarantees. Package-manager and production-image
-migration should be separate pull requests because their rollback and security
-boundaries are materially different.
+The supported contract stops at Phase 0. It provides continuous runtime
+compatibility evidence without weakening existing reproducibility or coverage
+guarantees. Package-manager and production-image migration remain separate work
+because their rollback, supply-chain, observability, and security boundaries are
+materially different.

@@ -107,6 +107,10 @@ for (const [workflowName, workflowText] of [
 }
 for (const required of [
   'non-runtime-validation',
+  'bun-compat',
+  'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6',
+  'bun-version-file: ${{ env.BUN_VERSION_FILE }}',
+  'pnpm run bun:check',
   'pnpm run db:migrations:check',
   'pnpm run lib:configs:check',
   'pnpm run api:contracts:check',

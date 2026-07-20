@@ -12,6 +12,7 @@ import { runMutation } from './commands/qa/mutation';
 import { runBranchCleanup } from './commands/git/branch-cleanup';
 import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
+import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
 import { run } from './runtime/process';
 
 export interface CommandContext {
@@ -72,6 +73,11 @@ register('doctor', 'Shorthand for project:doctor — workspace health checks.', 
 register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
+);
+register(
+  'tooling:bun-compat',
+  'Run the pinned Bun compatibility contract across builds, tests, and runtime smokes.',
+  runBunCompatibilityCommand,
 );
 register(
   'tooling:static-check',

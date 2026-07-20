@@ -9,6 +9,7 @@
     "dev": "pnpm run dev:fullstack",
     "dev:all": "nx run-many -t serve",
     "build": "VITE_API_BASE_URL_MODE=same-origin nx run-many -t build",
+    "bun:check": "bun run --bun packages/tooling/bin/repo-tooling.mjs tooling bun-compat",
     "storybook": "storybook dev -p 6006 -c libs/frontend/ui-web/lib/.storybook",
     "storybook:build": "storybook build -c libs/frontend/ui-web/lib/.storybook -o dist/storybook/frontend-ui-web",
     "test": "nx run-many -t test",

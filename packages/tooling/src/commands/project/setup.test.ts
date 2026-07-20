@@ -452,7 +452,7 @@ describe("doctor — runDoctorCommand", () => {
       workspaceRoot: "/mock",
     });
     const stdout = stdoutChunks.join("");
-    assert.ok(stdout.includes("node-version"), "Should report node version");
+    assert.ok(stdout.includes("runtime-version"), "Should report the JavaScript runtime version");
     assert.ok(stdout.includes("Summary:"), "Should show summary");
   });
 

@@ -11,7 +11,7 @@ or evaluate Nx's documented side-by-side TypeScript 7 build path in a dedicated 
 | Breaking change                 | Impact on this repo                                                  |
 | ------------------------------- | -------------------------------------------------------------------- |
 | `baseUrl` removed               | `tsconfig.base.json` uses `"baseUrl": "."`                           |
-| `paths` values must be relative | All 64 path aliases use absolute paths (`libs/...` not `./libs/...`) |
+| `paths` values must be relative | All 63 path aliases use absolute paths (`libs/...` not `./libs/...`) |
 | `ignoreDeprecations` removed    | Currently set to `"6.0"` in base config                              |
 
 ## Migration steps (run in order)
@@ -55,7 +55,7 @@ for line in lines:
 
 with open("tsconfig.base.json", "w") as f:
     f.writelines(out)
-print("Done: 64 paths made relative, baseUrl removed, ignoreDeprecations removed")
+print("Done: 63 paths made relative, baseUrl removed, ignoreDeprecations removed")
 PY
 ```
 
@@ -94,7 +94,7 @@ pnpm install
 - `typescript-eslint` is **8.64.0**; `ts-api-utils` is **2.5.0**
 - A direct TypeScript 7.0.2 trial failed during Nx project-graph creation, before
   application builds could start
-- 64 path aliases in `tsconfig.base.json` using `baseUrl: "."` pattern
+- 63 path aliases in `tsconfig.base.json` using `baseUrl: "."` pattern
 - Zero code changes required — migration is config-only
 
 Nx references:

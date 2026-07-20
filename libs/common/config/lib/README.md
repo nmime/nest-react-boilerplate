@@ -2,8 +2,9 @@
 
 ## Purpose
 
-Provides the Joi-backed `createConfig` accessor for typed environment
-configuration without coupling consumers to Nest application composition.
+Provides the validator-agnostic `createConfig` accessor (compatible with Joi and
+any schema exposing a `validate()` method) for typed environment configuration
+without coupling consumers to Nest application composition.
 
 ## Commands
 

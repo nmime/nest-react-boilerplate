@@ -74,7 +74,10 @@ cp .env.production.example .env.production
 mkdir -p docker/secrets
 chmod 700 docker/secrets
 openssl rand -base64 48 > docker/secrets/auth_jwt_secret.txt
+openssl rand -base64 48 > docker/secrets/session_secret.txt
 openssl rand -base64 48 > docker/secrets/better_auth_secret.txt
+openssl rand -base64 32 > docker/secrets/auth_provider_token_encryption_key.txt
+openssl rand -base64 32 > docker/secrets/redis_password.txt
 openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
 chmod 600 .env.production docker/secrets/*.txt
 ```

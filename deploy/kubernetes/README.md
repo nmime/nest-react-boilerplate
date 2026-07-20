@@ -9,7 +9,7 @@ This directory documents the direct Helm release path. The chart itself lives in
 2. Publish immutable `sha-<full-git-sha>` images for all enabled apps and the migrator.
 3. Provision reachable PostgreSQL and Redis services; the app chart does not own their lifecycle.
 4. Provision the Secret referenced by `secrets.existingSecret` with at least
-   `AUTH_JWT_SECRET` and `DATABASE_URL`.
+   `AUTH_JWT_SECRET`, `BETTER_AUTH_SECRET`, and `DATABASE_URL`.
 5. Provision `ghcr-credentials` in the target namespace when images are private.
 6. Configure ingress, DNS, and TLS for every enabled app domain.
 

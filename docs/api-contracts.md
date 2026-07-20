@@ -4,7 +4,7 @@
 
 REST contracts are standardized on the NestJS Swagger/OpenAPI documents produced by the backend apps. `openapi-typescript` generates shared contract review types in `libs/common/api-contracts` and frontend per-service client types in `libs/frontend/api-client/lib/src/generated`. Frontend runtime clients are built with `openapi-fetch` and `openapi-react-query`; Orval is not used.
 
-The repository-root `config/` directory is intentionally absent. The API contract manifest and schema are owned by repo tooling at `packages/tooling/config/`, and the shared Vitest coverage preset is owned by tooling test helpers at `packages/tooling/src/testing/vitest-coverage.mts`.
+There is intentionally no repository-root API contract manifest or artifact directory. The API contract manifest and schema are owned by repo tooling at `packages/tooling/config/`, and the shared Vitest coverage preset is owned by tooling test helpers at `packages/tooling/src/testing/vitest-coverage.mts`. (The root `config/` directory holds unrelated metro/vite tsconfig-alias helpers, not contract artifacts.)
 
 ## Rationale
 

@@ -66,7 +66,7 @@ Completion logs include (in JSON mode):
 
 The logger automatically redacts:
 
-- Values for protected keys: `authorization`, `cookie`, `credential`, `passwd`, `password`, `private-key`, `secret`, `token`
+- Values for protected keys (matched case-insensitively by name; see `ProtectedLoggerFields` in `libs/backend/common/logger/lib`): `authorization`, `cookie`, `set-cookie`, `password`, `passwd`, `pwd`, `token` (plus `access-token`/`access_token`, `refresh-token`/`refresh_token`, `id-token`/`id_token`), `signature`, `x-signature`, `x-api-key`, `api-key`/`api_key`/`apikey`, `access_key`, `secret`, `client-secret`/`client_secret`, `private-key`/`private_key`, `session`, `sid`, `csrf`, `xsrf`
 - Bearer token patterns in headers
 - API keys in query strings for protected field names
 

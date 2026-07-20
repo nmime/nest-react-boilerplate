@@ -8,6 +8,7 @@ native UI foundation consumed by Expo applications.
 ## Commands
 
 ```bash
+pnpm exec nx run @app/frontend-ui-native:test
 pnpm exec nx run @app/frontend-ui-native:build
 ```
 

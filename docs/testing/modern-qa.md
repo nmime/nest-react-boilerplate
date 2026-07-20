@@ -71,7 +71,7 @@ is set for a non-production dry run.
 - Optional preset smoke/dry-run bundle: `pnpm run quality:presets`
 - Security suite only: `pnpm run test:security`
 
-`pnpm run check` intentionally stays local and deterministic: formatting, migration/config drift, OpenAPI/client freshness, OpenAPI lint, consumer contracts, OpenAPI fuzz case generation, property invariants, lint, typecheck, and unit tests.
+`pnpm run check` runs mostly local, deterministic gates: formatting, migration/config drift, OpenAPI/client freshness, OpenAPI lint, consumer contracts, OpenAPI fuzz case generation, property invariants, the runtime world-class gate (`test:world-class`), lint, typecheck, and unit tests. Every step except the world-class gate is deterministic and needs no runtime; `test:world-class` reports `partial` locally when the required runtime is absent (see below).
 
 `pnpm run quality:presets` validates all preset entry points. Runtime-backed world-class gates keep local developer runs flexible and report `partial` when a required runtime target is absent. In CI, a missing required world-class runtime target fails the command unless the runner explicitly sets `WORLD_CLASS_ALLOW_CI_SKIPS=1`, which records an intentional partial run instead of reporting success.
 

@@ -87,14 +87,19 @@ await jetstream.publishJson('my.subject', { data: 'value' });
 
 // Get JetStream client for advanced operations
 const js = jetstream.getClient();
-const streams = await js.getStreamList();
+
+// List streams via the JetStream manager
+const manager = await jetstream.getManager();
+for await (const stream of manager.streams.list()) {
+  console.log(stream.config.name);
+}
 ```
 
 ### Key-Value Store
 
 ```typescript
-// Get a KV bucket
-const bucket = await kv.getBucket('config');
+// Open a KV bucket (use createBucket to create one)
+const bucket = await kv.openBucket('config');
 
 // Put and get values
 await bucket.put('setting.theme', 'dark');
@@ -104,8 +109,8 @@ const value = await bucket.get('setting.theme');
 ### Object Store
 
 ```typescript
-// Get an ObjectStore
-const store = await objectStore.getStore('uploads');
+// Open an ObjectStore (use createStore to create one)
+const store = await objectStore.openStore('uploads');
 
 // Store an object
 await store.put({
@@ -137,9 +142,14 @@ and all services check `isEnabled` before operating.
 
 ```typescript
 import { NatsHealthIndicator } from '@app/backend-common-nats';
+import { HealthService } from '@app/backend-common-health';
 
-// In your health check module:
-health.check('nats', (health) => health.checkNats('nats'));
+// NatsModule registers NatsHealthIndicator. Add it to your
+// HealthService indicators; its check() reports connection status:
+new HealthService({
+  appName: 'my-service',
+  indicators: [natsHealth],
+});
 ```
 
 ## Graceful Shutdown

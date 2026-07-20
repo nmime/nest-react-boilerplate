@@ -16,7 +16,7 @@ The SDK uses `@opentelemetry/api` for tracing and `@opentelemetry/sdk-node` for 
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | Metrics-specific OTLP endpoint (overrides base + /v1/metrics) | (none)             |
 | `OTEL_EXPORTER_OTLP_METRICS_HEADERS`  | Metrics-specific headers (overrides base)                     | (none)             |
 | `OTEL_METRIC_EXPORT_INTERVAL`         | Metric export interval in milliseconds                        | `60000`            |
-| `OTEL_SERVICE_NAME`                   | Service name resource attribute                               | app name from code |
+| `OTEL_SERVICE_NAME`                   | Not honored — service name is fixed to the app name from code | app name from code |
 | `OTEL_SERVICE_VERSION`                | Service version resource attribute                            | (none)             |
 
 **No secrets in this file.** Header values containing credentials (e.g. API keys) should use env var injection from the platform secret manager.
@@ -32,7 +32,7 @@ If no endpoint is configured and `OTEL_ENABLED` is not explicitly set, the SDK f
 
 ## What is exported
 
-- **Traces:** HTTP server spans, database query spans (via DB span processor), Redis spans, and NATS spans. Use the `wrapInSpan` helper to add custom instrumentation.
+- **Traces:** HTTP server spans (http/fastify), PostgreSQL query spans (via `@opentelemetry/instrumentation-pg`), Redis spans, and NestJS-core spans. Use the `withSpan` helper to add custom instrumentation.
 - **Metrics:** Node.js runtime metrics and custom counters/histograms. Exported via `OTLPMetricExporter`.
 
 Both signals use the OTLP protocol. Endpoint resolution appends `/v1/traces` or `/v1/metrics` to the base endpoint if signal-specific endpoints are not set.

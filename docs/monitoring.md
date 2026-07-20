@@ -30,14 +30,19 @@ Helm `ServiceMonitor` targets the collector service rather than individual APIs.
 
 ## Enable application telemetry
 
-Local Compose and production Compose already contain the collector. Enable the
-SDK in each backend process with:
+Production Compose (`docker/docker-compose.prod.yml`) ships the collector. Enable
+the SDK in each backend process with:
 
 ```env
 OTEL_ENABLED=true
 OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
 OTEL_METRIC_EXPORT_INTERVAL=60000
 ```
+
+There is no `otel-collector` service in local Compose; for local development,
+apps export OTLP directly to Tempo (`OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317`)
+via `docker-compose.override.yml`. See
+[the observability guide](observability.md) for the local wiring.
 
 The base endpoint is expanded to `/v1/traces` and `/v1/metrics`. Signal-specific
 endpoint and header variables are documented in

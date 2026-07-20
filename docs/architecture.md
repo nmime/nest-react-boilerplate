@@ -65,7 +65,7 @@ const NotFoundException = Exception({
 });
 ```
 
-- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The root app serves it at `/problems`.
+- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The `landing-app` (Astro) and `site-app` (Vike) frontends serve the registry documentation at `/problems`.
 - **Generic HTTP errors**: omit `problemType`; they serialize with `type: "about:blank"` and status-defined semantics.
 - **Runtime context** only accepts `{ extensions? (explicitly public), meta? (private diagnostics), cause? }`.
 - **Occurrence identity**: the HTTP boundary derives an absolute opaque `instance` URI from a validated request ID; request paths are never used as occurrence identifiers.
@@ -122,6 +122,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:asset` is for source-controlled static inputs such as scoped i18n catalog projects; common catalog adapters may depend on these assets, but assets should not import application code.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
 - `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Feature-owned Postgres libraries live under the owning scope, use `type:data-access`, and keep the same `scope:<domain>` tag instead of inventing a second database scope.
+- `boundary:backend-kernel`, `boundary:infrastructure-adapter`, `boundary:interface-helper`, and `boundary:test-util` describe Clean Architecture layer boundaries for backend libraries and constrain which layers may depend on which; `fsd:layer:*` (e.g. `fsd:layer:shared`, `fsd:layer:app`) describes frontend Feature-Sliced Design layers; and `framework:neutral` marks libraries that may only depend on other `framework:neutral` libraries or `type:asset`. These additional dimensions are defined and enforced in `eslint.config.js`.
 
 New libraries should use the taxonomy above and, where practical, keep feature, data-access, and test-util responsibilities split.
 
@@ -172,7 +173,7 @@ Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<loca
 - Component tests run under separate `component-test` targets and use Testcontainers for real service dependencies. They require Docker and are intentionally separate from unit tests so normal `test` targets do not start containers.
 - `@app/backend-common-component-test` provides shared PostgreSQL container helpers for DB-backed component tests.
 - Backend e2e tests should exercise Nest apps through HTTP with `supertest`; DB-backed e2e/component tests should use Testcontainers and isolated fixtures.
-- Frontend e2e currently uses static build smoke tests. Browser-level e2e coverage requires an instrumented browser test setup and will be introduced separately rather than hidden behind the existing static smoke target.
+- Frontend e2e already runs Vite SPA browser coverage smokes for `admin-app` and `user-app` (Playwright + `vite-plugin-istanbul`, gated by `VITE_E2E_COVERAGE=true`), alongside static build smokes for `landing-app` (Astro) and `site-app` (Vike). Browser-level coverage for the Astro and Vike shapes still requires framework-specific instrumentation and will be introduced separately rather than hidden behind their existing static smoke targets.
 
 ## E2E coverage
 
@@ -229,7 +230,7 @@ graph TD
 
 ## Current contract and persistence layout
 
-OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest, schema, and typed loader are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; the repository-root `config/` directory is intentionally absent.
+OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest, schema, and typed loader are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; there is intentionally no repository-root `config/` subtree for these contract artifacts (the root `config/` directory holds only vite/metro workspace tsconfig-alias helpers).
 
 There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
 

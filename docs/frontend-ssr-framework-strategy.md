@@ -58,9 +58,9 @@ page a React application.
 
 Use the current package baseline:
 
-- `astro@7.0.9`
+- `astro@7.1.0`
 - `@astrojs/react@6.0.1`
-- `@astrojs/mdx@7.0.2` when docs, changelog pages, pricing copy, or long-form
+- `@astrojs/mdx@7.0.3` when docs, changelog pages, pricing copy, or long-form
   content become part of the landing surface.
 - `@astrojs/sitemap@3.7.3` for sitemap generation.
 - `@astrojs/node@11.0.2` only when landing needs on-demand rendering, sessions,
@@ -83,8 +83,10 @@ Use the current package baseline:
 
 - `vike@0.4.260`
 - `vike-react@0.6.25`
-- `@vikejs/fastify@0.2.5` for the Node/Fastify server adapter, matching the
-  backend preference for Fastify.
+- `fastify@5.10.0` with `@fastify/static@9.3.0` for the Node server, wiring
+  Vike's `renderPage` from `vike/server` in
+  `apps/frontend/site/server/index.ts` and matching the backend preference for
+  Fastify.
 
 Site pages should use Vike page files and Vike server data hooks for initial
 SSR data. Client-side TanStack Query can still own live refetching, mutations,

@@ -44,7 +44,9 @@ Routing is app-owned; there is no repository-wide React Router assumption.
 - `admin-app` owns its explicit route composition in
   `apps/frontend/admin/src/App.tsx`.
 - Astro routes are filesystem pages under
-  `apps/frontend/landing/src/pages/**`.
+  `apps/frontend/landing/src/astro/pages/**` (the app's `astro.config.mjs` sets
+  `srcDir: './src/astro'`); the React FSD `src/pages/**` layer is separate and
+  is not an Astro route directory.
 - Vike routes are filesystem pages under `apps/frontend/site/pages/**` and use
   `+Page.tsx` / `+config.ts` conventions.
 - Expo Router routes live under `apps/frontend/mobile/src/app/**`; reusable

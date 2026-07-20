@@ -58,9 +58,12 @@ This repository intentionally allows native build steps only for packages requir
 
 - `@nestjs/core`
 - `@parcel/watcher`
+- `@prisma/client`
 - `@swc/core`
+- `better-sqlite3`
 - `esbuild`
 - `nx`
+- `sharp`
 
 Unexpected new package build scripts should be treated as a supply-chain review item. Approve them only when the package is necessary, the install script is documented, and CI still uses the frozen lockfile.
 
@@ -68,7 +71,7 @@ Unexpected new package build scripts should be treated as a supply-chain review 
 
 - Pin third-party and first-party GitHub Actions to full 40-character commit SHAs in workflow `uses:` entries.
 - Keep the human-readable version tag in a trailing comment (for example, `# v4`) so Dependabot action updates remain easy to review.
-- Prefer pinned runner images such as `ubuntu-24.04` over floating labels such as `ubuntu-latest` for CI and release reproducibility.
+- Prefer pinned runner images such as `ubuntu-22.04` over floating labels such as `ubuntu-latest` for CI and release reproducibility.
 
 ## Security gates
 

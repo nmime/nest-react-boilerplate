@@ -92,7 +92,7 @@ Important env values:
 
 ## Discord OAuth, bot commands, and interactions
 
-Planned Discord support has two pieces:
+Discord support has two implemented pieces:
 
 - OAuth/social login for web account creation and account linking.
 - Discord bot/interactions for slash commands and components.

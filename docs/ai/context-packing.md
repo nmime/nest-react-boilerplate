@@ -30,7 +30,8 @@ Use this order when deciding where to place guidance:
 The following backend patterns are documented in [agent-policy.md](agent-policy.md) and mapped in
 [repo-map.md](repo-map.md) so agents can find them without reading every library README:
 
-- **Request Context (CLS)**: `@app/backend-common-bootstrap` provides `requestContext` backed by
+- **Request Context (CLS)**: `@app/backend-common-request-context` provides `requestContext`
+  (re-exported by `@app/backend-common-bootstrap`) backed by
   Node.js `AsyncLocalStorage`. No `nestjs-cls` dependency. Agents should reference
   [agent-policy.md § Request Context](agent-policy.md#request-context-cls) for the canonical import
   and usage pattern.

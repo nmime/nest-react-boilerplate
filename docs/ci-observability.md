@@ -10,8 +10,9 @@ The `CI` workflow starts with a dedicated `Fast PR gate (ci:pr)` job. It runs:
 pnpm run ci:pr
 ```
 
-That command covers tooling/static checks, changed-file formatting, native secret
-and SAST scans, and the production dependency audit. The later Nx quality job
+That command covers tooling/static checks, documentation-contract checks
+(`docs:check`), changed-file formatting, native secret and SAST scans, and the
+production dependency audit. The later Nx quality job
 owns full formatting, lint, typecheck, unit/component coverage, and builds.
 
 The `Helm render validation` job also runs the dependency-free deployment configuration assertions before Helm setup and rendering:

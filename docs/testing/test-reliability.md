@@ -57,19 +57,19 @@ Track quarantined tests in the issue tracker with the `flaky-test` label.
 
 ## CI commands
 
-| Command                      | Purpose                                                                            |
-| ---------------------------- | ---------------------------------------------------------------------------------- |
-| `pnpm run check`             | Full local deterministic gate (format, lint, typecheck, contracts, property, unit) |
-| `pnpm run check:fast`        | Fast PR gate (format, lint, typecheck, unit)                                       |
-| `pnpm run test`              | Unit tests (Jest)                                                                  |
-| `pnpm run test:property`     | Property-based tests                                                               |
-| `pnpm run test:coverage`     | Unit tests with coverage report                                                    |
-| `pnpm run test:component`    | Component-level tests                                                              |
-| `pnpm run test:e2e`          | Playwright end-to-end (Chromium)                                                   |
-| `pnpm run test:e2e:matrix`   | Cross-browser e2e matrix                                                           |
-| `pnpm run test:docker-smoke` | Docker stack smoke tests                                                           |
-| `pnpm run test:fullstack`    | Fullstack Playwright e2e                                                           |
-| `pnpm run test:world-class`  | Runtime QA/ops gates (requires runtime)                                            |
+| Command                      | Purpose                                                                                                                                   |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run check`             | Full local gate (format, tooling/docs checks, contracts, property, lint, typecheck, unit) plus the runtime `test:world-class` QA/ops gate |
+| `pnpm run check:fast`        | Fast PR gate (tooling static check, docs check, format, lint, typecheck, unit)                                                            |
+| `pnpm run test`              | Unit tests (Jest)                                                                                                                         |
+| `pnpm run test:property`     | Property-based tests                                                                                                                      |
+| `pnpm run test:coverage`     | Unit tests with coverage report                                                                                                           |
+| `pnpm run test:component`    | Component-level tests                                                                                                                     |
+| `pnpm run test:e2e`          | Playwright end-to-end (Chromium)                                                                                                          |
+| `pnpm run test:e2e:matrix`   | Cross-browser e2e matrix                                                                                                                  |
+| `pnpm run test:docker-smoke` | Docker stack smoke tests                                                                                                                  |
+| `pnpm run test:fullstack`    | Fullstack Playwright e2e                                                                                                                  |
+| `pnpm run test:world-class`  | Runtime QA/ops gates (requires runtime)                                                                                                   |
 
 ## Investigating CI test failures
 

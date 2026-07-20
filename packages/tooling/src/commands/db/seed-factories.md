@@ -5,8 +5,9 @@ test data. No randomness, no secrets, no external packages (`faker`, `uuid`, etc
 
 ## Why
 
-The existing `seed.ts` uses `randomUUID()` and `randomBytes()`, which is correct for
-production seeding but breaks test reproducibility. These factories provide a
+The existing `seed.ts` uses `randomBytes()` for password salts and hardcoded
+deterministic UUID constants for record IDs. The random salts are correct for
+production seeding but break test reproducibility. These factories provide a
 predictable alternative for:
 
 - **Component tests** that need stable fixture records.
@@ -36,19 +37,17 @@ seq.next(); // 2 (starts from 1, next returns 2)
 Build a factory that produces deterministic records.
 
 ```ts
-import { createFactory, defineSequence } from './seed-factories.ts';
-
-const seq = defineSequence();
+import { createFactory } from './seed-factories.ts';
 
 const userFactory = createFactory({
-  id: () => `user_${seq.next()}`,
-  email: () => `user${seq.next()}@example.com`,
+  id: (ctx) => `user_${ctx.sequence.next()}`,
+  email: (ctx) => `user${ctx.sequence.next()}@example.com`,
   displayName: 'Default User',  // static value
   role: () => 'user',
 });
 
-userFactory.build();        // { id: 'user_1', email: 'user1@...', ... }
-userFactory.buildList(3);   // [{ id: 'user_2', ... }, { id: 'user_3', ... }, ...]
+userFactory.build();        // { id: 'user_1', email: 'user2@example.com', ... }
+userFactory.buildList(3);   // [{ id: 'user_3', ... }, { id: 'user_5', ... }, { id: 'user_7', ... }]
 userFactory.build({ role: 'admin' }); // override individual attributes
 ```
 
@@ -58,7 +57,7 @@ Factory with named trait support.
 
 ```ts
 const factory = createFactoryWithTraits(
-  { id: () => `u_${seq.next()}`, role: 'user', status: 'active' },
+  { id: (ctx) => `u_${ctx.sequence.next()}`, role: 'user', status: 'active' },
   { admin: { role: 'admin' }, deactivated: { status: 'deactivated' } },
 );
 
@@ -87,12 +86,11 @@ between tests.
 ```ts
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createFactory, defineSequence, resetFactory } from '@repo/tooling/commands/db/seed-factories';
+import { createFactory, resetFactory } from '@repo/tooling/commands/db/seed-factories';
 
-const seq = defineSequence();
 const userFactory = createFactory({
-  id: () => `u_${seq.next()}`,
-  email: () => `test${seq.next()}@example.com`,
+  id: (ctx) => `u_${ctx.sequence.next()}`,
+  email: (ctx) => `test${ctx.sequence.next()}@example.com`,
   displayName: 'Test User',
   status: 'active',
   roles: () => ['user'],
@@ -104,7 +102,7 @@ describe('auth component', () => {
   it('creates a user', () => {
     const user = userFactory.build();
     assert.equal(user.id, 'u_1'); // always the same
-    assert.equal(user.email, 'test1@example.com');
+    assert.equal(user.email, 'test2@example.com');
   });
 });
 ```
@@ -117,12 +115,10 @@ import {
   createFactoryWithTraits,
 } from './seed-factories.ts';
 
-const seq = defineSequence();
-
 const userFactory = createFactory({
-  id: () => `seed_u_${seq.next()}`,
-  email: () => `seed${seq.next()}@example.com`,
-  displayName: () => `Seed User ${seq.next()}`,
+  id: (ctx) => `seed_u_${ctx.sequence.next()}`,
+  email: (ctx) => `seed${ctx.sequence.next()}@example.com`,
+  displayName: (ctx) => `Seed User ${ctx.sequence.next()}`,
   passwordHash: 'pbkdf2_sha256$120000$salt$hash',
   status: 'active',
   roles: () => ['user'],
@@ -139,12 +135,11 @@ The factory helpers can be imported alongside the existing seed command. They
 don't replace `seed.ts` but provide a complementary deterministic data layer:
 
 ```ts
-import { createFactory, defineSequence } from './seed-factories.ts';
+import { createFactory } from './seed-factories.ts';
 
 // In a seed command, use factories for non-admin test data:
-const seq = defineSequence();
 const testUserFactory = createFactory({
-  id: () => `test_${seq.next()}`,
+  id: (ctx) => `test_${ctx.sequence.next()}`,
   // ...
 });
 ```

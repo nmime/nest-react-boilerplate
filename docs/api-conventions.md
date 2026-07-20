@@ -1,14 +1,19 @@
 # API conventions
 
-The backend consists of three standalone NestJS API shells:
+The backend consists of five standalone NestJS API shells. Three are the contract-bearing REST shells in the OpenAPI/contract pipeline:
 
 - `admin-app-api`
 - `user-app-api`
 - `auth-app-api`
 
+The remaining two are webhook/bot apps outside the REST contract pipeline:
+
+- `discord-app-api`
+- `telegram-bot-api`
+
 ## Health
 
-All APIs use the shared health library `@app/backend-common-health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `backend/*/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
+All APIs use the shared health library `@app/backend-common-health` at `libs/backend/common/health/lib`. App shells provide app-specific health providers/config through `apps/backend/*/*-app-api/src/health.config.ts`; the shared `BaseHealthController` and `HealthService` own the endpoint set and common response shaping.
 
 ```http
 GET /health
@@ -47,7 +52,7 @@ Checks can include `name`, `status`, `required`, `durationMs`, and sanitized `de
 
 Probe policy:
 
-- local development Compose (`docker/docker-compose.yml`) uses API `/health`;
+- local development Compose (`docker/docker-compose.yml`) uses API `/ready`;
 - production Compose (`docker/docker-compose.prod.yml`) uses API `/ready`;
 - Helm API workloads use `/live` and `/ready`;
 - frontend nginx containers use `/nginx-health`.
@@ -93,18 +98,21 @@ OpenAPI JSON is committed under `apps/backend/*/*-app-api/contracts/openapi/*.js
 
 ## Auth endpoints
 
-`auth-app-api` exposes:
+`auth-app-api` exposes the following core credential endpoints (an illustrative subset, not the complete surface):
 
 ```http
 POST /auth/register
 POST /auth/login
+POST /auth/refresh
 GET /auth/me
 POST /auth/logout
 ```
 
-Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`. Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `admin-app-api`.
+The full surface also includes Telegram (`/auth/telegram/*`), Discord OAuth (`/auth/discord/*`), provider-identities, link/email-verification/password-reset tokens, locale, profile preference, and problem-presentation routes; see `libs/backend/feature/auth/main/lib/src/interfaces/http`.
 
-Admin access is fail-closed. A registered email listed in `ADMIN_BOOTSTRAP_EMAILS` receives the `admin` role plus granular `admin:profile:read` and `admin:dashboard:read` permissions.
+Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`, plus an optional `refreshToken` (consumed by `POST /auth/refresh`) and optional session metadata (`amr`, `authProvider`, `authChannel`, `authTime`, `externalIdentityId`). Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `admin-app-api`.
+
+Admin access is fail-closed. Bootstrap requires `ADMIN_BOOTSTRAP_ENABLED=true` (and, for non-default tenants, `ADMIN_BOOTSTRAP_TENANT_IDS`); `ADMIN_BOOTSTRAP_EMAILS` does not grant admin by itself. A matching registered email then receives the `admin` role, which grants the full admin permission catalog (dashboard, profile, users, roles, audit, and settings permissions plus the break-glass `admin:manage:all`) as defined in the role-permission matrix.
 
 ## Request flow diagram
 

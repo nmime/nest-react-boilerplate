@@ -47,8 +47,10 @@ file as the next policy layer.
 The repository uses Node.js built-in `AsyncLocalStorage` for request-scoped
 context. There is **no** `nestjs-cls` or third-party CLS dependency.
 
-- **Package**: `@app/backend-common-bootstrap`
-  (`libs/backend/common/bootstrap/lib`).
+- **Package**: `@app/backend-common-request-context`
+  (`libs/backend/common/request-context/lib`). `@app/backend-common-bootstrap`
+  re-exports `requestContext` for convenience, so existing imports from bootstrap
+  remain valid.
 - **Import and usage**:
 
   ```ts
@@ -65,7 +67,8 @@ context. There is **no** `nestjs-cls` or third-party CLS dependency.
   ```
 
 - The `requestContext` helper is automatically bound to the current async scope
-  by the bootstrap middleware. Do not manually create or manage `AsyncLocalStorage`
+  by the global CLS interceptor (`ClsInterceptor`) registered during bootstrap.
+  Do not manually create or manage `AsyncLocalStorage`
   instances; always use `requestContext` from `@app/backend-common-bootstrap`.
 - Use `requestContext.getRequestId()` for correlation IDs in logs, tracing, and
   error reporting.

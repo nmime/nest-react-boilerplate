@@ -13,6 +13,6 @@ Use squash merges for boilerplate-sized feature branches unless release history 
 
 ## Branch cleanup safety
 
-Use `pnpm run branch:cleanup:check` before deleting stale branches. The check mode prints JSON with the merged local candidates for `origin/main` and does not mutate refs. To delete local merged branches, run `pnpm run branch:cleanup -- --apply`. Remote cleanup is opt-in and requires both `--remote` and `--apply`, which prevents accidental deletion during CI, audits, or dry runs.
+Use `pnpm run branch:cleanup:check` before deleting stale branches. The check mode prints JSON with the merged local candidates for `HEAD` (the `branch:cleanup:check` script passes `--target HEAD`; the plain `branch:cleanup` command uses the `origin/main` default) and does not mutate refs. To delete local merged branches, run `pnpm run branch:cleanup -- --apply`. Remote cleanup is opt-in and requires both `--remote` and `--apply`, which prevents accidental deletion during CI, audits, or dry runs.
 
 The cleanup guard never proposes protected refs: `main`, `master`, `develop`, `development`, `release/*`, `hotfix/*`, `prod`, `production`, `staging`, or `origin/HEAD`. Keep remote branch cleanup disabled in CI unless a repository maintainer is executing a reviewed maintenance workflow.

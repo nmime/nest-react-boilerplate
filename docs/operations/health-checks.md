@@ -39,7 +39,7 @@ See [architecture docs](../architecture.md) for module boundaries and [API conve
 }
 ```
 
-`GET /health` returns the flat shape (no `data` wrapper) with the same fields.
+`GET /health` returns the flat shape (no `data` wrapper) with only `status`, `uptime`, `timestamp`, and `checks` — it omits the `app` and `dependencies` fields present in the envelope.
 
 ## Status resolution
 

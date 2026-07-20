@@ -30,7 +30,7 @@ When the task involves request-scoped data, correlation IDs, or tracing:
 
 1. Read [agent-policy.md § Request Context](agent-policy.md#request-context-cls) for the
    canonical import path (`@app/backend-common-bootstrap`) and `requestContext` API.
-2. Read `libs/backend/common/bootstrap/lib` source to verify current exports and the bootstrap middleware.
+2. Read `libs/backend/common/request-context/lib` source to verify current `requestContext` exports (bootstrap re-exports it via `@app/backend-common-bootstrap`), and the global CLS interceptor (`ClsInterceptor`) in `libs/backend/common/bootstrap/lib` that binds it to the async scope.
 
 ## What belongs where
 

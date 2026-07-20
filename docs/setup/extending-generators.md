@@ -38,6 +38,7 @@ Edit `packages/tooling/src/setup/catalog.ts`:
   label: "My New App",
   platform: "backend",           // "frontend" | "backend" | "e2e"
   classification: "reference",  // or "optional"
+  runtime: "NestJS + Fastify API",
   publicHostname: "my-new-app.example.com",
   requiresCapabilities: ["postgres"],
   requiresApps: [],
@@ -150,23 +151,20 @@ To add a custom adapter (e.g., for testing or virtual filesystems):
 import type { FilesystemAdapter } from './filesystem.js';
 
 export const mockAdapter: FilesystemAdapter = {
-  readFile(path) {
-    /* ... */
+  async read(path) {
+    /* ... returns Promise<string | null> */
   },
-  writeFile(path, content) {
-    /* ... */
+  async write(path, content) {
+    /* ... returns Promise<void> */
   },
-  deleteFile(path) {
-    /* ... */
+  async delete(path) {
+    /* ... returns Promise<void> */
   },
-  exists(path) {
-    /* ... */
+  async exists(path) {
+    /* ... returns Promise<boolean> */
   },
-  mkdir(dir) {
-    /* ... */
-  },
-  readDir(dir) {
-    /* ... */
+  async list(dir) {
+    /* ... returns Promise<string[]> */
   },
 };
 ```
@@ -198,7 +196,8 @@ function createBackendTemplateFiles(names: Names, frontendRoot: string, migratio
 }
 ```
 
-To add support configs, edit `createSupportConfigFiles()`.
+To add support configs, edit the relevant helpers (`projectJson()`,
+`tsconfig()`, `projectGuides()`).
 
 ## Adding a custom command
 
@@ -234,7 +233,7 @@ Then create `packages/tooling/src/commands/my/command.ts`.
 Run with:
 
 ```bash
-pnpm --filter @repo/tooling test
+pnpm exec nx test @repo/tooling
 pnpm run scaffold:verify
 ```
 

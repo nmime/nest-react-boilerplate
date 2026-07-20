@@ -46,12 +46,14 @@ Expected output (clean install, no setup yet):
   ✓ nx-graph             Nx project graph resolves
   ○ nrb-config           nrb.config.json not found — run setup to create
   ○ nrb-state            .nrb/state.json not found — no setup state
+  ○ capability-wiring    Run setup to activate capabilities
+  ○ compose-selection    Run setup to materialize the selected Compose profile
   ✓ tooling-package      @repo/tooling v0.0.0 — repo-tooling + nrb bins present
 
-Summary: 7 passed, 0 failed, 0 warnings, 2 skipped
+Summary: 7 passed, 0 failed, 0 warnings, 4 skipped
 ```
 
-The two `○ skipped` entries for `nrb-config` and `nrb-state` are expected on a fresh clone. They pass after you run setup (see below).
+The four `○ skipped` entries for `nrb-config`, `nrb-state`, `capability-wiring`, and `compose-selection` are expected on a fresh clone. They pass after you run setup (see below).
 
 ## 3. Initialize product identity
 

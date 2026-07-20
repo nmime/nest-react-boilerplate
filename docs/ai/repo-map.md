@@ -31,7 +31,7 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 
 | Concern               | Package / Path                                                                                                 | Agent doc reference                                                                 |
 | --------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Request Context (CLS) | `@app/backend-common-bootstrap` / `libs/backend/common/bootstrap/lib`                                          | [Agent policy: Request Context](agent-policy.md#request-context-cls)                |
+| Request Context (CLS) | `@app/backend-common-request-context` / `libs/backend/common/request-context/lib`                              | [Agent policy: Request Context](agent-policy.md#request-context-cls)                |
 | Exception System      | `@app/backend-common-exception` / `libs/backend/common/exception/lib`                                          | [Agent policy: Exception System](agent-policy.md#exception-system-rfc-9457)         |
 | Health checks         | `@app/backend-common-health` / `libs/backend/common/health/lib`                                                | [Agent policy: Monorepo Layout](agent-policy.md#monorepo-layout)                    |
 | Capability activation | `packages/tooling/src/setup/**`, `apps/backend/**/capabilities.generated.ts`                                   | [Setup](../setup/configuration.md), [Presets](../setup/presets-and-technologies.md) |
@@ -40,7 +40,7 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 ### Request Context (CLS)
 
 - **No** `nestjs-cls` or third-party CLS dependency — uses Node.js built-in `AsyncLocalStorage`.
-- Access via `import { requestContext } from '@app/backend-common-bootstrap'`.
+- Access via `import { requestContext } from '@app/backend-common-request-context'` (`@app/backend-common-bootstrap` re-exports it, so that import path also works).
 - Key API: `requestContext.getRequestId()`, `requestContext.get(key)`, `requestContext.set(key, value)`.
 - See [agent-policy.md](agent-policy.md#request-context-cls) for usage patterns.
 

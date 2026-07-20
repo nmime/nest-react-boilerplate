@@ -42,7 +42,7 @@ Express has a larger ecosystem of middleware and a longer track record. However:
 
 - **Positive**: Higher throughput, built-in validation/serialization, structured logging, clearer error model, better DX with NestJS.
 - **Negative**: Smaller middleware ecosystem than Express (mitigated by Fastify adapter support), learning curve for team members familiar only with Express.
-- **Migration**: Existing Express middleware can be adapted via `@fastifyify/express-compatible` adapters where needed.
+- **Migration**: Existing Express middleware can be adapted via `@fastify/express` where needed.
 
 ## References
 

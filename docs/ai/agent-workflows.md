@@ -43,7 +43,7 @@ When adding or changing error handling in backend code:
 
 When adding request-scoped data (correlation IDs, user context, tracing):
 
-1. **Read first**: [Agent policy: Request Context](agent-policy.md#request-context-cls) and the source of `libs/backend/common/bootstrap/lib`.
+1. **Read first**: [Agent policy: Request Context](agent-policy.md#request-context-cls) and the source of `libs/backend/common/request-context/lib` (re-exported by `libs/backend/common/bootstrap/lib`).
 2. **Always use** `requestContext` from `@app/backend-common-bootstrap`:
    ```ts
    import { requestContext } from '@app/backend-common-bootstrap';
@@ -53,7 +53,7 @@ When adding request-scoped data (correlation IDs, user context, tracing):
    const userId = requestContext.get('userId');
    ```
 3. **Do not add** `nestjs-cls`, `cls-hooked`, or any third-party CLS package — the project uses Node's built-in `AsyncLocalStorage`.
-4. **Do not manually instantiate** `AsyncLocalStorage` — the bootstrap middleware manages the storage lifecycle.
+4. **Do not manually instantiate** `AsyncLocalStorage` — the global CLS interceptor (`ClsInterceptor`) registered during bootstrap manages the storage lifecycle.
 
 ## Common workflow rules
 

@@ -80,17 +80,16 @@ cosign attach sbom --sbom sbom-admin-app-api.spdx.json \
 ### Version quarantine
 
 ```yaml
-# Reject packages published less than 24 hours ago
-quarantine: 1d
+# Reject versions published less than a day ago (1440 minutes = 24 hours)
+minimumReleaseAge: 1440
 ```
 
-This prevents "0-day" malicious packages from being installed. If a critical security patch was just published, override temporarily:
+This prevents "0-day" malicious packages from being installed. If a critical security patch was just published, override it by either lowering `minimumReleaseAge` in `pnpm-workspace.yaml` or adding the specific `pkg@version` to the `minimumReleaseAgeExclude` list:
 
-```bash
-# Bypass quarantine for a specific package
-pnpm install --no-quarantine some-package
-# Or temporarily:
-pnpm config set quarantine 0s
+```yaml
+minimumReleaseAgeExclude:
+  # Explicitly reviewed newly-published version allowed through the quarantine
+  - 'some-package@1.2.3'
 ```
 
 ### Workspace overrides
@@ -119,14 +118,16 @@ These prevent accidental installs with incompatible toolchain versions that migh
 
 Dependabot runs automated dependency updates with grouped PRs:
 
-| Grouping          | Schedule | Packages                         |
-| ----------------- | -------- | -------------------------------- |
-| `npm-minor-patch` | Daily    | All npm packages (minor + patch) |
-| `npm-major`       | Weekly   | All npm packages (major)         |
-| `github-actions`  | Weekly   | GitHub Actions versions          |
-| `docker`          | Weekly   | Docker base images               |
+| Grouping          | Schedule | Packages                            |
+| ----------------- | -------- | ----------------------------------- |
+| `npm-minor-patch` | Weekly   | All npm packages (minor + patch)    |
+| `nx`              | Weekly   | `nx` and `@nx/*` packages           |
+| `nestjs`          | Weekly   | `@nestjs/*` packages                |
+| `opentelemetry`   | Weekly   | `@opentelemetry/*` packages         |
+| `github-actions`  | Weekly   | GitHub Actions versions             |
+| `docker`          | Weekly   | Docker base images (`/`, `/docker`) |
 
-Dependabot PRs are labeled `dependencies` and prefixed with `ci:`. All PRs must pass the full CI gate before merging.
+There is no dedicated major-only npm group; major updates surface as individual PRs. npm dependency PRs are labeled `dependencies, security` and use the `deps:` commit prefix (github-actions uses `ci:`, docker uses `docker:`). All PRs must pass the full CI gate before merging.
 
 ### Updating Dependabot groupings
 

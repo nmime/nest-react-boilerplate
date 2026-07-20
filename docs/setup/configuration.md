@@ -137,18 +137,19 @@ pnpm --filter @repo/tooling tooling doctor
 
 ### Checks performed
 
-| Check                   | Status              | Description                                                                         |
-| ----------------------- | ------------------- | ----------------------------------------------------------------------------------- |
-| `node-version`          | pass/fail           | Node.js version must satisfy `>=24 <25`.                                            |
-| `pnpm`                  | pass/fail           | pnpm must be exactly `11.11.0`.                                                     |
-| `docker`                | pass/skip           | Docker availability (optional for E2E).                                             |
-| `manifests`             | pass/fail           | `package.json`, `tsconfig.base.json` present.                                       |
-| `lock-file`             | pass/warn           | `pnpm-lock.yaml` present.                                                           |
-| `nx-graph`              | pass/warn           | Nx project graph resolves.                                                          |
-| `nrb-config`            | pass/fail/warn/skip | `nrb.config.json` validity.                                                         |
-| `nrb-state`             | pass/fail/warn/skip | `.nrb/state.json` consistency.                                                      |
-| `capability-activation` | pass/fail/skip      | Generated manifests, environment, and backend module wiring match the saved config. |
-| `tooling-package`       | pass/fail/warn      | `@repo/tooling` bin entries.                                                        |
+| Check               | Status              | Description                                                                         |
+| ------------------- | ------------------- | ----------------------------------------------------------------------------------- |
+| `node-version`      | pass/fail           | Node.js version must satisfy `>=24 <25`.                                            |
+| `pnpm`              | pass/fail           | pnpm must be exactly `11.11.0`.                                                     |
+| `docker`            | pass/skip           | Docker availability (optional for E2E).                                             |
+| `manifests`         | pass/fail           | `package.json`, `tsconfig.base.json` present.                                       |
+| `lock-file`         | pass/warn           | `pnpm-lock.yaml` present.                                                           |
+| `nx-graph`          | pass/warn           | Nx project graph resolves.                                                          |
+| `nrb-config`        | pass/fail/warn/skip | `nrb.config.json` validity.                                                         |
+| `nrb-state`         | pass/fail/warn/skip | `.nrb/state.json` consistency.                                                      |
+| `capability-wiring` | pass/fail/skip      | Generated manifests, environment, and backend module wiring match the saved config. |
+| `compose-selection` | pass/fail/skip      | Selected Compose service graph resolves (when Docker is available).                 |
+| `tooling-package`   | pass/fail/warn      | `@repo/tooling` bin entries.                                                        |
 
 ### JSON output
 
@@ -217,14 +218,19 @@ application stack with staging-specific secrets, databases, and domain names.
 
 ### CI/CD — Deploying to Staging
 
-The CI pipeline deploys to staging automatically on PR merge to the `staging`
-branch (or when tagged with a staging label):
+There is no automated staging pipeline; staging shares the production deploy
+path. Deployment runs from the manual `deploy` workflow
+(`.github/workflows/deploy.yml`), triggered via `workflow_dispatch`:
 
-- **Trigger:** merge to `staging` branch or PR labeled `deploy-staging`.
-- **Image tag:** `preview/<short-sha>` or `edge-<date>`.
-- **Helm:** applies `values-staging.yaml` on top of `values-production.yaml`.
-- **Namespace:** `staging` (isolated from production).
-- **Rollback:** revert the merge or re-trigger CI on the previous commit.
+- **Trigger:** manual `workflow_dispatch` with a full 40-character `git_sha`
+  whose release images already exist and that is an ancestor of `origin/main`.
+- **Image tag:** `sha-<git_sha>`.
+- **Helm:** renders `.helm/values-production.yaml` (there is no
+  `values-staging.yaml` overlay in the repo).
+- **Namespace:** `nest-react-boilerplate`.
+- **GitOps:** commits the updated deploy tags to a `gitops/sha-<git_sha>`
+  branch for Argo CD / Flux to reconcile.
+- **Rollback:** re-run the workflow with the previous known-good Git SHA.
 
 ### Running Staging Locally
 
@@ -232,10 +238,11 @@ branch (or when tagged with a staging label):
 # Using docker compose
 NODE_ENV=staging docker compose --profile staging -f docker/docker-compose.yml up -d
 
-# Using Helm (against a staging cluster)
+# Using Helm (against a staging cluster).
+# The repo ships only values-production.yaml; supply your own staging
+# overlay with an extra `-f` if you maintain one.
 helm upgrade --install nrb ./.helm \
   -f .helm/values-production.yaml \
-  -f .helm/values-staging.yaml \
   --namespace staging
 ```
 
